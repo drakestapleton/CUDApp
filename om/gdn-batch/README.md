@@ -31,8 +31,10 @@ pinned Omega compiler and Bridge. Both targets are in `make test`. Build
 `build/gdn-batch-chip` explicitly for the existing independent physical GDN
 reference, recurrent-state, tail, next-decode and damaged-kernel checks redirected
 to this scoped entry. `--host-only` and `--sim` remain host-only; without them
-the binary opens the GPU. `GDN_BATCH_TEST_TIMING=0` selects the untimed test arm;
-absent or `1` selects the timed arm. This setting exists only in that test.
+the binary opens the GPU. `GDN_BATCH_TEST_TIMING=0` omits optional timing reports;
+absent or `1` requests them. An explicit timing request by the existing oracle
+is always honored, including its timing loop. The host selector regression
+checks all four combinations. This setting exists only in that test.
 
 Physical qualification, complete-model parity, server behavior and quiet timing
 for this production candidate are NOT_RUN. Earlier external command-list screens

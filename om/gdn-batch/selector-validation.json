@@ -1,0 +1,22 @@
+{
+  "status": "PASS_TEST_SELECTOR_REPAIR",
+  "scope": "Test instrumentation only; production Omega policy and C transport unchanged from09dbc67b.",
+  "defect": "When optional timing was disabled, the chip test adapter discarded an explicit timing request made by its inherited oracle, leaving the caller info uninitialized.",
+  "repair": "Always preserve a provided info pointer. The option controls only extra reports when the caller did not request timing.",
+  "verification": "All four combinations of optional timing and caller timing request pass; reverting the selector reproduces the assertion failure. No GPU opened by this regression.",
+  "source_sha256": {
+    "om/gdn-batch/chip-check.c": "188913bf696eb7a8a99e14c8e7acb2005beca92b7d84c3de4f7d89b9073f6cf9",
+    "om/gdn-batch/selector-check.c": "2a35ccf9a0fe3757b059716e052cf5b931d7865b3830aeb815416428e01f9411",
+    "om/gdn-batch/selector-mutants.py": "53dad341d61b0fcb2b5a0e6aa356350beafe40bfa81032acc27424c79edb5074",
+    "mk/gdn-batch.mk": "3b5224366aa80bd12609cc69696f0edaee6f1e96f84aa24a88336eb1b88ab3b9"
+  },
+  "external_reproduction_receipt_sha256": "eb856aa0204e971366964857d84ec56c202ad4a7b6cead2e3d615e771aa84cd9",
+  "mutant_log_sha256": "85fc8cd3ba7f81ad0483e1b1ecd4f61b0e636f5a56eee48e296fde46c1f68a1e",
+  "commands": [
+    "cc -std=gnu11 -O2 -Wall -Wextra -Werror -ffp-contract=off -Isrc -Itests om/gdn-batch/selector-check.c $PINNED_ARCHIVE -Wl,--wrap=omega_gpu_gdn_prefill_scoped -lpthread -lm -o $CHECK",
+    "$CHECK",
+    "python3 om/gdn-batch/selector-mutants.py $PINNED_ARCHIVE"
+  ],
+  "archive_sha256": "11e5761501355588ae27ef5a425475e521296ebf918aac3fc4d590507bdda439",
+  "suite_note": "Complete85target suite continues in separate unchanged source worktree at09dbc67b. This new regression is added to the existing dispatch target; no new manifest target."
+}

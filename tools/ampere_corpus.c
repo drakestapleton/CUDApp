@@ -9,6 +9,15 @@
 #include <string.h>
 #include <unistd.h>
 
+static int is_safe_corpus_dir(const char *dir)
+{
+    if (!dir || !*dir) return 0;
+    if (dir[0] == '.') return 0;
+    if (strstr(dir, "..")) return 0;
+    if (strchr(dir, '/') || strchr(dir, '\\')) return 0;
+    return 1;
+}
+
 static void save(const char *dir, unsigned serial, const char *suffix, const void *data, size_t size)
 {
     char path[4096];
@@ -22,7 +31,7 @@ static void save(const char *dir, unsigned serial, const char *suffix, const voi
 void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *sm121, size_t len)
 {
     const char *dir = getenv("OMEGA_AMPERE_CORPUS_DIR");
-    if (!dir || !*dir) return;
+    if (!is_safe_corpus_dir(dir)) return;
     static unsigned serial;
     const unsigned id = serial++;
     uint8_t code[16384], reference[16384];

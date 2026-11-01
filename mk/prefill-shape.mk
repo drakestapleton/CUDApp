@@ -25,3 +25,11 @@ test-prefill-order: $(OUT_DIR)/prefill-order.so $(OUT_DIR)/gpu_qgemm_test
 ifeq ($(CUDAPP_OMC_HOST),1)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/prefill-shape/order-mutants.py
 endif
+
+CARRIED_HOST_TESTS += test-prefill-scoped
+.PHONY: test-prefill-scoped
+$(OUT_DIR)/prefill-scoped-check: om/prefill-shape/scoped-check.c $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) -o $@ $< $(OUT_DIR)/libomega_gpu.a -Wl,--wrap=omega_gpu_pf_open_locked -Wl,--wrap=omega_gpu_pf_kernel_locked -lpthread -lm
+test-prefill-scoped: $(OUT_DIR)/prefill-scoped-check
+	$(abspath $(OUT_DIR))/prefill-scoped-check
+	CC="$(CC)" python3 om/prefill-shape/scoped-mutants.py $(abspath $(OUT_DIR))/libomega_gpu.a

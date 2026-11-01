@@ -12,7 +12,7 @@
 # After a deliberate header change: edit the line here, run `tools/runtime_api_check.sh --bless` to refresh numbers, review the diff,
 # and bump the version (MAJOR/MINOR/PATCH, rule in API.md section 2; tools/runtime_api_semver.sh checks the bump against the base).
 # Names a manifest header declares that are NOT API go in omega_runtime_api.internal, each with a reason (the check fails otherwise).
-abi omega_runtime 0.10.0
+abi omega_runtime 0.11.0
 header src/omega_runtime_api.h
 header src/omega_gpu_platform.h
 header src/omega_gpu_session.h
@@ -38,9 +38,9 @@ header src/omega_gpu_pfhost.h
 header src/omega_gpu_gemm_ex.h
 # ---- version ----
 const OMEGA_RUNTIME_API_VERSION_MAJOR 0
-const OMEGA_RUNTIME_API_VERSION_MINOR 10
+const OMEGA_RUNTIME_API_VERSION_MINOR 11
 const OMEGA_RUNTIME_API_VERSION_PATCH 0
-const OMEGA_RUNTIME_API_VERSION 10
+const OMEGA_RUNTIME_API_VERSION 11
 # ---- platform contract (src/omega_gpu_platform.h, ABI 1.2) ----
 struct OmegaGpuDeviceHandle 8 4 # STABLE
 field OmegaGpuDeviceHandle index 0 4 u32 1
@@ -953,6 +953,8 @@ fn omega_gpu_pf_qgemm_bm fn() -> u32 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_tiles fn(*const OmegaGpuFp8Tensor, *const u32, *mut c_void, u32) -> u32 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_tiles_va fn(u32, *const u64, *const u64, *const u32, *mut c_void, u32) -> u32 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm fn(u32, u32, u32, u64, u32, u64, u64, u64, u64, *mut u64) -> i32 # EXPERIMENTAL
+fn omega_gpu_pf_qgemm_scoped_bm fn(u32, u32, u32, u32) -> u32 # EXPERIMENTAL
+fn omega_gpu_pf_qgemm_scoped fn(u32, u32, u32, u32, u32, u32, u32, u64, u32, u64, u64, u64, u64, *mut u64) -> i32 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_set_shape fn(u32, u32, u32) -> () # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_set_group fn(u32) -> () # EXPERIMENTAL
 fn omega_gpu_pf_quant_record fn(*mut OmegaGpuCmdList, u32, u32, u32, u64, u64, u64) -> i32 # EXPERIMENTAL

@@ -190,14 +190,16 @@ uint32_t omega_gpu_pf_qgemm_tiles(const OmegaGpuFp8Tensor *t, const uint32_t *co
 
 static int gen_qg(const OmegaPfKey *key, void *prog) { OmegaQgSpec s; memcpy(&s, key->words, sizeof s); return omega_blackwell_codegen_qgemm_prog(&s, prog); }
 
-static int qg_core(OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles, uint64_t rowidx_va, uint64_t xq_va,
+static int qg_core(OmegaGpuCmdList *cl, const OmegaQgSpec *scoped, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles, uint64_t rowidx_va, uint64_t xq_va,
                    uint64_t xs_va, uint64_t y_va, uint64_t *ns) {
     if (!tiles_va || !xq_va || !xs_va || !y_va) return OMEGA_GPU_PF_BAD_ARGS;
     if (layout != OMEGA_GPU_PF_PLAIN && layout != OMEGA_GPU_PF_SWIGLU_NAT) return OMEGA_GPU_PF_BAD_ARGS;
     if (ntiles == 0) return OMEGA_GPU_PF_OK;
     if (ntiles > 65535u) return OMEGA_GPU_PF_TOO_LARGE;
     OmegaQgSpec s; memset(&s, 0, sizeof s);
-    s.k = k; s.rt = QRT(); s.warps = QWARPS(); s.wait = QWAIT(); s.n = n; s.mutant = q.mutant; s.group = q.group;
+    if (scoped) s = *scoped;
+    else { s.rt = QRT(); s.warps = QWARPS(); s.wait = QWAIT(); s.mutant = q.mutant; s.group = q.group; }
+    s.k = k; s.n = n;
     s.epi = layout == OMEGA_GPU_PF_SWIGLU_NAT ? OMEGA_QG_EPI_SWIGLU : OMEGA_QG_EPI_F32; s.direct = rowidx_va == 0;
     if (!omega_qg_spec_ok(&s)) return OMEGA_GPU_PF_BAD_ARGS;
     const uint32_t span = omega_qg_span(&s);
@@ -221,10 +223,29 @@ static int qg_core(OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout,
     return rc;
 }
 int omega_gpu_pf_qgemm(uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles, uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va, uint64_t *ns) {
-    return qg_core(NULL, n, k, layout, tiles_va, ntiles, rowidx_va, xq_va, xs_va, y_va, ns);
+    return qg_core(NULL, NULL, n, k, layout, tiles_va, ntiles, rowidx_va, xq_va, xs_va, y_va, ns);
 }
 int omega_gpu_pf_qgemm_record(OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles,
                               uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va) {
     if (!cl) return OMEGA_GPU_PF_BAD_ARGS;
-    return qg_core(cl, n, k, layout, tiles_va, ntiles, rowidx_va, xq_va, xs_va, y_va, NULL);
+    return qg_core(cl, NULL, n, k, layout, tiles_va, ntiles, rowidx_va, xq_va, xs_va, y_va, NULL);
+}
+
+/* Per-call options: no reads or writes of the experimental process-global knobs.
+ * Shape and work-order admission remain in the checked Omega units. */
+static OmegaQgSpec qg_scoped_spec(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group) {
+    OmegaQgSpec s; memset(&s, 0, sizeof s);
+    s.rt = rt; s.warps = warps; s.wait = wait; s.group = group;
+    return s;
+}
+uint32_t omega_gpu_pf_qgemm_scoped_bm(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group) {
+    OmegaQgSpec s = qg_scoped_spec(rt, warps, wait, group);
+    s.n = 256; s.k = 128; s.direct = 1;
+    return omega_qg_spec_ok(&s) ? 16u * s.rt : 0;
+}
+int omega_gpu_pf_qgemm_scoped(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group,
+                              uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles,
+                              uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va, uint64_t *ns) {
+    const OmegaQgSpec s = qg_scoped_spec(rt, warps, wait, group);
+    return qg_core(NULL, &s, n, k, layout, tiles_va, ntiles, rowidx_va, xq_va, xs_va, y_va, ns);
 }

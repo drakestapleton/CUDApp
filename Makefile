@@ -161,6 +161,15 @@ $(GPU_EW_TEST): tests/gpu_elementwise_test.c src/omega_gpu_elementwise_api.h $(O
 test-gpu-elementwise: $(GPU_EW_TEST)
 	./$(GPU_EW_TEST) --host-only
 
+# GB10 fixed-latency chains versus Mesa NAK. test-gpu-latmeas is host-only
+# (encode, disassemble, oracle, diff). The chip gate is tools/latmeas/run_spark.sh.
+.PHONY: test-gpu-latmeas
+GPU_LATMEAS_TEST = $(OUT_DIR)/gpu_latmeas_test
+$(GPU_LATMEAS_TEST): tests/gpu_latmeas_test.c $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/gpu_latmeas_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+test-gpu-latmeas: $(GPU_LATMEAS_TEST)
+	sh tools/latmeas/selftest.sh $(GPU_LATMEAS_TEST)
+
 # omega #308: structured warp reconvergence (BSSY/BSYNC regions). test-gpu-reconv is
 # host-only (encoder goldens, region bookkeeping, refusals, nvdisasm listing, every probe
 # kernel through the SIMT warp simulator tests/bw_warp_sim.h against the oracle, mutation
@@ -532,7 +541,7 @@ test-omega-slices:
 
 # Every host-only check: no GPU, no device opened. The chip gates are listed in README.md.
 # Portable commands and the AArch64-only rows are separated in docs/OMEGA_HOST_TESTS.md.
-HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-reconv test-gpu-attention test-gpu-moe-window \
+HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-latmeas test-gpu-reconv test-gpu-attention test-gpu-moe-window \
 	test-gpu-fp8 test-gpu-decode-attn test-gpu-router test-gpu-bf16-gemv test-gpu-fp8gemm test-gpu-tern-sched test-gpu-gpr-boundary \
 	test-gpu-cmdlist test-gpu-decode-graph test-gpu-code-alloc test-gpu-engine-compile test-gpu-engine \
 	test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim \

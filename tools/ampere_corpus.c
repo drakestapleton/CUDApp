@@ -12,9 +12,14 @@
 static int is_safe_corpus_dir(const char *dir)
 {
     if (!dir || !*dir) return 0;
-    if (dir[0] == '.') return 0;
-    if (strstr(dir, "..")) return 0;
-    if (strchr(dir, '/') || strchr(dir, '\\')) return 0;
+    if (strchr(dir, '\\')) return 0;
+    for (const char *component = dir; *component;) {
+        while (*component == '/') ++component;
+        const char *start = component;
+        while (*component && *component != '/') ++component;
+        if ((size_t)(component - start) == 2 &&
+            start[0] == '.' && start[1] == '.') return 0;
+    }
     return 1;
 }
 

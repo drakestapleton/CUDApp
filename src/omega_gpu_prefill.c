@@ -88,7 +88,14 @@ int omega_gpu_pf_kernel_locked(const OmegaPfKey *key, OmegaPfGen gen, OmegaPfKer
     size_t need = cg == 0 ? omega_bw_program_code_bytes(prog) : 0;
     if (cg != 0 || need == 0) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill codegen refused the shape"); return OMEGA_GPU_PF_CODEGEN_FAIL; }
     const uint32_t peak = prog->regalloc.peak_gpr_usage, decl = omega_bw_gpr_declared(peak);
-    if (decl > 128u) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill kernel: more than 128 registers"); return OMEGA_GPU_PF_TOO_LARGE; }
+    /* Preserve the old 128-register declaration unless codegen explicitly opted
+     * into more. The allocator's hardware limit leaves declaration headroom;
+     * launch/record below independently enforce registers times threads.
+     * Blackwell Tuning Guide, physical page 13: 255/thread, 64K per SM. */
+    const uint32_t limit = prog->regalloc.gpr_limit ? prog->regalloc.gpr_limit : BW_PHYS_GPR_MAX - 2u;
+    if (limit > BW_PHYS_GPR_HW_LIMIT || peak > limit || !omega_bw_gpr_declared_ok(decl, peak)) {
+        omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill kernel: register budget exceeded"); return OMEGA_GPU_PF_TOO_LARGE;
+    }
     OmegaGpuMem code;
     if (omega_gpu_session_alloc_code(need, &code) != 0) { omega_gpu_host_free(prog); return OMEGA_GPU_PF_CHIP_FAIL; }
     OmegaBlackwellKernel kernel;

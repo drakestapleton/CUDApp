@@ -1,5 +1,5 @@
 {
-  "status": "PASS targeted host call isolation, three fault controls and runtime API/version gates; complete host suite and full-model scoped call not yet run",
+  "status": "PASS all79 host targets, scoped call isolation, three fault controls and runtime API/version gates; scoped serving and full-model qualification still in progress",
   "production_commit": "f50be1f9",
   "base": "6d339a0dcbcada66fd211d89f5a0ed6704003f75",
   "source_sha256": {
@@ -29,5 +29,32 @@
     "leak_options_to_global",
     "wrong_tile_height"
   ],
-  "scope": "The real qg_core constructs the intercepted kernel key. Tests interleave explicit128/group4, explicit64/group0, and legacy32/group1/mutant1 calls without opening a GPU. Invalid options are refused before device access. Checked Omega units retain numerical/order policy."
+  "scope": "The real qg_core constructs the intercepted kernel key. Tests interleave explicit128/group4, explicit64/group0, and legacy32/group1/mutant1 calls without opening a GPU. Invalid options are refused before device access. Checked Omega units retain numerical/order policy.",
+  "full_host": {
+    "command": [
+      "taskset",
+      "-c",
+      "12-15",
+      "nice",
+      "-n",
+      "19",
+      "make",
+      "-j4",
+      "OUT_DIR=../optimize27-scoped-reading-build",
+      "test",
+      "test-runtime-api-semver",
+      "RUNTIME_API_BASE=6d339a0dcbcada66fd211d89f5a0ed6704003f75"
+    ],
+    "cwd": "/tmp/optimize27-scoped-reading-cudapp",
+    "source_head": "fa70990c4af3dbf18469019c8707b7e0f5866998",
+    "started": "2026-11-01T20:00:46.400700+00:00",
+    "environment": {
+      "OMEGA_OMC": "/tmp/ribbon-seed-compiler/seed/out/omc",
+      "OMEGA_BRIDGE": "/tmp/optimize27-bridge"
+    },
+    "exit_code": 0,
+    "ended": "2026-11-01T20:07:51.693459+00:00",
+    "targets": 79,
+    "log_sha256": "f8ccb59ee6a562f2f0e2e3fdd57d5e9468fe798a82fa667097db5215262978ba"
+  }
 }

@@ -51,3 +51,5 @@ The host isolation test interleaves two scoped configurations and a different le
 The subsequent full host rerun completed successfully: all 78 targets passed at runtime source `28b533c95a2dce42cb14c9d8bc4a05847a5981a0`. See `order-combined-full-host-validation.json` for the command, timing and log digest. This does not qualify the later scoped API or serving performance.
 
 The subsequent full host rerun completed successfully: all 77 targets passed at runtime source `572a73bfd138b78154172f7746504842a7168f9c`. See `cache-full-host-validation.json` for the command, timing and log digest. This does not qualify the later scoped API or serving performance.
+
+The scoped entry subsequently passed the complete 79-target host suite and API version gate. `scoped-validation.json` records the exact command and log digest. Scoped full-model and server qualification remain separate.

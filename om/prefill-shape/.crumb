@@ -3,14 +3,14 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-01T20:02:59Z",
+      "compiled_at": "2026-11-01T20:06:13Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:fc03352d6bb50cf14b00c3485c9ba8406dcc67810426bc89a66952674fd1e645",
+      "digest": "sha256:4c2da4b06b3a47de49eab897326282dd21ea66e3ae1947054c5fb6e42b500e83",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 16,
-      "generated_at_commit": "6d339a0dcbcada66fd211d89f5a0ed6704003f75",
-      "source_tree": "sha256:6d0ccb70141ccda3bf5f6d19c0ed26de385748c973a344a24a6d3c0bb68cad88"
+      "files": 20,
+      "generated_at_commit": "3751e1ab02034a48d1fbc1217c70d60dc97382fc",
+      "source_tree": "sha256:141935040c08042f989ba49e50d9b43736e36c5f10faedad3b3af5b42c158e6b"
     }
   },
   "layer": "native-policy",

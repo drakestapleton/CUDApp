@@ -76,7 +76,7 @@ def build_md(cat, results, fake):
         lines.append("Driver: %s. No NVIDIA user-space libraries." % driver)
     else:
         lines.append("Driver: NVIDIA open kernel module <version>, no NVIDIA user-space libraries")
-    lines.append("Method: dependent-chain timing kernel. One warp (32 threads), lane 0 stores.")
+    lines.append("Method: dependent-chain timing kernel. One warp (32 threads); every lane stores, and a stall matches only when every lane matches the oracle.")
     lines.append("Each fixed-latency producer is issued at a programmed stall. The GB10 column is the smallest stall S such that S and every larger S in the sweep matched the oracle on every run. Cycles are the CS2R clock delta (NAK_SV_CLOCK_LO, 0x50) around that chain, median and max-min.")
     lines.append("Source: tests/gpu_latmeas_test.c in aien-dev/CUDApp")
     lines.append("How to rerun: sh tools/latmeas/run_spark.sh OUTPUT_DIR")

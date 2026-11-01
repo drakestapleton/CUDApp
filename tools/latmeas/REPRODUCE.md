@@ -38,6 +38,10 @@ The two `CS2R` reads bracket the loop. Between them are the producer, its consum
 
 The loop increment stalls 15 before `ISETP`. Stall 1 there is shorter than a fixed-latency add: the compare samples the old counter, the body runs one extra time, and the overhead kernel stores that counter. `sm121dis` of that kernel shows the `IADD`, the `ISETP`, and `@!P0 BRA` back to the `IADD`. The host simulator issues the same IR and keeps a GPR write hidden for 5 cycles and a predicate write hidden for 14 (the NAK floors). It requires the overhead counter to equal the trip count, the stall at the top of the sweep to equal the fresh oracle, and stall 1 to equal the stale oracle. Forcing the increment's stall back to 1 must fail the counter check.
 
+The 2026-11-01 GB10 run of `03cdcc5` merged with PR #251 is `evidence/LATMEAS-GB10-20261101/`. `UNITS.md` there compares the stall field with NAK's `deps.delay`. That run stored lane 0 only, and its HMMA oracle was the stall-36 result.
+
+The kernels after that receipt store eight words from every lane: the two clocks, four result words, and the lane id. HMMA's four result words are `FADD` of `d0` through `d3` against zero. The host value is sixteen products of bf16 1.0, not the stall-36 launch. A stall matches only when all 32 lanes match. Those kernels have not been launched.
+
 ## NAK pin
 
 Mesa commit `01bab9302a6bf0a082c7ba8c49d74427cf10b0cf`.

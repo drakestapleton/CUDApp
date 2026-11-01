@@ -38,8 +38,8 @@
  * to the IADD. The overhead word is that counter. The host simulator below
  * applies the stall counts and rejects that shape.
  *
- * One warp, 32 threads, uniform control flow inside the timed region. Only
- * lane 0 stores. Mesa commit and the NAK line citations live in
+ * One warp, 32 threads, uniform control flow inside the timed region. Every
+ * lane stores eight words. Mesa commit and the NAK line citations live in
  * tools/latmeas/diff_nak.py.
  *
  * Opening the device on a GB10 needs the driver's SM version 0xa04 admitted
@@ -83,6 +83,9 @@ enum {
     SWEEP_HMMA = 36
 };
 #define SENTINEL 0x7f800000u /* +inf bits: not equal to 1..N or to f32 1..N */
+#define LANE_N 32
+#define LANE_WORDS 8
+#define LANE_STRIDE 32u /* LANE_WORDS * 4: t0, t1, r0, r1, r2, r3, tid, unused */
 _Static_assert(RUNS % 2 == 1, "median uses the middle of an odd run count");
 _Static_assert(SWEEP_HMMA <= SWEEP_MAX, "sweep fits the sample array");
 
@@ -104,7 +107,7 @@ static const CaseDef CASES[] = {
     {"pred", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
     {"fmnmx_alu", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
     {"imad_wide_lo", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
-    {"hmma_reader", HMMA_ITERS, 1, SWEEP_HMMA, HMMA_ITERS, 1},
+    {"hmma_reader", HMMA_ITERS, 1, SWEEP_HMMA, HMMA_ITERS, 0},
 };
 #define NCASES ((int)(sizeof CASES / sizeof CASES[0]))
 
@@ -234,12 +237,6 @@ static void clock_read(B *b, int dst) {
     b->pending = 0;
 }
 
-static void s2r_sb(B *b, int dst, uint32_t sr) {
-    uint32_t wait = b->pending;
-    add(b, BW_IR_S2R, dst, NOREG, NOREG, NOREG, sr, cw(4, SB_GPR, SB_NONE, wait, 1), 0, 0, 0, 0);
-    b->pending = 1u << SB_GPR;
-}
-
 static void pin_live(BlackwellIRProgram *p) {
     int end = (int)p->count - 1;
     if (end < 0) return;
@@ -253,6 +250,16 @@ static uint32_t fbits(float f) {
     uint32_t u;
     memcpy(&u, &f, 4);
     return u;
+}
+
+/* HMMA.16816.F32.BF16: each of the four f32 accumulators is a dot of k=16.
+ * This kernel writes bf16 1.0 into every A and B half and 0 into C, so each
+ * accumulator is 16 products of 1*1. The same value on every lane, because
+ * every lane's fragments are initialized alike. */
+static uint32_t hmma_16816_ones(void) {
+    float acc = 0.f;
+    for (int k = 0; k < 16; k++) acc += 1.f * 1.f;
+    return fbits(acc);
 }
 
 /* stale=1: the consumer sees SENTINEL instead of the value just written.
@@ -320,6 +327,12 @@ static int eval_case(const CaseDef *c, int stale, uint32_t *result, uint32_t *au
         *result = stale ? PRED_POISON : n;
         return 0;
     }
+    if (!strcmp(c->id, "hmma_reader")) {
+        uint32_t e = hmma_16816_ones();
+        *result = stale ? 0u : e;
+        *aux = stale ? 0u : e;
+        return 0;
+    }
     return -1;
 }
 
@@ -339,20 +352,29 @@ static void prologue(B *b, int *ptr) {
     b->pending = 1u << SB_GPR;
 }
 
-static void store_tail(B *b, int ptr, int t0, int t1, int result, int rsub, int aux, int asub) {
+/* Every lane stores eight words at ptr + tid * LANE_STRIDE. There is no
+ * lane-0 filter: a lane that did not run would leave POISON in its slot. */
+static void store_lanes(B *b, int ptr, int t0, int t1, int r0, int r0s, int r1, int r1s, int r2, int r2s, int r3,
+                        int r3s) {
     int tid = V(b);
-    int one = V(b);
-    movi(b, one, 1, 0);
-    s2r_sb(b, tid, BW_SR_TID_X);
-    isetp_ge(b, tid, one, 15); /* P0 = (tid >= 1); lane 0 falls through */
-    int skip_br = bra(b, 1, 0, 5);
+    int addr = V64(b);
+    /* Stall 15, and a scoreboard the IMAD waits on. The address uses tid.
+     * A stall of 4 here is shorter than a fixed-latency S2R in the host
+     * simulator, which would then scale every lane by 0. */
+    uint32_t wait = b->pending;
+    add(b, BW_IR_S2R, tid, NOREG, NOREG, NOREG, BW_SR_TID_X, cw(15, SB_GPR, SB_NONE, wait, 1), 0, 0, 0, 0);
+    b->pending = 1u << SB_GPR;
+    wait = b->pending;
+    add(b, BW_IR_IMAD_WIDE, addr, tid, NOREG, ptr, LANE_STRIDE, cw(6, SB_NONE, SB_NONE, wait, 0), 0, 0, 0, 0);
+    b->pending = 0;
     uint32_t st = cw(4, SB_NONE, SB_RD, 0, 1);
-    add(b, BW_IR_STG_E, NOREG, ptr, t0, NOREG, 0, st, 0, 0, 0, 0);
-    add(b, BW_IR_STG_E, NOREG, ptr, t1, NOREG, 4, st, 0, 0, 0, 0);
-    add(b, BW_IR_STG_E, NOREG, ptr, result, NOREG, 8, st, 0, 0, 0, rsub);
-    add(b, BW_IR_STG_E, NOREG, ptr, aux, NOREG, 12, st, 0, 0, 0, asub);
-    int skip = (int)b->p->count;
-    patch_bra(b, skip_br, skip);
+    add(b, BW_IR_STG_E, NOREG, addr, t0, NOREG, 0, st, 0, 0, 0, 0);
+    add(b, BW_IR_STG_E, NOREG, addr, t1, NOREG, 4, st, 0, 0, 0, 0);
+    add(b, BW_IR_STG_E, NOREG, addr, r0, NOREG, 8, st, 0, 0, 0, r0s);
+    add(b, BW_IR_STG_E, NOREG, addr, r1, NOREG, 12, st, 0, 0, 0, r1s);
+    add(b, BW_IR_STG_E, NOREG, addr, r2, NOREG, 16, st, 0, 0, 0, r2s);
+    add(b, BW_IR_STG_E, NOREG, addr, r3, NOREG, 20, st, 0, 0, 0, r3s);
+    add(b, BW_IR_STG_E, NOREG, addr, tid, NOREG, 24, st, 0, 0, 0, 0);
     add(b, BW_IR_EXIT, NOREG, NOREG, NOREG, NOREG, 0, cw(5, SB_NONE, SB_NONE, 0, 0), 0, 0, 0, 0);
     add(b, BW_IR_BRA, NOREG, NOREG, NOREG, NOREG, 0, 0x000fc000u, 0, 0, 0, 0);
 }
@@ -442,6 +464,7 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
     int r = V(&b), acc = V(&b), acc2 = V(&b), cur = V(&b), tmp = V(&b), dsti = V(&b), seen = V(&b);
     int t0 = V(&b), t1 = V(&b), aux = V(&b);
     int rpair = NOREG, tpair = NOREG, dquad = NOREG, aquad = NOREG, bpair = NOREG, cquad = NOREG;
+    int h0 = NOREG, h1 = NOREG, h2 = NOREG, h3 = NOREG;
     unsigned iters = overhead ? ovh_iters : c->iters;
     movi(&b, one, 1, 0);
     movz(&b, zero, 0);
@@ -490,7 +513,17 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
         add(&b, BW_IR_HMMA_BF16, dquad, aquad, bpair, cquad, 0, cw(head, SB_NONE, SB_NONE, wait, 0), 0, 0, 0, 0);
         b.pending = 0;
         gap_nops(&b, rest);
-        fadd(&b, acc, dquad, 0, zero, 15); /* acc = d0 + 0 */
+        /* Four consumers, one per destination register. Stall 1 between them
+         * is the minimum issue gap: d1 is sampled one cycle after d0, d2 two,
+         * d3 three. The programmed stall is the gap before d0. */
+        h0 = V(&b);
+        h1 = V(&b);
+        h2 = V(&b);
+        h3 = V(&b);
+        fadd(&b, h0, dquad, 0, zero, 1);
+        fadd(&b, h1, dquad, 1, zero, 1);
+        fadd(&b, h2, dquad, 2, zero, 1);
+        fadd(&b, h3, dquad, 3, zero, 1);
         if (c->iters > 1) {
             /* HMMA_ITERS is 1: a repeated identical HMMA would make a stale
              * read equal the previous correct write. */
@@ -518,13 +551,17 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
     int asub = 0;
     if (!overhead && c && !c->href && strcmp(c->id, "pred") != 0) result = acc;
     if (!overhead && !strcmp(c->id, "mixed")) auxv = acc2;
+    int r2 = zero, r3 = zero, r2s = 0, r3s = 0;
     if (!overhead && !strcmp(c->id, "hmma_reader")) {
-        result = acc;
-        auxv = dquad; /* late read of d1, after the timed region: diagnostic only */
-        asub = 1;
+        result = h0;
+        rsub = 0;
+        auxv = h1;
+        asub = 0;
+        r2 = h2;
+        r3 = h3;
     }
     if (overhead) result = i;
-    store_tail(&b, ptr, t0, t1, result, rsub, auxv, asub);
+    store_lanes(&b, ptr, t0, t1, result, rsub, auxv, asub, r2, r2s, r3, r3s);
     if (b.err) return -1;
     pin_live(&g_prog);
     if (omega_bw_regalloc_solve(&g_prog) != 0) return -1;
@@ -659,7 +696,6 @@ typedef struct {
     int nwr;
     uint32_t now;
     int pc;
-    uint32_t out[4];
     int stores;
     const char *err;
 } LatSim;
@@ -746,9 +782,9 @@ static int lat_wr(LatSim *s, int v, unsigned sub, uint32_t value, uint32_t lat) 
     return lat_post(s, 0, reg, lat, value);
 }
 
-/* Lane 0 only: the kernel is uniform, and the lane filter stores from lane 0.
- * Returns 0 and fills out[4] (clock, clock, result, aux). */
-static int lat_sim(uint32_t out[4]) {
+/* One lane. mem[] is the whole warp's output, poisoned by the caller.
+ * Returns 0 when this lane stored LANE_WORDS-1 words (the last slot is unused). */
+static int lat_sim_lane(uint32_t tid, uint32_t *mem) {
     LatSim s;
     memset(&s, 0, sizeof s);
     for (int steps = 0; steps < 100000; steps++) {
@@ -767,11 +803,10 @@ static int lat_sim(uint32_t out[4]) {
         }
         switch (in->op) {
         case BW_IR_EXIT:
-            if (s.stores != 4) {
-                s.err = "lane 0 did not store four words";
+            if (s.stores != LANE_WORDS - 1) {
+                s.err = "lane did not store its seven words";
                 break;
             }
-            memcpy(out, s.out, sizeof s.out);
             return 0;
         case BW_IR_BRA: {
             int take = 1;
@@ -799,9 +834,32 @@ static int lat_sim(uint32_t out[4]) {
             break;
         case BW_IR_S2R: {
             uint32_t v = 0;
-            if (in->imm == BW_SR_TID_X) v = 0;
+            if (in->imm == BW_SR_TID_X) v = tid;
             else if (in->imm == CLOCK_LO) v = s.now;
             if (lat_wr(&s, in->dst_vreg, in->dst_subreg, v, SIM_GPR_LAT)) s.err = "write log full";
+            break;
+        }
+        case BW_IR_HMMA_BF16: {
+            int ones = 1;
+            for (unsigned sub = 0; sub < 4 && ones; sub++) {
+                uint32_t u = 0;
+                if (lat_rd(&s, in->src1_vreg, sub, &u) || u != 0x3f803f80u) ones = 0;
+            }
+            for (unsigned sub = 0; sub < 2 && ones; sub++) {
+                uint32_t u = 0;
+                if (lat_rd(&s, in->src2_vreg, sub, &u) || u != 0x3f803f80u) ones = 0;
+            }
+            for (unsigned sub = 0; sub < 4 && ones; sub++) {
+                uint32_t u = 0;
+                if (lat_rd(&s, in->src3_vreg, sub, &u) || u != 0) ones = 0;
+            }
+            if (!ones) {
+                s.err = "hmma inputs are not the ones matrix";
+                break;
+            }
+            uint32_t y = hmma_16816_ones();
+            for (unsigned sub = 0; sub < 4; sub++)
+                if (lat_wr(&s, in->dst_vreg, sub, y, SIM_GPR_LAT)) s.err = "write log full";
             break;
         }
         case BW_IR_IADD3:
@@ -836,12 +894,18 @@ static int lat_sim(uint32_t out[4]) {
             break;
         }
         case BW_IR_STG_E: {
-            uint32_t off = in->imm;
-            if (off % 4u || off / 4u >= 4u) {
-                s.err = "store offset is not one of the four result words";
+            uint32_t lo = 0, hi = 0;
+            if (lat_rd(&s, in->src1_vreg, 0, &lo) || lat_rd(&s, in->src1_vreg, 1, &hi)) {
+                s.err = "vreg has no physical register";
                 break;
             }
-            s.out[off / 4u] = b;
+            uint64_t ad = (uint64_t)lo | ((uint64_t)hi << 32);
+            uint64_t at = ad + (uint32_t)in->imm;
+            if ((at & 3u) || at / 4u >= (uint64_t)LANE_N * LANE_WORDS) {
+                s.err = "store address is outside the lane buffer";
+                break;
+            }
+            mem[at / 4u] = b;
             s.stores++;
             break;
         }
@@ -892,6 +956,59 @@ static int check_loop_sass(const char *id, const uint8_t *code, size_t ninsn, in
     return failed;
 }
 
+static uint32_t g_sim_mem[LANE_N * LANE_WORDS];
+
+static int lat_sim(uint32_t lane0[LANE_WORDS]) {
+    for (int i = 0; i < LANE_N * LANE_WORDS; i++) g_sim_mem[i] = POISON;
+    for (uint32_t tid = 0; tid < LANE_N; tid++)
+        if (lat_sim_lane(tid, g_sim_mem) != 0) return -1;
+    if (lane0) memcpy(lane0, g_sim_mem, sizeof(uint32_t) * LANE_WORDS);
+    return 0;
+}
+
+/* four=1: words 2..5 are the same value (HMMA d0..d3). Otherwise words 4 and 5 stay 0. */
+static int sim_lanes_match(uint32_t result, uint32_t aux, int four) {
+    for (int lane = 0; lane < LANE_N; lane++) {
+        const uint32_t *w = g_sim_mem + (size_t)lane * LANE_WORDS;
+        if (w[6] != (uint32_t)lane || w[2] != result || w[3] != aux) return 0;
+        if (four) {
+            if (w[4] != result || w[5] != result) return 0;
+        } else if (w[4] != 0 || w[5] != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* Seven stores at +0,+4,...,+24, addressed by IMAD.WIDE Rd, tid, 32, ptr. */
+static int check_lane_stores(const char *id, const uint8_t *code, size_t ninsn) {
+    int stg = 0, wide = 0, failed = 0;
+    int saw_off[7] = {0, 0, 0, 0, 0, 0, 0};
+    for (size_t i = 0; i < ninsn; i++) {
+        const uint8_t *ins = code + i * 16;
+        if (opc_of(ins) == 0x825u && rd32(ins + 4) == LANE_STRIDE) wide++;
+        if (opc_of(ins) == 0x986u) {
+            stg++;
+            uint32_t off = (rd32(ins + 4) >> 8) & 0xffffffu;
+            if (off % 4u == 0 && off / 4u < 7u) saw_off[off / 4u] = 1;
+        }
+    }
+    if (wide != 1) {
+        failed++;
+        printf("FAIL: %s tid-scaled address count %d\n", id, wide);
+    }
+    if (stg != 7) {
+        failed++;
+        printf("FAIL: %s store count %d, want 7\n", id, stg);
+    }
+    for (int k = 0; k < 7; k++)
+        if (!saw_off[k]) {
+            failed++;
+            printf("FAIL: %s missing store +%d\n", id, k * 4);
+        }
+    return failed;
+}
+
 static int loop_iadd_index(void) {
     int found = -1;
     for (size_t i = 0; i + 2 < g_prog.count; i++) {
@@ -911,7 +1028,7 @@ static int sim_self_test(void) {
     uint8_t code[CODE_CAP];
     size_t len = 0;
     uint32_t gpr = 0;
-    uint32_t out[4];
+    uint32_t out[LANE_WORDS];
 #define SCHECK(cond, ...)                                                                                              \
     do {                                                                                                               \
         if (!(cond)) {                                                                                                 \
@@ -926,40 +1043,39 @@ static int sim_self_test(void) {
     SCHECK(check_loop_sass("ovh32", code, g_prog.count, 1) == 0, "overhead sass");
     SCHECK(lat_sim(out) == 0, "overhead sim ran");
     SCHECK(out[2] == N_FIXED && out[3] == 1u, "overhead loop count is %u (aux 0x%x), want %u", out[2], out[3], N_FIXED);
+    SCHECK(sim_lanes_match(N_FIXED, 1u, 0), "overhead count on every lane");
     {
         int at = loop_iadd_index();
         SCHECK(at >= 0, "overhead loop increment is in the IR");
         if (at >= 0) {
             uint32_t saved = g_prog.insns[at].control;
             g_prog.insns[at].control = (saved & ~(15u << 9)) | (1u << 9);
-            uint32_t bad[4] = {0, 0, 0, 0};
+            uint32_t bad[LANE_WORDS] = {0};
             SCHECK(lat_sim(bad) == 0, "short-stall overhead sim ran");
             SCHECK(bad[2] != N_FIXED, "stall 1 on the increment must not store the trip count (got %u)", bad[2]);
             g_prog.insns[at].control = saved;
         }
     }
     SCHECK(build(NULL, 0, 1, 1, code, sizeof code, &len, &gpr) == 0, "one-trip overhead encode");
-    SCHECK(lat_sim(out) == 0 && out[2] == 1u, "one-trip overhead stored %u", out[2]);
+    SCHECK(lat_sim(out) == 0 && out[2] == 1u && sim_lanes_match(1u, 1u, 0), "one-trip overhead stored %u", out[2]);
 
     for (int ci = 0; ci < NCASES; ci++) {
-        if (CASES[ci].href) {
-            SCHECK(build(&CASES[ci], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "%s encode", CASES[ci].id);
-            SCHECK(check_loop_sass(CASES[ci].id, code, g_prog.count, 0) == 0, "%s has no loop", CASES[ci].id);
-            continue;
-        }
+        int hmma = !strcmp(CASES[ci].id, "hmma_reader");
         uint32_t fresh = 0, fr_aux = 0, stale = 0, st_aux = 0;
         SCHECK(eval_case(&CASES[ci], 0, &fresh, &fr_aux) == 0, "%s fresh", CASES[ci].id);
         SCHECK(eval_case(&CASES[ci], 1, &stale, &st_aux) == 0, "%s stale", CASES[ci].id);
         SCHECK(build(&CASES[ci], CASES[ci].sweep, 0, 0, code, sizeof code, &len, &gpr) == 0, "%s stall %u encode",
                CASES[ci].id, CASES[ci].sweep);
-        SCHECK(check_loop_sass(CASES[ci].id, code, g_prog.count, 1) == 0, "%s loop sass", CASES[ci].id);
+        SCHECK(check_loop_sass(CASES[ci].id, code, g_prog.count, hmma ? 0 : 1) == 0, "%s loop sass", CASES[ci].id);
         SCHECK(lat_sim(out) == 0, "%s stall %u sim", CASES[ci].id, CASES[ci].sweep);
         SCHECK(out[2] == fresh && out[3] == fr_aux, "%s stall %u sim result 0x%x aux 0x%x, fresh 0x%x aux 0x%x",
                CASES[ci].id, CASES[ci].sweep, out[2], out[3], fresh, fr_aux);
+        SCHECK(sim_lanes_match(fresh, fr_aux, hmma), "%s stall %u every lane", CASES[ci].id, CASES[ci].sweep);
         SCHECK(build(&CASES[ci], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "%s stall 1 encode", CASES[ci].id);
         SCHECK(lat_sim(out) == 0, "%s stall 1 sim", CASES[ci].id);
         SCHECK(out[2] == stale && out[3] == st_aux, "%s stall 1 sim result 0x%x aux 0x%x, stale 0x%x aux 0x%x",
                CASES[ci].id, out[2], out[3], stale, st_aux);
+        SCHECK(sim_lanes_match(stale, st_aux, hmma), "%s stall 1 every lane", CASES[ci].id);
     }
 #undef SCHECK
     return failed;
@@ -995,7 +1111,11 @@ static int self_test(void) {
     }
     {
         uint32_t er = 0, ea = 0;
-        CHECK(expect_abs(&CASES[6], &er, &ea) != 0, "hmma has no closed host formula");
+        float fifteen = 0.f;
+        for (int k = 0; k < 15; k++) fifteen += 1.f;
+        CHECK(hmma_16816_ones() == fbits(16.f), "hmma ones dot is 16.0f (got 0x%x)", hmma_16816_ones());
+        CHECK(fbits(fifteen) != hmma_16816_ones(), "a 15-term dot must not match k=16");
+        CHECK(expect_abs(&CASES[6], &er, &ea) == 0 && er == hmma_16816_ones() && ea == er, "hmma oracle");
     }
 
     for (int ci = 0; ci < NCASES; ci++) {
@@ -1013,7 +1133,8 @@ static int self_test(void) {
             if (opc == S2R_OPC && idx == BW_SR_TID_X) s2r_tid++;
         }
         CHECK(clocks == 2, "%s clock sites %d", CASES[ci].id, clocks);
-        CHECK(s2r_tid == 1, "%s lane filter %d", CASES[ci].id, s2r_tid);
+        CHECK(s2r_tid == 1, "%s tid read %d", CASES[ci].id, s2r_tid);
+        failed += check_lane_stores(CASES[ci].id, code, ninsn);
         char *text = NULL;
         size_t tlen = 0;
         FILE *mf = open_memstream(&text, &tlen);
@@ -1022,6 +1143,18 @@ static int self_test(void) {
         CHECK(unk == 2, "%s disasm unknowns %d (the two CS2R sites)", CASES[ci].id, unk);
         failed += check_raw_window(CASES[ci].id, code, ninsn, stall);
         if (!strcmp(CASES[ci].id, "hmma_reader")) {
+            int quads = 0;
+            for (size_t i = 0; i + 4 < ninsn; i++) {
+                if (opc_of(code + i * 16) != 0x23cu || stall_of(code + i * 16) != 1u) continue;
+                unsigned d = reg_dst(code + i * 16);
+                int ok = 1;
+                for (int k = 0; k < 4; k++) {
+                    const uint8_t *f = code + (i + 1 + (size_t)k) * 16;
+                    if (opc_of(f) != 0x221u || reg_a(f) != d + (unsigned)k) ok = 0;
+                }
+                if (ok) quads++;
+            }
+            CHECK(quads == 1, "hmma stall 1 is followed by FADD of d0,d1,d2,d3");
             len = 0;
             rc = build(&CASES[ci], 29u, 0, 0, code, sizeof code, &len, &gpr);
             CHECK(rc == 0, "hmma stall 29 encode");
@@ -1304,12 +1437,14 @@ static void read_driver(char *dst, size_t n) {
     while (L && (dst[L - 1] == '\n' || dst[L - 1] == '\r')) dst[--L] = 0;
 }
 
-static int launch_kern(const Kern *k, OmegaGpuMem *code, OmegaGpuMem *buf, uint32_t outw[4], uint64_t *cycles) {
+/* mem holds LANE_N * LANE_WORDS words. Cycles come from lane 0's two clocks.
+ * Returns -3 when a lane's id slot is not that lane (the store address is wrong). */
+static int launch_kern(const Kern *k, OmegaGpuMem *code, OmegaGpuMem *buf, uint32_t *mem, uint64_t *cycles) {
     if (k->nbytes > code->size) return -1;
     memset(code->cpu, 0, code->size);
     memcpy(code->cpu, k->code, k->nbytes);
     uint32_t *w = buf->cpu;
-    for (int i = 0; i < 4; i++) w[i] = POISON;
+    for (int i = 0; i < LANE_N * LANE_WORDS; i++) w[i] = POISON;
     if (omega_gpu_session_sync_to_gpu(code) || omega_gpu_session_sync_to_gpu(buf)) return -1;
     uint32_t args[2] = {(uint32_t)buf->va, (uint32_t)(buf->va >> 32)};
     OmegaGpuLaunch L = {.code_va = code->va,
@@ -1326,11 +1461,26 @@ static int launch_kern(const Kern *k, OmegaGpuMem *code, OmegaGpuMem *buf, uint3
                         .target_sm = 121};
     if (omega_gpu_session_launch(&L, NULL, NULL) != 0) return -1;
     if (omega_gpu_session_sync_to_cpu(buf) != 0) return -1;
-    memcpy(outw, buf->cpu, 16);
-    uint32_t t0 = outw[0], t1 = outw[1];
-    if (t0 == POISON && t1 == POISON && outw[2] == POISON && outw[3] == POISON) return -2;
+    memcpy(mem, buf->cpu, sizeof(uint32_t) * LANE_N * LANE_WORDS);
+    for (int lane = 0; lane < LANE_N; lane++)
+        if (mem[(size_t)lane * LANE_WORDS + 6] != (uint32_t)lane) return -3;
+    uint32_t t0 = mem[0], t1 = mem[1];
+    if (t0 == POISON && t1 == POISON) return -2;
     *cycles = t1 >= t0 ? (uint64_t)t1 - t0 : (1ull << 32) + t1 - t0;
     return 0;
+}
+
+static int mem_match(const uint32_t *mem, uint32_t result, uint32_t aux, int four) {
+    for (int lane = 0; lane < LANE_N; lane++) {
+        const uint32_t *w = mem + (size_t)lane * LANE_WORDS;
+        if (w[2] != result || w[3] != aux) return 0;
+        if (four) {
+            if (w[4] != result || w[5] != result) return 0;
+        } else if (w[4] != 0 || w[5] != 0) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static void json_escape(const char *s, char *dst, size_t n) {
@@ -1363,18 +1513,12 @@ static int run_launch(const char *kdir, const char *out_path) {
 
     int pass[NCASES][RUNS][SWEEP_MAX];
     uint64_t cyc[NCASES][RUNS][SWEEP_MAX];
-    uint32_t href[NCASES][RUNS];
-    int href_ok[NCASES][RUNS];
     uint64_t ovh_cyc[8][RUNS];
     uint32_t run0_res[NCASES][SWEEP_MAX];
-    uint32_t run0_ref[NCASES];
     memset(pass, 0, sizeof pass);
     memset(cyc, 0, sizeof cyc);
-    memset(href, 0, sizeof href);
-    memset(href_ok, 0, sizeof href_ok);
     memset(ovh_cyc, 0, sizeof ovh_cyc);
     memset(run0_res, 0, sizeof run0_res);
-    memset(run0_ref, 0, sizeof run0_ref);
     char notes[NCASES][384];
     memset(notes, 0, sizeof notes);
     unsigned ovh_list[8];
@@ -1418,18 +1562,18 @@ static int run_launch(const char *kdir, const char *out_path) {
             break;
         }
         for (int r = 0; r < RUNS; r++) {
-            uint32_t w[4];
+            uint32_t mem[LANE_N * LANE_WORDS];
             uint64_t cy = 0;
-            int rc = launch_kern(k, &code, &buf, w, &cy);
+            int rc = launch_kern(k, &code, &buf, mem, &cy);
             printf("overhead %s run %d/%d rc %d\n", id, r + 1, RUNS, rc);
             fflush(stdout);
             if (rc != 0) {
-                err = omega_gpu_session_last_error();
+                err = rc == -3 ? "lane id was not stored" : omega_gpu_session_last_error();
                 device_error = 1;
                 break;
             }
             ovh_cyc[oi][r] = cy;
-            if (w[2] != ovh_list[oi] || w[3] != 1) err = "overhead loop count did not match";
+            if (!mem_match(mem, ovh_list[oi], 1u, 0)) err = "overhead loop count did not match";
         }
     }
 
@@ -1438,51 +1582,22 @@ static int run_launch(const char *kdir, const char *out_path) {
         for (int r = 0; r < RUNS && !device_error; r++) {
             printf("case %s run %d/%d\n", c->id, r + 1, RUNS);
             fflush(stdout);
-            uint32_t refv = 0;
-            int have_ref = 0;
-            if (c->href) {
-                Kern *kr = find_kern(kerns, nk, c->id, c->sweep);
-                uint32_t w[4];
-                uint64_t cy = 0;
-                if (!kr || launch_kern(kr, &code, &buf, w, &cy) != 0) {
-                    err = omega_gpu_session_last_error();
-                    device_error = 1;
-                    break;
-                }
-                refv = w[2];
-                have_ref = (w[3] != POISON && refv != 0 && refv != POISON);
-                href[ci][r] = refv;
-                href_ok[ci][r] = have_ref;
-                cyc[ci][r][c->sweep - 1] = cy;
-                pass[ci][r][c->sweep - 1] = have_ref;
-                if (r == 0) {
-                    run0_ref[ci] = refv;
-                    run0_res[ci][c->sweep - 1] = refv;
-                }
-                if (!have_ref)
-                    snprintf(notes[ci], sizeof notes[ci],
-                             "HMMA reference at stall %u is 0x%08x (aux 0x%08x); d0 did not move", c->sweep, w[2], w[3]);
-            }
             for (unsigned s = 1; s <= c->sweep && !device_error; s++) {
-                if (c->href && s == c->sweep) continue;
                 Kern *k = find_kern(kerns, nk, c->id, s);
-                uint32_t w[4];
+                uint32_t mem[LANE_N * LANE_WORDS];
                 uint64_t cy = 0;
-                if (!k || launch_kern(k, &code, &buf, w, &cy) != 0) {
-                    err = k ? omega_gpu_session_last_error() : "missing kernel";
+                int rc = !k ? -1 : launch_kern(k, &code, &buf, mem, &cy);
+                if (rc != 0) {
+                    err = rc == -3 ? "lane id was not stored" : (k ? omega_gpu_session_last_error() : "missing kernel");
                     device_error = 1;
                     break;
                 }
                 cyc[ci][r][s - 1] = cy;
-                int ok = 0;
-                if (c->href) {
-                    ok = href_ok[ci][r] && w[2] == refv;
-                } else {
-                    uint32_t expv = 0, auxv = 0;
-                    if (expect_abs(c, &expv, &auxv) == 0) ok = (w[2] == expv && w[3] == auxv && w[0] != POISON);
-                }
+                uint32_t expv = 0, auxv = 0;
+                int four = !strcmp(c->id, "hmma_reader");
+                int ok = expect_abs(c, &expv, &auxv) == 0 && mem_match(mem, expv, auxv, four);
                 pass[ci][r][s - 1] = ok;
-                if (r == 0) run0_res[ci][s - 1] = w[2];
+                if (r == 0) run0_res[ci][s - 1] = mem[2];
             }
         }
     }
@@ -1593,10 +1708,7 @@ write_json:;
             fprintf(jf, "      \"overhead_cycle_median\": null,\n");
         else
             fprintf(jf, "      \"overhead_cycle_median\": %llu,\n", (unsigned long long)omed);
-        if (c->href && !device_error)
-            fprintf(jf, "      \"reference_result\": %u,\n", run0_ref[ci]);
-        else
-            fprintf(jf, "      \"reference_result\": null,\n");
+        fprintf(jf, "      \"reference_result\": null,\n");
         fprintf(jf, "      \"run0_result\": [");
         for (unsigned s = 1; s <= c->sweep; s++)
             fprintf(jf, "%s%u", s == 1 ? "" : ", ", run0_res[ci][s - 1]);

@@ -37,13 +37,21 @@ def agree(measured, nak_stall, enc_stall):
 
 
 def runs_text(case, runs):
-    if not case or case.get("stall_required") is None:
+    if not case:
         return ""
-    parts = ["%d runs" % runs, "stall spread %s" % case.get("stall_spread")]
-    if case.get("cycle_median") is not None:
-        parts.append("dep cycles median %s spread %s" % (case["cycle_median"], case.get("cycle_spread")))
+    parts = ["%d runs" % runs]
+    if case.get("stall_required") is None:
+        parts.append("no failing stall in the sweep")
+    else:
+        parts.append("stall spread %s" % case.get("stall_spread"))
+        if case.get("cycle_median") is not None:
+            parts.append("cycles at that stall median %s spread %s" % (case["cycle_median"], case.get("cycle_spread")))
+    if case.get("cycle_median_stall1") is not None:
+        parts.append("stall-1 cycles median %s spread %s" % (case["cycle_median_stall1"], case.get("cycle_spread_stall1")))
     if case.get("overhead_cycle_median") is not None:
         parts.append("loop overhead median %s" % case["overhead_cycle_median"])
+    if case.get("stall_required") is None and case.get("cycle_median_stall1") is None and case.get("overhead_cycle_median") is None:
+        return ""
     return "; ".join(parts)
 
 
@@ -193,6 +201,15 @@ def self_test():
     parts = [p.strip() for p in alu.strip("|").split("|")]
     if parts[3] != "":
         print("FAIL: measured:false still filled a cell (%r)" % parts[3], file=sys.stderr)
+        return 1
+    timed = {"synthetic": False, "measured": True, "runs": 11, "cases": {
+        "alu_alu": {"stall_required": None, "cycle_median_stall1": 1703, "cycle_spread_stall1": 4,
+                    "overhead_cycle_median": 800}}}
+    text = build_md(cat, timed, False)
+    alu = [ln for ln in text.splitlines() if ln.startswith("| ALU -> ALU")][0]
+    parts = [p.strip() for p in alu.strip("|").split("|")]
+    if parts[3] != "" or "1703" not in parts[5]:
+        print("FAIL: stall-1 cycles landed in the measured cell or missed the runs cell: %r" % parts, file=sys.stderr)
         return 1
     print("fill_template self-test PASS")
     return 0

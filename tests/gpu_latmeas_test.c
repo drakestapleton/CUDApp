@@ -27,6 +27,16 @@
  * One warp, 32 threads, uniform control flow inside the timed region. Only
  * lane 0 stores. Mesa commit and the NAK line citations live in
  * tools/latmeas/diff_nak.py.
+ *
+ * Opening the device on a GB10 needs the driver's SM version 0xa04 admitted
+ * (draft PR #251, or the same change). select_classes is not modified here.
+ *
+ * Each fixed-latency case writes a destination that was armed to SENTINEL and
+ * does not read that destination. The next instruction reads it. A stale read
+ * therefore adds SENTINEL, which the host oracle rejects. Back-to-back
+ * `r = r + 1` can stay correct at stall 1 when the new value is forwarded, so
+ * that shape cannot show a too-short stall. HMMA keeps the shape that resolved
+ * on the chip: d starts at 0, HMMA writes it, FADD reads d0.
  */
 #include "omega_blackwell_codegen.h"
 #include "omega_gpu_session.h"
@@ -53,16 +63,12 @@
 
 enum {
     RUNS = 11,
-    ALU_ITERS = 64,
-    ALU_UNROLL = 8,
-    MIXED_ITERS = 64,
-    PRED_ITERS = 64,
-    FMNMX_ITERS = 32,
-    WIDE_ITERS = 64,
+    N_FIXED = 32,
     HMMA_ITERS = 1,
     SWEEP_FIXED = 15,
     SWEEP_HMMA = 36
 };
+#define SENTINEL 0x7f800000u /* +inf bits: not equal to 1..N or to f32 1..N */
 _Static_assert(RUNS % 2 == 1, "median uses the middle of an odd run count");
 _Static_assert(SWEEP_HMMA <= SWEEP_MAX, "sweep fits the sample array");
 
@@ -78,12 +84,12 @@ typedef struct {
 } CaseDef;
 
 static const CaseDef CASES[] = {
-    {"alu_alu", ALU_ITERS, ALU_UNROLL, SWEEP_FIXED, ALU_ITERS * ALU_UNROLL, 0},
-    {"fma_fma", ALU_ITERS, ALU_UNROLL, SWEEP_FIXED, ALU_ITERS * ALU_UNROLL, 0},
-    {"mixed", MIXED_ITERS, 1, SWEEP_FIXED, MIXED_ITERS * 2, 0},
-    {"pred", PRED_ITERS, 1, SWEEP_FIXED, PRED_ITERS, 0},
-    {"fmnmx_alu", FMNMX_ITERS, 1, SWEEP_FIXED, FMNMX_ITERS, 0},
-    {"imad_wide_lo", WIDE_ITERS, 1, SWEEP_FIXED, WIDE_ITERS, 0},
+    {"alu_alu", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
+    {"fma_fma", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
+    {"mixed", N_FIXED, 1, SWEEP_FIXED, N_FIXED * 2u, 0},
+    {"pred", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
+    {"fmnmx_alu", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
+    {"imad_wide_lo", N_FIXED, 1, SWEEP_FIXED, N_FIXED, 0},
     {"hmma_reader", HMMA_ITERS, 1, SWEEP_HMMA, HMMA_ITERS, 1},
 };
 #define NCASES ((int)(sizeof CASES / sizeof CASES[0]))
@@ -151,13 +157,11 @@ static void movz(B *b, int dst, int sub) {
     add(b, BW_IR_MOV_RZ, dst, NOREG, NOREG, NOREG, 0, cw(6, SB_NONE, SB_NONE, wait, 0), 0, 0, sub, 0);
     b->pending = 0;
 }
-static void iadd(B *b, int dst, int a, int c, unsigned stall, int dst_sub, int src_sub) {
-    /* src_sub selects a subregister of the source that lives in src2's slot? IADD3's
-     * first GPR source is src1. Subregister is carried by editing the insn after append
-     * when src_sub != 0: the encoder adds src1_subreg. */
+static void iadd(B *b, int dst, int a, int c, unsigned stall, int dst_sub, int src1_sub, int src2_sub) {
     uint32_t wait = b->pending;
     int at = add(b, BW_IR_IADD3, dst, a, c, NOREG, 0, cw(stall, SB_NONE, SB_NONE, wait, 0), 0, 0, dst_sub, 0);
-    if (at >= 0 && src_sub) b->p->insns[at].src1_subreg = (uint8_t)src_sub;
+    if (at >= 0 && src1_sub) b->p->insns[at].src1_subreg = (uint8_t)src1_sub;
+    if (at >= 0 && src2_sub) b->p->insns[at].src2_subreg = (uint8_t)src2_sub;
     b->pending = 0;
 }
 static void ffma(B *b, int dst, int a, int c, int d, unsigned stall) {
@@ -237,47 +241,76 @@ static uint32_t fbits(float f) {
     return u;
 }
 
-static uint32_t fmnmx_expect(void) {
-    uint32_t acc = 0;
-    float cur = 1.0f;
-    for (int i = 0; i < FMNMX_ITERS; i++) {
-        uint32_t t;
-        memcpy(&t, &cur, 4);
-        acc += t;
-        cur += 1.0f;
-    }
-    return acc;
-}
-
-static int expect_abs(const CaseDef *c, uint32_t *result, uint32_t *aux) {
-    if (c->href) return -1;
+/* stale=1: the consumer sees SENTINEL instead of the value just written.
+ * The two results differ for every fixed-latency case. HMMA has no closed form. */
+static int eval_case(const CaseDef *c, int stale, uint32_t *result, uint32_t *aux) {
+    if (!c || c->href) return -1;
+    unsigned n = c->iters;
     *aux = 1;
-    if (!strcmp(c->id, "alu_alu")) {
-        *result = c->iters * c->unroll;
+    *result = 0;
+    if (!strcmp(c->id, "alu_alu") || !strcmp(c->id, "imad_wide_lo")) {
+        uint32_t acc = 0, live = 0;
+        for (unsigned i = 0; i < n; i++) {
+            uint32_t produced = live + 1u;
+            acc += stale ? SENTINEL : produced;
+            live += 1u;
+        }
+        *result = acc;
         return 0;
     }
     if (!strcmp(c->id, "fma_fma")) {
-        *result = fbits((float)(c->iters * c->unroll));
-        return 0;
-    }
-    if (!strcmp(c->id, "mixed")) {
-        *result = fbits((float)c->iters);
-        return 0;
-    }
-    if (!strcmp(c->id, "pred")) {
-        *result = c->iters;
+        float acc = 0.f, live = 0.f, inf = 0.f;
+        memcpy(&inf, &(uint32_t){SENTINEL}, 4);
+        for (unsigned i = 0; i < n; i++) {
+            float produced = live + 1.f;
+            float seen = stale ? inf : produced;
+            acc = acc + seen;
+            live = produced;
+        }
+        *result = fbits(acc);
         return 0;
     }
     if (!strcmp(c->id, "fmnmx_alu")) {
-        *result = fmnmx_expect();
+        uint32_t acc = 0;
+        float cur = 1.f;
+        for (unsigned i = 0; i < n; i++) {
+            acc += stale ? SENTINEL : fbits(cur);
+            cur += 1.f;
+        }
+        *result = acc;
         return 0;
     }
-    if (!strcmp(c->id, "imad_wide_lo")) {
-        *result = c->iters;
-        *aux = 0;
+    if (!strcmp(c->id, "mixed")) {
+        uint32_t acc = 0;
+        float live = 0.f;
+        for (unsigned i = 0; i < n; i++) {
+            float produced = live + 1.f;
+            acc += stale ? SENTINEL : fbits(produced);
+            live = produced;
+        }
+        uint32_t acc2 = 0;
+        float inf = 0.f;
+        memcpy(&inf, &(uint32_t){SENTINEL}, 4);
+        live = 1.f;
+        for (unsigned i = 0; i < n; i++) {
+            /* FFMA(0, 0, x) preserves a normal f32 and yields +inf for SENTINEL. */
+            float out = stale ? inf : live;
+            acc2 += fbits(out);
+            live += 1.f;
+        }
+        *result = acc;
+        *aux = acc2;
+        return 0;
+    }
+    if (!strcmp(c->id, "pred")) {
+        *result = stale ? PRED_POISON : n;
         return 0;
     }
     return -1;
+}
+
+static int expect_abs(const CaseDef *c, uint32_t *result, uint32_t *aux) {
+    return eval_case(c, 0, result, aux);
 }
 
 static void prologue(B *b, int *ptr) {
@@ -311,48 +344,67 @@ static void store_tail(B *b, int ptr, int t0, int t1, int result, int rsub, int 
 }
 
 static void loop_ctl(B *b, int i, int nreg, int one, int *loop_back) {
-    iadd(b, i, i, one, 1, 0, 0);
+    iadd(b, i, i, one, 1, 0, 0, 0);
     isetp_ge(b, i, nreg, 14); /* P0 = (i >= n) */
     *loop_back = bra(b, 1, 1, 5); /* @!P0 BRA loop */
 }
 
-static void body(B *b, const CaseDef *c, unsigned stall, int r, int one, int zero, int fone, int acc, int cur, int tmp,
-                 int rpair, int tpair, int *poison_br) {
+/* Producer writes dst, which was armed to SENTINEL and which the producer does
+ * not read. The very next instruction reads dst. A stale read adds SENTINEL. */
+static void body(B *b, const CaseDef *c, unsigned stall, int live, int livef, int one, int zero, int fone, int acc,
+                 int acc2, int dst, int dstf, int seen, int rpair, int tpair, int *poison_br) {
     unsigned head = stall_head(stall);
     unsigned rest = stall - head;
     if (!strcmp(c->id, "alu_alu")) {
-        for (unsigned u = 0; u < c->unroll; u++) iadd(b, r, r, one, head, 0, 0);
-    } else if (!strcmp(c->id, "fma_fma")) {
-        for (unsigned u = 0; u < c->unroll; u++) ffma(b, r, fone, fone, r, head);
-    } else if (!strcmp(c->id, "mixed")) {
-        /* FFMA then IADD3 of zero: FMA->ALU and, on the next iteration, ALU->FMA. */
-        ffma(b, r, fone, fone, r, head);
+        iadd(b, dst, live, one, head, 0, 0, 0);
         gap_nops(b, rest);
-        iadd(b, r, r, zero, head, 0, 0);
+        iadd(b, acc, acc, dst, 15, 0, 0, 0);
+        iadd(b, live, live, one, 15, 0, 0, 0);
+        movi(b, dst, SENTINEL, 0);
+    } else if (!strcmp(c->id, "fma_fma")) {
+        ffma(b, dst, fone, fone, livef, head); /* dst = livef + 1 */
+        gap_nops(b, rest);
+        fadd(b, acc, acc, 0, dst, 15); /* FMA consumer, immediate */
+        fadd(b, livef, livef, 0, fone, 15);
+        movi(b, dst, SENTINEL, 0);
+    } else if (!strcmp(c->id, "mixed")) {
+        ffma(b, dstf, fone, fone, livef, head);
+        gap_nops(b, rest);
+        iadd(b, acc, acc, dstf, 15, 0, 0, 0); /* FMA -> ALU */
+        fadd(b, livef, livef, 0, fone, 15);
+        movi(b, dstf, SENTINEL, 0);
+        iadd(b, dst, live, zero, head, 0, 0, 0); /* ALU copy of a normal f32 bit pattern */
+        gap_nops(b, rest);
+        ffma(b, seen, zero, zero, dst, 15); /* ALU -> FMA, immediate */
+        iadd(b, acc2, acc2, seen, 15, 0, 0, 0);
+        fadd(b, live, live, 0, fone, 15);
+        movi(b, dst, SENTINEL, 0);
     } else if (!strcmp(c->id, "pred")) {
-        /* Setup leaves P0 true. The measured ISETP clears it (0 >= r after r
-         * has been incremented). A short stall lets @P0 see the leftover true
-         * and take the poison branch. */
+        /* P0 is true from the previous setup. This ISETP clears it. The next
+         * instruction is @P0 BRA poison, so a stale predicate takes the poison. */
         isetp_ge(b, one, zero, 15);
-        iadd(b, r, r, one, 15, 0, 0);
-        isetp_ge(b, zero, r, head);
+        iadd(b, live, live, one, 15, 0, 0, 0);
+        isetp_ge(b, zero, live, head);
+        gap_nops(b, rest);
         *poison_br = bra(b, 1, 0, 1);
     } else if (!strcmp(c->id, "fmnmx_alu")) {
-        fmnmx(b, tmp, cur, cur, head);
+        fmnmx(b, dst, livef, livef, head);
         gap_nops(b, rest);
-        iadd(b, acc, acc, tmp, 15, 0, 0);
-        fadd(b, cur, cur, 0, fone, 15);
+        iadd(b, acc, acc, dst, 15, 0, 0, 0);
+        fadd(b, livef, livef, 0, fone, 15);
+        movi(b, dst, SENTINEL, 0);
     } else if (!strcmp(c->id, "imad_wide_lo")) {
         uint32_t wait = b->pending;
         add(b, BW_IR_IMAD_WIDE, tpair, one, NOREG, rpair, 1, cw(head, SB_NONE, SB_NONE, wait, 0), 0, 0, 0, 0);
         b->pending = 0;
         gap_nops(b, rest);
-        iadd(b, rpair, tpair, zero, 15, 0, 0);
+        iadd(b, acc, acc, tpair, 15, 0, 0, 0);
+        iadd(b, rpair, rpair, one, 15, 0, 0, 0);
+        movi(b, tpair, SENTINEL, 0);
+        movi(b, tpair, SENTINEL, 1);
     } else {
         b->err = -1;
     }
-    if (strcmp(c->id, "mixed") && strcmp(c->id, "pred") && strcmp(c->id, "fmnmx_alu") && strcmp(c->id, "imad_wide_lo"))
-        gap_nops(b, rest);
 }
 
 static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overhead, uint8_t *code, size_t cap,
@@ -368,7 +420,8 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
     int ptr = NOREG;
     prologue(&b, &ptr);
     int one = V(&b), zero = V(&b), fone = V(&b), i = V(&b), nreg = V(&b);
-    int r = V(&b), acc = V(&b), cur = V(&b), tmp = V(&b), t0 = V(&b), t1 = V(&b), aux = V(&b);
+    int r = V(&b), acc = V(&b), acc2 = V(&b), cur = V(&b), tmp = V(&b), dsti = V(&b), seen = V(&b);
+    int t0 = V(&b), t1 = V(&b), aux = V(&b);
     int rpair = NOREG, tpair = NOREG, dquad = NOREG, aquad = NOREG, bpair = NOREG, cquad = NOREG;
     unsigned iters = overhead ? ovh_iters : c->iters;
     movi(&b, one, 1, 0);
@@ -378,15 +431,23 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
     movz(&b, i, 0);
     movz(&b, r, 0);
     movz(&b, acc, 0);
-    movi(&b, cur, 0x3f800000u, 0);
+    movz(&b, acc2, 0);
+    movz(&b, cur, 0);
     movi(&b, aux, 1, 0);
+    if (!overhead && c && !c->href && strcmp(c->id, "pred") != 0 && strcmp(c->id, "imad_wide_lo") != 0)
+        movi(&b, dsti, SENTINEL, 0);
+    if (!overhead && !strcmp(c->id, "fmnmx_alu")) movi(&b, cur, 0x3f800000u, 0);
+    if (!overhead && !strcmp(c->id, "mixed")) {
+        movi(&b, r, 0x3f800000u, 0); /* ALU source: f32 1.0 bits, a normal number */
+        movi(&b, tmp, SENTINEL, 0);  /* FMA destination, separate from dsti */
+    }
     if (!overhead && !strcmp(c->id, "imad_wide_lo")) {
         rpair = V64(&b);
         tpair = V64(&b);
         movz(&b, rpair, 0);
         movz(&b, rpair, 1);
-        movz(&b, tpair, 0);
-        movz(&b, tpair, 1);
+        movi(&b, tpair, SENTINEL, 0);
+        movi(&b, tpair, SENTINEL, 1);
     }
     if (!overhead && !strcmp(c->id, "hmma_reader")) {
         aquad = V128(&b);
@@ -417,7 +478,7 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
             b.err = -1;
         }
     } else if (!overhead) {
-        body(&b, c, stall, r, one, zero, fone, acc, cur, tmp, rpair, tpair, &poison_br);
+        body(&b, c, stall, r, cur, one, zero, fone, acc, acc2, dsti, tmp, seen, rpair, tpair, &poison_br);
     }
     if (!(c && !overhead && c->iters == 1 && !strcmp(c->id, "hmma_reader"))) {
         loop_ctl(&b, i, nreg, one, &back);
@@ -436,16 +497,11 @@ static int build(const CaseDef *c, unsigned stall, unsigned ovh_iters, int overh
     int rsub = 0;
     int auxv = aux;
     int asub = 0;
-    if (!overhead && !strcmp(c->id, "fmnmx_alu")) result = acc;
-    if (!overhead && !strcmp(c->id, "imad_wide_lo")) {
-        result = rpair;
-        rsub = 0;
-        auxv = rpair;
-        asub = 1;
-    }
+    if (!overhead && c && !c->href && strcmp(c->id, "pred") != 0) result = acc;
+    if (!overhead && !strcmp(c->id, "mixed")) auxv = acc2;
     if (!overhead && !strcmp(c->id, "hmma_reader")) {
         result = acc;
-        auxv = dquad; /* late read of d1, diagnostic, after the timed region */
+        auxv = dquad; /* late read of d1, after the timed region: diagnostic only */
         asub = 1;
     }
     if (overhead) result = i;
@@ -487,6 +543,76 @@ static int count_opc_stall(const uint8_t *code, size_t ninsn, unsigned opc, unsi
     }
     return n;
 }
+static unsigned reg_dst(const uint8_t *ins) { return (rd32(ins) >> 16) & 0xffu; }
+static unsigned reg_a(const uint8_t *ins) { return (rd32(ins) >> 24) & 0xffu; }
+static unsigned reg_b(const uint8_t *ins) { return rd32(ins + 4) & 0xffu; }
+static unsigned reg_c(const uint8_t *ins) { return rd32(ins + 8) & 0xffu; }
+static int bare_issue(const uint8_t *ins) {
+    unsigned w3 = rd32(ins + 12);
+    return ((w3 >> 13) & 1u) == 0u && ((w3 >> 14) & 7u) == 7u && ((w3 >> 17) & 7u) == 7u && ((w3 >> 20) & 63u) == 0u;
+}
+static int reads_reg(const uint8_t *ins, unsigned r) {
+    unsigned opc = opc_of(ins);
+    if (opc == 0x223u) return reg_c(ins) == r;
+    if (opc == 0x221u || opc == 0x210u) return reg_a(ins) == r || reg_b(ins) == r;
+    return 0;
+}
+static int bra_index(const uint8_t *ins, int index) {
+    uint32_t w0 = rd32(ins), w1 = rd32(ins + 4);
+    int32_t low = (int32_t)((w0 >> 18) & 0x3fu);
+    int32_t high = (int32_t)w1 >> 2;
+    int32_t rel = (high << 6) | low;
+    return index + rel + 1;
+}
+
+/* Stall-1 shape: the consumer is the next instruction, it reads the producer's
+ * destination, and the producer carries no scoreboard and no yield. A stale
+ * read of the armed SENTINEL is then visible to the oracle. */
+static int check_raw_window(const char *id, const uint8_t *code, size_t ninsn, unsigned stall) {
+    int failed = 0, producers = 0;
+#define W(cond, ...)                                                                                                   \
+    do {                                                                                                               \
+        if (!(cond)) {                                                                                                 \
+            failed++;                                                                                                  \
+            printf("FAIL: %s: ", id);                                                                                  \
+            printf(__VA_ARGS__);                                                                                       \
+            printf("\n");                                                                                              \
+        }                                                                                                              \
+    } while (0)
+    for (size_t i = 0; i + 1 < ninsn; i++) {
+        const uint8_t *ins = code + i * 16;
+        const uint8_t *nxt = code + (i + 1) * 16;
+        unsigned opc = opc_of(ins);
+        if (stall_of(ins) != stall) continue;
+        int take = 0;
+        if (!strcmp(id, "alu_alu") && opc == 0x210u && reg_dst(ins) != reg_a(ins)) take = 1;
+        if (!strcmp(id, "fma_fma") && opc == 0x223u && reg_dst(ins) != reg_c(ins)) take = 1;
+        if (!strcmp(id, "mixed") && opc == 0x223u && reg_dst(ins) != reg_c(ins)) take = 1;
+        if (!strcmp(id, "mixed") && opc == 0x210u && reg_dst(ins) != reg_a(ins)) take = 1;
+        if (!strcmp(id, "fmnmx_alu") && opc == 0x209u && reg_dst(ins) != reg_a(ins)) take = 1;
+        if (!strcmp(id, "imad_wide_lo") && opc == 0x825u) take = 1;
+        if (!strcmp(id, "hmma_reader") && opc == 0x23cu) take = 1;
+        if (!strcmp(id, "pred") && opc == 0x20cu) take = 1;
+        if (!take) continue;
+        producers++;
+        W(bare_issue(ins), "producer %zu is scoreboarded or yields (w3 0x%08x)", i, rd32(ins + 12));
+        if (!strcmp(id, "pred")) {
+            W(opc_of(nxt) == 0x947u, "predicate consumer is not BRA");
+            W(((rd32(nxt) >> 12) & 0xfu) == 0u, "poison branch is not @P0");
+            int tgt = bra_index(nxt, (int)i + 1);
+            W(tgt >= 0 && (size_t)tgt < ninsn, "poison target %d", tgt);
+            if (tgt >= 0 && (size_t)tgt < ninsn) {
+                const uint8_t *mv = code + (size_t)tgt * 16;
+                W(opc_of(mv) == 0x802u && rd32(mv + 4) == PRED_POISON, "poison mov missing");
+            }
+        } else {
+            W(reads_reg(nxt, reg_dst(ins)), "consumer does not read producer dest R%u", reg_dst(ins));
+        }
+    }
+    W(producers == (!strcmp(id, "mixed") ? 2 : 1), "producer count %d", producers);
+#undef W
+    return failed;
+}
 
 static int self_test(void) {
     int failed = 0;
@@ -504,17 +630,25 @@ static int self_test(void) {
     } while (0)
     CHECK(build(&CASES[0], 0, 0, 0, code, sizeof code, &len, &gpr) != 0, "stall 0 must be refused");
     CHECK(build(&CASES[0], 99, 0, 0, code, sizeof code, &len, &gpr) != 0, "stall past the sweep must be refused");
-    uint32_t er = 0, ea = 0;
-    CHECK(expect_abs(&CASES[0], &er, &ea) == 0 && er == 512 && ea == 1, "alu oracle");
-    CHECK(expect_abs(&CASES[1], &er, &ea) == 0 && er == fbits(512.0f), "fma oracle");
-    CHECK(expect_abs(&CASES[2], &er, &ea) == 0 && er == fbits(64.0f), "mixed oracle");
-    CHECK(expect_abs(&CASES[3], &er, &ea) == 0 && er == 64, "pred oracle");
-    CHECK(expect_abs(&CASES[4], &er, &ea) == 0 && er == fmnmx_expect() && er != 0, "fmnmx oracle");
-    CHECK(expect_abs(&CASES[5], &er, &ea) == 0 && er == 64 && ea == 0, "wide oracle");
-    CHECK(expect_abs(&CASES[6], &er, &ea) != 0, "hmma has no closed host formula");
+    for (int ci = 0; ci < NCASES; ci++) {
+        if (CASES[ci].href) continue;
+        uint32_t good = 0, bad = 0, ga = 0, ba = 0;
+        CHECK(eval_case(&CASES[ci], 0, &good, &ga) == 0, "%s fresh oracle", CASES[ci].id);
+        CHECK(eval_case(&CASES[ci], 1, &bad, &ba) == 0, "%s stale oracle", CASES[ci].id);
+        CHECK(good != bad || ga != ba, "%s stale read is distinguishable (fresh 0x%x stale 0x%x)", CASES[ci].id, good, bad);
+    }
+    {
+        uint32_t good = 0, aux = 0;
+        CHECK(eval_case(&CASES[0], 0, &good, &aux) == 0 && good == (N_FIXED * (N_FIXED + 1u)) / 2u, "alu sum");
+        CHECK(eval_case(&CASES[1], 0, &good, &aux) == 0 && good == fbits((float)(N_FIXED * (N_FIXED + 1u)) / 2u), "fma sum");
+    }
+    {
+        uint32_t er = 0, ea = 0;
+        CHECK(expect_abs(&CASES[6], &er, &ea) != 0, "hmma has no closed host formula");
+    }
 
     for (int ci = 0; ci < NCASES; ci++) {
-        unsigned stall = CASES[ci].href ? 29u : 4u;
+        unsigned stall = 1u;
         len = 0;
         int rc = build(&CASES[ci], stall, 0, 0, code, sizeof code, &len, &gpr);
         CHECK(rc == 0, "%s encode rc %d", CASES[ci].id, rc);
@@ -535,38 +669,12 @@ static int self_test(void) {
         int unk = mf ? omega_sm121_listing(code, len, mf) : -1;
         if (mf) fclose(mf);
         CHECK(unk == 2, "%s disasm unknowns %d (the two CS2R sites)", CASES[ci].id, unk);
-        if (!strcmp(CASES[ci].id, "alu_alu")) {
-            CHECK(text && strstr(text, "IADD3"), "alu listing");
-            CHECK(count_opc_stall(code, ninsn, 0x210, 4) == ALU_UNROLL, "alu chain stall count");
-        } else if (!strcmp(CASES[ci].id, "fma_fma")) {
-            CHECK(text && strstr(text, "FFMA"), "fma listing");
-            CHECK(count_opc_stall(code, ninsn, 0x223, 4) == ALU_UNROLL, "fma chain stall count");
-        } else if (!strcmp(CASES[ci].id, "mixed")) {
-            CHECK(count_opc_stall(code, ninsn, 0x223, 4) == 1, "mixed ffma");
-            CHECK(count_opc_stall(code, ninsn, 0x210, 4) == 1, "mixed iadd");
-        } else if (!strcmp(CASES[ci].id, "pred")) {
-            CHECK(text && strstr(text, "ISETP"), "pred listing");
-            CHECK(text && strstr(text, "BRA"), "pred branch");
-            CHECK(count_opc_stall(code, ninsn, 0x20c, 4) == 1, "measured isetp stall");
-        } else if (!strcmp(CASES[ci].id, "fmnmx_alu")) {
-            CHECK(text && strstr(text, "FMNMX"), "fmnmx listing");
-            CHECK(count_opc_stall(code, ninsn, 0x209, 4) == 1, "fmnmx stall");
-        } else if (!strcmp(CASES[ci].id, "imad_wide_lo")) {
-            CHECK(text && strstr(text, "IMAD.WIDE"), "wide listing");
-            CHECK(count_opc_stall(code, ninsn, 0x825, 4) == 1, "wide stall");
-            int saw = 0;
-            for (size_t i = 0; i + 1 < ninsn; i++) {
-                if (opc_of(code + i * 16) == 0x825 && stall_of(code + i * 16) == 4) {
-                    unsigned dst = (rd32(code + i * 16) >> 16) & 0xffu;
-                    unsigned src = (rd32(code + (i + 1) * 16) >> 24) & 0xffu;
-                    CHECK(opc_of(code + (i + 1) * 16) == 0x210, "wide consumer is IADD3");
-                    CHECK(src == dst, "IADD3 reads the wide low half");
-                    saw = 1;
-                }
-            }
-            CHECK(saw, "wide pair found");
-        } else if (!strcmp(CASES[ci].id, "hmma_reader")) {
-            CHECK(text && strstr(text, "HMMA"), "hmma listing");
+        failed += check_raw_window(CASES[ci].id, code, ninsn, stall);
+        if (!strcmp(CASES[ci].id, "hmma_reader")) {
+            len = 0;
+            rc = build(&CASES[ci], 29u, 0, 0, code, sizeof code, &len, &gpr);
+            CHECK(rc == 0, "hmma stall 29 encode");
+            ninsn = g_prog.count;
             CHECK(count_opc_stall(code, ninsn, 0x23c, 15) == 1, "hmma stall 15");
             CHECK(count_opc_stall(code, ninsn, 0x918, 14) == 1, "hmma padding nop stall 14 (15+14=29)");
             int saw = 0;
@@ -576,11 +684,17 @@ static int self_test(void) {
                     opc_of(code + (i + 2) * 16) == 0x221) {
                     unsigned dst = (rd32(code + i * 16) >> 16) & 0xffu;
                     unsigned src = (rd32(code + (i + 2) * 16) >> 24) & 0xffu;
-                    CHECK(src == dst, "FADD reads HMMA d0");
+                    CHECK(src == dst, "FADD reads HMMA d0 after the 29-cycle gap");
                     saw = 1;
                 }
             }
             CHECK(saw, "hmma, nop, fadd sequence");
+            /* stall 19 is HMMA stall 15 plus one NOP of stall 4: the gap the chip
+             * can fail without faulting. The self-test only checks the shape. */
+            len = 0;
+            CHECK(build(&CASES[ci], 19u, 0, 0, code, sizeof code, &len, &gpr) == 0, "hmma stall 19 encodes");
+            CHECK(count_opc_stall(code, g_prog.count, 0x23c, 15) == 1, "hmma 19 head");
+            CHECK(count_opc_stall(code, g_prog.count, 0x918, 4) == 1, "hmma 19 tail nop");
         }
         for (size_t i = 0; i < ninsn; i++) {
             if (opc_of(code + i * 16) == CS2R_OPC) {
@@ -614,6 +728,11 @@ static int required_stall(const int pass[][SWEEP_MAX], int runs, int sweep) {
     }
     return -1;
 }
+/* 1 means every stall matched, which is not a measured threshold. -1 means no suffix did. */
+static int reported_threshold(const int pass[][SWEEP_MAX], int runs, int sweep) {
+    int start = required_stall(pass, runs, sweep);
+    return start > 1 ? start : -1;
+}
 
 static int self_test_suffix(void) {
     int failed = 0;
@@ -635,6 +754,12 @@ static int self_test_suffix(void) {
         printf("FAIL: empty sweep must not invent a stall\n");
         failed++;
     }
+    for (int r = 0; r < RUNS; r++)
+        for (int s = 1; s <= 15; s++) pass[r][s - 1] = 1;
+    if (reported_threshold(pass, RUNS, 15) != -1) {
+        printf("FAIL: a sweep that passes at stall 1 is not a measured threshold\n");
+        failed++;
+    }
     return failed;
 }
 
@@ -653,9 +778,10 @@ static int plan_launches(void) {
 
 static void print_plan(void) {
     int n = plan_launches();
+    unsigned upper_s = (unsigned)((n * 50 + 999) / 1000);
     printf("latmeas plan: %d cases, %d runs, sweep 1..15 (HMMA 1..36), %d launches\n", NCASES, RUNS, n);
-    printf("estimated chip window: 90 s upper bound (%d launches; 50 ms each covers a cold shader invalidate). Usually shorter.\n",
-           n);
+    printf("estimated chip window: %u s upper bound (%d launches; 50 ms each covers a cold shader invalidate). Usually shorter.\n",
+           upper_s, n);
     printf("The runner wraps only the launch with: flock /tmp/aien-gb10.lock timeout 600\n");
     printf("One warp, 32 threads. Clock: CS2R idx 0x50. Mesa %s\n", MESA_COMMIT);
 }
@@ -696,8 +822,15 @@ static int emit_kernels(const char *dir) {
                     CASES[ci].ops, gpr, len);
         }
     }
-    unsigned ovh_iters[] = {64, 32, 1};
-    for (int k = 0; k < 3; k++) {
+    unsigned ovh_iters[8];
+    int novh = 0;
+    for (int ci = 0; ci < NCASES; ci++) {
+        int seen = 0;
+        for (int j = 0; j < novh; j++)
+            if (ovh_iters[j] == CASES[ci].iters) seen = 1;
+        if (!seen && novh < 8) ovh_iters[novh++] = CASES[ci].iters;
+    }
+    for (int k = 0; k < novh; k++) {
         size_t len = 0;
         uint32_t gpr = 0;
         if (build(NULL, 0, ovh_iters[k], 1, code, sizeof code, &len, &gpr) != 0) {
@@ -880,14 +1013,26 @@ static int run_launch(const char *kdir, const char *out_path) {
     uint64_t cyc[NCASES][RUNS][SWEEP_MAX];
     uint32_t href[NCASES][RUNS];
     int href_ok[NCASES][RUNS];
-    uint64_t ovh_cyc[3][RUNS];
+    uint64_t ovh_cyc[8][RUNS];
+    uint32_t run0_res[NCASES][SWEEP_MAX];
+    uint32_t run0_ref[NCASES];
     memset(pass, 0, sizeof pass);
     memset(cyc, 0, sizeof cyc);
     memset(href, 0, sizeof href);
     memset(href_ok, 0, sizeof href_ok);
     memset(ovh_cyc, 0, sizeof ovh_cyc);
+    memset(run0_res, 0, sizeof run0_res);
+    memset(run0_ref, 0, sizeof run0_ref);
     char notes[NCASES][384];
     memset(notes, 0, sizeof notes);
+    unsigned ovh_list[8];
+    int novh = 0;
+    for (int ci = 0; ci < NCASES && novh < 8; ci++) {
+        int seen = 0;
+        for (int j = 0; j < novh; j++)
+            if (ovh_list[j] == CASES[ci].iters) seen = 1;
+        if (!seen) ovh_list[novh++] = CASES[ci].iters;
+    }
     int device_error = 0;
     const char *err = "";
 
@@ -911,8 +1056,7 @@ static int run_launch(const char *kdir, const char *out_path) {
         goto write_json;
     }
 
-    unsigned ovh_list[] = {64, 32, 1};
-    for (int oi = 0; oi < 3 && !device_error; oi++) {
+    for (int oi = 0; oi < novh && !device_error; oi++) {
         char id[16];
         snprintf(id, sizeof id, "ovh%u", ovh_list[oi]);
         Kern *k = find_kern(kerns, nk, id, 0);
@@ -959,6 +1103,10 @@ static int run_launch(const char *kdir, const char *out_path) {
                 href_ok[ci][r] = have_ref;
                 cyc[ci][r][c->sweep - 1] = cy;
                 pass[ci][r][c->sweep - 1] = have_ref;
+                if (r == 0) {
+                    run0_ref[ci] = refv;
+                    run0_res[ci][c->sweep - 1] = refv;
+                }
                 if (!have_ref)
                     snprintf(notes[ci], sizeof notes[ci],
                              "HMMA reference at stall %u is 0x%08x (aux 0x%08x); d0 did not move", c->sweep, w[2], w[3]);
@@ -982,6 +1130,7 @@ static int run_launch(const char *kdir, const char *out_path) {
                     if (expect_abs(c, &expv, &auxv) == 0) ok = (w[2] == expv && w[3] == auxv && w[0] != POISON);
                 }
                 pass[ci][r][s - 1] = ok;
+                if (r == 0) run0_res[ci][s - 1] = w[2];
             }
         }
     }
@@ -1013,24 +1162,30 @@ write_json:;
             device_error ? "false" : "true", MESA_COMMIT, drv_esc, mach_esc, RUNS, plan_launches(), err_esc);
     for (int ci = 0; ci < NCASES; ci++) {
         const CaseDef *c = &CASES[ci];
-        int req = device_error ? -1 : required_stall(pass[ci], RUNS, (int)c->sweep);
+        int req = device_error ? -1 : reported_threshold(pass[ci], RUNS, (int)c->sweep);
         int spread_s = 0;
-        int row_req[RUNS];
-        int all_rows = 1;
-        for (int r = 0; r < RUNS; r++) {
-            int one[1][SWEEP_MAX];
-            memcpy(one[0], pass[ci][r], sizeof one[0]);
-            row_req[r] = required_stall(one, 1, (int)c->sweep);
-            if (row_req[r] < 0) all_rows = 0;
-        }
-        if (!all_rows) req = -1;
-        int smin = 1000, smax = -1;
-        if (all_rows && !device_error) {
+        int smin = 1000, smax = -1, nthr = 0;
+        if (!device_error) {
             for (int r = 0; r < RUNS; r++) {
-                if (row_req[r] < smin) smin = row_req[r];
-                if (row_req[r] > smax) smax = row_req[r];
+                int one[1][SWEEP_MAX];
+                memcpy(one[0], pass[ci][r], sizeof one[0]);
+                int row = reported_threshold(one, 1, (int)c->sweep);
+                if (row > 1) {
+                    if (row < smin) smin = row;
+                    if (row > smax) smax = row;
+                    nthr++;
+                }
             }
-            spread_s = smax - smin;
+            if (nthr == RUNS) spread_s = smax - smin;
+        }
+        if (!device_error && req < 0 && notes[ci][0] == 0) {
+            int any_fail = 0;
+            for (unsigned s = 1; s <= c->sweep && !any_fail; s++)
+                for (int r = 0; r < RUNS; r++)
+                    if (!pass[ci][r][s - 1]) any_fail = 1;
+            snprintf(notes[ci], sizeof notes[ci],
+                     any_fail ? "no stall was correct through the top of the sweep"
+                              : "every stall matched the oracle; threshold is at or below 1");
         }
         uint64_t samples[RUNS];
         uint64_t cmed = 0, cspread = 0;
@@ -1044,13 +1199,24 @@ write_json:;
             for (int r = 0; r < RUNS; r++)
                 if (samples[r] == 0) have_cyc = 0;
         }
-        unsigned ovh_iters = c->iters;
-        int oi = ovh_iters == 64 ? 0 : ovh_iters == 32 ? 1 : 2;
+        int oi = 0;
+        for (int k = 0; k < novh; k++)
+            if (ovh_list[k] == c->iters) oi = k;
         uint64_t oc[RUNS];
         memcpy(oc, ovh_cyc[oi], sizeof oc);
         uint64_t ospread = 0;
         uint64_t omed = median_spread(oc, RUNS, &ospread);
         (void)ospread;
+        uint64_t s1[RUNS], s1copy[RUNS], s1med = 0, s1spread = 0;
+        int have_s1 = !device_error;
+        for (int r = 0; r < RUNS; r++) {
+            s1[r] = cyc[ci][r][0];
+            if (s1[r] == 0) have_s1 = 0;
+        }
+        if (have_s1) {
+            memcpy(s1copy, s1, sizeof s1);
+            s1med = median_spread(s1copy, RUNS, &s1spread);
+        }
         char note_esc[512];
         json_escape(notes[ci], note_esc, sizeof note_esc);
         fprintf(jf, "    \"%s\": {\n", c->id);
@@ -1058,17 +1224,31 @@ write_json:;
             fprintf(jf, "      \"stall_required\": %d,\n", req);
         else
             fprintf(jf, "      \"stall_required\": null,\n");
-        fprintf(jf, "      \"stall_spread\": %d,\n", all_rows && req > 0 && !device_error ? spread_s : 0);
+        fprintf(jf, "      \"stall_spread\": %d,\n", req > 0 && !device_error ? spread_s : 0);
         if (have_cyc && !device_error) {
             fprintf(jf, "      \"cycle_median\": %llu,\n      \"cycle_spread\": %llu,\n", (unsigned long long)cmed,
                     (unsigned long long)cspread);
         } else {
             fprintf(jf, "      \"cycle_median\": null,\n      \"cycle_spread\": null,\n");
         }
+        if (have_s1) {
+            fprintf(jf, "      \"cycle_median_stall1\": %llu,\n      \"cycle_spread_stall1\": %llu,\n",
+                    (unsigned long long)s1med, (unsigned long long)s1spread);
+        } else {
+            fprintf(jf, "      \"cycle_median_stall1\": null,\n      \"cycle_spread_stall1\": null,\n");
+        }
         if (device_error)
             fprintf(jf, "      \"overhead_cycle_median\": null,\n");
         else
             fprintf(jf, "      \"overhead_cycle_median\": %llu,\n", (unsigned long long)omed);
+        if (c->href && !device_error)
+            fprintf(jf, "      \"reference_result\": %u,\n", run0_ref[ci]);
+        else
+            fprintf(jf, "      \"reference_result\": null,\n");
+        fprintf(jf, "      \"run0_result\": [");
+        for (unsigned s = 1; s <= c->sweep; s++)
+            fprintf(jf, "%s%u", s == 1 ? "" : ", ", run0_res[ci][s - 1]);
+        fprintf(jf, "],\n");
         fprintf(jf, "      \"iters\": %u,\n      \"ops\": %u,\n", c->iters, c->ops);
         fprintf(jf, "      \"note\": \"%s\"\n    }%s\n", note_esc, ci + 1 == NCASES ? "" : ",");
     }

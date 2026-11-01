@@ -75,6 +75,10 @@ Build the existing runtime with `make -j1 build/libomega_gpu.a`. Set
 sh om/q38-head/run.sh
 ```
 
+`make test-q38-head-bounds` runs the same host check and is included in
+`make test` when the pinned compiler can run on the host. On other hosts the
+explicit target reports NOT_RUN and exits 2. Neither command opens the GPU.
+
 The external C instrument runs the generated IR in the existing warp simulator
 against a long-double reference. Cases include tails, zero coefficients,
 subnormals, cancellation, extreme exponents, overflow and both fragment orders.

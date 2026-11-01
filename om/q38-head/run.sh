@@ -16,5 +16,5 @@ chmod +x "$Q38_GPU_OUT/emit"
 "$Q38_GPU_OUT/emit" > "$Q38_GPU_OUT/bounds.frame"
 ${CC:-cc} -O2 -std=gnu11 -Wall -Wextra -Werror -Wno-unused-function \
     -ffp-contract=off -Isrc -Itests om/q38-head/check.c \
-    build/libomega_gpu.a -lpthread -lm -o "$Q38_GPU_OUT/check"
+    "${Q38_GPU_LIB:-build/libomega_gpu.a}" -lpthread -lm -o "$Q38_GPU_OUT/check"
 "$Q38_GPU_OUT/check" "$Q38_GPU_OUT/bounds.frame" "$@"

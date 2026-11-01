@@ -7,7 +7,7 @@
   "source_sha256": {
     "om/q38-head/bounds.om": "a35bea87e381ba7b67fa78fc75631fa21a42e54d3a3769a4c7219f7636820162",
     "om/q38-head/driver.om": "f6ad3c75883d8f7ddda783198f8a27af734e4f4bf5d76d3f63b547a62135ba98",
-    "om/q38-head/check.c": "94e115e36f7c40162db2784eddacd5ca078e625777c4fadb70d38d3daa589c12",
+    "om/q38-head/check.c": "cc4c5656269a84ded7d62c2f5e0b687641e9e1924f82429e354587c9ff19e5d6",
     "om/q38-head/run.sh": "62243c7717d3ee9d71b78e903d2a7b6543b6f3f6a6745e18331054a0a7345723",
     "om/encoder/amp_runtime.om": "6203730d7d80acc0e563e3cb5e7a2b925b5d8739124f467bd3bd5d65a4920cdc",
     "nvrm/nvrm.c": "b6edd4d9fcb447e97318f4fb404623b987414c4cb05bdea8a86936790ae83c40",
@@ -17,14 +17,16 @@
   "frame_sha256": "ea03f28a8dab07412395087fba5f413e79f201226471df516607300255775abe",
   "machine_code_sha256": "adee7fb923580e614707fa8f968e6ef5bb0d3ec8f2b248100344ccb3b636ad0c",
   "runtime_archive_sha256": "4f771fa4b16b47e23f0385b8b616a62ffc054768bbaa408333f3be5a273c9644",
-  "window": "20261101T161439Z-64fab6",
+  "window": "20261101T161659Z-240a79",
   "host_output": [
     "bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf",
-    "PASS: bounds enclose long-double reference; tails untouched; both orders/repetitions",
-    "PASS: arithmetic mutant caught"
+    "bad row2 s0 c0 hn123.25 lo-inf hiinf",
+    "PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions",
+    "PASS: arithmetic mutant caught",
+    "PASS: all-infinite radius mutant caught by bounded slack"
   ],
   "chip_output": [
-    "PASS: bounds enclose long-double reference; tails untouched; both orders/repetitions",
+    "PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions",
     "replay position=1 candidates=44 violations=0 winner_retained=1",
     "replay position=16 candidates=1 violations=0 winner_retained=1",
     "replay position=32 candidates=47 violations=0 winner_retained=1",

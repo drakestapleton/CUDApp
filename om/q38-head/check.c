@@ -53,7 +53,13 @@ static unsigned run(uint32_t n, float hn, unsigned order) {
     for(uint32_t i=0;i<n;i++) {
         long double radius=(long double)v[1][i]*hn;
         long double lo=(long double)v[0][i]-radius,hi=(long double)v[0][i]+radius;
-        if(!((long double)v[2][i]<=lo && (long double)v[3][i]>=hi)) {
+        long double slack=radius*0x1p-16L+fabsl(v[0][i])*0x1p-16L+0x1p-96L;
+        /* A conservatively inflated radius may itself overflow even when one
+         * endpoint cancels. The contract then explicitly retains this row. */
+        int tight=radius+slack>FLT_MAX ||
+                  ((lo-slack < -FLT_MAX || (long double)v[2][i]>=lo-slack)
+                && (hi+slack > FLT_MAX || (long double)v[3][i]<=hi+slack));
+        if(!((long double)v[2][i]<=lo && (long double)v[3][i]>=hi && tight)) {
             if(!bad) fprintf(stderr,"bad row%u s%g c%g hn%g lo%g hi%g\n",i,v[0][i],v[1][i],hn,v[2][i],v[3][i]);
             bad++;
         }
@@ -112,7 +118,7 @@ int main(int argc,char **argv) {
     for(unsigned a=0;a<sizeof counts/sizeof *counts;a++)
     for(unsigned b=0;b<sizeof norms/sizeof *norms;b++)
     for(unsigned o=0;o<2;o++) if(run(counts[a],norms[b],o))return 1;
-    puts("PASS: bounds enclose long-double reference; tails untouched; both orders/repetitions");
+    puts("PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions");
     if(argc==5)replay(argv[3],argv[4]);
     if(chip) {
         omega_gpu_session_lock();omega_gpu_session_free(&code);omega_gpu_session_unlock();omega_gpu_session_close();
@@ -120,5 +126,14 @@ int main(int argc,char **argv) {
     }
     if(!frame_wrong_result())return 66;
     if(!run(1027,123.25f,0))return 3;
-    puts("PASS: arithmetic mutant caught");return 0;
+    puts("PASS: arithmetic mutant caught");
+    assert(frame_load(argv[1],0));
+    int changed=0;
+    for(size_t i=0;i<native_program.count;i++)if(native_program.insns[i].op==BW_IR_FMUL) {
+        BlackwellIRInsn *x=&native_program.insns[i];
+        x->op=BW_IR_MOV_IMM;x->imm=bits(INFINITY);
+        x->src1_vreg=x->src2_vreg=x->src3_vreg=-1;changed=1;break;
+    }
+    if(!changed||!run(1027,123.25f,0))return 3;
+    puts("PASS: all-infinite radius mutant caught by bounded slack");return 0;
 }

@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='seal-reuse-mutants-') as t:
   om=t/(name+'.om');om.write_text(prefix+source.replace(old,new))
   c=t/(name+'.c');so=t/(name+'.so')
   with c.open('w') as f:subprocess.run(['sh',str(bridge),'c',str(om)],env=env,stdout=f,check=True)
-  subprocess.run([os.environ.get('CC','cc'),'-O2','-shared','-fPIC',str(c),'-o',str(so)],check=True)
+  subprocess.run([os.environ.get('CC','cc'),os.environ.get('CUDAPP_SEAL_OPT','-O3'),'-shared','-fPIC',str(c),'-o',str(so)],check=True)
   p=subprocess.run(['python3',str(root/'om/pipeline/seal-reuse-check.py'),str(so)],capture_output=True,text=True)
   assert p.returncode!=0,name+' escaped oracle'
   assert 'AssertionError' in p.stderr,(name,p.stderr)

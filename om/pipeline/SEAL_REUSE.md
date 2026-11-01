@@ -9,3 +9,5 @@ The memo supplies a digest only. Native lease acquisition, revision and epoch ch
 `make test-seal-reuse` compares the result with Python's independent SHA256. It changes every byte of both input arrays, tests every argument count in both directions, includes all-zero images, and checks invalid counts and repeated hits. On a host that runs the pinned Omega compiler, five source mutants prove the oracle catches missing comparisons, a missing count check, a skipped byte, incorrect normalization, and a dirty refusal output. Python is an external verification tool only.
 
 The full-model speed result remains pending. Initial shared-machine diagnostic data is recorded separately; no default-serving or first-token improvement is asserted here.
+
+The generated integer seal unit is compiled at `-O3`, including its independent oracle and source mutants. Other library units keep their existing settings. No fast-math option is added. `CUDAPP_SEAL_OPT=-O2` selects the comparison build; use a distinct `OUT_DIR` per setting. Host screening found faster cold hashing and repeated-byte comparison with identical SHA256 results; full-model evidence remains a separate requirement.

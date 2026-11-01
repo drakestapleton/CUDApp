@@ -1,0 +1,79 @@
+--- tests/gpu_exact_head_test.c
++++ pipeline.c
+@@ -1,3 +1,4 @@
++/* External qualification derivative of tests/gpu_exact_head_test.c. Not runtime code. */
+ /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+ /*
+  * gpu_exact_head_test: the exact two-pass lm_head (HUM lever L314) on the Qwen3.6-35B-A3B head.
+@@ -138,7 +139,7 @@
+ 
+ /* ------------------------------------------------------------- chip */
+ #define XH_N 248320u
+-#define XH_K 2048u
++#define XH_K 5120u
+ #define NEG_PAD (-1e30f)
+ 
+ static void *read_all(const char *dir, const char *name, size_t want) {
+@@ -152,6 +153,16 @@
+ 
+ typedef struct { OmegaGpuMem code; uint32_t gpr; } XKern;
+ static int xkern(XKern *k, OmegaDecKind kind, uint32_t mode, int mutant) {
++    if (kind == OMEGA_DEC_XBOUND && mode == 0 && mutant == 0) {
++        const char *path=getenv("Q38_BOUNDS_BIN"); if(!path)return -1;
++        FILE *f=fopen(path,"rb");if(!f)return -1;
++        unsigned char bytes[16384];size_t need=fread(bytes,1,sizeof bytes,f);
++        if(ferror(f)||!feof(f)||!need){fclose(f);return -1;}fclose(f);
++        if(omega_gpu_session_alloc_code(need,&k->code))return -1;
++        memcpy(k->code.cpu,bytes,need);k->gpr=64;
++        return omega_gpu_session_sync_to_gpu(&k->code);
++    }
++
+     OmegaDecSpec s; memset(&s, 0, sizeof s); s.kind = kind; s.mode = mode; s.mutant = mutant;
+     static BlackwellIRProgram prog;
+     if (omega_blackwell_codegen_dec_prog(&s, &prog) != 0) return -1;
+@@ -236,10 +247,14 @@
+         e |= omega_gpu_bf16_gemv_record(clF, tb, V + o_h, V + o_yf);
+         e |= xargmax(clF, &ka0, &ka1, ctas, V + o_yf, V + o_amv, V + o_ami, V + o_tokf + 4, V + o_tokf);
+         e |= omega_gpu_fp8_gemv_grouped_record(clT, t8, 1, V + o_tab, V + o_h8, 1, V + o_s);
+-        uint32_t xb[OMEGA_DEC_XB_WORDS]; memset(xb, 0, sizeof xb);
+-        put64v(xb, OMEGA_DEC_XB_S, V + o_s); put64v(xb, OMEGA_DEC_XB_C, V + o_c); put64v(xb, OMEGA_DEC_XB_H, V + o_h);
+-        put64v(xb, OMEGA_DEC_XB_LO, V + o_lo); put64v(xb, OMEGA_DEC_XB_HI, V + o_hi); xb[(OMEGA_DEC_XB_N - 0x380u) / 4] = n;
+-        e |= xadd(clT, &kb, (n + OMEGA_DEC_THREADS - 1) / OMEGA_DEC_THREADS, n, xb, OMEGA_DEC_XB_WORDS);
++        uint32_t xb[10]={0};
++        put64v(xb,896,V+o_s);put64v(xb,904,V+o_c);
++        put64v(xb,912,V+o_lo);put64v(xb,920,V+o_hi);
++        long double hn2=0;
++        for(uint32_t j=0;j<k;j++)hn2=nextafterl(hn2+(long double)h[j]*h[j],INFINITY);
++        float hn=nextafterf((float)nextafterl(sqrtl(hn2),INFINITY),INFINITY);
++        memcpy(&xb[8],&hn,4);xb[9]=n;
++        e |= xadd(clT,&kb,(n+255)/256,n,xb,10);
+         e |= xargmax(clT, &ka0, &ka1, ctas, V + o_lo, V + o_amv, V + o_ami, V + o_tau, V + o_tau + 4);
+         e |= omega_gpu_bf16_gemv_mask_record(clT, tb, V + o_h, V + o_y, V + o_hi, V + o_tau);
+         e |= xargmax(clT, &ka0, &ka1, ctas, V + o_y, V + o_amv, V + o_ami, V + o_tok + 4, V + o_tok);
+@@ -250,6 +265,18 @@
+         if (e) { sub_fail++; printf("record %zu: chip error: %s\n", r, omega_gpu_session_last_error()); break; }
+         uint32_t tok, tokf; memcpy(&tok, B + o_tok, 4); memcpy(&tokf, B + o_tokf, 4);
+         const float *y = (const float *)(B + o_y), *yf = (const float *)(B + o_yf);
++        const char *captured=getenv("Q38_CAPTURE_DIR");
++        uint32_t position;memcpy(&position,rec+4,4);char fn[64];
++        snprintf(fn,sizeof fn,"%u-logits.f32",position);
++        float *saved=read_all(captured,fn,n*4);if(!saved){sub_fail++;break;}
++        size_t saved_bad=0,bound_bad=0;
++        for(uint32_t i=0;i<n;i++) {
++            saved_bad+=memcmp(saved+i,yf+i,4)!=0;
++            bound_bad+=!(((float*)(B+o_lo))[i]<=yf[i]&&((float*)(B+o_hi))[i]>=yf[i]);
++        }
++        free(saved);
++        CHECK(!saved_bad&&!bound_bad,"saved full logits mismatch %zu; GPU compact interval violations %zu",saved_bad,bound_bad);
++        printf("record %zu position %u saved_bits_bad %zu bounds_bad %zu\n",r,position,saved_bad,bound_bad);
+         size_t c = 0;
+         for (uint32_t i = 0; i < n; i++) {
+             if (y[i] == -INFINITY) continue;
+@@ -257,6 +284,7 @@
+         }
+         missing += tokf < n && y[tokf] == -INFINITY;
+         same += tok == tokf; host_same += tokf == host_full;
++        printf("record %zu candidates %zu full %u selected %u\n",r,c,tokf,tok);
+         cs[r] = c; csum += c; if (c > cmax) cmax = c;
+         tf[r] = sf.elapsed_ns; tt[r] = st.elapsed_ns;
+         if (tok != tokf && mutant == 0) printf("record %zu: two-pass %u != full %u (|C| %zu)\n", r, tok, tokf, c);

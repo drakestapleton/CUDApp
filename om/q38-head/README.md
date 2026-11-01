@@ -110,3 +110,24 @@ The new regression assertion fails before the Omega policy fix and passes after
 regenerating its binding with the pinned Bridge. Physical qualification uses the
 patched runtime itself, including its normal class admission. No bypass or
 environment override selects the target.
+
+## Isolated two-pass head experiment
+
+`pipeline.patch` derives an external verification instrument from the existing
+`tests/gpu_exact_head_test.c`. It uses width 5120, this Omega-generated bound
+kernel, and conservatively computes the hidden norm on the host. The existing
+GPU kernels perform compact screening, threshold reduction, masked full-precision
+recheck and final selection. Apply it outside the source tree:
+
+```
+patch -o /tmp/pipeline.c tests/gpu_exact_head_test.c om/q38-head/pipeline.patch
+```
+
+`pipeline-validation.json` records the source fingerprints and results. All eight
+saved states reproduce the original full GPU logits bit for bit; every compact
+interval contains the full score, every rechecked score matches, and every final
+token matches. Zeroing the coefficients loses the true winner at position 97,
+reproducing the earlier compact-head error. The recorded timing is provisional:
+host suites were active in the shared correctness window. It is neither an
+accepted speed result nor a whole-model/first-token measurement. Serving
+integration and its complete exact-token gate remain untested.

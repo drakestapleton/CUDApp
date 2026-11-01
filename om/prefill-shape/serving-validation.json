@@ -1,0 +1,51 @@
+{
+  "status": "PASS exact128, seeded sampled32, exact128 after sampling",
+  "binary_sha256": "e04a4bd683fa13863cb83c8ecaf508e355a89003727b99b0dc932dface215be7",
+  "core_source": "f0acdc7dc460e1984aa72bba515ea35c3eac2d55",
+  "cudapp_source": "0cc2579513b74cc38c12f7c53052f4cad01917ca",
+  "external_adapter": "sets existing shape to rt2/warps4/wait45 before model load; not production code",
+  "first_visible_seconds": [
+    0.5158439959632233,
+    0.5210204750183038,
+    0.4791836779913865
+  ],
+  "requests": [
+    {
+      "name": "exact128",
+      "wall_seconds": 15.529412995965686,
+      "token_ids_sha256": "8d3ae59b4eb2f5be2a7e705c081d3654f8dacedd62d719dac7503fb5fa54c004"
+    },
+    {
+      "name": "sampled",
+      "wall_seconds": 4.527396937017329,
+      "token_ids_sha256": "8900051ea281633f9ef7ae4562d24af8433c04821c9b9cb73faa5c78ef16356c"
+    },
+    {
+      "name": "exact128-after-sampling",
+      "wall_seconds": 16.005692942999303,
+      "token_ids_sha256": "8d3ae59b4eb2f5be2a7e705c081d3654f8dacedd62d719dac7503fb5fa54c004"
+    }
+  ],
+  "limits": [
+    "Shared correctness screen only. No five alternating quiet pairs.",
+    "Full256 conversation, streaming, longer-prompt and broader task gate still pending.",
+    "No default selection or deployment changed."
+  ],
+  "chip_comparison": {
+    "status": "single three-repeat chip screen per shape, shared machine, not full-model qualification",
+    "median_kernel_ms": {
+      "rows32": {
+        "q38gu": 0.854,
+        "q38down": 0.454,
+        "q38mix": 0.393,
+        "q38o": 0.142
+      },
+      "rows64": {
+        "q38gu": 0.81,
+        "q38down": 0.493,
+        "q38mix": 0.41,
+        "q38o": 0.155
+      }
+    }
+  }
+}

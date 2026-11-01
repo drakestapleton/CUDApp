@@ -9,3 +9,5 @@ The 32-row shape reduces padded work for short prompts. This is a hypothesis unt
 Hardware reference: NVIDIA PTX ISA9.4, physical page605, warp matrix instruction examples. This change reuses the existing instruction generator and changes its work grouping. The manual is not evidence that this implementation runs correctly; simulator and chip receipts supply that evidence.
 
 The existing `omega_gpu_pf_qgemm_set_shape(2, 4, 45)` test knob selects the candidate. Call it before sizing prefill buffers or building tile tables. Never change shape while a model operation is in flight. No serving option or automatic policy is introduced here.
+
+The separate serving screen in `serving-validation.json` passes two128-token reference runs with a seeded sampled request between them. First-visible latency remains about0.5seconds on the shared machine. The four-matrix chip comparison is mixed; this shape is not promoted as a speed improvement. Longer contexts, the full conversation/streaming gate and controlled pairs remain pending.

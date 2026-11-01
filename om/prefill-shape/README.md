@@ -24,3 +24,5 @@ The checked Omega policy also bounds the actual largest emitted store offset, in
 Before the change, all four 27B projection shapes refused 128-row generation. The candidate is still UNQUALIFIED: host generation and simulator checks pass locally, but chip/full-model parity and timing remain pending. The existing 64-row kernel bytes and resource metadata match the original build for the tested direct and indexed 27B projections. Earlier32-row receipts remain historical and do not certify this branch. The current64-row/eight-warp default is unchanged.
 
 [The host receipt](large-shape-host-validation.json) pins the changed sources and archive and records the targeted host, simulator and mutation checks. The full host suite was still running when this draft was published. No chip or full-model result is implied by this receipt.
+
+The subsequent [full host-suite receipt](large-shape-full-host-validation.json) records all 77 targets passing on the candidate source. It includes the failed absolute-output-path invocation and its correction. GPU and full-model qualification remain pending.

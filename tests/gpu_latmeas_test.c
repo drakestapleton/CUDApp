@@ -56,12 +56,14 @@
 #include "omega_gpu_session.h"
 #include "omega_sm121_disasm.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 
 #define NOREG (-1)
 #define SB_NONE 7u
@@ -1276,11 +1278,34 @@ static void print_plan(void) {
 
 static int mkdir_p(const char *dir);
 
+/* fopen("w") creates the file mode 0666. These outputs are not secrets, and they are not world-writable. */
+static FILE *fopen_0644(const char *path, const char *mode) {
+    int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+    if (fd < 0) return NULL;
+    FILE *f = fdopen(fd, mode);
+    if (!f) close(fd);
+    return f;
+}
+
+/* Manifest ids are our own tokens. Reject anything else before it becomes a path. */
+static int id_token(const char *s, char out[64]) {
+    size_t n = 0;
+    if (!s || !s[0]) return 0;
+    for (const char *p = s; *p; p++) {
+        char c = *p;
+        int ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
+        if (!ok || n >= 63) return 0;
+        out[n++] = c;
+    }
+    out[n] = 0;
+    return 1;
+}
+
 static int emit_kernels(const char *dir) {
     if (mkdir_p(dir) != 0) return -1;
     char path[512], manp[512];
     snprintf(manp, sizeof manp, "%s/manifest.txt", dir);
-    FILE *man = fopen(manp, "w");
+    FILE *man = fopen_0644(manp, "w");
     if (!man) return -1;
     uint8_t code[CODE_CAP];
     for (int ci = 0; ci < NCASES; ci++) {
@@ -1299,7 +1324,7 @@ static int emit_kernels(const char *dir) {
                 return -1;
             }
             snprintf(path, sizeof path, "%s/%s_%u.bin", dir, CASES[ci].id, s);
-            FILE *f = fopen(path, "wb");
+            FILE *f = fopen_0644(path, "wb");
             if (!f || fwrite(code, 1, len, f) != len) {
                 if (f) fclose(f);
                 fclose(man);
@@ -1326,7 +1351,7 @@ static int emit_kernels(const char *dir) {
             return -1;
         }
         snprintf(path, sizeof path, "%s/ovh%u_0.bin", dir, ovh_iters[k]);
-        FILE *f = fopen(path, "wb");
+        FILE *f = fopen_0644(path, "wb");
         if (!f || fwrite(code, 1, len, f) != len) {
             if (f) fclose(f);
             fclose(man);
@@ -1405,10 +1430,16 @@ static Kern *load_manifest(const char *dir, int *nout) {
         t.ops = ops;
         t.gpr = gpr;
         t.nbytes = nbytes;
+        char safe[64];
+        if (!id_token(t.id, safe) || nbytes == 0 || nbytes > CODE_CAP) {
+            free(k);
+            fclose(man);
+            return NULL;
+        }
         char path[512];
-        snprintf(path, sizeof path, "%s/%s_%u.bin", dir, t.id, t.stall);
+        snprintf(path, sizeof path, "%s/%s_%u.bin", dir, safe, t.stall);
         FILE *f = fopen(path, "rb");
-        t.code = f ? malloc(nbytes ? nbytes : 1) : NULL;
+        t.code = malloc(CODE_CAP);
         if (!f || !t.code || fread(t.code, 1, nbytes, f) != nbytes) {
             if (f) fclose(f);
             free(t.code);
@@ -1518,6 +1549,16 @@ static int lanes_report(const uint32_t *mem, const uint32_t o[4], LaneMiss *miss
     return n;
 }
 
+/* out[0..3] count lanes whose words 2, 3, 4 and 5 differ from the oracle. */
+static void word_fail_counts(const uint32_t *mem, const uint32_t o[4], uint8_t out[4]) {
+    out[0] = out[1] = out[2] = out[3] = 0;
+    for (int lane = 0; lane < LANE_N; lane++) {
+        const uint32_t *w = mem + (size_t)lane * LANE_WORDS;
+        for (int k = 0; k < 4; k++)
+            if (w[2 + k] != o[k] && out[k] < 255) out[k]++;
+    }
+}
+
 static uint32_t lane_fail_bits(const uint32_t *mem, const uint32_t o[4]) {
     uint32_t mask = 0;
     for (int lane = 0; lane < LANE_N; lane++) {
@@ -1538,7 +1579,7 @@ static int mem_match(const uint32_t *mem, uint32_t result, uint32_t aux, int fou
 }
 
 static void fprint_lane_fields(FILE *jf, const uint32_t o[4], const uint8_t *matched_min, const uint32_t *fail_mask,
-                               const LaneMiss *miss, int sweep, int have) {
+                               const uint8_t *word_max, const LaneMiss *miss, int sweep, int have) {
     fprintf(jf, "      \"oracle\": [%u, %u, %u, %u],\n", o[0], o[1], o[2], o[3]);
     fprintf(jf, "      \"reference_result\": %u,\n", o[0]);
     fprintf(jf, "      \"lanes_matched_min\": [");
@@ -1554,6 +1595,14 @@ static void fprint_lane_fields(FILE *jf, const uint32_t o[4], const uint8_t *mat
             fprintf(jf, "%snull", s ? ", " : "");
         else
             fprintf(jf, "%s\"0x%08x\"", s ? ", " : "", fail_mask[s]);
+    }
+    fprintf(jf, "],\n      \"word_mismatch_max\": [");
+    for (int s = 0; s < sweep; s++) {
+        const uint8_t *w = word_max + (size_t)s * 4;
+        if (!have || matched_min[s] == 0xff)
+            fprintf(jf, "%snull", s ? ", " : "");
+        else
+            fprintf(jf, "%s[%u, %u, %u, %u]", s ? ", " : "", w[0], w[1], w[2], w[3]);
     }
     fprintf(jf, "],\n      \"first_mismatch\": [");
     for (int s = 0; s < sweep; s++) {
@@ -1601,8 +1650,12 @@ static int lane_field_self_test(void) {
            "a planted word-4 mismatch names lane 7");
     LCHECK(lane_fail_bits(mem, o) == (1u << 7), "fail mask is lane 7");
 
+    uint8_t wc[4];
+    word_fail_counts(mem, o, wc);
+    LCHECK(wc[0] == 0 && wc[1] == 0 && wc[2] == 1 && wc[3] == 0, "only word 4 mismatches");
     uint8_t mins[2] = {31, 32};
     uint32_t masks[2] = {1u << 7, 0};
+    uint8_t words[2][4] = {{0, 0, 1, 0}, {0, 0, 0, 0}};
     LaneMiss ms[2];
     ms[0] = m;
     ms[0].run = 3;
@@ -1611,12 +1664,13 @@ static int lane_field_self_test(void) {
     size_t tlen = 0;
     FILE *mf = open_memstream(&text, &tlen);
     if (mf) {
-        fprint_lane_fields(mf, o, mins, masks, ms, 2, 1);
+        fprint_lane_fields(mf, o, mins, masks, (const uint8_t *)words, ms, 2, 1);
         fclose(mf);
     }
     LCHECK(text && strstr(text, "\"oracle\": [") && strstr(text, "\"lanes_matched_min\": [31, 32]") &&
                strstr(text, "\"lane_fail_mask\"") && strstr(text, "\"lane\": 7") && strstr(text, "\"word\": 4") &&
-               strstr(text, "\"run\": 3") && strstr(text, ", null]"),
+               strstr(text, "\"run\": 3") && strstr(text, "\"word_mismatch_max\": [[0, 0, 1, 0], [0, 0, 0, 0]]") &&
+               strstr(text, ", null]"),
            "json lane fields: %s", text ? text : "(none)");
     free(text);
 
@@ -1672,6 +1726,7 @@ static int run_launch(const char *kdir, const char *out_path) {
     uint32_t run0_res[NCASES][SWEEP_MAX];
     uint8_t lane_min[NCASES][SWEEP_MAX];
     uint32_t fail_mask[NCASES][SWEEP_MAX];
+    uint8_t word_max[NCASES][SWEEP_MAX][4];
     LaneMiss first_miss[NCASES][SWEEP_MAX];
     memset(pass, 0, sizeof pass);
     memset(cyc, 0, sizeof cyc);
@@ -1679,6 +1734,7 @@ static int run_launch(const char *kdir, const char *out_path) {
     memset(run0_res, 0, sizeof run0_res);
     memset(lane_min, 0xff, sizeof lane_min);
     memset(fail_mask, 0, sizeof fail_mask);
+    memset(word_max, 0, sizeof word_max);
     for (int ci = 0; ci < NCASES; ci++)
         for (int s = 0; s < SWEEP_MAX; s++) first_miss[ci][s].lane = -1;
     char notes[NCASES][384];
@@ -1761,6 +1817,12 @@ static int run_launch(const char *kdir, const char *out_path) {
                 int nmatch = lanes_report(mem, oracle, &one);
                 if (lane_min[ci][s - 1] == 0xff || nmatch < lane_min[ci][s - 1]) lane_min[ci][s - 1] = (uint8_t)nmatch;
                 fail_mask[ci][s - 1] |= lane_fail_bits(mem, oracle);
+                {
+                    uint8_t wc[4];
+                    word_fail_counts(mem, oracle, wc);
+                    for (int k = 0; k < 4; k++)
+                        if (wc[k] > word_max[ci][s - 1][k]) word_max[ci][s - 1][k] = wc[k];
+                }
                 if (nmatch < LANE_N && first_miss[ci][s - 1].lane < 0) {
                     one.run = r;
                     first_miss[ci][s - 1] = one;
@@ -1778,7 +1840,7 @@ write_json:;
     int locked = 1;
     char tmp[512];
     snprintf(tmp, sizeof tmp, "%s.tmp", out_path);
-    FILE *jf = fopen(tmp, "w");
+    FILE *jf = fopen_0644(tmp, "w");
     if (!jf) {
         if (locked) {
             omega_gpu_session_unlock();
@@ -1880,7 +1942,8 @@ write_json:;
         {
             uint32_t oracle[4];
             oracle_words(c, oracle);
-            fprint_lane_fields(jf, oracle, lane_min[ci], fail_mask[ci], first_miss[ci], (int)c->sweep, !device_error);
+            fprint_lane_fields(jf, oracle, lane_min[ci], fail_mask[ci], (const uint8_t *)word_max[ci], first_miss[ci],
+                               (int)c->sweep, !device_error);
         }
         fprintf(jf, "      \"run0_result\": [");
         for (unsigned s = 1; s <= c->sweep; s++)

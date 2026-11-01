@@ -34,11 +34,34 @@ write_receipt() {
             echo "driver: unread"
         fi
         found=0
-        for info in /proc/driver/nvidia/gpus/*/information; do
+        sysroot=${CUDAPP_RECEIPT_SYSROOT:-}
+        for info in ${CUDAPP_RECEIPT_GPU_INFO:-/proc/driver/nvidia/gpus/*/information}; do
             [ -f "$info" ] || continue
             found=1
-            echo "device: $(basename "$(dirname "$info")")"
-            sed -n 's/^Model:[[:space:]]*/model: /p; s/^Bus Location:[[:space:]]*/bus: /p' "$info"
+            bdf=$(basename "$(dirname "$info")")
+            echo "device: $bdf"
+            model=$(sed -n 's/^Model:[[:space:]]*//p' "$info" | head -n 1)
+            bus=$(sed -n 's/^Bus Location:[[:space:]]*//p' "$info" | head -n 1)
+            # The open module prints "Model: Unknown" for the GB10. The doctor names
+            # that chip from PCI id 0x2e12 (src/omega_gpu_chip.c).
+            if [ -z "$model" ] || [ "$model" = "Unknown" ]; then
+                ven=$(cat "$sysroot/sys/bus/pci/devices/$bdf/vendor" 2>/dev/null || true)
+                dev=$(cat "$sysroot/sys/bus/pci/devices/$bdf/device" 2>/dev/null || true)
+                ven=$(printf '%s' "$ven" | tr -d '[:space:]')
+                dev=$(printf '%s' "$dev" | tr -d '[:space:]')
+                if [ "$ven" = "0x10de" ] && [ "$dev" = "0x2e12" ]; then
+                    echo "model: NVIDIA GB10 (sm_121)"
+                    echo "model_source: pci 0x2e12; proc Model was ${model:-empty}"
+                else
+                    echo "model: Unknown"
+                    echo "model_source: proc Model was ${model:-empty}; pci ${ven:-unread}:${dev:-unread}"
+                fi
+            else
+                echo "model: $model"
+            fi
+            if [ -n "$bus" ]; then
+                echo "bus: $bus"
+            fi
         done
         if [ "$found" -eq 0 ]; then
             echo "device: none"
@@ -66,6 +89,18 @@ if [ "$1" = "--receipt-self-test" ]; then
     grep -q '^device: ' "$tmp/RECEIPT.txt"
     test "$got" = "$want"
     rm -rf "$tmp"
+    # proc Model "Unknown" plus PCI 10de:2e12 is the GB10 the doctor names.
+    fake=$(mktemp -d)
+    mkdir -p "$fake/gpus/000f:01:00.0" "$fake/sys/bus/pci/devices/000f:01:00.0"
+    printf 'Model: Unknown\nBus Location: 000f:01:00.0\n' > "$fake/gpus/000f:01:00.0/information"
+    printf '0x10de\n' > "$fake/sys/bus/pci/devices/000f:01:00.0/vendor"
+    printf '0x2e12\n' > "$fake/sys/bus/pci/devices/000f:01:00.0/device"
+    printf '{}\n' > "$fake/raw.json"
+    CUDAPP_RECEIPT_SYSROOT=$fake CUDAPP_RECEIPT_GPU_INFO=$fake/gpus/000f:01:00.0/information \
+        write_receipt "$fake"
+    grep -q '^model: NVIDIA GB10 (sm_121)$' "$fake/RECEIPT.txt"
+    grep -q '^model_source: pci 0x2e12' "$fake/RECEIPT.txt"
+    rm -rf "$fake"
     echo "receipt self-test PASS"
     exit 0
 fi

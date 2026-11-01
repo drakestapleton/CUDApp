@@ -97,6 +97,8 @@ int omega_gpu_q38_graph_set_lm_head_fp8(OmegaGpuQ38Graph *g, const OmegaGpuFp8Te
  * The original head is retained. Disable for sampled requests needing all logits. */
 int omega_gpu_q38_graph_set_exact_head(OmegaGpuQ38Graph *g, const OmegaGpuFp8Tensor *head,
                                       const float *coef, uint32_t roundings);
+/* 1 when all n coefficients are finite and >= 0 (set_exact_head refuses anything else), else 0. */
+int omega_gpu_q38_exact_coef_ok(const float *coef, size_t n);
 uint64_t omega_gpu_q38_exact_extra_bytes(void);
 void omega_gpu_q38_graph_set_exact_head_on(OmegaGpuQ38Graph *g, int on);
 int omega_gpu_q38_graph_exact_head_active(const OmegaGpuQ38Graph *g);

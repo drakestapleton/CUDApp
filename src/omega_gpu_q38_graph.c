@@ -13,6 +13,7 @@
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_mem_cached.h"
 #include "cudapp_native.h"
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -248,10 +249,18 @@ uint64_t omega_gpu_q38_exact_extra_bytes(void) {
     const uint8_t unused[H*4]={0};uint64_t m[16]={3,248320},q[192]={0},result=0;
     return !omega_q38_runtime(&result,m,16,unused,sizeof unused,q,192) && result==1 ? q[10] : 0;
 }
+/* A NaN, negative or infinite coefficient would silently pick a wrong greedy token; refuse it. */
+int omega_gpu_q38_exact_coef_ok(const float *coef, size_t n) {
+    if (!coef) return 0;
+    for (size_t i = 0; i < n; i++)
+        if (!(coef[i] >= 0.0f) || coef[i] > FLT_MAX) return 0;
+    return 1;
+}
 int omega_gpu_q38_graph_set_exact_head(OmegaGpuQ38Graph *g, const OmegaGpuFp8Tensor *head,
                                       const float *coef, uint32_t roundings) {
     if (!g || !head || !coef || g->in_token || !g->final_set || g->exact8 || g->head8 ||
-        !shape_is(head, g->cfg.vocab, H) || g->cfg.eps != 1e-6f) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+        !shape_is(head, g->cfg.vocab, H) || g->cfg.eps != 1e-6f ||
+        !omega_gpu_q38_exact_coef_ok(coef, g->cfg.vocab)) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     uint64_t m[16]={1,g->cfg.vocab},result=0,entry[2];
     if (omega_q38_runtime(&result,m,16,cpu_of(g,g->lo.fnorm),H*4,g->exact_info,192) || result!=1 ||
         roundings!=g->exact_info[2] || omega_gpu_fp8_tensor_entry(head,0,&entry[0],&entry[1]))

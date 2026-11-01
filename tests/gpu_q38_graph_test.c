@@ -227,6 +227,16 @@ static int host_only(void) {
     OmegaGpuQ38GraphConfig c; memset(&c, 0, sizeof c);
     CHECK(omega_gpu_q38_graph_create(&c, &g) == OMEGA_GPU_DGRAPH_BAD_ARGS && !g, "create refuses an empty config");
     CHECK(omega_gpu_q38_graph_create(NULL, &g) == OMEGA_GPU_DGRAPH_BAD_ARGS, "create refuses NULL");
+    float coef[4] = {0.0f, 1.5f, 3.0e38f, 2.0f};
+    CHECK(omega_gpu_q38_exact_coef_ok(coef, 4) == 1, "exact coef: finite nonnegative table accepted");
+    const float bad_vals[3] = {NAN, -1.0f, INFINITY};
+    const char *bad_names[3] = {"NaN", "negative", "infinite"};
+    for (int i = 0; i < 3; i++) {
+        coef[2] = bad_vals[i];
+        CHECK(omega_gpu_q38_exact_coef_ok(coef, 4) == 0, "exact coef: %s entry refused", bad_names[i]);
+    }
+    CHECK(omega_gpu_q38_exact_coef_ok(NULL, 4) == 0, "exact coef: NULL table refused");
+    CHECK(omega_gpu_q38_graph_set_exact_head(NULL, NULL, coef, 0) == OMEGA_GPU_DGRAPH_BAD_ARGS, "set_exact_head refuses NULL graph");
     return g_failed ? 1 : 0;
 }
 

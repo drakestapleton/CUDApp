@@ -227,7 +227,7 @@ log "PASS: audit raw ranges, absent RZ parity, cold decode, active-operand mutan
 
 # 8. Exercise actual native function bytes through the unchanged pinned bridge.
 BRIDGE=${OMEGA_BRIDGE:-"$ROOT/../omega-bridge"}
-NATIVE_PIN=d3cfe0561696aad92164ddf11340522645cf6daf7af238835c3d3c61ecdef656
+NATIVE_PIN=45935a64f46408ba2c964748603b5e5c696a6bda584e4f16a0a0d68b1e71ea06
 [ -f "$BRIDGE/src/native.om" ] || { echo "NOT_RUN: set OMEGA_BRIDGE to pinned bridge" >&2; exit 3; }
 [ "$(sha256sum < "$BRIDGE/src/native.om" | cut -c1-64)" = "$NATIVE_PIN" ] || {
   echo "FAIL: native bridge source pin mismatch" >&2; exit 1;

@@ -1,0 +1,11 @@
+measured_utc: 2026-11-01 12:08:46.562510362 -0600
+tested_head: cb5bd7087470336b6d59da53e99ef4dc5edcb7f2
+pr254_head: 03cdcc5a4401043da2196f4f5efcb9b379400f66
+pr251_head: 6a93cb567b33b67bc1185fb45a3c50fc4d88d30e
+local_changes: merge of PR251 head into PR254 head, no other edits
+Linux spark-b87b 7.0.0-1019-nvidia #19~24.04.2-Ubuntu SMP PREEMPT_DYNAMIC Sun Sep  6 18:35:11 UTC 2 aarch64 aarch64 aarch64 GNU/Linux
+NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.173.02  Release Build  (dvs-builder@U22-A24-5-4)  Tue Jun 23 08:34:19 UTC 2026
+GCC version:  gcc version 13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 
+name, pci.bus_id, driver_version, clocks.current.sm [MHz], clocks.max.sm [MHz]
+NVIDIA GB10, 0000000F:01:00.0, 580.173.02, 1787 MHz, 3003 MHz
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0

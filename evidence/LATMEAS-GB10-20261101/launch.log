@@ -1,0 +1,104 @@
+latmeas plan: 7 cases, 11 runs, sweep 1..15 (HMMA 1..36), 1408 launches
+estimated chip window: 71 s upper bound (1408 launches; 50 ms each covers a cold shader invalidate). Usually shorter.
+The runner wraps only the launch with: flock /tmp/aien-gb10.lock timeout 600
+One warp, 32 threads. Clock: CS2R idx 0x50. Mesa 01bab9302a6bf0a082c7ba8c49d74427cf10b0cf
+overhead ovh32 run 1/11 rc 0
+overhead ovh32 run 2/11 rc 0
+overhead ovh32 run 3/11 rc 0
+overhead ovh32 run 4/11 rc 0
+overhead ovh32 run 5/11 rc 0
+overhead ovh32 run 6/11 rc 0
+overhead ovh32 run 7/11 rc 0
+overhead ovh32 run 8/11 rc 0
+overhead ovh32 run 9/11 rc 0
+overhead ovh32 run 10/11 rc 0
+overhead ovh32 run 11/11 rc 0
+overhead ovh1 run 1/11 rc 0
+overhead ovh1 run 2/11 rc 0
+overhead ovh1 run 3/11 rc 0
+overhead ovh1 run 4/11 rc 0
+overhead ovh1 run 5/11 rc 0
+overhead ovh1 run 6/11 rc 0
+overhead ovh1 run 7/11 rc 0
+overhead ovh1 run 8/11 rc 0
+overhead ovh1 run 9/11 rc 0
+overhead ovh1 run 10/11 rc 0
+overhead ovh1 run 11/11 rc 0
+case alu_alu run 1/11
+case alu_alu run 2/11
+case alu_alu run 3/11
+case alu_alu run 4/11
+case alu_alu run 5/11
+case alu_alu run 6/11
+case alu_alu run 7/11
+case alu_alu run 8/11
+case alu_alu run 9/11
+case alu_alu run 10/11
+case alu_alu run 11/11
+case fma_fma run 1/11
+case fma_fma run 2/11
+case fma_fma run 3/11
+case fma_fma run 4/11
+case fma_fma run 5/11
+case fma_fma run 6/11
+case fma_fma run 7/11
+case fma_fma run 8/11
+case fma_fma run 9/11
+case fma_fma run 10/11
+case fma_fma run 11/11
+case mixed run 1/11
+case mixed run 2/11
+case mixed run 3/11
+case mixed run 4/11
+case mixed run 5/11
+case mixed run 6/11
+case mixed run 7/11
+case mixed run 8/11
+case mixed run 9/11
+case mixed run 10/11
+case mixed run 11/11
+case pred run 1/11
+case pred run 2/11
+case pred run 3/11
+case pred run 4/11
+case pred run 5/11
+case pred run 6/11
+case pred run 7/11
+case pred run 8/11
+case pred run 9/11
+case pred run 10/11
+case pred run 11/11
+case fmnmx_alu run 1/11
+case fmnmx_alu run 2/11
+case fmnmx_alu run 3/11
+case fmnmx_alu run 4/11
+case fmnmx_alu run 5/11
+case fmnmx_alu run 6/11
+case fmnmx_alu run 7/11
+case fmnmx_alu run 8/11
+case fmnmx_alu run 9/11
+case fmnmx_alu run 10/11
+case fmnmx_alu run 11/11
+case imad_wide_lo run 1/11
+case imad_wide_lo run 2/11
+case imad_wide_lo run 3/11
+case imad_wide_lo run 4/11
+case imad_wide_lo run 5/11
+case imad_wide_lo run 6/11
+case imad_wide_lo run 7/11
+case imad_wide_lo run 8/11
+case imad_wide_lo run 9/11
+case imad_wide_lo run 10/11
+case imad_wide_lo run 11/11
+case hmma_reader run 1/11
+case hmma_reader run 2/11
+case hmma_reader run 3/11
+case hmma_reader run 4/11
+case hmma_reader run 5/11
+case hmma_reader run 6/11
+case hmma_reader run 7/11
+case hmma_reader run 8/11
+case hmma_reader run 9/11
+case hmma_reader run 10/11
+case hmma_reader run 11/11
+wrote latmeas-out4/raw.json

@@ -34,6 +34,10 @@ The runner tries stall 1 through 15 (1 through 36 for HMMA; the stall field is f
 
 The fixed-latency oracle arms the destination to `0x7f800000` and the producer does not read it. The next instruction does. A stale read adds that sentinel. The host self-test checks the fresh and stale totals differ, and that the stall-1 SASS really is that pair with no scoreboard and no yield. HMMA is unchanged: `d` starts at 0, the consumer is `FADD` of `d0`, and stall 19 is HMMA stall 15 plus a `NOP` of stall 4.
 
+The two `CS2R` reads bracket the loop. Between them are the producer, its consumer, the advance of the live value, the sentinel move, and the loop-back. A programmed stall of 1 is only the producer's field. Dividing the clock delta by the op count counts that whole bracket. On the predicate chain the measured stall sits on the `ISETP` that feeds `@P0 BRA`. A stall shorter than the predicate leaves the previous `P0`, which that kernel sets true, so the poison move runs and the clocks cover one pass out of the loop.
+
+The loop increment stalls 15 before `ISETP`. Stall 1 there is shorter than a fixed-latency add: the compare samples the old counter, the body runs one extra time, and the overhead kernel stores that counter. `sm121dis` of that kernel shows the `IADD`, the `ISETP`, and `@!P0 BRA` back to the `IADD`. The host simulator issues the same IR and keeps a GPR write hidden for 5 cycles and a predicate write hidden for 14 (the NAK floors). It requires the overhead counter to equal the trip count, the stall at the top of the sweep to equal the fresh oracle, and stall 1 to equal the stale oracle. Forcing the increment's stall back to 1 must fail the counter check.
+
 ## NAK pin
 
 Mesa commit `01bab9302a6bf0a082c7ba8c49d74427cf10b0cf`.

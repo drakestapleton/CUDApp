@@ -24,6 +24,20 @@
  * the 32-bit clock delta around that same chain, median and max-min over the
  * runs. An empty loop with the same trip count is the overhead control.
  *
+ * The two CS2R reads bracket the loop, not one instruction. Between them sit
+ * the producer, its consumer, the live-value advance, the sentinel move, and
+ * the loop-back (increment, compare, branch). A programmed stall of 1 is only
+ * the producer's field. The predicate chain puts that stall on the ISETP that
+ * feeds @P0 BRA: a shorter stall leaves the previous P0, which was set true,
+ * so the poison move runs and the clocks do not cover the whole trip count.
+ *
+ * The loop increment stalls 15 before ISETP. Stall 1 there is shorter than a
+ * fixed-latency add, so the compare samples the old counter and the body runs
+ * one extra time. sm121dis of the previous overhead kernel showed that IADD
+ * (control 0x000fc200, stall 1) immediately before ISETP, with @!P0 BRA back
+ * to the IADD. The overhead word is that counter. The host simulator below
+ * applies the stall counts and rejects that shape.
+ *
  * One warp, 32 threads, uniform control flow inside the timed region. Only
  * lane 0 stores. Mesa commit and the NAK line citations live in
  * tools/latmeas/diff_nak.py.
@@ -344,7 +358,12 @@ static void store_tail(B *b, int ptr, int t0, int t1, int result, int rsub, int 
 }
 
 static void loop_ctl(B *b, int i, int nreg, int one, int *loop_back) {
-    iadd(b, i, i, one, 1, 0, 0, 0);
+    /* 15, not 1. The compare reads i. Stall 1 is shorter than a fixed-latency
+     * IADD, so ISETP samples the previous i and the body runs one extra time:
+     * the overhead word is then not the trip count, and every exact oracle
+     * fails, including a stall at the top of the sweep. 15 is past every fixed
+     * GPR latency this kit measures. The stall under test stays on the producer. */
+    iadd(b, i, i, one, 15, 0, 0, 0);
     isetp_ge(b, i, nreg, 14); /* P0 = (i >= n) */
     *loop_back = bra(b, 1, 1, 5); /* @!P0 BRA loop */
 }
@@ -614,6 +633,338 @@ static int check_raw_window(const char *id, const uint8_t *code, size_t ninsn, u
     return failed;
 }
 
+/* Host latency simulator. The shared warp simulator (tests/bw_warp_sim.h) writes
+ * a register and the next instruction already sees it, so it cannot catch a
+ * stall that is too short. This one issues the IR in order and keeps each GPR
+ * write hidden for SIM_GPR_LAT cycles and each P0 write hidden for
+ * SIM_PRED_LAT cycles. Those are the NAK floors (ALU/FMA raw 4 plus one,
+ * predicate raw 13 plus one), used here as the model's assumption. A read at
+ * the issue cycle sees a write whose visible cycle is at or before that. The
+ * stall field is how many cycles pass before the next issue. */
+#define SIM_GPR_LAT 5u
+#define SIM_PRED_LAT 14u
+#define SIM_LOG 4096
+
+float fmaf(float, float, float);
+float fminf(float, float);
+
+typedef struct {
+    int is_pred;
+    int reg;
+    uint32_t issue, visible, value;
+} SimWr;
+
+typedef struct {
+    SimWr wr[SIM_LOG];
+    int nwr;
+    uint32_t now;
+    int pc;
+    uint32_t out[4];
+    int stores;
+    const char *err;
+} LatSim;
+
+static uint32_t lat_u2f_bits(float f) {
+    uint32_t u;
+    memcpy(&u, &f, 4);
+    return u;
+}
+static float lat_f(uint32_t u) {
+    float f;
+    memcpy(&f, &u, 4);
+    return f;
+}
+
+static int lat_phys(int v, unsigned sub, int *reg) {
+    if (v < 0) {
+        *reg = -1;
+        return 0;
+    }
+    if (v >= g_prog.regalloc.num_vregs) return -1;
+    int ph = g_prog.regalloc.vreg_to_phys[v];
+    if (ph < 0) return -1;
+    *reg = (ph + (int)sub) & 0xff;
+    return 0;
+}
+
+static uint32_t lat_gpr(const LatSim *s, int reg) {
+    uint32_t val = 0, issue = 0;
+    int have = 0;
+    if (reg < 0) return 0;
+    for (int i = 0; i < s->nwr; i++) {
+        if (s->wr[i].is_pred || s->wr[i].reg != reg) continue;
+        if (s->wr[i].visible > s->now) continue;
+        if (!have || s->wr[i].issue >= issue) {
+            have = 1;
+            issue = s->wr[i].issue;
+            val = s->wr[i].value;
+        }
+    }
+    return val;
+}
+
+static int lat_p0(const LatSim *s) {
+    uint32_t issue = 0, val = 0;
+    int have = 0;
+    for (int i = 0; i < s->nwr; i++) {
+        if (!s->wr[i].is_pred) continue;
+        if (s->wr[i].visible > s->now) continue;
+        if (!have || s->wr[i].issue >= issue) {
+            have = 1;
+            issue = s->wr[i].issue;
+            val = s->wr[i].value;
+        }
+    }
+    return val != 0;
+}
+
+static int lat_post(LatSim *s, int is_pred, int reg, uint32_t lat, uint32_t value) {
+    if (reg < 0 && !is_pred) return 0;
+    if (s->nwr >= SIM_LOG) {
+        s->err = "write log full";
+        return -1;
+    }
+    s->wr[s->nwr].is_pred = is_pred;
+    s->wr[s->nwr].reg = reg;
+    s->wr[s->nwr].issue = s->now;
+    s->wr[s->nwr].visible = s->now + lat;
+    s->wr[s->nwr].value = value;
+    s->nwr++;
+    return 0;
+}
+
+static int lat_rd(const LatSim *s, int v, unsigned sub, uint32_t *out) {
+    int reg = 0;
+    if (lat_phys(v, sub, &reg) != 0) return -1;
+    *out = lat_gpr(s, reg);
+    return 0;
+}
+
+static int lat_wr(LatSim *s, int v, unsigned sub, uint32_t value, uint32_t lat) {
+    int reg = 0;
+    if (lat_phys(v, sub, &reg) != 0) return -1;
+    return lat_post(s, 0, reg, lat, value);
+}
+
+/* Lane 0 only: the kernel is uniform, and the lane filter stores from lane 0.
+ * Returns 0 and fills out[4] (clock, clock, result, aux). */
+static int lat_sim(uint32_t out[4]) {
+    LatSim s;
+    memset(&s, 0, sizeof s);
+    for (int steps = 0; steps < 100000; steps++) {
+        if (s.pc < 0 || (size_t)s.pc >= g_prog.count) {
+            s.err = "pc outside the program";
+            break;
+        }
+        const BlackwellIRInsn *in = &g_prog.insns[s.pc];
+        unsigned stall = (in->control >> 9) & 15u;
+        int next = s.pc + 1;
+        uint32_t a = 0, b = 0, c = 0;
+        if (lat_rd(&s, in->src1_vreg, in->src1_subreg, &a) || lat_rd(&s, in->src2_vreg, in->src2_subreg, &b) ||
+            lat_rd(&s, in->src3_vreg, in->src3_subreg, &c)) {
+            s.err = "vreg has no physical register";
+            break;
+        }
+        switch (in->op) {
+        case BW_IR_EXIT:
+            if (s.stores != 4) {
+                s.err = "lane 0 did not store four words";
+                break;
+            }
+            memcpy(out, s.out, sizeof s.out);
+            return 0;
+        case BW_IR_BRA: {
+            int take = 1;
+            if (in->predicate_p0) take = in->predicate_not ? !lat_p0(&s) : lat_p0(&s);
+            if (take && (int32_t)in->imm == 0) {
+                s.err = "branch to itself";
+                break;
+            }
+            if (take) next = s.pc + (int32_t)in->imm;
+            break;
+        }
+        case BW_IR_NOP:
+        case BW_IR_LDCU64:
+        case BW_IR_LDCU:
+            break;
+        case BW_IR_LDC64:
+            if (lat_wr(&s, in->dst_vreg, 0, 0, SIM_GPR_LAT) || lat_wr(&s, in->dst_vreg, 1, 0, SIM_GPR_LAT))
+                s.err = "write log full";
+            break;
+        case BW_IR_MOV_IMM:
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, in->imm, SIM_GPR_LAT)) s.err = "write log full";
+            break;
+        case BW_IR_MOV_RZ:
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, 0, SIM_GPR_LAT)) s.err = "write log full";
+            break;
+        case BW_IR_S2R: {
+            uint32_t v = 0;
+            if (in->imm == BW_SR_TID_X) v = 0;
+            else if (in->imm == CLOCK_LO) v = s.now;
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, v, SIM_GPR_LAT)) s.err = "write log full";
+            break;
+        }
+        case BW_IR_IADD3:
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, a + b, SIM_GPR_LAT)) s.err = "write log full";
+            break;
+        case BW_IR_ISETP_GE_U32:
+            if (lat_post(&s, 1, 0, SIM_PRED_LAT, a >= b ? 1u : 0u)) s.err = "write log full";
+            break;
+        case BW_IR_FFMA:
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, lat_u2f_bits(fmaf(lat_f(a), lat_f(b), lat_f(c))), SIM_GPR_LAT))
+                s.err = "write log full";
+            break;
+        case BW_IR_FADD:
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, lat_u2f_bits(lat_f(a) + lat_f(b)), SIM_GPR_LAT))
+                s.err = "write log full";
+            break;
+        case BW_IR_FMNMX_MIN:
+            if (lat_wr(&s, in->dst_vreg, in->dst_subreg, lat_u2f_bits(fminf(lat_f(a), lat_f(b))), SIM_GPR_LAT))
+                s.err = "write log full";
+            break;
+        case BW_IR_IMAD_WIDE: {
+            /* Immediate form: Rd:Rd+1 = Ra * imm + Rc+1:Rc. src2 is NOREG. */
+            uint32_t hi = 0;
+            if (lat_rd(&s, in->src3_vreg, 1, &hi)) {
+                s.err = "vreg has no physical register";
+                break;
+            }
+            uint64_t prod = (uint64_t)a * in->imm + (((uint64_t)hi << 32) | c);
+            if (lat_wr(&s, in->dst_vreg, 0, (uint32_t)prod, SIM_GPR_LAT) ||
+                lat_wr(&s, in->dst_vreg, 1, (uint32_t)(prod >> 32), SIM_GPR_LAT))
+                s.err = "write log full";
+            break;
+        }
+        case BW_IR_STG_E: {
+            uint32_t off = in->imm;
+            if (off % 4u || off / 4u >= 4u) {
+                s.err = "store offset is not one of the four result words";
+                break;
+            }
+            s.out[off / 4u] = b;
+            s.stores++;
+            break;
+        }
+        default:
+            s.err = "opcode not modelled";
+            break;
+        }
+        if (s.err) break;
+        s.now += stall ? stall : 1u;
+        s.pc = next;
+    }
+    if (s.err) fprintf(stderr, "lat sim: %s at pc %d\n", s.err, s.pc);
+    else fprintf(stderr, "lat sim: step budget at pc %d\n", s.pc);
+    return -1;
+}
+
+/* The loop-back sm121dis must show: IADD (dest == src A) stall 15, ISETP stall
+ * 14, then @!P0 BRA back to the body. The body is at or before that IADD
+ * (overhead has no body, so the branch lands on the IADD). HMMA has no loop. */
+static int check_loop_sass(const char *id, const uint8_t *code, size_t ninsn, int expect_loop) {
+    int found = 0, failed = 0;
+    for (size_t i = 0; i + 2 < ninsn; i++) {
+        const uint8_t *a = code + i * 16;
+        const uint8_t *bp = code + (i + 1) * 16;
+        const uint8_t *c = code + (i + 2) * 16;
+        if (opc_of(a) != 0x210u || opc_of(bp) != 0x20cu || opc_of(c) != 0x947u) continue;
+        if (reg_dst(a) != reg_a(a)) continue;
+        if (((rd32(c) >> 12) & 0xfu) != 8u) continue;
+        found++;
+        if (stall_of(a) != 15u) {
+            failed++;
+            printf("FAIL: %s loop increment stall %u, want 15\n", id, stall_of(a));
+        }
+        if (stall_of(bp) != 14u) {
+            failed++;
+            printf("FAIL: %s loop compare stall %u, want 14\n", id, stall_of(bp));
+        }
+        int tgt = bra_index(c, (int)i + 2);
+        if (tgt < 0 || tgt > (int)i) {
+            failed++;
+            printf("FAIL: %s loop branch targets %d, increment is at %zu\n", id, tgt, i);
+        }
+    }
+    if (found != expect_loop) {
+        failed++;
+        printf("FAIL: %s loop-back count %d, want %d\n", id, found, expect_loop);
+    }
+    return failed;
+}
+
+static int loop_iadd_index(void) {
+    int found = -1;
+    for (size_t i = 0; i + 2 < g_prog.count; i++) {
+        const BlackwellIRInsn *a = &g_prog.insns[i];
+        const BlackwellIRInsn *b = &g_prog.insns[i + 1];
+        const BlackwellIRInsn *c = &g_prog.insns[i + 2];
+        if (a->op != BW_IR_IADD3 || b->op != BW_IR_ISETP_GE_U32 || c->op != BW_IR_BRA) continue;
+        if (a->dst_vreg != a->src1_vreg) continue;
+        if (!c->predicate_p0 || !c->predicate_not) continue;
+        found = (int)i;
+    }
+    return found;
+}
+
+static int sim_self_test(void) {
+    int failed = 0;
+    uint8_t code[CODE_CAP];
+    size_t len = 0;
+    uint32_t gpr = 0;
+    uint32_t out[4];
+#define SCHECK(cond, ...)                                                                                              \
+    do {                                                                                                               \
+        if (!(cond)) {                                                                                                 \
+            failed++;                                                                                                  \
+            printf("FAIL: ");                                                                                          \
+            printf(__VA_ARGS__);                                                                                       \
+            printf("\n");                                                                                              \
+        }                                                                                                              \
+    } while (0)
+
+    SCHECK(build(NULL, 0, N_FIXED, 1, code, sizeof code, &len, &gpr) == 0, "overhead encode");
+    SCHECK(check_loop_sass("ovh32", code, g_prog.count, 1) == 0, "overhead sass");
+    SCHECK(lat_sim(out) == 0, "overhead sim ran");
+    SCHECK(out[2] == N_FIXED && out[3] == 1u, "overhead loop count is %u (aux 0x%x), want %u", out[2], out[3], N_FIXED);
+    {
+        int at = loop_iadd_index();
+        SCHECK(at >= 0, "overhead loop increment is in the IR");
+        if (at >= 0) {
+            uint32_t saved = g_prog.insns[at].control;
+            g_prog.insns[at].control = (saved & ~(15u << 9)) | (1u << 9);
+            uint32_t bad[4] = {0, 0, 0, 0};
+            SCHECK(lat_sim(bad) == 0, "short-stall overhead sim ran");
+            SCHECK(bad[2] != N_FIXED, "stall 1 on the increment must not store the trip count (got %u)", bad[2]);
+            g_prog.insns[at].control = saved;
+        }
+    }
+    SCHECK(build(NULL, 0, 1, 1, code, sizeof code, &len, &gpr) == 0, "one-trip overhead encode");
+    SCHECK(lat_sim(out) == 0 && out[2] == 1u, "one-trip overhead stored %u", out[2]);
+
+    for (int ci = 0; ci < NCASES; ci++) {
+        if (CASES[ci].href) {
+            SCHECK(build(&CASES[ci], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "%s encode", CASES[ci].id);
+            SCHECK(check_loop_sass(CASES[ci].id, code, g_prog.count, 0) == 0, "%s has no loop", CASES[ci].id);
+            continue;
+        }
+        uint32_t fresh = 0, fr_aux = 0, stale = 0, st_aux = 0;
+        SCHECK(eval_case(&CASES[ci], 0, &fresh, &fr_aux) == 0, "%s fresh", CASES[ci].id);
+        SCHECK(eval_case(&CASES[ci], 1, &stale, &st_aux) == 0, "%s stale", CASES[ci].id);
+        SCHECK(build(&CASES[ci], CASES[ci].sweep, 0, 0, code, sizeof code, &len, &gpr) == 0, "%s stall %u encode",
+               CASES[ci].id, CASES[ci].sweep);
+        SCHECK(check_loop_sass(CASES[ci].id, code, g_prog.count, 1) == 0, "%s loop sass", CASES[ci].id);
+        SCHECK(lat_sim(out) == 0, "%s stall %u sim", CASES[ci].id, CASES[ci].sweep);
+        SCHECK(out[2] == fresh && out[3] == fr_aux, "%s stall %u sim result 0x%x aux 0x%x, fresh 0x%x aux 0x%x",
+               CASES[ci].id, CASES[ci].sweep, out[2], out[3], fresh, fr_aux);
+        SCHECK(build(&CASES[ci], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "%s stall 1 encode", CASES[ci].id);
+        SCHECK(lat_sim(out) == 0, "%s stall 1 sim", CASES[ci].id);
+        SCHECK(out[2] == stale && out[3] == st_aux, "%s stall 1 sim result 0x%x aux 0x%x, stale 0x%x aux 0x%x",
+               CASES[ci].id, out[2], out[3], stale, st_aux);
+    }
+#undef SCHECK
+    return failed;
+}
+
 static int self_test(void) {
     int failed = 0;
     uint8_t code[CODE_CAP];
@@ -706,6 +1057,7 @@ static int self_test(void) {
     }
     len = 0;
     CHECK(build(NULL, 0, 64, 1, code, sizeof code, &len, &gpr) == 0, "overhead kernel");
+    failed += sim_self_test();
 
     int pass[RUNS][SWEEP_MAX];
     memset(pass, 0, sizeof pass);

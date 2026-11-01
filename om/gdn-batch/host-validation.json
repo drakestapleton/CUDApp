@@ -1,0 +1,76 @@
+{
+  "utc": "2026-11-01T22:54:15.331376+00:00",
+  "status": "PASS_TARGETED_HOST_NOT_PHYSICAL",
+  "source_base": "245122b1fc2f36e65d6ece23399179eeea22b34f",
+  "tested_source_identity": "Working-tree content hashes below. The commit carrying this receipt records the candidate; the base alone does not contain it.",
+  "source_sha256": {
+    "om/gdn-batch/plan.om": "c4cfd1984427465911bfa787dfdf7bb16fe82c03edef830c88af70ea9abc58cb",
+    "om/gdn-batch/step.om": "ecaa23c0c660d2b6ca11c91bba2503bb2b41d223b4951fc23d6edcce74c74826",
+    "om/gdn-batch/stamp.om": "202398ad0bdda7987d5d6229a0998a6394f9e4c0460cb9e50ed5d73429eeb5ec",
+    "om/gdn-batch/check.py": "b9ef1c822f64ad036668638363fcdaae64be2076a97f33b4ab8d2379d6e820c5",
+    "om/gdn-batch/mutants.py": "f79f26e4a293f971f9d66c9c99be8af773332e9f6b4eec21d147b8ab14db52e3",
+    "om/gdn-batch/dispatch-check.c": "0ba2d59ea9b50c6c84a777e67c79555e915ea869491063174625ce808dfcbd5f",
+    "om/gdn-batch/dispatch-mutants.py": "ee6bd80ec566a52e7100794b1a17804ed8f4bfd0f716130a8fea0647c1df9622",
+    "om/gdn-batch/chip-check.c": "003674483cfda8b2558c154ecb9dd73f5346c0eabd5c00b242d2a476497f8071",
+    "src/omega_gpu_gdn_api.c": "3fa263934e0c5d6341ea61f21e3bfcfd26bbf952d80d35fe2465c5ab6436e45a",
+    "src/omega_gpu_gdn_batch.h": "8482eb730245424bdc5c2f31715a4782e541ecb1d9c7c7c4daa93c2d047e49e5",
+    "src/cudapp_om_gdn_batch_plan.c": "721b185307f6380fc15b980fe73e1be0ff04237a941f731566c2dce04932d0c3",
+    "src/cudapp_om_gdn_batch_step.c": "539e8ab04ae0734f1f49f77bab40c7e6c553a0f887c7b32aa303493497cc1eb5",
+    "src/cudapp_om_gdn_batch_stamp.c": "cf7290729828b4d521cbbd6e6a752def3e07e85e974523a585b23b609a3384ae",
+    "src/cudapp_native.h": "1ad4768477216747f2cb4a9eea8bc430dbbcf8078520f02c9378f7defabe829a",
+    "mk/gdn-batch.mk": "aa497f85d0f8f341866e00618fe3df829cbfaf59ed8c10d7273aa4e01526f82f"
+  },
+  "admission_cases": 1440,
+  "transition_cases": 34560,
+  "timestamp_cases": 12005,
+  "wrong_lengths_refused": 8,
+  "policy_mutants_caught": 11,
+  "actual_transport_mutants_caught": 8,
+  "host_only_existing_codegen_checks": 68,
+  "commands": [
+    "OMEGA_OMC=$PINNED_OMC OMEGA_BRIDGE=$PINNED_BRIDGE sh om/units.sh",
+    "make OUT_DIR=build-gdn-batch test-gdn-batch-policy test-gdn-batch-dispatch",
+    "make OUT_DIR=build-gdn-batch test-runtime-api test-runtime-portability test-runtime-api-semver RUNTIME_API_BASE=245122b1fc2f36e65d6ece23399179eeea22b34f",
+    "build-gdn-batch/gdn-batch-chip --host-only"
+  ],
+  "logs": {
+    "gdn-batch-host-mutants.log": {
+      "sha256": "2f409c28f76347129e350a1cff5874e85c4af118078696c83368be492dcbb725",
+      "terminal_lines": [
+        "ignore_poison: caught",
+        "skip_list_release: caught"
+      ]
+    },
+    "gdn-batch-targeted.log": {
+      "sha256": "45cbb15ee5b6def3e52c397e30f9b38c8a292285f43c35b89d9d2c8b4e6a5a5e",
+      "terminal_lines": [
+        "POSITIVE CONTROL semver-added-with-minor: PASSED as it must (the entry changes need MINOR)",
+        "RESULT: PASS (every negative control was caught)"
+      ]
+    },
+    "gdn-batch-chip-host.log": {
+      "sha256": "2457ab0d406fcb4a53503402106441924ea7a0f06d8099ac6ef1ac1bca7ded0d",
+      "terminal_lines": [
+        "gpu_gdn_test: 68 checks, 0 failed: PASS",
+        "scoped GDN batches: 0, timing: 1, status: PASS"
+      ]
+    }
+  },
+  "host_manifest": {
+    "count": 85,
+    "includes_new_targets": true,
+    "probe_receipt_sha256": "90e78cca5e62c3e56382b163920606544c64883cbb81a3592e0f1340b321c6c4",
+    "probe_note": "make -pRrq -f Makefile : prints its database and exits 2 because the artificial colon target is absent. This proves registration only; the complete85target suite is NOT_RUN in this receipt."
+  },
+  "preserved_initial_failure": {
+    "name": "dispatch checker indentation rejected by -Werror; formatting repaired without weakening checks",
+    "log_sha256": "71825f0fd6751b65089dfe88e45c0bb78ae75a75901abb84dace56f5d0307394"
+  },
+  "not_run": [
+    "Complete85target suite",
+    "Production candidate physical reference/state/next-decode checks",
+    "Complete-model score parity",
+    "Core adapter and server integration",
+    "Quiet alternating timing"
+  ]
+}

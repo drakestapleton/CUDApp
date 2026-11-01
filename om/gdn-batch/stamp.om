@@ -1,0 +1,13 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Four ordered timestamp reports cover exactly three operations. All-ones is unwritten or refusal.
+fn native_gdnbstamp ts view ulong 4 which ulong to ulong
+if or gt which 2 eq get ts 3 18446744073709551615
+ret 18446744073709551615
+end
+for i ulong 3
+if ge get ts i get ts add i 1
+ret 18446744073709551615
+end
+end
+ret sub get ts add which 1 get ts which
+end

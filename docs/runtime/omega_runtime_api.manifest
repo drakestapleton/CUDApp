@@ -12,7 +12,7 @@
 # After a deliberate header change: edit the line here, run `tools/runtime_api_check.sh --bless` to refresh numbers, review the diff,
 # and bump the version (MAJOR/MINOR/PATCH, rule in API.md section 2; tools/runtime_api_semver.sh checks the bump against the base).
 # Names a manifest header declares that are NOT API go in omega_runtime_api.internal, each with a reason (the check fails otherwise).
-abi omega_runtime 0.13.0
+abi omega_runtime 0.14.0
 header src/omega_runtime_api.h
 header src/omega_gpu_platform.h
 header src/omega_gpu_session.h
@@ -32,6 +32,7 @@ header src/omega_gpu_tern_api.h
 header src/omega_gpu_tcgemm_api.h
 header src/omega_gpu_prefill_attn_api.h
 header src/omega_gpu_attention_mirror.h
+header src/omega_gpu_gdn_batch.h
 header src/omega_gpu_moe_api.h
 header src/omega_gpu_decode_graph.h
 header src/omega_gpu_prefill.h
@@ -39,9 +40,9 @@ header src/omega_gpu_pfhost.h
 header src/omega_gpu_gemm_ex.h
 # ---- version ----
 const OMEGA_RUNTIME_API_VERSION_MAJOR 0
-const OMEGA_RUNTIME_API_VERSION_MINOR 13
+const OMEGA_RUNTIME_API_VERSION_MINOR 14
 const OMEGA_RUNTIME_API_VERSION_PATCH 0
-const OMEGA_RUNTIME_API_VERSION 13
+const OMEGA_RUNTIME_API_VERSION 14
 # ---- platform contract (src/omega_gpu_platform.h, ABI 1.2) ----
 struct OmegaGpuDeviceHandle 8 4 # STABLE
 field OmegaGpuDeviceHandle index 0 4 u32 1
@@ -1099,3 +1100,5 @@ fn omega_gpu_pf_qgemm_reading_option fn(u32, u32) -> u32 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_workspace_fits fn(u64, u64, u64, u64, u64) -> i32 # EXPERIMENTAL
 
 fn omega_gpu_prefill_attn256_scoped fn(*mut OmegaGpuDecodeAttn256Cache, u32, u32, u32, *const f32, f32, f32, *mut f32, *mut OmegaGpuPrefillAttn256Info, u32, *mut u64) -> i32 # EXPERIMENTAL
+
+fn omega_gpu_gdn_prefill_scoped fn(*mut OmegaGpuGdn, u32, u32, *const f32, *const f32, *const f32, f32, f32, f32, f32, *mut f32, *mut OmegaGpuGdnPfInfo, u32) -> i32 # EXPERIMENTAL

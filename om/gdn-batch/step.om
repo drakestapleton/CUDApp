@@ -1,0 +1,18 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Phases 0..2 record prep, scan, post; 3 submits; 4 reads; 5 publishes.
+note Actions 1..6 advance one phase; 0 refuses. Missing is all-ones only when no completion is missing.
+fn native_gdnbnext phase ulong count ulong done ulong missing ulong ok ulong launched ulong to ulong
+if or ne ok 1 or gt phase 5 ne missing 18446744073709551615
+ret 0
+end
+if le phase 3
+if or ne count phase or ne done 0 ne launched 0
+ret 0
+end
+else
+if or ne count 3 or ne done 3 ne launched 3
+ret 0
+end
+end
+ret add phase 1
+end

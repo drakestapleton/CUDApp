@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-01T22:54:21Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:7f0c42fd54596bee38d56f13a41748748048f746791a94dee281ce7c333e44fc",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 10,
+      "generated_at_commit": "245122b1fc2f36e65d6ece23399179eeea22b34f",
+      "source_tree": "sha256:fe150d4e85c792c9f39d6a627edc7c0a754bc813636f6575e15318be4c0d45f1"
+    }
+  },
+  "layer": "native-policy",
+  "name": "gdn-batch",
+  "purpose": "Checked Omega admission, ordered submission and completed output publication for scoped GDN prefill batches",
+  "schema_version": "1.0.0"
+}

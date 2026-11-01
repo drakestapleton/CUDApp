@@ -5,7 +5,9 @@
  * sync_to_gpu after host writes, sync_to_cpu before host reads, one omega_gpu_session_launch per call; the tails and states
  * are the exception (GPU-cached, reached by the host only through the copy / zero launches).
  */
-#include "omega_gpu_gdn_api.h"
+#include "omega_gpu_gdn_batch.h"
+#include "cudapp_native.h"
+_Static_assert(OMEGA_GDN_PF_MIN_T == 3u && OMEGA_GPU_GDN_PF_MAX_T == 65536u, "Omega GDN admission bounds must match the implementation");
 #include "omega_gpu_hostmath.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_cmdlist.h"
@@ -38,6 +40,7 @@ struct OmegaGpuGdn {
     int bf16;          /* L313: the state is stored bf16 (AIEN_OMEGA_GDN_STATE_BF16=1 at alloc); set/get_state keep the f32 layout */
     OmegaGpuMem stage; /* cached: uncached staging for set_state / get_state, [state of one layer][tail of one layer] */
     OmegaGpuScratch pf; /* prefill scratch (see pf_layout) */
+    OmegaGpuCmdList *pf_batch; /* session-locked installation and reuse; freed outside the lock */
 };
 
 typedef struct {
@@ -188,6 +191,7 @@ int omega_gpu_gdn_alloc_ratio(uint32_t layers, uint32_t ratio, OmegaGpuGdn **out
 
 void omega_gpu_gdn_free(OmegaGpuGdn *g) {
     if (!g) return;
+    omega_gpu_cmdlist_free(g->pf_batch);
     omega_gpu_session_lock();
     if (g->par.cpu) omega_gpu_session_free(&g->par);
     if (g->tail.cpu) omega_gpu_session_free(&g->tail);
@@ -529,11 +533,41 @@ int omega_gpu_gdn_prefill_reserve(OmegaGpuGdn *g, uint32_t max_tokens) {
     return rc;
 }
 
+/* The list API takes the lock for creation/free. Install under the lock, and
+ * discard a redundant allocation outside it if another call installed first.
+ * A stale list is refused by add/submit after session recovery. */
+static int pf_batch_list(OmegaGpuGdn *g, uint32_t capacity, OmegaGpuCmdList **out) {
+    OmegaGpuCmdList *made = NULL;
+    omega_gpu_session_lock();
+    *out = g->pf_batch;
+    omega_gpu_session_unlock();
+    if (*out) return OMEGA_GPU_GDN_OK;
+    if (omega_gpu_cmdlist_create(capacity, &made) != 0) return OMEGA_GPU_GDN_CHIP_FAIL;
+    omega_gpu_session_lock();
+    if (!g->pf_batch) { g->pf_batch = made; made = NULL; }
+    *out = g->pf_batch;
+    omega_gpu_session_unlock();
+    omega_gpu_cmdlist_free(made);
+    return OMEGA_GPU_GDN_OK;
+}
+
+static int pf_batch_action(OmegaGpuCmdList *list, uint64_t phase,
+                           const OmegaGpuCmdListStats *stats, uint64_t ok) {
+    uint64_t action = 0;
+    const uint64_t done = stats ? stats->sems_done : 0;
+    const uint64_t missing = stats ? (uint64_t)(int64_t)stats->first_missing : UINT64_MAX;
+    if (omega_native_gdnbnext(&action, phase, omega_gpu_cmdlist_count(list), done, missing, ok, stats ? stats->launches : 0) != OMEGA_OK || action != phase + 1) {
+        omega_gpu_session_set_error("gdn batch: Omega refused operation or completion");
+        return OMEGA_GPU_GDN_CHIP_FAIL;
+    }
+    return OMEGA_GPU_GDN_OK;
+}
+
 /* rec non-NULL (record path, caller holds the lock): the inputs are device rows, the scratch must already hold T
  * tokens (omega_gpu_gdn_prefill_reserve), the three launches are appended to rec. */
 static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv, const float *z, const float *ab, float eps_l2,
                    float eps_norm, float in_scale, float out_scale, float *out, OmegaGpuGdnPfInfo *info,
-                   OmegaGpuCmdList *rec, uint64_t dev_qkv, uint64_t dev_z, uint64_t dev_ab, uint64_t *out_va) {
+                   OmegaGpuCmdList *rec, uint64_t dev_qkv, uint64_t dev_z, uint64_t dev_ab, uint64_t *out_va, OmegaGpuCmdList *batch) {
     uint64_t c0 = omega_gpu_session_now_ns();
     if (info) memset(info, 0, sizeof *info);
     if (!g || layer >= g->layers || T < OMEGA_GDN_PF_MIN_T || T > OMEGA_GPU_GDN_PF_MAX_T) return OMEGA_GPU_GDN_BAD_ARGS;
@@ -549,6 +583,8 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
     if (!rec) omega_gpu_session_lock();
 #define UNLOCK() do { if (!rec) omega_gpu_session_unlock(); } while (0)
     if (!dev_open_locked()) { UNLOCK(); return OMEGA_GPU_GDN_CHIP_FAIL; }
+    if (batch) omega_gpu_cmdlist_reset(batch);
+    OmegaGpuCmdListStats batch_stats = {0};
     if (rec && (!g->pf.mem.cpu || g->pf.cap < bytes)) {
         omega_gpu_session_set_error("gdn prefill record: scratch below T tokens (call omega_gpu_gdn_prefill_reserve first)");
         UNLOCK(); return OMEGA_GPU_GDN_TOO_LARGE;
@@ -604,14 +640,38 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
         };
         if (!omega_bw_gpr_declared_ok(L.gpr_count, ks[k]->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); rc = OMEGA_GPU_GDN_CHIP_FAIL; }
         else if (rec) { if (omega_gpu_cmdlist_add(rec, &L) < 0) rc = OMEGA_GPU_GDN_CHIP_FAIL; }
+        else if (batch) {
+            rc = pf_batch_action(batch, k, NULL, 1);
+            if (rc == OMEGA_GPU_GDN_OK && omega_gpu_cmdlist_add(batch, &L) < 0) rc = OMEGA_GPU_GDN_CHIP_FAIL;
+        }
         else if (omega_gpu_session_launch(&L, info ? &info->elapsed_ns[k] : NULL, NULL) != 0) rc = OMEGA_GPU_GDN_CHIP_FAIL;
+    }
+    if (rc == OMEGA_GPU_GDN_OK && batch) {
+        rc = pf_batch_action(batch, 3, NULL, 1);
+        const OmegaGpuCmdListOpts opts = {.stamps = info != NULL};
+        if (rc == OMEGA_GPU_GDN_OK) {
+            const int submitted = omega_gpu_cmdlist_submit(batch, &opts, &batch_stats) == 0;
+            rc = pf_batch_action(batch, 4, &batch_stats, submitted);
+        }
+        if (rc == OMEGA_GPU_GDN_OK && info) {
+            uint64_t ts[4];
+            if (omega_gpu_cmdlist_stamps(batch, ts, 4) != 4) rc = OMEGA_GPU_GDN_CHIP_FAIL;
+            for (unsigned k = 0; k < 3 && rc == OMEGA_GPU_GDN_OK; k++) {
+                uint64_t ns = UINT64_MAX;
+                if (omega_native_gdnbstamp(&ns, ts, 4, k) != OMEGA_OK || ns == UINT64_MAX) rc = OMEGA_GPU_GDN_CHIP_FAIL;
+                else info->elapsed_ns[k] = ns;
+            }
+        }
     }
     if (rc == OMEGA_GPU_GDN_OK && !rec && omega_gpu_session_sync_to_cpu(&g->pf.mem) != 0) rc = OMEGA_GPU_GDN_CHIP_FAIL;
     if (rc == OMEGA_GPU_GDN_OK && !rec) {
         size_t unchanged = 0;
         for (size_t i = 0; i < nout; i++) if (yo[i] == POISON_F32) unchanged++;
         if (unchanged) { omega_gpu_session_set_error("gdn prefill: output poison survived"); rc = OMEGA_GPU_GDN_CHIP_FAIL; }
-        else memcpy(out, yo, nout * 4u);
+        else {
+            if (batch) rc = pf_batch_action(batch, 5, &batch_stats, 1);
+            if (rc == OMEGA_GPU_GDN_OK) memcpy(out, yo, nout * 4u);
+        }
     }
     if (rc == OMEGA_GPU_GDN_OK && out_va) *out_va = a_out;
     UNLOCK();
@@ -622,14 +682,32 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
 
 int omega_gpu_gdn_prefill(OmegaGpuGdn *g, uint32_t layer, uint32_t tokens, const float *qkv, const float *z, const float *ab,
                           float eps_l2, float eps_norm, float in_scale, float out_scale, float *out, OmegaGpuGdnPfInfo *info) {
-    return pf_core(g, layer, tokens, qkv, z, ab, eps_l2, eps_norm, in_scale, out_scale, out, info, NULL, 0, 0, 0, NULL);
+    return pf_core(g, layer, tokens, qkv, z, ab, eps_l2, eps_norm, in_scale, out_scale, out, info, NULL, 0, 0, 0, NULL, NULL);
+}
+
+int omega_gpu_gdn_prefill_scoped(OmegaGpuGdn *g, uint32_t layer, uint32_t tokens,
+    const float *qkv, const float *z, const float *ab, float eps_l2,
+    float eps_norm, float in_scale, float out_scale, float *out,
+    OmegaGpuGdnPfInfo *info, uint32_t mode) {
+    if (info) memset(info, 0, sizeof *info);
+    if (!g || !qkv || !z || !ab || !out || !isfinite(eps_l2) || !isfinite(eps_norm) || !isfinite(in_scale) || !isfinite(out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
+    const uint64_t request[4] = {mode, tokens, layer, g->layers};
+    uint64_t capacity = UINT64_MAX;
+    if (omega_native_gdnbplan(&capacity, request, 4) != OMEGA_OK || capacity == UINT64_MAX) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (capacity == 0) return omega_gpu_gdn_prefill(g, layer, tokens, qkv, z, ab, eps_l2, eps_norm, in_scale, out_scale, out, info);
+    const uint64_t begin = omega_gpu_session_now_ns();
+    OmegaGpuCmdList *batch = NULL;
+    int rc = pf_batch_list(g, (uint32_t)capacity, &batch);
+    if (rc == OMEGA_GPU_GDN_OK) rc = pf_core(g, layer, tokens, qkv, z, ab, eps_l2, eps_norm, in_scale, out_scale, out, info, NULL, 0, 0, 0, NULL, batch);
+    if (info) info->call_ns = omega_gpu_session_now_ns() - begin;
+    return rc;
 }
 
 int omega_gpu_gdn_prefill_record(OmegaGpuCmdList *cl, OmegaGpuGdn *g, uint32_t layer, uint32_t tokens, uint64_t qkv_va,
                                  uint64_t z_va, uint64_t ab_va, float eps_l2, float eps_norm, float in_scale, float out_scale,
                                  uint64_t *out_va) {
     if (!cl) return OMEGA_GPU_GDN_BAD_ARGS;
-    return pf_core(g, layer, tokens, NULL, NULL, NULL, eps_l2, eps_norm, in_scale, out_scale, NULL, NULL, cl, qkv_va, z_va, ab_va, out_va);
+    return pf_core(g, layer, tokens, NULL, NULL, NULL, eps_l2, eps_norm, in_scale, out_scale, NULL, NULL, cl, qkv_va, z_va, ab_va, out_va, NULL);
 }
 
 int omega_gpu_gdn_prefill_read_out(OmegaGpuGdn *g, uint32_t tokens, float *out) {

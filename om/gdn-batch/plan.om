@@ -1,0 +1,19 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Exact request: mode, tokens, layer, layer count. Result 0 ordinary, 3 batch, all-ones refusal.
+note Bounds are existing GDN implementation contracts, not hardware limits.
+fn native_gdnbplan req view ulong 4 to ulong
+mode = get req 0
+rows = get req 1
+layer = get req 2
+layers = get req 3
+if or gt mode 1 or lt rows 3 gt rows 65536
+ret 18446744073709551615
+end
+if or eq layers 0 or gt layers 4294967295 ge layer layers
+ret 18446744073709551615
+end
+if eq mode 0
+ret 0
+end
+ret 3
+end

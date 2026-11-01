@@ -3,14 +3,14 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-10-28T15:50:30Z",
+      "compiled_at": "2026-11-01T16:42:16Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:805faf2db4f652d19178a20ad182a980644ef12732768f10ae2c46e756f37fc4",
+      "digest": "sha256:a605aa9ba74e3fb3501e922cff8504e343f150f03ba888ef6f075ec40c89a061",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 14,
-      "generated_at_commit": "017069c63f80dca6ebb97f4426296bba9e01ad76",
-      "source_tree": "sha256:ef9e40937892c5ea51254ecf2d8e927c88956fd983eba03e1de48109cb66eba1"
+      "files": 18,
+      "generated_at_commit": "200c0598700da5c6fdbbd1469107718299899699",
+      "source_tree": "sha256:3cfd281b632f2f840a9335917aaeac95267250c8a40ed21f6f6599d744ee8568"
     },
     "owner_lane": "PipelineSelect",
     "seed": {

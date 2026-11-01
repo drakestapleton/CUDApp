@@ -43,6 +43,7 @@ uint32_t omega_native_mcblob(uint64_t *result, const void *p0, uint64_t p0_n, co
 uint32_t omega_native_mccover(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n);
 uint32_t omega_native_mcintent(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n, const void *p4, uint64_t p4_n);
 uint32_t omega_native_mcseal(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2, void *p3, uint64_t p3_n);
+uint32_t omega_native_mcreseal(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2, void *p3, uint64_t p3_n, void *p4, uint64_t p4_n);
 uint32_t omega_native_mccode(uint64_t *result, const void *p0, uint64_t p0_n, uint64_t p1, void *p2, uint64_t p2_n);
 uint32_t omega_native_mclaunch(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n, void *p4, uint64_t p4_n);
 uint32_t omega_native_mcdir(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);

@@ -69,8 +69,9 @@ extern "C" {
 /* Cycles every user stays behind a fixed-latency producer (chip-proven rule: >= 5; omega_gpu_elementwise_api.c:13).
  * The generator sets each stall from the register dependencies after allocation (tern_schedule_stalls). */
 #define OMEGA_TERN_FIXED_LAT 6u
-/* I2FP is decoupled (chip sweep lat-20261027T025808Z: i2fp->fmul 18, i2f->fmul 19 cycles). The generator puts it on
- * scoreboard 0; a consumer without that wait must sit >= OMEGA_TERN_I2FP_LAT cycles behind or the program is refused. */
+/* Cycles every reader stays behind an I2FP write (Sass#4 chip sweep lat-20261027T025808Z: i2fp->fmul 18, i2f->fmul 19).
+ * I2FP carries no scoreboard (a wait on one did not hold its reader on the GB10); a program with a reader closer than
+ * this is refused (omega_tern_i2fp_violations). */
 #define OMEGA_TERN_I2FP_LAT 19u
 #define OMEGA_TERN_LAYOUT_ROWMAJOR 0
 #define OMEGA_TERN_LAYOUT_BLOCK 1

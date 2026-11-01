@@ -1,15 +1,17 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* gpu_tern_sched_test: the I2FP consumer rule of the ternary GEMV generator (Sass#4, 2026-10-27). Host only, no device.
  *
- * I2FP is decoupled on consumer Blackwell (chip sweep lat-20261027T025808Z: i2fp->fmul 18, i2f->fmul 19 cycles), but
- * the generator emitted it as a fixed-latency op with stall 6, so the f32 epilogue's FMUL could read a stale register.
- * The generator now puts I2FP on scoreboard 0 and refuses any program in which an I2FP reader neither waits on that
- * scoreboard nor sits >= OMEGA_TERN_I2FP_LAT cycles behind (omega_tern_i2fp_violations).
+ * The Sass#4 chip sweep (lat-20261027T025808Z) measured i2fp->fmul 18 and i2f->fmul 19 cycles, while the generator gave
+ * the f32 epilogue's FMUL 6. Sass#4 then put I2FP on scoreboard 0 with the FMUL waiting on it at stall 4; on the GB10
+ * that broke the epilogue (omega-mv#924 window 2026-11-01T00:55Z: gpu_tern_test "f32 q|k|v segments" 2040 of 3840 rows
+ * off, stall-6 encoding 0). The generator now emits I2FP with no scoreboard, first in the epilogue, and refuses any
+ * program in which an I2FP reader sits < OMEGA_TERN_I2FP_LAT cycles behind, waiting on a scoreboard or not
+ * (omega_tern_i2fp_violations).
  *
- *  1. every production f32 spec builds, has an I2FP, and the I2FP sets a write scoreboard its reader waits on;
- *  2. negative control: mutant 4 (the pre-fix I2FP, stall 6, no scoreboard) is refused for every f32 spec;
- *  3. the checker on hand-built programs: I2FP -> FMUL at stall 6 fails, at 18 fails, at 19 passes, with the
- *     scoreboard wait passes, without it fails; an FMUL producer at stall 6 passes (other producers keep their rule).
+ *  1. every production f32 spec builds, has an I2FP, the I2FP writes no scoreboard and the checker passes it;
+ *  2. negative control: mutant 4 (the pre-Sass#4 I2FP, directly before its FMUL at stall 6) is refused for every spec;
+ *  3. the checker on hand-built programs: I2FP -> FMUL at stall 6 fails, at 18 fails, at 19 passes, behind a
+ *     scoreboard wait at stall 4 fails; an FMUL producer at stall 6 passes (other producers keep their rule).
  *
  * MIGRATION-PENDING C (GpuStack PLAN, Language rule): a host test of an existing C generator (omega_blackwell_codegen_tern.c).
  * It runs only while CUDAPP_MIGRATION_PENDING_TERN_SCHED is 1 (the default below); set it to 0 when the ternary kernel moves
@@ -77,17 +79,17 @@ int main(void) {
                         if (prog.insns[i].op != BW_IR_I2FP) continue;
                         seen++;
                         const uint32_t wb = (prog.insns[i].control >> 14) & 7u;
-                        const uint32_t nxw = i + 1 < prog.count ? (prog.insns[i + 1].control >> 20) & 0x3fu : 0;
-                        if (wb == 7u || !((nxw >> wb) & 1u)) ok = 0;
+                        if (wb != 7u) ok = 0;
                     }
                     if (seen && ok && omega_tern_i2fp_violations(&prog) == 0) wired++;
                 }
                 s.mutant = 4;
                 if (omega_tern_gemv_spec_ok(&s) && omega_blackwell_codegen_tern_gemv_prog(&s, &prog) != 0) refused++;
             }
-    printf("  f32 specs %d: built %d, I2FP on a scoreboard its reader waits on %d, mutant 4 refused %d\n", specs, built, wired, refused);
+    printf("  f32 specs %d: built %d, I2FP without a scoreboard and >= %u cycles ahead of its reader %d, mutant 4 refused %d\n",
+           specs, built, OMEGA_TERN_I2FP_LAT, wired, refused);
     check(specs > 0 && built == specs, "1. every production f32 spec builds");
-    check(specs > 0 && wired == specs, "1. its I2FP writes a scoreboard and the next instruction waits on it");
+    check(specs > 0 && wired == specs, "1. its I2FP writes no scoreboard and its reader sits >= OMEGA_TERN_I2FP_LAT behind");
     check(specs > 0 && refused == specs, "2. negative control: mutant 4 (I2FP fixed stall 6) refused for every spec");
     OmegaTernGemvSpec i32 = { 2560, OMEGA_TERN_LAYOUT_ROWMAJOR, 2, 4, 1, OMEGA_TERN_EPI_I32, 4 };
     check(omega_blackwell_codegen_tern_gemv_prog(&i32, &prog) == 0, "2. mutant 4 without an I2FP (i32 epilogue) still builds");
@@ -95,7 +97,7 @@ int main(void) {
     check(synth(BW_IR_I2FP, CW(6, 7, 7, 0), 0, CW(6, 7, 7, 0)) == 1, "3. I2FP -> FMUL at stall 6, no scoreboard: violation");
     check(synth(BW_IR_I2FP, CW(15, 7, 7, 0), 3, CW(6, 7, 7, 0)) == 1, "3. I2FP -> FMUL at 18 cycles, no scoreboard: violation");
     check(synth(BW_IR_I2FP, CW(15, 7, 7, 0), 4, CW(6, 7, 7, 0)) == 0, "3. I2FP -> FMUL at 19 cycles, no scoreboard: pass");
-    check(synth(BW_IR_I2FP, CW(4, 0, 1, 0), 0, CW(6, 7, 7, 1u)) == 0, "3. I2FP on scoreboard 0, FMUL waits on it at stall 4: pass");
+    check(synth(BW_IR_I2FP, CW(4, 0, 1, 0), 0, CW(6, 7, 7, 1u)) == 1, "3. I2FP on scoreboard 0, FMUL waits on it at stall 4: violation");
     check(synth(BW_IR_I2FP, CW(4, 0, 1, 0), 0, CW(6, 7, 7, 2u)) == 1, "3. I2FP on scoreboard 0, FMUL waits on another: violation");
     check(synth(BW_IR_FMUL, CW(6, 7, 7, 0), 0, CW(6, 7, 7, 0)) == 0, "3. FMUL producer -> FMUL at stall 6: pass (not an I2FP)");
     if (fails) { printf("gpu_tern_sched_test: FAIL (%d)\n", fails); return 1; }

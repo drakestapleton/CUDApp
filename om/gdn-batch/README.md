@@ -36,8 +36,18 @@ absent or `1` requests them. An explicit timing request by the existing oracle
 is always honored, including its timing loop. The host selector regression
 checks all four combinations. This setting exists only in that test.
 
-Physical qualification, complete-model parity, server behavior and quiet timing
-for this production candidate are NOT_RUN. Earlier external command-list screens
-motivated the change but do not qualify it. Core integration is not yet present.
+The complete 85-target host suite passes on production commit `09dbc67b`.
+The test-only timing-selector correction passes the full dispatch target on
+`e74b047f`. Physical reference, carried-state and next-decode checks pass in
+timed and optional-untimed arms (54 checks each); the BF16 state arm passes
+8 checks. All six complete-model score vectors and selected tokens match in
+ordinary, untimed-batch and timed-batch arms. The independent frozen-score
+comparison and damaged-output refusal also pass. See
+[`followup-validation.json`](followup-validation.json) for exact identities.
+
+These are shared-machine screens. The external selector exercises the production
+Omega policy and native transport, but Core integration and server behavior are
+NOT_RUN. Quiet performance qualification, independent review and deployment
+remain open. No default selection changes.
 Tracking issue: aien-dev/aien-sovereign-core-mv#710. The parent attention candidate
 is CUDApp #260; this is a separate, optional follow-up.

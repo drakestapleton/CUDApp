@@ -1,0 +1,405 @@
+{
+  "utc": "2026-11-01T23:10:32.009020+00:00",
+  "status": "PASS_HOST_CHIP_AND_FULL_MODEL_SCREENS",
+  "scope": "Optional production Omega GDN policy and native transport, exercised through an external complete-model selector. This receipt does not claim Core integration, server TTFT, quiet performance qualification or deployment.",
+  "runtime_source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+  "test_selector_source": "e74b047fc50019d737a54d1e7512ebeef26bc0f3",
+  "archive_sha256": "11e5761501355588ae27ef5a425475e521296ebf918aac3fc4d590507bdda439",
+  "full_host_suite": {
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "nice",
+      "-n",
+      "19",
+      "make",
+      "-j4",
+      "OUT_DIR=build-gdn-batch",
+      "test",
+      "test-runtime-api-semver",
+      "RUNTIME_API_BASE=245122b1fc2f36e65d6ece23399179eeea22b34f"
+    ],
+    "source_head": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+    "started": "2026-11-01T22:54:39.547791+00:00",
+    "repair": "Scoped Omega GDN batching;85registered targets include83parent plus2new checks.",
+    "environment": {
+      "OMEGA_OMC": "$TMP/ribbon-seed-compiler/seed/out/omc",
+      "OMEGA_BRIDGE": "$TMP/optimize27-bridge"
+    },
+    "exit_code": 0,
+    "ended": "2026-11-01T23:04:01.966038+00:00",
+    "log_sha256": "7c3fdb38ad691d988ddcf69183d09214334d6135b8c2341ae1b5dd9df9e3e726"
+  },
+  "selector_and_dispatch_followup": {
+    "started": "2026-11-01T23:05:36.343778+00:00",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "nice",
+      "-n",
+      "19",
+      "make",
+      "-j2",
+      "OUT_DIR=build-gdn-batch",
+      "test-gdn-batch-dispatch"
+    ],
+    "source": "e74b047fc50019d737a54d1e7512ebeef26bc0f3",
+    "exit_code": 0,
+    "log_sha256": "3addc3b1123c0741082a36cb7128dd990ec13a05e88f76b3a0ca3ca135bfe82a",
+    "ended": "2026-11-01T23:05:53.797610+00:00"
+  },
+  "full_suite_scope": "85 registered targets passed on production commit 09dbc67b. The later test-only selector fix e74b047f passed its complete dispatch target, including the selector regression and mutations. The complete85suite was not repeated at e74b047f. Runtime and Omega policy are unchanged.",
+  "physical_checks": [
+    {
+      "arm": "timed",
+      "source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+      "checks": 54,
+      "scoped_prefill_calls": 19,
+      "exit_code": 0,
+      "binary_sha256": "a791b75aa8bbf496f6bae12b750721f60188c2e3fdfe31a6ec836c40465ea3df",
+      "selector_source_sha256": "ac69964192d5a4ea9cb8379bc5593e1230b11d26a94a48c5811d22bc7bbcc899",
+      "receipt_sha256": "7619517e40043be7f8ff1e1f2488f899ba1433f907d5d1352c87e82d928af507",
+      "data_sha256": "00e2aac1393f77bac477caf42dd92042b861130ad633ae52e84ccf7f080ff1f4",
+      "log_sha256": "eb7153f83fd41e66883db0d3406977b59cfbfbffe07b5deee906a425473b4d5b",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "300s",
+        "flock",
+        "-w",
+        "2",
+        "$TMP/aien-gb10.lock",
+        "$RECEIPTS/gdn-batch-native-chip-fixed",
+        "--reps",
+        "3",
+        "--out",
+        "$RECEIPTS/gdn-batch-chip-timed-20261101T230617Z/data.json"
+      ]
+    },
+    {
+      "arm": "optional-untimed",
+      "source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+      "checks": 54,
+      "scoped_prefill_calls": 19,
+      "exit_code": 0,
+      "binary_sha256": "a791b75aa8bbf496f6bae12b750721f60188c2e3fdfe31a6ec836c40465ea3df",
+      "selector_source_sha256": "ac69964192d5a4ea9cb8379bc5593e1230b11d26a94a48c5811d22bc7bbcc899",
+      "receipt_sha256": "0880e511c260f1a8ce0af3e71ba933362baca630f2a322909e91314f19469a7f",
+      "data_sha256": "56c6091539267bb93e7b1e107f1a02730633d326d55e3fbfeed7b8c69e9fb3cc",
+      "log_sha256": "714073e983e5a11ebc250dbad2796f34deb9611f128cf08a8d2e97c6ab73afc9",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "300s",
+        "flock",
+        "-w",
+        "2",
+        "$TMP/aien-gb10.lock",
+        "$RECEIPTS/gdn-batch-native-chip-fixed",
+        "--reps",
+        "3",
+        "--out",
+        "$RECEIPTS/gdn-batch-chip-optional-untimed-20261101T230618Z/data.json"
+      ]
+    },
+    {
+      "arm": "bf16",
+      "source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+      "checks": 8,
+      "scoped_prefill_calls": 2,
+      "exit_code": 0,
+      "binary_sha256": "a791b75aa8bbf496f6bae12b750721f60188c2e3fdfe31a6ec836c40465ea3df",
+      "selector_source_sha256": "ac69964192d5a4ea9cb8379bc5593e1230b11d26a94a48c5811d22bc7bbcc899",
+      "receipt_sha256": "cb7cd9915aa32843db702ba9bc63d827437cc0906cf78bbafbefda5c52b1c458",
+      "data_sha256": "c9f83d18cda78430cd9f8ea5e5d44d4f558e9c26a88663e27545f8e1e2bb97cb",
+      "log_sha256": "7251fc1813c888127ee2de4e80aad69be460e54d65a7be363087c0e81a59264b",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "300s",
+        "flock",
+        "-w",
+        "2",
+        "$TMP/aien-gb10.lock",
+        "$RECEIPTS/gdn-batch-native-chip-fixed",
+        "--reps",
+        "3",
+        "--out",
+        "$RECEIPTS/gdn-batch-chip-bf16-20261101T230620Z/data.json",
+        "--bf16"
+      ]
+    }
+  ],
+  "model_validation": {
+    "utc": "2026-11-01T23:10:31.968919+00:00",
+    "status": "PASS_PRODUCTION_NATIVE_AND_FULL_SCORE_SCREENS",
+    "scope": "Production Omega admission, transitions and timestamp policy plus existing C transport; selected by an external full-model measuring wrapper. Core integration and server behavior NOT_RUN. All timings are shared-machine screens, not quiet qualification or server TTFT.",
+    "production_runtime_source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+    "test_selector_fix": "e74b047fc50019d737a54d1e7512ebeef26bc0f3",
+    "archive_sha256": "11e5761501355588ae27ef5a425475e521296ebf918aac3fc4d590507bdda439",
+    "model_binary_sha256": "b28ce1f9e1c4514a7465a926194d6a42ed55588e918ee56d1471815a57837893",
+    "chip_arms": [
+      {
+        "started": "2026-11-01T23:06:17.225039+00:00",
+        "arm": "timed",
+        "optional_timing": 1,
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "300s",
+          "flock",
+          "-w",
+          "2",
+          "$TMP/aien-gb10.lock",
+          "$RECEIPTS/gdn-batch-native-chip-fixed",
+          "--reps",
+          "3",
+          "--out",
+          "$RECEIPTS/gdn-batch-chip-timed-20261101T230617Z/data.json"
+        ],
+        "source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+        "archive_sha256": "11e5761501355588ae27ef5a425475e521296ebf918aac3fc4d590507bdda439",
+        "binary_sha256": "a791b75aa8bbf496f6bae12b750721f60188c2e3fdfe31a6ec836c40465ea3df",
+        "selector_source_sha256": "ac69964192d5a4ea9cb8379bc5593e1230b11d26a94a48c5811d22bc7bbcc899",
+        "scope": "Production runtime correctness on shared machine. Optional-timing0 preserves explicit timing requests from the existing oracle; no timing qualification.",
+        "exit_code": 0,
+        "ended": "2026-11-01T23:06:18.739572+00:00",
+        "log_sha256": "eb7153f83fd41e66883db0d3406977b59cfbfbffe07b5deee906a425473b4d5b",
+        "status": "PASS",
+        "calls": 19,
+        "directory": "$RECEIPTS/gdn-batch-chip-timed-20261101T230617Z"
+      },
+      {
+        "started": "2026-11-01T23:06:18.740753+00:00",
+        "arm": "optional-untimed",
+        "optional_timing": 0,
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "300s",
+          "flock",
+          "-w",
+          "2",
+          "$TMP/aien-gb10.lock",
+          "$RECEIPTS/gdn-batch-native-chip-fixed",
+          "--reps",
+          "3",
+          "--out",
+          "$RECEIPTS/gdn-batch-chip-optional-untimed-20261101T230618Z/data.json"
+        ],
+        "source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+        "archive_sha256": "11e5761501355588ae27ef5a425475e521296ebf918aac3fc4d590507bdda439",
+        "binary_sha256": "a791b75aa8bbf496f6bae12b750721f60188c2e3fdfe31a6ec836c40465ea3df",
+        "selector_source_sha256": "ac69964192d5a4ea9cb8379bc5593e1230b11d26a94a48c5811d22bc7bbcc899",
+        "scope": "Production runtime correctness on shared machine. Optional-timing0 preserves explicit timing requests from the existing oracle; no timing qualification.",
+        "exit_code": 0,
+        "ended": "2026-11-01T23:06:20.260626+00:00",
+        "log_sha256": "714073e983e5a11ebc250dbad2796f34deb9611f128cf08a8d2e97c6ab73afc9",
+        "status": "PASS",
+        "calls": 19,
+        "directory": "$RECEIPTS/gdn-batch-chip-optional-untimed-20261101T230618Z"
+      },
+      {
+        "started": "2026-11-01T23:06:20.261688+00:00",
+        "arm": "bf16",
+        "optional_timing": 1,
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "300s",
+          "flock",
+          "-w",
+          "2",
+          "$TMP/aien-gb10.lock",
+          "$RECEIPTS/gdn-batch-native-chip-fixed",
+          "--reps",
+          "3",
+          "--out",
+          "$RECEIPTS/gdn-batch-chip-bf16-20261101T230620Z/data.json",
+          "--bf16"
+        ],
+        "source": "09dbc67bcb588a53598409d2d9b201342f0669bf",
+        "archive_sha256": "11e5761501355588ae27ef5a425475e521296ebf918aac3fc4d590507bdda439",
+        "binary_sha256": "a791b75aa8bbf496f6bae12b750721f60188c2e3fdfe31a6ec836c40465ea3df",
+        "selector_source_sha256": "ac69964192d5a4ea9cb8379bc5593e1230b11d26a94a48c5811d22bc7bbcc899",
+        "scope": "Production runtime correctness on shared machine. Optional-timing0 preserves explicit timing requests from the existing oracle; no timing qualification.",
+        "exit_code": 0,
+        "ended": "2026-11-01T23:06:20.477930+00:00",
+        "log_sha256": "7251fc1813c888127ee2de4e80aad69be460e54d65a7be363087c0e81a59264b",
+        "status": "PASS",
+        "calls": 2,
+        "directory": "$RECEIPTS/gdn-batch-chip-bf16-20261101T230620Z"
+      }
+    ],
+    "independently_checked_frozen_score_vectors": 18,
+    "one_score_bit_mutant_rejected": true,
+    "model_nonfinite_output_negative": {
+      "status": "PASS_EXPECTED_NONFINITE_REJECTION",
+      "directory": "$RECEIPTS/gdn-batch-production-corrupt-20261101T230956Z",
+      "binary_sha256": "b28ce1f9e1c4514a7465a926194d6a42ed55588e918ee56d1471815a57837893",
+      "receipt_sha256": "5114db58b5d9327e375c524cfeee94f22ba1a1e184c19c80192b71fabb853605",
+      "log_sha256": "e375c95ebb9a580a1c2af152b98c74684c41010e07e2f576324614bbec150380",
+      "scope": "Damaged output refused before any passing row; external measurement only."
+    },
+    "model_rows": [
+      {
+        "trial": 0,
+        "prompt_tokens": 30,
+        "full_score_and_next_equal": true,
+        "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+        "baseline_s": 0.296328673,
+        "untimed_s": 0.418767935,
+        "timed_s": 0.357362044,
+        "timed_reduction_percent": -20.596512103302267,
+        "gdn_call_s": {
+          "baseline": 0.02973118,
+          "untimed": 0.030816376,
+          "timed": 0.02010747
+        },
+        "timed_gdn_chip_s": 0.008298016,
+        "timed_gdn_phases_s": {
+          "prepare": 0.002164864,
+          "scan": 0.0052424,
+          "post": 0.000890752
+        },
+        "timed_recorded_calls": 48
+      },
+      {
+        "trial": 1,
+        "prompt_tokens": 513,
+        "full_score_and_next_equal": true,
+        "score_sha256": "751c59e6812c98bedc12ccb72bf878cb7c52fe6734a51a96646b1d0bd5937396",
+        "baseline_s": 1.80103494,
+        "untimed_s": 2.103064045,
+        "timed_s": 1.890070935,
+        "timed_reduction_percent": -4.943601760441139,
+        "gdn_call_s": {
+          "baseline": 0.295230214,
+          "untimed": 0.299754289,
+          "timed": 0.292415116
+        },
+        "timed_gdn_chip_s": 0.107253888,
+        "timed_gdn_phases_s": {
+          "prepare": 0.02112832,
+          "scan": 0.074106144,
+          "post": 0.012019424
+        },
+        "timed_recorded_calls": 96
+      },
+      {
+        "trial": 2,
+        "prompt_tokens": 941,
+        "full_score_and_next_equal": true,
+        "score_sha256": "36dabb2803481bdd0e552d3c631557e3047d2e233e43f5636dccceae143661c0",
+        "baseline_s": 2.871309657,
+        "untimed_s": 3.090205215,
+        "timed_s": 2.926992671,
+        "timed_reduction_percent": -1.9392897545637309,
+        "gdn_call_s": {
+          "baseline": 0.52653023,
+          "untimed": 0.536400893,
+          "timed": 0.515210745
+        },
+        "timed_gdn_chip_s": 0.176922656,
+        "timed_gdn_phases_s": {
+          "prepare": 0.036777312,
+          "scan": 0.120333472,
+          "post": 0.019811872
+        },
+        "timed_recorded_calls": 48
+      },
+      {
+        "trial": 3,
+        "prompt_tokens": 5017,
+        "full_score_and_next_equal": true,
+        "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+        "baseline_s": 14.379768169,
+        "untimed_s": 15.442365159,
+        "timed_s": 14.345030469,
+        "timed_reduction_percent": 0.24157343561969077,
+        "gdn_call_s": {
+          "baseline": 2.76688804,
+          "untimed": 2.817049831,
+          "timed": 2.752249422
+        },
+        "timed_gdn_chip_s": 0.926112832,
+        "timed_gdn_phases_s": {
+          "prepare": 0.197390912,
+          "scan": 0.6202688,
+          "post": 0.10845312
+        },
+        "timed_recorded_calls": 96
+      },
+      {
+        "trial": 4,
+        "prompt_tokens": 30,
+        "full_score_and_next_equal": true,
+        "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+        "baseline_s": 0.295262264,
+        "untimed_s": 0.311910495,
+        "timed_s": 0.305983681,
+        "timed_reduction_percent": -3.631150440545291,
+        "gdn_call_s": {
+          "baseline": 0.028727508,
+          "untimed": 0.021690427,
+          "timed": 0.019677334
+        },
+        "timed_gdn_chip_s": 0.008590176,
+        "timed_gdn_phases_s": {
+          "prepare": 0.002275328,
+          "scan": 0.005364704,
+          "post": 0.000950144
+        },
+        "timed_recorded_calls": 48
+      },
+      {
+        "trial": 5,
+        "prompt_tokens": 5017,
+        "full_score_and_next_equal": true,
+        "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+        "baseline_s": 14.266499047,
+        "untimed_s": 14.606546515,
+        "timed_s": 14.187628491,
+        "timed_reduction_percent": 0.5528374953109826,
+        "gdn_call_s": {
+          "baseline": 2.695474819,
+          "untimed": 2.719714106,
+          "timed": 2.622094465
+        },
+        "timed_gdn_chip_s": 0.925857344,
+        "timed_gdn_phases_s": {
+          "prepare": 0.197784864,
+          "scan": 0.618807552,
+          "post": 0.109264928
+        },
+        "timed_recorded_calls": 96
+      }
+    ],
+    "sources": {
+      "gdn-batch-production-queue.json": "5c4a5fbfed591f53bd5c5062ec4828bf75582a2302eb550f13309d0faf39e0ae",
+      "gdn-batch-production-comparison.json": "6887981bd8a1f86b1c3950ea0b0d00f6f0b9d4faf52b603c48d03191be1979c8",
+      "gdn-batch-production-profile-build.json": "68013900fbbaaf1af752dcfa5633a01e2dbf2c523544cb246dfc5015db51eee9",
+      "gdn-batch-production-negative.json": "4431ed56af7e33a12252fdcc44b007a3865dab1cfc69f7504727bc1df33abf66",
+      "verify-gdn-batch-production.py": "3a5b06ba2c9f5932c73ea6c9568b38c95965fefeea10d6b1b96b3ec0268096aa"
+    }
+  },
+  "not_run": [
+    "Core GDN adapter integration and server behavior",
+    "Quiet alternating timing",
+    "Independent review and dependency-order merge",
+    "Deployment/default promotion"
+  ],
+  "local_receipt_hashes": {
+    "gdn-batch-full-host.json": "271af1bf65abb327ff7b926ce1ee12e660443d9cce78585c9ba1f2c44aafb0ca",
+    "gdn-batch-current-dispatch.json": "e31f443f6b1287991d1b4d497575a1620a5f9ea4be380fc04a79deed149528b1",
+    "gdn-batch-production-verified.json": "8064db69423798b79129db6a236a6664fc642c092f12b17b49d37fe3415e3176"
+  }
+}

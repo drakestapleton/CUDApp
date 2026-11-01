@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 static int is_safe_corpus_dir(const char *dir)
 {
@@ -28,8 +30,10 @@ static void save(const char *dir, unsigned serial, const char *suffix, const voi
     char path[4096];
     int n = snprintf(path, sizeof(path), "%s/%ld-%u.%s", dir, (long)getpid(), serial, suffix);
     if (n < 0 || (size_t)n >= sizeof(path)) abort();
-    FILE *f = fopen(path, "wb");
-    if (!f) { perror(path); abort(); }
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd < 0) { perror(path); abort(); }
+    FILE *f = fdopen(fd, "wb");
+    if (!f) { perror(path); close(fd); abort(); }
     if (fwrite(data, 1, size, f) != size || fclose(f) != 0) abort();
 }
 

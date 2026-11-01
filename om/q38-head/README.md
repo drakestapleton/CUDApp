@@ -131,3 +131,38 @@ reproducing the earlier compact-head error. The recorded timing is provisional:
 host suites were active in the shared correctness window. It is neither an
 accepted speed result nor a whole-model/first-token measurement. Serving
 integration and its complete exact-token gate remain untested.
+
+## Fixed envelope and experimental graph integration
+
+`envelope.om` calculates an upward-rounded binary32 bound from the folded final
+RMSNorm weights: `72 * max(abs(weight)) * 1025/1024`. It uses integer arithmetic
+on the weight encodings, refuses nonfinite weights and overflow, and conservatively
+returns 1 for an all-subnormal or zero weight vector. `envelope-check.py` checks
+all exponent ranges against exact rational arithmetic; five compiled source
+mutants exercise tail scanning, upward rounding, nonfinite refusal, sign masking and slack.
+
+The ideal normalized vector has norm at most `sqrt(5120) * max(abs(weight))`.
+The fixed envelope adds room for the existing GPU normalization's rounding.
+Its scope is finite input, folded finite weights, epsilon `1e-6f`, width 5120,
+and output scale 1. The graph adapter refuses a different epsilon. The actual
+normalizer is in `omega_blackwell_codegen_dec.c`: 20 products per lane, five
+warp sums, seven CTA sums, the mean plus epsilon, reciprocal square root and
+two output products. NVIDIA PTX ISA 9.4, physical page 211 (printed 199), gives
+the reciprocal-square-root relative error as at most `2^-22.9`; this is a
+numerical reference, not independent proof of every native instruction.
+`norm-check.c` tests the actual emitted normalizer on the chip, including
+underflow and overflow magnitudes, dense and sparse input, and adversarial
+weights. The replay and stress receipts do not prove all possible model states.
+
+`plan.om` owns the scratch layout and six operations: scale, compact screen,
+intervals, two threshold reductions, and full-precision masked recheck.
+`emit.om` produces the checked native bounds kernel. Both are compiled through
+the pinned Omega Bridge. The C graph adapter only supplies resources and
+dispatches those operations. The feature is opt-in through
+`omega_gpu_q38_graph_set_exact_head`; the original head remains available.
+Disable the feature for sampling, which requires all logits. Full serving
+qualification is pending; the default path is unchanged.
+
+The Omega plan also supplies an additional 2 GiB admission reserve for the
+resident screen, coefficients and scratch. The Core opt-in adds that reserve
+before loading. It is a conservative budget, not a measured allocation size.

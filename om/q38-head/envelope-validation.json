@@ -1,0 +1,66 @@
+{
+  "test": "gpu_exact_head_test",
+  "mutant": 0,
+  "records": 8,
+  "identical": 8,
+  "host_full_agrees": 8,
+  "candidate_bits_differ": 0,
+  "full_argmax_missing": 0,
+  "C_mean": 70.125,
+  "C_p99": 259,
+  "C_max": 259,
+  "full_list_us": {
+    "p50": 11299.75,
+    "p99": 11506.46
+  },
+  "two_pass_list_us": {
+    "p50": 5596.17,
+    "p99": 6001.02
+  },
+  "bytes": {
+    "full_head": 2542796800,
+    "fp8b_screen": 1271553600,
+    "coef": 993280,
+    "row": 10240
+  },
+  "status": "PASS captured-state GPU replay; full serving validation pending",
+  "fixed_envelope": 195.37811279296875,
+  "envelope_host_cases": 1309,
+  "envelope_source_mutants_caught": 5,
+  "norm_stress_cases": 90,
+  "norm_stress_failures": 0,
+  "underestimated_envelope_control_failures": 12,
+  "timing_status": "PROVISIONAL shared correctness window; not a whole-model or TTFT result",
+  "source_sha256": {
+    "om/q38-head/envelope.om": "dd65c33f7a92372a83c9eb21f2579a74ff0a8053e8850ef9e3f0361e579b37e7",
+    "om/q38-head/plan.om": "1e20f15ae5e9fe62c816700da014843933cd6bc3594e30e86877778ec949fb9d",
+    "om/q38-head/emit.om": "9214fa3ef6e18800bdc13ff6e51944198cfc46df157d22d756cf254adc1b84d3",
+    "om/q38-head/norm-check.c": "26e46dee094ac5b21f6b0ea27d53b457e30ecf7035f228e586450c735418e991"
+  },
+  "output": [
+    "record 0 position 1 saved_bits_bad 0 bounds_bad 0",
+    "record 0 candidates 259 full 2732 selected 2732",
+    "record 1 position 16 saved_bits_bad 0 bounds_bad 0",
+    "record 1 candidates 2 full 11 selected 11",
+    "record 2 position 32 saved_bits_bad 0 bounds_bad 0",
+    "record 2 candidates 202 full 1946 selected 1946",
+    "record 3 position 64 saved_bits_bad 0 bounds_bad 0",
+    "record 3 candidates 3 full 324 selected 324",
+    "record 4 position 96 saved_bits_bad 0 bounds_bad 0",
+    "record 4 candidates 3 full 264 selected 264",
+    "record 5 position 97 saved_bits_bad 0 bounds_bad 0",
+    "record 5 candidates 79 full 58170 selected 58170",
+    "record 6 position 98 saved_bits_bad 0 bounds_bad 0",
+    "record 6 candidates 2 full 310 selected 310",
+    "record 7 position 127 saved_bits_bad 0 bounds_bad 0",
+    "record 7 candidates 11 full 561 selected 561",
+    "chip: 8 records, identical 8, host-full agrees 8, |C| mean 70.1 p99 259 max 259",
+    "chip: full head list p50 11299.8 us p99 11506.5 us; two-pass list p50 5596.2 us p99 6001.0 us",
+    "gpu_exact_head_test: 23 checks, 0 failed: PASS"
+  ],
+  "normalization_output": [
+    "RMSNorm envelope: 90 cases, 0 failures, largest norm 193.978906598, bound 195.378112793: PASS"
+  ],
+  "additional_admission_bytes": 2147483648,
+  "admission_status": "PASS host metadata and null-handle gate; full server retest with admission update pending"
+}

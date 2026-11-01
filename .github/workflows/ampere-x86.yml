@@ -24,7 +24,7 @@ jobs:
           (cd "$RUNNER_TEMP/omega-bridge" && sh tools/bootstrap.sh)
           cp "$RUNNER_TEMP/omega-bridge/build/bootstrap/omc" "$RUNNER_TEMP/baseline-omc"
           printf '%s  %s\n' 191b776ef98821597c3e30655da6d680a9b66edbc9ceaca3c39c61ea6df098e9 "$RUNNER_TEMP/baseline-omc" | sha256sum --check --strict
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ampere-baseline-${{ github.sha }}
           path: ${{ runner.temp }}/baseline-omc

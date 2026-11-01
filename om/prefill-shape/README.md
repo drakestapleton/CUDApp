@@ -53,3 +53,5 @@ The subsequent full host rerun completed successfully: all 78 targets passed at 
 The subsequent full host rerun completed successfully: all 77 targets passed at runtime source `572a73bfd138b78154172f7746504842a7168f9c`. See `cache-full-host-validation.json` for the command, timing and log digest. This does not qualify the later scoped API or serving performance.
 
 The scoped entry subsequently passed the complete 79-target host suite and API version gate. `scoped-validation.json` records the exact command and log digest. Scoped full-model and server qualification remain separate.
+
+The scoped adapter also passed all six full-score comparisons and the initial serving correctness and quality suite. Its repeated 5,017-token read took 14.515 seconds versus 19.123 seconds with the setting off. The repeated 30-token case was slower, 0.358 versus 0.282 seconds. These shared-machine screens support an adaptive-batch experiment, not promotion of the fixed profile. See `scoped-model-validation.json` and its linked Ribbon receipt.

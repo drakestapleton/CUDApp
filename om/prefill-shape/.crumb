@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-01T17:02:28Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:f26ee6647d9c09bd057e904b6686b25c6cb1a82aca05c60de07a51dd94945671",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 5,
+      "generated_at_commit": "009ada7602c70755e3fb8cd6d9cd776a30ad9c39",
+      "source_tree": "sha256:cc6aceb2ce0336f5fb2c8118c326fb991e3ec598fc49fd479b9cbe1de5564307"
+    }
+  },
+  "layer": "native-policy",
+  "name": "prefill-shape",
+  "purpose": "Checked Omega admission for bounded prompt matrix tile shapes and independent parity verification",
+  "schema_version": "1.0.0"
+}

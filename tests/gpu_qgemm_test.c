@@ -335,6 +335,11 @@ static int qg_sim(void) {
         { 3, 256, 256, 200, 0, OMEGA_GPU_PF_PLAIN, 1, 4, 8 },
         { 2, 256, 128, 150, 64, OMEGA_GPU_PF_PLAIN, 0, 4, 8 },
         { 2, 512, 1024, 140, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 4, 8 },
+        /* 32-row shape: paired scale rows, tails, direct and indexed input. */
+        { 3, 256, 384, 97, 120, OMEGA_GPU_PF_SWIGLU_NAT, 0, 2, 4 },
+        { 3, 256, 256, 65, 0, OMEGA_GPU_PF_PLAIN, 1, 2, 4 },
+        { 2, 256, 128, 31, 64, OMEGA_GPU_PF_PLAIN, 0, 2, 4 },
+        { 1, 512, 1024, 30, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 2, 4 },
     };
     for (size_t c = 0; c < sizeof cs / sizeof cs[0]; c++) {
         const uint32_t bm = 16 * cs[c].rt;
@@ -349,7 +354,7 @@ static int qg_sim(void) {
                    cs[c].direct ? "direct" : "indexed", cs[c].rt, cs[c].warps, order, rc ? msg : "ran", bad);
             if (rc || bad) fail++;
         }
-        if (c == 0 || c == 1) for (int m = 1; m <= 4; m++) {
+        if (c == 0 || c == 1 || c == 4 || c == 5) for (int m = 1; m <= 4; m++) {
             OmegaQgSpec ms = sp; ms.mutant = m;
             const int rc = qg_sim_run(&p, &ms, 0, y, msg, sizeof msg);
             const size_t bad = rc ? 0 : qcompare(&p, y, rows, p.M, 0, NULL);

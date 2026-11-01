@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* omega_blackwell_codegen_qg.c: native FP8 prefill kernels (W-L1G). See the header. */
 #include "omega_blackwell_codegen_qg.h"
+#include "cudapp_native.h"
 #include "omega_bw_em.h"
 #include "omega_bw_em_q.h"
 
@@ -72,8 +73,8 @@ int omega_blackwell_codegen_pq_prog(const OmegaPqSpec *spec, BlackwellIRProgram 
 int omega_qg_spec_ok(const OmegaQgSpec *s) {
     if (!s) return 0;
     if (s->k < 128u || s->k > 32768u || s->k % 128u) return 0; /* the k loop counts at run time: no k-sized immediate */
-    if (s->rt != 4) return 0; /* rt 8 needs more than 128 registers (the GPR cap); its 17408 shared bytes are inside the QMD cap now */
-    if (s->warps != 8 && s->warps != 16) return 0;
+    uint64_t shape = 0;
+    if (omega_native_qgshape(&shape, s->rt, s->warps) != OMEGA_OK || shape != 1) return 0;
     if (s->epi > OMEGA_QG_EPI_SWIGLU || s->direct > 1 || s->wait > 120u) return 0;
     if (s->epi == OMEGA_QG_EPI_SWIGLU && s->n % 256u) return 0; /* gate and up halves start on a 128-row scale block */
     if (s->n == 0 || s->n % (s->warps * 16u) || (uint64_t)(s->epi == OMEGA_QG_EPI_F32 ? 4u : 1u) * s->n * 16u * s->rt >= (1u << 23)) return 0; /* row stride (n f32, or n / 2 bf16 = n bytes) x 16 rt: the store offsets fit the signed 24-bit field */

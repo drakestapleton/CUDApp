@@ -1,0 +1,11 @@
+utc: 2026-11-01T18:47:06Z
+head: fb91560dc3492082455576477bffd1794d27ab3c
+head_parents: 7ec018409bbc2ca29e51fc88584585fdca3c7231 6a93cb567b33b67bc1185fb45a3c50fc4d88d30e 
+worktree: clean
+kernel: Linux 7.0.0-1019-nvidia #19~24.04.2-Ubuntu SMP PREEMPT_DYNAMIC Sun Sep  6 18:35:11 UTC 2 aarch64
+gcc: gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+driver: NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.173.02  Release Build  (dvs-builder@U22-A24-5-4)  Tue Jun 23 08:34:19 UTC 2026
+device: 000f:01:00.0
+model: Unknown
+bus: 000f:01:00.0
+raw_json_sha256: aa3fe3fee12ffe123f572e5a0c9b26b7e7fc82142635ea59442b6a008033534a

@@ -1,0 +1,165 @@
+latmeas: building (outside the chip lock)
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_ampere_codegen.c -o build/omega_ampere_codegen.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen.c -o build/omega_blackwell_codegen.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_cmdlist.c -o build/omega_gpu_cmdlist.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8_api.c -o build/omega_gpu_fp8_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8gemm_api.c -o build/omega_gpu_fp8gemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_q36_graph.c -o build/omega_gpu_q36_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_q38_graph.c -o build/omega_gpu_q38_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_router_api.c -o build/omega_gpu_router_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_session.c -o build/omega_gpu_session.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_tcgemm_api.c -o build/omega_gpu_tcgemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_cubin.c -o build/omega_cubin.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_amp_runtime.c -o build/cudapp_om_amp_runtime.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -O3  -c src/cudapp_om_closure_reseal.c -o build/cudapp_om_closure_reseal.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_q38_emit.c -o build/cudapp_om_q38_emit.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_q38_runtime.c -o build/cudapp_om_q38_runtime.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c ./nvrm/nvrm.c -o build/nvrm.o
+make: 'build/cudapp-doctor' is up to date.
+ar rcs build/libomega_gpu.a build/omega_ampere_codegen.o build/omega_ampere_qmd.o build/omega_blackwell_codegen.o build/omega_blackwell_codegen_attn.o build/omega_blackwell_codegen_attn256.o build/omega_blackwell_codegen_bf16.o build/omega_blackwell_codegen_dec.o build/omega_blackwell_codegen_gdn.o build/omega_blackwell_codegen_gemm.o build/omega_blackwell_codegen_moe.o build/omega_blackwell_codegen_moe2.o build/omega_blackwell_codegen_pattn.o build/omega_blackwell_codegen_pattn256.o build/omega_blackwell_codegen_pf.o build/omega_blackwell_codegen_pfhost.o build/omega_blackwell_codegen_qg.o build/omega_blackwell_codegen_qmma.o build/omega_blackwell_codegen_router.o build/omega_blackwell_codegen_tc.o build/omega_blackwell_codegen_tc2.o build/omega_blackwell_codegen_tern.o build/omega_blackwell_encoder.o build/omega_blackwell_engine.o build/omega_blackwell_matmul.o build/omega_blackwell_qmd.o build/omega_blackwell_realize.o build/omega_blackwell_submit.o build/omega_gpu_attention_api.o build/omega_gpu_bf16_gemv_api.o build/omega_gpu_chip.o build/omega_gpu_cmdlist.o build/omega_gpu_decode_attn256_api.o build/omega_gpu_decode_attn_api.o build/omega_gpu_decode_graph.o build/omega_gpu_elementwise_api.o build/omega_gpu_engine.o build/omega_gpu_fmt.o build/omega_gpu_fp8_api.o build/omega_gpu_fp8_pack.o build/omega_gpu_fp8_slots.o build/omega_gpu_fp8gemm_api.o build/omega_gpu_gdn_api.o build/omega_gpu_gemm.o build/omega_gpu_gemm_ex.o build/omega_gpu_hostmath.o build/omega_gpu_matmul_api.o build/omega_gpu_mem_cached.o build/omega_gpu_moe_api.o build/omega_gpu_pfgemm.o build/omega_gpu_pfhost.o build/omega_gpu_platform.o build/omega_gpu_platform_linux.o build/omega_gpu_prefill.o build/omega_gpu_prefill_attn256_api.o build/omega_gpu_prefill_attn_api.o build/omega_gpu_q36_graph.o build/omega_gpu_q38_graph.o build/omega_gpu_router_api.o build/omega_gpu_scan.o build/omega_gpu_scan_ref.o build/omega_gpu_serving.o build/omega_gpu_session.o build/omega_gpu_tcgemm_api.o build/omega_gpu_tern_api.o build/omega_gpu_wait.o build/omega_fp8_slot_table.o build/omega_cubin.o build/omega_native_artifact.o build/omega_sm121_disasm.o build/sha256.o build/omega_canonical.o build/omega_core.o build/omega_vector.o build/cudapp_om_ampere_enc_sm86.o build/cudapp_om_amp_runtime.o build/cudapp_om_binding.o build/cudapp_om_bw_enc_sm121.o build/cudapp_om_cache_runtime.o build/cudapp_om_closure_alloc.o build/cudapp_om_closure_bind.o build/cudapp_om_closure_blob.o build/cudapp_om_closure_code.o build/cudapp_om_closure_cover.o build/cudapp_om_closure_dir.o build/cudapp_om_closure_intent.o build/cudapp_om_closure_launch.o build/cudapp_om_closure_pack.o build/cudapp_om_closure_reseal.o build/cudapp_om_closure_seal.o build/cudapp_om_closure_series.o build/cudapp_om_code_digest.o build/cudapp_om_command.o build/cudapp_om_compose.o build/cudapp_om_context_lookup.o build/cudapp_om_cubin_elf.o build/cudapp_om_digest.o build/cudapp_om_encode.o build/cudapp_om_graph.o build/cudapp_om_lease.o build/cudapp_om_moe_admission.o build/cudapp_om_moe_group.o build/cudapp_om_moe_ids32.o build/cudapp_om_moe_maps32.o build/cudapp_om_moe_plan.o build/cudapp_om_moe_segs32.o build/cudapp_om_moe_windows.o build/cudapp_om_q38_emit.o build/cudapp_om_q38_runtime.o build/cudapp_om_quant_wire.o build/cudapp_om_repack.o build/cudapp_om_slotrev.o build/cudapp_om_templates.o build/cudapp_om_validate.o build/cudapp_freest_revision.o build/cudapp_freest_epoch.o build/cudapp_freest_f16.o build/m16_native.o build/nvrm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_latmeas_test tests/gpu_latmeas_test.c build/libomega_gpu.a -lpthread -lm
+latmeas: doctor (outside the chip lock; NOT READY aborts before flock)
+cudapp doctor: is this machine ready for CUDA++?
+Diagnostic only: direct library use has no driver-version or PCI-ID admission guard.
+  info  system: Linux 7.0.0-1019-nvidia aarch64
+  ok    NVIDIA kernel module: open module 580.173.02 (CUDA++ speaks 580.173.02)
+  ok    device files: /dev/nvidiactl /dev/nvidia0 /dev/nvidia-uvm can be opened by this user
+  ok    GPU 000f:01:00.0: NVIDIA GB10 (sm_121), supported target (historical summary: evidence/m16-blackwell-native-path-requalification-receipt.json)
+        raw M16 evidence unavailable; not current-commit qualification
+  ok    memory: 121.7 GiB shared by the CPU and the GPU, 98.9 GiB available now
+  info  CUDA toolkit: not needed and not used by CUDA++ (one is installed at /usr/local/cuda/bin/nvcc; that is fine)
+  info  compiler: this doctor was built by 13.3.0; CUDA++ needs only make and a C compiler
+READY. Next: make hello-gpu
+latmeas plan: 7 cases, 11 runs, sweep 1..15 (HMMA 1..36), 1408 launches
+estimated chip window: 71 s upper bound (1408 launches; 50 ms each covers a cold shader invalidate). Usually shorter.
+The runner wraps only the launch with: flock /tmp/aien-gb10.lock timeout 600
+One warp, 32 threads. Clock: CS2R idx 0x50. Mesa 01bab9302a6bf0a082c7ba8c49d74427cf10b0cf
+emitted kernels in latmeas-out-7ec0184/kernels (1408 launches when run)
+# CUDA++ fixed latencies vs NAK
+
+Mesa commit `01bab9302a6bf0a082c7ba8c49d74427cf10b0cf`.
+Clock: nak_private.h:135 NAK_SV_CLOCK_LO = 0x50; from_nir.rs:3522 SM>=50 uses CS2R; sm70_encode.rs:4278 opcode 0x805, index bits 72..80.
+Priority 1 pairs match NAK on paper. They are measured because that match is circular.
+Rows below are the ones that differ. A blank NAK stall means NAK calls the op decoupled.
+
+| id | pair | CUDA++ | NAK | kernel |
+|---|---|---|---|---|
+| pred_attention | Predicate write -> guard, attention emitter | 13 | 13 + 1 = 14 | tests/gpu_latmeas_test.c (pred) |
+| hmma_reader | HMMA -> non-HMMA reader (FADD of d0) | 15 + NOP 14 = 29 | 19 + 9 = 28 | tests/gpu_latmeas_test.c (hmma_reader) |
+| imad_wide_lo | IMAD.WIDE low half -> IADD3 | 6 (blanket K_FIXED; IMAD.WIDE is not in fixed_pair_class) | 3 + 1 = 4 | tests/gpu_latmeas_test.c (imad_wide_lo) |
+| fmnmx_alu | FMNMX (dualalu) -> IADD3 (alu) | 6 (blanket K_FIXED; FMNMX is not in fixed_pair_class) | 4 + 1 = 5 | tests/gpu_latmeas_test.c (fmnmx_alu) |
+| qmma_reader | QMMA (IMMA) -> next reader | 15 + NOP 15 = 30 | 19 + 7 = 26 | not generated (patched QMMA placeholder; see REPRODUCE.md) |
+| numeric_min | Fixed-producer minimum in the numeric checker | 5 (any fixed producer; mixed pairs need 6) | 5 + 1 = 6 for mixed ALU/FMA | tests/gpu_latmeas_test.c (mixed) |
+| bssy | BSSY stall | 1, no scoreboard | decoupled (1 & sb) | not generated (NAK class is decoupled, not a fixed GPR RAW) |
+| bsync | BSYNC stall | 5, no scoreboard | decoupled (1 & sb) | not generated (NAK class is decoupled, not a fixed GPR RAW) |
+| bra | BRA stall | 5 | decoupled (1 & sb) | not generated (NAK class is decoupled, not a fixed GPR RAW) |
+| exit_op | EXIT stall | 5 | decoupled (1 & sb) | not generated (NAK class is decoupled, not a fixed GPR RAW) |
+| bar | BAR.SYNC stall | 6 | decoupled AGU (1 & sb) | not generated (NAK class is decoupled, not a fixed GPR RAW) |
+
+latmeas: taking flock /tmp/aien-gb10.lock for the launch only; timeout 600
+latmeas: the launch bound is the estimated chip window printed above
+latmeas plan: 7 cases, 11 runs, sweep 1..15 (HMMA 1..36), 1408 launches
+estimated chip window: 71 s upper bound (1408 launches; 50 ms each covers a cold shader invalidate). Usually shorter.
+The runner wraps only the launch with: flock /tmp/aien-gb10.lock timeout 600
+One warp, 32 threads. Clock: CS2R idx 0x50. Mesa 01bab9302a6bf0a082c7ba8c49d74427cf10b0cf
+overhead ovh32 run 1/11 rc 0
+overhead ovh32 run 2/11 rc 0
+overhead ovh32 run 3/11 rc 0
+overhead ovh32 run 4/11 rc 0
+overhead ovh32 run 5/11 rc 0
+overhead ovh32 run 6/11 rc 0
+overhead ovh32 run 7/11 rc 0
+overhead ovh32 run 8/11 rc 0
+overhead ovh32 run 9/11 rc 0
+overhead ovh32 run 10/11 rc 0
+overhead ovh32 run 11/11 rc 0
+overhead ovh1 run 1/11 rc 0
+overhead ovh1 run 2/11 rc 0
+overhead ovh1 run 3/11 rc 0
+overhead ovh1 run 4/11 rc 0
+overhead ovh1 run 5/11 rc 0
+overhead ovh1 run 6/11 rc 0
+overhead ovh1 run 7/11 rc 0
+overhead ovh1 run 8/11 rc 0
+overhead ovh1 run 9/11 rc 0
+overhead ovh1 run 10/11 rc 0
+overhead ovh1 run 11/11 rc 0
+case alu_alu run 1/11
+case alu_alu run 2/11
+case alu_alu run 3/11
+case alu_alu run 4/11
+case alu_alu run 5/11
+case alu_alu run 6/11
+case alu_alu run 7/11
+case alu_alu run 8/11
+case alu_alu run 9/11
+case alu_alu run 10/11
+case alu_alu run 11/11
+case fma_fma run 1/11
+case fma_fma run 2/11
+case fma_fma run 3/11
+case fma_fma run 4/11
+case fma_fma run 5/11
+case fma_fma run 6/11
+case fma_fma run 7/11
+case fma_fma run 8/11
+case fma_fma run 9/11
+case fma_fma run 10/11
+case fma_fma run 11/11
+case mixed run 1/11
+case mixed run 2/11
+case mixed run 3/11
+case mixed run 4/11
+case mixed run 5/11
+case mixed run 6/11
+case mixed run 7/11
+case mixed run 8/11
+case mixed run 9/11
+case mixed run 10/11
+case mixed run 11/11
+case pred run 1/11
+case pred run 2/11
+case pred run 3/11
+case pred run 4/11
+case pred run 5/11
+case pred run 6/11
+case pred run 7/11
+case pred run 8/11
+case pred run 9/11
+case pred run 10/11
+case pred run 11/11
+case fmnmx_alu run 1/11
+case fmnmx_alu run 2/11
+case fmnmx_alu run 3/11
+case fmnmx_alu run 4/11
+case fmnmx_alu run 5/11
+case fmnmx_alu run 6/11
+case fmnmx_alu run 7/11
+case fmnmx_alu run 8/11
+case fmnmx_alu run 9/11
+case fmnmx_alu run 10/11
+case fmnmx_alu run 11/11
+case imad_wide_lo run 1/11
+case imad_wide_lo run 2/11
+case imad_wide_lo run 3/11
+case imad_wide_lo run 4/11
+case imad_wide_lo run 5/11
+case imad_wide_lo run 6/11
+case imad_wide_lo run 7/11
+case imad_wide_lo run 8/11
+case imad_wide_lo run 9/11
+case imad_wide_lo run 10/11
+case imad_wide_lo run 11/11
+case hmma_reader run 1/11
+case hmma_reader run 2/11
+case hmma_reader run 3/11
+case hmma_reader run 4/11
+case hmma_reader run 5/11
+case hmma_reader run 6/11
+case hmma_reader run 7/11
+case hmma_reader run 8/11
+case hmma_reader run 9/11
+case hmma_reader run 10/11
+case hmma_reader run 11/11
+wrote latmeas-out-7ec0184/raw.json
+latmeas: wrote latmeas-out-7ec0184/RECEIPT.txt

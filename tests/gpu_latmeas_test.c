@@ -1081,6 +1081,8 @@ static int sim_self_test(void) {
     return failed;
 }
 
+static int lane_field_self_test(void);
+
 static int self_test(void) {
     int failed = 0;
     uint8_t code[CODE_CAP];
@@ -1191,6 +1193,7 @@ static int self_test(void) {
     len = 0;
     CHECK(build(NULL, 0, 64, 1, code, sizeof code, &len, &gpr) == 0, "overhead kernel");
     failed += sim_self_test();
+    failed += lane_field_self_test();
 
     int pass[RUNS][SWEEP_MAX];
     memset(pass, 0, sizeof pass);
@@ -1470,17 +1473,169 @@ static int launch_kern(const Kern *k, OmegaGpuMem *code, OmegaGpuMem *buf, uint3
     return 0;
 }
 
-static int mem_match(const uint32_t *mem, uint32_t result, uint32_t aux, int four) {
+/* Host oracle for the four stored result words (lane record words 2..5).
+ * HMMA: d0..d3, each the 16-term ones dot. Other cases: result, aux, 0, 0. */
+static void oracle_words(const CaseDef *c, uint32_t o[4]) {
+    uint32_t r = 0, a = 0;
+    o[0] = o[1] = o[2] = o[3] = 0;
+    if (!c || expect_abs(c, &r, &a) != 0) return;
+    int four = !strcmp(c->id, "hmma_reader");
+    o[0] = r;
+    o[1] = a;
+    o[2] = four ? r : 0;
+    o[3] = four ? r : 0;
+}
+
+typedef struct {
+    int run; /* -1 when this stall never mismatched */
+    int lane;
+    int word; /* 2..5, the lane-record index */
+    uint32_t got, want;
+} LaneMiss;
+
+/* How many lanes match o[0..3] in words 2..5. The first failure, if any, is written to *miss (lane stays -1 when every lane matches). */
+static int lanes_report(const uint32_t *mem, const uint32_t o[4], LaneMiss *miss) {
+    int n = 0;
+    miss->run = -1;
+    miss->lane = -1;
+    miss->word = 0;
+    miss->got = miss->want = 0;
     for (int lane = 0; lane < LANE_N; lane++) {
         const uint32_t *w = mem + (size_t)lane * LANE_WORDS;
-        if (w[2] != result || w[3] != aux) return 0;
-        if (four) {
-            if (w[4] != result || w[5] != result) return 0;
-        } else if (w[4] != 0 || w[5] != 0) {
-            return 0;
+        int bad = 0;
+        for (int k = 0; k < 4; k++) {
+            if (w[2 + k] == o[k]) continue;
+            if (miss->lane < 0) {
+                miss->lane = lane;
+                miss->word = 2 + k;
+                miss->got = w[2 + k];
+                miss->want = o[k];
+            }
+            bad = 1;
         }
+        if (!bad) n++;
     }
-    return 1;
+    return n;
+}
+
+static uint32_t lane_fail_bits(const uint32_t *mem, const uint32_t o[4]) {
+    uint32_t mask = 0;
+    for (int lane = 0; lane < LANE_N; lane++) {
+        const uint32_t *w = mem + (size_t)lane * LANE_WORDS;
+        for (int k = 0; k < 4; k++)
+            if (w[2 + k] != o[k]) {
+                mask |= 1u << lane;
+                break;
+            }
+    }
+    return mask;
+}
+
+static int mem_match(const uint32_t *mem, uint32_t result, uint32_t aux, int four) {
+    uint32_t o[4] = {result, aux, four ? result : 0u, four ? result : 0u};
+    LaneMiss m;
+    return lanes_report(mem, o, &m) == LANE_N;
+}
+
+static void fprint_lane_fields(FILE *jf, const uint32_t o[4], const uint8_t *matched_min, const uint32_t *fail_mask,
+                               const LaneMiss *miss, int sweep, int have) {
+    fprintf(jf, "      \"oracle\": [%u, %u, %u, %u],\n", o[0], o[1], o[2], o[3]);
+    fprintf(jf, "      \"reference_result\": %u,\n", o[0]);
+    fprintf(jf, "      \"lanes_matched_min\": [");
+    for (int s = 0; s < sweep; s++) {
+        if (!have || matched_min[s] == 0xff)
+            fprintf(jf, "%snull", s ? ", " : "");
+        else
+            fprintf(jf, "%s%u", s ? ", " : "", matched_min[s]);
+    }
+    fprintf(jf, "],\n      \"lane_fail_mask\": [");
+    for (int s = 0; s < sweep; s++) {
+        if (!have || matched_min[s] == 0xff)
+            fprintf(jf, "%snull", s ? ", " : "");
+        else
+            fprintf(jf, "%s\"0x%08x\"", s ? ", " : "", fail_mask[s]);
+    }
+    fprintf(jf, "],\n      \"first_mismatch\": [");
+    for (int s = 0; s < sweep; s++) {
+        if (!have || matched_min[s] == 0xff || miss[s].lane < 0)
+            fprintf(jf, "%snull", s ? ", " : "");
+        else
+            fprintf(jf,
+                    "%s{\"run\": %d, \"lane\": %d, \"word\": %d, \"got\": %u, \"want\": %u}",
+                    s ? ", " : "", miss[s].run, miss[s].lane, miss[s].word, miss[s].got, miss[s].want);
+    }
+    fprintf(jf, "],\n");
+}
+
+static int lane_field_self_test(void) {
+    int failed = 0;
+#define LCHECK(cond, ...)                                                                                              \
+    do {                                                                                                               \
+        if (!(cond)) {                                                                                                 \
+            failed++;                                                                                                  \
+            printf("FAIL: ");                                                                                          \
+            printf(__VA_ARGS__);                                                                                       \
+            printf("\n");                                                                                              \
+        }                                                                                                              \
+    } while (0)
+    uint32_t o[4];
+    oracle_words(&CASES[6], o);
+    LCHECK(o[0] == hmma_16816_ones() && o[1] == o[0] && o[2] == o[0] && o[3] == o[0],
+           "hmma oracle is four destination words");
+    oracle_words(&CASES[0], o);
+    LCHECK(o[0] == (N_FIXED * (N_FIXED + 1u)) / 2u && o[1] == 1u && o[2] == 0u && o[3] == 0u, "alu oracle words");
+
+    uint32_t mem[LANE_N * LANE_WORDS];
+    memset(mem, 0, sizeof mem);
+    for (int lane = 0; lane < LANE_N; lane++) {
+        mem[(size_t)lane * LANE_WORDS + 2] = o[0];
+        mem[(size_t)lane * LANE_WORDS + 3] = o[1];
+        mem[(size_t)lane * LANE_WORDS + 4] = o[2];
+        mem[(size_t)lane * LANE_WORDS + 5] = o[3];
+        mem[(size_t)lane * LANE_WORDS + 6] = (uint32_t)lane;
+    }
+    LaneMiss m;
+    LCHECK(lanes_report(mem, o, &m) == LANE_N && m.lane < 0, "all lanes match the oracle");
+    mem[7u * LANE_WORDS + 4] = 0x11111111u;
+    LCHECK(lanes_report(mem, o, &m) == LANE_N - 1 && m.lane == 7 && m.word == 4 && m.got == 0x11111111u && m.want == o[2],
+           "a planted word-4 mismatch names lane 7");
+    LCHECK(lane_fail_bits(mem, o) == (1u << 7), "fail mask is lane 7");
+
+    uint8_t mins[2] = {31, 32};
+    uint32_t masks[2] = {1u << 7, 0};
+    LaneMiss ms[2];
+    ms[0] = m;
+    ms[0].run = 3;
+    ms[1].lane = -1;
+    char *text = NULL;
+    size_t tlen = 0;
+    FILE *mf = open_memstream(&text, &tlen);
+    if (mf) {
+        fprint_lane_fields(mf, o, mins, masks, ms, 2, 1);
+        fclose(mf);
+    }
+    LCHECK(text && strstr(text, "\"oracle\": [") && strstr(text, "\"lanes_matched_min\": [31, 32]") &&
+               strstr(text, "\"lane_fail_mask\"") && strstr(text, "\"lane\": 7") && strstr(text, "\"word\": 4") &&
+               strstr(text, "\"run\": 3") && strstr(text, ", null]"),
+           "json lane fields: %s", text ? text : "(none)");
+    free(text);
+
+    uint8_t code[CODE_CAP];
+    size_t len = 0;
+    uint32_t gpr = 0, lane0[LANE_WORDS];
+    LCHECK(build(&CASES[0], CASES[0].sweep, 0, 0, code, sizeof code, &len, &gpr) == 0, "alu top encode");
+    LCHECK(lat_sim(lane0) == 0, "alu top sim");
+    oracle_words(&CASES[0], o);
+    LCHECK(lanes_report(g_sim_mem, o, &m) == LANE_N && m.lane < 0, "sim stall 15 matches on every lane");
+    LCHECK(build(&CASES[0], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "alu stall 1 encode");
+    LCHECK(lat_sim(lane0) == 0, "alu stall 1 sim");
+    LCHECK(lanes_report(g_sim_mem, o, &m) == 0 && m.lane == 0 && m.word == 2, "sim stall 1 fails word 2 on lane 0");
+    oracle_words(&CASES[6], o);
+    LCHECK(build(&CASES[6], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "hmma stall 1 encode");
+    LCHECK(lat_sim(lane0) == 0, "hmma stall 1 sim");
+    LCHECK(lanes_report(g_sim_mem, o, &m) == 0 && m.word >= 2 && m.word <= 5, "hmma stall 1 fails a destination word");
+#undef LCHECK
+    return failed;
 }
 
 static void json_escape(const char *s, char *dst, size_t n) {
@@ -1515,10 +1670,17 @@ static int run_launch(const char *kdir, const char *out_path) {
     uint64_t cyc[NCASES][RUNS][SWEEP_MAX];
     uint64_t ovh_cyc[8][RUNS];
     uint32_t run0_res[NCASES][SWEEP_MAX];
+    uint8_t lane_min[NCASES][SWEEP_MAX];
+    uint32_t fail_mask[NCASES][SWEEP_MAX];
+    LaneMiss first_miss[NCASES][SWEEP_MAX];
     memset(pass, 0, sizeof pass);
     memset(cyc, 0, sizeof cyc);
     memset(ovh_cyc, 0, sizeof ovh_cyc);
     memset(run0_res, 0, sizeof run0_res);
+    memset(lane_min, 0xff, sizeof lane_min);
+    memset(fail_mask, 0, sizeof fail_mask);
+    for (int ci = 0; ci < NCASES; ci++)
+        for (int s = 0; s < SWEEP_MAX; s++) first_miss[ci][s].lane = -1;
     char notes[NCASES][384];
     memset(notes, 0, sizeof notes);
     unsigned ovh_list[8];
@@ -1593,10 +1755,17 @@ static int run_launch(const char *kdir, const char *out_path) {
                     break;
                 }
                 cyc[ci][r][s - 1] = cy;
-                uint32_t expv = 0, auxv = 0;
-                int four = !strcmp(c->id, "hmma_reader");
-                int ok = expect_abs(c, &expv, &auxv) == 0 && mem_match(mem, expv, auxv, four);
-                pass[ci][r][s - 1] = ok;
+                uint32_t oracle[4];
+                oracle_words(c, oracle);
+                LaneMiss one;
+                int nmatch = lanes_report(mem, oracle, &one);
+                if (lane_min[ci][s - 1] == 0xff || nmatch < lane_min[ci][s - 1]) lane_min[ci][s - 1] = (uint8_t)nmatch;
+                fail_mask[ci][s - 1] |= lane_fail_bits(mem, oracle);
+                if (nmatch < LANE_N && first_miss[ci][s - 1].lane < 0) {
+                    one.run = r;
+                    first_miss[ci][s - 1] = one;
+                }
+                pass[ci][r][s - 1] = nmatch == LANE_N;
                 if (r == 0) run0_res[ci][s - 1] = mem[2];
             }
         }
@@ -1708,7 +1877,11 @@ write_json:;
             fprintf(jf, "      \"overhead_cycle_median\": null,\n");
         else
             fprintf(jf, "      \"overhead_cycle_median\": %llu,\n", (unsigned long long)omed);
-        fprintf(jf, "      \"reference_result\": null,\n");
+        {
+            uint32_t oracle[4];
+            oracle_words(c, oracle);
+            fprint_lane_fields(jf, oracle, lane_min[ci], fail_mask[ci], first_miss[ci], (int)c->sweep, !device_error);
+        }
         fprintf(jf, "      \"run0_result\": [");
         for (unsigned s = 1; s <= c->sweep; s++)
             fprintf(jf, "%s%u", s == 1 ? "" : ", ", run0_res[ci][s - 1]);

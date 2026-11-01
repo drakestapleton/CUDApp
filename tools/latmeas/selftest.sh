@@ -15,4 +15,9 @@ trap 'rm -rf "$dir"' EXIT
 "$bin" --emit "$dir/kernels" >/dev/null
 test -f "$dir/kernels/manifest.txt"
 test -f "$dir/kernels/alu_alu_4.bin"
+if grep -q '90 s' tools/latmeas/run_spark.sh; then
+    echo "FAIL: run_spark.sh still quotes a 90 s bound" >&2
+    exit 1
+fi
+sh tools/latmeas/run_spark.sh --receipt-self-test
 echo "latmeas host self-test PASS"

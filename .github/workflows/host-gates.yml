@@ -29,7 +29,7 @@ jobs:
         run: bash tools/ci/host-gates.sh --self-test
       - name: Figure check
         run: bash tools/ci/host-gates.sh --figures
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: host-gates-figures-${{ github.sha }}
@@ -48,7 +48,7 @@ jobs:
         env:
           HOST_GATES_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bash tools/ci/host-gates.sh
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: host-gates-${{ github.sha }}

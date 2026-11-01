@@ -5,6 +5,7 @@
 #include "omega_gpu_fp8_api.h"
 #include "omega_gpu_cmdlist.h"
 #include "omega_gpu_fmt.h"
+#include "cudapp_native.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -143,7 +144,8 @@ int omega_gpu_pf_quant_record(OmegaGpuCmdList *cl, uint32_t k, uint32_t in_type,
 
 /* ---- native FP8 path (W-L1G): grouped GEMM on QMMA (omega_blackwell_codegen_qg.h) ---- */
 #define KIND_QG 4u
-static struct { uint32_t rt, warps, wait, set; int mutant; } q;
+static struct { uint32_t rt, warps, wait, set; int mutant; uint32_t group; } q;
+void omega_gpu_pf_qgemm_set_group(uint32_t group) { q.group = group; }
 void omega_gpu_pf_qgemm_set_shape(uint32_t rt, uint32_t warps, uint32_t wait) { q.rt = rt; q.warps = warps; q.wait = wait; q.set = rt || warps || wait; }
 void omega_gpu_pf_qgemm_test_set_mutant(int m) { q.mutant = m; }
 static uint32_t QRT(void) { return q.rt ? q.rt : 4u; }
@@ -195,7 +197,7 @@ static int qg_core(OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout,
     if (ntiles == 0) return OMEGA_GPU_PF_OK;
     if (ntiles > 65535u) return OMEGA_GPU_PF_TOO_LARGE;
     OmegaQgSpec s; memset(&s, 0, sizeof s);
-    s.k = k; s.rt = QRT(); s.warps = QWARPS(); s.wait = QWAIT(); s.n = n; s.mutant = q.mutant;
+    s.k = k; s.rt = QRT(); s.warps = QWARPS(); s.wait = QWAIT(); s.n = n; s.mutant = q.mutant; s.group = q.group;
     s.epi = layout == OMEGA_GPU_PF_SWIGLU_NAT ? OMEGA_QG_EPI_SWIGLU : OMEGA_QG_EPI_F32; s.direct = rowidx_va == 0;
     if (!omega_qg_spec_ok(&s)) return OMEGA_GPU_PF_BAD_ARGS;
     const uint32_t span = omega_qg_span(&s);
@@ -205,14 +207,16 @@ static int qg_core(OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout,
     uint32_t args[OMEGA_QG_ARGS_WORDS];
     const uint64_t va[5] = { tiles_va, rowidx_va, xq_va, y_va, xs_va };
     for (int i = 0; i < 5; i++) { args[2 * i] = (uint32_t)va[i]; args[2 * i + 1] = (uint32_t)(va[i] >> 32); }
-    args[10] = n;
+    args[10] = n; args[11] = ntiles;
+    uint64_t plan[64] = {0}, ok = 0;
+    if (omega_native_qgorder(&ok, plan, 64, s.group, n / span, ntiles, 1) != OMEGA_OK || ok != 1) return OMEGA_GPU_PF_BAD_ARGS;
     if (!cl) omega_gpu_session_lock();
     int rc = omega_gpu_pf_open_locked();
     OmegaPfKernel kern;
     if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_kernel_locked(&key, gen_qg, &kern);
     if (rc == OMEGA_GPU_PF_OK)
-        rc = cl ? omega_gpu_pf_record_locked(cl, &kern, 32u * s.warps, n / span, ntiles, omega_qg_shared_bytes(&s), args, OMEGA_QG_ARGS_WORDS)
-                : omega_gpu_pf_launch_locked(&kern, 32u * s.warps, n / span, ntiles, omega_qg_shared_bytes(&s), args, OMEGA_QG_ARGS_WORDS, ns);
+        rc = cl ? omega_gpu_pf_record_locked(cl, &kern, 32u * s.warps, (uint32_t)plan[0], (uint32_t)plan[1], omega_qg_shared_bytes(&s), args, OMEGA_QG_ARGS_WORDS)
+                : omega_gpu_pf_launch_locked(&kern, 32u * s.warps, (uint32_t)plan[0], (uint32_t)plan[1], omega_qg_shared_bytes(&s), args, OMEGA_QG_ARGS_WORDS, ns);
     if (!cl) omega_gpu_session_unlock();
     return rc;
 }

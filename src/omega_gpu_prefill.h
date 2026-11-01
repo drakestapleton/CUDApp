@@ -105,6 +105,7 @@ struct OmegaGpuCmdList;
 int omega_gpu_pf_quant_record(struct OmegaGpuCmdList *cl, uint32_t k, uint32_t in_type, uint32_t rows, uint64_t x_va, uint64_t q_va, uint64_t s_va);
 int omega_gpu_pf_qgemm_record(struct OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles,
                               uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va);
+void omega_gpu_pf_qgemm_set_group(uint32_t group); /* 0 restores original order; 1..5 candidate reuse groups. Set before model use. */
 void omega_gpu_pf_qgemm_set_shape(uint32_t rt, uint32_t warps, uint32_t wait); /* knobs (all 0 restores rt 4, warps 8, wait 45) */
 void omega_gpu_pf_qgemm_test_set_mutant(int m);
 #ifdef __cplusplus

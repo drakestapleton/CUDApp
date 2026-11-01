@@ -256,3 +256,9 @@ uint32_t omega_gpu_pf_qgemm_reading_option(uint32_t rows, uint32_t index) {
     if (omega_native_qgreading(&option, rows, index) != OMEGA_OK || option > UINT32_MAX) return UINT32_MAX;
     return (uint32_t)option;
 }
+
+/* Existing allocation capacities are admitted by Omega before reusing another profile. */
+int omega_gpu_pf_qgemm_workspace_fits(uint64_t capacity, uint64_t padded, uint64_t tiles, uint64_t rows, uint64_t bm) {
+    uint64_t fits = 0;
+    return omega_native_qgworkspace(&fits, capacity, padded, tiles, rows, bm) == OMEGA_OK && fits == 1;
+}

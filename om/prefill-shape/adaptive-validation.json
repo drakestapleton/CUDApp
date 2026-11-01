@@ -1,21 +1,26 @@
 {
-  "status": "PASS targeted Omega profile boundary/refusal oracle, five profile source faults, existing admission/simulation tests, actual scoped dispatch and three adapter faults, runtime API and version gates. Full host suite and adaptive model measurements pending.",
+  "status": "PASS targeted profile and allocation-capacity oracles, five faults in each Omega unit, actual scoped dispatch, existing simulation/admission and API/version gates. Full81 host suite and revised full-model reuse tests pending.",
   "base": "6068d94a8ad8",
   "source_sha256": {
     "om/prefill-shape/reading.om": "5415d3146b00c74e75592866d37833cd80fc7523cbdd4b4b9502ce1ecce51749",
     "om/prefill-shape/reading-check.py": "2ce18d71296f1a1a11414904ac69cf7df2a12f3b0fd232164d95c0b9d2da35fc",
     "om/prefill-shape/reading-mutants.py": "d9585e059c0f8ace7105696793500c9623aed305d7f3498d34623ad5cafc8f0b",
     "om/prefill-shape/scoped-check.c": "a3e030e15eaa558e5b68e17715cbbe36981985b9b3c1006eaf286ae64dcea3e5",
-    "om/units.sh": "9ab5545df400770328f59f95641122831c8a266c72aa2f3b9657ea7a851cf279",
+    "om/units.sh": "87b79c8f4230be5a3a2ad9f6676c6fd5e714dde7558b79b8eeecb2dc6be3317e",
     "src/cudapp_om_prefill_reading.c": "82ba2d9c34ffd2e006f7b3028f509068d80c5c6f6cc27bdfea81ee972323108d",
     "src/cudapp_om_prefill_reading.ident": "2eb37ac0c9280ea5e4e78246f7ddd4f759de8c4c238e2db1f00687e429bf9d42",
-    "src/cudapp_native.h": "b8f4672a803b10b7b80c3313b606fd97a8caee0904302da921e1ffe3e95b7e1b",
-    "src/cudapp_om_units.ident": "0a7a176dcf09d309dfc6fb83022412b9f45ddf72ea90cbb995278b6c38efcf92",
-    "src/omega_gpu_pfgemm.c": "2316fa4c4ac1e00b96150892e3ef637ce4d1597236b1807bb9b12b45bfa4de15",
-    "src/omega_gpu_prefill.h": "abbc571e99beba5a3ee9238f2b05c50e67ff6d7e07957cfd63757be9e6b2050b",
+    "src/cudapp_native.h": "c474fc5969b745715d9c4f2cbd22c56a973e59f07a315fbb487bbe578338d6c4",
+    "src/cudapp_om_units.ident": "607e3cf5e2a80a182facb97b76d8ef8c34c5394f2c240a5da17428d0938a154c",
+    "src/omega_gpu_pfgemm.c": "31ade74e532bf70c53db02a00094d12d797dc03200af0dd68eaaf7a32066be10",
+    "src/omega_gpu_prefill.h": "5ef3810afc3976654b4c86d5774f02d9a4211c6f05610ce9e9eaf4dd30b66fda",
     "src/omega_runtime_api.h": "937712e9cc2b6b644a8d14b58375740ce592dd29cfd57292b3a2c8435a2094af",
-    "mk/prefill-shape.mk": "531beb9e5c9e83c09d1bff0d1d245463b22a97efde47bde0e6ba661dabfa08c8",
-    "docs/runtime/omega_runtime_api.manifest": "fa170c98894f00e4f44f9d0b632962882c06ebe33a7c253797520cd764dfaf91"
+    "mk/prefill-shape.mk": "42eb254bdc284fcee2e8a450803f64eabfb9825f958abec7bebf993716dbbf2f",
+    "docs/runtime/omega_runtime_api.manifest": "1107dd42566a97c09e2060b995daabe115ebab2cf847cf63e9f8ab561bad76c9",
+    "om/prefill-shape/workspace.om": "6b6f9342a66a73667fa3a2c4d0392ab2817a6a6f2c623dc38119de99d45f12e8",
+    "om/prefill-shape/workspace-check.py": "2e76c25e0adffb654dec29066fe57c2a33b2caf65d651868f5370c8057260a25",
+    "om/prefill-shape/workspace-mutants.py": "e2c35f673d3936217350d538a961a90ff578ba594a8e96f83360dedec6445775",
+    "src/cudapp_om_prefill_workspace.c": "893d9ede96e003d763d8022e2fa60b9619b92399d186460043125c4c974fe7fb",
+    "src/cudapp_om_prefill_workspace.ident": "25692a15e87cfc1e210a6a4fd95cc1a2b8fde2c429a9a1c4b6e9cc9b31c730e2"
   },
   "build": {
     "command": [
@@ -29,6 +34,7 @@
       "-j4",
       "OUT_DIR=../optimize27-adaptive-reading-build",
       "all",
+      "test-prefill-workspace",
       "test-prefill-reading",
       "test-prefill-scoped",
       "test-prefill-shape",
@@ -37,15 +43,16 @@
       "RUNTIME_API_BASE=6068d94a8ad8"
     ],
     "cwd": "/tmp/optimize27-adaptive-reading-cudapp",
-    "started": "2026-11-01T20:17:33.749563+00:00",
+    "started": "2026-11-01T20:27:09.626673+00:00",
     "exit_code": 0,
-    "ended": "2026-11-01T20:19:32.569894+00:00",
-    "archive_sha256": "2fcce8a493cc624c002f9f93ad4ddf16c53c77f93ce3d0a37b1005b097c352c3"
+    "ended": "2026-11-01T20:28:48.214809+00:00",
+    "archive_sha256": "752564da817349a38ced23a8beda735f221afce78b1dce0a2e20ea09be1d5ce0"
   },
-  "log_sha256": "cf068c3ab41548460b53e6d168804172ff129c55484f6b3a0a509ef7165927d0",
+  "log_sha256": "7d9f8fd613960d6c4a536925333cb3165a3483ca49b206d9113688399c066772",
   "earlier_attempts": [
     "First API check refused missing exact function-name documentation and stale version labels.",
     "Second API check still refused stale version labels. Both logs are preserved; final labels and function documentation pass."
   ],
-  "scope": "Only reading.om chooses the profile. C transports scalars into the existing scoped API. Fixed profile evidence is unchanged."
+  "scope": "Omega owns profile selection and reuse admission across row, padded-row and tile capacities. C transports scalar results; no second allocation cache is introduced.",
+  "workspace_cases": 1575
 }

@@ -1095,3 +1095,4 @@ const OMEGA_GEMM_ROUTE_BF16X3 3 # EXPERIMENTAL
 const OMEGA_GEMM_ROUTE_FAST_BF16 4 # EXPERIMENTAL
 const OMEGA_GEMM_ROUTE_FFMA 5 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_reading_option fn(u32, u32) -> u32 # EXPERIMENTAL
+fn omega_gpu_pf_qgemm_workspace_fits fn(u64, u64, u64, u64, u64) -> i32 # EXPERIMENTAL

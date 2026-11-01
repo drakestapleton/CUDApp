@@ -44,3 +44,14 @@ test-prefill-reading: $(OUT_DIR)/prefill-reading.so
 ifeq ($(CUDAPP_OMC_HOST),1)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/prefill-shape/reading-mutants.py
 endif
+
+CARRIED_HOST_TESTS += test-prefill-workspace
+.PHONY: test-prefill-workspace
+$(OUT_DIR)/prefill-workspace.so: src/cudapp_om_prefill_workspace.c
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(filter-out -MMD -MP,$(CFLAGS)) -shared -fPIC $< -o $@
+test-prefill-workspace: $(OUT_DIR)/prefill-workspace.so
+	python3 om/prefill-shape/workspace-check.py $(abspath $(OUT_DIR))/prefill-workspace.so
+ifeq ($(CUDAPP_OMC_HOST),1)
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/prefill-shape/workspace-mutants.py
+endif

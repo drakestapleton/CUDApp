@@ -199,3 +199,6 @@ const OMEGA_GPU_ATTN_GMUT_TAIL_DIMS # TEST ONLY: general attention mutant ids fo
 const OMEGA_GPU_ATTN_GMUT_CAUSAL # TEST ONLY: general attention mutant ids for the sweep
 const OMEGA_GPU_ATTN_GMUT_SCALE # TEST ONLY: general attention mutant ids for the sweep
 const OMEGA_GPU_ATTN_GMUT_COUNT # TEST ONLY: general attention mutant ids for the sweep
+
+fn omega_gpu_pf_alloc_dev_locked # internal device-private allocation transport; caller already holds session lock
+fn omega_gpu_pf_copy_va_locked # internal copy transport and chip-time result; caller already holds session lock

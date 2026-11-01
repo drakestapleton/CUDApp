@@ -54,6 +54,9 @@ int omega_gpu_pf_kernel_locked(const OmegaPfKey *key, OmegaPfGen gen, OmegaPfKer
 int omega_gpu_pf_launch_locked(const OmegaPfKernel *k, uint32_t threads, uint32_t grid_x, uint32_t grid_y, uint32_t shared_bytes,
                                const uint32_t *args, uint32_t n_args, uint64_t *ns);
 int omega_gpu_pf_open_locked(void); /* opens the device, registers the hook: OMEGA_GPU_PF_OK or CHIP_FAIL */
+/* Existing device allocation/copy transport, for callers already holding the session lock. */
+int omega_gpu_pf_alloc_dev_locked(size_t bytes, OmegaGpuMem *out);
+int omega_gpu_pf_copy_va_locked(uint64_t dst_va, uint64_t src_va, size_t bytes, uint64_t *chip_ns);
 /* lock held: the same launch appended to a command list (omega_gpu_cmdlist.h) instead of submitted (sc #642: a whole Qwen3.8
  * prefill chunk is one list). Prefill kernels are never evicted, so a recorded launch's code stays valid until the submit. */
 struct OmegaGpuCmdList;

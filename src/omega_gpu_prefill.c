@@ -45,10 +45,9 @@ int omega_gpu_pf_open_locked(void) {
 void omega_gpu_pf_stats(uint64_t *chip_ns, uint64_t *launches) { if (chip_ns) *chip_ns = g.chip_ns; if (launches) *launches = g.launches; }
 void omega_gpu_pf_stats_reset(void) { g.chip_ns = 0; g.launches = 0; }
 
-int omega_gpu_pf_alloc_dev(size_t bytes, OmegaGpuMem *out) {
+int omega_gpu_pf_alloc_dev_locked(size_t bytes, OmegaGpuMem *out) {
     if (!out || bytes == 0) return OMEGA_GPU_PF_BAD_ARGS;
     memset(out, 0, sizeof *out);
-    omega_gpu_session_lock();
     int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK) {
         OmegaGpuSession *s = omega_gpu_session_open();
@@ -64,6 +63,11 @@ int omega_gpu_pf_alloc_dev(size_t bytes, OmegaGpuMem *out) {
             omega_gpu_session_set_error(e); memset(out, 0, sizeof *out); rc = OMEGA_GPU_PF_CHIP_FAIL;
         } else { out->kind = OMEGA_GPU_HANDLE_BUF_DATA; out->cpu = cpu.ptr; out->va = va.va; out->size = cpu.len; }
     }
+    return rc;
+}
+int omega_gpu_pf_alloc_dev(size_t bytes, OmegaGpuMem *out) {
+    omega_gpu_session_lock();
+    int rc = omega_gpu_pf_alloc_dev_locked(bytes, out);
     omega_gpu_session_unlock();
     return rc;
 }
@@ -155,10 +159,16 @@ static int copy_locked(uint64_t dst, uint64_t src, size_t bytes) {
     }
     return rc;
 }
-int omega_gpu_pf_copy_va(uint64_t dst_va, uint64_t src_va, size_t bytes) {
-    omega_gpu_session_lock();
+int omega_gpu_pf_copy_va_locked(uint64_t dst_va, uint64_t src_va, size_t bytes, uint64_t *chip_ns) {
+    const uint64_t before = g.chip_ns;
     int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK) rc = copy_locked(dst_va, src_va, bytes);
+    if (chip_ns) *chip_ns = g.chip_ns - before;
+    return rc;
+}
+int omega_gpu_pf_copy_va(uint64_t dst_va, uint64_t src_va, size_t bytes) {
+    omega_gpu_session_lock();
+    int rc = omega_gpu_pf_copy_va_locked(dst_va, src_va, bytes, NULL);
     omega_gpu_session_unlock();
     return rc;
 }

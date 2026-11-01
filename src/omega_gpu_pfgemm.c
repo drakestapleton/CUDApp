@@ -249,3 +249,10 @@ int omega_gpu_pf_qgemm_scoped(uint32_t rt, uint32_t warps, uint32_t wait, uint32
     const OmegaQgSpec s = qg_scoped_spec(rt, warps, wait, group);
     return qg_core(NULL, &s, n, k, layout, tiles_va, ntiles, rowidx_va, xq_va, xs_va, y_va, ns);
 }
+
+/* Scalar transport for the checked Omega reading profile. */
+uint32_t omega_gpu_pf_qgemm_reading_option(uint32_t rows, uint32_t index) {
+    uint64_t option = UINT32_MAX;
+    if (omega_native_qgreading(&option, rows, index) != OMEGA_OK || option > UINT32_MAX) return UINT32_MAX;
+    return (uint32_t)option;
+}

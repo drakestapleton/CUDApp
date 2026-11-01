@@ -33,3 +33,14 @@ $(OUT_DIR)/prefill-scoped-check: om/prefill-shape/scoped-check.c $(OUT_DIR)/libo
 test-prefill-scoped: $(OUT_DIR)/prefill-scoped-check
 	$(abspath $(OUT_DIR))/prefill-scoped-check
 	CC="$(CC)" python3 om/prefill-shape/scoped-mutants.py $(abspath $(OUT_DIR))/libomega_gpu.a
+
+CARRIED_HOST_TESTS += test-prefill-reading
+.PHONY: test-prefill-reading
+$(OUT_DIR)/prefill-reading.so: src/cudapp_om_prefill_reading.c
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(filter-out -MMD -MP,$(CFLAGS)) -shared -fPIC $< -o $@
+test-prefill-reading: $(OUT_DIR)/prefill-reading.so
+	python3 om/prefill-shape/reading-check.py $(abspath $(OUT_DIR))/prefill-reading.so
+ifeq ($(CUDAPP_OMC_HOST),1)
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/prefill-shape/reading-mutants.py
+endif

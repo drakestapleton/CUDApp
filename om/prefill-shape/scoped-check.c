@@ -39,6 +39,16 @@ int main(void) {
         check(rc==OMEGA_GPU_PF_TOO_LARGE && opened==1 && keyed==1,"legacy settings unchanged after scoped call");
         check(omega_gpu_pf_qgemm_bm()==32,"legacy tile height unchanged");
     }
+    const uint32_t rows[] = {1,30,64,65,128,4096,UINT32_MAX};
+    for(unsigned i=0;i<sizeof(rows)/sizeof(rows[0]);i++) {
+        uint32_t p[4];for(unsigned j=0;j<4;j++)p[j]=omega_gpu_pf_qgemm_reading_option(rows[i],j);
+        expect(rows[i]<=64?4:8,8,rows[i]<=64?0:4,0);
+        int rc=omega_gpu_pf_qgemm_scoped(p[0],p[1],p[2],p[3],256,128,OMEGA_GPU_PF_PLAIN,16,1,0,32,48,64,NULL);
+        check(rc==OMEGA_GPU_PF_TOO_LARGE && opened==1 && keyed==1,"adaptive profile reaches matching cache key");
+        check(omega_gpu_pf_qgemm_bm()==32,"adaptive query leaves legacy height unchanged");
+    }
+    check(omega_gpu_pf_qgemm_reading_option(0,0)==UINT32_MAX,"zero reading rows refused");
+    check(omega_gpu_pf_qgemm_reading_option(64,4)==UINT32_MAX,"unknown reading option refused");
     expect(8,8,6,0);
     check(scoped(8,6)==OMEGA_GPU_PF_BAD_ARGS && opened==0 && keyed==0,"invalid options refused before device access");
     omega_gpu_pf_qgemm_set_shape(0,0,0);omega_gpu_pf_qgemm_set_group(0);omega_gpu_pf_qgemm_test_set_mutant(0);

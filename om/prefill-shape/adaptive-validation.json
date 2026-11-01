@@ -1,0 +1,51 @@
+{
+  "status": "PASS targeted Omega profile boundary/refusal oracle, five profile source faults, existing admission/simulation tests, actual scoped dispatch and three adapter faults, runtime API and version gates. Full host suite and adaptive model measurements pending.",
+  "base": "6068d94a8ad8",
+  "source_sha256": {
+    "om/prefill-shape/reading.om": "5415d3146b00c74e75592866d37833cd80fc7523cbdd4b4b9502ce1ecce51749",
+    "om/prefill-shape/reading-check.py": "2ce18d71296f1a1a11414904ac69cf7df2a12f3b0fd232164d95c0b9d2da35fc",
+    "om/prefill-shape/reading-mutants.py": "d9585e059c0f8ace7105696793500c9623aed305d7f3498d34623ad5cafc8f0b",
+    "om/prefill-shape/scoped-check.c": "a3e030e15eaa558e5b68e17715cbbe36981985b9b3c1006eaf286ae64dcea3e5",
+    "om/units.sh": "9ab5545df400770328f59f95641122831c8a266c72aa2f3b9657ea7a851cf279",
+    "src/cudapp_om_prefill_reading.c": "82ba2d9c34ffd2e006f7b3028f509068d80c5c6f6cc27bdfea81ee972323108d",
+    "src/cudapp_om_prefill_reading.ident": "2eb37ac0c9280ea5e4e78246f7ddd4f759de8c4c238e2db1f00687e429bf9d42",
+    "src/cudapp_native.h": "b8f4672a803b10b7b80c3313b606fd97a8caee0904302da921e1ffe3e95b7e1b",
+    "src/cudapp_om_units.ident": "0a7a176dcf09d309dfc6fb83022412b9f45ddf72ea90cbb995278b6c38efcf92",
+    "src/omega_gpu_pfgemm.c": "2316fa4c4ac1e00b96150892e3ef637ce4d1597236b1807bb9b12b45bfa4de15",
+    "src/omega_gpu_prefill.h": "abbc571e99beba5a3ee9238f2b05c50e67ff6d7e07957cfd63757be9e6b2050b",
+    "src/omega_runtime_api.h": "937712e9cc2b6b644a8d14b58375740ce592dd29cfd57292b3a2c8435a2094af",
+    "mk/prefill-shape.mk": "531beb9e5c9e83c09d1bff0d1d245463b22a97efde47bde0e6ba661dabfa08c8",
+    "docs/runtime/omega_runtime_api.manifest": "fa170c98894f00e4f44f9d0b632962882c06ebe33a7c253797520cd764dfaf91"
+  },
+  "build": {
+    "command": [
+      "taskset",
+      "-c",
+      "12-15",
+      "nice",
+      "-n",
+      "19",
+      "make",
+      "-j4",
+      "OUT_DIR=../optimize27-adaptive-reading-build",
+      "all",
+      "test-prefill-reading",
+      "test-prefill-scoped",
+      "test-prefill-shape",
+      "test-runtime-api",
+      "test-runtime-api-semver",
+      "RUNTIME_API_BASE=6068d94a8ad8"
+    ],
+    "cwd": "/tmp/optimize27-adaptive-reading-cudapp",
+    "started": "2026-11-01T20:17:33.749563+00:00",
+    "exit_code": 0,
+    "ended": "2026-11-01T20:19:32.569894+00:00",
+    "archive_sha256": "2fcce8a493cc624c002f9f93ad4ddf16c53c77f93ce3d0a37b1005b097c352c3"
+  },
+  "log_sha256": "cf068c3ab41548460b53e6d168804172ff129c55484f6b3a0a509ef7165927d0",
+  "earlier_attempts": [
+    "First API check refused missing exact function-name documentation and stale version labels.",
+    "Second API check still refused stale version labels. Both logs are preserved; final labels and function documentation pass."
+  ],
+  "scope": "Only reading.om chooses the profile. C transports scalars into the existing scoped API. Fixed profile evidence is unchanged."
+}

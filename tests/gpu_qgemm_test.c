@@ -278,8 +278,35 @@ static int qg_mufu_ftz_unobservable(void) {
     printf("%s qgemm SwiGLU: MUFU flush vs IEEE, %llu inputs, %llu differ (t-cap keeps it unobservable, #462)\n", diff ? "FAIL" : "PASS", (unsigned long long)n, (unsigned long long)diff);
     return diff ? 1 : 0;
 }
+static int qg128_host(void) {
+    const uint32_t dims[][3] = {
+        {16384,5120,OMEGA_QG_EPI_F32}, {14336,5120,OMEGA_QG_EPI_F32},
+        {5120,6144,OMEGA_QG_EPI_F32}, {34816,5120,OMEGA_QG_EPI_SWIGLU},
+        {5120,17408,OMEGA_QG_EPI_F32}
+    };
+    int fail=0;
+    for (size_t c=0;c<sizeof dims/sizeof dims[0];c++) {
+        BlackwellIRProgram p;
+        OmegaQgSpec sp={dims[c][1],8,8,dims[c][2],1,dims[c][0],45,0};
+        int rc=omega_blackwell_codegen_qgemm_prog(&sp,&p);
+        if (rc) {printf("FAIL 128-row real-shape generation %zu\n",c);fail++;continue;}
+        uint32_t declared=omega_bw_gpr_declared(p.regalloc.peak_gpr_usage), maxstore=0, stores=0;
+        for(size_t j=0;j<p.count;j++) if(p.insns[j].op==BW_IR_STG_E) {
+            if(p.insns[j].imm>maxstore)maxstore=p.insns[j].imm;
+            stores++;
+        }
+        int ok=stores && maxstore<=8388607u && p.regalloc.peak_gpr_usage<=BW_PHYS_GPR_HW_LIMIT
+            && declared>=p.regalloc.peak_gpr_usage+2u && (uint64_t)declared*256u<=65536u;
+        printf("%s 128-row shape %zu peak %u declared %u max-store %u\n",ok?"PASS":"FAIL",c,p.regalloc.peak_gpr_usage,declared,maxstore);
+        if(!ok)fail++;
+    }
+    OmegaQgSpec bad={128,8,8,OMEGA_QG_EPI_F32,1,17536,45,0};
+    if(omega_qg_spec_ok(&bad)){printf("FAIL out-of-range store admitted\n");fail++;}
+    return fail;
+}
+
 static int qg_host(void) {
-    int fail = qg_mufu_ftz_unobservable();
+    int fail = qg_mufu_ftz_unobservable() + qg128_host();
     for (uint32_t layout = 0; layout < 3; layout += 2) {
         QProb p; qprob_make(&p, 3, 256, 384, 40, 17, layout, 0, 0);
         double worst = 0;
@@ -335,6 +362,11 @@ static int qg_sim(void) {
         { 3, 256, 256, 200, 0, OMEGA_GPU_PF_PLAIN, 1, 4, 8 },
         { 2, 256, 128, 150, 64, OMEGA_GPU_PF_PLAIN, 0, 4, 8 },
         { 2, 512, 1024, 140, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 4, 8 },
+        /* Extended-register 128-row shape: direct/indexed and tail stores. */
+        { 3, 256, 384, 259, 300, OMEGA_GPU_PF_SWIGLU_NAT, 0, 8, 8 },
+        { 3, 256, 256, 257, 0, OMEGA_GPU_PF_PLAIN, 1, 8, 8 },
+        { 2, 256, 128, 127, 150, OMEGA_GPU_PF_PLAIN, 0, 8, 8 },
+        { 1, 512, 1024, 129, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 8, 8 },
         /* 32-row shape: paired scale rows, tails, direct and indexed input. */
         { 3, 256, 384, 97, 120, OMEGA_GPU_PF_SWIGLU_NAT, 0, 2, 4 },
         { 3, 256, 256, 65, 0, OMEGA_GPU_PF_PLAIN, 1, 2, 4 },
@@ -354,7 +386,7 @@ static int qg_sim(void) {
                    cs[c].direct ? "direct" : "indexed", cs[c].rt, cs[c].warps, order, rc ? msg : "ran", bad);
             if (rc || bad) fail++;
         }
-        if (c == 0 || c == 1 || c == 4 || c == 5) for (int m = 1; m <= 4; m++) {
+        if (c == 0 || c == 1 || c == 4 || c == 5 || c == 8 || c == 9) for (int m = 1; m <= 4; m++) {
             OmegaQgSpec ms = sp; ms.mutant = m;
             const int rc = qg_sim_run(&p, &ms, 0, y, msg, sizeof msg);
             const size_t bad = rc ? 0 : qcompare(&p, y, rows, p.M, 0, NULL);

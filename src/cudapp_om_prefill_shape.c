@@ -46,24 +46,61 @@ static int o_overlap(const void *a,uint64_t an,const void *b,uint64_t bn){uintpt
 #error fast math is not a supported Omega environment
 #endif
 static uint64_t o_f32(unsigned op,uint64_t a,uint64_t b){uint32_t ua=(uint32_t)a,ub=(uint32_t)b,ur;float x,y;__builtin_memcpy(&x,&ua,4);__builtin_memcpy(&y,&ub,4);if(op==1)return ua&UINT32_C(0x7fffffff);if(op==2){volatile float z=x*y;__builtin_memcpy(&ur,(const void*)&z,4);return ur;}return x<=y;}
-static uint64_t f0(uint64_t v0, uint64_t v1);
-static uint64_t f0(uint64_t v0, uint64_t v1){
+static uint64_t f0(uint64_t v0, uint64_t v1, uint64_t v2);
+static uint64_t f1(uint64_t v0, uint64_t v1, uint64_t v2, uint64_t v3);
+static uint64_t f0(uint64_t v0, uint64_t v1, uint64_t v2){
 o_enter();
+if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=0ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v0;uint64_t _b=4294967295ULL;o_op(10, 5, _a,_b);});o_op(13, 1, _a,_b);})){
+return o_leave(0ULL);
+}
+if(({uint64_t _a=({uint64_t _a=v1;uint64_t _b=1ULL;o_op(8, 5, _a,_b);});uint64_t _b=({uint64_t _a=v1;uint64_t _b=8ULL;o_op(10, 5, _a,_b);});o_op(13, 1, _a,_b);})){
+return o_leave(0ULL);
+}
+if(({uint64_t _a=v2;uint64_t _b=1ULL;o_op(10, 5, _a,_b);})){
+return o_leave(0ULL);
+}
+uint64_t __attribute__((unused)) v3=v0;
+if(({uint64_t _a=v2;uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
+v3=({uint64_t _a=v0;uint64_t _b=4ULL;o_op(3, 5, _a,_b);});
+}
+uint64_t __attribute__((unused)) v4=({uint64_t _a=({uint64_t _a=({uint64_t _a=v1;uint64_t _b=16ULL;o_op(3, 5, _a,_b);});uint64_t _b=8ULL;o_op(2, 5, _a,_b);});uint64_t _b=v3;o_op(3, 5, _a,_b);});
+if(({uint64_t _a=v2;uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
+v4=({uint64_t _a=v4;uint64_t _b=36ULL;o_op(1, 5, _a,_b);});
+}
+if(({uint64_t _a=v4;uint64_t _b=8388607ULL;o_op(9, 5, _a,_b);})){
+return o_leave(1ULL);
+}
+return o_leave(0ULL);
+}
+static uint64_t f1(uint64_t v0, uint64_t v1, uint64_t v2, uint64_t v3){
+o_enter();
+uint64_t __attribute__((unused)) v4=({uint64_t p0=v2;uint64_t p1=v0;uint64_t p2=v3;f0(p0, p1, p2);});
+if(({uint64_t _a=v4;uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
+return o_leave(0ULL);
+}
 if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=4ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v1;uint64_t _b=8ULL;o_op(6, 5, _a,_b);});o_op(12, 1, _a,_b);})){
 return o_leave(1ULL);
 }
 if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=2ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v1;uint64_t _b=4ULL;o_op(6, 5, _a,_b);});o_op(12, 1, _a,_b);})){
 return o_leave(1ULL);
 }
+if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=4ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v1;uint64_t _b=16ULL;o_op(6, 5, _a,_b);});o_op(12, 1, _a,_b);})){
+return o_leave(1ULL);
+}
+if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=8ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v1;uint64_t _b=8ULL;o_op(6, 5, _a,_b);});o_op(12, 1, _a,_b);})){
+return o_leave(1ULL);
+}
 return o_leave(0ULL);
 }
-uint32_t omega_native_qgshape(uint64_t *result, volatile uint64_t p0, volatile uint64_t p1){
+uint32_t omega_native_qgshape(uint64_t *result, volatile uint64_t p0, volatile uint64_t p1, volatile uint64_t p2, volatile uint64_t p3){
 if(!o_buf(result,1,1,5))return 32;
 if(!o_valid(5, p0))return 32;
 if(!o_valid(5, p1))return 32;
+if(!o_valid(5, p2))return 32;
+if(!o_valid(5, p3))return 32;
 if(o_busy)return 33;
 o_busy=1;o_depth=0;int code=setjmp(o_jmp);
-if(!code)*result=f0(p0, p1);
+if(!code)*result=f1(p0, p1, p2, p3);
 o_busy=0;o_depth=0;return (uint32_t)code;
 }
 #if defined(__GNUC__)

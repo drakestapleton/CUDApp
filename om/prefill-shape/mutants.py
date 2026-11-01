@@ -5,6 +5,11 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 source=(root/'om/prefill-shape/admit.om').read_text()
 mutants={
+ 'drop_column_offset':('last = add last 36','last = add last 0'),
+ 'overflow_offset_boundary':('le last 8388607','le last 8388643'),
+ 'drop_last_row_group':('sub mul rt 16 8','sub mul rt 16 16'),
+ 'drop_large_shape':('eq rt 8 eq warps 8','eq rt 7 eq warps 8'),
+ 'admit_large_overbudget_warps':('eq rt 8 eq warps 8','eq rt 8 eq warps 16'),
  'drop_small_shape':('eq rt 2 eq warps 4','eq rt 3 eq warps 4'),
  'drop_incumbent':('eq rt 4 eq warps 8','eq rt 5 eq warps 8'),
  'admit_unsafe_one_row_group':('eq rt 2 eq warps 4','eq rt 1 eq warps 2'),

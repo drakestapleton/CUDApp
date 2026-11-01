@@ -74,10 +74,10 @@ int omega_qg_spec_ok(const OmegaQgSpec *s) {
     if (!s) return 0;
     if (s->k < 128u || s->k > 32768u || s->k % 128u) return 0; /* the k loop counts at run time: no k-sized immediate */
     uint64_t shape = 0;
-    if (omega_native_qgshape(&shape, s->rt, s->warps) != OMEGA_OK || shape != 1) return 0;
+    if (omega_native_qgshape(&shape, s->rt, s->warps, s->n, s->epi) != OMEGA_OK || shape != 1) return 0;
     if (s->epi > OMEGA_QG_EPI_SWIGLU || s->direct > 1 || s->wait > 120u) return 0;
     if (s->epi == OMEGA_QG_EPI_SWIGLU && s->n % 256u) return 0; /* gate and up halves start on a 128-row scale block */
-    if (s->n == 0 || s->n % (s->warps * 16u) || (uint64_t)(s->epi == OMEGA_QG_EPI_F32 ? 4u : 1u) * s->n * 16u * s->rt >= (1u << 23)) return 0; /* row stride (n f32, or n / 2 bf16 = n bytes) x 16 rt: the store offsets fit the signed 24-bit field */
+    if (s->n == 0 || s->n % (s->warps * 16u)) return 0;
     if ((16u * s->rt * 4u) % (32u * s->warps)) return 0; /* whole 16-byte staging slots per thread */
     if (s->mutant < 0 || s->mutant > 4) return 0;
     return 1;
@@ -97,6 +97,10 @@ int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgr
     const uint32_t BM = 16u * RT, KB = K / 128u, SPAN = W * 16u, NJ = BM * 4u / T, ABUF = BM * 64u, BUF = ABUF + BM * 4u;
     const uint32_t NS = spec->epi == OMEGA_QG_EPI_SWIGLU ? 2u : 1u; /* scale rows per warp: gate + up block, or one block */
     omega_bw_ir_init(prog);
+    /* The 128-row candidate keeps more accumulators live. Use the existing
+     * opt-in allocation range; the runtime still validates declared registers
+     * times threads. Blackwell Tuning Guide, physical page 13. */
+    if (RT == 8 && omega_bw_ir_set_gpr_limit(prog, BW_PHYS_GPR_HW_LIMIT) != 0) return -1;
     Em em; memset(&em, 0, sizeof em); em.p = prog; Em *e = &em;
 
     int udesc = UV64(e), ptab = V64(e), pidx = V64(e), px = V64(e), pxs = V64(e);

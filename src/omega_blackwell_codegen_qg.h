@@ -51,8 +51,8 @@ int omega_blackwell_codegen_pq_prog(const OmegaPqSpec *s, BlackwellIRProgram *pr
 enum { OMEGA_QG_EPI_F32 = 0, OMEGA_QG_EPI_SWIGLU = 1 };
 typedef struct {
     uint32_t k;      /* multiple of 128, 128 .. 32768 */
-    uint32_t rt;     /* row tiles of 16: 4 (8 exceeds 128 registers and the 16384-byte QMD shared cap) */
-    uint32_t warps;  /* 8 or 16 */
+    uint32_t rt;     /* row tiles of 16, admitted by Omega; 8 opts into the extended register allocator */
+    uint32_t warps;  /* paired with rt by the checked Omega shape policy */
     uint32_t epi;    /* OMEGA_QG_EPI_* */
     uint32_t direct; /* 1: no row index */
     uint32_t n;      /* output width (weight rows), multiple of warps * 16 */

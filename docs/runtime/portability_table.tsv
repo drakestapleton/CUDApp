@@ -62,6 +62,7 @@ src/omega_bw_em_q.h	CHIP_SPECIFIC	Private emitters for the FP8 QMMA placeholders
 src/omega_bw_hazard.c	CHIP_SPECIFIC	Static scoreboard hazard checker over encoded sm_121 kernel bytes (RAW, WAR, WAW against the Blackwell write and read barriers); decodes the operand positions the encoder writes. Includes stdlib.h.	HOSTED_LIBC
 src/omega_bw_hazard.h	CHIP_SPECIFIC	Interface of the sm_121 scoreboard hazard checker; includes only stddef.h and stdint.h.	NO_HOSTED_INCLUDE
 src/omega_bw_reconv.h	CHIP_SPECIFIC	Warp reconvergence regions (BSSY, BSYNC) for the Blackwell IR emitters.	NO_HOSTED_INCLUDE
+src/omega_gpu_attention_mirror.h	CHIP_SPECIFIC	Scoped native attention history placement; declares GPU-private cached-copy behavior and includes omega_gpu_prefill_attn256_api.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_attention_api.c	CHIP_SPECIFIC	Builds and launches its own sm_121 attention kernels (stall counts as nvcc writes them for sm_121) through the session: the tuned head_dim 64/128 kernels and, since runtime API 0.6.0, the general fallback kernel (head_dim 1..256, any GQA ratio). In the freestanding closure.	FREESTANDING_PROVEN
 src/omega_gpu_attention_api.h	CHIP_SPECIFIC	Attention API; its kernel type OmegaBlackwellKernel comes from omega_blackwell_matmul.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_bf16_gemv_api.c	CHIP_SPECIFIC	Launches the bf16 GEMV through a command list; uses the Blackwell bf16 generator.	NO_HOSTED_INCLUDE

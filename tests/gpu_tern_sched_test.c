@@ -7,7 +7,7 @@
  * scoreboard nor sits >= OMEGA_TERN_I2FP_LAT cycles behind (omega_tern_i2fp_violations).
  *
  *  1. every production f32 spec builds, has an I2FP, and the I2FP sets a write scoreboard its reader waits on;
- *  2. negative control: mutant 4 (the pre-fix I2FP, stall 6, no scoreboard) is refused for every f32 spec;
+ *  2. negative control: mutant 6 (the pre-fix I2FP, stall 6, no scoreboard) is refused for every f32 spec;
  *  3. the checker on hand-built programs: I2FP -> FMUL at stall 6 fails, at 18 fails, at 19 passes, with the
  *     scoreboard wait passes, without it fails; an FMUL producer at stall 6 passes (other producers keep their rule).
  *
@@ -82,15 +82,15 @@ int main(void) {
                     }
                     if (seen && ok && omega_tern_i2fp_violations(&prog) == 0) wired++;
                 }
-                s.mutant = 4;
+                s.mutant = 6;
                 if (omega_tern_gemv_spec_ok(&s) && omega_blackwell_codegen_tern_gemv_prog(&s, &prog) != 0) refused++;
             }
-    printf("  f32 specs %d: built %d, I2FP on a scoreboard its reader waits on %d, mutant 4 refused %d\n", specs, built, wired, refused);
+    printf("  f32 specs %d: built %d, I2FP on a scoreboard its reader waits on %d, mutant 6 refused %d\n", specs, built, wired, refused);
     check(specs > 0 && built == specs, "1. every production f32 spec builds");
     check(specs > 0 && wired == specs, "1. its I2FP writes a scoreboard and the next instruction waits on it");
-    check(specs > 0 && refused == specs, "2. negative control: mutant 4 (I2FP fixed stall 6) refused for every spec");
-    OmegaTernGemvSpec i32 = { 2560, OMEGA_TERN_LAYOUT_ROWMAJOR, 2, 4, 1, OMEGA_TERN_EPI_I32, 4 };
-    check(omega_blackwell_codegen_tern_gemv_prog(&i32, &prog) == 0, "2. mutant 4 without an I2FP (i32 epilogue) still builds");
+    check(specs > 0 && refused == specs, "2. negative control: mutant 6 (I2FP fixed stall 6) refused for every spec");
+    OmegaTernGemvSpec i32 = { 2560, OMEGA_TERN_LAYOUT_ROWMAJOR, 2, 4, 1, OMEGA_TERN_EPI_I32, 6 };
+    check(omega_blackwell_codegen_tern_gemv_prog(&i32, &prog) == 0, "2. mutant 6 without an I2FP (i32 epilogue) still builds");
 
     check(synth(BW_IR_I2FP, CW(6, 7, 7, 0), 0, CW(6, 7, 7, 0)) == 1, "3. I2FP -> FMUL at stall 6, no scoreboard: violation");
     check(synth(BW_IR_I2FP, CW(15, 7, 7, 0), 3, CW(6, 7, 7, 0)) == 1, "3. I2FP -> FMUL at 18 cycles, no scoreboard: violation");

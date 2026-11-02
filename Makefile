@@ -306,7 +306,7 @@ test-gpu-bf16-gemv: $(GPU_BF16_TEST)
 # The ternary GEMV host test (tests/gpu_tern_test.c) stays in Omega: its reference is Omega's ternary
 # algebra oracle (src/algebra), which is not part of CUDA++. The library itself (omega_gpu_tern_api) is here.
 # Sass#4 (2026-10-27): the generator's I2FP consumer rule (scoreboard or >= 19 cycles), host only, with its negative
-# control (mutant 4, the pre-fix stall 6, must be refused). No reference oracle needed, so it lives here.
+# control (mutant 6, the pre-fix stall 6, must be refused). No reference oracle needed, so it lives here.
 .PHONY: test-gpu-tern-sched
 GPU_TERN_SCHED_TEST = $(OUT_DIR)/gpu_tern_sched_test
 $(GPU_TERN_SCHED_TEST): tests/gpu_tern_sched_test.c src/omega_blackwell_codegen_tern.h $(OUT_DIR)/libomega_gpu.a

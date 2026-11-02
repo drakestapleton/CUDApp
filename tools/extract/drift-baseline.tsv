@@ -14,7 +14,10 @@
 # Still differ at 4376c21 on purpose: Makefile (CUDA++ build); src/omega_gpu_fp8_api.c (CUDA++ owner-generation upload kept, omega#456 lock-held fill already there);
 # tests/gpu_fp8gemm_test.c (CUDA++ test_out_open 0600 receipt kept over omega's 0644 open); licence headers.
 # tests/bw_hazard_test.c is omega 6d7b883844a0f17a7a3ceb427108be7e01e4c677's blob (#984, unchanged through omega 2638a49b); CUDA++ is ahead there with the sm_86 uniform-destination cases (#170), so any later omega edit to it must still fail.
-Makefile	6011dfa5d7d883b01ac3671f630499ef5f9d1fcc
+# Blobs omega changed through f9a9a40b5989 (train r4 #995: #490 KT1 coalesced output, #905 q38 config shape and bf16 layers, #900 EXP/LOG GB10 table, #598, #566) are that commit's (CUDApp fix/drift-r4-port). The omega deltas were applied to the CUDA++ copies;
+# byte copies: src/omega_blackwell_codegen.h, tests/bw_warp_sim.h, tests/bw_warp_sim_k.h, tests/bw_warp_sim_pa.h. Still differ at f9a9a40b on purpose: Makefile (r4 adds only Omega-side targets: physics.lock gate pins, GB10 transcendental mutants, gpu_tern_test, none carried here);
+# tests/gpu_tern_test.c (omega-only: its oracle is Omega's src/algebra); src/omega_blackwell_codegen_tern.{c,h} (CUDA++ I2FP refusal Sass#4 kept, its mutant renumbered 4 -> 6 so omega #490 keeps mutants 4 and 5); src/omega_gpu_q38_graph.c (Ribbon exact head kept, 27B-only); licence headers and earlier CUDA++-ahead code.
+Makefile	8ce1577719599ded4b0b4b8c00c241e45f972cb1
 evidence/C3-GEMM/01-host-only.log	c581c5126718bc24ef10ed1b1637528018a260e5
 evidence/C3-GEMM/02-sim.log	fd97da9f29871abfc16fb2ed938c38a4d3c2314f
 evidence/C3-GEMM/README.md	0e730a9bf2072f34d59d9cdc1961f4112a7ff90e
@@ -160,8 +163,8 @@ mk/omega-gpu-code-alloc.mk	3b217c32d9cc063c8b83d18ede48afcc24a594ae
 mk/omega-gpu-engine.mk	f3f5dd632c6a42c806ccdb687c8df6e7e5c35ffa
 mk/omega-gpu-wait.mk	42e5ed25b232b7ae67f922e9a4a948e3ef942159
 mk/sm121dis.mk	c9440caa7c5b1f956c4fdd55d93e1eb631a2e768
-src/omega_blackwell_codegen.c	97a727a97323936af86acf81a2d36cb35befd9f2
-src/omega_blackwell_codegen.h	1f0b70eecd3860da68bbe013860f27ca01da0d2f
+src/omega_blackwell_codegen.c	cfbc951a5e8baf75ef6f4e244e9e2e116f1d4abf
+src/omega_blackwell_codegen.h	209f6c64d7cb9b972c001309cd25b8c5f88602c5
 src/omega_blackwell_codegen_attn.c	060e25cff987ff43fdb234aee39497253cf25c3a
 src/omega_blackwell_codegen_attn.h	4f84bba33c4cf4dfca8834335b6900aba01b677b
 src/omega_blackwell_codegen_attn256.c	ecb4c1dae47bfa0b7d25f90468b17de79247c040
@@ -196,8 +199,8 @@ src/omega_blackwell_codegen_tc.c	6a882d7e197ebfcf428d173e2d8ee3986090a748
 src/omega_blackwell_codegen_tc.h	a27f71f81774f9ee0e9be521ac57b1e935083f71
 src/omega_blackwell_codegen_tc2.c	4feb021fb579af433ac37d0fc37e060a96ac0533
 src/omega_blackwell_codegen_tc2.h	38d17fdd1667afe82ced90d4702b44445fba5058
-src/omega_blackwell_codegen_tern.c	6177d45ad13dc53cdb8cb4b3f7a133240ef3c3c6
-src/omega_blackwell_codegen_tern.h	12465d8b6aabcf5bb37de3d86cdaf5935a6abc3b
+src/omega_blackwell_codegen_tern.c	e788259bac40d99e0eb6cba218e9eaafcec93491
+src/omega_blackwell_codegen_tern.h	e744f379e118f2be6dcade9749ac6127c925c8d4
 src/omega_blackwell_encoder.c	373a98cdac7c8bdbf3921579f013eac4cafe6647
 src/omega_blackwell_encoder.h	9050a2f03dcf7b072775d1182cc558b8d8e5b623
 src/omega_blackwell_engine.c	436de40edfab6b760ebaefe65840d10803497d98
@@ -270,8 +273,8 @@ src/omega_gpu_prefill_attn_api.c	40b9fa33f23e355308056629e0f63e36005da079
 src/omega_gpu_prefill_attn_api.h	3bf4bd3bf2ae2e7e3b4d7e5877e9eb78c63965b1
 src/omega_gpu_q36_graph.c	57fe6ddc2bb7483520c6b8dc6a0e3dbc9cb6f38c
 src/omega_gpu_q36_graph.h	c14475acfa644db8938c6152e8886c76d778232c
-src/omega_gpu_q38_graph.c	d890d8261aafcdad70d57686de95bced654c1158
-src/omega_gpu_q38_graph.h	263b1a3a10f4c51e8a1d06b91d440fe72e9ea814
+src/omega_gpu_q38_graph.c	b0da9cd96da85a2deb0888583773c52f53ba843b
+src/omega_gpu_q38_graph.h	c0b760adaf7058bf43f45013ca46fa62215744c1
 src/omega_gpu_router_api.c	fc06a7b08711016feefffdec0efc756ff92ac3f3
 src/omega_gpu_router_api.h	1232e8aaa21242fa04c5ae6a839f604fe4c3ed9f
 src/omega_gpu_scan.c	0094072e36d8b6f7b53f92152c6b21776fa86bae
@@ -287,9 +290,9 @@ src/omega_gpu_tern_api.c	36f052a92daa588b5032aca0476648de6103094e
 src/omega_gpu_tern_api.h	4e81e02c195418de8859415498a61108ea0ad23b
 src/omega_gpu_wait.c	57325f0fd0564a9e4e5815372e62c4810a076331
 src/omega_gpu_wait.h	f007dbca95527ef6266daf85397779ce6f8e84e2
-# Ampere x86 cutover, Main authorization 2026-10-28: the four src/omega_numeric{,_reduce}.{c,h} rows below are the retained Omega CPU-oracle copies at main 6999fa9e6dae. CUDA++ adds explicit x86 SSE/fmaf realizations there; future changes to the retained Omega copy must still fail.
-src/omega_numeric.c	271f0027b37069249bb79af99d139f1aee92c36c
-src/omega_numeric.h	b3548189a5d0101bfa1d3f9e83abb3595528004b
+# Ampere x86 cutover, Main authorization 2026-10-28: the four src/omega_numeric{,_reduce}.{c,h} rows below are the retained Omega CPU-oracle copies at main 6999fa9e6dae. CUDA++ adds explicit x86 SSE/fmaf realizations there; future changes to the retained Omega copy must still fail. src/omega_numeric.{c,h} moved to omega f9a9a40b (#900: EXP and LOG listed as GB10 whole-program kernels, which live in Omega's src/omega_numeric_divsqrt_gb10.c); the delta was applied here and the x86 realizations kept.
+src/omega_numeric.c	d76000ba9d5bca8258d5709b131803a377f075d7
+src/omega_numeric.h	842bd2d6408ab230a690c7ea62fb4982e1f22391
 src/omega_numeric_lifecycle.h	a90a359306f98420a3189a488fe413319b4fad38
 src/omega_numeric_reduce.c	3dffadfe031a774191d07bddacd203fadee6a4b2
 src/omega_numeric_reduce.h	ac9cf9c9b636b292ab23d5a25309cf2669496a17
@@ -305,10 +308,10 @@ tests/bw_encode_control_test.c	46a67b11dfc65bf7d6fab711312b6368a8814f87
 tests/bw_hazard_test.c	e052b0904db6ad5eac33effaaf9111245bbdb9dc
 tests/bw_hmma_model.h	f019912d90dd2f5b1b3634473abdc8f767c32c25
 tests/bw_qmma_model.h	8429ad2cbf5031f435b13f3bcb332dbdbfac1d58
-tests/bw_warp_sim.h	6d93828f3979b3a7223ebe0f1952b53e1d414764
-tests/bw_warp_sim_k.h	993875647985cc99ce27a78003df26df91fd18e1
-tests/bw_warp_sim_pa.h	157e396cde9d942cc0bfff02fd057ed393c52a0a
-tests/bw_warp_sim_tc.h	59e4ad37965c70650cd5c6ce37f53d5f4a459937
+tests/bw_warp_sim.h	b9f5e1070de7b3f0c36f0c73957db8c95189ea2f
+tests/bw_warp_sim_k.h	9babac07ab7d9728482c703697c38f111069c208
+tests/bw_warp_sim_pa.h	9fd16192c926d29155d392b05d9d10eb6bb4b197
+tests/bw_warp_sim_tc.h	042c273a94f736003751619c28b971fbc643759a
 tests/dagsim/dagsim_unit.c	f9c6c089ea9bbb8ab820e5070583bd6c1cf98804
 tests/dagsim/fixtures/m1_spark_overlap.oev	249980f17162a95e47917072fa842b37bca08b41
 tests/dagsim/fixtures/m1_spark_subset.oev	34fdf73644edbaad5ead8d444752430aefb451a0
@@ -321,7 +324,7 @@ tests/dagsim/run_cli.sh	5b22297de823d24af6c8f7e5f373b90f632aa461
 tests/dagsim/sha256_host.c	64ffdf4e5d6443ccf1272d43f6dba39589624c0a
 tests/fake_m16_native.c	54f204c266512c29324a46bbcda880c004509971
 tests/fake_m16_native.h	cdb48ee8764184fdbf9d8895019d44f87a5e21ca
-tests/gpu_attention_test.c	fa8b39cf58dbf20ec4785f3be2b9d58d443cf1ea
+tests/gpu_attention_test.c	04522ef4ec1aeac9fe8feb154fe66dc95ce652b2
 tests/gpu_bf16_gemv_test.c	4a8b733f7effd37220ebcd50991455eac3fe125f
 tests/gpu_cmdlist_test.c	f32d36caed78fda46cd1a7536da284d8d260e952
 tests/gpu_dattn256_multi_test.c	daef69b87e28c449d7756216f343d6463a0ddd7b
@@ -350,7 +353,7 @@ tests/gpu_pfgemm_test.c	900878f59f98aaf3f0a16061b95b7d363882b1e9
 tests/gpu_pfhost_test.c	ba25fc5aab20f3feb81da9180fc615aa29f7d33f
 tests/gpu_prefill_attn256_test.c	72374f11bd23b28619765b91d8c7aa85a18b719a
 tests/gpu_prefill_attn_test.c	5a20ae554749cabaa9854aa2306c617ed1e07e3c
-tests/gpu_q38_graph_test.c	69de826c8b69398c011fdb452aaab9d5060eb2ef
+tests/gpu_q38_graph_test.c	7abe010b768ced7bbcae2bb0114e18aafaf03984
 tests/gpu_qgemm_test.c	15dd5cb87d5b695aaf4f27147c141ef95779ff8e
 tests/gpu_qmma_probe_test.c	639aa7cd2008825c8d6562634e769d1f12df28c7
 tests/gpu_reconv_test.c	3416fe6ea9f9a17cc9e0a52e09fd42e52d3f8c71
@@ -362,7 +365,7 @@ tests/gpu_streams_test.c	621049e148681b8c7defb68e15c986cfbcc715b2
 tests/gpu_tc_peak_test.c	5d2841cbafc3014775551c49531e0c9af3407992
 tests/gpu_tc_probe_test.c	934e4a03c2eb6a13e03b9b63ae1284e1038dc109
 tests/gpu_tcgemm_test.c	340ff8a63dc8b422c829161e4d43ef06bea743a1
-tests/gpu_tern_test.c	48e91db2d504ad6a6aa3b1e578edbc45523cf46a
+tests/gpu_tern_test.c	fb4e90e4c199ff9a830dc673ddc0bc140c10ca2f
 tests/test_omega_blackwell_engine.c	5d79271fbd597624a92d3a1544a10b7bccffc960
 tests/test_omega_codegen_freestanding.c	a84887375200f9a27393096f33333821df503df8
 tests/test_omega_gpu_code_alloc.c	2bebf3ca808f4cb38081a035fc633ebafc66dd8a

@@ -1,0 +1,8 @@
+Command, stopped after the refusal was already printed. make was still waiting for other jobs, so this is not a completed suite exit code.
+
+make -j4 test
+CUDAPP_MEM_RESERVE_MIB was unset.
+
+FAIL tests/gpu_serving_alloc_count_test.c:73: upload 2560x151936 rc=-4 dma_alloc: refused 741.9 MiB: 4.6 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+make: *** [mk/omega-gpu-engine.mk:101: test-gpu-serving-alloc] Error 1
+make: *** Waiting for unfinished jobs....

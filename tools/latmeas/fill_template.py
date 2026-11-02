@@ -47,7 +47,7 @@ def runs_text(case, runs):
         if case.get("cycle_median") is not None:
             parts.append("cycles at that stall median %s spread %s" % (case["cycle_median"], case.get("cycle_spread")))
     if case.get("cycle_median_stall1") is not None:
-        parts.append("stall-1 cycles median %s spread %s" % (case["cycle_median_stall1"], case.get("cycle_spread_stall1")))
+        parts.append("programmed stall 1 cycles median %s spread %s (not the stall under the threshold)" % (case["cycle_median_stall1"], case.get("cycle_spread_stall1")))
     if case.get("overhead_cycle_median") is not None:
         parts.append("loop overhead median %s" % case["overhead_cycle_median"])
     if case.get("stall_required") is None and case.get("cycle_median_stall1") is None and case.get("overhead_cycle_median") is None:

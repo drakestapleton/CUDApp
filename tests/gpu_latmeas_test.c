@@ -55,6 +55,7 @@
 #include "omega_blackwell_codegen.h"
 #include "omega_gpu_session.h"
 #include "omega_sm121_disasm.h"
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -1728,6 +1729,18 @@ static int lane_field_self_test(void) {
             for (int i = 0; i < nk; i++) free(kk[i].code);
             free(kk);
         }
+        DIR *dd = opendir(dump);
+        if (dd) {
+            struct dirent *de;
+            while ((de = readdir(dd)) != NULL) {
+                if (de->d_name[0] == '.') continue;
+                char p[768];
+                snprintf(p, sizeof p, "%s/%s", dump, de->d_name);
+                unlink(p);
+            }
+            closedir(dd);
+        }
+        rmdir(dump);
     }
 #undef LCHECK
     return failed;

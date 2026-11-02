@@ -17,14 +17,21 @@ cd "$root"
 
 write_receipt() {
     rec=$1/RECEIPT.txt
+    gitdir=${CUDAPP_RECEIPT_GIT:-.}
+    launch_cmd=${2:-}
+    launch_rc=${3:-}
     {
         echo "utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        echo "head: $(git rev-parse HEAD)"
-        echo "head_parents: $(git rev-parse HEAD^@ 2>/dev/null | tr '\n' ' ')"
-        if git diff --quiet && git diff --cached --quiet; then
-            echo "worktree: clean"
-        else
+        echo "head: $(git -C "$gitdir" rev-parse HEAD)"
+        echo "head_parents: $(git -C "$gitdir" rev-parse HEAD^@ 2>/dev/null | tr '\n' ' ')"
+        if [ -n "$(git -C "$gitdir" status --porcelain)" ]; then
             echo "worktree: dirty"
+        else
+            echo "worktree: clean"
+        fi
+        if [ -n "$launch_cmd" ]; then
+            echo "launch_command: $launch_cmd"
+            echo "launch_rc: $launch_rc"
         fi
         echo "kernel: $(uname -srvm)"
         echo "gcc: $(gcc --version | head -n 1)"
@@ -78,7 +85,7 @@ write_receipt() {
 if [ "$1" = "--receipt-self-test" ]; then
     tmp=$(mktemp -d)
     printf '{}\n' > "$tmp/raw.json"
-    write_receipt "$tmp"
+    write_receipt "$tmp" "flock /tmp/aien-gb10.lock timeout 600 ./build/gpu_latmeas_test --launch $tmp/kernels --out $tmp/raw.json" 0
     got=$(awk '/^raw_json_sha256: / {print $2}' "$tmp/RECEIPT.txt")
     want=$(sha256sum "$tmp/raw.json" | awk '{print $1}')
     grep -q '^utc: ' "$tmp/RECEIPT.txt"
@@ -88,6 +95,8 @@ if [ "$1" = "--receipt-self-test" ]; then
     grep -q '^gcc: ' "$tmp/RECEIPT.txt"
     grep -q '^device: ' "$tmp/RECEIPT.txt"
     test "$got" = "$want"
+    grep -q '^launch_command: ' "$tmp/RECEIPT.txt"
+    grep -q '^launch_rc: 0$' "$tmp/RECEIPT.txt"
     rm -rf "$tmp"
     # proc Model "Unknown" plus PCI 10de:2e12 is the GB10 the doctor names.
     fake=$(mktemp -d)
@@ -101,6 +110,24 @@ if [ "$1" = "--receipt-self-test" ]; then
     grep -q '^model: NVIDIA GB10 (sm_121)$' "$fake/RECEIPT.txt"
     grep -q '^model_source: pci 0x2e12' "$fake/RECEIPT.txt"
     rm -rf "$fake"
+    # An untracked file must mark the tree dirty. git diff --quiet would miss it.
+    repo=$(mktemp -d)
+    rout=$(mktemp -d)
+    git -C "$repo" init -q
+    git -C "$repo" config user.email receipt@example.com
+    git -C "$repo" config user.name receipt
+    echo tracked > "$repo/a"
+    git -C "$repo" add a
+    git -C "$repo" commit -q -m init
+    printf '{}\n' > "$rout/raw.json"
+    echo untracked > "$repo/untracked"
+    CUDAPP_RECEIPT_GIT=$repo write_receipt "$rout" "launch-cmd" 7
+    grep -q '^worktree: dirty$' "$rout/RECEIPT.txt"
+    grep -q '^launch_rc: 7$' "$rout/RECEIPT.txt"
+    rm "$repo/untracked"
+    CUDAPP_RECEIPT_GIT=$repo write_receipt "$rout" "launch-cmd" 0
+    grep -q '^worktree: clean$' "$rout/RECEIPT.txt"
+    rm -rf "$repo" "$rout"
     echo "receipt self-test PASS"
     exit 0
 fi
@@ -118,11 +145,12 @@ echo "latmeas: taking flock /tmp/aien-gb10.lock for the launch only; timeout 600
 echo "latmeas: the launch bound is the estimated chip window printed above"
 # flock waits here without holding the lock. timeout covers only the launch.
 set +e
+launch_cmd="flock /tmp/aien-gb10.lock timeout 600 ./build/gpu_latmeas_test --launch $out/kernels --out $out/raw.json"
 flock /tmp/aien-gb10.lock timeout 600 ./build/gpu_latmeas_test --launch "$out/kernels" --out "$out/raw.json"
 rc=$?
 set -e
 if [ -f "$out/raw.json" ]; then
     python3 tools/latmeas/fill_template.py --results "$out/raw.json" --md "$out/sm121_vs_NAK.md"
 fi
-write_receipt "$out"
+write_receipt "$out" "$launch_cmd" "$rc"
 exit "$rc"

@@ -2,9 +2,13 @@
 /* Stand-in for ldd and nm. The zero-CUDA argv test copies this binary onto PATH
  * under both names. It records argv and prints a CUDA line only when the named
  * file itself contains a marker. It does not run a shell. */
+#include "omega_path_check.h"
+
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static const char *base_name(const char *path) {
     const char *slash = strrchr(path, '/');
@@ -12,13 +16,20 @@ static const char *base_name(const char *path) {
 }
 
 static void record_argv(int argc, char **argv) {
-    const char *log_path = getenv("ZERO_CUDA_ARGV_LOG");
+    const char *env = getenv("ZERO_CUDA_ARGV_LOG");
+    char log_path[4096];
+    int fd;
     FILE *log;
     int i;
 
-    if (!log_path || !log_path[0]) return;
-    log = fopen(log_path, "a");
-    if (!log) return;
+    if (omega_path_copy(log_path, sizeof log_path, env) != 0) return;
+    fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC | O_NOFOLLOW, 0600);
+    if (fd < 0) return;
+    log = fdopen(fd, "a");
+    if (!log) {
+        close(fd);
+        return;
+    }
     fprintf(log, "argc %d\n", argc);
     for (i = 0; i < argc; i++) {
         size_t n = strlen(argv[i]);

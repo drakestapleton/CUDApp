@@ -8,6 +8,7 @@
 #include "omega_blackwell_submit.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <ftw.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,8 +46,17 @@ static void expect_int(const char *name, int got, int want) {
     }
 }
 
+static FILE *open_mode(const char *path, int flags, mode_t mode, const char *fdmode) {
+    int fd = open(path, flags, mode);
+    FILE *f;
+    if (fd < 0) return NULL;
+    f = fdopen(fd, fdmode);
+    if (!f) close(fd);
+    return f;
+}
+
 static int write_file(const char *path, const char *text) {
-    FILE *f = fopen(path, "w");
+    FILE *f = open_mode(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW, 0600, "w");
     if (!f) {
         fprintf(stderr, "FAIL open %s: %s\n", path, strerror(errno));
         return -1;
@@ -66,7 +76,7 @@ static int copy_file(const char *src, const char *dst) {
     size_t n;
 
     if (!in) return -1;
-    out = fopen(dst, "wb");
+    out = open_mode(dst, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW, 0700, "wb");
     if (!out) {
         fclose(in);
         return -1;
@@ -80,7 +90,6 @@ static int copy_file(const char *src, const char *dst) {
     }
     fclose(in);
     if (fclose(out) != 0) return -1;
-    if (chmod(dst, 0755) != 0) return -1;
     return 0;
 }
 
@@ -155,7 +164,7 @@ static void expect_argv(const char *name, const char *log_path, int want_argc, c
 }
 
 static void reset_log(const char *log_path) {
-    FILE *f = fopen(log_path, "w");
+    FILE *f = open_mode(log_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW, 0600, "w");
     if (f) fclose(f);
 }
 

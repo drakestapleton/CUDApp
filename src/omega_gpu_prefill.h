@@ -105,11 +105,11 @@ struct OmegaGpuCmdList;
 int omega_gpu_pf_quant_record(struct OmegaGpuCmdList *cl, uint32_t k, uint32_t in_type, uint32_t rows, uint64_t x_va, uint64_t q_va, uint64_t s_va);
 int omega_gpu_pf_qgemm_record(struct OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles,
                               uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va);
+int omega_gpu_pf_qgemm_workspace_fits(uint64_t capacity, uint64_t padded, uint64_t tiles, uint64_t rows, uint64_t bm);
+/* Omega-owned reading options (rt, warps, wait, group), UINT32_MAX on refusal. */
+uint32_t omega_gpu_pf_qgemm_reading_option(uint32_t rows, uint32_t index);
 /* Explicit options belong to this call only. bm returns 0 for refused options;
  * a real call also validates its projection shape. Tile buffers must use this bm. */
-/* Omega-owned reading options (rt, warps, wait, group), UINT32_MAX on refusal. */
-int omega_gpu_pf_qgemm_workspace_fits(uint64_t capacity, uint64_t padded, uint64_t tiles, uint64_t rows, uint64_t bm);
-uint32_t omega_gpu_pf_qgemm_reading_option(uint32_t rows, uint32_t index);
 uint32_t omega_gpu_pf_qgemm_scoped_bm(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group);
 int omega_gpu_pf_qgemm_scoped(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles, uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va, uint64_t *ns);
 void omega_gpu_pf_qgemm_set_group(uint32_t group); /* 0 restores original order; 1..5 candidate reuse groups. Set before model use. */

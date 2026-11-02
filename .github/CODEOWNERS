@@ -4,56 +4,54 @@
 # Until then docs/REVIEWING.md section 1 still binds every pull request, and
 # section 2 is followed by convention.
 #
-# @drakestapleton is the repository owner.
-# @aien-dev/gpu-core-reviewers and @aien-dev/ip-review were not confirmed as
-# teams with write access when this file was activated. They are unchanged.
-# No owner was invented or replaced.
+# @drakestapleton is the only owner. The GPU-core and IP-review team handles
+# were removed because GitHub reported them as unknown owners. They can be
+# re-added once those teams are created with write access.
 
 # Default: owner.
 *                                   @drakestapleton
 
 # Core path 1: machine-code encoders, launch descriptors and code objects.
-/src/omega_blackwell_codegen.c      @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_codegen.h      @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_encoder.*      @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_qmd.*          @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_bw_*                     @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_cubin.*                  @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_gpu_code_alloc.h         @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_codegen_*     @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_matmul.*       @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_realize.*      @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_native_artifact.*        @drakestapleton @aien-dev/gpu-core-reviewers
+/src/omega_blackwell_codegen.c      @drakestapleton
+/src/omega_blackwell_codegen.h      @drakestapleton
+/src/omega_blackwell_encoder.*      @drakestapleton
+/src/omega_blackwell_qmd.*          @drakestapleton
+/src/omega_bw_*                     @drakestapleton
+/src/omega_cubin.*                  @drakestapleton
+/src/omega_gpu_code_alloc.h         @drakestapleton
+/src/omega_blackwell_codegen_*      @drakestapleton
+/src/omega_blackwell_matmul.*       @drakestapleton
+/src/omega_blackwell_realize.*      @drakestapleton
+/src/omega_native_artifact.*        @drakestapleton
 # Inline machine-code emitters inside library files (ARCHITECTURE.md section 2, MIXED row).
-/src/omega_gpu_attention_api.c     @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_gpu_elementwise_api.c   @drakestapleton @aien-dev/gpu-core-reviewers
+/src/omega_gpu_attention_api.c      @drakestapleton
+/src/omega_gpu_elementwise_api.c    @drakestapleton
 
 # Core path 2: driver client and submission.
-/nvrm/                              @drakestapleton @aien-dev/gpu-core-reviewers
-/m16/                               @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_gpu_platform*            @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_engine.*       @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_blackwell_submit.*       @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_gpu_cmdlist.*            @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_gpu_session.*            @drakestapleton @aien-dev/gpu-core-reviewers
-/native/nvrm/                       @drakestapleton @aien-dev/gpu-core-reviewers
+/nvrm/                              @drakestapleton
+/m16/                               @drakestapleton
+/src/omega_gpu_platform*            @drakestapleton
+/src/omega_blackwell_engine.*       @drakestapleton
+/src/omega_blackwell_submit.*       @drakestapleton
+/src/omega_gpu_cmdlist.*            @drakestapleton
+/src/omega_gpu_session.*            @drakestapleton
+/native/nvrm/                       @drakestapleton
 
 # Core path 3: future backend ABI and backends (ADR 0043; not present yet).
-/backend/                           @drakestapleton @aien-dev/gpu-core-reviewers
+/backend/                           @drakestapleton
 
 # Core path 4: public ABI.
-/docs/runtime/omega_runtime_api.manifest  @drakestapleton @aien-dev/gpu-core-reviewers
-/src/omega_runtime_api.h            @drakestapleton @aien-dev/gpu-core-reviewers
+/docs/runtime/omega_runtime_api.manifest  @drakestapleton
+/src/omega_runtime_api.h            @drakestapleton
 
 # Core path 5: provenance and licence.
-/THIRD_PARTY.md                     @drakestapleton @aien-dev/ip-review
-/LICENSE                            @drakestapleton @aien-dev/ip-review
-/NOTICE                             @drakestapleton @aien-dev/ip-review
-/docs/LICENSE_PROVENANCE.md         @drakestapleton @aien-dev/ip-review
-/docs/LICENSING_TRANSITION.md       @drakestapleton @aien-dev/ip-review
-/docs/AUDIT.md                      @drakestapleton @aien-dev/ip-review
+/THIRD_PARTY.md                     @drakestapleton
+/LICENSE                            @drakestapleton
+/NOTICE                             @drakestapleton
+/docs/LICENSE_PROVENANCE.md         @drakestapleton
+/docs/LICENSING_TRANSITION.md       @drakestapleton
+/docs/AUDIT.md                      @drakestapleton
 
 # Review rules themselves.
 /docs/REVIEWING.md                  @drakestapleton
-/docs/review/                       @drakestapleton
 /.github/                           @drakestapleton

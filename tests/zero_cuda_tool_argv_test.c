@@ -8,11 +8,31 @@
 #include "omega_blackwell_submit.h"
 
 #include <errno.h>
+#include <ftw.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+static char g_cleanup_dir[128];
+
+static int rm_tree_entry(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+    (void)sb;
+    (void)typeflag;
+    (void)ftwbuf;
+    return remove(path);
+}
+
+static void cleanup_tmpdir(void) {
+    int left;
+    if (!g_cleanup_dir[0]) return;
+    left = chdir("/tmp");
+    if (left != 0) left = chdir("/");
+    (void)left;
+    nftw(g_cleanup_dir, rm_tree_entry, 16, FTW_DEPTH | FTW_PHYS);
+    g_cleanup_dir[0] = '\0';
+}
 
 static int g_failed;
 
@@ -163,6 +183,8 @@ int main(void) {
         fprintf(stderr, "FAIL mkdtemp: %s\n", strerror(errno));
         return 1;
     }
+    snprintf(g_cleanup_dir, sizeof(g_cleanup_dir), "%s", dir);
+    atexit(cleanup_tmpdir);
     snprintf(bindir, sizeof(bindir), "%s/bin", dir);
     snprintf(workdir, sizeof(workdir), "%s/space dir", dir);
     snprintf(log_path, sizeof(log_path), "%s/argv.log", dir);
@@ -248,6 +270,12 @@ int main(void) {
         fprintf(stderr, "test-zero-cuda-tool-argv: FAIL (%d)\n", g_failed);
         return 1;
     }
+    cleanup_tmpdir();
+    if (access(dir, F_OK) == 0) {
+        fprintf(stderr, "FAIL tmpdir still present: %s\n", dir);
+        return 1;
+    }
+    printf("PASS tmpdir removed\n");
     printf("test-zero-cuda-tool-argv: PASS\n");
     return 0;
 }

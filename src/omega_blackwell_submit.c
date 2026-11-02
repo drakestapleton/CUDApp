@@ -700,7 +700,8 @@ static int spawn_tool_stdout(char *const argv[], struct tool_stdout *sp) {
     int fds[2];
     pid_t pid;
 
-    if (pipe(fds) != 0) return -1;
+    /* O_CLOEXEC matches glibc popen: a fork in another thread must not inherit the pipe. */
+    if (pipe2(fds, O_CLOEXEC) != 0) return -1;
     pid = fork();
     if (pid < 0) {
         close(fds[0]);

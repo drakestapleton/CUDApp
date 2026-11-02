@@ -150,5 +150,5 @@ faster.
 ## 7. Review
 
 See `docs/REVIEWING.md` and `.github/CODEOWNERS`. GitHub enforces code-owner review only after the
-default-branch ruleset requires it. That ruleset is Drake's change. `@drakestapleton` is the owner.
-The two `@aien-dev` groups in the owners file were not confirmed as teams with write access at activation.
+default-branch ruleset requires it. That ruleset is Drake's change. `@drakestapleton` is the only
+owner until the GPU-core and IP-review teams exist and are added back with write access.

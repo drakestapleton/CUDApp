@@ -1,7 +1,9 @@
 # Reviewing CUDApp changes
 
-**Status:** The owners file is `.github/CODEOWNERS` (activated 2026-11-02). Section 1 binds every pull
-request. Section 2 is the review that file names. GitHub enforces section 2 only when the default-branch
+**Status:** The owners file is `.github/CODEOWNERS` (2026-11-02). `@drakestapleton` is the only owner.
+The GPU-core and IP-review team handles were removed because GitHub reported them as unknown owners.
+They can be re-added once those teams are created with write access. Section 1 binds every pull request.
+Section 2 is the review for the paths in that file. GitHub enforces it only when the default-branch
 ruleset requires one approval and code-owner review. That ruleset is Drake's decision and is not changed here.
 
 ## 1. Every pull request
@@ -20,7 +22,9 @@ ruleset requires one approval and code-owner review. That ruleset is Drake's dec
 ## 2. Core paths
 
 A PR touching a path listed in `.github/CODEOWNERS` also needs **one approving review from
-a human reviewer** in the owning group, in addition to section 1. The groups are:
+@drakestapleton**, in addition to section 1. The GPU-core and IP-review teams are not owners.
+They can be re-added once those teams are created with write access. Until then the checklists below
+are the review he applies to those paths:
 
 | Group | Paths | Reviewer checks |
 |---|---|---|

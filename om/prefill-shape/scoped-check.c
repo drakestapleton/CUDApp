@@ -24,7 +24,7 @@ static int scoped(unsigned rt,unsigned group) {
     return omega_gpu_pf_qgemm_scoped(rt,8,45,group,256,128,OMEGA_GPU_PF_PLAIN,16,1,0,32,48,64,NULL);
 }
 int main(void) {
-    omega_gpu_pf_qgemm_set_shape(2,4,45);omega_gpu_pf_qgemm_set_group(1);omega_gpu_pf_qgemm_test_set_mutant(1);
+    omega_gpu_pf_qgemm_set_shape(2,4,45);omega_gpu_pf_qgemm_set_group(1);omega_gpu_pf_qgemm_test_set_mutant(0);
     check(omega_gpu_pf_qgemm_scoped_bm(8,8,45,4)==128,"checked128 tile height");
     check(omega_gpu_pf_qgemm_scoped_bm(4,8,45,0)==64,"checked64 tile height");
     check(omega_gpu_pf_qgemm_scoped_bm(0,8,45,4)==0,"zero shape refused");
@@ -34,11 +34,21 @@ int main(void) {
         unsigned rt=i==1?4:8, group=i==1?0:4;
         expect(rt,8,group,0);
         check(scoped(rt,group)==OMEGA_GPU_PF_TOO_LARGE && opened==1 && keyed==1,"scoped call reached its own kernel key");
-        expect(2,4,1,1);
+        expect(2,4,1,0);
         int rc=omega_gpu_pf_qgemm(256,128,OMEGA_GPU_PF_PLAIN,16,1,0,32,48,64,NULL);
         check(rc==OMEGA_GPU_PF_TOO_LARGE && opened==1 && keyed==1,"legacy settings unchanged after scoped call");
         check(omega_gpu_pf_qgemm_bm()==32,"legacy tile height unchanged");
     }
+    /* Kernel-mutant negative control. A scoped call must not launch the unmutated kernel. */
+    omega_gpu_pf_qgemm_test_set_mutant(1);
+    expect(8,8,4,0);
+    int mrc=scoped(8,4);
+    check(mrc==OMEGA_GPU_PF_BAD_ARGS && opened==0 && keyed==0,"scoped call refuses a kernel mutant before device access");
+    if(mrc!=OMEGA_GPU_PF_BAD_ARGS || opened || keyed)
+        fprintf(stderr,"scoped mutant rc %d opened %u keyed %u\n",mrc,opened,keyed);
+    expect(2,4,1,1);
+    check(omega_gpu_pf_qgemm(256,128,OMEGA_GPU_PF_PLAIN,16,1,0,32,48,64,NULL)==OMEGA_GPU_PF_TOO_LARGE && opened==1 && keyed==1,"legacy call still carries the kernel mutant");
+    omega_gpu_pf_qgemm_test_set_mutant(0);
     const uint32_t rows[] = {1,30,64,65,128,4096,UINT32_MAX};
     for(unsigned i=0;i<sizeof(rows)/sizeof(rows[0]);i++) {
         uint32_t p[4];for(unsigned j=0;j<4;j++)p[j]=omega_gpu_pf_qgemm_reading_option(rows[i],j);

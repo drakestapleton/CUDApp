@@ -36,8 +36,8 @@ static BlackwellIRInsn fixture(unsigned op, unsigned variant)
     case BW_IR_STG_E: case BW_IR_LDG_E_64: case BW_IR_LDG_E_128: in.imm = variant ? (uint32_t)-16 : 16; break;
     case BW_IR_SHF_R: in.imm = variant ? 31 : 4; break;
     case BW_IR_LOP3_AND: in.imm = variant ? 0xffffffffu : 0xabcdef01; break;
-    case BW_IR_SHFL_DOWN: in.imm = variant ? OMEGA_TC_MARK_BFLY | 16 : 1; break;
-    case BW_IR_FMNMX_MAX: if (variant) in.imm = OMEGA_TC_MARK_F2FP; break;
+    case BW_IR_SHFL_DOWN: in.imm = variant ? 16 : 1; break;
+    case BW_IR_FMNMX_MAX: if (variant) in.imm = 1; break;
     case BW_IR_LDS: case BW_IR_STS: case BW_IR_LDS128: in.imm = variant ? 64 : 16; break;
     case BW_IR_BRA: in.imm = variant ? (uint32_t)-2 : 2; in.predicate_p0 = variant != 0; in.predicate_not = variant == 2; break;
     case BW_IR_LOP3_LUT: in.imm = variant ? 0x96 : 0xe8; break;

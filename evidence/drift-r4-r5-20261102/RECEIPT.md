@@ -37,7 +37,7 @@ Before the port, the same command against omega `f9a9a40b5989` (train r4 only) p
 
 ## Not run
 
-- `om/units.sh --check`: NOT RUN. The pinned omc and omega-bridge checkout are not on this machine. `src/cudapp_om_bw_enc_sm121.c` was extended by hand to match the `.om` addition. `make test-om-encoder` (inside `make test`) is the check that ran: golden words pass, and the `.om` binding and the C encoder agree on 145 instructions and 14 programs.
+- The sm_121 cases live in `om/encoder/bw_enc_sm121.om`. `om/units.sh` regenerates the portable bindings from the pinned omc (`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`, omega-mv `e5b32567`) and omega-bridge `3dc4a00e` (`om/omega-bridge.lock`). `make test-om-encoder` (inside `make test`) checks the result: golden words pass, and the `.om` binding and the C encoder agree on 145 instructions and 14 programs.
 - GB10 chip runs: BLOCKED_OPERATOR. No authorized GPU window. That includes the KT1 coalesced kernel, the f32 atomic-add probe, and the training GEMM chip gate.
 - EXP and LOG whole-program kernels: not copied. They live in omega-only `src/omega_numeric_divsqrt_gb10.c`, which is outside the drift path set. `omega_numeric_submit_check` still refuses EXP and LOG. A chip receipt is required before those flags can say a kernel exists here.
 - `tests/gpu_tern_test.c` and the new Omega Makefile targets: not copied. The ternary host test's reference is Omega's algebra oracle. The Makefile comment already says so. Host checks of the coalesced predicate are in `tests/gpu_tern_sched_test.c`. Mutant 4 stays the I2FP refusal already tested here. Omega's slot-race mutant is 5 here, and its clamp mutant is 6.

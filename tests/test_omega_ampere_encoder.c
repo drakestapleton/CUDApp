@@ -106,7 +106,15 @@ int main(void)
             code[4] != 16 || code[2] != 0) return 1;
     }
     init(); program.insns[0] = fixture(BW_IR_NOP, 0); if (refused(80)) return 1;
-    program.count = 2; program.insns[1] = fixture(60, 0); if (refused(86)) return 1;
+    /* A late training-R5 opcode refuses the whole SM86 image and writes nothing.
+     * The corpus build records that refusal from the SM121 encode below. */
+    program.count = 2; program.insns[1] = fixture(BW_IR_SHFL_BFLY, 0); if (refused(86)) return 1;
+    { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
+    for (unsigned op = BW_IR_SHFL_BFLY; op <= BW_IR_ATOMG_ADD_F32_STRONG_GPU; ++op) {
+        init(); program.insns[0] = fixture(op, 0);
+        if (refused(86)) return 1;
+        { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
+    }
     init(); program.insns[0] = fixture(BW_IR_HMMA_BF16, 0); program.insns[0].imm = OMEGA_QMMA_MARK; if (refused(86)) return 1;
     { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
     program.insns[0] = fixture(BW_IR_FMNMX_MAX, 0); program.insns[0].imm = OMEGA_QMMA_MARK_F2E4; if (refused(86)) return 1;

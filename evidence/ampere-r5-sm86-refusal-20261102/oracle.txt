@@ -1,0 +1,7 @@
+make OUT_DIR=build-ampere-oracle CUDAPP_AMPERE_CORPUS=1 test-ampere-encoder-oracle
+python3 tools/ampere_nvdisasm.py build-ampere-oracle/ampere-oracle-corpus
+SM86 offline oracle: 4478 kernels, every opcode/operand matched; mutated operand refused;
+native FP8 refusals: 350 kernels. Device qualification: NOT_RUN
+MMIO policy, subtraction sign, branch target, reconvergence join/barrier controls refused
+IADD3's discarded PT outputs retained semantically; unexpected carry output refused
+EXIT:0

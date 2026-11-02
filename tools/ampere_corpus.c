@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Test-only IR capture. Linked into the existing host-only corpus producers;
- * no driver API is called here. A refusal is legal only for an explicit FP8 marker. */
+ * no driver API is called here. A refusal is legal for an explicit FP8 marker,
+ * or for a training R5 opcode SM86 does not implement (op > BW_IR_MUFU_LG2). */
 #include "omega_ampere_codegen.h"
 #include "omega_blackwell_codegen_tc.h"
 #include "omega_blackwell_codegen_qmma.h"
@@ -45,18 +46,21 @@ void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *
     const unsigned id = serial++;
     uint8_t code[16384];
     uint32_t metadata[BW_MAX_IR_INSNS][2];
-    int fp8 = 0;
+    int fp8 = 0, blackwell_only = 0;
     for (size_t i = 0; i < prog->count; ++i) {
         const BlackwellIRInsn *in = &prog->insns[i];
         metadata[i][0] = (uint32_t)in->op;
         metadata[i][1] = in->imm;
+        if (in->op > BW_IR_MUFU_LG2) blackwell_only = 1;
         if ((in->op == BW_IR_HMMA_BF16 && in->imm == OMEGA_QMMA_MARK) ||
             (in->op == BW_IR_FMNMX_MAX && in->imm == OMEGA_QMMA_MARK_F2E4)) fp8 = 1;
     }
     memset(code, 0xa5, sizeof(code));
     size_t bytes = 0;
     int rc = omega_gpu_encode_program_target(prog, 86, code, sizeof(code), &bytes);
-    if (fp8) {
+    /* SM121 already holds the published bytes. SM86 refuses the new opcodes in
+     * its preflight and writes nothing. There is no post-encode patch. */
+    if (fp8 || blackwell_only) {
         if (rc != OMEGA_GPU_ENCODE_UNSUPPORTED || bytes != 0) abort();
         for (size_t i = 0; i < sizeof(code); ++i) if (code[i] != 0xa5) abort();
         save(dir, id, "refused", metadata, prog->count * sizeof(metadata[0]));
@@ -66,10 +70,6 @@ void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *
         fprintf(stderr, "SM86 unexpectedly refused an existing kernel (%zu instructions, rc %d)\n", prog->count, rc);
         abort();
     }
-    /* Training R5 emits SHFL.BFLY and F2FP.BF16 as native encoder words
-     * (omega_blackwell_codegen_tc.h). The sm_121 image is already the published
-     * bytes, so there is no omega_tc_patch_code step. This hook still runs
-     * before the QMMA family patch. */
     save(dir, id, "sm121.bin", sm121, len);
     save(dir, id, "sm86.bin", code, bytes);
     save(dir, id, "ir", metadata, prog->count * sizeof(metadata[0]));

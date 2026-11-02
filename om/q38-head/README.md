@@ -160,7 +160,9 @@ intervals, two threshold reductions, and full-precision masked recheck.
 the pinned Omega Bridge. The C graph adapter only supplies resources and
 dispatches those operations. The feature is opt-in through
 `omega_gpu_q38_graph_set_exact_head`; the original head remains available.
-Disable the feature for sampling, which requires all logits. Full serving
+`omega_gpu_q38_graph_set_sampling(g, 1)` refuses while that head is on, and
+`omega_gpu_q38_graph_read` refuses a logits pointer when sampling is on and the
+last token wrote the masked buffer. Full serving
 qualification is pending; the default path is unchanged.
 
 The Omega plan also supplies an additional 2 GiB admission reserve for the

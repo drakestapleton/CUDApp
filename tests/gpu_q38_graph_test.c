@@ -227,6 +227,7 @@ static int host_only(void) {
     OmegaGpuQ38GraphConfig c; memset(&c, 0, sizeof c);
     CHECK(omega_gpu_q38_graph_create(&c, &g) == OMEGA_GPU_DGRAPH_BAD_ARGS && !g, "create refuses an empty config");
     CHECK(omega_gpu_q38_graph_create(NULL, &g) == OMEGA_GPU_DGRAPH_BAD_ARGS, "create refuses NULL");
+    CHECK(omega_gpu_q38_graph_test_sampling_guard() == 0, "exact head refuses sampling, and a masked logits read refuses");
     return g_failed ? 1 : 0;
 }
 

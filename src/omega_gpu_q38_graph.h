@@ -94,11 +94,15 @@ int omega_gpu_q38_graph_set_lm_head_fp8(OmegaGpuQ38Graph *g, const OmegaGpuFp8Te
 /* Experimental greedy-only exact recheck. The head and finite nonnegative row coefficients
  * must describe the same compact screen; roundings must equal the Omega plan's 10384.
  * The graph copies coefficients and borrows head. Install after final_norm, before tokens.
- * The original head is retained. Disable for sampled requests needing all logits. */
+ * The original head is retained. Masked logits are not a distribution: sampling must be off
+ * while the exact head is on (omega_gpu_q38_graph_set_sampling refuses that pair, and
+ * graph_read refuses a logits pointer when sampling is on and the last token wrote the mask). */
 int omega_gpu_q38_graph_set_exact_head(OmegaGpuQ38Graph *g, const OmegaGpuFp8Tensor *head,
                                       const float *coef, uint32_t roundings);
 uint64_t omega_gpu_q38_exact_extra_bytes(void);
-void omega_gpu_q38_graph_set_exact_head_on(OmegaGpuQ38Graph *g, int on);
+int omega_gpu_q38_graph_set_exact_head_on(OmegaGpuQ38Graph *g, int on); /* BAD_ARGS if sampling is on */
+/* 1: this graph's logits will be sampled. BAD_ARGS while the exact head is on. */
+int omega_gpu_q38_graph_set_sampling(OmegaGpuQ38Graph *g, int on);
 int omega_gpu_q38_graph_exact_head_active(const OmegaGpuQ38Graph *g);
 /* GDN layers record the a|b GEMV first and the mix GEMV beside it (no barrier between the two; both only read xq), process-wide.
  * 1 (default) or 0 (mix then a|b, each behind a barrier); env AIEN_OMEGA_Q38_OVERLAP_AB when never set. Values are identical. */
@@ -111,7 +115,8 @@ int omega_gpu_q38_graph_begin_token(OmegaGpuQ38Graph *g, const float *x_embed);
 int omega_gpu_q38_graph_record_layer(OmegaGpuQ38Graph *g, uint32_t layer, uint32_t pos);
 int omega_gpu_q38_graph_record_final(OmegaGpuQ38Graph *g);
 int omega_gpu_q38_graph_end_token(OmegaGpuQ38Graph *g, uint32_t *token, OmegaGpuDecodeGraphStats *st);
-/* Takes the lock; copies the device x, hidden and logits (vocab values) of the last token; any pointer may be NULL. */
+/* Takes the lock; copies the device x, hidden and logits (vocab values) of the last token; any pointer may be NULL.
+ * Refuses the logits pointer when sampling is on and the last record_final wrote masked exact-head logits. */
 int omega_gpu_q38_graph_read(OmegaGpuQ38Graph *g, float *x, float *hidden, float *logits);
 /* Test and trace reads of one intermediate of the last token (f32, n values from the start of the buffer). */
 enum { OMEGA_GPU_Q38_BUF_X, OMEGA_GPU_Q38_BUF_XQ, OMEGA_GPU_Q38_BUF_MIX, OMEGA_GPU_Q38_BUF_AB, OMEGA_GPU_Q38_BUF_AGG,
@@ -134,6 +139,8 @@ const char *omega_gpu_q38_graph_kind_name(uint8_t kind);
 void omega_gpu_q38_graph_set_flush_each(OmegaGpuQ38Graph *g, int on);
 /* TEST ONLY: 1 SWIGLU up half off by one, 2 GATHER index + 1, 3 GATE dropped, 4 post-norm without its weight. 0 none. */
 void omega_gpu_q38_graph_test_set_mutant(OmegaGpuQ38Graph *g, int mutant);
+/* TEST ONLY: exact head and sampling refuse each other, and a logits read of a masked buffer refuses. No device. 0 pass. */
+int omega_gpu_q38_graph_test_sampling_guard(void);
 
 #ifdef __cplusplus
 }

@@ -2,10 +2,11 @@
 # External independent SHA256 oracle for the Omega normalized-command memo.
 import ctypes,hashlib,json,random,sys,time
 from pathlib import Path
-l=ctypes.CDLL(sys.argv[1]);fn=l.omega_native_mcreseal
+l=ctypes.CDLL(sys.argv[1]);fn=l.omega_native_mcreseal;seal=l.omega_native_mcseal
 fn.argtypes=[ctypes.POINTER(ctypes.c_uint64),ctypes.c_void_p,ctypes.c_uint64,ctypes.c_void_p,ctypes.c_uint64,ctypes.c_uint64,ctypes.c_void_p,ctypes.c_uint64,ctypes.c_void_p,ctypes.c_uint64]
+seal.argtypes=[ctypes.POINTER(ctypes.c_uint64),ctypes.c_void_p,ctypes.c_uint64,ctypes.c_void_p,ctypes.c_uint64,ctypes.c_uint64,ctypes.c_void_p,ctypes.c_uint64]
 U=ctypes.c_ubyte
-b=(U*1024)();q=(U*1024)();c=(U*2048)();o=(U*32)();r=ctypes.c_uint64()
+b=(U*1024)();q=(U*1024)();c=(U*2048)();o=(U*32)();r=ctypes.c_uint64();sb=(U*32)();sr=ctypes.c_uint64()
 rng=random.Random(710)
 for a in (b,q):
  for i in range(1024):a[i]=rng.randrange(256)
@@ -18,8 +19,14 @@ def check(n):
  for i in range(32):o[i]=255
  rc=fn(ctypes.byref(r),b,1024,q,1024,n,c,2048,o,32)
  assert rc==0,(rc,n)
- if 1<=n<=32:assert r.value==0 and bytes(o)==digest(n),(n,r.value,bytes(o).hex(),digest(n).hex())
- else:assert r.value==2**64-1 and bytes(o)==bytes(32)
+ src=seal(ctypes.byref(sr),b,1024,q,1024,n,sb,32)
+ assert src==0,(src,n)
+ if 1<=n<=32:
+  assert r.value==0 and bytes(o)==digest(n),(n,r.value,bytes(o).hex(),digest(n).hex())
+  assert sr.value==0 and bytes(sb)==bytes(o),(n,'mcseal',bytes(sb).hex(),bytes(o).hex())
+ else:
+  assert r.value==2**64-1 and bytes(o)==bytes(32)
+  assert sr.value==2**64-1 and bytes(sb)==bytes(32)
  cases+=1
 for n in (0,1,2,10,31,32,33,2**64-1,10):check(n);check(n)
 # Every byte of both inputs: covered mutations must refresh, ignored bytes must retain exact digest.
@@ -39,4 +46,4 @@ elapsed=time.perf_counter_ns()-start
 # Refresh cold memo as well, proving no prior command is required.
 for i in range(2048):c[i]=0
 check(10)
-print(json.dumps({'pass':True,'oracle_cases':cases,'warm_calls':256,'warm_total_ns':elapsed,'all_input_byte_mutations':2048,'oracle':'Python hashlib.sha256 over original normalized byte contract'}))
+print(json.dumps({'pass':True,'oracle_cases':cases,'warm_calls':256,'warm_total_ns':elapsed,'all_input_byte_mutations':2048,'oracle':'Python hashlib.sha256 over original normalized byte contract','differential':'omega_native_mcseal digest equals omega_native_mcreseal on every case, miss and hit'}))

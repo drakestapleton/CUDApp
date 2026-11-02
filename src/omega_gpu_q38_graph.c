@@ -54,6 +54,8 @@ struct OmegaGpuQ38Graph {
     Kern exact_scale, exact_bound;
     uint64_t exact_info[192];
     int exact_on;
+    int sampling;                        /* 1: logits will be sampled; exact head must stay off */
+    int exact_logits;                    /* last record_final wrote masked exact-head logits */
     /* token state */
     int in_token, failed;
     int xq_layer;                        /* layer whose input-norm x' sits in xq, -1 none */
@@ -250,7 +252,8 @@ uint64_t omega_gpu_q38_exact_extra_bytes(void) {
 }
 int omega_gpu_q38_graph_set_exact_head(OmegaGpuQ38Graph *g, const OmegaGpuFp8Tensor *head,
                                       const float *coef, uint32_t roundings) {
-    if (!g || !head || !coef || g->in_token || !g->final_set || g->exact8 || g->head8 ||
+    /* sampling is checked before shape_is so a host test can refuse a dummy head without a device */
+    if (!g || !head || !coef || g->in_token || !g->final_set || g->exact8 || g->head8 || g->sampling ||
         !shape_is(head, g->cfg.vocab, H) || g->cfg.eps != 1e-6f) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     uint64_t m[16]={1,g->cfg.vocab},result=0,entry[2];
     if (omega_q38_runtime(&result,m,16,cpu_of(g,g->lo.fnorm),H*4,g->exact_info,192) || result!=1 ||
@@ -284,8 +287,17 @@ int omega_gpu_q38_graph_set_exact_head(OmegaGpuQ38Graph *g, const OmegaGpuFp8Ten
     } else {g->exact8=head;g->exact_on=1;}
     omega_gpu_session_unlock();return rc;
 }
-void omega_gpu_q38_graph_set_exact_head_on(OmegaGpuQ38Graph *g,int on) {
-    if(g && !g->in_token)g->exact_on=on && g->exact8;
+int omega_gpu_q38_graph_set_exact_head_on(OmegaGpuQ38Graph *g,int on) {
+    if(!g || g->in_token) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if(on && g->sampling) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    g->exact_on=on && g->exact8;
+    return OMEGA_GPU_DGRAPH_OK;
+}
+int omega_gpu_q38_graph_set_sampling(OmegaGpuQ38Graph *g, int on) {
+    if (!g || g->in_token) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (on && g->exact_on) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    g->sampling = on ? 1 : 0;
+    return OMEGA_GPU_DGRAPH_OK;
 }
 int omega_gpu_q38_graph_exact_head_active(const OmegaGpuQ38Graph *g) {return g && g->exact8 && g->exact_on;}
 
@@ -477,14 +489,19 @@ int omega_gpu_q38_graph_record_final(OmegaGpuQ38Graph *g) {
     if (!g || !g->in_token) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     if (g->failed) return OMEGA_GPU_DGRAPH_CHIP_FAIL;
     if (!g->final_set) return fail(g, "q38 graph: final norm not set", OMEGA_GPU_DGRAPH_BAD_ARGS);
+    if (g->exact_on && g->sampling)
+        return fail(g, "q38 graph: exact head masks logits; sampling is on", OMEGA_GPU_DGRAPH_BAD_ARGS);
     const uint64_t x = va_of(g, g->lo.x), hidden = va_of(g, g->lo.hidden), logits = va_of(g, g->lo.logits), token = va_of(g, g->lo.token);
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (!g->hidden_ready) rc = rec_res(g, K_NORM, x, 0, va_of(g, g->lo.fnorm), hidden, g->head8 ? SCALE_2P64 : 1.0f);
-    if (rc == OMEGA_GPU_DGRAPH_OK && g->exact_on)
+    if (rc == OMEGA_GPU_DGRAPH_OK && g->exact_on) {
+        g->exact_logits = 1;
         rc = rec_exact_head(g,hidden,logits);
-    else if (rc == OMEGA_GPU_DGRAPH_OK)
+    } else if (rc == OMEGA_GPU_DGRAPH_OK) {
         rc = g->head8 ? rec_fp8(g, OMEGA_GPU_Q38_K_LM_HEAD, g->head8, va_of(g, g->lo.tabs) + (uint64_t)g->cfg.layers * 64u, hidden, logits)
                       : after_op(g, OMEGA_GPU_Q38_K_LM_HEAD, omega_gpu_bf16_gemv_record(g->cl, g->cfg.lm_head, hidden, logits));
+        if (rc == OMEGA_GPU_DGRAPH_OK) g->exact_logits = 0;
+    }
     uint32_t a0[OMEGA_DEC_AM_WORDS], a1[OMEGA_DEC_AM_WORDS]; memset(a0, 0, sizeof a0); memset(a1, 0, sizeof a1);
     const uint64_t amv = va_of(g, g->lo.am_v), ami = va_of(g, g->lo.am_i);
     put64(a0, OMEGA_DEC_AM_V, logits); put64(a0, OMEGA_DEC_AM_I, 0); put64(a0, OMEGA_DEC_AM_OV, amv); put64(a0, OMEGA_DEC_AM_OI, ami);
@@ -526,6 +543,8 @@ int omega_gpu_q38_graph_token(OmegaGpuQ38Graph *g, const float *x_embed, uint32_
 
 int omega_gpu_q38_graph_read(OmegaGpuQ38Graph *g, float *x, float *hidden, float *logits) {
     if (!g || g->in_token) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    /* Masked exact-head logits are not a distribution. Sampling must not read them. */
+    if (logits && g->sampling && g->exact_logits) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     omega_gpu_session_lock();
     int rc = omega_gpu_session_sync_to_cpu(&g->buf) == 0 ? OMEGA_GPU_DGRAPH_OK : OMEGA_GPU_DGRAPH_CHIP_FAIL;
     if (rc == OMEGA_GPU_DGRAPH_OK) {
@@ -583,4 +602,32 @@ const char *omega_gpu_q38_graph_kind_name(uint8_t kind) {
     static const char *const names[OMEGA_GPU_Q38_K_COUNT] = { "norm", "mix", "ab", "gdn", "gather", "attn", "gate", "o_proj", "res",
                                                               "gate_up", "swiglu", "down", "lm_head", "argmax" };
     return kind < OMEGA_GPU_Q38_K_COUNT ? names[kind] : "?";
+}
+
+/* Stack object only. The dummy head is never dereferenced: sampling is refused first. */
+int omega_gpu_q38_graph_test_sampling_guard(void) {
+    OmegaGpuQ38Graph g;
+    float coef = 0.f, logit = 1.f;
+    const OmegaGpuFp8Tensor *head = (const OmegaGpuFp8Tensor *)(uintptr_t)1;
+    memset(&g, 0, sizeof g);
+    if (omega_gpu_q38_graph_set_sampling(NULL, 1) != OMEGA_GPU_DGRAPH_BAD_ARGS) return 1;
+    if (omega_gpu_q38_graph_set_exact_head_on(NULL, 1) != OMEGA_GPU_DGRAPH_BAD_ARGS) return 2;
+    g.exact8 = head;
+    if (omega_gpu_q38_graph_set_exact_head_on(&g, 1) != OMEGA_GPU_DGRAPH_OK || !g.exact_on) return 3;
+    if (omega_gpu_q38_graph_set_sampling(&g, 1) != OMEGA_GPU_DGRAPH_BAD_ARGS || g.sampling) return 4;
+    if (omega_gpu_q38_graph_set_exact_head_on(&g, 0) != OMEGA_GPU_DGRAPH_OK || g.exact_on) return 5;
+    if (omega_gpu_q38_graph_set_sampling(&g, 1) != OMEGA_GPU_DGRAPH_OK || !g.sampling) return 6;
+    if (omega_gpu_q38_graph_set_exact_head_on(&g, 1) != OMEGA_GPU_DGRAPH_BAD_ARGS || g.exact_on) return 7;
+    g.final_set = 1;
+    g.exact8 = NULL;
+    if (omega_gpu_q38_graph_set_exact_head(&g, head, &coef, 10384) != OMEGA_GPU_DGRAPH_BAD_ARGS || g.exact8 || g.exact_on)
+        return 8;
+    g.exact_on = 1;
+    g.in_token = 1;
+    if (omega_gpu_q38_graph_record_final(&g) != OMEGA_GPU_DGRAPH_BAD_ARGS || !g.failed) return 9;
+    g.in_token = 0;
+    g.failed = 0;
+    g.exact_logits = 1;
+    if (omega_gpu_q38_graph_read(&g, NULL, NULL, &logit) != OMEGA_GPU_DGRAPH_BAD_ARGS || logit != 1.f) return 10;
+    return 0;
 }

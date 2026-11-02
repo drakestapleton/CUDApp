@@ -6,7 +6,7 @@ The native command-list path hashes the driver bank, arguments, and normalized Q
 
 The memo supplies a digest only. Native lease acquisition, revision and epoch checks, recording ownership, completion tracking, and submit-time intent checks still run. It does not admit an artifact or authorize a launch. The cache is caller-owned internal state, never an external serialized credential.
 
-`make test-seal-reuse` compares the result with Python's independent SHA256. It changes every byte of both input arrays, tests every argument count in both directions, includes all-zero images, and checks invalid counts and repeated hits. On a host that runs the pinned Omega compiler, five source mutants prove the oracle catches missing comparisons, a missing count check, a skipped byte, incorrect normalization, and a dirty refusal output. Python is an external verification tool only.
+`make test-seal-reuse` compares the result with Python's independent SHA256, and requires the same digest from `omega_native_mcseal` on every case, both when the memo misses and when it hits. It changes every byte of both input arrays, tests every argument count in both directions, includes all-zero images, and checks invalid counts and repeated hits. On a host that runs the pinned Omega compiler, five source mutants prove the oracle catches missing comparisons, a missing count check, a skipped byte, incorrect normalization, and a dirty refusal output. Python is an external verification tool only.
 
 The full-model speed result remains pending. Initial shared-machine diagnostic data is recorded separately; no default-serving or first-token improvement is asserted here.
 

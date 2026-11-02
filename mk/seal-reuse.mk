@@ -4,9 +4,9 @@ CARRIED_HOST_TESTS += test-seal-reuse
 CUDAPP_SEAL_OPT ?= -O3
 $(OUT_DIR)/cudapp_om_closure_reseal.o: private CFLAGS += $(CUDAPP_SEAL_OPT)
 .PHONY: test-seal-reuse
-$(OUT_DIR)/seal-reuse.so: src/cudapp_om_closure_reseal.c
+$(OUT_DIR)/seal-reuse.so: src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c
 	@mkdir -p $(OUT_DIR)
-	$(CC) $(filter-out -MMD -MP,$(CFLAGS)) $(CUDAPP_SEAL_OPT) -shared -fPIC $< -o $@
+	$(CC) $(filter-out -MMD -MP,$(CFLAGS)) $(CUDAPP_SEAL_OPT) -shared -fPIC $^ -o $@
 test-seal-reuse: $(OUT_DIR)/seal-reuse.so
 	python3 om/pipeline/seal-reuse-check.py $(abspath $(OUT_DIR))/seal-reuse.so
 ifeq ($(CUDAPP_OMC_HOST),1)

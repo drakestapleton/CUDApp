@@ -42,6 +42,10 @@ bash tools/extract/drift.sh --self-test <omega> 19b8340dbae70888c49fcc98299be928
 
 `DRIFT-GATE: PASS (920 GPU paths, omega 19b8340dbae7, none moved away from CUDA++ since the baseline)`. `SELF-TEST: PASS`. Exit 0. See `drift-self-test.txt`. `tools/ampere_corpus.c` and `tools/ampere_families.c` are not in the drift set. `tests/test_omega_ampere_encoder.c` and `src/omega_ampere_codegen.h` are CUDA++ only.
 
+## CI on 1c3d33f
+
+GitHub Actions run 41387070372, job `native-x86-host`, was cancelled at the 40 minute job cap. The log had already printed `CUDA++ HOST TESTS PASS (83 targets)` and `Ampere extended existing generator families encoded (host only)`, then `python3 tools/ampere_nvdisasm.py` ran until `The operation was canceled`. The job budget is now 60 minutes, the same budget `host-x86.yml` gives the x86 suite. The commands and the corpus compare are unchanged.
+
 ## Not run
 
 GB10 chip runs. NOT_RUN.

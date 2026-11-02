@@ -1287,18 +1287,31 @@ static FILE *fopen_0644(const char *path, const char *mode) {
     return f;
 }
 
-/* Manifest ids are our own tokens. Reject anything else before it becomes a path. */
-static int id_token(const char *s, char out[64]) {
-    size_t n = 0;
-    if (!s || !s[0]) return 0;
-    for (const char *p = s; *p; p++) {
-        char c = *p;
-        int ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
-        if (!ok || n >= 63) return 0;
-        out[n++] = c;
+/* The manifest name is chosen from the case table, not copied out of the file.
+ * The scanned token is only compared. The name and stall written here come from
+ * that table, so the path passed to fopen is not the fscanf text. */
+static int canonical_kernel(const char *scanned, unsigned stall, char name[64], unsigned *stall_out) {
+    if (!scanned || !name || !stall_out) return 0;
+    name[0] = 0;
+    for (int i = 0; i < NCASES; i++) {
+        if (strcmp(scanned, CASES[i].id) != 0) continue;
+        for (unsigned s = 1; s <= CASES[i].sweep; s++) {
+            if (s != stall) continue;
+            snprintf(name, 64, "%s", CASES[i].id);
+            *stall_out = s;
+            return 1;
+        }
+        return 0;
     }
-    out[n] = 0;
-    return 1;
+    for (int i = 0; i < NCASES; i++) {
+        char ovh[32];
+        snprintf(ovh, sizeof ovh, "ovh%u", CASES[i].iters);
+        if (strcmp(scanned, ovh) != 0 || stall != 0) continue;
+        snprintf(name, 64, "ovh%u", CASES[i].iters);
+        *stall_out = 0;
+        return 1;
+    }
+    return 0;
 }
 
 static int emit_kernels(const char *dir) {
@@ -1430,14 +1443,17 @@ static Kern *load_manifest(const char *dir, int *nout) {
         t.ops = ops;
         t.gpr = gpr;
         t.nbytes = nbytes;
-        char safe[64];
-        if (!id_token(t.id, safe) || nbytes == 0 || nbytes > CODE_CAP) {
+        char name[64];
+        unsigned stall_used = 0;
+        if (!canonical_kernel(t.id, stall, name, &stall_used) || nbytes == 0 || nbytes > CODE_CAP) {
             free(k);
             fclose(man);
             return NULL;
         }
+        snprintf(t.id, sizeof t.id, "%s", name);
+        t.stall = stall_used;
         char path[512];
-        snprintf(path, sizeof path, "%s/%s_%u.bin", dir, safe, t.stall);
+        snprintf(path, sizeof path, "%s/%s_%u.bin", dir, name, stall_used);
         FILE *f = fopen(path, "rb");
         t.code = malloc(CODE_CAP);
         if (!f || !t.code || fread(t.code, 1, nbytes, f) != nbytes) {
@@ -1688,6 +1704,31 @@ static int lane_field_self_test(void) {
     LCHECK(build(&CASES[6], 1, 0, 0, code, sizeof code, &len, &gpr) == 0, "hmma stall 1 encode");
     LCHECK(lat_sim(lane0) == 0, "hmma stall 1 sim");
     LCHECK(lanes_report(g_sim_mem, o, &m) == 0 && m.word >= 2 && m.word <= 5, "hmma stall 1 fails a destination word");
+    char tmpl[] = "/tmp/latmeas-load-XXXXXX";
+    char *dump = mkdtemp(tmpl);
+    LCHECK(dump != NULL, "load-check directory");
+    if (dump) {
+        int nk = 0;
+        LCHECK(emit_kernels(dump) == 0, "emit for the load check");
+        Kern *kk = load_manifest(dump, &nk);
+        int files = 0, ns = 0;
+        unsigned seen[8];
+        for (int i = 0; i < NCASES; i++) {
+            files += (int)CASES[i].sweep;
+            int have = 0;
+            for (int j = 0; j < ns; j++)
+                if (seen[j] == CASES[i].iters) have = 1;
+            if (!have && ns < 8) seen[ns++] = CASES[i].iters;
+        }
+        files += ns;
+        LCHECK(kk && nk == files, "manifest load count %d want %d", nk, files);
+        LCHECK(kk && find_kern(kk, nk, "alu_alu", 1) && find_kern(kk, nk, "hmma_reader", 20) && find_kern(kk, nk, "ovh32", 0),
+               "loaded kernel names");
+        if (kk) {
+            for (int i = 0; i < nk; i++) free(kk[i].code);
+            free(kk);
+        }
+    }
 #undef LCHECK
     return failed;
 }

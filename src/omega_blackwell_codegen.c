@@ -1192,7 +1192,9 @@ int omega_blackwell_verify_codegen_fixtures_bfly_f2fp(void) {
  *   0x80000005020479a3 0x00321e000c1ef306  ATOMG.E.ADD.F32.FTZ.RN.STRONG.GPU PT, R4, desc[UR6][R2.64], R5 ;
  *   0x800000070a0979a3 0x00321e000c1ef304  ATOMG.E.ADD.F32.FTZ.RN.STRONG.GPU PT, R9, desc[UR4][R10.64], R7 ;
  *   0x8000000502ff79a3 0x00321e000c1ef306  ATOMG.E.ADD.F32.FTZ.RN.STRONG.GPU PT, RZ, desc[UR6][R2.64], R5 ;
- * Rows with d = -1 (no destination vreg) must encode RZ, not R0. Chip proof: tests/gpu_atomf32_probe_test.c. 0 = all good. */
+ * Rows with d = -1 (no destination vreg) must encode RZ, not R0. These are host golden words.
+ * The GB10 probe tests/gpu_atomf32_probe_test.c is NOT QUALIFIED (pending a receipt). See docs/status.md.
+ * 0 = all good. */
 int omega_blackwell_verify_codegen_fixtures_atomf32(void) {
     static const struct { BlackwellIROpcode op; int d, a, b, u; uint32_t w0, w1, w2; } fx[] = {
         { BW_IR_ATOMG_ADD_F32_STRONG_SYS, 4, 2, 5, 6, 0x020479a3U, 0x80000005U, 0x0c1f5306U },

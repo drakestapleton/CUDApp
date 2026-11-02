@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "runtime_source_commit": "28b533c95a2dce42cb14c9d8bc4a05847a5981a0",
+  "targets": 78,
+  "exit_code": 0,
+  "started": "2026-11-01T19:51:53.584886+00:00",
+  "ended": "2026-11-01T19:58:35.997653+00:00",
+  "command": [
+    "make",
+    "-j4",
+    "OUT_DIR=../optimize27-qg-order-build",
+    "test",
+    "test-runtime-api-semver",
+    "RUNTIME_API_BASE=572a73bfd138b78154172f7746504842a7168f9c"
+  ],
+  "log_sha256": "669e90dfddd238b8b81e05829acb2633c2ad4b4c0ded9aa15a8d237478a0f858",
+  "scope": "Complete local host suite at the named runtime source. Not server performance qualification."
+}

@@ -1,0 +1,15 @@
+{
+  "status": "PASS_FULL_HOST_SUITE_GPU_NOT_RUN",
+  "tested_source_commit": "370c9b00bbd9f8b20efdbc3fa0cc844cb1d47b87",
+  "archive_sha256": "2372e067481f23ca7d8ef0126a900c1152ea1572d4e89ccb1c816ce433c6febe",
+  "command": "make -j4 OUT_DIR=../optimize27-prefill128-build test",
+  "execution": "CPUs12-15 at nice19; existing128K GPU qualification active; this suite opens no GPU",
+  "tool_configuration": "OMEGA_OMC and OMEGA_BRIDGE set to the versions pinned by om/units.sh and om/omega-bridge.lock",
+  "started_utc": "2026-11-01T19:25:38Z",
+  "ended_utc": "2026-11-01T19:33:46Z",
+  "exit_code": 0,
+  "final_line": "CUDA++ HOST TESTS PASS (77 targets)",
+  "log_sha256": "145212e485e6f8bcd5404e20c6c6bef5e85dc2c3106de59ef5ba7e8a23759f3f",
+  "earlier_attempt": "The first full-suite invocation used an absolute OUT_DIR. Existing recipes prefix ./ and could not execute that path. The corrected relative path names the same build directory. No test or production code was changed to obtain the pass.",
+  "limits": "Host validation only. No128-row chip/full-model parity or performance result yet. Default64rows unchanged."
+}

@@ -23,7 +23,7 @@ Porting Omega means answering two questions that are easy to mix up:
 2. **Operating system and driver.** Does this file need Linux, the NVIDIA open driver, or a C library?
 
 The table `docs/runtime/portability_table.tsv` answers both, one row per `src/omega_gpu_*`, `src/omega_blackwell_*`,
-`src/omega_bw_*` and `src/omega_ampere_*` file (136 rows; the M17/M18 gate suite `omega_blackwell_gates.{c,h}` stays in Omega, which runs it against this library):
+`src/omega_bw_*` and `src/omega_ampere_*` file. The table is the current inventory; the M17/M18 gate suite `omega_blackwell_gates.{c,h}` stays in Omega, which runs it against this library:
 
 | Column | Values | Meaning |
 |---|---|---|
@@ -38,7 +38,7 @@ carries (#120, #121) brought (15 `NO_HOSTED_INCLUDE`, 6 `HOSTED_LIBC`). The sync
 r2 #972) adds 5 `CHIP_SPECIFIC` rows (`src/omega_bw_hazard.{c,h}`, omega-mv#554; `src/omega_gpu_fp8_slots.{c,h}` and
 `src/omega_gpu_fp8_internal.h`, #961) and carries omega's review of the public headers (#954): `omega_gpu_matmul_api.h`,
 `omega_gpu_moe_api.h`, `omega_gpu_platform.h`, `omega_gpu_serving.{c,h}` and `omega_gpu_session.h` become `CHIP_SPECIFIC`,
-`omega_gpu_scan_ref.c` becomes `PORTABLE` (section 3). Totals now: 120 `CHIP_SPECIFIC`, 11 `PORTABLE`; 13
+`omega_gpu_scan_ref.c` becomes `PORTABLE` (section 3). At that sync, the totals were 120 `CHIP_SPECIFIC`, 11 `PORTABLE`; 13
 `FREESTANDING_PROVEN`, 98 `NO_HOSTED_INCLUDE`, 17 `HOSTED_LIBC`, 3 `LINUX_DRIVER`. Command to recount: section 7.
 
 `make test-runtime-portability` (host only, no compiler, no GPU) checks the table against the tree: every file has a row,

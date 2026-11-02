@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-01T20:39:42Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:50312e9b639e794fd27ea8c0a76f6834b7d9fe8401615e55dd09a5c80eadaae1",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 29,
+      "generated_at_commit": "88379395296357571618ebf7f701a6e2cdf8be31",
+      "source_tree": "sha256:d9d47631c2b8d7c2bfed72eaa9d4334eecc4933a233e94fb992f15a828d6a17e"
+    }
+  },
+  "layer": "native-policy",
+  "name": "prefill-shape",
+  "purpose": "Checked Omega admission and work ordering for bounded prompt matrix tiles, with independent parity verification",
+  "schema_version": "1.0.0"
+}

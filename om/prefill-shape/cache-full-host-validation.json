@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "runtime_source_commit": "572a73bfd138b78154172f7746504842a7168f9c",
+  "targets": 77,
+  "exit_code": 0,
+  "started": "2026-11-01T19:45:51.631716+00:00",
+  "ended": "2026-11-01T19:54:34.887727+00:00",
+  "command": [
+    "make",
+    "-j4",
+    "OUT_DIR=../optimize27-prefill128-fixed-build",
+    "test"
+  ],
+  "log_sha256": "748502861fb0d8189164c443cca81c0c0816fa8eb1cda5b569837608d1d74fd1",
+  "scope": "Complete local host suite at the named runtime source. Not server performance qualification."
+}

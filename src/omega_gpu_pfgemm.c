@@ -192,6 +192,8 @@ static int gen_qg(const OmegaPfKey *key, void *prog) { OmegaQgSpec s; memcpy(&s,
 
 static int qg_core(OmegaGpuCmdList *cl, const OmegaQgSpec *scoped, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles, uint64_t rowidx_va, uint64_t xq_va,
                    uint64_t xs_va, uint64_t y_va, uint64_t *ns) {
+    /* A scoped spec is built with mutant 0. Applying that spec while q.mutant is set would launch the unmutated kernel. */
+    if (scoped && q.mutant) return OMEGA_GPU_PF_BAD_ARGS;
     if (!tiles_va || !xq_va || !xs_va || !y_va) return OMEGA_GPU_PF_BAD_ARGS;
     if (layout != OMEGA_GPU_PF_PLAIN && layout != OMEGA_GPU_PF_SWIGLU_NAT) return OMEGA_GPU_PF_BAD_ARGS;
     if (ntiles == 0) return OMEGA_GPU_PF_OK;

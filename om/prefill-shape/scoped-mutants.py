@@ -8,6 +8,7 @@ mutants={
  'ignore_scoped_options':('if (scoped) s = *scoped;','if (scoped && 0) s = *scoped;'),
  'leak_options_to_global':('const OmegaQgSpec s = qg_scoped_spec(rt, warps, wait, group);','omega_gpu_pf_qgemm_set_shape(rt, warps, wait); omega_gpu_pf_qgemm_set_group(group);\n    const OmegaQgSpec s = qg_scoped_spec(rt, warps, wait, group);'),
  'wrong_tile_height':('return omega_qg_spec_ok(&s) ? 16u * s.rt : 0;','return omega_qg_spec_ok(&s) ? 8u * s.rt : 0;'),
+ 'drop_scoped_mutant_guard':('if (scoped && q.mutant) return OMEGA_GPU_PF_BAD_ARGS;','if (scoped && 0) return OMEGA_GPU_PF_BAD_ARGS;'),
 }
 with tempfile.TemporaryDirectory(prefix='qg-scoped-faults-') as d:
  d=Path(d)

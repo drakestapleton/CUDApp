@@ -1,14 +1,13 @@
-# PROPOSED owners file for CUDApp. INACTIVE: GitHub reads CODEOWNERS only from
-# .github/, the repository root or docs/, so this file under docs/review/ has no effect.
-# Activation is Drake's decision: copy it to .github/CODEOWNERS after the human reviewers
-# he chooses accept, and replace each placeholder team with their GitHub logins.
-# Until then every path keeps the agent rule in docs/REVIEWING.md section 1 (non-author
-# approval, fresh-clone gates, --match-head-commit).
+# Owners for CUDApp. GitHub reads this file from .github/CODEOWNERS.
+# A default-branch ruleset that requires one approval and code-owner review is
+# still required before GitHub enforces these lines. That ruleset is Drake's.
+# Until then docs/REVIEWING.md section 1 still binds every pull request, and
+# section 2 is followed by convention.
 #
-# Placeholders (not real GitHub teams yet):
-#   @aien-dev/gpu-core-reviewers   experienced GPU/compiler engineers (at least two)
-#   @aien-dev/ip-review            the IP lawyer Drake engages (provenance and licence files)
-#   @drakestapleton                owner; final say on licence and gate changes
+# @drakestapleton is the repository owner.
+# @aien-dev/gpu-core-reviewers and @aien-dev/ip-review were not confirmed as
+# teams with write access when this file was activated. They are unchanged.
+# No owner was invented or replaced.
 
 # Default: owner.
 *                                   @drakestapleton

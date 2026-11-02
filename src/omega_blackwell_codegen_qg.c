@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* omega_blackwell_codegen_qg.c: native FP8 prefill kernels (W-L1G). See the header. */
 #include "omega_blackwell_codegen_qg.h"
+#include "cudapp_native.h"
 #include "omega_bw_em.h"
 #include "omega_bw_em_q.h"
 
@@ -72,14 +73,15 @@ int omega_blackwell_codegen_pq_prog(const OmegaPqSpec *spec, BlackwellIRProgram 
 int omega_qg_spec_ok(const OmegaQgSpec *s) {
     if (!s) return 0;
     if (s->k < 128u || s->k > 32768u || s->k % 128u) return 0; /* the k loop counts at run time: no k-sized immediate */
-    if (s->rt != 4) return 0; /* rt 8 needs more than 128 registers (the GPR cap); its 17408 shared bytes are inside the QMD cap now */
-    if (s->warps != 8 && s->warps != 16) return 0;
+    uint64_t shape = 0;
+    if (omega_native_qgshape(&shape, s->rt, s->warps, s->n, s->epi) != OMEGA_OK || shape != 1) return 0;
     if (s->epi > OMEGA_QG_EPI_SWIGLU || s->direct > 1 || s->wait > 120u) return 0;
     if (s->epi == OMEGA_QG_EPI_SWIGLU && s->n % 256u) return 0; /* gate and up halves start on a 128-row scale block */
-    if (s->n == 0 || s->n % (s->warps * 16u) || (uint64_t)(s->epi == OMEGA_QG_EPI_F32 ? 4u : 1u) * s->n * 16u * s->rt >= (1u << 23)) return 0; /* row stride (n f32, or n / 2 bf16 = n bytes) x 16 rt: the store offsets fit the signed 24-bit field */
+    if (s->n == 0 || s->n % (s->warps * 16u)) return 0;
     if ((16u * s->rt * 4u) % (32u * s->warps)) return 0; /* whole 16-byte staging slots per thread */
     if (s->mutant < 0 || s->mutant > 4) return 0;
-    return 1;
+    uint64_t plan[64] = {0}, ok = 0;
+    return omega_native_qgorder(&ok, plan, 64, s->group, s->n / (s->warps * 16u), 1, 1) == OMEGA_OK && ok == 1;
 }
 uint32_t omega_qg_shared_bytes(const OmegaQgSpec *s) { return omega_qg_spec_ok(s) ? 2u * (16u * s->rt * 64u + 16u * s->rt * 4u) : 0u; }
 uint32_t omega_qg_span(const OmegaQgSpec *s) { return omega_qg_spec_ok(s) ? s->warps * 16u : 0u; }
@@ -90,13 +92,43 @@ static void ffma_s(Em *e, int d, unsigned dsub, int a, unsigned asub, int b, uns
 }
 static void mufu_q(Em *e, BlackwellIROpcode op, int d, int a) { BlackwellIRInsn i = I0(op); i.dst_vreg = d; i.src1_vreg = a; emit(e, i, K_VAR); }
 
+/* Primitive adapter for the instruction stream owned by om/prefill-shape/order.om.
+ * It contains no coordinate mapping policy. Roles: cx, cy, temporary, tile count. */
+static int qg_order_emit(Em *e, const uint64_t p[64], const int role[4], int *branch) {
+    if (p[2] > 6) return -1;
+    for (uint64_t i = 0; i < p[2]; i++) {
+        const uint64_t *v = p + 3 + 5 * i;
+        if (v[1] > 3 || v[2] > 3 || v[3] > 3 || v[4] > UINT32_MAX) return -1;
+        const int d = role[v[1]], a = role[v[2]], b = role[v[3]];
+        const uint32_t imm = (uint32_t)v[4];
+        switch (v[0]) {
+        case 1: andi(e, d, a, 0, imm); break;
+        case 2: shr(e, d, a, 0, imm); break;
+        case 3: imadi(e, d, a, 0, imm, b); break;
+        case 4: ldc32(e, d, imm); break;
+        case 5: isetp_ge_u32(e, a, b); break;
+        case 6: if (!branch || *branch >= 0) return -1; *branch = bra_if_p0_fwd(e); break;
+        default: return -1;
+        }
+    }
+    return e->err ? -1 : 0;
+}
+
 int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgram *prog) {
     if (!omega_qg_spec_ok(spec) || !prog) return -1;
     const uint32_t K = spec->k, RT = spec->rt, W = spec->warps, T = 32u * W;
     const uint32_t BM = 16u * RT, KB = K / 128u, SPAN = W * 16u, NJ = BM * 4u / T, ABUF = BM * 64u, BUF = ABUF + BM * 4u;
     const uint32_t NS = spec->epi == OMEGA_QG_EPI_SWIGLU ? 2u : 1u; /* scale rows per warp: gate + up block, or one block */
     omega_bw_ir_init(prog);
+    /* The 128-row candidate keeps more accumulators live. Use the existing
+     * opt-in allocation range; the runtime still validates declared registers
+     * times threads. Blackwell Tuning Guide, physical page 13. */
+    if (RT == 8 && omega_bw_ir_set_gpr_limit(prog, BW_PHYS_GPR_HW_LIMIT) != 0) return -1;
     Em em; memset(&em, 0, sizeof em); em.p = prog; Em *e = &em;
+    uint64_t order[64] = {0}, epilogue[64] = {0}, ok = 0;
+    if (omega_native_qgorder(&ok, order, 64, spec->group, spec->n / SPAN, 1, 1) != OMEGA_OK || ok != 1) return -1;
+    if (omega_native_qgorder(&ok, epilogue, 64, spec->group, spec->n / SPAN, 1, 0) != OMEGA_OK || ok != 1) return -1;
+    int at_exit = -1;
 
     int udesc = UV64(e), ptab = V64(e), pidx = V64(e), px = V64(e), pxs = V64(e);
     int tid = V(e), cx = V(e), cy = V(e), warp = V(e), lane = V(e), g = V(e), tq = V(e), one = V(e), tent = V64(e);
@@ -107,6 +139,11 @@ int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgr
     ldc64(e, ptab, 0x380); if (!spec->direct) ldc64(e, pidx, 0x388); ldc64(e, px, 0x390); ldc64(e, pxs, 0x3a0);
     s2r(e, tid, BW_SR_TID_X); s2r(e, cx, BW_SR_CTAID_X); s2r(e, cy, BW_SR_CTAID_Y);
     movi(e, one, 1);
+    if (order[2]) {
+        int ntl = V(e);
+        const int role[4] = {cx, cy, tmp, ntl};
+        if (e->err || qg_order_emit(e, order, role, &at_exit)) return -1;
+    }
     shr(e, warp, tid, 0, 5); andi(e, lane, tid, 0, 31); shr(e, g, lane, 0, 2); andi(e, tq, lane, 0, 3);
     imadw(e, tent, cy, OMEGA_QG_TILE_BYTES, ptab);
     ldg_wide(e, BW_IR_LDG_E_64, wbase, tent, 0, udesc, 1);
@@ -221,6 +258,8 @@ int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgr
         if (e->err) return -1;
         ldc64(e, tab2, 0x380); ldc64(e, py2, 0x398); ldc32(e, n2, 0x3a8);
         s2r(e, tid2, BW_SR_TID_X); s2r(e, cx2, BW_SR_CTAID_X); s2r(e, cy2, BW_SR_CTAID_Y);
+        const int role[4] = {cx2, cy2, tmp2, NOREG};
+        if (qg_order_emit(e, epilogue, role, NULL)) return -1;
         imadw(e, ten2, cy2, OMEGA_QG_TILE_BYTES, tab2);
         ldg_wide(e, BW_IR_LDG_E_64, rc2, ten2, 16, udesc, 1);
         andi(e, lane2, tid2, 0, 31); shr(e, g2, lane2, 0, 2); andi(e, tq3, lane2, 0, 3);
@@ -271,6 +310,7 @@ int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgr
         bsync(e);
         for (uint32_t q = 0; q < nskip; q++) patch_bra(e, skips[q], at_bsync);
         patch_bra(e, at_bssy, at_bsync + 1); }
+    if (at_exit >= 0) patch_bra(e, at_exit, here(e));
     tail(e);
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);

@@ -1,0 +1,103 @@
+{
+  "test": "gpu_exact_head_test",
+  "mutant": 0,
+  "records": 8,
+  "identical": 8,
+  "host_full_agrees": 8,
+  "candidate_bits_differ": 0,
+  "full_argmax_missing": 0,
+  "C_mean": 15.25,
+  "C_p99": 47,
+  "C_max": 47,
+  "full_list_us": {
+    "p50": 11420.71,
+    "p99": 11497.49
+  },
+  "two_pass_list_us": {
+    "p50": 5796.01,
+    "p99": 6002.6
+  },
+  "bytes": {
+    "full_head": 2542796800,
+    "fp8b_screen": 1271553600,
+    "coef": 993280,
+    "row": 10240
+  },
+  "status": "PASS correctness only",
+  "timing_status": "PROVISIONAL: shared correctness window, concurrent host suites; not an accepted speed/TTFT result",
+  "ratio_calculation": {
+    "expression": "full_list_us.p50 / two_pass_list_us.p50",
+    "value": 1.970443460242477
+  },
+  "window": "20261101T161824Z-99563b",
+  "baseline_file": "tests/gpu_exact_head_test.c",
+  "baseline_sha256": "be7573c66dc74d73c0fe7bc7ee04a782efdf82072200ed9cc688ff6ac520afa7",
+  "instrument_sha256": "c764733af53a94b47717dac16108a2382ecbc9fb614ad9694970fce1b6a79d21",
+  "export_source_sha256": "595e1329d1d6a9cecdb83f3e8db076059d3d7e0e3c611c28c112622f12c5d05c",
+  "zero_bound_control": {
+    "exit": 1,
+    "missed_full_winner": 1,
+    "position": 97,
+    "full_token": 58170,
+    "wrong_token": 25155
+  },
+  "not_run": [
+    "server integration",
+    "full 256-token private-server exactness gate",
+    "first-token measurement",
+    "uncontended timing"
+  ],
+  "output": [
+    "record 0 position 1 saved_bits_bad 0 bounds_bad 0",
+    "record 0 candidates 44 full 2732 selected 2732",
+    "record 1 position 16 saved_bits_bad 0 bounds_bad 0",
+    "record 1 candidates 1 full 11 selected 11",
+    "record 2 position 32 saved_bits_bad 0 bounds_bad 0",
+    "record 2 candidates 47 full 1946 selected 1946",
+    "record 3 position 64 saved_bits_bad 0 bounds_bad 0",
+    "record 3 candidates 2 full 324 selected 324",
+    "record 4 position 96 saved_bits_bad 0 bounds_bad 0",
+    "record 4 candidates 2 full 264 selected 264",
+    "record 5 position 97 saved_bits_bad 0 bounds_bad 0",
+    "record 5 candidates 21 full 58170 selected 58170",
+    "record 6 position 98 saved_bits_bad 0 bounds_bad 0",
+    "record 6 candidates 1 full 310 selected 310",
+    "record 7 position 127 saved_bits_bad 0 bounds_bad 0",
+    "record 7 candidates 4 full 561 selected 561",
+    "chip: 8 records, identical 8, host-full agrees 8, |C| mean 15.2 p99 47 max 47",
+    "chip: full head list p50 11420.7 us p99 11497.5 us; two-pass list p50 5796.0 us p99 6002.6 us",
+    "gpu_exact_head_test: 15 checks, 0 failed: PASS"
+  ],
+  "zero_bound_output": [
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248310",
+    "record 0 position 1 saved_bits_bad 0 bounds_bad 248310",
+    "record 0 candidates 1 full 2732 selected 2732",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248309",
+    "record 1 position 16 saved_bits_bad 0 bounds_bad 248309",
+    "record 1 candidates 1 full 11 selected 11",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248313",
+    "record 2 position 32 saved_bits_bad 0 bounds_bad 248313",
+    "record 2 candidates 1 full 1946 selected 1946",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248313",
+    "record 3 position 64 saved_bits_bad 0 bounds_bad 248313",
+    "record 3 candidates 1 full 324 selected 324",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248315",
+    "record 4 position 96 saved_bits_bad 0 bounds_bad 248315",
+    "record 4 candidates 1 full 264 selected 264",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248314",
+    "record 5 position 97 saved_bits_bad 0 bounds_bad 248314",
+    "record 5 candidates 1 full 58170 selected 25155",
+    "record 5: two-pass 25155 != full 58170 (|C| 1)",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248311",
+    "record 6 position 98 saved_bits_bad 0 bounds_bad 248311",
+    "record 6 candidates 1 full 310 selected 310",
+    "FAIL: saved full logits mismatch 0; GPU compact interval violations 248314",
+    "record 7 position 127 saved_bits_bad 0 bounds_bad 248314",
+    "record 7 candidates 1 full 561 selected 561",
+    "FAIL: two-pass token == full head token on 7 / 8 records",
+    "FAIL: candidate logits bit-identical to the full head (0 differ, 1 full argmax missing)",
+    "chip: 8 records, identical 7, host-full agrees 8, |C| mean 1.0 p99 1 max 1",
+    "chip: full head list p50 11359.9 us p99 11408.9 us; two-pass list p50 5736.2 us p99 5996.1 us",
+    "gpu_exact_head_test: 15 checks, 10 failed: FAIL"
+  ]
+}

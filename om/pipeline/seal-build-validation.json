@@ -1,0 +1,229 @@
+{
+  "status": "PASS correctness; shared-machine timing diagnostic only",
+  "core_source": "f0acdc7dc460e1984aa72bba515ea35c3eac2d55",
+  "cudapp_source_base": "009ada7602c70755e3fb8cd6d9cd776a30ad9c39",
+  "change": "Only generated integer seal unit compiled at O3; no fast math",
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "library_sha256": "21590c04cadece115fc4b96e94128301af07c800c13e5df7baf1622869157be5",
+  "object_diff": {
+    "added": [],
+    "removed": [],
+    "changed": [
+      "cudapp_om_closure_reseal.o"
+    ]
+  },
+  "oracle_cases": 6304,
+  "source_mutants_caught": 5,
+  "native_runtime_tests_passed": 27,
+  "host_timing": {
+    "scope": "host diagnostic only",
+    "rows": [
+      {
+        "mode": "cold",
+        "pair": 0,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 142387205
+      },
+      {
+        "mode": "cold",
+        "pair": 0,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 64496545
+      },
+      {
+        "mode": "cold",
+        "pair": 1,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 64521633
+      },
+      {
+        "mode": "cold",
+        "pair": 1,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 141692080
+      },
+      {
+        "mode": "cold",
+        "pair": 2,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 141659664
+      },
+      {
+        "mode": "cold",
+        "pair": 2,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 64570033
+      },
+      {
+        "mode": "cold",
+        "pair": 3,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 64029005
+      },
+      {
+        "mode": "cold",
+        "pair": 3,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 141439406
+      },
+      {
+        "mode": "cold",
+        "pair": 4,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 141299069
+      },
+      {
+        "mode": "cold",
+        "pair": 4,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 64607490
+      },
+      {
+        "mode": "warm",
+        "pair": 0,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 12080890
+      },
+      {
+        "mode": "warm",
+        "pair": 0,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 5116070
+      },
+      {
+        "mode": "warm",
+        "pair": 1,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 5120183
+      },
+      {
+        "mode": "warm",
+        "pair": 1,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 12078906
+      },
+      {
+        "mode": "warm",
+        "pair": 2,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 12079354
+      },
+      {
+        "mode": "warm",
+        "pair": 2,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 5117750
+      },
+      {
+        "mode": "warm",
+        "pair": 3,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 5117238
+      },
+      {
+        "mode": "warm",
+        "pair": 3,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 12079418
+      },
+      {
+        "mode": "warm",
+        "pair": 4,
+        "optimization": "O2",
+        "calls": 512,
+        "total_ns": 12079754
+      },
+      {
+        "mode": "warm",
+        "pair": 4,
+        "optimization": "O3",
+        "calls": 512,
+        "total_ns": 5118470
+      }
+    ]
+  },
+  "serving": {
+    "workers-default": {
+      "binary_sha256": "50159c11f87b0140818324254011c9f8f237bb52fcae2722ef34a82ec34c20f5",
+      "first_visible_seconds": [
+        0.4953926330199465,
+        0.502205659984611,
+        0.48923380399355665
+      ],
+      "requests": [
+        {
+          "name": "exact128",
+          "wall_seconds": 16.66915816598339,
+          "token_ids_sha256": "8d3ae59b4eb2f5be2a7e705c081d3654f8dacedd62d719dac7503fb5fa54c004",
+          "model_stats": "aien-serve-http: qwen38: lock wait 0 ms, prompt 30 tok, reuse Snapshot(23) (23 tok), fed 7 (0 stepped), prefill 235 ms (gemm chip 152 ms, gdn chip 5 ms, attn chip 0 ms, host 44 ms, restore 11 ms, snapshot 0 ms), decode 128 tok in 16432 ms, graph chip 120.1 ms/token, wall 129.4 ms/token, chip greedy true"
+        },
+        {
+          "name": "sampled",
+          "wall_seconds": 4.818427950027399,
+          "token_ids_sha256": "8900051ea281633f9ef7ae4562d24af8433c04821c9b9cb73faa5c78ef16356c",
+          "model_stats": "aien-serve-http: qwen38: lock wait 0 ms, prompt 21 tok, reuse Cold (0 tok), fed 21 (0 stepped), prefill 467 ms (gemm chip 308 ms, gdn chip 12 ms, attn chip 1 ms, host 100 ms, restore 0 ms, snapshot 10 ms), decode 32 tok in 4350 ms, graph chip 127.0 ms/token, wall 140.3 ms/token, chip greedy false"
+        },
+        {
+          "name": "exact128-after-sampling",
+          "wall_seconds": 16.77317768597277,
+          "token_ids_sha256": "8d3ae59b4eb2f5be2a7e705c081d3654f8dacedd62d719dac7503fb5fa54c004",
+          "model_stats": "aien-serve-http: qwen38: lock wait 0 ms, prompt 30 tok, reuse Cold (0 tok), fed 30 (0 stepped), prefill 477 ms (gemm chip 311 ms, gdn chip 13 ms, attn chip 2 ms, host 93 ms, restore 0 ms, snapshot 10 ms), decode 128 tok in 16294 ms, graph chip 119.6 ms/token, wall 128.3 ms/token, chip greedy true"
+        }
+      ],
+      "owned_server_exit": 0
+    },
+    "seal-o3": {
+      "binary_sha256": "5310d2cb4734e750628a109e18cc0ded3588ab3e06d9962db008d3939bbf4363",
+      "first_visible_seconds": [
+        0.5581696779699996,
+        0.5268060020171106,
+        0.5595134629984386
+      ],
+      "requests": [
+        {
+          "name": "exact128",
+          "wall_seconds": 15.436602974019479,
+          "token_ids_sha256": "8d3ae59b4eb2f5be2a7e705c081d3654f8dacedd62d719dac7503fb5fa54c004",
+          "model_stats": "aien-serve-http: qwen38: lock wait 0 ms, prompt 30 tok, reuse Snapshot(23) (23 tok), fed 7 (0 stepped), prefill 255 ms (gemm chip 149 ms, gdn chip 5 ms, attn chip 0 ms, host 71 ms, restore 8 ms, snapshot 0 ms), decode 128 tok in 15180 ms, graph chip 116.5 ms/token, wall 119.5 ms/token, chip greedy true"
+        },
+        {
+          "name": "sampled",
+          "wall_seconds": 4.559978285979014,
+          "token_ids_sha256": "8900051ea281633f9ef7ae4562d24af8433c04821c9b9cb73faa5c78ef16356c",
+          "model_stats": "aien-serve-http: qwen38: lock wait 0 ms, prompt 21 tok, reuse Cold (0 tok), fed 21 (0 stepped), prefill 522 ms (gemm chip 302 ms, gdn chip 12 ms, attn chip 1 ms, host 162 ms, restore 0 ms, snapshot 9 ms), decode 32 tok in 4036 ms, graph chip 123.8 ms/token, wall 130.2 ms/token, chip greedy false"
+        },
+        {
+          "name": "exact128-after-sampling",
+          "wall_seconds": 15.926157885987777,
+          "token_ids_sha256": "8d3ae59b4eb2f5be2a7e705c081d3654f8dacedd62d719dac7503fb5fa54c004",
+          "model_stats": "aien-serve-http: qwen38: lock wait 0 ms, prompt 30 tok, reuse Cold (0 tok), fed 30 (0 stepped), prefill 554 ms (gemm chip 305 ms, gdn chip 13 ms, attn chip 2 ms, host 177 ms, restore 0 ms, snapshot 10 ms), decode 128 tok in 15370 ms, graph chip 117.8 ms/token, wall 121.0 ms/token, chip greedy true"
+        }
+      ],
+      "owned_server_exit": 0
+    }
+  },
+  "limits": [
+    "Single fresh-process server screen per build, not alternating performance qualification.",
+    "Other CPU work was active. First-response probes show no accepted gain.",
+    "The earlier full host suite tests the unchanged O2 sources; optimized unit has separate oracle, mutation and native-runtime coverage.",
+    "No serving default or deployment changed."
+  ]
+}

@@ -19,9 +19,107 @@ This is not a claim that every NVIDIA component has been replaced: the documente
 - NVIDIA's open-kernel-module interface headers retain their MIT notices in `third_party/nvidia-open-580.173.02/`.
 - Mesa/NVK/NAK hardware facts and references retain their attribution in [THIRD_PARTY.md](../THIRD_PARTY.md). The historical audit reports no copied Mesa source code.
 - Attributed quotations remain third-party text, not my newly authored work.
-- 48 first-party files outside `evidence/` still carry `SPDX-License-Identifier: AGPL-3.0-only` and are not covered by the Apache-2.0 WITH LLVM-exception grant until their headers change: `tests/speculation` 10, `tests/learn53` 9, `tests/host-trace` 9, `native/speculation` 5, `native/learn53` 5, `native/blackwell` 3, `native/trace` 2, `native/gsp` 1, `native/nvrm` 1, `tests/device-trace` 1, `tests/gsp` 1, `tools/omtrace` 1 (34 added by aien-spark on 2026-10-24 and 2026-10-25, 14 by Drake Stapleton on 2026-10-26; counted 2026-10-27 for CUDApp#89). List them with `grep -rl 'SPDX-License-Identifier: AGPL' --exclude-dir=evidence --exclude-dir=.git --exclude-dir=docs .`. Relicensing them is the author's decision; until then their AGPL-3.0-only terms apply.
-- Receipts under `evidence/` keep the terms they were recorded with and are not edited. `evidence/LEARN53-L777-CONTINUATION/{author,review}/omega-core.om` carry no licence header.
+- The first-party AGPL-3.0-only transition is complete as of 2026-11-02. Drake Stapleton decided to relicense those files to Apache-2.0 WITH LLVM-exception. Before the edit, `git grep -l 'SPDX-License-Identifier: AGPL-3.0-only' -- ':!evidence' ':!third_party'` listed 57 files. CUDApp#89 had counted 48 on 2026-10-27 (`tests/learn53` 9, `native/learn53` 5, and the other directories below at the same counts). Nine files were added after that count: `tests/learn53` grew from 9 to 17 and `native/learn53` from 5 to 6. Each of the 57 SPDX lines changed from `AGPL-3.0-only` to `Apache-2.0 WITH LLVM-exception`. Those 57 files had no copyright line. The same edit normalized 26 first-party SPDX lines that said plain `Apache-2.0` to `Apache-2.0 WITH LLVM-exception` and left their copyright lines in place. The pull request URL is added on this branch after the pull request is opened. Directory counts for the 57: `tests/learn53` 17, `tests/speculation` 10, `tests/host-trace` 9, `native/learn53` 6, `native/speculation` 5, `native/blackwell` 3, `native/trace` 2, `native/gsp` 1, `native/nvrm` 1, `tests/device-trace` 1, `tests/gsp` 1, `tools/omtrace` 1.
+- Receipts under `evidence/` keep the terms they were recorded with and are not edited. 33 receipt files still contain a historical `SPDX-License-Identifier: AGPL-3.0-only` line. `evidence/LEARN53-L777-CONTINUATION/{author,review}/omega-core.om` carry no licence header.
+- `native/learn53/omega653.lock` still records `"license": "AGPL-3.0"` for the pinned omega-mv object `84d03c5523f39ca1045d1c313c5f62597779462b` at `src/learning/benchmark/core.om`. That field is the upstream object's licence at that revision, not a CUDA++ SPDX header. `docs/learn53/CATALOG.md` and `docs/learn53/CONTINUATION-PLAN.md` describe that same upstream LICENSE. Those three texts were not changed.
+- `CITATION.cff` keeps `license: "Apache-2.0"`. The Citation File Format accepts SPDX license identifiers only, and the file's comment says `LICENSE` is authoritative for the LLVM exception.
+- `tools/localrouter/setup.py`, `tests/localrouter/test_setup.py`, and `tests/localrouter/negative_control.py` keep `SPDX-License-Identifier: MIT`. They were neither AGPL nor plain Apache-2.0.
 - The original first-party MIT license can be read in [LICENSE at the pinned MIT revision](https://github.com/aien-dev/CUDApp/blob/232332422bfdc31c8918085b50f13c1e18ab702e/LICENSE). That prior grant remains effective for material covered by it; it is not a blanket MIT option for later Apache-2.0 WITH LLVM-exception contributions.
+
+## Files changed on 2026-11-02
+
+AGPL-3.0-only SPDX headers, 57 files:
+
+```text
+native/blackwell/launch.om
+native/blackwell/trace-emit.om
+native/blackwell/vector.om
+native/gsp/fwimage.om
+native/learn53/catalog.om
+native/learn53/moe-closure.om
+native/learn53/omega-adapter.om
+native/learn53/stream.om
+native/learn53/task.om
+native/learn53/wire.om
+native/nvrm/context.om
+native/speculation/costs.om
+native/speculation/policy.om
+native/speculation/replay.om
+native/speculation/report.om
+native/speculation/service.om
+native/trace/htlaunch.om
+native/trace/htrec.om
+tests/device-trace/emitter-test.om
+tests/gsp/run-fwimage-host.sh
+tests/host-trace/badfrag.om
+tests/host-trace/fakedev.om
+tests/host-trace/fakenv.om
+tests/host-trace/launch-test.om
+tests/host-trace/lossy.om
+tests/host-trace/overhead-absent.om
+tests/host-trace/overhead-traced.om
+tests/host-trace/overhead.om
+tests/host-trace/recorder-test.om
+tests/learn53/catalog-check.om
+tests/learn53/catalog-export.om
+tests/learn53/catalog-fixtures.om
+tests/learn53/catalog-unit.om
+tests/learn53/fixtures.om
+tests/learn53/moe-export.om
+tests/learn53/moe-fixtures.om
+tests/learn53/moe-observe-export.om
+tests/learn53/moe-observe-fixtures.om
+tests/learn53/moe-observe-unit.om
+tests/learn53/moe-series-export.om
+tests/learn53/moe-series-unit.om
+tests/learn53/moe-unit.om
+tests/learn53/omega-unit.om
+tests/learn53/stream-check.om
+tests/learn53/stream-fixtures.om
+tests/learn53/stream-input.om
+tests/speculation/cost-test.om
+tests/speculation/oracle-test.om
+tests/speculation/packet-fixture.om
+tests/speculation/policy-test.om
+tests/speculation/reply-test.om
+tests/speculation/report-test.om
+tests/speculation/run-teardown-host.sh
+tests/speculation/service-test.om
+tests/speculation/support.om
+tests/speculation/teardown-host-test.om
+tools/omtrace/omtrace.om
+```
+
+Plain `Apache-2.0` SPDX lines normalized to `Apache-2.0 WITH LLVM-exception`, 26 files:
+
+```text
+src/omega_blackwell_codegen.h
+src/omega_canonical.c
+src/omega_canonical.h
+src/omega_core.c
+src/omega_core.h
+src/omega_numeric.c
+src/omega_numeric.h
+src/omega_numeric_lifecycle.h
+src/omega_numeric_reduce.c
+src/omega_numeric_reduce.h
+src/omega_path_check.h
+src/omega_types.h
+src/omega_vector.c
+src/omega_vector.h
+src/runtime/rx_costmodel.c
+src/runtime/rx_costmodel.h
+src/sha256.c
+src/sha256.h
+tests/bw_warp_sim.h
+tests/bw_warp_sim_k.h
+tests/bw_warp_sim_pa.h
+tests/bw_warp_sim_tc.h
+tests/omega/run.sh
+tests/runtime/rx_costmodel_unit.c
+tests/test_omega_gpu_decode_attn_maxpos.c
+tools/mutation_runner.sh
+```
 
 ## Get the MIT foundation
 

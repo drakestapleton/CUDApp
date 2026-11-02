@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Native data-frame tests. No generated program is compiled or executed here.
 fn pw p ulong v ulong to void
 for i ulong 4

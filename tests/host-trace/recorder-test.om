@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Host checks for native/trace/htrec.om. Synthetic events only; no device is opened.
 note Prints one line per failed check and HOSTTRACE_RECORDER_PASS <checks> or _FAIL <failures>.
 global tally ulong 2

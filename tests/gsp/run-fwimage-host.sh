@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Disclosed verification orchestration. The parser under test is handwritten seeded Omega
 # (native/gsp/fwimage.om + omega-mv om/tls/sha2.om). This script only coordinates the build and
 # compares it with independent oracles: readelf -SW (binutils), dd + sha256sum (coreutils), and

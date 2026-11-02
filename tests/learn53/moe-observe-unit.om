@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST_ONLY SYNTHETIC; no device qualification or owner-snapshot authentication.
 text mo_ok "MOE-OBSERVE HOST_ONLY PASS\n"
 fn mo_launchtest to bool

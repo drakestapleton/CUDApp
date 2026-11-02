@@ -1,5 +1,7 @@
 # Scoped qgemm mutant refusal
 
+The follow-up on `main` re-ran the suite at `2b117d83e2303466453e5615f8beee810911acba`. That result is [../PREFILL-SCOPED-MUTANT-MAIN-20261102/README.md](../PREFILL-SCOPED-MUTANT-MAIN-20261102/README.md). The rest of this file is the earlier run at `932d9548d3ca8584316c9f2cd3307d2ec32535d7` and was not rewritten.
+
 Host result for the scoped-call mutant guard. No GPU device was opened. `make hello-gpu` was not run. `/dev/nvidiactl`, `/dev/nvidia0` and `/dev/nvidia-uvm` were absent.
 
 ## Fresh clone

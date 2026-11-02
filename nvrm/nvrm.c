@@ -56,13 +56,15 @@ static int fail(Nvrm *rm, const char *fmt, ...);
 
 /* Pure class admission lives in seeded Omega. Class IDs are vendor constants:
  * open-gpu-doc clc7c0.h, clc56f.h, and vendored clc361.h / clc661.h. */
-static int select_classes(Nvrm *rm, const uint32_t *classes, uint32_t count) {
+static int select_classes(Nvrm *rm, const uint32_t *classes, uint32_t count,
+                          uint16_t vendor_id, uint16_t device_id) {
     rm->compute_class = rm->gpfifo_class = rm->usermode_class = 0;
     rm->target_sm = 0; rm->discrete = 0;
     uint64_t m[16] = {1, rm->sm_version,
         NV2080_CTRL_GR_INFO_SM_VERSION_8_06, NV2080_CTRL_GR_INFO_SM_VERSION_12_01,
         OMEGA_AMPERE_COMPUTE_B, OMEGA_AMPERE_GPFIFO_A, VOLTA_USERMODE_A,
-        BLACKWELL_COMPUTE_B, BLACKWELL_CHANNEL_GPFIFO_A, HOPPER_USERMODE_A};
+        BLACKWELL_COMPUTE_B, BLACKWELL_CHANNEL_GPFIFO_A, HOPPER_USERMODE_A,
+        0, 0, NV2080_CTRL_GR_INFO_SM_VERSION_10_04, vendor_id, device_id};
     /* Marshal the vendor's class-list presence, without selecting a target. */
     for (uint32_t i = 0; i < count; i++) {
         for (uint32_t k = 0; k < 3; k++) {
@@ -427,7 +429,8 @@ int nvrm_open(Nvrm *rm) {
     if (cl.numClasses > 512) return fail(rm, "too many classes");
     cl.classList = NV_PTR_TO_NvP64(classes);
     if (rm_control(rm, rm->device, NV0080_CTRL_CMD_GPU_GET_CLASSLIST, &cl, sizeof cl)) return -1;
-    if (cl.numClasses > 512 || select_classes(rm, classes, cl.numClasses)) return -1;
+    if (cl.numClasses > 512 || select_classes(rm, classes, cl.numClasses,
+            cards[found].pci_info.vendor_id, cards[found].pci_info.device_id)) return -1;
     if (rm_alloc(rm, rm->subdevice, rm->usermode_class, NULL, 0, &rm->usermode)) return -1;
     void *mmio = map_to_cpu(rm, rm->usermode, 0x10000, NULL, 0, 0);
     if (mmio == MAP_FAILED) return -1;

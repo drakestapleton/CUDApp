@@ -103,14 +103,24 @@ static void class_and_bdf(void) {
     const uint32_t amp[] = {OMEGA_AMPERE_COMPUTE_B, OMEGA_AMPERE_GPFIFO_A, VOLTA_USERMODE_A};
     const uint32_t bw[] = {BLACKWELL_COMPUTE_B, BLACKWELL_CHANNEL_GPFIFO_A, HOPPER_USERMODE_A};
     rm.sm_version = NV2080_CTRL_GR_INFO_SM_VERSION_8_06;
-    assert(select_classes(&rm, amp, 3) == 0 && rm.target_sm == 86 && rm.discrete);
+    assert(select_classes(&rm, amp, 3, 0, 0) == 0 && rm.target_sm == 86 && rm.discrete);
     assert(rm.compute_class == OMEGA_AMPERE_COMPUTE_B && rm.gpfifo_class == OMEGA_AMPERE_GPFIFO_A);
-    assert(select_classes(&rm, amp, 2) != 0); /* missing usermode: no stale class reuse */
-    assert(select_classes(&rm, bw, 3) != 0); /* a Blackwell class set cannot authorize SM86 */
+    assert(select_classes(&rm, amp, 2, 0, 0) != 0); /* missing usermode: no stale class reuse */
+    assert(select_classes(&rm, bw, 3, 0, 0) != 0); /* a Blackwell class set cannot authorize SM86 */
     rm.sm_version = NV2080_CTRL_GR_INFO_SM_VERSION_12_01;
-    assert(select_classes(&rm, bw, 3) == 0 && rm.target_sm == 121 && !rm.discrete);
+    assert(select_classes(&rm, bw, 3, 0, 0) == 0 && rm.target_sm == 121 && !rm.discrete);
+    /* Physical Spark reported raw RM SM 10.04 with PCI 10de:2e12. Its
+     * execution target is SM121. Do not normalize an unrelated device. */
+    rm.sm_version = NV2080_CTRL_GR_INFO_SM_VERSION_10_04;
+    assert(select_classes(&rm, bw, 3, 0x10de, 0x2e12) == 0 && rm.target_sm == 121 && !rm.discrete);
+    assert(select_classes(&rm, bw, 3, 0x10de, 0x2e13) != 0);
+    assert(select_classes(&rm, bw, 3, 0x10df, 0x2e12) != 0);
+    assert(select_classes(&rm, bw, 2, 0x10de, 0x2e12) != 0);
+    assert(select_classes(&rm, amp, 3, 0x10de, 0x2e12) != 0);
+    rm.sm_version = NV2080_CTRL_GR_INFO_SM_VERSION_10_03;
+    assert(select_classes(&rm, bw, 3, 0x10de, 0x2e12) != 0);
     rm.sm_version = NV2080_CTRL_GR_INFO_SM_VERSION_8_09;
-    assert(select_classes(&rm, amp, 3) != 0); /* Ada is not silently treated as GA10x */
+    assert(select_classes(&rm, amp, 3, 0, 0) != 0); /* Ada is not silently treated as GA10x */
     nv_ioctl_card_info_t cards[64] = {0};
     cards[0].valid = cards[1].valid = 1;
     cards[1].pci_info.bus = 1; cards[1].pci_info.slot = 2;

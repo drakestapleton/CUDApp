@@ -43,7 +43,7 @@ void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *
     if (!is_safe_corpus_dir(dir)) return;
     static unsigned serial;
     const unsigned id = serial++;
-    uint8_t code[16384], reference[16384];
+    uint8_t code[16384];
     uint32_t metadata[BW_MAX_IR_INSNS][2];
     int fp8 = 0;
     for (size_t i = 0; i < prog->count; ++i) {
@@ -66,11 +66,11 @@ void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *
         fprintf(stderr, "SM86 unexpectedly refused an existing kernel (%zu instructions, rc %d)\n", prog->count, rc);
         abort();
     }
-    memcpy(reference, sm121, len);
-    /* The corpus hook runs before family post-encoding patches. Reproduce the
-     * published reference patches, not the Ampere implementation under test. */
-    if (omega_tc_patch_code(prog, reference, len) < 0) abort();
-    save(dir, id, "sm121.bin", reference, len);
+    /* Training R5 emits SHFL.BFLY and F2FP.BF16 as native encoder words
+     * (omega_blackwell_codegen_tc.h). The sm_121 image is already the published
+     * bytes, so there is no omega_tc_patch_code step. This hook still runs
+     * before the QMMA family patch. */
+    save(dir, id, "sm121.bin", sm121, len);
     save(dir, id, "sm86.bin", code, bytes);
     save(dir, id, "ir", metadata, prog->count * sizeof(metadata[0]));
 }

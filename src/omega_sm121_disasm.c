@@ -197,6 +197,7 @@ static const Row ROWS[] = {
     { 0x000000000000723eull, 0x00000010ffull, "F2FP.BF16.F32.PACK_AB %d, %a, %b" },
     /* tensor cores */
     { 0x000000000000723cull, 0x00041800ull, "HMMA.16816.F32.BF16 %d, %a, %b, %c" },
+    { 0x000000000000723cull, 0x00001800ull, "HMMA.16816.F32 %d, %a, %b, %c" },
     { 0x000000000000727aull, 0x00002c00ull, "QMMA.16832.F32.E4M3.E4M3 %d, %a, %b, %c" },
     { 0x0000000000007308ull, 0x00000800ull, "MUFU.EX2 %d, %b" },
     { 0x0000000000007308ull, 0x00001000ull, "MUFU.RCP %d, %b" },
@@ -205,6 +206,13 @@ static const Row ROWS[] = {
     /* memory */
     { 0x0000000000007981ull, 0x0c1e1100ull, "LDG.E%z %d, desc[%B][%a.64%o]" },
     { 0x0000000000007986ull, 0x0c101100ull, "STG.E%z desc[%C][%a.64%o], %b" },
+    /* the .STRONG.SYS forms (and ATOMG) are the ones the bw_hazard_test sweep builds (decode_attn); only the 32-bit
+     * size and the PT predicate seen there are rows, every other bit pattern stays reported, not guessed. The sweep
+     * has these forms only with a zero offset, so their %o is checked by the plain LDG/STG rows above (same opcode,
+     * same offset field, nonzero offsets throughout the corpus), not by a STRONG listing of its own */
+    { 0x0000000000007981ull, 0x0c1f5900ull, "LDG.E.STRONG.SYS %d, desc[%B][%a.64%o]" },
+    { 0x0000000000007986ull, 0x0c115900ull, "STG.E.STRONG.SYS desc[%C][%a.64%o], %b" },
+    { 0x80000000000079a8ull, 0x081f5100ull, "ATOMG.E.ADD.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
     { 0x0000000000007984ull, 0x08000800ull, "LDS %d, [%a+%B]" },
     { 0x0000000000007988ull, 0x08000800ull, "STS [%a+%C], %b" },
     { 0x0000000000007984ull, 0x00000000ull, "LDS%z %d, [%a%o]" },

@@ -54,6 +54,9 @@ int omega_gpu_pf_kernel_locked(const OmegaPfKey *key, OmegaPfGen gen, OmegaPfKer
 int omega_gpu_pf_launch_locked(const OmegaPfKernel *k, uint32_t threads, uint32_t grid_x, uint32_t grid_y, uint32_t shared_bytes,
                                const uint32_t *args, uint32_t n_args, uint64_t *ns);
 int omega_gpu_pf_open_locked(void); /* opens the device, registers the hook: OMEGA_GPU_PF_OK or CHIP_FAIL */
+/* Existing device allocation/copy transport, for callers already holding the session lock. */
+int omega_gpu_pf_alloc_dev_locked(size_t bytes, OmegaGpuMem *out);
+int omega_gpu_pf_copy_va_locked(uint64_t dst_va, uint64_t src_va, size_t bytes, uint64_t *chip_ns);
 /* lock held: the same launch appended to a command list (omega_gpu_cmdlist.h) instead of submitted (sc #642: a whole Qwen3.8
  * prefill chunk is one list). Prefill kernels are never evicted, so a recorded launch's code stays valid until the submit. */
 struct OmegaGpuCmdList;
@@ -105,6 +108,14 @@ struct OmegaGpuCmdList;
 int omega_gpu_pf_quant_record(struct OmegaGpuCmdList *cl, uint32_t k, uint32_t in_type, uint32_t rows, uint64_t x_va, uint64_t q_va, uint64_t s_va);
 int omega_gpu_pf_qgemm_record(struct OmegaGpuCmdList *cl, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles,
                               uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va);
+/* Explicit options belong to this call only. bm returns 0 for refused options;
+ * a real call also validates its projection shape. Tile buffers must use this bm. */
+/* Omega-owned reading options (rt, warps, wait, group), UINT32_MAX on refusal. */
+int omega_gpu_pf_qgemm_workspace_fits(uint64_t capacity, uint64_t padded, uint64_t tiles, uint64_t rows, uint64_t bm);
+uint32_t omega_gpu_pf_qgemm_reading_option(uint32_t rows, uint32_t index);
+uint32_t omega_gpu_pf_qgemm_scoped_bm(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group);
+int omega_gpu_pf_qgemm_scoped(uint32_t rt, uint32_t warps, uint32_t wait, uint32_t group, uint32_t n, uint32_t k, uint32_t layout, uint64_t tiles_va, uint32_t ntiles, uint64_t rowidx_va, uint64_t xq_va, uint64_t xs_va, uint64_t y_va, uint64_t *ns);
+void omega_gpu_pf_qgemm_set_group(uint32_t group); /* 0 restores original order; 1..5 candidate reuse groups. Set before model use. */
 void omega_gpu_pf_qgemm_set_shape(uint32_t rt, uint32_t warps, uint32_t wait); /* knobs (all 0 restores rt 4, warps 8, wait 45) */
 void omega_gpu_pf_qgemm_test_set_mutant(int m);
 #ifdef __cplusplus

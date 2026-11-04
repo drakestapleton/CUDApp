@@ -21,6 +21,7 @@
 #include "omega_sm121_disasm.h"
 #define WS_MAX_THREADS 512 /* the FFT's n / 4 threads at n = 2048 */
 #include "bw_warp_sim.h"
+#include "test_out_file.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdarg.h>
@@ -772,7 +773,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--out") && i + 1 < argc) out = argv[++i];
         else { fprintf(stderr, "usage: %s [--host-only | --sim] [--fixture F] [--out FILE]\n", argv[0]); return 2; }
     }
-    if (out && !(g_rcpt = fopen(out, "w"))) { fprintf(stderr, "cannot write %s\n", out); return 2; }
+    if (out && !(g_rcpt = test_out_open(out))) { fprintf(stderr, "cannot write %s\n", out); return 2; }
     if (load_fixture(fixture) != 0) { fprintf(stderr, "cannot read fixture %s\n", fixture); return 2; }
     receipt("mathlibs tier=%s fixture=%s", tier, fixture);
     host_tier();

@@ -25,9 +25,9 @@ int __wrap_omega_gpu_session_sync_to_cpu(const OmegaGpuMem *m) { assert(depth ==
 int __wrap_omega_gpu_cmdlist_create(uint32_t cap, OmegaGpuCmdList **out) {
     assert(depth == 0 && cap == 3); creates++;
     if (failure == 1) return -1;
-    *out = (void *)calloc(1,sizeof(FakeList)); assert(*out);
+    FakeList *fl = calloc(1, sizeof *fl); assert(fl); *out = (void *)fl;
     /* Model another caller installing after this caller released the lock. */
-    if (failure == 18) { owner->pf_batch=(void *)calloc(1,sizeof(FakeList)); assert(owner->pf_batch); creates++; }
+    if (failure == 18) { FakeList *other = calloc(1, sizeof *other); assert(other); owner->pf_batch = (void *)other; creates++; }
     return 0;
 }
 void __wrap_omega_gpu_cmdlist_free(OmegaGpuCmdList *cl) { assert(depth == 0); if (cl) { frees++; free(cl); } }

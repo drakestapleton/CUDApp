@@ -245,7 +245,9 @@ static int c_cubin_pack(uint32_t target_sm, const char *fn_name,
      * 20261030T235211Z-0352f1 and 20261030T235858Z-10fa8c). Same note header as
      * .note.nv.cuinfo with type 2000; the descriptor is version 2, 0, then the
      * offsets of the tool, version, build and option strings in a zero-padded
-     * string blob. The strings are this writer's own. */
+     * string blob. The strings are this writer's own and name sm_121, so the note
+     * is written for sm_121 only; sm_86 images stay as they were (no tkinfo). */
+    const int with_tk = target_sm == OMEGA_CUBIN_SM_121;
     static const char tk_str[72] = "\0cudapp\0CUDApp omega_cubin sm_121\0Build omega_cubin\0-arch sm_121";
     uint8_t tk[120];
     {
@@ -285,7 +287,7 @@ static int c_cubin_pack(uint32_t target_sm, const char *fn_name,
     size_t shstr_len = 1, strtab_len = 1;
     uint32_t shname[11], strname = 0;
     shstr[0] = 0; strtab[0] = 0;
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 10 + with_tk; i++) {
         size_t n = strlen(snames[i]);
         shname[i] = (uint32_t)shstr_len;
         memcpy(shstr + shstr_len, snames[i], n + 1);
@@ -322,8 +324,8 @@ static int c_cubin_pack(uint32_t target_sm, const char *fn_name,
     secs[s++] = (Sec){ ".nv.compat", 0x70000086u, 0, compat, sizeof compat, 0, 0, 4, 0 };
     secs[s++] = (Sec){ info_name, 0x70000000u, 0x40, info, info_len, 3, 4, 4, 0 };
     secs[s++] = (Sec){ ".nv.shared.reserved.0", 8, 0x3, NULL, shared_reserved, 0, 0, 1, 0 };
-    secs[s++] = (Sec){ ".note.nv.cuinfo", 7, 0x1000040u, note, sizeof note, 11, 2, 4, 0 }; /* link: tkinfo */
-    secs[s++] = (Sec){ ".note.nv.tkinfo", 7, 0x2000000u, tk, sizeof tk, 0, 0, 4, 0 };
+    secs[s++] = (Sec){ ".note.nv.cuinfo", 7, 0x1000040u, note, sizeof note, with_tk ? 11u : 0u, 2, 4, 0 }; /* link: tkinfo */
+    if (with_tk) secs[s++] = (Sec){ ".note.nv.tkinfo", 7, 0x2000000u, tk, sizeof tk, 0, 0, 4, 0 };
     size_t nsec = (size_t)s;
 
     /* Layout: ELF header, section payloads (aligned), section header table. */

@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Host-only helper regressions (dummy processes)
@@ -22,7 +22,7 @@ jobs:
       - run: ./build/gpu_streams_test --sim
       - run: ./build/gpu_isolation_test --host-only
       - run: sha256sum build/gpu_streams_test | tee build/gpu_streams_test.sha256
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: gpu_streams_test-${{ github.event.pull_request.head.sha || github.sha }}
           path: |

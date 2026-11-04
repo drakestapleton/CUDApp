@@ -1,0 +1,132 @@
+{
+  "status": "PASS_EXACT_SCORES",
+  "scope": "Shared-machine single-run diagnostic. Not quiet or statistically qualified.",
+  "formula": "seconds=ns/1e9; reduction_percent=100*(baseline_ns-candidate_ns)/baseline_ns",
+  "inputs": {
+    "reading-screen-group0-20261101T194419Z": "b8bcb76500664674cfc9ef99003f23df731a90fb121794abb79f6c0a581b2537",
+    "reading-screen-group4-20261101T194534Z": "a7802b188ee8d2bb54e0a8d4d9e3dcffaf50867f1fdb6b81dfd8e86be008ffc6",
+    "Optimize27-checkpoint-20261101": "44e4cb62fc06712f3728c26d0ba0a70dc4e516fb4557f80060f756720e8d26d6"
+  },
+  "rows": [
+    {
+      "trial": 0,
+      "prompt_tokens": 30,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+      "baseline_s": 0.332722031,
+      "candidate_s": 0.328841392,
+      "wall_reduction_percent": 1.1663306419285473,
+      "baseline_gemm_s": 0.164627506,
+      "candidate_gemm_s": 0.163969208
+    },
+    {
+      "trial": 1,
+      "prompt_tokens": 513,
+      "chunk": 512,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "751c59e6812c98bedc12ccb72bf878cb7c52fe6734a51a96646b1d0bd5937396",
+      "baseline_s": 2.258274006,
+      "candidate_s": 2.156755011,
+      "wall_reduction_percent": 4.4954241482776025,
+      "baseline_gemm_s": 1.337981532,
+      "candidate_gemm_s": 1.209889835
+    },
+    {
+      "trial": 2,
+      "prompt_tokens": 941,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "36dabb2803481bdd0e552d3c631557e3047d2e233e43f5636dccceae143661c0",
+      "baseline_s": 3.650990357,
+      "candidate_s": 3.306518864,
+      "wall_reduction_percent": 9.435015141564232,
+      "baseline_gemm_s": 2.213912136,
+      "candidate_gemm_s": 1.795833972
+    },
+    {
+      "trial": 3,
+      "prompt_tokens": 5017,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+      "baseline_s": 19.126557271,
+      "candidate_s": 16.36954494,
+      "wall_reduction_percent": 14.414577029919688,
+      "baseline_gemm_s": 11.546749839,
+      "candidate_gemm_s": 8.809191353
+    },
+    {
+      "trial": 4,
+      "prompt_tokens": 30,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+      "baseline_s": 0.3078444,
+      "candidate_s": 0.316550316,
+      "wall_reduction_percent": -2.8280248073377328,
+      "baseline_gemm_s": 0.165410748,
+      "candidate_gemm_s": 0.162994709
+    },
+    {
+      "trial": 5,
+      "prompt_tokens": 5017,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+      "baseline_s": 18.816751006,
+      "candidate_s": 16.198925508,
+      "wall_reduction_percent": 13.91220778318886,
+      "baseline_gemm_s": 11.509962547,
+      "candidate_gemm_s": 8.801004973
+    }
+  ],
+  "binary_sha256": "8b8687ada95f10254ddf7dbedb9bbecc080fd35c42bed77d104666d417388d58",
+  "settings": {
+    "baseline": {
+      "rt": 4,
+      "group": 0
+    },
+    "candidate": {
+      "rt": 4,
+      "group": 4
+    },
+    "warps": 8,
+    "wait": 45
+  },
+  "host": {
+    "status": "PASS",
+    "exit_code": 0,
+    "targets": 78,
+    "command": "make -j4 OUT_DIR=../optimize27-qg-order-build test test-runtime-api-semver RUNTIME_API_BASE=ecb672c77f6f9145f0983348277ae8f58c74c8d3",
+    "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+    "full_log_sha256": "4db1c5946321e1d77594196896039749f70246247dd202646de6bb8051ca52eb",
+    "source_identity": {
+      "base": "ecb672c77f6f9145f0983348277ae8f58c74c8d3",
+      "status": "PASS full host suite78, semver, exact GPU scores group0/group4; shared timing only",
+      "sources": {
+        "docs/runtime/API.md": "2d9e4e4390ca852ff05dd76e6290778cf90173e94348b8deabb3978ec5e1292f",
+        "docs/runtime/omega_runtime_api.manifest": "0fd414db619b7fc8d40b503c4368e415fd215b05e29039346a855e3d8e5d717e",
+        "mk/prefill-shape.mk": "ccba4c78dc228c864094028674319b6c07a6b403a852c7b0e10014805c30fe39",
+        "om/prefill-shape/README.md": "5cfd7bc8ac55bb62a19996a0c79de2eebecc0357121a362c2705dcf8157cc293",
+        "om/units.sh": "90e2b06d539b0fce4b8b1642985bd339f7df103c10689721bdf279cbb6ef6324",
+        "src/cudapp_native.h": "91cab62eed37af70fe6b83710b5c0d2ea1f365f4a626fb988550ea3a0c0a65d6",
+        "src/cudapp_om_units.ident": "77b16d01c829b52e115eb9ed659664921fa3d9d419319869e03b0399c8f43650",
+        "src/omega_blackwell_codegen_qg.c": "cf2c5cd3d58d9f0439e116143199054e0d6ff4c7117c96c64ad6b0995072cfeb",
+        "src/omega_blackwell_codegen_qg.h": "c19bbd7f882c99da69b23d2e6cb9b3fd999f541803730f0aa0db023019ed4806",
+        "src/omega_gpu_pfgemm.c": "c2379b1758dd402dc2eb5608404e5f333531994e39ebd5d7f8058247e21e47b7",
+        "src/omega_gpu_prefill.h": "3460cfeeb2f19799b318e059a6cdfb66447ab0a4dc720d8c5122e98d86c02e90",
+        "src/omega_runtime_api.h": "a52d32533dafe83ca20d69399b59f998389cd867cb3b9de6b4e2937926e3547f",
+        "tests/bw_hazard_test.c": "9cb312122fab1e0f9cfeb17a42dd64310d51919bf9fa6f019bc82f4e2ead9757",
+        "tests/gpu_qgemm_test.c": "407875e2d792c0db39903bf3a2689a954e90a5c2698426fb09d93ffe0108acd9",
+        "om/prefill-shape/order.om": "13f0e33cd7013f62564a82e5e6a2a9722ab3de92e10934ed46fffc2c5174de9b",
+        "om/prefill-shape/order-check.py": "62032077e16c8e0e99c32c016b051e19b706b887da2e722b04c63c7124ff73b4",
+        "om/prefill-shape/order-mutants.py": "0795f05f7661e0c0b58dd066cae8e470f64392b6389ea3b7a8d25e0aaf199442",
+        "src/cudapp_om_prefill_order.c": "43c835999dd230d3b953ad5b002a63d116638d93b4cb6893525676db6432ae77",
+        "src/cudapp_om_prefill_order.ident": "fb4a96a87f733878627afadf6562b9f6b3c51bea805cb9c61c51b33ab9bcce71"
+      },
+      "archive_sha256": "7d29f388fd6e270e4017df99e7e2ef18f914a9aeee0837a74fc9b05980eb0cbd"
+    },
+    "scope": "Host tests and simulated matrix arithmetic, including all 137 plan cases and five Omega source mutants. Not hardware performance qualification."
+  }
+}

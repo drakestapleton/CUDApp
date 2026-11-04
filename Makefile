@@ -14,11 +14,14 @@
 # exist yet and Omega main still takes nvrm/m16 from physics-mv (#106, #107).
 .DEFAULT_GOAL := all
 PHYSICS_DIR ?= .
-# The seeded bindings src/cudapp_om_units.c and src/cudapp_freest_units.c are
-# AArch64 machine code. A non-AArch64 host links src/cudapp_binding_portable.c
-# instead and compiles the migration-pending C encoder and C cubin writer.
-# That is the portable host path. It is not a run of the seeded units.
-# CUDAPP_ENCODER=diff still requires the seeded binding and is refused here.
+# om/units.sh emits every seeded Omega unit as checked portable C (omega-bridge,
+# om/omega-bridge.lock): src/cudapp_om_<unit>.c hosted, src/cudapp_freest_<unit>.c
+# import-free scalar. Every host compiles the same units, so x86-64 runs the .om
+# encoder, cubin packer and native units that AArch64 runs.
+# The pinned compiler omc is an AArch64 binary. The rows that execute it
+# (CUDAPP_TARGET_ONLY_TESTS) run on AArch64, or on another host when OMEGA_OMC
+# is given explicitly and executes there (the pinned QEMU provenance oracle in
+# .github/workflows/ampere-x86.yml). Otherwise they print NOT_RUN and exit 2.
 # On AArch64, CC stays make's built-in (CC ?= gcc does not replace it), so a
 # GB10 `make` invokes the same compiler it did before this portability guard.
 CUDAPP_HOST_ARCH := $(shell uname -m)
@@ -30,28 +33,19 @@ ifeq ($(origin CC),default)
 CC := gcc
 endif
 CUDAPP_HOST_IS_AARCH64 :=
-CUDAPP_HOST_BINDING := src/cudapp_binding_portable.c
-CUDAPP_HOST_FREEST_BINDING :=
-CUDAPP_FS_BINDING := src/cudapp_binding_portable.c
-CUDAPP_BINDING_SRCS := src/cudapp_binding_portable.c
-CUDAPP_PORTABLE_DEFS := -DCUDAPP_MIGRATION_PENDING_C_ENCODER -DCUDAPP_MIGRATION_PENDING_C_CUBIN
-CUDAPP_TARGET_ONLY_TESTS := test-om-encoder test-om-cubin test-gpu-native-runtime test-om-spec-encoder test-portable-receipts test-model-capacity
-ifeq ($(CUDAPP_ENCODER),diff)
-$(error CUDAPP_ENCODER=diff executes the AArch64 seeded binding; this host is $(CUDAPP_HOST_ARCH))
-endif
-$(info CUDA++ host $(CUDAPP_HOST_ARCH): seeded AArch64 binding is not assembled; C encoder and C cubin writer are the portable bodies; other seeded units refuse with status 34)
+CUDAPP_OMC_HOST := $(if $(filter environment command,$(firstword $(origin OMEGA_OMC))),1,)
 else
 # Same assignment as before this branch. Make's built-in CC=cc wins, because ?=
 # does not replace a variable make already defined.
 CC ?= gcc
 CUDAPP_HOST_IS_AARCH64 := 1
-CUDAPP_HOST_BINDING := src/cudapp_om_units.c
-CUDAPP_HOST_FREEST_BINDING := src/cudapp_freest_units.c
-CUDAPP_FS_BINDING := src/cudapp_freest_units.c
-CUDAPP_BINDING_SRCS := src/cudapp_om_units.c src/cudapp_freest_units.c
-CUDAPP_PORTABLE_DEFS :=
-CUDAPP_TARGET_ONLY_TESTS :=
+CUDAPP_OMC_HOST := 1
 endif
+CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-portable-receipts test-model-capacity)
+# Portable checked Omega-to-C output; each unit has a separate private runtime namespace.
+CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
+CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c
+CUDAPP_BINDING_SRCS = $(CUDAPP_HOST_BINDING) $(CUDAPP_FS_BINDING)
 OUT_DIR ?= build
 GPU_PROD_TARGET ?= $(OUT_DIR)/libomega_gpu.a
 NVIDIA_OPEN := $(PHYSICS_DIR)/third_party/nvidia-open-580.173.02
@@ -64,7 +58,7 @@ CFLAGS ?= -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc \
 -include mk/*.mk
 
 # sm_121 instruction encoder (CUDApp#79): om (default) = om/encoder/bw_enc_sm121.om through the generated binding
-# src/cudapp_om_units.c; c = the migration-pending C encoder, the differential oracle; diff = both on every call,
+# portable generated C units in CUDAPP_BINDING_SRCS; c = the migration-pending C encoder, the differential oracle; diff = both on every call,
 # abort on any difference (mk/om-encoder.mk). Use a separate OUT_DIR per value.
 CUDAPP_ENCODER ?= om
 CUDAPP_ENCODER_DEFS_om :=
@@ -78,10 +72,10 @@ endif
 # Every C file of the GPU part, the shared base (tools/extract/shared.txt), the driver client and the generated
 # binding of the seeded Omega units (om/units.sh). src/omega_fp8_slot_table.c is the slot table under
 # src/omega_gpu_fp8_slots.c (Expert Ribbon P1, omega #533).
-SRCS := $(sort $(wildcard src/omega_blackwell_*.c src/omega_gpu_*.c)) src/omega_fp8_slot_table.c \
+SRCS := $(sort $(wildcard src/omega_blackwell_*.c src/omega_gpu_*.c src/omega_ampere_*.c)) src/omega_fp8_slot_table.c \
 	src/omega_cubin.c src/omega_native_artifact.c src/omega_sm121_disasm.c \
 	src/sha256.c src/omega_canonical.c src/omega_core.c src/omega_vector.c $(CUDAPP_BINDING_SRCS) \
-	$(PHYSICS_DIR)/m16/m16_native.c $(PHYSICS_DIR)/nvrm/nvrm.c
+	$(PHYSICS_DIR)/m16/m16_native.c $(PHYSICS_DIR)/nvrm/nvrm.c $(AMPERE_CORPUS_SRCS)
 OBJS = $(patsubst %.c,$(OUT_DIR)/%.o,$(notdir $(SRCS)))
 DEPS = $(OBJS:.o=.d)
 -include $(DEPS)
@@ -90,7 +84,7 @@ vpath %.c src $(PHYSICS_DIR)/m16 $(PHYSICS_DIR)/nvrm
 $(OUT_DIR):
 	mkdir -p $@
 $(OUT_DIR)/%.o: %.c | $(OUT_DIR)
-	$(CC) $(CFLAGS) $(CUDAPP_ENCODER_DEFS) $(CUDAPP_PORTABLE_DEFS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CUDAPP_ENCODER_DEFS) -c $< -o $@
 
 .PHONY: all libcudapp test clean
 all: $(OUT_DIR)/libomega_gpu.a $(OUT_DIR)/libcudapp.a
@@ -110,12 +104,11 @@ ARTIFACT_EXPORT = $(OUT_DIR)/artifact-export
 artifact-export: $(ARTIFACT_EXPORT)
 ARTIFACT_TEST = $(OUT_DIR)/gpu_artifact_export_test
 # These two recipes compile omega_cubin.c on the command line, which overrides the
-# archive member. On a non-AArch64 host that must be the C cubin writer
-# (CUDAPP_PORTABLE_DEFS). On AArch64 the variable is empty and the .om packer stays.
+# archive member with the same .om packer the library links.
 $(ARTIFACT_EXPORT): tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
-	$(CC) $(CFLAGS) $(CUDAPP_PORTABLE_DEFS) -o $@ tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+	$(CC) $(CFLAGS) -o $@ tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 $(ARTIFACT_TEST): tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
-	$(CC) $(CFLAGS) $(CUDAPP_PORTABLE_DEFS) -o $@ tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+	$(CC) $(CFLAGS) -o $@ tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 # cubin-probe is the only target that links NVIDIA's libcuda: an interop check that NVIDIA's own loader accepts
 # CUDA++'s cubin. It is not in `make test`; zero-cuda-gate (in HOST_TESTS) checks hello_gpu and the API test link no CUDA.
 CUDA_INC ?= /usr/local/cuda/include
@@ -129,8 +122,8 @@ test-native-artifact: $(ARTIFACT_EXPORT) $(ARTIFACT_TEST)
 	./$(ARTIFACT_TEST) $(OUT_DIR)/artifact-test
 # Pure artifact-format boundary: portable host test, no driver or device objects.
 .PHONY: test-native-artifact-manifest
-$(OUT_DIR)/native_artifact_manifest_test: tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_HOST_BINDING) | $(OUT_DIR)
-	$(CC) $(CFLAGS) $(CUDAPP_PORTABLE_DEFS) -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o $@ $^ -lpthread
+$(OUT_DIR)/native_artifact_manifest_test: tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_BINDING_SRCS) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o $@ $^ -lpthread
 test-native-artifact-manifest: $(OUT_DIR)/native_artifact_manifest_test
 	./$(OUT_DIR)/native_artifact_manifest_test
 .PHONY: libomega_gpu test-gpu-matmul-api
@@ -382,6 +375,32 @@ test-gemm-selectors: $(GPU_PFGEMM_TEST) $(GPU_QGEMM_TEST) $(GPU_FP8GEMM_TEST)
 GPU_PFHOST_TEST = $(OUT_DIR)/gpu_pfhost_test
 $(GPU_PFHOST_TEST): tests/gpu_pfhost_test.c tests/bw_warp_sim_tc.h src/omega_gpu_pfhost.h src/omega_blackwell_codegen_pfhost.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -ffp-contract=off -DWS_MAX_THREADS=1024 -Itests -o $@ tests/gpu_pfhost_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+# omega#456: the prefill tests above, host model and warp simulator only. Every run names --host-only or --sim, the two
+# modes that never open the device (each test's main returns before its chip part); chip runs stay under the GB10 lock.
+.PHONY: test-gpu-prefill-host
+test-gpu-prefill-host: $(GPU_TC_PROBE_TEST) $(GPU_TCGEMM_TEST) $(GPU_PATTN_TEST) $(GPU_PF_MEM_TEST) $(GPU_PFGEMM_TEST) \
+                       $(GPU_QMMA_PROBE_TEST) $(GPU_QGEMM_TEST) $(GPU_PFHOST_TEST)
+	./$(GPU_TC_PROBE_TEST) --host-only
+	./$(GPU_QMMA_PROBE_TEST) --host-only
+	./$(GPU_PF_MEM_TEST) --host-only
+	./$(GPU_TCGEMM_TEST) --host-only
+	./$(GPU_TCGEMM_TEST) --sim
+	./$(GPU_PATTN_TEST) --host-only
+	./$(GPU_PATTN_TEST) --sim
+	./$(GPU_PFGEMM_TEST) --host-only
+	./$(GPU_PFGEMM_TEST) --sim
+	./$(GPU_QGEMM_TEST) --host-only
+	./$(GPU_QGEMM_TEST) --sim
+	./$(GPU_PFHOST_TEST) --host-only
+	./$(GPU_PFHOST_TEST) --sim
+	@echo "test-gpu-prefill-host: PASS (8 prefill tests, host model + warp simulator, no device)"
+# omega#456: tools/own30b_decode_profile.c is a link-only recorder built by hand on the Spark; compile it with the
+# project's -Werror flags so a warning cannot land unseen.
+.PHONY: check-own30b-decode-profile
+check-own30b-decode-profile: tools/own30b_decode_profile.c
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CFLAGS) -c -o $(OUT_DIR)/own30b_decode_profile.o tools/own30b_decode_profile.c
+	@echo "check-own30b-decode-profile: PASS (compiles with -Werror)"
 # OWN-30B W-L2 (2026-10-13): command list (many launches, one submission) + decode glue kernels. test-gpu-cmdlist is
 # host-only + warp simulator; the chip gate is tools/run_gpu_cmdlist_chip.sh under the GB10 lock.
 .PHONY: test-gpu-cmdlist
@@ -399,7 +418,7 @@ GPU_DECODE_GRAPH_TEST = $(OUT_DIR)/gpu_decode_graph_test
 GPU_DGRAPH_ABORT_TEST = $(OUT_DIR)/test_omega_gpu_decode_graph_abort
 $(GPU_DECODE_GRAPH_TEST): tests/gpu_decode_graph_test.c src/omega_gpu_decode_graph.h src/omega_gpu_cmdlist.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/gpu_decode_graph_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
-test-gpu-decode-graph: $(GPU_DECODE_GRAPH_TEST) $(GPU_DGRAPH_ABORT_TEST) test-gpu-decode-graph-abort-mutants
+test-gpu-decode-graph: $(GPU_DECODE_GRAPH_TEST) $(GPU_DGRAPH_ABORT_TEST) test-gpu-decode-graph-abort-mutants test-gpu-decode-graph-timeline
 	./$(GPU_DECODE_GRAPH_TEST) --host-only
 	./$(GPU_DGRAPH_ABORT_TEST)
 
@@ -429,6 +448,32 @@ test-gpu-decode-graph-abort-mutants: $(OUT_DIR)/libomega_gpu.a
 	dmut abort-keeps-lock 's|g->n_stamp = 0; /\* no timeline for an abandoned token \*/|&\n    return OMEGA_GPU_DGRAPH_OK;|'; \
 	dmut abort-submits 's|^int omega_gpu_decode_graph_abort_token(OmegaGpuDecodeGraph \*g) {$$|&\n    if (g \&\& g->in_token) return omega_gpu_decode_graph_end_token(g, NULL, NULL);|'; \
 	echo "test-gpu-decode-graph-abort-mutants: $$killed of 5 mutants killed"
+
+# omega #456: the per-token timeline (set_stamps) never writes past stamp[]: 4096 stamped launches fill it, the 4097th
+# (flush_each, one submission per launch) fails the token and leaves no timeline. Fake platform that completes every
+# submission; no device. Each mutant breaks one rule in a copy of omega_gpu_decode_graph.c linked ahead of the library;
+# the overflow case must FAIL on it.
+.PHONY: test-gpu-decode-graph-timeline
+GPU_DGRAPH_TL_TEST = $(OUT_DIR)/test_omega_gpu_decode_graph_timeline
+GPU_DGRAPH_TL_MUT = $(OUT_DIR)/dgraph_tl_mut
+$(GPU_DGRAPH_TL_TEST): tests/test_omega_gpu_decode_graph_timeline.c src/omega_gpu_decode_graph.h src/omega_gpu_platform.h $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) -o $@ tests/test_omega_gpu_decode_graph_timeline.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+test-gpu-decode-graph-timeline: $(GPU_DGRAPH_TL_TEST)
+	./$(GPU_DGRAPH_TL_TEST)
+	@mkdir -p $(GPU_DGRAPH_TL_MUT)
+	@set -e; \
+	tmut() { name=$$1; script=$$2; \
+	  sed -e "$$script" src/omega_gpu_decode_graph.c > $(GPU_DGRAPH_TL_MUT)/$$name.c; \
+	  if cmp -s src/omega_gpu_decode_graph.c $(GPU_DGRAPH_TL_MUT)/$$name.c; then echo "mutant $$name: pattern not found"; exit 1; fi; \
+	  $(CC) $(filter-out -MMD -MP,$(CFLAGS)) -o $(GPU_DGRAPH_TL_MUT)/$$name tests/test_omega_gpu_decode_graph_timeline.c \
+	    $(GPU_DGRAPH_TL_MUT)/$$name.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm; \
+	  if ./$(GPU_DGRAPH_TL_MUT)/$$name > $(GPU_DGRAPH_TL_MUT)/$$name.log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
+	  if ! grep -q '^FAIL one launch past the timeline' $(GPU_DGRAPH_TL_MUT)/$$name.log; then \
+	    echo "mutant $$name: no FAIL case (did not run?)"; cat $(GPU_DGRAPH_TL_MUT)/$$name.log; exit 1; fi; \
+	  echo "mutant $$name killed"; }; \
+	tmut room-off-by-one 's|(uint32_t)(cnt - from) > room) {|(uint32_t)(cnt - from) > room + 1u) {|'; \
+	tmut timeline-after-failure 's#if (!g->stamps || g->failed || #if (!g->stamps || #'; \
+	echo "test-gpu-decode-graph-timeline: 2 of 2 mutants killed"
 
 # OWN-30B W-L2c (2026-10-14): per-launch fixed cost inside a command list (tests/gpu_launch_cost_test.c, chip only, GB10 lock).
 GPU_LAUNCH_COST_TEST = $(OUT_DIR)/gpu_launch_cost_test
@@ -465,7 +510,7 @@ ARCH_GUARD_TEST = $(OUT_DIR)/omega_blackwell_arch_guard_test
 $(ARCH_GUARD_TEST): tests/test_omega_blackwell_arch_guard.c tests/fake_m16_native.c tests/fake_m16_native.h \
 		$(GPU_ENGINE_SIM_SRCS) src/omega_gpu_wait.c | $(OUT_DIR)
 	$(CC) -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -ffunction-sections -fdata-sections \
-		$(CUDAPP_PORTABLE_DEFS) -Isrc -Itests $(GPU_ENGINE_PHYS_INC) -o $@ tests/test_omega_blackwell_arch_guard.c tests/fake_m16_native.c \
+		-Isrc -Itests $(GPU_ENGINE_PHYS_INC) -o $@ tests/test_omega_blackwell_arch_guard.c tests/fake_m16_native.c \
 		$(GPU_ENGINE_SIM_SRCS) src/omega_gpu_wait.c -Wl,--gc-sections -lm
 ifeq ($(CUDAPP_HOST_IS_AARCH64),1)
 test-omega-arch-guard:
@@ -495,6 +540,7 @@ HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-reconv
 	test-codegen-freestanding test-gpu-session-platform test-gpu-native-runtime test-gpu-wait test-gpu-wait-mutants host-tests-m16 \
 	test-runtime-api test-runtime-portability test-doctor test-hello-sim test-native-artifact-manifest test-gemm-selectors \
 	test-native-artifact zero-cuda-gate verify-vendored test-swap-cli test-om-encoder test-om-spec-encoder test-om-cubin \
+	test-ampere-encoder test-ampere-cubin test-ampere-numeric-host test-ampere-f16-host test-ampere-runtime test-ampere-plan \
 	test-portable-receipts test-gpu-qmd-shared test-model-capacity test-gpu-qmd-shared-clean-build \
 	test-omega-slice-runner test-omega-arch-guard test-omega-barrier-contract test-omega-binding-portable \
 	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz $(CARRIED_HOST_TESTS)
@@ -505,12 +551,12 @@ test: $(HOST_TESTS)
 	@echo "CUDA++ HOST TESTS PASS ($(words $(HOST_TESTS)) targets)"
 
 .PHONY: test-model-capacity
-ifeq ($(CUDAPP_HOST_IS_AARCH64),1)
+ifeq ($(CUDAPP_OMC_HOST),1)
 test-model-capacity:
 	OMEGA_OMC="$(OMEGA_OMC)" sh tests/models/capacity.sh
 else
 test-model-capacity:
-	@echo "test-model-capacity: NOT_RUN (requires the pinned omc; not part of the portable host suite)"
+	@echo "test-model-capacity: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
 	@exit 2
 endif
 
@@ -520,7 +566,7 @@ test-drift:
 
 # Original Git blobs are read-only verification oracles, not a replacement receipt authority.
 .PHONY: test-portable-receipts
-ifeq ($(CUDAPP_HOST_IS_AARCH64),1)
+ifeq ($(CUDAPP_OMC_HOST),1)
 test-portable-receipts: test-om-units tests/portable_receipts.om tests/portable_receipts.tsv om/cache/digest.om
 	@mkdir -p build/portable_receipts
 	cat om/cache/digest.om tests/portable_receipts.om > build/portable_receipts.source.om
@@ -535,7 +581,7 @@ test-portable-receipts: test-om-units tests/portable_receipts.om tests/portable_
 	done < tests/portable_receipts.tsv
 else
 test-portable-receipts:
-	@echo "test-portable-receipts: NOT_RUN (requires the pinned omc; not part of the portable host suite)"
+	@echo "test-portable-receipts: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
 	@exit 2
 endif
 
@@ -569,17 +615,17 @@ test-gpu-imadhi-rc: $(GPU_IMADHI_TESTS)
 
 # omega-mv#554: static scoreboard hazard checker (RAW / WAR / WAW) over the encoded bytes of every kernel the generators
 # build, after the launchers' patch steps. Host only: decoder vs encoder, the pre-#553 attend red receipt
-# (tests/fixtures/bw_hazard), negative controls, then the sweep. test-bw-hazard-nvdisasm adds the decoder cross-check
-# against nvdisasm (offline oracle, /usr/local/cuda/bin) on every distinct kernel: one nvdisasm call per kernel, over
-# ten minutes on the Spark (2026-10-19: 2360 kernels, 1028064 instructions, 0 mismatched).
+# (tests/fixtures/bw_hazard), negative controls, then the sweep. test-bw-hazard-nvdisasm (the name it had when it
+# called nvdisasm) adds the decoder cross-check against Omega's own sm_121 disassembler, in process, on every distinct
+# kernel (bar C6: every check that called nvdisasm calls ours; test-sm121dis checks that disassembler against the oracle).
 .PHONY: test-bw-hazard test-bw-hazard-nvdisasm
 BW_HAZARD_TEST = $(OUT_DIR)/bw_hazard_test
-$(BW_HAZARD_TEST): tests/bw_hazard_test.c src/omega_bw_hazard.c src/omega_bw_hazard.h $(OUT_DIR)/libomega_gpu.a
+$(BW_HAZARD_TEST): tests/bw_hazard_test.c src/omega_bw_hazard.c src/omega_bw_hazard.h src/omega_sm121_disasm.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/bw_hazard_test.c src/omega_bw_hazard.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 test-bw-hazard: $(BW_HAZARD_TEST)
 	$(BW_HAZARD_TEST)
 test-bw-hazard-nvdisasm: $(BW_HAZARD_TEST)
-	$(BW_HAZARD_TEST) --nvdisasm
+	$(BW_HAZARD_TEST) --disasm
 
 # Offline resource-DAG evaluator, imported verbatim from closed PR #590
 # (commit 3bd56731). Host arithmetic on the numbers written in the fixtures.

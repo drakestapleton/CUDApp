@@ -1,2 +1,3 @@
-# omega-bridge source for all hosted/freest production bindings; exact native.om sha256 also pinned in om/units.sh.
-0c4cb9ff980af278890b231b994eaede4dc7621c
+# Checked portable hosted and import-free scalar Omega converters.
+# Draft omega-bridge#36; exact source and frontend hashes checked by om/units.sh.
+3dc4a00e9966770cce58bdedb401c3b3932c35ee

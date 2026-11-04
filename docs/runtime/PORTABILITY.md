@@ -8,20 +8,26 @@ UNVERIFIED. Nothing here was run on a GPU; this slice is read-only analysis plus
 Companion documents, not repeated here: `docs/numeric/OMEGA_GPU_NATIVE_BOUNDARY.md` (which driver call each part makes
 today and which cut removes it) and `docs/numeric/OMEGA_GPU_ENGINE.md` (the engine contract).
 
+Current Ampere work is audited in [`../PORT-AMPERE.md`](../PORT-AMPERE.md).
+Its sm_86 encoder, QMD3 and discrete-memory path do not make GA102/GA104
+qualified: both remain device NOT_RUN. The Blackwell inventory below explains
+the original R3 boundary; target-specific Ampere files now participate in the
+same table gate.
+
 ## 1. Two separate questions
 
 Porting Omega means answering two questions that are easy to mix up:
 
-1. **Chip.** Does this file know something about the GB10 (Grace Blackwell, compute capability sm_121)? Machine-code
+1. **Chip.** Does this file know something about GB10 (Grace Blackwell, sm_121) or Ampere (sm_86)? Machine-code
    words, launch-descriptor fields, class numbers, cache behaviour.
 2. **Operating system and driver.** Does this file need Linux, the NVIDIA open driver, or a C library?
 
-The table `docs/runtime/portability_table.tsv` answers both, one row per `src/omega_gpu_*`, `src/omega_blackwell_*` and
-`src/omega_bw_*` file (131 rows; the M17/M18 gate suite `omega_blackwell_gates.{c,h}` stays in Omega, which runs it against this library):
+The table `docs/runtime/portability_table.tsv` answers both, one row per `src/omega_gpu_*`, `src/omega_blackwell_*`,
+`src/omega_bw_*` and `src/omega_ampere_*` file. The table is the current inventory; the M17/M18 gate suite `omega_blackwell_gates.{c,h}` stays in Omega, which runs it against this library:
 
 | Column | Values | Meaning |
 |---|---|---|
-| `class` | `CHIP_SPECIFIC`, `PORTABLE` | `CHIP_SPECIFIC`: the file carries knowledge of the GB10 or of the driver interface that exposes it, so a different GPU or driver means reviewing or replacing it. `PORTABLE`: it carries neither. |
+| `class` | `CHIP_SPECIFIC`, `PORTABLE` | `CHIP_SPECIFIC`: the file carries knowledge of a target GPU or its driver interface, so a different GPU or driver means reviewing or replacing it. `PORTABLE`: it carries neither. |
 | `reason` | text | Why, with the evidence (an include list, a constant, a make target). |
 | `os_binding` | `FREESTANDING_PROVEN`, `NO_HOSTED_INCLUDE`, `HOSTED_LIBC`, `LINUX_DRIVER` | `FREESTANDING_PROVEN`: a `.c` file in `GPU_FS_SRCS` (`mk/omega-gpu-engine.mk`), built by `make gpu-engine-freestanding` with no hosted headers. `NO_HOSTED_INCLUDE`: no hosted header by include scan only (a header, or a `.c` outside that build). `HOSTED_LIBC`: includes stdio, stdlib, time, errno, math or pthread. `LINUX_DRIVER`: includes `nvrm.h`, `m16_native.h` or `omega_gpu_platform_linux.h`. |
 
@@ -32,7 +38,7 @@ carries (#120, #121) brought (15 `NO_HOSTED_INCLUDE`, 6 `HOSTED_LIBC`). The sync
 r2 #972) adds 5 `CHIP_SPECIFIC` rows (`src/omega_bw_hazard.{c,h}`, omega-mv#554; `src/omega_gpu_fp8_slots.{c,h}` and
 `src/omega_gpu_fp8_internal.h`, #961) and carries omega's review of the public headers (#954): `omega_gpu_matmul_api.h`,
 `omega_gpu_moe_api.h`, `omega_gpu_platform.h`, `omega_gpu_serving.{c,h}` and `omega_gpu_session.h` become `CHIP_SPECIFIC`,
-`omega_gpu_scan_ref.c` becomes `PORTABLE` (section 3). Totals now: 120 `CHIP_SPECIFIC`, 11 `PORTABLE`; 13
+`omega_gpu_scan_ref.c` becomes `PORTABLE` (section 3). At that sync, the totals were 120 `CHIP_SPECIFIC`, 11 `PORTABLE`; 13
 `FREESTANDING_PROVEN`, 98 `NO_HOSTED_INCLUDE`, 17 `HOSTED_LIBC`, 3 `LINUX_DRIVER`. Command to recount: section 7.
 
 `make test-runtime-portability` (host only, no compiler, no GPU) checks the table against the tree: every file has a row,
@@ -127,7 +133,7 @@ different family it is *rewriting*. In order:
 8. **A backend.** Either the vector backend (`OmegaGpuBackend`, example `src/omega_blackwell_engine.c`) or the session path.
 9. **Qualification on the chip.** The M17 and M18 gates (Omega `src/omega_blackwell_gates.c`) and the poison-word vector add are
    the first correctness check; nothing is claimed for a chip until they pass there.
-10. **Update the table.** `make test-runtime-portability` refuses a new `omega_gpu_*`, `omega_blackwell_*` or `omega_bw_*`
+10. **Update the table.** `make test-runtime-portability` refuses a new `omega_gpu_*`, `omega_blackwell_*`, `omega_bw_*` or `omega_ampere_*`
     file that has no row.
 
 ## 6. Limits of this note

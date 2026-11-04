@@ -49,6 +49,12 @@ uint32_t omega_native_mclaunch(uint64_t *result, const void *p0, uint64_t p0_n, 
 uint32_t omega_native_mcdir(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_native_mcalloc(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_native_mcseries(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_native_qgshape(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3);
+uint32_t omega_native_qgreading(uint64_t *result, uint64_t p0, uint64_t p1);
+uint32_t omega_native_qgworkspace(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4);
+uint32_t omega_native_qgorder(uint64_t *result, void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4);
+uint32_t omega_native_attnmirplan(uint64_t *result, const void *p0, uint64_t p0_n);
+uint32_t omega_native_attnmirnext(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3);
 uint32_t omega_q38_runtime(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_q38_emit(uint64_t *result, void *p0, uint64_t p0_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);

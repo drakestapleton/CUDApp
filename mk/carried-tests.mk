@@ -65,5 +65,6 @@ test-gpu-isolation: $(GPU_ISOLATION_TEST)
 # Chip-only binaries: built here so the host suite at least compiles them.
 test-carried-bins: $(GPU_DATTN256_MULTI_TEST) $(GPU_GDN_MULTI_TEST) $(GPU_PATTN256_TEST) $(GPU_EXACT_HEAD_TEST)
 
-CARRIED_HOST_TESTS = test-bw-encode-control test-gpu-decode-attn256 test-gpu-gdn test-gpu-q38-graph-host \
+# Other fragments may register tests before this file in the wildcard include order.
+CARRIED_HOST_TESTS += test-bw-encode-control test-gpu-decode-attn256 test-gpu-gdn test-gpu-q38-graph-host \
 	test-gpu-streams test-gpu-isolation test-carried-bins

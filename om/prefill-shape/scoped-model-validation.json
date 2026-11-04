@@ -1,0 +1,132 @@
+{
+  "status": "PASS_EXACT_SCORES",
+  "scope": "Shared-machine single-run diagnostic. Not quiet or statistically qualified.",
+  "formula": "seconds=ns/1e9; reduction_percent=100*(baseline_ns-candidate_ns)/baseline_ns",
+  "inputs": {
+    "/home/drakestapleton/handoffs/Optimize27-checkpoint-20261101/scoped-profile-mode0-20261101T201048Z/data": "c66387fb7abd1a50b5515d06f3c925959c8ef3c68e47a48a7a5ec37cb1846691",
+    "/home/drakestapleton/handoffs/Optimize27-checkpoint-20261101/scoped-profile-mode1-20261101T201204Z/data": "9e084d7227443e9f706787d7b0f72aedd1cd34968104f83a9c26365a5f300eff",
+    "/home/drakestapleton/handoffs/Optimize27-checkpoint-20261101/scratch-baseline-data": "44e4cb62fc06712f3728c26d0ba0a70dc4e516fb4557f80060f756720e8d26d6"
+  },
+  "rows": [
+    {
+      "trial": 0,
+      "prompt_tokens": 30,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+      "baseline_s": 0.310116316,
+      "candidate_s": 0.340853811,
+      "wall_reduction_percent": -9.911602006777354,
+      "baseline_gemm_s": 0.164876334,
+      "candidate_gemm_s": 0.171508113
+    },
+    {
+      "trial": 1,
+      "prompt_tokens": 513,
+      "chunk": 512,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "751c59e6812c98bedc12ccb72bf878cb7c52fe6734a51a96646b1d0bd5937396",
+      "baseline_s": 2.274214302,
+      "candidate_s": 1.862565739,
+      "wall_reduction_percent": 18.10069361704331,
+      "baseline_gemm_s": 1.353240513,
+      "candidate_gemm_s": 0.869492863
+    },
+    {
+      "trial": 2,
+      "prompt_tokens": 941,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "36dabb2803481bdd0e552d3c631557e3047d2e233e43f5636dccceae143661c0",
+      "baseline_s": 3.722388432,
+      "candidate_s": 2.933748301,
+      "wall_reduction_percent": 21.18640075872662,
+      "baseline_gemm_s": 2.21938298,
+      "candidate_gemm_s": 1.382941945
+    },
+    {
+      "trial": 3,
+      "prompt_tokens": 5017,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+      "baseline_s": 19.07438026,
+      "candidate_s": 14.640784822,
+      "wall_reduction_percent": 23.24371946855588,
+      "baseline_gemm_s": 11.630266332,
+      "candidate_gemm_s": 7.109164731
+    },
+    {
+      "trial": 4,
+      "prompt_tokens": 30,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+      "baseline_s": 0.282019619,
+      "candidate_s": 0.358219437,
+      "wall_reduction_percent": -27.019332296878254,
+      "baseline_gemm_s": 0.165838626,
+      "candidate_gemm_s": 0.170276119
+    },
+    {
+      "trial": 5,
+      "prompt_tokens": 5017,
+      "chunk": 4096,
+      "all_score_bits_and_next_equal": true,
+      "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+      "baseline_s": 19.123025181,
+      "candidate_s": 14.51508928,
+      "wall_reduction_percent": 24.096270633886377,
+      "baseline_gemm_s": 11.665614326,
+      "candidate_gemm_s": 7.135011549
+    }
+  ],
+  "core_source": "af6a899c3e4826fbba2d8ee42d31d6d136bf2256",
+  "core_receipt": "https://github.com/aien-dev/aien-sovereign-core-mv/blob/4723174d/om/ribbon/q38-scoped-reading-validation.json",
+  "profile_build": {
+    "command": [
+      "taskset",
+      "-c",
+      "10-11",
+      "nice",
+      "-n",
+      "19",
+      "rustc",
+      "--edition=2021",
+      "-O",
+      "-C",
+      "panic=abort",
+      "-C",
+      "lto=thin",
+      "/home/drakestapleton/handoffs/Optimize27-checkpoint-20261101/scoped-profile.rs",
+      "-L",
+      "dependency=/tmp/optimize27-serving-target/release/deps",
+      "-L",
+      "native=/tmp/optimize27-scoped-reading-build",
+      "--extern",
+      "serde_json=/tmp/optimize27-serving-target/release/deps/libserde_json-c53b161b72615764.rlib",
+      "--extern",
+      "aien_inference_abi=/tmp/optimize27-serving-target/release/libaien_inference_abi.rlib",
+      "-o",
+      "/home/drakestapleton/handoffs/Optimize27-checkpoint-20261101/scoped-profile"
+    ],
+    "artifacts": {
+      "serde_json": {
+        "path": "/tmp/optimize27-serving-target/release/deps/libserde_json-c53b161b72615764.rlib",
+        "sha256": "3d48d513d1b663788c4ac635260557eb3251d02c594ccdf2392e76a0a92fe774"
+      },
+      "aien_inference_abi": {
+        "path": "/tmp/optimize27-serving-target/release/libaien_inference_abi.rlib",
+        "sha256": "6327d731fd5cb451fefdb995352a30976e5099d6b8c5586bc2bac13497a7a9ff"
+      }
+    },
+    "exit_code": 0,
+    "native_sha256": "97b822bd9e919e834adf90e7b9485bf73f7d4f2c0a80cfd1ecde9c8ff9ff1631",
+    "source_sha256": "a4e0bee1a17a82cedc6d17282d2144be5dc8efc10c86eaf44e52d1773ecf0553",
+    "source_core": "af6a899c3e4826fbba2d8ee42d31d6d136bf2256",
+    "binary_sha256": "691e75516b4134a47d1ff365742f6725b06217b1683212a434632d924d00abfa"
+  },
+  "input_tokens_sha256": "c77cea30c9f1344a22d664ed76f50b079aa02a48a88174feb5f928ce89feaaaa",
+  "serving_status": "Initial full serving quality and sampled32 parity PASS; clean build, long contexts and controlled timing are separate.",
+  "limitation": "The repeated30-token case increased from0.282019619s to0.358219437s. Fixed128 rows are not promoted; an adaptive profile remains to be tested."
+}

@@ -6,13 +6,17 @@
  *      R22/R23 at IR 88/89; the same kernel after the encoder fix passes; the fixed kernel with the one lost wait
  *      cleared fails again;
  *   3. negative controls: small encoded programs with one hazard each are caught, the same programs with the wait
- *      in place pass, and an undecodable word is "not checked", never clean;
+ *      in place pass, and an undecodable word is "not checked", never clean; the allocator gives a uniform-source
+ *      IMAD's destination a GPR live from the IMAD (only LDCU/LDCU64 write a uniform register);
  *   4. sweep: every generator over its accepted shapes (production kernels, mutant 0), encoded and patched as the
  *      launchers do; every finding is printed and must be on the triaged list below.
  *
- * --nvdisasm: additionally cross-checks the decoder against nvdisasm (offline oracle, CUDA 13 -b SM121) on every
- * distinct kernel: the base registers each instruction names must be the ones the decoder found. */
+ * --disasm: additionally cross-checks the decoder against Omega's own sm_121 disassembler (src/omega_sm121_disasm.c,
+ * in process) on every distinct kernel: the base registers each instruction names must be the ones the decoder found.
+ * The disassembler is checked word for word against nvdisasm by test-sm121dis; this test never calls nvdisasm (bar C6
+ * of docs/OMEGA.md: every check that called nvdisasm calls ours). */
 #include "omega_bw_hazard.h"
+#include "omega_sm121_disasm.h"
 #include "omega_blackwell_codegen.h"
 #include "omega_blackwell_codegen_moe.h"
 #include "omega_blackwell_codegen_moe2.h"
@@ -38,7 +42,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static int g_checks, g_failed, g_nvdisasm;
+static int g_checks, g_failed, g_disasm;
 static const char *g_dump_dir; /* --dump DIR: write each distinct kernel with findings as DIR/<family>-<n>.bin (triage) */
 #define CHECK(c, ...) do { g_checks++; if (!(c)) { g_failed++; printf("FAIL: "); printf(__VA_ARGS__); printf("\n"); } } while (0)
 
@@ -302,6 +306,38 @@ static void test_controls(void) {
     CHECK(omega_bw_hazard_check(c, 15, &g_rep) == -1 && omega_bw_hazard_check(NULL, 16, &g_rep) == -1, "control: bad length / NULL refused");
 }
 
+/* Only LDCU/LDCU64 write a uniform register (the encoder's rule). An IMAD R, R, UR, R carries is_uniform for its
+ * uniform SOURCE; its destination is a GPR whose live interval starts at the IMAD. The allocator must not hand that
+ * GPR to a value still live there (c below, read at IR 3), and must not count the IMAD as a def of the uniform
+ * vreg with the same index (u1, defined at IR 5). */
+static void test_uniform_source_dst(void) {
+    static BlackwellIRProgram p;
+    omega_bw_ir_init(&p);
+    const int u0 = omega_bw_ir_alloc_uvreg(&p), u1 = omega_bw_ir_alloc_uvreg(&p);
+    const int c = omega_bw_ir_alloc_vreg(&p), d = omega_bw_ir_alloc_vreg(&p), e = omega_bw_ir_alloc_vreg(&p);
+    const int f = omega_bw_ir_alloc_vreg(&p), g = omega_bw_ir_alloc_vreg(&p);
+    BlackwellIRInsn prog[] = {
+        mk(BW_IR_LDCU, u0, -1, -1, -1, -1, 0),     /* 0 */
+        mk(BW_IR_MOV_IMM, c, -1, -1, -1, -1, 0),   /* 1 */
+        mk(BW_IR_IMAD, d, c, -1, c, u0, 0),        /* 2: d = c * UR(u0) + c, the uniform-source form */
+        mk(BW_IR_IADD3, e, c, c, -1, -1, 0),       /* 3: last read of c */
+        mk(BW_IR_IADD3, f, d, e, -1, -1, 0),       /* 4: first read of d */
+        mk(BW_IR_LDCU, u1, -1, -1, -1, -1, 0),     /* 5 */
+        mk(BW_IR_IMAD, g, f, -1, f, u1, 0),        /* 6 */
+        mk(BW_IR_EXIT, -1, -1, -1, -1, -1, 0),     /* 7 */
+    };
+    prog[0].is_uniform = prog[2].is_uniform = prog[5].is_uniform = prog[6].is_uniform = true;
+    int ok = 1;
+    for (unsigned i = 0; i < sizeof prog / sizeof *prog; i++) ok &= omega_bw_ir_append(&p, &prog[i]) == (int)i;
+    CHECK(ok && omega_bw_regalloc_solve(&p) == 0, "uniform-source IMAD: program appends and allocates");
+    CHECK(p.regalloc.intervals[d].first_def == 2, "uniform-source IMAD: GPR dst interval starts at the IMAD (IR 2), got %d",
+          p.regalloc.intervals[d].first_def);
+    CHECK(p.regalloc.vreg_to_phys[d] != p.regalloc.vreg_to_phys[c],
+          "uniform-source IMAD: dst R%d must not reuse R%d of c, still live until IR 3", p.regalloc.vreg_to_phys[d], p.regalloc.vreg_to_phys[c]);
+    CHECK(p.regalloc.uintervals[u1].first_def == 5, "uniform-source IMAD: uniform vreg %d first def is its LDCU (IR 5), got %d", u1,
+          p.regalloc.uintervals[u1].first_def);
+}
+
 /* ------------------------------------------------------------------------------------------------------- 4. sweep */
 typedef struct { const char *family; char variant[96]; uint64_t hash; size_t findings; } Seen;
 #define MAX_SEEN 8192
@@ -348,7 +384,7 @@ static Known g_known[] = {
 
 static uint64_t fnv(const uint8_t *p, size_t n) { uint64_t h = 1469598103934665603ull; for (size_t i = 0; i < n; i++) { h ^= p[i]; h *= 1099511628211ull; } return h; }
 
-static void nvdisasm_cross_check(const char *family, const char *variant, const uint8_t *code, size_t len);
+static void disasm_cross_check(const char *family, const char *variant, const uint8_t *code, size_t len);
 
 static void sweep_bytes(const char *family, const char *variant, const uint8_t *code, size_t len) {
     g_variants++;
@@ -381,7 +417,7 @@ static void sweep_bytes(const char *family, const char *variant, const uint8_t *
         if (fd >= 0 && !f) close(fd);
         if (f) { fwrite(code, 1, len, f); fclose(f); printf("DUMP %s = %s %s\n", path, family, variant); }
     }
-    if (g_nvdisasm) nvdisasm_cross_check(family, variant, code, len);
+    if (g_disasm) disasm_cross_check(family, variant, code, len);
 }
 
 /* encode + the launcher's patch steps */
@@ -484,7 +520,7 @@ static void sweep(void) {
       }
       for (unsigned a = 0; a < 5; a++) for (unsigned w = 8; w <= 16; w *= 2) for (unsigned epi = 0; epi <= 1; epi++) for (unsigned dir = 0; dir <= 1; dir++)
       for (unsigned wt = 0; wt <= 120; wt += 60) {
-          OmegaQgSpec s = { ks[a], 4, w, epi, dir, 512, wt, 0 };
+          OmegaQgSpec s = { ks[a], 4, w, epi, dir, 512, wt, 0, 0 };
           snprintf(v, sizeof v, "k%u warps%u epi%u direct%u n512 wait%u", ks[a], w, epi, dir, wt);
           if (BUILD(omega_blackwell_codegen_qgemm_prog(&s, &g_prog))) sweep_prog("qgemm", v, P_TC | P_QMMA);
       }
@@ -563,30 +599,25 @@ static void sweep(void) {
       if (omega_bw_ir_append(&g_prog, &ex) >= 0 && omega_bw_ir_append(&g_prog, &self) >= 0 && omega_bw_regalloc_solve(&g_prog) == 0) sweep_prog("cmdlist_nop", "-", P_NONE); }
 }
 
-/* ----------------------------------------------------------------------------------------- nvdisasm cross-check */
-static size_t g_nv_insns, g_nv_bad, g_nv_kernels;
+/* ----------------------------------------------------------------------------------- disassembler cross-check (C6) */
+static size_t g_dis_insns, g_dis_bad, g_dis_kernels;
 static int decoded_has(const OmegaBwInsn *d, int reg, int uniform) {
     for (unsigned j = 0; j < d->nr; j++) if (d->rd[j].uniform == uniform && d->rd[j].reg == reg) return 1;
     for (unsigned j = 0; j < d->nw; j++) if (d->wr[j].uniform == uniform && d->wr[j].reg == reg) return 1;
     return 0;
 }
-static void nvdisasm_cross_check(const char *family, const char *variant, const uint8_t *code, size_t len) {
-    char path[] = "/tmp/bw_hazard_nvdisasm_XXXXXX";
-    int fd = mkstemp(path); if (fd < 0) { CHECK(0, "mkstemp"); return; }
-    FILE *f = fdopen(fd, "wb"); fwrite(code, 1, len, f); fclose(f);
-    char cmd[600]; snprintf(cmd, sizeof cmd, "/usr/local/cuda/bin/nvdisasm -b SM121 -raw '%s' 2>&1", path);
-    FILE *p = popen(cmd, "r");
-    if (!p) { remove(path); CHECK(0, "nvdisasm popen"); return; }
-    char line[1024]; size_t seen = 0; g_nv_kernels++;
-    while (fgets(line, sizeof line, p)) {
-        char *s = strstr(line, "/*"); if (!s || s[6] != '*' || s[7] != '/') continue; /* the address field, e.g. 0040 */
-        unsigned addr; if (sscanf(s + 2, "%4x", &addr) != 1) continue;
-        size_t pc = addr / 16u; if (pc * 16u >= len) continue;
-        char *t = s + 8; while (*t == ' ') t++;
-        char *end = strchr(t, ';'); if (end) *end = 0;
-        OmegaBwInsn d; if (omega_bw_decode(code + pc * 16u, &d) != 0) continue; /* unreachable padding words are not decoded either */
-        seen++; g_nv_insns++;
-        /* every register token nvdisasm prints must be a base register the decoder has, and vice versa */
+static void disasm_cross_check(const char *family, const char *variant, const uint8_t *code, size_t len) {
+    size_t seen = 0; g_dis_kernels++;
+    for (size_t pc = 0; pc * 16u + 16u <= len; pc++) {
+        const uint8_t *w = code + pc * 16u;
+        OmegaBwInsn d; if (omega_bw_decode(w, &d) != 0) continue; /* unreachable padding words are not decoded either */
+        seen++; g_dis_insns++;
+        uint64_t lo = 0, hi = 0;
+        for (int i = 7; i >= 0; i--) { lo = lo << 8 | w[i]; hi = hi << 8 | w[8 + i]; }
+        char t[256];
+        int rc = omega_sm121_disasm(lo, hi, pc * 16u, t, sizeof t);
+        if (rc != 0) { g_dis_bad++; if (g_dis_bad <= 20) printf("DISASM UNKNOWN %s %s IR %zu: decoder %s, disassembler rc %d lo %016llx hi %016llx\n", family, variant, pc, d.name, rc, (unsigned long long)lo, (unsigned long long)hi); continue; }
+        /* every register token the disassembler prints must be a base register the decoder has, and vice versa */
         int nvr[16], nvu[16], nn = 0, nu = 0;
         for (char *q = t; *q; q++) {
             int uni = 0; char *r = q;
@@ -605,22 +636,22 @@ static void nvdisasm_cross_check(const char *family, const char *variant, const 
             for (int i = 0; i < (o->uniform ? nu : nn); i++) if ((o->uniform ? nvu[i] : nvr[i]) == o->reg) f2 = 1;
             ok = f2;
         }
-        if (!ok) { g_nv_bad++; if (g_nv_bad <= 20) printf("NVDISASM MISMATCH %s %s IR %zu: '%s' vs decoder %s (%u reads, %u writes)\n", family, variant, pc, t, d.name, d.nr, d.nw); }
+        if (!ok) { g_dis_bad++; if (g_dis_bad <= 20) printf("DISASM MISMATCH %s %s IR %zu: '%s' vs decoder %s (%u reads, %u writes)\n", family, variant, pc, t, d.name, d.nr, d.nw); }
     }
-    int st = pclose(p); remove(path);
-    CHECK(st == 0 && seen > 0, "%s %s: nvdisasm ran (status %d, %zu instructions)", family, variant, st, seen);
+    CHECK(seen > 0, "%s %s: disassembled %zu instructions", family, variant, seen);
 }
 
 int main(int argc, char **argv) {
     const char *dir = "tests/fixtures/bw_hazard";
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--nvdisasm")) g_nvdisasm = 1;
+        if (!strcmp(argv[i], "--disasm")) g_disasm = 1;
         else if (!strcmp(argv[i], "--fixtures") && i + 1 < argc) dir = argv[++i];
         else if (!strcmp(argv[i], "--dump") && i + 1 < argc) g_dump_dir = argv[++i];
     }
     test_decoder_vs_encoder();
     test_red_receipt(dir);
     test_controls();
+    test_uniform_source_dst();
     sweep();
     size_t clean = 0;
     printf("sweep per generator (distinct kernels, clean, findings):\n");
@@ -640,9 +671,9 @@ int main(int argc, char **argv) {
     printf("sweep: %zu variants built, %zu distinct kernels, %zu clean, %zu with findings, %zu findings, %zu not checked\n",
            g_variants, g_nseen, clean, g_nseen - clean - g_unchecked, g_findings_total, g_unchecked);
     CHECK(g_nseen >= 50, "the sweep built only %zu distinct kernels", g_nseen);
-    if (g_nvdisasm) {
-        printf("nvdisasm cross-check: %zu kernels, %zu instructions, %zu mismatched\n", g_nv_kernels, g_nv_insns, g_nv_bad);
-        CHECK(g_nv_bad == 0 && g_nv_insns > 0, "nvdisasm cross-check");
+    if (g_disasm) {
+        printf("disassembler cross-check (sm121dis, in process): %zu kernels, %zu instructions, %zu mismatched\n", g_dis_kernels, g_dis_insns, g_dis_bad);
+        CHECK(g_dis_bad == 0 && g_dis_insns > 0, "disassembler cross-check");
     }
     printf("bw_hazard_test: %d checks, %d failed: %s\n", g_checks, g_failed, g_failed ? "FAIL" : "PASS");
     return g_failed ? 1 : 0;

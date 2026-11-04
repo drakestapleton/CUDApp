@@ -1,0 +1,74 @@
+{
+  "status": "PASS for primitive correctness; full repository checks running",
+  "scope": "Omega-generated bounds on host compact scores; not complete GPU head or speed qualification",
+  "base": "c8ccbc34e4cb0b46693f2c6f8321c7c52eb88429",
+  "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+  "bridge_commit": "3dc4a00e9966770cce58bdedb401c3b3932c35ee",
+  "source_sha256": {
+    "om/q38-head/bounds.om": "a35bea87e381ba7b67fa78fc75631fa21a42e54d3a3769a4c7219f7636820162",
+    "om/q38-head/driver.om": "f6ad3c75883d8f7ddda783198f8a27af734e4f4bf5d76d3f63b547a62135ba98",
+    "om/q38-head/check.c": "cc4c5656269a84ded7d62c2f5e0b687641e9e1924f82429e354587c9ff19e5d6",
+    "om/q38-head/run.sh": "1e9b8a5b3b82d0ce65d437570c5924f8d9fe0bd161afdfad81be53343552edea",
+    "om/encoder/amp_runtime.om": "6203730d7d80acc0e563e3cb5e7a2b925b5d8739124f467bd3bd5d65a4920cdc",
+    "nvrm/nvrm.c": "b6edd4d9fcb447e97318f4fb404623b987414c4cb05bdea8a86936790ae83c40",
+    "tests/test_ampere_runtime.c": "643011c5f918ae407bee074bebce622c8282b0e47fa28dd411727489e28ebbbc",
+    "src/cudapp_om_amp_runtime.c": "54302a88d9a9a9efbdf0c401fde6fc88d6518a0105c83d86916e7b4a73b1bbda",
+    "mk/q38-head.mk": "b24419dc69469cf1e4d63cf9dfae0b6cc409aa0ee2affc38b5f851b9822b6e9a"
+  },
+  "frame_sha256": "ea03f28a8dab07412395087fba5f413e79f201226471df516607300255775abe",
+  "machine_code_sha256": "adee7fb923580e614707fa8f968e6ef5bb0d3ec8f2b248100344ccb3b636ad0c",
+  "runtime_archive_sha256": "4f771fa4b16b47e23f0385b8b616a62ffc054768bbaa408333f3be5a273c9644",
+  "window": "20261101T161659Z-240a79",
+  "host_output": [
+    "bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf",
+    "bad row2 s0 c0 hn123.25 lo-inf hiinf",
+    "PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions",
+    "PASS: arithmetic mutant caught",
+    "PASS: all-infinite radius mutant caught by bounded slack"
+  ],
+  "chip_output": [
+    "PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions",
+    "replay position=1 candidates=44 violations=0 winner_retained=1",
+    "replay position=16 candidates=1 violations=0 winner_retained=1",
+    "replay position=32 candidates=47 violations=0 winner_retained=1",
+    "replay position=64 candidates=2 violations=0 winner_retained=1",
+    "replay position=96 candidates=2 violations=0 winner_retained=1",
+    "replay position=97 candidates=21 violations=0 winner_retained=1",
+    "replay position=98 candidates=1 violations=0 winner_retained=1",
+    "replay position=127 candidates=4 violations=0 winner_retained=1",
+    "PASS: generated machine code executed on GPU"
+  ],
+  "admission_red": "test_ampere_runtime: tests/test_ampere_runtime.c:115: class_and_bdf: Assertion `select_classes(&rm, bw, 3, 0x10de, 0x2e12) == 0 && rm.target_sm == 121 && !rm.discrete' failed.",
+  "admission_green": "Ampere simulated RM allocation/class/QMD tests passed (HOST_ONLY; device NOT_RUN)",
+  "proof": {
+    "method": "exact rational arithmetic; u=2^-24, e=2^-20, tiny=2^-100, eta=2^-150; A=(1-u)^4*(1+e), B=e*(1-u)^2, D=(1+e)*(1-u)^3+(1-u)^2+(1-u)+1",
+    "inequalities": {
+      "radius_coefficient": {
+        "exact": "913843900478962934897940496357785599/1393796574908163946345982392040522594123776",
+        "positive": true
+      },
+      "score_coefficient": {
+        "exact": "4427217733265412587519/4951760157141521099596496896",
+        "positive": true
+      },
+      "absolute_margin": {
+        "exact": "93536093638805104422944811423736056598056271871999/118571099379011784113736688648896417641748464297615937576404566024103044751294464",
+        "positive": true
+      }
+    },
+    "units": "dimensionless coefficients; absolute score margin"
+  },
+  "not_run": [
+    "end-to-end server with exact head",
+    "time to first token comparison",
+    "complete GPU two-pass pipeline"
+  ],
+  "commands": [
+    "make -j1 build/libomega_gpu.a",
+    "sh om/q38-head/run.sh",
+    "check bounds.frame --chip SCREEN_DIRECTORY CAPTURE_DIRECTORY",
+    "make build/test_ampere_runtime && build/test_ampere_runtime",
+    "make test-q38-head-bounds (PASS; integrated into supported host make test)"
+  ],
+  "synthetic_cases_calculation": "8 counts * 6 norms * 2 orders/repetitions = 96"
+}

@@ -10,6 +10,9 @@
 #include "omega_blackwell_codegen_tc.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_cmdlist.h"
+#include "omega_gpu_attention_mirror.h"
+#include "omega_gpu_prefill.h"
+#include "cudapp_native.h"
 #include <string.h>
 
 #define MARKER_TIMEOUT_MS 60000ull
@@ -30,12 +33,16 @@ static struct {
     int prep_mut, att_mut;
     OmegaGpuMem qf; size_t qf_size; bool have_qf;             /* q' scratch */
     OmegaGpuMem qkv, out; size_t qkv_size, out_size; bool have_bufs; /* host-entry staging */
+    OmegaGpuMem mirror; /* one device-private full-copy workspace, no prefix-validity state */
 } g;
 
 static void bufs_forget(void) { g.have_qf = false; g.qf_size = 0; g.have_bufs = false; g.qkv_size = g.out_size = 0; }
-static void on_session_close(void) { memset(g.slot, 0, sizeof g.slot); bufs_forget(); }
+static void on_session_close(void) { memset(g.slot, 0, sizeof g.slot); bufs_forget(); memset(&g.mirror, 0, sizeof g.mirror); }
 static OmegaGpuSession *dev_open_locked(void) {
-    if (!g.hooked) { (void)omega_gpu_session_on_close(on_session_close); g.hooked = true; }
+    if (!g.hooked) {
+        if (omega_gpu_session_on_close(on_session_close) != 0) { omega_gpu_session_set_error("prefill attn256: close hook unavailable"); return NULL; }
+        g.hooked = true;
+    }
     return omega_gpu_session_open();
 }
 static void slots_clear_locked(void) {
@@ -48,6 +55,7 @@ void omega_gpu_prefill_attn256_release(void) {
     omega_gpu_session_lock();
     if (g.have_qf) omega_gpu_session_free(&g.qf);
     if (g.have_bufs) { omega_gpu_session_free(&g.qkv); omega_gpu_session_free(&g.out); }
+    omega_gpu_session_free(&g.mirror);
     bufs_forget();
     omega_gpu_session_unlock();
 }
@@ -160,9 +168,11 @@ static int bufs_locked(size_t qkv_size, size_t out_size) {
 /* host != 0: qkv / out are host arrays staged through the module buffers (poison-checked); else qkv_va / out_va are
  * device buffers. rec non-NULL: record path (lock held, nothing allocated, compiled or submitted). */
 static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, uint32_t m, const float *qkv, float *out,
-                uint64_t qkv_va, uint64_t out_va, float eps, float out_scale, OmegaGpuPrefillAttn256Info *info, OmegaGpuCmdList *rec) {
+                uint64_t qkv_va, uint64_t out_va, float eps, float out_scale, OmegaGpuPrefillAttn256Info *info, OmegaGpuCmdList *rec,
+                uint32_t mirror_mode, uint64_t *copy_ns) {
     uint64_t t0 = omega_gpu_session_now_ns();
     if (info) memset(info, 0, sizeof *info);
+    if (copy_ns) *copy_ns = 0;
     const int host = qkv != NULL;
     OmegaGpuDecodeAttn256CacheView v;
     if (!c || m == 0 || m > OMEGA_GPU_PATTN256_MAX_M || omega_gpu_decode_attn256_cache_view(c, layer, &v) != OMEGA_GPU_DATTN_OK ||
@@ -170,6 +180,12 @@ static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, ui
     const uint32_t sh[3] = { v.q_heads, v.kv_heads, v.q_per_cta }, QKVW = v.qkv_words, OUTW = v.out_words;
     if (!rec) omega_gpu_session_lock();
 #define UNLOCK() do { if (!rec) omega_gpu_session_unlock(); } while (0)
+    uint64_t mirror_bytes = 0;
+    if (mirror_mode) {
+        const uint64_t request[7] = {mirror_mode, v.q_heads, v.kv_heads, v.max_pos, pos0, m, v.v_va - v.k_va};
+        if (rec || v.v_va <= v.k_va || omega_native_attnmirplan(&mirror_bytes, request, 7) != OMEGA_OK || mirror_bytes == UINT64_MAX)
+            { UNLOCK(); return OMEGA_GPU_DATTN_BAD_ARGS; }
+    }
     if (!dev_open_locked()) { UNLOCK(); return OMEGA_GPU_DATTN_CHIP_FAIL; }
     Slot *ks[KK_N] = { NULL, NULL }; bool hit[KK_N] = { false, false };
     int rc = OMEGA_GPU_DATTN_OK;
@@ -210,7 +226,35 @@ static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, ui
         info->layer = layer; info->pos0 = pos0; info->m = m; info->grid_x[0] = m; info->grid_x[1] = gx_att;
         for (unsigned k = 0; k < KK_N; k++) { info->insns[k] = ks[k]->insns; info->gprs[k] = ks[k]->kernel.gpr_count; info->kernel_cache_hits += hit[k]; }
     }
-    for (unsigned k = 0; k < KK_N && rc == OMEGA_GPU_DATTN_OK; k++) {
+    if (mirror_mode) {
+        uint64_t phase = 0, action = 0;
+        /* Omega owns allocation admission and PREP -> COPY -> ATTEND order.
+         * Each transport operation returns only after completion; failure cannot advance. */
+        for (unsigned transitions = 0; transitions < 6; transitions++) {
+            if (omega_native_attnmirnext(&action, phase, mirror_bytes, g.mirror.size, rc == OMEGA_GPU_DATTN_OK) != OMEGA_OK || !action) {
+                if (rc == OMEGA_GPU_DATTN_OK) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
+                break;
+            }
+            if (action == 5) break;
+            if (action == 1) {
+                omega_gpu_session_free(&g.mirror);
+                if (omega_gpu_pf_alloc_dev_locked((size_t)mirror_bytes, &g.mirror) != OMEGA_GPU_PF_OK) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
+            } else if (action == 3) {
+                if (omega_gpu_pf_copy_va_locked(g.mirror.va, v.k_va, (size_t)mirror_bytes, copy_ns) != OMEGA_GPU_PF_OK) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
+                if (rc == OMEGA_GPU_DATTN_OK) {
+                    const uint64_t mv = g.mirror.va + (v.v_va - v.k_va);
+                    aa[2] = (uint32_t)g.mirror.va; aa[3] = (uint32_t)(g.mirror.va >> 32);
+                    aa[4] = (uint32_t)mv; aa[5] = (uint32_t)(mv >> 32);
+                }
+            } else if (action == 2 || action == 4) {
+                const unsigned k = action == 2 ? KK_PREP : KK_ATTEND;
+                if (!omega_bw_gpr_declared_ok(L[k].gpr_count, ks[k]->kernel.gpr_count) ||
+                    omega_gpu_session_launch(&L[k], info ? &info->elapsed_ns[k] : NULL, NULL) != 0) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
+            } else { rc = OMEGA_GPU_DATTN_CHIP_FAIL; break; }
+            phase = action;
+        }
+        if (action != 5 && rc == OMEGA_GPU_DATTN_OK) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
+    } else for (unsigned k = 0; k < KK_N && rc == OMEGA_GPU_DATTN_OK; k++) {
         if (!omega_bw_gpr_declared_ok(L[k].gpr_count, ks[k]->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); rc = OMEGA_GPU_DATTN_CHIP_FAIL; }
         else if (rec) { if (omega_gpu_cmdlist_add(rec, &L[k]) < 0) rc = OMEGA_GPU_DATTN_CHIP_FAIL; }
         else if (omega_gpu_session_launch(&L[k], info ? &info->elapsed_ns[k] : NULL, NULL) != 0) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
@@ -234,14 +278,21 @@ static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, ui
 int omega_gpu_prefill_attn256(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, uint32_t m,
                               const float *qkv, float eps, float out_scale, float *out, OmegaGpuPrefillAttn256Info *info) {
     if (!qkv) return OMEGA_GPU_DATTN_BAD_ARGS;
-    return core(c, layer, pos0, m, qkv, out, 0, 0, eps, out_scale, info, NULL);
+    return core(c, layer, pos0, m, qkv, out, 0, 0, eps, out_scale, info, NULL, 0, NULL);
 }
 int omega_gpu_prefill_attn256_dev(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, uint32_t m,
                                   uint64_t qkv_va, float eps, float out_scale, uint64_t out_va, OmegaGpuPrefillAttn256Info *info) {
-    return core(c, layer, pos0, m, NULL, NULL, qkv_va, out_va, eps, out_scale, info, NULL);
+    return core(c, layer, pos0, m, NULL, NULL, qkv_va, out_va, eps, out_scale, info, NULL, 0, NULL);
 }
 int omega_gpu_prefill_attn256_record(OmegaGpuCmdList *cl, OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0,
                                      uint32_t m, uint64_t qkv_va, float eps, float out_scale, uint64_t out_va) {
     if (!cl) return OMEGA_GPU_DATTN_BAD_ARGS;
-    return core(c, layer, pos0, m, NULL, NULL, qkv_va, out_va, eps, out_scale, NULL, cl);
+    return core(c, layer, pos0, m, NULL, NULL, qkv_va, out_va, eps, out_scale, NULL, cl, 0, NULL);
+}
+
+int omega_gpu_prefill_attn256_scoped(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, uint32_t m,
+    const float *qkv, float eps, float out_scale, float *out, OmegaGpuPrefillAttn256Info *info,
+    uint32_t mode, uint64_t *copy_ns) {
+    if (!qkv) return OMEGA_GPU_DATTN_BAD_ARGS;
+    return core(c, layer, pos0, m, qkv, out, 0, 0, eps, out_scale, info, NULL, mode, copy_ns);
 }

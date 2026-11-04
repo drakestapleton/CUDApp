@@ -1,0 +1,63 @@
+# Experimental prompt matrix shapes
+
+The Omega policy admits the existing 64-row, eight-warp matrix kernel, an experimental 32-row, four-warp kernel, and the 128-row experiment described below. The default remains 64 rows. The current parameterized emitter, arithmetic order, wait distance, tail masks and device ownership checks are retained.
+
+The 32-row shape reduces padded work for short prompts. This is a hypothesis until chip and full-model measurements establish a benefit. The emitter stages scales in paired row groups; a 16-row shape is not admitted. Shapes outside the explicit admission list remain refused.
+
+`make test-prefill-shape` checks the portable admission boundary, host numerical references and simulated direct/indexed matrix cases, including row tails, natural SwiGLU order and deliberate faults. It does not open a GPU. `om/units.sh --check` verifies generated bindings with the pinned Omega compiler and Bridge.
+
+Hardware reference: NVIDIA PTX ISA9.4, physical page605, warp matrix instruction examples. This change reuses the existing instruction generator and changes its work grouping. The manual is not evidence that this implementation runs correctly; simulator and chip receipts supply that evidence.
+
+The existing `omega_gpu_pf_qgemm_set_shape(2, 4, 45)` test knob selects the candidate. Call it before sizing prefill buffers or building tile tables. Never change shape while a model operation is in flight. No serving option or automatic policy is introduced here.
+
+The separate serving screen in `serving-validation.json` passes two128-token reference runs with a seeded sampled request between them. First-visible latency remains about0.5seconds on the shared machine. The four-matrix chip comparison is mixed; this shape is not promoted as a speed improvement. Longer contexts, the full conversation/streaming gate and controlled pairs remain pending.
+
+
+## 128-row experiment
+
+This branch additionally admits `rt=8, warps=8` and restores the original `rt=4, warps=16` policy entry. The latter still fails the emitter's existing staging-slot divisibility guard, as it did before the policy was extracted. Only the 128-row candidate opts its generated program into the existing extended register limit. The launcher retains its declared-register and thread-product checks. Defaults, arithmetic order, instruction encodings and wait distance stay unchanged.
+
+The hardware basis is NVIDIA Blackwell Tuning Guide, physical page13: 255 registers per thread and64K registers per SM. The project already provides a conservative246-register allocation limit and rounds the declared requirement separately. These limits make an experiment reasonable; they do not prove it is faster or even that this generated kernel passes.
+
+The checked Omega policy also bounds the actual largest emitted store offset, including the final column offset for F32 output. This replaces the conservative full-tile extent test that rejected a valid 27B projection. Width, epilogue and row-group bounds are checked before multiplication. The independent oracle enumerates the emitted offsets at both sides of the admission boundary, and mutation controls remove each important part of the bound.
+
+Before the change, all four 27B projection shapes refused 128-row generation. The candidate is still UNQUALIFIED: host generation and simulator checks pass locally, but chip/full-model parity and timing remain pending. The existing 64-row kernel bytes and resource metadata match the original build for the tested direct and indexed 27B projections. Earlier32-row receipts remain historical and do not certify this branch. The current64-row/eight-warp default is unchanged.
+
+[The host receipt](large-shape-host-validation.json) pins the changed sources and archive and records the targeted host, simulator and mutation checks. The full host suite was still running when this draft was published. No chip or full-model result is implied by this receipt.
+
+The subsequent [full host-suite receipt](large-shape-full-host-validation.json) records all 77 targets passing on the candidate source. It includes the failed absolute-output-path invocation and its correction. GPU and full-model qualification remain pending.
+
+## Grouped work-order experiment
+
+The separate grouped-order candidate revisits the mechanism in historical Omega commit `86211a39965bd903b6be482cfc784c7dd58733a5`. It schedules nearby matrix jobs over the same weight panel before advancing to another panel. Historical chip screens motivated that work, but their shared-machine measurements and sampled-row checks do not qualify this implementation or a full model.
+
+`order.om` owns the grid and coordinate-remapping instruction plan. Group 0 keeps the original order. Groups 1 through 5 gather consecutive row tiles into groups of powers of two. The Omega plan checks input and grid bounds before returning success. Jobs beyond the last tile branch out before reading the tile table. The existing C emitter interprets only the plan's primitive instructions; it does not calculate the coordinate mapping.
+
+The private plan is 64 unsigned words: grid x, grid y, instruction count, then five-word records `(operation, destination, source1, source2, immediate)`. Register roles are column coordinate, row coordinate, temporary and tile count. Operations are AND-immediate, shift-right-immediate, multiply-add-immediate, constant load, unsigned greater-or-equal predicate, and predicate branch. The prefix emits the mapping plus a tail guard; the output-store prefix repeats the same mapping. Matrix arithmetic and the existing wait distance are unchanged.
+
+Select a candidate with `omega_gpu_pf_qgemm_set_group(group)` before model work begins. Never change it while a model operation is in flight. This composes with the existing shape test knob. Default group 0 remains unchanged. `order-check.py` independently interprets the plan and verifies coverage, uniqueness and boundaries; `order-mutants.py` checks source faults. The matrix simulator exercises groups 0, 1, 3 and 4 across direct/indexed inputs and partial tiles. GPU and full-model correctness and speed remain unqualified.
+
+The complete 78-target host suite and API version check pass. On the full 27B reader, group4 and group0 preserve every output-score bit and next-token choice in all six frozen cases. Repeated 5,017-token reading was 18.817 seconds with group0 and 16.199 seconds with group4 in this shared-machine screen. This is not quiet-machine qualification. Group0 remains the default. `order-validation.json` records source identities, checks and per-case observations. The separate 128-row full-model attempt was refused by an older prefill-cache register cap before its first matrix; that correction is being verified on the parent branch and is not part of this tested group4 binary.
+The first full-model 128-row trial exposed an older cache-admission cap: it refused the generated 152-register declaration before the first matrix launch. The cache now honors the generator's existing opt-in budget, bounded by the allocator's hardware ceiling. The default declaration cap and the launch/record register-file checks remain enforced. `cache-check.c` reproduces the real cache call without a GPU by stopping at code allocation: it fails on the original library and passes the correction, including absent-opt-in and over-budget refusals. The correction also passes the matrix simulator and admission mutants. The corrected full-model run passed all six complete-score comparisons. The repeated 5,017-token read was 14.759 seconds versus 18.817 seconds in the comparison run. These are shared-machine observations, not quiet qualification; the full-host correction suite remains pending. See `large-shape-gpu-validation.json`. See `cache-admission-regression.json`.
+
+With the cache-budget correction included, the 128-row/group4 combination passed all six full-model score and next-token comparisons. The repeated 5,017-token read took 14.348 seconds versus 18.817 seconds for 64-row/group0. Group5 at 128 rows took 15.379 seconds in the same screening series. These are shared-machine observations. `order-combined-validation.json` records every compared setting and the complete selected-candidate comparison. The combined host rerun and serving qualification remain pending; no default changed.
+
+## Per-call reading options
+
+`omega_gpu_pf_qgemm_scoped` carries explicit row, warp, wait and order settings into the existing validated kernel specification and cache key. It neither reads nor modifies process-global tuning controls. `omega_gpu_pf_qgemm_scoped_bm` checks a profile and returns its tile height, or zero on refusal. Callers must construct and pad their tile buffers with that height; each projection is validated again at execution. Original calls retain their behavior. API version 0.11.0 adds these entries.
+
+The host isolation test interleaves two scoped configurations and a different legacy configuration through the real dispatch path, intercepting the cache boundary before any device use. Three source faults are caught. API and semantic-version gates pass. `scoped-validation.json` records the exact source and library. Full host and full-model scoped qualification remain pending; previous global-knob speed screens do not prove this new entry.
+
+The subsequent full host rerun completed successfully: all 78 targets passed at runtime source `28b533c95a2dce42cb14c9d8bc4a05847a5981a0`. See `order-combined-full-host-validation.json` for the command, timing and log digest. This does not qualify the later scoped API or serving performance.
+
+The subsequent full host rerun completed successfully: all 77 targets passed at runtime source `572a73bfd138b78154172f7746504842a7168f9c`. See `cache-full-host-validation.json` for the command, timing and log digest. This does not qualify the later scoped API or serving performance.
+
+The scoped entry subsequently passed the complete 79-target host suite and API version gate. `scoped-validation.json` records the exact command and log digest. Scoped full-model and server qualification remain separate.
+
+The scoped adapter also passed all six full-score comparisons and the initial serving correctness and quality suite. Its repeated 5,017-token read took 14.515 seconds versus 19.123 seconds with the setting off. The repeated 30-token case was slower, 0.358 versus 0.282 seconds. These shared-machine screens support an adaptive-batch experiment, not promotion of the fixed profile. See `scoped-model-validation.json` and its linked Ribbon receipt.
+
+The adaptive experiment adds `reading.om`, a separate checked Omega unit. It returns the full matrix profile for a request, choosing the existing 64-row/group0 profile through 64 rows and the 128-row/group4 profile above that proposed boundary. `omega_gpu_pf_qgemm_reading_option` transports one option; it adds no host-side numerical policy. The profile oracle covers the boundary, invalid inputs and option order, and five source faults must be caught. Full-model measurements determine whether this policy is retained.
+
+`workspace.om` admits existing storage only when its row, padded-row and tile capacities all cover the newly selected profile. This lets the adapter rebuild each tile table without reallocating otherwise sufficient storage. The independent oracle passes 1,575 cases and catches five source faults. Incompatible storage is refused. Revised full-model reuse measurements and the complete host suite remain pending.
+
+The revised adaptive profile and capacity reuse pass the complete 81-target host suite and version gate at native source `88379395296357571618ebf7f701a6e2cdf8be31`. Core source `f440df0e3f9fd4c6b5d37deb1b635037f140bb32` preserves all score bits and next-token choices in six model cases and 14 boundary cases. The repeated 5,017-token read took 14.497 seconds versus 18.901 seconds with the setting off. The repeated 30-token case took 0.290 versus 0.274 seconds. These shared-machine observations do not establish quiet timing or eliminate the small-request penalty. Exact commands, identities and raw observations are in `adaptive-validation.json`. Serving and long-context validation remain separate.

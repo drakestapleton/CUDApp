@@ -1,0 +1,19 @@
+{
+  "status": "PASS targeted regression, matrix simulator and six-case full-model exact scores; full host correction suite pending",
+  "base": "ecb672c77f6f9145f0983348277ae8f58c74c8d3",
+  "trigger": "128-row full-model trial refused before first matrix by old 128-register cache cap",
+  "original_trial": "reading-screen-rows128-20261101T194347Z",
+  "old_test_exit": 1,
+  "old_test_stdout": "prefill cache admission: FAIL\n",
+  "old_test_stderr": "cache case 1 rc=-2 allocations=0 wanted=1\n",
+  "new_test_exit": 0,
+  "new_test_stdout": "prefill cache admission: PASS\n",
+  "source_sha256": {
+    "src/omega_gpu_prefill.c": "bbcd2f3699de02c08994c71cb1f76557ab66af2431adef98979c7f97f3773e0c",
+    "om/prefill-shape/cache-check.c": "050eed09c5606e8d19a06e766d4e987a70d42d93151bdb8589e311365465714b",
+    "mk/prefill-shape.mk": "ffd88a70f7192bc4a014933263d51f54530106bb1beec82401d301fcc65db38d"
+  },
+  "matrix_host_simulator_and_mutants_exit": 0,
+  "matrix_log_sha256": "3574d0dd85c2ba74d88716c6e42c7be747eed6b875e177d56a86bb83131d4304",
+  "limits": "Default declared limit remains128. Opt-in allocator budget is honored only within246 peak; launch and record still enforce threads times declared <=65536. Blackwell Tuning Guide physicalp13."
+}

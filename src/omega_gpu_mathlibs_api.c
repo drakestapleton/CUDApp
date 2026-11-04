@@ -112,7 +112,7 @@ static int kernel_for(uint64_t kind, uint64_t a, uint64_t b, uint32_t threads, b
     if (upload && !s->code.cpu) {
         if (omega_gpu_session_alloc_code(s->kernel.code_size, &s->code) != 0) return OMEGA_GPU_ML_CHIP_FAIL;
         memcpy(s->code.cpu, s->kernel.code, s->kernel.code_size);
-        __asm__ volatile("dsb sy" ::: "memory");
+        if (omega_gpu_session_sync_to_gpu(&s->code) != 0) { omega_gpu_session_free(&s->code); return OMEGA_GPU_ML_CHIP_FAIL; }
     }
     *out = s;
     return OMEGA_GPU_ML_OK;
@@ -200,7 +200,7 @@ int omega_gpu_rng_generate(OmegaGpuRngKind kind, uint64_t seed, uint64_t stream0
     if (rc == OMEGA_GPU_ML_OK) {
         uint32_t *dev = (uint32_t *)g_out.mem.cpu;
         for (size_t i = 0; i < bytes / 4; i++) dev[i] = ML_POISON32;
-        __asm__ volatile("dsb sy" ::: "memory");
+        if (omega_gpu_session_sync_to_gpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
         /* 0x380 out, 0x388 + 8 i base_i, 0x3a8 skip, 0x3ac per-stream count, 0x3b0 streams */
         uint32_t args[13];
         put64(&args[0], g_out.mem.va);
@@ -210,7 +210,8 @@ int omega_gpu_rng_generate(OmegaGpuRngKind kind, uint64_t seed, uint64_t stream0
         args[11] = per_stream;
         args[12] = nstreams;
         uint32_t grid = (nstreams + OMEGA_GPU_RNG_THREADS - 1) / OMEGA_GPU_RNG_THREADS;
-        rc = launch(s, args, 13, grid, count, 0, info);
+        if (rc == OMEGA_GPU_ML_OK) rc = launch(s, args, 13, grid, count, 0, info);
+        if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
         if (rc == OMEGA_GPU_ML_OK) {
             memcpy(out, g_out.mem.cpu, bytes);
             uint64_t unwritten = 0;
@@ -283,7 +284,9 @@ int omega_gpu_fft_c2c(const float *in, float *out, uint32_t n, uint32_t batch, i
         memcpy(g_tw.mem.cpu, tw, (size_t)8 * n);
         uint32_t *dev = (uint32_t *)g_out.mem.cpu;
         for (size_t i = 0; i < floats; i++) dev[i] = ML_POISON32;
-        __asm__ volatile("dsb sy" ::: "memory");
+        if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0 ||
+            omega_gpu_session_sync_to_gpu(&g_out.mem) != 0)
+            rc = OMEGA_GPU_ML_CHIP_FAIL;
         for (uint32_t b0 = 0; b0 < batch && rc == OMEGA_GPU_ML_OK; b0 += OMEGA_GPU_FFT_MAX_CTAS) {
             uint32_t grid = batch - b0 < OMEGA_GPU_FFT_MAX_CTAS ? batch - b0 : OMEGA_GPU_FFT_MAX_CTAS;
             uint64_t off = (uint64_t)b0 * n * 8u;
@@ -293,6 +296,7 @@ int omega_gpu_fft_c2c(const float *in, float *out, uint32_t n, uint32_t batch, i
             put64(&args[4], g_tw.mem.va);
             rc = launch(s, args, 6, grid, (size_t)grid * n * 2u, 8u * n, info);
         }
+        if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
         if (rc == OMEGA_GPU_ML_OK) {
             memcpy(out, g_out.mem.cpu, bytes);
             uint64_t unwritten = 0;

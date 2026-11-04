@@ -1,0 +1,59 @@
+{
+  "status": "PASS_SCOPED_FUNCTIONAL_GATE",
+  "code": {
+    "CUDApp": "39160652aa4b4224d64c1fa9b7c012416efa1cd0",
+    "Core": "f0acdc7dc460e1984aa72bba515ea35c3eac2d55",
+    "server_sha256": "50159c11f87b0140818324254011c9f8f237bb52fcae2722ef34a82ec34c20f5",
+    "library_sha256": "9722beb3760e0a195dcc6982bbe43a480de14c0827aa6dc764408ace92f4ea39",
+    "fixture_sha256": "f1130c77f0ca13fe86eb3187b26a203268eea357918acf6ae9568a3c28eb2868"
+  },
+  "model": "qwen3.8-27b-fp8-017b9c7a",
+  "options": {
+    "exact_head": true,
+    "approximate_head": false,
+    "weight_cache": false
+  },
+  "functional": {
+    "conversation_continuation": "PASS",
+    "reference_tokens": 256,
+    "reference_runs": 3,
+    "all_reference_ids_and_text_identical": true,
+    "stream_ids_and_text_identical": true,
+    "seeded_sample_ids_and_text_identical_to_full_head": true,
+    "sample_seed": 710,
+    "sample_temperature": 0.7,
+    "sample_tokens": 32,
+    "coding_cases_passed": 7,
+    "coding_repeat_identical": true,
+    "prose_repeat_identical": true,
+    "prose_words": 115,
+    "owned_server_clean_exit": true
+  },
+  "timing": {
+    "status": "SHARED_MACHINE_DIAGNOSTIC_ONLY",
+    "old_exact_head_request_seconds": [
+      48.576396254007705,
+      48.618170346016996
+    ],
+    "new_combined_request_seconds": [
+      32.82787152699893,
+      32.82463613298023
+    ],
+    "load_wall_seconds": 43.033468157984316,
+    "first_visible_stream_seconds": 0.49409718898823485,
+    "note": "Not five alternating quiet-machine pairs; not a qualification against the older frozen server. No accepted TTFT improvement."
+  },
+  "seal": {
+    "oracle_cases": 6304,
+    "all_input_byte_mutations": 2048,
+    "compiled_mutants_caught": 5,
+    "native_runtime_host_cases_passed": 27,
+    "portable_bindings_reproduce": true
+  },
+  "remaining": [
+    "Final full host suite and current-head CI",
+    "Quiet controlled performance qualification",
+    "Broader prompt and context coverage before enabling exact head by default"
+  ],
+  "deployment": "None; exact head remains opt-in."
+}

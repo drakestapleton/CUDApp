@@ -1,0 +1,60 @@
+{
+  "status": "PASS all79 host targets, scoped call isolation, three fault controls and runtime API/version gates; scoped serving and full-model qualification still in progress",
+  "production_commit": "f50be1f9",
+  "base": "6d339a0dcbcada66fd211d89f5a0ed6704003f75",
+  "source_sha256": {
+    "src/omega_gpu_pfgemm.c": "f8ca4e4ca9dc841ced3b7ed344399a49352062f0244438ce9fc64f39156d619b",
+    "src/omega_gpu_prefill.h": "0bc62e9fd3a20bc801fb008aa55af953a412a104171bc450386bfb412a12fdbd",
+    "src/omega_runtime_api.h": "436604826fb01e10e6fb03490b3f0723f66b7b3b8171f96a277694947d62da0e",
+    "docs/runtime/omega_runtime_api.manifest": "b603dd037c8fc064f46fef994a43b56a4886e6aaed101b968d46451be601fbc4",
+    "om/prefill-shape/scoped-check.c": "aecddc1972fd6c452ed5429a525042abdf7b91e9c8bcd868a3ab874e64922a74",
+    "om/prefill-shape/scoped-mutants.py": "8a6a927d37976717305afca2ff7f1e4ce707c6f6f29bdbf078eb28149292dd63",
+    "mk/prefill-shape.mk": "e0bd383c075a634f85ca807e8cf5d392f8c06c557a81744a22be62cf62921da0"
+  },
+  "archive_sha256": "97b822bd9e919e834adf90e7b9485bf73f7d4f2c0a80cfd1ecde9c8ff9ff1631",
+  "commands": [
+    "make test-prefill-scoped",
+    "make test-runtime-api test-runtime-api-semver RUNTIME_API_BASE=6d339a0dcbcada66fd211d89f5a0ed6704003f75"
+  ],
+  "exit_codes": [
+    0,
+    0
+  ],
+  "logs_sha256": {
+    "scoped-native-final-target.log": "8d27a0929a3ce654c5f0f20acc1813623c91f9fa7042479e86ceaefa0097ee17",
+    "scoped-native-tests-fixed.log": "bf12b4a8230396ab52122cf8719558daa50e54ceb7d30ab4fc99031de4897fbc"
+  },
+  "negative_controls": [
+    "ignore_scoped_options",
+    "leak_options_to_global",
+    "wrong_tile_height"
+  ],
+  "scope": "The real qg_core constructs the intercepted kernel key. Tests interleave explicit128/group4, explicit64/group0, and legacy32/group1/mutant1 calls without opening a GPU. Invalid options are refused before device access. Checked Omega units retain numerical/order policy.",
+  "full_host": {
+    "command": [
+      "taskset",
+      "-c",
+      "12-15",
+      "nice",
+      "-n",
+      "19",
+      "make",
+      "-j4",
+      "OUT_DIR=../optimize27-scoped-reading-build",
+      "test",
+      "test-runtime-api-semver",
+      "RUNTIME_API_BASE=6d339a0dcbcada66fd211d89f5a0ed6704003f75"
+    ],
+    "cwd": "/tmp/optimize27-scoped-reading-cudapp",
+    "source_head": "fa70990c4af3dbf18469019c8707b7e0f5866998",
+    "started": "2026-11-01T20:00:46.400700+00:00",
+    "environment": {
+      "OMEGA_OMC": "/tmp/ribbon-seed-compiler/seed/out/omc",
+      "OMEGA_BRIDGE": "/tmp/optimize27-bridge"
+    },
+    "exit_code": 0,
+    "ended": "2026-11-01T20:07:51.693459+00:00",
+    "targets": 79,
+    "log_sha256": "f8ccb59ee6a562f2f0e2e3fdd57d5e9468fe798a82fa667097db5215262978ba"
+  }
+}

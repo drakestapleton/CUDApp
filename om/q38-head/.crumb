@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-01T16:47:09Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:4aab8fe5adcb674ef13cd30ebb293d6b31c457eb42b209bd479add4e492f2e68",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 20,
+      "generated_at_commit": "39160652aa4b4224d64c1fa9b7c012416efa1cd0",
+      "source_tree": "sha256:37714faa582eed5abec1c4165e0960bd760732041d519ab0694f9b542df94d7b"
+    }
+  },
+  "name": "q38-head",
+  "purpose": "Experimental conservative output-head GPU screening kernels and independent verification",
+  "schema_version": "1.0.0"
+}

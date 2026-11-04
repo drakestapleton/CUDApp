@@ -1,0 +1,730 @@
+{
+  "status": "PASS integrated native, Core preflight, full-model parity, short and paired 32768-token serving; longer serving and quiet performance remain open",
+  "recorded_utc": "2026-11-01T22:28:34.897900+00:00",
+  "scope": "Opt-in production candidate, shared-machine measurements, not quiet qualification or deployment. Paths below are presentation substitutions; hashes identify original local receipts.",
+  "source": {
+    "native_implementation": "ede9c14ca71fca1fe8503d09a0a11edb02a3fef6",
+    "native_full_host_checked_head": "878c2cd4c5db8f9c79a73333770b5f650147e5ba",
+    "core_implementation_and_preflight": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+    "archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+    "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c"
+  },
+  "host_suite": {
+    "manifest_targets": 81,
+    "additional_targeted_attention_policy_and_dispatch": "PASS; see historical host-validation.json, 1679 admission cases, 1008 transitions, 9 policy mutants and 4 transport mutants",
+    "note": "Earlier board estimates of 83 host targets were incorrect; the terminal make-test manifest reports 81. The two new targeted attention checks passed separately."
+  },
+  "remaining": [
+    "New candidate 65536-token serving and 128000-token serving",
+    "Five alternating quiet-machine timing pairs",
+    "Independent review and dependency-order merge",
+    "Default promotion or deployment not requested by this receipt"
+  ],
+  "original_receipt_sha256": {
+    "attention-native-full-host.json": "c93873ca595a99ac98b90da25390420800240367c695d39f2c1916196fc5dd05",
+    "attention-preflight.json": "a5d2615541c77ee31429cb76943b53f0186ec22a2b5dcded59f2ee0b142e8ca0",
+    "attention-native-quick-receipt.json": "5b3d6fd9bf6a02922c11444ae7eac9613c15138823c11fc41d730d35d74901a4",
+    "attention-native-quick.json": "ff319e973d2492cbd6c7ca3a24a5b8444c59edf422a1c28edc27e3a275593ec9",
+    "attention-native-comparison.json": "fdee5e3dda895d4fbfc61ff0e835561de971b52755bbf9315bfe944dc9111d34",
+    "attention-native-boundaries-comparison.json": "f29d5a4ed859ce02a732796f44923c28b6cf682daac5a0e3b6b49debfc22ecfc",
+    "attention-native-long32-comparison.json": "6fb3ad4010b237c660d53f410897b26aa2aca1406715a14f98f46b64c2eb1099",
+    "attention-native-long32-frozen-reference.json": "b5d60350fe7440db5a9eedabf9de4be8d5f6fbcc76896820acb71dd942d80296",
+    "attention-native-negative.json": "2ce9a76f9ba5036bf0af7a907459e539d3ef0e0adc41cf67bddf625d4e683abd",
+    "attention-core-old-archive.json": "2ddc1c2b219e02411a2ba283f77ed97f3e54f0f93c3e536df5d69eb6fe7fdd95",
+    "attention-serving-short-final.json": "27872253e76320cd1a03484774fa215938e91aa6fc3f3c2f71ce660aeecea3b0",
+    "attention-baseline-serving-long32-final.json": "27dfb04b3a2758b2e788d3b494686f09b6ac4fb76b2668647f26154380c67730",
+    "attention-serving-long32-final.json": "dec104c1bae391a419ced54777e1c6ba1fed9378575ccd7ff53fcb5499fde0e9",
+    "attention-serving-long32-pair.json": "09a0a1d33e7ff6b13064835cc8e0ebbedf2666e07931d2ea932b72da142547ad",
+    "attention-clean-server-build.json": "c8c635249feba7560091d66c765eae98cba25486f5a4b7def12e9978c23f57ae",
+    "attention-native-pinned-tool-repair.json": "64020277c129eab29f6cb7f824c468c32d685e664c844d6283df74556aa68bdf"
+  },
+  "evidence": {
+    "attention-native-full-host.json": {
+      "command": [
+        "taskset",
+        "-c",
+        "10-13",
+        "nice",
+        "-n",
+        "19",
+        "make",
+        "-j4",
+        "OUT_DIR=build-attention-mirror",
+        "test",
+        "test-runtime-api-semver",
+        "RUNTIME_API_BASE=6820ff0f95ca798a44d42767e5ecb1ee6592eeeb"
+      ],
+      "source_head": "878c2cd4c5db8f9c79a73333770b5f650147e5ba",
+      "started": "2026-11-01T22:10:09.344385+00:00",
+      "repair": "Portability row repaired; exact pinned compiler and Bridge paths restored in runner. Both prior incomplete full-suite runs preserved. Native implementation unchanged from ede9c14c.",
+      "environment": {
+        "OMEGA_OMC": "$TMP/ribbon-seed-compiler/seed/out/omc",
+        "OMEGA_BRIDGE": "$TMP/optimize27-bridge"
+      },
+      "exit_code": 0,
+      "ended": "2026-11-01T22:20:04.012344+00:00",
+      "log_sha256": "7bf31296e92022e6068a9c21b8fde8c388a25ea3c6f847edbf715ad2ae259c41"
+    },
+    "attention-preflight.json": {
+      "command": [
+        "taskset",
+        "-c",
+        "14-15",
+        "nice",
+        "-n",
+        "19",
+        "bash",
+        "scripts/agent-preflight.sh"
+      ],
+      "started": "2026-11-01T21:53:25.222765+00:00",
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "environment": {
+        "AIEN_FORCE_CPU_STUB": "1",
+        "AIEN_PROOF_OFF": "1",
+        "CARGO_TARGET_DIR": "$TMP/optimize27-scratch-host-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_NET_OFFLINE": "true",
+        "RUST_TEST_THREADS": "1"
+      },
+      "exit_code": 0,
+      "ended": "2026-11-01T22:25:03.264658+00:00",
+      "log_sha256": "5a6afbe670b997d97e0707eca28fa5086dcb66997c92bd3c55bc307328a224ce"
+    },
+    "attention-native-quick-receipt.json": {
+      "started": "2026-11-01T21:46:04.154031+00:00",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "120s",
+        "flock",
+        "-w",
+        "2",
+        "$TMP/aien-gb10.lock",
+        "$RECEIPTS/attention-native-quick-test",
+        "--quick",
+        "--out",
+        "$RECEIPTS/attention-native-quick.json"
+      ],
+      "source_head": "ede9c14ca71fca1fe8503d09a0a11edb02a3fef6",
+      "native_archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "binary_sha256": "4effe6800dd7a75126cbc45437814f16bd0aa0a4b45448d0753c243a5092d7ee",
+      "exit_code": 0,
+      "ended": "2026-11-01T21:46:04.679544+00:00"
+    },
+    "attention-native-quick.json": {
+      "test": "gpu_prefill_attn256",
+      "rotary_dim": 64,
+      "points": [],
+      "checks": 63,
+      "failed": 0
+    },
+    "attention-native-comparison.json": {
+      "status": "PASS_EXACT_SCORES_AND_SCOPED_POLICY",
+      "scope": "Production Omega policy with an external counting observer; shared-machine screen, not quiet qualification or server TTFT.",
+      "formula": "seconds=nanoseconds/1e9; reduction_percent=100*(baseline-candidate)/baseline",
+      "binary_sha256": "91fbf9959a21b1e8e4db8e811d58ee3783e816760a8a149c576cb7cb5e9f38c6",
+      "inputs": {
+        "$RECEIPTS/attention-native-profile-probe0-20261101T215541Z": {
+          "receipt_sha256": "e7fcc3205cf8f2481b1d50e38a6924d350b1ed66c91fd558e3a5618b5da78a94",
+          "report_sha256": "542e0ecee64b90be4f8f0587013501e98d9108511172840d23bd8df928a902b2"
+        },
+        "$RECEIPTS/attention-native-profile-probe1-20261101T215711Z": {
+          "receipt_sha256": "a059bbf53a75efe0b39243aebfd3d133a292de969b446d842dc232c06d65a8c9",
+          "report_sha256": "2f7707eda4e4d598d37f9da7d1aa1786f484dde09f4f35e8029fb5f4b7d4326e"
+        }
+      },
+      "rows": [
+        {
+          "trial": 0,
+          "prompt_tokens": 30,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+          "baseline_s": 0.32255004,
+          "candidate_s": 0.326229207,
+          "reduction_percent": -1.1406499903084806,
+          "baseline_attention_call_s": 0.007236356,
+          "candidate_attention_call_s": 0.007342884,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 16,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 1,
+          "prompt_tokens": 513,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "751c59e6812c98bedc12ccb72bf878cb7c52fe6734a51a96646b1d0bd5937396",
+          "baseline_s": 1.763473547,
+          "candidate_s": 1.815083543,
+          "reduction_percent": -2.926610160260034,
+          "baseline_attention_call_s": 0.084508389,
+          "candidate_attention_call_s": 0.084548614,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 32,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 2,
+          "prompt_tokens": 941,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "36dabb2803481bdd0e552d3c631557e3047d2e233e43f5636dccceae143661c0",
+          "baseline_s": 2.854637079,
+          "candidate_s": 2.853120004,
+          "reduction_percent": 0.053144233680711604,
+          "baseline_attention_call_s": 0.162417473,
+          "candidate_attention_call_s": 0.161741703,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 16,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 3,
+          "prompt_tokens": 5017,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+          "baseline_s": 14.534902234,
+          "candidate_s": 14.505424645,
+          "reduction_percent": 0.20280555400672812,
+          "baseline_attention_call_s": 1.247529488,
+          "candidate_attention_call_s": 1.085637108,
+          "copy_chip_s": 0.005656449,
+          "scoped_calls": 32,
+          "mirror_copies": 16,
+          "mirror_allocations": 1
+        },
+        {
+          "trial": 4,
+          "prompt_tokens": 30,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+          "baseline_s": 0.327650407,
+          "candidate_s": 0.319271237,
+          "reduction_percent": 2.557350707029642,
+          "baseline_attention_call_s": 0.005868565,
+          "candidate_attention_call_s": 0.006324492,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 16,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 5,
+          "prompt_tokens": 5017,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "88ca539df5ecfc096a32e59aec5c48da86f9bcc54f6d78e2bcb9fa4a79535447",
+          "baseline_s": 14.373191108,
+          "candidate_s": 14.365210285,
+          "reduction_percent": 0.05552575583273181,
+          "baseline_attention_call_s": 1.235630627,
+          "candidate_attention_call_s": 1.047434019,
+          "copy_chip_s": 0.005471651,
+          "scoped_calls": 32,
+          "mirror_copies": 16,
+          "mirror_allocations": 0
+        }
+      ]
+    },
+    "attention-native-boundaries-comparison.json": {
+      "status": "PASS_EXACT_SCORES_AND_SCOPED_POLICY",
+      "scope": "Production Omega policy with an external counting observer; shared-machine screen, not quiet qualification or server TTFT.",
+      "formula": "seconds=nanoseconds/1e9; reduction_percent=100*(baseline-candidate)/baseline",
+      "binary_sha256": "4f259bad1f2c3e0bb1aed92d708e3d64651ab9f61ed1850421723d32a2d573b0",
+      "inputs": {
+        "$RECEIPTS/attention-native-boundaries-probe0-20261101T220526Z": {
+          "receipt_sha256": "123ee46d47aebd6778bc2577d3595f2435456920e9c761d737d4e260c7ad13ea",
+          "report_sha256": "9b4b6d6aad765c8da6240245e0e72d1c69631152c9d24ae57147d62525ec9105"
+        },
+        "$RECEIPTS/attention-native-boundaries-probe1-20261101T220639Z": {
+          "receipt_sha256": "068271887940717917f4123c68856507b3add35ef95e240989c97832fd7582e6",
+          "report_sha256": "fa94e122a98476f89b5caacefa140c2f9c22a58fc8a80842d1d6dbc5700a08c9"
+        }
+      },
+      "rows": [
+        {
+          "trial": 0,
+          "prompt_tokens": 1023,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "9c78df7b97b7850efdd8aae55e2996c28f8370a1ff196cae231cac2031581f7b",
+          "baseline_s": 2.98146795,
+          "candidate_s": 2.940379828,
+          "reduction_percent": 1.378117178821258,
+          "baseline_attention_call_s": 0.192015815,
+          "candidate_attention_call_s": 0.17664932,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 16,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 1,
+          "prompt_tokens": 1024,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "330012ebacdc7b58f19cd3dc251f104c3e5d31c6b445f912b4bb067ca26ef479",
+          "baseline_s": 2.974827245,
+          "candidate_s": 2.954201348,
+          "reduction_percent": 0.6933477241297755,
+          "baseline_attention_call_s": 0.178152425,
+          "candidate_attention_call_s": 0.165616685,
+          "copy_chip_s": 0.005454094,
+          "scoped_calls": 16,
+          "mirror_copies": 16,
+          "mirror_allocations": 1
+        },
+        {
+          "trial": 2,
+          "prompt_tokens": 1025,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "1b81e6713689f99540764226ab8258f484ca8a1b503fb77e586b44a7da6f234f",
+          "baseline_s": 3.135915799,
+          "candidate_s": 3.139989463,
+          "reduction_percent": -0.1299034878837957,
+          "baseline_attention_call_s": 0.179553366,
+          "candidate_attention_call_s": 0.16586277,
+          "copy_chip_s": 0.005708974,
+          "scoped_calls": 16,
+          "mirror_copies": 16,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 3,
+          "prompt_tokens": 2049,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "302240174ce7ad0120cef305bda6f1dd6725c07459a80aeaf666732cfc03a414",
+          "baseline_s": 6.089043099,
+          "candidate_s": 6.141841808,
+          "reduction_percent": -0.8671101212712897,
+          "baseline_attention_call_s": 0.395871141,
+          "candidate_attention_call_s": 0.375040216,
+          "copy_chip_s": 0.005551945,
+          "scoped_calls": 48,
+          "mirror_copies": 16,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 4,
+          "prompt_tokens": 2049,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "302240174ce7ad0120cef305bda6f1dd6725c07459a80aeaf666732cfc03a414",
+          "baseline_s": 6.114124817,
+          "candidate_s": 6.116345962,
+          "reduction_percent": -0.036328093823407466,
+          "baseline_attention_call_s": 0.392014981,
+          "candidate_attention_call_s": 0.392963091,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 48,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 5,
+          "prompt_tokens": 30,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "890aabe9fed6550d1665eaa1fb20c3dfc25efe514db8d8ca6b97160be5bde853",
+          "baseline_s": 0.287883813,
+          "candidate_s": 0.284561521,
+          "reduction_percent": 1.154039181772266,
+          "baseline_attention_call_s": 0.00605,
+          "candidate_attention_call_s": 0.006076961,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 16,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        },
+        {
+          "trial": 6,
+          "prompt_tokens": 1024,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "330012ebacdc7b58f19cd3dc251f104c3e5d31c6b445f912b4bb067ca26ef479",
+          "baseline_s": 2.922651369,
+          "candidate_s": 2.925919289,
+          "reduction_percent": -0.1118135414528807,
+          "baseline_attention_call_s": 0.177778925,
+          "candidate_attention_call_s": 0.152960959,
+          "copy_chip_s": 0.005381641,
+          "scoped_calls": 16,
+          "mirror_copies": 16,
+          "mirror_allocations": 0
+        }
+      ]
+    },
+    "attention-native-long32-comparison.json": {
+      "status": "PASS_EXACT_SCORES_AND_SCOPED_POLICY",
+      "scope": "Production Omega policy with an external counting observer; shared-machine screen, not quiet qualification or server TTFT.",
+      "formula": "seconds=nanoseconds/1e9; reduction_percent=100*(baseline-candidate)/baseline",
+      "binary_sha256": "b1b76f84307f722983e4a145bf873c0551aec38ba0106c0e49ef62d54fa77a2f",
+      "inputs": {
+        "$RECEIPTS/attention-native-long32-probe0-20261101T215933Z": {
+          "receipt_sha256": "2205c279a7988122779f8fd13cc0089fe200115bf4c72573d02263df1e69f0f3",
+          "report_sha256": "1cc837509db08fc8ea17eaff4a7642f810c752b6773225d805c557053c359ca9"
+        },
+        "$RECEIPTS/attention-native-long32-probe1-20261101T220233Z": {
+          "receipt_sha256": "88442434113b57c946eaeb9c42b7ad8230f76fdf3936e3a0f5cdecbf23086337",
+          "report_sha256": "2c74702bea21d55b0abbd8736a2312b68bdc772be46d357d5cbf37e12b9557c9"
+        }
+      },
+      "rows": [
+        {
+          "trial": 0,
+          "prompt_tokens": 32768,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "5968be65d82c7850ff7ffa41cc030da9fe6c2a8582874f5290555bf9df026bfd",
+          "baseline_s": 109.500214625,
+          "candidate_s": 103.451106286,
+          "reduction_percent": 5.524289025109296,
+          "baseline_attention_call_s": 24.057411949,
+          "candidate_attention_call_s": 18.384451928,
+          "copy_chip_s": 0.21355748,
+          "scoped_calls": 128,
+          "mirror_copies": 128,
+          "mirror_allocations": 1
+        },
+        {
+          "trial": 1,
+          "prompt_tokens": 30,
+          "all_score_bits_and_next_equal": true,
+          "score_sha256": "35f781e4c3ccf8f232c13bdfccc1bf4d95c31ab628fd0c3382bab50d2468627d",
+          "baseline_s": 0.303417755,
+          "candidate_s": 0.292779797,
+          "reduction_percent": 3.5060433427832858,
+          "baseline_attention_call_s": 0.006147739,
+          "candidate_attention_call_s": 0.006220015,
+          "copy_chip_s": 0.0,
+          "scoped_calls": 16,
+          "mirror_copies": 0,
+          "mirror_allocations": 0
+        }
+      ]
+    },
+    "attention-native-long32-frozen-reference.json": {
+      "status": "PASS_FROZEN_LONG32_REFERENCE",
+      "scope": "New production baseline matches earlier independent ordinary-path long32 complete-score files, including short-after-long.",
+      "directories": [
+        "$RECEIPTS/attention-model-mirror-long32-probe0-20261101T213344Z",
+        "$RECEIPTS/attention-native-long32-probe0-20261101T215933Z"
+      ],
+      "fixture_sha256": "89f7865eeac4424984c11ace38314f66a36eb99ca2e9d928d646e09622f7a06a",
+      "rows": [
+        {
+          "trial": 0,
+          "score_sha256": "5968be65d82c7850ff7ffa41cc030da9fe6c2a8582874f5290555bf9df026bfd"
+        },
+        {
+          "trial": 1,
+          "score_sha256": "35f781e4c3ccf8f232c13bdfccc1bf4d95c31ab628fd0c3382bab50d2468627d"
+        }
+      ]
+    },
+    "attention-native-negative.json": {
+      "status": "PASS_EXPECTED_NONFINITE_REJECTION",
+      "directory": "$RECEIPTS/attention-native-profile-probecorrupt-20261101T215839Z",
+      "binary_sha256": "91fbf9959a21b1e8e4db8e811d58ee3783e816760a8a149c576cb7cb5e9f38c6",
+      "receipt_sha256": "f6fe36f122084b4b2bcc3693ea84ceb87cff7845920f6fe4ee1e9b74ab443f97",
+      "log_sha256": "00d27dd2a17899d507a5eaee9ba2bc584b90646d74a75a68c7c4c326d49a6ccb",
+      "scope": "External observer damages first returned attention output; full-score checker rejects before writing any passing row."
+    },
+    "attention-core-old-archive.json": {
+      "started": "2026-11-01T22:08:11.313839+00:00",
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "archive_sha256": "752564da817349a38ced23a8beda735f221afce78b1dce0a2e20ea09be1d5ce0",
+      "command": [
+        "taskset",
+        "-c",
+        "12-13",
+        "nice",
+        "-n",
+        "19",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--release",
+        "--lib",
+        "-p",
+        "aien-omega-q38"
+      ],
+      "scope": "Older native archive has prefill but lacks scoped mirror entry; explicit selection must refuse while legacy adapter builds.",
+      "exit_code": 0,
+      "ended": "2026-11-01T22:08:22.380979+00:00"
+    },
+    "attention-serving-short-final.json": {
+      "status": "PASS",
+      "scope": "Shared-machine serving correctness, not quiet timing qualification",
+      "directory": "$RECEIPTS/attention-clean-reading-short-20261101T220744Z",
+      "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c",
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "native_archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "events_sha256": "dc17a311cb3d1a8360ed56714eb77d2a20a907fbabfb584a052df560266378ce",
+      "checker_sha256": "bb57a6d0a9c8cbdfe96c8cf1a3f725f775cdca6cb4a780121e73495311786052",
+      "server_exit": 0,
+      "ttft": [
+        {
+          "trial": 0,
+          "first_visible_s": 0.3048270510043949,
+          "completed_s": 0.30504918098449707
+        },
+        {
+          "trial": 1,
+          "first_visible_s": 0.3035210730158724,
+          "completed_s": 0.30372265801997855
+        },
+        {
+          "trial": 2,
+          "first_visible_s": 0.3018241479876451,
+          "completed_s": 0.3020443099667318
+        }
+      ],
+      "correctness_summary_sha256": "3646bdefd15d3d4687fce707cd74a3778da60adc0510ad4b8d82ce683a3cee5a",
+      "quality": {
+        "coding_seven_cases_pass": true,
+        "coding_repeat_tokens_identical": true,
+        "prose_repeat_tokens_identical": true,
+        "prose_word_count": 115
+      },
+      "sampled32_exact": true,
+      "sampled_reference_sha256": "b5a60ca8dd005ba3e5daa0d1a365375ba8af03661580f33dee590b76c6659e68",
+      "sampled_file_sha256": "fd8676cff89ef6f3b626d428dc90922bfab78662909b840dd5db64c5e3634ac2",
+      "stream": [
+        {
+          "first_visible_s": 0.2814186100149527,
+          "completed_s": 31.78127289697295
+        }
+      ]
+    },
+    "attention-baseline-serving-long32-final.json": {
+      "status": "PASS",
+      "scope": "Shared-machine serving correctness, not quiet timing qualification",
+      "directory": "$RECEIPTS/attention-baseline-reading-long32-20261101T221317Z",
+      "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c",
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "native_archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "events_sha256": "d7576288c2983b3299c568814a9331fc0f1951ea2b34fddbbead4058747707f5",
+      "checker_sha256": "4622d985058ce2f316d4448a09ccec6fe3aad75d2774cabbeecb503560c28fa5",
+      "server_exit": 0,
+      "ttft": [
+        {
+          "trial": 0,
+          "first_visible_s": 0.2966060619801283,
+          "completed_s": 0.29693475196836516
+        },
+        {
+          "trial": 1,
+          "first_visible_s": 0.2766931710066274,
+          "completed_s": 0.27700125402770936
+        },
+        {
+          "trial": 2,
+          "first_visible_s": 0.2764042890048586,
+          "completed_s": 0.27671019500121474
+        }
+      ],
+      "rows": [
+        {
+          "name": "long-cold",
+          "wall_s": 109.73309939197497,
+          "first_visible_s": 108.37207425601082
+        },
+        {
+          "name": "long-resumed",
+          "wall_s": 1.7773851879755966,
+          "first_visible_s": 0.41870647098403424
+        },
+        {
+          "name": "long-follow-cold",
+          "wall_s": 110.28245649801102,
+          "first_visible_s": 108.91847210697597
+        }
+      ],
+      "actual_prompt_tokens": 32768,
+      "retrieval_and_followup_parity": true
+    },
+    "attention-serving-long32-final.json": {
+      "status": "PASS",
+      "scope": "Shared-machine serving correctness, not quiet timing qualification",
+      "directory": "$RECEIPTS/attention-clean-reading-long32-20261101T221801Z",
+      "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c",
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "native_archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "events_sha256": "54c32226828da4b3a1f2036ac7cbbcacee0d927e970e5cbeb3e232985cc6c331",
+      "checker_sha256": "bb57a6d0a9c8cbdfe96c8cf1a3f725f775cdca6cb4a780121e73495311786052",
+      "server_exit": 0,
+      "ttft": [
+        {
+          "trial": 0,
+          "first_visible_s": 0.28204494796227664,
+          "completed_s": 0.28234910999890417
+        },
+        {
+          "trial": 1,
+          "first_visible_s": 0.26950368704274297,
+          "completed_s": 0.2697978650103323
+        },
+        {
+          "trial": 2,
+          "first_visible_s": 0.2774197229882702,
+          "completed_s": 0.2777193739893846
+        }
+      ],
+      "rows": [
+        {
+          "name": "long-cold",
+          "wall_s": 106.08346427499782,
+          "first_visible_s": 104.72773140401114
+        },
+        {
+          "name": "long-resumed",
+          "wall_s": 1.7694314229884185,
+          "first_visible_s": 0.39178861398249865
+        },
+        {
+          "name": "long-follow-cold",
+          "wall_s": 104.4376475510071,
+          "first_visible_s": 103.07380026899045
+        }
+      ],
+      "actual_prompt_tokens": 32768,
+      "retrieval_and_followup_parity": true
+    },
+    "attention-serving-long32-pair.json": {
+      "status": "PASS_SAME_BINARY_SERVING_PAIR",
+      "scope": "same immutable server; shared-machine correctness and TTFT comparison, not quiet qualification",
+      "formula": "reduction_percent=100*(baseline-candidate)/baseline; all time values in seconds",
+      "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c",
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "prompt_tokens": 32768,
+      "rows": [
+        {
+          "name": "long-cold",
+          "baseline_first_visible_s": 108.37207425601082,
+          "candidate_first_visible_s": 104.72773140401114,
+          "reduction_percent": 3.362806218316477
+        },
+        {
+          "name": "long-resumed",
+          "baseline_first_visible_s": 0.41870647098403424,
+          "candidate_first_visible_s": 0.39178861398249865,
+          "reduction_percent": 6.428813230011437
+        },
+        {
+          "name": "long-follow-cold",
+          "baseline_first_visible_s": 108.91847210697597,
+          "candidate_first_visible_s": 103.07380026899045,
+          "reduction_percent": 5.36609789406987
+        }
+      ],
+      "inputs": {
+        "$RECEIPTS/attention-baseline-serving-long32-final.json": "27dfb04b3a2758b2e788d3b494686f09b6ac4fb76b2668647f26154380c67730",
+        "$RECEIPTS/attention-serving-long32-final.json": "dec104c1bae391a419ced54777e1c6ba1fed9378575ccd7ff53fcb5499fde0e9"
+      }
+    },
+    "attention-clean-server-build.json": {
+      "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+      "archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "command": [
+        "taskset",
+        "-c",
+        "12-13",
+        "nice",
+        "-n",
+        "19",
+        "cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--release",
+        "-p",
+        "aien-serve-http",
+        "--bin",
+        "aien-serve-http"
+      ],
+      "started": "2026-11-01T21:55:39.013560+00:00",
+      "exit_code": 0,
+      "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c",
+      "ended": "2026-11-01T21:57:04.444320+00:00"
+    },
+    "attention-native-pinned-tool-repair.json": {
+      "started": "2026-11-01T22:09:38.656710+00:00",
+      "command": [
+        "taskset",
+        "-c",
+        "10-13",
+        "nice",
+        "-n",
+        "19",
+        "make",
+        "-j2",
+        "OUT_DIR=build-attention-mirror",
+        "test-om-spec-encoder",
+        "test-om-units"
+      ],
+      "tool_pins": {
+        "$TMP/ribbon-seed-compiler/seed/out/omc": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+        "$TMP/optimize27-bridge/src/toc.om": "3a416aea14770bd3fab4880337e89020c10476214d7a3c139d8cd1a8ba1423e6",
+        "$TMP/optimize27-bridge/tools/bridge-seeded": "23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37",
+        "$TMP/optimize27-bridge/src/freest.om": "836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661",
+        "$TMP/optimize27-bridge/tools/bridge-freest": "51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d",
+        "$TMP/optimize27-bridge/src/native.om": "45935a64f46408ba2c964748603b5e5c696a6bda584e4f16a0a0d68b1e71ea06"
+      },
+      "exit_code": 0,
+      "ended": "2026-11-01T22:09:41.975459+00:00"
+    }
+  },
+  "physical_selector": {
+    "source": "/* External call selector for exercising the production scoped entry. No policy or copying here. */\n#include \"omega_gpu_attention_mirror.h\"\nint __wrap_omega_gpu_prefill_attn256(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos, uint32_t m,\n const float *qkv, float eps, float scale, float *out, OmegaGpuPrefillAttn256Info *info) {\n return omega_gpu_prefill_attn256_scoped(c,layer,pos,m,qkv,eps,scale,out,info,1,0);\n}\n",
+    "sha256": "143a9816bc56ef2d69f08c2e579f0817a0c74cfae743e869fabf899218d3ce33",
+    "build": {
+      "started": "2026-11-01T21:45:56.985848+00:00",
+      "command": [
+        "taskset",
+        "-c",
+        "12-13",
+        "nice",
+        "-n",
+        "19",
+        "cc",
+        "-std=gnu11",
+        "-O2",
+        "-ffp-contract=off",
+        "-DWS_MAX_THREADS=256",
+        "-I$TMP/optimize27-attention-mirror-cudapp/src",
+        "-I$TMP/optimize27-attention-mirror-cudapp/tests",
+        "$TMP/optimize27-attention-mirror-cudapp/tests/gpu_prefill_attn256_test.c",
+        "$RECEIPTS/attention-native-selector.c",
+        "$TMP/optimize27-attention-mirror-cudapp/build-attention-mirror/libomega_gpu.a",
+        "-Wl,--wrap=omega_gpu_prefill_attn256",
+        "-lpthread",
+        "-lm",
+        "-o",
+        "$RECEIPTS/attention-native-quick-test"
+      ],
+      "source_head": "ede9c14ca71fca1fe8503d09a0a11edb02a3fef6",
+      "selector_sha256": "143a9816bc56ef2d69f08c2e579f0817a0c74cfae743e869fabf899218d3ce33",
+      "native_archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+      "exit_code": 0,
+      "ended": "2026-11-01T21:45:57.912485+00:00",
+      "binary_sha256": "4effe6800dd7a75126cbc45437814f16bd0aa0a4b45448d0753c243a5092d7ee"
+    }
+  },
+  "preserved_failed_full_suites": [
+    {
+      "receipt_sha256": "68d46b19afdee216c1d607a910bbc454285efbf5ff7de2aaa9bd9a55a217a083",
+      "log_sha256": "1e16a7457e69b8de74d8853c6e33ed56ac9e9af84484932b94e65581c5e9c383",
+      "repair": "Add omitted public header row to portability table; gate and controls pass."
+    },
+    {
+      "receipt_sha256": "71d4202dd3e294a946a722c396561e13b1d31c8d9ce59eb3db34fbc4c826285b",
+      "log_sha256": "bd107c92c14654932ed779af5f8f6542e5c07c4fdf47b0ab539d671f24e57902",
+      "repair": "Restore explicit pinned compiler and Bridge paths in external runner; regenerated bindings unchanged; full suite passes."
+    }
+  ],
+  "calculation": {
+    "formula": "seconds = nanoseconds / 1e9; reduction_percent = 100 * (baseline - candidate) / baseline",
+    "independent_wolfram_receipt_sha256": {
+      "wolfram-reading-reduction.json": "a434b297f3ce540a8e52e4dfc7c518702332e74741d862580b67b4e252eadfe7",
+      "wolfram-server-pair.json": "c6c2d0debf8ad2870859b6c4dfbe3d8bf9fa1a1ad34235177fbd03c10ef4b771"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+control 1: red as required (Makefile)
+control 2: red as required (src/omega_gpu_attention_api.c edited in a scratch Omega commit)
+control 3: red as required (src/omega_numeric.c changed beyond its explicit cutover pin)
+control 3: red as required (src/omega_numeric.h changed beyond its explicit cutover pin)
+control 3: red as required (src/omega_numeric_reduce.c changed beyond its explicit cutover pin)
+control 3: red as required (src/omega_numeric_reduce.h changed beyond its explicit cutover pin)
+real check:
+DIVERGENCE: 405 shared, 187 same, 218 differ (124 licence-header only, 94 code); 505 cudapp-only, 10 omega-only
+DRIFT-GATE: PASS (920 GPU paths, omega 19b8340dbae7, none moved away from CUDA++ since the baseline)
+SELF-TEST: PASS (all controls red, real check green)

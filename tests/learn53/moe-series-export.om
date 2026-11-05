@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST_ONLY raw digests: router code/launch count2, combine code/launch count128.
 fn main to int
 m = new ulong 8 0

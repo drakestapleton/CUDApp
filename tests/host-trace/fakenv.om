@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST STAND-IN for native/nvrm/context.om, for host trace tests only. It defines the names
 note launch.om uses (nvfull nvchan nvalloc nvsend nvwait nverr nvfault nvstage) without opening any
 note device: buffers are anonymous private mappings (mapnew -1 0 bytes 3 34). nvsend calls fkdev

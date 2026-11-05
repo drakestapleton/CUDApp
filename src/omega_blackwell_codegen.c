@@ -505,7 +505,10 @@ static int bw_c_encode_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *ra
             break;
 
         case BW_IR_LDG_MMIO:
-            /* LDG.E.MMIO.GPU, as required by BW_IR_LDG_MMIO. */
+            /* LDG.E.MMIO.GPU, as required by BW_IR_LDG_MMIO. Mesa NAK's sm_80+ fields (sm70_encode.rs
+             * set_mem_access): eviction 84..86 = 1 (normal, not .EF = 0), memory order 77..80 = 0x8, a value
+             * NAK does not list (weak = 0 would be a cached load); nvdisasm 13.0.85 decodes it as MMIO.GPU.
+             * Pinned by tests/bw_ldg_mmio_test.c (issue #205); GB10 behaviour NOT_RUN. */
             w[0] = 0x7981 | ((uint32_t)(dst & 0xff) << 16) | ((uint32_t)(src1 & 0xff) << 24);
             w[1] = (uint32_t)(ureg & 0xff);
             w[2] = 0x0c1f1900;

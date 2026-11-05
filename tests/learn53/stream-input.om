@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Public fixture emitter, not candidate generation or a heldout task.
 fn main to int
 r = read 0 nums 0 1

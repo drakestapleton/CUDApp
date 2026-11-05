@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Copyright 2026 Drake Stapleton (AIEN / aien-dev)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

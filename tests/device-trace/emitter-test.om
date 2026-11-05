@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Host checks for the device-side trace emitter (CUDApp #82 first slice).
 note Run: cat native/blackwell/trace-emit.om tests/device-trace/emitter-test.om | seed/out/omc > t; ./t
 note Prints one line per check: "id 0" pass, "id 1" fail. Exit status is the failure count.

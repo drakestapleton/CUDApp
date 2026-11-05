@@ -32,7 +32,9 @@ jobs:
   native-x86-host:
     needs: provenance-baseline
     runs-on: ubuntu-24.04
-    # The build/test step alone has taken 1479-2568 s on successful runs; 40 cancelled runs mid-nvdisasm.
+    # make test plus the offline nvdisasm corpus compare. host-x86.yml allows
+    # 60 minutes for the suite alone. 40 cancelled this job during nvdisasm
+    # after the encoder oracle had already accepted the kernels.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

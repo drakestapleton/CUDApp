@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST_ONLY synthetic byte emitter; mode0 exact wire, mode1 native digest.
 fn main to int
 b = new uchar 16384 0

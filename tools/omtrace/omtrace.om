@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note omtrace: compile-phase and run tracing around omc, merged with a program's OTR1 events, written
 note as Chrome trace JSON (Perfetto, chrome://tracing) and OTLP JSON. Handwritten seeded Omega; compose
 note after native/trace/htrec.om (omtrace records its own phases with that recorder).

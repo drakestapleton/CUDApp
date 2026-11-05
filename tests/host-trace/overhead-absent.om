@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Overhead arm "absent": launch.om called directly; the unit contains no recorder code.
 fn armopen n uint on bool to bool
 ret gbopen n

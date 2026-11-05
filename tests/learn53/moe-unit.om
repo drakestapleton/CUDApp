@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST_ONLY synthetic controls; this does not execute a GPU/evaluator/candidate.
 text mf_ok "MOE-CLOSURE HOST_ONLY PASS\n"
 fn mf_zero h view uchar 32 to bool

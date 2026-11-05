@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST STAND-IN device step for tests/host-trace/fakenv.om; compose after launch.om. It computes
 note the VECTOR_1D result on the CPU (c = a + b mod 2^32 over gbargs 6 elements) and writes the two
 note completion marks and the queue value that gblaunch checks. Not a GPU observation.

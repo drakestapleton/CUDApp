@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Fixture for run-host-trace.sh: a recording with known losses, so the exports must report
 note dropped 2, refused 1, open_spans 1. Compose after native/trace/htrec.om; run as PROGRAM FRAG.
 global path uchar 4096

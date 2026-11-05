@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Synthetic test support. None of these values are hardware observations.
 global tally ulong 2
 global digits uchar 32

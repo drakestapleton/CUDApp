@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Independent finite oracle: a two-outcome drafter accepts everything with p,
 note or rejects the first token with 1-p, so E = 1 + k*p without a survival loop.
 global lens ulong 7

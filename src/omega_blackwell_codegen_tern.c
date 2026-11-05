@@ -503,6 +503,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
         for (uint32_t r = 0; r < R; r++) {
             imadi(e, yv, one, 0, 0u - KSC * (1u << 18), T[r]); /* y = T - KSC * 2^18 (mod 2^32, exact) */
             if (f32) {
+                if (!e->i2f_fixed) i2f(e, f, yv);      /* first, so the segment lookup covers its >= 19 cycles */
                 imadi(e, row, one, 0, r, rowbase);
                 for (int i = 0; i < 3; i++) {
                     imadi(e, t, row, 0, 1, nb[i]);
@@ -511,7 +512,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
                 }
                 imadw(e, pwsa, sum, 4u, pws);              /* ws_rev[boundaries above row] = w_scale[seg] */
                 ldg32(e, wsv, pwsa, 0, udesc, 1);
-                i2f(e, f, yv);
+                if (e->i2f_fixed) i2f(e, f, yv);
                 fmul(e, f, f, asv);
                 fmul(e, f, f, wsv);
                 if (r) imadi(e, sa, one, 0, 4u, sa);

@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST_ONLY SYNTHETIC hash-preimage fixtures; not actual GPU QMDs or hardware receipts.
 fn mo_launch m edit ulong 32 s edit ulong 16 to void
 put m 0 1

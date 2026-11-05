@@ -18,19 +18,16 @@
  * Exit 0 = FRESH, 1 = STALE_READ or API failure, 2 = usage. Red receipt (unfixed platform, omega 710d438c): rewrite
  * --cached 1 read 4096 of 4096 lines stale on every launch, 5/5; --cached 0 FRESH 5/5. */
 #include "omega_gpu_fp8_api.h"
+#include "omega_gpu_fp8_internal.h"
 #include "omega_gpu_session.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Copied verbatim from omega src/omega_gpu_fp8_api.c:20-24 (frozen candidate, not modified). Checked at run time
- * against the public omega_gpu_fp8_tensor_entry() VAs; a mismatch aborts. */
-struct OmegaGpuFp8Tensor {
-    uint32_t experts, n, k;
-    OmegaGpuMem w; /* experts * n * k e4m3 bytes, row-major */
-    OmegaGpuMem s; /* experts * (n/128) * (k/128) f32 (scale * 2^56) */
-};
+/* No copy of the tensor layout: the test reaches the weight buffer through the library-internal accessors
+ * (omega_gpu_fp8_internal.h), so a change to struct OmegaGpuFp8Tensor cannot desynchronise it. A hand copy did:
+ * CUDApp added allocation_epoch/owner_generation ahead of w and the copy read allocation_epoch as w.va. */
 
 #define N 256u
 #define K 2048u
@@ -75,24 +72,25 @@ int main(int argc, char **argv) {
     OmegaGpuFp8Tensor *t = NULL;
     int rc = omega_gpu_fp8_tensor_upload(1, N, K, wa, sc, &t);
     if (rc != OMEGA_GPU_FP8_OK) { printf("FAIL upload A: %s\n", omega_gpu_fp8_last_error()); return 1; }
-    uint64_t wva = 0, sva = 0;
-    if (omega_gpu_fp8_tensor_entry(t, 0, &wva, &sva) != 0 || wva != t->w.va || sva != t->s.va || !t->w.cpu) {
-        printf("FAIL mirror struct does not match omega (entry w_va 0x%" PRIx64 " vs mirror 0x%" PRIx64 ")\n", wva, t->w.va); return 1;
+    uint64_t va_a = 0, sva = 0; uint8_t *w_cpu = NULL; float *s_cpu = NULL;
+    if (omega_gpu_fp8_tensor_entry(t, 0, &va_a, &sva) != OMEGA_GPU_FP8_OK || omega_gpu_fp8_tensor_cpu_view(t, 0, &w_cpu, &s_cpu) != OMEGA_GPU_FP8_OK) {
+        printf("FAIL tensor view: %s\n", omega_gpu_fp8_last_error()); return 1;
     }
-    const uint64_t va_a = t->w.va;
     memset(y, 0, sizeof y);
     if ((rc = omega_gpu_fp8_gemv_f32(t, 0, x, y, NULL)) != OMEGA_GPU_FP8_OK) { printf("FAIL gemv A: %s\n", omega_gpu_fp8_last_error()); return 1; }
     if (snap("gemv-A", y, 2048.0f) != 0) { printf("STALE verdict=INVALID reason=first read of A is not +2048 (decode cannot see A)\n"); return 1; }
 
     if (strcmp(mode, "rewrite") == 0) {
-        memcpy(t->w.cpu, wb, (size_t)N * K);                 /* what omega_gpu_fp8_tensor_upload does, on the same buffer */
-        if (omega_gpu_session_sync_to_gpu(&t->w) != 0) { printf("FAIL sync: %s\n", omega_gpu_session_last_error()); return 1; }
+        memcpy(w_cpu, wb, (size_t)N * K);                    /* what omega_gpu_fp8_tensor_upload does, on the same buffer */
+        if (omega_gpu_fp8_tensor_sync_to_gpu(t) != 0) { printf("FAIL sync: %s\n", omega_gpu_session_last_error()); return 1; }
         printf("HOST rewrote w (va 0x%" PRIx64 ") with B and synced\n", va_a);
     } else {
         omega_gpu_fp8_tensor_free(t); t = NULL;
         if ((rc = omega_gpu_fp8_tensor_upload(1, N, K, wb, sc, &t)) != OMEGA_GPU_FP8_OK) { printf("FAIL upload B: %s\n", omega_gpu_fp8_last_error()); return 1; }
+        uint64_t va_b = 0;
+        if (omega_gpu_fp8_tensor_entry(t, 0, &va_b, &sva) != OMEGA_GPU_FP8_OK) { printf("FAIL tensor view B: %s\n", omega_gpu_fp8_last_error()); return 1; }
         printf("HOST freed A (va 0x%" PRIx64 "), uploaded B at va 0x%" PRIx64 " same_va=%s phys=UNKNOWN reason=no physical address in the API\n",
-               va_a, t->w.va, t->w.va == va_a ? "yes" : "no");
+               va_a, va_b, va_b == va_a ? "yes" : "no");
     }
     uint32_t total = 0;
     for (uint32_t r = 0; r < reps; r++) {

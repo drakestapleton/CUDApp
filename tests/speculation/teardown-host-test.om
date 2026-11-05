@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Synthetic host refusal fixture. The private unit replaces device calls, close and mapdrop.
 note No GPU file is opened and no kernel, model, or hardware result is claimed.
 global tchecks ulong 1

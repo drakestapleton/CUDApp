@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 fn sample r ulong n ulong to void
 for i ulong 16
 put cobs i 0

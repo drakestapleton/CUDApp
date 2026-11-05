@@ -161,6 +161,17 @@ $(GPU_EW_TEST): tests/gpu_elementwise_test.c src/omega_gpu_elementwise_api.h $(O
 test-gpu-elementwise: $(GPU_EW_TEST)
 	./$(GPU_EW_TEST) --host-only
 
+# Audit rows 29/30: GB10 xoshiro256** (aien-math stream) and batched f32 complex FFT, kernels from
+# om/mathlibs/mathlibs_ir.om. test-gpu-mathlibs is host-only (fixture, refusals, codegen, listing, normal sweep)
+# plus the warp simulator (bit-exact streams, FFT within the Wolfram tolerance, mutants); the chip gate is
+# `./build/gpu_mathlibs_test --out receipt.txt` under the GB10 lock.
+.PHONY: test-gpu-mathlibs
+GPU_MATHLIBS_TEST = $(OUT_DIR)/gpu_mathlibs_test
+$(GPU_MATHLIBS_TEST): tests/gpu_mathlibs_test.c tests/bw_warp_sim.h src/omega_gpu_mathlibs_api.h src/omega_gpu_om_ir.h $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) -ffp-contract=off -Itests -o $@ tests/gpu_mathlibs_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+test-gpu-mathlibs: $(GPU_MATHLIBS_TEST)
+	./$(GPU_MATHLIBS_TEST) --sim
+
 # omega #308: structured warp reconvergence (BSSY/BSYNC regions). test-gpu-reconv is
 # host-only (encoder goldens, region bookkeeping, refusals, nvdisasm listing, every probe
 # kernel through the SIMT warp simulator tests/bw_warp_sim.h against the oracle, mutation
@@ -225,7 +236,7 @@ test-gpu-fp8: $(GPU_FP8_TEST)
 # omega #457 (2026-10-15): host rewrite of a GPU-cached buffer must be visible to the next launch. Chip only; the gate
 # is tools/run_gpu_l2_stale_chip.sh.
 GPU_L2_STALE_TEST = $(OUT_DIR)/gpu_l2_stale_test
-$(GPU_L2_STALE_TEST): tests/gpu_l2_stale_test.c src/omega_gpu_fp8_api.h src/omega_gpu_session.h $(OUT_DIR)/libomega_gpu.a
+$(GPU_L2_STALE_TEST): tests/gpu_l2_stale_test.c src/omega_gpu_fp8_api.h src/omega_gpu_fp8_internal.h src/omega_gpu_session.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/gpu_l2_stale_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 
 # Expert Ribbon P1 (aienix#4 / omega#533, 2026-10-18): versioned replaceable FP8 expert slots (omega_gpu_fp8_slots.h).
@@ -532,7 +543,7 @@ test-omega-slices:
 
 # Every host-only check: no GPU, no device opened. The chip gates are listed in README.md.
 # Portable commands and the AArch64-only rows are separated in docs/OMEGA_HOST_TESTS.md.
-HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-reconv test-gpu-attention test-gpu-moe-window \
+HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-mathlibs test-gpu-reconv test-gpu-attention test-gpu-moe-window \
 	test-gpu-fp8 test-gpu-decode-attn test-gpu-router test-gpu-bf16-gemv test-gpu-fp8gemm test-gpu-tern-sched test-gpu-gpr-boundary \
 	test-gpu-cmdlist test-gpu-decode-graph test-gpu-code-alloc test-gpu-engine-compile test-gpu-engine \
 	test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim \
@@ -543,7 +554,8 @@ HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-reconv
 	test-ampere-encoder test-ampere-cubin test-ampere-numeric-host test-ampere-f16-host test-ampere-runtime test-ampere-plan \
 	test-portable-receipts test-gpu-qmd-shared test-model-capacity test-gpu-qmd-shared-clean-build \
 	test-omega-slice-runner test-omega-arch-guard test-omega-barrier-contract test-omega-binding-portable \
-	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz $(CARRIED_HOST_TESTS)
+	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz \
+	test-zero-cuda-tool-argv $(CARRIED_HOST_TESTS)
 ifneq ($(CUDAPP_TARGET_ONLY_TESTS),)
 HOST_TESTS := $(filter-out $(CUDAPP_TARGET_ONLY_TESTS),$(HOST_TESTS)) test-omega-target-only
 endif
@@ -559,6 +571,12 @@ test-model-capacity:
 	@echo "test-model-capacity: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
 	@exit 2
 endif
+
+# CUDApp#184 C0 frozen CUDA compatibility profile: host-only static admission plus negative controls.
+.PHONY: test-cuda-c0-profile
+test-cuda-c0-profile:
+	rm -rf build/cuda-c0-profile
+	OMEGA_OMC="$(OMEGA_OMC)" sh compat/cuda/test.sh build/cuda-c0-profile
 
 .PHONY: test-drift
 test-drift:

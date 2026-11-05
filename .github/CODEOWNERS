@@ -1,0 +1,57 @@
+# Owners for CUDApp. GitHub reads this file from .github/CODEOWNERS.
+# A default-branch ruleset that requires one approval and code-owner review is
+# still required before GitHub enforces these lines. That ruleset is Drake's.
+# Until then docs/REVIEWING.md section 1 still binds every pull request, and
+# section 2 is followed by convention.
+#
+# @drakestapleton is the only owner. The GPU-core and IP-review team handles
+# were removed because GitHub reported them as unknown owners. They can be
+# re-added once those teams are created with write access.
+
+# Default: owner.
+*                                   @drakestapleton
+
+# Core path 1: machine-code encoders, launch descriptors and code objects.
+/src/omega_blackwell_codegen.c      @drakestapleton
+/src/omega_blackwell_codegen.h      @drakestapleton
+/src/omega_blackwell_encoder.*      @drakestapleton
+/src/omega_blackwell_qmd.*          @drakestapleton
+/src/omega_bw_*                     @drakestapleton
+/src/omega_cubin.*                  @drakestapleton
+/src/omega_gpu_code_alloc.h         @drakestapleton
+/src/omega_blackwell_codegen_*      @drakestapleton
+/src/omega_blackwell_matmul.*       @drakestapleton
+/src/omega_blackwell_realize.*      @drakestapleton
+/src/omega_native_artifact.*        @drakestapleton
+# Inline machine-code emitters inside library files (ARCHITECTURE.md section 2, MIXED row).
+/src/omega_gpu_attention_api.c      @drakestapleton
+/src/omega_gpu_elementwise_api.c    @drakestapleton
+
+# Core path 2: driver client and submission.
+/nvrm/                              @drakestapleton
+/m16/                               @drakestapleton
+/src/omega_gpu_platform*            @drakestapleton
+/src/omega_blackwell_engine.*       @drakestapleton
+/src/omega_blackwell_submit.*       @drakestapleton
+/src/omega_gpu_cmdlist.*            @drakestapleton
+/src/omega_gpu_session.*            @drakestapleton
+/native/nvrm/                       @drakestapleton
+
+# Core path 3: future backend ABI and backends (ADR 0043; not present yet).
+/backend/                           @drakestapleton
+
+# Core path 4: public ABI.
+/docs/runtime/omega_runtime_api.manifest  @drakestapleton
+/src/omega_runtime_api.h            @drakestapleton
+
+# Core path 5: provenance and licence.
+/THIRD_PARTY.md                     @drakestapleton
+/LICENSE                            @drakestapleton
+/NOTICE                             @drakestapleton
+/docs/LICENSE_PROVENANCE.md         @drakestapleton
+/docs/LICENSING_TRANSITION.md       @drakestapleton
+/docs/AUDIT.md                      @drakestapleton
+
+# Review rules themselves.
+/docs/REVIEWING.md                  @drakestapleton
+/.github/                           @drakestapleton

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0
+/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
  *
  * omega_path_check.h: a checked copy of a file system path that came from outside the program (an

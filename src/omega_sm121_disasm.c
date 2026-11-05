@@ -211,6 +211,8 @@ static const Row ROWS[] = {
      * has these forms only with a zero offset, so their %o is checked by the plain LDG/STG rows above (same opcode,
      * same offset field, nonzero offsets throughout the corpus), not by a STRONG listing of its own */
     { 0x0000000000007981ull, 0x0c1f5900ull, "LDG.E.STRONG.SYS %d, desc[%B][%a.64%o]" },
+    /* BW_IR_LDG_MMIO (issue #205): 32-bit only, the one form the encoder writes; text checked with nvdisasm 13.0.85 */
+    { 0x0000000000007981ull, 0x0c1f1900ull, "LDG.E.MMIO.GPU %d, desc[%B][%a.64%o]" },
     { 0x0000000000007986ull, 0x0c115900ull, "STG.E.STRONG.SYS desc[%C][%a.64%o], %b" },
     { 0x80000000000079a8ull, 0x081f5100ull, "ATOMG.E.ADD.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
     { 0x0000000000007984ull, 0x08000800ull, "LDS %d, [%a+%B]" },

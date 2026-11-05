@@ -27,6 +27,7 @@
 # Blobs omega changed through 19b8340dbae70888c49fcc98299be928831bfd26 (train r5, omega-mv #996, merged after #995) are that commit's. The r5 opcode, prefill and training-GEMM deltas are applied on the CUDA++ copies. SPDX lines and CUDA++-ahead code stay, so those blobs still differ. Makefile stays CUDA++'s.
 # The nine rows below that CUDApp#266 synced byte-equal from omega d3d1b1bc7e3b are that commit's blobs (src/omega_blackwell_codegen.h, src/omega_path_check.h, src/runtime/rx_costmodel.{c,h}, tests/bw_warp_sim{,_k,_pa}.h, tests/runtime/rx_costmodel_unit.c, tests/test_omega_gpu_decode_attn_maxpos.c).
 # CUDA++ differs only in the SPDX line (Apache-2.0 WITH LLVM-exception, #263); any later omega edit to them must still fail.
+# mk/omega-gpu-engine.mk is omega 37fa50340345's blob (omega-mv #966). #966 swaps omega's freestanding C SHA-256 (src/omega_sha256_fs.c, test-sha256-fs-parity) for the bridge's freestanding Omega binding (src/omega_om_units_fs.c, test-sha256-freestanding-parity). CUDA++ never carried that C path: its GPU_FS_SRCS link src/sha256.c beside CUDAPP_FS_BINDING from its own om/units.sh at bridge 3dc4a00e, so the delta is not ported here; adopting the Omega SHA-256 binding needs that bridge pin moved. Any later omega edit to the file must still fail.
 Makefile	7e1426b3be2281979d00ac550a9397f913a38c30
 docs/runtime/API.md	9f5f34321bfb3f8623623ca9a174b68e3ff3c3ed
 docs/runtime/PORTABILITY.md	7b923a91e12f7f2e5c5954d80293517e19e8c959
@@ -175,7 +176,7 @@ evidence/R4-MATMUL-CTA-ffc3176a/smoke-1661fc72/sweep.bf820dbd4243086e9c61866a50e
 evidence/R4-MATMUL-CTA-ffc3176a/smoke-1661fc72/sweep.log	14ea4d447540f2d875b05628ba0c1525f13fc8cf
 mk/om-encoder.mk	16de2e0d0f37e5e956795cfa71c34d73450e794b
 mk/omega-gpu-code-alloc.mk	3b217c32d9cc063c8b83d18ede48afcc24a594ae
-mk/omega-gpu-engine.mk	f3f5dd632c6a42c806ccdb687c8df6e7e5c35ffa
+mk/omega-gpu-engine.mk	f3251cae743fe5bbe1a9395c5bd1cd8cbc46e272
 mk/omega-gpu-wait.mk	42e5ed25b232b7ae67f922e9a4a948e3ef942159
 mk/runtime-r1.mk	a6cc401cfbc7f5c11fb149f71b4b1991b6147e85
 mk/runtime-r3.mk	9c541fbb2574df1e91d291dd7b365cfce9fd471b

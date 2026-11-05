@@ -43,9 +43,12 @@ static int remaining_families(void)
         OmegaDecodeAttnSpec s = { .depth = depth };
         EMIT(omega_blackwell_codegen_decode_attn_prog(&s, &program));
     }
+    /* FUSED and ATTEND emit SHFL.BFLY and F2FP.BF16.F32.PACK_AB. APPEND returns
+     * before that softmax, so SM86 still encodes it. */
     for (unsigned mode = OMEGA_PATTN_MODE_FUSED; mode <= OMEGA_PATTN_MODE_ATTEND; ++mode) {
         OmegaPrefillAttnSpec s = { .warps = 4, .mode = mode, .mirror = mode == OMEGA_PATTN_MODE_APPEND };
-        EMIT(omega_blackwell_codegen_prefill_attn_prog(&s, &program));
+        if (mode == OMEGA_PATTN_MODE_APPEND) EMIT(omega_blackwell_codegen_prefill_attn_prog(&s, &program));
+        else REFUSE(omega_blackwell_codegen_prefill_attn_prog(&s, &program));
     }
     OmegaBf16GemvSpec bf = { .k = 256, .rows = 1, .warps = 4, .depth = 1 };
     EMIT(omega_blackwell_codegen_bf16_gemv_prog(&bf, &program));
@@ -76,7 +79,9 @@ static int remaining_families(void)
     for (unsigned epi = OMEGA_TC2_EPI_F32; epi <= OMEGA_TC2_EPI_SWIGLU; ++epi)
         for (unsigned direct = 0; direct <= 1; ++direct) {
             OmegaTc2Spec s = { .k = 128, .rt = 2, .ct = 2, .warps = 4, .aqn = 2, .epi = epi, .direct = direct, .n = 256 };
-            EMIT(omega_blackwell_codegen_tc2_prog(&s, &program));
+            /* SwiGLU stores through F2FP.BF16.F32.PACK_AB. The f32 epilogue does not. */
+            if (epi == OMEGA_TC2_EPI_F32) EMIT(omega_blackwell_codegen_tc2_prog(&s, &program));
+            else REFUSE(omega_blackwell_codegen_tc2_prog(&s, &program));
         }
     for (unsigned kind = OMEGA_DEC_AXPY; kind <= OMEGA_DEC_XBOUND; ++kind) {
         OmegaDecSpec s = { .kind = (OmegaDecKind)kind };
@@ -109,15 +114,18 @@ int main(void)
         }
         OmegaPrefillAttn256Spec s = {0};
         if (shape) { s.q_heads = 16; s.kv_heads = 2; }
-        EMIT(omega_blackwell_codegen_prefill_attn256_prog(&s, &program));
+        REFUSE(omega_blackwell_codegen_prefill_attn256_prog(&s, &program));
     }
     for (unsigned ratio = 2; ratio <= 3; ++ratio) for (unsigned bf16 = 0; bf16 < 2; ++bf16) {
         OmegaGdnSpec s = { .ratio = ratio, .state_bf16 = bf16 };
-        EMIT(omega_blackwell_codegen_gdn_prog(&s, &program));
+        /* bf16 state stores F2FP.BF16.F32.PACK_AB. f32 state stays on SM86. */
+        if (bf16) REFUSE(omega_blackwell_codegen_gdn_prog(&s, &program));
+        else EMIT(omega_blackwell_codegen_gdn_prog(&s, &program));
         EMIT(omega_blackwell_codegen_gdn_multi_prog(&s, &program));
         EMIT(omega_blackwell_codegen_gdn_prep_prog(&s, &program));
-        EMIT(omega_blackwell_codegen_gdn_scan_prog(&s, &program));
-        EMIT(omega_blackwell_codegen_gdn_post_prog(&s, &program));
+        /* The scan and the post epilogue reduce with SHFL.BFLY. */
+        REFUSE(omega_blackwell_codegen_gdn_scan_prog(&s, &program));
+        REFUSE(omega_blackwell_codegen_gdn_post_prog(&s, &program));
     }
     for (unsigned kind = OMEGA_GDN_COPY; kind <= OMEGA_GDN_ZERO; ++kind) {
         OmegaGdnSpec s = { .copy = (int)kind };

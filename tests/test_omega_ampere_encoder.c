@@ -36,8 +36,8 @@ static BlackwellIRInsn fixture(unsigned op, unsigned variant)
     case BW_IR_STG_E: case BW_IR_LDG_E_64: case BW_IR_LDG_E_128: in.imm = variant ? (uint32_t)-16 : 16; break;
     case BW_IR_SHF_R: in.imm = variant ? 31 : 4; break;
     case BW_IR_LOP3_AND: in.imm = variant ? 0xffffffffu : 0xabcdef01; break;
-    case BW_IR_SHFL_DOWN: in.imm = variant ? OMEGA_TC_MARK_BFLY | 16 : 1; break;
-    case BW_IR_FMNMX_MAX: if (variant) in.imm = OMEGA_TC_MARK_F2FP; break;
+    case BW_IR_SHFL_DOWN: in.imm = variant ? 16 : 1; break;
+    case BW_IR_FMNMX_MAX: if (variant) in.imm = 1; break;
     case BW_IR_LDS: case BW_IR_STS: case BW_IR_LDS128: in.imm = variant ? 64 : 16; break;
     case BW_IR_BRA: in.imm = variant ? (uint32_t)-2 : 2; in.predicate_p0 = variant != 0; in.predicate_not = variant == 2; break;
     case BW_IR_LOP3_LUT: in.imm = variant ? 0x96 : 0xe8; break;
@@ -106,7 +106,15 @@ int main(void)
             code[4] != 16 || code[2] != 0) return 1;
     }
     init(); program.insns[0] = fixture(BW_IR_NOP, 0); if (refused(80)) return 1;
-    program.count = 2; program.insns[1] = fixture(60, 0); if (refused(86)) return 1;
+    /* A late training-R5 opcode refuses the whole SM86 image and writes nothing.
+     * The corpus build records that refusal from the SM121 encode below. */
+    program.count = 2; program.insns[1] = fixture(BW_IR_SHFL_BFLY, 0); if (refused(86)) return 1;
+    { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
+    for (unsigned op = BW_IR_SHFL_BFLY; op <= BW_IR_ATOMG_ADD_F32_STRONG_GPU; ++op) {
+        init(); program.insns[0] = fixture(op, 0);
+        if (refused(86)) return 1;
+        { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
+    }
     init(); program.insns[0] = fixture(BW_IR_HMMA_BF16, 0); program.insns[0].imm = OMEGA_QMMA_MARK; if (refused(86)) return 1;
     { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
     program.insns[0] = fixture(BW_IR_FMNMX_MAX, 0); program.insns[0].imm = OMEGA_QMMA_MARK_F2E4; if (refused(86)) return 1;

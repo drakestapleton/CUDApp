@@ -215,7 +215,12 @@ static void c_caps(void) {
      * (max_queues = 1 + NVRM_MAX_EXTRA_CHANNELS), aien-gpu ABI 1 drives one queue. */
     EXPECT(caps.max_queues == 1 && lcaps.max_queues >= 1);
     lcaps.max_queues = caps.max_queues;
-    EXPECT(memcmp(&caps, &lcaps, sizeof caps) == 0);
+    /* Field by field: OmegaGpuPlatformCaps has padding, which struct assignment need not copy (memcmp failed on x86-64). */
+    EXPECT(caps.abi_major == lcaps.abi_major && caps.abi_minor == lcaps.abi_minor && caps.services == lcaps.services &&
+           caps.max_devices == lcaps.max_devices && caps.max_buffers == lcaps.max_buffers &&
+           caps.max_queues == lcaps.max_queues && caps.max_inflight == lcaps.max_inflight &&
+           caps.max_buffer_bytes == lcaps.max_buffer_bytes && caps.max_total_bytes == lcaps.max_total_bytes &&
+           caps.submit_prefix_words == lcaps.submit_prefix_words);
     EXPECT(caps.services == OMEGA_GPU_SVC_REQUIRED_SESSION);
     EXPECT(p->irq_wait == NULL && p->mmio_read32 == NULL && p->mmio_write32 == NULL);
     EXPECT(omega_gpu_platform_check_for(p, &caps, OMEGA_GPU_SVC_REQUIRED_SESSION) == OMEGA_GPU_PLAT_OK);

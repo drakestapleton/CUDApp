@@ -554,7 +554,8 @@ HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-mathli
 	test-ampere-encoder test-ampere-cubin test-ampere-numeric-host test-ampere-f16-host test-ampere-runtime test-ampere-plan \
 	test-portable-receipts test-gpu-qmd-shared test-model-capacity test-gpu-qmd-shared-clean-build \
 	test-omega-slice-runner test-omega-arch-guard test-omega-barrier-contract test-omega-binding-portable \
-	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz $(CARRIED_HOST_TESTS)
+	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz \
+	test-zero-cuda-tool-argv $(CARRIED_HOST_TESTS)
 ifneq ($(CUDAPP_TARGET_ONLY_TESTS),)
 HOST_TESTS := $(filter-out $(CUDAPP_TARGET_ONLY_TESTS),$(HOST_TESTS)) test-omega-target-only
 endif

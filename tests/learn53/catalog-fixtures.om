@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Literal output oracle only. No kexpect/keval calls construct expected values.
 fn csize id ulong to ulong
 if eq id 1

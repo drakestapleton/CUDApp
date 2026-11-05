@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Emitter stream checker; first byte selects expected catalog, remaining bytes task.
 global CBuf uchar 258
 fn main to int

@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 text expected "HOST_ONLY 0\n"
 global seen uchar 32
 fn main to int

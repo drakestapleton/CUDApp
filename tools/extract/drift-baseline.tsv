@@ -15,7 +15,9 @@
 # tests/gpu_fp8gemm_test.c (CUDA++ test_out_open 0600 receipt kept over omega's 0644 open); licence headers.
 # tests/bw_hazard_test.c is omega 6d7b883844a0f17a7a3ceb427108be7e01e4c677's blob (#984, unchanged through omega 2638a49b); CUDA++ is ahead there with the sm_86 uniform-destination cases (#170), so any later omega edit to it must still fail.
 # Blobs omega changed through f9a9a40b598928fc6f92d7ffa6ff386941182663 (train r4, omega-mv #995) are that commit's.
-# Byte-identical here: src/omega_blackwell_codegen.h, tests/bw_warp_sim.h, tests/bw_warp_sim_k.h, tests/bw_warp_sim_pa.h (LDG.E immediate).
+# Byte-identical here: src/omega_blackwell_codegen.h, tests/bw_warp_sim_k.h, tests/bw_warp_sim_pa.h (LDG.E immediate).
+# tests/bw_warp_sim.h is omega f9a9a40b's blob (LDG.E immediate, unchanged through omega d3d1b1bc). The CUDA++ copy carries that change and is
+# ahead with the mathlibs RNG/FFT simulator support (#147: I2FP, MUFU.LG2, STG.E immediate, partial last warp), so the blobs differ.
 # Applied onto the CUDA++ copies (SPDX line and CUDA++-ahead code kept, so the blobs still differ): src/omega_blackwell_codegen.c (LDG.E immediate),
 # src/omega_blackwell_codegen_tern.c/.h (coalesced KT1 stores; mutant 4 stays the I2FP refusal, omega's slot-race and clamp mutants are 5 and 6),
 # src/omega_gpu_q38_graph.c/.h and tests/gpu_q38_graph_test.c (shape and bf16 layers; the exact-head API stays),
@@ -327,7 +329,7 @@ tests/bw_encode_control_test.c	aeb63941514ab28ffc9efbd2cd8fbfc37acdaf34
 tests/bw_hazard_test.c	039a2fd973ce660462add55ded74488994c50770
 tests/bw_hmma_model.h	f019912d90dd2f5b1b3634473abdc8f767c32c25
 tests/bw_qmma_model.h	8429ad2cbf5031f435b13f3bcb332dbdbfac1d58
-tests/bw_warp_sim.h	6d93828f3979b3a7223ebe0f1952b53e1d414764
+tests/bw_warp_sim.h	b9f5e1070de7b3f0c36f0c73957db8c95189ea2f
 tests/bw_warp_sim_k.h	993875647985cc99ce27a78003df26df91fd18e1
 tests/bw_warp_sim_pa.h	157e396cde9d942cc0bfff02fd057ed393c52a0a
 tests/bw_warp_sim_tc.h	6cfbe9c949a408696c1ba9c1023210a475d04b6a

@@ -28,5 +28,6 @@ third_party/nvidia-open-580.173.02/ holds NVIDIA open GPU kernel module
 headers, copied unchanged with NVIDIA Corporation's copyright and MIT notices;
 see third_party/nvidia-open-580.173.02/COPYING.
 Mesa citations and other third-party references are listed in THIRD_PARTY.md.
-Files carrying SPDX-License-Identifier: AGPL-3.0-only are under that licence,
-not the one above; docs/LICENSING_TRANSITION.md lists them.
+First-party SPDX headers are Apache-2.0 WITH LLVM-exception. Third-party
+notices and historical receipt text are not covered by that grant;
+docs/LICENSING_TRANSITION.md records the completed relicense.

@@ -25,6 +25,9 @@
 # which is not in the drift set and is not here; submit_check still refuses EXP and LOG).
 # Ampere x86 cutover, Main authorization 2026-10-28: the four src/omega_numeric{,_reduce}.{c,h} rows below are the retained Omega CPU-oracle copies at main 6999fa9e6dae. CUDA++ adds explicit x86 SSE/fmaf realizations there; future changes to the retained Omega copy must still fail.
 # Blobs omega changed through 19b8340dbae70888c49fcc98299be928831bfd26 (train r5, omega-mv #996, merged after #995) are that commit's. The r5 opcode, prefill and training-GEMM deltas are applied on the CUDA++ copies. SPDX lines and CUDA++-ahead code stay, so those blobs still differ. Makefile stays CUDA++'s.
+# The nine rows below that CUDApp#266 synced byte-equal from omega d3d1b1bc7e3b are that commit's blobs (src/omega_blackwell_codegen.h, src/omega_path_check.h, src/runtime/rx_costmodel.{c,h}, tests/bw_warp_sim{,_k,_pa}.h, tests/runtime/rx_costmodel_unit.c, tests/test_omega_gpu_decode_attn_maxpos.c).
+# CUDA++ differs only in the SPDX line (Apache-2.0 WITH LLVM-exception, #263); any later omega edit to them must still fail.
+# mk/omega-gpu-engine.mk is omega 37fa50340345's blob (omega-mv #966). #966 swaps omega's freestanding C SHA-256 (src/omega_sha256_fs.c, test-sha256-fs-parity) for the bridge's freestanding Omega binding (src/omega_om_units_fs.c, test-sha256-freestanding-parity). CUDA++ never carried that C path: its GPU_FS_SRCS link src/sha256.c beside CUDAPP_FS_BINDING from its own om/units.sh at bridge 3dc4a00e, so the delta is not ported here; adopting the Omega SHA-256 binding needs that bridge pin moved. Any later omega edit to the file must still fail.
 Makefile	7e1426b3be2281979d00ac550a9397f913a38c30
 docs/runtime/API.md	9f5f34321bfb3f8623623ca9a174b68e3ff3c3ed
 docs/runtime/PORTABILITY.md	7b923a91e12f7f2e5c5954d80293517e19e8c959
@@ -173,13 +176,13 @@ evidence/R4-MATMUL-CTA-ffc3176a/smoke-1661fc72/sweep.bf820dbd4243086e9c61866a50e
 evidence/R4-MATMUL-CTA-ffc3176a/smoke-1661fc72/sweep.log	14ea4d447540f2d875b05628ba0c1525f13fc8cf
 mk/om-encoder.mk	16de2e0d0f37e5e956795cfa71c34d73450e794b
 mk/omega-gpu-code-alloc.mk	3b217c32d9cc063c8b83d18ede48afcc24a594ae
-mk/omega-gpu-engine.mk	f3f5dd632c6a42c806ccdb687c8df6e7e5c35ffa
+mk/omega-gpu-engine.mk	f3251cae743fe5bbe1a9395c5bd1cd8cbc46e272
 mk/omega-gpu-wait.mk	42e5ed25b232b7ae67f922e9a4a948e3ef942159
 mk/runtime-r1.mk	a6cc401cfbc7f5c11fb149f71b4b1991b6147e85
 mk/runtime-r3.mk	9c541fbb2574df1e91d291dd7b365cfce9fd471b
 mk/sm121dis.mk	c9440caa7c5b1f956c4fdd55d93e1eb631a2e768
 src/omega_blackwell_codegen.c	fc07541b86f1e07ed64fa28809c562605ba42620
-src/omega_blackwell_codegen.h	1f0b70eecd3860da68bbe013860f27ca01da0d2f
+src/omega_blackwell_codegen.h	44b73727d9c571b84bd2b63fe800ef4e2f70572f
 src/omega_blackwell_codegen_attn.c	060e25cff987ff43fdb234aee39497253cf25c3a
 src/omega_blackwell_codegen_attn.h	4f84bba33c4cf4dfca8834335b6900aba01b677b
 src/omega_blackwell_codegen_attn256.c	ecb4c1dae47bfa0b7d25f90468b17de79247c040
@@ -314,22 +317,23 @@ src/omega_numeric.h	842bd2d6408ab230a690c7ea62fb4982e1f22391
 src/omega_numeric_lifecycle.h	a90a359306f98420a3189a488fe413319b4fad38
 src/omega_numeric_reduce.c	3dffadfe031a774191d07bddacd203fadee6a4b2
 src/omega_numeric_reduce.h	ac9cf9c9b636b292ab23d5a25309cf2669496a17
+src/omega_path_check.h	a0ebf22fa83b86c812f7d04a8ea72f16d5a30d9a
 src/omega_runtime_api.h	89e2acbee00c0fee71c0fa78913726ccc8e2f708
 src/omega_sm121_disasm.c	17a1ef14b13abf0c0d4dc2367ed2728893c299a2
 src/omega_sm121_disasm.h	aaf815d6387018ff0ac2598c23dac1398672cb60
 src/omega_types.h	433c3e8113c154e2c12e1cb508841319d29d1b7d
 src/omega_vector.c	a3add41a0d77a484d4357e913fb9e7c0c9b4cc23
 src/omega_vector.h	348195ca448839cb191ea1c9d5da05b4e61bdda8
-src/runtime/rx_costmodel.c	d8ddf956d88d4d9164682d2223a277cd04fc37dd
-src/runtime/rx_costmodel.h	6e2c0db52fafe3548e9161bc96ea9c07292dcd36
+src/runtime/rx_costmodel.c	2a5df36d97e958633702581568c2fe76e808ed3c
+src/runtime/rx_costmodel.h	162b5f053102a06d02385d24d42da3b41068bb2b
 src/sha256.h	7db16bcacfbe68623fc2a042dd4cca5a388e41f9
 tests/bw_encode_control_test.c	aeb63941514ab28ffc9efbd2cd8fbfc37acdaf34
 tests/bw_hazard_test.c	039a2fd973ce660462add55ded74488994c50770
 tests/bw_hmma_model.h	f019912d90dd2f5b1b3634473abdc8f767c32c25
 tests/bw_qmma_model.h	8429ad2cbf5031f435b13f3bcb332dbdbfac1d58
-tests/bw_warp_sim.h	6d93828f3979b3a7223ebe0f1952b53e1d414764
-tests/bw_warp_sim_k.h	993875647985cc99ce27a78003df26df91fd18e1
-tests/bw_warp_sim_pa.h	157e396cde9d942cc0bfff02fd057ed393c52a0a
+tests/bw_warp_sim.h	b9f5e1070de7b3f0c36f0c73957db8c95189ea2f
+tests/bw_warp_sim_k.h	f66071055f5aa10bbfad580a1620b9808235f2c9
+tests/bw_warp_sim_pa.h	d6050873e1df44cfb365251e92c1951fc39c53e5
 tests/bw_warp_sim_tc.h	6cfbe9c949a408696c1ba9c1023210a475d04b6a
 tests/dagsim/dagsim_unit.c	f9c6c089ea9bbb8ab820e5070583bd6c1cf98804
 tests/dagsim/fixtures/m1_spark_overlap.oev	249980f17162a95e47917072fa842b37bca08b41
@@ -389,9 +393,11 @@ tests/gpu_tc_probe_test.c	934e4a03c2eb6a13e03b9b63ae1284e1038dc109
 tests/gpu_tcgemm_test.c	b8221f89cd274b53b62758254b86f31e8a9fe3c3
 tests/gpu_tern_test.c	fb4e90e4c199ff9a830dc673ddc0bc140c10ca2f
 tests/gpu_tgemm_test.c	76ebc6ade04c69d11064339b6424c308432e076d
+tests/runtime/rx_costmodel_unit.c	aa7bbf3618f20de91fd3c1972c9c5a3418641dbd
 tests/test_omega_blackwell_engine.c	5d79271fbd597624a92d3a1544a10b7bccffc960
 tests/test_omega_codegen_freestanding.c	e4c39e739e59e127d0c3ff90e43f19cba3d38cab
 tests/test_omega_gpu_code_alloc.c	2bebf3ca808f4cb38081a035fc633ebafc66dd8a
+tests/test_omega_gpu_decode_attn_maxpos.c	dedcd9c963d8e60edd87d52e51345d76334d2674
 tests/test_omega_gpu_decode_graph_timeline.c	619eac986fb47f17e76d8e5c9bad137237146d6d
 tests/test_omega_gpu_engine.c	a1a1c15f8b8cf9f14d1581aab353ef4f1b8679c5
 tests/test_omega_gpu_engine_compile.c	332f6af383a373975d78f13b145f88d5bff08186

@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Native emitter for synthetic public stream fixtures. Selector1 policy,2 costs,3 pairs.
 global frame uchar 32768
 global selector uchar 2

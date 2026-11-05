@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Host check of native/trace/htlaunch.om over tests/host-trace/fakenv.om (no device). Compose:
 note fakenv.om vector.om launch.om htrec.om htlaunch.om launch-test.om. With a path in argv 1 it
 note writes the OTR1 dump there. Prints HOSTTRACE_LAUNCH_PASS <checks> or _FAIL <failures>.

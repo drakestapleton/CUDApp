@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note badfrag GOOD.otr PREFIX: writes PREFIX.N.otr for N = 0..12, each the good OTR1 file with one
 note fault. omtrace v must reject mutant N with exit status listed in tests/host-trace/run-host-trace.sh.
 note Mutants: 0 magic, 1 version, 2 record size, 3 clock domain, 4 truncated by one byte,

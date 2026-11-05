@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Development fixture emitter: exactly one input byte, public catalog ID1..8.
 global CIn uchar 2
 fn main to int

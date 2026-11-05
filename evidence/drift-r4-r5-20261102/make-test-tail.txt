@@ -1,0 +1,2 @@
+CUDA++ HOST TESTS PASS (80 targets)
+EXIT:0

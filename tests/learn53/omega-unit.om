@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note SYNTHETIC unit metadata, pins and costs, NEVER a real benchmark record.
 fn afix to void
 for i ulong 2048

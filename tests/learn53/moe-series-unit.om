@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note HOST_ONLY synthetic digest occurrences; no recorded device entries or qualification.
 text ms_ok "MOE-SERIES HOST_ONLY PASS\n"
 fn ms_flip b edit uchar 4096 i ulong to void

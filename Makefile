@@ -572,6 +572,12 @@ test-model-capacity:
 	@exit 2
 endif
 
+# CUDApp#184 C0 frozen CUDA compatibility profile: host-only static admission plus negative controls.
+.PHONY: test-cuda-c0-profile
+test-cuda-c0-profile:
+	rm -rf build/cuda-c0-profile
+	OMEGA_OMC="$(OMEGA_OMC)" sh compat/cuda/test.sh build/cuda-c0-profile
+
 .PHONY: test-drift
 test-drift:
 	bash tools/extract/test-drift.sh

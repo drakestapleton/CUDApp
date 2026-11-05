@@ -27,7 +27,7 @@ typedef struct {
     int err;
     int open_start[MAX_LOOPS];
     int depth;
-    int i2f_fixed; /* mutant 4 only: the pre-fix I2FP encoding (fixed stall 6, no scoreboard) */
+    int i2f_fixed; /* mutant 4 only: the pre-Sass#4 I2FP (directly before its FMUL, OMEGA_TERN_FIXED_LAT behind) */
 } Em;
 
 static void emit(Em *e, BlackwellIRInsn in, int kind) {
@@ -87,10 +87,13 @@ static void sts32(Em *e, int addr, int val) { BlackwellIRInsn i = I0(BW_IR_STS32
 static void xorr(Em *e, int d, int a, int b) { BlackwellIRInsn i = I0(BW_IR_LOP3_XOR); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; emit(e, i, K_FIXED); }
 static void bar_sync(Em *e) { emit(e, I0(BW_IR_BAR_SYNC), K_SYNC); }
 static void fmul(Em *e, int d, int a, int b) { BlackwellIRInsn i = I0(BW_IR_FMUL); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; emit(e, i, K_FIXED); }
-/* I2FP is decoupled on consumer Blackwell (chip sweep, Provenance lat-20261027T025808Z: i2fp->fmul 18, i2f->fmul 19
- * cycles; NAK sm120_instr_latencies.rs classes I2F as Decoupled), so it writes scoreboard 0 like a load and the next
- * instruction waits on it. The fixed stall 6 it had before let a consumer read a stale register. */
-static void i2f(Em *e, int d, int a) { BlackwellIRInsn i = I0(BW_IR_I2FP); i.dst_vreg = d; i.src1_vreg = a; emit(e, i, e->i2f_fixed ? K_FIXED : K_VAR); }
+/* I2FP is a fixed-latency write here: no scoreboard, and every reader sits >= OMEGA_TERN_I2FP_LAT cycles behind
+ * (tern_schedule_stalls). Sass#4 (bc16eab) put it on scoreboard 0 with the reader waiting at stall 4 instead; that was
+ * host-tested only, and on the GB10 it broke the f32 epilogue: omega-mv#924 window 2026-11-01T00:55Z, gpu_tern_test
+ * "f32 q|k|v segments" 2040 of 3840 rows off ((float)y * a) * scale[seg], while the stall-6 fixed encoding (omega-mv
+ * main ba5559d9) had 0 in the same window. A wait on an I2FP scoreboard does not hold the reader on this chip, so only
+ * distance counts. 19 is the Sass#4 sweep's i2f->fmul (lat-20261027T025808Z); it covers the chip-correct 6 as well. */
+static void i2f(Em *e, int d, int a) { BlackwellIRInsn i = I0(BW_IR_I2FP); i.dst_vreg = d; i.src1_vreg = a; emit(e, i, K_FIXED); }
 static void shfl_down(Em *e, int d, int a, uint32_t off) { BlackwellIRInsn i = I0(BW_IR_SHFL_DOWN); i.dst_vreg = d; i.src1_vreg = a; i.imm = off; emit(e, i, K_VAR); }
 static void isetp_ge_u32(Em *e, int a, int b) { BlackwellIRInsn i = I0(BW_IR_ISETP_GE_U32); i.src1_vreg = a; i.src2_vreg = b; emit(e, i, K_PRED); }
 static void bra_if_p0(Em *e, int target) { BlackwellIRInsn i = I0(BW_IR_BRA); i.predicate_p0 = true; i.imm = (uint32_t)(target - here(e)); emit(e, i, K_BRA); }
@@ -179,7 +182,7 @@ uint64_t omega_tern_word_offset(uint32_t layout, uint32_t R, uint32_t k, uint32_
 static int tern_fixed(BlackwellIROpcode op) {
     switch (op) {
     case BW_IR_IMAD: case BW_IR_IMAD_WIDE: case BW_IR_SHF_R: case BW_IR_LOP3_AND: case BW_IR_MOV_IMM: case BW_IR_MOV_RZ:
-    case BW_IR_FMUL: return 1;
+    case BW_IR_FMUL: case BW_IR_I2FP: return 1;
     default: return 0;
     }
 }
@@ -194,7 +197,7 @@ static void tern_span(const BlackwellIRProgram *p, int v, int *lo, int *cnt) {
     if (ph < 0) return;
     *lo = ph; *cnt = (int)(p->regalloc.intervals[v].bundle_size ? p->regalloc.intervals[v].bundle_size : 1u);
 }
-static int tern_schedule_stalls(BlackwellIRProgram *p) {
+static int tern_schedule_stalls(BlackwellIRProgram *p, uint64_t i2f_lat) {
     static uint8_t target[BW_MAX_IR_INSNS + 1];
     uint64_t ready[BW_MAX_VREGS + 8];
     const size_t n = p->count;
@@ -213,9 +216,10 @@ static int tern_schedule_stalls(BlackwellIRProgram *p) {
         BlackwellIRInsn *in = &p->insns[i];
         const uint32_t s_emit = (in->control >> 9) & 0xfu;
         if (tern_fixed(in->op)) {
+            const uint64_t lat = in->op == BW_IR_I2FP ? i2f_lat : OMEGA_TERN_FIXED_LAT;
             int lo, c; tern_span(p, in->dst_vreg, &lo, &c);
-            for (int k = 0; k < c; k++) { if (lo + k >= BW_MAX_VREGS + 8) return -1; ready[lo + k] = T + OMEGA_TERN_FIXED_LAT; }
-            if (c && T + OMEGA_TERN_FIXED_LAT > all) all = T + OMEGA_TERN_FIXED_LAT;
+            for (int k = 0; k < c; k++) { if (lo + k >= BW_MAX_VREGS + 8) return -1; ready[lo + k] = T + lat; }
+            if (c && T + lat > all) all = T + lat;
         }
         uint64_t need = T + (tern_fixed(in->op) ? 1u : s_emit);
         if (i + 1 < n) {
@@ -235,10 +239,10 @@ static int tern_schedule_stalls(BlackwellIRProgram *p) {
     return 0;
 }
 /* ---- I2FP consumer check (Sass#4), run on every generated program; the generator refuses a violation ----
- * For every I2FP write, walk forward summing stalls. The write is safe for an instruction once that instruction or an
- * earlier one waits on the I2FP's write scoreboard, or, without a scoreboard, once OMEGA_TERN_I2FP_LAT cycles have
- * passed. An instruction that reads or overwrites the I2FP's registers before that, or a control instruction or branch
- * target reached before that, is a violation. Every other producer keeps its own rule (an FMUL at stall 6 is fine). */
+ * For every I2FP write, walk forward summing stalls. The write is safe for an instruction once OMEGA_TERN_I2FP_LAT
+ * cycles have passed; a scoreboard wait does not count (see i2f). An instruction that reads or overwrites the I2FP's
+ * registers before that, or a control instruction or branch target reached before that, is a violation. Every other
+ * producer keeps its own rule (an FMUL at stall 6 is fine). */
 static int tern_overlap(const BlackwellIRProgram *p, int a, int b) {
     int la, ca, lb, cb; tern_span(p, a, &la, &ca); tern_span(p, b, &lb, &cb);
     return ca && cb && la < lb + cb && lb < la + ca;
@@ -255,13 +259,11 @@ long omega_tern_i2fp_violations(const BlackwellIRProgram *p) {
     for (size_t i = 0; i < p->count; i++) {
         const BlackwellIRInsn *in = &p->insns[i];
         if (in->op != BW_IR_I2FP || in->dst_vreg < 0) continue;
-        const uint32_t wb = (in->control >> 14) & 7u;
         uint32_t dist = 0;
         for (size_t j = i + 1; j < p->count; j++) {
             const BlackwellIRInsn *u = &p->insns[j];
             dist += (p->insns[j - 1].control >> 9) & 0xfu;
-            if (wb != SB_NONE && ((u->control >> 20) >> wb) & 1u) break;
-            if (wb == SB_NONE && dist >= OMEGA_TERN_I2FP_LAT) break;
+            if (dist >= OMEGA_TERN_I2FP_LAT) break;
             if (tern_control(u->op) || tgt[j]) { bad++; break; }
             if (tern_overlap(p, in->dst_vreg, u->dst_vreg) || tern_overlap(p, in->dst_vreg, u->src1_vreg) ||
                 tern_overlap(p, in->dst_vreg, u->src2_vreg) || tern_overlap(p, in->dst_vreg, u->src3_vreg)) { bad++; break; }
@@ -501,6 +503,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
         for (uint32_t r = 0; r < R; r++) {
             imadi(e, yv, one, 0, 0u - KSC * (1u << 18), T[r]); /* y = T - KSC * 2^18 (mod 2^32, exact) */
             if (f32) {
+                if (!e->i2f_fixed) i2f(e, f, yv);      /* first, so the segment lookup covers its >= 19 cycles */
                 imadi(e, row, one, 0, r, rowbase);
                 for (int i = 0; i < 3; i++) {
                     imadi(e, t, row, 0, 1, nb[i]);
@@ -509,7 +512,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
                 }
                 imadw(e, pwsa, sum, 4u, pws);              /* ws_rev[boundaries above row] = w_scale[seg] */
                 ldg32(e, wsv, pwsa, 0, udesc, 1);
-                i2f(e, f, yv);
+                if (e->i2f_fixed) i2f(e, f, yv);
                 fmul(e, f, f, asv);
                 fmul(e, f, f, wsv);
                 if (r) imadi(e, sa, one, 0, 4u, sa);
@@ -547,6 +550,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
         imadw(e, pya, row, 4u, py);
         if (NCH > 1) { ldg32(e, prev, pya, 0, udesc, 1); imadr(e, yv, prev, mul, 0, yv); } /* + earlier chunks */
         if (f32) {
+            if (!e->i2f_fixed) i2f(e, f, yv);          /* first, so the segment lookup covers its >= 19 cycles */
             for (int i = 0; i < 3; i++) {
                 imadi(e, t, row, 0, 1, nb[i]);
                 shr(e, t, t, 0, 31);                   /* 1 if row < b_i */
@@ -554,7 +558,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
             }
             imadw(e, pwsa, sum, 4u, pws);              /* ws_rev[boundaries above row] = w_scale[seg] */
             ldg32(e, wsv, pwsa, 0, udesc, 1);
-            i2f(e, f, yv);
+            if (e->i2f_fixed) i2f(e, f, yv);
             fmul(e, f, f, asv);
             fmul(e, f, f, wsv);
             stg(e, pya, 0, f, udesc);
@@ -578,7 +582,7 @@ int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *spec, Blackw
     tail(e);
     if (e->err) return -1;
     if (omega_bw_regalloc_solve(prog) != 0) return -1;
-    if (tern_schedule_stalls(prog) != 0) return -1;
+    if (tern_schedule_stalls(prog, spec->mutant == 4 ? OMEGA_TERN_FIXED_LAT : OMEGA_TERN_I2FP_LAT) != 0) return -1;
     return omega_tern_i2fp_violations(prog) == 0 ? 0 : -1;
 }
 

@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Overhead driver for the host trace recorder. Compose after one arm file:
 note   overhead-absent.om  calls gbopen/gblaunch directly (no recorder in the unit)
 note   overhead-traced.om  calls htopen/htlaunch; argument "on" starts the recorder, "off" never does

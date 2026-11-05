@@ -45,6 +45,11 @@ end
 ret 1
 end
 
+note Only constant loads have uniform destinations; IMAD uses is_uniform for its source.
+fn isuld op ulong to bool
+ret or eq op 6 eq op 7
+end
+
 fn opnds ins view ulong 8192 i ulong phys view ulong 288 o edit ulong 16 to void
 b = mul i 8
 f = get ins add b 7
@@ -69,7 +74,8 @@ put o 11 and shr f 8 255
 put o 12 pres get ins add b 2
 put o 13 pres get ins add b 3
 d = get ins add b 1
-if and eq and f 1 1 lt d NEG
+put o 15 pres d
+if and isuld get o 0 lt d NEG
 put o 1 get phys add d 256
 end
 end
@@ -235,7 +241,7 @@ put4 w wda o 31105 rb o 5 203380992 ctl o 991744
 ret 0
 end
 if eq op 21
-put4 w wda o 31105 rb o 5 202250496 ctl o 991744
+put4 w wda o 31105 rb o 5 203364608 ctl o 991744
 ret 0
 end
 if eq op 22
@@ -462,6 +468,33 @@ end
 ret 1
 end
 
+note ops 60..63 (Training R5): SHFL.BFLY (SHFL.DOWN's words with w1 bit 26), F2FP.BF16.F32.PACK_AB,
+note ATOMG.E.ADD.F32.FTZ.RN.STRONG.SYS and .GPU (no dst vreg encodes RZ, presence slot 15).
+note Constants by Wolfram: FromDigits of 0c001f00 7f89 000e0000 000e2400 723e 10ff 004fc400 79a3 80000000
+note 0c1f5300 0c1ef300 00321e00 base 16 = 201334528 32649 917504 926720 29246 4351 5227520 31139 2147483648
+note 203379456 203354880 3284480.
+fn enc_e o view ulong 16 w edit ulong 4 to ulong
+op = get o 0
+if eq op 60
+put4 w wda o 32649 or 201334528 shl and get o 6 31 21 917504 ctl o 926720
+ret 0
+end
+if eq op 61
+put4 w wda o 29246 rb o 3 4351 ctl o 5227520
+ret 0
+end
+if or eq op 62 eq op 63
+s = ulong 203379456
+if eq op 63
+s = 203354880
+end
+a = or or 31139 shl rz o 1 15 16 shl rb o 2 24
+put4 w a or rb o 3 2147483648 or s rb o 5 ctl o 3284480
+ret 0
+end
+ret 1
+end
+
 fn enc1 o view ulong 16 w edit ulong 4 to ulong
 op = get o 0
 if lt op 15
@@ -473,7 +506,10 @@ end
 if lt op 46
 ret enc_c o w
 end
+if lt op 60
 ret enc_d o w
+end
+ret enc_e o w
 end
 
 note the 16 bytes of instruction i, each word little-endian

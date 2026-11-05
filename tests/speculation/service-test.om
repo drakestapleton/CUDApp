@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Actual native parent/child pipe exchange. Synthetic policy data, no model or GPU.
 global xreq uchar 2048
 global xresp uchar 128

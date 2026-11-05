@@ -205,14 +205,14 @@ Each row has a done-when anyone can run. A row is DONE only with a receipt on a 
 | D13 | Our own disassembler, plain text a person can read | Disassembler agrees with nvdisasm on every library kernel; nothing calls nvdisasm | PLANNED (L386, Omega bar C6) |
 | D14 | Recover from a fault without restarting | A kernel that faults or never ends is stopped and the same process keeps working | PLANNED (L386, Omega bar C5) |
 
-The swap story, replacing a developer's CUDA libraries with CUDA++'s, is ledger item L401. NVIDIA's open kernel module stays; GB10 support goes upstream to Nova and nouveau, and Aien's own driver branch (L332, `ROADMAP.md`) is a research harness only.
+The swap story, replacing a developer's CUDA libraries with CUDA++'s, is ledger item L401. Under it, my own GB10 driver replaces NVIDIA's open kernel module (L332: aien-dev/aien-gpu, aien-dev/omega-gpu-driver, aienux#441; BUILDING in `ROADMAP.md`); until it runs on the GB10, CUDA++ runs on `nvidia.ko`.
 
 ## 4. Where CUDA is better today
 
 Said as plainly as the wins:
 
 - **Chips.** CUDA runs on every NVIDIA GPU of the last decade. CUDA++ runs on one, the GB10. Row D6 makes the refusal honest; it does not add chips. Porting is the community's job as much as ours (`CONTRIBUTING.md`).
-- **Libraries.** cuBLAS, cuDNN, NCCL, cuFFT, cuRAND, CUTLASS and the whole ecosystem above them. CUDA++ has matrix multiply and attention shaped for the models AIEN runs, and no FFT, random numbers or multi-GPU (`ROADMAP.md`).
+- **Libraries.** cuBLAS, cuDNN, NCCL, cuFFT, cuRAND, CUTLASS and the whole ecosystem above them. CUDA++ has matrix multiply and attention shaped for the models AIEN runs, one random-number generator, a power-of-two complex FFT up to 2048 points, and no multi-GPU (`ROADMAP.md`).
 - **Languages and frameworks.** PyTorch, JAX, Triton and every framework speak CUDA. CUDA++ today is a C kernel builder; Omega's languages reaching the GPU is Omega bar C1 (L386).
 - **Asynchronous work.** CUDA's streams overlap independent work. CUDA++'s launches are synchronous by default and its command lists are the way to batch; streams and events are Omega bar C4.
 - **Tools.** Nsight, cuda-gdb and compute-sanitizer are mature. CUDA++ has a simulator and receipts, and no profiler GUI.

@@ -56,10 +56,20 @@ static void human_bytes(char *out, size_t n, uint64_t b) {
     else snprintf(out, n, "%.1f GiB", (double)b / (double)(1ull << 30));
 }
 
-int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
+static unsigned long long reserve_mib_env(void) {
     unsigned long long reserve_mib = CUDAPP_MEM_RESERVE_DEFAULT_MIB;
     const char *e = getenv("CUDAPP_MEM_RESERVE_MIB");
     if (e && *e) { char *end = NULL; unsigned long long v = strtoull(e, &end, 10); if (end && end != e && *end == 0) reserve_mib = v; }
+    return reserve_mib;
+}
+
+/* Saturate rather than wrap: 2^44 MiB shifted by 20 is 2^64 (RtMem F9). */
+static uint64_t mib_bytes(unsigned long long mib) { return mib > (UINT64_MAX >> 20) ? UINT64_MAX : (uint64_t)mib << 20; }
+
+uint64_t omega_gpu_mem_reserve_bytes(void) { return mib_bytes(reserve_mib_env()); }
+
+int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
+    const unsigned long long reserve_mib = reserve_mib_env();
     if (reserve_mib == 0) return OMEGA_GPU_PLAT_OK;
     FILE *f = meminfo_open();
     if (!f) return OMEGA_GPU_PLAT_OK;
@@ -67,9 +77,9 @@ int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
     while (!have && fgets(line, sizeof line, f)) have = sscanf(line, "MemAvailable: %llu kB", &avail_kb) == 1;
     fclose(f);
     if (!have) return OMEGA_GPU_PLAT_OK;
-    /* Saturate rather than wrap: 2^44 MiB shifted by 20 is 2^64, and 2^54 kB times 1024 is 2^64 (RtMem F9). */
+    /* Saturate rather than wrap: 2^54 kB times 1024 is 2^64 (RtMem F9). */
     const uint64_t avail = avail_kb > UINT64_MAX / 1024ull ? UINT64_MAX : (uint64_t)avail_kb * 1024ull;
-    const uint64_t reserve = reserve_mib > (UINT64_MAX >> 20) ? UINT64_MAX : (uint64_t)reserve_mib << 20;
+    const uint64_t reserve = mib_bytes(reserve_mib);
     if (bytes <= avail && avail - bytes >= reserve) return OMEGA_GPU_PLAT_OK;
     char want[32], free_[32], keep[32];
     human_bytes(want, sizeof want, bytes); human_bytes(free_, sizeof free_, avail); human_bytes(keep, sizeof keep, reserve);

@@ -1,0 +1,19 @@
+{
+  "status": "PASS targeted host policy, actual dispatch, source mutants, API and semver. Full host suite and chip/model verification pending.",
+  "base": "6820ff0f95ca798a44d42767e5ecb1ee6592eeeb",
+  "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+  "policy_cases": 1679,
+  "transition_cases": 1008,
+  "policy_mutants_caught": 9,
+  "dispatch_mutants_caught": 4,
+  "logs": {
+    "attention-mirror-policy.log": "c19e10348405b26268442240f338b9e76149ad74c437e500fdff7cc864236e61",
+    "attention-mirror-dispatch-mutants.log": "0007aa5e3ab5a6043de014517e8938bf464c8c57f12c766271d4f0d3b13fcf50",
+    "attention-mirror-api.log": "1640f212b8d8f74b48cb88bf408322f0b1c4e2e29bfecce08310e702342ca395"
+  },
+  "scope": "Host-only evidence. External measuring prototype results do not qualify this source.",
+  "repairs": [
+    "Seven scalar arguments exceeded pinned compiler function-argument limit; replaced with exact seven-element view and exercised length/null refusals.",
+    "Initial transport mutant changed only a zero low address word; strengthened fake addresses with distinct nonzero low words, then allfouractualdispatch mutants were caught."
+  ]
+}

@@ -20,7 +20,11 @@
 
 #define CUDAPP_MEM_RESERVE_DEFAULT_MIB 4096ull
 
-/* OMEGA_GPU_PLAT_OK, or OMEGA_GPU_PLAT_REFUSED_LIMIT with the sentence in diag (diag_len bytes). */
+/* The reserve in bytes from CUDAPP_MEM_RESERVE_MIB (default CUDAPP_MEM_RESERVE_DEFAULT_MIB; saturates at UINT64_MAX;
+ * 0 = check off). The Linux reference uses it for local VRAM on a discrete GPU. */
+uint64_t omega_gpu_mem_reserve_bytes(void);
+
+/* Shared host memory: OMEGA_GPU_PLAT_OK, or OMEGA_GPU_PLAT_REFUSED_LIMIT with the sentence in diag (diag_len bytes). */
 int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len);
 
 #endif

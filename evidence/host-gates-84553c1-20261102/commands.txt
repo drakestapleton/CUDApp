@@ -1,0 +1,21 @@
+sha 84553c1a429fec094d719641b2fb5315b4190ec4
+fresh clone
+make test-native-artifact
+EXIT 0
+test_gpu_artifact_export: 47 checks, 0 failed
+make zero-cuda-gate
+EXIT 0
+ZERO_CUDA SELF-TEST PASS (CUDA probe rejected, clean library accepted)
+ZERO_CUDA PASS build/hello_gpu needs=[libm.so.6 libc.so.6]
+ZERO_CUDA PASS build/gpu_matmul_api_test needs=[libc.so.6]
+build/hello_gpu --sim
+EXIT 0
+PASS
+checked 1048576 of 1048576 elements: 0 wrong, 0 never written
+make doctor
+EXIT 2
+NOT READY: 5 problems above
+bash tools/extract/drift.sh --self-test 19b8340dbae70888c49fcc98299be928831bfd26
+EXIT 0
+DRIFT-GATE: PASS (920 GPU paths, omega 19b8340dbae7, none moved away from CUDA++ since the baseline)
+SELF-TEST: PASS (all controls red, real check green)

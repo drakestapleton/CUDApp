@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0
+/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,8 +82,9 @@ unsigned omega_reduce_levels(size_t n);
  * each tile into 32 slots, pad, run the lane tree). */
 int omega_reduce_reference(OmegaReduceOp op, const float *x, size_t n, float *out);
 
-/* CPU realization tier: independent code (bottom-up in place, explicit
- * AArch64 FADD / FMAXNM / FMINNM / FDIV / UCVTF). */
+/* CPU realization tier: independent bottom-up code. AArch64 uses explicit
+ * FADD/FMAXNM/FMINNM/FDIV/UCVTF; x86 uses scalar SSE with explicit NaN and
+ * signed-zero handling for minimum/maximum. */
 int omega_reduce_cpu(OmegaReduceOp op, const float *x, size_t n, float *out);
 
 /* Batched: out[r] = reduce(x[r*row_stride .. r*row_stride + n)) for r < rows,

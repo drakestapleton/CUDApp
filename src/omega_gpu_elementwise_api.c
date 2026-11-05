@@ -25,6 +25,7 @@
 #include "omega_blackwell_submit.h"
 #include "omega_gpu_session.h"
 #include "sha256.h"
+#include "cpu_barrier.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -752,7 +753,8 @@ static int check_loop_invariant(const Em *e) {
             for (size_t i = (size_t)e->loop_end[L] + 1; i < e->p->count; i++) {
                 const BlackwellIRInsn *in = &e->p->insns[i];
                 if (in->src1_vreg == v || in->src2_vreg == v || in->src3_vreg == v) return -1;
-                if (in->dst_vreg == v && !in->is_uniform) break;
+                /* only LDCU/LDCU64 write a uniform register; any other dst (also a uniform-source IMAD) is GPR v */
+                if (in->dst_vreg == v && in->op != BW_IR_LDCU && in->op != BW_IR_LDCU64) break;
             }
         }
     return 0;
@@ -930,7 +932,7 @@ static int kernel_for(OmegaGpuEwOp op, bool upload, Slot **out, bool *hit) {
     if (upload && !s->code.cpu) {
         if (omega_gpu_session_alloc_code(s->kernel.code_size, &s->code) != 0) return OMEGA_GPU_EW_CHIP_FAIL;
         memcpy(s->code.cpu, s->kernel.code, s->kernel.code_size);
-        __asm__ volatile("dsb sy" ::: "memory");
+        nvrm_cpu_barrier();
     }
     *out = s;
     return OMEGA_GPU_EW_OK;
@@ -983,7 +985,7 @@ static int run_abc(const Slot *ks, const void *a, size_t a_bytes, const void *b,
     size_t c_words = c_bytes / 4;
     uint32_t *c_dev = (uint32_t *)g_c.mem.cpu;
     for (size_t i = 0; i < c_words; i++) c_dev[i] = EW_POISON;
-    __asm__ volatile("dsb sy" ::: "memory");
+    nvrm_cpu_barrier();
 
     uint32_t args[OMEGA_BW_CBANK_MATMUL_ARGS_WORDS];
     args[0] = (uint32_t)g_a.mem.va; args[1] = (uint32_t)(g_a.mem.va >> 32);

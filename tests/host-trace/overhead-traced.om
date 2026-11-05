@@ -1,4 +1,4 @@
-note SPDX-License-Identifier: AGPL-3.0-only
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Overhead arms "off" and "on": the recorder is composed; it runs only when on is true. Each
 note sample starts a fresh recording session (outside the timed loop) so capacity is never reached.
 fn armopen n uint on bool to bool

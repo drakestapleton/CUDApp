@@ -56,7 +56,7 @@ generators; **DRV** driver client; **MIXED** has to be split logically. Line num
 | KER | `omega_blackwell_codegen_{attn,bf16,dec,gemm,moe,moe2,pattn,pf,pfhost,qg,qmma,router,tc,tc2,tern}`, the matmul generators inside `omega_blackwell_codegen.c`, `omega_gpu_fp8_pack.c`, `omega_gpu_pfgemm.c` |
 | DRV | `nvrm/` (`nvrm.c` 908 lines, RM client against the 580.173.02 headers), `m16/`, `omega_gpu_platform_linux.c`, `omega_blackwell_engine.c`, `omega_blackwell_submit.c` |
 | MIXED | `omega_gpu_session.c` (QMD and pushbuffer construction in `omega_gpu_session_launch` :445; includes qmd/submit :18-19), `omega_gpu_cmdlist.c` (`emit_tail` :199, `emit_stamp` :219, `emit_inline_qmd` :226, PCAS method words :308-309), `omega_native_artifact.c` (packaging is TOP, QMD template bytes are ENC), every `omega_gpu_*_api.c` (tensor lifetime is TOP; inline emitters in `attention_api.c` :69-143 and `elementwise_api.c` :61-145 are KER) |
-| Already `.om` | `native/nvrm/context.om`, `native/blackwell/{trace-emit,trace,vector,launch}.om`; in the default hosted build: `om/encoder/bw_enc_sm121.om` (the instruction encoder and program NOP padding of `omega_blackwell_codegen.c`) and `om/cubin/cubin_elf.om` (the writer of `omega_cubin`), linked through the generated omega-bridge binding `src/cudapp_om_units.c`. Their C bodies build only for the freestanding target and the migration-pending oracle switches (`CUDAPP_ENCODER=c\|diff`, `CUDAPP_MIGRATION_PENDING_C_CUBIN`, `_CUBIN_DIFF`). |
+| Already `.om` | `native/nvrm/context.om`, `native/blackwell/{trace-emit,trace,vector,launch}.om`; in the default hosted build: `om/encoder/bw_enc_sm121.om`, `om/cubin/cubin_elf.om`, `om/encoder/ampere_enc_sm86.om` and `om/encoder/amp_runtime.om`. `om/units.sh` emits four separate portable `src/cudapp_om_*.c` units through the pinned omega-bridge, with source-to-C provenance in `src/cudapp_om_units.ident`. No AArch64 executable-code trampoline is needed on x86. Historical C encoder/cubin bodies remain only for freestanding or differential-oracle switches. Ampere qualification is [NOT_RUN](PORT-AMPERE.md). |
 
 Three structural defects the split removes (in the `.om` stack; the C stack is frozen, not reworked):
 
@@ -87,7 +87,7 @@ Linux today), `queue_submit(words)` (replaced by `ob_dispatch` + `ob_submit`).
 
 Code-object formats accepted by `ob_code_load`: `SM121_RAW`, `AMDGPU_HSACO`, `SPIRV_VK`, `SPIRV_CL`
 (OpenCL-environment SPIR-V: Kernel capability, Physical64 addressing, for OpenCL runtimes),
-`MSL_SOURCE`, `AARCH64`. `CUBIN` is reserved and unused while omega-mv #864 is on HOLD.
+`MSL_SOURCE`, `AARCH64`. `CUBIN` is reserved and unused. omega-mv #864 (`seed/sm80/cubin.om`) was closed unmerged; see `docs/CUBIN_WRITERS.md`.
 
 ### 3a. First pieces that exist (IMPLEMENTED; host EXERCISED; hardware NOT_RUN off the GB10)
 
@@ -140,7 +140,7 @@ faster.
 - Encodings come from Mesa NAK (MIT) plus chip tests (`THIRD_PARTY.md` §2). `docs/HOW_I_DID_IT.md` line 36
   records a preference for nvcc output where it and NAK disagree; every encoder field gets a NAK
   citation or a chip test before the GB10 encoder is declared the backend.
-- Nothing derived from omega-mv #864 (`cubin.om`) enters a backend while #864 is on HOLD.
+- Nothing derived from omega-mv #864 (`seed/sm80/cubin.om`) enters a backend. That pull request was closed unmerged on 2026-10-27. See `docs/CUBIN_WRITERS.md`.
 - AMD encodings come from AMD's published ISA reference guides; LLVM (`llvm-mc`, `llvm-readelf`) is a
   verification oracle only. The terms of the ISA guides are an open item for the IP-lawyer review.
   `backend/amd/vadd-gfx1151.s` is such an oracle fixture: it exists to test the loader, is labelled
@@ -149,5 +149,6 @@ faster.
 
 ## 7. Review
 
-See `docs/REVIEWING.md` and the proposed owners file `docs/review/CODEOWNERS.proposed` (inactive until
-human reviewers exist).
+See `docs/REVIEWING.md` and `.github/CODEOWNERS`. GitHub enforces code-owner review only after the
+default-branch ruleset requires it. That ruleset is Drake's change. `@drakestapleton` is the only
+owner until the GPU-core and IP-review teams exist and are added back with write access.

@@ -824,6 +824,22 @@ static void sim_battery(uint32_t cta_budget) {
 /* ------------------------------------------------------------------- chip */
 typedef struct { uint32_t experts, n, k, groups, x_rows; const char *name; int parity_check; } ChipPoint;
 
+/* Whether any variant-2 kernel shape (lane bytes 8 or 16, rows 1..8, warps 1..32) exists for n x k, decided from the
+ * generator's own spec rule, not from the API under test. Variant 2 keeps a warp's whole row group in one register set
+ * (rows * k / 32 <= 128 bytes), so k > 4096 is outside it (the q38 shapes, the 32768 width cap); a host-staged call on
+ * such a shape is served by the general fallback (omega_gpu_fp8_api.h: info->general = 1). Variant 1 serves every point. */
+static int v2_can_build(uint32_t n, uint32_t k) {
+    static const uint32_t lbs[2] = { 8, 16 }, rws[4] = { 1, 2, 4, 8 };
+    for (int a = 0; a < 2; a++)
+        for (int b = 0; b < 4; b++)
+            for (uint32_t w = 1; w <= 32; w++) {
+                if (n % rws[b]) continue;
+                OmegaFp8GemvSpec s = { .k = k, .lane_bytes = lbs[a], .rows = rws[b], .warps = w };
+                if (omega_fp8_gemv2_shared_bytes(&s) != 0u) return 1;
+            }
+    return 0;
+}
+
 static int g_evict = 1; /* stream 512 MB through the host caches between upload and timing (nvrm.c:433: freshly written
                           host memory is served from the CPU caches by snooping and reads faster) */
 static void evict_host_caches(void) {
@@ -1189,28 +1205,31 @@ static int chip_run(const char *out_path, uint32_t reps) {
         OmegaGpuFp8Info info; memset(&info, 0, sizeof info);
         if (rc == OMEGA_GPU_FP8_OK) rc = omega_gpu_fp8_gemv_grouped_f32(t, p->groups, ids, x, p->x_rows, y, &info);
         size_t bad = 0; double worst = rc == OMEGA_GPU_FP8_OK ? parity(&W, p->groups, ids, x, p->x_rows, y, &bad) : 1.0;
-        int ok = rc == OMEGA_GPU_FP8_OK && bad == 0;
-        /* second call: cache hit, bit-identical */
+        /* the expected path: the GEMV kernel, or (variant 2 only, outside its shape rule) the general fallback */
+        const int want_general = omega_gpu_fp8_variant() == 2 && !v2_can_build(p->n, p->k);
+        int ok = rc == OMEGA_GPU_FP8_OK && bad == 0 && (int)info.general == want_general;
+        const char *path = info.general ? "general" : "kernel";
+        /* second call: the same path, bit-identical, and a kernel cache hit when a kernel served it */
         int same = 0; OmegaGpuFp8Info i2; memset(&i2, 0, sizeof i2);
-        if (ok) { int r2 = omega_gpu_fp8_gemv_grouped_f32(t, p->groups, ids, x, p->x_rows, y2, &i2); same = r2 == OMEGA_GPU_FP8_OK && memcmp(y, y2, (size_t)p->groups * p->n * 4) == 0 && i2.kernel_cache_hit; }
-        CHECK(ok && same, "chip %s: rc=%s bad=%zu worst_rel=%.3e second-call-identical=%d (%s)", p->name, omega_gpu_fp8_rc_name(rc), bad, worst, same, omega_gpu_fp8_last_error());
-        /* timing: median of reps */
+        if (ok) { int r2 = omega_gpu_fp8_gemv_grouped_f32(t, p->groups, ids, x, p->x_rows, y2, &i2); same = r2 == OMEGA_GPU_FP8_OK && memcmp(y, y2, (size_t)p->groups * p->n * 4) == 0 && i2.general == info.general && (info.general || i2.kernel_cache_hit); }
+        CHECK(ok && same, "chip %s: rc=%s bad=%zu worst_rel=%.3e path=%s (want %s) second-call-identical=%d (%s)", p->name, omega_gpu_fp8_rc_name(rc), bad, worst, path, want_general ? "general" : "kernel", same, omega_gpu_fp8_last_error());
+        /* timing: median of reps (the kernel only; the general fallback is not this battery's measurement) */
         uint64_t *el = calloc(reps, sizeof *el), *cl = calloc(reps, sizeof *cl);
         uint32_t done = 0;
         if (g_evict) evict_host_caches();
-        for (uint32_t r = 0; r < reps && ok; r++) {
+        for (uint32_t r = 0; r < reps && ok && !info.general; r++) {
             OmegaGpuFp8Info ti; if (omega_gpu_fp8_gemv_grouped_f32(t, p->groups, ids, x, p->x_rows, y2, &ti) != OMEGA_GPU_FP8_OK) break;
             el[r] = ti.elapsed_ns; cl[r] = ti.call_ns; done++;
         }
         uint64_t med_el = 0, med_cl = 0; double gbs = 0.0, gbs_call = 0.0;
         if (done) { qsort(el, done, sizeof *el, cmp_u64); qsort(cl, done, sizeof *cl, cmp_u64); med_el = el[done / 2]; med_cl = cl[done / 2];
                     gbs = med_el ? (double)(info.weight_bytes + info.scale_bytes) / (double)med_el : 0.0; gbs_call = med_cl ? (double)(info.weight_bytes + info.scale_bytes) / (double)med_cl : 0.0; }
-        printf("chip %-32s variant=%d rc=%-9s bad=%zu worst_rel=%.3e grid=%ux%u lb=%u rows=%u warps=%u depth=%u bytes=%" PRIu64 " upload=%.1fms chip_med=%.1fus (%.1f GB/s) call_med=%.1fus (%.1f GB/s) reps=%u\n",
-               p->name, omega_gpu_fp8_variant(), omega_gpu_fp8_rc_name(rc), bad, worst, info.grid_x, info.grid_y, info.lane_bytes, info.rows_per_warp, info.warps_per_cta, info.depth,
+        printf("chip %-32s variant=%d path=%s rc=%-9s bad=%zu worst_rel=%.3e grid=%ux%u lb=%u rows=%u warps=%u depth=%u bytes=%" PRIu64 " upload=%.1fms chip_med=%.1fus (%.1f GB/s) call_med=%.1fus (%.1f GB/s) reps=%u\n",
+               p->name, omega_gpu_fp8_variant(), path, omega_gpu_fp8_rc_name(rc), bad, worst, info.grid_x, info.grid_y, info.lane_bytes, info.rows_per_warp, info.warps_per_cta, info.depth,
                info.weight_bytes + info.scale_bytes, up_ms, med_el / 1e3, gbs, med_cl / 1e3, gbs_call, done);
-        if (out) fprintf(out, "%s{\"name\":\"%s\",\"experts\":%u,\"n\":%u,\"k\":%u,\"groups\":%u,\"x_rows\":%u,\"rc\":\"%s\",\"bad\":%zu,\"worst_rel\":%.3e,\"second_call_identical\":%d,"
+        if (out) fprintf(out, "%s{\"name\":\"%s\",\"experts\":%u,\"n\":%u,\"k\":%u,\"groups\":%u,\"x_rows\":%u,\"rc\":\"%s\",\"general\":%u,\"bad\":%zu,\"worst_rel\":%.3e,\"second_call_identical\":%d,"
                          "\"variant\":%d,\"grid_x\":%u,\"grid_y\":%u,\"lane_bytes\":%u,\"rows_per_warp\":%u,\"warps_per_cta\":%u,\"depth\":%u,\"bytes\":%" PRIu64 ",\"upload_ms\":%.2f,\"chip_median_ns\":%" PRIu64 ",\"gbps_chip\":%.2f,\"call_median_ns\":%" PRIu64 ",\"gbps_call\":%.2f,\"reps\":%u,\"marker\":%u,\"evict\":%d}",
-                         first ? "" : ",", p->name, p->experts, p->n, p->k, p->groups, p->x_rows, omega_gpu_fp8_rc_name(rc), bad, worst, same,
+                         first ? "" : ",", p->name, p->experts, p->n, p->k, p->groups, p->x_rows, omega_gpu_fp8_rc_name(rc), info.general, bad, worst, same,
                          omega_gpu_fp8_variant(), info.grid_x, info.grid_y, info.lane_bytes, info.rows_per_warp, info.warps_per_cta, info.depth, info.weight_bytes + info.scale_bytes, up_ms, med_el, gbs, med_cl, gbs_call, done, info.completion_marker, g_evict);
         first = 0;
         free(el); free(cl);

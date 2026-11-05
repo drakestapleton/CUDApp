@@ -18,11 +18,14 @@
  * the caller observed completion covers everything submitted.
  */
 #include "omega_gpu_platform_linux.h"
+#include "cpu_barrier.h"
 
 #include "m16_native.h"
 #include "nvrm.h"
+#include "omega_ampere_qmd.h"
 #include "omega_gpu_mem_reserve.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -217,8 +220,39 @@ static int ref_device_close(void *ctx, OmegaGpuDeviceHandle dev) {
 
 static const char *ref_diag_text(void *ctx) { return ((LinuxRef *)ctx)->diag; }
 
-/* Developer bar D1: src/omega_gpu_mem_reserve.c, shared with the aien-gpu platform. It runs under ref_lock; every meminfo
- * open there is O_NOFOLLOW|O_NONBLOCK and must reach a regular file, so it cannot block on a FIFO or act on a device. */
+/* Developer bar D1 (docs/PAIN_POINTS.md). Shared host memory goes through src/omega_gpu_mem_reserve.c, shared with the
+ * aien-gpu platform: it runs under ref_lock, and every meminfo open there is O_NOFOLLOW|O_NONBLOCK and must reach a
+ * regular file, so it cannot block on a FIFO or act on a device. Local VRAM on a discrete GPU is checked here against
+ * the selected framebuffer's free memory, with CUDAPP_GPU_MIN_FREE_BYTES (bytes) replacing the reserve when set. */
+static int mem_reserve_check(LinuxRef *r, uint64_t bytes, int local) {
+    if (!local) return omega_gpu_mem_reserve_check(bytes, r->diag, sizeof r->diag);
+    uint64_t reserve = omega_gpu_mem_reserve_bytes();
+    const char *minimum = getenv("CUDAPP_GPU_MIN_FREE_BYTES");
+    if (minimum && *minimum) {
+        char *end = NULL;
+        errno = 0;
+        unsigned long long value = strtoull(minimum, &end, 10);
+        if (errno || !end || end == minimum || *end || *minimum == '-') {
+            snprintf(r->diag, sizeof r->diag, "dma_alloc: invalid CUDAPP_GPU_MIN_FREE_BYTES");
+            return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+        }
+        reserve = value;
+    }
+    if (!reserve) return OMEGA_GPU_PLAT_OK;
+    uint64_t avail = 0, total = 0;
+    if (bytes > UINT64_MAX - 0xfffull ||
+        nvrm_vram_info(&r->m16.rm, &avail, &total) != 0) {
+        snprintf(r->diag, sizeof r->diag, "dma_alloc: refused: selected GPU framebuffer free-memory query failed");
+        return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+    }
+    bytes = (bytes + 0xfffull) & ~0xfffull;
+    const uint64_t m[16] = {2, avail, bytes, reserve};
+    if (omega_ampere_policy(m, NULL) == 0) return OMEGA_GPU_PLAT_OK;
+    snprintf(r->diag, sizeof r->diag,
+             "dma_alloc: refused local VRAM allocation: free=%llu bytes request=%llu bytes reserve=%llu bytes; host RAM is not VRAM",
+             (unsigned long long)avail, (unsigned long long)bytes, (unsigned long long)reserve);
+    return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+}
 
 static int ref_dma_alloc(void *ctx, OmegaGpuDeviceHandle dev, const OmegaGpuBufferDesc *desc, OmegaGpuBufferHandle *out,
                          OmegaCpuView *cpu, OmegaGpuVa *gpu, OmegaGpuBusAddr *bus) {
@@ -234,17 +268,23 @@ static int ref_dma_alloc(void *ctx, OmegaGpuDeviceHandle dev, const OmegaGpuBuff
      * coherent with direct CPU mappings"). omega_gpu_mem_cached.c (OWN-30B L2) writes such a buffer from the CPU exactly once,
      * before any GPU read, then syncs; omega_gpu_devmem.h (T3b) fills them with GPU writes only. Either way no stale L2 line exists. */
     const int cached = desc->gpu_cache == OMEGA_GPU_CACHE_GPU_CACHED;
+    const int local = r->m16.rm.discrete && desc->kind != OMEGA_GPU_HANDLE_BUF_QUEUE &&
+                      !(desc->rights & OMEGA_GPU_RIGHT_HOST_POLLED);
+    /* Cached host/BAR alias maintenance is not yet exposed for Ampere. Do not
+     * silently use the GB10-only SYSMEM_NCOH invalidation for local framebuffer. */
+    if (rc == OMEGA_GPU_PLAT_OK && local && cached) rc = OMEGA_GPU_PLAT_REFUSED_CACHE_POLICY;
     if (rc == OMEGA_GPU_PLAT_OK && cached &&
         (desc->kind != OMEGA_GPU_HANDLE_BUF_DATA || (desc->rights & (OMEGA_GPU_RIGHT_CPU_READ | OMEGA_GPU_RIGHT_HOST_POLLED))))
         rc = OMEGA_GPU_PLAT_REFUSED_CACHE_POLICY;
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "dma_alloc"); ref_unlock(r); return rc; }
-    rc = omega_gpu_mem_reserve_check(desc->bytes, r->diag, sizeof r->diag); /* D1: before any slot or driver call; the sentence is in r->diag */
+    rc = mem_reserve_check(r, desc->bytes, local); /* D1 before handle/driver allocation; the sentence is in r->diag */
     if (rc != OMEGA_GPU_PLAT_OK) { ref_unlock(r); return rc; }
     uint32_t idx = 0, gen = 0;
     rc = omega_gpu_handles_open(&r->t, desc->kind, desc->bytes, LINUX_REF_BUFFERS, g_caps.max_total_bytes, &idx, &gen);
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "dma_alloc"); ref_unlock(r); return rc; }
     NvrmMem m;
-    if ((cached ? nvrm_alloc(&r->m16.rm, desc->bytes, &m) : nvrm_alloc_gpu_uncached(&r->m16.rm, desc->bytes, &m)) != 0) {
+    if ((local ? nvrm_alloc_vram(&r->m16.rm, desc->bytes, &m) :
+         cached ? nvrm_alloc(&r->m16.rm, desc->bytes, &m) : nvrm_alloc_gpu_uncached(&r->m16.rm, desc->bytes, &m)) != 0) {
         (void)omega_gpu_handles_close(&r->t, idx, gen, desc->kind); /* this slot never got memory: its generation moves on */
         rc = refuse(r, OMEGA_GPU_PLAT_REFUSED_DEVICE, cached ? "nvrm_alloc" : "nvrm_alloc_gpu_uncached");
         ref_unlock(r);
@@ -271,7 +311,11 @@ static int ref_dma_free(void *ctx, OmegaGpuBufferHandle b) {
     for (uint32_t i = 0; rc == OMEGA_GPU_PLAT_OK && i + 1u < r->nchan; i++)
         if (r->xq[i].generation != 0u && r->xring[i].handle == r->mem[b.index].handle) rc = OMEGA_GPU_PLAT_REFUSED_BUSY;
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "dma_free"); ref_unlock(r); return rc; }
-    (void)nvrm_free(&r->m16.rm, &r->mem[b.index]);
+    if (nvrm_free(&r->m16.rm, &r->mem[b.index]) != 0) {
+        rc = refuse(r, OMEGA_GPU_PLAT_REFUSED_DEVICE, "nvrm_free (allocation retained for cleanup)");
+        ref_unlock(r);
+        return rc;
+    }
     (void)omega_gpu_handles_close(&r->t, b.index, b.generation, kind);
     memset(&r->mem[b.index], 0, sizeof r->mem[b.index]);
     r->rights[b.index] = 0;
@@ -281,11 +325,7 @@ static int ref_dma_free(void *ctx, OmegaGpuBufferHandle b) {
 }
 
 static void barrier(void) {
-#if defined(__aarch64__)
-    __asm__ volatile("dsb sy" ::: "memory");
-#else
-    __sync_synchronize();
-#endif
+    nvrm_cpu_barrier();
 }
 
 static int ref_sync(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint64_t len, const char *stage, int to_gpu) {
@@ -388,7 +428,7 @@ static int ref_queue_submit(void *ctx, OmegaGpuQueueHandle q, const uint32_t *wo
             uint32_t *dst = ring->cpu;
             if (xpre) memcpy(dst, L2_INVAL_PREFIX, sizeof L2_INVAL_PREFIX);
             memcpy(dst + xpre, words, (size_t)nwords * 4u);
-            __asm__ volatile("dsb sy" ::: "memory");
+            barrier();
             if (nvrm_chan_submit(&r->m16.rm, (uint32_t)slot + 1u, ring, 0, nwords + xpre) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
             else { r->x_l2_pending[slot] = 0; r->xinflight[slot]++; }
         }
@@ -473,4 +513,19 @@ static const OmegaGpuPlatform g_platform = {
 const OmegaGpuPlatform *omega_gpu_platform_linux(OmegaGpuPlatformCaps *caps) {
     if (caps) *caps = g_caps;
     return &g_platform;
+}
+
+uint32_t omega_gpu_platform_linux_target_sm(void) {
+    ref_lock(&g_ref);
+    const uint32_t target = g_ref.dev.generation ?
+        (g_ref.m16.rm.target_sm ? g_ref.m16.rm.target_sm : 121u) : 0;
+    ref_unlock(&g_ref);
+    return target;
+}
+
+int omega_gpu_platform_linux_vram_info(uint64_t *free_bytes, uint64_t *total_bytes) {
+    ref_lock(&g_ref);
+    int rc = g_ref.dev.generation ? nvrm_vram_info(&g_ref.m16.rm, free_bytes, total_bytes) : -1;
+    ref_unlock(&g_ref);
+    return rc;
 }

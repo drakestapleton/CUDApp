@@ -7,9 +7,13 @@
 #include "omega_gpu_engine.h"
 #include "m16_native.h"
 #include "omega_gpu_wait.h"
+#include "cpu_barrier.h"
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include "omega_gpu_code_alloc.h"
@@ -29,12 +33,25 @@ static uint64_t current_time_ns(void) {
     return (uint64_t)t.tv_sec * 1000000000ULL + (uint64_t)t.tv_nsec;
 }
 
+/* Production entry points run on AArch64. The host simulator defines
+ * OMEGA_BLACKWELL_HOST_SIMULATOR and keeps the argument checks below. */
+static int bw_refuse_non_aarch64(void)
+{
+#if !defined(__aarch64__) && !defined(OMEGA_BLACKWELL_HOST_SIMULATOR)
+    errno = ENOTSUP;
+    return -1;
+#else
+    return 0;
+#endif
+}
+
 int omega_blackwell_execute_vector(const OmegaVectorSpec *spec,
                                   const OmegaBlackwellRealization *real,
                                   const uint32_t *h_a,
                                   const uint32_t *h_b,
                                   uint32_t *h_c_out,
                                   OmegaBlackwellVectorExecution *exec_info) {
+    if (bw_refuse_non_aarch64() != 0) return -1;
     if (!spec || !real || !h_a || !h_b || !h_c_out) return -1;
     uint32_t n = spec->element_count;
     if (n == 0) return -1;
@@ -165,6 +182,7 @@ int omega_blackwell_execute_matmul(const OmegaMatMulSpec *spec,
                                   const uint32_t *h_b,
                                   uint32_t *h_c_out,
                                   OmegaBlackwellMatMulExecution *exec_info) {
+    if (bw_refuse_non_aarch64() != 0) return -1;
     if (!spec || !kernel || !h_a || !h_b || !h_c_out) return -1;
     if (!kernel->code || kernel->code_size == 0) return -1;
     if (spec->m == 0 || spec->k == 0 || spec->n == 0) return -1;
@@ -281,7 +299,7 @@ int omega_blackwell_execute_matmul(const OmegaMatMulSpec *spec,
     *hsem = 0;
     *hmarker = 0;
     *hmarker2 = 0;
-    __asm__ volatile("dsb sy" ::: "memory");
+    nvrm_cpu_barrier();
 
     /* Assemble unified pushbuffer */
     uint32_t pb[1024];
@@ -374,7 +392,7 @@ int omega_blackwell_execute_matmul(const OmegaMatMulSpec *spec,
     /* Wait for hardware completion marker */
     /* CHIPWAIT-2: marker with marker2 required (C3: the second release lands only after the L2 flush). */
     if (bw_wait_one(__func__, "marker", hmarker, OMEGA_BW_MARKER_COMPLETION_PAYLOAD, hmarker2, OMEGA_BW_MARKER2_PAYLOAD) != 0) { m16_native_close(&ctx); return -1; }
-    __asm__ volatile("dsb sy" ::: "memory");
+    nvrm_cpu_barrier();
     uint64_t t_end = current_time_ns();
 
     /* Validate intermediate semaphore updated to 6 */
@@ -420,6 +438,7 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
                                          OmegaBlackwellMatMulExecution *exec_info,
                                          float *out_max_abs_err,
                                          float *out_max_rel_err) {
+    if (bw_refuse_non_aarch64() != 0) return -1;
     if (!spec || !kernel || !h_a || !h_b || !h_c_out) return -1;
     if (!kernel->code || kernel->code_size == 0) return -1;
     if (spec->m == 0 || spec->k == 0 || spec->n == 0) return -1;
@@ -538,7 +557,7 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
     *hsem = 0;
     *hmarker = 0;
     *hmarker2 = 0;
-    __asm__ volatile("dsb sy" ::: "memory");
+    nvrm_cpu_barrier();
 
     uint32_t pb[1024];
     size_t pb_len = 0;
@@ -619,7 +638,7 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
 
     /* CHIPWAIT-2: marker with marker2 required (C3: the second release lands only after the L2 flush). */
     if (bw_wait_one(__func__, "marker", hmarker, OMEGA_BW_MARKER_COMPLETION_PAYLOAD, hmarker2, OMEGA_BW_MARKER2_PAYLOAD) != 0) { m16_native_close(&ctx); return -1; }
-    __asm__ volatile("dsb sy" ::: "memory");
+    nvrm_cpu_barrier();
     uint64_t t_end = current_time_ns();
 
     if (*hsem != OMEGA_BW_SEMAPHORE_INTERMEDIATE_DONE) { m16_native_close(&ctx); return -1; }
@@ -668,43 +687,101 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
     return (mismatches == 0) ? 0 : -1;
 }
 
-int omega_blackwell_verify_zero_libcuda_linkage(const char *binary_path) {
-    char cmd[512];
-    if (binary_path) {
-        snprintf(cmd, sizeof(cmd), "ldd %s 2>/dev/null", binary_path);
-    } else {
-        snprintf(cmd, sizeof(cmd), "ldd /proc/self/exe 2>/dev/null");
+/* stdout of argv, stderr discarded. -1 is a pipe or fork failure, the same
+ * class as a failed popen. The child exits 127 when exec fails, and the
+ * caller then sees an empty stream, as it did when the shell could not run
+ * the tool. binary_path is one argv element: it is not a shell command. */
+struct tool_stdout {
+    FILE *out;
+    pid_t pid;
+};
+
+static int spawn_tool_stdout(char *const argv[], struct tool_stdout *sp) {
+    int fds[2];
+    pid_t pid;
+
+    /* O_CLOEXEC matches glibc popen: a fork in another thread must not inherit the pipe. */
+    if (pipe2(fds, O_CLOEXEC) != 0) return -1;
+    pid = fork();
+    if (pid < 0) {
+        close(fds[0]);
+        close(fds[1]);
+        return -1;
     }
+    if (pid == 0) {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) {
+            dup2(devnull, STDERR_FILENO);
+            if (devnull != STDERR_FILENO) close(devnull);
+        }
+        if (dup2(fds[1], STDOUT_FILENO) < 0) _exit(127);
+        close(fds[0]);
+        if (fds[1] != STDOUT_FILENO) close(fds[1]);
+        execvp(argv[0], argv);
+        _exit(127);
+    }
+    close(fds[1]);
+    sp->out = fdopen(fds[0], "r");
+    if (!sp->out) {
+        close(fds[0]);
+        while (waitpid(pid, NULL, 0) < 0 && errno == EINTR) {}
+        return -1;
+    }
+    sp->pid = pid;
+    return 0;
+}
 
-    FILE *f = popen(cmd, "r");
-    if (!f) return -1;
+static void finish_tool_stdout(struct tool_stdout *sp) {
+    fclose(sp->out);
+    while (waitpid(sp->pid, NULL, 0) < 0 && errno == EINTR) {}
+}
 
+int omega_blackwell_verify_zero_libcuda_linkage(const char *binary_path) {
+    const char *path = binary_path ? binary_path : "/proc/self/exe";
+    char *path_arg = strdup(path);
+    char *argv[3];
+    struct tool_stdout sp;
     char line[512];
     bool found_cuda = false;
-    while (fgets(line, sizeof(line), f)) {
+
+    if (!path_arg) return -1;
+    argv[0] = "ldd";
+    argv[1] = path_arg;
+    argv[2] = NULL;
+    if (spawn_tool_stdout(argv, &sp) != 0) {
+        free(path_arg);
+        return -1;
+    }
+    free(path_arg);
+    while (fgets(line, sizeof(line), sp.out)) {
         if (strstr(line, "libcuda.so") || strstr(line, "libcudart.so")) {
             found_cuda = true;
             break;
         }
     }
-    pclose(f);
+    finish_tool_stdout(&sp);
     return found_cuda ? -1 : 0;
 }
 
 int omega_blackwell_verify_zero_cuda_symbols(const char *binary_path) {
-    char cmd[512];
-    if (binary_path) {
-        snprintf(cmd, sizeof(cmd), "nm -u %s 2>/dev/null", binary_path);
-    } else {
-        snprintf(cmd, sizeof(cmd), "nm -u /proc/self/exe 2>/dev/null");
-    }
-
-    FILE *f = popen(cmd, "r");
-    if (!f) return -1;
-
+    const char *path = binary_path ? binary_path : "/proc/self/exe";
+    char *path_arg = strdup(path);
+    char *argv[4];
+    struct tool_stdout sp;
     char line[512];
     bool found_cuda_sym = false;
-    while (fgets(line, sizeof(line), f)) {
+
+    if (!path_arg) return -1;
+    argv[0] = "nm";
+    argv[1] = "-u";
+    argv[2] = path_arg;
+    argv[3] = NULL;
+    if (spawn_tool_stdout(argv, &sp) != 0) {
+        free(path_arg);
+        return -1;
+    }
+    free(path_arg);
+    while (fgets(line, sizeof(line), sp.out)) {
         char sym[256];
         if (sscanf(line, " %*s %255s", sym) == 1 || sscanf(line, "%255s", sym) == 1) {
             if (strncmp(sym, "cu", 2) == 0 || strncmp(sym, "cuda", 4) == 0) {
@@ -713,7 +790,7 @@ int omega_blackwell_verify_zero_cuda_symbols(const char *binary_path) {
             }
         }
     }
-    pclose(f);
+    finish_tool_stdout(&sp);
     return found_cuda_sym ? -1 : 0;
 }
 

@@ -1,7 +1,10 @@
 # Reviewing CUDApp changes
 
-**Status:** PROPOSED (2026-10-27). The rules in section 1 restate what already binds agent lanes. Section 2
-takes effect only when Drake activates `docs/review/CODEOWNERS.proposed` and the matching GitHub ruleset.
+**Status:** The owners file is `.github/CODEOWNERS` (2026-11-02). `@drakestapleton` is the only owner.
+The GPU-core and IP-review team handles were removed because GitHub reported them as unknown owners.
+They can be re-added once those teams are created with write access. Section 1 binds every pull request.
+Section 2 is the review for the paths in that file. GitHub enforces it only when the default-branch
+ruleset requires one approval and code-owner review. That ruleset is Drake's decision and is not changed here.
 
 ## 1. Every pull request
 
@@ -16,10 +19,12 @@ takes effect only when Drake activates `docs/review/CODEOWNERS.proposed` and the
    not interchangeable. Host or emulator results are not hardware qualification. Inferences are marked
    `[INFERENCE]`. Public wording comes from the verified claims ledger with its limit clause.
 
-## 2. Core paths (after activation)
+## 2. Core paths
 
-A PR touching a path listed in `docs/review/CODEOWNERS.proposed` also needs **one approving review from
-a human reviewer** in the owning group, in addition to section 1. The groups are:
+A PR touching a path listed in `.github/CODEOWNERS` also needs **one approving review from
+@drakestapleton**, in addition to section 1. The GPU-core and IP-review teams are not owners.
+They can be re-added once those teams are created with write access. Until then the checklists below
+are the review he applies to those paths:
 
 | Group | Paths | Reviewer checks |
 |---|---|---|
@@ -35,7 +40,7 @@ a human reviewer** in the owning group, in addition to section 1. The groups are
   disagree (`docs/HOW_I_DID_IT.md`, steps 1-2); those fields keep that record until each gets a NAK
   citation or a chip test. `nvdisasm` may be used only as a
   read-only checker of words we produced.
-- **No HOLD material.** Nothing derived from omega-mv #864 (`cubin.om`) while it is on HOLD.
+- **No material from omega-mv #864.** Nothing derived from `seed/sm80/cubin.om` (branch `ck/cubin-om` at `76639738`, closed unmerged 2026-10-27) enters this repository. See `docs/CUBIN_WRITERS.md`.
 - **Negative control.** A deliberately broken kernel or input is refused or detected by the change's own
   test.
 - **Cache and coherence.** Anything the CPU polls for a GPU write is GPU-uncached; flush and invalidate
@@ -58,5 +63,6 @@ a human reviewer** in the owning group, in addition to section 1. The groups are
 
 ## 3. Enforcement
 
-GitHub enforces section 2 only through a ruleset that requires code-owner review on the default branch.
-Changing rulesets is Drake's decision. Until then section 2 is followed by convention.
+GitHub enforces section 2 only through a ruleset that requires one approval and code-owner review on
+the default branch. Changing rulesets is Drake's decision. The owners file is `.github/CODEOWNERS`.
+Until that ruleset is in place, section 2 is followed by convention.

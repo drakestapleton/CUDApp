@@ -376,6 +376,20 @@ int nvrm_alloc_gpu_uncached(Nvrm *rm, uint64_t size, NvrmMem *out)
     return nvrm_alloc(rm, size, out);
 }
 
+/* Explicit simulated framebuffer oracle for Linux D1 tests. No host RAM query. */
+uint64_t fake_vram_free = 8ull << 30, fake_vram_total = 8ull << 30;
+int fake_vram_query_fail, fake_vram_allocs;
+int nvrm_vram_info(Nvrm *rm, uint64_t *free_bytes, uint64_t *total_bytes) {
+    if (!rm || !rm->discrete || fake_vram_query_fail || !free_bytes || !total_bytes) return -1;
+    *free_bytes = fake_vram_free; *total_bytes = fake_vram_total;
+    return 0;
+}
+int nvrm_alloc_vram(Nvrm *rm, uint64_t size, NvrmMem *out) {
+    if (!rm || !rm->discrete) return -1;
+    fake_vram_allocs++;
+    return nvrm_alloc_gpu_uncached(rm, size, out);
+}
+
 int nvrm_free(Nvrm *rm, NvrmMem *m)
 {
     if (!m || m->handle == 0) return 0; /* a zeroed NvrmMem is a no-op (nvrm.h) */
@@ -399,6 +413,7 @@ int m16_native_submit_methods(M16NativeContext *ctx, const uint32_t *methods, si
     if (!ctx || !methods || count == 0) return -1;
     fk.submit_calls++;
     logev(FK_EV_SUBMIT, count, 0, 0);
+    if (fk.submit_fail && fk.submit_faults_device) ctx->rm.faulted = 1;
     if (!fk.channel_up || fk.submit_fail) return inject(&ctx->rm, -1);
     /* Like m16_native_enqueue_methods: the words must fit the ring buffer. */
     if (count > ctx->pb_mem.size / sizeof(uint32_t) || count > FK_PB_MAX) return inject(&ctx->rm, -1);

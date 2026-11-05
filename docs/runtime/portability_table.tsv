@@ -43,6 +43,8 @@ src/omega_blackwell_codegen_tc2.c	CHIP_SPECIFIC	Generates the tensor-core groupe
 src/omega_blackwell_codegen_tc2.h	CHIP_SPECIFIC	Interface of the tensor-core GEMM v2 generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tc.c	CHIP_SPECIFIC	Generates tensor-core kernels (HMMA.16816 fragment layout) as sm_121 machine code.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tc.h	CHIP_SPECIFIC	Interface of the tensor-core kernel generators; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
+src/omega_blackwell_codegen_tgemm.c	CHIP_SPECIFIC	Generates the device-resident bf16 training GEMM (trainer lane E1) as sm_121 machine code.	NO_HOSTED_INCLUDE
+src/omega_blackwell_codegen_tgemm.h	CHIP_SPECIFIC	Interface of the training GEMM generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tern.c	CHIP_SPECIFIC	Generates the ternary W2A8 GEMV as sm_121 machine code.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tern.h	CHIP_SPECIFIC	Interface of the ternary GEMV generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_blackwell_encoder.c	CHIP_SPECIFIC	The sm_121 machine-code encoder: packs instructions into 16-byte words. OS-free (in the freestanding closure) but the words it writes are Blackwell's.	FREESTANDING_PROVEN
@@ -121,6 +123,8 @@ src/omega_gpu_session.c	CHIP_SPECIFIC	The persistent session over OmegaGpuPlatfo
 src/omega_gpu_session.h	CHIP_SPECIFIC	Session exposes QMD scratch, register-count rules and QMD shared-memory default 1024, plus the GB10 two-marker/L2 flush launch protocol; platform handles remove OS types, not chip assumptions.	NO_HOSTED_INCLUDE
 src/omega_gpu_tcgemm_api.c	CHIP_SPECIFIC	Launches the tensor-core GEMM through the session.	HOSTED_LIBC
 src/omega_gpu_tcgemm_api.h	CHIP_SPECIFIC	Tensor-core GEMM API; includes omega_blackwell_codegen_tc.h.	NO_HOSTED_INCLUDE
+src/omega_gpu_tgemm_api.c	CHIP_SPECIFIC	Launches the device-resident bf16 training GEMM through the prefill kernel cache.	NO_HOSTED_INCLUDE
+src/omega_gpu_tgemm_api.h	CHIP_SPECIFIC	Training GEMM API; includes omega_blackwell_codegen_tgemm.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_tern_api.c	CHIP_SPECIFIC	Launches the ternary GEMV with GPU-cached weights through a command list.	HOSTED_LIBC
 src/omega_gpu_tern_api.h	CHIP_SPECIFIC	Ternary GEMV API; includes omega_blackwell_codegen_tern.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_wait.c	PORTABLE	Bounded wait with a caller-supplied clock and hooks; no default clock in the freestanding build. Builds in make gpu-engine-freestanding.	FREESTANDING_PROVEN

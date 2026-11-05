@@ -1,0 +1,17 @@
+sha 87d795b4446a762a0b12e05721f41b8abbde0c36
+fresh clone
+make test-native-artifact
+EXIT 0
+test_gpu_artifact_export: 47 checks, 0 failed
+make zero-cuda-gate
+EXIT 0
+ZERO_CUDA SELF-TEST PASS (CUDA probe rejected, clean library accepted)
+ZERO_CUDA PASS build/hello_gpu needs=[libm.so.6 libc.so.6]
+ZERO_CUDA PASS build/gpu_matmul_api_test needs=[libc.so.6]
+build/hello_gpu --sim
+EXIT 0
+PASS
+checked 1048576 of 1048576 elements: 0 wrong, 0 never written
+make doctor
+EXIT 2
+NOT READY: 5 problems above

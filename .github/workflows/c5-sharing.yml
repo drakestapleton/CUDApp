@@ -14,14 +14,14 @@ jobs:
   build:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: sh tools/c5/build.sh
       - run: ./build/gpu_isolation_test --host-only
       - run: sh tools/c5/selftest.sh
       - run: sha256sum build/gpu_isolation_test build/gpu_isolation_test_mutant build/c5_matrix | tee build/c5.sha256
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: c5-sharing-${{ github.event.pull_request.head.sha || github.sha }}
           path: |

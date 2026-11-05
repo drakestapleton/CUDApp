@@ -65,6 +65,7 @@ struct OmegaGpuCmdList {
     uint64_t epoch;        /* normal close/reopen also invalidates device handles */
     uint64_t record_generation; /* advanced only by generated policy on safe reset */
     NativeRef *native;    /* per-launch exact code ownership, metadata only */
+    uint8_t *seal_cache;  /* optional per-slot normalized byte memo; no ownership authority */
 };
 
 static uint64_t next_record_generation(uint64_t previous) {
@@ -182,6 +183,7 @@ int omega_gpu_cmdlist_create(uint32_t cap, OmegaGpuCmdList **out) {
     cl->indep = omega_gpu_host_calloc(cap, 1);
     cl->wait_va = omega_gpu_host_calloc(cap, sizeof *cl->wait_va);
     cl->native = omega_gpu_host_calloc(cap, sizeof *cl->native);
+    cl->seal_cache = omega_gpu_host_calloc(cap, 2048u);
     int rc = cl->words && cl->indep && cl->wait_va && cl->native ? 0 : -1;
     omega_gpu_session_lock();
     if (rc == 0 && !omega_gpu_session_open()) rc = -1;
@@ -216,6 +218,7 @@ void omega_gpu_cmdlist_free(OmegaGpuCmdList *cl) {
     omega_gpu_host_free(cl->indep);
     omega_gpu_host_free(cl->wait_va);
     omega_gpu_host_free(cl->native);
+    omega_gpu_host_free(cl->seal_cache);
     omega_gpu_host_free(cl);
 }
 
@@ -253,8 +256,13 @@ static int add_recorded(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L, NativeRef 
     memcpy(qs + 0x200, q0, sizeof q0);
     if (pending) {
         uint64_t result = 0;
-        if (omega_native_mcseal(&result, bank, OMEGA_GPU_CMDLIST_BANK_BYTES,
-            qs, OMEGA_GPU_CMDLIST_QMD_BYTES, L->n_args, pending->intent_seal, 32) != OMEGA_OK ||
+        uint32_t seal_rc = cl->seal_cache ?
+            omega_native_mcreseal(&result, bank, OMEGA_GPU_CMDLIST_BANK_BYTES,
+                qs, OMEGA_GPU_CMDLIST_QMD_BYTES, L->n_args,
+                cl->seal_cache + (size_t)i * 2048u, 2048u, pending->intent_seal, 32) :
+            omega_native_mcseal(&result, bank, OMEGA_GPU_CMDLIST_BANK_BYTES,
+                qs, OMEGA_GPU_CMDLIST_QMD_BYTES, L->n_args, pending->intent_seal, 32);
+        if (seal_rc != OMEGA_OK ||
             result != 0) return -1;
         pending->n_args = L->n_args;
         pending->code_va = L->code_va;

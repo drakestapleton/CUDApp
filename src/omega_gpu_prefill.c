@@ -45,10 +45,9 @@ int omega_gpu_pf_open_locked(void) {
 void omega_gpu_pf_stats(uint64_t *chip_ns, uint64_t *launches) { if (chip_ns) *chip_ns = g.chip_ns; if (launches) *launches = g.launches; }
 void omega_gpu_pf_stats_reset(void) { g.chip_ns = 0; g.launches = 0; }
 
-int omega_gpu_pf_alloc_dev(size_t bytes, OmegaGpuMem *out) {
+int omega_gpu_pf_alloc_dev_locked(size_t bytes, OmegaGpuMem *out) {
     if (!out || bytes == 0) return OMEGA_GPU_PF_BAD_ARGS;
     memset(out, 0, sizeof *out);
-    omega_gpu_session_lock();
     int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK) {
         OmegaGpuSession *s = omega_gpu_session_open();
@@ -64,6 +63,11 @@ int omega_gpu_pf_alloc_dev(size_t bytes, OmegaGpuMem *out) {
             omega_gpu_session_set_error(e); memset(out, 0, sizeof *out); rc = OMEGA_GPU_PF_CHIP_FAIL;
         } else { out->kind = OMEGA_GPU_HANDLE_BUF_DATA; out->cpu = cpu.ptr; out->va = va.va; out->size = cpu.len; }
     }
+    return rc;
+}
+int omega_gpu_pf_alloc_dev(size_t bytes, OmegaGpuMem *out) {
+    omega_gpu_session_lock();
+    int rc = omega_gpu_pf_alloc_dev_locked(bytes, out);
     omega_gpu_session_unlock();
     return rc;
 }
@@ -88,12 +92,18 @@ int omega_gpu_pf_kernel_locked(const OmegaPfKey *key, OmegaPfGen gen, OmegaPfKer
     size_t need = cg == 0 ? omega_bw_program_code_bytes(prog) : 0;
     if (cg != 0 || need == 0) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill codegen refused the shape"); return OMEGA_GPU_PF_CODEGEN_FAIL; }
     const uint32_t peak = prog->regalloc.peak_gpr_usage, decl = omega_bw_gpr_declared(peak);
-    if (decl > 128u) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill kernel: more than 128 registers"); return OMEGA_GPU_PF_TOO_LARGE; }
+    /* Preserve the old 128-register declaration unless codegen explicitly opted
+     * into more. The allocator's hardware limit leaves declaration headroom;
+     * launch/record below independently enforce registers times threads.
+     * Blackwell Tuning Guide, physical page 13: 255/thread, 64K per SM. */
+    const uint32_t limit = prog->regalloc.gpr_limit ? prog->regalloc.gpr_limit : BW_PHYS_GPR_MAX - 2u;
+    if (limit > BW_PHYS_GPR_HW_LIMIT || peak > limit || !omega_bw_gpr_declared_ok(decl, peak)) {
+        omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill kernel: register budget exceeded"); return OMEGA_GPU_PF_TOO_LARGE;
+    }
     OmegaGpuMem code;
     if (omega_gpu_session_alloc_code(need, &code) != 0) { omega_gpu_host_free(prog); return OMEGA_GPU_PF_CHIP_FAIL; }
     OmegaBlackwellKernel kernel;
     cg = omega_blackwell_kernel_encode_into(prog, code.cpu, need, &kernel);
-    if (cg == 0 && omega_tc_patch_code(prog, code.cpu, need) < 0) cg = -1;
     if (cg == 0 && omega_qmma_patch_code(prog, code.cpu, need) < 0) cg = -1;
     omega_gpu_host_free(prog);
     if (cg != 0 || kernel.code_size != need) { omega_gpu_session_free(&code); omega_gpu_session_set_error("prefill encode failed"); return OMEGA_GPU_PF_CODEGEN_FAIL; }
@@ -148,10 +158,16 @@ static int copy_locked(uint64_t dst, uint64_t src, size_t bytes) {
     }
     return rc;
 }
-int omega_gpu_pf_copy_va(uint64_t dst_va, uint64_t src_va, size_t bytes) {
-    omega_gpu_session_lock();
+int omega_gpu_pf_copy_va_locked(uint64_t dst_va, uint64_t src_va, size_t bytes, uint64_t *chip_ns) {
+    const uint64_t before = g.chip_ns;
     int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK) rc = copy_locked(dst_va, src_va, bytes);
+    if (chip_ns) *chip_ns = g.chip_ns - before;
+    return rc;
+}
+int omega_gpu_pf_copy_va(uint64_t dst_va, uint64_t src_va, size_t bytes) {
+    omega_gpu_session_lock();
+    int rc = omega_gpu_pf_copy_va_locked(dst_va, src_va, bytes, NULL);
     omega_gpu_session_unlock();
     return rc;
 }

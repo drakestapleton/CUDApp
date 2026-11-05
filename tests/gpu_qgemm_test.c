@@ -214,8 +214,12 @@ static float qemu_phys(const QProb *p, uint32_t i, uint32_t c) {
     }
     return acc;
 }
+/* the kernel's SwiGLU epilogue (omega_blackwell_codegen_qg.c: FMNMX t-cap, MUFU.EX2, MUFU.RCP). Both MUFU results go
+ * through the chip's flush rule (tests/bw_mufu_ftz.h, omega #462). Not observable with the t-cap: t <= 125 keeps
+ * 1 / (2^t + 1) >= 2^-125 normal, and an EX2 result below 2^-126 (t < -126) rounds to the same d = 1.0 after the +1 as
+ * its flushed zero; qg_host checks this bit for bit. Removing the cap (issue #462) is a separate chip-gated change. */
 static uint16_t qswiglu_bits(float g, float u) {
-    float t = fminf(g * u2f(0xbfb8aa3bu), 125.0f), ex = exp2f(t), d = ex + 1.0f, r = 1.0f / d, o = g * r;
+    float t = fminf(g * u2f(0xbfb8aa3bu), 125.0f), ex = ws_mufu_ex2(t), d = ex + 1.0f, r = ws_mufu_rcp(d), o = g * r;
     o = o * u;
     return bf16_rn(o);
 }
@@ -256,8 +260,53 @@ static size_t qcompare(const QProb *p, const void *y, const uint32_t *rows, uint
     return bad;
 }
 
+/* omega #462: with the t-cap the MUFU flush never changes a SwiGLU output bit. Compare qswiglu_bits against the IEEE
+ * form over every g in [80, 110] and [-110, -80] (the EX2-subnormal window t in (-150, -126] and the cap t = 125, both
+ * signs) plus a stride-65537 sample of all f32. Not a red test: there is no input for which the two differ. */
+static int qg_mufu_ftz_unobservable(void) {
+    uint64_t n = 0, diff = 0;
+    const float us[2] = { 1.0f, -3.0f };
+    for (int pass = 0; pass < 3; pass++) {
+        uint64_t lo = pass == 0 ? f2u(80.0f) : pass == 1 ? f2u(-80.0f) : 0, hi = pass == 0 ? f2u(110.0f) : pass == 1 ? f2u(-110.0f) : 0xffffffffull, step = pass == 2 ? 65537 : 1;
+        for (uint64_t b = lo; b <= hi; b += step) {
+            float g = u2f((uint32_t)b);
+            if (isnan(g)) continue;
+            float t = fminf(g * u2f(0xbfb8aa3bu), 125.0f), r = 1.0f / (exp2f(t) + 1.0f);
+            for (int k = 0; k < 2; k++) { n++; if (bf16_rn((g * r) * us[k]) != qswiglu_bits(g, us[k])) diff++; }
+        }
+    }
+    printf("%s qgemm SwiGLU: MUFU flush vs IEEE, %llu inputs, %llu differ (t-cap keeps it unobservable, #462)\n", diff ? "FAIL" : "PASS", (unsigned long long)n, (unsigned long long)diff);
+    return diff ? 1 : 0;
+}
+static int qg128_host(void) {
+    const uint32_t dims[][3] = {
+        {16384,5120,OMEGA_QG_EPI_F32}, {14336,5120,OMEGA_QG_EPI_F32},
+        {5120,6144,OMEGA_QG_EPI_F32}, {34816,5120,OMEGA_QG_EPI_SWIGLU},
+        {5120,17408,OMEGA_QG_EPI_F32}
+    };
+    int fail=0;
+    for (size_t c=0;c<sizeof dims/sizeof dims[0];c++) {
+        BlackwellIRProgram p;
+        OmegaQgSpec sp={dims[c][1],8,8,dims[c][2],1,dims[c][0],45,0,0};
+        int rc=omega_blackwell_codegen_qgemm_prog(&sp,&p);
+        if (rc) {printf("FAIL 128-row real-shape generation %zu\n",c);fail++;continue;}
+        uint32_t declared=omega_bw_gpr_declared(p.regalloc.peak_gpr_usage), maxstore=0, stores=0;
+        for(size_t j=0;j<p.count;j++) if(p.insns[j].op==BW_IR_STG_E) {
+            if(p.insns[j].imm>maxstore)maxstore=p.insns[j].imm;
+            stores++;
+        }
+        int ok=stores && maxstore<=8388607u && p.regalloc.peak_gpr_usage<=BW_PHYS_GPR_HW_LIMIT
+            && declared>=p.regalloc.peak_gpr_usage+2u && (uint64_t)declared*256u<=65536u;
+        printf("%s 128-row shape %zu peak %u declared %u max-store %u\n",ok?"PASS":"FAIL",c,p.regalloc.peak_gpr_usage,declared,maxstore);
+        if(!ok)fail++;
+    }
+    OmegaQgSpec bad={128,8,8,OMEGA_QG_EPI_F32,1,17536,45,0,0};
+    if(omega_qg_spec_ok(&bad)){printf("FAIL out-of-range store admitted\n");fail++;}
+    return fail;
+}
+
 static int qg_host(void) {
-    int fail = 0;
+    int fail = qg_mufu_ftz_unobservable() + qg128_host();
     for (uint32_t layout = 0; layout < 3; layout += 2) {
         QProb p; qprob_make(&p, 3, 256, 384, 40, 17, layout, 0, 0);
         double worst = 0;
@@ -291,7 +340,7 @@ static int qg_sim_run(const QProb *p, const OmegaQgSpec *sp, int order, void *y,
     s.p = &prog; s.threads = 32u * sp->warps; s.smem = smem; s.smem_bytes = omega_qg_shared_bytes(sp); s.order = order;
     const uint64_t a[5] = { (uintptr_t)tiles, sp->direct ? 0 : (uintptr_t)ridx, (uintptr_t)p->xq, (uintptr_t)y, (uintptr_t)p->xs };
     for (int i = 0; i < 5; i++) { s.cbank[(0x380 + 8 * i) / 4] = (uint32_t)a[i]; s.cbank[(0x380 + 8 * i) / 4 + 1] = (uint32_t)(a[i] >> 32); }
-    s.cbank[0x3a8 / 4] = p->n;
+    s.cbank[0x3a8 / 4] = p->n; s.cbank[0x3ac / 4] = nt;
     const size_t XR = p->xr + p->pad;
     s.ranges[0].lo = (uintptr_t)tiles; s.ranges[0].hi = (uintptr_t)(tiles + nt);
     s.ranges[1].lo = (uintptr_t)ridx; s.ranges[1].hi = (uintptr_t)(ridx + p->M + bm);
@@ -301,7 +350,8 @@ static int qg_sim_run(const QProb *p, const OmegaQgSpec *sp, int order, void *y,
     s.ranges[5].lo = (uintptr_t)p->swf; s.ranges[5].hi = (uintptr_t)(p->swf + (size_t)p->E * (p->n / 128) * KB);
     s.ranges[6].lo = (uintptr_t)p->xs; s.ranges[6].hi = (uintptr_t)(p->xs + XR * KB);
     s.nranges = 7;
-    const int err = ws_run(&s, p->n / span, nt);
+    const uint32_t group_size = 1u << sp->group;
+    const int err = ws_run(&s, (p->n / span) * group_size, (nt + group_size - 1u) / group_size);
     if (err) snprintf(msg, msgn, "simulator %.150s", s.msg);
     free(tiles); free(ridx); free(smem);
     return err ? -1 : 0;
@@ -313,21 +363,33 @@ static int qg_sim(void) {
         { 3, 256, 256, 200, 0, OMEGA_GPU_PF_PLAIN, 1, 4, 8 },
         { 2, 256, 128, 150, 64, OMEGA_GPU_PF_PLAIN, 0, 4, 8 },
         { 2, 512, 1024, 140, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 4, 8 },
+        /* Extended-register 128-row shape: direct/indexed and tail stores. */
+        { 3, 256, 384, 259, 300, OMEGA_GPU_PF_SWIGLU_NAT, 0, 8, 8 },
+        { 3, 256, 256, 257, 0, OMEGA_GPU_PF_PLAIN, 1, 8, 8 },
+        { 2, 256, 128, 127, 150, OMEGA_GPU_PF_PLAIN, 0, 8, 8 },
+        { 1, 512, 1024, 129, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 8, 8 },
+        /* 32-row shape: paired scale rows, tails, direct and indexed input. */
+        { 3, 256, 384, 97, 120, OMEGA_GPU_PF_SWIGLU_NAT, 0, 2, 4 },
+        { 3, 256, 256, 65, 0, OMEGA_GPU_PF_PLAIN, 1, 2, 4 },
+        { 2, 256, 128, 31, 64, OMEGA_GPU_PF_PLAIN, 0, 2, 4 },
+        { 1, 512, 1024, 30, 0, OMEGA_GPU_PF_SWIGLU_NAT, 1, 2, 4 },
     };
     for (size_t c = 0; c < sizeof cs / sizeof cs[0]; c++) {
         const uint32_t bm = 16 * cs[c].rt;
         QProb p; qprob_make(&p, cs[c].E, cs[c].n, cs[c].k, cs[c].M, cs[c].xr, cs[c].layout, cs[c].direct, bm);
-        OmegaQgSpec sp = { cs[c].k, cs[c].rt, cs[c].warps, cs[c].layout == OMEGA_GPU_PF_PLAIN ? OMEGA_QG_EPI_F32 : OMEGA_QG_EPI_SWIGLU, cs[c].direct, cs[c].n, 45, 0 };
+        OmegaQgSpec sp = { cs[c].k, cs[c].rt, cs[c].warps, cs[c].layout == OMEGA_GPU_PF_PLAIN ? OMEGA_QG_EPI_F32 : OMEGA_QG_EPI_SWIGLU, cs[c].direct, cs[c].n, 45, 0, 0 };
         uint32_t *rows = malloc(p.M * 4); for (uint32_t i = 0; i < p.M; i++) rows[i] = i;
         void *y = malloc((size_t)(p.M + bm) * p.n * 4);
-        for (int order = 0; order < 2; order++) {
+        const uint32_t groups[] = {0,1,3,4};
+        for (size_t gi=0;gi<sizeof groups/sizeof groups[0];gi++) for (int order = 0; order < 2; order++) {
+            sp.group=groups[gi];
             const int rc = qg_sim_run(&p, &sp, order, y, msg, sizeof msg);
             size_t ulp1 = 0, bad = rc ? 0 : qcompare(&p, y, rows, p.M, 0, &ulp1);
-            printf("sim qgemm case %zu (n %u k %u M %u %s %s rt %u warps %u) order %d: %s, %zu differ\n", c, p.n, p.k, p.M, cs[c].layout ? "swiglu" : "f32",
-                   cs[c].direct ? "direct" : "indexed", cs[c].rt, cs[c].warps, order, rc ? msg : "ran", bad);
+            printf("sim qgemm case %zu (n %u k %u M %u %s %s rt %u warps %u group %u) order %d: %s, %zu differ\n", c, p.n, p.k, p.M, cs[c].layout ? "swiglu" : "f32",
+                   cs[c].direct ? "direct" : "indexed", cs[c].rt, cs[c].warps, sp.group, order, rc ? msg : "ran", bad);
             if (rc || bad) fail++;
         }
-        if (c == 0 || c == 1) for (int m = 1; m <= 4; m++) {
+        if (c == 0 || c == 1 || c == 4 || c == 5 || c == 8 || c == 9) for (int m = 1; m <= 4; m++) {
             OmegaQgSpec ms = sp; ms.mutant = m;
             const int rc = qg_sim_run(&p, &ms, 0, y, msg, sizeof msg);
             const size_t bad = rc ? 0 : qcompare(&p, y, rows, p.M, 0, NULL);
@@ -425,7 +487,7 @@ static int qg_chip_shape(const char *name, uint32_t tokens, int reps, int check_
 }
 
 int main(int argc, char **argv) {
-    int host = 1, sim = 1, chip = 0, reps = 7, rows = 64; uint32_t tokens = 3600, rt = 0, warps = 0, wait = 0, waitset = 0; const char *only = NULL;
+    int host = 1, sim = 1, chip = 0, reps = 7, rows = 64; uint32_t tokens = 3600, rt = 0, warps = 0, wait = 0, waitset = 0, group = 0; const char *only = NULL;
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--host-only")) sim = 0;
         else if (!strcmp(argv[i], "--sim")) host = 0;
@@ -438,6 +500,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--rt") && i + 1 < argc) rt = (uint32_t)atoi(argv[++i]);
         else if (!strcmp(argv[i], "--warps") && i + 1 < argc) warps = (uint32_t)atoi(argv[++i]);
         else if (!strcmp(argv[i], "--wait") && i + 1 < argc) { wait = (uint32_t)atoi(argv[++i]); waitset = 1; }
+        else if (!strcmp(argv[i], "--group") && i + 1 < argc) group = (uint32_t)atoi(argv[++i]);
         else { fprintf(stderr, "GPU_QGEMM: INVALID argument %s\n", argv[i]); return 2; }
     }
     static const char *shapes[] = { "gateup", "down", "qkv", "o", "q38gu", "q38down", "q38mix", "q38o" };
@@ -450,6 +513,8 @@ int main(int argc, char **argv) {
     if (host) { fail += pq_host(); fail += qg_host(); cases++; }
     if (sim) { fail += pq_sim(); fail += qg_sim(); cases++; }
     if (chip) {
+        omega_gpu_pf_qgemm_set_group(group);
+        printf("qgemm selected group %u\n",group);
         if (rt || warps || waitset) omega_gpu_pf_qgemm_set_shape(rt ? rt : 4, warps ? warps : 8, waitset ? wait : 45);
         if (!only || q38) { fail += pq_chip(tokens, reps); cases++; }
         for (int s = 0; s < 8; s++) {

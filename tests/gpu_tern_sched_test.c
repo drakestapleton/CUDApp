@@ -98,6 +98,28 @@ int main(void) {
     check(synth(BW_IR_I2FP, CW(4, 0, 1, 0), 0, CW(6, 7, 7, 1u)) == 0, "3. I2FP on scoreboard 0, FMUL waits on it at stall 4: pass");
     check(synth(BW_IR_I2FP, CW(4, 0, 1, 0), 0, CW(6, 7, 7, 2u)) == 1, "3. I2FP on scoreboard 0, FMUL waits on another: violation");
     check(synth(BW_IR_FMUL, CW(6, 7, 7, 0), 0, CW(6, 7, 7, 0)) == 0, "3. FMUL producer -> FMUL at stall 6: pass (not an I2FP)");
+
+    /* Coalesced output from omega-mv #995. The algebra-oracle simulator stays in tests/gpu_tern_test.c (Omega).
+     * These checks cover the predicate, the shared-memory size, and the two extra mutants. Mutant 4 remains the
+     * I2FP refusal above; omega calls the slot-race mutant 4 and the clamp mutant 5. */
+    OmegaTernGemvSpec coal = { 1024, OMEGA_TERN_LAYOUT_ROWMAJOR, 1, 5, 2, OMEGA_TERN_EPI_I32, 0 };
+    check(omega_tern_gemv_coalesced_out(&coal) == 1, "4. row-major R=1 W=5 single chunk coalesces");
+    check(omega_tern_gemv_shared_bytes(&coal) == coal.k * 2u + 2u * omega_tern_gemv_out_slot_bytes(&coal),
+          "4. coalesced shared bytes are the x stage plus two slot sets");
+    OmegaTernGemvSpec wide = { 1024, OMEGA_TERN_LAYOUT_BLOCK, 4, 8, 1, OMEGA_TERN_EPI_I32, 0 };
+    check(omega_tern_gemv_spec_ok(&wide) && omega_tern_gemv_coalesced_out(&wide) == 0,
+          "4. block R=4 W=8 keeps the per-row store");
+    OmegaTernGemvSpec chunked = { 16384, OMEGA_TERN_LAYOUT_ROWMAJOR, 1, 1, 1, OMEGA_TERN_EPI_I32, 0 };
+    check(omega_tern_gemv_spec_ok(&chunked) && omega_tern_gemv_coalesced_out(&chunked) == 0,
+          "4. two chunks keep the per-row store");
+    coal.mutant = 5;
+    check(omega_tern_gemv_spec_ok(&coal) && omega_blackwell_codegen_tern_gemv_prog(&coal, &prog) == 0,
+          "4. mutant 5 (one slot set) builds");
+    coal.mutant = 6;
+    check(omega_tern_gemv_spec_ok(&coal) && omega_blackwell_codegen_tern_gemv_prog(&coal, &prog) == 0,
+          "4. mutant 6 (no unit clamp) builds");
+    coal.mutant = 7;
+    check(!omega_tern_gemv_spec_ok(&coal), "4. negative control: mutant 7 is refused");
     if (fails) { printf("gpu_tern_sched_test: FAIL (%d)\n", fails); return 1; }
     printf("gpu_tern_sched_test: PASS\n");
     return 0;

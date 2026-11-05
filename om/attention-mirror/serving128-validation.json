@@ -1,0 +1,60 @@
+{
+  "status": "PASS_SERVING128K",
+  "utc": "2026-11-01T22:59:52.036456+00:00",
+  "scope": "Candidate serving correctness on shared machine; not a paired speed comparison or quiet performance qualification.",
+  "receipt": {
+    "status": "PASS",
+    "scope": "Shared-machine serving correctness, not quiet timing qualification",
+    "directory": "$RECEIPTS/attention-clean-reading-long128-20261101T223835Z",
+    "server_sha256": "1ce91df0454acbb77ade0c0e06c5ac4acbe3312045439497f96b6316bc7fe43c",
+    "source_core": "7d5141008012c53f9c7dcd7c9e045652dd96db5e",
+    "native_archive_sha256": "965bfedc062aa9b5594468198a8b1d4c5cfd23b65d39777e7fb2a06ba7cb5a2d",
+    "events_sha256": "2e13cb3b697ef1392eb8e3d2e9bb92c6c570b0afb72c65b150f9b4ed498d9d5b",
+    "checker_sha256": "bb57a6d0a9c8cbdfe96c8cf1a3f725f775cdca6cb4a780121e73495311786052",
+    "server_exit": 0,
+    "ttft": [
+      {
+        "trial": 0,
+        "first_visible_s": 0.30572278797626495,
+        "completed_s": 0.305960037978366
+      },
+      {
+        "trial": 1,
+        "first_visible_s": 0.29659820400411263,
+        "completed_s": 0.296798846044112
+      },
+      {
+        "trial": 2,
+        "first_visible_s": 0.29343546996824443,
+        "completed_s": 0.29363678401568905
+      }
+    ],
+    "rows": [
+      {
+        "name": "long-cold",
+        "wall_s": 572.4547912859707,
+        "first_visible_s": 570.3117875239695
+      },
+      {
+        "name": "long-resumed",
+        "wall_s": 2.898457432980649,
+        "first_visible_s": 0.7781901069683954
+      },
+      {
+        "name": "long-follow-cold",
+        "wall_s": 573.0986176449805,
+        "first_visible_s": 570.9670559570077
+      }
+    ],
+    "actual_prompt_tokens": 128000,
+    "retrieval_and_followup_parity": true
+  },
+  "original_receipt_sha256": "585aad9d5b0024b901a1be64297e78b83e6955399668648d75b88e663132cdb0",
+  "raw_runner_receipt_sha256": "66aadd1943105a5c2f15cd5bbaa17f28820baf31fa4efadd3b7de407675ddba6",
+  "earlier_serving_receipts": {
+    "attention-serving-short-final.json": "27872253e76320cd1a03484774fa215938e91aa6fc3f3c2f71ce660aeecea3b0",
+    "attention-serving-long32-pair.json": "09a0a1d33e7ff6b13064835cc8e0ebbedf2666e07931d2ea932b72da142547ad",
+    "attention-serving-long64-final.json": "0be30d7189d163eb1ae7551489d16ccb23379289d727ddde85fc794272745f5a"
+  },
+  "meaning": "Short, paired32K,64K and128K planned serving correctness gates now pass for the immutable candidate. Full-model scores and host checks are in prior immutable receipts. Independent review and quiet timing remain open; no default change or deployment."
+}

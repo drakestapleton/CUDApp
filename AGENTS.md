@@ -103,7 +103,7 @@ Cloud Agent VMs are x86_64. `make` decides the host from `uname -m` (Makefile L2
 Pinned tools sit where the Makefile looks, next to the checkout:
 
 - `../omega-mv` is omega-mv `e5b32567`, `seed/out/omc`, sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`
-- `../omega-bridge` is omega-bridge `3dc4a00e9966770cce58bdedb401c3b3932c35ee` (`om/omega-bridge.lock`). `tools/bootstrap.sh` checks `uname -m` for aarch64; its rung binaries are AArch64 and run through the qemu-user handler. The built converter is `../omega-bridge/build/bridge` (`build/bootstrap/omc` sha256 `191b776ef98821597c3e30655da6d680a9b66edbc9ceaca3c39c61ea6df098e9`)
+- `../omega-bridge` is omega-bridge `bc11b30b1faa9af8b875ae6fec24e5f49cf03ac4` (`om/omega-bridge.lock`; draft omega-bridge#56 head, to move to its merge sha). `tools/bootstrap.sh` checks `uname -m` for aarch64; its rung binaries are AArch64 and run through the qemu-user handler. The built converter is `../omega-bridge/build/bridge` (`build/bootstrap/omc` sha256 `191b776ef98821597c3e30655da6d680a9b66edbc9ceaca3c39c61ea6df098e9`)
 - `nvdisasm` 13.0.85 is the x86_64 redistributable from NVIDIA `redistrib_13.0.2.json` (CI uses the linux-sbsa archive of the same version)
 
 `/usr/local/bin/make` exports `CUDAPP_MEM_RESERVE_MIB=0` when the variable is unset. MemAvailable on this VM under-reports because of the hypervisor balloon, and the default 4 GiB reserve then refuses the Qwen-shaped upload in `test-gpu-serving-alloc`. The platform test unsets the variable and still checks the 4096 default against a fake meminfo. Do not copy that `0` onto a Spark.

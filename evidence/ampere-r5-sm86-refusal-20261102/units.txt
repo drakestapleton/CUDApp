@@ -1,0 +1,6 @@
+sh om/units.sh --check
+PASS portable Omega units regenerate byte for byte
+UNITS_EXIT:0
+make test-om-units
+PASS portable Omega units regenerate byte for byte
+OM_UNITS_EXIT:0

@@ -75,9 +75,14 @@ independent semantic SHA mutants, requires the baseline to pass and treats a
 compiler failure as a broken mutant rather than a kill.
 
 The existing cubin gate compares image bytes, status and diagnostics against the
-legacy writer and includes an image-bit negative control. Ampere's plan target
-uses the warp simulator, not hardware. Missing-device failures are never grounds
-to rerun outside the namespace. Hardware authorization and qualification are
-separate; see the lane receipt and `CHIP.md`.
+legacy writer and includes an image-bit negative control. `test-core-residue`
+checks target and null-parameter admission against the C `snprintf` format, packs
+one cubin per accepted target under `/tmp` and unlinks it, and compares Ampere
+field packing with the inline sign-extend formula. Its red check flips one image
+bit. `test-core-residue-mutants` recompiles eight semantic mutants. Ampere's plan
+target uses the warp simulator, not hardware. Missing-device failures are never
+grounds to rerun outside the namespace. Hardware authorization and qualification
+are separate; see the lane receipt and `CHIP.md`.
 
-Receipt: [2026-11-06](../../evidence/core-util/2026-11-06/README.md).
+Receipts: [core utilities](../../evidence/core-util/2026-11-06/README.md),
+[core residue](../../evidence/core-residue/2026-11-06/README.md).

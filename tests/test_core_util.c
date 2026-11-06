@@ -43,12 +43,27 @@ static int cavp(const char *path) {
     if(!result)printf("CAVP %s PASS (%u records)\n",path,count);
     return result;
 }
+/* Padding crosses a block at 56 bytes: lengths 55 and 56, the 64-byte edges, and two/three blocks.
+ * WolframLanguageEvaluator: Mod[56, 64] -> 56; 128/64 -> 2; 192/64 -> 3. */
+static int partition(void) {
+    static const size_t lens[] = {0, 55, 56, 63, 64, 65, 128, 192};
+    uint8_t buf[192], a[32], b[32];
+    for (size_t i = 0; i < sizeof buf; i++) buf[i] = (uint8_t)(i * 17u + 3u);
+    for (size_t k = 0; k < sizeof lens / sizeof lens[0]; k++) {
+        sha256_hash(buf, lens[k], a);
+        ref_sha256_hash(buf, lens[k], b);
+        if (memcmp(a, b, 32)) { fprintf(stderr, "SHA partition length %zu\n", lens[k]); return 1; }
+    }
+    puts("CORE-UTIL SHA partition PASS: 0 55 56 63 64 65 128 192");
+    return 0;
+}
 int main(int argc,char **argv) {
     uint8_t p[32768],a[32],b[32],c[32];
     if(vector((const uint8_t *)"",0,"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")) return 1;
     if(vector((const uint8_t *)"abc",3,"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")) return 1;
     const char *msg="abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
     if(vector((const uint8_t *)msg,strlen(msg),"248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1")) return 1;
+    if(partition()) return 1;
     if(argc>1&&!strcmp(argv[1],"--quick"))return 0;
     if(cavp("tests/vectors/core/SHA256ShortMsg.rsp")||
        cavp("tests/vectors/core/SHA256LongMsg.rsp"))return 1;

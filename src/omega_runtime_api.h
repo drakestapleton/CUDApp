@@ -2,7 +2,7 @@
 #ifndef OMEGA_RUNTIME_API_H
 #define OMEGA_RUNTIME_API_H
 /*
- * Omega Runtime API version (R1, omega-mv#594). Defines the version and nothing else; includes nothing.
+ * Omega Runtime API version (R1, omega-mv#594). Defines the version and one function that reports it; includes nothing.
  *
  * The API is the set of entries listed in docs/runtime/omega_runtime_api.manifest and described in
  * docs/runtime/API.md, which also states the compatibility rule (semantic versioning, MAJOR.MINOR.PATCH):
@@ -14,8 +14,13 @@
  * tools/runtime_api_semver.sh fails when the manifest changed without the bump the rule asks for.
  */
 #define OMEGA_RUNTIME_API_VERSION_MAJOR 0
-#define OMEGA_RUNTIME_API_VERSION_MINOR 16
+#define OMEGA_RUNTIME_API_VERSION_MINOR 17
 #define OMEGA_RUNTIME_API_VERSION_PATCH 0
 /* One number for #if comparisons: (MAJOR << 16) | MINOR. PATCH is left out: it never changes the surface. */
 #define OMEGA_RUNTIME_API_VERSION ((OMEGA_RUNTIME_API_VERSION_MAJOR << 16) | OMEGA_RUNTIME_API_VERSION_MINOR)
+/* OMEGA_RUNTIME_API_VERSION of the library that was linked (added in 0.14.0). A program compares it with the
+ * OMEGA_RUNTIME_API_VERSION it was compiled against: the library serves the program when MAJOR is equal and the library's
+ * MINOR is at least the program's; while MAJOR is 0 a MINOR bump may break callers, so MINOR must be equal too
+ * (API.md section 2). */
+unsigned int omega_runtime_api_version(void);
 #endif

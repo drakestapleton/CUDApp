@@ -112,7 +112,9 @@ different family it is *rewriting*. In order:
    reports it, compute and channel and user-mode class numbers, QMD version and shared-memory fields, SM count, L2 size,
    memory model (unified like GB10 or discrete VRAM), host barrier. The shape of this row is `OmegaBwTarget` in
    `src/omega_bw_target.h` on `rig/gb20x`; each field there carries an evidence grade, and fields nobody has published are
-   `UNKNOWN` until measured on the card.
+   `UNKNOWN` until measured on the card. Then admit it in the library: add its PCI device id and SM version to
+   `chip_target` in `om/admission/chip_admit.om` and to the reference table in `tests/test_chip_admission.c`. Until then
+   `nvrm_open` refuses the chip with one sentence before it opens any `/dev/nvidia` node.
 2. **Machine code.** Same family: check whether `src/omega_blackwell_encoder.c` output is valid on the new chip. For
    sm_120 versus sm_121 the branch records "no sm_120 vs sm_121 encoding split is public" (`omega_bw_target.c`, field
    `isa`, evidence INFERRED). Different family: a new encoder, new generators for every `omega_blackwell_codegen_*.c` kernel

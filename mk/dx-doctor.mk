@@ -8,8 +8,10 @@ DOCTOR = $(OUT_DIR)/cudapp-doctor
 CUDAPP_NVIDIA_OPEN_ABI := $(patsubst nvidia-open-%,%,$(notdir $(NVIDIA_OPEN)))
 
 .PHONY: doctor test-doctor
-$(DOCTOR): tools/doctor/cudapp_doctor.c $(wildcard src/omega_gpu_chip.c src/omega_gpu_chip.h) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -DCUDAPP_NVIDIA_OPEN_ABI='"$(CUDAPP_NVIDIA_OPEN_ABI)"' -o $@ tools/doctor/cudapp_doctor.c $(wildcard src/omega_gpu_chip.c)
+# src/omega_gpu_chip.c also holds the library admission, which calls the generated om/admission/chip_admit.om unit.
+$(DOCTOR): tools/doctor/cudapp_doctor.c $(wildcard src/omega_gpu_chip.c src/omega_gpu_chip.h src/cudapp_om_chip_admit.c) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -DCUDAPP_NVIDIA_OPEN_ABI='"$(CUDAPP_NVIDIA_OPEN_ABI)"' -o $@ tools/doctor/cudapp_doctor.c \
+		$(wildcard src/omega_gpu_chip.c src/cudapp_om_chip_admit.c)
 doctor: $(DOCTOR)
 	$(DOCTOR); rc=$$?; sh tools/multitarget/targets-doctor.sh '$(OMC)' $(OUT_DIR)/multitarget || rc=1; exit $$rc
 test-doctor: $(DOCTOR)

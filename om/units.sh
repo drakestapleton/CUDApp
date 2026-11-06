@@ -48,6 +48,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 NVML="nvml_step=native/nvml/nvml.om,native/nvml/query.om,native/nvml/step.om nvml_errstr=native/nvml/errstr.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $NVML"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/admission/chip_admit.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

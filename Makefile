@@ -74,7 +74,7 @@ endif
 # binding of the seeded Omega units (om/units.sh). src/omega_fp8_slot_table.c is the slot table under
 # src/omega_gpu_fp8_slots.c (Expert Ribbon P1, omega #533).
 SRCS := $(sort $(wildcard src/omega_blackwell_*.c src/omega_gpu_*.c src/omega_ampere_*.c)) src/omega_fp8_slot_table.c \
-	src/omega_cubin.c src/omega_native_artifact.c src/omega_sm121_disasm.c \
+	src/omega_cubin.c src/omega_native_artifact.c src/omega_sm121_disasm.c src/omega_runtime_api.c \
 	src/sha256.c src/omega_canonical.c src/omega_core.c src/omega_vector.c $(CUDAPP_BINDING_SRCS) \
 	$(PHYSICS_DIR)/m16/m16_native.c $(PHYSICS_DIR)/nvrm/nvrm.c $(AMPERE_CORPUS_SRCS)
 OBJS = $(patsubst %.c,$(OUT_DIR)/%.o,$(notdir $(SRCS)))

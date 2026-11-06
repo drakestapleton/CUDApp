@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* omega_gpu_chip.c: the supported-target table and doctor refusal sentence (developer bar D6).
- * Diagnostic only, not runtime admission. See omega_gpu_chip.h. */
+/* omega_gpu_chip.c: the supported-target table, the doctor refusal sentence (developer bar D6), and the
+ * library admission glue around the Omega decision om/admission/chip_admit.om (D2, D6). See omega_gpu_chip.h. */
 #include "omega_gpu_chip.h"
+
+#include "cudapp_native.h"
 
 #include <dirent.h>
 #include <stdio.h>
@@ -73,4 +75,93 @@ int omega_gpu_chip_refusal(const OmegaGpuPciDev *d, char *buf, size_t n) {
         "What to do: follow docs/runtime/PORTABILITY.md section 5 (\"What a new GPU needs\") and CONTRIBUTING.md (\"Port a chip\"),\n"
         "or report it with the output of `make doctor` attached.",
         d->bdf, d->device);
+}
+
+static const char *g_root; /* NULL: the real /sys */
+
+void omega_gpu_chip_set_root(const char *root) { g_root = root; }
+
+int omega_gpu_chip_admit(const OmegaGpuPciDev *devs, int n, const char *bdf, OmegaGpuChipAdmission *out) {
+    uint64_t d[4 * OMEGA_GPU_ADMIT_MAX] = { 0 }, o[4] = { 0 }, status = 0;
+    memset(out, 0, sizeof *out);
+    if (n < 0 || (n > 0 && !devs)) return out->status = OMEGA_GPU_ADMIT_BAD_INPUT;
+    /* More than 16 functions reaches the unit as n > 16, which it refuses as bad input. */
+    for (int i = 0; i < n && i < OMEGA_GPU_ADMIT_MAX; i++) {
+        d[4 * i] = devs[i].vendor;
+        d[4 * i + 1] = devs[i].device;
+        d[4 * i + 2] = devs[i].class_code;
+        d[4 * i + 3] = bdf && strcmp(devs[i].bdf, bdf) == 0;
+    }
+    if (omega_chip_admit(&status, d, 4 * OMEGA_GPU_ADMIT_MAX, (uint64_t)n, bdf != NULL, o, 4) != OMEGA_OK)
+        return out->status = OMEGA_GPU_ADMIT_UNIT;
+    out->status = (int)status;
+    out->index = (int)o[1];
+    out->target_sm = (uint32_t)o[2];
+    out->device = (uint16_t)o[3];
+    return out->status;
+}
+
+#define NO_NODE "the library opened no /dev/nvidia node"
+
+static int sentence(const OmegaGpuChipAdmission *a, const OmegaGpuPciDev *dev, const char *bdf, const char *root,
+                    char *why, size_t n) {
+    switch (a->status) {
+    case OMEGA_GPU_ADMIT_NO_SYSFS:
+        snprintf(why, n, "cannot read %.120s/sys/bus/pci/devices to name the GPU, so " NO_NODE ". Run `make doctor`.",
+                 root ? root : "");
+        break;
+    case OMEGA_GPU_ADMIT_NO_GPU:
+        snprintf(why, n, "no NVIDIA GPU under /sys/bus/pci/devices, so " NO_NODE ". Run `make doctor`.");
+        break;
+    case OMEGA_GPU_ADMIT_NO_BDF:
+        snprintf(why, n, "CUDAPP_GPU_BDF=%.32s names no NVIDIA GPU under /sys/bus/pci/devices, so " NO_NODE
+                 ". Run `make doctor` for the addresses.", bdf ? bdf : "");
+        break;
+    case OMEGA_GPU_ADMIT_REFUSED:
+        snprintf(why, n, "GPU %.32s: NVIDIA device 0x%04x is not one CUDA++ has qualified, so " NO_NODE
+                 ". Run `make doctor` for why, what is missing and what to do.", dev ? dev->bdf : "?", a->device);
+        break;
+    case OMEGA_GPU_ADMIT_BAD_INPUT:
+        snprintf(why, n, "GPU admission refused: more than %d NVIDIA GPUs, or CUDAPP_GPU_BDF matched twice, so " NO_NODE
+                 ".", OMEGA_GPU_ADMIT_MAX);
+        break;
+    default:
+        snprintf(why, n, "GPU admission unit om/admission/chip_admit.om failed, so " NO_NODE ".");
+        break;
+    }
+    return -1;
+}
+
+int omega_gpu_chip_admit_open(const char *bdf, char *why, size_t n) {
+    OmegaGpuPciDev devs[OMEGA_GPU_ADMIT_MAX];
+    OmegaGpuChipAdmission a = { 0 };
+    int found = omega_gpu_chip_scan(g_root, devs, OMEGA_GPU_ADMIT_MAX);
+    if (found < 0) a.status = OMEGA_GPU_ADMIT_NO_SYSFS;
+    else if (omega_gpu_chip_admit(devs, found, bdf, &a) == OMEGA_GPU_ADMIT_OK) return 0;
+    const OmegaGpuPciDev *dev = found > 0 && a.index < found && a.index < OMEGA_GPU_ADMIT_MAX ? &devs[a.index] : NULL;
+    return sentence(&a, dev, bdf, g_root, why, n);
+}
+
+int omega_gpu_chip_admit_card(uint32_t domain, uint32_t bus, uint32_t slot, uint32_t function, uint16_t vendor,
+                              uint16_t device, uint32_t *target_sm, char *why, size_t n) {
+    /* NV_ESC_CARD_INFO lists GPUs only, so the card is given the display class 0x030000. */
+    OmegaGpuPciDev card = { .vendor = vendor, .device = device, .class_code = 0x030000u };
+    snprintf(card.bdf, sizeof card.bdf, "%04x:%02x:%02x.%x", domain & 0xffffu, bus & 0xffu, slot & 0x1fu, function & 7u);
+    OmegaGpuChipAdmission a = { 0 };
+    *target_sm = 0;
+    if (omega_gpu_chip_admit(&card, 1, card.bdf, &a) == OMEGA_GPU_ADMIT_OK) {
+        *target_sm = a.target_sm;
+        return 0;
+    }
+    if (a.status == OMEGA_GPU_ADMIT_NO_BDF) { /* the driver named a non-NVIDIA vendor */
+        snprintf(why, n, "GPU %s: the driver reports vendor 0x%04x device 0x%04x, not an NVIDIA GPU CUDA++ has qualified;"
+                 " refused before opening the device node.", card.bdf, vendor, device);
+        return -1;
+    }
+    if (a.status == OMEGA_GPU_ADMIT_REFUSED) {
+        snprintf(why, n, "GPU %s: the driver reports NVIDIA device 0x%04x, which is not one CUDA++ has qualified;"
+                 " refused before opening the device node. Run `make doctor`.", card.bdf, device);
+        return -1;
+    }
+    return sentence(&a, &card, card.bdf, NULL, why, n);
 }

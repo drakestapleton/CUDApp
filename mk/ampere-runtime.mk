@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # HOST_ONLY simulated RM/UVM and session paths; no /dev/nvidia opens.
-AMPERE_RUNTIME_SRCS = src/omega_ampere_qmd.c $(CUDAPP_BINDING_SRCS)
+AMPERE_RUNTIME_SRCS = src/omega_ampere_qmd.c src/omega_gpu_chip.c $(CUDAPP_BINDING_SRCS)
 AMPERE_SESSION_SIM_SRCS = src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c
 
 build/test_ampere_runtime: tests/test_ampere_runtime.c nvrm/nvrm.c nvrm/nvrm.h nvrm/native_client.h src/omega_ampere_qmd.h $(AMPERE_RUNTIME_SRCS)

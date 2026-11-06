@@ -1,0 +1,27 @@
+Gaps found walking origin/main b774723f (2026-11-05) as a newcomer without a GPU, and what this branch did.
+
+1. No GPU-free first run. README "Run your first GPU kernel" only had `make hello-gpu`, which opens /dev/nvidia0.
+   Fixed: README section "Run your first kernel without a GPU" (git clone / cd / make hello-gpu-build /
+   build/hello_gpu --sim / make zero-cuda-gate). run1-branch.log is that block run from a fresh clone.
+
+2. No build-only target was named. `build/hello_gpu --sim` needs the binary, but the README never said how to build it
+   without also running it on the GPU. Fixed: the section names `make hello-gpu-build` and says `make hello-gpu` would
+   open the GPU.
+
+3. No check that a no-GPU run stays off the GPU. Fixed: tools/runtime/clean-room-sim.sh traces the README block and
+   fails on any /dev/nvidia* or CUDA file open, with two red controls.
+
+4. The library accepted any NVIDIA GPU at open; only `make doctor` refused an unqualified one. Fixed (D2/D6):
+   nvrm_open asks om/admission/chip_admit.om before any /dev/nvidia node opens and refuses with one sentence.
+
+5. tests/run_m16_requalification.sh and tests/run_nvrm_lifecycle_gates.sh (chip scripts) no longer built at
+   b774723f ("omega_ampere_qmd.h" / missing sources for nvrm.c). Fixed: both scripts compile the sources nvrm.c needs.
+   Their chip runs are NOT_RUN (no GPU window).
+
+6. The README platform line claimed aarch64 or x86-64; only aarch64 has been run. Fixed: it now says so.
+
+Not changed (observations):
+- `make hello-gpu-build` runs 133 compiles serially (count of "cc ... -c" lines in run1-branch.log); 637 s here on a host at load average 63.
+  The README block does not pass -j so that the run equals the README exactly.
+- The no-GPU path needs no environment variable; the CUDApp .om regeneration path (om/units.sh) does need
+  OMEGA_OMC/OMEGA_BRIDGE, but the README block uses the committed generated C and never calls it.

@@ -220,7 +220,7 @@ Receipts: `evidence/dx/d1-memory/platform-test-spark.txt`, and `evidence/dx/d1-m
 
 **The pain.** "I don't know a right solution that works for all setups, happy to hear suggestions." (FlashAttention's maintainer, [flash-attention #246](https://github.com/Dao-AILab/flash-attention/issues/246))
 
-**How CUDA++ fixes it.** There is no toolkit version to match: compiler, runtime and libraries are one repository at one commit, built with `make` and a C compiler. The one outside version is NVIDIA's kernel module, whose public headers CUDA++ is built against. `make doctor` checks it and everything else a first run needs. It reads `/proc`, `/sys` and `/dev` only and opens no device. Every problem gets a line saying what is wrong, why and the command that fixes it. **The doctor wrapper** refuses a module of another version; `make hello-gpu` runs that wrapper first. Direct execution of binaries and applications linking the library have **no driver-version or PCI-ID admission guard**. The diagnostic is not a sandbox or current-commit qualification; callers must perform the compatibility preflight themselves and have an authorized GPU window.
+**How CUDA++ fixes it.** There is no toolkit version to match: compiler, runtime and libraries are one repository at one commit, built with `make` and a C compiler. The one outside version is NVIDIA's kernel module, whose public headers CUDA++ is built against. `make doctor` checks it and everything else a first run needs. It reads `/proc`, `/sys` and `/dev` only and opens no device. Every problem gets a line saying what is wrong, why and the command that fixes it. **The doctor wrapper** refuses a module of another version; `make hello-gpu` runs that wrapper first. Programs that link the library directly get the library's own GPU admission at device open (runtime API 0.14.0): an unknown or unqualified PCI id is refused with a sentence before any `/dev/nvidia` node opens. The driver-version check is still in the doctor only. The diagnostic is not a sandbox or current-commit qualification; callers must perform the compatibility preflight themselves and have an authorized GPU window.
 
 **The command that shows it:**
 
@@ -300,7 +300,7 @@ Receipt: `evidence/dx/pain-points/d5-build-from-empty.txt`. **FIXED for what CUD
 
 **The pain.** "Very frustrating compared to most every other GPU release that has zero day support from cuda/nvcc/pytorch/tensorflow." ([r/LocalLLaMA, on the DGX Spark](https://www.reddit.com/r/LocalLLaMA/comments/1r569eb/psa_nvidia_dgx_spark_has_terrible_cuda_software))
 
-**How CUDA++ fixes it.** CUDA++ writes sm_121 machine code and has a supported-target table. `make doctor` refuses other NVIDIA GPUs by name and PCI id, with what is missing and the steps to port them. `make hello-gpu` runs the doctor first. This is a **wrapper-only compatibility check**, not a library admission guard: direct binaries and library callers can bypass it. A table row is not proof that the current checkout passed its gates; the M16 evidence limitation above applies.
+**How CUDA++ fixes it.** CUDA++ writes sm_121 machine code and has a supported-target table. `make doctor` refuses other NVIDIA GPUs by name and PCI id, with what is missing and the steps to port them. `make hello-gpu` runs the doctor first. Since runtime API 0.14.0 the library refuses them too: before it opens any `/dev/nvidia` node, `om/admission/chip_admit.om` decides from `/sys/bus/pci/devices` whether the GPU is a CUDA++ target, and any other is refused with one sentence naming its address and PCI id (host-tested with simulated driver and fake PCI trees, `make test-chip-admission`; the chip run is NOT_RUN). A table row is not proof that the current checkout passed its gates; the M16 evidence limitation above applies.
 
 **The command that shows it** (`CUDAPP_DOCTOR_SHOW=1 sh tests/doctor/run.sh build/cudapp-doctor`, the fake machine with a GPU CUDA++ has not qualified):
 
@@ -421,6 +421,20 @@ make zero-cuda-gate
 `make hello-gpu-control` checks the check: it builds a second copy, `build/hello_gpu_control`, with a migration-pending switch turned on (`CUDAPP_MIGRATION_PENDING_HELLO_CONTROL=1`; it is off in `build/hello_gpu`, and its `.om` successor is #79), runs it with `--bug=short`, which gives the last launch one element too few (nothing is written outside a buffer), and passes only when the program catches that one missing answer, prints `FAIL` and exits 1. `make zero-cuda-gate` reads the built programs' ELF dynamic section and imports and fails on any CUDA library or CUDA symbol; it first runs its own negative control, a stub `libcudart` that must fail. It is a check on the binaries, not proof that NVIDIA's kernel modules or firmware are gone.
 
 On a shared machine, hold the GPU lock your operator uses around these commands (on the AIEN Spark: `flock -w 900 /tmp/aien-gb10.lock make hello-gpu`). A run of exactly these commands by a brand-new Linux user with an empty environment is recorded in `evidence/C2-CLEAN-USER/`.
+
+## Run your first kernel without a GPU
+
+You need: Linux with `git`, `make`, `gcc` and `bash`, plus `readelf` and `nm` from binutils for the zero-CUDA gate (this block has been run on aarch64 only). No GPU, no NVIDIA driver, no CUDA toolkit and no environment variable. From an empty folder:
+
+```bash
+git clone https://github.com/aien-dev/CUDApp
+cd CUDApp
+make hello-gpu-build
+build/hello_gpu --sim
+make zero-cuda-gate
+```
+
+`make hello-gpu-build` builds the library and `build/hello_gpu` and runs nothing; `make hello-gpu` would also open the GPU, so do not use it here. `build/hello_gpu --sim` builds the same vector-add kernel and runs it on the host warp simulator; it prints the runtime API version of the library and of the program, checks every answer and prints `PASS`. It never opens a `/dev/nvidia` node. When it is later run on a GPU without `--sim`, the library first checks that the GPU is one CUDA++ targets and refuses any other with one sentence before it opens anything (`docs/runtime/API.md` section 1). `tools/runtime/clean-room-sim.sh <branch>` runs exactly this block from a fresh clone in an empty folder with an empty environment, traces it, and fails if any `/dev/nvidia` node or CUDA file was opened; its run is in `evidence/C2-CLEAN-ROOM-SIM-20261105/`.
 
 ## Build and test without a GPU
 

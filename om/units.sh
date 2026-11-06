@@ -36,6 +36,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_layout=$GRAPH_REC,om/graph/layout.om"
   UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
   UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om hello_plan=om/graph/hello-plan.om"
+  UNITS="$UNITS graph_headscale=om/graph/headscale.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -89,7 +90,7 @@ for u in $UNITS $PURE_UNITS; do
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
-    model_graph_table) profile=--runtime-views ;;
+    model_graph_table|graph_headscale) profile=--runtime-views ;;
   esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
   OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile c "$src" > "$T/$file"

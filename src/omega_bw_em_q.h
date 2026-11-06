@@ -7,7 +7,11 @@
 /* QMMA.16832.F32.E4M3.E4M3 d = a * b + c (c NOREG = RZ); operands may start at a subregister (b pair inside a quad) */
 static void qmma_s(Em *e, int d, int a, int b, unsigned bsub, int c, uint32_t stall) {
     BlackwellIRInsn i = I0(BW_IR_HMMA_BF16); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; i.src2_subreg = (uint8_t)bsub; i.src3_vreg = c; i.imm = OMEGA_QMMA_MARK;
+#ifdef BW_EM_C_PRIMARY
     i.control = CW(stall, SB_NONE, SB_NONE, e->pending); e->pending = 0;
+#else
+    if (em_step(e, 7, stall, 0, 0, 0, &i.control) < 0) { e->err = -1; return; }
+#endif
     if (omega_bw_ir_append(e->p, &i) < 0) e->err = -1;
 }
 static void qmma(Em *e, int d, int a, int b, int c, uint32_t stall) { qmma_s(e, d, a, b, 0, c, stall); }

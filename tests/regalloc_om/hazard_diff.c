@@ -99,6 +99,9 @@ static void gen_insn(uint8_t *b, size_t pc, size_t n, int allow_bad) {
     uint32_t D = k_regs[rnd() % 11], A = k_regs[rnd() % 11], B = k_regs[rnd() % 11], C = k_regs[rnd() % 11];
     uint32_t size = rnd() % 8 ? (uint32_t)(rnd() % 7) : (uint32_t)(rnd() & 7u);
     if (!allow_bad && size == 7) size = 6;
+    /* Mandatory size-class witness: hz_size opcode, size=4, live write.
+     * same_insn compares nr/nw and every rd.n/wr.n, not just the return code. */
+    if (pc == 0) { op = 0x981u; size = 4; D = 1; }
     uint32_t w0 = op | guard << 12 | D << 16 | A << 24;
     uint32_t w1 = B | (uint32_t)(rnd() & 0xffffff00u);
     uint32_t w2 = C | size << 9 | (rnd() & 1 ? 0x100u : 0) | (rnd() & 1 ? 0x08000000u : 0) | (uint32_t)(rnd() & 0xf0000000u);
@@ -132,6 +135,10 @@ static uint8_t *load(const char *path, size_t *len) {
 
 int main(void) {
     uint8_t b[16];
+    memset(b, 0, sizeof b);
+    put32(b, 0x981u | 7u << 12 | 1u << 16 | 2u << 24);
+    put32(b + 8, 4u << 9);
+    decode_one(b);
     /* decode: every opcode x size field x bit 8 x bit 27, registers at the RZ boundary */
     for (uint32_t op = 0; op < 4096; ++op)
         for (uint32_t s = 0; s < 8; ++s)

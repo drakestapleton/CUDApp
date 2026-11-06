@@ -58,3 +58,39 @@ Stage 3 was pushed at `0e09c1996d867d0712b91b5c1b878175c2c9a687`. Stage 4 uses t
 Stage-4 API views are hosted-only. The preexisting `OMEGA_GPU_NO_POSIX` scalar conversion boundary remains C pending a checked-view freestanding converter path (bridge #72 / combined #76 native work). Attempting to link the hosted runtime-view unit fails the unchanged freestanding undefined-symbol gate (`_exit`, setjmp/longjmp and 128-bit arithmetic helpers); that gate was not weakened. This is an explicit unconverted boundary, not an Omega or hardware completion claim.
 
 Hardware/chip, live-RM and VFIO tiers remain NOT_RUN. A host PASS is not hardware qualification. The full integrated host suite still requires its rc and final `CUDA++ HOST TESTS PASS` line; no target count is inferred.
+
+### Stage-4 residual checkpoint (Integrator5)
+
+The initial detached stage-4 state `0d6302cb` was pushed after checking the remote
+stage-3 head `0e09c199`. The following residual lane heads are integrated in order,
+under the unchanged single #73 converter pin. These are focused **host** receipts,
+not a full stage-4 suite result. Logs and numeric rc files are `/tmp/integ/<gate>.log`
+and `/tmp/integ/<gate>.rc`; every command used the mandatory device-hiding bwrap boundary.
+
+| PR | Exact lane head | Green gate | rc | Observed final line |
+| --- | --- | --- | --- | --- |
+| #326 | `12a0c41f8bf0b6e8bf26baf62e52af50e2841752` | stage4-core | 0 | `crumb verify: OK: 84 crumbs current` |
+| #327 | `718e10bac1ade12436641f13852d64d0b439d4a6` | stage4-base4 | 0 | `crumb verify: OK: 86 crumbs current` |
+| #328 | `e1a87f0d30efa0292fbc6da6ca07346ae49e79b5` | stage4-cost3 | 0 | `crumb verify: OK: 86 crumbs current` |
+| #329 | `8697f02e18ad02f62a056145a226603776b99b9c` | stage4-platform2 | 0 | `crumb verify: OK: 86 crumbs current` |
+| #332 | `c1fec738fb3dfe4fd48bf9115a19ca9d4d3d6367` | stage4-attnviews3 | 0 | `crumb verify: OK: 86 crumbs current` |
+| #333 | `5dad87a569f4fcca3410c4558691b4fdcb9589ca` | stage4-apirest-shells | 0 | `crumb verify: OK: 88 crumbs current` |
+| #336 | `b9ef8f14eaa2e5810e8fc9ed06db540ff92990d2` | stage4-nvrmstruct2 | 0 | `crumb verify: OK: 88 crumbs current` |
+| #338 | `cd44785cc000ec2a7337d35252173ea3aa3cba06` | stage4-checkers / stage4-checkers-regalloc3 | 0 / 0 | `crumb verify: OK: 88 crumbs current` |
+
+Additional #332 family gate `stage4-attnviews-api` returned rc 0 and
+`PASS attention typed-view host gate`. The #333 differential/family portion passed
+before its shell link exposed missing FP8 provider dependencies; the repaired shell
+gate reported `PASS api-shells checks=753157`.
+
+The #338 allocator runner initially failed to link #327 providers, then revealed
+two stale liveness mutants that no longer reached the active policy. Its dependency
+union is repaired and those mutants now target `cg_life.om` and `cg_replay.om`.
+The final rerun killed all 20 semantic mutants; the shortened-override and v159
+negative controls failed the liveness differential as expected. Historical failed
+logs remain alongside the green reruns. The #338 backend JSON receipt is still
+pending #339's escaping repair and must not be described as parsed valid JSON.
+
+Stage 5, the NO_POSIX BF16 cutover and `full-2` remain **NOT_RUN** at this checkpoint.
+The inherited C BF16 boundary above remains explicit. Chip/live-RM/VFIO/hardware
+and merge-to-main are **NOT_RUN**. Integration is only on draft #280.

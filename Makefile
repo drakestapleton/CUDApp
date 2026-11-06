@@ -744,3 +744,14 @@ test-dagsim: $(DS_UNIT) $(DS_CLI)
 	sh tests/dagsim/mutant_lifetime.sh
 	sh tests/dagsim/mutant_predict.sh
 	sh tests/dagsim/mutant_omega.sh $(DS_CLI)
+
+# Pure emitter/reconvergence and fragment-provider source differentials. Invoke
+# the entire make command under the device-free bwrap contract.
+.PHONY: test-checkers-om test-frag-packers-om
+test-checkers-om:
+	sh tests/regalloc_om/checkers.sh
+	python3 tests/regalloc_om/checkers_mutants.py
+
+test-frag-packers-om:
+	sh tests/regalloc_om/packers.sh
+	python3 tests/regalloc_om/packers_mutants.py

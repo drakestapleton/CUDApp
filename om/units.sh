@@ -201,6 +201,7 @@ REST="$REST ar_victim=om/apirest/victim.om ar_mstep=om/apirest/data.om,om/api/ap
 REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/codegen/cg_em.om om/codegen/cg_reconv.om om/codegen/cg_sentin.om"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
 [ "$(sha256sum < "$OMEGA_OMC" | cut -c1-64)" = "$OMC_PIN" ] || { echo "NOT_RUN: omc is not the pinned compiler"; exit 3; }
@@ -262,7 +263,7 @@ for u in $UNITS $PURE_UNITS; do
     attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    ar_*|cg_pack_h|cg_mrow|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)
+    ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

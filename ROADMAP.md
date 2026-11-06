@@ -135,3 +135,14 @@ upgraded by this note.
 2026-11-06: kernel-family API shell decisions (shape, alignment, overflow, refusal, FP8 pack, slot table) now default to seeded Omega in `om/api/`. The previous C expressions stay behind `CUDAPP_MIGRATION_PENDING_C_API_SHELLS` (default off) as the differential oracle. Public entry points are unchanged. Host differential and family host/sim gates are recorded under `evidence/api-shells/2026-11-06/`. Chip tier is NOT_RUN: no GPU window was authorized. Status rows above are not upgraded.
 
 2026-11-06: attention/decode/prefill/router/bf16-GEMV host buffer walks, descriptors and launch arguments now default to typed-view Omega units. `CUDAPP_MIGRATION_PENDING_ATTN_VIEWS` retains the default-OFF C oracle. Hosted runtime extents use omega-bridge `79e8c36`; this consumer remains pending bridge #71 and #73. Pointer-window dispatch avoids overall data-capacity ceilings without weakening the seed loop guard. The differential, red controls, mutants, oracle coverage, C/Omega measurements and seven existing host/sim gates are recorded in `evidence/attention-views/2026-11-06/`. This is not freestanding or chip qualification; the status rows above are unchanged.
+## 2026-11-06: emitter, reconvergence and fragment decisions (pending integration)
+
+The `feat/checkers-rest-om` lane moves hosted emitter/scoreboard decisions,
+reconvergence admission and patch policy, all five fragment packers, result
+sentinels and shared row compaction to seeded Omega. Source-partition
+differentials, red controls, recompiled mutants and the focused host gates are
+EXERCISED in `evidence/checkers-rest-2026-11-06/README.md`. The retained C oracle
+and freestanding fallback are default-off in hosted builds; C still marshals
+records, pointers and external effects. The runtime-view converter remains
+pending omega-bridge #71 and #73. Chip qualification is NOT_RUN, and no roadmap
+row status is upgraded.

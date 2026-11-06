@@ -14,7 +14,8 @@ CC=${CC:-cc}
 CFLAGS="-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -Im16 -Invrm -Ithird_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -Ithird_party/nvidia-open-580.173.02/kernel-open/common/inc -Ithird_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -Ithird_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -Ithird_party/aien-gpu-abi1"
 cd "$ROOT"
 [ -f "$OUT/streams-submit-c.img" ] || { echo "run make test-streams-submit first" >&2; exit 2; }
-SRCS="src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_wire_pack.c src/cudapp_om_nvrm_wire_reply.c src/cudapp_om_nvrm_heap_wire.c src/cudapp_om_nvrm_uvm_wire.c src/cudapp_om_nvrm_uvm_map_wire.c src/omega_gpu_chip.c src/cudapp_om_chip_admit.c"
+# Same link providers as the make fixtures (mk/streams-submit.mk STREAMS_SUBMIT_LINK), so a missing provider fails the build, not a mutant.
+SRCS=${STREAMS_SUBMIT_LINK:?run through make test-streams-submit-mutants (STREAMS_SUBMIT_LINK)}
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 export OMEGA_NATIVE_OMC OMEGA_NATIVE_OMC2

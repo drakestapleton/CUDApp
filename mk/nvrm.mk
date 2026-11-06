@@ -23,8 +23,8 @@ test-nvrm-wire: $(OUT_DIR)/nvrm-wire-test $(OUT_DIR)/nvrm-wire-mutant $(OUT_DIR)
 
 NVRM_SERIALIZER_SRCS = $(NVRM_WIRE_SRCS) src/cudapp_om_nvrm_uvm_wire.c src/cudapp_om_nvrm_uvm_map_wire.c src/cudapp_om_nvrm_struct.c
 # nvrm_open admits the chip first (HelloC2 #296): omega_gpu_chip_admit_open/_card in src/omega_gpu_chip.c,
-# whose decision is the generated om/admission/chip_admit.om unit. Every binary that links nvrm.c needs both.
-NVRM_ADMIT_SRCS = src/omega_gpu_chip.c src/cudapp_om_chip_admit.c src/cudapp_om_nvrm_policy.c
+# whose decisions are the generated om/admission/chip_admit.om and chip_enum.om units. Every binary that links nvrm.c needs them.
+NVRM_ADMIT_SRCS = src/omega_gpu_chip.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_nvrm_policy.c
 $(OUT_DIR)/nvrm-native-test: nvrm/native_test.c nvrm/native_ioctl_fixture.h nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
 	@mkdir -p $(OUT_DIR)
 	$(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -pthread -o $@ nvrm/native_test.c src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)

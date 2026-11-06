@@ -1,0 +1,29 @@
+mutant 1 red ('s/eq device 11794/eq device 11795/'): FAIL tests/test_chip_admission.c:182: omega_gpu_chip_admit(d, 3, NULL, &a) == OMEGA_GPU_ADMIT_OK && a.target_sm == 121 && a.index == 1
+mutant 2 red ('s/ne shr cls 16 3/ne shr cls 16 4/'): FAIL tests/test_chip_admission.c:182: omega_gpu_chip_admit(d, 3, NULL, &a) == OMEGA_GPU_ADMIT_OK && a.target_sm == 121 && a.index == 1
+mutant 3 red ('s/eq device 9353/eq device 9354/'): FAIL tests/test_chip_admission.c:207: omega_gpu_chip_admit(d, 3, NULL, &a) == OMEGA_GPU_ADMIT_OK && a.target_sm == 86
+mutant 4 red ('s/if eq t 0/if eq t 1/'): FAIL tests/test_chip_admission.c:187: omega_gpu_chip_admit(d, 4, NULL, &a) == OMEGA_GPU_ADMIT_REFUSED && a.index == 3 && a.device == 0x2b85 && a.target_sm == 0
+mutant 5 red ('s/if gt hit 1/if gt hit 2/'): FAIL tests/test_chip_admission.c:199: omega_chip_admit(&st, w, 4 * OMEGA_GPU_ADMIT_MAX, 1, 1, o, 4) == OMEGA_OK && st == 4 && o[0] == 4 && o[2] == 0
+mutant 6 red ('s/if (omega_gpu_chip_admit_open(bdf, rm->err, sizeof rm->err) != 0) return -1;/(void)0;/'): FAIL refusal: err "GPU 0000:00:00.0: the driver reports vendor 0x0000 device 0x0000, not an NVIDIA GPU CUDA++ has qualified; refused before opening the device node." (145 bytes), 3 device opens, expected "GPU 0000:01:00.0: NVIDIA device 0x2b85 is not one CUDA++ has qualified, so the library opened no /dev/nvidia node. Run `make doctor`"
+mutant 7 red ('s/\&admitted_sm, rm->err, sizeof rm->err) != 0) return -1;/\&admitted_sm, rm->err, sizeof rm->err) != 0) (void)0;/'): FAIL admitted path: err "GPU admission admitted sm_0 but the driver classes select sm_121; refused", 4 opens, last "/dev/nvidia0", expected "GPU 000f:01:00.0: the driver reports NVIDIA device 0x2e13, which is not one CUDA++ has qualified" after "/dev/nvidia-uvm"
+mutant 8 red ('s/if (rm->target_sm != admitted_sm)/if (0)/'): FAIL admitted path: err "RM_ALLOC class 0xc661 status 0x40", 4 opens, last "/dev/nvidia0", expected "GPU admission admitted sm_86 but the driver classes select sm_121; refused" after "/dev/nvidia0"
+chip admission mutants: 8 of 8 red
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)

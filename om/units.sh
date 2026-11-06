@@ -100,6 +100,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/tools/dag_jstr.om"
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/disasm/words.om"
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/admission/chip_enum.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

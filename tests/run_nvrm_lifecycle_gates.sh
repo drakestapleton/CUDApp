@@ -23,7 +23,7 @@ gcc -O2 -Wall -Wextra -Werror \
   -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
   -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
   nvrm/nvrm.c m16/m16_native.c nvrm/lifecycle_gates.c \
-  -I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c src/cudapp_om_chip_admit.c src/cudapp_om_nvrm_*.c -o build/lifecycle_gates
+  -I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_nvrm_*.c -o build/lifecycle_gates
 
 echo "    lifecycle_gates built cleanly."
 

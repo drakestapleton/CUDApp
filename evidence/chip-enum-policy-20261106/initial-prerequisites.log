@@ -1,0 +1,2 @@
+NOT_RUN: set OMEGA_MV and OMEGA_BRIDGE_DIR
+make: *** [mk/c2-admission.mk:30: test-chip-admission-mutants] Error 3

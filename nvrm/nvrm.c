@@ -11,6 +11,7 @@
 #include "omega_gpu_chip.h"
 #include "cpu_barrier.h"
 #include "cudapp_native.h"
+#include "nvrm_policy.h"
 
 
 #include <errno.h>
@@ -284,29 +285,32 @@ static int rm_alloc(Nvrm *rm, uint32_t parent, uint32_t cls, void *params, uint3
         rm->last_rm_status = NV_ERR_NO_MEMORY;
         return fail(rm, "RM_ALLOC class 0x%x status 0x%x (NV_ERR_NO_MEMORY) [injected]", cls, NV_ERR_NO_MEMORY);
     }
-    if (rm->rm_alloc_accepted == UINT64_MAX ||
-        (cls != NV01_ROOT_CLIENT && rm->next_handle == UINT32_MAX))
+    uint64_t hdec = nvrm_policy_hnext(cls, rm->next_handle, rm->rm_alloc_accepted);
+    if (hdec & (1ull << 32))
         return fail(rm, "RM handle or accounting space exhausted");
+    uint32_t new_handle = (uint32_t)hdec;
+    if (hdec & (1ull << 33)) rm->next_handle++;
     NVOS21_PARAMETERS p;
 #if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&p, 0, sizeof p);
     p.hRoot = rm->root;
     p.hObjectParent = parent;
-    p.hObjectNew = (cls == NV01_ROOT_CLIENT) ? 0 : rm->next_handle++;
+    p.hObjectNew = new_handle;
     p.hClass = cls;
     p.pAllocParms = NV_PTR_TO_NvP64(params);
     p.paramsSize = psz;
 #else
     uint64_t fields[16] = {rm->root, parent,
-        cls == NV01_ROOT_CLIENT ? 0 : rm->next_handle++, cls, (uintptr_t)params, psz};
+        new_handle, cls, (uintptr_t)params, psz};
     if (rm_wire(&p, sizeof p, 1, fields)) return fail(rm, "RM_ALLOC wire refused");
 #endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_ALLOC, &p, sizeof p) != 0)
         return fail(rm, "RM_ALLOC class 0x%x ioctl errno %d", cls, errno);
     rm->last_rm_status = p.status;
-    if (p.status != 0)
+    uint64_t sc = nvrm_policy_nrstat(p.status);
+    if (sc != 0)
         return fail(rm, "RM_ALLOC class 0x%x status 0x%x%s", cls, p.status,
-                    p.status == NV_ERR_NO_MEMORY ? " (NV_ERR_NO_MEMORY)" : "");
+                    sc == 1 ? " (NV_ERR_NO_MEMORY)" : "");
     rm->rm_alloc_accepted++;
     *out = p.hObjectNew;
     return 0;
@@ -469,13 +473,7 @@ static void recycle_va_slot(uint64_t base) {
     atomic_flag_clear_explicit(&g_va_slots_lock, memory_order_release);
 }
 
-/* Bytes of whole 4 GiB slot units covering `used` bytes of a slot, at least one unit. */
-static int va_slot_units(uint64_t used, uint64_t *out) {
-    if (used == 0) used = 1;
-    if (__builtin_add_overflow(used, 0xffffffffull, out)) return -1;
-    *out &= ~0xffffffffull;
-    return 0;
-}
+
 
 /* CudaAuditFable RtMem F5: the bump allocator may only hand out VA inside this client's slot. The slot is the 4 GiB
  * units from va_slot_base up to the units va_next already covers; a request past them grows the slot only while it
@@ -483,13 +481,11 @@ static int va_slot_units(uint64_t used, uint64_t *out) {
  * acquire_va_slot starts above it. Otherwise the next slot belongs to another Nvrm and the request is refused.
  * Growing (not a hard 4 GiB cap) keeps single allocations above 4 GiB, which the 30B/35B weights need. */
 static int va_slot_cover(Nvrm *rm, uint64_t end) {
-    const uint64_t base = rm->va_slot_base;
-    if (!base) return 1; /* no slot (nvrm_open not run): nothing shared to protect */
-    if (end < base || rm->va_next < base) return 0;
-    uint64_t owned, want, owned_end, want_end;
-    if (va_slot_units(rm->va_next - base, &owned) || va_slot_units(end - base, &want)) return 0;
-    if (want <= owned) return 1;
-    if (__builtin_add_overflow(base, owned, &owned_end) || __builtin_add_overflow(base, want, &want_end)) return 0;
+    uint64_t o[4];
+    uint64_t d = nvrm_policy_vcover(rm->va_slot_base, rm->va_next, end, o);
+    if (d == 0) return 1; /* no slot, or the request is already covered */
+    if (d != 1) return 0; /* refused: bad range or overflow */
+    uint64_t owned_end = o[2], want_end = o[3];
     return atomic_compare_exchange_strong_explicit(&g_va_counter, &owned_end, want_end,
                                                    memory_order_relaxed, memory_order_relaxed) ? 1 : 0;
 }
@@ -679,11 +675,10 @@ static uint64_t va_take(Nvrm *rm, uint64_t size, uint64_t align) {
     for (uint32_t i = 0; i < rm->free_count; i++) {
         uint64_t base = rm->free_list[i].va;
         uint64_t sz = rm->free_list[i].size;
-        uint64_t rounded;
         uint64_t range_end;
-        if (__builtin_add_overflow(base, align - 1, &rounded) ||
-            __builtin_add_overflow(base, sz, &range_end)) return 0;
-        uint64_t aligned = rounded & ~(align - 1);
+        if (__builtin_add_overflow(base, sz, &range_end)) return 0;
+        uint64_t aligned = nvrm_policy_palign(base, align);
+        if (aligned == 0) return 0;
         uint64_t pad = aligned - base;
         if (pad > sz || size > sz - pad) continue;
         uint64_t used_end;
@@ -715,9 +710,9 @@ static uint64_t va_take(Nvrm *rm, uint64_t size, uint64_t align) {
         return aligned;
     }
 
-    uint64_t rounded, end;
-    if (__builtin_add_overflow(rm->va_next, align - 1, &rounded)) return 0;
-    uint64_t va = rounded & ~(align - 1);
+    uint64_t end;
+    uint64_t va = nvrm_policy_palign(rm->va_next, align);
+    if (va == 0) return 0;
     if (__builtin_add_overflow(va, size, &end)) return 0;
     if (!va_slot_cover(rm, end)) return 0;
     rm->va_next = end;
@@ -1088,9 +1083,11 @@ static int chan_extra_destroy(Nvrm *rm, NvrmChan *c) {
 int nvrm_channel(Nvrm *rm) { return nvrm_channel_n(rm, 0); }
 
 int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
-    if (!rm || rm->faulted || rm->chgroup || rm->channel_registered || rm->n_extra)
-        return rm ? fail(rm, "channel construction requires clean state") : -1;
-    if (extra > NVRM_MAX_EXTRA_CHANNELS) return fail(rm, "extra channels %u > %d", extra, NVRM_MAX_EXTRA_CHANNELS);
+    if (!rm) return -1;
+    uint64_t adm = nvrm_policy_chadm(rm->faulted, rm->chgroup, rm->channel_registered,
+                                     rm->n_extra, extra, NVRM_MAX_EXTRA_CHANNELS);
+    if (adm == 1) return fail(rm, "channel construction requires clean state");
+    if (adm == 2) return fail(rm, "extra channels %u > %d", extra, NVRM_MAX_EXTRA_CHANNELS);
     NV_CHANNEL_GROUP_ALLOCATION_PARAMETERS cg;
     memset(&cg, 0, sizeof cg);
     cg.engineType = NV2080_ENGINE_TYPE_GRAPHICS;
@@ -1128,10 +1125,12 @@ int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
     const uint32_t budget = NVRM_CHANNEL_NO_MEMORY_RETRIES;
     rm->channel_no_memory_retries = 0;
     for (;;) {
-        if (rm_alloc(rm, rm->gpfifo, rm->compute_class, NULL, 0, &rm->compute_obj) == 0) break;
-        if (rm->last_rm_status != NV_ERR_NO_MEMORY) return -1;
-        if (rm->channel_no_memory_retries >= budget)
-            return fail_channel_no_memory(rm, rm->channel_no_memory_retries + 1, delay_ms);
+        int arc = rm_alloc(rm, rm->gpfifo, rm->compute_class, NULL, 0, &rm->compute_obj);
+        uint64_t rd = nvrm_policy_retry(arc == 0, rm->last_rm_status == NV_ERR_NO_MEMORY,
+                                        rm->channel_no_memory_retries, budget);
+        if (rd == 0) break;
+        if (rd == 3) return -1;
+        if (rd == 2) return fail_channel_no_memory(rm, rm->channel_no_memory_retries + 1, delay_ms);
         rm->channel_no_memory_retries++;
         usleep((useconds_t)delay_ms * 1000u);
     }
@@ -1215,7 +1214,7 @@ failed:
  * clc96f.h names LEVEL_SUBROUTINE (MAIN is 0). The M16 chip receipts ran with this bit set, so it
  * stays until a GPU window qualifies LEVEL_MAIN. */
 uint64_t nvrm_gp_entry(uint64_t va, uint32_t nwords) {
-    return (va & ~3ull) | ((uint64_t)(nwords & 0x1fffff) << 42) | (1ull << 41);
+    return nvrm_policy_gpentry(va, nwords);
 }
 
 volatile uint32_t *nvrm_userd_gpput(Nvrm *rm) {
@@ -1287,13 +1286,12 @@ static int nvrm_doorbell(Nvrm *rm, uint32_t token) {
 int nvrm_enqueue(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint32_t nwords) {
     if (!rm || !pb || rm->faulted || !rm->gpfifo || !rm->fifo.cpu || rm->entries < 2)
         return rm ? fail(rm, "channel not ready") : -1;
-    if ((off & 3u) || nwords == 0 || nwords > 0x1fffff || (uint64_t)off + (uint64_t)nwords * 4u > pb->size)
-        return fail(rm, "bad pushbuffer span");
+    uint64_t sp = nvrm_policy_pspan(off, nwords, pb->size, pb->va);
+    if (sp == 1) return fail(rm, "bad pushbuffer span");
     if (validate_ampere_push(rm, pb, off, nwords)) return -1;
-    if (pb->va > UINT64_MAX - off) return fail(rm, "pushbuffer VA overflow");
-    /* Blackwell USERD documents no GPGet (clc96f.h), so consumption is tracked by the
-     * caller via nvrm_retire() after it observes completion. Never overrun unretired entries. */
-    if (rm->put - rm->retired >= rm->entries - 1) return fail(rm, "GPFIFO full: %u entries unretired", rm->put - rm->retired);
+    if (sp == 2) return fail(rm, "pushbuffer VA overflow");
+    uint64_t full = nvrm_policy_pfull(rm->put, rm->retired, rm->entries);
+    if (full) return fail(rm, "GPFIFO full: %u entries unretired", rm->put - rm->retired);
     if (nvrm_publish(rm, &rm->fifo, rm->entries, rm->put, rm->userd_off, pb->va + off, nwords))
         return fail(rm, "GPFIFO publish refused");
     rm->put++;
@@ -1319,11 +1317,12 @@ int nvrm_chan_submit(Nvrm *rm, uint32_t ch, const NvrmMem *pb, uint32_t off, uin
     if (!rm || !pb || rm->faulted || ch == 0 || ch > rm->n_extra) return rm ? fail(rm, "extra channel %u not ready", ch) : -1;
     NvrmChan *c = &rm->extra[ch - 1];
     if (!c->gpfifo || !c->fifo.cpu || c->entries < 2) return fail(rm, "extra channel %u not ready", ch);
-    if ((off & 3u) || nwords == 0 || nwords > 0x1fffff || (uint64_t)off + (uint64_t)nwords * 4u > pb->size)
-        return fail(rm, "bad pushbuffer span");
-    if (pb->va > UINT64_MAX - off) return fail(rm, "pushbuffer VA overflow");
+    uint64_t sp = nvrm_policy_pspan(off, nwords, pb->size, pb->va);
+    if (sp == 1) return fail(rm, "bad pushbuffer span");
+    if (sp == 2) return fail(rm, "pushbuffer VA overflow");
     if (validate_ampere_push(rm, pb, off, nwords)) return -1;
-    if (c->put - c->retired >= c->entries - 1) return fail(rm, "GPFIFO full (channel %u): %u entries unretired", ch, c->put - c->retired);
+    uint64_t full = nvrm_policy_pfull(c->put, c->retired, c->entries);
+    if (full) return fail(rm, "GPFIFO full (channel %u): %u entries unretired", ch, c->put - c->retired);
     if (nvrm_publish(rm, &c->fifo, c->entries, c->put, c->userd_off, pb->va + off, nwords))
         return fail(rm, "GPFIFO publish refused (channel %u)", ch);
     c->put++;

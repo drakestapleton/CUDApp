@@ -81,6 +81,7 @@ fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_pfhost=om/codegen/cg_pfhost_emit.om,om/codegen/cg_pfhost_rl.om,om/codegen/cg_pfhost_mc.om,om/codegen/cg_pfhost.om"
 fi
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_policy=native/nvrm/policy.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

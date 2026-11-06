@@ -31,3 +31,8 @@ test-graph-residue-coverage: test-graph-residue $(OUT_DIR)/hello_gpu-oracle
 CARRIED_HOST_TESTS += test-graph-table-perm
 test-graph-table-perm:
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/graph/table-mutants.py
+
+.PHONY: test-graph-headscale
+CARRIED_HOST_TESTS += test-graph-headscale
+test-graph-headscale:
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/graph/headscale-mutants.py

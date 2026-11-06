@@ -188,3 +188,9 @@ exposed the omitted dispatch. Scalar clock retains its ordinary seeded ABI.
 `/tmp/integ/6a-343.log/.rc` rc0; q38 host9/9, complete rotary-tail
 mapping and all five compiled mutants; byte-identical units;
 `crumb verify: OK: 91 crumbs current`. Dated roadmap notes retained together.
+
+#345 `c0d5e0316e13d64aacdfe9a28a4d44f7f66c2dd7`:
+`/tmp/integ/6a-345.log/.rc` rc0; headscale, q38 host, graph warp/OM/nested
+and compiled mutants PASS; byte-identical units;
+`crumb verify: OK: 91 crumbs current`. Root union adds graph_headscale
+to the existing flags/ABI runtime-views dispatch rather than stale profile syntax.

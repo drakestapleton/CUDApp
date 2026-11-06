@@ -127,6 +127,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om hello_plan=om/graph/hello-plan.om"
   UNITS="$UNITS core_cubadmit=$CORE/fmtnum.om,$CORE/cubadmit.om"
   UNITS="$UNITS core_ampack=$CORE/ampack.om"
+  UNITS="$UNITS graph_headscale=om/graph/headscale.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || PURE_UNITS="$PURE_UNITS c5=tools/c5/policy.om,tools/c5/runtime.om"
 GXNUM=om/gemmex/num.om
@@ -268,7 +269,7 @@ for u in $UNITS $PURE_UNITS; do
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
-    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
+    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table|graph_headscale)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
     attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx|attn_host|attn_scanchk)

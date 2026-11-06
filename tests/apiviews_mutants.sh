@@ -39,7 +39,7 @@ run_one() {
   restore=$src
   sed -i "s|$old|$new|" "$src"
   dest=$(mktemp -d)
-  if ! OMEGA_OMC="$OMC" OMEGA_BRIDGE="$BRIDGE" OMEGA_BRIDGE_RT="${OMEGA_BRIDGE_RT:-/tmp/bridge-73-apiviews}" \
+  if ! OMEGA_OMC="$OMC" OMEGA_BRIDGE="$BRIDGE" \
       OMEGA_UNITS_DEST="$dest" sh "$ROOT/om/units.sh" >/tmp/apiviews-mutant-$name.log 2>&1; then
     echo "FAIL mutant $name: regen rc $?"
     cat /tmp/apiviews-mutant-$name.log
@@ -59,7 +59,7 @@ run_one() {
   bin=$OUT/mutant-$name
   if ! $CC -std=c11 -Wall -Wno-unused-function -I"$ROOT/src" -ffp-contract=off -O0 \
       -DCUDAPP_MIGRATION_PENDING_APIVIEWS_DIFF \
-      -o "$bin" "$ROOT/tests/apiviews_host_test.c" $srcs "$ROOT/src/omega_gpu_hostmath.c" -lm; then
+      -o "$bin" "$ROOT/tests/apiviews_host_test.c" $srcs "$ROOT/src/omega_gpu_hostmath.c" "$ROOT/src/cudapp_om_core_hostmath.c" -lm; then
     echo "KILLED mutant $name: compile refused"
     rm -rf "$dest"
     return 0

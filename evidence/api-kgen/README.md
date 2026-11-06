@@ -45,8 +45,13 @@ against its C oracle over the source-derived boundary partition from
 `om/components/api_ew_plan.om`: zero, minimum even dimension 2, divisibility by
 128, row clamp 1024, dimension caps 2048/16384, element clamp 131072 and mutant
 0..3 admission, with v-1/v/v+1 representatives where representable. All modes
-0..6 and range lower/upper comparisons are included. Observed: **3276 admitted,
-3094 refused** with identical admission and output words.
+0..6 and range lower/upper comparisons are included, including the signed-input
+boundary at 9223372036854775807 and UINT64_MAX. Observed: **4189 admitted,
+4001 refused** with identical admission and output words.
+
+WolframLanguageEvaluator:
+`{9223372036854775807-1,9223372036854775807,9223372036854775807+1}`
+-> `{9223372036854775806,9223372036854775807,9223372036854775808}`.
 
 The red control flips the first IR immediate and must exit 1 with `FAIL IR`.
 Five separately regenerated seeded semantic mutants were killed: descriptor
@@ -64,6 +69,11 @@ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make
 Production-default host results: elementwise **24 checks, 0 failed**;
 reconvergence **119 checks, 0 failed**. These include the existing software-model
 and disassembly controls, not chip execution.
+
+`elementwise-differential.log` records the final boundary/differential/red and
+seeded-mutant gate. `simulator-targets.log` records all three named `mk/`
+simulator targets listed below, with exit 0. Logs replace the user's home
+directory with `~` where present; no outputs or verdicts are otherwise changed.
 
 ## Existing target inventory
 

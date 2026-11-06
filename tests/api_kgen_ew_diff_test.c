@@ -21,7 +21,8 @@ static int shape_partition(void) {
     /* om/components/api_ew_plan.om: zero admission; even/128 divisibility;
      * 1024-row and 131072-element clamps; 2048/16384 dimension caps;
      * reconvergence lower/upper bound and the mutant 0..3 enum. */
-    static const uint64_t ns[]={0,1,2,3,4,127,128,129,1023,1024,1025,131071,131072,131073};
+    static const uint64_t ns[]={0,1,2,3,4,127,128,129,1023,1024,1025,131071,131072,131073,
+      9223372036854775806ull,9223372036854775807ull,9223372036854775808ull,UINT64_MAX};
     static const uint64_t ds[]={0,1,2,3,127,128,129,2047,2048,2049,16383,16384,16385};
     unsigned admitted=0,refused=0;
     for(unsigned mode=0;mode<=6;mode++)for(size_t n=0;n<sizeof ns/sizeof *ns;n++)

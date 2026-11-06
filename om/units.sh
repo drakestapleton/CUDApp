@@ -216,6 +216,7 @@ REST="$REST ar_copy=om/apirest/copy.om ar_sstats=om/apirest/sstats.om"
 REST="$REST ar_victim=om/apirest/victim.om ar_mstep=om/apirest/data.om,om/api/apish_shp.om,om/apirest/mstep.om"
 REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
+UNITS="$UNITS fixture_verify=om/codegen/fixture_verify.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/codegen/cg_em.om om/codegen/cg_reconv.om om/codegen/cg_sentin.om"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -267,7 +268,7 @@ for u in $UNITS $PURE_UNITS; do
   file=cudapp_om_$name.c
   profile=
   case "$name" in
-    revision|epoch|f16|c5|leftovers|bw_scalar)
+    revision|epoch|f16|c5|leftovers|bw_scalar|fixture_verify)
       frontend=bridge-freest
       abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN

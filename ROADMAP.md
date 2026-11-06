@@ -164,3 +164,14 @@ row status is upgraded.
 2026-11-06: elementwise and attention API kernel generation, scheduling, reconvergence and loop-liveness metadata now default to seeded `om/kgen/{ew,attention}_*.om` through the existing single `omega_gpu_om_ir_replay` entry. `CUDAPP_MIGRATION_PENDING_C_API_KGEN` retains the default-OFF C oracles. Complete source-derived IR, solved allocation, text and cubin differential checks, altered-IR/final-cubin controls and ten seeded semantic mutants are recorded in `evidence/api-kgen/README.md` and `evidence/api-kernel-gen-attn/2026-11-06/README.md`. Required host/model/simulator targets and byte-for-byte unit regeneration passed. This is host evidence, not chip qualification; chip NOT_RUN and the status rows above are unchanged.
 
 2026-11-06: general-attention thread/shared/workspace/chunk policy, scan poison/prefix/sorted-neighbor verification and elementwise timestamp arithmetic now default to seeded Omega through strong hosted units. The C references remain behind default-OFF `CUDAPP_MIGRATION_PENDING_C_ATTENTION_HOST_POLICY`, `CUDAPP_MIGRATION_PENDING_C_SCAN_CHECK_REST` and `CUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS`. Public APIs and the inherited API kernel/view migration are unchanged. Differential, missing-unit/content red controls, source mutants and focused family receipts are recorded under `evidence/attn-host-policy-20261106/`. Chip is NOT_RUN; status rows above are unchanged.
+
+## 2026-11-06: codegen fixture verification (pending integration)
+
+The seven exported codegen fixture verifiers now call the seeded scalar unit
+`om/codegen/fixture_verify.om`, including freestanding builds. Golden-word
+comparisons, refusal/error arithmetic, BF16 relations and control-word assembly
+are Omega-owned; C only invokes encoders and marshals their words. Host
+differentials, seven killed Omega mutants, a corrupted-golden red control and
+the focused hosted/freestanding gates are EXERCISED in
+`evidence/codegen-fixture-verify-20261106/README.md`. Chip qualification is
+NOT_RUN. No roadmap status row is upgraded.

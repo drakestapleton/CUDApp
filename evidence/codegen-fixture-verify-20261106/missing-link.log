@@ -1,0 +1,8 @@
+/usr/bin/ld: /tmp/ccq1uRK5.o: in function `main':
+om_fixture_verify_test.c:(.text.startup+0xdc): undefined reference to `omega_fv_run'
+/usr/bin/ld: om_fixture_verify_test.c:(.text.startup+0x104): undefined reference to `omega_fv_run'
+/usr/bin/ld: om_fixture_verify_test.c:(.text.startup+0x14c): undefined reference to `omega_fv_run'
+/usr/bin/ld: om_fixture_verify_test.c:(.text.startup+0x174): undefined reference to `omega_fv_run'
+/usr/bin/ld: om_fixture_verify_test.c:(.text.startup+0x19c): undefined reference to `omega_fv_run'
+/usr/bin/ld: /tmp/ccq1uRK5.o:om_fixture_verify_test.c:(.text.startup+0x21c): more undefined references to `omega_fv_run' follow
+collect2: error: ld returned 1 exit status

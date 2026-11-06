@@ -1,0 +1,15 @@
+File 'tests/om_fixture_verify_test.c'
+Lines executed:100.00% of 20
+Branches executed:100.00% of 12
+Taken at least once:100.00% of 12
+Calls executed:100.00% of 23
+Creating 'om_fixture_verify_test.c.gcov'
+
+File 'src/omega_fixture_verify.h'
+Lines executed:97.30% of 37
+Branches executed:100.00% of 32
+Taken at least once:96.88% of 32
+Calls executed:88.89% of 9
+Creating 'omega_fixture_verify.h.gcov'
+
+Lines executed:98.25% of 57

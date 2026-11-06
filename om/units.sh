@@ -26,6 +26,7 @@ UNITS="$UNITS bw_cpui=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/c
 UNITS="$UNITS bw_shape=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/shape_probe.om"
 UNITS="$UNITS bw_name=om/blackwell/name.om"
 UNITS="$UNITS om/codegen/cg_em.om om/codegen/cg_reconv.om om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow.om om/codegen/cg_sentin.om"
+UNITS="$UNITS fixture_verify=om/codegen/fixture_verify.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om bw_scalar=om/blackwell/scalar.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

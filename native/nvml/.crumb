@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:26:53Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:d5707787e5e73ad87aacb38d89df5694ea4ba948c5994a4af9baa5ac56d8a9b7",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "85f48ad056ba4f6ee7d9ad310d005c69dde1624f",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "development",
+  "name": "cudapp-nvml-omega",
+  "purpose": "Pure Omega units nvml_step and nvml_errstr: every decision of the CUDA++ libnvidia-ml subset (RM requests, reply decoding, error mapping, teardown)",
+  "schema_version": "1.0.0"
+}

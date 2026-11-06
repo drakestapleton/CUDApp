@@ -13,7 +13,12 @@ set -eu
 MODE=${1:-}
 OUT=${ZERO_COPY_OUT:-build/zero-copy}
 SRC=${ZERO_COPY_SHARE_SRC:-native/share/share.om}
-test "$(sha256sum < "$OMEGA_OMC" | cut -c1-64)" = 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+GOT=$(sha256sum < "$OMEGA_OMC" | cut -c1-64)
+if test "$GOT" != "$PIN"; then
+    echo "zero-copy: FAIL OMEGA_OMC sha256 $GOT, want the pinned omc $PIN (omega-mv e5b32567)" >&2
+    exit 1
+fi
 mkdir -p "$OUT"
 T=third_party/nvidia-open-580.173.02
 

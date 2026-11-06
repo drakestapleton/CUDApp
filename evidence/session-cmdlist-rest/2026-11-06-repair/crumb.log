@@ -1,0 +1,6 @@
+Command: bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh -c 'crumb compile . && crumb verify .'
+COMPILED   om/cmdlist
+COMPILED   om/session
+crumb compile: 41 crumbs, 2 rewritten, HEAD fe56534
+crumb verify: OK: 41 crumbs current
+Exit status: 0

@@ -25,7 +25,7 @@
 static uint64_t clbook(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3) {
 #if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2)
     if (op == 0) return (i0 == i1 && i2 == i3) ? 0u : 1u;
-    if (op == 1) return i0 == i1 + 1u ? 1u : 0u;
+    if (op == 1) return i0 == (uint32_t)(i1 + 1u) ? 1u : 0u;
     return UINT64_MAX;
 #else
     uint64_t r = 0, a[16] = {i0, i1, i2, i3}, o[4] = {0};

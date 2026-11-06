@@ -251,9 +251,9 @@ int omega_gpu_session_is_parked(OmegaGpuBufferHandle h) {
         if (g_parked[i].index == h.index && g_parked[i].generation == h.generation) return 1;
     return 0;
 #else
-    uint64_t idx[OMEGA_GPU_SESSION_PARK_MAX], gen[OMEGA_GPU_SESSION_PARK_MAX], r = 0;
+    uint64_t idx[OMEGA_GPU_SESSION_PARK_MAX] = {0}, gen[OMEGA_GPU_SESSION_PARK_MAX] = {0}, r = 0;
     for (uint32_t i = 0; i < n; i++) { idx[i] = g_parked[i].index; gen[i] = g_parked[i].generation; }
-    if (omega_scan(&r, idx, n, gen, n, h.index, h.generation) != 0) return 0;
+    if (omega_scan(&r, idx, OMEGA_GPU_SESSION_PARK_MAX, gen, OMEGA_GPU_SESSION_PARK_MAX, h.index, h.generation) != 0) return 0;
     return r ? 1 : 0;
 #endif
 }
@@ -354,7 +354,7 @@ int omega_gpu_session_sync_to_cpu(const OmegaGpuMem *m) { return sync_mem(m, 0);
 
 int omega_gpu_session_scratch(OmegaGpuScratch *s, size_t bytes) {
     uint64_t hw = 0;
-    uint64_t code = ses(6, bytes, s->cap, s->reserved ? 1u : 0u, s->mem.cpu ? 1u : 0u, 0, &hw);
+    uint64_t code = ses(6, bytes, s->cap, s->reserved ? 1u : 0u, s->mem.cpu ? 1u : 0u, s->high_water, &hw);
     if (code == 2) {
         omega_gpu_fmt(g_err, sizeof g_err, "serving reservation exceeded: need %zu bytes, reserved %zu", bytes, s->cap);
         return OMEGA_GPU_SESSION_SCRATCH_RESERVED;
@@ -574,7 +574,7 @@ static uint32_t round_up(uint32_t v, uint32_t q) { return (v + q - 1) / q * q; }
 /* Default-OFF C oracle for the session decisions. Mirrors om/session/admit.om
  * and the park/words units so the differential can compare both paths. */
 static uint64_t ses_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3, uint64_t i4, uint64_t *out0) {
-(void)i4;
+    uint64_t high = i4;
     uint64_t b, c;
     switch (op) {
     case 0: return round_up((uint32_t)i0, (uint32_t)i1);
@@ -584,16 +584,17 @@ static uint64_t ses_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64
     case 4: return (i0 + 1u + 3u) / 4u;
     case 5: return i0 + 0x160u * i1 + 0x10u;
     case 6:
-        b = i0 & 0xffffffffu; c = i1 & 0xffffffffu;
-        if (i2) { if (b > c || !i3) { if (out0) *out0 = c; return 2; } }
-        if (out0) *out0 = b;
+        b = i0; c = i1;
+        if (i2) { if (b > c || !i3) { if (out0) *out0 = high; return 2; } }
+        if (b > high) high = b;
+        if (out0) *out0 = high;
         return (c >= b && i3) ? 0u : 1u;
-    case 7: if (i0 || !i1) return 0; if (!i2) return 3; return 2;
+    case 7: if (i0) return 0; if (!i1 || !i2) return 3; return 2;
     case 8:
         if (i0) return 1;
+        if (i3) return 2;
         if (i1 == UINT64_MAX) return 3;
-        if (!i2) return 4;
-        return i3 ? 2u : 0u;
+        return !i2 ? 4u : 0u;
     case 9: return (i0 || i1 || i2) ? 1u : 0u;
     case 10: if (!i0) return 2; if (!i1 || !i2) return 1; return 0;
     case 11: return (i0 < 8u && i1) ? 0u : 1u;
@@ -633,9 +634,9 @@ static size_t ses_pkt(uint32_t *pb, size_t n, uint64_t op, uint64_t a0, uint64_t
 #if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
     switch (op) {
     case 0:
-        o[0] = bw_mthd(1, 0, 1); o[1] = 0x7c0u; o[2] = bw_mthd(1, 0x021c, 1); o[3] = (1u << 0) | (1u << 4) | (1u << 12);
+        o[0] = bw_mthd(1, 0, 1); o[1] = OMEGA_AMPERE_COMPUTE_B; o[2] = bw_mthd(1, 0x021c, 1); o[3] = (1u << 0) | (1u << 4) | (1u << 12);
         o[4] = bw_mthd(1, 0x02b4, 1); o[5] = (uint32_t)(a0 >> 8); o[6] = bw_mthd(1, 0x02c0, 1); o[7] = 3; r = 8; break;
-    case 1: memcpy(o, SETUP_WORDS, sizeof SETUP_WORDS); r = sizeof SETUP_WORDS / 4; break;
+    case 1: r = sizeof SETUP_WORDS / sizeof SETUP_WORDS[0]; for (uint64_t i = 0; i < r; i++) o[i] = SETUP_WORDS[i]; break;
     case 2: o[0] = bw_mthd(1, OMEGA_BW_MTHD_INVALIDATE_SHADER_CACHES, 1); o[1] = (uint32_t)a0; r = 2; break;
     case 3:
         o[0] = bw_mthd(1, 0x0188, 2); o[1] = (uint32_t)(a0 >> 32); o[2] = (uint32_t)a0;

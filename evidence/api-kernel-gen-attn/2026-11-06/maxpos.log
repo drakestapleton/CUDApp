@@ -1,0 +1,17 @@
+build/test_omega_gpu_decode_attn_maxpos
+ok   cache of 131072 positions allocates, buffers sized for it; 131328 refused
+ok   KV rows 65535/65536/131071 round-trip; 131072/131073 refused
+  rope rows 0..131071: worst |table - libm| 2.98e-08
+ok   RoPE rows up to 131071 match libm; table holds exactly 131072 rows
+ok   decode step at pos 131071 launches 512 splits; 131072/131073 refused
+ok   a 65536-position cache refuses pos 65536
+test_omega_gpu_decode_attn_maxpos: 5 of 5 cases passed: PASS
+CC="cc" python3 tests/runtime/api_plan_maxpos_mutants.py "build/libomega_gpu.a" "-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0"
+maxpos control killed: cap-off-by-one
+maxpos control killed: cap-one-chunk-over
+maxpos control killed: write-pos-bound
+maxpos control killed: write-count-bound
+maxpos control killed: read-pos-bound
+maxpos control killed: step-pos-bound
+maxpos control killed: rope-table-short
+test-gpu-decode-attn-maxpos: 7 of 7 controls killed (5 binding mutants)

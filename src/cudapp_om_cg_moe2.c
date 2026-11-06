@@ -1600,6 +1600,8 @@ for(;o_op(8,5, v5, k1);v5=o_op(1,5, v5,1)){
 ({f41(v1, v1_n, v2, v2_n, v3, v3_n);});
 {uint64_t _i=1ULL;uint64_t _v=o_get(v2, v2_n, 6ULL, 5);o_put(v2, v2_n, _i,_v,5);}
 {uint64_t _i=2ULL;uint64_t _v=o_get(v2, v2_n, 7ULL, 5);o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=6ULL;uint64_t _v=0ULL;o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=7ULL;uint64_t _v=0ULL;o_put(v2, v2_n, _i,_v,5);}
 if(({uint64_t _a=o_get(v2, v2_n, 4ULL, 5);uint64_t _b=0ULL;o_op(7, 5, _a,_b);})){
 return o_leave(2ULL);
 }

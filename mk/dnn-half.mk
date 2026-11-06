@@ -6,8 +6,12 @@ CARRIED_HOST_TESTS += test-dnn-half test-dnn-half-mutants
 $(OUT_DIR)/dnn_half_test: tests/gpu_dnn_half_test.c tests/bw_warp_sim_k.h src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -ffp-contract=off -Isrc -Itests -o $@ $< src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 
-test-dnn-half: $(OUT_DIR)/dnn_half_test
+$(OUT_DIR)/dnn_half_alt_test: tests/gpu_dnn_half_test.c tests/bw_warp_sim.h src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) -ffp-contract=off -DDNN_HALF_ALT_SIM -Isrc -Itests -o $@ $< src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+
+test-dnn-half: $(OUT_DIR)/dnn_half_test $(OUT_DIR)/dnn_half_alt_test
 	$(OUT_DIR)/dnn_half_test
+	$(OUT_DIR)/dnn_half_alt_test
 
 test-dnn-half-mutants: $(OUT_DIR)/dnn_half_test
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" OMEGA_TEST_LIB="$(OUT_DIR)/libomega_gpu.a" python3 tests/gpu_dnn_half_mutants.py

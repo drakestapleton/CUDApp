@@ -3,7 +3,11 @@
  * Independent integer references live in omega_numeric.c, not this simulator. */
 #include "omega_blackwell_codegen.h"
 #include "omega_numeric.h"
+#ifdef DNN_HALF_ALT_SIM
+#include "bw_warp_sim.h"
+#else
 #include "bw_warp_sim_k.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,10 +78,45 @@ static int simulation(BlackwellIRProgram *p) {
     s.threads=32;
     return ws_run(&s,1,1)==0;
 }
+/* Exercise the warp scheduler, not only its unguarded per-lane ALU helper.
+ * Both simulator headers must preserve destinations in predicated-off lanes. */
+static int predicates(BlackwellIRProgram *p) {
+    omega_bw_ir_init(p);
+    p->count=2;
+    p->regalloc.vreg_to_phys[0]=0;
+    p->regalloc.vreg_to_phys[1]=1;
+    p->insns[1]=(BlackwellIRInsn){.op=BW_IR_EXIT};
+    for(unsigned op=66;op<=67;op++)for(unsigned guard=0;guard<3;guard++)
+        for(unsigned pattern=0;pattern<3;pattern++) {
+            uint32_t input=op==66?1u:ws_f2u(1.f);
+            uint32_t converted=op==66?ws_f2u(omega_ref_f16_to_f32((uint16_t)input)):
+                omega_ref_f32_to_f16(ws_u2f(input));
+            p->insns[0]=(BlackwellIRInsn){.op=(BlackwellIROpcode)op,
+                .dst_vreg=0,.src1_vreg=1,.src2_vreg=-1,.src3_vreg=-1,
+                .predicate_p0=guard!=0,.predicate_not=guard==2};
+            WsWarp w={0};
+            WsSim s={.p=p};
+            w.present=UINT32_MAX;
+            w.nfrag=1;
+            w.frag[0].mask=UINT32_MAX;
+            for(unsigned lane=0;lane<WS_WARP;lane++) {
+                w.lane[lane].p0=(uint8_t)(pattern==2?lane&1u:pattern);
+                w.lane[lane].r[0]=0xfeedfaceu;
+                w.lane[lane].r[1]=input;
+            }
+            if(ws_run_warp(&s,&w,0,0,0,0)!=0)return 0;
+            for(unsigned lane=0;lane<WS_WARP;lane++) {
+                int active=guard==0||w.lane[lane].p0!=(guard==2);
+                if(w.lane[lane].r[0]!=(active?converted:0xfeedfaceu))return 0;
+            }
+        }
+    return 1;
+}
 int main(int argc,char **argv) {
     BlackwellIRProgram *p=malloc(sizeof *p);if(!p)return 2;
     int okay=golden(p,argc==2?argv[1]:NULL);
     if(okay)okay=simulation(p);
+    if(okay)okay=predicates(p);
     free(p);
     puts(okay?"dnn-half: PASS (native words, predicates, exhaustive half reference, narrowing controls)":"dnn-half: FAIL (native encoding or independent reference)");
     return !okay;

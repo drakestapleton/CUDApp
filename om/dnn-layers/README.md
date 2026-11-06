@@ -37,6 +37,14 @@ binary32 narrowing sweep. NaNs are compared by class, not payload. It separately
 checks native words across registers and all three IR guard modes, plus an
 unknown-opcode refusal. The simulator uses the host `_Float16` conversion,
 not the integer reference. No tolerance is applied to finite conversion bits.
+Both simulator headers run the same native conversion reference and guarded
+warp-scheduler regression. Default/scalar instructions execute only for the
+predicate-selected lanes. SHFL writes only those lanes but may read a source
+register from a guard-inactive lane; an entirely guard-inactive SHFL does
+nothing. Active SHFL retains the simulator's split/exited-lane refusals.
+The scalar simulator repair follows C1 commit `7de6da63`; the pre-existing
+dynamic simulator repair is carried by attention #282.
+
 
 Host-only commands:
 

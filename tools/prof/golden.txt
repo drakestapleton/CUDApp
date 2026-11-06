@@ -1,0 +1,25 @@
+PROFI 1
+source omega-mv docs/OMEGA.md section 5; probe evidence/OWN30B-T3-TC-PEAK-BW-5faa0f70-20261013T2236Z
+probe_flops 115140000000000
+probe_bytes 195100000000
+probe_source evidence/OWN30B-T3-TC-PEAK-BW-5faa0f70-20261013T2236Z
+sec5_flops 237500000000000
+sec5_flops_kind arithmetic
+sec5_bytes_lo 207000000000
+sec5_bytes_hi 237000000000
+sec5_bytes_kind measured
+ridge_probe_n 1151400
+ridge_probe_d 1951
+ridge_probe_milli 590158
+ridge_sec5_237_n 237500
+ridge_sec5_237_d 237
+ridge_sec5_207_n 237500
+ridge_sec5_207_d 207
+launch_us_lo 24
+launch_us_hi 31
+launch_source evidence/OWN30B-LAUNCH-COST-20261014T0120Z
+stamp_source fixture
+nkern 3
+k 0 time_ns 1000000000 bytes 195100000000 flops 115140000000 ai_milli 590 bound_probe mem bound_sec5_237 mem bound_sec5_207 mem probe_mem_milli 1000 probe_flop_milli 1 sec5_mem_237_milli 823 sec5_mem_207_milli 942 sec5_flop_milli 0
+k 1 time_ns 1000000000 bytes 195100000 flops 115140000000000 ai_milli 590158892 bound_probe compute bound_sec5_237 compute bound_sec5_207 compute probe_mem_milli 1 probe_flop_milli 1000 sec5_mem_237_milli 0 sec5_mem_207_milli 0 sec5_flop_milli 484
+k 2 time_ns 1000000000 bytes 97550000000 flops 57570000000000 ai_milli 590158 bound_probe ridge bound_sec5_237 mem bound_sec5_207 mem probe_mem_milli 500 probe_flop_milli 500 sec5_mem_237_milli 411 sec5_mem_207_milli 471 sec5_flop_milli 242

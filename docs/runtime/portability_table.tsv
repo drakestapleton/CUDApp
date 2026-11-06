@@ -145,7 +145,7 @@ src/omega_gpu_gdn_api.c	CHIP_SPECIFIC	Keeps Gated DeltaNet parameters and states
 src/omega_gpu_gdn_api.h	CHIP_SPECIFIC	Gated DeltaNet decode API; includes omega_blackwell_codegen_gdn.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_gemm.c	CHIP_SPECIFIC	Builds and launches tensor-core GEMM kernels of any shape for the GB10 from Omega's IR emitters.	HOSTED_LIBC
 src/omega_gpu_gemm.h	CHIP_SPECIFIC	GEMM API; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
-src/omega_gpu_gemm_ex.c	CHIP_SPECIFIC	General GEMM entry (op N/T, leading dimensions, alpha/beta, strided batch, bf16/f16/f32 via bf16x3/fp8 with scales) over the GB10 tensor-core GEMM: the memory shell of the seeded Omega units om/gemmex (src/cudapp_om_gemm_ex_*.c), with the old C kept as migration-pending differential oracle (CUDAPP_MIGRATION_PENDING_GEMM_EX).	NO_HOSTED_INCLUDE
+src/omega_gpu_gemm_ex.c	CHIP_SPECIFIC	General GEMM entry (op N/T, leading dimensions, alpha/beta, strided batch, bf16/f16/f32 via bf16x3/fp8 with scales) over the GB10 tensor-core GEMM: the memory shell of the seeded Omega units om/gemmex (src/cudapp_om_gemm_ex_*.c), with the old C kept as migration-pending differential oracle (CUDAPP_MIGRATION_PENDING_GEMM_EX); hosted failure handling includes stdlib.	HOSTED_LIBC
 src/omega_gpu_gemm_ex.h	CHIP_SPECIFIC	General GEMM API; includes omega_gpu_gemm.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_prefill_attn256_api.c	CHIP_SPECIFIC	Launches the two head_dim 256 prefill attention kernels from the Blackwell generator through a command list.	NO_HOSTED_INCLUDE
 src/omega_gpu_prefill_attn256_api.h	CHIP_SPECIFIC	Head_dim 256 prefill attention API; includes omega_blackwell_codegen_pattn256.h.	NO_HOSTED_INCLUDE
@@ -169,6 +169,9 @@ src/omega_gpu_conv2d_api.h	CHIP_SPECIFIC	Convolution interface exposes the Black
 src/omega_gpu_apiviews.h	PORTABLE	Host data-loop ABI projections for seeded Omega API residue, with stdio/stdlib differential-failure handling; no device or chip headers.	HOSTED_LIBC
 src/omega_gpu_gdn_admit.c	CHIP_SPECIFIC	Gated DeltaNet admission/layout shell and migration-only C oracle; includes math.h for finite-value checks and the GDN chip API.	HOSTED_LIBC
 src/omega_gpu_gdn_admit.h	CHIP_SPECIFIC	Gated DeltaNet admission/layout interface exposes Blackwell GDN shape types.	NO_HOSTED_INCLUDE
+src/omega_gpu_api_hostrest.h	PORTABLE	Scalar seeded Omega host-residue ABI helpers with migration-only C oracle; hosted stdlib/stdio failure handling, no chip headers.	HOSTED_LIBC
+src/omega_gpu_mathlibs_host.h	PORTABLE	Seeded Omega mathlibs scalar/admission ABI helpers; stdlib failure handling, no chip headers.	HOSTED_LIBC
+src/omega_gpu_mathlibs_host.inc	CHIP_SPECIFIC	Included mathlibs plan/effect shell launches GB10 RNG and FFT kernels under the session lock; no direct hosted includes.	NO_HOSTED_INCLUDE
 src/omega_gpu_graph_om.h	PORTABLE	Graph-node and address ABI projections to seeded Omega over raw integer/float-bit records; no chip or driver includes.	NO_HOSTED_INCLUDE
 src/omega_gpu_graph_residue.h	PORTABLE	Graph metadata ABI projections to seeded Omega with stdlib failure handling and a migration-only C oracle.	HOSTED_LIBC
 src/omega_gpu_platform_linux_rest_oracle.h	PORTABLE	Migration-only scalar oracle for platform decisions; uint64_t records, no Linux or device includes.	NO_HOSTED_INCLUDE

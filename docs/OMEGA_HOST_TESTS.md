@@ -88,7 +88,6 @@ row-major cases even with the unchanged C builder. Do not alter the generator,
 packing, or expected values to accommodate it. The integration
 `test-codegen-tern-sim` target already uses a current-simulator adapter.
 
-
 ## Memory ordering
 
 `nvrm/cpu_barrier.h` is the publication barrier.

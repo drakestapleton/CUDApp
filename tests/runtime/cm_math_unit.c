@@ -8,7 +8,7 @@
 static uint64_t bits(double x) { uint64_t b; memcpy(&b, &x, 8); return b; }
 static double value(uint64_t b) { double x; memcpy(&x, &b, 8); return x; }
 static uint64_t ordered(uint64_t b) { return b >> 63 ? ~b : b | UINT64_C(0x8000000000000000); }
-static uint64_t maxima[7], arguments[7], got_bits[7], ref_bits[7];
+static uint64_t maxima[8], arguments[8], got_bits[8], ref_bits[8];
 static int check(unsigned mode, uint64_t arg) {
     double x = value(arg), ref;
     switch (mode) {
@@ -18,10 +18,12 @@ static int check(unsigned mode, uint64_t arg) {
     case 3: ref = exp(x); break;
     case 4: ref = exp2(x); break;
     case 5: ref = sqrt(x); break;
-    default: ref = erfc(x); break;
+    case 6: ref = erfc(x); break;
+    default: ref = fabs(x); break;
     }
     uint64_t out;
     if (omega_cm_math(&out, mode, arg)) return 1;
+    if (mode == 7 && out != (arg & UINT64_C(0x7fffffffffffffff))) return 1;
     double got = value(out);
     if (isnan(ref)) return !isnan(got);
     if (isnan(got)) return 1;
@@ -42,7 +44,7 @@ int main(void) {
     if (omega_cm_math(&out, 3, UINT64_C(0x3e50000000000000)) || out != UINT64_C(0x3ff0000004000001)) ++bad;
     if (omega_cm_math(&out, 6, UINT64_C(0x402570dc08794a6a)) || out != UINT64_C(0x354eb3d792b02a8a)) ++bad;
     uint64_t special[] = {0, UINT64_C(0x8000000000000000), 1, 2, UINT64_C(0x000fffffffffffff), UINT64_C(0x0010000000000000), UINT64_C(0x3fefffffffffffff), UINT64_C(0x3ff0000000000000), UINT64_C(0x3ff0000000000001), UINT64_C(0x7fefffffffffffff), UINT64_C(0x7ff0000000000000), UINT64_C(0xfff0000000000000), UINT64_C(0x7ff8000000000000), UINT64_C(0x7ff0000000000001)};
-    for (unsigned m = 0; m < 7; ++m) {
+    for (unsigned m = 0; m < 8; ++m) {
         for (unsigned i = 0; i < sizeof special / sizeof *special; ++i) {
             bad += check(m, special[i]); bad += check(m, special[i] | UINT64_C(0x8000000000000000));
         }

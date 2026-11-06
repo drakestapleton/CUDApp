@@ -53,13 +53,52 @@ sort order must compile and then fail the differential executable.
 Before the final integration run, `make -j3 test-costmodel test-dagsim` passed:
 `checks 127 failures 0`, `dagsim_unit: 203 checks, 0 failed`, pinned CLI fixtures,
 unsupported/refused prediction mutants, inverted-lifetime mutant and the retained
-C operation-clamp mutant. This exercised the migrated model arithmetic and
-ranking on the existing tests; it is **not** a C-vs-Omega decision identity proof.
+C operation-clamp mutant. This exercises the default Omega model arithmetic,
+prediction, calibration and ranking on the existing tests. The additional
+direct differential below checks same-state decisions rather than assuming
+parity from those standalone passes.
 
 `cm_blob_unit` passed after blob/digest cutover. It compares initialization,
 serialization bytes, digest bytes and deserialization against the retained C
 oracle, checks digest tampering, all header-bit perturbations, both header byte
 orders, SHA block/padding boundaries, lengths 0 through 255 and larger inputs.
+
+`test-cm-decision-differential` links the unchanged direct model unit through
+decision/prediction interceptors and the retained C implementation. It compares
+actions, selected arms, measurement pairs, reasons, refusal/known/borrowed flags
+and sample counts exactly, and records floating-output ULP distances separately.
+Additional deterministic inputs cover unsupported operations, saturated
+core/pressure classes, empty/partial eligibility, budgets and fallback indices.
+Poisoned-output invalid-argument probes check the cleared prediction contract.
+Assertion-disabled verifier builds are refused, not reported as passing.
+
+The exercised run reported 21,058 decisions and 8,617 predictions, with all
+discrete comparisons equal. This is parity over those exercised inputs, not a
+universal decision-threshold proof and not independently trained-state parity.
+The largest measured floating distance was 5,611,147 ULP in `mean_log2_ps`:
+candidate `0x1.c1fea4ee44ep-6`, C `0x1.c1fea4e8eaf75p-6`. The harness records
+the exact model/features/policy in ignored `build/cm_decision_max.case` so this
+near-zero value can be replayed without regenerating its training fixture.
+
+WolframLanguageEvaluator:
+`a=FromDigits["1c1fea4ee44e",16]2^(-6-4 StringLength["c1fea4ee44e"]);`
+`b=FromDigits["1c1fea4e8eaf75",16]2^(-6-4 StringLength["c1fea4e8eaf75"]);`
+`N[{a,b,a-b,Abs[(a-b)/b]},30]`
+returned absolute difference `1.9467576856113666 * 10^-11` and relative
+difference `7.0880118476913915 * 10^-10`. These describe that measured case;
+they are not a global model-error bound. The C oracle retains normal compiler
+flags; a separately compiled `-ffp-contract=off` oracle is diagnostic only.
+Replaying the captured case with **only** `cm_oracle.c` rebuilt using that flag
+reported zero ULP difference across the complete decision output. This isolates
+contraction as the cause for this case, not for every possible model state.
+
+`test-cm-source-mutants` passed ten attributed source controls: unsupported-op
+aliasing, doubled sample counts, incorrect variance division, reversed quantile,
+incorrect spread scaling, changed measurement action, inverted calibration
+clamp, changed blob magic, lost digest bits and the wrong logarithm base.
+Every mutant compiled and failed a named numerical/decision/blob assertion.
+The decision interceptor independently caught the action mutant, and its
+assertion-disabled build was refused.
 
 The binary64 sweep uses 65,536 deterministic random bit patterns per tested
 function, signed special values, subnormal/binary-exponent boundaries and
@@ -129,12 +168,13 @@ Blob packing queries and results are also quoted directly in `cm_blob.om`.
 
 ## Remaining acceptance work
 
-The original assignment still needs full artifact manifest/admission/JSON and
-remaining owned API plan migration; all-input C-vs-Omega decision differentials
-and dedicated source mutants for the newly migrated model arithmetic/ranking;
-and a correct-rounding argument beyond the finite libm sweep. Do not describe
-this draft as qualified or as a completed CUDA-stack replacement. No ROADMAP
-status has been upgraded.
+Artifact manifest/admission/JSON and remaining owned API plans are being
+completed on disjoint stacked branches before integration. The direct model
+input corpus and dedicated arithmetic/ranking source mutants are exercised
+above. A universal correct-rounding or arbitrary-threshold identity proof is
+not claimed by the finite sweeps. Do not describe this draft as hardware
+qualified or as a completed CUDA-stack replacement. No ROADMAP status has been
+upgraded.
 
 ## Chip runbook — NOT_RUN
 

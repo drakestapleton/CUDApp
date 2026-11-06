@@ -627,9 +627,12 @@ It is EXPERIMENTAL for four reasons, each one a stated limit rather than a defec
   against a double reference in `tests/gpu_gemm_ex_test.c`, and parts of a value below 2^-133 are dropped.
   `OMEGA_GEMM_EX_F32_FFMA_REF` is the slow per-k FFMA comparator, not a fast path.
 - **fp8 output is refused** (`OMEGA_GPU_GEMM_UNSUPPORTED`).
-- **Migration-pending C, one chip.** `src/omega_gpu_gemm_ex.c` is new C behind the build switch
-  `CUDAPP_MIGRATION_PENDING_GEMM_EX` (`mk/gemm-ex.mk`, default 1; 0 refuses every call with `OMEGA_GPU_GEMM_UNSUPPORTED`).
-  Its named successor is `src/omega_gpu_gemm_ex.om` (CUDApp#144). Exercised on sm_121 (GB10) only.
+- **Omega with a migration-pending C oracle, one chip.** The plan, routes, k parts, operand conversion, k-part sums,
+  host recompute, epilogue and fp8 dequantization are seeded Omega (`om/gemmex/*.om`, generated
+  `src/cudapp_om_gemm_ex_*.c`, CUDApp#144); `src/omega_gpu_gemm_ex.c` is their memory shell. The old C stays behind
+  `CUDAPP_MIGRATION_PENDING_GEMM_EX` (`mk/gemm-ex.mk`, default 0; 1 builds the C path) as the differential oracle
+  (`make test-gpu-gemm-ex-diff`). An Omega unit refusing its window returns `OMEGA_GPU_GEMM_CODEGEN_FAIL`.
+  Exercised on sm_121 (GB10) only, by the C path; the Omega path's chip tier is NOT_RUN.
 
 The fp8 GEMV and grouped GEMM of section 9.7 call `omega_gpu_gemm_ex_fp8_block_rows` for shapes their tuned kernels
 refuse, and report it in `OmegaGpuFp8Info.general` / `OmegaGpuFp8GemmInfo.general`; those rows carry the bf16x3

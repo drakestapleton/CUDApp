@@ -33,8 +33,9 @@
  * into block_m x block_k blocks, scale_a row-major [ceil(m/block_m)][ceil(k/block_k)]; op(B) into block_k x block_n blocks,
  * scale_b [ceil(k/block_k)][ceil(n/block_n)]; the k parts break at block_k. Scales must be finite. Any input type may be scaled.
  *
- * Migration-pending C (GpuStack PLAN rules): build switch CUDAPP_MIGRATION_PENDING_GEMM_EX (mk/gemm-ex.mk, default 1: new
- * capability, no served caller); named successor src/omega_gpu_gemm_ex.om. */
+ * The decisions and arithmetic are seeded Omega (om/gemmex, CUDApp#144); src/omega_gpu_gemm_ex.c is their memory shell.
+ * Migration-pending C, kept as the differential oracle: build switch CUDAPP_MIGRATION_PENDING_GEMM_EX (mk/gemm-ex.mk,
+ * default 0: the Omega path; 1: the old C path; CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF=1 runs both and aborts on a difference). */
 #ifndef OMEGA_GPU_GEMM_EX_H
 #define OMEGA_GPU_GEMM_EX_H
 
@@ -84,7 +85,8 @@ typedef struct {
 } OmegaGemmExArgs;
 
 /* OMEGA_GPU_GEMM_OK, _BAD_ARGS (malformed), _TOO_LARGE (a dimension or batch past the maxima), _UNSUPPORTED (fp8 C),
- * _CODEGEN_FAIL, _CHIP_FAIL (from the kernels or a host allocation) */
+ * _CODEGEN_FAIL (an Omega unit refused its window: a shell defect, never the caller's), _CHIP_FAIL (from the kernels or a
+ * host allocation) */
 int omega_gpu_gemm_ex(const OmegaGemmExArgs *args);
 
 /* The block-scaled fp8 weight product the fp8 GEMV and grouped GEMM fall back to for shapes their tuned kernels refuse
@@ -94,8 +96,7 @@ int omega_gpu_gemm_ex(const OmegaGemmExArgs *args);
  * one non-NULL; y: m rows of n f32 at ldy (0: n). Any m, n, k, block >= 1. Each weight is dequantized to f32 with one rounding
  * (exact when the scale has <= 20 significant bits, as the fp8 tensors' bf16 scales do), then the product runs as
  * omega_gpu_gemm_ex f32 x f32 (the bf16x3 route, its stated accuracy). Every output element's sum is independent of m, so
- * a row computed in a batch of m equals the same row computed alone. Returns the omega_gpu_gemm_ex codes; UNSUPPORTED
- * when the build switch is off. */
+ * a row computed in a batch of m equals the same row computed alone. Returns the omega_gpu_gemm_ex codes. */
 int omega_gpu_gemm_ex_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
                                      const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info);
 

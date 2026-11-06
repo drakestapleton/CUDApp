@@ -24,8 +24,7 @@
  *     General fallback (GemmGeneral, 2026-10-27): any other M, segment count or k the tensor holds runs each segment
  *     through omega_gpu_fp8_general_rows (weights dequantized exactly, fp32-input GEMM via bf16x3; info->general = 1).
  *     Those rows are NOT bit-identical to the GEMV; they carry the bf16x3 tolerance (tests/gpu_gemm_ex_test.c). Not when a
- *     test override (mt, warps, ctas) or a kernel mutant is set, and not on the record path; with the build switch
- *     CUDAPP_MIGRATION_PENDING_GEMM_EX off the refusal codes come back as before.
+ *     test override (mt, warps, ctas) or a kernel mutant is set, and not on the record path.
  *
  *   int omega_gpu_fp8gemm_prepare(uint32_t k);   build and pin the kernel for width k now (serving).
  *   const char *omega_gpu_fp8gemm_rc_name(int rc);  const char *omega_gpu_fp8gemm_last_error(void);

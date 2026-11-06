@@ -41,6 +41,7 @@ static void sentinels(const uint32_t *dims, size_t nd, const uint32_t *bits, siz
 int main(int argc, char **argv) {
     if (argc == 1 || strcmp(argv[1], "--mutant") != 0) row0_regression();
     if (argc > 1 && strcmp(argv[1], "--row0") == 0) return 0;
+    if (argc > 1 && strcmp(argv[1], "--red") == 0) putchar('!');
     const uint32_t dims[] = {0, 1, 2, 7, 8, 15, 16, 17, 31, 32, 47};
     const uint32_t bits[] = {0, 0x80000000u, 0x3f800000u, 0x3f808000u,
         0x3f818000u, 0x7f800000u, 0xff800000u, 0x7f800001u, 0xffc12345u,

@@ -11,8 +11,7 @@ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10
 ```
 
 ```sh
-sh tests/regalloc_om/checkers.sh
-env OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/tmp/integ/bridge-73-79e8c36 python3 tests/regalloc_om/checkers_mutants.py
+env OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/tmp/integ/bridge-73-79e8c36 make -j3 test-checkers-om
 ```
 
 `checkers.c` partitions the source predicates: all emitter kinds and invalid kinds, predicated/unpredicated branches, append success/failure, pending masks and held bits, prefetch/consume barriers 0..31, loop capacity and all interval comparisons, log2 powers/nonpowers, begin/exit bounds, every join refusal and valid joins, including failure after an earlier exit was patched. Allocation and append doubles are deliberately limited to injecting those external outcomes; no device is used. The C oracle is compiled separately and full mutable state/immediates are compared. An extra output record is the red comparison control. `build/checkers-om/` contains the two outputs, red output, gcov source reports and recompiled-mutant evidence. Compilation refusal is not a killed mutant. Host evidence is not chip qualification.
@@ -42,3 +41,13 @@ The metadata is `ulong[12]={kind,m,k,mp,kp,n,nt0,nt1,source_bytes,destination_us
 `cg_sentin.om` supplies result-sentinel placement/counting under the same default-off C_PACK oracle switch. Its metadata is `{m,n,np,set_as_uint32,poison_f32_bits}`; C marshals the float bits and buffer extent, and Omega chooses the last real word in each tile and performs the exact float comparisons. The differential also compares every sentinel count and full destination for positive/negative set flags, signed zero, infinities and NaN poisons.
 
 With the bwrap prefix above, run `sh tests/regalloc_om/packers.sh`, then `env OMEGA_OMC=... OMEGA_BRIDGE=... python3 tests/regalloc_om/packers_mutants.py`. The differential compares every destination and guard word across all five packers, including partial A/B tiles, empty inputs, extra padding blocks, B subranges and f32 edge bit patterns. Six recompiled semantic mutants must execute successfully and produce different complete outputs; a compile failure or trap is not credited.
+
+The named `test-frag-packers-om` make target runs both fragment checks in order. The C oracle is built with `--coverage -O0`; `build/packers-om/gcov.log` and its annotated source report record the partition. Functions elsewhere in the same codegen translation unit are outside this packer differential and are exercised by their separate gates. The extra output-byte red control must fail the full-buffer comparison.
+
+The backend adapter `tools/gpu_engine_backend_mutations.sh` explicitly links `cg_bind` and the providers reached by the current codegen wrappers. Run it with `PHYSICS_DIR=.` in this self-contained checkout, under the same bwrap prefix; its fake M16 driver must remain the only driver implementation. The exercised sweep reported 120 rows, 107 killed, 13 justified redundant and zero test gaps.
+
+## Deferred chip qualification
+
+Chip qualification is **NOT_RUN**: this lane has neither a GPU window nor device access, and the mandatory bwrap mount hides `/dev/nvidia*`. Host simulation and successful portable regeneration do not change that verdict.
+
+After the operator grants a separate exclusive hardware window, the hardware owner must use the then-current approved device harness, rerun the host gates on the exact integration revision first, and run `gpu_reconv_test --out <new-receipt.json>` through that harness. The executable runs its host part before the chip probes, refuses simulator-rejected kernels, compares exact u32 results and checks its math mutants. Do not pass the optional `--observe-dropped-join` flag. Record the revision, window authorization, binary hash, exit status and raw receipt; stop on the first failed probe. This runbook is not permission to expose a device, disturb serving, or relax the bwrap rule in this lane.

@@ -14,6 +14,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include "cudapp_native.h"
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
+#define CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC 0
+#endif
 
 #define NVRM_MAX_MEM 16
 
@@ -183,7 +189,13 @@ int  nvrm_close(Nvrm *rm);
 
 /* Pushbuffer method header (non-incrementing=1, incrementing=2 / SEC_OP_INC_METHOD) */
 static inline uint32_t nvrm_mthd(uint32_t subc, uint32_t mthd, uint32_t count) {
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
     return (2u << 28) | (count << 16) | (subc << 13) | (mthd >> 2);
+#else
+    uint64_t result;
+    if (omega_nvrm_alloc_scalar(&result, 1, subc, mthd, count)) abort();
+    return (uint32_t)result;
+#endif
 }
 
 /* As nvrm_alloc, but the graphics chip does not cache it in L2. For memory

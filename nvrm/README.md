@@ -8,13 +8,16 @@ The proprietary kernel/module replacement is not part of this client change.
 
 | Responsibility | Source |
 | --- | --- |
-| Public lifecycle, class selection, VA ownership, quarantine and channel policy | `nvrm/nvrm.c`, `nvrm/nvrm.h` |
+| Lifecycle effects, VA slot atomics, quarantine and channel policy | `nvrm/nvrm.c`, `nvrm/nvrm.h` |
 | Library adapter and completion waits | `m16/m16_native.c`, `m16/m16_gpu_wait.c` |
 | NVOS21, NVOS54, NVOS00, NVOS33+fd, NVOS46, NVOS47, register-fd bytes and reply decoding | `native/nvrm/wire.om`, `wire_pack.om` |
 | NVOS32 heap-information request bytes | `native/nvrm/heap_wire.om` |
 | All UVM requests used by this client, including the complete external-allocation attribute array | `native/nvrm/uvm_wire.om`, `uvm_map_wire.om` |
 | Checked file, RM, UVM and owned mapping operations | `native/nvrm/transport.om`, generated `src/cudapp_om_nvrm_transport.c` |
 | Earlier standalone program-mode context, with its own smaller resource tables | `native/nvrm/context.om` |
+| VA first-fit/split/coalesce, recycled-slot stack and counter successor | `native/nvrm/alloc.om`, `alloc_scalar.om` |
+| `/proc` decimal parsing and counter reductions; method-header encoding | `native/nvrm/counts.om`, `alloc_scalar.om` |
+| Ampere packet envelope validation, composed with existing method/class admission | `native/nvrm/alloc_push.om`, `om/encoder/amp_runtime.om` |
 
 The standalone `context.om` is not substituted for the library client: its
 singleton tables do not implement the library's independent contexts or its
@@ -31,6 +34,16 @@ boundary while retaining Omega request construction. Defining `ioctl` or
 forbidden symbol names are not referenced. Production has no fallback.
 High-level lifecycle policy and vendor class-specific parameter values still
 originate in C; this is not a claim that every line of the library is Omega.
+
+`CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0` selects the seeded allocation,
+counter and packet units. Set it to 1 only for the retained original C oracle.
+The free-range table is borrowed in place, with explicit layout assertions:
+no table copy or host allocation is introduced. C retains file reads, slot
+lock/CAS effects, error reporting and mapped-pointer construction. All four
+new entries are strong references; a missing entry fails to link. The public
+method-header signature and the #281 vendor header baseline are unchanged.
+Portable generation uses the existing `om/units.sh` digests, not the newer
+converter in an arbitrary bridge checkout.
 
 Each client owns a native mapping context with 4098 slots: 4096 live
 allocations, the usermode page and one transient reservation. Only an owned
@@ -63,12 +76,14 @@ streams are never mixed in one generation. Set `OMEGA_NVRM_CC_AARCH64` and
 
 ## Host gates
 
-With `OMEGA_OMC` and `OMEGA_BRIDGE` set to the repository's pinned toolchain:
+With `OMEGA_OMC`, `OMEGA_BRIDGE` and `OMEGA_SEED` set to the pinned toolchain
+(`OMEGA_SEED` is the baseline compiler required by existing freest units):
 
 ```sh
-taskset -c 10-14 nice -n 10 sh om/units.sh
-taskset -c 10-14 nice -n 10 make -j3 test-nvrm-wire test-nvrm-native test-nvrm-differential test-nvrm-boundary test-ampere-runtime build/test_nvrm_va_slots
-taskset -c 10-14 nice -n 10 ./build/test_nvrm_va_slots
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-nvrm-wire test-nvrm-native test-nvrm-boundary test-nvrm-differential test-nvrm-struct test-ampere-runtime test-streams-submit build/test_nvrm_va_slots
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ./build/test_nvrm_va_slots
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-nvrm-alloc
 ```
 
 The wire gate compares whole buffers, including padding, against independent
@@ -82,6 +97,15 @@ without opening a GPU. These are **HOST_ONLY**, not chip receipts.
 `test-nvrm-differential` also compiles that lifecycle fixture with the retained
 C oracle explicitly enabled and compares its complete output with the Omega
 default; both binaries must satisfy the same internal assertions.
+
+The allocation gate compares exact operation results, active free ranges,
+counts, bump position, fault state and error text against the original C
+across seeded random alloc/free sequences and source-derived edge classes.
+It also covers recycled slots, method field spill/truncation edges, complete
+packet streams (including the maximum public word-count neighborhood),
+decimal overflow/sign/token classes, a changed-result red control, ten
+compiled source mutants and four missing-entry link controls.
+See `evidence/nvrm-alloc-20261106/README.md` for receipts and the unrun chip plan.
 
 The native fixture executes the compiled Omega syscall path. In a child only,
 a seccomp filter traps ioctl calls to deliberately unopened fd 12345. A SIGSYS

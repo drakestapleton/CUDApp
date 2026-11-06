@@ -1,0 +1,79 @@
+tests/run_m16_requalification.sh compile 0 C_NVRM_ALLOC=0
+  gcc -O2 -Wall -Wextra -Werror \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
+    -I./src -I./nvrm -I./m16 \
+    -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
+    -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+    nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c \
+    src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o /tmp/nvrm-script-build-k4wftovj/artifact
+rc=0
+
+tests/run_m16_requalification.sh compile 0 C_NVRM_ALLOC=1
+  gcc -O2 -Wall -Wextra -Werror \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
+    -I./src -I./nvrm -I./m16 \
+    -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
+    -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+    nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c \
+    src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o /tmp/nvrm-script-build-k4wftovj/artifact
+rc=0
+
+tests/run_m16_requalification.sh compile 1 C_NVRM_ALLOC=0
+  gcc -O2 -Wall -Wextra -Werror \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
+    -I./src -I./nvrm -I./m16 \
+    -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
+    -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+    nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c \
+    src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o /tmp/nvrm-script-build-k4wftovj/artifact
+rc=0
+
+tests/run_m16_requalification.sh compile 1 C_NVRM_ALLOC=1
+  gcc -O2 -Wall -Wextra -Werror \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
+    -I./src -I./nvrm -I./m16 \
+    -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
+    -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
+    -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+    nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c \
+    src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o /tmp/nvrm-script-build-k4wftovj/artifact
+rc=0
+
+tests/run_nvrm_lifecycle_gates.sh compile 0 C_NVRM_ALLOC=0
+gcc -O2 -Wall -Wextra -Werror \
+  -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+  -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
+  -I./src -I./nvrm -I./m16 \
+  -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
+  -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
+  -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
+  -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+  nvrm/nvrm.c m16/m16_native.c nvrm/lifecycle_gates.c \
+  src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o /tmp/nvrm-script-build-k4wftovj/artifact
+rc=0
+
+tests/run_nvrm_lifecycle_gates.sh compile 0 C_NVRM_ALLOC=1
+gcc -O2 -Wall -Wextra -Werror \
+  -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+  -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
+  -I./src -I./nvrm -I./m16 \
+  -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
+  -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
+  -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
+  -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+  nvrm/nvrm.c m16/m16_native.c nvrm/lifecycle_gates.c \
+  src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o /tmp/nvrm-script-build-k4wftovj/artifact
+rc=0
+
+NVRM QUALIFICATION SCRIPT BUILD PASS (6 builds; execution NOT_RUN)

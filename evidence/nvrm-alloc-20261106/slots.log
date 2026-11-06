@@ -1,0 +1,14 @@
+[PASS] va_two_slots_adjacent
+[PASS] va_whole_slot_fits
+  slot A full, next take: 0x0 (slot B starts at 0x1100000000)
+[PASS] va_slot_full_refused_not_into_next_slot
+[PASS] va_last_slot_grows_past_4gib
+  after B took 8 GiB, next slot: 0x1300000000 (B ends at 0x1300000000)
+[PASS] va_next_slot_after_grown_slot
+[PASS] va_grown_slot_cannot_grow_into_later_slot
+[PASS] va_later_slot_still_usable
+[PASS] close_first
+[PASS] close_fds_cleared
+  reused fd 5 (fd_ctl was 5)
+[PASS] close_twice_leaves_reused_fd_open
+SUMMARY passed=10 failed=0

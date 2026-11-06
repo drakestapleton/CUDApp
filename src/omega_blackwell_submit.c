@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_fixture_rest.h"
 #include <math.h>
 #include "omega_blackwell_submit.h"
 #include "omega_blackwell_qmd.h"
@@ -40,7 +41,7 @@ static const uint32_t SETUP_WORDS[18] = {
 static uint64_t current_time_ns(void) {
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
-    return (uint64_t)t.tv_sec * 1000000000ULL + (uint64_t)t.tv_nsec;
+    return omega_fixture_calc(FR_NS, (uint64_t)t.tv_sec, (uint64_t)t.tv_nsec, 0);
 }
 
 /* Production entry points run on AArch64. The host simulator defines

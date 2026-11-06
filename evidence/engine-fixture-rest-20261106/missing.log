@@ -1,0 +1,9 @@
+/usr/bin/ld: /tmp/ccIhHERw.o: in function `main':
+om_fixture_rest_test.c:(.text.startup+0xc8): undefined reference to `omega_eng'
+/usr/bin/ld: om_fixture_rest_test.c:(.text.startup+0x19c): undefined reference to `omega_eng'
+/usr/bin/ld: om_fixture_rest_test.c:(.text.startup+0x264): undefined reference to `omega_eng'
+/usr/bin/ld: om_fixture_rest_test.c:(.text.startup+0x2ec): undefined reference to `omega_fr_text'
+/usr/bin/ld: om_fixture_rest_test.c:(.text.startup+0x328): undefined reference to `omega_fr_text'
+/usr/bin/ld: om_fixture_rest_test.c:(.text.startup+0x3dc): undefined reference to `omega_fr_text'
+/usr/bin/ld: om_fixture_rest_test.c:(.text.startup+0x400): undefined reference to `omega_fr_text'
+collect2: error: ld returned 1 exit status

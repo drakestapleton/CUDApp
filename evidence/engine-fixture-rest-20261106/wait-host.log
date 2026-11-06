@@ -1,0 +1,45 @@
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -o build/test_omega_gpu_wait tests/test_omega_gpu_wait.c src/omega_gpu_wait.c src/cudapp_om_eng.c
+cc -O2 -Wall -Wextra -Werror -I m16 -I src tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c src/cudapp_om_eng.c -o build/m16_gpu_wait/test_real
+MUTANT STALL_NEVER_RESETS killed by progress_resets_idle
+build/m16_gpu_wait/test_real
+real  never_written                ok
+real  written_late                 ok
+real  marker2_gate                 ok
+real  seq_wrap32                   ok
+real  progress_resets_idle         ok
+real  barrier_before_read          ok
+real  hard_deadline_with_progress  ok
+real  fixed_overshoot              ok
+real  invalid_state                ok
+real  abort                        ok
+real  failure_classes              ok
+mutant naive_wall_clock           killed mask 7ff (required 7ff)
+mutant fixed_accepts_overshoot    killed mask 482 (required 080)
+mutant seq_unsigned_compare       killed mask 779 (required 008)
+m16_gpu_wait: checks=149 real_failures=0 required_kills=13/13
+M16_GPU_WAIT_HOST PASS
+./build/test_omega_gpu_wait
+real  never_written                ok
+real  written_late                 ok
+real  marker2_gate                 ok
+real  seq_wrap32                   ok
+real  progress_resets_idle         ok
+real  barrier_each_read            ok
+real  hard_deadline_with_progress  ok
+real  fixed_overshoot              ok
+real  invalid_state                ok
+real  abort                        ok
+real  queue_wrap_sentinel          ok
+mutant naive_wall_clock           killed mask 3ff (required 3ff)
+mutant fixed_accepts_overshoot    killed mask 082 (required 080)
+mutant seq_unsigned_compare       killed mask 379 (required 008)
+gpu_wait: checks=130 real_failures=0 required_kills=12/12
+OMEGA_GPU_WAIT_HOST PASS
+unflagged: PASS
+MUTANT PROGRESS_EXTENDS_HARD killed by hard_deadline_with_progress
+OMEGA_GPU_WAIT_MUTANT_STALL_NO_RESET: killed (6 failing checks)
+MUTANT NO_BARRIER killed by barrier_before_read
+M16_GPU_WAIT_MUTANTS PASS (3/3 killed)
+OMEGA_GPU_WAIT_MUTANT_PROGRESS_EXTENDS_HARD: killed (3 failing checks)
+OMEGA_GPU_WAIT_MUTANT_NO_READ_BARRIER: killed (4 failing checks)
+OMEGA_GPU_WAIT_MUTANTS PASS

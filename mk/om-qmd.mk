@@ -35,7 +35,7 @@ test-om-qmd-red: $(OM_QMD_DIR)/sweep_red
 #   make test-om-eng-red      one flipped unit answer must make the transcripts differ
 #   make test-om-eng-mutants  recompiled eng.om mutants must fail the differential or the backend test
 #                             (needs OMEGA_OMC, OMEGA_BRIDGE and the eng_c transcript of test-om-eng-diff)
-OM_ENG_C_PARTS = $(foreach p,ENGINE WAIT MEMRESV MEMCACHE SERVING M16NATIVE M16WAIT PLATFORM SUBMIT BWENGINE REQUALIFY CONCURRENT VISIBILITY LIFECYCLE,-DCUDAPP_MIGRATION_PENDING_C_$(p))
+OM_ENG_C_PARTS = $(foreach p,ENGINE WAIT MEMRESV MEMCACHE SERVING M16NATIVE M16WAIT PLATFORM SUBMIT BWENGINE REQUALIFY CONCURRENT VISIBILITY LIFECYCLE ENGINE_FIXTURE_REST CLOCK_SCALARS,-DCUDAPP_MIGRATION_PENDING_C_$(p))
 OM_ENG_SRCS = tests/om_eng_diff_test.c src/omega_gpu_engine.c src/omega_gpu_wait.c src/omega_gpu_platform.c \
 	src/omega_gpu_mem_reserve.c src/omega_gpu_mem_cached.c src/omega_gpu_serving.c src/omega_gpu_platform_linux.c \
 	src/omega_gpu_fmt.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c m16/m16_gpu_wait.c m16/m16_native.c nvrm/nvrm.c
@@ -43,7 +43,7 @@ OM_ENG_UNIT ?= src/cudapp_om_eng.c
 OM_ENG_BINDING = $(filter-out src/cudapp_om_nvrm_transport.c $(OM_ENG_UNIT) src/cudapp_om_eng.c src/cudapp_om_amp_runtime.c,$(GPU_AIEN_BINDING))
 OM_ENG_PLATFORM = src/omega_gpu_chip.c om/platform-linux/gen/link/plat_fx_effects.c om/platform-linux/gen/link/plat_fx_wait.c
 OM_ENG_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DCUDAPP_NVRM_TEST_TRANSPORT=1 -Isrc $(GPU_ENGINE_PHYS_INC) -Wl,--wrap=omega_eng
-OM_ENG_DEPS = $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM) src/omega_eng_dec.h src/omega_eng_gates.h
+OM_ENG_DEPS = $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM) src/omega_eng_dec.h src/omega_eng_gates.h src/omega_fixture_rest.h
 
 .PHONY: test-om-eng-diff test-om-eng-red
 $(OM_QMD_DIR)/eng_om: $(OM_ENG_DEPS)
@@ -80,3 +80,8 @@ test-om-qmd-cov: tests/om_qmd_sweep_test.c $(OM_QMD_DEPS)
 	cd $(OM_QMD_DIR)/cov && gcc -std=gnu11 -O0 --coverage -Wall -Wextra -Werror -I$(CURDIR)/src $(OM_QMD_DIFF) -o sweep_cov \
 		$(CURDIR)/tests/om_qmd_sweep_test.c $(CURDIR)/src/omega_blackwell_qmd.c $(CURDIR)/src/cudapp_om_bw_qmd.c
 	cd $(OM_QMD_DIR)/cov && ./sweep_cov && gcov -b -o . $$(ls *omega_blackwell_qmd.gcno) | tee gcov.txt | grep -A4 "omega_blackwell_qmd.c'"
+
+CARRIED_HOST_TESTS += test-engine-fixture-rest
+.PHONY: test-engine-fixture-rest
+test-engine-fixture-rest:
+	python3 tests/om_fixture_rest_test.py

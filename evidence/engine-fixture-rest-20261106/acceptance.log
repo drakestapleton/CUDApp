@@ -1,0 +1,33 @@
+PASS link-failure negative
+build-omega: rc=0
+build-oracle: rc=0
+oracle: rc=0
+omega: rc=0
+PASS host differential: scalars, overflow edges, flush words, f64 scaling, bounded text
+build-CUDAPP_MIGRATION_PENDING_C_ENGINE_FIXTURE_REST: rc=0
+CUDAPP_MIGRATION_PENDING_C_ENGINE_FIXTURE_REST: rc=0
+build-CUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS: rc=0
+CUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS: rc=0
+build-coverage: rc=0
+coverage: rc=0
+gcov: rc=0
+ns_scale-build: rc=0
+KILLED ns_scale
+ms_divisor-build: rc=0
+KILLED ms_divisor
+size_cycle-build: rc=0
+KILLED size_cycle
+count_wrap-build: rc=0
+KILLED count_wrap
+flush_offset-build: rc=0
+KILLED flush_offset
+float_scale-build: rc=0
+KILLED float_scale
+text_equal-build: rc=0
+KILLED text_equal
+PASS red control: ns_scale changed a real unit answer
+build-only-m16_requalify: rc=0
+build-only-m16_concurrent: rc=0
+build-only-lifecycle_gates: rc=0
+build-only-submission_visibility_gates: rc=0
+PASS fixtures BUILD_ONLY; HW NOT_RUN; mutants 7/7 KILLED

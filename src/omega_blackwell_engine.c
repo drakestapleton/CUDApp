@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_fixture_rest.h"
 /*
  * Omega GPU Engine, Blackwell GB10 backend (cut A3b1). See
  * src/omega_blackwell_engine.h and docs/numeric/OMEGA_GPU_ENGINE.md.
@@ -118,7 +119,7 @@ static uint64_t now_ns(void)
 {
     struct timespec t;
     if (clock_gettime(CLOCK_MONOTONIC, &t) != 0) return 0u;
-    return (uint64_t)t.tv_sec * 1000000000ull + (uint64_t)t.tv_nsec;
+    return omega_fixture_calc(FR_NS, (uint64_t)t.tv_sec, (uint64_t)t.tv_nsec, 0);
 }
 
 /* Bounded copy that never reads past a NUL and always terminates. */

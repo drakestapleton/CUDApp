@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_fixture_rest.h"
 /*
  * m16_concurrent.c -- M16 concurrent multi-channel qualification test.
  *
@@ -72,18 +73,9 @@ static void fence(void) { nvrm_cpu_barrier(); }
 static int build_release_flushed(uint32_t *w, uint64_t marker_va, uint32_t payload, uint32_t cls) {
     int n = m16_native_build_release(w, marker_va, payload, cls);
     if (n < 0) return -1;
-    w[n++] = nvrm_mthd(0, 0x0028, 4);
-    w[n++] = 0;
-    w[n++] = 0;
-    w[n++] = 0;
-    w[n++] = (0x10u << 27);
-    uint64_t m2 = marker_va + MARKER2_OFF;
-    w[n++] = nvrm_mthd(0, 0x005c, 5);
-    w[n++] = (uint32_t)m2;
-    w[n++] = (uint32_t)(m2 >> 32);
-    w[n++] = MARKER2_PAYLOAD;
-    w[n++] = 0;
-    w[n++] = 0x1 | (1u << 20);
+    /* The loop only transports words computed by the seeded unit. */
+    for (uint64_t i = 0; i < 11; ++i)
+        w[n++] = omega_fixture_flush(i, marker_va);
     return n;
 }
 
@@ -93,8 +85,10 @@ static void print_report(const char *cls, const char *stage, int code, const m16
             "last_marker2=0x%08x elapsed_ms=%llu last_progress_ms=%llu "
             "progress_count=%llu polls=%llu\n",
             cls, stage, code, m16_gpu_wait_kind_name(r->wait_kind), m16_gpu_wait_result_name(r->result),
-            r->expected, r->last_observed, r->last_marker2, (unsigned long long)(r->elapsed_ns / 1000000ull),
-            (unsigned long long)((r->last_progress_ns - r->start_ns) / 1000000ull),
+            r->expected, r->last_observed, r->last_marker2,
+            (unsigned long long)omega_fixture_calc(FR_NS_MS, r->elapsed_ns, 0, 0),
+            (unsigned long long)omega_fixture_calc(FR_NS_MS,
+                omega_fixture_calc(FR_SUB, r->last_progress_ns, r->start_ns, 0), 0, 0),
             (unsigned long long)r->progress_count, (unsigned long long)r->polls);
 }
 

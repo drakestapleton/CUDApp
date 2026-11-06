@@ -66,7 +66,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_gdn=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_common.om,om/codegen/cg_gdn.om cg_gdn_policy=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_policy.om"
   UNITS="$UNITS cg_dec=om/codegen/cg_dec_emit.om,om/codegen/cg_dec.om gdn_admit=om/gdn/admit.om"
   UNITS="$UNITS om/tools/dag_eval.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
-  UNITS="$UNITS bw_qmd=om/qmd/bw_qmd.om eng=om/engine/eng.om"
+  UNITS="$UNITS bw_qmd=om/qmd/bw_qmd.om eng=om/engine/fixture_rest.om,om/engine/eng.om fixture_text=om/engine/fixture_rest.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

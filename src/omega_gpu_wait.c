@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_fixture_rest.h"
 #include "omega_gpu_wait.h"
 
 #include <string.h>
@@ -13,7 +14,7 @@ static uint64_t real_now_ns(void *ctx) {
     (void)ctx;
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+    return omega_fixture_calc(FR_NS, (uint64_t)ts.tv_sec, (uint64_t)ts.tv_nsec, 0);
 }
 #define DEFAULT_NOW_NS real_now_ns
 #else

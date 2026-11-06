@@ -8,6 +8,7 @@
 
 #include "nvrm.h"
 #include "omega_ampere_qmd.h"
+#include "omega_gpu_chip.h"
 #include "cpu_barrier.h"
 
 #include <errno.h>
@@ -364,6 +365,10 @@ static int card_index(const nv_ioctl_card_info_t cards[64], const char *bdf) {
 }
 int nvrm_open(Nvrm *rm) {
     memset(rm, 0, sizeof *rm);
+    /* D2/D6 library admission (om/admission/chip_admit.om): refuse a GPU CUDA++ has no target for from
+     * sysfs alone, before the VA slot is taken and before any /dev/nvidia node is opened. */
+    const char *bdf = getenv("CUDAPP_GPU_BDF");
+    if (omega_gpu_chip_admit_open(bdf, rm->err, sizeof rm->err) != 0) return -1;
     rm->next_handle = 0xcf000001u;
     rm->va_next = acquire_va_slot();
     if (!rm->va_next) return fail(rm, "VA slot space exhausted");
@@ -386,9 +391,13 @@ int nvrm_open(Nvrm *rm) {
     nv_ioctl_card_info_t cards[64];
     memset(cards, 0, sizeof cards);
     if (nv_ioctl(rm->fd_ctl, NV_ESC_CARD_INFO, cards, sizeof cards) != 0) return fail(rm, "CARD_INFO errno %d", errno);
-    const char *bdf = getenv("CUDAPP_GPU_BDF");
     int found = card_index(cards, bdf);
     if (found < 0) return fail(rm, "no GPU matches CUDAPP_GPU_BDF=%s (canonical dddd:bb:ss.f required)", bdf ? bdf : "");
+    /* The same decision on the card the driver names, before its /dev/nvidiaN node is opened. */
+    const nv_pci_info_t *pci = &cards[found].pci_info;
+    uint32_t admitted_sm = 0;
+    if (omega_gpu_chip_admit_card(pci->domain, pci->bus, pci->slot, pci->function, pci->vendor_id, pci->device_id,
+                                  &admitted_sm, rm->err, sizeof rm->err) != 0) return -1;
     rm->gpu_id = cards[found].gpu_id;
     rm->minor = cards[found].minor_number;
 
@@ -431,6 +440,9 @@ int nvrm_open(Nvrm *rm) {
     if (rm_control(rm, rm->device, NV0080_CTRL_CMD_GPU_GET_CLASSLIST, &cl, sizeof cl)) return -1;
     if (cl.numClasses > 512 || select_classes(rm, classes, cl.numClasses,
             cards[found].pci_info.vendor_id, cards[found].pci_info.device_id)) return -1;
+    if (rm->target_sm != admitted_sm)
+        return fail(rm, "GPU admission admitted sm_%u but the driver classes select sm_%u; refused", admitted_sm,
+                    rm->target_sm);
     if (rm_alloc(rm, rm->subdevice, rm->usermode_class, NULL, 0, &rm->usermode)) return -1;
     void *mmio = map_to_cpu(rm, rm->usermode, 0x10000, NULL, 0, 0);
     if (mmio == MAP_FAILED) return -1;

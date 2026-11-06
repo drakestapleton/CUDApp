@@ -108,10 +108,12 @@ make doctor
 The doctor inspects the host and reports compatibility. It does not open a GPU device. **NOT READY is an expected result** on unsupported chips, absent driver/device nodes, or mismatched driver releases. Do not bypass its refusal to try hardware.
 
 The doctor is a wrapper-only preflight, also run by `make hello-gpu`. Direct
-binaries and applications linking the library have no driver-version or PCI-ID
-admission guard. READY means the diagnostic checks matched, not that this commit
-is chip-qualified. The imported M16 summary lacks its referenced raw logs; see
-the README evidence limitation. Current native qualification is NOT_RUN.
+binaries and applications linking the library get no driver-version check; since
+runtime API 0.14.0 the library refuses an unknown or unqualified GPU (by PCI id)
+before it opens any `/dev/nvidia` node. READY means the diagnostic checks matched,
+not that this commit is chip-qualified. The imported M16 summary lacks its
+referenced raw logs; see the README evidence limitation. Current native
+qualification is NOT_RUN.
 
 Only when the machine is a qualified GB10 and you are authorized to use it without interrupting a serving workload:
 

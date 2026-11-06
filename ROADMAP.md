@@ -56,11 +56,11 @@ The research in `docs/PAIN_POINTS.md` ranks what developers hit with CUDA and it
 | Row | Aims to improve on CUDA by | Status |
 | --- | --- | --- |
 | D1 | Memory you can see, and a refusal before the machine hangs | DONE on the host; chip run open |
-| D2 | One command, one version: `make doctor`, then `make hello-gpu` | DONE in doctor wrapper; no direct library admission guard |
+| D2 | One command, one version: `make doctor`, then `make hello-gpu` | DONE in doctor wrapper; no direct library driver-version guard. 2026-11-05 note: the library's PCI-id admission at device open (D6) is host-tested only (`make test-chip-admission`) |
 | D3 | Faults named at the launch that caused them | DONE on the simulator; chip half open |
 | D4 | The simulator first, from the same program: `hello_gpu --sim` | DONE |
 | D5 | Builds in seconds, ships small | DONE (2.0 s, 1.06 MB) |
-| D6 | A new chip works on day one or is refused with a sentence | DONE in doctor wrapper only; table row is not current-commit qualification |
+| D6 | A new chip works on day one or is refused with a sentence | DONE in doctor wrapper; table row is not current-commit qualification. 2026-11-05 note: the library now refuses an unknown or unqualified PCI id before opening any `/dev/nvidia` node (`om/admission/chip_admit.om`); host and mutant tests only, chip run NOT_RUN |
 | D7 | Same inputs, same bits, at no cost | simulator DONE; chip DONE for hello-gpu, bf16 GEMV, rmsnorm, decode attention (10 separate processes each, `evidence/d7-same-bits-chip/2026-10-27/`); other kernels not hashed; the "no cost" half is not measured |
 | D8 | No per-process CUDA tax | PLANNED (chip window) |
 | D9 | No licence that stops you | DONE (`evidence/dx/pain-points/licence.txt`) |

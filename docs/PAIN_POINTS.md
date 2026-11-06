@@ -66,9 +66,11 @@ Even the toolkit can change the answer. causal-conv1d records a "**numerical cor
 
 **CUDA++'s answer (row D2).** There is one version to match, and it is checked. CUDA++ uses no toolkit, no framework build and no extension build: the compiler, runtime and libraries are one repository at one commit, built by `make` with a C compiler. The only outside version is NVIDIA's kernel module, whose interface headers CUDA++ is built against (`third_party/nvidia-open-580.173.02/`). `make doctor` reads `/proc`, `/sys` and `/dev` (it opens no device) and prints one line per check; a wrong module version is refused with the reason and the fix, instead of failing later in a driver call. `make hello-gpu` runs the doctor first. Status: DONE (`evidence/dx/d2-doctor/`).
 
-This refusal is implemented in the doctor wrapper, not at the library device-open
-boundary. Direct binaries and library callers have no driver-version or PCI-ID
-admission guard; `make hello-gpu` is the guarded wrapper path.
+The driver-version refusal is implemented in the doctor wrapper, not at the library
+device-open boundary; `make hello-gpu` is the guarded wrapper path. Since runtime
+API 0.14.0 the library itself refuses an unknown or unqualified PCI id at device
+open, before any `/dev/nvidia` node opens (row D6); direct callers still get no
+driver-version check.
 
 ### 2.3 Errors reported late, at the wrong call (rank 3)
 
@@ -108,7 +110,7 @@ The workarounds can be worse than the error. In Triton's sm_121 issue: "Those \"
 
 **Why people stay.** The wait is weeks or months, and then it works. On the Spark forum: "It took several weeks of community effort here to get vllm working reasonably well, in both standalone and cluster configuration."[28] From the Spark Reddit thread: "Very frustrating compared to most every other GPU release that has zero day support from cuda/nvcc/pytorch/tensorflow."[88]
 
-**CUDA++'s answer (row D6).** CUDA++ targets sm_121 and keeps a supported-target table. `make doctor` refuses other NVIDIA GPUs by name and PCI id, with what is missing and the porting steps in `docs/runtime/PORTABILITY.md` section 5. `make hello-gpu` invokes it first. Direct binaries and library callers have no PCI-ID admission guard, so this is wrapper-only refusal, not a guarantee against loading code on a different chip. A target row does not prove current qualification; the imported M16 summary's raw logs are absent (README evidence limitation). Status: DONE for the doctor refusal (`evidence/dx/d2-doctor/fake-machines.txt`); current native qualification NOT_RUN.
+**CUDA++'s answer (row D6).** CUDA++ targets sm_121 and keeps a supported-target table. `make doctor` refuses other NVIDIA GPUs by name and PCI id, with what is missing and the porting steps in `docs/runtime/PORTABILITY.md` section 5. `make hello-gpu` invokes it first. Since runtime API 0.14.0 direct binaries and library callers are refused too: `nvrm_open` asks `om/admission/chip_admit.om` (through `src/omega_gpu_chip.c`) whether the GPU named by `/sys/bus/pci/devices` (or `CUDAPP_GPU_BDF`) is a CUDA++ target before it opens any `/dev/nvidia` node, and refuses any other with one sentence naming the address and PCI id. That admission is host-tested with a simulated driver and fake PCI trees (`make test-chip-admission`, an unknown PCI id as its negative control, and `make test-chip-admission-mutants`); its chip run is NOT_RUN. A target row does not prove current qualification; the imported M16 summary's raw logs are absent (README evidence limitation). Status: DONE for the doctor refusal (`evidence/dx/d2-doctor/fake-machines.txt`); library refusal EXERCISED on the host only; current native qualification NOT_RUN.
 
 ### 2.6 Different answers from the same inputs (rank 6)
 

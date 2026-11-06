@@ -46,6 +46,7 @@
 #include "omega_ampere_codegen.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_gpu_session.h"
+#include "omega_runtime_api.h"
 #include "sha256.h"
 #include "../../tests/bw_warp_sim.h" /* the host warp simulator the host tests use; only --sim calls it */
 #include <stdio.h>
@@ -291,6 +292,18 @@ int main(int argc, char **argv) {
 
     printf("hello_gpu: c = a + b over %u floats %s, built with Omega's own kernel builder\n", N_TOTAL,
            sim ? "on the host simulator (no GPU)" : "on the GPU");
+    {   /* the library this program linked must serve the API it was compiled against (API.md section 2) */
+        unsigned lib = omega_runtime_api_version();
+        printf("runtime API %u.%u (library), program built against %u.%u\n", lib >> 16, lib & 0xffffu,
+               OMEGA_RUNTIME_API_VERSION_MAJOR, OMEGA_RUNTIME_API_VERSION_MINOR);
+        if (lib >> 16 != OMEGA_RUNTIME_API_VERSION_MAJOR || (lib & 0xffffu) < OMEGA_RUNTIME_API_VERSION_MINOR ||
+            (OMEGA_RUNTIME_API_VERSION_MAJOR == 0 && (lib & 0xffffu) != OMEGA_RUNTIME_API_VERSION_MINOR)) {
+            printf("FAIL: the linked CUDA++ library has runtime API %u.%u, this program needs %u.%u; rebuild it against "
+                   "the library it links (make hello-gpu-build)\n", lib >> 16, lib & 0xffffu,
+                   OMEGA_RUNTIME_API_VERSION_MAJOR, OMEGA_RUNTIME_API_VERSION_MINOR);
+            return 2;
+        }
+    }
     double t0 = now_us();
     if (build_vecadd(&prog) != 0) { printf("FAIL: the kernel did not build\n"); return 1; }
     {   /* the machine code, encoded once here so its hash and build time can be printed (D10) */

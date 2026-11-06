@@ -40,6 +40,10 @@ GATE_NO_LIBCUDA_RUNTIME=false
 GATE_EVIDENCE_DURABILITY=false
 GATE_RECEIPT=false
 
+# nvrm.c calls the seeded Omega class policy (src/omega_ampere_qmd.c) and the library admission
+# (src/omega_gpu_chip.c, om/admission/chip_admit.om) through their generated bindings.
+NVRM_DEPS="-I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_chip_admit.c"
+
 # 1. Build M16 binaries
 echo -e "\n[*] Step 1: Compiling M16 binaries..."
 {
@@ -49,7 +53,7 @@ echo -e "\n[*] Step 1: Compiling M16 binaries..."
     -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
     -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
-    nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c -o m16/m16_requalify
+    nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c $NVRM_DEPS -o m16/m16_requalify
 
   gcc -O2 -Wall -Wextra -Werror \
     -I./nvrm -I./m16 \
@@ -57,7 +61,7 @@ echo -e "\n[*] Step 1: Compiling M16 binaries..."
     -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
     -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
-    nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c -o m16/m16_concurrent
+    nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c $NVRM_DEPS -o m16/m16_concurrent
 } > "$EVIDENCE_DIR/build.log" 2>&1
 
 if [ -x m16/m16_requalify ] && [ -x m16/m16_concurrent ]; then

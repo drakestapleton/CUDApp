@@ -1,6 +1,6 @@
 # Omega Runtime API v0
 
-Omega Runtime API version: 0.13.0
+Omega Runtime API version: 0.14.0
 
 Status: first written version, 2026-10-19 (slice R1, omega-mv#594, tracking #593). Source of truth is the C headers in
 `src/`. This file describes them; `docs/runtime/omega_runtime_api.manifest` lists them; `make test-runtime-api` checks the
@@ -16,10 +16,15 @@ directly: find and open the GPU, get memory, copy data in and out, run a kernel,
 packaged job, and read errors. GB10 is the historical device target. The Linux reference now also has
 an experimental sm_86 direct-driver path for GA102/GA104; both Ampere devices remain NOT_RUN.
 
-Compatibility preflight is **wrapper-only**: `make doctor` checks the kernel-module
-version and PCI target, and `make hello-gpu` runs it first. Direct binaries and
-library callers have no driver-version or PCI-ID admission guard at device open.
-Callers must not bypass the preflight or the operator's GPU authorization procedure.
+Compatibility preflight has two parts. `make doctor` checks the kernel-module version, the PCI target and the rest of
+the machine, and `make hello-gpu` runs it first. Since 0.14.0 the library also admits the GPU itself at device open:
+before `nvrm_open` opens any `/dev/nvidia` node it reads `/sys/bus/pci/devices`, and `om/admission/chip_admit.om`
+decides whether the GPU is one CUDA++ targets (GB10 `0x2e12` as sm_121; the prepared, NOT_RUN Ampere ids `0x2204`,
+`0x2486`, `0x2489` as sm_86). An unknown or unqualified PCI id is refused with one sentence naming the address and id,
+and no node is opened. `CUDAPP_GPU_BDF` (for example `000f:01:00.0`) picks one GPU when several are present; without
+it every NVIDIA display GPU must be a target. The driver's card list is checked again against the same decision before
+the device node opens, and the sm the driver's classes select must equal the admitted one. The driver-version check
+stays in the doctor only. Callers must not bypass the preflight or the operator's GPU authorization procedure.
 The M16 receipt imported here is a historical summary whose referenced raw logs
 are absent; it is not current-commit qualification (see README evidence limitation).
 
@@ -36,8 +41,14 @@ signature against the headers on every run.
 
 ## 2. Version and compatibility rule
 
-The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.13.0**. It is a property of the list of entries and
+The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.14.0**. It is a property of the list of entries and
 their behaviour, not of the library build. Changes so far:
+- 0.14.0: adds experimental `omega_runtime_api_version` in `omega_runtime_api.h`, which returns the
+  `OMEGA_RUNTIME_API_VERSION` the linked library was built at (section 9.9), and library admission at device open
+  (section 1): `nvrm_open`, under every session open, now refuses an unknown or unqualified PCI id, or a GPU the driver
+  reports with an sm other than the admitted one, with a sentence and without opening a `/dev/nvidia` node. A machine
+  that opened before still opens unless its GPU is not a CUDA++ target. Changed behaviour of existing entries while MAJOR
+  is 0, so MINOR.
 - 0.13.0: adds experimental `omega_gpu_prefill_attn256_scoped` in `omega_gpu_attention_mirror.h`. Mode 0 preserves ordinary attention; mode 1 copies the complete original 27B K/V into one GPU-private reusable buffer before attention; mode 2 uses the provisional Omega-selected 1024-row threshold. Omega checks geometry, bounds, allocation capacity and completed PREP/copy/ATTEND ordering. Other modes and unsupported mirrored shapes are refused. `copy_ns` reports copy chip time separately from the unchanged attention info layout; total call time includes allocation and copying. Existing host/device/recorded entries and defaults are unchanged. See `om/attention-mirror/README.md` for qualification status.
 - 0.12.0: adds experimental `omega_gpu_pf_qgemm_reading_option` with `(rows, index)`. The checked Omega policy returns the scoped rt, warps, wait and group values at indices 0..3, or UINT32_MAX for invalid input. This proposed adaptive profile uses 64 rows for requests at most 64 rows and 128 above that threshold. Callers obtain the checked height and use `omega_gpu_pf_qgemm_workspace_fits` to check existing row, padded-row and tile capacities before switching profiles. The query returns 1 only when all capacities cover the request; otherwise callers allocate a compatible workspace.
 - 0.11.0: adds experimental `omega_gpu_pf_qgemm_scoped` per-call options and the checked `omega_gpu_pf_qgemm_scoped_bm` tile-height query. Explicit calls neither read nor modify process-global tuning knobs. Tile storage must use the queried height; actual projection dimensions are validated on every call.
@@ -461,7 +472,6 @@ Each line is a gap named in `docs/runtime/ROADMAP.md` section 1 (on branch `runt
 - Cached read-write buffers; unified memory.
 - Launches with more than the 32 argument words, or an asynchronous single launch.
 - A second real backend (WSL2 `/dev/dxg` is on branch `rig/gb20x`; native AIENOS is planned), so the platform contract has only been exercised by one.
-- A runtime function that reports the version of the linked library (the version is a compile-time macro only).
 
 ## 9. EXPERIMENTAL entries
 
@@ -645,6 +655,17 @@ accuracy, not the tuned kernels' bit pattern. Shapes the tuned kernels take neve
 The enumerators of `OmegaGemmOp`, `OmegaGemmDtype`, `OmegaGemmExCompute`, `OmegaGemmScale` and `OmegaGemmRoute` and the two
 maxima are EXPERIMENTAL constants in the manifest. `omega_gpu_gemm_ex_set_backend` and `omega_gpu_gemm_ex_test_set_mutant`
 are TEST ONLY (INTERNAL list).
+
+### 9.9 Version query (`src/omega_runtime_api.h`, added in 0.14.0)
+
+`omega_runtime_api_version()` returns `OMEGA_RUNTIME_API_VERSION`, `(MAJOR << 16) | MINOR`, of the library that was linked,
+so a program can compare it with the macro it was compiled against. While MAJOR is 0 the library serves a program only
+when MAJOR and MINOR are both equal (section 2); `examples/hello_gpu` prints both and stops with exit 2 when they differ.
+EXPERIMENTAL because it has no chip coverage yet and one user.
+
+| Entry | Signature (manifest spelling) |
+| --- | --- |
+| `omega_runtime_api_version` | `fn() -> u32` |
 
 ## 10. INTERNAL (not part of the API)
 

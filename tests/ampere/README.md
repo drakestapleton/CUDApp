@@ -25,6 +25,9 @@ reviewed header/ABI update before device execution.
 The doctor accepts the requested GA102/GA104 PCI IDs: 2204 (3090), 2486 and
 2489 (3060 Ti). Other products sold under a 3060 Ti name have distinct PCI IDs;
 they are not silently treated as GA104. The actual PCI ID must be recorded.
+The library admits the same three IDs as sm_86 at device open
+(`om/admission/chip_admit.om`); `nvrm_open` refuses any other NVIDIA GPU with
+one sentence before it opens `/dev/nvidia*`.
 
 Drake must provide the machine holding each card, its OS, driver version, and SSH
 access. On that machine, obtain its PCI BDF with the read-only doctor or `lspci`.

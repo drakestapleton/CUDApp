@@ -238,9 +238,11 @@ build/test_omega_gpu_platform_linux: tests/test_omega_gpu_platform_linux.c tests
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests $(GPU_ENGINE_PHYS_INC) \
 		-o $@ tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c $(GPU_LINUX_REF_SRCS) $(GPU_LINUX_REF_CMDLIST_SRCS) -lm
 # The driver client's VA slots and close path on the host (no device opened, nvrm_open never called).
-build/test_nvrm_va_slots: tests/test_nvrm_va_slots.c $(PHYSICS_DIR)/nvrm/nvrm.c $(PHYSICS_DIR)/nvrm/nvrm.h src/omega_ampere_qmd.c $(CUDAPP_BINDING_SRCS)
+build/test_nvrm_va_slots: tests/test_nvrm_va_slots.c $(PHYSICS_DIR)/nvrm/nvrm.c $(PHYSICS_DIR)/nvrm/nvrm.h src/omega_ampere_qmd.c \
+		src/omega_gpu_chip.c $(CUDAPP_BINDING_SRCS)
 	@mkdir -p build
-	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc $(GPU_ENGINE_PHYS_INC) -o $@ tests/test_nvrm_va_slots.c src/omega_ampere_qmd.c $(CUDAPP_BINDING_SRCS)
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc $(GPU_ENGINE_PHYS_INC) -o $@ tests/test_nvrm_va_slots.c src/omega_ampere_qmd.c \
+		src/omega_gpu_chip.c $(CUDAPP_BINDING_SRCS)
 test-gpu-session-platform: build/test_omega_gpu_session_platform build/test_omega_gpu_platform_linux build/test_nvrm_va_slots \
 		test-gpu-session-mutants
 	./build/test_omega_gpu_session_platform
@@ -253,7 +255,7 @@ test-gpu-session-platform: build/test_omega_gpu_session_platform build/test_omeg
 # NVIDIA driver. The mutants prove the test can fail: each breaks one rule in a copy of the platform.
 GPU_AIEN_INC = -I$(PHYSICS_DIR)/third_party/aien-gpu-abi1
 GPU_AIEN_SRCS = src/omega_gpu_platform_aien.c src/omega_gpu_platform.c src/omega_gpu_mem_reserve.c src/omega_gpu_session.c \
-	src/omega_gpu_platform_linux.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c $(CUDAPP_BINDING_SRCS) \
+	src/omega_gpu_platform_linux.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c src/omega_gpu_chip.c $(CUDAPP_BINDING_SRCS) \
 	$(PHYSICS_DIR)/m16/m16_native.c $(PHYSICS_DIR)/nvrm/nvrm.c
 # MIGRATION-PENDING C: the platform's code exists only with CUDAPP_MIGRATION_PENDING_AIEN_GPU=1, set here for the test and
 # its mutants and OFF in libomega_gpu.a and every other build (successor: native/aiengpu/context.om, CUDApp#128).

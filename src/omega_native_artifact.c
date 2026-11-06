@@ -18,6 +18,9 @@
 #ifndef CUDAPP_MIGRATION_PENDING_C_ARTIFACT
 #define CUDAPP_MIGRATION_PENDING_C_ARTIFACT 0
 #endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST
+#define CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST 0
+#endif
 
 #define MANIFEST_CAP 8192u
 #if CUDAPP_MIGRATION_PENDING_C_ARTIFACT
@@ -270,9 +273,16 @@ static void json_str(FILE *f, const char *s) {
     fputc('"', f);
     for (; *s; s++) {
         unsigned char c = (unsigned char)*s;
+#if CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST
         if (c == '"' || c == '\\') { fputc('\\', f); fputc(c, f); }
         else if (c < 0x20 || c == 0x7f) fprintf(f, "\\u%04x", c);
         else fputc(c, f);
+#else
+        unsigned char bytes[6];
+        uint64_t count = 0;
+        if (omega_na_json(&count, c, bytes, sizeof bytes) != OMEGA_OK) __builtin_trap();
+        (void)fwrite(bytes, 1, count, f);
+#endif
     }
     fputc('"', f);
 }
@@ -514,15 +524,18 @@ done:
 
 /* ---- admission ------------------------------------------------------- */
 
+#if CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST
 static uint16_t rd16(const uint8_t *p) { return (uint16_t)(p[0] | (p[1] << 8)); }
 static uint32_t rd32(const uint8_t *p) { return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24); }
 static uint64_t rd64(const uint8_t *p) { return (uint64_t)rd32(p) | ((uint64_t)rd32(p + 4) << 32); }
+#endif
 
 /* Confirm that the cubin's .text.<function> bytes are exactly the bound text
  * and that its section table is well formed. The digest of text.bin alone says
  * nothing about what the cubin actually contains (REVIEW C-21). */
 static int cubin_text_matches(const uint8_t *cub, size_t n, const char *fn,
                               const uint8_t *text, size_t tn) {
+#if CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST
     if (n < 64 || memcmp(cub, "\177ELF", 4) != 0) return 0;
     if (rd16(cub + 18) != 190) return 0;
     uint64_t shoff = rd64(cub + 40);
@@ -547,6 +560,11 @@ static int cubin_text_matches(const uint8_t *cub, size_t n, const char *fn,
         return memcmp(cub + off, text, tn) == 0;
     }
     return 0;
+#else
+    uint64_t r = 0;
+    if (omega_na_cubin(&r, cub, n, fn, strlen(fn), text, tn) != OMEGA_OK) __builtin_trap();
+    return (int)r;
+#endif
 }
 
 /* Version 1 has one canonical ordered record per field. Validate the whole
@@ -555,6 +573,7 @@ static int cubin_text_matches(const uint8_t *cub, size_t n, const char *fn,
  * Unknown/duplicate/reordered fields require a new format, not reinterpretation
  * of an existing artifact id. provenance_tool is deliberately outside the id. */
 static int manifest_layout_ok(const uint8_t *buf, size_t n) {
+#if CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST
     static const char *const keys[] = {
         "artifact_id=", "op=", "shape=", "bounds=", "contract=",
         "contract_id=", "semantic_spec_id=", "isa=", "machine_profile=",
@@ -577,6 +596,21 @@ static int manifest_layout_ok(const uint8_t *buf, size_t n) {
         off = (size_t)(nl - buf) + 1;
     }
     return off == n;
+#else
+    static const char keys[] =
+        OMEGA_ARTIFACT_FORMAT "\n\0"
+        "artifact_id=\0" "op=\0" "shape=\0" "bounds=\0" "contract=\0"
+        "contract_id=\0" "semantic_spec_id=\0" "isa=\0" "machine_profile=\0"
+        "kernel_format=\0" "kernel_function=\0" "text_sha256=\0" "text_size=\0"
+        "cubin_sha256=\0" "cubin_size=\0" "qmd0_sha256=\0" "qmd1_sha256=\0"
+        "qmd_template=\0" "cbank_offset=\0" "cbank_words=\0" "cbank_args=\0"
+        "cbank_args_sha256=\0" "grid=\0" "block=\0" "shared_bytes=\0" "gpr_count=\0"
+        "precision=\0" "accumulation=\0" "tolerance=\0" "min_driver=\0" "requires=\0"
+        "qualification=\0" "provenance_source_commit=\0" "provenance_tool=\0";
+    uint64_t r = 0;
+    if (omega_na_layout(&r, buf, n, keys, sizeof keys - 1, MANIFEST_CAP) != OMEGA_OK) __builtin_trap();
+    return (int)r;
+#endif
 }
 
 static char *find_line(char *buf, const char *key) {
@@ -610,10 +644,16 @@ static int copy_value(const char *line, char *out, size_t cap) {
 static int semver_ge(const char *have, const char *need) {
     unsigned h[3], n[3];
     if (parse_semver(have, h) || parse_semver(need, n)) return -1;
+#if CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST
     for (int i = 0; i < 3; i++) {
         if (h[i] != n[i]) return h[i] > n[i];
     }
     return 1;
+#else
+    uint64_t r = 0;
+    if (omega_na_ver(&r, h, 3, n, 3) != OMEGA_OK) __builtin_trap();
+    return (int)r;
+#endif
 }
 
 static int artifact_admit(const char *out_prefix, const char *current_driver,

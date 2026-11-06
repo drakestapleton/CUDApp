@@ -111,3 +111,22 @@ freestanding provider defect: `test-gpu-native-runtime` failed with unresolved
 converter-regeneration difference. The unchanged native import allowlist
 remains enforced. Full integrated host acceptance and hardware qualification
 remain NOT_RUN.
+
+The #335/#348/#352 union supplies nine native NO_POSIX roots. The shared
+`CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION` remains default zero, and
+`src/omega_gpu_apiviews.h` is the sole definition of `av_bf16_n`. The focused
+session and BF16 differentials, production OFF/ON symbol controls and their
+compiled mutants pass (`/tmp/integ/6b-pr352-final.log`). The BF16 C helper is
+compiled only in the explicit NO_POSIX oracle arm, not merely because other
+NO_POSIX apiview helpers still use their C snapshots.
+
+The independent #333 API-rest and #356 attention/artifact-rest differential
+harnesses originally shared a filename. Both remain: `tests/api_rest_diff.c`
+and `tests/api_attn_rest_diff.c`, respectively. The latter is selected by
+`tests/api_rest_check.py`. Its artifact fixture explicitly opens the retained
+C-artifact shell while independently selecting new Omega versus C residual
+computations; the production seeded artifact snapshot path remains unchanged.
+Focused harness links include the prior Omega BW scalar provider. #350's scan
+oracle additionally renames the later u32-prefix/radix exports to avoid
+duplicate definitions, and its mutant runner uses the single configured
+converter for both scalar and runtime-view units.

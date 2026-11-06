@@ -68,8 +68,9 @@ const char *omega_gpu_decode_attn_rc_name(int rc) {
 /* ---- host math ---- */
 uint16_t omega_dattn_bf16_rne(float f) {
     uint32_t x; av_memcpy(&x, &f, 4);
-    uint32_t r = x + 0x7fffu + ((x >> 16) & 1u);
-    return (uint16_t)(r >> 16);
+    uint64_t r = 0;
+    if (omega_ds_round(&r, x) != OMEGA_OK) __builtin_trap();
+    return (uint16_t)r;
 }
 float omega_dattn_bf16_f32(uint16_t b) { uint32_t x = (uint32_t)b << 16; float f; av_memcpy(&f, &x, 4); return f; }
 void omega_dattn_rope_row(uint32_t pos, double theta, float *row128) {

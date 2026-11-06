@@ -176,6 +176,19 @@ UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/at
 UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
 UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
 UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
+UNITS="$UNITS attn_ds_round=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_round.om"
+UNITS="$UNITS attn_ds_slot=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_slot.om"
+UNITS="$UNITS attn_ds_vecf=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_vecf.om"
+UNITS="$UNITS attn_ds_vecb=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_vecb.om"
+UNITS="$UNITS attn_na_read=om/api/attn_art.om,om/api/na_read.om"
+UNITS="$UNITS attn_na_cubin=om/api/attn_art.om,om/api/na_cubin.om"
+UNITS="$UNITS attn_na_layout=om/api/attn_art.om,om/api/na_layout.om"
+UNITS="$UNITS attn_na_ver=om/api/attn_art.om,om/api/na_ver.om"
+UNITS="$UNITS attn_na_json=om/api/attn_art.om,om/api/na_json.om"
+UNITS="$UNITS attn_mm_dot=om/api/attn_oracle.om,om/api/mm_dot.om"
+UNITS="$UNITS attn_mm_err=om/api/attn_oracle.om,om/api/mm_err.om"
+UNITS="$UNITS attn_mm_init=om/api/mm_init.om"
+UNITS="$UNITS attn_mm_next=om/api/mm_next.om"
 fi
 REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
 for entry in fill count args argsx pad idle route perm widen next key; do
@@ -266,7 +279,7 @@ for u in $UNITS $PURE_UNITS; do
     av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|ar_carry|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
+    attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx|attn_ds_*|attn_na_*|attn_mm_*)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
     ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)

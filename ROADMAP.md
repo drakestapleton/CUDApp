@@ -155,3 +155,5 @@ and freestanding fallback are default-off in hosted builds; C still marshals
 records, pointers and external effects. The runtime-view converter remains
 pending omega-bridge #71 and #73. Chip qualification is NOT_RUN, and no roadmap
 row status is upgraded.
+
+2026-11-06: native artifact JSON/ELF/manifest/version checks, decode BF16 rounding and head permutations, and matmul host-oracle error reduction default to seeded Omega. Decode retains the raw C rounding behavior for every nonfinite payload; no trust/admission policy or public API changes. The old artifact and matmul computations are default-OFF C oracles under `CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST` and `CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD`. Differential, source mutants, strong-link red controls, focused family gates and the unexecuted chip runbook are recorded in `evidence/api-attn-rest-20261106/`. Status rows are unchanged; chip qualification is NOT_RUN.

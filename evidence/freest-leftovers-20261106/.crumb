@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T06:44:14Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:8a7d3b6befbb4a645f4caea131b72f7fc05adc2dfda27cf03db740c60fa81da3",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "d46b5a77a7a8805350536bda474bb842a71e92b8",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "name": "freest-leftovers",
+  "purpose": "Host-only slice5 scalar migration receipts",
+  "schema_version": "1.0.0"
+}

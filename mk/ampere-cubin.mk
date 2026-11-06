@@ -40,9 +40,9 @@ NUMERIC_SRCS := src/omega_numeric.c src/omega_numeric_reduce.c src/cudapp_om_num
 
 # Independently runnable on a native x86 host before the bridge prerequisite.
 .PHONY: test-ampere-numeric-host
-$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) src/omega_numeric.h src/omega_numeric_reduce.h src/omega_numeric_om.h
+$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) src/omega_numeric.h src/omega_numeric_reduce.h src/omega_numeric_om.h src/cudapp_freest_leftovers.c
 	@mkdir -p $(AMPERE_CUBIN_DIR)
-	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections $(CUDAPP_NUMERIC_DEFS) -o $@ tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) -lm
+	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections $(CUDAPP_NUMERIC_DEFS) -o $@ tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) src/cudapp_freest_leftovers.c -lm
 
 test-ampere-numeric-host: $(AMPERE_CUBIN_DIR)/numeric-host
 	$(AMPERE_CUBIN_DIR)/numeric-host

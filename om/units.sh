@@ -119,6 +119,7 @@ GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.o
 if [ -z "${OMEGA_UNITS:-}" ]; then
 UNITS="$UNITS apish_shp=om/api/apish_shp.om apish_pack=om/api/apish_pack.om apish_slot=om/api/apish_slot.om apish_blk=om/api/apish_blk.om apish_trit=om/api/apish_trit.om"
 fi
+PURE_UNITS="$PURE_UNITS leftovers=om/components/leftovers.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -164,7 +165,7 @@ for u in $UNITS $PURE_UNITS; do
   frontend_pin=$FRONTEND_PIN
   file=cudapp_om_$name.c
   case "$name" in
-    revision|epoch|f16|c5)
+    revision|epoch|f16|c5|leftovers)
       frontend=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN

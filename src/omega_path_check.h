@@ -14,6 +14,9 @@
 #define OMEGA_PATH_CHECK_H
 
 #include <stddef.h>
+#include "cudapp_native.h"
+
+#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
 
 /* c when it may appear in a checked path, -1 otherwise */
 static inline int omega_path_byte(int c) {
@@ -52,5 +55,33 @@ static inline int omega_path_copy(char *out, size_t cap, const char *in) {
     }
     return 0;
 }
+#else
+/* Pointer custody and stores stay here; the scalar Omega transducer owns
+ * alphabet, component and length decisions. No fixed-size path truncation. */
+static inline int omega_path_byte(int c) {
+    uint64_t value = 256;
+    if (omega_leftovers(&value, 0, (uint64_t)(int64_t)c, 0, 0, 0) != OMEGA_OK)
+        return -1;
+    return value == 256 ? -1 : (int)value;
+}
+static inline int omega_path_copy(char *out, size_t cap, const char *in) {
+    if (!out || cap == 0) return -1;
+    out[0] = '\0';
+    if (!in) return -1;
+    uint64_t state = 0;
+    for (size_t k = 0;; ++k) {
+        unsigned char value = (unsigned char)in[k];
+        uint64_t next = 4;
+        if (omega_leftovers(&next, 1, state, value, k, cap) != OMEGA_OK ||
+            next == 4) {
+            out[0] = '\0';
+            return -1;
+        }
+        out[k] = (char)value;
+        if (next == 5) return 0;
+        state = next;
+    }
+}
+#endif
 
 #endif /* OMEGA_PATH_CHECK_H */

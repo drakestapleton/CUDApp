@@ -88,6 +88,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
   UNITS="$UNITS om/resident/resident.om resident_check=om/resident/resident.om,om/resident/check.om"
 fi
+[ -n "${OMEGA_UNITS:-}" ] || PURE_UNITS="$PURE_UNITS c5=tools/c5/policy.om,tools/c5/runtime.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -133,7 +134,7 @@ for u in $UNITS $PURE_UNITS; do
   frontend_pin=$FRONTEND_PIN
   file=cudapp_om_$name.c
   case "$name" in
-    revision|epoch|f16)
+    revision|epoch|f16|c5)
       frontend=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN

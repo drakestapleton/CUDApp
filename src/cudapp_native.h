@@ -126,6 +126,7 @@ uint32_t omega_resident_check(uint64_t *result, const void *p0, uint64_t p0_n, u
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);
+uint32_t omega_native_c5(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5);
 #ifdef __cplusplus
 }
 #endif

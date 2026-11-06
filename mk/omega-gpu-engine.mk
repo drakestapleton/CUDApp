@@ -311,4 +311,6 @@ test-gpu-session-mutants: $(GPU_FS_LINK)
 	smut recover-when-not-latched 's|const int latched = LOAD(g_blocked) \|\| LOAD(g_module_latched);|const int latched = 1;|'; \
 	smut recover-ignores-teardown-fault 's|if (prc != OMEGA_GPU_PLAT_OK) {|if (0) {|'; \
 	smut recover-ignores-module-latch 's|const int latched = LOAD(g_blocked) \|\| LOAD(g_module_latched);|const int latched = LOAD(g_blocked);|'; \
-	echo "test-gpu-session-mutants: $$killed of 11 mutants killed"
+	smut legacy-per-marker-deadline 's|#define CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT 0|#define CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT 1|'; \
+	grep -q '^FAIL SUBMISSION_DEADLINE_SHARED_BY_BOTH_MARKERS$$' $(GPU_SESSION_MUT_DIR)/legacy-per-marker-deadline.log; \
+	echo "test-gpu-session-mutants: $$killed of 12 mutants killed"

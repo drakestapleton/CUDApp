@@ -91,6 +91,7 @@ static int dr_resolved(const ds_model *m,const ds_opts *o,uint64_t *s,ds_result 
         }
     }
 }
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS
 static int resolve(const ds_model *m,const ds_opts *o,ds_num *num,ds_result *r) {
     uint64_t s[8192];int rc=dr_resolved(m,o,s,r);if(rc)return rc;
     for(int i=0;i<m->n_ops;i++) {
@@ -99,6 +100,7 @@ static int resolve(const ds_model *m,const ds_opts *o,ds_num *num,ds_result *r) 
     }
     return DS_OK;
 }
+#endif
 static double dr_counter(const ds_model *m,const ds_opts *o,int idx) {
     uint64_t w[16384],s[8192],a[64]={0};unsigned char t[131072];dr_model(m,w,0);
     a[1]=(uint64_t)(int64_t)idx;

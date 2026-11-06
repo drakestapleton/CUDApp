@@ -1,0 +1,11 @@
+resolve differential: 4501 checks, 10 failures
+FAIL resolve modes/provenance: pack status
+FAIL resolve modes/provenance: refusal bytes/state
+FAIL resolve modes/provenance: packed model bytes
+FAIL resolve modes/provenance: pack status
+FAIL resolve modes/provenance: refusal bytes/state
+FAIL resolve modes/provenance: packed model bytes
+FAIL resolve modes/provenance: pack status
+FAIL resolve modes/provenance: refusal bytes/state
+FAIL resolve modes/provenance: packed model bytes
+FAIL counterfactual unmatched launcher/refusal/default kind: counterfactual refused evaluation

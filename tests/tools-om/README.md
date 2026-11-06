@@ -274,5 +274,10 @@ lookups, and zero/maximum record counts. It compares status, refusal strings,
 packed words, feature bytes, counterfactual results and the full diff result.
 The runner compiles the C oracle at `-O0 --coverage`, records annotated branch
 data, requires a corrupt-result red control, and compiles nine behavioral mutants.
+It also requires a default build without `cudapp_om_dag_eval.c` to fail linkage,
+and checks that the default object has a strong Omega scheduler reference and
+no `ds_eval_c` symbol. The C scheduler and its computational helpers are compiled
+only with the existing `CUDAPP_MIGRATION_PENDING_C_TOOLS` oracle flag; there is
+no weak-symbol fallback.
 Evidence and the external dependency inventory are in `evidence/dagsim-resolve-om/`.
 These are host checks, not chip qualification.

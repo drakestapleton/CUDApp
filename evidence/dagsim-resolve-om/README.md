@@ -6,6 +6,8 @@ Branch: `feat/dagsim-resolve-om`. Draft PR: [CUDApp #341](https://github.com/aie
 
 Registration was committed and pushed first as `58e7b49cbe150a08a716c3a65464204a388a98d8`: `om/units.sh`, the native declarations, generated bindings and unit identities. `pins.txt` records the compiler, bridge, source and dependency pins. The seeded compiler is omega-mv `e5b32567a7aff3ce594e3254a622a846a6cd190b`, executable SHA-256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
 
+The resolver implementation and initial full host envelope are committed as `2cf2c484300db4014c65c03945f52f7fd5889f0f`. The scheduler fail-closed repair is a separate subsequent commit. `source-sha256.txt` pins the final exercised source files independently of receipt/commit metadata.
+
 `dag_res.om` owns provenance refusals; mode-dependent capacity, launch and duration selection; cost-model request features and prediction acceptance; confidence interval decisions; calibration presence and expiry; resolved header/resource/op packing decisions; resource counterfactual changes; lookup scans; and streaming changed-list membership. `dag_diff.om`, composed with the resolver helpers, owns added/kept/removed counts, removal evidence, shared-reference double counting, fabricated savings and removed-time accounting. The original implementations are available only with `CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE=1`, which defaults to zero.
 
 This is a host cutover receipt, not a model-performance or hardware claim.
@@ -34,7 +36,7 @@ Final differential result: **4,498 checks, zero failures** (`resolve.log`). The 
 - Every `DS_RM_*` reason, empty/missing/present/self references, proof absent/present, retained/removed/unrelated consumers, NULL options and changed lists, missing/duplicate/fabricated records, shared double counting, changed kept demand, added ops and time-vs-bandwidth removed accounting.
 - Changed-list tokens crossing every tested stream boundary through 1,024-byte prefixes; exact token matching rather than substring matching; zero and maximum op-count diffs.
 
-`oracle.gcov` and `resolve.gcov` are captured immediately after the unmutated differential, before negative controls/mutants. They are branch receipts, not a claim of complete coverage of unrelated parser/formatter/scheduler code.
+`oracle.gcov` and `resolve.gcov` capture the initial resolver cutover; `scheduler-oracle.gcov` and `scheduler-resolve.gcov` capture the subsequent scheduler-boundary repair. All are captured immediately after the unmutated differential, before negative controls/mutants. They are branch receipts, not a claim of complete coverage of unrelated parser/formatter code.
 
 The runtime negative control deliberately corrupts the candidate resolved pack: **caught, rc 1** (`red.log`). The pre-cutover test source also failed compilation because the migration guard did not exist (rc 1); this prerequisite failure is not counted as a behavioural mutant.
 
@@ -71,15 +73,21 @@ The wrapper hides NVIDIA, CUSE and VFIO devices. No GPU window or live service w
 | `sh om/units.sh --check` | 0 | `PASS portable Omega units regenerate byte for byte` |
 | `crumb compile . && crumb verify .` | 0 | See `crumb.log` for the current crumb count and verdict. |
 
-The focused resolver gate was rerun after extending its source partition and moving coverage capture before mutants. The other full-suite results use the same implementation; subsequent changes at that point affected only the resolver test partition.
+The initial full envelope above is recorded at the resolver cutover. After the scheduler-boundary repair, the resolver, dagsim unit/CLI/mutants, parser differential, 1,200-case corpus and byte-for-byte regeneration gates were all rerun successfully under the same wrapper. `scheduler-commands.json` records these final focused commands, each rc 0, with the same final lines as the corresponding rows above. Their logs are `scheduler-resolve.log`, `scheduler-dagsim.log`, `scheduler-parse.log`, `scheduler-corpus.log` and `scheduler-regenerate.log`. The full tools and cost-model gates were not rerun after this scheduler-only guard repair; their initial full-envelope results remain separately recorded.
 
 ## Scheduler integration boundary
 
-The inherited scheduler still compiled `ds_eval_c` unconditionally and used a weak `omega_dag_eval` fallback. `scheduler-fallback.log` reproduces it: a default build omitting `src/cudapp_om_dag_eval.c` linked and evaluated successfully, with output identical to the linked scheduler. This was handed to the parent and then explicitly assigned back for a separate scheduler-boundary commit. It is not evidence that the default binary is fail-closed without its Omega scheduler.
+The inherited scheduler compiled `ds_eval_c` unconditionally and used a weak `omega_dag_eval` fallback. `scheduler-fallback.log` preserves the pre-repair reproduction: a default build omitting `src/cudapp_om_dag_eval.c` linked and evaluated successfully, with output identical to the linked scheduler. The parent explicitly assigned this defect back to this lane.
+
+The separate repair puts `ds_eval_c`, Kahn ordering, lifetime computation and scheduler state helpers behind the existing default-OFF `CUDAPP_MIGRATION_PENDING_C_TOOLS` oracle guard. The endpoint-name formatting helper remains shared. The default scheduler declaration is strong, and the weak-symbol runtime fallback is deleted. The Omega-to-C numeric adapter used only by the C oracle is also guarded. The flag-ON C scheduler remains exercised by the focused lifetime/prediction mutants and full-C corpus oracle.
+
+The new regression in `resolve_check.py` builds a default CLI while deliberately omitting only the Omega scheduler binding. It must fail linkage with an undefined `omega_dag_eval` reference; the default object must contain a strong undefined scheduler reference and no `ds_eval_c` definition. `scheduler-boundary.log` records the expected linker rejection and symbol inventory. This is a **PASS negative control**, not an implementation build failure. The normal linked CLI, differential and corpus gates pass. No silent host scheduler remains in the default build.
+
+Final metadata compilation and verification also passed, rc 0: `crumb verify: OK: 44 crumbs current` (`scheduler-crumb.log`). Generated crumbs are sealed again after staging the final receipts.
 
 ## Tier verdicts
 
-- IMPLEMENTED: resolver/diff/lookup/counterfactual computation and packing decisions in seeded Omega; legacy resolver C is default-OFF.
+- IMPLEMENTED: resolver/diff/lookup/counterfactual computation and packing decisions in seeded Omega; legacy resolver C is default-OFF. The inherited default C scheduler fallback is removed, with the C scheduler retained only behind its oracle guard.
 - EXERCISED: host differential **PASS**, runtime negative control **PASS**, nine compiled behavioural mutants killed **PASS**, requested focused/full host gates **PASS**, byte-for-byte regeneration **PASS**, crumb compilation/verification **PASS**.
 - QUALIFIED: chip **NOT_RUN**. Host and synthetic results are not hardware qualification.
 - MERGED: **NOT_RUN**. Draft PR only.

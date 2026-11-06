@@ -20,6 +20,13 @@ link(sources,out/'diff');run([out/'diff'])
 for name in ['oracle','resolve']:
     cov=run(['gcov','-b','-c','-t','-o',out/(name+'.gcno'),'tools/dagsim/dagsim.c'],capture_output=True)
     (out/(name+'.gcov')).write_bytes(cov.stdout);(out/(name+'-coverage.log')).write_bytes(cov.stderr)
+missing=[cc,*flags,'tools/dagsim/dagsim_cli.c',out/'resolve.o',*sources[3:5],*sources[6:],'-lm','-lgcov','-o',out/'missing-scheduler']
+neg=subprocess.run([str(x) for x in missing],capture_output=True)
+symbols=run(['nm',out/'resolve.o'],capture_output=True).stdout
+(out/'scheduler-boundary.log').write_bytes(('COMMAND '+' '.join(str(x) for x in missing)+'\n').encode()+neg.stdout+neg.stderr+f'\nRC {neg.returncode}\nDEFAULT OBJECT SYMBOLS\n'.encode()+symbols)
+assert neg.returncode!=0 and b'omega_dag_eval' in neg.stderr,'missing Omega scheduler must fail linkage'
+assert b' T ds_eval_c' not in symbols and b' U omega_dag_eval' in symbols,'default scheduler must have no C fallback'
+print('scheduler boundary: PASS (missing Omega scheduler link refused; no C fallback symbol)',flush=True)
 red=subprocess.run([str(out/'diff')],env=dict(os.environ,DS_RESOLVE_RED='1'),capture_output=True)
 (out/'red.log').write_bytes(red.stdout+red.stderr)
 if red.returncode!=1:raise SystemExit(f'resolve red control did not return 1: {red.returncode}')

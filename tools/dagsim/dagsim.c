@@ -637,7 +637,11 @@ int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_re
     }
     return DS_OK;
 }
+static const char *endpoint_name(const ds_model *m, int op) {
+    return op >= 0 ? m->ops[op].id : "omitted";
+}
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS
 /* Kahn topological order; returns 0 on a cycle */
 static int topo(const ds_model *m, int *order) {
     int indeg[DS_MAX_OPS] = {0};
@@ -658,10 +662,6 @@ enum { BLK_NONE = 0, BLK_SLOT, BLK_LAUNCHER };
 static void buffer_window(const ds_model *m, const ds_result *r, int b, double *s, double *e) {
     *s = m->buf[b].first >= 0 ? r->start_ns[m->buf[b].first] : 0.0;
     *e = m->buf[b].last >= 0 ? r->end_ns[m->buf[b].last] : r->makespan_ns;
-}
-
-static const char *endpoint_name(const ds_model *m, int op) {
-    return op >= 0 ? m->ops[op].id : "omitted";
 }
 
 /* Resolved end earlier than start is not an interval. Refuse before the ledger. */
@@ -905,9 +905,10 @@ int ds_eval_c(const ds_model *m, const ds_opts *o, ds_result *r) {
     r->status = DS_OK;
     return DS_OK;
 }
+#endif
 
 #ifndef CUDAPP_MIGRATION_PENDING_C_TOOLS
-extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n) __attribute__((weak));
+extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 
 static double om_f(const uint64_t *s, int i) {
     double x;
@@ -992,7 +993,6 @@ int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
 #if defined(CUDAPP_MIGRATION_PENDING_C_TOOLS)
     return ds_eval_c(m, o, r);
 #else
-    if (!omega_dag_eval) return ds_eval_c(m, o, r);
     memset(r, 0, sizeof *r);
     uint64_t model[8192], scratch[8192], result = 0;
     int rc = ds_resolved_pack(m, o, model, r);

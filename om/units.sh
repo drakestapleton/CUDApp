@@ -33,6 +33,7 @@ fi
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan_plan.om"; fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS ew_ir=om/kgen/ew_emit.om,om/kgen/ew_scalar.om,om/kgen/ew_reconv.om,om/kgen/ew_prime.om,om/kgen/ew_ir.om"
+    UNITS="$UNITS attention_ir=om/kgen/attention_emit.om,om/kgen/attention_tuned.om,om/kgen/attention_general.om,om/kgen/attention_ir.om"
 fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 GXNUM=om/gemmex/num.om

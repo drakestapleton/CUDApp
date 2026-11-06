@@ -69,6 +69,9 @@ uint32_t omega_cg_loop(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, 
 uint32_t omega_cg_frag(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_cg_block(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_cg_vec(uint64_t *result, void *p0, uint64_t p0_n);
+uint32_t omega_hz_chk(uint64_t *result, const void *p0, uint64_t p0_n, uint64_t p1, void *p2, uint64_t p2_n);
+uint32_t omega_hz_dec(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_cg_bind(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

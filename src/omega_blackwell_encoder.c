@@ -3,6 +3,7 @@
 #include "sha256.h"
 #include <string.h>
 #include "cudapp_native.h"
+#include "omega_bw_bind.h"
 
 /*
  * Bit-for-bit verified sm_121 instruction sequence for unsigned 32-bit vector addition.
@@ -75,7 +76,12 @@ int omega_blackwell_encode_vecadd(uint8_t *code_buf, size_t max_len, size_t *out
 #endif
 
 int omega_blackwell_compute_code_digest(const uint8_t *code_buf, size_t len, uint8_t *out_digest) {
+#ifndef BW_BIND_C_PRIMARY
+    uint8_t w[256] = {0};
+    if (!code_buf || !out_digest || omega_bw_bind(7, len, 0, w) != 0) return -1;
+#else
     if (!code_buf || len == 0 || !out_digest) return -1;
+#endif
     sha256_ctx ctx;
     sha256_init(&ctx);
     sha256_update(&ctx, code_buf, len);

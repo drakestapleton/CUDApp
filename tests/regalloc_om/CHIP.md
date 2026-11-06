@@ -4,13 +4,14 @@
 are not hardware qualification. Do not access live RM, VFIO, NVIDIA devices,
 service ports, modules, or the GB10 lock under the present assignment.
 
-1. Integrator first adopts the eleven portable units registered in
+1. Integrator first adopts the fourteen portable units registered in
    `om/units.sh` and listed in `om/codegen/REGALLOC.md`, and the exact-liveness
    replay change. Freeze source, compiler and bridge revisions and the
    `src/cudapp_om_*.ident` identities in a new receipt. Freestanding builds
    still use the migration-pending C until the portable freestanding binding
    covers these units.
-2. Run the lane's host gate, ten semantic mutants, and signed-GE negative
+2. Run the lane's host gate (including the hazard and bind differentials),
+   nineteen semantic mutants, and signed-GE negative
    control in the required device-free namespace:
 
    ```sh
@@ -29,7 +30,10 @@ service ports, modules, or the GB10 lock under the present assignment.
    device namespace, compare all five builder families to their existing CPU
    reference, including K=16/32/64, scalar pressure refusals, fragment/block
    layouts and partial tiles. Require retained C and Omega encoded digests to
-   match before launching either artifact.
+   match before launching either artifact. Hazard-check every launched kernel
+   with both the Omega checker and the `CUDAPP_MIGRATION_PENDING_C_HAZARD`
+   oracle, and require identical realization identities from the Omega and
+   `CUDAPP_MIGRATION_PENDING_C_BIND` binding paths.
 5. Run the existing `--mutant` negative control under the same authorization;
    require a real detected output mismatch, not a missing-device refusal.
    Stop on a driver fault or unexpected session state; never weaken the gate.

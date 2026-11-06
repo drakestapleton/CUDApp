@@ -117,11 +117,24 @@ bool omega_numeric_fpenv_ok(void) {
 #if defined(OMEGA_NUMERIC_C_BODIES)
 /* ---- Semantic Reference Tier (Zero Libm) --------------------------------- */
 
-float omega_ref_fadd(float a, float b) { return a + b; }
-float omega_ref_fsub(float a, float b) { return a - b; }
-float omega_ref_fmul(float a, float b) { return a * b; }
+/* Every float result that is NaN is the canonical NaN, 0x7fffffff, whatever the
+ * host. The PTX ISA leaves single-precision NaN results unspecified ("Single-
+ * precision instructions return an unspecified NaN", 9.7.3 Floating-Point
+ * Instructions) and names 0x7fffffff00000000 the canonical f64 NaN; NVIDIA
+ * documents 0x7fffffff as the f32 NaN the GPU produces. Host NaN propagation
+ * (AArch64 keeps a payload, x86 SSE makes 0xffc00000) never reaches a result. */
+static float ref_canon(float r) {
+    return omega_isnan(r) ? omega_bits_to_float(OMEGA_NUMERIC_CANON_NAN_BITS) : r;
+}
 
-float omega_ref_ffma(float a, float b, float c) {
+static float omega_ref_fadd_raw(float a, float b) { return a + b; }
+float omega_ref_fadd(float a, float b) { return ref_canon(omega_ref_fadd_raw(a, b)); }
+static float omega_ref_fsub_raw(float a, float b) { return a - b; }
+float omega_ref_fsub(float a, float b) { return ref_canon(omega_ref_fsub_raw(a, b)); }
+static float omega_ref_fmul_raw(float a, float b) { return a * b; }
+float omega_ref_fmul(float a, float b) { return ref_canon(omega_ref_fmul_raw(a, b)); }
+
+static float omega_ref_ffma_raw(float a, float b, float c) {
 #if defined(__aarch64__)
     float r;
     __asm__("fmadd %s0, %s1, %s2, %s3" : "=w"(r) : "w"(a), "w"(b), "w"(c));
@@ -131,8 +144,9 @@ float omega_ref_ffma(float a, float b, float c) {
     return fmaf(a, b, c);
 #endif
 }
+float omega_ref_ffma(float a, float b, float c) { return ref_canon(omega_ref_ffma_raw(a, b, c)); }
 
-float omega_ref_fmin(float a, float b) {
+static float omega_ref_fmin_raw(float a, float b) {
     if (omega_isnan(a)) return b;
     if (omega_isnan(b)) return a;
     if (omega_iszero(a) && omega_iszero(b)) {
@@ -140,8 +154,9 @@ float omega_ref_fmin(float a, float b) {
     }
     return (a < b) ? a : b;
 }
+float omega_ref_fmin(float a, float b) { return ref_canon(omega_ref_fmin_raw(a, b)); }
 
-float omega_ref_fmax(float a, float b) {
+static float omega_ref_fmax_raw(float a, float b) {
     if (omega_isnan(a)) return b;
     if (omega_isnan(b)) return a;
     if (omega_iszero(a) && omega_iszero(b)) {
@@ -149,6 +164,7 @@ float omega_ref_fmax(float a, float b) {
     }
     return (a > b) ? a : b;
 }
+float omega_ref_fmax(float a, float b) { return ref_canon(omega_ref_fmax_raw(a, b)); }
 
 bool omega_ref_fsetp_ge(float a, float b) {
     if (omega_isnan(a) || omega_isnan(b)) return false;
@@ -315,7 +331,7 @@ static int32_t ref_msb(ref_u128 v) {
  * far more than the 26 bits rounding needs and the sticky bit only breaks
  * ties, which is all it has to do.
  */
-float omega_ref_ffma_int(float a, float b, float c) {
+static float omega_ref_ffma_int_raw(float a, float b, float c) {
     uint32_t ua = omega_float_to_bits(a), ub = omega_float_to_bits(b), uc = omega_float_to_bits(c);
     uint32_t ps = (ua ^ ub) & 0x80000000U, cs = uc & 0x80000000U;
     uint32_t xa = ua & 0x7fffffffU, xb = ub & 0x7fffffffU, xc = uc & 0x7fffffffU;
@@ -361,6 +377,7 @@ float omega_ref_ffma_int(float a, float b, float c) {
     if (m == 0) return 0.0f;                 /* exact cancellation: +0 under RNE */
     return omega_bits_to_float(s | ref_round_small(m, ex, 23, 127, 0xffU));
 }
+float omega_ref_ffma_int(float a, float b, float c) { return ref_canon(omega_ref_ffma_int_raw(a, b, c)); }
 #endif
 
 #ifndef HWCAP2_BF16
@@ -417,7 +434,7 @@ int omega_ref_fsetp_pred(int op, float a, float b) {
     return (m & ref_order(omega_float_to_bits(a), omega_float_to_bits(b))) ? 1 : 0;
 }
 
-float omega_ieee_div(float x, float y) {
+static float omega_ieee_div_raw(float x, float y) {
 #if defined(__aarch64__)
     float r;
     __asm__("fdiv %s0, %s1, %s2" : "=w"(r) : "w"(x), "w"(y));
@@ -426,8 +443,9 @@ float omega_ieee_div(float x, float y) {
     return _mm_cvtss_f32(_mm_div_ss(_mm_set_ss(x), _mm_set_ss(y)));
 #endif
 }
+float omega_ieee_div(float x, float y) { return ref_canon(omega_ieee_div_raw(x, y)); }
 
-float omega_ieee_sqrt(float x) {
+static float omega_ieee_sqrt_raw(float x) {
 #if defined(__aarch64__)
     float r;
     __asm__("fsqrt %s0, %s1" : "=w"(r) : "w"(x));
@@ -436,6 +454,7 @@ float omega_ieee_sqrt(float x) {
     return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(x)));
 #endif
 }
+float omega_ieee_sqrt(float x) { return ref_canon(omega_ieee_sqrt_raw(x)); }
 
 /* ---- Host seed used only by the raw-seed negative test ------------------- */
 /* Magic-constant reciprocal seed. It is not a model of the hardware MUFU unit. */
@@ -497,7 +516,7 @@ static uint32_t omega_round_pack(uint32_t sign, uint64_t sig, int32_t exp2, bool
     return sign | (uint32_t)bits;
 }
 
-float omega_math_div(float x, float y) {
+static float omega_math_div_raw(float x, float y) {
     if (omega_isnan(x) || omega_isnan(y)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     uint32_t sign = (omega_float_to_bits(x) ^ omega_float_to_bits(y)) & 0x80000000U;
     bool neg = sign != 0;
@@ -528,8 +547,9 @@ float omega_math_div(float x, float y) {
     }
     return omega_bits_to_float(omega_round_pack(sign, q, ex - ey - 26, rem != 0));
 }
+float omega_math_div(float x, float y) { return ref_canon(omega_math_div_raw(x, y)); }
 
-float omega_math_sqrt(float x) {
+static float omega_math_sqrt_raw(float x) {
     if (omega_isnan(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (omega_iszero(x)) return x;
     if (omega_signbit(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
@@ -552,10 +572,11 @@ float omega_math_sqrt(float x) {
     }
     return omega_bits_to_float(omega_round_pack(0, s, e / 2 - 14, op != 0));
 }
+float omega_math_sqrt(float x) { return ref_canon(omega_math_sqrt_raw(x)); }
 
 /* ---- Omega-Defined Exp Polynomial Sequence -------------------------------- */
 
-float omega_math_exp(float x) {
+static float omega_math_exp_raw(float x) {
     if (omega_isnan(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (x < -104.0f) return 0.0f;
     if (x > 88.722839f) return omega_bits_to_float(OMEGA_INF_POS);
@@ -595,10 +616,11 @@ float omega_math_exp(float x) {
     }
     return poly * omega_bits_to_float((uint32_t)(k + 127) << 23);
 }
+float omega_math_exp(float x) { return ref_canon(omega_math_exp_raw(x)); }
 
 /* ---- Omega-Defined Log Polynomial Sequence -------------------------------- */
 
-float omega_math_log(float x) {
+static float omega_math_log_raw(float x) {
     if (omega_isnan(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (x < 0.0f) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (omega_iszero(x)) return omega_bits_to_float(OMEGA_INF_NEG);
@@ -632,6 +654,7 @@ float omega_math_log(float x) {
     const float LN2 = 0.6931471805599453f;
     return (float)e * LN2 + ln_m;
 }
+float omega_math_log(float x) { return ref_canon(omega_math_log_raw(x)); }
 
 /* ---- Declared-Order Warp Reduction ---------------------------------------- */
 
@@ -644,7 +667,7 @@ float omega_warp_reduce_sum(const float warp_inputs[32]) {
         int d = deltas[s];
         for (int i = 0; i < 32; i++) {
             if (i + d < 32) {
-                val[i] = val[i] + val[i + d];
+                val[i] = omega_ref_fadd(val[i], val[i + d]);
             }
         }
     }

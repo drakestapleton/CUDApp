@@ -19,6 +19,7 @@
  */
 #include "omega_numeric.h"
 #include "omega_numeric_reduce.h"
+#include "omega_numeric_om.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -54,6 +55,18 @@ static uint32_t next32(void) {
 
 static unsigned long long checks;
 
+/* Documented GPU NaN: every NaN a float-producing reference op returns is the
+ * canonical 0x7fffffff, on any host (src/omega_numeric_om.h). */
+static float cn(const char *what, float r) {
+    uint32_t b = omega_float_to_bits(r);
+    if ((b & 0x7fffffffu) > 0x7f800000u && b != OMEGA_NUMERIC_CANON_NAN_BITS) {
+        fprintf(stderr, "FAIL numeric canon %s: NaN 0x%08x, documented 0x%08x\n", what, b, OMEGA_NUMERIC_CANON_NAN_BITS);
+        exit(1);
+    }
+    return r;
+}
+#define CN(call) (void)cn(#call, call)
+
 static void unary(uint32_t u) {
     float a = omega_bits_to_float(u);
     (void)omega_ref_i2f((int32_t)u);
@@ -65,10 +78,10 @@ static void unary(uint32_t u) {
     (void)omega_ref_f2u(a);
     (void)omega_ref_f32_to_f16(a);
     (void)omega_ref_f32_to_bf16(a);
-    (void)omega_math_sqrt(a);
-    (void)omega_math_exp(a);
-    (void)omega_math_log(a);
-    (void)omega_ieee_sqrt(a);
+    CN(omega_math_sqrt(a));
+    CN(omega_math_exp(a));
+    CN(omega_math_log(a));
+    CN(omega_ieee_sqrt(a));
     (void)omega_numeric_host_rcp_seed(a);
     for (int m = 0; m <= OMEGA_CMP_BF16_BITS; m++) (void)omega_numeric_compare_equal((OmegaNumericCompare)m, u, u ^ 1u);
     checks += 20;
@@ -77,23 +90,23 @@ static void unary(uint32_t u) {
 static void binary(uint32_t ua, uint32_t ub) {
     float a = omega_bits_to_float(ua), b = omega_bits_to_float(ub);
     (void)omega_numeric_bits_equal(a, b);
-    (void)omega_ref_fadd(a, b);
-    (void)omega_ref_fsub(a, b);
-    (void)omega_ref_fmul(a, b);
-    (void)omega_ref_fmin(a, b);
-    (void)omega_ref_fmax(a, b);
+    CN(omega_ref_fadd(a, b));
+    CN(omega_ref_fsub(a, b));
+    CN(omega_ref_fmul(a, b));
+    CN(omega_ref_fmin(a, b));
+    CN(omega_ref_fmax(a, b));
     (void)omega_ref_fsetp_ge(a, b);
     for (int op = 0; op < OMEGA_NOP_COUNT; op++) (void)omega_ref_fsetp_pred(op, a, b);
-    (void)omega_math_div(a, b);
-    (void)omega_ieee_div(a, b);
+    CN(omega_math_div(a, b));
+    CN(omega_ieee_div(a, b));
     for (int m = 0; m <= OMEGA_CMP_BF16_BITS; m++) (void)omega_numeric_compare_equal((OmegaNumericCompare)m, ua, ub);
     checks += 10 + OMEGA_NOP_COUNT + 5;
 }
 
 static void ternary(uint32_t ua, uint32_t ub, uint32_t uc) {
     float a = omega_bits_to_float(ua), b = omega_bits_to_float(ub), c = omega_bits_to_float(uc);
-    (void)omega_ref_ffma(a, b, c);
-    (void)omega_ref_ffma_int(a, b, c);
+    CN(omega_ref_ffma(a, b, c));
+    CN(omega_ref_ffma_int(a, b, c));
     checks += 2;
 }
 
@@ -106,7 +119,7 @@ static void tile(const uint32_t t[32]) {
             exit(1);
         }
     }
-    (void)omega_warp_reduce_sum(x);
+    CN(omega_warp_reduce_sum(x));
     checks += 5;
 }
 
@@ -114,6 +127,31 @@ int main(void) {
     if (!omega_numeric_fpenv_ok()) {
         fprintf(stderr, "FAIL numeric diff: FP environment is not the required one\n");
         return 1;
+    }
+    /* host-vs-documented NaN: inf*0 (x86 SSE gives 0xffc00000), payload and
+     * signalling inputs (AArch64 keeps the payload) all give 0x7fffffff */
+    {
+        const float inf = omega_bits_to_float(0x7f800000u), z = 0.0f, one = 1.0f;
+        const float pay = omega_bits_to_float(0xffc12345u), snan = omega_bits_to_float(0x7f800001u);
+        const struct { const char *what; float r; } want[] = {
+            { "fmul(inf,0)", omega_ref_fmul(inf, z) }, { "fsub(inf,inf)", omega_ref_fsub(inf, inf) },
+            { "fadd(payload,1)", omega_ref_fadd(pay, one) }, { "fadd(snan,1)", omega_ref_fadd(snan, one) },
+            { "ffma(inf,0,1)", omega_ref_ffma(inf, z, one) }, { "ffma(1,1,payload)", omega_ref_ffma(one, one, pay) },
+            { "ffma_int(1,1,payload)", omega_ref_ffma_int(one, one, pay) }, { "ieee_div(0,0)", omega_ieee_div(z, z) },
+            { "ieee_sqrt(-1)", omega_ieee_sqrt(-one) }, { "ieee_div(payload,1)", omega_ieee_div(pay, one) },
+            { "math_div(0,0)", omega_math_div(z, z) }, { "math_sqrt(-1)", omega_math_sqrt(-one) },
+            { "math_exp(payload)", omega_math_exp(pay) }, { "math_log(-1)", omega_math_log(-one) },
+            { "fmin(payload,snan)", omega_ref_fmin(pay, snan) }, { "fmax(snan,payload)", omega_ref_fmax(snan, pay) },
+        };
+        for (size_t i = 0; i < sizeof(want) / sizeof(want[0]); i++) {
+            uint32_t b = omega_float_to_bits(want[i].r);
+            if (b != OMEGA_NUMERIC_CANON_NAN_BITS) {
+                fprintf(stderr, "FAIL numeric canon %s: 0x%08x, documented 0x%08x\n", want[i].what, b, OMEGA_NUMERIC_CANON_NAN_BITS);
+                return 1;
+            }
+            checks++;
+        }
+        printf("numeric documented NaN: %zu cases 0x%08x\n", sizeof(want) / sizeof(want[0]), OMEGA_NUMERIC_CANON_NAN_BITS);
     }
     /* exhaustive 16-bit decode and the F16/BF16 boundaries of FP32 */
     for (uint32_t h = 0; h < 65536u; h++) {

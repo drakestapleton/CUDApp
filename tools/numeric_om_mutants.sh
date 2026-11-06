@@ -20,7 +20,8 @@ MUTANTS='tie_to_odd|numeric.om|if and eq g 1 or ne r 0 eq and mant 1 1|if and eq
 f16_nan_quiet_bit|numeric.om|ret or or sign INF or QBIT shl f 13|ret or or sign INF shl f 13
 narrow_nan_quiet_bit|numeric.om|shl ulong 1 sub man 1 shr f sub 23 man|shl ulong 1 sub man 2 shr f sub 23 man
 exp_ln2_hi|numeric.om|mul fk f32of 1060205056|mul fk f32of 1060205057
-tile_stride|tile.om|get v add i d|get v add i 1'
+tile_stride|tile.om|get v add i d|get v add i 1
+canon_dropped|numeric.om|ret CANON|ret u'
 
 run() { # $1 = label, $2 = directory with numeric.om and tile.om
 	out="$TMP/out-$1"

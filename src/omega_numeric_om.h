@@ -26,6 +26,9 @@
 #endif
 
 /* Operation codes of the numeric_ref dispatcher in om/numeric/numeric.om. */
+/* The one NaN every float-producing reference op returns (both paths). */
+#define OMEGA_NUMERIC_CANON_NAN_BITS 0x7fffffffU
+
 enum {
     OMEGA_NUMERIC_OM_FADD = 0,
     OMEGA_NUMERIC_OM_FSUB = 1,

@@ -3,6 +3,7 @@
 #include "omega_gpu_prefill.h"
 #include "omega_blackwell_codegen_tc2.h"
 #include "omega_gpu_fp8_api.h"
+#include "omega_api_shells.h"
 #include "omega_gpu_cmdlist.h"
 #include "omega_gpu_fmt.h"
 #include "cudapp_native.h"
@@ -13,14 +14,13 @@
 static struct { uint32_t rt, warps, aqn; int mutant; } g;
 void omega_gpu_pf_gemm_set_shape(uint32_t rt, uint32_t warps, uint32_t aqn) { g.rt = rt; g.warps = warps; g.aqn = aqn; }
 void omega_gpu_pf_gemm_test_set_mutant(int m) { g.mutant = m; }
-static uint32_t RT(void) { return g.rt ? g.rt : 8u; }
-uint32_t omega_gpu_pf_gemm_bm(void) { return 16u * RT(); }
+static uint32_t RT(void) { return (uint32_t)(omega_api_pfbm(g.rt) >> 4); }
+uint32_t omega_gpu_pf_gemm_bm(void) { return omega_api_pfbm(g.rt); }
 
-static uint32_t perm4(uint32_t q) { static const uint32_t o[4] = { 0, 2, 1, 3 }; return (q & ~3u) | o[q & 3u]; }
+static uint32_t perm4(uint32_t q) { return omega_api_perm4(q); }
 
 int omega_gpu_pf_weights_host_form(uint32_t E, uint32_t n, uint32_t k, const uint8_t *w, const uint16_t *sinv, uint32_t layout, uint8_t *pw, float *ratio) {
-    if (!E || !n || !k || n % 128u || k % 128u || !w || !sinv || !pw || !ratio || layout > OMEGA_GPU_PF_SWIGLU) return OMEGA_GPU_PF_BAD_ARGS;
-    if (layout == OMEGA_GPU_PF_SWIGLU && n % 256u) return OMEGA_GPU_PF_BAD_ARGS;
+    if (!E || omega_api_pfargs(n, k, layout) || !w || !sinv || !pw || !ratio) return OMEGA_GPU_PF_BAD_ARGS;
     const uint32_t KB = k / 128u, NB = n / 128u, I = n / 2u;
     float *sf = malloc((size_t)NB * KB * 4u);
     if (!sf) return OMEGA_GPU_PF_TOO_LARGE;
@@ -88,7 +88,7 @@ int omega_gpu_pf_gemm(const OmegaPfWeights *w, uint64_t tiles_va, uint32_t ntile
     if (ntiles == 0) return OMEGA_GPU_PF_OK;
     if (ntiles > 65535u) return OMEGA_GPU_PF_TOO_LARGE;
     OmegaTc2Spec s; memset(&s, 0, sizeof s);
-    s.k = w->k; s.rt = RT(); s.ct = 2; s.warps = g.warps ? g.warps : 16u; s.aqn = g.aqn ? g.aqn : 1u;
+    s.k = w->k; s.rt = RT(); s.ct = 2; s.warps = omega_api_tcw(g.warps); s.aqn = g.aqn ? g.aqn : 1u;
     s.epi = w->layout == OMEGA_GPU_PF_SWIGLU ? OMEGA_TC2_EPI_SWIGLU : OMEGA_TC2_EPI_F32; s.direct = rowidx_va == 0; s.n = w->n; s.mutant = g.mutant;
     if (!omega_tc2_spec_ok(&s)) return OMEGA_GPU_PF_BAD_ARGS;
     const uint32_t span = omega_tc2_span(&s);
@@ -118,7 +118,7 @@ static int gen_pq(const OmegaPfKey *key, void *prog) { OmegaPqSpec s; memcpy(&s,
 static int pq_core(OmegaGpuCmdList *cl, uint32_t k, uint32_t in_type, uint32_t rows, uint64_t x_va, uint64_t q_va, uint64_t s_va, uint64_t *ns) {
     OmegaPqSpec s; memset(&s, 0, sizeof s); s.k = k; s.in_type = in_type; s.mutant = pq_mutant;
     const uint32_t kb = k / 128u;
-    if (k % 128u == 0 && kb > 32u) for (s.groups = 32u; kb % s.groups; s.groups--) {} /* wide row: split over ctaid.y */
+    s.groups = omega_api_qset(k);
     const uint32_t g = s.groups ? s.groups : kb, gy = s.groups ? kb / s.groups : 1u;
     if (!omega_pq_spec_ok(&s) || !x_va || !q_va || !s_va) return OMEGA_GPU_PF_BAD_ARGS;
     if (rows == 0) return OMEGA_GPU_PF_OK;
@@ -148,9 +148,9 @@ static struct { uint32_t rt, warps, wait, set; int mutant; uint32_t group; } q;
 void omega_gpu_pf_qgemm_set_group(uint32_t group) { q.group = group; }
 void omega_gpu_pf_qgemm_set_shape(uint32_t rt, uint32_t warps, uint32_t wait) { q.rt = rt; q.warps = warps; q.wait = wait; q.set = rt || warps || wait; }
 void omega_gpu_pf_qgemm_test_set_mutant(int m) { q.mutant = m; }
-static uint32_t QRT(void) { return q.rt ? q.rt : 4u; }
-static uint32_t QWARPS(void) { return q.warps ? q.warps : 8u; }
-static uint32_t QWAIT(void) { return q.set ? q.wait : 45u; } /* 45 cycles: chip-safe QMMA read distance (evidence OWN30B-L1G-QMMA-PFGEMM-c742aa13) */
+static uint32_t QRT(void) { return omega_api_qrt(q.rt); }
+static uint32_t QWARPS(void) { return omega_api_tcw(q.warps); }
+static uint32_t QWAIT(void) { return omega_api_qwait(q.set, q.wait); }
 uint32_t omega_gpu_pf_qgemm_bm(void) { return 16u * QRT(); }
 
 /* tile table from per-expert base addresses (w_va[e], s_va[e]: GEMV-tensor layout, wherever it lives) */

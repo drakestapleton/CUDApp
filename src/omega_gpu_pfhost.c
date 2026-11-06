@@ -2,6 +2,7 @@
 /* omega_gpu_pfhost.c: launchers for the whole-prompt router logits and MoE combine (W-L1G-D). See omega_gpu_pfhost.h. */
 #include "omega_gpu_pfhost.h"
 #include "omega_blackwell_codegen_pfhost.h"
+#include "omega_api_shells.h"
 #include <string.h>
 
 #define KIND_RL 0x50u
@@ -11,15 +12,15 @@ static uint32_t rl_rows;
 void omega_gpu_pf_router_test_set_mutant(int m) { rl_mutant = m; }
 void omega_gpu_pf_combine_test_set_mutant(int m) { mc_mutant = m; }
 void omega_gpu_pf_router_set_rows(uint32_t t) { rl_rows = t; }
-uint32_t omega_gpu_pf_router_rows(void) { return rl_rows ? rl_rows : 16u; }
+uint32_t omega_gpu_pf_router_rows(void) { return omega_api_rrows(rl_rows); }
 
-size_t omega_gpu_pf_router_packed_bytes(uint32_t e, uint32_t k) { return (size_t)(k / 4u + 1u) * e * 16u; }
+size_t omega_gpu_pf_router_packed_bytes(uint32_t e, uint32_t k) { return omega_api_pkbytes(e, k); }
 void omega_gpu_pf_router_pack(uint32_t e, uint32_t k, const float *w, float *wq) {
     if (!w || !wq) return;
     for (uint32_t g = 0; g < k / 4u; g++)
         for (uint32_t ex = 0; ex < e; ex++)
-            for (uint32_t q = 0; q < 4u; q++) wq[((size_t)g * e + ex) * 4u + q] = w[(size_t)ex * k + 4u * g + q];
-    memset(wq + (size_t)(k / 4u) * e * 4u, 0, (size_t)e * 16u);
+            for (uint32_t q = 0; q < 4u; q++) wq[omega_api_rtdst(g, ex, q, e)] = w[omega_api_rtsrc(ex, k, g, q)];
+    memset(wq + omega_api_rtdst(k / 4u, 0, 0, e), 0, (size_t)e * 16u);
 }
 
 static int gen_rl(const OmegaPfKey *key, void *prog) { OmegaRlSpec s; memcpy(&s, key->words, sizeof s); return omega_blackwell_codegen_rl_prog(&s, prog); }

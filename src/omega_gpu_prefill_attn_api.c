@@ -4,6 +4,7 @@
  * Session use mirrors omega_gpu_decode_attn_api.c: buffers from omega_gpu_session_alloc (GPU-uncached, host-visible),
  * sync_to_gpu after host writes, sync_to_cpu before host reads, one omega_gpu_session_launch per chunk.
  */
+#include "omega_api_shells.h"
 #include "omega_gpu_prefill_attn_api.h"
 #include "omega_blackwell_codegen_tc.h"
 #include "omega_gpu_session.h"
@@ -94,7 +95,7 @@ static struct Mir *mirror_get(const OmegaGpuDecodeAttnCacheView *v) {
     struct Mir *m = &g.mir[g.n_mir];
     memset(m, 0, sizeof *m);
     const uint64_t plane = v->v_va - v->k_va, bytes = 2u * plane;
-    if (v->v_va <= v->k_va || (plane & 15u)) { omega_gpu_session_set_error("prefill attn: cache planes"); return NULL; }
+    if (v->v_va <= v->k_va || !omega_api_alignok((uint32_t)plane, 15u)) { omega_gpu_session_set_error("prefill attn: cache planes"); return NULL; }
     if (omega_gpu_pf_alloc_dev(bytes, &m->mem) != OMEGA_GPU_PF_OK) { memset(m, 0, sizeof *m); return NULL; }
     const size_t step = (size_t)16u << 20;                 /* zero-fill in 16 MB uploads */
     void *z = omega_gpu_host_calloc(1, step);
@@ -116,7 +117,7 @@ static struct Mir *mirror_find(const OmegaGpuDecodeAttnCacheView *v) {
 /* lock held: the copy kernel of the prefill module (same key and generator as omega_gpu_pf_copy_va) */
 static int gen_copy(const OmegaPfKey *key, void *prog) { (void)key; return omega_blackwell_codegen_pf_copy_prog(prog); }
 static int copy_locked(uint64_t dst, uint64_t src, size_t bytes, uint64_t *ns) {
-    if ((bytes & 15u) || (dst & 15u) || (src & 15u)) return OMEGA_GPU_PF_BAD_ARGS;
+    if (!omega_api_alignok((uint32_t)bytes, 15u) || !omega_api_alignok((uint32_t)dst, 15u) || !omega_api_alignok((uint32_t)src, 15u)) return OMEGA_GPU_PF_BAD_ARGS;
     OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = 1u; /* KIND_COPY of omega_gpu_prefill.c */
     OmegaPfKernel k; int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_kernel_locked(&key, gen_copy, &k);
@@ -316,7 +317,7 @@ int omega_gpu_prefill_attn_dev(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint3
     uint64_t t0 = omega_gpu_session_now_ns();
     info_head(info, layer, pos0, m);
     Run r;
-    if (!qkv_va || !out_va || (qkv_va & 15u) || (out_va & 15u)) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (!qkv_va || !out_va || !omega_api_alignok((uint32_t)qkv_va, 15u) || !omega_api_alignok((uint32_t)out_va, 15u)) return OMEGA_GPU_DATTN_BAD_ARGS;
     int rc = prepare(c, layer, pos0, m, eps, out_scale, &r);
     if (rc != OMEGA_GPU_DATTN_OK) return rc;
 #if PATTN_HAVE_PF

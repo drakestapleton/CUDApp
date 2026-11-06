@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T06:31:14Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:64146f9aeb438b15af14f5ee3584b7c78c92705eb69833d966a23c8c4522e104",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 5,
+      "generated_at_commit": "0e4417ae62ce2fbfbdda6be4a2c3e684d373c2cd",
+      "source_tree": "sha256:c9270033ce88728f3cafe9bae8a2761677a822fb9233bd6875d73ca7cb6e6b71"
+    }
+  },
+  "layer": "api",
+  "name": "api",
+  "purpose": "Seeded Omega decisions for the kernel-family API shells: FP8 pack, slot table, shape and refusal",
+  "schema_version": "1.0.0"
+}

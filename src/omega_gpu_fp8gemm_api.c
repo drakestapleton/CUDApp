@@ -8,6 +8,7 @@
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_native_runtime.h"
 #include "omega_gpu_code_alloc.h"
+#include "omega_api_shells.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -77,7 +78,7 @@ void omega_gpu_fp8gemm_test_set_mutant(int m) { omega_gpu_session_lock(); g.muta
 static uint32_t gpr_declared(uint32_t peak) { return omega_bw_gpr_declared(peak); } /* peak + 2 rounded up to 8: the chip hung at peak + 1 (omega_blackwell_codegen.h) */
 static bool register_file_fits(uint32_t warps, uint32_t peak) {
     uint32_t decl = gpr_declared(peak);
-    if ((uint64_t)32u * warps * decl <= 65536u) return true;
+    if (omega_api_regfit(warps, decl)) return true;
     char e[160]; omega_gpu_fmt(e, sizeof e, "fp8 gemm kernel: %u warps x %u declared registers exceed the 65536-register file", warps, decl);
     omega_gpu_session_set_error(e);
     return false;
@@ -90,18 +91,16 @@ int omega_gpu_fp8gemm_kernel_fits(const OmegaFp8GemmSpec *spec, uint32_t *declar
 }
 
 void omega_gpu_fp8gemm_shape_for(uint32_t k, uint32_t *mt, uint32_t *warps, uint32_t *lane_bytes) {
-    uint32_t lb = k % 512u == 0 ? 16u : 8u;
-    if (lane_bytes) *lane_bytes = lb;
-    /* default 4 rows per pass: chip sweep 2026-10-13, gate|up 3.5 ms at 4 vs 6.0 ms at 8 (8 rows fill the 16 KB of shared memory and run at half the rate) */
-    if (mt) *mt = g.mt ? g.mt : 4u;
-    if (warps) *warps = g.warps ? g.warps : 16u;
+    if (lane_bytes) *lane_bytes = omega_api_lane(k);
+    omega_api_fp8_defaults(g.mt, g.warps, mt, warps);
 }
 /* dense = a few distinct experts with many rows each (qkv, o): 8 rows per pass measured best there */
 static void spec_for(uint32_t k, uint32_t segs, OmegaFp8GemmSpec *spec) {
     memset(spec, 0, sizeof *spec);
     spec->k = k;
-    omega_gpu_fp8gemm_shape_for(k, &spec->mt, &spec->warps, &spec->lane_bytes);
-    if (!g.mt && segs < 8u) spec->mt = 8u;
+    spec->mt = omega_api_fp8mt(g.mt, segs);
+    omega_api_fp8_defaults(0, g.warps, NULL, &spec->warps);
+    spec->lane_bytes = omega_api_lane(k);
     spec->mutant = g.mutant;
 }
 
@@ -228,7 +227,7 @@ int omega_gpu_fp8gemm_prepare_shape(uint32_t k, uint32_t segs, uint32_t mt, int 
     omega_gpu_session_unlock();
     return rc;
 }
-uint32_t omega_gpu_fp8gemm_cta_budget_for(uint32_t segs) { return g.ctas ? g.ctas : (segs >= 64u ? 2u : segs >= 8u ? 12u : 96u); }
+uint32_t omega_gpu_fp8gemm_cta_budget_for(uint32_t segs) { return omega_api_ctabud(segs, g.ctas); }
 
 int omega_gpu_fp8gemm_record(OmegaGpuCmdList *cl, const OmegaGpuFp8Tensor *t, uint32_t rows, uint32_t segs, uint64_t seg_va, uint64_t xp_va,
                              uint64_t y_va, uint64_t xmap_va, uint64_t ymap_va, uint32_t mt, uint32_t cta_budget, OmegaGpuFp8GemmInfo *info) {
@@ -337,7 +336,7 @@ static int gemm_core(const OmegaGpuFp8Tensor *t, uint32_t M, const uint32_t *ids
     if (general_ok && omega_fp8gemm_shared_bytes(&spec) == 0) return general_gemm(t, M, ids, trow, x32, x16, y, n, k, segs, info, OMEGA_GPU_FP8GEMM_CODEGEN_FAIL, t0);
     const uint32_t MT = spec.mt, W = spec.warps;
     uint32_t grid_x = (n + W - 1) / W;
-    uint32_t budget = g.ctas ? g.ctas : (segs >= 64u ? 2u : segs >= 8u ? 12u : 96u);
+    uint32_t budget = omega_api_ctabud(segs, g.ctas);
     if (grid_x > budget) grid_x = budget;
     if (grid_x == 0) grid_x = 1;
 

@@ -260,7 +260,7 @@ static int gemv_core(const OmegaGpuBf16Tensor *t, const float *x32, const uint16
     uint32_t args[32];
     const uint64_t x_va = rec ? dev_x : g.x_buf.mem.va, y_va = rec ? dev_y : g.y_buf.mem.va;
     const uint64_t pack[32] = { [0]=t->w.va, [2]=x_va, [4]=y_va, [6]=RG,
-        [7]=grid_x * spec.warps, [8]=mask_hi, [10]=mask_tau };
+        [7]=(uint64_t)grid_x * spec.warps, [8]=mask_hi, [10]=mask_tau };
     if (av_layout(args, pack, (1ull<<0)|(1ull<<2)|(1ull<<4)|(1ull<<8)|(1ull<<10))) rc = OMEGA_GPU_BF16_CHIP_FAIL;
     if (info) {
         info->n = n; info->k = k; info->rows_per_warp = spec.rows; info->warps_per_cta = spec.warps; info->depth = spec.depth;

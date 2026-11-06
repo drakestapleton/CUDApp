@@ -1,0 +1,6 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF -ffunction-sections -fdata-sections -Wl,--gc-sections -Isrc -o /tmp/integ/numeric-rest-archive-diff tests/numeric_rest_om_diff_test.c src/omega_numeric.c src/omega_numeric_reduce.c src/omega_blackwell_qmd.c build/libomega_gpu.a -lm -lpthread
+rc=0
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/integ/numeric-rest-archive-diff
+NUMERIC REST OM DIFF PASS; host only; chip NOT_RUN
+checks=8418438
+rc=0

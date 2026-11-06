@@ -26,14 +26,16 @@
  * the parity comparators. Nothing here opens a device. The GB10 executor is
  * src/omega_numeric_gb10.c.
  *
- * Build with -ffp-contract=off: the reference and CPU tiers must not depend
- * on whether the compiler fuses a*b+c. Fused operations use explicit AArch64
- * instructions or the correctly rounded x86 host fmaf implementation.
+ * The default implementation is seeded Omega through generated hosted units.
+ * Build with -ffp-contract=off: neither tier may depend on implicit fusion.
+ * Independent native C/assembly remains a default-OFF migration oracle under
+ * CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST.
  */
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "omega_numeric_om.h"
 
 /*
  * Frozen numerical reduction order specification:
@@ -63,6 +65,7 @@ static inline float omega_bits_to_float(uint32_t u) {
 #define OMEGA_INF_NEG   0xff800000U
 #define OMEGA_QNAN_BITS 0x7fc00000U
 
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST) || defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF)
 static inline float omega_fabs(float x) {
     return omega_bits_to_float(omega_float_to_bits(x) & 0x7fffffffU);
 }
@@ -89,6 +92,26 @@ static inline bool omega_issubnormal(float x) {
 static inline bool omega_iszero(float x) {
     return (omega_float_to_bits(x) & 0x7fffffffU) == 0;
 }
+#else
+static inline float omega_fabs(float x) {
+    return omega_bits_to_float((uint32_t)omega_numeric_rest(0, omega_float_to_bits(x), 0, 0, 0, 0));
+}
+static inline bool omega_isnan(float x) {
+    return omega_numeric_rest(1, omega_float_to_bits(x), 0, 0, 0, 0) != 0;
+}
+static inline bool omega_isinf(float x) {
+    return omega_numeric_rest(2, omega_float_to_bits(x), 0, 0, 0, 0) != 0;
+}
+static inline bool omega_signbit(float x) {
+    return omega_numeric_rest(3, omega_float_to_bits(x), 0, 0, 0, 0) != 0;
+}
+static inline bool omega_issubnormal(float x) {
+    return omega_numeric_rest(4, omega_float_to_bits(x), 0, 0, 0, 0) != 0;
+}
+static inline bool omega_iszero(float x) {
+    return omega_numeric_rest(5, omega_float_to_bits(x), 0, 0, 0, 0) != 0;
+}
+#endif
 
 /*
  * Required host FP environment. The reference and CPU tiers compute with the
@@ -384,8 +407,8 @@ void omega_numeric_launch_shape(size_t count, uint32_t *threads_per_block, uint3
 int omega_numeric_reference(OmegaNumericOp op, const float *a, const float *b,
                             const float *c, float *out, size_t count);
 
-/* CPU realization tier: the AArch64 instruction (or the Omega sequence for
- * DIV/SQRT/EXP/LOG) that realizes each op on the host. */
+/* CPU realization semantics, implemented in seeded Omega by default. The
+ * retained independent native-instruction realization is an opt-in C oracle. */
 int omega_numeric_cpu_realize(OmegaNumericOp op, const float *a, const float *b,
                               const float *c, float *out, size_t count);
 

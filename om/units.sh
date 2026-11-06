@@ -91,6 +91,8 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/codegen/cg_fields.om om/codegen/cg_replay.om om/codegen/cg_life.om om/codegen/cg_invar.om om/codegen/cg_budget.om"
     UNITS="$UNITS cm_route=om/components/cm_route.om"
 fi
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_rest=om/numeric/numeric.om,om/numeric/rest.om numeric_patch=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/patch.om numeric_check=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/patch.om,om/numeric/check.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_trace=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/trace.om numeric_reduce=om/numeric/numeric.om,om/numeric/tile.om,om/numeric/rest.om,om/numeric/reduce.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

@@ -1,0 +1,11 @@
+generating portable unit numeric (bridge-seeded)
+generating portable unit numeric_tile (bridge-seeded)
+generating portable unit numeric_rest (bridge-seeded)
+generating portable unit numeric_patch (bridge-seeded)
+generating portable unit numeric_check (bridge-seeded)
+generating portable unit numeric_trace (bridge-seeded)
+generating portable unit numeric_reduce (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to /tmp/tmp.ZzHGL71Q9U/out-minmax_padding

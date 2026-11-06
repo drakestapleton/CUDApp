@@ -1,0 +1,14 @@
+sh tools/numeric_rest_om_mutants.sh
+control rc=0 NUMERIC REST OM DIFF PASS; host only; chip NOT_RUN
+strong-link rest refused as expected
+strong-link patch refused as expected
+strong-link check refused as expected
+strong-link trace refused as expected
+strong-link reduce refused as expected
+mutant source_lane killed rc=1 FAIL reference bits op=12 n=0
+mutant ftz_dropped killed rc=1 FAIL FTZ bits op=0 n=1
+mutant parity_compare killed rc=1 FAIL trace op=0 n=1
+mutant minmax_padding killed rc=1 FAIL identity op=1 n=0
+mutant patch_exit killed rc=1 FAIL patch words op=4 n=3
+mutant seed_bound killed rc=1 FAIL trace op=10 n=31
+NUMERIC REST OM MUTANTS PASS 6/6; chip NOT_RUN

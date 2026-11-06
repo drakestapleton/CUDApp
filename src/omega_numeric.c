@@ -76,6 +76,23 @@
 #define omega_numeric_compare_equal numeric_c_compare_equal
 #define omega_numeric_launch_shape numeric_c_launch_shape
 #endif
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST) || defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF)
+#define NUMERIC_REST_C_BODIES 1
+#endif
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF)
+#define omega_numeric_submit_check numeric_rest_c_submit_check
+#define omega_numeric_patch_words numeric_rest_c_patch_words
+#define omega_numeric_check_patch numeric_rest_c_check_patch
+#define omega_numeric_element_checked numeric_rest_c_element_checked
+#define omega_numeric_reference numeric_rest_c_reference
+#define omega_numeric_cpu_realize numeric_rest_c_cpu_realize
+#define omega_numeric_parity numeric_rest_c_parity
+#define omega_numeric_seed_bound numeric_rest_c_seed_bound
+#define omega_numeric_reference_ftz numeric_rest_c_reference_ftz
+int numeric_rest_c_patch_words(OmegaNumericOp, OmegaNumericPatchInsn [OMEGA_NUMERIC_PATCH_MAX]);
+int numeric_rest_c_check_patch(OmegaNumericOp, const OmegaNumericPatchInsn *, int, const uint32_t *, char *, size_t);
+#endif
 atomic_int omega_numeric_native_state = ATOMIC_VAR_INIT(OMEGA_NUMERIC_NATIVE_IDLE);
 
 #if !defined(__aarch64__) && !defined(__x86_64__)
@@ -398,6 +415,7 @@ bool omega_numeric_cpu_has_bf16(void) {
 #define PE 2u
 #define PG 4u
 #define PU 8u
+#if defined(NUMERIC_REST_C_BODIES)
 static unsigned fsetp_mask(int op) {
     switch (op) {
     case OMEGA_NOP_FSETP_SEL:     return PG | PE;            /* GE  */
@@ -417,6 +435,11 @@ static unsigned fsetp_mask(int op) {
     default:                      return 0;
     }
 }
+#else
+static unsigned fsetp_mask(int op) {
+    return (unsigned)omega_numeric_rest(8, (unsigned)op, 0, 0, 0, 0);
+}
+#endif
 
 #if defined(OMEGA_NUMERIC_C_BODIES)
 /* Comparison outcome from the bit patterns: sign-magnitude to a signed key,
@@ -845,6 +868,7 @@ static int refuse(char *err, size_t err_len, int rc, const char *fmt, const char
     return rc;
 }
 
+#if defined(NUMERIC_REST_C_BODIES)
 int omega_numeric_submit_check(const char *op_name,
                                const float *in_a, const float *in_b, const float *in_c,
                                const float *out_res, size_t count,
@@ -908,6 +932,7 @@ int omega_numeric_submit_check(const char *op_name,
     }
     return omega_numeric_check_patch(info->op, patch, n, qmd1, err, err_len);
 }
+#endif
 
 /* ---- Kernel patch words ----------------------------------------------------
  * Register map of the vecadd baseline (src/omega_blackwell_encoder.c):
@@ -934,6 +959,7 @@ int omega_numeric_submit_check(const char *op_name,
 #define CTRL_SHFL_NEXT 0x000e2400U  /* later SHFL.DOWN: sets SB0, no wait (FADD before it is fixed latency) */
 #define CTRL_FADD_SB0  0x001fca00U  /* FADD that waits SB0 (the shuffled value)                         */
 
+#if defined(NUMERIC_REST_C_BODIES)
 int omega_numeric_patch_words(OmegaNumericOp op,
                               OmegaNumericPatchInsn out[OMEGA_NUMERIC_PATCH_MAX]) {
     static const OmegaNumericPatchInsn STG0 = { W_STG0, "STG.E desc[UR4][R6.64], R9", NULL };
@@ -1123,6 +1149,7 @@ int omega_numeric_patch_words(OmegaNumericOp op,
 #undef PUT
     return OMEGA_NUMERIC_ERR_BAD_ARGS;
 }
+#endif
 
 int omega_numeric_build_kernel(OmegaNumericOp op, uint8_t *code, size_t code_len, size_t *out_len) {
     OmegaNumericPatchInsn patch[OMEGA_NUMERIC_PATCH_MAX];
@@ -1153,6 +1180,7 @@ static int bad(char *err, size_t err_len, const char *fmt, ...) {
     return OMEGA_NUMERIC_ERR_OPERANDS;
 }
 
+#if defined(NUMERIC_REST_C_BODIES)
 #define INSN_OP(p)   ((p).w[0] & 0xffffu)
 #define INSN_DST(p)  (((p).w[0] >> 16) & 0xffu)
 #define INSN_SRCA(p) (((p).w[0] >> 24) & 0xffu)
@@ -1341,9 +1369,11 @@ int omega_numeric_check_patch(OmegaNumericOp op, const OmegaNumericPatchInsn *p,
     if (n > 1 && (p[n - 2].w[0] != W_STG_WORD0 || p[n - 2].w[1] != W_STG_WORD1 || p[n - 2].w[2] != W_STG_WORD2 || p[n - 1].w[0] != 0x0000794du || p[n - 1].w[1] != 0u || p[n - 1].w[2] != 0x03800000u)) return bad(err, err_len, "%s: patch does not end with STG.E desc[UR4][R6.64], R9 ; EXIT", name); /* CHECK:tail_store_exit */
     return OMEGA_NUMERIC_OK;
 }
+#endif
 
 /* ---- Reference and CPU realization tiers ---------------------------------- */
 
+#if defined(NUMERIC_REST_C_BODIES)
 static float ref_fsetp_sel(float a, float b) { return omega_ref_fsetp_ge(a, b) ? a : b; }
 static float ref_fsel(float a, float b) { return omega_ref_fsetp_ge(a, 0.0f) ? b : a; }
 
@@ -1734,6 +1764,9 @@ int omega_numeric_reference_ftz(OmegaNumericOp op, const float *a, const float *
     }
     return OMEGA_NUMERIC_OK;
 }
+#endif
+
+#include "omega_numeric_rest.inc"
 
 /* ---- Omega path (om/numeric/numeric.om, om/numeric/tile.om) ----------------
  * Every value crosses as raw bits. Under CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF

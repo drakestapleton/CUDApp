@@ -58,6 +58,10 @@ uint32_t omega_native_attnmirplan(uint64_t *result, const void *p0, uint64_t p0_
 uint32_t omega_native_attnmirnext(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3);
 uint32_t omega_q38_runtime(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_q38_emit(uint64_t *result, void *p0, uint64_t p0_n);
+uint32_t omega_cg_qmma(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
+uint32_t omega_cg_qmma_patch(uint64_t *result, uint64_t p0, uint64_t p1, void *p2, uint64_t p2_n);
+uint32_t omega_cg_tgemm_spec(uint64_t *result, const void *p0, uint64_t p0_n, uint64_t p1);
+uint32_t omega_cg_tgemm(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

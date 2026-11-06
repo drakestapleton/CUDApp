@@ -188,3 +188,108 @@ is the separate GEMM host and simulator target and is also outside `make test`.
 An AArch64 host build of this tree keeps `dsb sy` in `nvrm_cpu_barrier`. A
 GB10 run of the device path is a separate receipt. A host or simulator pass
 does not qualify it.
+
+## QMMA builder migration
+
+`make test-codegen-qmma-diff` is host-only and part of `make test`. The default
+QMMA probe, peak and F2E4 probe builders execute `om/codegen/cg_qmma.om`
+through checked portable Omega IR replay. `cg_qmma_patch.om` owns placeholder
+validation and rewriting. `CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA=1` selects
+the old C oracle; it defaults to zero.
+
+The differential is **exhaustive over structure, bit-basis over niter**.
+For every supported peak chain count, issue stall and thread count it tests
+the unique union of `{1,7,UINT32_MAX}` and
+`{2^k,2^k-1,2^k+1 | k=0..31}`. Zero is a matched refusal.
+It also checks both probe variants at every supported wait count and F2E4.
+Each accepted case compares encoded bytes, patched bytes, patch counts and
+packed cubins between C and Omega. For each structural configuration, both
+implementations' patched bytes must differ from their niter=7 baseline only
+in the same MOVI word-1 immediate field, whose decoded value must equal niter.
+The field is located from the baseline IR, not a hard-coded instruction index.
+A parity-dependent stall mutant must fail this confinement check independently
+of C/Omega equality; a separate corrupted-control-word mutant must fail byte equality.
+Unsupported configurations, null outputs, corrupt placeholders and short
+buffers are also compared with C.
+
+Source-level scalar dependence: `src/omega_blackwell_codegen_qmma.c:110-122`
+rejects zero and copies `iters` only into `movi(e,cnt,iters)`.
+On the peak path, `om/codegen/cg_qmma.om:416-419` copies the scalar into spec
+slot 1, `:98-101` rejects zero, and `:294-297` copies it into the single MOVI
+immediate. No other peak emission depends on that scalar. The executable
+confinement checks strengthen this source argument; they do not claim literal
+enumeration of every uint32 iteration count.
+
+Domain query:
+`WolframLanguageEvaluator: v=Union[Join[{1,7,2^32-1},Flatten[Table[{2^k,2^k-1,2^k+1},{k,0,31}]]]]; {Length[v],Count[v,_?(#>0&)],Length[v]*16*15*32}`
+→ `{94,93,721920}` (including the refused-zero probes).
+The strengthened matrix/confinement target is **NOT_RUN** to completion:
+its focused run was cancelled at the operator's wrap-up directive. The initial
+receipt below predates this strengthening and must not be cited as its PASS.
+Initial pre-confinement receipt:
+The focused command exited zero and printed
+`CODEGEN QMMA DIFF PASS (7748 cases)` on 2026-11-06, after printing
+`CODEGEN QMMA MUTANT CAUGHT`. This is host parity, not chip qualification.
+`make test-codegen-qmma-host` also exited zero on 2026-11-06 UTC:
+the patch oracle-bit self-test and model checks passed, ending
+`GPU_QMMA_PROBE: PASS`.
+
+Constants were transcribed from the existing C oracle and checked with
+`WolframLanguageEvaluator: AssociationMap[FromDigits[#,16]&,{"51303832","46453433","38383838","fc000","358","380","388","ffff","7209","723e","07800000","048070ff","723c","727a","41800","2c00","ffffff00","ffff0000"}]`
+→ respectively
+`1362114610,1178940467,943208504,1032192,856,896,904,65535,29193,29246,125829120,75526399,29244,29306,268288,11264,4294967040,4294901760`.
+
+Chip tier is **NOT_RUN**. In a separately authorized exclusive GB10 window,
+build `taskset -c 10-14 nice -n 10 make -j3 build/gpu_qmma_probe_test`,
+then run `./build/gpu_qmma_probe_test --host-only` and
+`./build/gpu_qmma_probe_test` using that window's required device authorization
+and receipt capture procedure. The default command exercises arithmetic,
+the dropped-C negative control, and the peak sweep. Do not run it outside
+that window.
+
+## Tiled BF16 training GEMM builder migration
+
+The default `omega_blackwell_codegen_tgemm_prog` executes the first-party
+`cg_tgemm.om` builder and `cg_tgemm_spec.om` admission/query unit through
+checked portable IR replay. `cg_tgemm_emit.om` shares the QMMA allocator,
+record packer and scoreboard-control primitives. The old C oracle remains
+behind `CUDAPP_MIGRATION_PENDING_C_CODEGEN_TGEMM=1`, default zero.
+Native portable view lengths count elements, not bytes.
+
+`make test-codegen-tgemm-diff` checks every structural shape and supported
+mutant along the full independent K and N axes, compares all public query
+results and refusals, and compares complete IR plus allocator state.
+Each structural baseline also compares encoded bytes and packed cubins.
+Equal complete IR and allocator state feed the same deterministic encoder;
+this is stronger than comparing only encoded bytes.
+The independent-axes command is not an exhaustive Cartesian-product receipt.
+`make test-codegen-tgemm-exhaustive` visits the complete supported bounded
+K/N/RT/warps/AQN/mutant product, including C refusals.
+Both modes require detection of an independently corrupted Omega control word.
+`make test-codegen-tgemm-sim` runs the carried budget checks and warp simulator
+with its arithmetic reference and mutant controls; it opens no GPU.
+
+Host receipt (2026-11-06 UTC, pinned `omc` e5b32567 and Bridge bc11b30b):
+`taskset -c 10-14 nice -n 10 make -j3 test-codegen-tgemm-diff`
+returned zero with `CODEGEN TGEMM MUTANT CAUGHT` and
+`CODEGEN TGEMM AXES DIFF PASS (55295 accepted cases)`.
+The printed first-instruction control-word mismatch belongs to the deliberate
+mutant, not a positive-case failure. The carried reference command
+`taskset -c 10-14 nice -n 10 make -j3 test-codegen-qmma-host test-codegen-tgemm-sim`
+also exited zero on 2026-11-06 UTC. QMMA ended `GPU_QMMA_PROBE: PASS`;
+TGEMM budget checks ended `GPU_TGEMM: PASS`; TGEMM simulation ended
+`GPU_TGEMM: PASS`, with both fragment orders matching the arithmetic reference
+and mutants 1–4 caught. Full-product and chip verdicts remain separate.
+
+Constant transcription query:
+`WolframLanguageEvaluator: {AssociationMap[FromDigits[#,16]&,{"21","25","26","d8","100","10000","ffff0000","fffffffe"}],2^32,2^17,2^23}`
+→ `{<|"21"->33,"25"->37,"26"->38,"d8"->216,"100"->256,"10000"->65536,"ffff0000"->4294901760,"fffffffe"->4294967294|>,4294967296,131072,8388608}`.
+
+Chip tier is **NOT_RUN**. In a separately authorized exclusive GB10 window,
+build `taskset -c 10-14 nice -n 10 make -j3 build/gpu_tgemm_test`,
+run `./build/gpu_tgemm_test --host-only` and
+`./build/gpu_tgemm_test --sim`, then capture
+`./build/gpu_tgemm_test --chip` under the current device authorization and
+receipt procedure. Only the last command opens the device. Its carried chip
+path checks both uncached and cached buffers, output poisoning, repeat
+identity, arithmetic reference and mutant 4. Host parity is not chip qualification.

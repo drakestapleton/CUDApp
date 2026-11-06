@@ -1,7 +1,7 @@
 /* omega_gpu_gemm_ex.c -- the general matrix multiply over the C3 kernels (contract: omega_gpu_gemm_ex.h).
  * The plan, the routes, the k parts, the operand conversion, the k-part sums, the host recompute, the epilogue and the fp8
  * dequantization are seeded Omega (the om/gemmex units, generated src/cudapp_om_gemm_ex_<unit>.c, CUDApp#144); this file is the
- * memory shell: gathers into the units' byte windows, copies, allocation and the C3 calls.
+ * memory shell: gathers into the units' windows, copies, allocation and the C3 calls.
  * Migration-pending C, kept as the differential oracle (mk/gemm-ex.mk): CUDAPP_MIGRATION_PENDING_GEMM_EX=1 builds the
  * old C path instead; CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF=1 runs both on every call and aborts on any difference. */
 #include "omega_gpu_gemm_ex.h"
@@ -503,7 +503,7 @@ static int c_fp8_block_rows(const uint8_t *w, const float *scale, double scale_m
 #if GX_OM /* ------------------------------------------------------------------ the Omega path: the memory shell */
 #include "cudapp_native.h"
 
-#define GX_WIN 65536u /* bytes of a unit's byte window (view uchar 65536 in om/gemmex) */
+#define GX_WIN 65536u /* bytes of a unit's window (view uchar 65536; uint, f32 16384 and ushort 32768 in om/gemmex) */
 #define GX_ROW 4096u  /* words of a unit's tile-row window (acc, fix: one row of a 4096-wide C tile) */
 
 /* The units' windows: x the call, p the plan, q one unit call's arguments, res a unit's result; ga gb gathered runs,
@@ -792,7 +792,8 @@ static int gx_accrows(Gx *g, const float *sa, const float *sb, uint64_t m0, uint
         if (blk) memcpy(g->gc, sa + ((m0 + i) / x[23]) * p[13] + kb, 4);
         q[0] = rn * nc;
         memcpy(g->q, q, sizeof q);
-        if (omega_gemm_ex_acc(&g->res, g->q, 8, P + i * nc, GX_WIN, g->gc, GX_WIN, acc + i * nc, GX_ROW) != OMEGA_OK) return GX_FAULT;
+        if (omega_gemm_ex_acc(&g->res, g->q, 8, P + i * nc, GX_WIN / 4u, g->gc, GX_WIN / 4u, acc + i * nc, GX_ROW) != OMEGA_OK)
+            return GX_FAULT;
     }
     return OMEGA_GPU_GEMM_OK;
 }
@@ -815,7 +816,7 @@ static int gx_epirows(Gx *g, GxBufs *bf, const uint8_t *A, const uint8_t *B, con
         for (uint64_t r = 0; r < rn; r++) memcpy(g->gc + r * nc * ec, C + ((m0 + i + r) * p[4] + n0) * ec, nc * ec);
         q[0] = rn * nc;
         memcpy(g->q, q, sizeof q);
-        if (omega_gemm_ex_epi(&g->res, g->q, 8, pv, GX_WIN, av, GX_ROW, g->fix, GX_ROW, g->fl, GX_ROW, g->gc, GX_WIN) != OMEGA_OK)
+        if (omega_gemm_ex_epi(&g->res, g->q, 8, pv, GX_WIN / 4u, av, GX_ROW, g->fix, GX_ROW, g->fl, GX_ROW, g->gc, GX_WIN / 2u) != OMEGA_OK)
             return GX_FAULT;
         for (uint64_t r = 0; r < rn; r++) memcpy(C + ((m0 + i + r) * p[4] + n0) * ec, g->gc + r * nc * ec, nc * ec);
         *fixed += g->res;
@@ -965,7 +966,7 @@ static int om_fp8_block_rows(const uint8_t *w, const float *scale, double scale_
                 memcpy(g->gb, sr + sbase, gx_min(GX_WIN / 4u, kb - sbase) * 4u);
                 const uint64_t q[8] = {cn, c0, block, kb, gx_dbits(scale_mul), (uint64_t)(int64_t)g_mutant, sbase, gx_fbits(sr[0])};
                 memcpy(g->q, q, sizeof q);
-                if (omega_gemm_ex_fp8(&g->res, g->q, 8, g->ga, GX_WIN, g->gb, GX_WIN / 8u, slab + (j * k + c0) * 4u, GX_WIN) != OMEGA_OK ||
+                if (omega_gemm_ex_fp8(&g->res, g->q, 8, g->ga, GX_WIN, g->gb, GX_WIN / 4u, slab + (j * k + c0) * 4u, GX_WIN / 4u) != OMEGA_OK ||
                     g->res) {
                     rc = GX_FAULT;
                     break;

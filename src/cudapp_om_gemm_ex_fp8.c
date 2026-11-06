@@ -282,7 +282,7 @@ if(({uint64_t _a=v2;uint64_t _b=v3;o_op(11, 5, _a,_b);})){
 if(({uint64_t _a=({uint64_t _a=v2;uint64_t _b=v3;o_op(2, 5, _a,_b);});uint64_t _b=16384ULL;o_op(11, 5, _a,_b);})){
 return o_leave(({uint64_t _a=1ULL;uint64_t _b=32ULL;o_op(15, 5, _a,_b);}));
 }
-return o_leave(o_cast(5, 4, ({uint64_t p1=({uint64_t _a=v2;uint64_t _b=v3;o_op(2, 5, _a,_b);});uint64_t p2=4ULL;f11(v1, v1_n, p1, p2);})));
+return o_leave(o_cast(5, 4, o_get(v1, v1_n, ({uint64_t _a=v2;uint64_t _b=v3;o_op(2, 5, _a,_b);}), 4)));
 }
 if(({uint64_t _a=v2;uint64_t _b=0ULL;o_op(7, 5, _a,_b);})){
 return o_leave(({uint64_t _a=1ULL;uint64_t _b=32ULL;o_op(15, 5, _a,_b);}));
@@ -310,7 +310,8 @@ return o_leave(1ULL);
 }
 uint64_t __attribute__((unused)) v10=o_fcv(12, 11, ({uint64_t p0=o_cast(4, 2, o_get(v1, v1_n, v9, 2));f2(p0);}));
 v10=({uint64_t _a=v10;uint64_t _b=o_fcv(12, 11, o_cast(4, 5, v7));o_fp(3, 12, _a,_b);});
-({uint64_t p1=v9;uint64_t p2=4ULL;uint64_t p3=o_fcv(11, 12, ({uint64_t _a=v10;uint64_t _b=v8;o_fp(3, 12, _a,_b);}));f12(v3, v3_n, p1, p2, p3);});
+v10=({uint64_t _a=v10;uint64_t _b=v8;o_fp(3, 12, _a,_b);});
+{uint64_t _i=v9;uint64_t _v=o_fcv(11, 12, v10);o_put(v3, v3_n, _i,_v,11);}
 v6=({uint64_t _a=v6;uint64_t _b=1ULL;o_op(1, 5, _a,_b);});
 if(({uint64_t _a=v6;uint64_t _b=v4;o_op(6, 5, _a,_b);})){
 v6=0ULL;
@@ -327,13 +328,13 @@ if(!o_buf(p0, p0_n,8, 5))return 32;
   if(o_overlap(result,8,p0, p0_n*8))return 32;
 if(!o_buf(p1, p1_n,65536, 2))return 32;
   if(o_overlap(result,8,p1, p1_n*1))return 32;
-if(!o_buf(p2, p2_n,8192, 5))return 32;
-  if(o_overlap(result,8,p2, p2_n*8))return 32;
-if(!o_buf(p3, p3_n,65536, 2))return 32;
-  if(o_overlap(result,8,p3, p3_n*1))return 32;
-if(o_overlap(p3, p3_n*1, p0, p0_n*8))return 32;
-if(o_overlap(p3, p3_n*1, p1, p1_n*1))return 32;
-if(o_overlap(p3, p3_n*1, p2, p2_n*8))return 32;
+if(!o_buf(p2, p2_n,16384, 4))return 32;
+  if(o_overlap(result,8,p2, p2_n*4))return 32;
+if(!o_buf(p3, p3_n,16384, 11))return 32;
+  if(o_overlap(result,8,p3, p3_n*4))return 32;
+if(o_overlap(p3, p3_n*4, p0, p0_n*8))return 32;
+if(o_overlap(p3, p3_n*4, p1, p1_n*1))return 32;
+if(o_overlap(p3, p3_n*4, p2, p2_n*4))return 32;
   if(o_busy)return 33;
   o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f14(p0, p0_n, p1, p1_n, p2, p2_n, p3, p3_n);o_put(result,1,0,_result,5);}
   o_busy=0;return (uint32_t)code;

@@ -1,0 +1,33 @@
+OMEGA_OMC="~/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="~/work/cudastack/omega-bridge" sh tests/nvml/run.sh
+PASS committed src/cudapp_om_nvml_step.c is the bridge output of native/nvml
+PASS committed src/cudapp_om_nvml_errstr.c is the bridge output of native/nvml
+PASS fake tier: CUDAPP-NVML HOST PASS (476 checks)
+PASS oracle negative control (altered string rejected: CUDAPP-NVML HOST FAIL (1 of 476 checks))
+PASS abi: 55 facts equal to /usr/local/cuda/include/nvml.h
+PASS shell compiles against the CUDA nvml.h prototypes
+PASS thin-shell guard
+PASS thin-shell guard negative control
+  mutant nvml 'if eq v 86': caught (CUDAPP-NVML HOST FAIL (3 of 476 checks))
+  mutant nvml 'if eq v 27': caught (CUDAPP-NVML HOST FAIL (2 of 476 checks))
+  mutant nvml 'if or or eq x 18446744073709551614 eq x 18446744073709551610 eq x 18446744073709551597': caught (CUDAPP-NVML HOST FAIL (2 of 476 checks))
+  mutant nvml 'put b n uchar add 48 rem minor 10': caught (CUDAPP-NVML HOST FAIL (157 of 411 checks))
+  mutant nvml 'if gt get s 16 0': caught (CUDAPP-NVML HOST FAIL (16 of 476 checks))
+  mutant nvml 'if gt get s 16 1': caught (CUDAPP-NVML HOST FAIL (3 of 476 checks))
+  mutant nvml 'for t ulong 26': caught (CUDAPP-NVML HOST FAIL (138 of 476 checks))
+  mutant nvml 'if eq g32 b add add PO 4 mul i 4 52928': caught (CUDAPP-NVML HOST FAIL (29 of 476 checks))
+  mutant query 'if ge get s 1 get s 21': caught (CUDAPP-NVML HOST FAIL (4 of 476 checks))
+  mutant query 'put b add OO 3 45': caught (CUDAPP-NVML HOST FAIL (6 of 476 checks))
+  mutant query 'put b n 45': caught (CUDAPP-NVML HOST FAIL (6 of 476 checks))
+  mutant query 'if eq g32 b add add add PO 24 mul tg 44 16 1': caught (CUDAPP-NVML HOST FAIL (8 of 476 checks))
+  mutant query 'if ge v 2147483648': caught (CUDAPP-NVML HOST FAIL (1 of 476 checks))
+  mutant query 'if ne g32 b add PO 8 0': caught (CUDAPP-NVML HOST FAIL (1 of 476 checks))
+  mutant query 'p64 b add OO 16 mul sub t f 1024': caught (CUDAPP-NVML HOST FAIL (2 of 476 checks))
+  mutant query 'o = add add PO 16 mul rem add r 71 72 776': caught (CUDAPP-NVML HOST FAIL (4 of 476 checks))
+  mutant query 'p32 b OO div g 100': caught (CUDAPP-NVML HOST FAIL (2 of 476 checks))
+  mutant query 'p64 b add q 8 18446744073709551615': caught (CUDAPP-NVML HOST FAIL (1 of 476 checks))
+  mutant query 'p32 b add q 16 4294967295': caught (CUDAPP-NVML HOST FAIL (2 of 476 checks))
+  mutant query 'if or gt c 72 ge r 72': caught (CUDAPP-NVML HOST FAIL (1 of 476 checks))
+  mutant query 'if gt f t': caught (CUDAPP-NVML HOST FAIL (1 of 476 checks))
+  mutant errstr 'n = w8 o n 32496501618079059': caught (CUDAPP-NVML HOST FAIL (1 of 476 checks))
+mutants caught 22/22
+CUDAPP-NVML HOST PASS

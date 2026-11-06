@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:26:53Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:7afa2cce22fc740cf18c4bba0a5945c2da711b93f97cf9103b922e862c411cae",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "85f48ad056ba4f6ee7d9ad310d005c69dde1624f",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "development",
+  "name": "cudapp-nvml-tests",
+  "purpose": "Host tier for the NVML subset: resource-manager fake, fake transport, ABI comparison with CUDA nvml.h, negative controls, mutants",
+  "schema_version": "1.0.0"
+}

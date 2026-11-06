@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:26:53Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:706c0b081c76f33ac5d12cb5efcaef96b4c9ebed67309414e1fe7b47a0e9fc8f",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "85f48ad056ba4f6ee7d9ad310d005c69dde1624f",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "development",
+  "name": "cudapp-nvml",
+  "purpose": "Thin C ABI shell and own nvml.h for the CUDA++ libnvidia-ml subset over native/nvml and the omega2_nvrm transport",
+  "schema_version": "1.0.0"
+}

@@ -1,0 +1,4 @@
+make test-nvml OMEGA_OMC=<pin> OMEGA_BRIDGE=<bridge> rc=0 last=CUDAPP-NVML HOST PASS
+make test-nvml (unset) rc=2 last=make: *** [mk/nvml.mk:15: test-nvml] Error 2
+run.sh (DevcallCap omc) rc=69 last=REFUSED: omc digest 390629fd22590aaefca852045f8b0ace86c62cefb3b1bc203ce400773c8abc2f is not the omega-mv e5b32567 pin
+run.sh (unset) rc=77 last=NOT_RUN: set OMEGA_OMC (omega-mv e5b32567 omc) and OMEGA_BRIDGE (omega-bridge checkout)

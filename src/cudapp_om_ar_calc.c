@@ -117,6 +117,9 @@ uint64_t __attribute__((unused)) v4=({uint64_t _a=({uint64_t _a=({uint64_t _a=o_
 {uint64_t _i=22ULL;uint64_t _v=({uint64_t _a=o_get(v0, v0_n, 4ULL, 5);uint64_t _b=v2;o_op(3, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
 {uint64_t _i=23ULL;uint64_t _v=({uint64_t _a=o_get(v0, v0_n, 4ULL, 5);uint64_t _b=v3;o_op(3, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
 {uint64_t _i=24ULL;uint64_t _v=({uint64_t _a=o_get(v0, v0_n, 4ULL, 5);uint64_t _b=v4;o_op(3, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
+{uint64_t _i=25ULL;uint64_t _v=({uint64_t _a=v2;uint64_t _b=4ULL;o_op(3, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
+{uint64_t _i=26ULL;uint64_t _v=({uint64_t _a=({uint64_t _a=o_get(v0, v0_n, 4ULL, 5);uint64_t _b=v4;o_op(3, 5, _a,_b);});uint64_t _b=4ULL;o_op(4, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
+{uint64_t _i=27ULL;uint64_t _v=({uint64_t _a=v4;uint64_t _b=4ULL;o_op(4, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
 return o_leave(0ULL);
 }
 static uint64_t f3(void *v0, uint64_t v0_n){

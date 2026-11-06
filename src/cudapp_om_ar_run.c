@@ -199,10 +199,11 @@ uint64_t __attribute__((unused)) v4=0ULL;
 uint64_t __attribute__((unused)) v5=0ULL;
 {
 uint64_t v6=0;
-uint64_t k1=v1_n;
-uint64_t c1=0;
+uint64_t k1=4294967296ULL;
 for(;o_op(8,5, v6, k1);v6=o_op(1,5, v6,1)){
-if(c1++>=1000000)o_trap(4);
+if(({uint64_t _a=v6;uint64_t _b=v1_n;o_op(11, 5, _a,_b);})){
+break;
+}
 if(({uint64_t _a=o_cast(5, 4, o_get(v1, v1_n, v6, 4));uint64_t _b=o_get(v0, v0_n, 0ULL, 5);o_op(11, 5, _a,_b);})){
 return o_leave(18446744073709551615ULL);
 }

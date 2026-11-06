@@ -3,7 +3,11 @@
  * decode are cut 1's (omega_blackwell_codegen_tc.c, chip gate OWN30B-T3-TCGEMM-6d2803ec) with the scale folded through the
  * accumulator and the v2 epilogues. */
 #include "omega_blackwell_codegen_tc2.h"
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 #include "omega_bw_em.h"
+#endif
 
 int omega_tc2_spec_ok(const OmegaTc2Spec *s) {
     if (!s) return 0;
@@ -23,6 +27,7 @@ int omega_tc2_spec_ok(const OmegaTc2Spec *s) {
 uint32_t omega_tc2_shared_bytes(const OmegaTc2Spec *s) { return omega_tc2_spec_ok(s) ? 2u * 16u * s->rt * 128u : 0u; }
 uint32_t omega_tc2_span(const OmegaTc2Spec *s) { return omega_tc2_spec_ok(s) ? s->warps * 8u * s->ct : 0u; }
 
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 /* one e4m3 word (bytes b0..b3) -> B register pair: lo = (bf(b0), bf(b2)), hi = (bf(b1), bf(b3)) (cut 1) */
 static void decode_word(Em *e, int bpair, int wq, unsigned word, int m, int s, int t) {
     andi(e, m, wq, word, 0x007F007Fu); andi(e, s, wq, word, 0x00800080u);
@@ -228,3 +233,13 @@ int omega_blackwell_codegen_tc2_prog(const OmegaTc2Spec *spec, BlackwellIRProgra
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_tc2_prog(const OmegaTc2Spec *s, BlackwellIRProgram *prog) {
+    if (!prog || !omega_tc2_spec_ok(s)) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_tc, 4,
+        (uint64_t)s->k | (uint64_t)s->n << 32,
+        (uint64_t)s->rt | (uint64_t)s->ct << 32,
+        (uint64_t)s->warps | (uint64_t)s->aqn << 8 | (uint64_t)s->epi << 16 |
+        (uint64_t)s->direct << 24 | (uint64_t)(uint32_t)s->mutant << 32, prog, NULL) == 0 ? 0 : -1;
+}
+#endif

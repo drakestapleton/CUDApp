@@ -13,14 +13,25 @@ Set `OMEGA_C1_SOURCE` to a clean checkout of the exact pin, with its pinned
 `seed/out/omc` artifact present. Then run:
 
 ```
-taskset -c 10-14 nice -n 10 make -j3 test-c1
-taskset -c 10-14 nice -n 10 make -j3 test
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-c1
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test
 ```
+
+The device-free namespace is mandatory for host, simulator, differential and
+mutant checks. A missing-device failure is a host-path defect, not permission
+to rerun outside it. During the parallel integration wave, only the Integrator
+runs the full `make test` command after all writers finish.
 
 `test-c1` remains standalone while its omega-mv source is a pending draft;
 it joins `HOST_TESTS` only once that draft merges. Missing or changed source
 or a mismatched compiler SHA-256 is NOT_RUN (the source-check script exits 3,
 and Make reports failure), never PASS. No fallback checkout or compiler is used.
+
+`test-c1-predicate` independently checks guarded unsigned conversions, MOV and
+SHFL with inactive, active, inverted and mixed lane predicates. Predicated-off
+lanes retain canaries; an inactive SHFL walks past structural checks, while
+an active SHFL after a lane exits is still refused. This catches the former
+scalar dispatch bug that used the fragment mask instead of the predicate mask.
 
 The pipeline is:
 
@@ -63,6 +74,8 @@ removed dependencies.
 No command in `test-c1` builds a device launcher or opens `/dev/nvidia*`.
 A fresh Drake-authorized exclusive GPU window is required for all steps below.
 Historical omega-mv receipts do not qualify the draft pin.
+The current device-free policy does not authorize the unwrapped chip command:
+later authorization must explicitly permit the required GPU device exposure.
 
 After authorization and the current hardware runbook's preflight, repeat the
 host command above and preserve its output and the exact source/compiler/image

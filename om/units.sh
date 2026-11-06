@@ -32,6 +32,8 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_address=om/graph/address.om"
   UNITS="$UNITS model_graph_final_batch=$GRAPH_NODE,om/graph/final_batch.om"
   UNITS="$UNITS model_graph_window=$GRAPH_NODE,om/graph/window.om"
+  UNITS="$UNITS model_graph_layout=$GRAPH_REC,om/graph/layout.om"
+  UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

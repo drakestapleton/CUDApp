@@ -90,6 +90,7 @@ int main(void){
         for(c.mode=0;c.mode<10;c.mode++){if(c.mode==8)continue;c.flags=flags;if(c.mode==5)c.flags&=~12u;if(one(c,old_mg_q36_run,new_mg_q36_run,i))return 1;}
         c.flags=flags;
         for(c.mode=0;c.mode<2;c.mode++){if(one(c,old_mg_q38_run,new_mg_q38_run,i))return 1;if(one(c,old_mg_decode_run,new_mg_decode_run,i))return 1;}
+        for(c.mode=3;c.mode<5;c.mode++){if(one(c,old_mg_decode_run,new_mg_decode_run,i))return 1;}
     }
     for(unsigned attn=0;attn<2;attn++){
         MgCase c={.seed=UINT64_C(0x900000000),.pos=65535,.layers=64,.heads=1,.attn=attn,.mode=8};
@@ -98,5 +99,5 @@ int main(void){
         if(submission("q38",c,old_mg_q38_run,new_mg_q38_run)||submission("decode",c,old_mg_decode_run,new_mg_decode_run))return 1;
     }
     omega_gpu_cmdlist_free(list);omega_gpu_session_close();
-    puts("MODEL-GRAPHS command-list PASS cases=130416 record-flip=CAUGHT nested-ABI=deterministic-host-adapters");return 0;
+    puts("MODEL-GRAPHS command-list PASS cases=150480 record-flip=CAUGHT exact-head=covered standalone-glue=covered nested-ABI=deterministic-host-adapters");return 0;
 }

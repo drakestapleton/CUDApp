@@ -33,6 +33,14 @@ int mg_q38_run(const MgCase *c){
     g.amix=(g.qh+g.kvh)*512;g.aqkv=g.qh*256+g.kvh*512;g.mout=g.qh*256;
     g_overlap_ab=c->flags&1;
     if(c->flags&4)g.head8=(void*)0x300;
+    float norm[5120]={0};
+    if((c->flags&512)&&c->mode){
+        g.hd=5120;g.lo.fnorm=0;g.buf.cpu=norm;g.buf.size=sizeof norm;
+        g.exact_on=1;g.exact8=(void*)0x400;g.head8=NULL;g.exact_info[0]=0x3f800000;
+        g.exact_mem.va=UINT64_C(0x400000000);
+        g.exact_scale.code.va=UINT64_C(0x500100000);g.exact_scale.gpr=64;
+        g.exact_bound.code.va=UINT64_C(0x500200000);g.exact_bound.gpr=64;
+    }
     for(unsigned i=0;i<c->layers;i++){
         g.layer[i].set=1;g.layer[i].attn=c->attn;g.layer[i].kind_index=i;g.layer[i].bf16=(c->flags>>1)&1;
         g.layer[i].mix=(void*)0x10;g.layer[i].ab=(void*)0x20;g.layer[i].o=(void*)0x30;g.layer[i].gu=(void*)0x40;g.layer[i].dn=(void*)0x50;

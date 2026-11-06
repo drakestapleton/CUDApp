@@ -30,6 +30,8 @@ int mg_decode_run(const MgCase *c){
     if(c->mode)g.hidden_ready=(c->flags>>7)&1;
     int rc=0;if(c->mode<2)rc=c->mode?omega_gpu_decode_graph_record_final(&g):omega_gpu_decode_graph_record_layer(&g,c->layer,c->pos);
     if(c->mode==2){g.xq_layer=-1;g.hidden_ready=0;rc=0;for(unsigned l=0;l<c->layers&&!rc;l++)rc=omega_gpu_decode_graph_record_layer(&g,l,c->pos);if(!rc)rc=omega_gpu_decode_graph_record_final(&g);}
+    if(c->mode==3){const unsigned modes[3]={OMEGA_DEC_RES_NORM,OMEGA_DEC_RES_ADD,OMEGA_DEC_RES_COMBINE|OMEGA_DEC_RES_NORM};rc=omega_gpu_decode_graph_record_res(&g,modes[c->flags%3],c->seed,c->seed+16,c->seed+32,c->seed+48,c->seed+64,g.cfg.eps,0x1p-64f);}
+    if(c->mode==4)rc=omega_gpu_decode_graph_record_swiglu(&g,c->seed,c->seed+16,0x1p-64f);
     uint64_t state[16]={g.n_kind,g.failed,g.xq_layer+1,g.hidden_ready};mg_record(200,state,16);
     for(unsigned i=0;i<g.n_kind;i++){uint64_t kind=g.kind[i];mg_record(201,&kind,1);}
     return rc;

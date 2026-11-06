@@ -117,8 +117,8 @@ static size_t hidden_of(const OmegaGpuQ36Graph *g, uint32_t h) { return omega_gr
 static size_t xq_of(const OmegaGpuQ36Graph *g, uint32_t h) { return omega_graph_addr(2,g->lo.xq,0,0,0,h,H*4u); }
 static size_t logits_of(const OmegaGpuQ36Graph *g, uint32_t h) { return omega_graph_addr(2,g->lo.logits,0,0,0,h,g->am_ctas*OMEGA_DEC_ARGMAX_SPAN*4u); }
 static size_t token_of(const OmegaGpuQ36Graph *g, uint32_t h) { return omega_graph_addr(2,g->lo.token,0,0,0,h,TOKEN_STRIDE); }
-static void put64(uint32_t *a, unsigned off, uint64_t v) { a[(off - 0x380) / 4] = (uint32_t)v; a[(off - 0x380) / 4 + 1] = (uint32_t)(v >> 32); }
 #ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+static void put64(uint32_t *a, unsigned off, uint64_t v) { a[(off - 0x380) / 4] = (uint32_t)v; a[(off - 0x380) / 4 + 1] = (uint32_t)(v >> 32); }
 static void putf(uint32_t *a, unsigned off, float f) { memcpy(&a[(off - 0x380) / 4], &f, 4); }
 #endif
 static int fail(OmegaGpuQ36Graph *g, const char *what, int rc) {
@@ -220,7 +220,19 @@ int omega_gpu_q36_graph_create_heads(const OmegaGpuQ36GraphConfig *cfg, uint32_t
         g->layer[l].attn = (int)((cfg->attn_mask >> l) & 1u);
         g->layer[l].kind_index = g->layer[l].attn ? na++ : ng++;
     }
-    Layout *L = &g->lo; size_t o = 0;
+    Layout *L = &g->lo;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t lc[32]={1,heads,cfg->layers,g->am_ctas,H,EI,NG,0,0,OMEGA_GPU_Q36_GDN_MIX,OMEGA_GPU_Q36_AB,OMEGA_GPU_Q36_ATT_MIX,OMEGA_GPU_Q36_MIXER_OUT,omega_gpu_router_layout_bytes(cfg->router),OMEGA_GEMM_SEG_BYTES,OMEGA_DEC_ARGMAX_SPAN,OMEGA_GPU_Q36_MAX_HEADS,OMEGA_DEC_GR_PAD,COPY_ROW,TOKEN_STRIDE};
+    uint64_t ld[64],lr=0;
+    if(omega_mg_layout(&lr,lc,32,ld,64)!=OMEGA_OK||lr!=1){omega_gpu_host_free(g);return OMEGA_GPU_DGRAPH_BAD_ARGS;}
+#define FIELD(f,i) L->f=ld[i]
+    FIELD(x,0);FIELD(ab,1);FIELD(hidden,2);FIELD(logits,3);FIELD(am_v,4);FIELD(am_i,5);FIELD(token,6);FIELD(norms,7);FIELD(fnorm,8);FIELD(tabs,9);
+    FIELD(gtab,10);FIELD(idtab,11);FIELD(stage,12);FIELD(segd,13);FIELD(ptab,14);FIELD(xq,15);FIELD(mix,16);FIELD(agg,17);FIELD(att,18);FIELD(o,19);
+    FIELD(gu,20);FIELD(act,21);FIELD(dn,22);FIELD(xp,23);FIELD(mixN,24);FIELD(abN,25);FIELD(aggN,26);FIELD(attN,27);FIELD(op,28);FIELD(oN,29);
+    FIELD(rlb,30);FIELD(sgu,31);FIELD(sdn,32);FIELD(xmap,33);FIELD(ymap,34);FIELD(xp2,35);FIELD(guN,36);FIELD(actN,37);FIELD(actp,38);FIELD(dnN,39);FIELD(split,60);FIELD(bytes,61);FIELD(lb_stride,62);
+#undef FIELD
+#else
+    size_t o = 0;
 #define REG(f, bytes) do { L->f = o; o = al(o + (bytes)); } while (0)
     REG(x, (size_t)H * 4 * heads); REG(ab, OMEGA_GPU_Q36_AB * 4); REG(hidden, (size_t)H * 4 * heads);
     REG(logits, (size_t)g->am_ctas * OMEGA_DEC_ARGMAX_SPAN * 4 * heads); REG(am_v, OMEGA_DEC_ARGMAX_SPAN * 4); REG(am_i, OMEGA_DEC_ARGMAX_SPAN * 4);
@@ -240,6 +252,7 @@ int omega_gpu_q36_graph_create_heads(const OmegaGpuQ36GraphConfig *cfg, uint32_t
     }
 #undef REG
     L->bytes = o;
+#endif
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (omega_gpu_cmdlist_create(OMEGA_GPU_CMDLIST_MAX_LAUNCHES, &g->cl) != 0) { omega_gpu_q36_graph_free(g); return OMEGA_GPU_DGRAPH_CHIP_FAIL; }
     omega_gpu_session_lock();
@@ -1079,12 +1092,24 @@ int omega_gpu_q36_graph_read_buf(OmegaGpuQ36Graph *g, int which, float *out, uin
     size_t from = b[which].off;
     if (from >= g->lo.split && n) {
         /* a chip-only region: K_COPY moves ceil(n / 256) rows of 256 floats into stage (every cap is a multiple of 256) */
-        uint32_t w[OMEGA_DEC_GA_WORDS]; memset(w, 0, sizeof w);
+        uint32_t w[32]; memset(w, 0, sizeof w);
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        const uint64_t c[16]={2,0,0,0,0,0,COPY_ROW,n},v[16]={va_of(g,from),va_of(g,g->lo.idtab),va_of(g,g->lo.stage)};
+        uint64_t node[64],result=0;
+        if(omega_mg_aux(&result,c,16,v,16,node,64)!=OMEGA_OK||result!=1){omega_gpu_session_unlock();return OMEGA_GPU_DGRAPH_CHIP_FAIL;}
+        omega_graph_args(node,w);
+#else
         put64(w, OMEGA_DEC_GA_IN, va_of(g, from)); put64(w, OMEGA_DEC_GA_TAB, va_of(g, g->lo.idtab)); put64(w, OMEGA_DEC_GA_OUT, va_of(g, g->lo.stage));
+#endif
         const Kern *k = &g->k[K_COPY];
         OmegaGpuLaunch L; memset(&L, 0, sizeof L);
-        L.code_va = k->code.va; L.gpr_count = k->gpr; L.threads_x = OMEGA_DEC_THREADS; L.threads_y = 1; L.grid_x = 1; L.grid_y = (n + COPY_ROW - 1) / COPY_ROW;
-        L.num_elements = (size_t)L.grid_y * COPY_ROW; L.args = w; L.n_args = OMEGA_DEC_GA_WORDS; L.timeout_ms = TIMEOUT_MS;
+        L.code_va = k->code.va; L.gpr_count = k->gpr; L.threads_x = OMEGA_DEC_THREADS; L.threads_y = 1;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        L.grid_x=node[2];L.grid_y=node[3];L.num_elements=node[4];L.n_args=node[5];
+#else
+        L.grid_x = 1; L.grid_y = (n + COPY_ROW - 1) / COPY_ROW;L.num_elements = (size_t)L.grid_y * COPY_ROW;L.n_args = OMEGA_DEC_GA_WORDS;
+#endif
+        L.args = w; L.timeout_ms = TIMEOUT_MS;
         if (!omega_gpu_session_open() || omega_gpu_session_launch(&L, NULL, NULL) != 0) rc = OMEGA_GPU_DGRAPH_CHIP_FAIL;
         from = g->lo.stage;
     }
@@ -1124,8 +1149,18 @@ static int pf_fail(OmegaGpuQ36Graph *g, const char *what) { return fail(g, what,
 int omega_gpu_q36_graph_prefill_alloc(OmegaGpuQ36Graph *g, uint32_t cap) {
     if (!g || g->in_token || cap == 0 || cap > OMEGA_GPU_Q36_PREFILL_MAX_ROWS) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     if (g->pf.cap >= cap) return OMEGA_GPU_DGRAPH_OK;
-    const size_t P = cap, R = P * NG, lbs = g->lo.lb_stride;
     size_t ho = 0, dof = 0;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t lc[32]={3,g->heads,g->cfg.layers,g->am_ctas,H,EI,NG,0,0,OMEGA_GPU_Q36_GDN_MIX,OMEGA_GPU_Q36_AB,OMEGA_GPU_Q36_ATT_MIX,OMEGA_GPU_Q36_MIXER_OUT,g->lo.lb_stride,OMEGA_GEMM_SEG_BYTES,OMEGA_DEC_ARGMAX_SPAN,OMEGA_GPU_Q36_MAX_HEADS,PF_PAD,COPY_ROW,TOKEN_STRIDE,cap};
+    uint64_t ld[64],lr=0;
+    if(omega_mg_layout(&lr,lc,32,ld,64)!=OMEGA_OK||lr!=1)return OMEGA_GPU_DGRAPH_BAD_ARGS;
+#define FIELD(f,i) g->pf.f=ld[i]
+    FIELD(x,0);FIELD(rlb,1);FIELD(sgu,2);FIELD(sdn,3);FIELD(sgu2,4);FIELD(sdn2,5);FIELD(xmap,6);FIELD(ymap,7);FIELD(xmap2,8);FIELD(ymap2,9);
+    FIELD(xq,10);FIELD(xp,11);FIELD(mixN,12);FIELD(abN,13);FIELD(aggN,14);FIELD(attN,15);FIELD(op,16);FIELD(oN,17);FIELD(xp2,18);FIELD(guN,19);FIELD(actN,20);FIELD(actp,21);FIELD(dnN,22);
+#undef FIELD
+    ho=ld[61];dof=ld[63];
+#else
+    const size_t P = cap, R = P * NG, lbs = g->lo.lb_stride;
 #define HREG(f, b) do { g->pf.f = ho; ho += al(b); } while (0)
 #define DREG(f, b) do { g->pf.f = dof; dof += al(b); } while (0)
     HREG(x, P * H * 4); HREG(rlb, P * lbs); HREG(sgu, 256u * OMEGA_GEMM_SEG_BYTES); HREG(sdn, 256u * OMEGA_GEMM_SEG_BYTES);
@@ -1137,6 +1172,7 @@ int omega_gpu_q36_graph_prefill_alloc(OmegaGpuQ36Graph *g, uint32_t cap) {
     DREG(dnN, R * H * 4);
 #undef HREG
 #undef DREG
+#endif
     omega_gpu_session_lock();
     if (g->pf.hb.cpu) omega_gpu_session_free(&g->pf.hb);
     if (g->pf.db.cpu) omega_gpu_session_free(&g->pf.db);

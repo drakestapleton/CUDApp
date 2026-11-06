@@ -74,7 +74,9 @@ struct OmegaGpuQ38Graph {
     uint64_t stamp[OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1];
 };
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
 static size_t al(size_t v) { return omega_graph_addr(0,v,0,0,0,0,0); }
+#endif
 static uint64_t va_of(const OmegaGpuQ38Graph *g, size_t off) { return omega_graph_addr(1,g->buf.va,g->dbuf.va,g->lo.split,off,0,0); }
 static void *cpu_of(const OmegaGpuQ38Graph *g, size_t off) { return (uint8_t *)g->buf.cpu + off; } /* host regions only (off < split) */
 static void put64(uint32_t *a, unsigned off, uint64_t v) { a[(off - 0x380) / 4] = (uint32_t)v; a[(off - 0x380) / 4 + 1] = (uint32_t)(v >> 32); }
@@ -163,7 +165,17 @@ int omega_gpu_q38_graph_create(const OmegaGpuQ38GraphConfig *cfg, OmegaGpuQ38Gra
         g->layer[l].attn = (int)((cfg->attn_mask >> l) & 1u);
         g->layer[l].kind_index = g->layer[l].attn ? na++ : ng++;
     }
-    Layout *L = &g->lo; size_t o = 0;
+    Layout *L = &g->lo;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t lc[32]={2,1,cfg->layers,g->am_ctas,H,I,1,g->gqkv,g->mout,g->gmix,g->ab,g->amix,g->mout,0,0,OMEGA_DEC_ARGMAX_SPAN,0,0,COPY_ROW};
+    uint64_t ld[64],lr=0;
+    if(omega_mg_layout(&lr,lc,32,ld,64)!=OMEGA_OK||lr!=1){omega_gpu_host_free(g);return OMEGA_GPU_DGRAPH_BAD_ARGS;}
+#define FIELD(f,i) L->f=ld[i]
+    FIELD(x,0);FIELD(ab,1);FIELD(hidden,2);FIELD(logits,3);FIELD(am_v,4);FIELD(am_i,5);FIELD(token,6);FIELD(norms,7);FIELD(fnorm,8);FIELD(tabs,9);
+    FIELD(gtab,10);FIELD(idtab,11);FIELD(stage,12);FIELD(xq,13);FIELD(mix,14);FIELD(agg,15);FIELD(att,16);FIELD(o,17);FIELD(gu,18);FIELD(act,19);FIELD(split,60);FIELD(bytes,61);
+#undef FIELD
+#else
+    size_t o = 0;
 #define REG(f, bytes) do { L->f = o; o = al(o + (bytes)); } while (0)
     REG(x, H * 4); REG(ab, g->ab * 4); REG(hidden, H * 4);
     REG(logits, (size_t)g->am_ctas * OMEGA_DEC_ARGMAX_SPAN * 4); REG(am_v, OMEGA_DEC_ARGMAX_SPAN * 4); REG(am_i, OMEGA_DEC_ARGMAX_SPAN * 4);
@@ -174,6 +186,7 @@ int omega_gpu_q38_graph_create(const OmegaGpuQ38GraphConfig *cfg, OmegaGpuQ38Gra
     REG(att, g->mout * 4); REG(o, H * 4); REG(gu, 2 * I * 4); REG(act, I * 4);
 #undef REG
     L->bytes = o;
+#endif
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (omega_gpu_cmdlist_create(OMEGA_GPU_CMDLIST_MAX_LAUNCHES, &g->cl) != 0) { omega_gpu_q38_graph_free(g); return OMEGA_GPU_DGRAPH_CHIP_FAIL; }
     omega_gpu_session_lock();
@@ -708,12 +721,24 @@ int omega_gpu_q38_graph_read_buf(OmegaGpuQ38Graph *g, int which, float *out, uin
     size_t from = b[which].off;
     if (from >= g->lo.split && n) {
         /* a chip-only region: K_COPY moves ceil(n / 256) rows of 256 floats into stage (every cap is a multiple of 256) */
-        uint32_t w[OMEGA_DEC_GA_WORDS]; memset(w, 0, sizeof w);
+        uint32_t w[32]; memset(w, 0, sizeof w);
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        const uint64_t c[16]={2,0,0,0,0,0,COPY_ROW,n},v[16]={va_of(g,from),va_of(g,g->lo.idtab),va_of(g,g->lo.stage)};
+        uint64_t node[64],result=0;
+        if(omega_mg_aux(&result,c,16,v,16,node,64)!=OMEGA_OK||result!=1){omega_gpu_session_unlock();return OMEGA_GPU_DGRAPH_CHIP_FAIL;}
+        omega_graph_args(node,w);
+#else
         put64(w, OMEGA_DEC_GA_IN, va_of(g, from)); put64(w, OMEGA_DEC_GA_TAB, va_of(g, g->lo.idtab)); put64(w, OMEGA_DEC_GA_OUT, va_of(g, g->lo.stage));
+#endif
         const Kern *k = &g->k[K_COPY];
         OmegaGpuLaunch L; memset(&L, 0, sizeof L);
-        L.code_va = k->code.va; L.gpr_count = k->gpr; L.threads_x = OMEGA_DEC_THREADS; L.threads_y = 1; L.grid_x = 1; L.grid_y = (n + COPY_ROW - 1) / COPY_ROW;
-        L.num_elements = (size_t)L.grid_y * COPY_ROW; L.args = w; L.n_args = OMEGA_DEC_GA_WORDS; L.timeout_ms = TIMEOUT_MS;
+        L.code_va = k->code.va; L.gpr_count = k->gpr; L.threads_x = OMEGA_DEC_THREADS; L.threads_y = 1;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        L.grid_x=node[2];L.grid_y=node[3];L.num_elements=node[4];L.n_args=node[5];
+#else
+        L.grid_x = 1; L.grid_y = (n + COPY_ROW - 1) / COPY_ROW;L.num_elements = (size_t)L.grid_y * COPY_ROW;L.n_args = OMEGA_DEC_GA_WORDS;
+#endif
+        L.args = w; L.timeout_ms = TIMEOUT_MS;
         if (!omega_gpu_session_open() || omega_gpu_session_launch(&L, NULL, NULL) != 0) rc = OMEGA_GPU_DGRAPH_CHIP_FAIL;
         from = g->lo.stage;
     }

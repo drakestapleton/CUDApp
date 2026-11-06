@@ -51,11 +51,15 @@ struct OmegaGpuDecodeGraph {
     uint64_t stamp[OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1];
 };
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
 static size_t al(size_t v) { return omega_graph_addr(0,v,0,0,0,0,0); }
+#endif
 static uint64_t va_of(const OmegaGpuDecodeGraph *g, size_t off) { return omega_graph_addr(2,g->buf.va,0,0,0,off,1); }
 static void *cpu_of(const OmegaGpuDecodeGraph *g, size_t off) { return (uint8_t *)g->buf.cpu + off; }
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
 static void put64(uint32_t *a, unsigned off, uint64_t v) { a[(off - 0x380) / 4] = (uint32_t)v; a[(off - 0x380) / 4 + 1] = (uint32_t)(v >> 32); }
 static void putf(uint32_t *a, unsigned off, float f) { memcpy(&a[(off - 0x380) / 4], &f, 4); }
+#endif
 static int fail(OmegaGpuDecodeGraph *g, const char *what, int rc) {
     if (g) g->failed = 1;
     if (what) omega_gpu_session_set_error(what);
@@ -105,7 +109,17 @@ int omega_gpu_decode_graph_create(const OmegaGpuDecodeGraphConfig *cfg, OmegaGpu
     g->am_ctas = (cfg->vocab + OMEGA_DEC_ARGMAX_SPAN - 1) / OMEGA_DEC_ARGMAX_SPAN;
     g->xq_layer = -1;
     const size_t H = OMEGA_GPU_DGRAPH_HIDDEN, TK = OMEGA_GPU_DGRAPH_TOPK, I = OMEGA_GPU_DGRAPH_INTER;
-    Layout *L = &g->lo; size_t o = 0;
+    Layout *L = &g->lo;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t lc[32]={0,1,cfg->layers,g->am_ctas,H,I,TK,OMEGA_GPU_DGRAPH_QKV,OMEGA_GPU_DGRAPH_ATTN,0,0,0,0,0,0,OMEGA_DEC_ARGMAX_SPAN};
+    uint64_t ld[64],lr=0;
+    if(omega_mg_layout(&lr,lc,32,ld,64)!=OMEGA_OK||lr!=1){omega_gpu_host_free(g);return OMEGA_GPU_DGRAPH_BAD_ARGS;}
+#define FIELD(f,i) L->f=ld[i]
+    FIELD(x,0);FIELD(xq,1);FIELD(qkv,2);FIELD(attn,3);FIELD(o,4);FIELD(gu,5);FIELD(act,6);FIELD(dn,7);FIELD(hidden,8);
+    FIELD(logits,9);FIELD(am_v,10);FIELD(am_i,11);FIELD(token,12);FIELD(norms,13);FIELD(fnorm,14);FIELD(tabs,15);FIELD(pf_x,16);FIELD(pf_y,17);FIELD(bytes,61);
+#undef FIELD
+#else
+    size_t o = 0;
 #define REG(f, bytes) do { L->f = o; o = al(o + (bytes)); } while (0)
     REG(x, H * 4); REG(xq, H * 4); REG(qkv, OMEGA_GPU_DGRAPH_QKV * 4); REG(attn, OMEGA_GPU_DGRAPH_ATTN * 4); REG(o, H * 4);
     REG(gu, TK * 2 * I * 4); REG(act, TK * I * 4); REG(dn, TK * H * 4); REG(hidden, H * 4);
@@ -114,6 +128,7 @@ int omega_gpu_decode_graph_create(const OmegaGpuDecodeGraphConfig *cfg, OmegaGpu
     REG(pf_x, OMEGA_GPU_DGRAPH_ATTN * 4); REG(pf_y, H * 4); /* prefetch launch (W-L2d): x read by nothing else, y read by nothing */
 #undef REG
     L->bytes = o;
+#endif
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (omega_gpu_cmdlist_create(OMEGA_GPU_CMDLIST_MAX_LAUNCHES, &g->cl) != 0) { omega_gpu_decode_graph_free(g); return OMEGA_GPU_DGRAPH_CHIP_FAIL; }
     omega_gpu_session_lock();
@@ -269,16 +284,25 @@ static int add_glue(OmegaGpuDecodeGraph *g, uint8_t kind, const Kern *k, uint32_
     return after_op(g, kind, omega_gpu_cmdlist_add(g->cl, &L) < 0 ? -1 : 0);
 }
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
 static int res_kernel(const OmegaGpuDecodeGraph *g, uint32_t mode) {
     if (mode == OMEGA_DEC_RES_NORM) return K_NORM;
     if (mode == OMEGA_DEC_RES_ADD) return K_ADD;
     if (mode == (OMEGA_DEC_RES_COMBINE | OMEGA_DEC_RES_NORM)) return g->mutant == 2 ? K_CN_M2 : K_CN;
     return -1;
 }
+#endif
 
 int omega_gpu_decode_graph_record_res(OmegaGpuDecodeGraph *g, uint32_t mode, uint64_t x_va, uint64_t a_va, uint64_t w_va,
                                       uint64_t nw_va, uint64_t y_va, float eps, float scale) {
     if (!g || !g->in_token) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t c[16]={0,mode,g->mutant,OMEGA_GPU_DGRAPH_HIDDEN},v[16]={x_va,a_va,w_va,nw_va,y_va,omega_graph_fbits(eps),omega_graph_fbits(scale)};
+    uint64_t node[64],result=0;uint32_t words[32];
+    if(omega_mg_aux(&result,c,16,v,16,node,64)!=OMEGA_OK||result!=1)return fail(g,"decode graph: RES mode not built (NORM, ADD, COMBINE|NORM)",OMEGA_GPU_DGRAPH_BAD_ARGS);
+    omega_graph_args(node,words);
+    return add_glue(g,node[6],&g->k[node[1]],node[2],node[3],node[4],words,node[5]);
+#else
     int ki = res_kernel(g, mode);
     if (ki < 0) return fail(g, "decode graph: RES mode not built (NORM, ADD, COMBINE|NORM)", OMEGA_GPU_DGRAPH_BAD_ARGS);
     uint32_t a[OMEGA_DEC_RES_WORDS]; memset(a, 0, sizeof a);
@@ -286,13 +310,22 @@ int omega_gpu_decode_graph_record_res(OmegaGpuDecodeGraph *g, uint32_t mode, uin
     put64(a, OMEGA_DEC_RES_Y, y_va); putf(a, OMEGA_DEC_RES_EPS, eps); putf(a, OMEGA_DEC_RES_SCALE, scale);
     const uint8_t kind = ki == K_ADD ? OMEGA_GPU_DGRAPH_K_ADD : ki == K_NORM ? OMEGA_GPU_DGRAPH_K_NORM : OMEGA_GPU_DGRAPH_K_COMBINE;
     return add_glue(g, kind, &g->k[ki], 1, 1, OMEGA_GPU_DGRAPH_HIDDEN, a, OMEGA_DEC_RES_WORDS);
+#endif
 }
 
 int omega_gpu_decode_graph_record_swiglu(OmegaGpuDecodeGraph *g, uint64_t gu_va, uint64_t act_va, float scale) {
     if (!g || !g->in_token) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t c[16]={1,0,g->mutant,0,OMEGA_DEC_INTER,OMEGA_DEC_TOPK},v[16]={gu_va,act_va,omega_graph_fbits(scale)};
+    uint64_t node[64],result=0;uint32_t words[32];
+    if(omega_mg_aux(&result,c,16,v,16,node,64)!=OMEGA_OK||result!=1)return fail(g,NULL,OMEGA_GPU_DGRAPH_BAD_ARGS);
+    omega_graph_args(node,words);
+    return add_glue(g,node[6],&g->k[node[1]],node[2],node[3],node[4],words,node[5]);
+#else
     uint32_t a[OMEGA_DEC_SW_WORDS]; memset(a, 0, sizeof a);
     put64(a, OMEGA_DEC_SW_GU, gu_va); put64(a, OMEGA_DEC_SW_ACT, act_va); putf(a, OMEGA_DEC_SW_SCALE, scale);
     return add_glue(g, OMEGA_GPU_DGRAPH_K_SWIGLU, &g->k[g->mutant == 1 ? K_SW_M1 : K_SW], OMEGA_DEC_INTER / OMEGA_DEC_THREADS, OMEGA_DEC_TOPK, (size_t)OMEGA_DEC_TOPK * OMEGA_DEC_INTER, a, OMEGA_DEC_SW_WORDS);
+#endif
 }
 
 /* A failed begin leaves no token behind: list emptied, out of the token, lock released (no end_token owed, omega #518). */

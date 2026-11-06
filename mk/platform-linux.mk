@@ -34,16 +34,13 @@ test-platform-linux-wait: $(OUT_DIR)/platform_linux_wait $(OUT_DIR)/platform_lin
 	@set +e; $(OUT_DIR)/platform_linux_wait_mutant; rc=$$?; set -e; test $$rc -ne 0
 	@echo "PASS platform linux wait mutant caught"
 
-$(OUT_DIR)/plat_wait_mutant.c: om/platform-linux/plat_wait.om
+# The mutant (2^31 bound -> 0) is committed by om/platform-linux/gen_effects.sh like
+# plat_wait.c, so this carried gate needs no unpinned compiler.
+$(OUT_DIR)/platform_linux_wait_mutant: tests/platform_linux_wait.c om/platform-linux/gen/plat_wait_mutant.c
 	@mkdir -p $(OUT_DIR)
-	sed 's/2147483648/0/' $< > $(OUT_DIR)/plat_wait_mutant.om
-	grep -q 2147483648 $<
-	! grep -q 2147483648 $(OUT_DIR)/plat_wait_mutant.om
-	OMEGA_NATIVE_OMC2=/home/drakestapleton/work/cudastack/lanes/omega-mv-bh-retire/seed/out/omc OMEGA_NATIVE_OMC=/home/drakestapleton/work/cudastack/lanes/omega-mv-c6/seed/out/omc /home/drakestapleton/work/cudastack/lanes/BridgeX86/tools/native --host --target aarch64linux $(OUT_DIR)/plat_wait_mutant_gen $(OUT_DIR)/plat_wait_mutant.om
-	cp $(OUT_DIR)/plat_wait_mutant_gen/omega_native.c $@
-
-$(OUT_DIR)/platform_linux_wait_mutant: tests/platform_linux_wait.c $(OUT_DIR)/plat_wait_mutant.c
-	$(CC) $(CFLAGS) -o $@ tests/platform_linux_wait.c $(OUT_DIR)/plat_wait_mutant.c -lpthread
+	grep -q 2147483648 om/platform-linux/plat_wait.om
+	! cmp -s om/platform-linux/gen/plat_wait.c om/platform-linux/gen/plat_wait_mutant.c
+	$(CC) $(CFLAGS) -o $@ tests/platform_linux_wait.c om/platform-linux/gen/plat_wait_mutant.c -lpthread
 
 $(OUT_DIR)/platform_linux_fake_devctl: om/platform-linux/fake_devctl.om
 	@mkdir -p $(OUT_DIR)

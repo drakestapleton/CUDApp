@@ -39,6 +39,14 @@ one() {
 }
 one plat_effects "$ROOT/om/platform-linux/plat_effects.om"
 one plat_wait "$ROOT/om/platform-linux/plat_wait.om"
+# The carried test-platform-linux-wait mutant: the 2^31 deadline bound replaced by 0.
+# Committed like the units above, so the gate compiles it without these compilers.
+MT=$(mktemp -d)
+grep -q 2147483648 "$ROOT/om/platform-linux/plat_wait.om"
+sed 's/2147483648/0/' "$ROOT/om/platform-linux/plat_wait.om" > "$MT/plat_wait_mutant.om"
+! grep -q 2147483648 "$MT/plat_wait_mutant.om"
+one plat_wait_mutant "$MT/plat_wait_mutant.om"
+rm -rf "$MT"
 rename() {
   src=$1
   dst=$2

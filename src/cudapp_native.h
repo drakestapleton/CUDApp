@@ -14,6 +14,8 @@ extern "C" {
 uint32_t omega_bw_enc_sm121(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n);
 uint32_t omega_cubin_elf(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
 uint32_t omega_mathlibs_ir(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
+uint32_t omega_scan_ir(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
+uint32_t omega_scan_plan(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, void *p5, uint64_t p5_n);
 uint32_t omega_ampere_enc_sm86(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n);
 uint32_t omega_amp_runtime(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_native_repack(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n, void *p4, uint64_t p4_n);

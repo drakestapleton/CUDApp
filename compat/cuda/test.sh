@@ -21,18 +21,20 @@ C="$w/c0_check"
 "$here/build.sh" "$w/b" > "$w/build-b.log"
 cmp "$w/build-a.log" "$w/build-b.log" || { echo "FAIL rebuild not deterministic"; exit 1; }
 cat "$w/build-a.log"
-PA="$here/profile-c0-aarch64-v2.tsv"
-PX="$here/profile-c0-x86_64-v2.tsv"
+PA="$here/profile-c0-aarch64-v3.tsv"
+PX="$here/profile-c0-x86_64-v3.tsv"
 EA="$w/a/aarch64/vadd_drv"
 EX="$w/a/x86_64/vadd_drv"
 PTX="$w/a/vadd_u32.ptx"
-# v1 is immutable historical identity. The v2 computation migration changes the
-# executable hash, never the CUDA entry-point surface.
+# v1/v2 are immutable historical identities. Converter regeneration changes
+# executable hashes, never the CUDA entry-point surface.
 for isa in aarch64 x86_64; do
-    awk -F '\t' '$1=="import" && $3=="cuda" {print $2}' "$here/profile-c0-$isa-v1.tsv" | sort > "$w/import-$isa-v1"
-    awk -F '\t' '$1=="import" && $3=="cuda" {print $2}' "$here/profile-c0-$isa-v2.tsv" | sort > "$w/import-$isa-v2"
+    for version in v1 v2 v3; do
+        awk -F '\t' '$1=="import" && $3=="cuda" {print $2}' "$here/profile-c0-$isa-$version.tsv" | sort > "$w/import-$isa-$version"
+    done
     diff -u "$w/import-$isa-v1" "$w/import-$isa-v2"
-    echo "PASS $isa v1/v2 CUDA imports: empty diff"
+    diff -u "$w/import-$isa-v2" "$w/import-$isa-v3"
+    echo "PASS $isa v1/v2/v3 CUDA imports: empty diff"
 done
 fail=0
 pass() { # name profile exe ptx runisa

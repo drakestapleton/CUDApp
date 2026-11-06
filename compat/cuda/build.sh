@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# Rebuild the v2 Omega-default fixture identity; v1 profiles remain frozen.
+# Rebuild the v3 Omega-default fixture identity; v1/v2 profiles remain frozen.
 # Usage: compat/cuda/build.sh OUTDIR
 # Host only. Nothing here opens /dev/nvidia*, loads libcuda, or runs the executables.
 # The link uses a link-only stub libcuda.so.1 generated from the object's own undefined cu* symbols

@@ -97,6 +97,33 @@ budget, but only 3 ms after the first marker.
 `{6*10^6,6-3,6-5}` returned `{6000000,3,1}` (nanoseconds, milliseconds,
 milliseconds respectively).
 
+## Host receipt (2026-11-05)
+
+Source implementation: `57278a8` on `feat/c5-recovery-policy`, based on
+`b774723f537cec16a359fe082b8100317a5b5490`. Generated scalar output uses
+`omc.pin` and the existing CUDApp `omega-bridge.lock` pin; no toolchain was
+rebuilt or repinned.
+
+- `taskset -c 10-14 nice -n 10 make -j3 test-c5-policy test-gpu-session-platform`
+  initially exited 2: policy/model and 18 session cases passed, but the Linux
+  fixture still required exactly five fake one-ms polls despite its real
+  clock callback. GpuPlatformLinux applied the agreed bounded-poll assertion;
+  no production deadline was relaxed.
+- The initial full `make -j3 test` invocation was interrupted by its tool
+  deadline after 1800 seconds: INCONCLUSIVE, not a test failure. Its partial
+  stdout is `build/c5-full-test.log`.
+- The resumed full `taskset -c 10-14 nice -n 10 make -j3 test` (same four
+  `OMEGA_*` environment paths as the lane setup; no tool deadline) exited 0.
+  Final line: `CUDA++ HOST TESTS PASS (89 targets)`.
+  Stdout: `build/c5-full-test-resumed.log`; session 18/18, Linux fake-RM 17/17,
+  policy/model mutants 9/9, session mutants 12/12 all passed.
+- The legacy timing negative control exited 1 and specifically failed
+  `SUBMISSION_DEADLINE_SHARED_BY_BOTH_MARKERS`; final line:
+  `test_omega_gpu_session_platform: 16 passed, 2 failed`.
+- `crumb compile . && crumb verify .` exited 0, reporting 39 current crumbs.
+
+These are EXERCISED host/model results, not chip qualification.
+
 ## Chip runbook: NOT_RUN
 
 Only Drake's current exclusive GPU-window procedure authorizes these commands.

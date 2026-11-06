@@ -24,6 +24,14 @@ Sources: Omega `docs/OMEGA.md` sections 2 to 5 (branch `docs/what-omega-is`, 202
 | `nvidia-smi`, NVML | Status, clocks, power | not started | MISSING | |
 | GSP firmware (`gsp_*.bin`) | Runs inside the GPU | stays NVIDIA's: the chip checks its signature | not replaceable | the kernel module loads NVIDIA's signed file from the system's firmware folder; CUDA++ never ships it |
 
+2026-11-06 attention note: `om/attn-any/` adds seeded-Omega arbitrary-shape
+f32/bf16 online-softmax attention (dimensions 1..256, rectangular sequences,
+GQA and top-left causal/non-causal masks), with independent host reference,
+warp simulation, source-mutant controls and `om/attn-any/CHIP.md`.
+Chip qualification is NOT_RUN; the §1 row remains PARTIAL and existing
+model-tuned attention generators are unchanged.
+
+
 ## 2. Bars before I say "replaces CUDA"
 
 From Omega `docs/OMEGA.md` section 3. Each needs a receipt on the exact commit; none is waived.

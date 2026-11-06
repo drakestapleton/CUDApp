@@ -153,3 +153,5 @@ src/omega_gpu_q38_graph.h	CHIP_SPECIFIC	Qwen3.8 decode graph interface over the 
 src/omega_gpu_scan.c	CHIP_SPECIFIC	Builds and launches the reduction and prefix-sum kernels for the GB10 from Omega's IR emitters.	HOSTED_LIBC
 src/omega_gpu_scan.h	CHIP_SPECIFIC	Reduction and prefix-sum API; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_scan_ref.c	PORTABLE	Host references of the frozen reduction and prefix-sum order, which depends only on n and the element index (docs/numeric/E1_REDUCTION_CONTRACT.md); plain C additions, no chip or OS call. Its own header omega_gpu_scan.h still pulls in omega_blackwell_codegen.h, so reusing it off this tree needs the declarations split out.	HOSTED_LIBC
+src/omega_gpu_attn_any_api.c	CHIP_SPECIFIC	Memory and session-launch shell for the seeded Omega sm_121 arbitrary-shape attention emitter.	HOSTED_LIBC
+src/omega_gpu_attn_any_api.h	CHIP_SPECIFIC	Experimental attention interface and CPU-only Blackwell IR generation hook.	NO_HOSTED_INCLUDE

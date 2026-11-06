@@ -1,6 +1,6 @@
 # Omega Runtime API v0
 
-Omega Runtime API version: 0.13.0
+Omega Runtime API version: 0.14.0
 
 Status: first written version, 2026-10-19 (slice R1, omega-mv#594, tracking #593). Source of truth is the C headers in
 `src/`. This file describes them; `docs/runtime/omega_runtime_api.manifest` lists them; `make test-runtime-api` checks the
@@ -36,8 +36,9 @@ signature against the headers on every run.
 
 ## 2. Version and compatibility rule
 
-The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.13.0**. It is a property of the list of entries and
+The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.14.0**. It is a property of the list of entries and
 their behaviour, not of the library build. Changes so far:
+- 0.14.0: adds experimental seeded-Omega arbitrary-shape f32/bf16 attention, `omega_gpu_attn_any`, with a CPU-only code-generation entry. Geometry, GQA and causal tails are decided in `om/attn-any/`; hardware qualification is NOT_RUN. Existing tuned model-shape entries are unchanged.
 - 0.13.0: adds experimental `omega_gpu_prefill_attn256_scoped` in `omega_gpu_attention_mirror.h`. Mode 0 preserves ordinary attention; mode 1 copies the complete original 27B K/V into one GPU-private reusable buffer before attention; mode 2 uses the provisional Omega-selected 1024-row threshold. Omega checks geometry, bounds, allocation capacity and completed PREP/copy/ATTEND ordering. Other modes and unsupported mirrored shapes are refused. `copy_ns` reports copy chip time separately from the unchanged attention info layout; total call time includes allocation and copying. Existing host/device/recorded entries and defaults are unchanged. See `om/attention-mirror/README.md` for qualification status.
 - 0.12.0: adds experimental `omega_gpu_pf_qgemm_reading_option` with `(rows, index)`. The checked Omega policy returns the scoped rt, warps, wait and group values at indices 0..3, or UINT32_MAX for invalid input. This proposed adaptive profile uses 64 rows for requests at most 64 rows and 128 above that threshold. Callers obtain the checked height and use `omega_gpu_pf_qgemm_workspace_fits` to check existing row, padded-row and tile capacities before switching profiles. The query returns 1 only when all capacities cover the request; otherwise callers allocate a compatible workspace.
 - 0.11.0: adds experimental `omega_gpu_pf_qgemm_scoped` per-call options and the checked `omega_gpu_pf_qgemm_scoped_bm` tile-height query. Explicit calls neither read nor modify process-global tuning knobs. Tile storage must use the queried height; actual projection dimensions are validated on every call.
@@ -705,3 +706,37 @@ here; that every C signature quoted in this file appears verbatim in a header; a
 not check that the prose is true. A struct field added inside padding is not seen, nor a field that changes type but keeps
 its size, nor a constant value quoted in prose, nor a new type (struct or typedef) that no function uses yet, nor a
 function-like macro.
+
+## 12. Any-shape attention (EXPERIMENTAL)
+
+Header: `src/omega_gpu_attn_any_api.h`. `OmegaGpuAttnAnyShape` carries
+`seq_q`, `seq_kv`, `head_dim`, `q_heads`, `kv_heads`, `causal`, `dtype` (u32)
+and `scale` (f32), in that order. Contiguous `[head][sequence][component]`
+Q/K/V use dtype `OMEGA_GPU_ATTN_ANY_F32` (0) or `OMEGA_GPU_ATTN_ANY_BF16` (1);
+output is f32. Head dimensions 1..`OMEGA_GPU_ATTN_ANY_MAX_HEAD_DIM` (256),
+sequence lengths 1..65535 and head counts 1..65535 are admitted when KV heads
+divide Q heads and each tensor has at most 1073741824 elements. No padding or
+power-of-two restriction exists. Causal mode 1 means top-left alignment
+(`key <= query`), including rectangular matrices; mode 0 is non-causal.
+Scale is a finite caller-provided multiplier, including zero and negative values.
+Inputs and intermediate dots must be finite; the call does not scan input values.
+f16 and all other dtype values are refused, not widened or reinterpreted.
+
+```c
+int omega_gpu_attn_any(const OmegaGpuAttnAnyShape *shape, const void *q, const void *k, const void *v, float *out);
+int omega_gpu_attn_any_codegen(const OmegaGpuAttnAnyShape *shape, BlackwellIRProgram *program, uint8_t *code, size_t capacity, OmegaBlackwellKernel *kernel);
+```
+
+Both return `OMEGA_GPU_ATTN_ANY_OK` (0), `REFUSED` (1) for unsupported
+geometry/format, `BAD_ARGS` (2) for null arguments, `CODEGEN` (3) for
+generation/encoding/storage failure, or `CHIP` (4) for device execution failure.
+These names all have prefix `OMEGA_GPU_ATTN_ANY_`. Refusals happen before
+device open. Codegen is CPU-only and writes caller-owned storage; kernel code
+aliases `code` and owns nothing. The execution entry allocates GPU memory,
+launches one warp per query row per query head, then copies output back.
+The session retains its normal uncertain-completion latch/parking policy.
+Online softmax uses f32 dot/accumulator/running maximum and sum.
+See `om/attn-any/README.md` for the tested numerical envelope and
+`om/attn-any/CHIP.md` for the operator-gated chip procedure. No performance or
+chip-qualification claim is made.
+

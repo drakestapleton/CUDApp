@@ -60,11 +60,25 @@ static void refusals(void) {
     OmegaGpuAttnAnyShape s={1,1,257,4,1,0,0,0.125f};
     BlackwellIRProgram *p=malloc(sizeof *p); uint8_t *code=malloc(OMEGA_BW_CODE_CAP_MAX); OmegaBlackwellKernel k;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    float dummy=0; /* Admission must refuse before any session/device access. */
+    CHECK(omega_gpu_attn_any(&s,&dummy,&dummy,&dummy,&dummy)==OMEGA_GPU_ATTN_ANY_REFUSED);
     s.head_dim=80;s.q_heads=3;s.kv_heads=2;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
     s.q_heads=4;s.kv_heads=1;s.seq_kv=0;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
     s.seq_kv=1;s.dtype=2;
+    CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    s.dtype=0;s.causal=2;
+    CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    s.causal=0;s.scale=INFINITY;
+    CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    s.scale=NAN;
+    CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    s.scale=0.125f;s.seq_q=65536;
+    CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    s.seq_q=65535;s.head_dim=256;s.q_heads=65535;
+    CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
+    s.seq_q=1;s.q_heads=0;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
     CHECK(omega_gpu_attn_any(NULL,NULL,NULL,NULL,NULL)==OMEGA_GPU_ATTN_ANY_BAD_ARGS);
     free(p);free(code);
@@ -77,6 +91,9 @@ int main(int argc,char **argv) {
     OmegaGpuAttnAnyShape control={7,65,80,4,1,1,0,0.125f};
     CHECK(run_shape(control,chip,0));
     CHECK(!run_shape(control,chip,1)); /* The independent wrong-mask reference must disagree. */
+    OmegaGpuAttnAnyShape grouped={2,7,96,8,2,0,1,0.125f};
+    CHECK(run_shape(grouped,chip,0));
+    grouped.scale=0; CHECK(run_shape(grouped,chip,0)); /* Uniform weights, including bf16 input. */
     if (!quick) {
         static const uint32_t seq[]={1,2,7,64,65,513}, dim[]={64,80,96,128,256}, groups[]={1,4,8};
         for (unsigned i=0;i<30;++i) {

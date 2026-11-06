@@ -22,8 +22,8 @@ mismatch rather than widening the qualified-chip table.
 ## Host prerequisites (no device access)
 
 ```sh
-taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants
-taskset -c 10-14 nice -n 10 make -j3 build/gpu_dnn_activations_chip_test
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 build/gpu_dnn_activations_chip_test
 ```
 
 Set the compiler/bridge environment exactly as described in README.md before

@@ -142,7 +142,7 @@ The checked C and declarations are generated only by that script.
 export OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc
 export OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge
 taskset -c 10-14 nice -n 10 sh om/units.sh
-taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants
 ```
 
 The host gate exercises every operator/type over counts
@@ -164,19 +164,20 @@ operator-only hardware acceptance procedure.
 
 First registration was committed separately as `8d491f2`. The implementation
 and reference-first work-in-progress checkpoint was pushed as `9c9f00b`.
-The settled focused command was:
+The final device-isolated focused command was:
 
 ```sh
-taskset -c 10-14 nice -n 10 env \
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env \
   OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc \
   OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge \
-  make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants \
-  build/gpu_dnn_activations_chip_test
+  make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants
 ```
 
-Exit status: **0**. Local evidence: `build/dnn-activations-final.log`;
-mutation artifacts: `build/dnn-activations-mutants.WvD4UZ/`. These build
-artifacts are ignored, not historical committed chip receipts. Final lines:
+Exit status: **0**. Local evidence: `build/dnn-activations-bwrap-final.log`;
+mutation artifacts: `build/dnn-activations-mutants.A5n2G3/`. The private `/dev`
+contains no GPU, CUSE or VFIO device nodes. Session-abort guards remain in
+addition to this device namespace isolation. These build artifacts are ignored,
+not historical committed chip receipts. Final lines:
 
 ```
 dnn-activations host+warp-sim: PASS (4 operators, 3 types, tails, independent double references, refusal-before-open, wrong-result control)
@@ -190,7 +191,8 @@ The widened seeded admission mutant aborts with the session-lock marker;
 the remaining six seeded mutants return the expected behavioral-failure status.
 The host test binary's five `__wrap_omega_gpu_session_*` symbols were also
 observed with `nm -g --defined-only` before the guarded acceptance run.
-The separately gated chip runner was built, not executed.
+The separately gated chip runner was built, not executed, in the prior focused
+build recorded in `build/dnn-activations-final.log` (exit 0).
 
 Generation by `om/units.sh`: PASS. Independent host references and warp
 simulation: PASS for the enumerated corpus and counts, not an exhaustive input

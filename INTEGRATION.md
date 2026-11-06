@@ -55,4 +55,6 @@ The stage3-c3 backend mutation sweep completed: 109 total, 100 killed, 9 documen
 
 Stage 3 was pushed at `0e09c1996d867d0712b91b5c1b878175c2c9a687`. Stage 4 uses the single portable converter pin omega-bridge #73 at `79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538`. The ordered groups are converter regeneration, #319/#323, #325, #322 and #324, then finished residual lanes. #333 is now complete at `5dad87a569f4fcca3410c4558691b4fdcb9589ca`; it is eligible after adopting the canonical packers from #338. Main authorized stage 5 to adopt the combined #76 pin and #330/#335 after stage 4 passes; no second concurrent converter pin is introduced.
 
+Stage-4 API views are hosted-only. The preexisting `OMEGA_GPU_NO_POSIX` scalar conversion boundary remains C pending a checked-view freestanding converter path (bridge #72 / combined #76 native work). Attempting to link the hosted runtime-view unit fails the unchanged freestanding undefined-symbol gate (`_exit`, setjmp/longjmp and 128-bit arithmetic helpers); that gate was not weakened. This is an explicit unconverted boundary, not an Omega or hardware completion claim.
+
 Hardware/chip, live-RM and VFIO tiers remain NOT_RUN. A host PASS is not hardware qualification. The full integrated host suite still requires its rc and final `CUDA++ HOST TESTS PASS` line; no target count is inferred.

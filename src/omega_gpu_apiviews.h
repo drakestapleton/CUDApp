@@ -19,7 +19,7 @@
 #define AV_DIFF 1
 #define AV_C 1
 #define AV_OM 1
-#elif defined(CUDAPP_MIGRATION_PENDING_APIVIEWS)
+#elif defined(CUDAPP_MIGRATION_PENDING_APIVIEWS) || defined(OMEGA_GPU_NO_POSIX)
 #define AV_DIFF 0
 #define AV_C 1
 #define AV_OM 0
@@ -143,11 +143,7 @@ static inline int av_bf16_n(uint64_t md, uint64_t n, const float *x, uint16_t *y
     if (!tmp) av_die("omega unit refused");
 #endif
     uint32_t st = omega_av_bf16(&res, md, x, n, tmp, n);
-#if defined(OMEGA_GPU_NO_POSIX)
-    if (st || res) return -1;
-#else
     av_need(st, res);
-#endif
     av_flip(tmp, (size_t)n * 2u);
 #if AV_DIFF
     if (memcmp(y, tmp, (size_t)n * 2u) != 0) av_die("output bytes differ");

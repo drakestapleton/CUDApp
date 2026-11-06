@@ -162,6 +162,11 @@ if(({uint64_t _a=o_fcv(11, 12, v5);uint64_t _b=o_cast(4, 5, o_get(v2, v2_n, 1ULL
 if(({uint64_t _a=v5;uint64_t _b=4532020583610935537ULL;o_fp(10, 12, _a,_b);})){
 {uint64_t _i=2ULL;uint64_t _v=({uint64_t _a=o_get(v2, v2_n, 2ULL, 5);uint64_t _b=1ULL;o_op(1, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
 }
+if(({uint64_t _a=o_get(v2, v2_n, 2ULL, 5);uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
+{uint64_t _i=3ULL;uint64_t _v=1ULL;o_put(v2, v2_n, _i,_v,5);}
+}else{
+{uint64_t _i=3ULL;uint64_t _v=0ULL;o_put(v2, v2_n, _i,_v,5);}
+}
 return o_leave(0ULL);
 }
 static uint64_t f5(const void *v0, uint64_t v0_n, uint64_t v1, void *v2, uint64_t v2_n){
@@ -173,7 +178,7 @@ uint32_t omega_mm_err(uint64_t  *result, const void *p0, volatile uint64_t p0_n,
 if(!o_rbuf(p0, p0_n,2, 5))return 32;
   if(o_rover(result,8,p0, p0_n*8))return 32;
 if(!o_valid(4, p1))return 32;
-if(!o_rbuf(p2, p2_n,3, 5))return 32;
+if(!o_rbuf(p2, p2_n,4, 5))return 32;
   if(o_rover(result,8,p2, p2_n*8))return 32;
 if(o_rover(p2, p2_n*8, p0, p0_n*8))return 32;
   if(o_busy)return 33;

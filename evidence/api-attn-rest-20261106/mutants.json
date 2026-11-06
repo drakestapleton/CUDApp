@@ -1,0 +1,65 @@
+[
+  {
+    "unit": "attn_ds_round",
+    "site": "fn av_drnd u uint to uint\nif gx_fin u",
+    "replacement": "fn av_drnd u uint to uint\nif not gx_fin u",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_ds_slot",
+    "site": "p = div r 2",
+    "replacement": "p = div r 3",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_ds_vecf",
+    "site": "ret av_permf s d r",
+    "replacement": "ret av_permf s d 256",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_na_cubin",
+    "site": "ret ar_eq b off txt",
+    "replacement": "ret true",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_na_layout",
+    "site": "if ge len b cap",
+    "replacement": "if ge len b 1",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_na_ver",
+    "site": "ret gt get h i get n i",
+    "replacement": "ret lt get h i get n i",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_na_json",
+    "site": "if or lt c 32 eq c 127",
+    "replacement": "if lt c 32",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_mm_dot",
+    "site": "ret bitcast ulong mul x y",
+    "replacement": "ret bitcast ulong add x y",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_mm_err",
+    "site": "if gt rel 0.00001",
+    "replacement": "if gt rel 100.0",
+    "rc": 1,
+    "verdict": "KILLED"
+  }
+]

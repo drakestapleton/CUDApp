@@ -1,0 +1,56 @@
+python3 tests/dagsim/resolve_check.py
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim -O0 --coverage -DCUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE=1 -Dds_status_name=oracle_ds_status_name -Dds_prov_name=oracle_ds_prov_name -Dds_day_from_date=oracle_ds_day_from_date -Dds_find_op=oracle_ds_find_op -Dds_find_res=oracle_ds_find_res -Dds_parse_text=oracle_ds_parse_text -Dds_parse_file=oracle_ds_parse_file -Dds_resolved_pack=oracle_ds_resolved_pack -Dds_eval_c=oracle_ds_eval_c -Dds_eval=oracle_ds_eval -Dds_eval_interval=oracle_ds_eval_interval -Dds_counterfactual=oracle_ds_counterfactual -Dds_diff_models=oracle_ds_diff_models -c tools/dagsim/dagsim.c -o build/dagsim-resolve/oracle.o
+tools/dagsim/dagsim.c: In function ‘oracle_ds_diff_models’:
+tools/dagsim/dagsim.c:1090:121: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size between 104 and 192 [-Wformat-truncation=]
+ 1090 |             snprintf(d->reason, sizeof d->reason, "op %s: removal reason %d not supported by its evidence (ref=%s proof=%s changed=%s)",
+      |                                                                                                                         ^~
+tools/dagsim/dagsim.c:1090:13: note: ‘snprintf’ output 75 or more bytes (assuming 280) into a destination of size 256
+ 1090 |             snprintf(d->reason, sizeof d->reason, "op %s: removal reason %d not supported by its evidence (ref=%s proof=%s changed=%s)",
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 1091 |                      b->ops[i].id, rec->reason, rec->ref, rec->proof, o && o->changed ? o->changed : "");
+      |                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim --coverage -c tools/dagsim/dagsim.c -o build/dagsim-resolve/resolve.o
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/diff
++ build/dagsim-resolve/diff
+resolve differential: 4498 checks, 0 failures
++ gcov -b -c -t -o build/dagsim-resolve/oracle.gcno tools/dagsim/dagsim.c
++ gcov -b -c -t -o build/dagsim-resolve/resolve.gcno tools/dagsim/dagsim.c
+resolve red control: caught (rc=1)
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-unknown-resource/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-unknown-resource/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-unknown-resource/dag_res.c build/dagsim-resolve/mutant-unknown-resource/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-unknown-resource/diff
+resolve mutant unknown-resource: killed (rc=1); build/dagsim-resolve/mutant-unknown-resource/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-stale-boundary/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-stale-boundary/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-stale-boundary/dag_res.c build/dagsim-resolve/mutant-stale-boundary/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-stale-boundary/diff
+resolve mutant stale-boundary: killed (rc=1); build/dagsim-resolve/mutant-stale-boundary/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-pessimistic-time/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-pessimistic-time/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-pessimistic-time/dag_res.c build/dagsim-resolve/mutant-pessimistic-time/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-pessimistic-time/diff
+resolve mutant pessimistic-time: killed (rc=1); build/dagsim-resolve/mutant-pessimistic-time/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-prediction-n/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-prediction-n/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-prediction-n/dag_res.c build/dagsim-resolve/mutant-prediction-n/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-prediction-n/diff
+resolve mutant prediction-n: killed (rc=1); build/dagsim-resolve/mutant-prediction-n/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-bandwidth-double/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-bandwidth-double/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-bandwidth-double/dag_res.c build/dagsim-resolve/mutant-bandwidth-double/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-bandwidth-double/diff
+resolve mutant bandwidth-double: killed (rc=1); build/dagsim-resolve/mutant-bandwidth-double/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-eliminated-proof/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-eliminated-proof/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-eliminated-proof/dag_res.c build/dagsim-resolve/mutant-eliminated-proof/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-eliminated-proof/diff
+resolve mutant eliminated-proof: killed (rc=1); build/dagsim-resolve/mutant-eliminated-proof/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-deferred-consumer/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-deferred-consumer/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-deferred-consumer/dag_res.c build/dagsim-resolve/mutant-deferred-consumer/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-deferred-consumer/diff
+resolve mutant deferred-consumer: killed (rc=1); build/dagsim-resolve/mutant-deferred-consumer/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-removed-weight/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-removed-weight/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-removed-weight/dag_res.c build/dagsim-resolve/mutant-removed-weight/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-removed-weight/diff
+resolve mutant removed-weight: killed (rc=1); build/dagsim-resolve/mutant-removed-weight/out.log
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-changed-membership/dag_res.om
++ sh ~/work/cudastack/omega-bridge/tools/bridge-seeded c build/dagsim-resolve/mutant-changed-membership/dag_diff.om
++ cc -std=gnu11 -O2 -ffp-contract=off -D_GNU_SOURCE -Isrc -Itools/dagsim tests/dagsim/resolve_diff.c build/dagsim-resolve/oracle.o build/dagsim-resolve/resolve.o src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c build/dagsim-resolve/mutant-changed-membership/dag_res.c build/dagsim-resolve/mutant-changed-membership/dag_diff.c -Wl,--wrap=rx_cm_predict -Wl,--wrap=malloc -lm -lgcov -o build/dagsim-resolve/mutant-changed-membership/diff
+resolve mutant changed-membership: killed (rc=1); build/dagsim-resolve/mutant-changed-membership/out.log
+resolve mutants: 9 killed
+dagsim resolve Omega differential: PASS

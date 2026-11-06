@@ -22,7 +22,7 @@ $CC $cflags -c -o "$tmp/rx.o" src/runtime/rx_costmodel.c
 if [ -z "$ORACLE" ]; then
   OMEGA_SEEDED_OMC="$OMC" sh "$BRIDGE/tools/bridge-seeded" c om/tools/dag_eval.om > "$tmp/base.c"
   $CC $cflags -c -o "$tmp/base.o" "$tmp/base.c"
-  $CC $cflags -o "$tmp/oracle" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/base.o" src/sha256.c $units -lm
+  $CC $cflags -o "$tmp/oracle" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/base.o" src/sha256.c $units src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c src/cudapp_om_dag_jstr.c -lm
   ORACLE=$tmp/oracle
 fi
 
@@ -59,7 +59,7 @@ kill_one() {
   cmp -s om/tools/dag_eval.om "$tmp/$name.om" && { echo "mutant $name: sed changed nothing"; exit 1; }
   OMEGA_SEEDED_OMC="$OMC" sh "$BRIDGE/tools/bridge-seeded" c "$tmp/$name.om" > "$tmp/$name.c"
   $CC $cflags -c -o "$tmp/$name.o" "$tmp/$name.c"
-  $CC $cflags -o "$tmp/$name.bin" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/$name.o" src/sha256.c $units -lm
+  $CC $cflags -o "$tmp/$name.bin" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/$name.o" src/sha256.c $units src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c src/cudapp_om_dag_jstr.c -lm
   "$ORACLE" eval "$fixture" --asof 2026-10-20 > "$tmp/$name.good" || true
   grep -q "$expect" "$tmp/$name.good" || { echo "mutant $name: oracle missing $expect"; cat "$tmp/$name.good"; exit 1; }
   "$tmp/$name.bin" eval "$fixture" --asof 2026-10-20 > "$tmp/$name.bad" || true

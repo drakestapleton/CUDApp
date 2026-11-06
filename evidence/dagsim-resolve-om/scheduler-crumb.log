@@ -1,0 +1,4 @@
+COMPILED   evidence/dagsim-resolve-om
+COMPILED   tests/tools-om
+crumb compile: 44 crumbs, 2 rewritten, HEAD 2cf2c48
+crumb verify: OK: 44 crumbs current

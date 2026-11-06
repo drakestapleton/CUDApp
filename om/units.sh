@@ -69,8 +69,8 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_moe=om/codegen/cg_moe_emit.om,om/codegen/cg_moe_core.om,om/codegen/cg_moe.om cg_moe2=om/codegen/cg_moe_emit.om,om/codegen/cg_moe_core.om,om/codegen/cg_moe2.om cg_moe_sched=om/codegen/cg_moe_sched.om"
   UNITS="$UNITS cg_gdn=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_common.om,om/codegen/cg_gdn.om cg_gdn_policy=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_policy.om"
   UNITS="$UNITS cg_dec=om/codegen/cg_dec_emit.om,om/codegen/cg_dec.om gdn_admit=om/gdn/admit.om"
-  UNITS="$UNITS om/tools/dag_eval.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
   UNITS="$UNITS bw_qmd=om/qmd/bw_qmd.om eng=om/engine/fixture_rest.om,om/engine/eng.om fixture_text=om/engine/fixture_rest.om"
+  UNITS="$UNITS om/tools/dag_eval.om om/tools/dag_parse.om om/tools/dag_fmt.om om/tools/dag_res.om dag_diff=om/tools/dag_res.om,om/tools/dag_diff.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"
@@ -100,6 +100,7 @@ fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS mathlibs_host=om/mathlibs/host.om,om/mathlibs/host_scalar.om mathlibs_walk=om/mathlibs/host.om,om/mathlibs/host_walk.om mathlibs_step=om/mathlibs/host.om,om/mathlibs/host_step.om mathlibs_many=om/mathlibs/host.om,om/mathlibs/host_many.om mathlibs_index=om/mathlibs/host.om,om/mathlibs/host_index.om mathlibs_fft=om/mathlibs/host.om,om/mathlibs/host_fft.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS standalone_oracles=om/standalone-oracles/oracles.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_va=native/nvrm/alloc_profile.om,native/nvrm/alloc.om nvrm_alloc_scalar=native/nvrm/policy.om,native/nvrm/alloc_scalar.om nvrm_counts=native/nvrm/counts.om nvrm_alloc_push=native/nvrm/alloc_profile.om,om/encoder/amp_runtime.om,native/nvrm/alloc_push.om"
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/tools/dag_jstr.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

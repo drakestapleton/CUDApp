@@ -18,9 +18,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+#include "dagsim_format.h"
+#endif
 
 /* ---------------------------------------------------------------- names */
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
 const char *ds_status_name(int s) {
     switch (s) {
     case DS_OK: return "OK";
@@ -68,17 +72,53 @@ int ds_day_from_date(const char *s) {
     unsigned doe = yoe * 365u + yoe / 4u - yoe / 100u + doy;
     return era * 146097 + (int)doe - 719468;
 }
+#else
+const char *ds_status_name(int s) {
+    static _Thread_local char out[256];
+    uint64_t a[16] = {(uint32_t)s}; ds_fmt(0, a, out); return out;
+}
+const char *ds_prov_name(int p) {
+    static _Thread_local char out[256];
+    uint64_t a[16] = {(uint32_t)p}; ds_fmt(1, a, out); return out;
+}
+int ds_day_from_date(const char *s) {
+    if (!s) return -1;
+    char in[256];
+    uint64_t a[16] = {0};
+    for (;;) {
+        size_t n = strnlen(s, sizeof in);
+        memcpy(in, s, n);
+        a[0] = n; a[13] = n < sizeof in;
+        uint64_t rc = ds_fmt(21, a, in);
+        if (rc == 1) return (int32_t)a[12];
+        if (rc == 2) return -1;
+        s += n;
+    }
+}
+#endif
 
+#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
+static int dr_lookup(const ds_model *, const char *, int);
+#endif
 int ds_find_op(const ds_model *m, const char *id) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     for (int i = 0; i < m->n_ops; i++) if (!strcmp(m->ops[i].id, id)) return i;
     return -1;
+#else
+    return dr_lookup(m,id,0);
+#endif
 }
 int ds_find_res(const ds_model *m, const char *id) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     for (int i = 0; i < m->n_res; i++) if (!strcmp(m->res[i].id, id)) return i;
     return -1;
+#else
+    return dr_lookup(m,id,1);
+#endif
 }
 
 /* ---------------------------------------------------------------- parse */
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
 /* bounded string copy; ids and sources are truncated, never overflowed */
 static void sset(char *dst, size_t cap, const char *src) {
     size_t n = strlen(src);
@@ -357,6 +397,84 @@ int ds_parse_text(const char *text, ds_model *m, char *err, size_t errcap) {
     if (!m->has_energy) PERR("missing energy record (use instrument=none for UNMEASURED)");
     return DS_OK;
 }
+#else
+/* Copy only the already-bounded source spans selected by the Omega parser. */
+static void dp_copy(char *dst, const unsigned char *text, const uint64_t *w, size_t i) {
+    memcpy(dst, text + w[i], (size_t)w[i + 1]);
+    dst[w[i + 1]] = 0;
+}
+static double dp_double(const uint64_t *w, size_t i) {
+    return ds_unbits(w[i]);
+}
+int ds_parse_text(const char *text, ds_model *m, char *err, size_t errcap) {
+    memset(m, 0, sizeof *m);
+    if (errcap) err[0] = 0;
+    size_t n = strnlen(text, 1048576);
+    if (n == 1048576) {
+        if (errcap) snprintf(err, errcap, "file size out of range");
+        return DS_PARSE_ERROR;
+    }
+    unsigned char *t = malloc(1048576);
+    uint64_t *w = malloc(16384 * sizeof *w);
+    if (!t || !w) {
+        free(t); free(w);
+        if (errcap) snprintf(err, errcap, "out of memory");
+        return DS_PARSE_ERROR;
+    }
+    memcpy(t, text, n + 1);
+    unsigned char error[256] = {0};
+    uint64_t rc = 0;
+    uint32_t trap = omega_dag_parse(&rc, t, 1048576, n, w, 16384, error, 256);
+    if (trap || rc) {
+        if (errcap) snprintf(err, errcap, "%s", trap ? "Omega parser trap" : (char *)error);
+        free(t); free(w); return DS_PARSE_ERROR;
+    }
+    m->version = (int32_t)w[0]; m->cores = (int32_t)w[1];
+    m->mem_bytes = dp_double(w, 2); m->has_calibration = (int32_t)w[3];
+    m->cal_taken_day = (int32_t)w[4]; m->cal_valid_days = (int32_t)w[5];
+    m->cal_load1 = dp_double(w, 6); m->has_energy = (int32_t)w[7];
+    m->joules = dp_double(w, 8); m->power_w = dp_double(w, 9);
+    m->energy_prov = (int32_t)w[10];
+    m->n_res = (int32_t)w[11]; m->n_ops = (int32_t)w[12];
+    m->n_buf = (int32_t)w[13]; m->n_deps = (int32_t)w[14]; m->n_removed = (int32_t)w[15];
+    dp_copy(m->machine_id, t, w, 17); dp_copy(m->soc, t, w, 19);
+    dp_copy(m->repo, t, w, 21); dp_copy(m->build_sha, t, w, 23);
+    dp_copy(m->physics, t, w, 25); dp_copy(m->cal_id, t, w, 27);
+    dp_copy(m->cal_src, t, w, 29); dp_copy(m->cal_model, t, w, 31);
+    dp_copy(m->instrument, t, w, 33); dp_copy(m->boundary, t, w, 35);
+    for (int i = 0; i < m->n_res; i++) {
+        ds_resource *r = &m->res[i]; const uint64_t *p = w + 64 + i * 12;
+        dp_copy(r->id, t, p, 0); r->kind = (int32_t)p[2]; r->slots = (int32_t)p[3];
+        r->cap = dp_double(p, 4); r->lo = dp_double(p, 5); r->hi = dp_double(p, 6);
+        r->prov = (int32_t)p[7]; dp_copy(r->src, t, p, 8);
+    }
+    for (int i = 0; i < m->n_ops; i++) {
+        ds_op *o = &m->ops[i]; const uint64_t *p = w + 448 + i * 26;
+        dp_copy(o->id, t, p, 0); o->kind = (int32_t)p[2]; o->engine = (int32_t)p[3];
+        o->t_ns = dp_double(p, 4); o->lo = dp_double(p, 5); o->hi = dp_double(p, 6);
+        o->t_prov = (int32_t)p[7]; o->has_t = (int32_t)p[8]; o->bytes = dp_double(p, 9);
+        o->bw = (int32_t)p[10]; o->launch_ns = dp_double(p, 11); o->launcher = (int32_t)p[12];
+        o->M = (uint32_t)p[13]; o->N = (uint32_t)p[14]; o->core = (uint32_t)p[15]; o->arm = (uint32_t)p[16];
+        dp_copy(o->src, t, p, 17);
+    }
+    for (int i = 0; i < m->n_deps; i++) {
+        m->deps[i].from = (int32_t)w[7104 + i * 2];
+        m->deps[i].to = (int32_t)w[7105 + i * 2];
+    }
+    for (int i = 0; i < m->n_buf; i++) {
+        ds_buffer *b = &m->buf[i]; const uint64_t *p = w + 9152 + i * 8;
+        dp_copy(b->id, t, p, 0); b->bytes = dp_double(p, 2); b->cap = (int32_t)p[3];
+        b->first = (int32_t)p[4]; b->last = (int32_t)p[5];
+    }
+    for (int i = 0; i < m->n_removed; i++) {
+        ds_removed *r = &m->removed[i]; const uint64_t *p = w + 11200 + i * 8;
+        dp_copy(r->op, t, p, 0); r->reason = (int32_t)p[2];
+        dp_copy(r->ref, t, p, 3); dp_copy(r->proof, t, p, 5);
+    }
+    free(t); free(w);
+    return DS_OK;
+}
+#endif
 
 int ds_parse_file(const char *path, ds_model *m, char *err, size_t errcap) {
     FILE *fp = fopen(path, "r");
@@ -376,11 +494,13 @@ int ds_parse_file(const char *path, ds_model *m, char *err, size_t errcap) {
 /* resolved per-op numbers for one evaluation mode */
 typedef struct { double t, launch, bytes, cap; int prov; } ds_num;   /* cap in B/ns */
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
 static double res_cap(const ds_resource *r, int mode) {
     if (mode < 0) return r->lo;
     if (mode > 0) return r->hi;
     return r->cap;
 }
+#endif
 
 static int refuse(ds_result *r, int status, const char *fmt, const char *a, const char *b) {
     memset(r, 0, sizeof *r);
@@ -396,6 +516,7 @@ static int refuse_msg(ds_result *r, int status, const char *msg) {
     return status;
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
 /* An unsupported operation and a refused prediction are the same as an
  * unknown cell: no certificate. known alone is not enough. */
 static int predict_unusable(int st, const RxCmPrediction *p) {
@@ -451,6 +572,9 @@ static int resolve(const ds_model *m, const ds_opts *o, ds_num *num, ds_result *
     }
     return DS_OK;
 }
+#else
+#include "dagsim_resolve.h"
+#endif
 
 static void pk_d(uint64_t *dst, double x) {
     uint64_t b;
@@ -460,6 +584,7 @@ static void pk_d(uint64_t *dst, double x) {
 
 /* Pack post-resolve numbers for omega_dag_eval. Refusal strings stay in C. */
 int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_result *r) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     if (m->n_ops == 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "empty DAG%s%s", "", "");
     ds_num num[DS_MAX_OPS];
     int rc = resolve(m, o, num, r);
@@ -494,6 +619,10 @@ int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_re
         pk_d(&p[2], m->res[i].cap);
         p[3] = (uint64_t)m->res[i].prov;
     }
+#else
+    int rc=dr_resolved(m,o,model,r);
+    if(rc)return rc;
+#endif
     for (int i = 0; i < m->n_deps; i++) {
         uint64_t *p = &model[2720 + i * 2];
         p[0] = (uint64_t)m->deps[i].from;
@@ -508,7 +637,11 @@ int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_re
     }
     return DS_OK;
 }
+static const char *endpoint_name(const ds_model *m, int op) {
+    return op >= 0 ? m->ops[op].id : "omitted";
+}
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS
 /* Kahn topological order; returns 0 on a cycle */
 static int topo(const ds_model *m, int *order) {
     int indeg[DS_MAX_OPS] = {0};
@@ -529,10 +662,6 @@ enum { BLK_NONE = 0, BLK_SLOT, BLK_LAUNCHER };
 static void buffer_window(const ds_model *m, const ds_result *r, int b, double *s, double *e) {
     *s = m->buf[b].first >= 0 ? r->start_ns[m->buf[b].first] : 0.0;
     *e = m->buf[b].last >= 0 ? r->end_ns[m->buf[b].last] : r->makespan_ns;
-}
-
-static const char *endpoint_name(const ds_model *m, int op) {
-    return op >= 0 ? m->ops[op].id : "omitted";
 }
 
 /* Resolved end earlier than start is not an interval. Refuse before the ledger. */
@@ -776,9 +905,10 @@ int ds_eval_c(const ds_model *m, const ds_opts *o, ds_result *r) {
     r->status = DS_OK;
     return DS_OK;
 }
+#endif
 
 #ifndef CUDAPP_MIGRATION_PENDING_C_TOOLS
-extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n) __attribute__((weak));
+extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 
 static double om_f(const uint64_t *s, int i) {
     double x;
@@ -863,7 +993,6 @@ int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
 #if defined(CUDAPP_MIGRATION_PENDING_C_TOOLS)
     return ds_eval_c(m, o, r);
 #else
-    if (!omega_dag_eval) return ds_eval_c(m, o, r);
     memset(r, 0, sizeof *r);
     uint64_t model[8192], scratch[8192], result = 0;
     int rc = ds_resolved_pack(m, o, model, r);
@@ -887,6 +1016,7 @@ int ds_eval_interval(const ds_model *m, const ds_opts *o, ds_result *nominal, do
 }
 
 double ds_counterfactual(const ds_model *m, const ds_opts *o, int res_index) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     if (res_index < 0 || res_index >= m->n_res) return -DS_REFUSED_UNSUPPORTED;
     ds_model *c = malloc(sizeof *c);
     if (!c) return -DS_REFUSED_UNSUPPORTED;
@@ -902,10 +1032,14 @@ double ds_counterfactual(const ds_model *m, const ds_opts *o, int res_index) {
     int rc = ds_eval(c, &x, &res);
     free(c);
     return rc == DS_OK ? res.makespan_ns : -(double)rc;
+#else
+    return dr_counter(m,o,res_index);
+#endif
 }
 
 /* ---------------------------------------------------------------- diff */
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
 static int in_changed(const char *list, const char *id) {
     if (!list) return 0;
     const char *p = list; size_t L = strlen(id);
@@ -917,8 +1051,10 @@ static int in_changed(const char *list, const char *id) {
     }
     return 0;
 }
+#endif
 
 int ds_diff_models(const ds_model *b, const ds_model *t, const ds_opts *o, ds_diff *d) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     memset(d, 0, sizeof *d);
     for (int i = 0; i < t->n_ops; i++) if (ds_find_op(b, t->ops[i].id) < 0) d->n_added++;
     for (int i = 0; i < b->n_ops; i++) {
@@ -966,4 +1102,7 @@ int ds_diff_models(const ds_model *b, const ds_model *t, const ds_opts *o, ds_di
         return DS_REFUSED_REMOVED_REQUIRED;
     }
     return DS_OK;
+#else
+    return dr_diff(b,t,o,d);
+#endif
 }

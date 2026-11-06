@@ -191,3 +191,97 @@ NULL end pointer:
 Mutants (10, all killed): the k tile, the single-CTA test, the column grid, the hex base, the overflow flag,
 the 32-bit bound, the attention shared bytes (`(3h+1)·512`, Wolfram `Expand[(3h+1)*128*4] -> 512+1536h`),
 the lowercase hex range, the power-of-two loop and the heads bound.
+
+## dagsim parse and format (`dag_parse.om`, `dag_fmt.om`)
+
+`CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE` is default OFF. Enabling it selects the former parser and
+formatting decisions as the differential oracle; it is not a runtime fallback. The normal C shell reads
+files, copies typed fields/spans, handles argv and prints. Post-parse lookup, resolution and diff
+decisions use the separate resolver units described below; the scheduler remains `dag_eval.om`.
+
+The parser ABI is `uchar[1048576]`, input length, `ulong[16384]`, and `uchar[256]` error text. Header
+words 0–39 and the record map are documented at the top of `om/tools/dag_parse.om`; scratch starts at
+14000. Inputs longer than 1048575 bytes are refused before the Omega call, including a file of exactly
+1048576 bytes. There is no oversized-input C fallback. The formatter takes a mode, `ulong[16]`, and
+`uchar[256]`: 64 bytes cannot hold the existing CLI's next-experiment strings. Its mode table is at the
+top of `dag_fmt.om`; modes 17–20 also own subtraction, seconds conversion, maximum and stable sorting.
+Mode 21 streams date text across 256-byte chunks, preserving C `sscanf` behavior for long leading
+zero/space runs, split signs and ignored trailing text without adding a date-length refusal. Its
+private state is in words 4–12, word 13 marks the final chunk, and the return is 0 for more input,
+1 for a completed day in word 12, or 2 for malformed input. C only copies chunks and dispatches status.
+
+The numeric parser converts decimal and hexadecimal finite values through bounded integer ratios and
+rounds ties to even. It also matches the oracle's infinity, signed-zero, saturation and malformed-token
+decisions on the partition. This is exercised parity on the filed corpus, not an exhaustive `strtod`
+equivalence claim. The C source, rather than earlier design notes, decides such details as rejected
+sync self-references and the requirement that a removed op is absent.
+
+```
+export OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=~/work/cudastack/omega-bridge
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-parse-om
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-corpus-om
+```
+
+`tests/dagsim/parse_partition.py` derives cases from the C tokenizer, record handlers, reference checks
+and capacities: all record/token classes, missing/empty/unknown/duplicate fields, numeric/date forms,
+malformed/refused records, and adjacent boundaries for text, line, keyword, key/value, positional/KV and
+record capacities. `parse_diff.c` compares status, error bytes and every successful model byte against
+the C oracle. A deliberately altered oracle model must fail. `format_diff.c` compares name/date and
+numeric decisions, including NaN and signed zero; CLI eval/diff/Pareto output is compared byte for byte.
+Six unique-site, recompiled parser mutants must each compile successfully and then fail the comparator.
+The runner checks the compiler pin and writes oracle/unpacker annotated branch data under
+`build/dagsim-parse/*.gcov`; this is C branch evidence, not Omega or chip coverage.
+
+`test-dagsim-corpus-om` also runs the existing deterministic `corpus_diff.py` on 1200 DAGs against the
+full C parser/evaluator/formatting oracle. It requires the driver to reject `/bin/true` and uses the
+shared `tom_flip` control to change one digit of the last matching CLI output record and require `cmp`
+to reject it.
+
+## dagsim resolve and diff (`dag_res.om`, `dag_diff.om`)
+
+`CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE` defaults to OFF. Setting it to 1 selects the
+former C resolution, lookup, counterfactual and diff code only as a migration oracle.
+The default resolver computes provenance refusals, mode-specific capacity/time,
+prediction features and intervals, calibration expiry, energy header decisions and
+resource doubling in `dag_res.om`. `dag_diff.om` owns conservation counts, removal
+evidence checks, shared-work double counting and removed-time accounting.
+
+The host shell in `tools/dagsim/dagsim_resolve.h` copies typed fields, dispatches the
+existing costmodel/libm calls, and formats refusal text from the returned code/index.
+No costmodel Omega unit exists at this stack's base. `rx_cm_predict`,
+`rx_cm_t_quantile` and `pow` remain explicit host dependencies; prediction acceptance,
+feature arithmetic, confidence-quantile defaulting and time conversion are Omega.
+The scheduler's dependency/buffer packing remains a pure fixed-offset layout copy;
+header decisions, resolved op values and resource selection do not remain in C.
+
+`dag_res` takes a mode and four fixed views: model `ulong[16384]`, scheduler/scratch
+`ulong[8192]`, text `uchar[131072]`, and controls `ulong[64]`. Each model half has
+8192 numeric words and 65536 name bytes. The source headers describe record offsets.
+Modes 0/1/2/3 resolve, double a resource, find an ID, and stream a changed-ID list.
+Resolve returns 1/2/3 when it requests prediction/quantile/pow, 4 for a refusal,
+and 0 when packed results are ready. The diff unit composes the resolver's shared
+lookup/capacity helpers and takes model, text and controls. Changed lists stream
+in 256-byte chunks; no new whole-list limit or C tokenization is introduced.
+
+```
+export OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=~/work/cudastack/omega-bridge
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-resolve-om
+```
+
+`resolve_diff.c` derives its partition from the guarded C branches: provenance,
+every resolver refusal, modes -1/0/+1, calibration expiry before/at/after the
+boundary, prediction refusal flags, valid/invalid quantiles, resource kinds,
+all seven removal reasons crossed with ref/proof/consumer/changed evidence,
+missing/duplicate/fabricated records, streamed token boundaries, absent/matching
+lookups, and zero/maximum record counts. It compares status, refusal strings,
+packed words, feature bytes, counterfactual results and the full diff result.
+The runner compiles the C oracle at `-O0 --coverage`, records annotated branch
+data, requires a corrupt-result red control, and compiles nine behavioral mutants.
+It also requires a default build without `cudapp_om_dag_eval.c` to fail linkage,
+and checks that the default object has a strong Omega scheduler reference and
+no `ds_eval_c` symbol. The C scheduler and its computational helpers are compiled
+only with the existing `CUDAPP_MIGRATION_PENDING_C_TOOLS` oracle flag; there is
+no weak-symbol fallback.
+Evidence and the external dependency inventory are in `evidence/dagsim-resolve-om/`.
+These are host checks, not chip qualification.

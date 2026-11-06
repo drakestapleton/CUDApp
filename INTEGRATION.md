@@ -241,3 +241,70 @@ engine/codegen, native runtime and byte-identical regeneration all pass in
 The hosted formatting includes use equivalent nested NO_POSIX/core-oracle
 guards so the existing portability scanner recognizes the freestanding
 boundary; the implementation-selection predicate and scanner are unchanged.
+### Stage-6 Half A receipts (Integrator6A, 2026-11-06)
+
+Half A uses bridge #73 `79e8c361` and the pinned e5b32567 compiler. Every
+execution is isolated by bwrap with an empty `/dev`, cores 10–14 and nice 10.
+These are host/simulator results, not chip qualification.
+
+#339 `e2b8e8a523088a0132ae849cf51afa3d150181cb` repairs the JSON receipt.
+The regenerated `/tmp/integ/6a-339-backend.json` parses losslessly: 109 rows,
+100 KILLED, 9 SURVIVED_REDUNDANT, zero gaps. Main accepted these current counts
+instead of the older 120/107/13/0. `/tmp/integ/6a-339-reconcile.tsv` maps every
+historical row: 109 retained, 10 relocated to `tests/om_eng_mutants.sh`, one
+redundant page-minimum guard removed by #321 `1ecaf8c40802dee63c9534944fae492005076033`.
+The relocated rows account for seven historical kills and three historical
+redundancies; the removed guard accounts for the fourth redundancy. All ten
+relocated rows are now killed in the 16/16 semantic sweep.
+
+Logs: `/tmp/integ/6a-339.log` records byte-identical regeneration, JSON PASS,
+engine C49/49 and OM21/21 kills, and backend109/100/9/0. Its aggregate rc2 came
+from a second invocation with a missing relative receipt directory. The absolute
+rerun `/tmp/integ/6a-339-final.log` completed the valid backend receipt before
+its deadline interrupted the semantic sweep. `/tmp/integ/6a-339-semantic.log`
+returned rc0: `PASS om eng mutants: 16/16 killed`, with 44584 differential records
+identical. The runner now fails immediately if it cannot open its receipt; the
+JSON regression includes that negative control. Historical evidence is untouched.
+
+An inherited clean-build repair delays `mk/host-policy.mk` until its cost-model
+object and binding variables exist, so target prerequisites include their providers.
+`6a-339-close.log` exercises that repair: decision differential21058, predictions8617,
+contraction negative control PASS, and crumb verify OK.
+
+#337 `3821a8b3b3858b44af8402e2e708a975fb6c2dc0`: full generation/check remained
+byte-identical. `/tmp/integ/6a-337-host.log/.rc` returned0: tern schedule PASS,
+simulator34/34,68 source-mutant/config controls, differential213120 programs/
+14258 refusals, and crumb88 current. Explicit ternary/codegen links now name the
+newly integrated API/IR providers rather than relying on an incomplete old list.
+`test-codegen-freestanding` is **DEFERRED_TO_UNION**, not PASS:
+`/tmp/integ/6a-337-focused.log` rc2 records inherited missing `omega_av_*`
+providers. Main authorized deferral because Half B `638975ca` owns the bridge#77
+root repair; final integration must regenerate under bridge `29d9cff7` and pass
+this gate. Half A retains its assigned bridge#73 pin.
+
+#331 `79dac21d2fccae9a86239c2ab13cb2bcd8ffffb5`: generation/check byte-identical
+(`6a-331.log`); repaired standalone parser/corpus and existing mutant links to
+retain integrated cost-model/SHA providers alongside dag_parse/dag_fmt.
+`/tmp/integ/6a-331-focused.log/.rc` returned0: parser492/0, formatter3631/0,
+CLI25/0, six parser mutants killed, unit203/0, five scheduler mutants killed,
+corpus1200/0 with driver/record-flip negatives, and the full focused tools family
+including artexp116 cases/266 files/10 mutants. Final: `crumb verify: OK: 89 crumbs current`.
+
+#341 `56baf91039954a14fdf47ce4fe91b5e61cb67e02`: `/tmp/integ/6a-341.log/.rc`
+returned0. Full units regeneration byte-identical; resolver4498/0, nine mutants,
+red and missing-scheduler controls passed. Parser/scheduler/corpus/tools and
+cost-model families passed. Final `crumb verify: OK: 90 crumbs current`.
+Merge retained integrated runtime/SHA providers in all standalone oracle links
+and combined dag_res/dag_diff roots rather than dropping earlier registrations.
+
+#344 `cfe1f8180c42c04257b99bb40e903659acf8be40`: `/tmp/integ/6a-344.log/.rc`
+returned0. JSON byte differential all256, exact stream parity, red/link and five
+mutants passed; parser/resolver/scheduler families passed and units regenerate
+byte-for-byte. Combined dag_jstr with integrated runtime providers in direct
+links. Final `crumb verify: OK: 90 crumbs current`.
+
+#282 `62abe5eadfdc674a1180f8e2b8a542e5b50c902d` merged cleanly on the newer
+integrated API, retaining the successful non-NULL session-pointer contract.
+`/tmp/integ/6a-282.log/.rc` returned0: host/warp-sim reference and shape sweep,
+six generated source mutants plus the session-open abort control, NULL/non-NULL
+shell contract, byte-identical units and `crumb verify: OK: 90 crumbs current`.

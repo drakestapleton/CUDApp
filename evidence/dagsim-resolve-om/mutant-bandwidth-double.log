@@ -1,0 +1,2 @@
+resolve differential: 4498 checks, 1 failures
+FAIL counterfactual kinds/index: counterfactual bit equality

@@ -1,0 +1,13 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 CG_TERN_HOST_SRCS=src/omega_blackwell_codegen_tern.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CG_TERN_SRC) $(CG_TERN_SCHED_SRC) src/cudapp_om_cg_tern_policy.c src/cudapp_om_bw_enc_sm121.c src/omega_gpu_fmt.c src/sha256.c $(BW_CODEGEN_BINDING) src/cudapp_om_apish_blk.c src/cudapp_om_apish_shp.c src/cudapp_om_apish_trit.c src/cudapp_om_apish_slot.c src/cudapp_om_apish_pack.c OMEGA_MV=~/work/cudastack/omega-mv test-codegen-tern-sim
+test -n "~/work/cudastack/omega-mv"
+test "$(git -C "~/work/cudastack/omega-mv" rev-parse HEAD)" = e5b32567a7aff3ce594e3254a622a846a6cd190b
+git -C "~/work/cudastack/omega-mv" diff --quiet HEAD -- tests/gpu_tern_test.c src/algebra/realize_common.c src/algebra/realize_common.h
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -ffunction-sections -fdata-sections -Wl,--gc-sections -ffp-contract=off -I"~/work/cudastack/omega-mv/src" -DOMEGA_TERN_REFERENCE='"~/work/cudastack/omega-mv/tests/gpu_tern_test.c"' -o build/codegen_tern_sim_test tests/codegen_tern_sim_test.c ~/work/cudastack/omega-mv/src/algebra/realize_common.c src/omega_gpu_tern_api.c src/omega_blackwell_codegen_tern.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_cg_tern.c src/cudapp_om_cg_tern_sched.c src/cudapp_om_cg_tern_policy.c src/cudapp_om_bw_enc_sm121.c src/omega_gpu_fmt.c src/sha256.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c src/cudapp_om_apish_blk.c src/cudapp_om_apish_shp.c src/cudapp_om_apish_trit.c src/cudapp_om_apish_slot.c src/cudapp_om_apish_pack.c -lpthread -lm
+./build/codegen_tern_sim_test
+sim: 14 int32 points x 2 orders bit-equal to oma_rz_oracle (211018 warp issues)
+sim: mutant 1 caught (16 of 16 rows differ)
+sim: mutant 3 caught (16 of 16 rows differ)
+sim: mutant 2 caught (24 of 48 rows take the wrong scale)
+CODEGEN TERN SIM: 34 checks, 0 failed: PASS
+
+rc=0

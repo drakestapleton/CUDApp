@@ -18,6 +18,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Explicit migration oracle only; the production parser/formatter is seeded Omega. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+#define CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE 0
+#endif
+
+/* Explicit migration oracle only; resolve/diff decisions are seeded Omega. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
+#define CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE 0
+#endif
+
 #define DS_MAX_OPS   256
 #define DS_MAX_RES   32
 #define DS_MAX_BUF   256

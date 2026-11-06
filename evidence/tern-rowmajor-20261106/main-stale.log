@@ -1,0 +1,22 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/tern-main-stale
+FAIL: sim k 512 n 13 layout 0 rows 2 warps 2 depth 2 grid 2 order 0: 13 rows differ from oma_rz_oracle
+FAIL: sim k 512 n 13 layout 0 rows 2 warps 2 depth 2 grid 2 order 1: 13 rows differ from oma_rz_oracle
+FAIL: sim k 1024 n 40 layout 0 rows 4 warps 4 depth 4 grid 2 order 0: 40 rows differ from oma_rz_oracle
+FAIL: sim k 1024 n 40 layout 0 rows 4 warps 4 depth 4 grid 2 order 1: 40 rows differ from oma_rz_oracle
+FAIL: sim k 2560 n 24 layout 0 rows 2 warps 2 depth 5 grid 1 order 0: 24 rows differ from oma_rz_oracle
+FAIL: sim k 2560 n 24 layout 0 rows 2 warps 2 depth 5 grid 1 order 1: 24 rows differ from oma_rz_oracle
+FAIL: sim k 8704 n 16 layout 0 rows 2 warps 1 depth 1 grid 1 order 0: 8 rows differ from oma_rz_oracle
+FAIL: sim k 8704 n 16 layout 0 rows 2 warps 1 depth 1 grid 1 order 1: 8 rows differ from oma_rz_oracle
+FAIL: sim k 2560 n 20 layout 0 rows 1 warps 2 depth 10 grid 2 order 0: 20 rows differ from oma_rz_oracle
+FAIL: sim k 2560 n 20 layout 0 rows 1 warps 2 depth 10 grid 2 order 1: 20 rows differ from oma_rz_oracle
+FAIL: sim k 6912 n 9 layout 0 rows 1 warps 2 depth 9 grid 1 order 0: 9 rows differ from oma_rz_oracle
+FAIL: sim k 6912 n 9 layout 0 rows 1 warps 2 depth 9 grid 1 order 1: 9 rows differ from oma_rz_oracle
+FAIL: sim k 16384 n 8 layout 0 rows 1 warps 1 depth 16 grid 1 order 0: 8 rows differ from oma_rz_oracle
+FAIL: sim k 16384 n 8 layout 0 rows 1 warps 1 depth 16 grid 1 order 1: 8 rows differ from oma_rz_oracle
+sim: 14 int32 points x 2 orders bit-equal to oma_rz_oracle (211018 warp issues)
+sim: mutant 1 caught (16 of 16 rows differ)
+sim: mutant 3 caught (16 of 16 rows differ)
+sim: mutant 2 caught (24 of 48 rows take the wrong scale)
+gpu_tern_test: 34 checks, 14 failed: FAIL
+
+rc=1

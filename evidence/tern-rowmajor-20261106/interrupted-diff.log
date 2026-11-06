@@ -1,0 +1,1 @@
+INCONCLUSIVE: initial test-codegen-tern-diff execution interrupted by the 360-second Eval deadline before completion. Its owned orphan make and child differential were terminated by exact PID after cwd validation. This is not PASS. Subsequent execution has no deadline and file-backed output.

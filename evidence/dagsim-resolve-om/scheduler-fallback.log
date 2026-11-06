@@ -1,0 +1,32 @@
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 cc -std=gnu11 -O2 -ffp-contract=off -Isrc -Itools/dagsim tools/dagsim/dagsim_cli.c tools/dagsim/dagsim.c src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c -lm -o build/dagsim-resolve/no-eval
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/dagsim-resolve/no-eval eval tests/dagsim/fixtures/valid_disjoint_80.oev --asof 2026-10-20
+{
+  "schema": "oev1", "tool": "dagsim", "file": "tests/dagsim/fixtures/valid_disjoint_80.oev",
+  "machine": "toy", "build_sha": "3bd56731c5517e2a9c8f195955c71e73dc6f9269",
+  "calibration": {"id": "", "taken_day": 0, "valid_days": 0, "load1": 0, "src": ""},
+  "asof_day": 20746,
+  "status": "OK", "reason": "",
+  "provenance": ["synthetic"], "synthetic": 1, "offline": true, "gpu_executed": false,
+  "makespan_ns": {"nominal": 30, "lo": 30, "hi": 30, "interval_known": true},
+  "bounds_ns": {"critical_path": 10, "max": 30, "resources": {"cpu": 30, "mem": 0}, "makespan_ge_bounds": true},
+  "ops": [
+    {"id": "A", "start_ns": 0, "end_ns": 10, "floor_ns": 10, "contention_ns": 0, "prov": "synthetic", "src": "analytical-fixture"},
+    {"id": "B", "start_ns": 10, "end_ns": 20, "floor_ns": 10, "contention_ns": 0, "prov": "synthetic", "src": "analytical-fixture"},
+    {"id": "C", "start_ns": 20, "end_ns": 30, "floor_ns": 10, "contention_ns": 0, "prov": "synthetic", "src": "analytical-fixture"}
+  ],
+  "critical_path": ["C"],
+  "peak_live_bytes": {"mem": {"bytes": 80, "at_ns": 0, "cap": 100}},
+  "attribution_ns": {"compute": 10, "bandwidth": 0, "contention": 0, "launch": 0, "serialization": 20, "sync": 0, "residual": 0},
+  "energy": {"status": "UNMEASURED", "joules": null, "instrument": "none", "boundary": "", "ranking_valid": false},
+  "conservation": {"n_ops": 3, "total_bytes": 0, "total_busy_ns": 30, "total_launch_ns": 0, "instrument_overhead_ns": null},
+  "sensitivities": [
+    {"resource": "cpu", "kind": "compute", "makespan_if_doubled_ns": 20, "delta_ns": 10, "interval_width_frac": 0, "decision_score": 0.5, "next_experiment": "measure the critical op at the next larger shape"},
+    {"resource": "mem", "kind": "capacity", "makespan_if_doubled_ns": 30, "delta_ns": 0, "interval_width_frac": 0, "decision_score": 0, "next_experiment": "none: capacity is a ledger, not a rate"}
+  ],
+  "unresolved_residual_ns": 0,
+  "note": "loaded-box calibration (load1 above); bounds are floors, not predictions; no performance claim from this simulation alone"
+}
+RC 0
+00000000000049f4 T ds_eval_c
+                 w omega_dag_eval

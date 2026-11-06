@@ -52,6 +52,7 @@ retains the default-OFF C oracle. See
 default with a default-OFF C oracle. Host state differential, source mutants
 and fake-RM gates are recorded in `evidence/nvrm-alloc-20261106/README.md`.
 Live RM and chip qualification remain NOT_RUN; no status row is upgraded.
+2026-11-06: dagsim JSON byte escaping defaults to seeded `om/tools/dag_jstr.om`; all-byte differential and five mutants are recorded in `evidence/dagsim-jstr-20261106/README.md`. Host only; chip NOT_RUN and no status row upgraded.
 
 ## 1. NVIDIA software on the Spark today
 

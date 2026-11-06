@@ -1,0 +1,6 @@
+parse differential: 492 cases, 5 failures
+build/dagsim-parse/corpus/0313-buffer-number-313.oev: production 0 ''; oracle 9 'line 10: buffer bytes must be a finite number >= 0'
+build/dagsim-parse/corpus/0315-buffer-number-315.oev: production 0 ''; oracle 9 'line 10: buffer bytes must be a finite number >= 0'
+build/dagsim-parse/corpus/0317-buffer-number-317.oev: production 0 ''; oracle 9 'line 10: buffer bytes must be a finite number >= 0'
+build/dagsim-parse/corpus/0325-buffer-number-325.oev: production 0 ''; oracle 9 'line 10: buffer bytes must be a finite number >= 0'
+build/dagsim-parse/corpus/0341-buffer-number-341.oev: production 0 ''; oracle 9 'line 10: buffer bytes must be a finite number >= 0'

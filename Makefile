@@ -64,7 +64,7 @@ CFLAGS ?= -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc \
 	-I$(NVIDIA_OPEN)/kernel-open/nvidia-uvm \
 	-I$(NVIDIA_OPEN)/src/nvidia/arch/nvalloc/unix/include \
 	-I$(PHYSICS_DIR)/third_party/aien-gpu-abi1
--include mk/*.mk
+-include $(filter-out mk/host-policy.mk,$(wildcard mk/*.mk))
 
 # sm_121 instruction encoder (CUDApp#79): om (default) = om/encoder/bw_enc_sm121.om through the generated binding
 # portable generated C units in CUDAPP_BINDING_SRCS; c = the migration-pending C encoder, the differential oracle; diff = both on every call,
@@ -341,7 +341,7 @@ test-gpu-bf16-gemv: $(GPU_BF16_TEST)
 # control (mutant 4, the pre-fix stall 6, must be refused). No reference oracle needed, so it lives here.
 .PHONY: test-gpu-tern-sched
 GPU_TERN_SCHED_TEST = $(OUT_DIR)/gpu_tern_sched_test
-$(GPU_TERN_SCHED_TEST): tests/gpu_tern_sched_test.c src/omega_blackwell_codegen_tern.h $(OUT_DIR)/libomega_gpu.a
+$(GPU_TERN_SCHED_TEST): tests/gpu_tern_sched_test.c tests/bw_warp_sim_k.h tests/bw_mufu_ftz.h src/omega_blackwell_codegen_tern.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/gpu_tern_sched_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 test-gpu-tern-sched: $(GPU_TERN_SCHED_TEST)
 	$(GPU_TERN_SCHED_TEST)
@@ -693,6 +693,9 @@ RX_CM_OBJ = $(OUT_DIR)/rx_costmodel.o
 RX_CM_BINDING = src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c
 RX_CM_BINDING += src/cudapp_om_cm_route.c
 
+# Host-policy prerequisites expand while this include is parsed.
+include mk/host-policy.mk
+
 $(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_sort.h src/runtime/rx_cm_math.h src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ src/runtime/rx_costmodel.c
 	@if nm -u $@ | grep -E 'rx_gen_|aienos_cap_|rx_caproot_|rx_capadmin_|rx_world_|mmap|mprotect|fork|exec|dlopen|system' ; then \
@@ -734,13 +737,14 @@ test-costmodel: $(RX_CM_UNIT) test-cm-route
 	    cat $$dir/err.txt; exit 1; fi; \
 	  echo "mutant restore-op-clamp: killed by unsupported-op-not-aliased-to-matvec (exit $$rc)"
 
-$(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h src/runtime/rx_costmodel.h | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -c -o $@ tools/dagsim/dagsim.c
+$(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h tools/dagsim/dagsim_format.h tools/dagsim/dagsim_resolve.h src/cudapp_native.h src/runtime/rx_costmodel.h | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -c -o $@ tools/dagsim/dagsim.c
 	@if nm -u $@ | grep -E 'rx_gen_|aienos_cap_|rx_caproot_|rx_capadmin_|rx_world_|mmap|mprotect|fork|exec|dlopen|system' ; then \
 		echo "dagsim.o references an operation an offline evaluator must not have"; \
 		rm -f $@; exit 1; fi
 
-DS_OM = src/cudapp_om_dag_eval.c
+DS_OM = src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c
+DS_OM += src/cudapp_om_dag_jstr.c
 $(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) -Wl,--wrap=rx_cm_predict -lm
 
@@ -764,3 +768,15 @@ test-checkers-om:
 test-frag-packers-om:
 	sh tests/regalloc_om/packers.sh
 	python3 tests/regalloc_om/packers_mutants.py
+
+.PHONY: test-dagsim-parse-om
+test-dagsim-parse-om:
+	python3 tests/dagsim/parse_check.py
+
+.PHONY: test-dagsim-resolve-om
+test-dagsim-resolve-om:
+	python3 tests/dagsim/resolve_check.py
+
+.PHONY: test-dagsim-corpus-om
+test-dagsim-corpus-om:
+	sh tests/dagsim/corpus_gate.sh

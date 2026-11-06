@@ -7,7 +7,8 @@
 #   test-gpu-engine-backend-compile  syntax-checks src/omega_blackwell_engine.c (A3b1): -c only, no link, no device
 #   test-gpu-engine-prod-build       production build of GPU_PROD_TARGET (CUDA++: libomega_gpu.a; Omega: build/omegatool): links only, opens no device
 #   test-gpu-engine-mutants  removes each protection from src/omega_gpu_engine.c in a scratch
-#                            copy; the host test must fail each one (exit nonzero on a survivor)
+#                            copy; the host test must fail each one (exit nonzero on a survivor).
+#                            First proves the shared runner's JSON receipt escapes every string.
 #   test-gpu-engine-sim      (A3b2) the REAL engine core + Blackwell backend + vector wrapper against a simulated driver
 #                            (tests/fake_m16_native.c); host only, no device, no physics C sources
 #   test-gpu-engine-backend-mutants  (A3b2) one mutant per protection in the backend and the vector wrapper
@@ -17,7 +18,7 @@
 #   test-codegen-freestanding        (cut A.2) codegen hosted vs freestanding byte-identical, bounded code buffers
 #   test-gpu-engine-freestanding     the engine contract test and the platform contract test linked against
 #                                    those freestanding objects (host runner, opens no device)
-.PHONY: test-gpu-engine-compile test-gpu-engine test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim test-gpu-engine-backend-mutants test-gpu-engine-gb10-compile gpu-engine-freestanding test-gpu-engine-freestanding
+.PHONY: test-gpu-engine-compile test-gpu-engine test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim test-gpu-engine-backend-mutants test-gpu-engine-gb10-compile gpu-engine-freestanding test-gpu-engine-freestanding test-mutation-runner-json
 build/test_omega_gpu_engine_compile: tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c src/omega_gpu_engine.h src/cudapp_om_eng.c src/omega_eng_dec.h
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o $@ tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c src/cudapp_om_eng.c
@@ -30,7 +31,10 @@ build/test_omega_gpu_engine: tests/test_omega_gpu_engine.c src/omega_gpu_engine.
 test-gpu-engine: build/test_omega_gpu_engine
 	./build/test_omega_gpu_engine
 
-test-gpu-engine-mutants:
+test-mutation-runner-json:
+	sh tests/mutation_runner_json_test.sh
+
+test-gpu-engine-mutants: test-mutation-runner-json
 	sh tools/gpu_engine_mutations.sh
 
 # A3b1: the Blackwell backend includes physics headers (m16_native.h, nvrm.h), so it

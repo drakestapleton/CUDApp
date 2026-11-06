@@ -308,3 +308,50 @@ integrated API, retaining the successful non-NULL session-pointer contract.
 `/tmp/integ/6a-282.log/.rc` returned0: host/warp-sim reference and shape sweep,
 six generated source mutants plus the session-open abort control, NULL/non-NULL
 shell contract, byte-identical units and `crumb verify: OK: 90 crumbs current`.
+
+## Final union receipts (FinalInteg, 2026-11-06)
+
+Merged in order, with merge commits: stage6c
+`b8775eecf844a956a644f60405244c6157ce6de2`, stage6b
+`638975caf28c8b98c751d28ed81b5bccc84e513c`, fix/ci-280
+`2568a7e37edac91ca51761bbf226b2246e5e7ccd`, then the available stage6a
+`489f1c03806e0d4d5ee3c3ca018106ce2f1925eb`. Stage6a remains open;
+this is not the final containment claim.
+
+Converter lock is omega-bridge #77
+`29d9cff72676bcef41a067bdcf4d8b0711042bcd`, using dedicated worktree
+`/tmp/integ/bridge-final-29d9cff7`. All portable/freestanding units regenerated;
+the independent `om/units.sh --check` run returned0 and
+`PASS portable Omega units regenerate byte for byte` (artifact10426).
+
+C0 v3 is additive; immutable v1/v2 profiles were not edited. Two clean builds
+in `/tmp/integ/final-c0-a` and `/tmp/integ/final-c0-b` compared identical:
+aarch64 `d7649f223e766b9dd007f723206b3c794c61bbda19a0d83b985fa4834c28d8b8`,
+x86_64 `0601563603f26bac683f1ecfb5bbd9a9690f0edba581f5e7638075df807f4492`,
+PTX `3f104fbfb9f2a98c633b9fab39cf1f67caae009d3785f42238b1c5ae32739971`.
+`compat/cuda/test.sh /tmp/integ/final-c0-test` returned0 with both admissions,
+all14 refusal controls and empty CUDA-import diffs across v1/v2/v3
+(`CUDA-C0-PROFILE-TEST PASS`, artifact10427).
+
+The first union run (`/tmp/integ/final-full-first-failed.log`, rc2) exposed a
+standalone backend-mutant link missing `nvrm_alloc_scalar`; the provider is now
+explicit in that link. No mutant assertion changed.
+
+Freestanding builds install checked-in native C/header artifacts from
+`om/no-posix/gen/{aarch64linux,x86linux}` without requiring bridge or compiler
+regeneration during ordinary builds. `om/units.sh` owns their generation and
+`--check` compares both target sets under bridge#77. The generator uses pinned
+compiler oracle blobs `734f0a39` and `be8c5130`; native differential tests request
+these tools explicitly, separately from installing the production sources.
+Default-off migration flags remain header defaults rather than command-line
+definitions in the production freestanding build.
+
+CI source-citation repair tracks the fixed-producer predicate at
+`src/omega_numeric.c:1286`, retaining the same minimum and assertion. The drift
+baseline adopts upstream dagsim header blob `8ab62e55da5cb1049ccf912e6a14953ab3e92dc4`:
+its only changes from the previous oracle are the lifetime-refusal comment and
+`DS_REFUSED_LIFETIME` enum member, already adopted by the integrated header.
+
+Full-union host acceptance and exact-head CI remain pending. Chip, live-RM,
+VFIO and hardware qualification are **NOT_RUN**; these host receipts authorize
+no device operation or deployment.

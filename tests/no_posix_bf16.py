@@ -10,6 +10,9 @@ OUT = ROOT / 'build/no_posix_bf16'
 OUT.mkdir(parents=True, exist_ok=True)
 BRIDGE = Path(os.environ['OMEGA_BRIDGE'])
 ENV = dict(os.environ, OMEGA_NATIVE_OMC2=os.environ['OMEGA_OMC'])
+subprocess.run(['sh', ROOT / 'om/no-posix.sh', '--tools', OUT], check=True)
+ENV.update(OMEGA_NATIVE_OMC=str(OUT / 'tools/omc-gen'),
+           OMEGA_NATIVE_X86_OMC=str(OUT / 'tools/omc-x86'))
 NATIVE = ROOT / 'build/no_posix/native'
 SOURCE = ROOT / 'build/no_posix/sources/no_avbf.om'
 CALLER = ROOT / 'tests/no_posix_bf16.c'

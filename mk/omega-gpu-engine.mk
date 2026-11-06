@@ -127,11 +127,15 @@ test-gpu-serving-alloc: build/gpu_serving_alloc_count_test
 GPU_FS_DIR = build/gpu_fs
 GPU_NO_POSIX_DIR = build/no_posix/native
 GPU_NO_POSIX_OBJS = $(GPU_NO_POSIX_DIR)/omega_native.o $(GPU_NO_POSIX_DIR)/omega_api_defs.o
-$(GPU_NO_POSIX_OBJS) &: om/units.sh om/no-posix.sh om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om om/session/admit.om om/session/words.om om/session/park.om om/cmdlist/book.om om/streams/streams.om om/apiviews/no_avbf.om
+GPU_NO_POSIX_CHECKED = $(wildcard om/no-posix/gen/*/*)
+$(GPU_NO_POSIX_DIR)/.installed: om/no-posix.sh $(GPU_NO_POSIX_CHECKED) om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om om/session/admit.om om/session/words.om om/session/park.om om/cmdlist/book.om om/streams/streams.om om/apiviews/no_avbf.om
 	sh om/units.sh --native-no-posix
+	touch $@
+$(GPU_NO_POSIX_OBJS): $(GPU_NO_POSIX_DIR)/.installed
+	$(CC) -std=gnu11 -O2 -Wall -Wextra -Werror -Wmissing-prototypes -ffreestanding -fno-builtin -fno-stack-protector -include $(GPU_NO_POSIX_DIR)/omega_native.h -I$(GPU_NO_POSIX_DIR) -c -o $@ $(@:.o=.c)
 CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION ?= 0
 GPU_FS_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector \
-	-U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -DCUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION=$(CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) -Isrc -I$(GPU_NO_POSIX_DIR)
+	-U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY $(if $(filter-out 0,$(CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION)),-DCUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION=$(CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION)) -Isrc -I$(GPU_NO_POSIX_DIR)
 # P07 cut C (session part): the persistent session, the matmul and attention APIs, the serving reservation and the
 # bounded wait join the link. Their machine comes from an installed OmegaGpuPlatform; the Linux reference
 # (src/omega_gpu_platform_linux.c) is deliberately NOT in this list. Still outside it: the elementwise API, the

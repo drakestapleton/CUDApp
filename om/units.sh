@@ -1,8 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Regenerate checked portable Omega C and declarations for all canonical roots.
-# Seeded e5b32567 validates exactly the composed bytes lowered by bridge36.
-# The default portable mode uses no native compiler or executable-code trampoline.
+# Seeded e5b32567 validates the portable bytes lowered by the locked converter.
+# NO_POSIX additionally carries checked native sources for both supported ISAs.
 set -eu
 OMC_PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
 
@@ -319,8 +319,10 @@ if [ "${1:-}" = --check ]; then
   for f in $OUTS; do cmp -s "$T/$f" "$DEST/$f" || { echo "FAIL $DEST/$f differs from pinned tools"; bad=1; }; done
   for f in $OBSOLETE; do [ ! -e "$DEST/$f" ] || { echo "FAIL obsolete $DEST/$f remains"; bad=1; }; done
   [ "$bad" = 0 ] || exit 1
+  sh "$ROOT/om/no-posix.sh" --check "$ROOT/build/no_posix_regen"
   echo "PASS portable Omega units regenerate byte for byte"; exit 0
 fi
 for f in $OUTS; do cp "$T/$f" "$DEST/$f"; done
 for f in $OBSOLETE; do rm -f "$DEST/$f"; done
+sh "$ROOT/om/no-posix.sh" --generate "$ROOT/build/no_posix_regen"
 echo "wrote checked portable Omega units to $DEST"

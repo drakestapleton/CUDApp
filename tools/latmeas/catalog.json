@@ -153,7 +153,7 @@
       "encoder_stall": 5,
       "encoder": "5 (any fixed producer; mixed pairs need 6)",
       "encoder_file": "src/omega_numeric.c",
-      "encoder_line": 1258,
+      "encoder_line": 1286,
       "encoder_substr": "CTRL_STALL(p[t].w[3]) < 5u",
       "nak_stall": 6,
       "nak": "5 + 1 = 6 for mixed ALU/FMA",

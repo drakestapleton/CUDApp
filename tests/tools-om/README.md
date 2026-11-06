@@ -126,3 +126,26 @@ The two untaken branches cannot be reached without fault injection:
 
 Mutants (8, all killed): the `..` length, the `\` byte, the `MUFU_LG2` bound, the F2E4 marker, the 0xa5 fill
 check, the 4096-byte path bound, the sign of `rc` in the message, and the SM121 length check.
+
+## ampfam (`tools/ampere_families.c`, switch `..._TOOLS_AMPFAM`)
+
+`om/tools/ampfam.om` holds the step order of the 30 generator families, every specification field, which
+steps must encode on SM86 and which must be refused (`rc` −2 with 0 bytes), the short-circuit of a failing
+step and both messages, which name the source line of the former C (kept in place, so `__LINE__` matches).
+The C shell dispatches the generator id the unit asks for, runs the SM121 or SM86 encoder and prints the
+unit's text.
+
+`ampfam_stub.c` stands in for the 30 generators and both encoders and traces every call (generator id, name
+and specification bytes; encoder limits). Partition, from the source: the baseline (133 steps, 399 trace
+lines) and, at each of the 133 steps, ten outcomes: generator failure, generator `rc` 7, a refusal on an
+encode step, an SM121 length of 0, SM86 `rc` 1, 0, −1 and −2 against the step's expectation, SM86 bytes one
+more than SM121, SM86 bytes unchanged. 1331 cases compare stdout, stderr, exit and the trace byte for byte.
+With `TOOLS_OM_AMPFAM_REAL=1` both builds also link one `CUDAPP_AMPERE_CORPUS=1` library (real generators
+and encoders) and compare output, exit and every corpus file by name and sha256.
+
+Coverage of the oracle under the differential: lines 100% of 94, branches executed and taken 100% of 218,
+calls 100% of 120. No branch needs a justification.
+
+Mutants (9, all killed): the line of a message, the ternary-GEMV skip bound, the refusal `rc`, the append
+check, the residual mode field, the SM86 byte initialisation, the queries-per-CTA field, the SM121 length
+check and the GDN BF16 flag.

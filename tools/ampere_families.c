@@ -20,7 +20,7 @@
 #include "omega_blackwell_codegen_tc.h"
 #include "omega_blackwell_codegen_tc2.h"
 #include <stdio.h>
-
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM
 static BlackwellIRProgram program;
 static int encode(void)
 {
@@ -146,3 +146,95 @@ int main(void)
     puts("Ampere extended existing generator families encoded (host only)");
     return 0;
 }
+#else
+/* The step order, every specification, which steps must encode and which must be refused, the
+ * short-circuit of a failing step and the message (with the source line of the former C above) are
+ * om/tools/ampfam.om. This shell only calls what the unit asks for: the generator with the fields it
+ * gives, the SM121 encoder or the SM86 encoder, and prints the unit's text. The former C keeps its line
+ * numbers, so the messages name the same lines in both builds. */
+#include "cudapp_native.h"
+#include <stdlib.h>
+
+static BlackwellIRProgram program;
+static int generate(const uint64_t *v, uint64_t id)
+{
+#define U(i) ((uint32_t)v[i])
+    switch (id) {
+    case 1: { OmegaDecodeAttnSpec s = { .depth = U(0) }; return omega_blackwell_codegen_decode_attn_prog(&s, &program); }
+    case 2: { OmegaPrefillAttnSpec s = { .warps = U(0), .mode = U(1), .mirror = U(2) };
+              return omega_blackwell_codegen_prefill_attn_prog(&s, &program); }
+    case 3: { OmegaBf16GemvSpec s = { .k = U(0), .rows = U(1), .warps = U(2), .depth = U(3), .mask = U(4),
+                                      .ystride = U(5), .xbatch = U(6) };
+              return omega_blackwell_codegen_bf16_gemv_prog(&s, &program); }
+    case 4: case 5: { OmegaFp8GemvSpec s = { .k = U(0), .lane_bytes = U(1), .rows = U(2), .warps = U(3), .depth = U(4) };
+              return id == 4 ? omega_blackwell_codegen_fp8_gemv_prog(&s, &program) : omega_blackwell_codegen_fp8_gemv2_prog(&s, &program); }
+    case 6: { OmegaFp8GemmSpec s = { .k = U(0), .lane_bytes = U(1), .mt = U(2), .warps = U(3), .rowmap = U(4) };
+              return omega_blackwell_codegen_fp8gemm_prog(&s, &program); }
+    case 7: { OmegaRouterSpec s = { .warps = U(0), .depth = U(1), .experts = U(2), .shared = U(3) };
+              return omega_blackwell_codegen_router_prog(&s, &program); }
+    case 8: return omega_blackwell_codegen_pf_copy_prog(&program);
+    case 9: { OmegaRlSpec s = { .k = U(0), .e = U(1), .t = U(2) }; return omega_blackwell_codegen_rl_prog(&s, &program); }
+    case 10: { OmegaMcSpec s = { .h = U(0), .top_k = U(1) }; return omega_blackwell_codegen_mc_prog(&s, &program); }
+    case 11: return omega_blackwell_codegen_tc_probe_prog((int)v[0], &program);
+    case 12: return omega_blackwell_codegen_tc_peak_prog(U(0), U(1), U(2), U(3), &program);
+    case 13: return omega_blackwell_codegen_tc_bw_prog(U(0), U(1), U(2), &program);
+    case 14: { OmegaTcGemmSpec s = { .k = U(0), .rt = U(1), .ct = U(2), .warps = U(3) };
+               return omega_blackwell_codegen_tcgemm_prog(&s, &program); }
+    case 15: { OmegaTc2Spec s = { .k = U(0), .rt = U(1), .ct = U(2), .warps = U(3), .aqn = U(4), .epi = U(5),
+                                  .direct = U(6), .n = U(7) };
+               return omega_blackwell_codegen_tc2_prog(&s, &program); }
+    case 16: { OmegaDecSpec s = { .kind = (OmegaDecKind)v[0], .stride = U(1), .mode = U(2), .width = U(3) };
+               return omega_blackwell_codegen_dec_prog(&s, &program); }
+    case 17: { OmegaPqSpec s = { .k = U(0), .in_type = U(1) }; return omega_blackwell_codegen_pq_prog(&s, &program); }
+    case 18: { OmegaQgSpec s = { .k = U(0), .rt = U(1), .warps = U(2), .n = U(3) };
+               return omega_blackwell_codegen_qgemm_prog(&s, &program); }
+    case 19: return omega_blackwell_codegen_qmma_probe_prog((int)v[0], U(1), &program);
+    case 20: return omega_blackwell_codegen_qmma_peak_prog(U(0), U(1), U(2), U(3), &program);
+    case 21: return omega_blackwell_codegen_f2e4_probe_prog(&program);
+    case 22: { OmegaDecodeAttn256Spec s = { .depth = U(0), .prep = U(1), .multi = U(2), .q_heads = U(3),
+                                            .kv_heads = U(4), .q_per_cta = U(5) };
+               return omega_blackwell_codegen_decode_attn256_prog(&s, &program); }
+    case 23: { OmegaPrefillAttn256Spec s = { .q_heads = U(0), .kv_heads = U(1) };
+               return omega_blackwell_codegen_prefill_attn256_prog(&s, &program); }
+    case 24: case 25: case 26: case 27: case 28: {
+        OmegaGdnSpec s = { .ratio = U(0), .state_bf16 = U(1) };
+        return id == 24 ? omega_blackwell_codegen_gdn_prog(&s, &program)
+             : id == 25 ? omega_blackwell_codegen_gdn_multi_prog(&s, &program)
+             : id == 26 ? omega_blackwell_codegen_gdn_prep_prog(&s, &program)
+             : id == 27 ? omega_blackwell_codegen_gdn_scan_prog(&s, &program)
+             : omega_blackwell_codegen_gdn_post_prog(&s, &program); }
+    case 29: { OmegaGdnSpec s = { .copy = (int)v[0] }; return omega_blackwell_codegen_gdn_copy_prog(&s, &program); }
+    case 30: { OmegaTernGemvSpec s = { U(0), U(1), U(2), U(3), U(4), U(5), 0 };
+               return omega_blackwell_codegen_tern_gemv_prog(&s, &program); }
+    }
+#undef U
+    abort();
+}
+
+int main(void)
+{
+    const uint64_t facts[32] = { OMEGA_PATTN_MODE_FUSED, OMEGA_PATTN_MODE_ATTEND, OMEGA_PATTN_MODE_APPEND,
+        OMEGA_TC2_EPI_F32, OMEGA_TC2_EPI_SWIGLU, OMEGA_DEC_AXPY, OMEGA_DEC_XBOUND, OMEGA_DEC_RES, OMEGA_DEC_GATHER,
+        OMEGA_DEC_RES_ADD | OMEGA_DEC_RES_NORM, OMEGA_QG_IN_F32, OMEGA_QG_IN_BF16, OMEGA_GDN_COPY, OMEGA_GDN_ZERO,
+        OMEGA_TERN_LAYOUT_ROWMAJOR, OMEGA_TERN_LAYOUT_BLOCK, OMEGA_TERN_MAX_K, OMEGA_TERN_CHUNK_MAX, OMEGA_TERN_EPI_F32 };
+    uint64_t s[64] = {0}, act = 0;
+    uint8_t text[128], reference[16384], ampere[16384];
+    for (;;) {
+        if (omega_ampfam(&act, facts, 32, s, 64, text, sizeof(text))) abort();
+        if ((act & 255) == 1) s[2] = (uint64_t)(int64_t)generate(s + 16, s[9]);
+        else if (act == 2) {
+            size_t a = 0;
+            s[2] = (uint64_t)(int64_t)omega_bw_encode_program(&program, reference, sizeof(reference), &a);
+            s[3] = a;
+        } else if (act == 3) {
+            size_t b = s[10];
+            s[2] = (uint64_t)(int64_t)omega_gpu_encode_program_target(&program, 86, ampere, sizeof(ampere), &b);
+            s[4] = b;
+        } else if ((act & 255) == 4 || (act & 255) == 5) {
+            FILE *to = (act & 255) == 4 ? stderr : stdout;
+            fwrite(text, 1, act >> 8, to);
+            return (act & 255) == 4;
+        } else abort();
+    }
+}
+#endif

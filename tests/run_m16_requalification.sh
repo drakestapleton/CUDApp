@@ -48,6 +48,7 @@ NVRM_DEPS="-I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp
 echo -e "\n[*] Step 1: Compiling M16 binaries..."
 {
   gcc -O2 -Wall -Wextra -Werror \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
     -I./nvrm -I./m16 \
     -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
@@ -56,6 +57,7 @@ echo -e "\n[*] Step 1: Compiling M16 binaries..."
     nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c $NVRM_DEPS -o m16/m16_requalify
 
   gcc -O2 -Wall -Wextra -Werror \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
     -I./nvrm -I./m16 \
     -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \

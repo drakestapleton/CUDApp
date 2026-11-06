@@ -16,6 +16,7 @@ echo "Host: $(uname -n) ($(uname -m))"
 mkdir -p build
 echo -e "\n[*] Building lifecycle_gates..."
 gcc -O2 -Wall -Wextra -Werror \
+  -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC="${CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC:-0}" \
   -I./nvrm -I./m16 \
   -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
   -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \

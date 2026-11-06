@@ -6,6 +6,7 @@
 #include "omega_gpu_session.h"
 #include "omega_gpu_mem_cached.h"
 #include "cudapp_native.h"
+#include "omega_gpu_om_ir.h"
 #ifndef CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
 #define CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER 0
 #endif
@@ -46,6 +47,7 @@ int omega_gpu_gemm_cfg_ok(const OmegaGemmCfg *c) {
 
 /* ------------------------------------------------------------------ IR helpers */
 
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
 typedef struct { int bssy, bra; } Region;
 static Region skip_if_p0(Em *e) { Region r; r.bssy = bssy_fwd(e); r.bra = bra_if_p0_fwd(e); return r; }
 static void region_end(Em *e, Region r) { int at = here(e); bsync(e); patch_bra(e, r.bra, at); patch_bra(e, r.bssy, at + 1); }
@@ -69,7 +71,6 @@ static void mma(Em *e, OmegaGpuGemmType t, int d, int a, int b, unsigned bsub, i
  *   A fragment f = u * rt + i: row 16 (rt cy + i) + g + 8 (q & 1), k = 2 step cx + step u + r t + 4 r (q >> 1)
  *   B fragment f = j:          row 8 (ct cy + j) + g,             k = 2 step cx + step (q >> 1) + r t + 4 r (q & 1)
  * Element (row, k) of the source is at (row * row_stride + k * k_stride) * esz; past rows or kdim it is 0. */
-#if CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
 static int gen_pack(Em *e, const OmegaGemmCfg *c, int isb) {
     const int fp8 = c->type == OMEGA_GPU_GEMM_E4M3;
     const uint32_t ks = kstep(c->type), r = 4u / esz(c->type), F = isb ? c->ct : 2u * c->rt;
@@ -232,6 +233,7 @@ static int gen_main(Em *e, const OmegaGemmCfg *c) {
  * acc = +0; for k = 0 .. K-1: acc = fma(A[m][k], B[k][n], acc) with one FFMA (IEEE round-to-nearest, fused) per k.
  * A is dense M x K, B dense K x N, both f32 row-major. Lanes past N read column 0 and do not store.
  * mutant 1 (the red check): FADD instead of FFMA, the product never formed. */
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
 static int gen_ffma(Em *e, const OmegaGemmCfg *c) {
     int udesc = UV64(e), pa = V64(e), pb = V64(e), pc = V64(e), M = V(e), N = V(e), K = V(e);
     int tid = V(e), cx = V(e), cy = V(e), one = V(e), zr = V(e), n = V(e), vn = V(e), nc = V(e), tmp = V(e);
@@ -270,6 +272,7 @@ static int gen_ffma(Em *e, const OmegaGemmCfg *c) {
     tail(e);
     return e->err;
 }
+#endif
 
 /* Checked Omega records are replayed into the existing allocator/encoder. No GPU arithmetic lives here. */
 #if !CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
@@ -323,7 +326,9 @@ int omega_gpu_gemm_codegen(const OmegaGemmCfg *cfg, OmegaGemmKind kind, Blackwel
     rc = cfg->type == OMEGA_GPU_GEMM_F32_FFMA ? gen_ffma(&em, cfg)
        : kind == OMEGA_GEMM_K_MAIN ? gen_main(&em, cfg) : gen_pack(&em, cfg, kind == OMEGA_GEMM_K_PACK_B);
 #else
-    rc = cfg->type == OMEGA_GPU_GEMM_F32_FFMA ? gen_ffma(&em, cfg) : gen_omega(cfg, kind, prog);
+    if (cfg->type == OMEGA_GPU_GEMM_F32_FFMA)
+        rc = omega_gpu_om_ir_replay(omega_gemm_scalar, 0, (uint64_t)cfg->mutant, 0, 0, prog, NULL);
+    else rc = gen_omega(cfg, kind, prog);
 #endif
     if (rc != 0 || em.err || em.depth != 0) return -1;
     return omega_bw_regalloc_solve(prog);

@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:24:43Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:698ff41ed0fbf238eaa023176d494a5c4cbc5d7fc8d59b419a1b36ec5ae832f8",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 5,
+      "generated_at_commit": "9a2efca8f208fb979473ae94cf112e55e8eaea14",
+      "source_tree": "sha256:d37865b984f5d9d2771fdeb2248e8a4da39cf4c0534df0f28469164dc00faa24"
+    }
+  },
+  "name": "conv2d",
+  "purpose": "Implicit convolution composition over shared seeded scalar GEMM",
+  "schema_version": "1.0.0"
+}

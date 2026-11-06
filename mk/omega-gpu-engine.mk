@@ -390,7 +390,7 @@ test-gpu-platform-aien-effects: $(if $(GPU_AIEN_EFFECTS_SRCS),build/test_omega_g
 	c=$$(diff src/omega_gpu_platform_aien.c $$md/platform.c | grep -c '^>' || true); \
 	if [ "$$c" != 1 ]; then echo "MUTANT c-glue-drop BROKEN: changed $$c lines, not 1"; exit 1; fi; \
 	gcc $(GPU_AIEN_CFLAGS) -o $$md/test tests/test_omega_gpu_platform_aien_fx.c $$md/platform.c $(GPU_AIEN_OTHER_SRCS) \
-		$(CUDAPP_BINDING_SRCS); \
+		$(GPU_AIEN_BINDING); \
 	judge c-glue-drop $$md; \
 	echo "test-gpu-platform-aien-effects: $$k of 1 C-glue mutants killed"
 test-gpu-platform-aien-effects-mutants: test-gpu-platform-aien-effects

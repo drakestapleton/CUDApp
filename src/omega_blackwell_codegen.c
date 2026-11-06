@@ -9,6 +9,7 @@
 #else
 #include "cudapp_hosted_native.h"
 #endif
+#include "omega_gpu_om_ir.h"
 /* native v1 P07 cut A.2 (aienos#286, docs/numeric/OMEGA_GPU_NATIVE_BOUNDARY.md): with OMEGA_GPU_NO_POSIX this file
  * builds -ffreestanding. Code generation then runs only through the allocation-free entry points
  * (omega_blackwell_kernel_encode_into: the caller supplies the code buffer and its capacity); the allocating
@@ -1456,6 +1457,31 @@ int omega_bw_encode_program(const BlackwellIRProgram *prog, uint8_t *code_buf, s
     return 0;
 }
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
+#define BW_NATIVE_REPLAY(name) \
+    static uint32_t name##_replay(uint64_t *out, uint64_t kind, uint64_t a, uint64_t b, uint64_t c, \
+                                  void *ins, uint64_t ni, void *meta, uint64_t nm) { \
+        return name(out, kind, a, b, c, ins, ni, meta, nm); \
+    }
+BW_NATIVE_REPLAY(omega2_cg_i32)
+BW_NATIVE_REPLAY(omega2_cg_tens)
+BW_NATIVE_REPLAY(omega2_cg_loop)
+BW_NATIVE_REPLAY(omega2_cg_frag)
+BW_NATIVE_REPLAY(omega2_cg_block)
+#undef BW_NATIVE_REPLAY
+/* ABI and memory routing only; validation, schedules and lifetime hints are seeded Omega. */
+static int bw_om_matprog(OmegaOmIrUnit unit, const OmegaMatMulSpec *s, uint32_t grid,
+                         uint32_t u, uint32_t rt, uint32_t ct, int mutant, BlackwellIRProgram *p) {
+    if (!s || !p) return -1;
+    uint64_t controls = UINT64_MAX;
+    if (omega2_cg_par(&controls, grid, u, rt, ct, (uint64_t)(int64_t)mutant) != 0 ||
+        controls == UINT64_MAX) return -1;
+    uint64_t a = (uint64_t)s->m | ((uint64_t)s->k << 32);
+    uint64_t b = (uint64_t)s->n | ((uint64_t)(uint32_t)s->precision << 32);
+    return omega_gpu_om_ir_replay(unit, 0, a, b, controls, p, NULL) == OMEGA_OM_IR_OK ? 0 : -1;
+}
+#endif
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
 int omega_blackwell_codegen_matmul_i32_prog(const OmegaMatMulSpec *spec, BlackwellIRProgram *prog) {
     if (!spec || !prog) return -1;
     if (spec->m == 0 || spec->k == 0 || spec->n == 0) return -1;
@@ -1615,6 +1641,11 @@ int omega_blackwell_codegen_matmul_i32_prog(const OmegaMatMulSpec *spec, Blackwe
     }
     return 0;
 }
+#else
+int omega_blackwell_codegen_matmul_i32_prog(const OmegaMatMulSpec *s, BlackwellIRProgram *p) {
+    return bw_om_matprog(omega2_cg_i32_replay, s, 0, 0, 0, 0, 0, p);
+}
+#endif
 
 /* ---- native v1 P07 cut A.2: allocation-free kernel encoding ---------------------------------
  * The one place a solved IR program becomes a kernel. Hosted and freestanding builds both encode
@@ -1669,6 +1700,7 @@ int omega_blackwell_codegen_matmul_i32(const OmegaMatMulSpec *spec, OmegaBlackwe
 }
 #endif
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
 int omega_blackwell_codegen_matmul_tensor_prog(const OmegaMatMulSpec *spec, BlackwellIRProgram *prog) {
     if (!spec || !prog) return -1;
     if (spec->m == 0 || spec->k == 0 || spec->n == 0) return -1;
@@ -1937,6 +1969,11 @@ int omega_blackwell_codegen_matmul_tensor_prog(const OmegaMatMulSpec *spec, Blac
     }
     return 0;
 }
+#else
+int omega_blackwell_codegen_matmul_tensor_prog(const OmegaMatMulSpec *s, BlackwellIRProgram *p) {
+    return bw_om_matprog(omega2_cg_tens_replay, s, 0, 0, 0, 0, 0, p);
+}
+#endif
 
 #ifndef OMEGA_GPU_NO_POSIX
 int omega_blackwell_codegen_matmul_tensor(const OmegaMatMulSpec *spec, OmegaBlackwellKernel *kernel) {
@@ -1968,6 +2005,7 @@ int omega_blackwell_codegen_matmul_tensor(const OmegaMatMulSpec *spec, OmegaBlac
  * Loop-carried registers are kept live to the end of their loop (keep_alive) because
  * the allocator is a straight-line linear scan and knows nothing about back edges.
  */
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
 static void bw_keep_alive(BlackwellIRProgram *prog, int from_idx, int to_idx, int last_idx) {
     /* every vreg first defined in [from_idx, to_idx) stays live until last_idx */
     for (int v = 0; v < prog->regalloc.num_vregs; v++) {
@@ -2130,6 +2168,12 @@ int omega_blackwell_codegen_matmul_tensor_loop_prog(const OmegaMatMulSpec *spec,
 
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_matmul_tensor_loop_prog(const OmegaMatMulSpec *s, uint32_t grid,
+                                                    int mutant, BlackwellIRProgram *p) {
+    return bw_om_matprog(omega2_cg_loop_replay, s, grid, 0, 0, 0, mutant, p);
+}
+#endif
 
 #ifndef OMEGA_GPU_NO_POSIX
 int omega_blackwell_codegen_matmul_tensor_loop(const OmegaMatMulSpec *spec, uint32_t grid_x,
@@ -2164,6 +2208,7 @@ int omega_blackwell_codegen_matmul_tensor_loop(const OmegaMatMulSpec *spec, uint
 #define BW_FRAG_CTRL_HMMA  0x014fde00u /* stall 15, waits SB2 and SB4 (nvcc: dependent HMMA chain) */
 #define BW_FRAG_CTRL_NOP  0x000fdc00u /* stall 14 (nvcc, between dependent HMMAs) */
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
 static void bw_live_until(BlackwellIRProgram *prog, int vreg, int last_idx) {
     if (prog->regalloc.intervals[vreg].last_use < last_idx) prog->regalloc.intervals[vreg].last_use = last_idx;
 }
@@ -2300,6 +2345,12 @@ int omega_blackwell_codegen_matmul_frag_prog(const OmegaMatMulSpec *spec, uint32
     bw_keep_alive(prog, L_k, L_k_end, L_k_end);
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_matmul_frag_prog(const OmegaMatMulSpec *s, uint32_t grid, uint32_t u,
+                                             int mutant, BlackwellIRProgram *p) {
+    return bw_om_matprog(omega2_cg_frag_replay, s, grid, u, 0, 0, mutant, p);
+}
+#endif
 
 #ifndef OMEGA_GPU_NO_POSIX
 int omega_blackwell_codegen_matmul_frag(const OmegaMatMulSpec *spec, uint32_t grid_x, uint32_t unroll,
@@ -2334,6 +2385,7 @@ int omega_blackwell_codegen_matmul_frag(const OmegaMatMulSpec *spec, uint32_t gr
  * (grid_x, row blocks); column blocks advance by grid_x per pass of the column loop. */
 /* The C store offset of the last tile (rt-1, ct-1) is a signed 24-bit STG immediate; for wide N (lm_head,
  * 151936 columns) rt > 1 does not fit. Shared by the generator below and omega_matmul_frag_block_shape. */
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
 static int frag_block_store_fits(uint32_t rt, uint32_t ct, uint32_t n) {
     return (uint64_t)(rt - 1) * 16u * n * 4u + (uint64_t)(ct - 1) * 32u + 4u < (1ull << 23);
 }
@@ -2490,6 +2542,12 @@ int omega_blackwell_codegen_matmul_frag_block_prog(const OmegaMatMulSpec *spec, 
     bw_keep_alive(prog, L_k, L_k_end, L_k_end);
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_matmul_frag_block_prog(const OmegaMatMulSpec *s, uint32_t grid, uint32_t u,
+                                                   uint32_t rt, uint32_t ct, int mutant, BlackwellIRProgram *p) {
+    return bw_om_matprog(omega2_cg_block_replay, s, grid, u, rt, ct, mutant, p);
+}
+#endif
 
 #ifndef OMEGA_GPU_NO_POSIX
 int omega_blackwell_codegen_matmul_frag_block(const OmegaMatMulSpec *spec, uint32_t grid_x, uint32_t unroll,
@@ -2505,6 +2563,7 @@ int omega_blackwell_codegen_matmul_frag_block(const OmegaMatMulSpec *spec, uint3
  * row tiles (rt), and for rt > 1 the largest of 4, 2, 1 dividing the column tiles (ct); rt = ct = 1
  * is the single-tile kernel (decode rows). An rt whose last C tile's store offset does not fit the
  * 24-bit immediate (frag_block_store_fits: wide N such as lm_head) steps down, to 1 at the end. */
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
 void omega_matmul_frag_block_shape(uint32_t mt, uint32_t nt, uint32_t *rt, uint32_t *ct) {
     uint32_t r = mt % 4u == 0 ? 4u : mt % 2u == 0 ? 2u : 1u, c = 1u;
     for (; r > 1; r /= 2u) {
@@ -2525,6 +2584,24 @@ uint32_t omega_matmul_frag_unroll(uint32_t kp) {
     const uint32_t ks = kp / 16u;
     return ks % 4u == 0 ? 4u : ks % 2u == 0 ? 2u : 1u;
 }
+#else
+static uint32_t bw_mat_decide(uint64_t kind, uint64_t a, uint64_t b, uint64_t c) {
+    uint64_t result = 0;
+    if (omega2_cg_matmul(&result, kind, a, b, c) != 0) __builtin_trap();
+    return (uint32_t)result;
+}
+void omega_matmul_frag_block_shape(uint32_t mt, uint32_t nt, uint32_t *rt, uint32_t *ct) {
+    uint32_t shape = bw_mat_decide(0, mt, nt, 0);
+    *rt = shape & 255u;
+    *ct = shape >> 8;
+}
+uint32_t omega_matmul_frag_block_unroll(uint32_t kp, uint32_t rt, uint32_t ct) {
+    return bw_mat_decide(1, kp, rt, ct);
+}
+uint32_t omega_matmul_frag_unroll(uint32_t kp) {
+    return bw_mat_decide(2, kp, 0, 0);
+}
+#endif
 
 /* A block (mt, ks) holds rows 16mt..16mt+15 and columns 16ks..16ks+15 as 256 bf16 at element
  * (mt*KS + ks)*256; inside the block, element (rr, cc) sits at lane*8 + e with lane = (rr%8)*4 + (cc%8)/2
@@ -2946,6 +3023,7 @@ int omega_blackwell_test_codegen_variation(void) {
 #endif
 
 /* Declared registers: peak + 2 rounded up to 8 (see omega_blackwell_codegen.h for the chip evidence). */
+#ifdef CUDAPP_MIGRATION_PENDING_C_REGALLOC
 uint32_t omega_bw_gpr_declared(uint32_t peak) { return ((peak + 2u + 7u) / 8u) * 8u; }
 int omega_bw_gpr_declared_ok(uint32_t declared, uint32_t peak) { return declared % 8u == 0u && declared >= peak + 2u; }
 
@@ -2954,3 +3032,16 @@ int omega_bw_ir_set_gpr_limit(BlackwellIRProgram *prog, uint32_t limit) {
     prog->regalloc.gpr_limit = limit;
     return 0;
 }
+#else
+uint32_t omega_bw_gpr_declared(uint32_t peak) {
+    return (uint32_t)bw_ra_decide(6, peak, 0);
+}
+int omega_bw_gpr_declared_ok(uint32_t declared, uint32_t peak) {
+    return bw_ra_decide(7, declared, peak);
+}
+int omega_bw_ir_set_gpr_limit(BlackwellIRProgram *prog, uint32_t limit) {
+    if (!prog || bw_ra_decide(8, limit, 0) != 1) return -1;
+    prog->regalloc.gpr_limit = limit;
+    return 0;
+}
+#endif

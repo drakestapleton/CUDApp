@@ -69,3 +69,14 @@ The research in `docs/PAIN_POINTS.md` ranks what developers hit with CUDA and it
 | D12 | Work per answer, against the machine's own ceiling | simulator DONE; chip open |
 | D13 | Our own disassembler, in plain text | PLANNED (L386, Omega bar C6) |
 | D14 | Recover from a fault without restarting | PLANNED (L386, Omega bar C5) |
+
+## 2026-11-06: core allocator and matmul Omega lane (pending integration)
+
+The seeded core allocator, IR helpers, five matmul builders, scalar register/layout
+decisions and vecadd writer have host differential, ten recompiled Omega mutants,
+existing encoder fixtures and BF16 warp-simulator receipts in
+`evidence/regalloc-om/2026-11-06/README.md`. The full assigned file-set migration
+is not complete: realization, hazard analysis and remaining wrapper/packing/spec
+policy are still C. Native aggregate adoption and freestanding OM2 array support
+are pending integration; chip qualification is NOT_RUN. No roadmap row status is
+upgraded by this note.

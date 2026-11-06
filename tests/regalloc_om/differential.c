@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* Reuse, rather than copy, the repository's canonical builder corpus. */
+#define main regalloc_canonical_fixture_driver
+#include "../test_omega_codegen_freestanding.c"
+#undef main
 void legacy_omega_bw_ir_init(BlackwellIRProgram *);
 int legacy_omega_bw_ir_alloc_vreg(BlackwellIRProgram *);
 int legacy_omega_bw_ir_alloc_vreg64(BlackwellIRProgram *);
@@ -17,6 +21,12 @@ int legacy_omega_blackwell_codegen_matmul_tensor_prog(const OmegaMatMulSpec *, B
 int legacy_omega_blackwell_codegen_matmul_tensor_loop_prog(const OmegaMatMulSpec *, uint32_t, int, BlackwellIRProgram *);
 int legacy_omega_blackwell_codegen_matmul_frag_prog(const OmegaMatMulSpec *, uint32_t, uint32_t, int, BlackwellIRProgram *);
 int legacy_omega_blackwell_codegen_matmul_frag_block_prog(const OmegaMatMulSpec *, uint32_t, uint32_t, uint32_t, uint32_t, int, BlackwellIRProgram *);
+uint32_t legacy_omega_bw_gpr_declared(uint32_t);
+int legacy_omega_bw_gpr_declared_ok(uint32_t, uint32_t);
+int legacy_omega_bw_ir_set_gpr_limit(BlackwellIRProgram *, uint32_t);
+void legacy_omega_matmul_frag_block_shape(uint32_t, uint32_t, uint32_t *, uint32_t *);
+uint32_t legacy_omega_matmul_frag_block_unroll(uint32_t, uint32_t, uint32_t);
+uint32_t legacy_omega_matmul_frag_unroll(uint32_t);
 static BlackwellIRProgram a, b;
 static uint8_t ca[BW_MAX_IR_INSNS * 16], cb[BW_MAX_IR_INSNS * 16];
 static unsigned checked, refused, encoded;
@@ -24,7 +34,24 @@ static void fail(const char *what, unsigned at) { fprintf(stderr,"FAIL %s case=%
 static int same(void) { return memcmp(&a, &b, sizeof a) == 0; }
 static void compare(int ar, int br, unsigned at) {
     if (ar != br) fail("refusal", at);
-    if (!same()) fail("program/map/partial-state", at);
+    if (!same()) {
+        for (unsigned i=0;i<BW_MAX_IR_INSNS;++i)
+            if(memcmp(&a.insns[i],&b.insns[i],sizeof a.insns[i])) {
+                fprintf(stderr,"insn=%u op=%d/%d imm=%u/%u dst=%d/%d src=%d,%d,%d/%d,%d,%d ctrl=%x/%x\n",
+                        i,a.insns[i].op,b.insns[i].op,a.insns[i].imm,b.insns[i].imm,
+                        a.insns[i].dst_vreg,b.insns[i].dst_vreg,a.insns[i].src1_vreg,a.insns[i].src2_vreg,
+                        a.insns[i].src3_vreg,b.insns[i].src1_vreg,b.insns[i].src2_vreg,b.insns[i].src3_vreg,
+                        a.insns[i].control,b.insns[i].control);break;
+            }
+        for(unsigned v=0;v<BW_MAX_VREGS;++v)
+            if(memcmp(&a.regalloc.intervals[v],&b.regalloc.intervals[v],sizeof a.regalloc.intervals[v])) {
+                fprintf(stderr,"interval=%u first=%d/%d last=%d/%d phys=%d/%d\n",v,
+                        a.regalloc.intervals[v].first_def,b.regalloc.intervals[v].first_def,
+                        a.regalloc.intervals[v].last_use,b.regalloc.intervals[v].last_use,
+                        a.regalloc.intervals[v].phys_reg,b.regalloc.intervals[v].phys_reg);break;
+            }
+        fail("program/map/partial-state",at);
+    }
     if (ar != 0) { ++refused; return; }
     size_t na = 0, nb = 0;
     ar = omega_bw_encode_program(&a, ca, sizeof ca, &na);
@@ -92,6 +119,43 @@ static void builders(void) {
         }
     }
 }
+static int fixture_program(const Fixture *f, BlackwellIRProgram *p, int legacy) {
+    OmegaMatMulSpec s;
+    if (omega_matmul_spec_init(&s, f->m, f->k, f->n, f->prec)) return -1;
+    switch (f->kind) {
+    case FX_I32: return legacy ? legacy_omega_blackwell_codegen_matmul_i32_prog(&s,p) : omega_blackwell_codegen_matmul_i32_prog(&s,p);
+    case FX_TENSOR: return legacy ? legacy_omega_blackwell_codegen_matmul_tensor_prog(&s,p) : omega_blackwell_codegen_matmul_tensor_prog(&s,p);
+    case FX_LOOP: return legacy ? legacy_omega_blackwell_codegen_matmul_tensor_loop_prog(&s,f->grid_x,f->mutant,p) : omega_blackwell_codegen_matmul_tensor_loop_prog(&s,f->grid_x,f->mutant,p);
+    case FX_FRAG: return legacy ? legacy_omega_blackwell_codegen_matmul_frag_prog(&s,f->grid_x,fx_unroll(f),f->mutant,p) : omega_blackwell_codegen_matmul_frag_prog(&s,f->grid_x,fx_unroll(f),f->mutant,p);
+    case FX_BLOCK: return legacy ? legacy_omega_blackwell_codegen_matmul_frag_block_prog(&s,f->grid_x,fx_unroll(f),f->rt,f->ct,f->mutant,p) : omega_blackwell_codegen_matmul_frag_block_prog(&s,f->grid_x,fx_unroll(f),f->rt,f->ct,f->mutant,p);
+    }
+    return -1;
+}
+static void canonical_builders(void) {
+    for (size_t i=0;i<NFX;++i) {
+        memset(&a,0,sizeof a); memset(&b,0,sizeof b);
+        int ar=fixture_program(&FX[i],&a,0), br=fixture_program(&FX[i],&b,1);
+        compare(ar,br,checked++);
+    }
+}
+static void policies(void) {
+    static const uint32_t edge[]={0,1,2,7,8,127,128,129,245,246,247,UINT32_MAX-9,UINT32_MAX-2,UINT32_MAX};
+    for (unsigned i=0;i<10000;++i) {
+        uint32_t x=i<sizeof edge/sizeof edge[0] ? edge[i] : ((uint32_t)rand()<<1)^(uint32_t)rand();
+        uint32_t y=((uint32_t)rand()<<1)^(uint32_t)rand(), z=(uint32_t)rand();
+        if(omega_bw_gpr_declared(x)!=legacy_omega_bw_gpr_declared(x)) fail("declared-gpr",i);
+        if(omega_bw_gpr_declared_ok(x,y)!=legacy_omega_bw_gpr_declared_ok(x,y)) fail("declared-gpr-refusal",i);
+        omega_bw_ir_init(&a); legacy_omega_bw_ir_init(&b);
+        if(omega_bw_ir_set_gpr_limit(&a,x)!=legacy_omega_bw_ir_set_gpr_limit(&b,x)||!same()) fail("gpr-limit",i);
+        uint32_t ar,ac,br,bc;
+        omega_matmul_frag_block_shape(x,y,&ar,&ac);
+        legacy_omega_matmul_frag_block_shape(x,y,&br,&bc);
+        if(ar!=br||ac!=bc) fail("block-shape",i);
+        if(omega_matmul_frag_block_unroll(x,y,z)!=legacy_omega_matmul_frag_block_unroll(x,y,z)) fail("block-unroll",i);
+        if(omega_matmul_frag_unroll(x)!=legacy_omega_matmul_frag_unroll(x)) fail("frag-unroll",i);
+    }
+    puts("PASS scalar register and matmul policies cases=10000 including uint32 wrap boundaries");
+}
 int main(int argc, char **argv) {
     (void)argv; srand(1);
     /* Exhaust every public register-count boundary, including one refusal beyond capacity. */
@@ -99,7 +163,8 @@ int main(int argc, char **argv) {
     for(unsigned i=0;i<=256;++i) if(alloc_one(&a,1,0,0)!=alloc_one(&b,1,1,0)) fail("capacity",i);
     for(unsigned i=0;i<=32;++i) if(alloc_one(&a,1,0,1)!=alloc_one(&b,1,1,1)) fail("uniform-capacity",i);
     for(unsigned i=0;i<10000;++i) random_case(i);
-    if(argc==1) builders();
+    if(argc==1) { builders(); canonical_builders(); }
+    policies();
     b=a; b.insns[0].imm^=1;
     if(same()) fail("negative-record-flip-not-caught",0);
     printf("PASS regalloc differential cases=%u refused=%u encoded=%u record-flip=caught\n",checked,refused,encoded);

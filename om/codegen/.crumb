@@ -3,18 +3,18 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-06T04:17:26Z",
+      "compiled_at": "2026-11-06T04:51:14Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:026338226c1a37602a7212ced53feb0d5f90c04eabbafe4b9472b2846f14c9bc",
+      "digest": "sha256:f9e55ef9e0222efe6dbb7f601d9d1b431bfdb7b262f32f53ba88ef303ef3e8db",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 0,
-      "generated_at_commit": "ea760f7a705dfbe56b08141610148302d238c362",
-      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "files": 12,
+      "generated_at_commit": "6a855fc7e28b6910848c1a0f9110bf8cf91f43e6",
+      "source_tree": "sha256:0ff0ed7916f0c246f002cedafce2d24c7cacc09ab0703c46f0d266041648b952"
     }
   },
-  "layer": "--purpose",
-  "name": "--name",
-  "purpose": "codegen",
+  "layer": "codegen",
+  "name": "codegen",
+  "purpose": "Seeded Blackwell register allocation, IR helpers and matmul builders",
   "schema_version": "1.0.0"
 }

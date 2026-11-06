@@ -699,6 +699,9 @@ whether the caller's output pointer must be cleared in word 7, preserving
 the original order of argument refusal and that observable write. Policy
 refusals 1/2/3 map to the existing negative BAD_ARGS/TOO_LARGE/CODEGEN_FAIL
 codes. No public signature, manifest entry or version changes.
+Private locals also avoid OM2 reserved words: the attention allocation-size
+temporary is `partsz`, not the reserved `part`, so whole-unit OM2 composition
+does not fail at that identifier.
 
 The default is Omega. `CUDAPP_MIGRATION_PENDING_C_API_PLAN=1` selects the C
 oracle in that private header, not a fallback after an Omega refusal.

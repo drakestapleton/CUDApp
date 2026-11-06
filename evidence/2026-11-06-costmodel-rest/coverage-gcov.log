@@ -1,0 +1,31 @@
+File 'tests/runtime/cm_oracle.c'
+Lines executed:96.67% of 30
+Branches executed:100.00% of 24
+Taken at least once:79.17% of 24
+Calls executed:100.00% of 2
+Creating 'cm_oracle.c.gcov'
+
+File 'src/runtime/rx_costmodel.c'
+Lines executed:96.61% of 384
+Branches executed:99.36% of 312
+Taken at least once:80.45% of 312
+Calls executed:94.20% of 69
+Creating 'rx_costmodel.c.gcov'
+
+File 'src/runtime/rx_cm_math.h'
+Lines executed:92.31% of 13
+Branches executed:100.00% of 2
+Taken at least once:50.00% of 2
+Calls executed:88.89% of 9
+Creating 'rx_cm_math.h.gcov'
+
+File 'src/runtime/rx_cm_sort.h'
+Lines executed:85.71% of 7
+Branches executed:80.00% of 10
+Taken at least once:50.00% of 10
+Calls executed:100.00% of 1
+Creating 'rx_cm_sort.h.gcov'
+
+Lines executed:96.31% of 434
+
+rc=0

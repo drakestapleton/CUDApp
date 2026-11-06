@@ -70,6 +70,18 @@ v2=({uint64_t _a=v2;uint64_t _b=o_get(v1, v1_n, v3, 5);o_op(1, 5, _a,_b);});
 }
 return o_leave(v2);
 }
+if(({uint64_t _a=v0;uint64_t _b=2ULL;o_op(6, 5, _a,_b);})){
+if(({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=o_get(v1, v1_n, 1ULL, 5);o_op(8, 5, _a,_b);})){
+return o_leave(1ULL);
+}
+return o_leave(0ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=3ULL;o_op(6, 5, _a,_b);})){
+return o_leave(({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=o_get(v1, v1_n, 1ULL, 5);o_op(1, 5, _a,_b);}));
+}
+if(({uint64_t _a=v0;uint64_t _b=4ULL;o_op(6, 5, _a,_b);})){
+return o_leave(({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=o_get(v1, v1_n, 1ULL, 5);o_op(2, 5, _a,_b);}));
+}
 return o_leave(0ULL);
 }
 uint32_t omega_cm_route(uint64_t *result, volatile uint64_t p0, void *p1, uint64_t p1_n){

@@ -13,14 +13,14 @@ $(OUT_DIR)/artifact_text_unit: tests/runtime/artifact_text_unit.c src/cudapp_nat
 	$(CC) $(CFLAGS) -o $@ tests/runtime/artifact_text_unit.c src/cudapp_om_artifact_parse.c
 
 $(OUT_DIR)/cm_math_unit: tests/runtime/cm_math_unit.c src/cudapp_native.h src/cudapp_om_cm_math.c | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/runtime/cm_math_unit.c src/cudapp_om_cm_math.c -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/runtime/cm_math_unit.c src/cudapp_om_cm_math.c -lm
 
 $(OUT_DIR)/cm_oracle_diff.o: tests/runtime/cm_oracle.c src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_math.h src/runtime/rx_cm_sort.h src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ $<
 $(OUT_DIR)/cm_oracle_contracted.o: tests/runtime/cm_oracle.c src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_math.h src/runtime/rx_cm_sort.h src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=fast -c -o $@ $<
 $(OUT_DIR)/cm_blob_unit: tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o src/cudapp_native.h $(RX_CM_OBJ) $(wildcard src/cudapp_om_cm_*.c) src/sha256.c | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c -lm
 
 test-host-policy: $(OUT_DIR)/host_policy_unit $(OUT_DIR)/cm_sort_unit $(OUT_DIR)/artifact_text_unit $(OUT_DIR)/cm_math_unit $(OUT_DIR)/cm_blob_unit
 	./$(OUT_DIR)/host_policy_unit
@@ -33,11 +33,11 @@ test-host-policy: $(OUT_DIR)/host_policy_unit $(OUT_DIR)/cm_sort_unit $(OUT_DIR)
 .PHONY: test-cm-decision-differential
 CM_DIFF_WRAP = -Wl,--wrap=rx_cm_decide -Wl,--wrap=rx_cm_predict -Wl,--wrap=rx_cm_init -Wl,--wrap=rx_cm_observe -Wl,--wrap=rx_cm_calibrate -Wl,--wrap=rx_cm_charge
 $(OUT_DIR)/cm_decision_diff: tests/runtime/rx_costmodel_unit.c tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) src/runtime/rx_costmodel.h src/cudapp_native.h $(wildcard src/cudapp_om_cm_*.c) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/runtime/rx_costmodel_unit.c tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c $(CM_DIFF_WRAP) -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/runtime/rx_costmodel_unit.c tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c $(CM_DIFF_WRAP) -lm
 $(OUT_DIR)/cm_decision_replay: tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) src/cudapp_native.h $(wildcard src/cudapp_om_cm_*.c) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -DCM_DIFF_REPLAY_MAIN -o $@ tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c $(CM_DIFF_WRAP) -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -DCM_DIFF_REPLAY_MAIN -o $@ tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c $(CM_DIFF_WRAP) -lm
 $(OUT_DIR)/cm_decision_contracted: tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_contracted.o $(RX_CM_OBJ) src/cudapp_native.h $(wildcard src/cudapp_om_cm_*.c) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -DCM_DIFF_REPLAY_MAIN -DCM_DIFF_OUTPUT_ONLY -o $@ tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_contracted.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c -Wl,--wrap=rx_cm_decide -Wl,--wrap=rx_cm_predict -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -DCM_DIFF_REPLAY_MAIN -DCM_DIFF_OUTPUT_ONLY -o $@ tests/runtime/cm_decision_diff.c $(OUT_DIR)/cm_oracle_contracted.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c -Wl,--wrap=rx_cm_decide -Wl,--wrap=rx_cm_predict -lm
 test-cm-decision-differential: $(OUT_DIR)/cm_decision_diff $(OUT_DIR)/cm_decision_replay $(OUT_DIR)/cm_decision_contracted
 	./$(OUT_DIR)/cm_decision_diff
 	@ulimit -c 0; if ./$(OUT_DIR)/cm_decision_contracted >$(OUT_DIR)/cm_contraction_control.log 2>&1; then \

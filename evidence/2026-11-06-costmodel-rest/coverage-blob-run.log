@@ -1,0 +1,4 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/cm-full-cov-v5qvhlky/blob
+CM BLOB/DIGEST differential PASS (native/big-endian headers, bit mutants, SHA-256 block/tail boundaries)
+
+rc=0

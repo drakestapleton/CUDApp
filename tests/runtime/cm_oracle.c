@@ -15,6 +15,7 @@
 #define CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION 1
 #define CUDAPP_MIGRATION_PENDING_C_CM_BLOB 1
 #define CUDAPP_MIGRATION_PENDING_C_CM_DIGEST 1
+#define CUDAPP_MIGRATION_PENDING_C_CM_ROUTE 1
 #define rx_cm_default_policy oracle_cm_default_policy
 #define rx_cm_init oracle_cm_init
 #define rx_cm_observe oracle_cm_observe

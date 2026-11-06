@@ -1,0 +1,77 @@
+        -:    0:Source:src/runtime/rx_cm_sort.h
+        -:    0:Graph:/tmp/cm-full-cov-v5qvhlky/oracle.gcno
+        -:    0:Data:/tmp/cm-full-cov-v5qvhlky/oracle.gcda
+        -:    0:Runs:2
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#ifndef RX_CM_SORT_H
+        -:    3:#define RX_CM_SORT_H
+        -:    4:#include "cudapp_native.h"
+        -:    5:#include <stdlib.h>
+        -:    6:#include <string.h>
+        -:    7:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_SORT
+        -:    8:#define CUDAPP_MIGRATION_PENDING_C_CM_SORT 0
+        -:    9:#endif
+        -:   10:#if CUDAPP_MIGRATION_PENDING_C_CM_SORT
+        -:   11:/* Total comparator: resolves formerly unspecified NaN and signed-zero ties. */
+function rx_cm_cmp called 2083 returned 100% blocks executed 67%
+     2083:   12:static int rx_cm_cmp(const void *pa, const void *pb) {
+        -:   13:    double a, b; uint64_t ab, bb;
+     2083:   14:    memcpy(&a,pa,8); memcpy(&b,pb,8); memcpy(&ab,pa,8); memcpy(&bb,pb,8);
+    2083*:   15:    if (a != a) { if (b == b) return 1; }
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2083
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    2083*:   16:    else { if (b != b) return -1; if (a < b) return -1; if (a > b) return 1; }
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2083
+branch  2 taken 994 (fallthrough)
+branch  3 taken 1089
+branch  4 taken 1089 (fallthrough)
+branch  5 taken 0
+    #####:   17:    return (ab > bb) - (ab < bb);
+        -:   18:}
+        -:   19:#endif
+function rx_cm_sort called 1 returned 100% blocks executed 100%
+        1:   20:static inline int rx_cm_sort(double *values, size_t n) {
+        -:   21:#if CUDAPP_MIGRATION_PENDING_C_CM_SORT
+        1:   22:    qsort(values,n,sizeof *values,rx_cm_cmp); return 0;
+call    0 returned 1
+        -:   23:#else
+        -:   24:    if (n < 2) return 0;
+        -:   25:    if (n > SIZE_MAX / sizeof *values) return -1;
+        -:   26:    uint64_t left[256]={0}, right[256]={0}, out[256]={0}, meta[4]={0}, done;
+        -:   27:    for (size_t i=0;i<n;i+=256) {
+        -:   28:        size_t count=n-i<256?n-i:256;
+        -:   29:        memcpy(left,values+i,count*sizeof *values);meta[0]=count;meta[1]=0;meta[2]=0;
+        -:   30:        if (omega_cm_sort(&done,left,256,right,256,out,256,meta,4) || done!=count) return -1;
+        -:   31:        memcpy(values+i,left,count*sizeof *values);
+        -:   32:    }
+        -:   33:    if (n <= 256) return 0;
+        -:   34:    double *scratch = malloc(n * sizeof *values);
+        -:   35:    if (!scratch) return -1;
+        -:   36:    double *src=values,*dst=scratch;
+        -:   37:    for (size_t width=256;width<n;) {
+        -:   38:        for (size_t start=0;start<n;) {
+        -:   39:            size_t mid=n-start<width?n:start+width;
+        -:   40:            size_t end=n-mid<width?n:mid+width;
+        -:   41:            size_t a=start,b=mid,k=start;
+        -:   42:            while(a<mid || b<end) {
+        -:   43:                size_t na=mid-a<256?mid-a:256,nb=end-b<256?end-b:256;
+        -:   44:                memcpy(left,src+a,na*sizeof *values);memcpy(right,src+b,nb*sizeof *values);
+        -:   45:                meta[0]=na;meta[1]=nb;meta[2]=1;
+        -:   46:                if (omega_cm_sort(&done,left,256,right,256,out,256,meta,4) || !done || done>256 || meta[2]>na || meta[3]>nb || done!=meta[2]+meta[3]) { free(scratch);return -1; }
+        -:   47:                memcpy(dst+k,out,(size_t)done*sizeof *values);
+        -:   48:                a+=(size_t)meta[2];b+=(size_t)meta[3];k+=(size_t)done;
+        -:   49:            }
+        -:   50:            start=end;
+        -:   51:        }
+        -:   52:        double *swap=src;src=dst;dst=swap;
+        -:   53:        if(width>n/2)break;
+        -:   54:        width*=2;
+        -:   55:    }
+        -:   56:    if(src!=values)memcpy(values,src,n*sizeof *values);
+        -:   57:    free(scratch);return 0;
+        -:   58:#endif
+        -:   59:}
+        -:   60:#endif

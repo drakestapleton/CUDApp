@@ -1,0 +1,4 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/cm-route-cov-i5zxyuln/unit
+PASS cm route C oracle, SHA block boundaries and blob transport
+
+rc=0

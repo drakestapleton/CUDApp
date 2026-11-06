@@ -671,6 +671,7 @@ DS_CLI = $(OUT_DIR)/dagsim
 DS_SHA_SRC = src/sha256.c
 RX_CM_OBJ = $(OUT_DIR)/rx_costmodel.o
 RX_CM_BINDING = src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c
+RX_CM_BINDING += src/cudapp_om_cm_route.c
 
 $(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_sort.h src/runtime/rx_cm_math.h src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ src/runtime/rx_costmodel.c
@@ -683,9 +684,22 @@ $(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/
 .PHONY: test-costmodel
 RX_CM_UNIT = $(OUT_DIR)/rx_costmodel_unit
 $(RX_CM_UNIT): tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -o $@ tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
 
-test-costmodel: $(RX_CM_UNIT)
+$(OUT_DIR)/cm_route_unit: tests/runtime/cm_route_unit.c src/cudapp_om_cm_route.c | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Isrc -o $@ $<
+
+$(OUT_DIR)/cm_route_oracle: tests/runtime/cm_route_oracle.c src/runtime/rx_costmodel.c $(RX_CM_BINDING) $(DS_SHA_SRC) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Isrc -o $@ $< $(RX_CM_BINDING) $(DS_SHA_SRC) -lm
+
+.PHONY: test-cm-route
+test-cm-route: $(OUT_DIR)/cm_route_unit $(OUT_DIR)/cm_route_oracle
+	./$(OUT_DIR)/cm_route_unit
+	./$(OUT_DIR)/cm_route_oracle
+	@if ./$(OUT_DIR)/cm_route_unit --red; then echo "FAIL route red control survived"; exit 1; fi
+	python3 tests/runtime/cm_route_mutants.py
+
+test-costmodel: $(RX_CM_UNIT) test-cm-route
 	./$(RX_CM_UNIT)
 	@set -eu; dir=$(OUT_DIR)/costmodel-mutant; rm -rf $$dir; mkdir -p $$dir; \
 	  sed "/CM704:refuse-unsupported-op/c\\    uint32_t op = f && f->op < RX_CM_OPS ? f->op : RX_CM_OPS - 1u; /* CM704:refuse-unsupported-op */" \
@@ -693,7 +707,7 @@ test-costmodel: $(RX_CM_UNIT)
 	  if cmp -s src/runtime/rx_costmodel.c $$dir/rx_costmodel.c; then \
 	    echo "mutant restore-op-clamp: sed changed nothing"; exit 1; fi; \
 	  $(CC) $(CFLAGS) -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_CM_FEATURES=1 -c -o $$dir/rx_costmodel.o $$dir/rx_costmodel.c; \
-	  $(CC) $(CFLAGS) -o $$dir/unit tests/runtime/rx_costmodel_unit.c $$dir/rx_costmodel.o $(DS_SHA_SRC) $(RX_CM_BINDING) -lm; \
+	  $(CC) $(CFLAGS) -ffp-contract=off -o $$dir/unit tests/runtime/rx_costmodel_unit.c $$dir/rx_costmodel.o $(DS_SHA_SRC) $(RX_CM_BINDING) -lm; \
 	  rc=0; $$dir/unit refuse > $$dir/out.txt 2> $$dir/err.txt || rc=$$?; \
 	  if [ $$rc -eq 0 ] || ! grep -q unsupported-op-not-aliased-to-matvec $$dir/err.txt; then \
 	    echo "mutant restore-op-clamp was not killed by unsupported-op-not-aliased-to-matvec (exit $$rc)"; \
@@ -707,10 +721,10 @@ $(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h src/runtime/rx_costmodel.
 		rm -f $@; exit 1; fi
 
 $(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -Wl,--wrap=rx_cm_predict -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -Wl,--wrap=rx_cm_predict -lm
 
 $(DS_CLI): tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
+	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
 
 test-dagsim: $(DS_UNIT) $(DS_CLI)
 	./$(DS_UNIT)

@@ -43,6 +43,7 @@ int oracle_cm_observe(RxCostModel *, const RxCmFeatures *, uint32_t, const RxCmO
 double oracle_cm_calibrate(RxCostModel *, const RxCmFeatures *, const uint32_t *, const uint64_t *, uint32_t, double);
 void oracle_cm_charge(RxCostModel *, uint64_t, uint64_t);
 static void numeric(const char *field, double a, double b) {
+    if (isnan(a) && isnan(b)) return; /* Payloads are not part of the numeric contract. */
     uint64_t x, y;
     memcpy(&x, &a, 8); memcpy(&y, &b, 8);
     x = x >> 63 ? ~x : x | UINT64_C(0x8000000000000000);
@@ -98,9 +99,7 @@ double __wrap_rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint3
     if (m) memcpy(&expected,m,sizeof expected);
     double reference=oracle_cm_calibrate(m ? &expected : NULL,f,arm,ps,n,q);
     double actual=__real_rx_cm_calibrate(m,f,arm,ps,n,q);
-    uint64_t a,b;
-    memcpy(&a,&actual,sizeof a); memcpy(&b,&reference,sizeof b);
-    assert(a==b);
+    numeric("calibration",actual,reference);
     if (m) state_equal("calibrate",m,&expected);
     ++calibrations;
     return actual;
@@ -147,6 +146,7 @@ static uint32_t random_word(void) {
     return (uint32_t)(seed >> 32);
 }
 __attribute__((constructor)) static void random_cases(void) {
+    numeric("NaN class",nan("1"),nan("2"));
     const char *replay = getenv("CM_DIFF_REPLAY");
     if (replay) {
         struct DiffCase c;

@@ -1,0 +1,18 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/cm-full-cov-v5qvhlky/unit
+    held-out synthetic (truth in basis): rmse 0.085 log2 (noise 0.08), coverage 80%: 0.825, 95%: 0.964
+    held-out synthetic (truth outside basis): rmse 0.093 log2 (noise 0.08), coverage 80%: 0.945, 95%: 0.997
+    calibration scale after drift: 3.23
+    80% coverage on later, drifted data: 0.323 before calibration, 0.820 after
+    model blob: 28112 bytes
+checks 127 failures 0
+CM LIBM actual-inputs mode=1 calls=332606 max_ulp=1 input=3ff0fbf55f8bbeaf candidate=3fb60c1ef82f0909 glibc=3fb60c1ef82f0908
+CM LIBM actual-inputs mode=2 calls=1 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=3 calls=14025 max_ulp=1 input=bfa53cdaf881f386 candidate=3feeb325c9a99db2 glibc=3feeb325c9a99db3
+CM LIBM actual-inputs mode=4 calls=20931 max_ulp=1 input=4042815aaf6527ba candidate=42401e25fcdb3a52 glibc=42401e25fcdb3a51
+CM LIBM actual-inputs mode=5 calls=411586 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=6 calls=28050 max_ulp=2 input=3fea66d1c80fe481 candidate=3fcf242eccf286be glibc=3fcf242eccf286c0
+CM LIBM actual-inputs mode=7 calls=300 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM DECISION differential PASS decisions=21058 predictions=8617 max_numeric_ulp=0 field=none candidate=0x0p+0 oracle=0x0p+0
+CM STATE differential PASS initializations=21 observations=4083 calibrations=3 charges=4
+
+rc=0

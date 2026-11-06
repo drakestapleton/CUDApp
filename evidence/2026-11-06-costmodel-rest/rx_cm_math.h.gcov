@@ -1,0 +1,62 @@
+        -:    0:Source:src/runtime/rx_cm_math.h
+        -:    0:Graph:/tmp/cm-full-cov-v5qvhlky/oracle.gcno
+        -:    0:Data:/tmp/cm-full-cov-v5qvhlky/oracle.gcda
+        -:    0:Runs:2
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#ifndef RX_CM_MATH_H
+        -:    3:#define RX_CM_MATH_H
+        -:    4:#include "cudapp_native.h"
+        -:    5:#include <math.h>
+        -:    6:#include <stdint.h>
+        -:    7:#include <string.h>
+        -:    8:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_MATH
+        -:    9:#define CUDAPP_MIGRATION_PENDING_C_CM_MATH 0
+        -:   10:#endif
+        -:   11:#if !CUDAPP_MIGRATION_PENDING_C_CM_MATH
+        -:   12:/* Binary64 transport only. Numerical computation and exceptional-value policy
+        -:   13: * are in the first-party Omega unit, not a host libm call. */
+function rx_host_math called 807499 returned 100% blocks executed 83%
+   807499:   14:static inline double rx_host_math(unsigned mode, double x) {
+        -:   15:    uint64_t input, output;
+   807499:   16:    memcpy(&input, &x, sizeof input);
+  807499*:   17:    if (omega_cm_math(&output, mode, input) != OMEGA_OK) return NAN;
+call    0 returned 807499
+branch  1 taken 0 (fallthrough)
+branch  2 taken 807499
+   807499:   18:    memcpy(&x, &output, sizeof x);
+   807499:   19:    return x;
+        -:   20:}
+function rx_host_log called 0 returned 0% blocks executed 0%
+    #####:   21:static inline double rx_host_log(double x) { return rx_host_math(0, x); }
+call    0 never executed
+function rx_host_log2 called 332606 returned 100% blocks executed 100%
+   332606:   22:static inline double rx_host_log2(double x) { return rx_host_math(1, x); }
+call    0 returned 332606
+function rx_host_ceil called 1 returned 100% blocks executed 100%
+        1:   23:static inline double rx_host_ceil(double x) { return rx_host_math(2, x); }
+call    0 returned 1
+function rx_host_exp called 14025 returned 100% blocks executed 100%
+    14025:   24:static inline double rx_host_exp(double x) { return rx_host_math(3, x); }
+call    0 returned 14025
+function rx_host_exp2 called 20931 returned 100% blocks executed 100%
+    20931:   25:static inline double rx_host_exp2(double x) { return rx_host_math(4, x); }
+call    0 returned 20931
+function rx_host_sqrt called 411586 returned 100% blocks executed 100%
+   411586:   26:static inline double rx_host_sqrt(double x) { return rx_host_math(5, x); }
+call    0 returned 411586
+function rx_host_erfc called 28050 returned 100% blocks executed 100%
+    28050:   27:static inline double rx_host_erfc(double x) { return rx_host_math(6, x); }
+call    0 returned 28050
+function rx_host_fabs called 300 returned 100% blocks executed 100%
+      300:   28:static inline double rx_host_fabs(double x) { return rx_host_math(7, x); }
+call    0 returned 300
+        -:   29:#define log rx_host_log
+        -:   30:#define log2 rx_host_log2
+        -:   31:#define ceil rx_host_ceil
+        -:   32:#define exp rx_host_exp
+        -:   33:#define exp2 rx_host_exp2
+        -:   34:#define sqrt rx_host_sqrt
+        -:   35:#define erfc rx_host_erfc
+        -:   36:#define fabs rx_host_fabs
+        -:   37:#endif
+        -:   38:#endif

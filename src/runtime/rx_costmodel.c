@@ -63,6 +63,22 @@ _Static_assert(RX_CM_CELL_NONE >= RX_CM_CELLS,
 #ifndef CUDAPP_MIGRATION_PENDING_C_CM_DIGEST
 #define CUDAPP_MIGRATION_PENDING_C_CM_DIGEST 0
 #endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+#define CUDAPP_MIGRATION_PENDING_C_CM_ROUTE 0
+#endif
+
+/* Host pointer validation stays here; scalar admission and wire offsets do not. */
+static uint64_t cm_route2(unsigned mode, uint64_t a, uint64_t b) {
+#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+    if (mode == 2) return a < b;
+    if (mode == 3) return a + b;
+    return a - b;
+#else
+    uint64_t data[16] = {a, b}, result;
+    if (omega_cm_route(&result, mode, data, 16) != OMEGA_OK) abort();
+    return result;
+#endif
+}
 
 
 #if CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
@@ -294,7 +310,7 @@ static int quiet_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t a
     RxCmFeatures g = *f;
     g.pressure = 0;
     uint32_t cell = rx_cm_cell(&g);
-    if (cell >= RX_CM_CELLS) return 0;
+    if (!cm_route2(2, cell, RX_CM_CELLS)) return 0;
     const RxCmArmStats *b = &m->cell[cell][arm];
     double phi[RX_CM_D];
     rx_cm_basis(f, phi);
@@ -318,9 +334,10 @@ int rx_cm_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm,
                   RxCmPrediction *out) {
     if (!out) return RX_CM_ERR_ARG;
     memset(out, 0, sizeof *out);
-    if (!m || !f || arm >= m->n_arms) return RX_CM_ERR_ARG;
+    if (!m || !f) return RX_CM_ERR_ARG;
+    if (!cm_route2(2, arm, m->n_arms)) return RX_CM_ERR_ARG;
     uint32_t cell = rx_cm_cell(f);
-    if (cell >= RX_CM_CELLS) {
+    if (!cm_route2(2, cell, RX_CM_CELLS)) {
         out->refused = 1;
         return RX_CM_ERR_UNSUPPORTED;
     }
@@ -382,9 +399,10 @@ int rx_cm_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm,
 }
 
 int rx_cm_observe(RxCostModel *m, const RxCmFeatures *f, uint32_t arm, const RxCmObservation *o) {
-    if (!m || !f || !o || arm >= m->n_arms) return RX_CM_ERR_ARG;
+    if (!m || !f || !o) return RX_CM_ERR_ARG;
+    if (!cm_route2(2, arm, m->n_arms)) return RX_CM_ERR_ARG;
     uint32_t cell = rx_cm_cell(f);
-    if (cell >= RX_CM_CELLS) return RX_CM_ERR_UNSUPPORTED;
+    if (!cm_route2(2, cell, RX_CM_CELLS)) return RX_CM_ERR_UNSUPPORTED;
     RxCmArmStats *s = &m->cell[cell][arm];
 #if !CUDAPP_MIGRATION_PENDING_C_CM_STATS
     uint64_t words[64] = {0}, stage;
@@ -789,14 +807,20 @@ static void cm_sha256(const uint8_t *data, size_t n, uint8_t out[32]) {
     uint64_t state[16];
     uint8_t block[128];
     if (cm_digest_step(0, state, block)) abort();
-    size_t offset = 0;
-    for (size_t i = 0; i < n / 64; ++i) {
-        memcpy(block, data + offset, 64);
+#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+    size_t blocks = n / 64, tail = n % 64, offset = blocks * 64;
+#else
+    uint64_t plan[16] = {n}, result;
+    if (omega_cm_route(&result, 0, plan, 16) != OMEGA_OK || result != 1) abort();
+    size_t blocks = (size_t)plan[1], tail = (size_t)plan[2], offset = (size_t)plan[3];
+#endif
+    const uint8_t *cursor = data;
+    for (size_t i = 0; i < blocks; ++i, cursor += 64) {
+        memcpy(block, cursor, 64);
         if (cm_digest_step(1, state, block)) abort();
-        offset += 64;
     }
-    state[9] = n - offset;
-    memcpy(block, data + offset, n - offset);
+    state[9] = tail;
+    memcpy(block, data + offset, tail);
     if (cm_digest_step(2, state, block)) abort();
     memcpy(out, block, 32);
 }
@@ -811,11 +835,26 @@ static int cm_digest_equal(const uint8_t a[32], const uint8_t b[32]) {
 
 static size_t body_size(void) {
     const RxCostModel *m = 0;
+#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
     return sizeof m->cell + sizeof m->power_mw + sizeof m->verify_ns + sizeof m->synth_ns +
            sizeof m->code_bytes + sizeof m->sd_scale;
+#else
+    uint64_t sizes[16] = {sizeof m->cell, sizeof m->power_mw, sizeof m->verify_ns,
+                          sizeof m->synth_ns, sizeof m->code_bytes, sizeof m->sd_scale}, result;
+    if (omega_cm_route(&result, 1, sizes, 16) != OMEGA_OK) abort();
+    return (size_t)result;
+#endif
 }
 
-size_t rx_cm_blob_size(void) { return sizeof(Header) + body_size() + 32u; }
+size_t rx_cm_blob_size(void) {
+#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+    return sizeof(Header) + body_size() + 32u;
+#else
+    uint64_t sizes[16] = {sizeof(Header), body_size(), 32}, result;
+    if (omega_cm_route(&result, 1, sizes, 16) != OMEGA_OK) abort();
+    return (size_t)result;
+#endif
+}
 
 static size_t pack(const RxCostModel *m, uint8_t *out) {
     Header h;
@@ -866,7 +905,7 @@ int rx_cm_serialize(const RxCostModel *m, uint8_t *out, size_t cap, size_t *out_
 #endif
     size_t n = pack(m, out);
     cm_sha256(out, n, out + n);
-    if (out_len) *out_len = n + 32u;
+    if (out_len) *out_len = (size_t)cm_route2(3, n, 32);
     return RX_CM_OK;
 }
 
@@ -881,8 +920,9 @@ int rx_cm_deserialize(RxCostModel *m, const uint8_t *in, size_t len) {
     if (!cm_blob_check(4, words)) return RX_CM_ERR_FORMAT;
 #endif
     uint8_t d[32];
-    cm_sha256(in, len - 32u, d);
-    if (!cm_digest_equal(d, in + len - 32u)) return RX_CM_ERR_DIGEST;
+    size_t payload = (size_t)cm_route2(4, len, 32);
+    cm_sha256(in, payload, d);
+    if (!cm_digest_equal(d, in + payload)) return RX_CM_ERR_DIGEST;
     Header h;
     memcpy(&h, in, sizeof h);
 #if CUDAPP_MIGRATION_PENDING_C_CM_BLOB

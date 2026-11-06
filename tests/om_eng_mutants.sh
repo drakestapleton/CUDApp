@@ -23,7 +23,8 @@ REF=$ROOT/build/om-qmd/eng_c.txt
 ENG=${OM_ENG_BUILD_LINE:?OM_ENG_BUILD_LINE (set by make test-om-eng-mutants)}
 TP=$ROOT/third_party/nvidia-open-580.173.02
 INC="-I$ROOT/m16 -I$ROOT/nvrm -I$TP/src/common/sdk/nvidia/inc -I$TP/kernel-open/common/inc -I$TP/kernel-open/nvidia-uvm -I$TP/src/nvidia/arch/nvalloc/unix/include"
-BESRCS="src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cubin_elf.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_bw_qmd.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c"
+BESRCS="src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c"
+BESRCS="$BESRCS ${OM_ENG_BE_BINDING:?OM_ENG_BE_BINDING (set by make test-om-eng-mutants)} src/omega_gpu_om_ir.c"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 killed=0

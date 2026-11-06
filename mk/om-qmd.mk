@@ -40,19 +40,21 @@ OM_ENG_SRCS = tests/om_eng_diff_test.c src/omega_gpu_engine.c src/omega_gpu_wait
 	src/omega_gpu_mem_reserve.c src/omega_gpu_mem_cached.c src/omega_gpu_serving.c src/omega_gpu_platform_linux.c \
 	src/omega_gpu_fmt.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c m16/m16_gpu_wait.c m16/m16_native.c nvrm/nvrm.c
 OM_ENG_UNIT ?= src/cudapp_om_eng.c
-OM_ENG_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc $(GPU_ENGINE_PHYS_INC) -Wl,--wrap=omega_eng
-OM_ENG_DEPS = $(OM_ENG_SRCS) $(OM_ENG_UNIT) src/omega_eng_dec.h src/omega_eng_gates.h
+OM_ENG_BINDING = $(filter-out src/cudapp_om_nvrm_transport.c $(OM_ENG_UNIT) src/cudapp_om_eng.c src/cudapp_om_amp_runtime.c,$(GPU_AIEN_BINDING))
+OM_ENG_PLATFORM = om/platform-linux/gen/link/plat_fx_effects.c om/platform-linux/gen/link/plat_fx_wait.c
+OM_ENG_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DCUDAPP_NVRM_TEST_TRANSPORT=1 -Isrc $(GPU_ENGINE_PHYS_INC) -Wl,--wrap=omega_eng
+OM_ENG_DEPS = $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM) src/omega_eng_dec.h src/omega_eng_gates.h
 
 .PHONY: test-om-eng-diff test-om-eng-red
 $(OM_QMD_DIR)/eng_om: $(OM_ENG_DEPS)
 	@mkdir -p $(OM_QMD_DIR)
-	$(OM_ENG_BUILD) -o $@ $(OM_ENG_SRCS) $(OM_ENG_UNIT)
+	$(OM_ENG_BUILD) -o $@ $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM)
 $(OM_QMD_DIR)/eng_c: $(OM_ENG_DEPS)
 	@mkdir -p $(OM_QMD_DIR)
-	$(OM_ENG_BUILD) $(OM_ENG_C_PARTS) -DENG_EXPECT_C -o $@ $(OM_ENG_SRCS) $(OM_ENG_UNIT)
+	$(OM_ENG_BUILD) $(OM_ENG_C_PARTS) -DENG_EXPECT_C -o $@ $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM)
 $(OM_QMD_DIR)/eng_flip: $(OM_ENG_DEPS)
 	@mkdir -p $(OM_QMD_DIR)
-	$(OM_ENG_BUILD) -DENG_TRACE_FLIP=5000 -o $@ $(OM_ENG_SRCS) $(OM_ENG_UNIT)
+	$(OM_ENG_BUILD) -DENG_TRACE_FLIP=5000 -o $@ $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM)
 test-om-eng-diff: $(OM_QMD_DIR)/eng_om $(OM_QMD_DIR)/eng_c
 	$(OM_QMD_DIR)/eng_om $(OM_QMD_DIR)/eng_om.txt 2>$(OM_QMD_DIR)/eng_om.ops
 	$(OM_QMD_DIR)/eng_c $(OM_QMD_DIR)/eng_c.txt 2>$(OM_QMD_DIR)/eng_c.ops
@@ -67,7 +69,7 @@ test-om-eng-red: $(OM_QMD_DIR)/eng_flip $(OM_QMD_DIR)/eng_c
 .PHONY: test-om-eng-mutants test-om-qmd-mutants
 test-om-eng-mutants: $(OM_QMD_DIR)/eng_c
 	$(OM_QMD_DIR)/eng_c $(OM_QMD_DIR)/eng_c.txt 2>/dev/null
-	OM_ENG_BUILD_LINE='$(OM_ENG_BUILD) $(OM_ENG_SRCS)' sh tests/om_eng_mutants.sh
+	OM_ENG_BUILD_LINE='$(OM_ENG_BUILD) $(OM_ENG_SRCS) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM)' OM_ENG_BE_BINDING='$(filter-out src/cudapp_om_eng.c src/cudapp_om_nvrm_transport.c,$(CUDAPP_BINDING_SRCS))' sh tests/om_eng_mutants.sh
 test-om-qmd-mutants:
 	sh tests/om_qmd_mutants.sh
 

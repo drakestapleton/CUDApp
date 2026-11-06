@@ -1,0 +1,18 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/tern-rows-stale
+original smallest case: sim rc 0
+row 0: Wolfram -3013 independent-dot -3013 algebra -3013 sim 11
+row 1: Wolfram 2779 independent-dot 2779 algebra 2779 sim 11
+row 2: Wolfram -1089 independent-dot -1089 algebra -1089 sim -2140
+row 3: Wolfram -2155 independent-dot -2155 algebra -2155 sim -2140
+row 4: Wolfram -1793 independent-dot -1793 algebra -1793 sim -1803
+row 5: Wolfram -2083 independent-dot -2083 algebra -2083 sim -1803
+row 6: Wolfram -240 independent-dot -240 algebra -240 sim 1069
+row 7: Wolfram 604 independent-dot 604 algebra 604 sim 1069
+row 8: Wolfram -1545 independent-dot -1545 algebra -1545 sim -431
+row 9: Wolfram 1900 independent-dot 1900 algebra 1900 sim -431
+row 10: Wolfram -156 independent-dot -156 algebra -156 sim 1708
+row 11: Wolfram 1931 independent-dot 1931 algebra 1931 sim 1708
+row 12: Wolfram -1037 independent-dot -1037 algebra -1037 sim -1647
+independent original rows: 13 mismatches
+
+rc=1

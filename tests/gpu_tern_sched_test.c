@@ -17,6 +17,7 @@
  * CUDAPP_MIGRATION_PENDING_C_CODEGEN_TERN=1 in the builder selects its retained
  * C oracle; this same API-level test remains valid for either implementation. */
 #include "omega_blackwell_codegen_tern.h"
+#include "bw_warp_sim_k.h"
 #include <stdio.h>
 #ifndef CUDAPP_MIGRATION_PENDING_TERN_SCHED
 #define CUDAPP_MIGRATION_PENDING_TERN_SCHED 1 /* legacy test-admission switch, not the builder selector */
@@ -55,6 +56,56 @@ static long synth(BlackwellIROpcode prod, uint32_t pc, int pad, uint32_t cw) {
     if (omega_bw_ir_append(&p, &x) < 0) return -2;
     if (omega_bw_regalloc_solve(&p) != 0) return -2;
     return omega_tern_i2fp_violations(&p);
+}
+
+/* Independent row-major regression: k=512, n=13, rows=2, warps=2,
+ * depth=2, grid=2. Row r has r+1 nonzero packed words, alternating sign;
+ * x is all ones. No API packer, word-offset helper or algebra oracle is used.
+ * Wolfram: Table[16(r+1)(-1)^r,{r,0,12}] gives the expected vector below.
+ * Nonzero scalar LDG immediates distinguish adjacent rows and depth steps. */
+static void rowmajor_sim(void) {
+    static BlackwellIRProgram p;
+    const OmegaTernGemvSpec spec = { 512, OMEGA_TERN_LAYOUT_ROWMAJOR, 2, 2, 2, OMEGA_TERN_EPI_I32, 0 };
+    static const int32_t expected[13] = { 16, -32, 48, -64, 80, -96, 112, -128, 144, -160, 176, -192, 208 };
+    _Alignas(16) uint32_t packed[16][32] = { { 0 } };
+    _Alignas(16) int8_t x[512];
+    _Alignas(16) uint32_t y[16];
+    _Alignas(16) uint8_t smem[4096];
+    memset(x, 1, sizeof x);
+    for (unsigned r = 0; r < 13; r++)
+        for (unsigned c = 0; c <= r; c++)
+            packed[r][c] = r & 1u ? 2863311530u : 1431655765u;
+    const int built = omega_blackwell_codegen_tern_gemv_prog(&spec, &p) == 0;
+    check(built, "5. independent row-major regression builds");
+    if (!built) return;
+    const uint32_t shared = omega_tern_gemv_shared_bytes(&spec);
+    check(shared <= sizeof smem, "5. regression shared-memory buffer fits");
+    if (shared > sizeof smem) return;
+    for (int order = 0; order < 2; order++) {
+        memset(y, 0xa5, sizeof y);
+        WsSim s; memset(&s, 0, sizeof s);
+        s.p = &p; s.threads = 64; s.order = order;
+        s.smem = smem; s.smem_bytes = shared;
+        const uint64_t args[3] = { (uintptr_t)packed, (uintptr_t)x, (uintptr_t)y };
+        for (unsigned i = 0; i < 3; i++) {
+            s.cbank[(OMEGA_TERN_ARG_W + 8u * i) / 4u] = (uint32_t)args[i];
+            s.cbank[(OMEGA_TERN_ARG_W + 8u * i) / 4u + 1u] = (uint32_t)(args[i] >> 32);
+        }
+        s.cbank[OMEGA_TERN_ARG_U / 4] = 4;
+        s.cbank[OMEGA_TERN_ARG_STRIDE / 4] = 4;
+        s.cbank[OMEGA_TERN_ARG_NEGN / 4] = 0u - 13u;
+        s.nranges = 3;
+        s.ranges[0].lo = (uintptr_t)packed; s.ranges[0].hi = (uintptr_t)packed + sizeof packed;
+        s.ranges[1].lo = (uintptr_t)x; s.ranges[1].hi = (uintptr_t)x + sizeof x;
+        s.ranges[2].lo = (uintptr_t)y; s.ranges[2].hi = (uintptr_t)y + sizeof expected;
+        const int rc = ws_run(&s, 2, 1);
+        unsigned bad = 0;
+        for (unsigned r = 0; !rc && r < 13; r++)
+            if ((int32_t)y[r] != expected[r]) bad++;
+        printf("  row-major independent oracle order %d: rc %d, %u differing rows\n", order, rc, bad);
+        if (rc) printf("  simulator: %s (pc %d)\n", s.msg, s.err_pc);
+        check(!rc && !bad, "5. scalar LDG row/depth offsets match independent row values");
+    }
 }
 
 int main(void) {
@@ -122,6 +173,7 @@ int main(void) {
           "4. mutant 6 (no unit clamp) builds");
     coal.mutant = 7;
     check(!omega_tern_gemv_spec_ok(&coal), "4. negative control: mutant 7 is refused");
+    rowmajor_sim();
     if (fails) { printf("gpu_tern_sched_test: FAIL (%d)\n", fails); return 1; }
     printf("gpu_tern_sched_test: PASS\n");
     return 0;

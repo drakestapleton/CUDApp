@@ -1,0 +1,6 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 CG_TERN_HOST_SRCS=src/omega_blackwell_codegen_tern.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CG_TERN_SRC) $(CG_TERN_SCHED_SRC) src/cudapp_om_cg_tern_policy.c src/cudapp_om_bw_enc_sm121.c src/omega_gpu_fmt.c src/sha256.c $(BW_CODEGEN_BINDING) src/cudapp_om_apish_blk.c src/cudapp_om_apish_shp.c src/cudapp_om_apish_trit.c src/cudapp_om_apish_slot.c src/cudapp_om_apish_pack.c OMEGA_MV=~/work/cudastack/omega-mv test-codegen-tern-diff
+./build/codegen_tern_diff_test
+CODEGEN TERN RECORD NEGATIVE CONTROL CAUGHT
+CODEGEN TERN DIFF PASS (213120 programs, 14258 refusals)
+
+rc=0

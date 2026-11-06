@@ -122,4 +122,16 @@ JSON regression includes that negative control. Historical evidence is untouched
 
 An inherited clean-build repair delays `mk/host-policy.mk` until its cost-model
 object and binding variables exist, so target prerequisites include their providers.
-Its focused acceptance is recorded with the dagsim/cost-model integration below.
+`6a-339-close.log` exercises that repair: decision differential21058, predictions8617,
+contraction negative control PASS, and crumb verify OK.
+
+#337 `3821a8b3b3858b44af8402e2e708a975fb6c2dc0`: full generation/check remained
+byte-identical. `/tmp/integ/6a-337-host.log/.rc` returned0: tern schedule PASS,
+simulator34/34,68 source-mutant/config controls, differential213120 programs/
+14258 refusals, and crumb88 current. Explicit ternary/codegen links now name the
+newly integrated API/IR providers rather than relying on an incomplete old list.
+`test-codegen-freestanding` is **DEFERRED_TO_UNION**, not PASS:
+`/tmp/integ/6a-337-focused.log` rc2 records inherited missing `omega_av_*`
+providers. Main authorized deferral because Half B `638975ca` owns the bridge#77
+root repair; final integration must regenerate under bridge `29d9cff7` and pass
+this gate. Half A retains its assigned bridge#73 pin.

@@ -1,0 +1,3 @@
+$ gcc -O2 -std=gnu11 -Wall -Wextra -Werror -ffunction-sections -fdata-sections -Wl,--gc-sections -Isrc -Itests -I~/work/cudastack/omega-mv/src -ffp-contract=off -DOMEGA_TC_MARK_F2FP=0x46320000u -include tests/bw_warp_sim_k.h -o /tmp/gpu_tern_cli_current ~/work/cudastack/omega-mv/tests/gpu_tern_test.c /tmp/tern-oracle.o build/libomega_gpu.a -lpthread -lm
+
+rc=0

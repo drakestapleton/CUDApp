@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Linux platform policy differential. No device is opened.
-CARRIED_HOST_TESTS += test-platform-linux-policy test-platform-linux-fake-device
-.PHONY: test-platform-linux-policy test-platform-linux-fake-device
+CARRIED_HOST_TESTS += test-platform-linux-policy test-platform-linux-fake-device test-platform-linux-effects test-platform-linux-wait
+.PHONY: test-platform-linux-policy test-platform-linux-fake-device test-platform-linux-effects test-platform-linux-wait
 
 $(OUT_DIR)/platform_linux_policy: tests/platform_linux_policy.c src/cudapp_om_plat_policy.c src/omega_gpu_platform_linux_cpolicy.h
 	@mkdir -p $(OUT_DIR)
@@ -9,6 +9,41 @@ $(OUT_DIR)/platform_linux_policy: tests/platform_linux_policy.c src/cudapp_om_pl
 
 test-platform-linux-policy: $(OUT_DIR)/platform_linux_policy
 	$(OUT_DIR)/platform_linux_policy
+
+$(OUT_DIR)/plat_fx_effects.o: om/platform-linux/gen/link/plat_fx_effects.c
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OUT_DIR)/plat_fx_wait.o: om/platform-linux/gen/link/plat_fx_wait.c
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OUT_DIR)/platform_linux_effects: tests/platform_linux_effects.c om/platform-linux/gen/plat_effects.c src/cudapp_plat_effects.h
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CFLAGS) -Isrc -o $@ tests/platform_linux_effects.c om/platform-linux/gen/plat_effects.c -lpthread
+
+test-platform-linux-effects: $(OUT_DIR)/platform_linux_effects
+	$(OUT_DIR)/platform_linux_effects
+
+$(OUT_DIR)/platform_linux_wait: tests/platform_linux_wait.c om/platform-linux/gen/plat_wait.c
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CFLAGS) -o $@ tests/platform_linux_wait.c om/platform-linux/gen/plat_wait.c -lpthread
+
+test-platform-linux-wait: $(OUT_DIR)/platform_linux_wait $(OUT_DIR)/platform_linux_wait_mutant
+	$(OUT_DIR)/platform_linux_wait
+	@set +e; $(OUT_DIR)/platform_linux_wait_mutant; rc=$$?; set -e; test $$rc -ne 0
+	@echo "PASS platform linux wait mutant caught"
+
+$(OUT_DIR)/plat_wait_mutant.c: om/platform-linux/plat_wait.om
+	@mkdir -p $(OUT_DIR)
+	sed 's/2147483648/0/' $< > $(OUT_DIR)/plat_wait_mutant.om
+	grep -q 2147483648 $<
+	! grep -q 2147483648 $(OUT_DIR)/plat_wait_mutant.om
+	OMEGA_NATIVE_OMC2=/home/drakestapleton/work/cudastack/lanes/omega-mv-bh-retire/seed/out/omc OMEGA_NATIVE_OMC=/home/drakestapleton/work/cudastack/lanes/omega-mv-c6/seed/out/omc /home/drakestapleton/work/cudastack/lanes/BridgeX86/tools/native --host --target aarch64linux $(OUT_DIR)/plat_wait_mutant_gen $(OUT_DIR)/plat_wait_mutant.om
+	cp $(OUT_DIR)/plat_wait_mutant_gen/omega_native.c $@
+
+$(OUT_DIR)/platform_linux_wait_mutant: tests/platform_linux_wait.c $(OUT_DIR)/plat_wait_mutant.c
+	$(CC) $(CFLAGS) -o $@ tests/platform_linux_wait.c $(OUT_DIR)/plat_wait_mutant.c -lpthread
 
 $(OUT_DIR)/platform_linux_fake_devctl: om/platform-linux/fake_devctl.om
 	@mkdir -p $(OUT_DIR)

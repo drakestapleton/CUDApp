@@ -19,6 +19,8 @@ The compiler pin is `e5b32567`, binary SHA-256 `2c82480596bbdc50cda9626866209ef6
 
 The comparator must turn red when its expected result is flipped. A copy of the real production library with `cudapp_om_gemm_ex_policy.o` removed must fail to link the existing public GEMM EX test with `omega_gemm_ex_policy` undefined. Each of eight non-equivalent `.om` mutants must compile and fail the scalar differential comparator. Full subprocess output stays at `build/gemm-ex-policy/check.log`; `receipt.txt` contains the final observed outcomes and first mismatch for each mutant. Raw gcov and the selected function summary are under the same build directory.
 
+`coverage.txt` preserves raw branch counters for all six owned C-oracle functions. There are no untaken branches in those functions; session/device effects outside this policy slice are not part of that claim.
+
 ## Partitions and negative paths
 
 - Both transpose choices, every source operand/row/column orientation, minimum ordering/equality, zero, one, boundary neighbors, `UINT32_MAX` and `UINT64_MAX`; unsigned index multiplication/addition wraps exactly like the C oracle.

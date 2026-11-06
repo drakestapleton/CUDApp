@@ -298,7 +298,7 @@ test-gpu-session-mutants: $(GPU_FS_LINK)
 	    tests/test_omega_gpu_session_platform.c $$objs $(GPU_SESSION_MUT_DIR)/$$name.o; \
 	  if ./$(GPU_SESSION_MUT_DIR)/$$name > $(GPU_SESSION_MUT_DIR)/$$name.log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
 	  echo "mutant $$name killed: $$(grep -c '^FAIL' $(GPU_SESSION_MUT_DIR)/$$name.log) case(s) failed"; killed=$$((killed+1)); }; \
-	smut release-when-latched 's|if (LOAD(g_blocked)) {$$|if (0) {|'; \
+	smut release-when-latched 's|ses(8, LOAD(g_blocked) ? 1u : 0u|ses(8, 0u|';
 	smut ignore-cancel 's|if (LOAD(g_cancel)) return WAIT_CANCELLED;|;|g'; \
 	smut no-latch-on-timeout 's|latch(w == WAIT_TIMED_OUT|omega_gpu_session_set_error(w == WAIT_TIMED_OUT|'; \
 	smut stale-not-counted 's|else { BUMP(g_stats.stale_refusals, 1u); fail_plat("dma_free", rc); }|else {}|'; \

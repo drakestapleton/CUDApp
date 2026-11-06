@@ -16,6 +16,24 @@
 #include "cudapp_native.h"
 #include <string.h>
 
+/* Command-list bookkeeping decisions are Omega (om/cmdlist/book.om). The C
+ * copies are the default-OFF differential oracle. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2) || defined(CUDAPP_MIGRATION_PENDING_CMDLIST2_DIFF)
+#define CMDLIST2_C_ORACLE 1
+#endif
+
+static uint64_t clbook(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3) {
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2)
+    if (op == 0) return (i0 == i1 && i2 == i3) ? 0u : 1u;
+    if (op == 1) return i0 == i1 + 1u ? 1u : 0u;
+    return UINT64_MAX;
+#else
+    uint64_t r = 0, a[16] = {i0, i1, i2, i3}, o[4] = {0};
+    if (omega_book(&r, op, a, 16, o, 4) != 0) return UINT64_MAX;
+    return r;
+#endif
+}
+
 /* C4 streams (CUDApp#115): the method words of a submission (setup, wait_for ACQUIRE, barrier choice, stamps, PCAS or
  * inline QMD headers, completion tail) and the submit_pair marker layout come from seeded Omega, om/streams/streams.om,
  * through the generated binding src/cudapp_om_streams.c. This file still writes them into the ring and submits.
@@ -133,7 +151,7 @@ static uint64_t next_record_generation(uint64_t previous) {
 
 static uint32_t g_latched; /* 1 + omega_gpu_session_recoveries() at the latch; 0 never latched (C5: a recovery lifts it) */
 
-int omega_gpu_cmdlist_is_latched(void) { return __atomic_load_n(&g_latched, __ATOMIC_ACQUIRE) == omega_gpu_session_recoveries() + 1u ? 1 : 0; }
+int omega_gpu_cmdlist_is_latched(void) { return clbook(1, __atomic_load_n(&g_latched, __ATOMIC_ACQUIRE), omega_gpu_session_recoveries(), 0, 0) ? 1 : 0; }
 uint32_t omega_gpu_cmdlist_count(const OmegaGpuCmdList *cl) { return cl ? cl->n : 0; }
 static int native_event(NativeRef *ref, unsigned event) {
     if (!ref->cache) return 0;
@@ -170,7 +188,7 @@ void omega_gpu_cmdlist_reset(OmegaGpuCmdList *cl) {
 }
 /* C5: every handle of a list made before the latest session recovery belongs to the closed device */
 static int stale(const OmegaGpuCmdList *cl) {
-    if (cl->gen == omega_gpu_session_recoveries() && cl->epoch == omega_gpu_session_epoch()) return 0;
+    if (clbook(0, cl->gen, omega_gpu_session_recoveries(), cl->epoch, omega_gpu_session_epoch()) == 0) return 0;
     omega_gpu_session_set_error("cmdlist: made before a session recovery (its buffers are gone): create a new list");
     return 1;
 }

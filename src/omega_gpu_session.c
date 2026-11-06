@@ -28,6 +28,18 @@
 #ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
 void cudapp_streams_diff_note(int same, const char *line); /* diff builds: tests/streams_diff_test.c */
 #endif
+#ifdef CUDAPP_MIGRATION_PENDING_SESSION_DIFF
+void cudapp_session_diff_note(int same, const char *line); /* diff builds: tests/session_diff_test.c */
+#endif
+
+/* Session admission, bookkeeping and method-word decisions are Omega
+ * (om/session/admit.om, om/session/park.om, om/session/words.om). The C copies
+ * are the default-OFF differential oracle. */
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION) || defined(CUDAPP_MIGRATION_PENDING_SESSION_DIFF)
+#define SESSION_C_ORACLE 1
+#endif
+
+static uint64_t ses(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3, uint64_t i4, uint64_t *out0);
 
 #define PAGE 0x1000ull
 
@@ -36,12 +48,14 @@ static inline uint32_t bw_mthd(uint32_t subc, uint32_t mthd, uint32_t count) {
     return (2u << 28) | (count << 16) | (subc << 13) | (mthd >> 2);
 }
 
+#ifdef SESSION_C_ORACLE
 /* Same words as src/omega_blackwell_submit.c SETUP_WORDS (compute class setup). */
 static const uint32_t SETUP_WORDS[18] = {
     0x20012061, 0x0000cec0, 0x20012092, 0x00000001, 0x200120a8, 0x0000000f, 0x2001255d, 0x00000003,
     0x2001255e, 0x20000000, 0x2001255f, 0x000fffff, 0x20012557, 0x00000003, 0x20012558, 0x22000000,
     0x20012559, 0x00000000,
 };
+#endif
 
 static const OmegaGpuPlatform *g_p; /* installed platform (atomic load / store) */
 static OmegaGpuPlatformCaps g_caps;
@@ -91,7 +105,7 @@ static int install(const OmegaGpuPlatform *p, const OmegaGpuPlatformCaps *caps) 
 }
 
 int omega_gpu_session_set_platform(const OmegaGpuPlatform *p, const OmegaGpuPlatformCaps *caps) {
-    if (g_open || LOAD(g_locked) || LOAD(g_blocked)) return OMEGA_GPU_PLAT_REFUSED_BUSY;
+    if (ses(9, g_open ? 1u : 0u, LOAD(g_locked) ? 1u : 0u, LOAD(g_blocked) ? 1u : 0u, 0, 0, 0) != 0) return OMEGA_GPU_PLAT_REFUSED_BUSY;
     if (!p) { STORE(g_p, (const OmegaGpuPlatform *)0); return OMEGA_GPU_PLAT_OK; }
     return install(p, caps);
 }
@@ -186,7 +200,7 @@ void omega_gpu_session_unlock(void) {
 bool omega_gpu_session_is_open(void) { return g_open; }
 int omega_gpu_session_is_blocked(void) { return LOAD(g_blocked) ? 1 : 0; }
 int omega_gpu_session_set_spin_us(uint32_t us) {
-    if (us > OMEGA_GPU_SESSION_MAX_SPIN_US) return -1;
+    if (ses(2, us, 1000000u, 0, 0, 0, 0) != 0) return -1;
     STORE(g_spin_us, us);
     return 0;
 }
@@ -231,9 +245,17 @@ void omega_gpu_session_parked(OmegaGpuParkStats *out) {
 int omega_gpu_session_is_parked(OmegaGpuBufferHandle h) {
     uint32_t n = LOAD(g_park.buffers) - LOAD(g_park.untracked);
     if (h.generation == 0u) return 0;
-    for (uint32_t i = 0; i < n && i < OMEGA_GPU_SESSION_PARK_MAX; i++)
+    if (n > OMEGA_GPU_SESSION_PARK_MAX) n = OMEGA_GPU_SESSION_PARK_MAX;
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
+    for (uint32_t i = 0; i < n; i++)
         if (g_parked[i].index == h.index && g_parked[i].generation == h.generation) return 1;
     return 0;
+#else
+    uint64_t idx[OMEGA_GPU_SESSION_PARK_MAX], gen[OMEGA_GPU_SESSION_PARK_MAX], r = 0;
+    for (uint32_t i = 0; i < n; i++) { idx[i] = g_parked[i].index; gen[i] = g_parked[i].generation; }
+    if (omega_scan(&r, idx, n, gen, n, h.index, h.generation) != 0) return 0;
+    return r ? 1 : 0;
+#endif
 }
 
 /* L136: queues past the first (omega_gpu_session_extra_queue), each with its own 64 KB ring; opened on demand, closed
@@ -257,13 +279,15 @@ void omega_gpu_session_latch_uncertain(const char *why) { latch(why ? why : "unc
 
 /* ---- buffers ---- */
 
+#ifdef SESSION_C_ORACLE
 static size_t page_up(size_t b) { b = (b + PAGE - 1) & ~(PAGE - 1); return b < PAGE ? PAGE : b; }
+#endif
 
 static int mem_alloc(uint32_t kind, uint32_t rights, size_t bytes, OmegaGpuMem *out) {
     const OmegaGpuPlatform *p = LOAD(g_p);
     memset(out, 0, sizeof *out);
     if (!g_open || LOAD(g_blocked) || !p) { omega_gpu_session_set_error("alloc without open device"); return -1; }
-    const size_t want = page_up(bytes);
+    const size_t want = (size_t)ses(1, bytes, 0, 0, 0, 0, 0);
     OmegaGpuBufferDesc d = {.kind = kind, .rights = rights, .gpu_cache = OMEGA_GPU_CACHE_GPU_UNCACHED, .align = (uint32_t)PAGE, .bytes = want};
     OmegaCpuView cpu; OmegaGpuVa va; OmegaGpuBusAddr bus; /* the bus address never leaves this function */
     int rc = p->dma_alloc(p->ctx, g_s.dev, &d, &out->handle, &cpu, &va, &bus);
@@ -303,9 +327,10 @@ void omega_gpu_session_free(OmegaGpuMem *m) {
     if (!m) return;
     if (m->cpu) {
         const OmegaGpuPlatform *p = LOAD(g_p);
-        if (LOAD(g_blocked)) {
+        uint64_t code = ses(7, LOAD(g_blocked) ? 1u : 0u, g_open ? 1u : 0u, p ? 1u : 0u, 0, 0, 0);
+        if (code == 0) {
             park(m); /* the device may still use it */
-        } else if (!g_open || !p) {
+        } else if (code == 3) {
             BUMP(g_stats.stale_refusals, 1u); /* its device is closed: the handle is stale, nothing to release */
         } else {
             int rc = p->dma_free(p->ctx, m->handle);
@@ -328,12 +353,14 @@ int omega_gpu_session_sync_to_gpu(const OmegaGpuMem *m) { return sync_mem(m, 1);
 int omega_gpu_session_sync_to_cpu(const OmegaGpuMem *m) { return sync_mem(m, 0); }
 
 int omega_gpu_session_scratch(OmegaGpuScratch *s, size_t bytes) {
-    if (s->reserved && (bytes > s->cap || !s->mem.cpu)) {
+    uint64_t hw = 0;
+    uint64_t code = ses(6, bytes, s->cap, s->reserved ? 1u : 0u, s->mem.cpu ? 1u : 0u, 0, &hw);
+    if (code == 2) {
         omega_gpu_fmt(g_err, sizeof g_err, "serving reservation exceeded: need %zu bytes, reserved %zu", bytes, s->cap);
         return OMEGA_GPU_SESSION_SCRATCH_RESERVED;
     }
-    if (bytes > s->high_water) s->high_water = bytes;
-    if (s->cap >= bytes && s->mem.cpu) return 0;
+    s->high_water = (size_t)hw;
+    if (code == 0) return 0;
     omega_gpu_session_free(&s->mem);
     s->cap = 0;
     if (omega_gpu_session_alloc(s->high_water, &s->mem) != 0) return -1;
@@ -364,11 +391,12 @@ static void free_session_buffers(void) {
 /* ---- open, close ---- */
 
 OmegaGpuSession *omega_gpu_session_open(void) {
-    if (LOAD(g_blocked)) { omega_gpu_session_set_error("process latched"); return NULL; }
-    if (g_open) return &g_s;
-    if (LOAD(g_epoch) == UINT64_MAX) { omega_gpu_session_set_error("device epoch exhausted"); return NULL; }
     const OmegaGpuPlatform *p = platform();
-    if (!p) { omega_gpu_session_set_error("no GPU platform installed (omega_gpu_session_set_platform)"); return NULL; }
+    uint64_t code = ses(8, LOAD(g_blocked) ? 1u : 0u, LOAD(g_epoch), p ? 1u : 0u, g_open ? 1u : 0u, 0, 0);
+    if (code == 1) { omega_gpu_session_set_error("process latched"); return NULL; }
+    if (code == 2) return &g_s;
+    if (code == 3) { omega_gpu_session_set_error("device epoch exhausted"); return NULL; }
+    if (code == 4) { omega_gpu_session_set_error("no GPU platform installed (omega_gpu_session_set_platform)"); return NULL; }
     uint64_t t0 = p->time_now_ns(p->ctx);
     const uint32_t opens = g_s.opens;
     memset(&g_s, 0, sizeof g_s);
@@ -459,7 +487,7 @@ int omega_gpu_session_on_close(void (*hook)(void)) { /* caller holds the lock (t
     int rc = 0;
     bool seen = false;
     for (unsigned i = 0; i < g_nhooks; i++) if (g_hooks[i] == hook) seen = true;
-    if (!seen) { if (g_nhooks < sizeof g_hooks / sizeof g_hooks[0]) g_hooks[g_nhooks++] = hook; else rc = -1; }
+    if (!seen) { if (ses(11, g_nhooks, hook ? 1u : 0u, 0, 0, 0, 0) == 0) g_hooks[g_nhooks++] = hook; else rc = -1; }
     return rc;
 }
 
@@ -507,8 +535,9 @@ int omega_gpu_session_recover(void) {
     const OmegaGpuPlatform *p = LOAD(g_p);
     int rc = -1;
     const int latched = LOAD(g_blocked) || LOAD(g_module_latched);
-    if (!latched || !g_open || !p) {
-        omega_gpu_session_set_error(latched ? "recover: latched but no device is open" : "recover: not latched (nothing to recover)");
+    uint64_t code = ses(10, latched ? 1u : 0u, g_open ? 1u : 0u, p ? 1u : 0u, 0, 0, 0);
+    if (code != 0) {
+        omega_gpu_session_set_error(code == 1 ? "recover: latched but no device is open" : "recover: not latched (nothing to recover)");
         goto out;
     }
     for (unsigned i = 0; i < g_nhooks; i++) g_hooks[i]();
@@ -537,7 +566,105 @@ uint32_t omega_gpu_session_recoveries(void) { return LOAD(g_recoveries); }
 uint64_t omega_gpu_session_epoch(void) { return LOAD(g_epoch); }
 /* ---- launch ---- */
 
+#ifdef SESSION_C_ORACLE
 static uint32_t round_up(uint32_t v, uint32_t q) { return (v + q - 1) / q * q; }
+#endif
+
+#ifdef SESSION_C_ORACLE
+/* Default-OFF C oracle for the session decisions. Mirrors om/session/admit.om
+ * and the park/words units so the differential can compare both paths. */
+static uint64_t ses_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3, uint64_t i4, uint64_t *out0) {
+(void)i4;
+    uint64_t b, c;
+    switch (op) {
+    case 0: return round_up((uint32_t)i0, (uint32_t)i1);
+    case 1: return page_up(i0);
+    case 2: return i0 > i1 ? 1u : 0u;
+    case 3: return (i0 + 7u) / 8u;
+    case 4: return (i0 + 1u + 3u) / 4u;
+    case 5: return i0 + 0x160u * i1 + 0x10u;
+    case 6:
+        b = i0 & 0xffffffffu; c = i1 & 0xffffffffu;
+        if (i2) { if (b > c || !i3) { if (out0) *out0 = c; return 2; } }
+        if (out0) *out0 = b;
+        return (c >= b && i3) ? 0u : 1u;
+    case 7: if (i0 || !i1) return 0; if (!i2) return 3; return 2;
+    case 8:
+        if (i0) return 1;
+        if (i1 == UINT64_MAX) return 3;
+        if (!i2) return 4;
+        return i3 ? 2u : 0u;
+    case 9: return (i0 || i1 || i2) ? 1u : 0u;
+    case 10: if (!i0) return 2; if (!i1 || !i2) return 1; return 0;
+    case 11: return (i0 < 8u && i1) ? 0u : 1u;
+    case 12:
+        if (i0 >= i1) return 0;
+        b = (i1 - i0) / (1000u * i2);
+        return b > 1u ? b : 1u;
+    case 13: return ((int32_t)(i0 - i1) >= 0) ? 0u : 1u;
+    default: return UINT64_MAX;
+    }
+}
+#endif
+
+static uint64_t ses(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3, uint64_t i4, uint64_t *out0) {
+    uint64_t r = 0;
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
+    r = ses_c(op, i0, i1, i2, i3, i4, out0);
+#else
+    uint64_t a[16] = {i0, i1, i2, i3, i4}, o[4] = {0};
+    if (omega_decide(&r, op, a, 16, o, 4) != 0) r = UINT64_MAX;
+    if (out0) *out0 = o[0];
+#ifdef CUDAPP_MIGRATION_PENDING_SESSION_DIFF
+    {
+        uint64_t cr, co = 0;
+        cr = ses_c(op, i0, i1, i2, i3, i4, &co);
+        if (cr != r || (out0 && co != o[0])) cudapp_session_diff_note(0, "session decide");
+        else cudapp_session_diff_note(1, "session decide");
+    }
+#endif
+#endif
+    return r;
+}
+
+/* Append one method packet from om/session/words.om. The blob copies stay in C. */
+static size_t ses_pkt(uint32_t *pb, size_t n, uint64_t op, uint64_t a0, uint64_t a1, uint64_t a2) {
+    uint64_t r = 0, a[16] = {a0, a1, a2}, o[32] = {0};
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
+    switch (op) {
+    case 0:
+        o[0] = bw_mthd(1, 0, 1); o[1] = 0x7c0u; o[2] = bw_mthd(1, 0x021c, 1); o[3] = (1u << 0) | (1u << 4) | (1u << 12);
+        o[4] = bw_mthd(1, 0x02b4, 1); o[5] = (uint32_t)(a0 >> 8); o[6] = bw_mthd(1, 0x02c0, 1); o[7] = 3; r = 8; break;
+    case 1: memcpy(o, SETUP_WORDS, sizeof SETUP_WORDS); r = sizeof SETUP_WORDS / 4; break;
+    case 2: o[0] = bw_mthd(1, OMEGA_BW_MTHD_INVALIDATE_SHADER_CACHES, 1); o[1] = (uint32_t)a0; r = 2; break;
+    case 3:
+        o[0] = bw_mthd(1, 0x0188, 2); o[1] = (uint32_t)(a0 >> 32); o[2] = (uint32_t)a0;
+        o[3] = bw_mthd(1, 0x0180, 2); o[4] = (uint32_t)a1; o[5] = 1;
+        o[6] = bw_mthd(1, 0x01b0, 1); o[7] = 0x41;
+        o[8] = ((uint32_t)a2 << 16) | (1u << 13) | (0x01b4u >> 2) | (6u << 28); r = 9; break;
+    case 4:
+        o[0] = (98u << 16) | (1u << 13) | (0x0318u >> 2) | (2u << 28);
+        o[1] = (1u << 30) | (uint32_t)((a0 >> 40) & 0x1ff); o[2] = (uint32_t)(a0 >> 8); r = 3; break;
+    case 5:
+        o[0] = bw_mthd(1, 0x0188, 2); o[1] = (uint32_t)(a0 >> 32); o[2] = (uint32_t)a0;
+        o[3] = bw_mthd(1, 0x0180, 2); o[4] = 4; o[5] = 1;
+        o[6] = bw_mthd(1, 0x01b0, 1); o[7] = 0x41;
+        o[8] = (1u << 16) | (1u << 13) | (0x01b4u >> 2) | (6u << 28); o[9] = OMEGA_BW_SEMAPHORE_INTERMEDIATE_INIT; r = 10; break;
+    case 6:
+        o[0] = bw_mthd(0, 0x005c, 5); o[1] = (uint32_t)a0; o[2] = (uint32_t)(a0 >> 32);
+        o[3] = OMEGA_BW_MARKER_COMPLETION_PAYLOAD; o[4] = 0; o[5] = 0x1u | (1u << 20);
+        o[6] = bw_mthd(0, 0x0028, 4); o[7] = 0; o[8] = 0; o[9] = 0; o[10] = (0x10u << 27);
+        o[11] = bw_mthd(0, 0x005c, 5); o[12] = (uint32_t)(a0 + 0x10); o[13] = (uint32_t)((a0 + 0x10) >> 32);
+        o[14] = OMEGA_BW_MARKER2_PAYLOAD; o[15] = 0; o[16] = 0x1u | (1u << 20); r = 17; break;
+    default: r = 0; break;
+    }
+    (void)a;
+#else
+    if (omega_emit(&r, op, a, 16, o, 32) != 0) return n;
+#endif
+    for (uint64_t i = 0; i < r && n < 1024; i++) pb[n++] = (uint32_t)o[i];
+    return n;
+}
 
 static inline void cpu_relax(void) {
 #if defined(__aarch64__)
@@ -560,7 +687,7 @@ static int session_wait(const OmegaGpuPlatform *p, uint64_t off, uint32_t want, 
     if (spin_us) {
         const uint64_t end = p->time_now_ns(p->ctx) + (uint64_t)spin_us * 1000u;
         do {
-            if ((int32_t)(*m - want) >= 0) return 0;
+            if (ses(13, *m, want, 0, 0, 0, 0) == 0) return 0;
             if (LOAD(g_cancel)) return WAIT_CANCELLED;
             cpu_relax();
         } while (p->time_now_ns(p->ctx) < end);
@@ -606,7 +733,7 @@ int omega_gpu_session_launch(const OmegaGpuLaunch *L, uint64_t *elapsed_ns, uint
 
     const uint64_t qmd0_va = g_s.qmd.va, qmd1_va = g_s.qmd.va + 0x1000,
         sem_va = ampere ? g_s.marker.va + 0x20 : g_s.qmd.va + 0x2000, scratch_va = g_s.qmd.va + 0x4000;
-    uint32_t gpr = L->gpr_count > 64u ? round_up(L->gpr_count, 8u) : 64u;
+    uint32_t gpr = L->gpr_count > 64u ? (uint32_t)ses(0, L->gpr_count, 8u, 0, 0, 0, 0) : 64u;
     OmegaBlackwellQmdConfig cfg = {
         .code_va = L->code_va, .cbank_va = g_s.cbank.va, .scratch_va = scratch_va, .sem_va = sem_va,
         .qmd0_va = qmd0_va, .qmd1_va = qmd1_va, .num_elements = L->num_elements,
@@ -653,56 +780,21 @@ int omega_gpu_session_launch(const OmegaGpuLaunch *L, uint64_t *elapsed_ns, uint
     uint32_t pb[1024];
     size_t n = 0;
     if (ampere) {
-        /* Vendor clc7c0.h SET_OBJECT, SEND_PCAS_A and SEND_SIGNALING_PCAS2_B.
-         * QMD3 is already BAR-written and ordered by sync above. No Blackwell
-         * inline QMD5 packet, null-grid dependency or class-specific setup. */
-        pb[n++] = bw_mthd(1, 0x0000, 1); pb[n++] = OMEGA_AMPERE_COMPUTE_B;
-        /* clc7c0.h INVALIDATE_SHADER_CACHES: instruction/data/constant. */
-        pb[n++] = bw_mthd(1, 0x021c, 1);
-        pb[n++] = (1u << 0) | (1u << 4) | (1u << 12);
-        pb[n++] = bw_mthd(1, 0x02b4, 1); pb[n++] = (uint32_t)(qmd1_va >> 8);
-        pb[n++] = bw_mthd(1, 0x02c0, 1); pb[n++] = 3;
+        n = ses_pkt(pb, n, 0, qmd1_va, 0, 0);
     } else {
-    memcpy(&pb[n], SETUP_WORDS, sizeof SETUP_WORDS); n += sizeof SETUP_WORDS / 4;
-    /* Invalidate the SM instruction, constant and data caches before this launch
-     * (cut 1b finding: a reused code address served stale instructions; clcec0.h
-     * NVCEC0_INVALIDATE_SHADER_CACHES 0x021c, bits INSTRUCTION 0, DATA 4, CONSTANT 12). */
-    pb[n++] = bw_mthd(1, OMEGA_BW_MTHD_INVALIDATE_SHADER_CACHES, 1); pb[n++] = OMEGA_BW_INVALIDATE_SHADER_CACHES_ALL;
-    /* constant bank 0: driver words, then our arguments at 0x380 (inline upload) */
-    pb[n++] = bw_mthd(1, 0x0188, 2); pb[n++] = (uint32_t)(g_s.cbank.va >> 32); pb[n++] = (uint32_t)g_s.cbank.va;
-    pb[n++] = bw_mthd(1, 0x0180, 2); pb[n++] = 0x00000380; pb[n++] = 0x00000001;
-    pb[n++] = bw_mthd(1, 0x01b0, 1); pb[n++] = 0x00000041;
-    pb[n++] = (224u << 16) | (1u << 13) | (0x01b4 >> 2) | (6u << 28);
-    memcpy(&pb[n], cbank_data, 224 * 4); n += 224;
-    pb[n++] = bw_mthd(1, 0x0188, 2); pb[n++] = (uint32_t)((g_s.cbank.va + 0x380) >> 32); pb[n++] = (uint32_t)(g_s.cbank.va + 0x380);
-    pb[n++] = bw_mthd(1, 0x0180, 2); pb[n++] = L->n_args * 4u; pb[n++] = 0x00000001;
-    pb[n++] = bw_mthd(1, 0x01b0, 1); pb[n++] = 0x00000041;
-    pb[n++] = (L->n_args << 16) | (1u << 13) | (0x01b4 >> 2) | (6u << 28);
-    memcpy(&pb[n], L->args, (size_t)L->n_args * 4u); n += L->n_args;
-    /* QMD0 (null grid, dependence 2) */
-    pb[n++] = (98u << 16) | (1u << 13) | (0x0318 >> 2) | (2u << 28);
-    pb[n++] = (1u << 30) | (uint32_t)((qmd0_va >> 40) & 0x1ff); pb[n++] = (uint32_t)(qmd0_va >> 8);
-    memcpy(&pb[n], qmd0_words, 96 * 4); n += 96;
-    /* intermediate semaphore init */
-    pb[n++] = bw_mthd(1, 0x0188, 2); pb[n++] = (uint32_t)(sem_va >> 32); pb[n++] = (uint32_t)sem_va;
-    pb[n++] = bw_mthd(1, 0x0180, 2); pb[n++] = 0x00000004; pb[n++] = 0x00000001;
-    pb[n++] = bw_mthd(1, 0x01b0, 1); pb[n++] = 0x00000041;
-    pb[n++] = (1u << 16) | (1u << 13) | (0x01b4 >> 2) | (6u << 28);
-    pb[n++] = OMEGA_BW_SEMAPHORE_INTERMEDIATE_INIT;
-    /* QMD1 (the kernel) */
-    pb[n++] = (98u << 16) | (1u << 13) | (0x0318 >> 2) | (2u << 28);
-    pb[n++] = (1u << 30) | (uint32_t)((qmd1_va >> 40) & 0x1ff); pb[n++] = (uint32_t)(qmd1_va >> 8);
-    memcpy(&pb[n], qmd1_words, 96 * 4); n += 96;
+        n = ses_pkt(pb, n, 1, 0, 0, 0);
+        n = ses_pkt(pb, n, 2, OMEGA_BW_INVALIDATE_SHADER_CACHES_ALL, 0, 0);
+        n = ses_pkt(pb, n, 3, g_s.cbank.va, 0x380u, 224u);
+        memcpy(&pb[n], cbank_data, 224 * 4); n += 224;
+        n = ses_pkt(pb, n, 3, g_s.cbank.va + 0x380u, (uint64_t)L->n_args * 4u, L->n_args);
+        memcpy(&pb[n], L->args, (size_t)L->n_args * 4u); n += L->n_args;
+        n = ses_pkt(pb, n, 4, qmd0_va, 0, 0);
+        memcpy(&pb[n], qmd0_words, 96 * 4); n += 96;
+        n = ses_pkt(pb, n, 5, sem_va, 0, 0);
+        n = ses_pkt(pb, n, 4, qmd1_va, 0, 0);
+        memcpy(&pb[n], qmd1_words, 96 * 4); n += 96;
     }
-    /* first marker */
-    pb[n++] = bw_mthd(0, 0x005c, 5);
-    pb[n++] = (uint32_t)g_s.marker.va; pb[n++] = (uint32_t)(g_s.marker.va >> 32);
-    pb[n++] = OMEGA_BW_MARKER_COMPLETION_PAYLOAD; pb[n++] = 0; pb[n++] = 0x1 | (1u << 20);
-    /* C3 tail: L2_FLUSH_DIRTY, then the second release on the uncached marker page */
-    pb[n++] = bw_mthd(0, 0x0028, 4); pb[n++] = 0; pb[n++] = 0; pb[n++] = 0; pb[n++] = (0x10u << 27);
-    pb[n++] = bw_mthd(0, 0x005c, 5);
-    pb[n++] = (uint32_t)(g_s.marker.va + 0x10); pb[n++] = (uint32_t)((g_s.marker.va + 0x10) >> 32);
-    pb[n++] = OMEGA_BW_MARKER2_PAYLOAD; pb[n++] = 0; pb[n++] = 0x1 | (1u << 20);
+    n = ses_pkt(pb, n, 6, g_s.marker.va, 0, 0);
 
     const uint32_t spin_us = L->spin_us ? L->spin_us : omega_gpu_session_spin_us();
     uint64_t t0 = p->time_now_ns(p->ctx);

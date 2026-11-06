@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T08:33:16Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:971931b2f6592d736e25052d14385114ca228a4055664b94c3c2830c4c5fa6e6",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "581c048799f13b5b29a5172031c15889d6067672",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "component",
+  "name": "session",
+  "purpose": "Seeded session admission, bookkeeping and method-word decisions",
+  "schema_version": "1.0.0"
+}

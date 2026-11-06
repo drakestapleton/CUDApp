@@ -3,6 +3,7 @@
 #include "omega_cubin.h"
 #include <string.h>
 #define CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA 1
+#define CUDAPP_MIGRATION_PENDING_C_QMMA_PROBE_REST 1
 #define omega_qmma_is_mark oracle_qmma_is_mark
 #define omega_qmma_patch_code oracle_qmma_patch_code
 #define omega_qmma_patch_selftest oracle_qmma_patch_selftest

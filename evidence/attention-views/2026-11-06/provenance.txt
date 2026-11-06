@@ -1,0 +1,11 @@
+CWD: ~/work/cudastack/lanes/ApiViewsAttn
+Command: git fetch origin main && bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 crumb compile . && bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 crumb verify .
+Compound rc: 0
+Observed output:
+From https://github.com/aien-dev/CUDApp
+ * branch            main       -> FETCH_HEAD
+COMPILED   om/api
+crumb compile: 43 crumbs, 1 rewritten, HEAD 84c1100
+crumb verify: OK: 43 crumbs current
+
+The implementation commit follows the recorded registration 8470e0d and separate bridge pin 84c1100. Integrator4 owns integration and the matching consolidated omega-harness guide refresh in draft omega-harness#194. No merge, deployment, GPU or service authority is delegated by this receipt.

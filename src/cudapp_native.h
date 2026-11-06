@@ -265,6 +265,70 @@ uint32_t omega_bw_cpubf16(uint64_t  *result, const void *p0, uint64_t p0_n, cons
 uint32_t omega_bw_shape(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_bw_name(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_av_pack(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3);
+uint32_t omega_av_lay(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_copy(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_attnrope(uint64_t  *result, void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_fold(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_set(uint64_t  *result, void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_fill(uint64_t  *result, void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_fillf(uint64_t  *result, void *p0, uint64_t p0_n, uint64_t p1, float p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_count(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_cntf(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, float p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_bfexp(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_bffin(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_any(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_comp(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_rpois(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_z64(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_bids(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_rows(uint64_t  *result, void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_gtab(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, uint64_t p3);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_range(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_total(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_table(uint64_t  *result, void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, uint64_t p3);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_touch(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n, uint64_t p3);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_blks(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_rfit(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_gath(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_stage(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_reset(uint64_t  *result, void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_hmap(uint64_t  *result, void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_eff(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_best(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_max(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_ctx(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

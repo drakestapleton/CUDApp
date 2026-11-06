@@ -136,6 +136,41 @@ UNITS="$UNITS bw_identity=om/cache/digest.om,om/blackwell/identity.om"
 UNITS="$UNITS bw_cpui=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpui.om bw_cpuf16=om/blackwell/views.om,om/blackwell/scalar.om,om/blackwell/shape.om,om/blackwell/cpuf16.om bw_cpubf16=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpubf16.om"
 UNITS="$UNITS bw_shape=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/shape_probe.om bw_name=om/blackwell/name.om"
 PURE_UNITS="$PURE_UNITS bw_scalar=om/blackwell/scalar.om"
+if [ -z "${OMEGA_UNITS:-}" ]; then
+UNITS="$UNITS attn_args=om/api/attn_args.om"
+UNITS="$UNITS attn_lay=om/api/attn_lay.om"
+UNITS="$UNITS attn_buf=om/api/attn_buf.om"
+UNITS="$UNITS attn_math=om/api/attn_math.om"
+UNITS="$UNITS attn_tables=om/api/attn_om2.om,om/api/attn_tables.om"
+UNITS="$UNITS attn_set=om/api/attn_set.om"
+UNITS="$UNITS attn_fill=om/api/attn_fill.om"
+UNITS="$UNITS attn_fillf=om/api/attn_fillf.om"
+UNITS="$UNITS attn_count=om/api/attn_count.om"
+UNITS="$UNITS attn_cntf=om/api/attn_cntf.om"
+UNITS="$UNITS attn_bfexp=om/api/attn_bfexp.om"
+UNITS="$UNITS attn_bffin=om/api/attn_bffin.om"
+UNITS="$UNITS attn_view_any=om/api/attn_any.om"
+UNITS="$UNITS attn_comp=om/api/attn_comp.om"
+UNITS="$UNITS attn_rpois=om/api/attn_rpois.om"
+UNITS="$UNITS attn_z64=om/api/attn_z64.om"
+UNITS="$UNITS attn_bids=om/api/attn_bids.om"
+UNITS="$UNITS attn_rows=om/api/attn_rows.om"
+UNITS="$UNITS attn_gtab=om/api/attn_om2.om,om/api/attn_gtab.om"
+UNITS="$UNITS attn_range=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_range.om"
+UNITS="$UNITS attn_total=om/api/attn_om2.om,om/api/attn_total.om"
+UNITS="$UNITS attn_table=om/api/attn_om2.om,om/api/attn_table.om"
+UNITS="$UNITS attn_touch=om/api/attn_om2.om,om/api/attn_touch.om"
+UNITS="$UNITS attn_blks=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_blks.om"
+UNITS="$UNITS attn_rfit=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_rfit.om"
+UNITS="$UNITS attn_gath=om/api/attn_om2.om,om/api/attn_cseg.om,om/api/attn_gath.om"
+UNITS="$UNITS attn_stage=om/api/attn_om2.om,om/api/attn_cseg.om,om/api/attn_stage.om"
+UNITS="$UNITS attn_reset=om/api/attn_om2.om,om/api/attn_reset.om"
+UNITS="$UNITS attn_hmap=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_hmap.om"
+UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_eff.om"
+UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
+UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
+UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
+fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -193,6 +228,9 @@ for u in $UNITS $PURE_UNITS; do
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
     av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
+      flags=--runtime-views
+      abi_name=bridge-seeded-runtime ;;
+    attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

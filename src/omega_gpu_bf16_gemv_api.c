@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_attn_views.h"
 /* omega_gpu_bf16_gemv_api.c: bf16 streaming GEMV (lm_head) on the shared session, OWN-30B 2026-10-13.
  * See the header. Submission path and buffer policy are the FP8 API's: every buffer both sides touch is
  * GPU-uncached (nvos.h NVOS32_ATTR2_GPU_CACHEABLE: "For system memory this will not be coherent with direct CPU
@@ -56,7 +57,7 @@ static void cache_clear_locked(void) {
     for (unsigned i = 0; i < CACHE_SLOTS; i++) {
         if (!g.cache[i].valid) continue;
         omega_gpu_session_free(&g.cache[i].code);
-        memset(&g.cache[i], 0, sizeof g.cache[i]);
+        av_memset(&g.cache[i], 0, sizeof g.cache[i]);
     }
     g.next = 0;
 }
@@ -105,7 +106,7 @@ void omega_gpu_bf16_shape_for(uint32_t k, uint32_t *rows, uint32_t *warps, uint3
     if(ctas)*ctas=p[11];
 }
 static void spec_for(uint32_t k, OmegaBf16GemvSpec *spec, uint32_t *ctas) {
-    memset(spec, 0, sizeof *spec);
+    av_memset(spec, 0, sizeof *spec);
     spec->k = k;
     omega_gpu_bf16_shape_for(k, &spec->rows, &spec->warps, &spec->depth, ctas);
     spec->mutant = g.mutant;
@@ -137,7 +138,7 @@ static int kernel_for(const OmegaBf16GemvSpec *spec, Slot **out, bool *hit) {
     if (cg != 0 || !kernel.code || kernel.code_size != need) { omega_gpu_session_free(&code); return OMEGA_GPU_BF16_CODEGEN_FAIL; }
     if (omega_gpu_session_sync_to_gpu(&code) != 0) { omega_gpu_session_free(&code); return OMEGA_GPU_BF16_CHIP_FAIL; }
     if (s->valid) omega_gpu_session_free(&s->code);
-    memset(s, 0, sizeof *s);
+    av_memset(s, 0, sizeof *s);
     s->valid = true; s->spec = *spec; s->kernel = kernel; s->code = code;
     *out = s; *hit = false;
     return OMEGA_GPU_BF16_OK;
@@ -181,8 +182,9 @@ int omega_gpu_bf16_tensor_upload(uint32_t n, uint32_t k, const uint16_t *w, Omeg
     int shape_rc = omega_host_shape(5, n, k, OMEGA_BF16_MAX_K);
     if (shape_rc) return shape_rc;
     const size_t count = (size_t)n * k;
-    for (size_t i = 0; i < count; i++) if ((w[i] & 0x7f80u) == 0x7f80u) {
-        char e[120]; omega_gpu_fmt(e, sizeof e, "bf16 upload: NaN or infinity at element %zu", i);
+    const size_t bad_weight = av_bffinite(w, count);
+    if (bad_weight) {
+        char e[120]; omega_gpu_fmt(e, sizeof e, "bf16 upload: NaN or infinity at element %zu", bad_weight - 1);
         omega_gpu_session_set_error(e);
         return OMEGA_GPU_BF16_NAN_WEIGHT;
     }
@@ -194,7 +196,7 @@ int omega_gpu_bf16_tensor_upload(uint32_t n, uint32_t k, const uint16_t *w, Omeg
     if (!dev_open_locked() || omega_gpu_session_alloc(count * 2u, &t->w) != 0) rc = OMEGA_GPU_BF16_CHIP_FAIL;
     omega_gpu_session_unlock();
     if (rc == OMEGA_GPU_BF16_OK) {
-        memcpy(t->w.cpu, w, count * 2u);
+        av_memcpy(t->w.cpu, w, count * 2u);
         if (omega_gpu_session_sync_to_gpu(&t->w) != 0) rc = OMEGA_GPU_BF16_CHIP_FAIL;
     }
     if (rc != OMEGA_GPU_BF16_OK) { omega_gpu_bf16_tensor_free(t); return rc; }
@@ -216,7 +218,7 @@ static int gemv_core(const OmegaGpuBf16Tensor *t, const float *x32, const uint16
                      OmegaGpuCmdList *rec, uint64_t dev_x, uint64_t dev_y, uint32_t xrows, uint32_t xbatch, uint32_t ystride,
                      uint64_t mask_hi, uint64_t mask_tau) {
     uint64_t t0 = omega_gpu_session_now_ns();
-    if (info) memset(info, 0, sizeof *info);
+    if (info) av_memset(info, 0, sizeof *info);
     if (rec && (!dev_x || !dev_y)) return OMEGA_GPU_BF16_BAD_ARGS;
     if (!t || !t->w.cpu || (!rec && ((!x32 && !x16) || !y))) return OMEGA_GPU_BF16_BAD_ARGS;
     const uint32_t n = t->n, k = t->k;
@@ -249,19 +251,17 @@ static int gemv_core(const OmegaGpuBf16Tensor *t, const float *x32, const uint16
 
     float *xd = g.x_buf.mem.cpu, *yd = g.y_buf.mem.cpu;
     if (!rec) {
-        if (x32) memcpy(xd, x32, (size_t)k * 4u);
-        else for (uint32_t i = 0; i < k; i++) { uint32_t b = (uint32_t)x16[i] << 16; memcpy(&xd[i], &b, 4); }
-        for (size_t i = 0; i < n; i++) yd[i] = POISON_F32;
+        if (x32) av_memcpy(xd, x32, (size_t)k * 4u);
+        else av_bfexpand(xd, x16, k);
+        av_fillf32(yd, n, POISON_F32);
         if (omega_gpu_session_sync_to_gpu(&g.x_buf.mem) != 0 || omega_gpu_session_sync_to_gpu(&g.y_buf.mem) != 0) rc = OMEGA_GPU_BF16_CHIP_FAIL;
     }
 
-    uint32_t args[OMEGA_BF16_MASK_ARGS_WORDS];
+    uint32_t args[32];
     const uint64_t x_va = rec ? dev_x : g.x_buf.mem.va, y_va = rec ? dev_y : g.y_buf.mem.va;
-    args[0] = (uint32_t)t->w.va; args[1] = (uint32_t)(t->w.va >> 32);
-    args[2] = (uint32_t)x_va; args[3] = (uint32_t)(x_va >> 32);
-    args[4] = (uint32_t)y_va; args[5] = (uint32_t)(y_va >> 32);
-    args[6] = RG; args[7] = grid_x * spec.warps;
-    args[8] = (uint32_t)mask_hi; args[9] = (uint32_t)(mask_hi >> 32); args[10] = (uint32_t)mask_tau; args[11] = (uint32_t)(mask_tau >> 32);
+    const uint64_t pack[32] = { [0]=t->w.va, [2]=x_va, [4]=y_va, [6]=RG,
+        [7]=grid_x * spec.warps, [8]=mask_hi, [10]=mask_tau };
+    if (av_layout(args, pack, (1ull<<0)|(1ull<<2)|(1ull<<4)|(1ull<<8)|(1ull<<10))) rc = OMEGA_GPU_BF16_CHIP_FAIL;
     if (info) {
         info->n = n; info->k = k; info->rows_per_warp = spec.rows; info->warps_per_cta = spec.warps; info->depth = spec.depth;
         info->grid_x = grid_x; info->steps = omega_bf16_gemv_steps(&spec);
@@ -285,9 +285,9 @@ static int gemv_core(const OmegaGpuBf16Tensor *t, const float *x32, const uint16
     if (rc == OMEGA_GPU_BF16_OK && !rec && omega_gpu_session_sync_to_cpu(&g.y_buf.mem) != 0) rc = OMEGA_GPU_BF16_CHIP_FAIL;
     if (rc == OMEGA_GPU_BF16_OK && !rec) {
         size_t unchanged = 0;
-        for (size_t i = 0; i < n; i++) if (yd[i] == POISON_F32) unchanged++;
+        unchanged = av_countf32(yd, n, POISON_F32);
         if (unchanged) { omega_gpu_session_set_error("output poison survived"); rc = OMEGA_GPU_BF16_CHIP_FAIL; }
-        else memcpy(y, yd, (size_t)n * sizeof *y);
+        else av_memcpy(y, yd, (size_t)n * sizeof *y);
     }
     UNLOCK();
     if (info) info->call_ns = omega_gpu_session_now_ns() - t0;

@@ -1,0 +1,267 @@
+        -:    0:Source:src/omega_attn_tables.h
+        -:    0:Graph:~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.gcno
+        -:    0:Data:~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.gcda
+        -:    0:Runs:9
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#ifndef OMEGA_ATTN_TABLES_H
+        -:    3:#define OMEGA_ATTN_TABLES_H
+        -:    4:#include "omega_attn_views.h"
+        -:    5:#include "omega_api_plan.h"
+        -:    6:#include "omega_gpu_hostmath.h"
+function av_ropegen called 16 returned 100% blocks executed 100%
+       16:    7:static inline void av_ropegen(float *d,uint64_t pos,double theta,uint64_t dim,uint64_t width,size_t rows) {
+        -:    8:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+     4152:    9:    for(size_t r=0;r<rows;r++)for(uint64_t i=0;i<width/2;i++) {
+branch  0 taken 4096
+branch  1 taken 40 (fallthrough)
+branch  2 taken 40
+branch  3 taken 16 (fallthrough)
+     4096:   10:        double s=0,c=1;
+     4096:   11:        if(i<dim/2){double inv=omega_hostmath_pow(theta,-2.0*(double)i/(double)dim);omega_hostmath_sincos((double)(pos+r)*inv,&s,&c);}
+branch  0 taken 1792 (fallthrough)
+branch  1 taken 2304
+call    2 returned 1792
+call    3 returned 1792
+     4096:   12:        d[r*width+i]=(float)c;d[r*width+width/2+i]=(float)s;
+        -:   13:    }
+        -:   14:#else
+        -:   15:    uint64_t bits;memcpy(&bits,&theta,8);
+        -:   16:    uint64_t q[16]={pos,bits,dim,width,rows},r=0;
+        -:   17:    if(omega_av_rope(&r,d,rows*width,q,16)!=OMEGA_OK || r)__builtin_trap();
+        -:   18:#endif
+       16:   19:}
+function av_gentab called 16 returned 100% blocks executed 100%
+       16:   20:static inline void av_gentab(const uint32_t *lo,const uint32_t *hi,uint32_t *tab,size_t n,uint64_t off,uint64_t stride) {
+        -:   21:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+       64:   22:    for(size_t i=0;i<n;i++){tab[4*i]=lo[i];tab[4*i+1]=hi[i];tab[4*i+2]=(uint32_t)(off+i*stride);tab[4*i+3]=0;}
+branch  0 taken 48
+branch  1 taken 16 (fallthrough)
+        -:   23:#else
+        -:   24:    uint64_t q[16]={n,off,stride},r=0;
+        -:   25:    if(omega_av_gtab(&r,lo,n,tab,4*n,q,16,0)!=OMEGA_OK || r ||
+        -:   26:       omega_av_gtab(&r,hi,n,tab,4*n,q,16,1)!=OMEGA_OK || r)__builtin_trap();
+        -:   27:#endif
+       16:   28:}
+function av_ranges called 8 returned 100% blocks executed 100%
+        8:   29:static inline void av_ranges(uint32_t *d,size_t n,const uint64_t q[16]) {
+        -:   30:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+       72:   31:    for(size_t i=0;i<n;i++){uint64_t p[16]={q[0]+i,q[1],q[2],q[3],q[4]};(void)ap_plan(AP_AT,10,p);d[i]=(uint32_t)p[8];d[n+i]=(uint32_t)p[9];}
+call    0 returned 64
+branch  1 taken 64
+branch  2 taken 8 (fallthrough)
+        -:   32:#else
+        -:   33:    uint64_t r=0;if(omega_av_range(&r,q,16,d,2*n,n)!=OMEGA_OK || r)__builtin_trap();
+        -:   34:#endif
+        8:   35:}
+function av_total called 16 returned 100% blocks executed 100%
+       16:   36:static inline uint32_t av_total(const uint32_t *e,size_t n,uint64_t bs) {
+        -:   37:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+  8000104:   38:    uint32_t r=0;for(size_t i=0;i<n;i++)r+=e[i]?(e[i]+bs-1)/bs:0;return r;
+branch  0 taken 5333440 (fallthrough)
+branch  1 taken 2666648
+branch  2 taken 8000088
+branch  3 taken 16 (fallthrough)
+        -:   39:#else
+        -:   40:    uint64_t r=0;if(omega_av_total(&r,e,n,n,bs)!=OMEGA_OK)__builtin_trap();return (uint32_t)r;
+        -:   41:#endif
+        -:   42:}
+function av_table called 48 returned 100% blocks executed 100%
+       48:   43:static inline uint32_t av_table(const uint32_t *ids,uint32_t *tab,size_t tw,int32_t *slots,uint32_t *touched,size_t nb,const uint64_t q[16],uint32_t g) {
+        -:   44:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+        -:   45:    (void)tw;(void)nb;
+ 16000192:   46:    for(size_t b=0;b<q[0];b++){uint32_t id=ids[b],v=g;
+branch  0 taken 16000144
+branch  1 taken 48 (fallthrough)
+ 16000144:   47:        if(q[1]==2)v=id;
+branch  0 taken 32 (fallthrough)
+branch  1 taken 16000112
+ 16000112:   48:        else if(q[1]){if(slots[id]<0){slots[id]=(int32_t)g;touched[g++]=id;}v=(uint32_t)slots[id];}
+branch  0 taken 16000080 (fallthrough)
+branch  1 taken 32
+branch  2 taken 32 (fallthrough)
+branch  3 taken 16000048
+       32:   49:        else g++;
+ 16000144:   50:        tab[q[2]+b]=v;
+        -:   51:    }
+       48:   52:    tab[q[3]]=(uint32_t)q[4];return g;
+        -:   53:#else
+        -:   54:    (void)tw;uint64_t r=0;
+        -:   55:    uint32_t *row=tab+q[2];
+        -:   56:    av_memcpy(row,ids,q[0]*sizeof *ids);
+        -:   57:    if(omega_av_table(&r,row,q[0],slots,nb,q,16,g)!=OMEGA_OK)__builtin_trap();
+        -:   58:    uint32_t result=(uint32_t)r;
+        -:   59:    if(q[1] && q[1]!=2)for(uint64_t start=0;;) {
+        -:   60:        uint64_t count=q[0]-start;if(count>1000000)count=1000000;
+        -:   61:        if(omega_av_touch(&r,start?ids+start:ids,count,slots,nb,touched,nb,g)!=OMEGA_OK)__builtin_trap();
+        -:   62:        if(count==q[0]-start)break;
+        -:   63:        start+=count;
+        -:   64:    }
+        -:   65:    av_fill32(tab+q[3],1,(uint32_t)q[4]);
+        -:   66:    return result;
+        -:   67:#endif
+        -:   68:}
+function av_blocks called 16 returned 100% blocks executed 100%
+       16:   69:static inline int av_blocks(const uint32_t *ids,size_t n,const uint64_t q[16]) {
+        -:   70:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+       64:   71:    for(size_t i=0;i<n;i++){uint64_t p[16]={ids[i],q[1],q[2],q[3],q[4],q[5]};if(ap_plan(AP_AT,16,p))return 1;}return 0;
+call    0 returned 56
+branch  1 taken 8 (fallthrough)
+branch  2 taken 48
+branch  3 taken 56
+branch  4 taken 8 (fallthrough)
+        -:   72:#else
+        -:   73:    uint64_t r=0;if(omega_av_blks(&r,ids,n,q,16,n)!=OMEGA_OK)__builtin_trap();return (int)r;
+        -:   74:#endif
+        -:   75:}
+function av_resfit called 24 returned 100% blocks executed 100%
+       24:   76:static inline int av_resfit(const uint32_t *ids,size_t n,uint64_t stride,uint64_t layer) {
+        -:   77:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+       56:   78:    for(size_t i=0;i<n;i++)if(stride>UINT32_MAX || (uint64_t)ids[i]*stride+layer>UINT32_MAX)return 0;return 1;
+branch  0 taken 40 (fallthrough)
+branch  1 taken 8
+branch  2 taken 8 (fallthrough)
+branch  3 taken 32
+branch  4 taken 48
+branch  5 taken 8 (fallthrough)
+        -:   79:#else
+        -:   80:    uint64_t q[16]={stride,layer},r=0;if(omega_av_rfit(&r,ids,n,q,16,n)!=OMEGA_OK)__builtin_trap();return (int)r;
+        -:   81:#endif
+        -:   82:}
+function av_gather called 8 returned 100% blocks executed 100%
+        8:   83:static inline void av_gather(const void *s,size_t sn,void *d,size_t dn,const uint64_t q[16]) {
+        -:   84:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+        -:   85:    (void)sn;(void)dn;
+      104:   86:    for(size_t t=0;t<q[0];t++)for(size_t h=0;h<q[1];h++)memcpy((uint8_t*)d+(t*q[1]+h)*q[2],(const uint8_t*)s+(t*q[3]+h*q[4])*q[5],q[2]);
+branch  0 taken 64
+branch  1 taken 32 (fallthrough)
+branch  2 taken 32
+branch  3 taken 8 (fallthrough)
+        -:   87:#else
+        -:   88:    uint64_t r=0;if(omega_av_gath(&r,s,sn,d,dn,q,16)!=OMEGA_OK || r)__builtin_trap();
+        -:   89:#endif
+        8:   90:}
+function av_stage called 24 returned 100% blocks executed 100%
+       24:   91:static inline void av_stage(const void *s,size_t sn,void *d,size_t dn,const uint32_t *ids,const uint64_t q[16]) {
+        -:   92:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+        -:   93:    (void)sn;(void)dn;
+  8000072:   94:    for(size_t i=0;i<q[0];i++)memcpy((uint8_t*)d+(q[4]+i)*q[3],(const uint8_t*)s+(uint64_t)ids[i]*q[1]+q[2],q[3]);
+branch  0 taken 8000048
+branch  1 taken 24 (fallthrough)
+        -:   95:#else
+        -:   96:    /* Three independent data views plus metadata exceed six unsized seed slots.
+        -:   97:     * Dispatch pointer windows only; every byte/data access remains in Omega. */
+        -:   98:    for(uint64_t start=0;;) {
+        -:   99:        uint64_t count=q[0]-start;if(count>1000000)count=1000000;
+        -:  100:        uint64_t wq[16]={count,q[1],q[2],q[3],q[4]+start},r=0;
+        -:  101:        if(omega_av_stage(&r,s,sn,d,dn,start?ids+start:ids,count,wq,16)!=OMEGA_OK || r)__builtin_trap();
+        -:  102:        if(count==q[0]-start)break;
+        -:  103:        start+=count;
+        -:  104:    }
+        -:  105:#endif
+       24:  106:}
+function av_reset called 8 returned 100% blocks executed 100%
+        8:  107:static inline void av_reset(int32_t *slots,size_t nb,const uint32_t *ids,size_t n) {
+        -:  108:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+       32:  109:    (void)nb;for(size_t i=0;i<n;i++)slots[ids[i]]=-1;
+branch  0 taken 24
+branch  1 taken 8 (fallthrough)
+        -:  110:#else
+        -:  111:    uint64_t r=0;if(omega_av_reset(&r,slots,nb,ids,n,n)!=OMEGA_OK || r)__builtin_trap();
+        -:  112:#endif
+        8:  113:}
+function av_headmap called 16 returned 100% blocks executed 100%
+       16:  114:static inline void av_headmap(uint32_t *d,uint64_t nqh,uint64_t nkv,uint64_t hb,uint64_t mutant) {
+        -:  115:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+      144:  116:    for(uint64_t i=0;i<nqh;i++){uint64_t p[16]={i,nqh,nkv,hb,mutant};(void)ap_plan(AP_AT,25,p);d[i]=(uint32_t)p[8];}
+call    0 returned 128
+branch  1 taken 128
+branch  2 taken 16 (fallthrough)
+        -:  117:#else
+        -:  118:    uint64_t q[16]={0,nqh,nkv,hb,mutant},r=0;if(omega_av_hmap(&r,d,nqh,q,16)!=OMEGA_OK || r)__builtin_trap();
+        -:  119:#endif
+       16:  120:}
+function av_eff called 16 returned 100% blocks executed 100%
+       16:  121:static inline void av_eff(uint32_t *d,const uint32_t *ctx,const uint32_t *nb,size_t n,uint64_t bs) {
+        -:  122:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+  8000104:  123:    for(size_t i=0;i<n;i++){uint64_t p[16]={ctx[i],nb[i],bs};(void)ap_plan(AP_AT,15,p);d[i]=(uint32_t)p[8];}
+call    0 returned 8000088
+branch  1 taken 8000088
+branch  2 taken 16 (fallthrough)
+        -:  124:#else
+        -:  125:    av_memcpy(d,ctx,n*sizeof *ctx);
+        -:  126:    uint64_t r=0;if(omega_av_eff(&r,nb,n,d,n,bs)!=OMEGA_OK || r)__builtin_trap();
+        -:  127:#endif
+       16:  128:}
+function av_best called 16 returned 100% blocks executed 100%
+       16:  129:static inline uint32_t av_best(const uint32_t *e,size_t n,uint64_t hd) {
+        -:  130:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+  8000104:  131:    uint32_t r=0;for(size_t i=0;i<n;i++){uint64_t p[16]={e[i],hd};(void)ap_plan(AP_AT,3,p);if(p[8]>r)r=(uint32_t)p[8];}return r;
+call    0 returned 8000088
+branch  1 taken 8 (fallthrough)
+branch  2 taken 8000080
+branch  3 taken 8000088
+branch  4 taken 16 (fallthrough)
+        -:  132:#else
+        -:  133:    uint64_t r=0;if(omega_av_best(&r,e,n,n,hd)!=OMEGA_OK)__builtin_trap();return (uint32_t)r;
+        -:  134:#endif
+        -:  135:}
+function av_max called 16 returned 100% blocks executed 100%
+       16:  136:static inline uint32_t av_max(const uint32_t *s,size_t n) {
+        -:  137:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+  8000104:  138:    uint32_t r=1;for(size_t i=0;i<n;i++)if(s[i]>r)r=s[i];return r;
+branch  0 taken 32 (fallthrough)
+branch  1 taken 8000056
+branch  2 taken 8000088
+branch  3 taken 16 (fallthrough)
+        -:  139:#else
+        -:  140:    uint64_t r=0;if(omega_av_max(&r,s,n,n)!=OMEGA_OK)__builtin_trap();return (uint32_t)r;
+        -:  141:#endif
+        -:  142:}
+        -:  143:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+function av_exp2_oracle called 48 returned 100% blocks executed 92%
+       48:  144:static inline float av_exp2_oracle(float x) {
+      48*:  145:    if(x<=-127.0f)return 0.0f;if(x>127.0f)x=127.0f;
+branch  0 taken 8 (fallthrough)
+branch  1 taken 40
+branch  2 taken 0 (fallthrough)
+branch  3 taken 40
+       40:  146:    int n=(int)(x+(x<0?-0.5f:0.5f));float f=x-(float)n,px=1.535336188319500e-4f;
+branch  0 taken 16 (fallthrough)
+branch  1 taken 24
+       40:  147:    px=px*f+1.339887440266574e-3f;px=px*f+9.618437357674640e-3f;px=px*f+5.550332471162809e-2f;
+       40:  148:    px=px*f+2.402264791363012e-1f;px=px*f+6.931472028550421e-1f;px=1.0f+f*px;
+       40:  149:    if(n < -126){px*=0.5f;n=-126;}uint32_t b=(uint32_t)(n+127)<<23;float s;memcpy(&s,&b,4);return px*s;
+branch  0 taken 8 (fallthrough)
+branch  1 taken 32
+        -:  150:}
+        -:  151:#endif
+function av_fold called 8 returned 100% blocks executed 100%
+        8:  152:static inline void av_fold(const float *p,float *out,size_t rows,uint32_t S,uint32_t HD) {
+        -:  153:#if CUDAPP_MIGRATION_PENDING_ATTN_VIEWS
+        8:  154:    size_t pw=HD+2;
+       40:  155:    for(size_t r=0;r<rows;r++){float mx=-__builtin_inff();size_t base=r*S*pw;
+branch  0 taken 32
+branch  1 taken 8 (fallthrough)
+       96:  156:        for(uint32_t s=0;s<S;s++)if(p[base+s*pw+HD]>mx)mx=p[base+s*pw+HD];
+branch  0 taken 24 (fallthrough)
+branch  1 taken 40
+branch  2 taken 64
+branch  3 taken 32 (fallthrough)
+       32:  157:        if(!(mx>-__builtin_inff())){memset(out+r*HD,0,HD*4);continue;}
+branch  0 taken 8 (fallthrough)
+branch  1 taken 24
+       72:  158:        float w[16],lsum=0;for(uint32_t s=0;s<S;s++){w[s]=av_exp2_oracle(p[base+s*pw+HD]-mx);lsum+=w[s]*p[base+s*pw+HD+1];}
+call    0 returned 48
+branch  1 taken 48
+branch  2 taken 24 (fallthrough)
+      600:  159:        float inv=1.0f/lsum;for(uint32_t d=0;d<HD;d++){float a=0;for(uint32_t s=0;s<S;s++)a+=w[s]*p[base+s*pw+d];out[r*HD+d]=a*inv;}
+branch  0 taken 384
+branch  1 taken 192 (fallthrough)
+branch  2 taken 192
+branch  3 taken 24 (fallthrough)
+        -:  160:    }
+        -:  161:#else
+        -:  162:    uint64_t q[16]={rows,S,HD},r=0;if(omega_av_fold(&r,p,rows*S*(HD+2),out,rows*HD,q,16)!=OMEGA_OK || r)__builtin_trap();
+        -:  163:#endif
+        8:  164:}
+        -:  165:#endif

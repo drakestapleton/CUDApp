@@ -80,7 +80,6 @@ static uint64_t cm_route2(unsigned mode, uint64_t a, uint64_t b) {
 #endif
 }
 
-
 #if CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
 void rx_cm_default_policy(RxCmPolicy *p) {
     p->ei_min = 0.08;

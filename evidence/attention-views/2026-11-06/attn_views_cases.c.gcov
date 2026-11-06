@@ -1,0 +1,168 @@
+        -:    0:Source:tests/attn_views_cases.c
+        -:    0:Graph:~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.gcno
+        -:    0:Data:~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.gcda
+        -:    0:Runs:9
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#include "attn_views_fixture.h"
+        -:    3:#include "omega_attn_tables.h"
+        -:    4:#include <stdlib.h>
+        -:    5:#ifndef AV_ENTRY
+        -:    6:#error AV_ENTRY must name the differential arm
+        -:    7:#endif
+function attn_oracle called 8 returned 100% blocks executed 99%
+        8:    8:void AV_ENTRY(AttnViewsFixture *r) {
+        8:    9:    uint8_t *bytes=malloc(AV_N);uint16_t *bf=malloc(AV_N*sizeof *bf);int32_t *si=malloc(AV_N*sizeof *si);
+       8*:   10:    if(!bytes || !bf || !si)abort();
+branch  0 taken 8 (fallthrough)
+branch  1 taken 0
+branch  2 taken 8 (fallthrough)
+branch  3 taken 0
+branch  4 taken 0 (fallthrough)
+branch  5 taken 8
+call    6 never executed
+  8000032:   11:    for(size_t i=0;i<AV_N;i++){bytes[i]=(uint8_t)(i*37u);bf[i]=(uint16_t)(i%0x7f80u);si[i]=i%3?(int32_t)i:-1;}
+branch  0 taken 5333344 (fallthrough)
+branch  1 taken 2666680
+branch  2 taken 8000024
+branch  3 taken 8 (fallthrough)
+      264:   12:    uint64_t p[32];for(size_t i=0;i<32;i++)p[i]=0xdeadbeef12345678ull^((uint64_t)i<<40);
+branch  0 taken 256
+branch  1 taken 8 (fallthrough)
+        8:   13:    r->result[0]=av_args(r->args,p,9,25);
+call    0 returned 8
+        8:   14:    r->result[1]=av_layout(r->layout,p,0x5555u);
+call    0 returned 8
+        8:   15:    r->result[28]=r->layout[1];
+        8:   16:    av_memcpy(r->bytes,bytes,AV_N);av_memset(r->bytes+17,0xe7,19);
+call    0 returned 8
+call    1 returned 8
+        8:   17:    av_memcpy(r->bytes,r->bytes,AV_N);av_memcpy(NULL,NULL,0);av_memset(NULL,0,0);
+call    0 returned 8
+call    1 returned 8
+call    2 returned 8
+        8:   18:    av_memset(bytes,0xe7,AV_N);
+call    0 returned 8
+        8:   19:    r->result[30]=(uint64_t)bytes[0]+bytes[AV_N-1];
+        8:   20:    av_fill32(r->ui,AV_N,0xa1234567u);r->result[2]=av_count32(r->ui,AV_N,0xa1234567u);
+call    0 returned 8
+call    1 returned 8
+        8:   21:    r->result[3]=av_any32(r->ui,AV_N);r->result[4]=av_compact32(r->compact,si,AV_N);
+call    0 returned 8
+call    1 returned 8
+        8:   22:    av_fillf32(r->ff,AV_N,-123.25f);r->result[5]=av_countf32(r->ff,AV_N,-123.25f);
+call    0 returned 8
+call    1 returned 8
+        8:   23:    r->result[6]=av_routerpoison(r->ff,r->ui,AV_N,-123.25f,0xffffffffu);
+call    0 returned 8
+        8:   24:    r->result[7]=av_badids(r->ui,AV_N,1024);uint64_t zeros[5]={0,1,0,UINT64_MAX,0};r->result[8]=av_zero64(zeros,5);
+call    0 returned 8
+call    1 returned 8
+        8:   25:    r->ff[0]=0;r->ff[1]=0;r->ui[0]=UINT32_MAX;r->ui[1]=0;
+        8:   26:    r->result[25]=av_routerpoison(r->ff,r->ui,AV_N,-123.25f,UINT32_MAX);
+call    0 returned 8
+        8:   27:    r->result[26]=av_count32(r->ui,AV_N,0xa1234567u);
+call    0 returned 8
+        8:   28:    r->result[27]=av_countf32(r->ff,AV_N,-123.25f);
+call    0 returned 8
+        8:   29:    r->result[9]=av_bffinite(bf,AV_N);bf[AV_N-1]=0x7f80u;r->result[10]=av_bffinite(bf,AV_N);bf[AV_N-1]=0x3f80u;
+call    0 returned 8
+call    1 returned 8
+        8:   30:    av_bfexpand(r->ff,bf,AV_N);av_rowtab(r->table,4,19);
+call    0 returned 8
+call    1 returned 8
+        8:   31:    int32_t signed_ctx[8]={INT32_MIN,-1,0,1,2,INT32_MAX,31,32};
+        8:   32:    av_context(r->compact+AV_N-8,signed_ctx,8);
+call    0 returned 8
+        8:   33:    av_ropegen(r->rope,0,10000.0,128,128,2);av_ropegen(r->rope+256,129,500000.0,64,256,3);
+call    0 returned 8
+call    1 returned 8
+        8:   34:    uint32_t lo[4]={0,1,2,4},hi[4]={3,4,5,6};av_gentab(lo,hi,r->table+8,4,29,3);
+call    0 returned 8
+        8:   35:    uint64_t ranges[16]={8,12,0,3,2};av_ranges(r->range,8,ranges);
+call    0 returned 8
+        8:   36:    av_rowtab(r->range+12,2,UINT32_MAX);
+call    0 returned 8
+        8:   37:    av_gentab(lo,hi,r->table+16,2,UINT32_MAX,1);
+call    0 returned 8
+        8:   38:    uint32_t ctx[8]={0,1,2,3,100,64,65,4096},nb[8]={0,1,2,1,3,4,1,2};av_eff(r->eff,ctx,nb,8,32);
+call    0 returned 8
+        8:   39:    r->result[11]=av_total(r->eff,8,32);r->result[12]=av_best(r->eff,8,128);r->result[13]=av_max(nb,8);
+call    0 returned 8
+call    1 returned 8
+call    2 returned 8
+        8:   40:    av_headmap(r->headmap,8,2,128,0);av_headmap(r->headmap+8,8,2,128,1);
+call    0 returned 8
+call    1 returned 8
+        8:   41:    uint32_t ids[4]={2,2,5,1};av_memset(r->slots,0xff,sizeof r->slots);
+call    0 returned 8
+        8:   42:    uint64_t tq[16]={4,1,0,24,91};uint32_t g=av_table(ids,r->table,32,r->slots,r->touched,8,tq,0);r->result[14]=g;
+call    0 returned 8
+        8:   43:    tq[1]=0;tq[2]=4;tq[3]=25;r->result[15]=av_table(ids,r->table,32,NULL,NULL,0,tq,g);
+call    0 returned 8
+        8:   44:    tq[1]=2;tq[2]=28;tq[3]=26;r->result[16]=av_table(ids,r->table,32,NULL,NULL,0,tq,0);
+call    0 returned 8
+        8:   45:    uint64_t block[16]={0,8,64,1,16,512};r->result[17]=av_blocks(ids,4,block);block[1]=5;r->result[18]=av_blocks(ids,4,block);
+call    0 returned 8
+call    1 returned 8
+        8:   46:    r->result[19]=av_resfit(ids,4,64,16);r->result[20]=av_resfit(ids,4,UINT32_MAX,16);
+call    0 returned 8
+call    1 returned 8
+        8:   47:    r->result[20]+=av_resfit(ids,4,UINT64_C(4294967296),0);
+call    0 returned 8
+        8:   48:    uint64_t gather[16]={4,2,8,20,5,2};av_gather(bytes,146,r->gather,64,gather);
+call    0 returned 8
+        8:   49:    uint64_t stage[16]={3,64,16,16,2};av_stage(bytes,512,r->stage,512,r->touched,stage);
+call    0 returned 8
+        8:   50:    av_reset(r->slots,8,r->touched,g);
+call    0 returned 8
+      648:   51:    float parts[4*2*10];for(size_t i=0;i<80;i++)parts[i]=(float)(i%7)*0.125f;
+branch  0 taken 640
+branch  1 taken 8 (fallthrough)
+        8:   52:    const float gaps[4]={0.0f,0.375f,126.75f,200.0f};
+      104:   53:    for(size_t row=0;row<4;row++)for(size_t s=0;s<2;s++){parts[row*20+s*10+8]=row==0?-__builtin_inff():-(float)s*gaps[row];parts[row*20+s*10+9]=1.0f;}
+branch  0 taken 48 (fallthrough)
+branch  1 taken 16
+branch  2 taken 64
+branch  3 taken 32 (fallthrough)
+branch  4 taken 32
+branch  5 taken 8 (fallthrough)
+        8:   54:    av_fold(parts,r->fold,4,2,8);
+call    0 returned 8
+        8:   55:    r->result[21]=av_args(r->args,p,17,32);
+call    0 returned 8
+        8:   56:    r->result[22]=av_args(r->args,p,0,33);
+call    0 returned 8
+        8:   57:    r->result[23]=av_args(r->args,p,2,3);
+call    0 returned 8
+        8:   58:    r->result[24]=av_layout(r->layout,p,UINT64_C(1)<<31);
+call    0 returned 8
+        8:   59:    r->result[31]=av_max(r->ui,AV_N);
+call    0 returned 8
+        8:   60:    r->result[29]=av_total(r->compact,AV_N,32)^av_best(r->ui,AV_N,128);
+call    0 returned 8
+call    1 returned 8
+        8:   61:    av_eff(r->compact,r->ui,r->ui,AV_N,32);
+call    0 returned 8
+        8:   62:    r->result[30]=((uint64_t)r->compact[999999]<<32)|r->compact[AV_N-1];
+        8:   63:    av_fill32((uint32_t*)si,AV_N,0);
+call    0 returned 8
+        8:   64:    uint64_t long_stage[16]={AV_N,1,0,1,0};
+        8:   65:    av_stage(r->bytes,AV_N,bytes,AV_N,(const uint32_t*)si,long_stage);
+call    0 returned 8
+        8:   66:    r->result[30]^=(uint64_t)bytes[999999]+bytes[AV_N-1];
+        8:   67:    int32_t one_slot=0;uint32_t one_touched=UINT32_MAX;
+        8:   68:    uint64_t long_table[16]={AV_N,1,0,0,0};
+        8:   69:    r->result[28]=av_table((uint32_t*)si,r->compact,AV_N,&one_slot,&one_touched,1,long_table,1);
+call    0 returned 8
+        8:   70:    r->result[28]|=(uint64_t)one_touched<<32;
+        8:   71:    one_slot=-1;one_touched=UINT32_MAX;
+        8:   72:    r->result[28]+=av_table((uint32_t*)si,r->compact,AV_N,&one_slot,&one_touched,1,long_table,0);
+call    0 returned 8
+        8:   73:    r->touched[7]=one_touched;r->slots[7]=one_slot;
+        8:   74:    uint64_t empty[16]={0};av_stage(NULL,0,NULL,0,NULL,empty);
+call    0 returned 8
+        8:   75:    empty[1]=1;empty[3]=31;empty[4]=97;
+        8:   76:    r->result[28]+=av_table(NULL,r->table,32,NULL,NULL,0,empty,0);
+call    0 returned 8
+        8:   77:    free(si);free(bf);free(bytes);
+        8:   78:}

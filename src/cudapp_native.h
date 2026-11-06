@@ -62,6 +62,7 @@ uint32_t omega_streams_words(uint64_t *result, uint64_t p0, const void *p1, uint
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);
+uint32_t omega_streams_xq(uint64_t *result, uint64_t p0, uint64_t p1);
 #ifdef __cplusplus
 }
 #endif

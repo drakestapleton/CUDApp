@@ -5,7 +5,10 @@
  */
 #include "omega_blackwell_codegen_dec.h"
 #include <string.h>
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
 
+#if defined(CUDAPP_MIGRATION_PENDING_C_CODEGEN_DEC)
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -672,6 +675,18 @@ int omega_blackwell_codegen_dec_prog(const OmegaDecSpec *spec, BlackwellIRProgra
     if (rc != 0 || em.err || em.depth != 0) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+
+#else
+/* The builder is om/codegen/cg_dec.om (unit cg_dec); this adapter packs the spec and replays its records. */
+int omega_blackwell_codegen_dec_prog(const OmegaDecSpec *spec, BlackwellIRProgram *prog) {
+    uint64_t error = 0;
+    if (!spec || !prog) return -1;
+    uint64_t a = (uint64_t)spec->mode | (uint64_t)spec->width << 32;
+    uint64_t b = (uint64_t)spec->stride | (uint64_t)spec->groups << 32;
+    return omega_gpu_om_ir_replay((OmegaOmIrUnit)omega_cg_dec, (uint64_t)(uint32_t)spec->kind, a, b,
+                                  (uint64_t)(uint32_t)spec->mutant, prog, &error) == 0 ? 0 : -1;
+}
+#endif
 
 int omega_dec_prog_stats(const OmegaDecSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog;

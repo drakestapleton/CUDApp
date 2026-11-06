@@ -6,6 +6,7 @@
  * are the exception (GPU-cached, reached by the host only through the copy / zero launches).
  */
 #include "omega_gpu_gdn_api.h"
+#include "omega_gpu_gdn_admit.h"
 #include "omega_gpu_hostmath.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_cmdlist.h"
@@ -90,7 +91,7 @@ static uint32_t slot_channel(const OmegaGdnShape *shp, uint32_t h, uint32_t s) {
     return 2u * OMEGA_GDN_KEY_HEADS * D + h * D + (s - 2u * D);
 }
 
-static int shape_of(uint32_t ratio, OmegaGdnShape *s) { OmegaGdnSpec sp; memset(&sp, 0, sizeof sp); sp.ratio = ratio; return omega_gdn_shape(&sp, s); }
+static int shape_of(uint32_t ratio, OmegaGdnShape *s) { return omega_gdn_admit_shape(ratio, 0, s); }
 
 int omega_gdn_pack_params(const float *conv_w, const float *a_log, const float *dt_bias, const float *norm_w, uint8_t *block) {
     return omega_gdn_pack_params_r(0, conv_w, a_log, dt_bias, norm_w, block);
@@ -148,11 +149,11 @@ int omega_gpu_gdn_alloc(uint32_t layers, OmegaGpuGdn **out) { return omega_gpu_g
 
 int omega_gpu_gdn_alloc_ratio(uint32_t layers, uint32_t ratio, OmegaGpuGdn **out) {
     OmegaGdnShape S;
-    if (!out || layers == 0 || layers > OMEGA_GPU_GDN_MAX_LAYERS || shape_of(ratio, &S)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!out || omega_gdn_admit_alloc(layers, ratio, 0, &S)) return OMEGA_GPU_GDN_BAD_ARGS;
     /* L313: AIEN_OMEGA_GDN_STATE_BF16=1 stores the state bf16 (half the bytes per conversation; compute stays f32) */
     const char *pb = getenv("AIEN_OMEGA_GDN_STATE_BF16");
     const int bf16 = pb && pb[0] == '1' && pb[1] == 0;
-    if (bf16) { OmegaGdnSpec sp; memset(&sp, 0, sizeof sp); sp.ratio = ratio; sp.state_bf16 = 1; if (omega_gdn_shape(&sp, &S)) return OMEGA_GPU_GDN_BAD_ARGS; }
+    if (bf16 && omega_gdn_admit_shape(ratio, 1, &S)) return OMEGA_GPU_GDN_BAD_ARGS;
     *out = NULL;
     OmegaGpuGdn *g = omega_gpu_host_calloc(1, sizeof *g);
     if (!g) return OMEGA_GPU_GDN_BAD_ARGS;
@@ -201,7 +202,7 @@ void omega_gpu_gdn_free(OmegaGpuGdn *g) {
 
 int omega_gpu_gdn_set_layer(OmegaGpuGdn *g, uint32_t layer, const float *conv_w, const float *a_log, const float *dt_bias,
                             const float *norm_w) {
-    if (!g || layer >= g->layers) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || omega_gdn_admit_layer(layer, g->layers)) return OMEGA_GPU_GDN_BAD_ARGS;
     omega_gpu_session_lock();
     int rc = omega_gdn_pack_params_r(g->ratio, conv_w, a_log, dt_bias, norm_w, (uint8_t *)g->par.cpu + (size_t)layer * g->sh.par_bytes) == 0
                  ? OMEGA_GPU_GDN_OK : OMEGA_GPU_GDN_BAD_ARGS;
@@ -241,7 +242,7 @@ static int stage_locked(OmegaGpuGdn *g) {
 }
 
 int omega_gpu_gdn_set_state(OmegaGpuGdn *g, uint32_t layer, const float *tail, const float *state) {
-    if (!g || layer >= g->layers || !tail || !state) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || omega_gdn_admit_layer(layer, g->layers) || !tail || !state) return OMEGA_GPU_GDN_BAD_ARGS;
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_GDN_OK;
     const size_t so = (size_t)layer * g->sh.state_bytes, to = (size_t)layer * g->sh.tail_bytes;
@@ -264,7 +265,7 @@ int omega_gpu_gdn_set_state(OmegaGpuGdn *g, uint32_t layer, const float *tail, c
 }
 
 int omega_gpu_gdn_get_state(OmegaGpuGdn *g, uint32_t layer, float *tail, float *state) {
-    if (!g || layer >= g->layers || (!tail && !state)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || omega_gdn_admit_layer(layer, g->layers) || (!tail && !state)) return OMEGA_GPU_GDN_BAD_ARGS;
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_GDN_OK;
     const size_t so = (size_t)layer * g->sh.state_bytes, to = (size_t)layer * g->sh.tail_bytes;
@@ -330,8 +331,8 @@ static int kernel_for(unsigned kind, const OmegaGdnSpec *spec, Slot **out, bool 
 /* One copy (KK_COPY: dst = src) or zero (KK_ZERO: dst = 0, src unused) launch over `bytes` (a multiple of 4096), submitted
  * and waited for. Caller holds the session lock with the device open. */
 static int move_locked(unsigned kind, uint64_t src, uint64_t dst, size_t bytes) {
-    const size_t per = (size_t)OMEGA_GDN_COPY_WORDS_PER_CTA * 4u;
-    if ((kind != KK_COPY && kind != KK_ZERO) || !dst || bytes == 0 || bytes % per || bytes / per > 0x7fffffffu) return OMEGA_GPU_GDN_BAD_ARGS;
+    uint32_t grid = 0;
+    if (omega_gdn_admit_move(kind, dst, bytes, &grid)) return OMEGA_GPU_GDN_BAD_ARGS;
     OmegaGdnSpec spec; memset(&spec, 0, sizeof spec);
     spec.copy = kind == KK_COPY ? OMEGA_GDN_COPY : OMEGA_GDN_ZERO;
     Slot *ks = NULL; bool hit = false;
@@ -340,7 +341,7 @@ static int move_locked(unsigned kind, uint64_t src, uint64_t dst, size_t bytes) 
     uint32_t args[OMEGA_GDN_COPY_ARGS_WORDS] = { (uint32_t)src, (uint32_t)(src >> 32), (uint32_t)dst, (uint32_t)(dst >> 32) };
     OmegaGpuLaunch L = {
         .code_va = ks->code.va, .gpr_count = omega_bw_gpr_declared(ks->kernel.gpr_count),
-        .threads_x = OMEGA_GDN_COPY_THREADS, .threads_y = 1, .grid_x = (uint32_t)(bytes / per), .grid_y = 1,
+        .threads_x = OMEGA_GDN_COPY_THREADS, .threads_y = 1, .grid_x = grid, .grid_y = 1,
         .num_elements = bytes / 4u, .args = args, .n_args = OMEGA_GDN_COPY_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
     };
     if (!omega_bw_gpr_declared_ok(L.gpr_count, ks->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); return OMEGA_GPU_GDN_CHIP_FAIL; }
@@ -364,8 +365,8 @@ static int gdn_core(OmegaGpuGdn *g, uint32_t layer, const float *qkv, const floa
                     OmegaGpuCmdList *rec, uint64_t dev_qkv, uint64_t dev_z, uint64_t dev_ab) {
     uint64_t t0 = omega_gpu_session_now_ns();
     if (info) memset(info, 0, sizeof *info);
-    if (!g || layer >= g->layers || (rec ? (!dev_qkv || !dev_z || !dev_ab) : (!qkv || !z || !ab || !out))) return OMEGA_GPU_GDN_BAD_ARGS;
-    if (!isfinite(eps_l2) || !isfinite(eps_norm) || !isfinite(in_scale) || !isfinite(out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || omega_gdn_admit_layer(layer, g->layers) || (rec ? (!dev_qkv || !dev_z || !dev_ab) : (!qkv || !z || !ab || !out))) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (omega_gdn_admit_finite(eps_l2, eps_norm, in_scale, out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
     OmegaGdnSpec spec; memset(&spec, 0, sizeof spec);
     spec.mutant = g_k.mutant;
     spec.ratio = g->ratio;
@@ -458,9 +459,8 @@ int omega_gpu_gdn_multi_prepare(OmegaGpuGdn *g) {
 int omega_gpu_gdn_multi_record(OmegaGpuCmdList *cl, OmegaGpuGdn *g, uint32_t layer, uint32_t tokens, uint64_t qkv_va, uint64_t z_va,
                                uint32_t xstride, uint64_t ab_va, uint32_t abstride, uint64_t out_va, uint32_t ostride, float eps_l2,
                                float eps_norm, float in_scale, float out_scale) {
-    if (!cl || !g || layer >= g->layers || tokens == 0 || !qkv_va || !z_va || !ab_va || !out_va) return OMEGA_GPU_GDN_BAD_ARGS;
-    if (!isfinite(eps_l2) || !isfinite(eps_norm) || !isfinite(in_scale) || !isfinite(out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
-    if (((qkv_va | z_va | out_va | xstride | ostride) & 15u) || ((ab_va | abstride) & 7u)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!cl || !g || omega_gdn_admit_multi(layer, g->layers, tokens, qkv_va, z_va, xstride, ab_va, abstride, out_va, ostride)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (omega_gdn_admit_finite(eps_l2, eps_norm, in_scale, out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
     OmegaGdnSpec spec; memset(&spec, 0, sizeof spec);
     spec.mutant = g_k.mutant; spec.ratio = g->ratio;
     /* caller holds the session lock */
@@ -502,17 +502,15 @@ int omega_gpu_gdn_read_out(OmegaGpuGdn *g, float *out) {
 /* scratch sections for T tokens (bytes, 256-aligned): qkv [T][10240] | z [T][6144] | ab [T][48][2] | out [T][6144] |
  * o [T][6144] | records [T rounded up to 8][48] */
 enum { PF_QKV, PF_Z, PF_AB, PF_OUT, PF_O, PF_REC, PF_N };
+/* T already admitted (omega_gdn_admit_tokens), g->sh admitted at alloc: the layout cannot refuse. */
 static size_t pf_layout(const OmegaGdnShape *shp, uint32_t T, size_t off[PF_N]) {
-    const uint64_t T8 = ((uint64_t)T + OMEGA_GDN_SCAN_CHUNK - 1u) / OMEGA_GDN_SCAN_CHUNK * OMEGA_GDN_SCAN_CHUNK;
-    const uint64_t sz[PF_N] = { (uint64_t)T * shp->conv * 4u, (uint64_t)T * shp->vdim * 4u, (uint64_t)T * shp->vh * 8u,
-                                (uint64_t)T * shp->vdim * 4u, (uint64_t)T * shp->vdim * 4u, T8 * shp->vh * OMEGA_GDN_REC_BYTES };
-    size_t at = 0;
-    for (unsigned i = 0; i < PF_N; i++) { off[i] = at; at += (size_t)((sz[i] + 255u) & ~(uint64_t)255u); }
-    return at;
+    size_t bytes = 0;
+    if (omega_gdn_admit_layout(shp->r, T, off, &bytes)) return SIZE_MAX;
+    return bytes;
 }
 
 int omega_gpu_gdn_prefill_reserve(OmegaGpuGdn *g, uint32_t max_tokens) {
-    if (!g || max_tokens < OMEGA_GDN_PF_MIN_T || max_tokens > OMEGA_GPU_GDN_PF_MAX_T) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || omega_gdn_admit_tokens(max_tokens)) return OMEGA_GPU_GDN_BAD_ARGS;
     size_t off[PF_N];
     const size_t bytes = pf_layout(&g->sh, max_tokens, off);
     omega_gpu_session_lock();
@@ -533,9 +531,9 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
                    OmegaGpuCmdList *rec, uint64_t dev_qkv, uint64_t dev_z, uint64_t dev_ab, uint64_t *out_va) {
     uint64_t c0 = omega_gpu_session_now_ns();
     if (info) memset(info, 0, sizeof *info);
-    if (!g || layer >= g->layers || T < OMEGA_GDN_PF_MIN_T || T > OMEGA_GPU_GDN_PF_MAX_T) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || omega_gdn_admit_layer(layer, g->layers) || omega_gdn_admit_tokens(T)) return OMEGA_GPU_GDN_BAD_ARGS;
     if (rec ? (!dev_qkv || !dev_z || !dev_ab) : (!qkv || !z || !ab || !out)) return OMEGA_GPU_GDN_BAD_ARGS;
-    if (!isfinite(eps_l2) || !isfinite(eps_norm) || !isfinite(in_scale) || !isfinite(out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (omega_gdn_admit_finite(eps_l2, eps_norm, in_scale, out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
     OmegaGdnSpec spec; memset(&spec, 0, sizeof spec);
     spec.mutant = g_k.mutant;
     spec.ratio = g->ratio;
@@ -630,7 +628,7 @@ int omega_gpu_gdn_prefill_record(OmegaGpuCmdList *cl, OmegaGpuGdn *g, uint32_t l
 }
 
 int omega_gpu_gdn_prefill_read_out(OmegaGpuGdn *g, uint32_t tokens, float *out) {
-    if (!g || !out || tokens < OMEGA_GDN_PF_MIN_T || tokens > OMEGA_GPU_GDN_PF_MAX_T) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || !out || omega_gdn_admit_tokens(tokens)) return OMEGA_GPU_GDN_BAD_ARGS;
     size_t off[PF_N];
     const size_t bytes = pf_layout(&g->sh, tokens, off);
     omega_gpu_session_lock();

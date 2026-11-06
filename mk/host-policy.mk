@@ -13,9 +13,13 @@ $(OUT_DIR)/artifact_text_unit: tests/runtime/artifact_text_unit.c src/cudapp_nat
 $(OUT_DIR)/cm_math_unit: tests/runtime/cm_math_unit.c src/cudapp_native.h src/cudapp_om_cm_math.c | $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ tests/runtime/cm_math_unit.c src/cudapp_om_cm_math.c -lm
 
-test-host-policy: $(OUT_DIR)/host_policy_unit $(OUT_DIR)/cm_sort_unit $(OUT_DIR)/artifact_text_unit $(OUT_DIR)/cm_math_unit
+$(OUT_DIR)/cm_blob_unit: tests/runtime/cm_blob_unit.c tests/runtime/cm_oracle.c src/cudapp_native.h $(OUT_DIR)/rx_costmodel.o $(wildcard src/cudapp_om_cm_*.c) src/sha256.c | $(OUT_DIR)
+	$(CC) $(CFLAGS) -o $@ tests/runtime/cm_blob_unit.c tests/runtime/cm_oracle.c $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c -lm
+
+test-host-policy: $(OUT_DIR)/host_policy_unit $(OUT_DIR)/cm_sort_unit $(OUT_DIR)/artifact_text_unit $(OUT_DIR)/cm_math_unit $(OUT_DIR)/cm_blob_unit
 	./$(OUT_DIR)/host_policy_unit
 	./$(OUT_DIR)/cm_sort_unit
 	./$(OUT_DIR)/artifact_text_unit
 	./$(OUT_DIR)/cm_math_unit
+	./$(OUT_DIR)/cm_blob_unit
 	CC="$(CC)" python3 tests/runtime/host_policy_mutants.py

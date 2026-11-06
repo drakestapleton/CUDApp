@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "runtime/rx_cm_sort.h"
 
 /*
  * rx_costmodel.c -- Omega's empirical cost model. See rx_costmodel.h.
@@ -26,6 +27,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include "runtime/rx_cm_math.h"
 
 _Static_assert(RX_CM_CELL_NONE >= RX_CM_CELLS,
                "unsupported-op sentinel must not be a cell index");
@@ -34,7 +36,36 @@ _Static_assert(RX_CM_CELL_NONE >= RX_CM_CELLS,
 #define PRIOR_B     0.01     /* prior noise variance ~0.01 log2^2 (about 7%) */
 #define NOISE_FLOOR 0.0009   /* never claim better than ~2% sd per call */
 #define FAIL_PRIOR  0.05
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_FIT
+#define CUDAPP_MIGRATION_PENDING_C_CM_FIT 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_STATS
+#define CUDAPP_MIGRATION_PENDING_C_CM_STATS 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+#define CUDAPP_MIGRATION_PENDING_C_CM_FEATURES 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE
+#define CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_DECISION
+#define CUDAPP_MIGRATION_PENDING_C_CM_DECISION 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION
+#define CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION
+#define CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+#define CUDAPP_MIGRATION_PENDING_C_CM_BLOB 0
+#endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_CM_DIGEST
+#define CUDAPP_MIGRATION_PENDING_C_CM_DIGEST 0
+#endif
 
+
+#if CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
 void rx_cm_default_policy(RxCmPolicy *p) {
     p->ei_min = 0.08;
     p->max_fail_p = 0.0;   /* any wrong result excludes the arm */
@@ -80,7 +111,56 @@ void rx_cm_basis(const RxCmFeatures *f, double phi[RX_CM_D]) {
     phi[6] = (f->N % 4u) != 0 ? 1.0 : 0.0;
     phi[7] = ov;
 }
+#else
+void rx_cm_default_policy(RxCmPolicy *p) {
+    uint64_t words[64], result;
+    if (omega_cm_features(&result, 4, words, 64) != OMEGA_OK) {
+        memset(p, 0, sizeof *p);
+        return;
+    }
+    memcpy(&p->ei_min, words + 16, sizeof(double));
+    memcpy(&p->max_fail_p, words + 17, sizeof(double));
+    p->fallback_arm = (uint32_t)words[18];
+    memcpy(&p->explore_frac, words + 19, sizeof(double));
+    p->explore_allow_ps = words[20];
+}
 
+void rx_cm_init(RxCostModel *m, uint32_t n_arms) {
+    uint64_t words[64], result;
+    memset(m, 0, sizeof *m);
+    words[0] = n_arms;
+    if (omega_cm_features(&result, 3, words, 64) != OMEGA_OK) return;
+    m->n_arms = (uint32_t)result;
+    memcpy(&m->lambda, words + 16, sizeof(double));
+    memcpy(&m->sd_scale, words, sizeof(double));
+    for (uint32_t c = 0; c < RX_CM_CELLS; ++c)
+        for (uint32_t a = 0; a < RX_CM_ARMS; ++a)
+            memcpy(&m->cell[c][a], words + 16, sizeof(RxCmArmStats));
+}
+
+uint32_t rx_cm_cell(const RxCmFeatures *f) {
+    if (!f) return RX_CM_CELL_NONE;
+    uint64_t words[64], result;
+    words[0] = f->op; words[5] = f->core; words[6] = f->pressure;
+    if (omega_cm_features(&result, 0, words, 64) != OMEGA_OK) return RX_CM_CELL_NONE;
+    return (uint32_t)result;
+}
+
+static void cm_host_basis(const RxCmFeatures *f, double phi[RX_CM_D], uint64_t mode) {
+    uint64_t words[64], result;
+    words[1] = f->M; words[2] = f->N;
+    words[3] = f->state_bytes; words[4] = f->cache_bytes;
+    if (omega_cm_features(&result, mode, words, 64) != OMEGA_OK) {
+        for (uint32_t i = 0; i < RX_CM_D; ++i) phi[i] = NAN;
+        return;
+    }
+    memcpy(phi, words + 16, RX_CM_D * sizeof(double));
+}
+
+void rx_cm_basis(const RxCmFeatures *f, double phi[RX_CM_D]) { cm_host_basis(f, phi, 1); }
+#endif
+
+#if CUDAPP_MIGRATION_PENDING_C_CM_FIT
 /* Cholesky of the D x D matrix held as an upper triangle. 0 on success. */
 static int cholesky(const double *tri, double L[RX_CM_D][RX_CM_D]) {
     double A[RX_CM_D][RX_CM_D];
@@ -119,8 +199,8 @@ static void backward(double L[RX_CM_D][RX_CM_D], const double *v, double *x) {
 
 /* Predictive t for one (cell, arm). Returns 0 if there is no data. */
 static int fit_predict(const RxCmArmStats *s, const double phi[RX_CM_D], double *mean,
-                       double *sd, double *dof) {
-    if (s->n == 0) return 0;
+                       double *sd, double *dof, uint64_t minimum) {
+    if (s->n == 0 || s->n < minimum) return 0;
     double L[RX_CM_D][RX_CM_D], v[RX_CM_D], mu[RX_CM_D], w[RX_CM_D];
     if (cholesky(s->tri, L) != 0) return 0;
     forward(L, s->xty, v);
@@ -142,7 +222,23 @@ static int fit_predict(const RxCmArmStats *s, const double phi[RX_CM_D], double 
     *dof = 2.0 * a;
     return 1;
 }
+#else
+static int fit_predict(const RxCmArmStats *s, const double phi[RX_CM_D], double *mean,
+                       double *sd, double *dof, uint64_t minimum) {
+    _Static_assert(sizeof(RxCmArmStats) == 48 * sizeof(uint64_t), "statistics transport layout");
+    uint64_t input[64], output[16], found;
+    memcpy(input, s, 46 * sizeof(uint64_t));
+    memcpy(input + 48, phi, RX_CM_D * sizeof(double));
+    input[56] = minimum;
+    if (omega_cm_fit(&found, input, 64, output, 16) != OMEGA_OK || found != 1) return 0;
+    memcpy(mean, output, sizeof *mean);
+    memcpy(sd, output + 1, sizeof *sd);
+    memcpy(dof, output + 2, sizeof *dof);
+    return 1;
+}
+#endif
 
+#if CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
 static uint64_t failures_of(const RxCostModel *m, uint32_t arm) {
     uint64_t f = 0;
     for (uint32_t c = 0; c < RX_CM_CELLS; c++) f += m->cell[c][arm].failures;
@@ -157,17 +253,40 @@ static double fail_p(const RxCostModel *m, uint32_t arm) {
     }
     return ((double)f + FAIL_PRIOR) / ((double)t + 1.0);
 }
+#else
+static uint64_t failures_of(const RxCostModel *m, uint32_t arm) {
+    uint64_t words[64], result;
+    for (uint32_t c = 0; c < RX_CM_CELLS; ++c) words[c] = m->cell[c][arm].failures;
+    if (omega_cm_features(&result, 6, words, 64) != OMEGA_OK) return UINT64_MAX;
+    return result;
+}
+
+static double fail_p(const RxCostModel *m, uint32_t arm) {
+    uint64_t words[64], result;
+    double value;
+    for (uint32_t c = 0; c < RX_CM_CELLS; ++c) {
+        words[c] = m->cell[c][arm].failures; words[9 + c] = m->cell[c][arm].trials;
+    }
+    if (omega_cm_features(&result, 7, words, 64) != OMEGA_OK) return 1.0;
+    memcpy(&value, &result, sizeof value);
+    return value;
+}
+#endif
 
 /* Pressure cells hold a correction over the same core class at pressure 0:
  * log2 cost under pressure = quiet prediction + a + b * (doublings past the
  * private cache). Two numbers per arm, readable as "pressure costs this much,
  * and this much more per doubling out of cache". */
 static void residual_basis(const RxCmFeatures *f, double phi[RX_CM_D]) {
+#if !CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+    cm_host_basis(f, phi, 2);
+#else
     double full[RX_CM_D];
     rx_cm_basis(f, full);
     memset(phi, 0, sizeof(double) * RX_CM_D);
     phi[0] = 1.0;
     phi[1] = full[7];
+#endif
 }
 
 static int quiet_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm, double *mean,
@@ -179,13 +298,20 @@ static int quiet_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t a
     const RxCmArmStats *b = &m->cell[cell][arm];
     double phi[RX_CM_D];
     rx_cm_basis(f, phi);
-    if (b->n < RX_CM_MIN_OBS || !fit_predict(b, phi, mean, sd, dof)) return 0;
+    if (!fit_predict(b, phi, mean, sd, dof, RX_CM_MIN_OBS)) return 0;
     *n = b->n;
     return 1;
 }
 
 static uint32_t bucket(const RxCmFeatures *f) {
+#if !CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+    uint64_t words[64], result;
+    words[6] = f->pressure;
+    if (omega_cm_features(&result, 5, words, 64) != OMEGA_OK) return RX_CM_PRESSURE - 1;
+    return (uint32_t)result;
+#else
     return f->pressure < RX_CM_PRESSURE ? f->pressure : RX_CM_PRESSURE - 1;
+#endif
 }
 
 int rx_cm_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm,
@@ -202,13 +328,14 @@ int rx_cm_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm,
     uint64_t n = 0;
     out->fail_p = fail_p(m, arm);
     if (!quiet_predict(m, f, arm, &mean, &sd, &dof, &n)) return RX_CM_OK;
+#if CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION
     if (bucket(f) == 0) {
         out->known = 1;
     } else {
         const RxCmArmStats *r = &m->cell[cell][arm];
         double phi[RX_CM_D], rm = 0, rsd = 0, rdof = 0;
         residual_basis(f, phi);
-        if (r->n >= RX_CM_RES_MIN_OBS && fit_predict(r, phi, &rm, &rsd, &rdof)) {
+        if (fit_predict(r, phi, &rm, &rsd, &rdof, RX_CM_RES_MIN_OBS)) {
             mean += rm;
             sd = sqrt(sd * sd + rsd * rsd);
             if (rdof < dof) dof = rdof;
@@ -228,6 +355,29 @@ int rx_cm_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm,
     uint32_t core = f->core < RX_CM_CORES ? f->core : RX_CM_CORE_OTHER;
     double mw = m->power_mw[core][arm];
     if (mw > 0.0) out->energy_pj = exp2(mean) * mw * 1e-3;   /* ps * mW = 1e-3 pJ */
+#else
+    uint64_t words[32], result;
+    memcpy(words, &mean, sizeof(double)); memcpy(words + 1, &sd, sizeof(double));
+    memcpy(words + 2, &dof, sizeof(double)); words[3] = n;
+    words[4] = bucket(f); words[5] = 0;
+    if (words[4] != 0) {
+        const RxCmArmStats *r = &m->cell[cell][arm];
+        double phi[RX_CM_D], rm = 0, rsd = 0, rdof = 0;
+        residual_basis(f, phi);
+        words[5] = (uint64_t)fit_predict(r, phi, &rm, &rsd, &rdof, RX_CM_RES_MIN_OBS);
+        memcpy(words + 6, &rm, sizeof(double)); memcpy(words + 7, &rsd, sizeof(double));
+        memcpy(words + 8, &rdof, sizeof(double)); words[9] = r->n;
+    }
+    memcpy(words + 10, &m->sd_scale, sizeof(double)); words[11] = f->core;
+    for (uint32_t c = 0; c < RX_CM_CORES; ++c)
+        memcpy(words + 12 + c, &m->power_mw[c][arm], sizeof(double));
+    if (omega_cm_prediction(&result, words, 32) != OMEGA_OK) return RX_CM_OK;
+    memcpy(&out->mean_log2_ps, words + 16, sizeof(double));
+    memcpy(&out->sd_log2, words + 17, sizeof(double));
+    memcpy(&out->dof, words + 18, sizeof(double));
+    out->n = (uint32_t)words[19]; out->known = (int)words[20]; out->borrowed = (int)words[21];
+    memcpy(&out->energy_pj, words + 22, sizeof(double));
+#endif
     return RX_CM_OK;
 }
 
@@ -236,6 +386,31 @@ int rx_cm_observe(RxCostModel *m, const RxCmFeatures *f, uint32_t arm, const RxC
     uint32_t cell = rx_cm_cell(f);
     if (cell >= RX_CM_CELLS) return RX_CM_ERR_UNSUPPORTED;
     RxCmArmStats *s = &m->cell[cell][arm];
+#if !CUDAPP_MIGRATION_PENDING_C_CM_STATS
+    uint64_t words[64] = {0}, stage;
+    memcpy(words, s, sizeof *s);
+    words[56] = (uint64_t)(uint32_t)o->failed;
+    words[59] = o->ps_per_call;
+    if (omega_cm_stats(&stage, 0, words, 64) != OMEGA_OK) return RX_CM_ERR_ARG;
+    memcpy(s, words, sizeof *s);
+    if (stage == 1) return RX_CM_OK;
+    if (stage != 0) return RX_CM_ERR_ARG;
+    double phi[RX_CM_D];
+    if (bucket(f) == 0) {
+        rx_cm_basis(f, phi);
+    } else {
+        double qm, qsd, qdof;
+        uint64_t qn;
+        if (!quiet_predict(m, f, arm, &qm, &qsd, &qdof, &qn)) return RX_CM_SKIPPED;
+        residual_basis(f, phi);
+        words[57] = 1;
+        memcpy(words + 58, &qm, sizeof qm);
+    }
+    memcpy(words + 48, phi, sizeof phi);
+    if (omega_cm_stats(&stage, 1, words, 64) != OMEGA_OK || stage != 0) return RX_CM_ERR_ARG;
+    memcpy(s, words, sizeof *s);
+    return RX_CM_OK;
+#else
     s->trials++;
     if (o->failed) {
         s->failures++;
@@ -260,11 +435,15 @@ int rx_cm_observe(RxCostModel *m, const RxCmFeatures *f, uint32_t arm, const RxC
     s->yty += y * y;
     s->n++;
     return RX_CM_OK;
+#endif
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_CM_DECISION
 static double norm_cdf(double x) { return 0.5 * erfc(-x / sqrt(2.0)); }
+#endif
 
 /* Acklam's inverse normal. */
+#if CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE
 static double norm_inv(double p) {
     static const double a[] = { -3.969683028665376e+01, 2.209460984245205e+02,
                                 -2.759285104469687e+02, 1.383577518672690e+02,
@@ -295,14 +474,26 @@ static double norm_inv(double p) {
     return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
            (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
 }
+#endif
 
 double rx_cm_t_quantile(double q, double dof) {
+#if CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE
     double z = norm_inv(0.5 + 0.5 * q);
     if (!(dof > 0.0)) return z;
     double z3 = z * z * z, z5 = z3 * z * z;
     return z + (z3 + z) / (4.0 * dof) + (5.0 * z5 + 16.0 * z3 + 3.0 * z) / (96.0 * dof * dof);
+#else
+    uint64_t qb, db, result;
+    double value;
+    memcpy(&qb, &q, sizeof qb);
+    memcpy(&db, &dof, sizeof db);
+    if (omega_cm_quantile(&result, qb, db) != OMEGA_OK) return NAN;
+    memcpy(&value, &result, sizeof value);
+    return value;
+#endif
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_CM_DECISION
 static int explore_allowed(const RxCostModel *m, const RxCmPolicy *p) {
     double cap = p->explore_frac * (double)m->work_ps + (double)p->explore_allow_ps;
     return (double)m->explore_ps < cap;
@@ -420,12 +611,54 @@ void rx_cm_decide(const RxCostModel *m, const RxCmPolicy *p, const RxCmFeatures 
     else if (why != RX_CM_WHY_CONFIDENT && allow_measure) out->why = RX_CM_WHY_BUDGET_SPENT;
     else out->why = RX_CM_WHY_CONFIDENT;
 }
-
-static int cmp_double(const void *a, const void *b) {
-    double x = *(const double *)a, y = *(const double *)b;
-    return (x > y) - (x < y);
+#else
+static void cm_decision_output(const uint64_t words[128], RxCmDecision *out) {
+    out->action = (int)words[100]; out->arm = (uint32_t)words[101];
+    out->measure[0] = (uint32_t)words[102]; out->measure[1] = (uint32_t)words[103];
+    out->why = (uint32_t)words[104];
+    memcpy(&out->p_runner_up_better, words + 105, sizeof(double));
+    memcpy(&out->expected_improvement, words + 106, sizeof(double));
 }
 
+void rx_cm_decide(const RxCostModel *m, const RxCmPolicy *p, const RxCmFeatures *f,
+                  int allow_measure, RxCmDecision *out) {
+    uint64_t words[128], stage;
+    memset(out, 0, sizeof *out);
+    words[80] = m->n_arms; words[81] = f->op;
+    if (omega_cm_decision(&stage, 0, words, 128) != OMEGA_OK) return;
+    if (stage == 0) {
+        for (uint32_t a = 0; a < RX_CM_ARMS; ++a) out->pred[a].refused = (int)words[9 * a + 8];
+        cm_decision_output(words, out);
+        return;
+    }
+    for (uint32_t a = 0; a < m->n_arms; ++a) {
+        RxCmPrediction *pr = &out->pred[a];
+        rx_cm_predict(m, f, a, pr);
+        uint64_t *w = words + 9 * a;
+        memcpy(w, &pr->mean_log2_ps, sizeof(double));
+        memcpy(w + 1, &pr->sd_log2, sizeof(double));
+        memcpy(w + 2, &pr->dof, sizeof(double));
+        w[3] = pr->n; w[4] = (uint64_t)(uint32_t)pr->known; w[5] = (uint64_t)(uint32_t)pr->borrowed;
+        memcpy(w + 6, &pr->energy_pj, sizeof(double));
+        memcpy(w + 7, &pr->fail_p, sizeof(double));
+        w[8] = (uint64_t)(uint32_t)pr->refused;
+        words[72 + a] = failures_of(m, a);
+    }
+    words[82] = f->eligible;
+    words[86] = f->latency_budget_ps; words[87] = f->energy_budget_pj;
+    words[88] = (uint64_t)(uint32_t)allow_measure;
+    memcpy(words + 89, &p->ei_min, sizeof(double));
+    memcpy(words + 90, &p->max_fail_p, sizeof(double));
+    words[91] = p->fallback_arm;
+    memcpy(words + 92, &p->explore_frac, sizeof(double));
+    words[93] = p->explore_allow_ps; words[94] = m->explore_ps; words[95] = m->work_ps;
+    if (omega_cm_decision(&stage, 1, words, 128) != OMEGA_OK) return;
+    cm_decision_output(words, out);
+}
+#endif
+
+
+#if CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION
 double rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *arm,
                        const uint64_t *ps, uint32_t n, double q) {
     if (!m || !f || !arm || !ps || n == 0 || !(q > 0.0 && q < 1.0)) return 0.0;
@@ -443,7 +676,7 @@ double rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *ar
     }
     double scale = 0.0;
     if (k >= 10) {
-        qsort(r, k, sizeof(double), cmp_double);
+        if (rx_cm_sort(r, k) != 0) { m->sd_scale = saved; free(r); return 0.0; }
         uint32_t idx = (uint32_t)ceil(q * (double)k) - 1u;
         scale = r[idx < k ? idx : k - 1];
         if (scale < 1.0) scale = 1.0;
@@ -454,10 +687,62 @@ double rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *ar
     free(r);
     return scale;
 }
+#else
+double rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *arm,
+                       const uint64_t *ps, uint32_t n, double q) {
+    if (!m || !f || !arm || !ps) return 0.0;
+    uint64_t words[32], stage;
+    memcpy(words, &q, sizeof(double)); words[2] = n;
+    if (omega_cm_calibration(&stage, 0, words, 32) != OMEGA_OK || stage == 0) return 0.0;
+    double *r = malloc(sizeof(double) * n);
+    if (!r) return 0.0;
+    double saved = m->sd_scale, scale = 0;
+    memcpy(words + 1, &saved, sizeof(double));
+    memcpy(&m->sd_scale, words + 10, sizeof(double));
+    uint32_t k = 0;
+    for (uint32_t i = 0; i < n; ++i) {
+        RxCmPrediction p;
+        rx_cm_predict(m, &f[i], arm[i], &p);
+        words[3] = ps[i];
+        memcpy(words + 4, &p.mean_log2_ps, sizeof(double));
+        memcpy(words + 5, &p.sd_log2, sizeof(double));
+        memcpy(words + 6, &p.dof, sizeof(double));
+        words[7] = (uint64_t)(uint32_t)p.known; words[8] = (uint64_t)(uint32_t)p.borrowed;
+        if (omega_cm_calibration(&stage, 1, words, 32) != OMEGA_OK) {
+            m->sd_scale = saved; free(r); return 0.0;
+        }
+        if (stage != 0) memcpy(r + k++, words + 10, sizeof(double));
+    }
+    words[2] = k;
+    if (omega_cm_calibration(&stage, 2, words, 32) != OMEGA_OK) {
+        m->sd_scale = saved; free(r); return 0.0;
+    }
+    if (stage != 0) {
+        uint64_t index = words[10];
+        if (rx_cm_sort(r, k) != 0) { m->sd_scale = saved; free(r); return 0.0; }
+        memcpy(words + 9, r + index, sizeof(double));
+        if (omega_cm_calibration(&stage, 3, words, 32) != OMEGA_OK) {
+            m->sd_scale = saved; free(r); return 0.0;
+        }
+        memcpy(&scale, words + 10, sizeof(double));
+    }
+    memcpy(&m->sd_scale, words + 10, sizeof(double));
+    free(r);
+    return scale;
+}
+#endif
 
 void rx_cm_charge(RxCostModel *m, uint64_t work_ps, uint64_t explore_ps) {
+#if CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION
     m->work_ps += work_ps;
     m->explore_ps += explore_ps;
+#else
+    uint64_t words[32], result;
+    words[0] = m->work_ps; words[1] = m->explore_ps;
+    words[2] = work_ps; words[3] = explore_ps;
+    if (omega_cm_calibration(&result, 4, words, 32) != OMEGA_OK) return;
+    m->work_ps = words[0]; m->explore_ps = words[1];
+#endif
 }
 
 /* ---- canonical bytes ---- */
@@ -474,6 +759,55 @@ typedef struct {
     uint32_t reserved;
     double lambda;
 } Header;
+_Static_assert(sizeof(Header) == 40, "cost model native blob header layout");
+
+#if !CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+static uint64_t cm_blob_check(unsigned mode, uint64_t words[64]) {
+    uint64_t result;
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    words[63] = 1;
+#else
+    words[63] = 0;
+#endif
+    if (omega_cm_blob(&result, mode, words, 64)) abort();
+    return result;
+}
+#endif
+
+#if CUDAPP_MIGRATION_PENDING_C_CM_DIGEST
+#define cm_sha256 sha256_hash
+static int cm_digest_equal(const uint8_t a[32], const uint8_t b[32]) {
+    return memcmp(a, b, 32) == 0;
+}
+#else
+static uint64_t cm_digest_step(unsigned mode, uint64_t state[16], uint8_t data[128]) {
+    uint64_t result;
+    if (omega_cm_digest(&result, mode, state, 16, data, 128)) abort();
+    return result;
+}
+static void cm_sha256(const uint8_t *data, size_t n, uint8_t out[32]) {
+    uint64_t state[16];
+    uint8_t block[128];
+    if (cm_digest_step(0, state, block)) abort();
+    size_t offset = 0;
+    for (size_t i = 0; i < n / 64; ++i) {
+        memcpy(block, data + offset, 64);
+        if (cm_digest_step(1, state, block)) abort();
+        offset += 64;
+    }
+    state[9] = n - offset;
+    memcpy(block, data + offset, n - offset);
+    if (cm_digest_step(2, state, block)) abort();
+    memcpy(out, block, 32);
+}
+static int cm_digest_equal(const uint8_t a[32], const uint8_t b[32]) {
+    uint64_t state[16];
+    uint8_t data[128];
+    memcpy(data, a, 32);
+    memcpy(data + 32, b, 32);
+    return (int)cm_digest_step(3, state, data);
+}
+#endif
 
 static size_t body_size(void) {
     const RxCostModel *m = 0;
@@ -485,6 +819,7 @@ size_t rx_cm_blob_size(void) { return sizeof(Header) + body_size() + 32u; }
 
 static size_t pack(const RxCostModel *m, uint8_t *out) {
     Header h;
+#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
     memset(&h, 0, sizeof h);
     h.magic = MAGIC;
     h.version = VERSION;
@@ -494,6 +829,13 @@ static size_t pack(const RxCostModel *m, uint8_t *out) {
     h.arms_cap = RX_CM_ARMS;
     h.cores = RX_CM_CORES;
     h.lambda = m->lambda;
+#else
+    uint64_t words[64];
+    words[0] = m->n_arms;
+    memcpy(words + 1, &m->lambda, sizeof m->lambda);
+    if (!cm_blob_check(0, words)) abort();
+    memcpy(&h, words + 16, sizeof h);
+#endif
     uint8_t *p = out;
     memcpy(p, &h, sizeof h);
     p += sizeof h;
@@ -513,28 +855,55 @@ static size_t pack(const RxCostModel *m, uint8_t *out) {
 }
 
 int rx_cm_serialize(const RxCostModel *m, uint8_t *out, size_t cap, size_t *out_len) {
-    if (!m || !out || cap < rx_cm_blob_size()) return RX_CM_ERR_ARG;
+    if (!m || !out) return RX_CM_ERR_ARG;
+#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+    if (cap < rx_cm_blob_size()) return RX_CM_ERR_ARG;
+#else
+    uint64_t words[64];
+    words[0] = cap;
+    words[1] = rx_cm_blob_size();
+    if (!cm_blob_check(3, words)) return RX_CM_ERR_ARG;
+#endif
     size_t n = pack(m, out);
-    sha256_hash(out, n, out + n);
+    cm_sha256(out, n, out + n);
     if (out_len) *out_len = n + 32u;
     return RX_CM_OK;
 }
 
 int rx_cm_deserialize(RxCostModel *m, const uint8_t *in, size_t len) {
-    if (!m || !in || len != rx_cm_blob_size()) return RX_CM_ERR_FORMAT;
+    if (!m || !in) return RX_CM_ERR_FORMAT;
+#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+    if (len != rx_cm_blob_size()) return RX_CM_ERR_FORMAT;
+#else
+    uint64_t words[64];
+    words[0] = len;
+    words[1] = rx_cm_blob_size();
+    if (!cm_blob_check(4, words)) return RX_CM_ERR_FORMAT;
+#endif
     uint8_t d[32];
-    sha256_hash(in, len - 32u, d);
-    if (memcmp(d, in + len - 32u, 32) != 0) return RX_CM_ERR_DIGEST;
+    cm_sha256(in, len - 32u, d);
+    if (!cm_digest_equal(d, in + len - 32u)) return RX_CM_ERR_DIGEST;
     Header h;
     memcpy(&h, in, sizeof h);
+#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
     if (h.magic != MAGIC || h.version != VERSION || h.d != RX_CM_D || h.cells != RX_CM_CELLS ||
         h.arms_cap != RX_CM_ARMS || h.cores != RX_CM_CORES || h.n_arms == 0 ||
         h.n_arms > RX_CM_ARMS)
         return RX_CM_ERR_FORMAT;
+#else
+    memcpy(words + 16, &h, sizeof h);
+    uint64_t n_arms = cm_blob_check(1, words);
+    if (!n_arms) return RX_CM_ERR_FORMAT;
+#endif
     RxCostModel t;
     memset(&t, 0, sizeof t);
+#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
     t.n_arms = h.n_arms;
     t.lambda = h.lambda;
+#else
+    t.n_arms = (unsigned)n_arms;
+    memcpy(&t.lambda, words + 20, sizeof t.lambda);
+#endif
     const uint8_t *p = in + sizeof h;
     memcpy(t.cell, p, sizeof t.cell);
     p += sizeof t.cell;
@@ -547,7 +916,12 @@ int rx_cm_deserialize(RxCostModel *m, const uint8_t *in, size_t len) {
     memcpy(t.code_bytes, p, sizeof t.code_bytes);
     p += sizeof t.code_bytes;
     memcpy(&t.sd_scale, p, sizeof t.sd_scale);
+#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
     if (!(t.sd_scale >= 1.0 && t.sd_scale < 1e6)) return RX_CM_ERR_FORMAT;
+#else
+    memcpy(words, &t.sd_scale, sizeof t.sd_scale);
+    if (!cm_blob_check(2, words)) return RX_CM_ERR_FORMAT;
+#endif
     *m = t;
     return RX_CM_OK;
 }
@@ -555,5 +929,5 @@ int rx_cm_deserialize(RxCostModel *m, const uint8_t *in, size_t len) {
 void rx_cm_digest(const RxCostModel *m, uint8_t out[32]) {
     uint8_t buf[sizeof(Header) + sizeof(((RxCostModel *)0)->cell) + 4096];
     size_t n = pack(m, buf);
-    sha256_hash(buf, n, out);
+    cm_sha256(buf, n, out);
 }

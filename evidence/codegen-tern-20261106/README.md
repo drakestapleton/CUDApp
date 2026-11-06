@@ -47,6 +47,41 @@ then exercises multi-step unrolling, deep streaming, and chunked input.
 `simulator-pinned-omega-failed.log` preserves the initial failed run against the
 superseded simulator rather than presenting it as a passing gate.
 
+## Exhaustive differential and full host attempt
+
+The full host run exercised `./build/codegen_tern_diff_test` to completion:
+
+```
+CODEGEN TERN RECORD NEGATIVE CONTROL CAUGHT
+CODEGEN TERN DIFF PASS (213120 programs, 14258 refusals)
+```
+
+The enclosing command was:
+
+```
+set -o pipefail
+taskset -c 10-14 nice -n 10 env \
+  OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc \
+  OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge \
+  OMEGA_MV=/home/drakestapleton/work/cudastack/omega-mv \
+  make -j3 test | tee evidence/codegen-tern-20261106/full-host.log
+```
+
+It finished with **rc 2**, not a timeout or interruption. Full-host tier is
+**FAIL**: `tools/latmeas/catalog.json` still pointed `qmma_reader` at the
+pre-migration C source line. The actual failure was:
+
+```
+FAIL: qmma_reader: src/omega_blackwell_codegen_qmma.c:42 does not contain 'nop(e, 15)'
+make: *** [Makefile:174: test-gpu-latmeas] Error 1
+```
+
+`full-host.log` retains stdout, including the completed exhaustive differential;
+`full-host-failure.log` retains the combined-output failure excerpt from the
+tool transcript. No `CUDA++ HOST TESTS PASS` final line was observed.
+The integration owner runs the final integrated full-host gate after the
+source-contract repair; this receipt does not turn that unrun gate into PASS.
+
 ## Numeric encoding checks
 WolframLanguageEvaluator:
 `{BitAnd[2^32-1,BitNot[BitShiftLeft[15,9]]],BitShiftLeft[2^32-1,32]}`

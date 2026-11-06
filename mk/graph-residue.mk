@@ -26,3 +26,8 @@ test-graph-residue-coverage: test-graph-residue $(OUT_DIR)/hello_gpu-oracle
 	@for bug in past-end short; do $(OUT_DIR)/hello_gpu-oracle --sim --bug=$$bug > $(OUT_DIR)/hello-oracle-$$bug.log; rc=$$?; test $$rc = 1 || exit 1; done
 	gcov -b -c -o $(OUT_DIR)/graph-residue-oracle-test_graph_residue.gcno tests/test_graph_residue.c
 	gcov -b -c -o $(OUT_DIR)/hello_gpu-oracle-hello_gpu.gcno examples/hello_gpu/hello_gpu.c
+
+.PHONY: test-graph-table-perm
+CARRIED_HOST_TESTS += test-graph-table-perm
+test-graph-table-perm:
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/graph/table-mutants.py

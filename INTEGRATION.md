@@ -183,3 +183,8 @@ host+sim gates; byte-identical units; `crumb verify: OK: 91 crumbs current`.
 Repair: dispatch OM2 `attn_host` and `attn_scanchk` through the existing
 runtime-views converter profile. Initial `/tmp/integ/6a-359.log` rc24
 exposed the omitted dispatch. Scalar clock retains its ordinary seeded ABI.
+
+#343 `0c12e0151b3d5ee3a5017584a8322d128dfbcb44`:
+`/tmp/integ/6a-343.log/.rc` rc0; q38 host9/9, complete rotary-tail
+mapping and all five compiled mutants; byte-identical units;
+`crumb verify: OK: 91 crumbs current`. Dated roadmap notes retained together.

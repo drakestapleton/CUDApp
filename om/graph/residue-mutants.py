@@ -24,6 +24,9 @@ mutants = [
     ('timeline-room', 'model_graph_residue', 'residue.om', 'sub get c 2 get c 0', 'add sub get c 2 get c 0 1'),
     ('perm-stride', 'model_graph_table', 'table.om', 'mul rem div j 4 32 16', 'mul rem div j 4 32 8'),
     ('load-scoreboard', 'hello_plan', 'hello-plan.om', 'wb = 0', 'wb = 1'),
+    ('d8-own-round', 'hello_plan', 'hello-plan.om', 'ownk = div add get c 3 1023 1024', 'ownk = div get c 3 1024'),
+    ('d8-beyond-sign', 'hello_plan', 'hello-plan.om', 'put d 4 1', 'put d 4 0'),
+    ('d8-driver-kib', 'hello_plan', 'hello-plan.om', 'put d 5 div add get c 4 1023 1024', 'put d 5 div get c 4 1000'),
 ]
 for name, unit, filename, old, new in mutants:
     source = (root / 'om/graph' / filename).read_text()

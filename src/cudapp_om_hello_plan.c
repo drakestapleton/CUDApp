@@ -199,6 +199,27 @@ uint64_t __attribute__((unused)) v8=o_get(v1, v1_n, ({uint64_t _a=v6;uint64_t _b
 {uint64_t _i=3ULL;uint64_t _v=({uint64_t _a=({uint64_t _a=v8;uint64_t _b=({uint64_t _a=v7;uint64_t _b=o_get(v1, v1_n, 8ULL, 5);o_op(1, 5, _a,_b);});o_op(2, 5, _a,_b);});uint64_t _b=4ULL;o_op(4, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
 return o_leave(1ULL);
 }
+if(({uint64_t _a=v0;uint64_t _b=5ULL;o_op(6, 5, _a,_b);})){
+uint64_t __attribute__((unused)) v3=({uint64_t _a=({uint64_t _a=o_get(v1, v1_n, 3ULL, 5);uint64_t _b=1023ULL;o_op(1, 5, _a,_b);});uint64_t _b=1024ULL;o_op(4, 5, _a,_b);});
+{uint64_t _i=0ULL;uint64_t _v=v3;o_put(v2, v2_n, _i,_v,5);}
+if(({uint64_t _a=o_get(v1, v1_n, 1ULL, 5);uint64_t _b=o_get(v1, v1_n, 0ULL, 5);o_op(11, 5, _a,_b);})){
+{uint64_t _i=1ULL;uint64_t _v=({uint64_t _a=o_get(v1, v1_n, 1ULL, 5);uint64_t _b=o_get(v1, v1_n, 0ULL, 5);o_op(2, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=2ULL;uint64_t _v=0ULL;o_put(v2, v2_n, _i,_v,5);}
+}else{
+{uint64_t _i=1ULL;uint64_t _v=({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=o_get(v1, v1_n, 1ULL, 5);o_op(2, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=2ULL;uint64_t _v=1ULL;o_put(v2, v2_n, _i,_v,5);}
+}
+uint64_t __attribute__((unused)) v4=({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=v3;o_op(1, 5, _a,_b);});
+if(({uint64_t _a=o_get(v1, v1_n, 2ULL, 5);uint64_t _b=v4;o_op(11, 5, _a,_b);})){
+{uint64_t _i=3ULL;uint64_t _v=({uint64_t _a=o_get(v1, v1_n, 2ULL, 5);uint64_t _b=v4;o_op(2, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=4ULL;uint64_t _v=0ULL;o_put(v2, v2_n, _i,_v,5);}
+}else{
+{uint64_t _i=3ULL;uint64_t _v=({uint64_t _a=v4;uint64_t _b=o_get(v1, v1_n, 2ULL, 5);o_op(2, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=4ULL;uint64_t _v=1ULL;o_put(v2, v2_n, _i,_v,5);}
+}
+{uint64_t _i=5ULL;uint64_t _v=({uint64_t _a=({uint64_t _a=o_get(v1, v1_n, 4ULL, 5);uint64_t _b=1023ULL;o_op(1, 5, _a,_b);});uint64_t _b=1024ULL;o_op(4, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
+return o_leave(1ULL);
+}
 return o_leave(0ULL);
 }
 uint32_t omega_hplan(uint64_t  *result, volatile uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n){

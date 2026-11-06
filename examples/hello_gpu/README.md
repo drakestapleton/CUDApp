@@ -36,6 +36,40 @@ phase digests and diagnostics against the oracle and requires a deliberately
 changed result to disagree. The mutant gate compiles each changed `.om` unit;
 compile refusal is not counted as a killed mutant.
 
+## D8: the process-tax line
+
+`hello_gpu` prints one overhead line (developer bar D8,
+`docs/issues/D8-process-tax.md`). On the GPU path it reads its resident memory
+(`VmRSS` in `/proc/self/status`) before the open, after the open and with its
+buffers allocated, its own buffer bytes, and what the session asked the driver
+for:
+
+```text
+overhead (D8): resident B KiB before open, O KiB after open, W KiB with buffers; own buffers N KiB; session driver allocations S KiB in K; open cost ±X KiB, beyond own buffers ±Y KiB
+```
+
+`--sim` prints the same line without the open:
+`overhead (D8, simulator, no device opened): …`. The KiB rounding and the signed
+differences come from `hello-plan.om` mode 5. `test-graph-residue` checks mode 5
+against the C oracle, and three mutants check its rounding and sign.
+`--hold-ms=N` (1 to 60000) holds the buffers after the line and prints the pid,
+so another process can read this one. The control build also accepts
+`--d8-ballast-mib=N`. It holds N MiB of touched host memory through the
+measurement, which is the negative control.
+
+`tests/run_d8_process_tax.sh` holds the bar that was fixed before any chip run,
+and the controls:
+
+- `make d8-process-tax-dry-run` (`--dry-run`) runs on the host only, in bwrap
+  with the GPU devices hidden. It runs the simulator, a device-hidden GPU path
+  that must stop at NOT_RUN, and judge self-tests on synthetic logs. This dry
+  run is not chip evidence.
+- `make d8-process-tax` (`--gpu`) takes one `spark-window` lease (gb10 exclusive,
+  20 minutes). Inside the lease it measures `hello_gpu --hold-ms=3000` and both
+  controls (`--bug=short`, and `--d8-ballast-mib=512`), then releases the lease.
+  It reads `VmRSS` and the driver's per-process report from outside the process.
+  `--check-gpu OUTDIR` judges a recorded run again.
+
 ## Chip runbook — NOT_RUN
 
 This migration has no current hardware qualification. Historical hello receipts

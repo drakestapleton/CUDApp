@@ -36,6 +36,16 @@
  * hash of its machine code (D10, no compiling at run time), and the hash of the output (D7: the same
  * inputs give the same bits on every run).
  *
+ * D8 (no per-process CUDA tax, docs/issues/D8-process-tax.md): before its launches the program prints its own
+ * overhead line. It reads its resident memory (VmRSS, /proc/self/status) before the GPU opens, after it opens
+ * and with its buffers allocated and uploaded, and prints those three numbers, its own buffer bytes, what it
+ * asked the driver for through the session, the cost of opening and the resident memory beyond its own
+ * buffers. --sim prints the same line without the open (no device). `--hold-ms=N` (at most 60000) then
+ * prints its pid and sleeps N ms with the buffers held, so an outside reader can record what the driver and
+ * the kernel report for this process (tests/run_d8_process_tax.sh). `--d8-ballast-mib=N` is the line's
+ * negative control: hello_gpu_control only (CUDAPP_MIGRATION_PENDING_HELLO_CONTROL, see above), it holds N MiB
+ * of touched host memory through the measured window, and the measurement must see it.
+ *
  * Hardware: NVIDIA GB10 (DGX Spark, sm_121), Linux, the open NVIDIA kernel driver loaded.
  * Built by `make hello-gpu` (see README, "Run your first kernel").
  */
@@ -57,6 +67,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define N_TOTAL     (1u << 20)          /* 1048576 floats per array */
 #define THREADS     128u                /* threads per block (CTA) */
@@ -65,6 +76,10 @@
 #define POISON      0xFFC0FFEEu         /* a NaN pattern c starts out as: an element the GPU never wrote stays this */
 #define READ_CEILING_GBPS 195.1         /* GB10 global reads, measured: evidence/OWN30B-T3-TC-PEAK-BW-5faa0f70-20261013T2236Z/ */
 static uint32_t target_sm = 121; /* explicit --target=sm_86; never infer from the build host */
+static unsigned hold_ms = 0;     /* D8: --hold-ms, 0 = no hold */
+#if CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
+static unsigned ballast_mib = 0; /* D8 negative control, hello_gpu_control only */
+#endif
 
 /* ---- Step 1: the kernel, as IR instructions -------------------------------------------------------------
  * Each instruction carries a "control word" that tells the chip how long to wait before the next one.
@@ -240,13 +255,81 @@ static void chunk_plan(uint32_t base, int bug, uint64_t d[16]) {
 #endif
 }
 
+/* ---- D8: the memory this process holds beyond its own buffers -------------------------------------------- */
+static uint64_t resident_kib(void) { /* VmRSS of this process; 0 when /proc cannot be read */
+    FILE *f = fopen("/proc/self/status", "r");
+    char line[256]; unsigned long long kib = 0;
+    if (!f) return 0;
+    while (fgets(line, sizeof line, f)) if (sscanf(line, "VmRSS: %llu kB", &kib) == 1) break;
+    fclose(f);
+    return kib;
+}
+/* opened = 0 is --sim: no device, so before == after open. driver_bytes is what the session asked the driver for. */
+static void print_overhead(int opened, uint64_t before, uint64_t after_open, uint64_t with_buffers,
+                           uint64_t own_bytes, uint64_t driver_bytes, uint64_t driver_allocs) {
+    if (!before || !after_open || !with_buffers) { printf("overhead (D8): resident memory unreadable (/proc/self/status VmRSS)\n"); return; }
+    uint64_t d[16] = { 0 };
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+    d[0] = (own_bytes + 1023u) / 1024u;
+    d[1] = after_open >= before ? after_open - before : before - after_open; d[2] = after_open < before;
+    const uint64_t floor_kib = before + d[0];
+    d[3] = with_buffers >= floor_kib ? with_buffers - floor_kib : floor_kib - with_buffers; d[4] = with_buffers < floor_kib;
+    d[5] = (driver_bytes + 1023u) / 1024u;
+#else
+    const uint64_t c[16] = {before, after_open, with_buffers, own_bytes, driver_bytes}; uint64_t result = 0;
+    if (omega_hplan(&result, 5, c, 16, d, 16) != OMEGA_OK || result != 1) abort();
+#endif
+    if (opened)
+        printf("overhead (D8): resident %llu KiB before open, %llu KiB after open, %llu KiB with buffers; own buffers %llu KiB; "
+               "session driver allocations %llu KiB in %llu; open cost %c%llu KiB, beyond own buffers %c%llu KiB\n",
+               (unsigned long long)before, (unsigned long long)after_open, (unsigned long long)with_buffers,
+               (unsigned long long)d[0], (unsigned long long)d[5], (unsigned long long)driver_allocs,
+               d[2] ? '-' : '+', (unsigned long long)d[1], d[4] ? '-' : '+', (unsigned long long)d[3]);
+    else
+        printf("overhead (D8, simulator, no device opened): resident %llu KiB before buffers, %llu KiB with buffers; "
+               "own buffers %llu KiB; beyond own buffers %c%llu KiB\n", (unsigned long long)before,
+               (unsigned long long)with_buffers, (unsigned long long)d[0], d[4] ? '-' : '+', (unsigned long long)d[3]);
+}
+static void hold(void) { /* D8: keep the buffers while an outside reader records this pid */
+    if (!hold_ms) return;
+    printf("hold (D8): pid %ld, %u ms with buffers allocated, for an outside reading of this process\n", (long)getpid(), hold_ms);
+    fflush(stdout);
+    struct timespec t = { (time_t)(hold_ms / 1000u), (long)(hold_ms % 1000u) * 1000000L };
+    while (nanosleep(&t, &t) != 0) {}
+}
+static void *ballast(void) { /* D8 negative control: N MiB of touched host memory, NULL when not asked for */
+#if CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
+    if (ballast_mib) {
+        const size_t n = (size_t)ballast_mib << 20;
+        char *p = malloc(n);
+        if (!p) { printf("FAIL: ballast of %u MiB not allocated\n", ballast_mib); exit(1); }
+        memset(p, 0x5a, n);
+        printf("ballast (D8 negative control): %u MiB of touched host memory held through the measurement\n", ballast_mib);
+        return p;
+    }
+#endif
+    return NULL;
+}
+static int number_arg(const char *arg, const char *prefix, unsigned max, unsigned *out) {
+    const size_t k = strlen(prefix);
+    if (strncmp(arg, prefix, k) != 0) return 0;
+    char *end = NULL; unsigned long v = strtoul(arg + k, &end, 10);
+    if (end == arg + k || *end || v < 1 || v > max) { printf("%s needs a whole number from 1 to %u\n", prefix, max); exit(2); }
+    *out = (unsigned)v;
+    return 1;
+}
+
 /* ---- --sim: the same program on the host warp simulator --------------------------------------------------- */
 static int run_sim(const BlackwellIRProgram *prog, int bug) {
     const size_t bytes = (size_t)N_TOTAL * sizeof(float);
+    const uint64_t rss_before = resident_kib();
+    void *extra = ballast();
     float *fa = aligned_alloc(64, bytes), *fb = aligned_alloc(64, bytes);
     uint32_t *wc = aligned_alloc(64, bytes);
     if (!fa || !fb || !wc) { printf("FAIL: host memory\n"); return 1; }
     inputs(fa, fb, wc);
+    print_overhead(0, rss_before, rss_before, resident_kib(), 3u * bytes, 0, 0);
+    hold();
     static WsSim s;
     memset(&s, 0, sizeof s);
     s.p = prog; s.threads = THREADS;
@@ -336,7 +419,7 @@ static int run_sim(const BlackwellIRProgram *prog, int bug) {
     print_work(read_b, wrote_b, flops, 0);
     print_sha("output", wc, bytes);
     printf("%s\n", rc ? "FAIL" : "PASS");
-    free(fa); free(fb); free(wc);
+    free(fa); free(fb); free(wc); free(extra);
     return rc;
 }
 
@@ -347,11 +430,13 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--target=sm_86")) target_sm = 86;
         else if (!strcmp(argv[i], "--target=sm_121")) target_sm = 121;
         else if (!strcmp(argv[i], "--bug=past-end")) bug = 1;
+        else if (number_arg(argv[i], "--hold-ms=", 60000u, &hold_ms)) {}
 #if CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
         else if (!strcmp(argv[i], "--bug=short")) bug = 2;
-        else { printf("usage: hello_gpu [--sim] [--bug=short] | hello_gpu --sim --bug=past-end\n"); return 2; }
+        else if (number_arg(argv[i], "--d8-ballast-mib=", 4096u, &ballast_mib)) {}
+        else { printf("usage: hello_gpu [--sim] [--bug=short] [--hold-ms=N] [--d8-ballast-mib=N] | hello_gpu --sim --bug=past-end\n"); return 2; }
 #else
-        else { printf("usage: hello_gpu [--target=sm_86|--target=sm_121] [--sim [--bug=past-end]]\n"); return 2; }
+        else { printf("usage: hello_gpu [--target=sm_86|--target=sm_121] [--sim [--bug=past-end]] [--hold-ms=N]\n"); return 2; }
 #endif
     }
     if (bug == 1 && !sim) { printf("--bug=past-end is only for --sim: on the GPU it would write past a buffer\n"); return 2; }
@@ -387,13 +472,18 @@ int main(int argc, char **argv) {
     }
     if (sim) return run_sim(&prog, bug);
 
-    /* ---- Step 2: open the GPU. One process owns one device channel; the lock serialises threads. */
+    /* ---- Step 2: open the GPU. One process owns one device channel; the lock serialises threads.
+     * D8: resident memory is read just before and just after the open. */
+    const uint64_t rss_before = resident_kib();
+    void *extra = ballast();
     omega_gpu_session_lock();
     if (!omega_gpu_session_open()) {
         printf("GPU not available (stage: %s)\nNOT_RUN\n", omega_gpu_session_last_error());
         omega_gpu_session_unlock();
+        free(extra);
         return 2;
     }
+    const uint64_t rss_open = resident_kib();
     if (omega_gpu_session_target_sm() != target_sm) {
         printf("NOT_RUN: requested sm_%u does not match opened device sm_%u\n", target_sm, omega_gpu_session_target_sm());
         rc = 2; goto done;
@@ -413,6 +503,11 @@ int main(int argc, char **argv) {
     inputs(fa, fb, wc);
     if (omega_gpu_session_sync_to_gpu(&code) || omega_gpu_session_sync_to_gpu(&a) || omega_gpu_session_sync_to_gpu(&b) ||
         omega_gpu_session_sync_to_gpu(&c)) { printf("FAIL: sync to GPU (stage: %s)\n", omega_gpu_session_last_error()); goto done; }
+    {   /* D8: the process with its own buffers in place, before any launch */
+        OmegaGpuAllocStats st; omega_gpu_session_alloc_stats(&st);
+        print_overhead(1, rss_before, rss_open, resident_kib(), 3u * (uint64_t)bytes + need, st.alloc_bytes, st.allocs);
+        hold();
+    }
 
     /* ---- Step 4: launch. The argument words land in the kernel's constant bank: three addresses (low word,
      * high word) and n. Each launch is pointed at its own slice of the arrays. */
@@ -447,5 +542,6 @@ done:
     if (c.cpu) omega_gpu_session_free(&c);
     omega_gpu_session_unlock();
     omega_gpu_session_close();
+    free(extra);
     return rc;
 }

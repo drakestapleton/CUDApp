@@ -11,6 +11,7 @@
 #include "omega_gpu_om_ir.h"
 #include "omega_gpu_session.h"
 #include "cudapp_native.h"
+#include "omega_attn_host_policy.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -461,8 +462,7 @@ int omega_gpu_prefix_sum(const float *x, size_t n, float *y, OmegaGpuScanInfo *i
     int rc = chip_run_locked(&c, &m, NULL, info);
     if (rc == OMEGA_GPU_SCAN_OK) {
         const uint32_t *w = (const uint32_t *)m.cpu + n;
-        size_t unwritten = 0;
-        for (size_t i = 0; i < n; i++) unwritten += w[i] == POISON;
+        size_t unwritten = ah_check(0,w,w,n);
         if (unwritten) { omega_gpu_session_set_error("prefix sum: output words never written"); rc = OMEGA_GPU_SCAN_CHIP_FAIL; }
         else memcpy(y, w, n * 4u);
         omega_gpu_session_free(&m);
@@ -483,8 +483,7 @@ int omega_gpu_prefix_sum_u32(const uint32_t *x, size_t n, uint32_t *y, OmegaGpuS
     int rc = chip_run_locked(&c, &m, NULL, info);
     if (rc == OMEGA_GPU_SCAN_OK) {
         const uint32_t *w = (const uint32_t *)m.cpu + n;
-        size_t wrong = w[0] != x[0];
-        for (size_t i = 1; i < n; i++) wrong += (uint32_t)(w[i] - w[i - 1]) != x[i];
+        size_t wrong = ah_check(1,w,x,n);
         if (wrong) { omega_gpu_session_set_error("u32 prefix sum: output words do not step by the input"); rc = OMEGA_GPU_SCAN_CHIP_FAIL; }
         else memcpy(y, w, n * 4u);
         omega_gpu_session_free(&m);
@@ -505,8 +504,7 @@ static int sort_chip(uint32_t *keys, uint32_t *vals, size_t n, OmegaGpuScanInfo 
     int rc = chip_run_locked(&c, &m, NULL, info);
     if (rc == OMEGA_GPU_SCAN_OK) {
         const uint32_t *w = m.cpu;
-        size_t down = 0;
-        for (size_t i = 1; i < n; i++) down += w[i] < w[i - 1];
+        size_t down = ah_check(2,w,w,n);
         if (down) { omega_gpu_session_set_error("radix sort: output keys out of order"); rc = OMEGA_GPU_SCAN_CHIP_FAIL; }
         else { memcpy(keys, w, n * 4u); if (vals) memcpy(vals, w + n, n * 4u); }
         omega_gpu_session_free(&m);

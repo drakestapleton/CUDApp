@@ -178,6 +178,9 @@ UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/at
 UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
 UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
 UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
+UNITS="$UNITS attn_host=om/api/attn_host.om"
+UNITS="$UNITS attn_scanchk=om/scan/scan_check.om"
+UNITS="$UNITS attn_clock=om/api/clock_ns.om"
 fi
 REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
 for entry in fill count args argsx pad idle route perm widen next key; do
@@ -268,7 +271,7 @@ for u in $UNITS $PURE_UNITS; do
     av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
+    attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx|attn_host|attn_scanchk)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
     ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)

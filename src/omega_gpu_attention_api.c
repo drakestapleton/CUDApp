@@ -32,6 +32,7 @@
 #include "omega_blackwell_codegen.h"
 #include "omega_gpu_om_ir.h"
 #include "cudapp_native.h"
+#include "omega_attn_host_policy.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
@@ -724,8 +725,8 @@ static void gen_attention(Em *e, const KSpec *k) {
  * Contiguous KV is one block of 2^31 slots (log2bs 31, block table {0}). */
 #define ARG_G_RECOFF ARG_MAXB     /* general kernel: byte offset of the row records inside the table buffer */
 #define ARG_G_HMAPOFF ARG_HSTRIDE /* general kernel: byte offset of the head map (kv byte offset per query head) */
-static uint32_t gen_threads(uint32_t hd) { return (hd + 31u) & ~31u; }
-static uint32_t gen_shared_bytes(uint32_t hd) { return 16u * gen_threads(hd); }
+static uint32_t gen_threads(uint32_t hd) { uint64_t p[32]={0,0,hd};(void)ah_policy(p,0);return (uint32_t)p[8]; }
+static uint32_t gen_shared_bytes(uint32_t hd) { uint64_t p[32]={0,0,hd};(void)ah_policy(p,0);return (uint32_t)p[9]; }
 
 #if CUDAPP_MIGRATION_PENDING_C_API_KGEN
 static void gen_attention_general(Em *e, const KSpec *k) {
@@ -1360,23 +1361,21 @@ typedef struct {
     uint32_t bstride, tstride, kvp; float scale;
 } GenCall;
 static int general_run(const Slot *ks, const GenCall *g, uint32_t per, OmegaGpuAttnInfo *info) {
-    const size_t row = (size_t)g->nqh * g->hd;
-    const size_t idw = g->ids ? (size_t)per * g->maxb : 1u;
-    uint32_t *tab = omega_gpu_host_calloc((size_t)per * 4u + g->nqh + idw, sizeof *tab);
+    uint64_t p[32]={g->nrows,g->nqh,g->hd,per,g->maxb,g->ids!=NULL};
+    (void)ah_policy(p,1);
+    uint32_t *tab = omega_gpu_host_calloc(p[9], sizeof *tab);
     if (!tab) return OMEGA_GPU_ATTN_CHIP_FAIL;
     int rc = OMEGA_GPU_ATTN_OK;
-    for (uint64_t r0 = 0; r0 < g->nrows && rc == OMEGA_GPU_ATTN_OK; r0 += per) {
-        uint64_t p[16]={g->nrows-r0,per,g->nqh};(void)ap_plan(AP_AT,12,p);
-        const uint32_t nr=p[8],hoff=p[9],ioff=p[10];
+    for (; rc == OMEGA_GPU_ATTN_OK && ah_policy(p,2); (void)ah_policy(p,3)) {
+        const uint64_t r0=p[10];const uint32_t nr=p[11],hoff=p[12],ioff=p[13];
         av_gentab(g->lo+r0,g->hi+r0,tab,nr,ioff,g->ids?g->maxb:0);
-        av_memcpy(tab + hoff, g->hmap, (size_t)g->nqh * 4u);
-        if (g->ids) av_memcpy(tab + ioff, g->ids + (size_t)r0 * g->maxb, (size_t)nr * g->maxb * 4u); else tab[ioff] = 0;
-        const size_t words = ioff + (g->ids ? (size_t)nr * g->maxb : 1u);
+        av_memcpy(tab + hoff, g->hmap, p[20]);
+        if (g->ids) av_memcpy(tab + ioff, g->ids + p[18], p[19]); else tab[ioff] = 0;
         Launch L = {
-            .q = g->q + (size_t)r0 * row, .q_bytes = (size_t)nr * row * 4, .pool = g->pool, .pool_bytes = g->pool_bytes,
-            .tab = tab, .tab_bytes = words * 4, .out = g->out + (size_t)r0 * row, .out_bytes = (size_t)nr * row * 4,
+            .q = g->q + p[15], .q_bytes = p[16], .pool = g->pool, .pool_bytes = g->pool_bytes,
+            .tab = tab, .tab_bytes = p[17], .out = g->out + p[15], .out_bytes = p[16],
             .grid_x = g->nqh, .grid_y = nr,
-            .params = { 0, f2u(g->scale), g->bstride, g->tstride, g->kvp, hoff * 4u, g->nqh, 0 },
+            .params = { 0, f2u(g->scale), g->bstride, g->tstride, g->kvp, p[21], g->nqh, 0 },
             .pool_va = g->pool_va,
         };
         rc = launch(ks, &L, info);

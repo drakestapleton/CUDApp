@@ -24,6 +24,7 @@
 #include "omega_blackwell_codegen.h"
 #include "omega_gpu_om_ir.h"
 #include "cudapp_native.h"
+#include "omega_attn_host_policy.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
@@ -983,7 +984,7 @@ const char *omega_gpu_elementwise_last_error(void) { return omega_gpu_session_la
 
 static uint64_t now_ns(void) {
     struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t);
-    return (uint64_t)t.tv_sec * 1000000000ULL + (uint64_t)t.tv_nsec;
+    return ah_clock((uint64_t)t.tv_sec, (uint64_t)t.tv_nsec);
 }
 
 /* Caller holds the lock. Opens the shared device on first use. */

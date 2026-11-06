@@ -1,0 +1,593 @@
+[
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "src/cudapp_om_attn_host.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "src/cudapp_om_attn_scanchk.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "src/cudapp_om_attn_clock.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-DHOST(x)=om_ ## x",
+      "-c",
+      "tests/attn_host_fixture.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-DHOST(x)=c_ ## x",
+      "-DCUDAPP_MIGRATION_PENDING_C_ATTENTION_HOST_POLICY=1",
+      "-DCUDAPP_MIGRATION_PENDING_C_SCAN_CHECK_REST=1",
+      "-DCUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS=1",
+      "-c",
+      "tests/attn_host_fixture.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "tests/attn_host_diff.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/diff"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/diff"
+    ],
+    "rc": 0,
+    "output": "ATTN-HOST-DIFF PASS\n"
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/missing"
+    ],
+    "rc": 1,
+    "output": "/usr/bin/ld: ~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o: in function `om_plan':\nattn_host_fixture.c:(.text+0x34): undefined reference to `omega_ah_plan'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/missing"
+    ],
+    "rc": 1,
+    "output": "/usr/bin/ld: ~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o: in function `om_check':\nattn_host_fixture.c:(.text+0xa8): undefined reference to `omega_sc_check'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/missing"
+    ],
+    "rc": 1,
+    "output": "/usr/bin/ld: ~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o: in function `om_clock':\nattn_host_fixture.c:(.text+0x118): undefined reference to `omega_clock_ns'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-0.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-0.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-0.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-0.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-0"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-0"
+    ],
+    "rc": 1,
+    "output": "FAIL line 15: om_plan(a,0)==c_plan(b,0)&&!memcmp(a,b,sizeof a)\nFAIL line 54: policy()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-1.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-1.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-1.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-1.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-1"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-1"
+    ],
+    "rc": 1,
+    "output": "FAIL line 15: om_plan(a,0)==c_plan(b,0)&&!memcmp(a,b,sizeof a)\nFAIL line 54: policy()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-2.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-2.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-2.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-2.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-2"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-2"
+    ],
+    "rc": 1,
+    "output": "FAIL line 19: om_plan(a,1)==c_plan(b,1)&&!memcmp(a,b,sizeof a)\nFAIL line 54: policy()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-3.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-3.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-3.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-3.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-3"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-3"
+    ],
+    "rc": 1,
+    "output": "FAIL line 23: om_plan(a,2)==c_plan(b,2)&&!memcmp(a,b,sizeof a)\nFAIL line 54: policy()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-4.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-4.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-4.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-4.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-4"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-4"
+    ],
+    "rc": 1,
+    "output": "FAIL line 23: om_plan(a,2)==c_plan(b,2)&&!memcmp(a,b,sizeof a)\nFAIL line 54: policy()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-5.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-5.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-5.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-5.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-5"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-5"
+    ],
+    "rc": 1,
+    "output": "FAIL line 48: om_check(0,w,w,n)==n&&om_check(0,w,w,n)==c_check(0,w,w,n)\nFAIL line 54: scans()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-6.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-6.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-6.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-6.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-6"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-6"
+    ],
+    "rc": 1,
+    "output": "FAIL line 41: om_check(op,w,x,n)==c_check(op,w,x,n)\nFAIL line 54: scans()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-7.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-7.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-7.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-7.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_clock.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-7"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-7"
+    ],
+    "rc": 1,
+    "output": "FAIL line 41: om_check(op,w,x,n)==c_check(op,w,x,n)\nFAIL line 54: scans()==0\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-8.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-c",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-8.c",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-8.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/main.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/om.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/c.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_host.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/attn_scanchk.o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-8.o",
+      "-o",
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-8"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/AttnHostPolicyOm/build/attn-host-check/mutant-8"
+    ],
+    "rc": 1,
+    "output": "FAIL line 56: om_clock(ts[i],ts[j])==c_clock(ts[i],ts[j])\n"
+  }
+]

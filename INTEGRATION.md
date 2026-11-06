@@ -175,3 +175,11 @@ hello-sim, GEMM-ex-sim and engine-sim gates passed. Final:
 `crumb verify: OK: 91 crumbs current`.
 Merge retained the existing root union and dated notes; no acceptance weakened.
 Hardware/live-RM/VFIO/chip remain NOT_RUN.
+
+#359 `bdb3d5d6f3532b9c0e1c9cf6b6933598ea4c3df7`:
+`/tmp/integ/6a-359-focused.log/.rc` rc0, ATTN-HOST-CHECK with nine
+compiled mutants and three link omissions; attention/elementwise/scan family
+host+sim gates; byte-identical units; `crumb verify: OK: 91 crumbs current`.
+Repair: dispatch OM2 `attn_host` and `attn_scanchk` through the existing
+runtime-views converter profile. Initial `/tmp/integ/6a-359.log` rc24
+exposed the omitted dispatch. Scalar clock retains its ordinary seeded ABI.

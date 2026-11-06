@@ -95,7 +95,7 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
         const uint64_t *r = &ins[i * 8];
         BlackwellIRInsn in;
         memset(&in, 0, sizeof in);
-        if (r[0] > (uint64_t)BW_IR_ATOMG_ADD_F32_STRONG_GPU) return OMEGA_OM_IR_REPLAY;
+        if (r[0] > (uint64_t)BW_IR_LAST) return OMEGA_OM_IR_REPLAY;
         in.op = (BlackwellIROpcode)r[0];
         if (field(r[1], &in.dst_vreg) || field(r[2], &in.src1_vreg) || field(r[3], &in.src2_vreg) ||
             field(r[4], &in.src3_vreg))

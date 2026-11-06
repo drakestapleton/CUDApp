@@ -12,6 +12,11 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 build = (root / sys.argv[1]).resolve()
+# The exact objects make linked into attention_diff besides the attention unit; a directory glob would also
+# pick up stale objects of generated files that om/units.sh has since renamed.
+objects = [str((root / p).resolve()) for p in sys.argv[2:]]
+if not objects:
+    raise SystemExit('usage: attention_kgen_mutants.py BUILD_DIR LINK_OBJECTS...')
 files = ['attention_emit.om', 'attention_tuned.om', 'attention_general.om', 'attention_ir.om']
 mutants = [
     ('descriptor-offset', 'attention_general.om', '775 atrg 0 AN AN AN 856 1', '775 atrg 0 AN AN AN 896 1'),
@@ -54,14 +59,11 @@ for name, filename, old, new in mutants:
         obj, exe = tmp / 'mutant.o', tmp / 'differential'
         cc = os.environ.get('CC', 'cc')
         result = run([cc, '-O2', '-Isrc', '-ffunction-sections', '-fdata-sections',
-                      '-c', str(generated / 'cudapp_om_attention_ir.c'), '-o', str(obj)])
+                      '-c', str(generated / 'cudapp_freest_attention_ir.c'), '-o', str(obj)])
         if result.returncode:
             raise SystemExit(f'FAIL {name}: compilation\n{result.stdout}')
-        core = {'attention_diff.o', 'omega_blackwell_codegen.o', 'omega_gpu_om_ir.o', 'omega_cubin.o', 'sha256.o'}
-        objects = [p for p in sorted(build.glob('*.o')) if p.name in core or
-                   (p.name.startswith('cudapp_') and p.name != 'cudapp_om_attention_ir.o')]
         result = run([cc, '--coverage', '-Wl,--gc-sections', '-o', str(exe), str(obj),
-                      *map(str, objects), '-lpthread', '-lm'])
+                      *objects, '-lpthread', '-lm'])
         if result.returncode:
             raise SystemExit(f'FAIL {name}: link\n{result.stdout}')
         result = run([str(exe)])

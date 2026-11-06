@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-"""Lower each mutated .om with the pinned portable bridge, then relink only that unit's generated C.
+"""Lower each mutated .om with its unit's pinned portable bridge profile, then relink only that unit's generated C.
 
 Run inside the same device-free namespace as run.sh, after run.sh (it reuses oracle.o and successor.o).
 Compilation refusal is not credited as a killed semantic mutant. The unmodified executables must pass first.
@@ -15,6 +15,7 @@ OUT = ROOT / 'build/regalloc-om'
 ENV = dict(os.environ)
 OMC = Path(ENV.get('OMEGA_OMC', str(Path.home() / 'work/cudastack/omega-mv/seed/out/omc')))
 BRIDGE = Path(ENV.get('OMEGA_BRIDGE', str(Path.home() / 'work/cudastack/omega-bridge')))
+SEED = ENV.get('OMEGA_SEED') or str(BRIDGE / 'build/bootstrap/omc')
 CC = ENV.get('CC', 'cc')
 UNITS = ['regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_params', 'cg_matmul_i32',
          'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block', 'cg_vecadd', 'cg_bind',
@@ -25,7 +26,7 @@ FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c',
          'src/cudapp_om_bw_cpuf16.c', 'src/cudapp_om_bw_cpubf16.c', 'src/cudapp_om_bw_shape.c',
          'src/cudapp_om_bw_name.c', 'src/cudapp_om_cg_pack_len.c', 'src/cudapp_om_cg_pack_h.c',
          'src/cudapp_om_cg_em.c', 'src/cudapp_om_cg_reconv.c', 'src/cudapp_om_cg_sentin.c',
-         'src/cudapp_freest_cg_fields.c', 'src/cudapp_om_cg_invar.c', 'src/cudapp_om_cg_budget.c']
+         'src/cudapp_freest_cg_fields.c', 'src/cudapp_freest_cg_invar.c', 'src/cudapp_om_cg_budget.c']
 FLAGS = ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections', '-Isrc']
 LINK = {
     'liveness': ['tests/regalloc_om/liveness.c', str(OUT / 'successor.o'), 'src/omega_gpu_om_ir.c'],
@@ -73,15 +74,53 @@ def run(command, path, env=ENV):
     with path.open('w') as log:
         return subprocess.run(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=600).returncode
 
+# Each unit's checked .ident (written by om/units.sh) names the profile that lowered it. A mutant is lowered by
+# the same frontend, converter and flags, and links in place of the same generated file name.
+PROFILES = {
+    'bridge-seeded': ('bridge-seeded', [], 'src/toc.om', 'cudapp_om_'),
+    'bridge-seeded-runtime': ('bridge-seeded', ['--runtime-views'], 'src/toc.om', 'cudapp_om_'),
+    'bridge-freest': ('bridge-freest', [], 'src/freest.om', 'cudapp_freest_'),
+}
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def ident(stem):
+    pins = dict(p.split('=', 1) for p in (ROOT / f'src/cudapp_om_{stem}.ident').read_text().split() if '=' in p)
+    if pins.get('abi') not in PROFILES:
+        raise RuntimeError(f'NOT_RUN: {stem} has unknown generated profile {pins.get("abi")}')
+    return pins
+
+
+def unit_file(stem):
+    return f'src/{PROFILES[ident(stem)["abi"]][3]}{stem}.c'
+
 
 def pinned():
-    pins = dict(part.split('=', 1) for part in (ROOT / 'src/cudapp_om_regalloc.ident').read_text().split() if '=' in part)
-    if hashlib.sha256(OMC.read_bytes()).hexdigest() != pins['omc']:
-        raise RuntimeError('NOT_RUN: OMEGA_OMC is not the pinned compiler')
-    if hashlib.sha256((BRIDGE / 'tools/bridge-seeded').read_bytes()).hexdigest() != pins['frontend']:
-        raise RuntimeError('NOT_RUN: bridge-seeded is not the pinned frontend')
-    if hashlib.sha256((BRIDGE / 'src/toc.om').read_bytes()).hexdigest() != pins['converter']:
-        raise RuntimeError('NOT_RUN: toc.om is not the pinned converter')
+    omc = sha(OMC)
+    for stem in sorted({*UNITS, *(c[1][:-3] for c in CASES), *(t[0] for ts in TAILS.values() for t in ts)}):
+        pins = ident(stem)
+        frontend, _, converter, _ = PROFILES[pins['abi']]
+        if omc != pins['omc']:
+            raise RuntimeError('NOT_RUN: OMEGA_OMC is not the pinned compiler')
+        if sha(BRIDGE / 'tools' / frontend) != pins['frontend']:
+            raise RuntimeError(f'NOT_RUN: {frontend} is not the pinned frontend of {stem}')
+        if sha(BRIDGE / converter) != pins['converter']:
+            raise RuntimeError(f'NOT_RUN: {converter} is not the pinned converter of {stem}')
+        if sha(ROOT / unit_file(stem)) != pins['c']:
+            raise RuntimeError(f'NOT_RUN: {unit_file(stem)} is not the checked output in its .ident')
+        if frontend == 'bridge-freest' and not Path(SEED).is_file():
+            raise RuntimeError(f'NOT_RUN: {stem} uses bridge-freest; set OMEGA_SEED to the baseline compiler')
+
+
+def lower(stem, source, generated, log_mode):
+    frontend, flags, _, _ = PROFILES[ident(stem)['abi']]
+    env = dict(ENV, OMEGA_SEEDED_OMC=str(OMC))
+    with generated.open('w') as c, (generated.parent / 'compile.log').open(log_mode) as log:
+        return subprocess.run(['sh', str(BRIDGE / 'tools' / frontend), *flags, 'c', str(source)], cwd=ROOT,
+                              env=env, stdout=c, stderr=log).returncode
 
 
 def main():
@@ -96,24 +135,20 @@ def main():
         mutated = work / unit
         mutated.write_text(source.replace(before, after))
         stem = unit[:-3]
-        generated = work / f'cudapp_om_{stem}.c'
-        with generated.open('w') as c, (work / 'compile.log').open('w') as log:
-            rc = subprocess.run(['sh', str(BRIDGE / 'tools/bridge-seeded'), 'c', str(mutated)], cwd=ROOT,
-                                env=dict(ENV, OMEGA_SEEDED_OMC=str(OMC)), stdout=c, stderr=log).returncode
+        generated = work / Path(unit_file(stem)).name
+        rc = lower(stem, mutated, generated, 'w')
         if rc:
             raise RuntimeError(f'{name}: NOT_KILLED compiler rc={rc}, see {work}/compile.log')
         regenerated = {stem: generated}
         for tail_stem, tail in TAILS.get(unit, []):
             tail_om = work / f'{tail_stem}.om'
             tail_om.write_text(mutated.read_text() + (ROOT / 'om/codegen' / tail).read_text())
-            regenerated[tail_stem] = work / f'cudapp_om_{tail_stem}.c'
-            with regenerated[tail_stem].open('w') as c, (work / 'compile.log').open('a') as log:
-                rc = subprocess.run(['sh', str(BRIDGE / 'tools/bridge-seeded'), 'c', str(tail_om)], cwd=ROOT,
-                                    env=dict(ENV, OMEGA_SEEDED_OMC=str(OMC)), stdout=c, stderr=log).returncode
+            regenerated[tail_stem] = work / Path(unit_file(tail_stem)).name
+            rc = lower(tail_stem, tail_om, regenerated[tail_stem], 'a')
             if rc:
                 raise RuntimeError(f'{name}: NOT_KILLED compiler rc={rc}, see {work}/compile.log')
         target = {'live': 'liveness', 'hazard': 'hazard', 'bind': 'bind'}.get(mode, 'differential')
-        units = [str(regenerated[u]) if u in regenerated else f'src/cudapp_om_{u}.c' for u in UNITS]
+        units = [str(regenerated[u]) if u in regenerated else unit_file(u) for u in UNITS]
         binary = work / target
         rc = run([CC, *FLAGS, *LINK[target], *units, *FIXED, '-Wl,--gc-sections', '-o', str(binary)], work / 'link.log')
         if rc:

@@ -11,6 +11,11 @@
  * releases from the ring completes a submission that poll_word then observes; refusals ring no doorbell; the ring
  * refuses its 1024th unretired entry; the omega #457 prefix follows a host sync into a GPU-cached buffer; the session
  * opens and closes on it; closing the device releases every object. Each case runs in its own child process.
+ *
+ * Differential (CUDApp#128): with AIEN_TRACE=<file> every simulated system call (request bytes in and out, map and
+ * unmap arguments) and the final ring, USERD GPPut, pushbuffer and doorbell bytes are appended to <file>. The make
+ * target builds this test against native/aiengpu/context.om (default) and against the C oracle
+ * (CUDAPP_MIGRATION_PENDING_C_PLATFORM_AIEN=1) and requires the two traces to be byte-identical.
  */
 #include "omega_gpu_platform_aien.h"
 #include "omega_gpu_platform_linux.h"
@@ -21,6 +26,8 @@
 #include "class/clc96f.h"
 
 #include <errno.h>
+#include <fcntl.h>
+#include <linux/ioctl.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -52,15 +59,39 @@ static struct {
     int bad_fixed_map; /* an object mapped somewhere other than its VA, or not FIXED|SHARED */
 } fk;
 
+/* ---- trace (AIEN_TRACE) ---- */
+static int g_tfd = -1;
+static void trace_hex(const char *tag, const void *p, size_t n) {
+    if (g_tfd < 0) return;
+    static const char hx[] = "0123456789abcdef";
+    const uint8_t *b = p;
+    char line[2 * 8192 + 64];
+    size_t k = (size_t)snprintf(line, 64, "%s %zu ", tag, n);
+    for (size_t i = 0; i < n && k + 3 < sizeof line; i++) { line[k++] = hx[b[i] >> 4]; line[k++] = hx[b[i] & 15u]; }
+    line[k++] = '\n';
+    (void)!write(g_tfd, line, k);
+}
+
 static int f_open(const char *path, int flags) {
     (void)flags;
+    if (g_tfd >= 0) dprintf(g_tfd, "open %s\n", path);
     if (strcmp(path, FAKE_PATH) != 0) { errno = ENOENT; return -1; }
     fk.opens++;
     return FAKE_FD;
 }
-static int f_close(int fd) { if (fd == FAKE_FD) fk.closes++; return 0; }
+static int f_close(int fd) { if (g_tfd >= 0) dprintf(g_tfd, "close %d\n", fd); if (fd == FAKE_FD) fk.closes++; return 0; }
 static FakeObj *obj_of(uint32_t h) { return (h >= 1 && h <= fk.nobj && fk.obj[h - 1].live) ? &fk.obj[h - 1] : NULL; }
+static int f_ioctl_dev(int fd, unsigned long req, void *arg);
 static int f_ioctl(int fd, unsigned long req, void *arg) {
+    char tag[48];
+    snprintf(tag, sizeof tag, "ioctl 0x%lx in", req);
+    trace_hex(tag, arg, _IOC_SIZE(req));
+    const int rc = f_ioctl_dev(fd, req, arg);
+    snprintf(tag, sizeof tag, "ioctl rc %d out", rc);
+    trace_hex(tag, arg, _IOC_SIZE(req));
+    return rc;
+}
+static int f_ioctl_dev(int fd, unsigned long req, void *arg) {
     if (fd != FAKE_FD) { errno = EBADF; return -1; }
     if (req == AGPU_INFO) {
         struct agpu_info *i = arg; memset(i, 0, sizeof *i); i->abi = fk.abi; i->state = fk.state; return 0;
@@ -98,6 +129,8 @@ static int f_ioctl(int fd, unsigned long req, void *arg) {
     return -1;
 }
 static void *f_map(void *addr, size_t len, int prot, int flags, int fd, uint64_t off) {
+    if (g_tfd >= 0) dprintf(g_tfd, "map 0x%llx %zu %d 0x%x %d 0x%llx\n", (unsigned long long)(uintptr_t)addr, len, prot, flags, fd,
+                            (unsigned long long)off);
     if (fd == -1) return mmap(addr, len, prot, flags, -1, 0);
     if (fd != FAKE_FD) { errno = EBADF; return MAP_FAILED; }
     if (off == FAKE_DOORBELL_OFF) {
@@ -114,6 +147,10 @@ static void *f_map(void *addr, size_t len, int prot, int flags, int fd, uint64_t
     return mmap(addr, len, prot, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 }
 static int f_unmap(void *addr, size_t len) {
+    if (g_tfd >= 0) {
+        if ((volatile uint8_t *)addr == fk.doorbell) dprintf(g_tfd, "unmap doorbell %zu\n", len);
+        else dprintf(g_tfd, "unmap 0x%llx %zu\n", (unsigned long long)(uintptr_t)addr, len);
+    }
     if ((volatile uint8_t *)addr == fk.doorbell) fk.doorbell = NULL;
     return munmap(addr, len);
 }
@@ -204,6 +241,15 @@ static uint32_t release_words(uint32_t *w, uint64_t va, uint32_t payload) {
 }
 static uint32_t doorbell_word(void) { return fk.doorbell ? *(volatile uint32_t *)(fk.doorbell + OMEGA_GPU_AIEN_DOORBELL_WORD) : 0xdeadu; }
 static uint32_t gpput_word(void) { return *(volatile uint32_t *)(uintptr_t)(g_fifo_va + OMEGA_GPU_AIEN_USERD_OFF + OMEGA_GPU_AIEN_USERD_GPPUT); }
+/* The bytes the platform stored for the GPU: the whole GPFIFO ring, USERD GPPut, the pushbuffer head, the doorbell. */
+static void trace_state(const Rig *g) {
+    if (g_tfd < 0 || !g_fifo_va) return;
+    trace_hex("ring", (const void *)(uintptr_t)g_fifo_va, (size_t)OMEGA_GPU_AIEN_GP_ENTRIES * 8u);
+    const uint32_t put = gpput_word(), db = doorbell_word();
+    trace_hex("gpput", &put, sizeof put);
+    trace_hex("pushbuffer", g->ring_cpu.ptr, 256);
+    trace_hex("doorbell", &db, sizeof db);
+}
 
 /* ---- cases ---------------------------------------------------------------------------------------------------- */
 
@@ -378,6 +424,7 @@ static void c_submit_poll(void) {
     OmegaGpuQueueHandle q2;
     EXPECT(p->queue_open(p->ctx, g.dev, g.ring, &q2) == OMEGA_GPU_PLAT_REFUSED_LIMIT);
     EXPECT(p->queue_open(p->ctx, g.dev, g.marker, &q2) == OMEGA_GPU_PLAT_REFUSED_BAD_KIND);
+    trace_state(&g);
     EXPECT(p->queue_close(p->ctx, g.q) == OMEGA_GPU_PLAT_OK);
     EXPECT(fk.chan_destroys == 1 && fk.doorbell == NULL);
     EXPECT(p->queue_submit(p->ctx, g.q, w, 6) == OMEGA_GPU_PLAT_REFUSED_STALE_HANDLE);
@@ -416,9 +463,14 @@ static void c_l2_prefix(void) {
     EXPECT(p->queue_submit(p->ctx, g.q, w, n) == OMEGA_GPU_PLAT_OK && pb[0] == w[0]);
     EXPECT(p->sync_cpu_to_gpu(p->ctx, bc, 0, 4096) == OMEGA_GPU_PLAT_OK);
     EXPECT(p->queue_submit(p->ctx, g.q, w, n) == OMEGA_GPU_PLAT_OK);
+    /* The whole omega #457 MEM_OP prefix (L2_SYSMEM_NCOH_INVALIDATE, as the Linux reference), then the words; traced
+     * here because the next submit reuses the pushbuffer head. */
+    EXPECT(pb[0] == ((2u << 28) | (4u << 16) | (0x0028u >> 2)) && pb[1] == 0 && pb[2] == 0 && pb[3] == 0);
     EXPECT(pb[4] == (0x11u << 27) && pb[5] == w[0]);
+    if (g_tfd >= 0) trace_hex("pushbuffer-prefixed", pb, 64);
     EXPECT(((volatile uint64_t *)(uintptr_t)g_fifo_va)[1] == nvrm_gp_entry(g.ring_va.va, n + 5));
     EXPECT(p->queue_submit(p->ctx, g.q, w, n) == OMEGA_GPU_PLAT_OK && pb[0] == w[0]); /* once only */
+    trace_state(&g);
     EXPECT(p->device_close(p->ctx, g.dev) == OMEGA_GPU_PLAT_OK);
 }
 
@@ -480,7 +532,14 @@ int main(void) {
         if (only && strcmp(only, CASES[i].name) != 0) continue;
         fflush(stdout);
         pid_t pid = fork();
-        if (pid == 0) { alarm(30); case_ok = 1; CASES[i].fn(); fflush(stdout); _exit(case_ok ? 0 : 1); }
+        if (pid == 0) {
+            const char *tp = getenv("AIEN_TRACE");
+            if (tp && *tp) {
+                g_tfd = open(tp, O_WRONLY | O_CREAT | O_APPEND, 0644);
+                if (g_tfd >= 0) dprintf(g_tfd, "case %s\n", CASES[i].name);
+            }
+            alarm(30); case_ok = 1; CASES[i].fn(); fflush(stdout); _exit(case_ok ? 0 : 1);
+        }
         int st = 0;
         waitpid(pid, &st, 0);
         const int ok = WIFEXITED(st) && WEXITSTATUS(st) == 0;

@@ -1,0 +1,106 @@
+OMEGA_OMC="/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="/home/drakestapleton/work/cudastack/omega-bridge" python3 tests/dis_words_run.py build/dis-words
+build/om-disasm/diff
+OMEGA_OMC="/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="/home/drakestapleton/work/cudastack/omega-bridge" sh om/units.sh --check
+PASS 11 golden words; 11 corrupted words refused
+PASS 26528 words, 0 differ (.om vs C)
+red check: the planted .om text difference FAILS, as it must
+red check: every corrupted word FAILS the golden text, as it must (11 of 11)
+DISASM WORDS PASS cases=460800
+RED planted difference rejected
+STRONG LINK missing Omega refused
+PASS portable Omega units regenerate byte for byte
+CLI listing and --pairs byte assembly differential PASS
+KILLED byte-shift
+KILLED opcode
+KILLED mask
+KILLED end
+KILLED retain
+File 'tests/dis_words_oracle.c'
+Lines executed:100.00% of 2
+No branches
+Calls executed:100.00% of 1
+Creating 'dis_words_oracle.c.gcov'
+
+File 'src/omega_dis_words.h'
+Lines executed:100.00% of 4
+Branches executed:100.00% of 6
+Taken at least once:100.00% of 6
+No calls
+Creating 'omega_dis_words.h.gcov'
+
+Lines executed:100.00% of 6
+DISASM WORDS DIFFERENTIAL RED LINK MUTANTS PASS
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit sm121_dis (bridge-seeded)
+generating portable unit words (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit words (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit words (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit words (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit words (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit words (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+Cannot open source file tests/dis_words_oracle.c
+Cannot open source file src/omega_dis_words.h

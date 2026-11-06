@@ -12,6 +12,7 @@
  * checked against nvdisasm 13.0 -b SM121 by tools/sm121dis/check.sh. */
 #include "omega_sm121_disasm.h"
 #include "cudapp_native.h"
+#include "omega_dis_words.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -332,12 +333,12 @@ int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t 
 }
 #endif
 
-static uint64_t word_half(const uint8_t *w) { uint64_t v = 0; for (int i = 7; i >= 0; i--) v = v << 8 | w[i]; return v; }
+static uint64_t word_half(const uint8_t *w) { return omega_dis_word(w, 0, 0, 0); }
 
 size_t omega_sm121_padding_start(const uint8_t *code, size_t len) {
     size_t end = 0;
-    for (size_t at = 0; code && at + 16 <= len; at += 16)
-        if ((word_half(code + at) & 0xfff) == 0x94d) end = at + 16; /* EXIT, any guard */
+    for (size_t at = 0; code && len - at >= 16; at += 16)
+        end = (size_t)omega_dis_word(code + at, 1, at, end);
     return end;
 }
 

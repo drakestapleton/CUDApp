@@ -1,0 +1,9 @@
+python3 om/codegen/gdn_mutants.py
+KILLED Omega shape-value-heads rc=1: GDN SHAPE DIFF ratio=0 bf16=0 C=0 Omega=0
+KILLED Omega control-word-wait rc=1: GDN DIFF decode mutant=0 copy=0 ratio=0 bf16=0 C=0 Omega=0 count=665/665
+KILLED Omega branch-patch-offset rc=1: GDN DIFF decode mutant=0 copy=0 ratio=0 bf16=0 C=0 Omega=0 count=665/665
+KILLED Omega butterfly-step rc=1: GDN DIFF scan mutant=0 copy=0 ratio=0 bf16=0 C=0 Omega=0 count=534/518
+KILLED Omega mutant-selector-bound rc=1: GDN DIFF decode mutant=5 copy=0 ratio=0 bf16=0 C=-1 Omega=0 count=90/665
+KILLED Omega one-minus-qs rc=1: GDN DIFF decode mutant=0 copy=0 ratio=0 bf16=0 C=0 Omega=0 count=665/665
+KILLED Omega prep-prefetch-offset rc=1: GDN DIFF prep mutant=0 copy=0 ratio=0 bf16=0 C=0 Omega=0 count=287/287
+CODEGEN GDN OMEGA MUTANTS PASS (7 source mutants killed)

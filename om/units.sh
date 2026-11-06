@@ -61,6 +61,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/tools/dag_eval.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om"
   UNITS="$UNITS cg_moe=om/codegen/cg_moe_emit.om,om/codegen/cg_moe_core.om,om/codegen/cg_moe.om cg_moe2=om/codegen/cg_moe_emit.om,om/codegen/cg_moe_core.om,om/codegen/cg_moe2.om cg_moe_sched=om/codegen/cg_moe_sched.om"
+  UNITS="$UNITS cg_gdn=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_common.om,om/codegen/cg_gdn.om cg_gdn_policy=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_policy.om"
 fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

@@ -23,6 +23,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"
+  UNITS="$UNITS tc_host=om/numeric/numeric.om,om/codegen/tc_host.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

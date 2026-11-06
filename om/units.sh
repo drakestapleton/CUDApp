@@ -46,6 +46,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS cmdlist_record=om/cmdlist/recor
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_uvm_wire=native/nvrm/uvm_wire.om nvrm_uvm_map_wire=native/nvrm/uvm_map_wire.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS plat_policy=om/platform-linux/plat_policy.om"
+  UNITS="$UNITS plat_rest=om/platform-linux/plat_rest.om"
 fi
 NVML="nvml_step=native/nvml/nvml.om,native/nvml/query.om,native/nvml/step.om nvml_errstr=native/nvml/errstr.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $NVML"

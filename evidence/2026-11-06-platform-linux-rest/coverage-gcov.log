@@ -1,0 +1,24 @@
+File 'tests/platform_linux_rest.c'
+Lines executed:86.84% of 38
+Branches executed:100.00% of 36
+Taken at least once:61.11% of 36
+Calls executed:72.22% of 18
+Creating 'platform_linux_rest.c.gcov'
+
+File 'src/cudapp_om_plat_rest.c'
+Lines executed:93.02% of 129
+Branches executed:57.41% of 324
+Taken at least once:42.90% of 324
+Calls executed:84.38% of 224
+Creating 'cudapp_om_plat_rest.c.gcov'
+
+File 'src/omega_gpu_platform_linux_rest_oracle.h'
+Lines executed:100.00% of 34
+Branches executed:100.00% of 73
+Taken at least once:100.00% of 73
+No calls
+Creating 'omega_gpu_platform_linux_rest_oracle.h.gcov'
+
+Lines executed:93.03% of 201
+
+rc=0

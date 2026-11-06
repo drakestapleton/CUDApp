@@ -103,6 +103,7 @@ uint32_t omega_nvrm_heap_wire(uint64_t  *result, const void *p0, uint64_t p0_n, 
 uint32_t omega_nvrm_uvm_wire(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
 uint32_t omega_nvrm_uvm_map_wire(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_plat_policy(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_plat_rest(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_nvml_step(uint64_t  *result, void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_nvml_errstr(uint64_t  *result, uint64_t p0, void *p1, uint64_t p1_n);
 uint32_t omega_chip_admit(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);

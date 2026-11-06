@@ -4,20 +4,20 @@
       "children": [
         {
           "digest": "c62760ef9d4c6643a2b916dc7b9f864498e51e3250f783c7e92c3d2dd902af16",
-          "last_commit": "03a6339",
+          "last_commit": "03a6339e",
           "name": "gen",
           "purpose": "Generated Omega native bindings for the Linux platform units. Do not edit; regenerate with gen_e"
         }
       ],
       "children_root": "sha256:397a1d2a2892956c7776f6b71b0cb3be549eeedab70ce22c63ce273945cd7383",
-      "compiled_at": "2026-11-06T07:14:57Z",
+      "compiled_at": "2026-11-06T10:45:00Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:d7b475a262e799f3aca308895c4e75e92d18e3666972a70fcf852a30fc5e4d06",
+      "digest": "sha256:0175e02bd39769a5ffa5adbd710a162738c8684da29dfa9f51fa472f2ffaf7c4",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 14,
-      "generated_at_commit": "6560f3f1b81e189725a170f07466fa6b1e263ffe",
-      "source_tree": "sha256:6842b889be546b65f00a9e847ed13b8fb390873d6bd96557e398c0c401353620"
+      "files": 17,
+      "generated_at_commit": "a3bcf3b075857d9cdfea2720afb45ee8bf5e5a58",
+      "source_tree": "sha256:0997cc506a631006b7486b3653e00df2f1dd07117e38d8d50966ba949ef12432"
     }
   },
   "layer": "platform",

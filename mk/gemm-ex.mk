@@ -81,6 +81,12 @@ test-gemm-ex-unfused: $(GEMM_EX_DIR)/test_c $(OUT_DIR)/libomega_gpu.a
 
 CARRIED_HOST_TESTS += test-gpu-gemm-ex test-gpu-gemm-ex-sim test-gpu-gemm-ex-c test-gpu-gemm-ex-diff test-gemm-ex-unfused
 
+# Not in `make test` (timing, no verdict): the host-path cost of the Omega path against the C oracle on one core,
+# null core, 5 calls per case, medians (tools/gemm_ex_bench.sh). Output in $(GEMM_EX_DIR)/bench/.
+.PHONY: bench-gemm-ex
+bench-gemm-ex: $(GPU_GEMM_EX_TEST) $(GEMM_EX_DIR)/test_c
+	taskset -c 14 nice -n 10 sh tools/gemm_ex_bench.sh ./$(GPU_GEMM_EX_TEST) $(GEMM_EX_DIR)/test_c $(GEMM_EX_DIR)/bench
+
 GEMM_EX_OMC = $(OMEGA_MV)/seed/out/omc
 GEMM_EX_TOOLS = [ -x $(GEMM_EX_OMC) ] && [ -f $(OMEGA_BRIDGE_DIR)/src/native.om ] || \
 	{ echo "NOT_RUN: set OMEGA_MV and OMEGA_BRIDGE_DIR"; exit 3; }

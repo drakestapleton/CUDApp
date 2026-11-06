@@ -1,0 +1,43 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -Itests -o build/gpu_decode_attn_test tests/gpu_decode_attn_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -o build/test_omega_gpu_decode_attn_maxpos tests/test_omega_gpu_decode_attn_maxpos.c \
+  src/omega_gpu_decode_attn_api.c build/libomega_gpu.a -lpthread -lm
+build/test_omega_gpu_decode_attn_maxpos
+ok   cache of 131072 positions allocates, buffers sized for it; 131328 refused
+ok   KV rows 65535/65536/131071 round-trip; 131072/131073 refused
+  rope rows 0..131071: worst |table - libm| 2.98e-08
+ok   RoPE rows up to 131071 match libm; table holds exactly 131072 rows
+ok   decode step at pos 131071 launches 512 splits; 131072/131073 refused
+ok   a 65536-position cache refuses pos 65536
+test_omega_gpu_decode_attn_maxpos: 5 of 5 cases passed: PASS
+CC="cc" python3 tests/runtime/api_plan_maxpos_mutants.py "build/libomega_gpu.a" "-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0"
+maxpos control killed: cap-off-by-one
+maxpos control killed: cap-one-chunk-over
+maxpos control killed: write-pos-bound
+maxpos control killed: write-count-bound
+maxpos control killed: read-pos-bound
+maxpos control killed: step-pos-bound
+maxpos control killed: rope-table-short
+test-gpu-decode-attn-maxpos: 7 of 7 controls killed (5 binding mutants)
+build/gpu_decode_attn_test --host-only
+rope rows vs libm: 1013 positions x 64 dims, 4 one-ulp differences, 0 worse
+hostmath vs libm: sincos max abs 2.22e-16, pow/exp/log max rel 1.31e-14
+codegen depth 1: 988 instructions, 112 registers (declared 120, 256 threads -> 30720 of 65536)
+codegen depth 2: 996 instructions, 116 registers (declared 120, 256 threads -> 30720 of 65536)
+codegen depth 3: 1004 instructions, 120 registers (declared 128, 256 threads -> 32768 of 65536)
+codegen depth 4: 1012 instructions, 124 registers (declared 128, 256 threads -> 32768 of 65536)
+gpu_decode_attn_test: 43 checks, 0 failed: PASS
+build/gpu_decode_attn_test --sim
+sim context 1                                          depth 1: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 7                                          depth 2: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 7, sharp q (x4)                            depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 256 (full chunk, 1 split)                  depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 257 (2 splits, last holds one position)    depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 301 (2 splits)                             depth 3: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 701 (3 splits)                             depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 701 (per_split 512: 2 chunks per CTA)      depth 2: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim mutant 1 at context 301: caught (bad=4601 worst=24.241 rows: k[0] chip bf76 ref becc)
+sim mutant 2 at context 301: caught (bad=3756 worst=37.139 rows: ok (0 one-ulp k flips))
+sim mutant 3 at context 301: caught (bad=2114 worst=16.257 rows: v[0] chip 0000 ref bf4c)
+sim mutant 4 at context 301: caught (bad=2233 worst=21.965 rows: ok (0 one-ulp k flips))
+sim: 6925320 warp issues in total
+gpu_decode_attn_test: 12 checks, 0 failed: PASS

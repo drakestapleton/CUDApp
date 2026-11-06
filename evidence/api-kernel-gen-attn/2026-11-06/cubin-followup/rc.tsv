@@ -1,0 +1,8 @@
+name	rc	command	final line
+differential-initial	0	make -j3 -f Makefile -f tests/attention_kgen.mk test-api-kgen-attention	PASS attention red control detected perturbed final cubin
+differential-final	0	make -j3 -f Makefile -f tests/attention_kgen.mk test-api-kgen-attention	PASS attention red control detected perturbed final cubin
+mutants	0	make -j3 -f Makefile -f tests/attention_kgen.mk test-api-kgen-attention-mutants	PASS attention seeded semantic mutants: 5 killed
+integration-include	0	make -j1 -f Makefile -f tests/attention_kgen.mk -f tests/attention_kgen.mk test-api-kgen-attention test-api-kgen-attention-mutants	PASS attention seeded semantic mutants: 5 killed
+coverage	0	gcov --json-format -b -c -f ~/work/cudastack/lanes/KernGenAttnOm/build/api-kgen/attention_diff.gcno	Lines executed:52.44% of 1394
+crumb-compile	0	crumb compile .	crumb compile: 46 crumbs, 0 rewritten, HEAD caad63b
+crumb-verify	0	crumb verify .	crumb verify: OK: 46 crumbs current

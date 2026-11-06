@@ -44,6 +44,13 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS artifact_format=om/components/artifact_format.om artifact_admit=om/components/artifact_parse.om,om/components/artifact_policy.om,om/components/artifact_format.om,om/components/artifact_admit.om"
     UNITS="$UNITS artifact_elf=om/components/artifact_elf.om"
     UNITS="$UNITS api_mm_plan=om/components/api_mm_plan.om api_at_plan=om/components/api_at_plan.om api_ew_plan=om/components/api_ew_plan.om api_bf_plan=om/components/api_bf_plan.om api_da_plan=om/components/api_da_plan.om api_rt_plan=om/components/api_rt_plan.om"
+    UNITS="$UNITS om/codegen/regalloc.om om/codegen/regalloc_ir.om om/codegen/regalloc_live.om om/codegen/cg_matmul.om om/codegen/cg_matmul_params.om om/codegen/cg_matmul_i32.om om/codegen/cg_matmul_tensor.om om/codegen/cg_matmul_loop.om om/codegen/cg_matmul_frag.om om/codegen/cg_matmul_block.om om/codegen/cg_vecadd.om om/codegen/bw_hazard.om bw_hazard_dec=om/codegen/bw_hazard.om,om/codegen/bw_hazard_dec.om om/codegen/cg_bind.om"
+fi
+# C3 scan and sort (CUB/Thrust row): the kernel IR and the launch plans
+if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan_plan.om"; fi
+if [ -z "${OMEGA_UNITS:-}" ]; then
+    UNITS="$UNITS ew_ir=om/kgen/ew_emit.om,om/kgen/ew_scalar.om,om/kgen/ew_reconv.om,om/kgen/ew_prime.om,om/kgen/ew_ir.om"
+    UNITS="$UNITS attention_ir=om/kgen/attention_emit.om,om/kgen/attention_tuned.om,om/kgen/attention_general.om,om/kgen/attention_ir.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS cmdlist_record=om/cmdlist/record.om cmdlist_plan=om/cmdlist/plan.om cmdlist_layout=om/cmdlist/layout.om cmdlist_access=om/cmdlist/plan.om,om/cmdlist/access.om"; fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_wire_pack=native/nvrm/wire.om,native/nvrm/wire_pack.om nvrm_wire_reply=native/nvrm/wire.om nvrm_heap_wire=native/nvrm/heap_wire.om"
@@ -101,6 +108,7 @@ fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS standalone_oracles=om/standalone-oracles/oracles.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_va=native/nvrm/alloc_profile.om,native/nvrm/alloc.om nvrm_alloc_scalar=native/nvrm/policy.om,native/nvrm/alloc_scalar.om nvrm_counts=native/nvrm/counts.om nvrm_alloc_push=native/nvrm/alloc_profile.om,om/encoder/amp_runtime.om,native/nvrm/alloc_push.om"
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/tools/dag_jstr.om"
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/disasm/words.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
@@ -132,6 +140,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om hello_plan=om/graph/hello-plan.om"
   UNITS="$UNITS core_cubadmit=$CORE/fmtnum.om,$CORE/cubadmit.om"
   UNITS="$UNITS core_ampack=$CORE/ampack.om"
+  UNITS="$UNITS graph_headscale=om/graph/headscale.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || PURE_UNITS="$PURE_UNITS c5=tools/c5/policy.om,tools/c5/runtime.om"
 GXNUM=om/gemmex/num.om
@@ -198,6 +207,9 @@ UNITS="$UNITS attn_mm_dot=om/api/attn_oracle.om,om/api/mm_dot.om"
 UNITS="$UNITS attn_mm_err=om/api/attn_oracle.om,om/api/mm_err.om"
 UNITS="$UNITS attn_mm_init=om/api/mm_init.om"
 UNITS="$UNITS attn_mm_next=om/api/mm_next.om"
+UNITS="$UNITS attn_host=om/api/attn_host.om"
+UNITS="$UNITS attn_scanchk=om/scan/scan_check.om"
+UNITS="$UNITS attn_clock=om/api/clock_ns.om"
 fi
 REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
 for entry in fill count args argsx pad idle route perm widen next key; do
@@ -290,10 +302,10 @@ for u in $UNITS $PURE_UNITS; do
       file=cudapp_freest_$name.c
       # A root has one generated implementation, shared by hosted and NO_POSIX links.
       case "$name" in attn_*|cg_fields|core_cubinmsg|core_cubadmit) OBSOLETE="$OBSOLETE cudapp_om_$name.c" ;; esac ;;
-    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|ar_carry|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
+    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|ar_carry|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table|graph_headscale)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    attn_ds_*|attn_na_*)
+    attn_ds_*|attn_na_*|attn_host|attn_scanchk)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
     ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire|nvrm_va|nvrm_counts|nvrm_alloc_push)

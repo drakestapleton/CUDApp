@@ -355,3 +355,39 @@ its only changes from the previous oracle are the lifetime-refusal comment and
 Full-union host acceptance and exact-head CI remain pending. Chip, live-RM,
 VFIO and hardware qualification are **NOT_RUN**; these host receipts authorize
 no device operation or deployment.
+### Half A: #340 kernel-family API generation
+
+Merged refreshed lane head `0463629a6d1651ed13e928e99b56a7b3f1b1d4e4`.
+`/tmp/integ/6a-340.log/.rc`: rc0 under device-isolated bwrap, bridge #73.
+Byte-identical unit regeneration; EW differential 127 accepted/73 refused,
+shape partition 4189/4001; attention 39423 cases/39392 complete cubins;
+five EW and five attention semantic mutants killed, IR/final-cubin red controls.
+Elementwise, reconvergence, attention, decode/decode256, eight prefill host/sim,
+hello-sim, GEMM-ex-sim and engine-sim gates passed. Final:
+`crumb verify: OK: 91 crumbs current`.
+Merge retained the existing root union and dated notes; no acceptance weakened.
+Hardware/live-RM/VFIO/chip remain NOT_RUN.
+
+#359 `bdb3d5d6f3532b9c0e1c9cf6b6933598ea4c3df7`:
+`/tmp/integ/6a-359-focused.log/.rc` rc0, ATTN-HOST-CHECK with nine
+compiled mutants and three link omissions; attention/elementwise/scan family
+host+sim gates; byte-identical units; `crumb verify: OK: 91 crumbs current`.
+Repair: dispatch OM2 `attn_host` and `attn_scanchk` through the existing
+runtime-views converter profile. Initial `/tmp/integ/6a-359.log` rc24
+exposed the omitted dispatch. Scalar clock retains its ordinary seeded ABI.
+
+#343 `0c12e0151b3d5ee3a5017584a8322d128dfbcb44`:
+`/tmp/integ/6a-343.log/.rc` rc0; q38 host9/9, complete rotary-tail
+mapping and all five compiled mutants; byte-identical units;
+`crumb verify: OK: 91 crumbs current`. Dated roadmap notes retained together.
+
+#345 `c0d5e0316e13d64aacdfe9a28a4d44f7f66c2dd7`:
+`/tmp/integ/6a-345.log/.rc` rc0; headscale, q38 host, graph warp/OM/nested
+and compiled mutants PASS; byte-identical units;
+`crumb verify: OK: 91 crumbs current`. Root union adds graph_headscale
+to the existing flags/ABI runtime-views dispatch rather than stale profile syntax.
+
+#342 `1ad73a6b8f05eddc7826c4ed9c7436312ccf2337`:
+`/tmp/integ/6a-342.log/.rc` rc0; disasm words differential/red/link/five mutants,
+Omega disasm and byte-identical units PASS; final `crumb verify: OK: 91 crumbs current`.
+Additive root and dated-roadmap notes retained.

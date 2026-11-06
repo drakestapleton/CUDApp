@@ -13,6 +13,15 @@ wire. The FP8 GEMM admission check now rejects overflowing `mt` before
 multiplication. CPU differential, simulator, and mutation receipts belong in
 `evidence/codegen-rest/2026-11-06/`; the hardware tiers remain NOT_RUN and no
 roadmap bar is upgraded by this migration. See `om/codegen/CHIP.md`.
+
+2026-11-06: repaired the seeded q38 gather permutation's nonrotary tail.
+The clean-base red reproduction, host green gate and compiled mutants are in
+`evidence/graph-table-tail-20261106/README.md`. Chip remains NOT_RUN.
+
+2026-11-06: final hidden-vector head scaling now defaults to seeded Omega.
+The default-OFF C oracle is `CUDAPP_MIGRATION_PENDING_C_GRAPH_HEAD_SCALE`.
+See `evidence/graph-head-scale-20261106/README.md`; hardware remains NOT_RUN.
+
 2026-11-06 — Slice 8 moves graph dimension/configuration checks, gather tables,
 timeline admission, prefill budget/rounding and hello host plans/checking into
 seeded Omega. Wrapped host differential, negative controls, simulator and seven
@@ -53,6 +62,7 @@ default with a default-OFF C oracle. Host state differential, source mutants
 and fake-RM gates are recorded in `evidence/nvrm-alloc-20261106/README.md`.
 Live RM and chip qualification remain NOT_RUN; no status row is upgraded.
 2026-11-06: dagsim JSON byte escaping defaults to seeded `om/tools/dag_jstr.om`; all-byte differential and five mutants are recorded in `evidence/dagsim-jstr-20261106/README.md`. Host only; chip NOT_RUN and no status row upgraded.
+2026-11-06: disassembly byte assembly and EXIT-padding policy now default to `om/disasm/words.om`; focused host differential and mutants are recorded in `evidence/disasm-words-20261106/README.md`. Chip NOT_RUN; no status row upgraded.
 
 ## 1. NVIDIA software on the Spark today
 
@@ -199,3 +209,7 @@ mutants. Receipts and the unexecuted chip runbook are in
 NOT_RUN, and no roadmap status row is upgraded.
 
 2026-11-06: native artifact JSON/ELF/manifest/version checks, decode BF16 rounding and head permutations, and matmul host-oracle error reduction default to seeded Omega. Decode retains the raw C rounding behavior for every nonfinite payload; no trust/admission policy or public API changes. The old artifact and matmul computations are default-OFF C oracles under `CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST` and `CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD`. Differential, source mutants, strong-link red controls, focused family gates and the unexecuted chip runbook are recorded in `evidence/api-attn-rest-20261106/`. Status rows are unchanged; chip qualification is NOT_RUN.
+
+2026-11-06: elementwise and attention API kernel generation, scheduling, reconvergence and loop-liveness metadata now default to seeded `om/kgen/{ew,attention}_*.om` through the existing single `omega_gpu_om_ir_replay` entry. `CUDAPP_MIGRATION_PENDING_C_API_KGEN` retains the default-OFF C oracles. Complete source-derived IR, solved allocation, text and cubin differential checks, altered-IR/final-cubin controls and ten seeded semantic mutants are recorded in `evidence/api-kgen/README.md` and `evidence/api-kernel-gen-attn/2026-11-06/README.md`. Required host/model/simulator targets and byte-for-byte unit regeneration passed. This is host evidence, not chip qualification; chip NOT_RUN and the status rows above are unchanged.
+
+2026-11-06: general-attention thread/shared/workspace/chunk policy, scan poison/prefix/sorted-neighbor verification and elementwise timestamp arithmetic now default to seeded Omega through strong hosted units. The C references remain behind default-OFF `CUDAPP_MIGRATION_PENDING_C_ATTENTION_HOST_POLICY`, `CUDAPP_MIGRATION_PENDING_C_SCAN_CHECK_REST` and `CUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS`. Public APIs and the inherited API kernel/view migration are unchanged. Differential, missing-unit/content red controls, source mutants and focused family receipts are recorded under `evidence/attn-host-policy-20261106/`. Chip is NOT_RUN; status rows above are unchanged.

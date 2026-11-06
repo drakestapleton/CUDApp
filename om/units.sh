@@ -34,6 +34,7 @@ GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.o
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $GEMMEX"
 if [ -z "${OMEGA_UNITS:-}" ]; then
 UNITS="$UNITS apish_shp=om/api/apish_shp.om apish_pack=om/api/apish_pack.om apish_slot=om/api/apish_slot.om apish_blk=om/api/apish_blk.om apish_trit=om/api/apish_trit.om"
+UNITS="$UNITS attn_args=om/api/attn_args.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

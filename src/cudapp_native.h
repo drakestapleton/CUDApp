@@ -90,6 +90,7 @@ uint32_t omega_apishk(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, 
 uint32_t omega_apishl(uint64_t  *result, uint64_t p0, uint64_t p1, void *p2, uint64_t p2_n);
 uint32_t omega_apishb(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2);
 uint32_t omega_apishr(uint64_t  *result, const void *p0, uint64_t p0_n);
+uint32_t omega_av_pack(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

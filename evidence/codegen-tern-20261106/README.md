@@ -82,6 +82,56 @@ tool transcript. No `CUDA++ HOST TESTS PASS` final line was observed.
 The integration owner runs the final integrated full-host gate after the
 source-contract repair; this receipt does not turn that unrun gate into PASS.
 
+## Latency source-contract repair
+
+The isolated repair updates all catalog anchors affected by the current lanes:
+
+- QMMA reader: `om/codegen/cg_qmma.om:257`, exact `put x 7 15`.
+- HMMA reader: `om/codegen/cg_tc.om:913`, exact `put x 7 ulong 14`.
+- Numeric minimum: `src/omega_numeric.c:1258`,
+  `CTRL_STALL(p[t].w[3]) < 5u`, rather than the moved comment.
+- Elementwise and attention fixed-stall policies remain in their existing C
+  emitters at the cataloged lines; their migration lanes did not move them.
+
+The checker still executes `diff_nak.py --check`. Omega statements match
+exactly, with the adjacent NOP initialization/emission and preceding tensor
+stall also checked. Its self-check runs wrong-line, zero-stall and
+digit-appended-stall source controls for both tensor readers. All are rejected;
+the wrong-line and changed-source cases use the real checker, not a second
+matching implementation. Temporary source mutants are cleaned automatically.
+
+The requested red run on the unfixed lane tree returned **rc 1**, exactly the
+stale QMMA assertion shown above (`latmeas-red.log`). The repaired green run
+returned **rc 0** and ended `latmeas host self-test PASS`
+(`latmeas-green.log`). The final green command used the new mandatory wrapper:
+
+```
+bwrap --dev-bind / / --dev /dev --proc /proc -- \
+  taskset -c 10-14 nice -n 10 sh tools/latmeas/selftest.sh \
+  /home/drakestapleton/work/cudastack/lanes/CodegenTern/build/gpu_latmeas_test
+```
+
+The working directory was a disposable verification worktree, not the active
+integration tree. Its source fixture was integration
+`071ad44ed5628a065fe0efe298124df3a52d4eb0`, with only the cited default-source
+files taken from:
+
+- `om/codegen/cg_tc.om`:
+  `57b19749567118e0400800ba9c10191ca627a499` (draft #278).
+- `src/omega_numeric.c`:
+  `1b78bfe99aba346e68274e4922f60791456295ab` (draft #288).
+
+It used the existing lane host-test binary and the repaired checker/catalog.
+This deliberately verifies the integration-only source contract without
+merging unrelated lanes into #279. The isolated repair commit must be consumed
+with those source revisions; the older #275-only base lacks `cg_tc.om`.
+
+The full-host attempt, ternary gates and initial red run predate the device-free
+namespace rule. One initial green also finished before that rule was received;
+the green result quoted here is the subsequent device-free run. No old result
+is relabeled as having used the wrapper. Future tests use the wrapper above.
+This host-only source-contract gate does not qualify or launch hardware.
+
 ## Numeric encoding checks
 WolframLanguageEvaluator:
 `{BitAnd[2^32-1,BitNot[BitShiftLeft[15,9]]],BitShiftLeft[2^32-1,32]}`

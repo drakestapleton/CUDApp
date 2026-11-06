@@ -54,6 +54,14 @@ Mesa commit `01bab9302a6bf0a082c7ba8c49d74427cf10b0cf`.
 
 `python3 tools/latmeas/diff_nak.py --verify-mesa` re-downloads those files and checks the cells. It is not part of `make test`.
 
+`--check` also anchors each latency claim to the default implementation source.
+The QMMA and HMMA reader rows name their seeded Omega NOP/stall emissions, not
+the migration-only C oracle. Omega anchors require an exact statement, its NOP
+initialization and emission, and the preceding tensor instruction's stall.
+The host self-test rejects a catalog pointed at a neighboring line and source
+mutants that change a NOP stall to zero or append a digit to its value. These
+controls use temporary source copies; they do not edit the builders.
+
 ## What this does not measure
 
 Loads, stores, and other scoreboarded ops. BSSY, BSYNC, BRA, EXIT, and BAR: NAK calls them decoupled, and the diff lists the encoder's fixed stall, but there is no GPR chain for them. QMMA: the encoder waits 30 and NAK's IMMA-to-ALU total is 26; the opcode is a patched placeholder, so this kit does not launch it.

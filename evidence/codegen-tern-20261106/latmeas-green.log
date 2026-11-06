@@ -1,0 +1,13 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh tools/latmeas/selftest.sh /home/drakestapleton/work/cudastack/lanes/CodegenTern/build/gpu_latmeas_test
+[cwd: /tmp/codegen-tern-latmeas; source fixture pins are recorded in README.md]
+emitted kernels in /tmp/latmeas-load-tQzuuJ (1408 launches when run)
+gpu_latmeas_test --self-test PASS (0 checks failed)
+refusing synthetic input (pass --allow-synthetic to render a FAKE table)
+fill_template self-test PASS
+latmeas: wrote /tmp/tmp.W2qzJvBLVm/RECEIPT.txt
+latmeas: wrote /tmp/tmp.kjj5ZEErgv/RECEIPT.txt
+latmeas: wrote /tmp/tmp.SMe5rXq3xt/RECEIPT.txt
+latmeas: wrote /tmp/tmp.SMe5rXq3xt/RECEIPT.txt
+receipt self-test PASS
+latmeas host self-test PASS
+[observed exit status: 0]

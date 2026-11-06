@@ -1,6 +1,7 @@
 /* omega_fp8_slot_table.c: host-only slot state machine (see the header). */
 #include "omega_fp8_slot_table.h"
 #include <stdlib.h>
+#include "omega_api_shells.h"
 #include <string.h>
 
 int omega_fp8_slot_table_init(OmegaFp8SlotTable *t, uint32_t slots) {
@@ -24,14 +25,33 @@ void omega_fp8_slot_table_fini(OmegaFp8SlotTable *t) {
 
 #define LOCKED(t, body) do { pthread_mutex_lock(&(t)->mu); body; pthread_mutex_unlock(&(t)->mu); } while (0)
 
+static void pack_rec(const OmegaFp8SlotTable *t, const OmegaFp8SlotRec *r, int ok, uint64_t rec[16]) {
+    memset(rec, 0, sizeof(*rec) * 16);
+    rec[0] = r->state; rec[1] = r->pins; rec[2] = r->key; rec[3] = r->version;
+    rec[4] = t->next_version; rec[5] = (uint64_t)t->mutant; rec[6] = (uint64_t)(ok != 0);
+    rec[8] = t->stats.loads; rec[9] = t->stats.load_failures; rec[10] = t->stats.busy_refusals;
+    rec[11] = t->stats.stale_refusals; rec[12] = t->stats.evictions; rec[13] = t->stats.pins;
+    rec[14] = t->stats.pinned_now; rec[15] = t->stats.pinned_high;
+}
+static void unpack_rec(OmegaFp8SlotTable *t, OmegaFp8SlotRec *r, const uint64_t rec[16]) {
+    r->state = (uint32_t)rec[0]; r->pins = (uint32_t)rec[1]; r->key = rec[2]; r->version = rec[3];
+    t->next_version = rec[4];
+    t->stats.loads = rec[8]; t->stats.load_failures = rec[9]; t->stats.busy_refusals = rec[10];
+    t->stats.stale_refusals = rec[11]; t->stats.evictions = rec[12]; t->stats.pins = rec[13];
+    t->stats.pinned_now = (uint32_t)rec[14]; t->stats.pinned_high = (uint32_t)rec[15];
+}
+static int step_slot(OmegaFp8SlotTable *t, uint32_t slot, int op, uint64_t aux, int ok) {
+    uint64_t rec[16];
+    pack_rec(t, &t->rec[slot], ok, rec);
+    int rc = omega_api_slot((uint64_t)op, aux, rec);
+    unpack_rec(t, &t->rec[slot], rec);
+    return rc;
+}
+
 int omega_fp8_slot_begin_load(OmegaFp8SlotTable *t, uint32_t slot) {
     if (!t || !t->rec || slot >= t->slots) return OMEGA_FP8_SLOT_BAD_ARGS;
     int rc = OMEGA_FP8_SLOT_OK;
-    LOCKED(t, {
-        OmegaFp8SlotRec *r = &t->rec[slot];
-        if (r->state == OMEGA_FP8_SLOT_LOADING || (r->pins && !t->mutant)) { rc = OMEGA_FP8_SLOT_BUSY; t->stats.busy_refusals++; }
-        else r->state = OMEGA_FP8_SLOT_LOADING; /* hides the old version: pin(old) is STALE from here */
-    });
+    LOCKED(t, { rc = step_slot(t, slot, 1, 0, 0); });
     return rc;
 }
 
@@ -39,52 +59,28 @@ int omega_fp8_slot_finish_load(OmegaFp8SlotTable *t, uint32_t slot, uint64_t key
     if (version) *version = 0;
     if (!t || !t->rec || slot >= t->slots) return OMEGA_FP8_SLOT_BAD_ARGS;
     int rc = OMEGA_FP8_SLOT_OK;
-    LOCKED(t, {
-        OmegaFp8SlotRec *r = &t->rec[slot];
-        if (r->state != OMEGA_FP8_SLOT_LOADING) rc = OMEGA_FP8_SLOT_BAD_ARGS;
-        else if (ok) {
-            r->state = OMEGA_FP8_SLOT_READY; r->key = key; r->version = t->next_version++;
-            if (version) *version = r->version;
-            t->stats.loads++;
-        } else { r->state = OMEGA_FP8_SLOT_EMPTY; r->key = 0; t->stats.load_failures++; }
-    });
+    LOCKED(t, { rc = step_slot(t, slot, 2, key, ok); if (version && rc == 0 && ok) *version = t->rec[slot].version; });
     return rc;
 }
 
 int omega_fp8_slot_pin(OmegaFp8SlotTable *t, uint32_t slot, uint64_t version) {
     if (!t || !t->rec || slot >= t->slots) return OMEGA_FP8_SLOT_BAD_ARGS;
     int rc = OMEGA_FP8_SLOT_OK;
-    LOCKED(t, {
-        OmegaFp8SlotRec *r = &t->rec[slot];
-        if (r->state != OMEGA_FP8_SLOT_READY || r->version != version || version == 0) { rc = OMEGA_FP8_SLOT_STALE; t->stats.stale_refusals++; }
-        else {
-            r->pins++; t->stats.pins++; t->stats.pinned_now++;
-            if (t->stats.pinned_now > t->stats.pinned_high) t->stats.pinned_high = t->stats.pinned_now;
-        }
-    });
+    LOCKED(t, { rc = step_slot(t, slot, 3, version, 0); });
     return rc;
 }
 
 int omega_fp8_slot_unpin(OmegaFp8SlotTable *t, uint32_t slot, uint64_t version) {
     if (!t || !t->rec || slot >= t->slots) return OMEGA_FP8_SLOT_BAD_ARGS;
     int rc = OMEGA_FP8_SLOT_OK;
-    LOCKED(t, {
-        OmegaFp8SlotRec *r = &t->rec[slot];
-        /* Under the mutant a pinned slot may have been reloaded: the pin is still dropped (version not checked). */
-        if (r->pins == 0 || (!t->mutant && r->version != version)) rc = OMEGA_FP8_SLOT_BAD_ARGS;
-        else { r->pins--; t->stats.pinned_now--; }
-    });
+    LOCKED(t, { rc = step_slot(t, slot, 4, version, 0); });
     return rc;
 }
 
 int omega_fp8_slot_evict(OmegaFp8SlotTable *t, uint32_t slot) {
     if (!t || !t->rec || slot >= t->slots) return OMEGA_FP8_SLOT_BAD_ARGS;
     int rc = OMEGA_FP8_SLOT_OK;
-    LOCKED(t, {
-        OmegaFp8SlotRec *r = &t->rec[slot];
-        if (r->pins || r->state == OMEGA_FP8_SLOT_LOADING) { rc = OMEGA_FP8_SLOT_BUSY; t->stats.busy_refusals++; }
-        else { if (r->state == OMEGA_FP8_SLOT_READY) t->stats.evictions++; r->state = OMEGA_FP8_SLOT_EMPTY; r->key = 0; }
-    });
+    LOCKED(t, { rc = step_slot(t, slot, 5, 0, 0); });
     return rc;
 }
 
@@ -99,10 +95,11 @@ int omega_fp8_slot_table_idle(OmegaFp8SlotTable *t) {
     int idle = 1;
     LOCKED(t, {
         for (uint32_t i = 0; i < t->slots; i++)
-            if (t->rec[i].pins || t->rec[i].state == OMEGA_FP8_SLOT_LOADING) { idle = 0; break; }
+            if (step_slot(t, i, 6, 0, 0) == 0) { idle = 0; break; }
     });
     return idle;
 }
+/* slot decisions live in om/api/apish_slot.om */
 
 void omega_fp8_slot_table_stats(OmegaFp8SlotTable *t, OmegaFp8SlotStats *out) {
     if (!out) return;

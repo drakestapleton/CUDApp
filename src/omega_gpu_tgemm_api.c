@@ -2,6 +2,7 @@
 /* omega_gpu_tgemm_api.c: the trainer's device-resident bf16 GEMM (lane E1, cut 1). See the header. */
 #include "omega_gpu_tgemm_api.h"
 #include "omega_gpu_prefill.h"
+#include "omega_api_shells.h"
 #include <string.h>
 
 #define TG_TIMEOUT_MS 20000u  /* the prefill module's launch limits (private there; same values) */
@@ -9,19 +10,21 @@
 static struct { uint32_t rt, warps, aqn; int mutant; OmegaGpuMem tab; } g;
 void omega_gpu_tgemm_set_shape(uint32_t rt, uint32_t warps, uint32_t aqn) { g.rt = rt; g.warps = warps; g.aqn = aqn; }
 void omega_gpu_tgemm_test_set_mutant(int m) { g.mutant = m; }
-uint32_t omega_gpu_tgemm_bm(uint32_t n) { if (g.rt) return 16u * g.rt; const uint32_t w = g.warps ? g.warps : (n % 256u ? 8u : 16u); return w == 16u ? 128u : 64u; } /* mirrors omega_gpu_tgemm_spec */
+uint32_t omega_gpu_tgemm_bm(uint32_t n) { return omega_api_tgbm(g.rt, g.warps, n); }
 _Static_assert(sizeof(OmegaTgemmTile) == OMEGA_TGEMM_TILE_BYTES, "tile entry");
 
 int omega_gpu_tgemm_spec(const OmegaTgemmCall *c, OmegaTgemmSpec *out) {
     if (!c || !out) return OMEGA_GPU_PF_BAD_ARGS;
     OmegaTgemmSpec s; memset(&s, 0, sizeof s);
-    s.k = c->k; s.n = c->n; s.rt = g.rt ? g.rt : 8u; s.ct = 2; s.kc = 32; s.aqn = g.aqn ? g.aqn : 1u; s.layout = c->layout; s.epi = c->epi; s.mutant = g.mutant;
-    s.warps = g.warps ? g.warps : (c->n % 256u ? 8u : 16u);
-    if (!g.rt) s.rt = s.warps == 16u ? 8u : 4u; /* chip sweep TGEMM-CUT1: rt 8 x 16 warps fastest on every gate shape; rt 8 x 8 warps does not fit the register file */
+    s.k = c->k; s.n = c->n; s.ct = 2; s.kc = 32; s.aqn = g.aqn ? g.aqn : 1u; s.layout = c->layout; s.epi = c->epi; s.mutant = g.mutant;
+    omega_api_tgspec(g.rt, g.warps, c->n, &s.rt, &s.warps);
     if (!omega_tgemm_spec_ok(&s)) return OMEGA_GPU_PF_BAD_ARGS;
-    if (c->m == 0 || c->m % omega_tgemm_bm(&s) || !c->a_va || !c->b_va || !c->c_va) return OMEGA_GPU_PF_BAD_ARGS;
-    if (c->m / omega_tgemm_bm(&s) > 65535u) return OMEGA_GPU_PF_TOO_LARGE;
-    if ((uint64_t)c->m * c->n >= (1ull << 32)) return OMEGA_GPU_PF_TOO_LARGE; /* the kernel forms row * n + col in 32 bits before the wide scale (review of PR 487) */
+    if (!c->a_va || !c->b_va || !c->c_va) return OMEGA_GPU_PF_BAD_ARGS;
+    {
+        uint32_t sz = omega_api_tgsz(c->m, c->n, omega_tgemm_bm(&s));
+        if (sz == 1u) return OMEGA_GPU_PF_BAD_ARGS;
+        if (sz == 2u) return OMEGA_GPU_PF_TOO_LARGE;
+    }
     *out = s;
     return OMEGA_GPU_PF_OK;
 }
@@ -48,7 +51,7 @@ int omega_gpu_tgemm_fill_launch_locked(const OmegaTgemmCall *c, uint64_t tiles_v
     rc = omega_gpu_pf_kernel_locked(&key, gen_tgemm, &k);
     if (rc != OMEGA_GPU_PF_OK) return rc;
     const uint32_t threads = 32u * s.warps;
-    if ((uint64_t)threads * k.gpr_declared > 65536u) return OMEGA_GPU_PF_TOO_LARGE;
+    if (!omega_api_regfit(s.warps, k.gpr_declared)) return OMEGA_GPU_PF_TOO_LARGE;
     if (!omega_bw_gpr_declared_ok(k.gpr_declared, k.gpr_peak)) return OMEGA_GPU_PF_CHIP_FAIL;
     const uint64_t va[3] = { tiles_va, c->a_va, c->b_va };
     for (int i = 0; i < 3; i++) { args[2 * i] = (uint32_t)va[i]; args[2 * i + 1] = (uint32_t)(va[i] >> 32); }

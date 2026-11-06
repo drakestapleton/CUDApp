@@ -122,3 +122,5 @@ is not complete: realization, hazard analysis and remaining wrapper/packing/spec
 policy are still C. Native aggregate adoption and freestanding OM2 array support
 are pending integration; chip qualification is NOT_RUN. No roadmap row status is
 upgraded by this note.
+
+2026-11-06: kernel-family API shell decisions (shape, alignment, overflow, refusal, FP8 pack, slot table) now default to seeded Omega in `om/api/`. The previous C expressions stay behind `CUDAPP_MIGRATION_PENDING_C_API_SHELLS` (default off) as the differential oracle. Public entry points are unchanged. Host differential and family host/sim gates are recorded under `evidence/api-shells/2026-11-06/`. Chip tier is NOT_RUN: no GPU window was authorized. Status rows above are not upgraded.

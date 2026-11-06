@@ -14,6 +14,7 @@
  * t0 * kp * 8 * 2 bytes. Nothing else about the launch changes.
  */
 #include "omega_gpu_moe_api.h"
+#include "omega_api_shells.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_codegen.h"
@@ -58,7 +59,7 @@ static uint64_t now_ns(void) { return omega_gpu_session_now_ns(); }
 static uint32_t round_up(uint32_t v, uint32_t q) { return (v + q - 1) / q * q; }
 
 uint64_t omega_gpu_moe_window_byte_offset(uint32_t kp, uint32_t col0) {
-    return (uint64_t)(col0 / OMEGA_GPU_MATMUL_TILE_N) * kp * OMEGA_GPU_MATMUL_TILE_N * 2u;
+    return omega_api_woff(kp, col0);
 }
 
 /* ---- device-side state (caller holds the session lock) ---- */
@@ -312,17 +313,15 @@ void omega_gpu_moe_tensor_free(OmegaGpuMoeTensor *t) {
 /* The alignment rule, fail-closed, with the stage named. */
 static int window_args_ok(const OmegaGpuMoeTensor *t, uint32_t col0, uint32_t cols) {
     char e[160];
+    if (omega_api_wok(col0, cols, t->n)) return 1;
     if (col0 % OMEGA_GPU_MATMUL_TILE_N != 0) {
         omega_gpu_fmt(e, sizeof e, "moe window: col0=%u is not a multiple of %u (a window starts on a column tile)", col0, OMEGA_GPU_MATMUL_TILE_N);
         omega_gpu_session_set_error(e);
         return 0;
     }
-    if (cols == 0 || col0 > t->n || cols > t->n - col0) {
-        omega_gpu_fmt(e, sizeof e, "moe window: [%u, %u + %u) is not inside the tensor's %u columns", col0, col0, cols, t->n);
-        omega_gpu_session_set_error(e);
-        return 0;
-    }
-    return 1;
+    omega_gpu_fmt(e, sizeof e, "moe window: [%u, %u + %u) is not inside the tensor's %u columns", col0, col0, cols, t->n);
+    omega_gpu_session_set_error(e);
+    return 0;
 }
 
 /* a16 or a32 (exactly one non-NULL). nwin windows of `cols` columns at col0[w]; c receives nwin

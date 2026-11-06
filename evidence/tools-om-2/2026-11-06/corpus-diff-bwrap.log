@@ -1,0 +1,1 @@
+PASS n=1200 bad=0 dir=/tmp/dagsim-corpus-rfot9beh kinds={'case_chain': 200, 'case_bw': 200, 'case_buf': 200, 'case_cycle': 200, 'case_launch': 200, 'case_barrier': 200}

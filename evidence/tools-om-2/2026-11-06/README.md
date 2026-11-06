@@ -26,3 +26,12 @@ log of the final artexp run. Home paths are replaced by `~`.
 
 NOT_RUN: dagsim (tools/dagsim/dagsim.c, dagsim_cli.c) was not ported in this lane; its scheduler stays in
 om/tools/dag_eval.om from b043be1e and the parse/resolve/format C is unchanged. corpus_diff 1200 was not run.
+
+## Predecessor dagsim receipts rerun under bwrap
+
+The b043be1e receipts (test-dagsim, corpus_diff) were run with taskset only. Rerun wrapped at 115bf71:
+- `make -j3 test-dagsim` (`test-dagsim-bwrap.log`): `dagsim_unit: 203 checks, 0 failed`, `run_cli: ok   second run byte-identical`.
+- `python3 tests/dagsim/corpus_diff.py ds_c ds_om 1200` (`corpus-diff-bwrap.log`), oracle built
+  `-O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_TOOLS`: `PASS n=1200 bad=0`.
+  Negative control (`ds_c` against `/bin/true`, 50 cases): `FAIL n=50 bad=5`.
+The predecessor's five dag_eval mutants were not rerun: INCONCLUSIVE (unwrapped).

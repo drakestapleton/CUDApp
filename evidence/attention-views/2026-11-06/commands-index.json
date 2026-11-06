@@ -1,0 +1,1795 @@
+[
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_args.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_lay.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_buf.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_math.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_tables.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_set.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_fill.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_fillf.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_count.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_cntf.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_bfexp.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_bffin.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_any.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_comp.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_rpois.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_z64.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_bids.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_rows.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_gtab.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_range.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_total.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_table.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_touch.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_blks.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_rfit.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_gath.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_stage.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_reset.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_hmap.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_eff.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_best.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_max.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_ctx.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_api_mm_plan.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_api_at_plan.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_api_ew_plan.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_api_bf_plan.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_api_da_plan.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_api_rt_plan.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/omega_gpu_hostmath.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-DAV_ENTRY=attn_omega",
+      "-c",
+      "tests/attn_views_cases.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-O0",
+      "--coverage",
+      "-DCUDAPP_MIGRATION_PENDING_ATTN_VIEWS=1",
+      "-DAV_ENTRY=attn_oracle",
+      "-c",
+      "tests/attn_views_cases.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "tests/attn_views_diff.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff"
+    ],
+    "rc": 0,
+    "final_line": "PASS attention host typed views differential; red check rejected; runtime bounds and aliases refused"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-0.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-0.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-0.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-0.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-0"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-0"
+    ],
+    "rc": 1,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-1.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-1.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-1.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-1.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-1"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-1"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-2.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-2.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-2.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-2.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-2"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-2"
+    ],
+    "rc": -5,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-3.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-3.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-3.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-3.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-3"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-3"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-4.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-4.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-4.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-4.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-4"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-4"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-5.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-5.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-5.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-5.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-5"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-5"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-6.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-6.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-6.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-6.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-6"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-6"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-7.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-7.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-7.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-7.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-7"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-7"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "sh",
+      "~/work/cudastack/lanes/bridge-attn-71/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-8.om"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-8.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-8.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "--coverage",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/diff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-8.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-8"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/mutant-8"
+    ],
+    "rc": 9,
+    "final_line": "FAIL host-data fixture differential"
+  },
+  {
+    "command": [
+      "gcov",
+      "-b",
+      "-c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/cases-oracle.o"
+    ],
+    "rc": 0,
+    "final_line": "Lines executed:97.46% of 197"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-DAV_BENCH=attn_bench_omega",
+      "-c",
+      "tests/attn_views_bench.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/bench-omega.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "-DCUDAPP_MIGRATION_PENDING_ATTN_VIEWS=1",
+      "-DAV_BENCH=attn_bench_oracle",
+      "-c",
+      "tests/attn_views_bench.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/bench-oracle.o"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-Isrc",
+      "-Itests",
+      "tests/attn_views_bench_main.c",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/bench-omega.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/bench-oracle.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/hostmath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_args.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_lay.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_buf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_math.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_tables.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_set.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fill.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_fillf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_count.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_cntf.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bfexp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bffin.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_any.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_comp.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rpois.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_z64.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_bids.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rows.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gtab.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_range.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_total.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_table.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_touch.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_blks.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_rfit.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_gath.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_stage.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_reset.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_hmap.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_eff.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_best.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_max.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/attn_ctx.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_mm_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_at_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_ew_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_bf_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_da_plan.o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/api_rt_plan.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/bench"
+    ],
+    "rc": 0,
+    "final_line": "(no output)"
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiViewsAttn/build/attn-views-qualified-final/bench"
+    ],
+    "rc": 0,
+    "final_line": "fold-4x2x8\t4\t256\t1065344\t20208"
+  },
+  {
+    "command": [
+      "make",
+      "-j3",
+      "test-gpu-attention"
+    ],
+    "rc": 0,
+    "final_line": "PASS: 348 checks, 0 failed"
+  },
+  {
+    "command": [
+      "make",
+      "-j3",
+      "test-gpu-decode-attn"
+    ],
+    "rc": 0,
+    "final_line": "gpu_decode_attn_test: 12 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "make",
+      "-j3",
+      "test-gpu-decode-attn256"
+    ],
+    "rc": 0,
+    "final_line": "gpu_decode_attn256_test: 14 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "make",
+      "-j3",
+      "test-gpu-router"
+    ],
+    "rc": 0,
+    "final_line": "gpu_router_test: 15 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "make",
+      "-j3",
+      "test-gpu-bf16-gemv"
+    ],
+    "rc": 0,
+    "final_line": "gpu_bf16_gemv_test: 23 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "make",
+      "-j3",
+      "build/gpu_prefill_attn_test",
+      "build/gpu_prefill_attn256_test"
+    ],
+    "rc": 0,
+    "final_line": "cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=256 -Itests -o build/gpu_prefill_attn256_test tests/gpu_prefill_attn256_test.c build/libomega_gpu.a -lpthread -lm"
+  },
+  {
+    "command": [
+      "build/gpu_prefill_attn_test",
+      "--host-only"
+    ],
+    "rc": 0,
+    "final_line": "gpu_prefill_attn_test: 69 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "build/gpu_prefill_attn_test",
+      "--sim"
+    ],
+    "rc": 0,
+    "final_line": "gpu_prefill_attn_test: 97 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "build/gpu_prefill_attn256_test",
+      "--host-only"
+    ],
+    "rc": 0,
+    "final_line": "gpu_prefill_attn256_test: 19 checks, 0 failed: PASS"
+  },
+  {
+    "command": [
+      "build/gpu_prefill_attn256_test",
+      "--sim"
+    ],
+    "rc": 0,
+    "final_line": "gpu_prefill_attn256_test: 30 checks, 0 failed: PASS"
+  }
+]

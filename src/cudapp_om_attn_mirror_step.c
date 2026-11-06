@@ -37,6 +37,9 @@ static uint64_t o_io(unsigned op,uint64_t fd,const void *p,uint64_t n,uint64_t o
 static int o_valid(unsigned t,uint64_t v){unsigned w=o_width(t);__int128 x=o_value(t,v);__int128 m=((__int128)1)<<(t>=6?w-1:w);return t>=6?x>=-m&&x<m:x>=0&&x<m;}
 static int o_buf(const void *p,uint64_t n,uint64_t want,unsigned t){uintptr_t a=(uintptr_t)p;uint64_t z=t==11?4:t==12?8:o_width(t)/8;return p&&n==want&&a%z==0&&n<=UINTPTR_MAX/z&&a<=UINTPTR_MAX-n*z;}
 static int o_overlap(const void *a,uint64_t an,const void *b,uint64_t bn){uintptr_t x=(uintptr_t)a,y=(uintptr_t)b;return x<y+bn&&y<x+an;}
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+static int o_rbuf(const void *p,uint64_t n,uint64_t want,unsigned t){uintptr_t a=(uintptr_t)p;uint64_t z=t==11?4:o_width(t)/8;if(n>UINTPTR_MAX/z)return 0;if(want&&n>want)return 0;if(!n)return 1;if(!p)return 0;return a%z==0&&a<=UINTPTR_MAX-n*z;}
+static int o_rover(const void *a,uint64_t an,const void *b,uint64_t bn){return an&&bn&&o_overlap(a,an,b,bn);}
 #if !defined(__BYTE_ORDER__) || __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error seeded C profile requires little-endian storage
 #endif

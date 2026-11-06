@@ -35,6 +35,38 @@ GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.o
 if [ -z "${OMEGA_UNITS:-}" ]; then
 UNITS="$UNITS apish_shp=om/api/apish_shp.om apish_pack=om/api/apish_pack.om apish_slot=om/api/apish_slot.om apish_blk=om/api/apish_blk.om apish_trit=om/api/apish_trit.om"
 UNITS="$UNITS attn_args=om/api/attn_args.om"
+UNITS="$UNITS attn_lay=om/api/attn_lay.om"
+UNITS="$UNITS attn_buf=om/api/attn_buf.om"
+UNITS="$UNITS attn_math=om/api/attn_math.om"
+UNITS="$UNITS attn_tables=om/api/attn_om2.om,om/api/attn_tables.om"
+UNITS="$UNITS attn_set=om/api/attn_set.om"
+UNITS="$UNITS attn_fill=om/api/attn_fill.om"
+UNITS="$UNITS attn_fillf=om/api/attn_fillf.om"
+UNITS="$UNITS attn_count=om/api/attn_count.om"
+UNITS="$UNITS attn_cntf=om/api/attn_cntf.om"
+UNITS="$UNITS attn_bfexp=om/api/attn_bfexp.om"
+UNITS="$UNITS attn_bffin=om/api/attn_bffin.om"
+UNITS="$UNITS attn_any=om/api/attn_any.om"
+UNITS="$UNITS attn_comp=om/api/attn_comp.om"
+UNITS="$UNITS attn_rpois=om/api/attn_rpois.om"
+UNITS="$UNITS attn_z64=om/api/attn_z64.om"
+UNITS="$UNITS attn_bids=om/api/attn_bids.om"
+UNITS="$UNITS attn_rows=om/api/attn_rows.om"
+UNITS="$UNITS attn_gtab=om/api/attn_om2.om,om/api/attn_gtab.om"
+UNITS="$UNITS attn_range=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_range.om"
+UNITS="$UNITS attn_total=om/api/attn_om2.om,om/api/attn_total.om"
+UNITS="$UNITS attn_table=om/api/attn_om2.om,om/api/attn_table.om"
+UNITS="$UNITS attn_touch=om/api/attn_om2.om,om/api/attn_touch.om"
+UNITS="$UNITS attn_blks=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_blks.om"
+UNITS="$UNITS attn_rfit=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_rfit.om"
+UNITS="$UNITS attn_gath=om/api/attn_om2.om,om/api/attn_cseg.om,om/api/attn_gath.om"
+UNITS="$UNITS attn_stage=om/api/attn_om2.om,om/api/attn_cseg.om,om/api/attn_stage.om"
+UNITS="$UNITS attn_reset=om/api/attn_om2.om,om/api/attn_reset.om"
+UNITS="$UNITS attn_hmap=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_hmap.om"
+UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_eff.om"
+UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
+UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
+UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -49,7 +81,8 @@ T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 cat > "$T/cudapp_native.h" <<'HEADER'
 /* Generated checked portable Omega declarations. Regenerate with om/units.sh.
  * Status: 0 done, 1..14 trap, 32 argument refused, 33 reentry.
- * Only a successful call writes result. Views use exact declared lengths.
+ * Only a successful call writes result. Attention data views use exact runtime lengths;
+ * all other roots keep their fixed-length profile.
  * Implementation is Omega lowered by omega-bridge, not the native AArch64 ABI. */
 #ifndef CUDAPP_PORTABLE_OMEGA_H
 #define CUDAPP_PORTABLE_OMEGA_H
@@ -87,9 +120,11 @@ for u in $UNITS $PURE_UNITS; do
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
   esac
+  profile=
+  case "$name" in attn_args|attn_lay) ;; attn_*) profile=--runtime-views ;; esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" c "$src" > "$T/$file"
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" h "$src" >> "$T/cudapp_native.h"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile c "$src" > "$T/$file"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile h "$src" >> "$T/cudapp_native.h"
   identity="omega-ident 2 unit=$name abi=$frontend src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
   printf '%s\n' "$identity" > "$T/cudapp_om_$name.ident"
   printf '%s\n' "$identity" >> "$T/cudapp_om_units.ident"

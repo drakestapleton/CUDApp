@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_attn_views.h"
 /*
  * omega_gpu_router_api.c: resident router weights, directories, launch buffers and the one-launch router call
  * (see the header). Session use mirrors omega_gpu_decode_attn_api.c: every buffer from omega_gpu_session_alloc
@@ -68,9 +69,9 @@ static uint64_t router_owner_next(void) {
     return next;
 }
 
-static void slot_free(Slot *s) { if (s->valid) omega_gpu_session_free(&s->code); memset(s, 0, sizeof *s); }
+static void slot_free(Slot *s) { if (s->valid) omega_gpu_session_free(&s->code); av_memset(s, 0, sizeof *s); }
 static void slot_clear_locked(void) { slot_free(&g.slot); slot_free(&g.rows); }
-static void on_session_close(void) { memset(&g.slot, 0, sizeof g.slot); memset(&g.rows, 0, sizeof g.rows); }
+static void on_session_close(void) { av_memset(&g.slot, 0, sizeof g.slot); av_memset(&g.rows, 0, sizeof g.rows); }
 static OmegaGpuSession *dev_open_locked(void) {
     if (!g.hooked) { (void)omega_gpu_session_on_close(on_session_close); g.hooked = true; }
     return omega_gpu_session_open();
@@ -111,8 +112,8 @@ int omega_gpu_router_alloc_shape(uint32_t layers, uint32_t experts, uint32_t sha
     if (rc == OMEGA_GPU_ROUTER_OK && omega_gpu_session_alloc(p[15], &r->dir) != 0) rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (rc == OMEGA_GPU_ROUTER_OK && omega_gpu_session_alloc(r->lb_bytes, &r->lb) != 0) rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (rc == OMEGA_GPU_ROUTER_OK) {
-        memset(r->dir.cpu, 0, (size_t)layers * 2u * DIRB(r));
-        memset(r->lb.cpu, 0, r->lb_bytes);
+        av_memset(r->dir.cpu, 0, (size_t)layers * 2u * DIRB(r));
+        av_memset(r->lb.cpu, 0, r->lb_bytes);
         if (omega_gpu_session_sync_to_gpu(&r->dir) != 0 || omega_gpu_session_sync_to_gpu(&r->lb) != 0) rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
     }
     if (rc == OMEGA_GPU_ROUTER_OK && !(r->owner_generation = router_owner_next()))
@@ -139,8 +140,8 @@ int omega_gpu_router_set_layer(OmegaGpuRouter *r, uint32_t layer, const uint16_t
     uint64_t p[16]={layer,r->layers};int pr=ap_plan(AP_RT,3,p);if(pr)return pr;
     omega_gpu_session_lock();
     r->owner_generation = 0;
-    memcpy((uint8_t *)r->gate.cpu + (size_t)layer * ROWB(r), gate_bf16, ROWB(r));
-    memcpy((uint8_t *)r->norm.cpu + (size_t)layer * OMEGA_ROUTER_HIDDEN * 4u, norm_w, (size_t)OMEGA_ROUTER_HIDDEN * 4u);
+    av_memcpy((uint8_t *)r->gate.cpu + (size_t)layer * ROWB(r), gate_bf16, ROWB(r));
+    av_memcpy((uint8_t *)r->norm.cpu + (size_t)layer * OMEGA_ROUTER_HIDDEN * 4u, norm_w, (size_t)OMEGA_ROUTER_HIDDEN * 4u);
     int rc = (omega_gpu_session_sync_to_gpu(&r->gate) == 0 && omega_gpu_session_sync_to_gpu(&r->norm) == 0) ? OMEGA_GPU_ROUTER_OK : OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (rc == OMEGA_GPU_ROUTER_OK && !(r->owner_generation = router_owner_next()))
         rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
@@ -154,8 +155,8 @@ int omega_gpu_router_set_directory(OmegaGpuRouter *r, uint32_t layer, const uint
     omega_gpu_session_lock();
     r->owner_generation = 0;
     uint8_t *d = (uint8_t *)r->dir.cpu + (size_t)layer * 2u * DIRB(r);
-    memcpy(d, gu, DIRB(r));
-    memcpy(d + DIRB(r), dn, DIRB(r));
+    av_memcpy(d, gu, DIRB(r));
+    av_memcpy(d + DIRB(r), dn, DIRB(r));
     int rc = omega_gpu_session_sync_to_gpu(&r->dir) == 0 ? OMEGA_GPU_ROUTER_OK : OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (rc == OMEGA_GPU_ROUTER_OK && !(r->owner_generation = router_owner_next()))
         rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
@@ -185,9 +186,9 @@ int omega_gpu_router_read_back(OmegaGpuRouter *r, float *xout, uint64_t *tab_gu,
     int rc = omega_gpu_session_sync_to_cpu(&r->lb) == 0 ? OMEGA_GPU_ROUTER_OK : OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (rc == OMEGA_GPU_ROUTER_OK) {
         const uint8_t *b = r->lb.cpu;
-        if (xout) memcpy(xout, b + LB_XOUT, OMEGA_ROUTER_HIDDEN * 4u);
-        if (tab_gu) memcpy(tab_gu, b + LB_TAB_GU, (size_t)r->slots * 16u);
-        if (tab_dn) memcpy(tab_dn, b + r->lb_tab_dn, (size_t)r->slots * 16u);
+        if (xout) av_memcpy(xout, b + LB_XOUT, OMEGA_ROUTER_HIDDEN * 4u);
+        if (tab_gu) av_memcpy(tab_gu, b + LB_TAB_GU, (size_t)r->slots * 16u);
+        if (tab_dn) av_memcpy(tab_dn, b + r->lb_tab_dn, (size_t)r->slots * 16u);
     }
     omega_gpu_session_unlock();
     return rc;
@@ -215,7 +216,7 @@ static int kernel_for(const OmegaRouterSpec *spec, Slot **out, bool *hit) {
     if (omega_gpu_session_sync_to_gpu(&code) != 0) { omega_gpu_session_free(&code); return OMEGA_GPU_ROUTER_CHIP_FAIL; }
     uint64_t generation = router_owner_next();
     if (!generation) { omega_gpu_session_free(&code); return OMEGA_GPU_ROUTER_CHIP_FAIL; }
-    memset(s, 0, sizeof *s);
+    av_memset(s, 0, sizeof *s);
     s->valid = true; s->spec = *spec; s->kernel = kernel; s->code = code;
     s->owner_generation = generation;
     *out = s; *hit = false;
@@ -223,7 +224,7 @@ static int kernel_for(const OmegaRouterSpec *spec, Slot **out, bool *hit) {
 }
 
 static void spec_for(const OmegaGpuRouter *r, OmegaRouterSpec *spec, uint32_t xstride, uint32_t lbstride) {
-    memset(spec, 0, sizeof *spec);
+    av_memset(spec, 0, sizeof *spec);
     uint64_t p[16]={g.warps,g.depth,r->experts};(void)ap_plan(AP_RT,1,p);
     spec->warps=p[8];spec->depth=p[9];spec->mutant=g.mutant;
     spec->experts=p[10];spec->shared=r->shared;
@@ -237,7 +238,7 @@ static int router_core(OmegaGpuRouter *r, uint32_t layer, const float *x, float 
                        uint32_t *ids, float *weights, OmegaGpuRouterInfo *info, OmegaGpuCmdList *rec, uint64_t dev_x, uint64_t rec_lb,
                        uint32_t xstride, uint32_t lbstride, uint32_t rows) {
     uint64_t t0 = omega_gpu_session_now_ns();
-    if (info) memset(info, 0, sizeof *info);
+    if (info) av_memset(info, 0, sizeof *info);
     if (!r || (rec ? !dev_x : (!x || !ids || !weights))) return OMEGA_GPU_ROUTER_BAD_ARGS;
     uint64_t p[16]={layer,r->layers,rows,rec!=NULL,rec_lb!=0,xstride,lbstride};
     int plan_rc=ap_plan(AP_RT,3,p);if(plan_rc)return plan_rc;
@@ -258,24 +259,23 @@ static int router_core(OmegaGpuRouter *r, uint32_t layer, const float *x, float 
     float *xo = (float *)(b + LB_XOUT), *wd = (float *)(b + LB_WTS);
     uint32_t *idd = (uint32_t *)(b + LB_IDS);
     if (!rec) {
-        memcpy(b + LB_X, x, OMEGA_ROUTER_HIDDEN * 4u);
-        for (size_t i = 0; i < OMEGA_ROUTER_HIDDEN; i++) xo[i] = POISON_F32;
-        for (size_t i = 0; i < r->slots; i++) { wd[i] = POISON_F32; idd[i] = POISON_ID; }
-        memset(b + LB_TAB_GU, 0, (size_t)r->slots * 16u); memset(b + r->lb_tab_dn, 0, (size_t)r->slots * 16u);
+        av_memcpy(b + LB_X, x, OMEGA_ROUTER_HIDDEN * 4u);
+        av_fillf32(xo, OMEGA_ROUTER_HIDDEN, POISON_F32);
+        av_fillf32(wd, r->slots, POISON_F32); av_fill32(idd, r->slots, POISON_ID);
+        av_memset(b + LB_TAB_GU, 0, (size_t)r->slots * 16u); av_memset(b + r->lb_tab_dn, 0, (size_t)r->slots * 16u);
         if (omega_gpu_session_sync_to_gpu(&r->lb) != 0) rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
     }
 
-    uint32_t args[OMEGA_ROUTER_ARGS_WORDS];
+    uint32_t args[32];
     const uint64_t gate = r->gate.va + (uint64_t)layer * ROWB(r);
     const uint64_t norm = r->norm.va + (uint64_t)layer * OMEGA_ROUTER_HIDDEN * 4u;
     const uint64_t dgu = r->dir.va + (uint64_t)layer * 2u * DIRB(r), ddn = dgu + DIRB(r);
-    float fe = eps, fo = out_scale; uint32_t ue, uo; memcpy(&ue, &fe, 4); memcpy(&uo, &fo, 4);
-#define A64(i, v) do { args[i] = (uint32_t)(v); args[(i) + 1] = (uint32_t)((v) >> 32); } while (0)
-    const uint64_t lb = rec_lb ? rec_lb : r->lb.va; /* record_to: the outputs land in the caller's buffer (one per conversation in the stroke) */
-    A64(0, rec ? dev_x : r->lb.va + LB_X); A64(2, gate); A64(4, norm); A64(6, lb + LB_XOUT); A64(8, lb + LB_IDS); A64(10, lb + LB_WTS);
-    A64(12, dgu); A64(14, ddn); A64(16, lb + LB_TAB_GU); A64(18, lb + r->lb_tab_dn);
-#undef A64
-    args[20] = ue; args[21] = uo; args[22] = norm_topk ? 1u : 0u;
+    float fe = eps, fo = out_scale; uint32_t ue, uo; av_memcpy(&ue, &fe, 4); av_memcpy(&uo, &fo, 4);
+    const uint64_t lb = rec_lb ? rec_lb : r->lb.va; /* caller-owned outputs for record_to */
+    const uint64_t pack[32] = { rec ? dev_x : r->lb.va + LB_X, gate, norm, lb + LB_XOUT,
+        lb + LB_IDS, lb + LB_WTS, dgu, ddn, lb + LB_TAB_GU, lb + r->lb_tab_dn,
+        ue, uo, norm_topk ? 1u : 0u };
+    if (av_args(args, pack, 10, OMEGA_ROUTER_ARGS_WORDS)) rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (info) {
         info->layer = layer; info->warps = spec.warps; info->depth = spec.depth; info->threads = 32u * spec.warps;
         info->weight_bytes = ROWB(r);
@@ -296,18 +296,18 @@ static int router_core(OmegaGpuRouter *r, uint32_t layer, const float *x, float 
     if (rc == OMEGA_GPU_ROUTER_OK && !rec && omega_gpu_session_sync_to_cpu(&r->lb) != 0) rc = OMEGA_GPU_ROUTER_CHIP_FAIL;
     if (rc == OMEGA_GPU_ROUTER_OK && !rec) {
         size_t unchanged = 0;
-        for (size_t i = 0; i < OMEGA_ROUTER_HIDDEN; i++) if (xo[i] == POISON_F32) unchanged++;
-        for (size_t i = 0; i < r->slots; i++) if (wd[i] == POISON_F32 || idd[i] == POISON_ID) unchanged++;
+        unchanged = av_countf32(xo, OMEGA_ROUTER_HIDDEN, POISON_F32);
+        unchanged += av_routerpoison(wd, idd, r->slots, POISON_F32, POISON_ID);
         const uint64_t *tg = (const uint64_t *)(b + LB_TAB_GU), *td = (const uint64_t *)(b + r->lb_tab_dn);
         size_t tab_zero = 0;
-        for (size_t i = 0; i < 2u * r->slots; i++) { if (tg[i] == 0) tab_zero++; if (td[i] == 0) tab_zero++; }
+        tab_zero = av_zero64(tg, 2u * r->slots) + av_zero64(td, 2u * r->slots);
         size_t bad_id = 0;
-        for (size_t i = 0; i < OMEGA_ROUTER_TOPK; i++) if (idd[i] >= r->experts) bad_id++;
+        bad_id = av_badids(idd, OMEGA_ROUTER_TOPK, r->experts);
         if (r->shared && idd[OMEGA_ROUTER_TOPK] != r->experts) bad_id++;
         if (unchanged) { omega_gpu_session_set_error("router: output poison survived"); rc = OMEGA_GPU_ROUTER_CHIP_FAIL; }
         else if (bad_id) { omega_gpu_session_set_error("router: an expert id is out of range"); rc = OMEGA_GPU_ROUTER_CHIP_FAIL; }
         else if (tab_zero) { omega_gpu_session_set_error("router: a group table word stayed zero (directory not set?)"); rc = OMEGA_GPU_ROUTER_CHIP_FAIL; }
-        else { memcpy(ids, idd, (size_t)r->slots * 4u); memcpy(weights, wd, (size_t)r->slots * 4u); }
+        else { av_memcpy(ids, idd, (size_t)r->slots * 4u); av_memcpy(weights, wd, (size_t)r->slots * 4u); }
     }
     UNLOCK();
 #undef UNLOCK
@@ -375,7 +375,7 @@ int omega_gpu_q36_router_observe(const OmegaGpuRouter *r, uint32_t layer,
     uint64_t recorded_code_va, OmegaGpuQ36RouterObservation *out) {
     const Slot *s = NULL;
     if (!out) return -1;
-    memset(out, 0, sizeof *out);
+    av_memset(out, 0, sizeof *out);
     if (!r || !r->dir.cpu) return -1;
     uint64_t p[16]={layer,r->layers};if(ap_plan(AP_RT,3,p))return -1;
     if (g.slot.valid && g.slot.code.va == recorded_code_va) s = &g.slot;

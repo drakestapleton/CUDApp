@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_attn_views.h"
 /*
  * omega_gpu_prefill_attn_api.c: chunked launches of the tensor-core causal prefill attention (see the header).
  * Session use mirrors omega_gpu_decode_attn_api.c: buffers from omega_gpu_session_alloc (GPU-uncached, host-visible),
@@ -51,9 +52,9 @@ static struct {
 } g;
 
 static void slot_clear_locked(void) {
-    for (unsigned i = 0; i < 3; i++) { if (g.slot[i].valid) omega_gpu_session_free(&g.slot[i].code); memset(&g.slot[i], 0, sizeof g.slot[i]); }
+    for (unsigned i = 0; i < 3; i++) { if (g.slot[i].valid) omega_gpu_session_free(&g.slot[i].code); av_memset(&g.slot[i], 0, sizeof g.slot[i]); }
 }
-static void on_session_close(void) { memset(g.mir, 0, sizeof g.mir); g.n_mir = 0; memset(g.slot, 0, sizeof g.slot); g.have_bufs = false; g.buf_rows = 0; memset(&g.qkv, 0, sizeof g.qkv); memset(&g.out, 0, sizeof g.out); }
+static void on_session_close(void) { av_memset(g.mir, 0, sizeof g.mir); g.n_mir = 0; av_memset(g.slot, 0, sizeof g.slot); g.have_bufs = false; g.buf_rows = 0; av_memset(&g.qkv, 0, sizeof g.qkv); av_memset(&g.out, 0, sizeof g.out); }
 static OmegaGpuSession *dev_open_locked(void) {
     if (!g.hooked) { (void)omega_gpu_session_on_close(on_session_close); g.hooked = true; }
     return omega_gpu_session_open();
@@ -67,7 +68,7 @@ int omega_gpu_prefill_attn_kv_mirror_available(void) { return PATTN_HAVE_PF; }
 uint32_t omega_gpu_prefill_attn_test_launch_ns(uint64_t *ns, uint32_t cap) {
     omega_gpu_session_lock();
     uint32_t n = g.n_launch < MAX_LAUNCH_LOG ? g.n_launch : MAX_LAUNCH_LOG;
-    for (uint32_t i = 0; i < n && i < cap; i++) ns[i] = g.launch_ns[i];
+    av_memcpy(ns, g.launch_ns, (size_t)(n < cap ? n : cap) * sizeof *ns);
     uint32_t total = g.n_launch;
     omega_gpu_session_unlock();
     return total;
@@ -79,7 +80,7 @@ void omega_gpu_prefill_attn_release(void) {
     omega_gpu_session_unlock();
 #if PATTN_HAVE_PF
     for (uint32_t i = 0; i < g.n_mir; i++) omega_gpu_pf_free(&g.mir[i].mem);
-    memset(g.mir, 0, sizeof g.mir); g.n_mir = 0;
+    av_memset(g.mir, 0, sizeof g.mir); g.n_mir = 0;
 #endif
 }
 
@@ -93,10 +94,10 @@ static struct Mir *mirror_get(const OmegaGpuDecodeAttnCacheView *v) {
         if (g.mir[i].key == v->k_va && g.mir[i].max_pos == v->max_pos) return &g.mir[i];
     if (g.n_mir >= OMEGA_GPU_PATTN_MAX_MIRRORS) { omega_gpu_session_set_error("prefill attn: too many KV mirrors"); return NULL; }
     struct Mir *m = &g.mir[g.n_mir];
-    memset(m, 0, sizeof *m);
+    av_memset(m, 0, sizeof *m);
     const uint64_t plane = v->v_va - v->k_va, bytes = 2u * plane;
     if (v->v_va <= v->k_va || !omega_api_alignok((uint32_t)plane, 15u)) { omega_gpu_session_set_error("prefill attn: cache planes"); return NULL; }
-    if (omega_gpu_pf_alloc_dev(bytes, &m->mem) != OMEGA_GPU_PF_OK) { memset(m, 0, sizeof *m); return NULL; }
+    if (omega_gpu_pf_alloc_dev(bytes, &m->mem) != OMEGA_GPU_PF_OK) { av_memset(m, 0, sizeof *m); return NULL; }
     const size_t step = (size_t)16u << 20;                 /* zero-fill in 16 MB uploads */
     void *z = omega_gpu_host_calloc(1, step);
     int ok = z != NULL;
@@ -105,7 +106,7 @@ static struct Mir *mirror_get(const OmegaGpuDecodeAttnCacheView *v) {
         ok = omega_gpu_pf_upload(&m->mem, off, z, part) == OMEGA_GPU_PF_OK;
     }
     omega_gpu_host_free(z);
-    if (!ok) { omega_gpu_pf_free(&m->mem); memset(m, 0, sizeof *m); omega_gpu_session_set_error("prefill attn: KV mirror zero-fill"); return NULL; }
+    if (!ok) { omega_gpu_pf_free(&m->mem); av_memset(m, 0, sizeof *m); omega_gpu_session_set_error("prefill attn: KV mirror zero-fill"); return NULL; }
     m->key = v->k_va; m->max_pos = v->max_pos; m->plane = plane; m->valid = 0;
     g.n_mir++;
     return m;
@@ -118,12 +119,13 @@ static struct Mir *mirror_find(const OmegaGpuDecodeAttnCacheView *v) {
 static int gen_copy(const OmegaPfKey *key, void *prog) { (void)key; return omega_blackwell_codegen_pf_copy_prog(prog); }
 static int copy_locked(uint64_t dst, uint64_t src, size_t bytes, uint64_t *ns) {
     if (!omega_api_alignok((uint32_t)bytes, 15u) || !omega_api_alignok((uint32_t)dst, 15u) || !omega_api_alignok((uint32_t)src, 15u)) return OMEGA_GPU_PF_BAD_ARGS;
-    OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = 1u; /* KIND_COPY of omega_gpu_prefill.c */
+    OmegaPfKey key; av_memset(&key, 0, sizeof key); key.kind = 1u; /* KIND_COPY of omega_gpu_prefill.c */
     OmegaPfKernel k; int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_kernel_locked(&key, gen_copy, &k);
     if (rc != OMEGA_GPU_PF_OK || bytes == 0) return rc;
     const uint32_t units = (uint32_t)(bytes / 16u), grid = (units + OMEGA_PF_COPY_THREADS - 1u) / OMEGA_PF_COPY_THREADS;
-    uint32_t args[5] = { (uint32_t)dst, (uint32_t)(dst >> 32), (uint32_t)src, (uint32_t)(src >> 32), units };
+    uint32_t args[32]; uint64_t pack[32]={dst,src,units};
+    if (av_args(args,pack,2,5)) return OMEGA_GPU_PF_CHIP_FAIL;
     return omega_gpu_pf_launch_locked(&k, OMEGA_PF_COPY_THREADS, grid, 1, 0, args, 5, ns);
 }
 #endif
@@ -144,7 +146,7 @@ static int kernel_for(const OmegaPrefillAttnSpec *spec, Slot **out, bool *hit) {
     Slot *s = &g.slot[spec->mode];
     if (s->valid && memcmp(&s->spec, spec, sizeof *spec) == 0) { *out = s; *hit = true; return OMEGA_GPU_DATTN_OK; }
     if (s->valid) omega_gpu_session_free(&s->code);
-    memset(s, 0, sizeof *s);
+    av_memset(s, 0, sizeof *s);
     BlackwellIRProgram *prog = omega_gpu_host_calloc(1, sizeof *prog);
     if (!prog) { omega_gpu_session_set_error("prefill attn codegen: host memory"); return OMEGA_GPU_DATTN_CODEGEN_FAIL; }
     int cg = omega_blackwell_codegen_prefill_attn_prog(spec, prog);
@@ -158,7 +160,7 @@ static int kernel_for(const OmegaPrefillAttnSpec *spec, Slot **out, bool *hit) {
     omega_gpu_host_free(prog);
     if (cg != 0 || !kernel.code || kernel.code_size != need) { omega_gpu_session_free(&code); omega_gpu_session_set_error("prefill attn encode"); return OMEGA_GPU_DATTN_CODEGEN_FAIL; }
     if (omega_gpu_session_sync_to_gpu(&code) != 0) { omega_gpu_session_free(&code); return OMEGA_GPU_DATTN_CHIP_FAIL; }
-    memset(s, 0, sizeof *s);
+    av_memset(s, 0, sizeof *s);
     s->valid = true; s->spec = *spec; s->kernel = kernel; s->code = code;
     *out = s; *hit = false;
     return OMEGA_GPU_DATTN_OK;
@@ -177,13 +179,13 @@ static int bufs_locked(uint32_t rows) {
 typedef struct { OmegaGpuDecodeAttnCacheView v; uint32_t ue, uo, uq; OmegaPrefillAttnSpec base; struct Mir *mir; } Run;
 
 static int prepare(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint32_t pos0, uint32_t m, float eps, float out_scale, Run *r) {
-    memset(r, 0, sizeof *r);
+    av_memset(r, 0, sizeof *r);
     if (!c || m == 0 || omega_gpu_decode_attn_cache_view(c, layer, &r->v) != OMEGA_GPU_DATTN_OK) return OMEGA_GPU_DATTN_BAD_ARGS;
     if (pos0 > r->v.max_pos || m > r->v.max_pos - pos0) return OMEGA_GPU_DATTN_BAD_ARGS;
     r->base.warps = g.warps ? g.warps : OMEGA_GPU_PATTN_WARPS; r->base.mutant = g.mutant;
     if (!omega_pattn_spec_ok(&r->base)) return OMEGA_GPU_DATTN_BAD_ARGS;
     float qk_f = (float)(0.08838834764831845 * 1.4426950408889634); /* log2(e) / sqrt(128) */
-    memcpy(&r->ue, &eps, 4); memcpy(&r->uo, &out_scale, 4); memcpy(&r->uq, &qk_f, 4);
+    av_memcpy(&r->ue, &eps, 4); av_memcpy(&r->uo, &out_scale, 4); av_memcpy(&r->uq, &qk_f, 4);
     return OMEGA_GPU_DATTN_OK;
 }
 
@@ -197,12 +199,12 @@ static int launch_locked(const Run *r, uint32_t mode, const KvPlanes *kv, uint64
     int rc = kernel_for(&spec, &ks, &hit);
     if (rc != OMEGA_GPU_DATTN_OK) return rc;
     const uint32_t W = spec.warps;
-    uint32_t args[OMEGA_PATTN_ARGS_WORDS];
-    memset(args, 0, sizeof args);
-#define A64(i, val) do { uint64_t _x = (val); args[i] = (uint32_t)_x; args[(i) + 1] = (uint32_t)(_x >> 32); } while (0)
-    A64(0, qkv_va); A64(2, kv->kc); A64(4, kv->vc); A64(6, r->v.rope_va); A64(8, r->v.q_norm_va); A64(10, r->v.k_norm_va); A64(12, out_va); A64(20, kv->kc2); A64(22, kv->vc2);
-#undef A64
-    args[14] = p0; args[15] = mc; args[16] = kv->kvs; args[24] = kv->kvs2; args[17] = r->ue; args[18] = r->uo; args[19] = r->uq;
+    uint32_t args[32];
+    const uint64_t pack[32] = { [0]=qkv_va, [2]=kv->kc, [4]=kv->vc, [6]=r->v.rope_va,
+        [8]=r->v.q_norm_va, [10]=r->v.k_norm_va, [12]=out_va, [14]=p0, [15]=mc,
+        [16]=kv->kvs, [17]=r->ue, [18]=r->uo, [19]=r->uq, [20]=kv->kc2, [22]=kv->vc2, [24]=kv->kvs2 };
+    if (av_layout(args, pack, (1ull<<0)|(1ull<<2)|(1ull<<4)|(1ull<<6)|(1ull<<8)|
+            (1ull<<10)|(1ull<<12)|(1ull<<20)|(1ull<<22))) return OMEGA_GPU_DATTN_CHIP_FAIL;
     OmegaGpuLaunch L = {
         .code_va = ks->code.va, .gpr_count = omega_bw_gpr_declared(ks->kernel.gpr_count),
         .threads_x = 32u * W, .threads_y = 1, .grid_x = (mc + W - 1u) / W, .grid_y = OMEGA_GPU_DATTN_KV_HEADS,
@@ -272,7 +274,7 @@ static int run_locked(const Run *r, uint32_t pos0, uint32_t m, uint64_t qkv_va, 
 
 static void info_head(OmegaGpuPrefillAttnInfo *info, uint32_t layer, uint32_t pos0, uint32_t m) {
     if (!info) return;
-    memset(info, 0, sizeof *info);
+    av_memset(info, 0, sizeof *info);
     info->layer = layer; info->pos0 = pos0; info->m = m;
 }
 
@@ -295,17 +297,17 @@ int omega_gpu_prefill_attn(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint32_t 
     if (bufs_locked(m < pass ? m : pass) != 0) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
     for (uint32_t done = 0; done < m && rc == OMEGA_GPU_DATTN_OK; done += pass) {
         const uint32_t mp = m - done < pass ? m - done : pass;
-        memcpy(g.qkv.cpu, qkv + (size_t)done * OMEGA_PATTN_QKV_WORDS, (size_t)mp * OMEGA_PATTN_QKV_WORDS * 4u);
+        av_memcpy(g.qkv.cpu, qkv + (size_t)done * OMEGA_PATTN_QKV_WORDS, (size_t)mp * OMEGA_PATTN_QKV_WORDS * 4u);
         float *od = g.out.cpu;
-        for (size_t i = 0; i < (size_t)mp * OMEGA_PATTN_OUT_WORDS; i++) od[i] = POISON_F32;
+        av_fillf32(od, (size_t)mp * OMEGA_PATTN_OUT_WORDS, POISON_F32);
         if (omega_gpu_session_sync_to_gpu(&g.qkv) != 0 || omega_gpu_session_sync_to_gpu(&g.out) != 0) { rc = OMEGA_GPU_DATTN_CHIP_FAIL; break; }
         rc = run_locked(&r, pos0 + done, mp, g.qkv.va, g.out.va, info);
         if (rc != OMEGA_GPU_DATTN_OK) break;
         if (omega_gpu_session_sync_to_cpu(&g.out) != 0) { rc = OMEGA_GPU_DATTN_CHIP_FAIL; break; }
         size_t unchanged = 0;
-        for (size_t i = 0; i < (size_t)mp * OMEGA_PATTN_OUT_WORDS; i++) if (od[i] == POISON_F32) unchanged++;
+        unchanged = av_countf32(od, (size_t)mp * OMEGA_PATTN_OUT_WORDS, POISON_F32);
         if (unchanged) { omega_gpu_session_set_error("prefill attn: output poison survived"); rc = OMEGA_GPU_DATTN_CHIP_FAIL; break; }
-        memcpy(out + (size_t)done * OMEGA_PATTN_OUT_WORDS, od, (size_t)mp * OMEGA_PATTN_OUT_WORDS * 4u);
+        av_memcpy(out + (size_t)done * OMEGA_PATTN_OUT_WORDS, od, (size_t)mp * OMEGA_PATTN_OUT_WORDS * 4u);
     }
     omega_gpu_session_unlock();
     if (info) info->call_ns = omega_gpu_session_now_ns() - t0;
@@ -336,7 +338,7 @@ int omega_gpu_prefill_attn_dev(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint3
 int omega_gpu_prefill_attn_kv_mirror_view(const OmegaGpuDecodeAttnCache *c, uint32_t layer, OmegaGpuPrefillAttnMirrorView *out) {
     OmegaGpuDecodeAttnCacheView v;
     if (!out) return OMEGA_GPU_DATTN_BAD_ARGS;
-    memset(out, 0, sizeof *out);
+    av_memset(out, 0, sizeof *out);
     if (!c || omega_gpu_decode_attn_cache_view(c, layer, &v) != OMEGA_GPU_DATTN_OK) return OMEGA_GPU_DATTN_BAD_ARGS;
     omega_gpu_session_lock();
 #if PATTN_HAVE_PF
@@ -374,8 +376,8 @@ void omega_gpu_prefill_attn_kv_mirror_forget(const OmegaGpuDecodeAttnCache *c) {
         if (omega_gpu_decode_attn_cache_view(c, l, &v) != OMEGA_GPU_DATTN_OK) continue;
         omega_gpu_session_lock();
         struct Mir *m = mirror_find(&v);
-        OmegaGpuMem mem; memset(&mem, 0, sizeof mem);
-        if (m) { mem = m->mem; *m = g.mir[g.n_mir - 1]; memset(&g.mir[g.n_mir - 1], 0, sizeof g.mir[0]); g.n_mir--; }
+        OmegaGpuMem mem; av_memset(&mem, 0, sizeof mem);
+        if (m) { mem = m->mem; *m = g.mir[g.n_mir - 1]; av_memset(&g.mir[g.n_mir - 1], 0, sizeof g.mir[0]); g.n_mir--; }
         omega_gpu_session_unlock();
         if (mem.va) omega_gpu_pf_free(&mem);
     }

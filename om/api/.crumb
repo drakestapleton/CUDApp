@@ -3,18 +3,18 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-06T06:31:14Z",
+      "compiled_at": "2026-11-06T08:22:57Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:64146f9aeb438b15af14f5ee3584b7c78c92705eb69833d966a23c8c4522e104",
+      "digest": "sha256:7011bdc5efdb360adff1a6337fb142b8e1492f34eff27b97463e78adbe805425",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 5,
-      "generated_at_commit": "0e4417ae62ce2fbfbdda6be4a2c3e684d373c2cd",
-      "source_tree": "sha256:c9270033ce88728f3cafe9bae8a2761677a822fb9233bd6875d73ca7cb6e6b71"
+      "files": 6,
+      "generated_at_commit": "84c110085a4c05c79f956e2256fce5101a03bb6e",
+      "source_tree": "sha256:d7ae97e42ec35899947ed534ee19215397540941e4903c51d279ee277f47985f"
     }
   },
   "layer": "api",
   "name": "api",
-  "purpose": "Seeded Omega decisions for the kernel-family API shells: FP8 pack, slot table, shape and refusal",
+  "purpose": "Seeded Omega API shell decisions and attention-family typed-view host data, descriptors and argument marshalling",
   "schema_version": "1.0.0"
 }

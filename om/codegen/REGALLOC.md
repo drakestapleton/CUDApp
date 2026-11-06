@@ -43,6 +43,11 @@ regenerates byte for byte.
 | bw_hazard.om | src/cudapp_om_bw_hazard.c | omega_hz_chk |
 | bw_hazard.om + bw_hazard_dec.om | src/cudapp_om_bw_hazard_dec.c | omega_hz_dec |
 | cg_bind.om | src/cudapp_om_cg_bind.c | omega_cg_bind |
+| cg_fields.om | src/cudapp_om_cg_fields.c | omega_cg_fields |
+| cg_replay.om | src/cudapp_om_cg_replay.c | omega_cg_replay |
+| cg_life.om | src/cudapp_om_cg_life.c | omega_cg_life |
+| cg_invar.om | src/cudapp_om_cg_invar.c | omega_cg_invar |
+| cg_budget.om | src/cudapp_om_cg_budget.c | omega_cg_budget |
 
 `bw_hazard.om` is the SM121 hazard decoder and checker behind
 `src/omega_bw_hazard.c` (C oracle: `CUDAPP_MIGRATION_PENDING_C_HAZARD`). The
@@ -78,3 +83,15 @@ See `evidence/regalloc-om/2026-11-06/README.md` and
 `evidence/regalloc-om/2026-11-06-rest/README.md` for measured results and the
 remaining unported assigned files. This is not a claim that all CUDApp CUDA
 replacement work is complete.
+
+The base/common-replay residue is now separate from the family emitters:
+`cg_fields.om` owns instruction wire packing/decoding and little-endian words;
+`cg_replay.om` owns metadata, width, operand and closure admission;
+`cg_life.om` owns loop extension and exact hints; `cg_invar.om` owns
+post-loop-use/redefinition policy; `cg_budget.om` owns the CTA register budget.
+The single `omega_gpu_om_ir_replay` C entry remains the ABI/dispatch shell.
+The old base computation is default-OFF
+`CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE`, without a C retry on Omega refusal.
+See [the exhaustive function classification and host gate](../../tests/codegen_base/README.md),
+[chip runbook](../../tests/codegen_base/CHIP.md), and
+[dated host evidence](../../evidence/2026-11-06-codegen-base/README.md).

@@ -15,6 +15,7 @@
 #define BW_MATMUL_C_PRIMARY 1
 #endif
 #include "omega_gpu_om_ir.h"
+#include "omega_bw_fields.h"
 /* native v1 P07 cut A.2 (aienos#286, docs/numeric/OMEGA_GPU_NATIVE_BOUNDARY.md): with OMEGA_GPU_NO_POSIX this file
  * builds -ffreestanding. Code generation then runs only through the allocation-free entry points
  * (omega_blackwell_kernel_encode_into: the caller supplies the code buffer and its capacity); the allocating
@@ -1125,6 +1126,7 @@ static size_t bw_om_encode(const BlackwellIRInsn *insns, size_t n, const OmegaRe
     for (size_t i = 0; i < n; i++) {
         const BlackwellIRInsn *in = &insns[i];
         uint64_t *r = &ins[i * 8];
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
         r[0] = (uint64_t)(int64_t)(int)in->op;
         r[1] = (uint64_t)(int64_t)in->dst_vreg;
         r[2] = (uint64_t)(int64_t)in->src1_vreg;
@@ -1135,6 +1137,9 @@ static size_t bw_om_encode(const BlackwellIRInsn *insns, size_t n, const OmegaRe
         r[7] = (uint64_t)in->is_uniform | (uint64_t)in->predicate_p0 << 1 | (uint64_t)in->predicate_not << 2 |
                (uint64_t)in->bar_reg << 8 | (uint64_t)in->dst_subreg << 16 | (uint64_t)in->src1_subreg << 24 |
                (uint64_t)in->src2_subreg << 32 | (uint64_t)in->src3_subreg << 40;
+#else
+        if (omega_bw_fields_pack(in, r) != 0) return 0;
+#endif
     }
     for (size_t i = n * 8; i < BW_OM_INS_LEN; i++) ins[i] = 0;
     for (int i = 0; i < BW_MAX_VREGS; i++) phys[i] = (uint64_t)(int64_t)ra->vreg_to_phys[i];
@@ -1176,10 +1181,19 @@ static int encode_single_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *
     uint8_t code[BW_OM_CODE_LEN];
     int rc = bw_om_encode(insn, 1, ra, 0, code) == 16 ? 0 : -1;
     memset(w, 0, 16);
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
     if (rc == 0)
         for (int k = 0; k < 4; k++)
             w[k] = (uint32_t)code[4 * k] | (uint32_t)code[4 * k + 1] << 8 | (uint32_t)code[4 * k + 2] << 16 |
                    (uint32_t)code[4 * k + 3] << 24;
+#else
+    if (rc == 0) {
+        uint64_t raw[16], record[8] = {0}, result = 0;
+        for (int k = 0; k < 16; ++k) raw[k] = code[k];
+        if (omega_cg_fields(&result, 2, raw, 16, record, 8) != OMEGA_OK || result != 0) rc = -1;
+        else for (int k = 0; k < 4; ++k) w[k] = (uint32_t)raw[k];
+    }
+#endif
 #ifdef CUDAPP_MIGRATION_PENDING_ENCODER_DIFF
     uint32_t c[4];
     int crc = bw_c_encode_insn(insn, ra, c);
@@ -1539,14 +1553,16 @@ int omega_bw_encode_program(const BlackwellIRProgram *prog, uint8_t *code_buf, s
 
 #ifndef BW_BIND_C_PRIMARY
     uint8_t bw[256] = {0};
-    size_t req_bytes = (size_t)omega_bw_bind(5, (uint64_t)prog->count, 0, bw);
+    int64_t fit = omega_bw_bind(6, (uint64_t)prog->count, max_len, bw);
+    if (fit < 0) return -1;
+    size_t req_bytes = (size_t)fit;
 #else
     size_t padded_insns = (prog->count + 7) & ~7ULL;
     if (padded_insns < 32) padded_insns = 32;
 
     size_t req_bytes = padded_insns * 16;
-#endif
     if (max_len < req_bytes) return -1;
+#endif
 
     if (bw_encode_program_bytes(prog, code_buf, req_bytes) != 0) return -1;
 #ifdef CUDAPP_AMPERE_CORPUS

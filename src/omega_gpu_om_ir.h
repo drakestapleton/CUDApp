@@ -6,10 +6,10 @@
  * bound through src/cudapp_om_units.c) into a BlackwellIRProgram, then register allocation, the loop live-range
  * check and encoding (the .om sm_121 encoder behind omega_blackwell_kernel_encode_into).
  *
- * MIGRATION-PENDING C: this file is the register-allocation and replay glue only. Instruction selection,
- * control words, loops and the fixed-pair schedule are decided in the .om unit. Successor: a seeded-Omega
- * live-interval allocator next to om/encoder/bw_enc_sm121.om, after which the records go straight to the
- * .om encoder and this file is deleted.
+ * ARCH-0042 C shell: pointers, ABI structs and the single replay dispatch stay here. Seeded Omega owns
+ * wire admission (om/codegen/cg_replay.om), field packing/unpacking (cg_fields.om), loop/exact-liveness
+ * policy (cg_life.om and cg_invar.om), register allocation (#309) and launch-budget arithmetic
+ * (cg_budget.om). CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE selects the default-OFF historical C oracle.
  *
  * Record (8 x u64): op, dst, src1, src2, src3 (vreg, or all-ones for none), ureg (or all-ones), imm | control << 32,
  * uniform | p0 << 1 | not << 2 | dst_sub << 16 | src1_sub << 24 | src2_sub << 32 | src3_sub << 40 | bar_reg << 48.

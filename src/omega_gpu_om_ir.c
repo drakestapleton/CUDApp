@@ -1,19 +1,22 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* MIGRATION-PENDING C (successor: a seeded-Omega allocator beside om/encoder/bw_enc_sm121.om); see the header. */
+/* ARCH-0042 ABI/replay dispatch shell; wire admission and lifetime policy are seeded Omega. */
 #include "omega_gpu_om_ir.h"
 
 #include <string.h>
 
 #include "cudapp_native.h"
+#include "omega_bw_fields.h"
 
 #define NONE64 UINT64_MAX
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
 static int field(uint64_t w, int *out) {
     if (w == NONE64) { *out = -1; return 0; }
     if (w >= (uint64_t)BW_MAX_VREGS) return -1;
     *out = (int)w;
     return 0;
 }
+#endif
 
 static int call_unit(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint64_t *ins, uint64_t *meta,
                      uint64_t *result) {
@@ -33,6 +36,7 @@ int omega_gpu_om_ir_data(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint
     return call_unit(kind, a, b, c, words, meta, &result);
 }
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
 /* The elementwise emitter's check (src/omega_gpu_elementwise_api.c check_loop_invariant): no value first defined
  * inside a loop may be read after the loop before it is redefined. */
 static int loop_invariant_ok(const BlackwellIRProgram *p, const uint64_t *meta) {
@@ -149,6 +153,53 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
     if (!loop_invariant_ok(prog, meta)) return OMEGA_OM_IR_LOOP;
     return OMEGA_OM_IR_OK;
 }
+#else
+int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64_t b, uint64_t c,
+                           BlackwellIRProgram *prog, uint64_t *emit_err) {
+    uint64_t ins[OMEGA_OM_IR_WORDS] = {0}, meta[OMEGA_OM_IR_META] = {0}, life[512] = {0};
+    uint64_t result = 0;
+    if (emit_err) *emit_err = 0;
+    if (!unit || !prog) return OMEGA_OM_IR_REPLAY;
+    uint32_t status = unit(&result, kind, a, b, c, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META);
+    if (emit_err) *emit_err = meta[4];
+    if (status != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+    if (result == 1) return OMEGA_OM_IR_REFUSED;
+    if (result != 0) return OMEGA_OM_IR_EMIT;
+    if (omega_cg_replay(&result, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META,
+                        BW_IR_LAST) != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+    if (result != 0) return (int)result;
+    omega_bw_ir_init(prog);
+    if (meta[6] != 0 && omega_bw_ir_set_gpr_limit(prog, (uint32_t)meta[6]) != 0)
+        return OMEGA_OM_IR_REPLAY;
+    for (uint64_t v = 0; v < meta[1]; ++v) {
+        uint64_t width = meta[64 + v];
+        int got = width == 4 ? omega_bw_ir_alloc_vreg128(prog) :
+                  width == 2 ? omega_bw_ir_alloc_vreg64(prog) : omega_bw_ir_alloc_vreg(prog);
+        if (got != (int)v) return OMEGA_OM_IR_REPLAY;
+    }
+    for (uint64_t u = 0; u < meta[2]; ++u) {
+        int got = meta[320 + u] == 2 ? omega_bw_ir_alloc_uvreg64(prog) : omega_bw_ir_alloc_uvreg(prog);
+        if (got != (int)u) return OMEGA_OM_IR_REPLAY;
+    }
+    for (uint64_t i = 0; i < meta[0]; ++i) {
+        BlackwellIRInsn in = {0};
+        if (omega_bw_fields_unpack(&ins[i * 8], &in) != 0) return OMEGA_OM_IR_BRIDGE;
+        if (omega_bw_ir_append(prog, &in) < 0) return OMEGA_OM_IR_REPLAY;
+    }
+    for (int v = 0; v < prog->regalloc.num_vregs; ++v) {
+        life[2 * v] = (uint64_t)(int64_t)prog->regalloc.intervals[v].first_def;
+        life[2 * v + 1] = (uint64_t)(int64_t)prog->regalloc.intervals[v].last_use;
+    }
+    if (omega_cg_life(&result, meta, OMEGA_OM_IR_META, life, 512) != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+    if (result != 0) return (int)result;
+    for (int v = 0; v < prog->regalloc.num_vregs; ++v)
+        prog->regalloc.intervals[v].last_use = (int)(int64_t)life[2 * v + 1];
+    if (omega_bw_regalloc_solve(prog) != 0) return OMEGA_OM_IR_REGALLOC;
+    if (omega_cg_invar(&result, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META, life, 512) != OMEGA_OK)
+        return OMEGA_OM_IR_BRIDGE;
+    return (int)result;
+}
+#endif
 
 int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint32_t threads,
                           BlackwellIRProgram *prog, uint8_t *code, size_t code_cap,
@@ -157,10 +208,18 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
     int rc = omega_gpu_om_ir_replay(omega_mathlibs_ir, kind, a, b, c, prog, emit_err);
     if (rc != OMEGA_OM_IR_OK) return rc;
     uint32_t peak = prog->regalloc.peak_gpr_usage;
+#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
     uint32_t decl = omega_bw_gpr_declared(peak);
     if (decl < 64u) decl = 64u;
     if (peak > BW_PHYS_GPR_MAX || !omega_bw_gpr_declared_ok(decl, peak) || (uint64_t)decl * threads > 65536u)
         return OMEGA_OM_IR_BUDGET;
+#else
+    uint64_t budget = 0;
+    if (omega_cg_budget(&budget, peak, omega_bw_gpr_declared(peak), threads) != OMEGA_OK)
+        return OMEGA_OM_IR_BRIDGE;
+    if (budget == 0) return OMEGA_OM_IR_BUDGET;
+    uint32_t decl = (uint32_t)budget;
+#endif
     if (omega_blackwell_kernel_encode_into(prog, code, code_cap, kernel) != 0) return OMEGA_OM_IR_ENCODE;
     *declared = decl;
     return OMEGA_OM_IR_OK;

@@ -96,11 +96,15 @@ WolframLanguageEvaluator: {3*2^30+28*2^16+70*2^8+52, 3*2^30+24*2^16+70*2^8+53,
 WolframLanguageEvaluator: {2^36 + 2^12, 2^37, 2^14, 2^13, FromDigits[{67,90,77,79},256]}
 -> {68719480832, 137438953472, 16384, 8192, 1129991503}
 WolframLanguageEvaluator: {2^16, 2^16/4096, 10*10^9} -> {65536, 16, 10000000000}
+WolframLanguageEvaluator: {FactorInteger[2^49 - 562949869535232], 2^49 - 5*2^24 == 562949869535232}
+-> {{{2, 24}, {5, 1}}, True}
 ```
 
-The GPU VA bound `562949869535232` in `nvshgpu` is the same literal
-`nvalloc` uses in `context.om`. It is not `2^49-2^26`; the two files agree,
-and changing it belongs to `context.om`.
+The GPU VA bound `562949869535232` in `nvshgpu` is `2^49 - 5*2^24`, the
+`vaSize` that `nvfull` in `context.om` gives the VA space
+(`NV_VASPACE_ALLOCATION_PARAMETERS` byte 8). `nvshgpu` checks an import's CPU
+address against it exactly as `nvalloc` does, with the same literal. (The
+`2^49-2^26` in the first query above is not that bound.)
 
 ## Host test
 

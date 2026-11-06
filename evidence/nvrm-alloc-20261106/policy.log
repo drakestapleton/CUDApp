@@ -1,0 +1,11 @@
+./build/nvrm-policy-test
+NVRM POLICY DIFFERENTIAL PASS
+NVRM policy red check caught
+sh tests/nvrm_policy_mutants.sh
+killed nrstat
+killed hnext
+killed pspan
+killed gpentry
+killed mthd
+killed pfull
+NVRM POLICY MUTANTS PASS (6 killed)

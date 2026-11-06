@@ -130,3 +130,13 @@ Focused harness links include the prior Omega BW scalar provider. #350's scan
 oracle additionally renames the later u32-prefix/radix exports to avoid
 duplicate definitions, and its mutant runner uses the single configured
 converter for both scalar and runtime-view units.
+
+#346's prefill poison counting now uses its specific Omega root, retaining
+earlier Omega copies/fills and #332 rope generation. Its six compiled mutants,
+missing-unit/red controls and eight host/simulator prefill gates pass
+(`/tmp/integ/6b-pr346.log`). #355's allocator union retains the existing chip
+admission and serializer dependencies while adding four strong allocation
+providers; its runtime-view selector is merged into the shared generator
+convention. Both qualification scripts forward the allocator oracle flag;
+their programs are compiled only and must not be executed without fresh
+hardware authorization.

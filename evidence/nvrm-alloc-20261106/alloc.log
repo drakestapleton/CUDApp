@@ -1,0 +1,19 @@
+sh tests/nvrm_alloc_check.sh
+NVRM ALLOC DIFFERENTIAL PASS (32768 randomized operations plus source boundaries; exact active state)
+NVRM ALLOC RED CONTROL KILLED
+NVRM COUNTS DIFFERENTIAL PASS (decimal classes, token boundaries, orders 0..33; HOST_ONLY)
+NVRM ALLOC STRONG LINK NEGATIVE PASS nvrm_va
+NVRM ALLOC STRONG LINK NEGATIVE PASS nvrm_alloc_scalar
+NVRM ALLOC STRONG LINK NEGATIVE PASS nvrm_counts
+NVRM ALLOC STRONG LINK NEGATIVE PASS nvrm_alloc_push
+NVRM ALLOC MUTANT KILLED overlap-edge
+NVRM ALLOC MUTANT KILLED coalesce-next
+NVRM ALLOC MUTANT KILLED exact-fit
+NVRM ALLOC MUTANT KILLED split-tail
+NVRM ALLOC MUTANT KILLED pool-reuse
+NVRM ALLOC MUTANT KILLED counter-step
+NVRM ALLOC MUTANT KILLED method-mode
+NVRM ALLOC MUTANT KILLED packet-envelope
+NVRM ALLOC MUTANT KILLED decimal-digit
+NVRM ALLOC MUTANT KILLED order-edge
+NVRM ALLOC MIGRATION PASS (10 compiled semantic mutants; HOST_ONLY)

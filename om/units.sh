@@ -92,6 +92,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/codegen/cg_fields.om om/codegen/cg_replay.om om/codegen/cg_life.om om/codegen/cg_invar.om om/codegen/cg_budget.om"
     UNITS="$UNITS cm_route=om/components/cm_route.om"
 fi
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_va=native/nvrm/alloc_profile.om,native/nvrm/alloc.om nvrm_alloc_scalar=native/nvrm/policy.om,native/nvrm/alloc_scalar.om nvrm_counts=native/nvrm/counts.om nvrm_alloc_push=native/nvrm/alloc_profile.om,om/encoder/amp_runtime.om,native/nvrm/alloc_push.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
@@ -283,7 +284,7 @@ for u in $UNITS $PURE_UNITS; do
     attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx|attn_ds_*|attn_na_*|attn_mm_*)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)
+    ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire|nvrm_va|nvrm_counts|nvrm_alloc_push)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

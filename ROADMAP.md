@@ -33,6 +33,10 @@ dependency is implicitly merged or deployed by this receipt.
 default to seeded Omega; `CUDAPP_MIGRATION_PENDING_C_PREFILL_HOST_REST`
 retains the default-OFF C oracle. See
 `evidence/prefill-host-rest-20261106/README.md`. Hardware remains NOT_RUN.
+2026-11-06: NVRM allocation/counter/packet computation now has a seeded Omega
+default with a default-OFF C oracle. Host state differential, source mutants
+and fake-RM gates are recorded in `evidence/nvrm-alloc-20261106/README.md`.
+Live RM and chip qualification remain NOT_RUN; no status row is upgraded.
 
 ## 1. NVIDIA software on the Spark today
 

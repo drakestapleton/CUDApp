@@ -1,0 +1,15 @@
+source-sha256=8bd9048d99cf7005642d06cd77cb0aa5c942196589ded2a82a27551a40eca87c
+replace 'sh = mul sub 7 i 8' -> 'sh = mul i 8'
+$ sh om/units.sh
+generating portable unit core_sha (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to /tmp/core-util-mutant-1ytmjr_b
+rc=0
+$ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Isrc tests/test_core_util.c src/sha256.c /home/drakestapleton/work/cudastack/lanes/CoreUtilOm/build/core-util-sha-ref.o /tmp/core-util-mutant-1ytmjr_b/cudapp_om_core_sha.c -lpthread -o /tmp/core-util-mutant-1ytmjr_b/test-mutant
+rc=0
+$ /tmp/core-util-mutant-1ytmjr_b/test-mutant --quick
+SHA vector length 3: 3859a4ec00dcbed7c01d4a462d18c1f4097a690a1d4d459be4e5b6f5a594ee68
+rc=1
+KILLED: compiled mutant disagrees with FIPS digest

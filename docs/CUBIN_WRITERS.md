@@ -45,18 +45,18 @@ The issue's 2026-10-26 table says the omega-mv writer targets sm_80, sm_86 and s
 
 `evidence/CUDAPP-OM-ENCODER/README.md` still says #864 is on HOLD. That receipt is left as it was written. The public pull request was closed later the same day.
 
-## The CUDApp writer is one writer with two bodies
+## Current CUDApp writer selection (2026-11-06)
 
-Both bodies target sm_121 only and ABI version 8.
+Both bodies accept the explicitly selected sm_86 (ABI 7) and sm_121 (ABI 8) targets. The writer and its Omega successor stay in CUDApp.
 
 | Body | Path | When it is compiled |
 |---|---|---|
-| C | `src/omega_cubin.c` `c_cubin_pack`, called as `omega_cubin_pack` | Freestanding (`OMEGA_GPU_NO_POSIX`) or `CUDAPP_MIGRATION_PENDING_C_CUBIN` (`src/omega_cubin.c:41-42`, `386-395`) |
-| `.om` | `om/cubin/cubin_elf.om` `cubin_elf`, called through `omega_cubin_elf` | The hosted build (`src/omega_cubin.c:6-9`, `510-518`; `mk/om-cubin.mk:1-4`) |
+| C reference | `src/omega_cubin.c` `c_cubin_pack` | Explicit `CUDAPP_MIGRATION_PENDING_C_CORE`; the differential harness also enables `CUDAPP_MIGRATION_PENDING_CUBIN_DIFF` |
+| `.om` default | `om/cubin/cubin_elf.om` `cubin_elf` | Hosted builds call the checked portable binding; `OMEGA_GPU_NO_POSIX` builds call the aggregate `omega2_cubin_elf` binding through `src/omega_core_binding.h`. There is no automatic freestanding C fallback. |
 
-`om/cubin/cubin_elf.om:1-3` says it replaces the body of `omega_cubin_pack`. `evidence/CUDAPP-OM-ENCODER/README.md` says that unit is a translation of `src/omega_cubin.c` only, and that omega-mv#864 was not read for it. `make test-om-cubin` (`mk/om-cubin.mk:36-47`) packs each call both ways and fails if the code, bytes, or message differ. That target was not re-run for this note. The receipt's host counts stay in the receipt.
+`om/cubin/cubin_elf.om` already replaces the layout, validation and byte-writing body of `omega_cubin_pack`; the core utility cutover does not introduce another writer. C retains allocation, ABI staging and refusal-message formatting. `evidence/CUDAPP-OM-ENCODER/README.md` records that the original translation used `src/omega_cubin.c`, not omega-mv#864. `make test-om-cubin` packs each call both ways and fails if the result code, bytes or message differ; its record-flip negative control must also fail. Current core-lane commands and verdicts belong in `evidence/core-util/2026-11-06/README.md`, separately from the historical receipt.
 
-Constants the two bodies share, from `src/omega_cubin.h:46-52`: ABI version 8, `e_flags` `0x6007902`, SM 121, parameter base `0x380`, at most 32 parameters, names of at most 64 bytes. `om/cubin/cubin_elf.om:24` spells the parameter base as decimal 896. `evidence/CUDAPP-OM-CUBIN/wolfram-constants.txt` (Wolfram, 2026-10-27) maps the hex literal `0x380` to 896. No new numeric conversion was done for this note. Wolfram is not mounted in this session.
+The sm_121 constants remain ABI version 8, `e_flags` `0x6007902`, parameter base `0x380`, at most 32 parameters and names of at most 64 bytes. `evidence/CUDAPP-OM-CUBIN/wolfram-constants.txt` records the prior hex conversion; this update does not recompute it. The sm_86 constants are separately named in `src/omega_cubin.h`.
 
 ## The other writer
 

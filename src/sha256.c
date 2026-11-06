@@ -17,6 +17,40 @@
 #include "sha256.h"
 #include <string.h>
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+#include "omega_core_binding.h"
+#include <stdlib.h>
+_Static_assert(sizeof(sha256_ctx) == 104, "seeded SHA context ABI");
+_Static_assert(offsetof(sha256_ctx, count) == 32, "seeded SHA count ABI");
+_Static_assert(offsetof(sha256_ctx, buffer) == 40, "seeded SHA buffer ABI");
+static void sha_call(sha256_ctx *ctx, const uint8_t *data, size_t len,
+                     uint64_t op, uint8_t *digest) {
+    uint64_t input[512], scratch[64], result;
+    if (len) memcpy(input, data, len);
+    if (CORE_CALL(omsha, &result, (uint8_t *)ctx, 104, (const uint8_t *)input, 4096,
+                    len, op, scratch, 64, input, 512) != OMEGA_OK || result) CORE_STOP();
+    if (digest) memcpy(digest, scratch, SHA256_DIGEST_SIZE);
+}
+void sha256_init(sha256_ctx *ctx) { sha_call(ctx, NULL, 0, 0, NULL); }
+void sha256_update(sha256_ctx *ctx, const uint8_t *data, size_t len) {
+    while (len) {
+        size_t n = len > 4096 ? 4096 : len;
+        sha_call(ctx, data, n, 1, NULL);
+        data += n;
+        len -= n;
+    }
+}
+void sha256_final(sha256_ctx *ctx, uint8_t digest[SHA256_DIGEST_SIZE]) {
+    sha_call(ctx, NULL, 0, 2, digest);
+}
+void sha256_hash(const uint8_t *data, size_t len, uint8_t digest[SHA256_DIGEST_SIZE]) {
+    sha256_ctx ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, data, len);
+    sha256_final(&ctx, digest);
+}
+#else
+
 #define ROTR(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 #define CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
 #define MAJ(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
@@ -162,3 +196,4 @@ void sha256_hash(const uint8_t *data, size_t len, uint8_t digest[SHA256_DIGEST_S
     sha256_update(&ctx, data, len);
     sha256_final(&ctx, digest);
 }
+#endif

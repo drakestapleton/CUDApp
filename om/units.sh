@@ -63,6 +63,18 @@ PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/n
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS gemm_scalar=om/gemm-any/gemm_ir.om,om/conv2d/dense.om conv2d=om/gemm-any/gemm_ir.om,om/conv2d/conv.om conv_plan=om/gemm-any/gemm_ir.om,om/conv2d/conv.om,om/conv2d/plan.om"
   UNITS="$UNITS cg_attn256=om/codegen/cg_rest_emit.om,om/codegen/cg_attn256.om cg_pattn256=om/codegen/cg_rest_emit.om,om/codegen/cg_pattn256.om cg_router=om/codegen/cg_rest_emit.om,om/codegen/cg_router.om cg_gemm=om/codegen/cg_rest_emit.om,om/codegen/cg_gemm.om cg_bf16=om/codegen/cg_rest_emit.om,om/codegen/cg_bf16.om cg_qg=om/codegen/cg_rest_emit.om,om/prefill-shape/admit.om,om/prefill-shape/order.om,om/codegen/cg_qg.om"
+  UNITS="$UNITS core_sha=om/core/sha256.om"
+  CORE=om/core
+  for entry in omcanon omcidcmp omcidhex; do
+    UNITS="$UNITS core_$entry=$CORE/canonical.om,$CORE/$entry.om"
+  done
+  for entry in omparse omcver omcheck; do
+    UNITS="$UNITS core_$entry=$CORE/idparse.om,$CORE/$entry.om"
+  done
+  for unit in object graph payload param effect eval vector vecspec vpay fmt fmtnum fmtclip hostmath; do
+    UNITS="$UNITS core_$unit=$CORE/$unit.om"
+  done
+  UNITS="$UNITS core_cubinmsg=$CORE/fmtnum.om,$CORE/cubinmsg.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

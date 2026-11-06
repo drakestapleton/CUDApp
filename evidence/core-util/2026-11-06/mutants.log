@@ -1,0 +1,7 @@
+CORE-UTIL mutant initial-state KILLED
+CORE-UTIL mutant round-constant KILLED
+CORE-UTIL mutant padding-marker KILLED
+CORE-UTIL mutant two-block-padding KILLED
+CORE-UTIL mutant message-bit-count KILLED
+CORE-UTIL mutant length-byte-order KILLED
+CORE-UTIL mutants PASS: 6 recompiled semantic mutants killed

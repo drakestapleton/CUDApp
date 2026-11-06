@@ -1,0 +1,57 @@
+./build/test-core-cubin-message
+CORE-UTIL cubin messages PASS: 10000 differential cases, truncation and bridge status boundaries
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_artifact_export_test tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c build/libomega_gpu.a -lpthread -lm
+cubin message mismatch case=1 rc=1 detail=6 cap=1
+CORE-UTIL cubin message negative control caught
+python3 tests/ampere/test_doctor.py
+AMPERE DOCTOR SIMULATED PASS (target IDs and refusal controls); DEVICE NOT_RUN
+build/ampere_math_device --self-test
+AMPERE MATH HOST ORACLE CONTROLS PASS; DEVICE NOT_RUN
+build/ampere_math_device --emit-only
+AMPERE MATH KERNEL EMISSION PASS; DEVICE NOT_RUN
+build/hello_gpu --target=sm_86 --sim
+hello_gpu: c = a + b over 1048576 floats on the host simulator (no GPU), built with Omega's own kernel builder
+kernel built in 101 us: 32 instructions, 12 registers, sm_86, no compiler run, no cache
+machine code sha256 1847a8d5493458aa2a209804b4467d912c838e25bf62bd98bd3fdbd92dfe260d
+checked 1048576 of 1048576 elements: 0 wrong, 0 never written
+work: 12582912 bytes moved (8388608 read, 4194304 written), 1048576 floating-point operations
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+PASS
+rm -rf build/om-cubin/artifact-om build/om-cubin/artifact-diff build/om-cubin/diff.log
+./build/gpu_artifact_export_test build/om-cubin/artifact-om
+test_gpu_artifact_export: 47 checks, 0 failed
+./build/native_artifact_manifest_test
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=1 current driver 'garbage' is not a strict A.B.C version)
+  (refused as expected? rc=8 driver 580.173.01 is older than required 580.173.02)
+  (refused as expected? rc=2 cbank_words '2abc' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=2 cbank_words '+2' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=2 cbank_words '33' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=3 QMD launch fields disagree with the manifest grid/block/shared/gpr)
+native_artifact_manifest: 70 checks, 0 failed
+CUDAPP_CUBIN_DIFF_LOG=build/om-cubin/diff.log build/om-cubin/artifact_diff build/om-cubin/artifact-diff
+test_gpu_artifact_export: 47 checks, 0 failed
+CUDAPP_CUBIN_DIFF_LOG=build/om-cubin/diff.log build/om-cubin/manifest_diff
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=1 current driver 'garbage' is not a strict A.B.C version)
+  (refused as expected? rc=8 driver 580.173.01 is older than required 580.173.02)
+  (refused as expected? rc=2 cbank_words '2abc' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=2 cbank_words '+2' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=2 cbank_words '33' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=3 QMD launch fields disagree with the manifest grid/block/shared/gpr)
+native_artifact_manifest: 70 checks, 0 failed
+cubin sweep: 854 calls, each packed by cubin_elf.om and the C writer and compared; OK 740 ARG 12 TEXT 8 PARAMS 53 CBANK 35 GPR 2 SHARED 4 MEM 0; 111037984 image bytes
+cubin diff: .om and C packers identical (code, bytes, message) on 869 calls (15 from the artifact tests, 854 from the sweep; 750 images)
+red check: one flipped image bit aborts the cubin diff, as it must

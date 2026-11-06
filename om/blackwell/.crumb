@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T06:41:44Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:bee38f1cc0a0e24088916ef7b13cb1426dc061ed672cae9c24ab78c19bc47776",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "name": "blackwell",
+  "purpose": "Blackwell matmul realization identities and scalar policies",
+  "schema_version": "1.0.0"
+}

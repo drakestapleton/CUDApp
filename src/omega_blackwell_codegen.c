@@ -735,7 +735,7 @@ static int bw_c_encode_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *ra
             break;
 
         case BW_IR_EXIT:
-            w[0] = insn->predicate_p0 ? 0x0000094d : 0x0000794d;
+            w[0] = 0x0000794d; /* generic guard handling below */
             w[1] = 0x00000000;
             w[2] = 0x03800000;
             w[3] = insn->control ? insn->control : 0x000fea00;
@@ -882,8 +882,25 @@ static int bw_c_encode_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *ra
             break;
         }
 
+        case BW_IR_I2FP_U32:
+            w[0] = 0x7245U | ((uint32_t)(dst & 0xff) << 16);
+            w[1] = (uint32_t)(src1 & 0xff);
+            w[2] = 0x00201000;
+            w[3] = insn->control ? insn->control : 0x004fe200;
+            break;
+        case BW_IR_F2I_U32:
+            w[0] = 0x7305U | ((uint32_t)(dst & 0xff) << 16);
+            w[1] = (uint32_t)(src1 & 0xff);
+            w[2] = 0x0020f000;
+            w[3] = insn->control ? insn->control : 0x004e2200;
+            break;
         default:
             return -1;
+    }
+    if (insn->predicate_p0 && insn->op != BW_IR_BRA && insn->op != BW_IR_BSSY && insn->op != BW_IR_BSYNC &&
+        insn->op != BW_IR_STG_STRONG_SYS) {
+        if (((w[0] >> 12) & 0xfu) != 0x7u) return -1;
+        w[0] = (w[0] & ~0xf000u) | ((insn->predicate_not ? 0x8u : 0x0u) << 12);
     }
     return 0;
 }

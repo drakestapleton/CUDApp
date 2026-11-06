@@ -202,6 +202,21 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
     case BW_IR_MUFU_RCP: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_mufu_rcp(ws_u2f(a))), p); break;
     case BW_IR_MUFU_RSQ: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_mufu_rsq(ws_u2f(a))), p); break;
     case BW_IR_MUFU_LG2: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(log2f(ws_u2f(a))), p); break;
+    case BW_IR_FSETP: {
+        if (in->dst_vreg >= 0) { ws_fail(s, WS_E_OP, pc, "FSETP into a predicate other than P0"); return; }
+        unsigned code = ((in->imm ? in->imm : 0x03f06000u) >> 12) & 0xfu;
+        float fa = ws_u2f(a), fb = ws_u2f(b);
+        unsigned o = (fa != fa || fb != fb) ? 8u : fa < fb ? 1u : fa > fb ? 4u : 2u;
+        l->p0 = (code & o) != 0;
+        break;
+    }
+    case BW_IR_I2FP_U32: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u((float)a), p); break;
+    case BW_IR_F2I_U32: {
+        float fa = ws_u2f(a);
+        uint32_t r = (fa != fa || fa <= 0.0f) ? 0u : fa >= 4294967296.0f ? 0xffffffffu : (uint32_t)fa;
+        ws_wrs(l, in->dst_vreg, in->dst_subreg, r, p);
+        break;
+    }
     default: ws_fail(s, WS_E_OP, pc, "opcode not modelled"); return;
     }
 }
@@ -298,11 +313,12 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         case BW_IR_SHFL_DOWN: {
+            if (!cond) { f->pc = pc + 1; break; }
             if (w->exited) { ws_fail(s, WS_E_SHFL_EXITED, pc, "SHFL on a warp with exited lanes"); return -1; }
             if (mask != live) { ws_fail(s, WS_E_SHFL_SPLIT, pc, "SHFL on a split warp"); return -1; }
             uint32_t src[WS_WARP];
             for (int L = 0; L < WS_WARP; L++) src[L] = ws_rd(&w->lane[L], in->src1_vreg, p);
-            for (int L = 0; L < WS_WARP; L++) { int from = L + (int)(in->imm & 31); ws_wr(&w->lane[L], in->dst_vreg, from < WS_WARP ? src[from] : src[L], p); }
+            for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) { int from = L + (int)(in->imm & 31); ws_wr(&w->lane[L], in->dst_vreg, from < WS_WARP ? src[from] : src[L], p); }
             f->pc = pc + 1;
             break;
         }
@@ -312,7 +328,7 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         default: {
-            for (int L = 0; L < WS_WARP; L++) if (mask >> L & 1) {
+            for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) {
                 ws_lane_exec(s, &w->lane[L], in, pc, warp * WS_WARP + (uint32_t)L, cx, cy);
                 if (s->err) return -1;
             }

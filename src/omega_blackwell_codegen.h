@@ -146,6 +146,10 @@ typedef enum {
      * chip probe: tests/gpu_atomf32_probe_test.c. */
     BW_IR_ATOMG_ADD_F32_STRONG_SYS, /* ATOMG.E.ADD.F32.FTZ.RN.STRONG.SYS PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem += Rb */
     BW_IR_ATOMG_ADD_F32_STRONG_GPU, /* ATOMG.E.ADD.F32.FTZ.RN.STRONG.GPU PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem += Rb */
+    /* C1 kernel conversions, append-only: preserve training opcodes 60..63. */
+    BW_IR_I2FP_U32, /* u32 -> f32, round to nearest even, fixed latency */
+    BW_IR_F2I_U32,  /* f32 -> u32, toward zero, saturating, NaN -> 0; variable latency */
+    BW_IR_LAST = BW_IR_F2I_U32
 } BlackwellIROpcode;
 
 /* Barrier (reconvergence) registers: the sm_121 BSSY/BSYNC words carry a 4-bit barrier id

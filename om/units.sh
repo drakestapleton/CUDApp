@@ -27,6 +27,8 @@ GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.o
 if [ -z "${OMEGA_UNITS:-}" ]; then
 UNITS="$UNITS apish_shp=om/api/apish_shp.om apish_pack=om/api/apish_pack.om apish_slot=om/api/apish_slot.om apish_blk=om/api/apish_blk.om apish_trit=om/api/apish_trit.om"
 fi
+REST="ar_data=om/apirest/data.om ar_pack=om/apirest/pack.om,om/api/apish_pack.om ar_tiles=om/apirest/tiles.om ar_tern=om/apirest/tern.om ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -78,9 +80,11 @@ for u in $UNITS $PURE_UNITS; do
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
   esac
+  opts=
+  case "$name" in ar_*) opts=--runtime-views ;; esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" c "$src" > "$T/$file"
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" h "$src" >> "$T/cudapp_native.h"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $opts c "$src" > "$T/$file"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $opts h "$src" >> "$T/cudapp_native.h"
   identity="omega-ident 2 unit=$name abi=$frontend src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
   printf '%s\n' "$identity" > "$T/cudapp_om_$name.ident"
   printf '%s\n' "$identity" >> "$T/cudapp_om_units.ident"

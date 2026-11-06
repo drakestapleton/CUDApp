@@ -78,8 +78,9 @@ with tempfile.TemporaryDirectory(prefix='cudapp-cm-mutants-') as temporary:
         print('CM SOURCE mutant caught:', name, 'rc=' + str(result.returncode), failures[0], flush=True)
         if name == 'cm_decision':
             executable = tmp / 'decision-verifier-mutant'
-            subprocess.run(cc + [verifier] + objects + ['-Wl,--wrap=rx_cm_decide',
-                           '-Wl,--wrap=rx_cm_predict', '-lm', '-o', str(executable)], check=True)
+            wraps = ['-Wl,--wrap=' + name for name in ('rx_cm_decide', 'rx_cm_predict',
+                     'rx_cm_init', 'rx_cm_observe', 'rx_cm_calibrate', 'rx_cm_charge')]
+            subprocess.run(cc + [verifier] + objects + wraps + ['-lm', '-o', str(executable)], check=True)
             result = subprocess.run([str(executable)], capture_output=True, text=True)
             assert result.returncode != 0 and 'out->action == expected.action' in result.stderr, result
             print('CM DECISION verifier control PASS: discrete action mutant caught', flush=True)

@@ -33,6 +33,15 @@ int __real_rx_cm_predict(const RxCostModel *, const RxCmFeatures *, uint32_t, Rx
 int oracle_cm_predict(const RxCostModel *, const RxCmFeatures *, uint32_t, RxCmPrediction *);
 static unsigned decisions, predictions;
 static uint64_t max_ulp;
+static unsigned initializations, observations, calibrations, charges;
+void __real_rx_cm_init(RxCostModel *, uint32_t);
+int __real_rx_cm_observe(RxCostModel *, const RxCmFeatures *, uint32_t, const RxCmObservation *);
+double __real_rx_cm_calibrate(RxCostModel *, const RxCmFeatures *, const uint32_t *, const uint64_t *, uint32_t, double);
+void __real_rx_cm_charge(RxCostModel *, uint64_t, uint64_t);
+void oracle_cm_init(RxCostModel *, uint32_t);
+int oracle_cm_observe(RxCostModel *, const RxCmFeatures *, uint32_t, const RxCmObservation *);
+double oracle_cm_calibrate(RxCostModel *, const RxCmFeatures *, const uint32_t *, const uint64_t *, uint32_t, double);
+void oracle_cm_charge(RxCostModel *, uint64_t, uint64_t);
 static void numeric(const char *field, double a, double b) {
     uint64_t x, y;
     memcpy(&x, &a, 8); memcpy(&y, &b, 8);
@@ -57,6 +66,54 @@ static void numeric(const char *field, double a, double b) {
         abort();
     }
 }
+#ifndef CM_DIFF_OUTPUT_ONLY
+static void state_equal(const char *operation, const RxCostModel *a, const RxCostModel *b) {
+    const unsigned char *actual=(const unsigned char *)a, *expected=(const unsigned char *)b;
+    for (size_t i=0;i<sizeof *a;++i) if (actual[i]!=expected[i]) {
+        fprintf(stderr,"CM STATE differential FAIL operation=%s byte=%zu candidate=%02x oracle=%02x\n",
+                operation,i,actual[i],expected[i]);
+        abort();
+    }
+}
+void __wrap_rx_cm_init(RxCostModel *m, uint32_t n) {
+    RxCostModel expected;
+    oracle_cm_init(m ? &expected : NULL,n);
+    __real_rx_cm_init(m,n);
+    if (m) state_equal("init",m,&expected);
+    ++initializations;
+}
+int __wrap_rx_cm_observe(RxCostModel *m, const RxCmFeatures *f, uint32_t arm, const RxCmObservation *o) {
+    RxCostModel expected;
+    if (m) memcpy(&expected,m,sizeof expected);
+    int reference=oracle_cm_observe(m ? &expected : NULL,f,arm,o);
+    int actual=__real_rx_cm_observe(m,f,arm,o);
+    assert(actual==reference);
+    if (m) state_equal("observe",m,&expected);
+    ++observations;
+    return actual;
+}
+double __wrap_rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *arm,
+                             const uint64_t *ps, uint32_t n, double q) {
+    RxCostModel expected;
+    if (m) memcpy(&expected,m,sizeof expected);
+    double reference=oracle_cm_calibrate(m ? &expected : NULL,f,arm,ps,n,q);
+    double actual=__real_rx_cm_calibrate(m,f,arm,ps,n,q);
+    uint64_t a,b;
+    memcpy(&a,&actual,sizeof a); memcpy(&b,&reference,sizeof b);
+    assert(a==b);
+    if (m) state_equal("calibrate",m,&expected);
+    ++calibrations;
+    return actual;
+}
+void __wrap_rx_cm_charge(RxCostModel *m, uint64_t work, uint64_t explore) {
+    RxCostModel expected;
+    if (m) memcpy(&expected,m,sizeof expected);
+    oracle_cm_charge(m ? &expected : NULL,work,explore);
+    __real_rx_cm_charge(m,work,explore);
+    if (m) state_equal("charge",m,&expected);
+    ++charges;
+}
+#endif
 static void prediction(const RxCmPrediction *a, const RxCmPrediction *b) {
     assert(a->n == b->n && a->known == b->known && a->borrowed == b->borrowed && a->refused == b->refused);
     numeric("mean_log2_ps",a->mean_log2_ps,b->mean_log2_ps); numeric("sd_log2",a->sd_log2,b->sd_log2);
@@ -155,6 +212,8 @@ __attribute__((constructor)) static void random_cases(void) {
 __attribute__((destructor)) static void report(void) {
     printf("CM DECISION differential PASS decisions=%u predictions=%u max_numeric_ulp=%llu field=%s candidate=%a oracle=%a\n",
            decisions,predictions,(unsigned long long)max_ulp,worst_field,worst_a,worst_b);
+    printf("CM STATE differential PASS initializations=%u observations=%u calibrations=%u charges=%u\n",
+           initializations,observations,calibrations,charges);
 }
 #ifdef CM_DIFF_REPLAY_MAIN
 int main(void) { return 0; }

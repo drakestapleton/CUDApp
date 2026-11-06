@@ -113,8 +113,9 @@ they are not a global model-error bound. Replaying the original captured case
 with **only** `cm_oracle.c` rebuilt using `-ffp-contract=off` reported zero ULP
 difference across the complete decision output, isolating contraction in that
 case. The permanent exact gate uses the canonical contract and first-party math,
-not the legacy contracting/glibc combination. This is same-state algorithm
-parity, not independently trained-state parity or an all-input rounding proof.
+not the legacy contracting/glibc combination. Predictions and decisions compare
+the same input state; the additional mutation gate below checks the independently
+computed state transitions rather than assuming training parity.
 
 The canonical gate passed: `checks 127 failures 0`,
 `decisions=21058 predictions=8617 max_numeric_ulp=0`. Its contraction-on
@@ -123,15 +124,26 @@ negative control was rejected at `p_runner_up_better`: Omega
 Replaying that state at the EI threshold passed with both EIs exactly
 `0x1.e347c758fe6aap+4` and every captured output at zero ULP.
 
+The mutation interceptors compare independent C and Omega initialization and
+post-call model bytes for every intercepted init/observe/calibrate/charge call
+in the unchanged direct unit and deterministic corpus. Calibration return bits
+and observation status codes must also match exactly. The exercised run passed
+21 initializations, 4,083 observations, 3 calibrations and 4 charges. Each C
+transition starts from a copy of the pre-call state, not from Omega's updated
+state. Equal initialization plus equal transitions establishes state identity
+over these exercised API sequences; it is not an all-input proof.
+
 The C oracle also compared glibc on its actual model math inputs:
 
 | Function | Calls | Maximum glibc distance (ULP) | Worst input bits | Omega bits | glibc bits |
 | --- | ---: | ---: | --- | --- | --- |
-| log2 | 318974 | 1 | 3ff0fbf55f8bbeaf | 3fb60c1ef82f0909 | 3fb60c1ef82f0908 |
+| log2 | 332606 | 1 | 3ff0fbf55f8bbeaf | 3fb60c1ef82f0909 | 3fb60c1ef82f0908 |
+| ceil | 1 | 0 | — | — | — |
 | exp | 14025 | 1 | bfa53cdaf881f386 | 3feeb325c9a99db2 | 3feeb325c9a99db3 |
 | exp2 | 20931 | 1 | 4042815aaf6527ba | 42401e25fcdb3a52 | 42401e25fcdb3a51 |
-| sqrt | 408670 | 0 | — | — | — |
+| sqrt | 411586 | 0 | — | — | — |
 | erfc | 28050 | 2 | 3fea66d1c80fe481 | 3fcf242eccf286be | 3fcf242eccf286c0 |
+| fabs | 300 | 0 | — | — | — |
 
 These differences are not algorithm-gate exemptions: that gate uses the
 canonical Omega math on both sides. The following separate high-precision

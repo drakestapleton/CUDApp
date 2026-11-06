@@ -187,7 +187,7 @@ static void consume(Em *e, unsigned sb) {
 
 static int log2u(uint32_t v) {
 #ifdef BW_EM_C_PRIMARY
-    int l = 0; while ((1u << l) < v) l++; return (1u << l) == v ? l : -1;
+    int l = 0; while (l < 31 && (1u << l) < v) l++; return (1u << l) == v ? l : -1;
 #else
     Em e = {0};
     return (int)em_step(&e, 6, v, 0, 0, 0, NULL);

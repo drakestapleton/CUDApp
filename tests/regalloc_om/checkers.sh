@@ -18,4 +18,7 @@ if cmp -s "$OUT/oracle.out" "$OUT/red.out"; then echo 'FAIL checker red control'
 ln -sfn ../../src "$OUT/src"
 ln -sfn ../../tests "$OUT/tests"
 (cd "$OUT" && gcov -b -c oracle-checkers.gcno > gcov.log)
+$CC $FLAGS -fsanitize=undefined -fno-sanitize-recover=undefined -DCUDAPP_MIGRATION_PENDING_C_EM -DCUDAPP_MIGRATION_PENDING_C_RECONV tests/regalloc_om/checkers.c -Wl,--gc-sections -o "$OUT/log-overflow"
+"$OUT/log-overflow" --log-overflow > "$OUT/log-overflow.out"
+grep -qx 'log-overflow -1' "$OUT/log-overflow.out"
 echo 'PASS checker differential, ordered failure state and red control'

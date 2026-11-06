@@ -74,8 +74,8 @@ static void emcases(void) {
         Em e={.p=&p,.depth=d,.open_start={1,1,1,1}}; loop_end(&e); emout(&e);
         printf("iv %d\n",p.regalloc.intervals[0].last_use);
     }
-    /* log2u C is defined through 2^31. The overflow regression is a separate gate. */
-    const uint32_t logs[]={0,1,2,3,4,7,8,9,0x7fffffff,0x80000000};
+    /* Include the full uint32 domain above the last representable power of two. */
+    const uint32_t logs[]={0,1,2,3,4,7,8,9,0x7fffffff,0x80000000,0x80000001,UINT32_MAX};
     for(unsigned j=0;j<sizeof logs/sizeof logs[0];j++) printf("l %d\n",log2u(logs[j]));
 }
 static void rcases(void) {
@@ -109,6 +109,9 @@ static void rcases(void) {
     r.depth=INT_MAX; printf("n %d\n",bw_regions_next_bar(&r));
 }
 int main(int argc,char **argv) {
+    if(argc>1 && strcmp(argv[1],"--log-overflow")==0) {
+        printf("log-overflow %d\n", log2u(UINT32_MAX)); return 0;
+    }
     (void)argv; emcases(); rcases();
     if(argc>1) puts("red-control");
     puts("CHECKERS source partition complete"); return 0;

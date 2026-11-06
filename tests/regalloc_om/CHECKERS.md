@@ -19,6 +19,8 @@ env OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/tmp/integ
 
 The source-partition run exercises every C branch outcome in all three headers. Ten recompiled semantic mutants are required by `checkers_mutants.py`, including a bad join opcode, lost depth decrement and wrong relative immediate.
 
+The retained C logarithm also had an undefined shift for inputs above `0x80000000`: the source-sized `--log-overflow` case with `UINT32_MAX`, compiled using `-fsanitize=undefined -fno-sanitize-recover=undefined`, exited 1 with `shift exponent 32 is too large for 32-bit type 'unsigned int'`. Bounding the search to the last uint32 bit fixes the oracle and freestanding path. `checkers.sh` repeats the sanitizer regression and requires `log-overflow -1`; the differential now includes both upper nonpower boundary values.
+
 ## Hazard mutant boundary
 
 `hazard_diff.c` forces a size-4 LDG with a live destination in every generated program and in a direct decoder witness. Comparison includes read/write counts and every register-range length. The size-class `< 4` mutation is killed, rather than relying on incidental random coverage.

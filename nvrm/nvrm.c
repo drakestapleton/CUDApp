@@ -11,6 +11,7 @@
 #include "cpu_barrier.h"
 #include "cudapp_native.h"
 #include "nvrm_policy.h"
+#include "nvrm_struct.h"
 
 
 #include <errno.h>
@@ -72,6 +73,7 @@ static int rm_wire(void *out, size_t size, uint64_t op, const uint64_t fields[16
 }
 /* Marshal API values, then let Omega own every byte of the UVM request,
  * including unused per-GPU attributes and ABI padding. */
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
 static int uvm_wire(unsigned long cmd, void *params) {
     uint64_t a[16] = {0}, n = 0;
     unsigned char uuid[16] = {0}, bytes[56];
@@ -144,6 +146,7 @@ static int uvm_wire(unsigned long cmd, void *params) {
     memcpy(params, bytes, size);
     return 0;
 }
+#endif
 #endif
 
 static int fail(Nvrm *rm, const char *fmt, ...);
@@ -326,9 +329,13 @@ static int uvm_free_checked(Nvrm *rm, uint64_t va, uint64_t size) {
         return fail(rm, "injected UVM_FREE failure for VA 0x%lx", (unsigned long)va);
     }
     UVM_FREE_PARAMS uf;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&uf, 0, sizeof uf);
     uf.base = va;
     uf.length = size;
+#else
+    NS_FILL(uf, 20, va, size);
+#endif
     return uvm(rm, rm->fd_uvm, UVM_FREE, &uf, &uf.rmStatus);
 }
 
@@ -372,11 +379,20 @@ static int rm_control(Nvrm *rm, uint32_t obj, uint32_t cmd, void *params, uint32
 }
 
 static int uvm(Nvrm *rm, int fd, unsigned long cmd, void *params, NV_STATUS *st) {
-#if !CUDAPP_MIGRATION_PENDING_C_NVRM
+#if !CUDAPP_MIGRATION_PENDING_C_NVRM && CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     if (uvm_wire(cmd, params)) return fail(rm, "UVM 0x%lx wire refused", cmd);
 #endif
     if (nvrm_uvm_ioctl(fd, cmd, params) != 0) return fail(rm, "UVM 0x%lx errno %d", cmd, errno);
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     if (st && *st != NV_OK) return fail(rm, "UVM 0x%lx status 0x%x", cmd, *st);
+#else
+    (void)st;
+    uint64_t size = 0, status = 0, unused = 0;
+    if (omega_nvrm_struct(&size, 8, cmd, &unused, 1, params, 0) || !size ||
+        omega_nvrm_struct(&status, 6, cmd, &unused, 1, params, size))
+        return fail(rm, "UVM response decode refused");
+    if (status != NV_OK) return fail(rm, "UVM 0x%lx status 0x%x", cmd, (unsigned)status);
+#endif
     return 0;
 }
 
@@ -470,6 +486,11 @@ static int va_slot_cover(Nvrm *rm, uint64_t end) {
                                                    memory_order_relaxed, memory_order_relaxed) ? 1 : 0;
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
+#define CARD_GET(cards, i, field, member) ((cards)[i].member)
+#else
+#define CARD_GET(cards, i, field, member) ns_get((void *)(cards), sizeof(nv_ioctl_card_info_t) * 64, 16, field, i)
+#endif
 static int card_index(const nv_ioctl_card_info_t cards[64], const char *bdf) {
     if (bdf) {
         unsigned domain, bus, slot, function;
@@ -479,12 +500,12 @@ static int card_index(const nv_ioctl_card_info_t cards[64], const char *bdf) {
         snprintf(canonical, sizeof canonical, "%04x:%02x:%02x.%x", domain, bus, slot, function);
         if (strcmp(bdf, canonical) != 0) return -1;
         for (int i = 0; i < 64; i++)
-            if (cards[i].valid && cards[i].pci_info.domain == domain &&
-                cards[i].pci_info.bus == bus && cards[i].pci_info.slot == slot &&
-                cards[i].pci_info.function == function) return i;
+            if (CARD_GET(cards, i, 0, valid) && CARD_GET(cards, i, 1, pci_info.domain) == domain &&
+                CARD_GET(cards, i, 2, pci_info.bus) == bus && CARD_GET(cards, i, 3, pci_info.slot) == slot &&
+                CARD_GET(cards, i, 4, pci_info.function) == function) return i;
         return -1;
     }
-    for (int i = 0; i < 64; i++) if (cards[i].valid) return i;
+    for (int i = 0; i < 64; i++) if (CARD_GET(cards, i, 0, valid)) return i;
     return -1;
 }
 int nvrm_open(Nvrm *rm) {
@@ -501,64 +522,109 @@ int nvrm_open(Nvrm *rm) {
     if (rm_alloc(rm, 0, NV01_ROOT_CLIENT, NULL, 0, &rm->root)) return -1;
 
     UVM_INITIALIZE_PARAMS ui;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&ui, 0, sizeof ui);
+#else
+    NS_FILL(ui, 18, 0);
+#endif
     if (uvm(rm, rm->fd_uvm, UVM_INITIALIZE, &ui, &ui.rmStatus)) return -1;
     UVM_MM_INITIALIZE_PARAMS mi;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&mi, 0, sizeof mi);
     mi.uvmFd = rm->fd_uvm;
 #if !CUDAPP_MIGRATION_PENDING_C_NVRM
     if (uvm_wire(UVM_MM_INITIALIZE, &mi)) return fail(rm, "UVM_MM_INITIALIZE wire refused");
 #endif
+#else
+    NS_FILL(mi, 19, (uint32_t)rm->fd_uvm);
+#endif
     (void)nvrm_uvm_ioctl(rm->fd_uvm2, UVM_MM_INITIALIZE, &mi); /* libcuda also tolerates failure here */
 
     nv_ioctl_card_info_t cards[64];
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(cards, 0, sizeof cards);
+#else
+    NS_FILL(cards, 16, 0);
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_CARD_INFO, cards, sizeof cards) != 0) return fail(rm, "CARD_INFO errno %d", errno);
     const char *bdf = getenv("CUDAPP_GPU_BDF");
     int found = card_index(cards, bdf);
     if (found < 0) return fail(rm, "no GPU matches CUDAPP_GPU_BDF=%s (canonical dddd:bb:ss.f required)", bdf ? bdf : "");
-    rm->gpu_id = cards[found].gpu_id;
-    rm->minor = cards[found].minor_number;
+    rm->gpu_id = (uint32_t)CARD_GET(cards, found, 5, gpu_id);
+    rm->minor = (int)CARD_GET(cards, found, 6, minor_number);
 
     rm->fd_dev = open_dev_fd(rm);
     if (rm->fd_dev < 0) return -1;
 
     NV0000_CTRL_GPU_GET_ID_INFO_V2_PARAMS idinfo;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&idinfo, 0, sizeof idinfo);
     idinfo.gpuId = rm->gpu_id;
+#else
+    NS_FILL(idinfo, 1, rm->gpu_id);
+#endif
     if (rm_control(rm, rm->root, NV0000_CTRL_CMD_GPU_GET_ID_INFO_V2, &idinfo, sizeof idinfo)) return -1;
 
     NV0080_ALLOC_PARAMETERS dp;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&dp, 0, sizeof dp);
     dp.deviceId = idinfo.deviceInstance;
     dp.hClientShare = rm->root;
     dp.vaMode = NV_DEVICE_ALLOCATION_VAMODE_OPTIONAL_MULTIPLE_VASPACES;
+#else
+    NS_FILL(dp, 2, NS_GET(idinfo, 1, 1), rm->root, NV_DEVICE_ALLOCATION_VAMODE_OPTIONAL_MULTIPLE_VASPACES);
+#endif
     if (rm_alloc(rm, rm->root, NV01_DEVICE_0, &dp, sizeof dp, &rm->device)) return -1;
     NV2080_ALLOC_PARAMETERS sp;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&sp, 0, sizeof sp);
+#else
+    NS_FILL(sp, 3, 0);
+#endif
     if (rm_alloc(rm, rm->device, NV20_SUBDEVICE_0, &sp, sizeof sp, &rm->subdevice)) return -1;
     NV_MEMORY_VIRTUAL_ALLOCATION_PARAMS vp;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&vp, 0, sizeof vp);
     vp.limit = 0x1ffffffffffffull;
+#else
+    NS_FILL(vp, 4, 0, 0x1ffffffffffffull);
+#endif
     if (rm_alloc(rm, rm->device, NV01_MEMORY_VIRTUAL, &vp, sizeof vp, &rm->virtmem)) return -1;
 
-    NV2080_CTRL_GR_INFO gi = { .index = NV2080_CTRL_GR_INFO_INDEX_SM_VERSION };
+    NV2080_CTRL_GR_INFO gi;
     NV2080_CTRL_GR_GET_INFO_PARAMS gp;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
+    gi = (NV2080_CTRL_GR_INFO){ .index = NV2080_CTRL_GR_INFO_INDEX_SM_VERSION };
     memset(&gp, 0, sizeof gp);
     gp.grInfoListSize = 1;
     gp.grInfoList = NV_PTR_TO_NvP64(&gi);
+#else
+    NS_FILL(gi, 17, NV2080_CTRL_GR_INFO_INDEX_SM_VERSION);
+    NS_FILL(gp, 6, 1, (uintptr_t)&gi);
+#endif
     if (rm_control(rm, rm->subdevice, NV2080_CTRL_CMD_GR_GET_INFO, &gp, sizeof gp)) return -1;
-    rm->sm_version = gi.data;
+    rm->sm_version = NS_VALUE(gi, 17, 1, gi.data);
 
     NV0080_CTRL_GPU_GET_CLASSLIST_PARAMS cl;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&cl, 0, sizeof cl);
+#else
+    NS_FILL(cl, 7, 0);
+#endif
     if (rm_control(rm, rm->device, NV0080_CTRL_CMD_GPU_GET_CLASSLIST, &cl, sizeof cl)) return -1;
     uint32_t classes[512];
-    if (cl.numClasses > 512) return fail(rm, "too many classes");
+    uint32_t class_count = (uint32_t)NS_VALUE(cl, 7, 0, cl.numClasses);
+    if (class_count > 512) return fail(rm, "too many classes");
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     cl.classList = NV_PTR_TO_NvP64(classes);
+#else
+    NS_FILL(cl, 7, class_count, (uintptr_t)classes);
+#endif
     if (rm_control(rm, rm->device, NV0080_CTRL_CMD_GPU_GET_CLASSLIST, &cl, sizeof cl)) return -1;
-    if (cl.numClasses > 512 || select_classes(rm, classes, cl.numClasses,
-            cards[found].pci_info.vendor_id, cards[found].pci_info.device_id)) return -1;
+    class_count = (uint32_t)NS_VALUE(cl, 7, 0, cl.numClasses);
+    if (class_count > 512 || select_classes(rm, classes, class_count,
+            (uint16_t)CARD_GET(cards, found, 7, pci_info.vendor_id),
+            (uint16_t)CARD_GET(cards, found, 8, pci_info.device_id))) return -1;
     if (rm_alloc(rm, rm->subdevice, rm->usermode_class, NULL, 0, &rm->usermode)) return -1;
     void *mmio = map_to_cpu(rm, rm->usermode, 0x10000, NULL, 0, 0);
     if (mmio == MAP_FAILED) return -1;
@@ -566,31 +632,53 @@ int nvrm_open(Nvrm *rm) {
     rm->doorbell = (volatile uint32_t *)((uint8_t *)mmio + NVC361_NOTIFY_CHANNEL_PENDING);
 
     NV_VASPACE_ALLOCATION_PARAMETERS vap;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&vap, 0, sizeof vap);
     vap.vaBase = 0x1000;
     vap.vaSize = 0x1fffffb000000ull;
     vap.flags = NV_VASPACE_ALLOCATION_FLAGS_ENABLE_PAGE_FAULTING | NV_VASPACE_ALLOCATION_FLAGS_IS_EXTERNALLY_OWNED;
+#else
+    NS_FILL(vap, 8, 0, NV_VASPACE_ALLOCATION_FLAGS_ENABLE_PAGE_FAULTING | NV_VASPACE_ALLOCATION_FLAGS_IS_EXTERNALLY_OWNED, 0x1fffffb000000ull, 0x1000);
+#endif
     if (rm_alloc(rm, rm->device, FERMI_VASPACE_A, &vap, sizeof vap, &rm->vaspace)) return -1;
 
     NV2080_CTRL_GPU_GET_GID_INFO_PARAMS gid;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&gid, 0, sizeof gid);
     gid.flags = NV2080_GPU_CMD_GPU_GET_GID_FLAGS_FORMAT_BINARY;
     gid.length = 16;
+#else
+    NS_FILL(gid, 9, 0, NV2080_GPU_CMD_GPU_GET_GID_FLAGS_FORMAT_BINARY, 16);
+#endif
     if (rm_control(rm, rm->subdevice, NV2080_CTRL_CMD_GPU_GET_GID_INFO, &gid, sizeof gid)) return -1;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memcpy(rm->gpu_uuid, gid.data, 16);
+#else
+    for (unsigned i = 0; i < sizeof rm->gpu_uuid; i++) rm->gpu_uuid[i] = (uint8_t)NS_GET(gid, 9, 3 + i);
+#endif
 
     UVM_REGISTER_GPU_PARAMS rg;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&rg, 0, sizeof rg);
     memcpy(rg.gpu_uuid.uuid, rm->gpu_uuid, 16);
     rg.rmCtrlFd = -1;
+#else
+    uint64_t uuid[2];
+    memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+    NS_FILL(rg, 21, uuid[0], uuid[1], UINT32_MAX);
+#endif
     if (uvm(rm, rm->fd_uvm, UVM_REGISTER_GPU, &rg, &rg.rmStatus)) return -1;
     rm->gpu_registered = 1;
     UVM_REGISTER_GPU_VASPACE_PARAMS rv;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&rv, 0, sizeof rv);
     memcpy(rv.gpuUuid.uuid, rm->gpu_uuid, 16);
     rv.rmCtrlFd = rm->fd_ctl;
     rv.hClient = rm->root;
     rv.hVaSpace = rm->vaspace;
+#else
+    NS_FILL(rv, 23, uuid[0], uuid[1], (uint32_t)rm->fd_ctl, rm->root, rm->vaspace);
+#endif
     if (uvm(rm, rm->fd_uvm, UVM_REGISTER_GPU_VASPACE, &rv, &rv.rmStatus)) return -1;
     rm->vas_registered = 1;
     return 0;
@@ -691,9 +779,13 @@ static uint64_t va_take(Nvrm *rm, uint64_t size, uint64_t align) {
 static int uvm_map(Nvrm *rm, uint64_t va, uint64_t size, uint32_t hmem,
                    uint8_t *uvm_created, uint8_t *dma_mapped) {
     UVM_CREATE_EXTERNAL_RANGE_PARAMS cr;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&cr, 0, sizeof cr);
     cr.base = va;
     cr.length = size;
+#else
+    NS_FILL(cr, 20, va, size);
+#endif
     if (uvm(rm, rm->fd_uvm, UVM_CREATE_EXTERNAL_RANGE, &cr, &cr.rmStatus)) return -1;
     *uvm_created = 1;
 
@@ -719,6 +811,7 @@ static int uvm_map(Nvrm *rm, uint64_t va, uint64_t size, uint32_t hmem,
     *dma_mapped = 1;
 
     static UVM_MAP_EXTERNAL_ALLOCATION_PARAMS ma;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&ma, 0, sizeof ma);
     ma.base = va;
     ma.length = size;
@@ -728,6 +821,12 @@ static int uvm_map(Nvrm *rm, uint64_t va, uint64_t size, uint32_t hmem,
     ma.gpuAttributesCount = 1;
     memcpy(ma.perGpuAttributes[0].gpuUuid.uuid, rm->gpu_uuid, 16);
     ma.perGpuAttributes[0].gpuMappingType = UvmGpuMappingTypeReadWriteAtomic;
+#else
+    uint64_t uuid[2];
+    memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+    NS_FILL(ma, 26, va, size, 0, uuid[0], uuid[1], UvmGpuMappingTypeReadWriteAtomic,
+            1, (uint32_t)rm->fd_ctl, rm->root, hmem);
+#endif
     return uvm(rm, rm->fd_uvm, UVM_MAP_EXTERNAL_ALLOCATION, &ma, &ma.rmStatus);
 }
 
@@ -779,11 +878,22 @@ int nvrm_vram_info(Nvrm *rm, uint64_t *free_bytes, uint64_t *total_bytes) {
     if (omega_nvrm_heap_wire(&bytes, fields, 16, (unsigned char *)&p, sizeof p) || bytes != sizeof p)
         return fail(rm, "VID_HEAP_INFO wire refused");
 #endif
-    if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_VID_HEAP_CONTROL, &p, sizeof p) != 0 || p.status)
-        return fail(rm, "VID_HEAP_INFO errno %d status 0x%x", errno, p.status);
-    if (!p.total || p.free > p.total) return fail(rm, "invalid framebuffer heap information");
-    *free_bytes = p.free;
-    *total_bytes = p.total;
+    int iorc = nv_ioctl(rm->fd_ctl, NV_ESC_RM_VID_HEAP_CONTROL, &p, sizeof p);
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
+    uint64_t status = p.status, total = p.total, avail = p.free;
+#else
+    uint64_t status = 0, total = 0, avail = 0, a[1] = {0};
+    if (omega_nvrm_struct(&status, 7, 0, a, 1, &p, sizeof p)) return fail(rm, "heap status decode refused");
+    a[0] = 1;
+    if (omega_nvrm_struct(&total, 7, 0, a, 1, &p, sizeof p)) return fail(rm, "heap total decode refused");
+    a[0] = 2;
+    if (omega_nvrm_struct(&avail, 7, 0, a, 1, &p, sizeof p)) return fail(rm, "heap free decode refused");
+#endif
+    if (iorc != 0 || status)
+        return fail(rm, "VID_HEAP_INFO errno %d status 0x%x", errno, (unsigned)status);
+    if (!total || avail > total) return fail(rm, "invalid framebuffer heap information");
+    *free_bytes = avail;
+    *total_bytes = total;
     return 0;
 }
 
@@ -803,6 +913,7 @@ static int alloc_with_cacheability(Nvrm *rm, uint64_t size, NvrmMem *out, uint32
     }
 
     NV_MEMORY_ALLOCATION_PARAMS mp;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&mp, 0, sizeof mp);
     mp.owner = rm->root;
     mp.type = NVOS32_TYPE_IMAGE;
@@ -817,6 +928,14 @@ static int alloc_with_cacheability(Nvrm *rm, uint64_t size, NvrmMem *out, uint32
     mp.size = size;
     mp.alignment = 0x1000;
     mp.limit = size - 1;
+#else
+    NS_FILL(mp, 10, rm->root, NVOS32_TYPE_IMAGE,
+        NVOS32_ALLOC_FLAGS_MAP_NOT_REQUIRED | NVOS32_ALLOC_FLAGS_MEMORY_HANDLE_PROVIDED |
+        NVOS32_ALLOC_FLAGS_ALIGNMENT_FORCE | NVOS32_ALLOC_FLAGS_IGNORE_BANK_PLACEMENT,
+        (NVOS32_ATTR_PHYSICALITY_ALLOW_NONCONTIGUOUS << 27) |
+        ((local ? NVOS32_ATTR_LOCATION_VIDMEM : NVOS32_ATTR_LOCATION_PCI) << 25),
+        (gpu_cacheable << 2) | NVOS32_ATTR2_ZBC_PREFER_NO_ZBC, 6, size, 0x1000, size - 1);
+#endif
     uint32_t h;
     if (rm_alloc(rm, rm->device, local ? NV01_MEMORY_LOCAL_USER : NV01_MEMORY_SYSTEM, &mp, sizeof mp, &h)) {
         if (nvrm_cpu_drop(rm, res, size) != 0) rm->faulted = 1;
@@ -979,40 +1098,61 @@ static int chan_extra(Nvrm *rm, NvrmChan *c) {
      * a separate ASYNC allocation lets the independent queue run before its peer.
      * n_extra is counted before this call, so partial construction is unwound too. */
     NV_CTXSHARE_ALLOCATION_PARAMETERS cs;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&cs, 0, sizeof cs);
     cs.hVASpace = rm->vaspace;
     cs.flags = NV_CTXSHARE_ALLOCATION_FLAGS_SUBCONTEXT_ASYNC;
+#else
+    NS_FILL(cs, 13, rm->vaspace, NV_CTXSHARE_ALLOCATION_FLAGS_SUBCONTEXT_ASYNC);
+#endif
     if (rm_alloc(rm, rm->chgroup, FERMI_CONTEXT_SHARE_A, &cs, sizeof cs, &c->ctxshare)) return -1;
     c->entries = 1024;
     if (nvrm_alloc_gpu_uncached(rm, 0x10000, &c->fifo)) return -1;
     if (nvrm_alloc(rm, 0x100000, &c->notifier)) return -1;
     NV_CHANNEL_ALLOC_PARAMS gp;
+    c->userd_off = c->entries * 8;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&gp, 0, sizeof gp);
     gp.gpFifoOffset = c->fifo.va;
     gp.gpFifoEntries = c->entries;
     gp.hObjectError = c->notifier.handle;
     gp.hObjectBuffer = c->fifo.handle;
     gp.hUserdMemory[0] = c->fifo.handle;
-    c->userd_off = c->entries * 8;
     gp.userdOffset[0] = c->userd_off;
     gp.engineType = 0;
     gp.hContextShare = c->ctxshare;
+#else
+    NS_FILL(gp, 11, c->notifier.handle, c->fifo.handle, c->fifo.va, c->entries,
+            c->ctxshare, 0, c->fifo.handle, c->userd_off, 0);
+#endif
     if (rm_alloc(rm, rm->chgroup, rm->gpfifo_class, &gp, sizeof gp, &c->gpfifo)) return -1;
     if (rm_alloc(rm, c->gpfifo, rm->compute_class, NULL, 0, &c->compute_obj)) return -1;
-    NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN_PARAMS tk = { .workSubmitToken = 0xffffffffu };
+    NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN_PARAMS tk;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
+    tk.workSubmitToken = UINT32_MAX;
+#else
+    NS_FILL(tk, 14, UINT32_MAX);
+#endif
     if (rm_control(rm, c->gpfifo, NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN, &tk, sizeof tk)) return -1;
-    c->token = tk.workSubmitToken;
+    c->token = (uint32_t)NS_VALUE(tk, 14, 0, tk.workSubmitToken);
     UVM_REGISTER_CHANNEL_PARAMS rc;
+    c->channel_va = va_take(rm, 0x4000000, 0x1000);
+    if (!c->channel_va) { rm->faulted = 1; return fail(rm, "channel VA exhausted (extra channel)"); }
+    c->channel_va_size = 0x4000000;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&rc, 0, sizeof rc);
     memcpy(rc.gpuUuid.uuid, rm->gpu_uuid, 16);
     rc.rmCtrlFd = rm->fd_ctl;
     rc.hClient = rm->root;
     rc.hChannel = c->gpfifo;
-    rc.base = va_take(rm, 0x4000000, 0x1000);
-    if (!rc.base) { rm->faulted = 1; return fail(rm, "channel VA exhausted (extra channel)"); }
-    rc.length = 0x4000000;
-    c->channel_va = rc.base;
-    c->channel_va_size = rc.length;
+    rc.base = c->channel_va;
+    rc.length = c->channel_va_size;
+#else
+    uint64_t uuid[2];
+    memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+    NS_FILL(rc, 24, uuid[0], uuid[1], (uint32_t)rm->fd_ctl, rm->root, c->gpfifo,
+            c->channel_va, c->channel_va_size);
+#endif
     if (uvm(rm, rm->fd_uvm, UVM_REGISTER_CHANNEL, &rc, &rc.rmStatus)) {
         rm->faulted = 1;
         return -1;
@@ -1025,10 +1165,16 @@ static int chan_extra(Nvrm *rm, NvrmChan *c) {
 static int chan_extra_destroy(Nvrm *rm, NvrmChan *c) {
     if (c->registered) {
         UVM_UNREGISTER_CHANNEL_PARAMS p;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
         memset(&p, 0, sizeof p);
         memcpy(p.gpuUuid.uuid, rm->gpu_uuid, sizeof rm->gpu_uuid);
         p.hClient = rm->root;
         p.hChannel = c->gpfifo;
+#else
+        uint64_t uuid[2];
+        memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+        NS_FILL(p, 25, uuid[0], uuid[1], rm->root, c->gpfifo);
+#endif
         if (uvm(rm, rm->fd_uvm, UVM_UNREGISTER_CHANNEL, &p, &p.rmStatus)) return -1;
         c->registered = 0;
     }
@@ -1058,13 +1204,21 @@ int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
     if (adm == 1) return fail(rm, "channel construction requires clean state");
     if (adm == 2) return fail(rm, "extra channels %u > %d", extra, NVRM_MAX_EXTRA_CHANNELS);
     NV_CHANNEL_GROUP_ALLOCATION_PARAMETERS cg;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&cg, 0, sizeof cg);
     cg.engineType = NV2080_ENGINE_TYPE_GRAPHICS;
+#else
+    NS_FILL(cg, 12, 0, NV2080_ENGINE_TYPE_GRAPHICS);
+#endif
     if (rm_alloc(rm, rm->device, KEPLER_CHANNEL_GROUP_A, &cg, sizeof cg, &rm->chgroup)) return -1;
     NV_CTXSHARE_ALLOCATION_PARAMETERS cs;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&cs, 0, sizeof cs);
     cs.hVASpace = rm->vaspace;
     cs.flags = NV_CTXSHARE_ALLOCATION_FLAGS_SUBCONTEXT_ASYNC;
+#else
+    NS_FILL(cs, 13, rm->vaspace, NV_CTXSHARE_ALLOCATION_FLAGS_SUBCONTEXT_ASYNC);
+#endif
     if (rm_alloc(rm, rm->chgroup, FERMI_CONTEXT_SHARE_A, &cs, sizeof cs, &rm->ctxshare)) return -1;
 
     rm->entries = 1024;
@@ -1075,16 +1229,21 @@ int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
     if (nvrm_alloc(rm, 0x100000, &rm->notifier)) return -1;
 
     NV_CHANNEL_ALLOC_PARAMS gp;
+    rm->userd_off = rm->entries * 8; /* USERD follows the ring. */
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&gp, 0, sizeof gp);
     gp.gpFifoOffset = rm->fifo.va;
     gp.gpFifoEntries = rm->entries;
     gp.hObjectError = rm->notifier.handle;
     gp.hObjectBuffer = rm->fifo.handle;
     gp.hUserdMemory[0] = rm->fifo.handle;
-    rm->userd_off = rm->entries * 8;   /* USERD follows the ring in the same allocation */
     gp.userdOffset[0] = rm->userd_off;
     gp.engineType = 0;
     gp.hContextShare = rm->ctxshare;
+#else
+    NS_FILL(gp, 11, rm->notifier.handle, rm->fifo.handle, rm->fifo.va, rm->entries,
+            rm->ctxshare, 0, rm->fifo.handle, rm->userd_off, 0);
+#endif
     if (rm_alloc(rm, rm->chgroup, rm->gpfifo_class, &gp, sizeof gp, &rm->gpfifo)) return -1;
     /* NV_ERR_NO_MEMORY here is the host lacking one free 2 MiB block for the
      * channel's main context buffer at this instant (see nvrm.h, omega#523).
@@ -1104,22 +1263,34 @@ int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
         usleep((useconds_t)delay_ms * 1000u);
     }
 
-    NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN_PARAMS tk = { .workSubmitToken = 0xffffffffu };
+    NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN_PARAMS tk;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
+    tk.workSubmitToken = UINT32_MAX;
+#else
+    NS_FILL(tk, 14, UINT32_MAX);
+#endif
     if (rm_control(rm, rm->gpfifo, NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN, &tk, sizeof tk)) return -1;
-    rm->token = tk.workSubmitToken;
+    rm->token = (uint32_t)NS_VALUE(tk, 14, 0, tk.workSubmitToken);
 
     /* The VA space is UVM-owned: UVM must bind the channel's context buffers before RM will schedule it. */
     UVM_REGISTER_CHANNEL_PARAMS rc;
+    rm->channel_va = va_take(rm, 0x4000000, 0x1000);
+    if (!rm->channel_va) { rm->faulted = 1; return fail(rm, "channel VA exhausted"); }
+    rm->channel_va_size = 0x4000000;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
     memset(&rc, 0, sizeof rc);
     memcpy(rc.gpuUuid.uuid, rm->gpu_uuid, 16);
     rc.rmCtrlFd = rm->fd_ctl;
     rc.hClient = rm->root;
     rc.hChannel = rm->gpfifo;
-    rc.base = va_take(rm, 0x4000000, 0x1000);
-    if (!rc.base) { rm->faulted = 1; return fail(rm, "channel VA exhausted"); }
-    rc.length = 0x4000000;
-    rm->channel_va = rc.base;
-    rm->channel_va_size = rc.length;
+    rc.base = rm->channel_va;
+    rc.length = rm->channel_va_size;
+#else
+    uint64_t uuid[2];
+    memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+    NS_FILL(rc, 24, uuid[0], uuid[1], (uint32_t)rm->fd_ctl, rm->root, rm->gpfifo,
+            rm->channel_va, rm->channel_va_size);
+#endif
     if (uvm(rm, rm->fd_uvm, UVM_REGISTER_CHANNEL, &rc, &rc.rmStatus)) {
         rm->faulted = 1;
         return -1;
@@ -1131,7 +1302,12 @@ int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
         if (chan_extra(rm, &rm->extra[i])) return -1;
     }
 
-    NVA06C_CTRL_GPFIFO_SCHEDULE_PARAMS sch = { .bEnable = 1 };
+    NVA06C_CTRL_GPFIFO_SCHEDULE_PARAMS sch;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
+    sch = (NVA06C_CTRL_GPFIFO_SCHEDULE_PARAMS){ .bEnable = 1 };
+#else
+    NS_FILL(sch, 15, 1);
+#endif
     if (rm_control(rm, rm->chgroup, NVA06C_CTRL_CMD_GPFIFO_SCHEDULE, &sch, sizeof sch)) return -1;
     rm->put = 0;
     rm->retired = 0;
@@ -1146,10 +1322,16 @@ int nvrm_channel_destroy(Nvrm *rm) {
     }
     if (rm->channel_registered) {
         UVM_UNREGISTER_CHANNEL_PARAMS p;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
         memset(&p, 0, sizeof p);
         memcpy(p.gpuUuid.uuid, rm->gpu_uuid, sizeof rm->gpu_uuid);
         p.hClient = rm->root;
         p.hChannel = rm->gpfifo;
+#else
+        uint64_t uuid[2];
+        memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+        NS_FILL(p, 25, uuid[0], uuid[1], rm->root, rm->gpfifo);
+#endif
         if (uvm(rm, rm->fd_uvm, UVM_UNREGISTER_CHANNEL, &p, &p.rmStatus)) {
             rm->faulted = 1;
             return -1;
@@ -1336,16 +1518,30 @@ int nvrm_close(Nvrm *rm) {
     }
     if (rm->vas_registered) {
         UVM_UNREGISTER_GPU_VASPACE_PARAMS p;
+        int packed = 0;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
         memset(&p, 0, sizeof p);
         memcpy(p.gpuUuid.uuid, rm->gpu_uuid, sizeof rm->gpu_uuid);
-        if (uvm(rm, rm->fd_uvm, UVM_UNREGISTER_GPU_VASPACE, &p, &p.rmStatus)) rm->faulted = 1;
+#else
+        uint64_t uuid[2];
+        memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+        packed = NS_PACK(p, 22, uuid[0], uuid[1]);
+#endif
+        if (packed || uvm(rm, rm->fd_uvm, UVM_UNREGISTER_GPU_VASPACE, &p, &p.rmStatus)) rm->faulted = 1;
         rm->vas_registered = 0;
     }
     if (rm->gpu_registered) {
         UVM_UNREGISTER_GPU_PARAMS p;
+        int packed = 0;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT
         memset(&p, 0, sizeof p);
         memcpy(p.gpu_uuid.uuid, rm->gpu_uuid, sizeof rm->gpu_uuid);
-        if (uvm(rm, rm->fd_uvm, UVM_UNREGISTER_GPU, &p, &p.rmStatus)) rm->faulted = 1;
+#else
+        uint64_t uuid[2];
+        memcpy(uuid, rm->gpu_uuid, sizeof uuid);
+        packed = NS_PACK(p, 22, uuid[0], uuid[1]);
+#endif
+        if (packed || uvm(rm, rm->fd_uvm, UVM_UNREGISTER_GPU, &p, &p.rmStatus)) rm->faulted = 1;
         rm->gpu_registered = 0;
     }
     /* Free root children explicitly so a clean close proves every RM object

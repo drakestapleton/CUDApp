@@ -126,6 +126,14 @@ Getting one of these bits wrong does not fail loudly: the GPU reads a register b
 | Platform contract | `src/omega_gpu_platform.h` | What the runtime may ask of the machine: typed handles instead of file descriptors, explicit rights on every buffer, no silent fallback. The Linux client above is one implementation; AIEN's own driver plugs in at the same seam. |
 | Session, command lists, engine | `src/omega_gpu_session.c`, `src/omega_gpu_cmdlist.c`, `src/omega_gpu_engine.c` | One device per process, kept open; many launches recorded into one submission; a job runner that returns success or exactly one named failure, and refuses all further GPU work if it cannot tell whether the GPU finished. |
 
+RM/UVM parameter blocks are filled and decoded by the seeded Omega codecs in
+`native/nvrm/struct.om`, using the measured 580.173.02 header layouts.
+`CUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=1` selects the old C parameter fills for
+the migration oracle; its default is **0**, the Omega path. Raw ioctl calls
+remain in C. The shared UVM bodies retain the older fixed-size exports while
+the struct entry uses exact-size views. See [host evidence and the chip runbook](evidence/NVRM-STRUCT-OM/README.md):
+byte/layout differential and mutants are host evidence, not live-RM qualification.
+
 What the headers do not say, I learned on the chip and wrote down as rules, each with a receipt or an issue behind it:
 
 - **A word the CPU polls must be GPU-uncached.** Otherwise the GPU keeps the new value in its L2 cache and the CPU never sees it change. This stalled the work once, on 2026-10-02; the platform now refuses such a buffer.

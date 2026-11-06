@@ -3,10 +3,11 @@
 #include "omega_gpu_q38_graph.h"
 #include <assert.h>
 #include <stdio.h>
+#include "../standalone-oracles/oracle.h"
 int main(void) {
-    assert(omega_gpu_q38_exact_extra_bytes() == (UINT64_C(2)<<30));
-    assert(omega_gpu_q38_graph_set_exact_head(NULL,NULL,NULL,10384) == OMEGA_GPU_DGRAPH_BAD_ARGS);
-    assert(!omega_gpu_q38_graph_exact_head_active(NULL));
+    assert(so_eq(omega_gpu_q38_exact_extra_bytes(),so_call(17,0,0,0,0)));
+    assert(so_eq((uint64_t)(int64_t)omega_gpu_q38_graph_set_exact_head(NULL,NULL,NULL,10384),(uint64_t)(int64_t)OMEGA_GPU_DGRAPH_BAD_ARGS));
+    assert(so_eq(omega_gpu_q38_graph_exact_head_active(NULL),0));
     omega_gpu_q38_graph_set_exact_head_on(NULL,1);
     puts("PASS: exact-head extra admission reserve and null-handle refusals");
     return 0;

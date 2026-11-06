@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix='attention-dispatch-mutants-') as td:
   assert source.count(old)==1,(name,source.count(old))
   c=t/(name+'.c');c.write_text(source.replace(old,new));check=t/(name+'-check.c');check.write_text(test.replace('#include "../../src/omega_gpu_prefill_attn256_api.c"','#include "'+str(c)+'"'))
   exe=t/name
-  subprocess.run([os.environ.get('CC','cc'),'-std=gnu11','-O2','-I'+str(root/'src'),str(check),sys.argv[1],*['-Wl,--wrap='+x for x in wrap],'-lpthread','-lm','-o',str(exe)],check=True)
+  subprocess.run([os.environ.get('CC','cc'),'-std=gnu11','-O2','-I'+str(root/'src'),'-I'+str(root/'om/attention-mirror'),str(check),sys.argv[1],*['-Wl,--wrap='+x for x in wrap],'-lpthread','-lm','-o',str(exe)],check=True)
   p=subprocess.run([str(exe)],capture_output=True,text=True)
   assert p.returncode!=0 and 'Assertion' in p.stderr,(name,p.returncode,p.stderr)
   print(name+': caught',flush=True)

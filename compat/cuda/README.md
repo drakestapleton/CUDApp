@@ -10,9 +10,18 @@ redefine them.
 | `fixture/vadd_drv.c` | Driver API application written for this gate: one context, one PTX module, three buffers, one launch, host-side verification. |
 | `fixture/vadd_u32.ptx` | The module it loads, written by hand from the PTX ISA (class A, PROVENANCE.md section 2). |
 | `build.sh OUT` | Rebuilds the aarch64 and x86_64 executables. A link-only stub `libcuda.so.1` (each cu* symbol defined as 0, no code) satisfies the link; it is never a runtime library. |
-| `profile-c0-aarch64-v1.tsv`, `profile-c0-x86_64-v1.tsv` | The frozen profiles. |
+| `profile-c0-aarch64-v1.tsv`, `profile-c0-x86_64-v1.tsv` | Original frozen identities, retained byte-identical. |
+| `profile-c0-aarch64-v2.tsv`, `profile-c0-x86_64-v2.tsv` | Active frozen identities with the seeded standalone-oracle unit linked into the fixture. |
 | `c0_check.om` | Seeded Omega admission checker, composed after `om/cache/digest.om` (SHA-256). |
-| `test.sh [WORKDIR]` | Rebuilds twice (hashes must match), admits both profiles, then requires 15 negative controls to refuse. `make test-cuda-c0-profile`. |
+| `test.sh [WORKDIR]` | Rebuilds twice (hashes must match), proves the v1/v2 CUDA import sets identical, admits both v2 profiles, then requires 14 negative controls to refuse. `make test-cuda-c0-profile`. |
+
+The v2 identity change moves the fixture's reference inputs, vector-add reference,
+grid size, checksum and failure aggregation to `om/standalone-oracles/oracles.om`.
+The host executable hashes change; the PTX and the CUDA import sets do not. The
+generated seeded bridge adds libc trap-handling imports, recorded in v2.
+The old v1 profiles are not revised or used to admit the changed executables.
+`build.sh` only builds artifacts. Neither it nor `test.sh` executes the CUDA fixture
+on a GPU; the lane's separate host transport exercise is not device qualification.
 
 ## Checker
 
@@ -128,5 +137,5 @@ spark-window close <window-id>
   inspection. The device part follows the C3 arm.
 - CUDApp#185 (C2): translate `fixture/vadd_u32.ptx` with exactly the `ptxop` and `sreg` rows. Every
   `deny` root must be refused.
-- CUDApp#186: `build/cuda-compat-check --manifest compat/cuda/profile-c0-<isa>-v1.tsv --gate C0` wraps
+- CUDApp#186: `build/cuda-compat-check --manifest compat/cuda/profile-c0-<isa>-v2.tsv --gate C0` wraps
   `c0_check`. The manifest is this TSV, not JSON. NOT_RUN rows stay NOT_RUN.

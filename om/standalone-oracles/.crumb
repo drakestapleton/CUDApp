@@ -1,0 +1,36 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T11:36:12Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:59020600bb095463693c689838559853ccb500d83643190220118879b92dcb41",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 1,
+      "generated_at_commit": "b6ddd22562b5729788a1439abc49f66068f10446",
+      "source_tree": "sha256:5d398a5907ee72242bdf76d714e0cdaf75c32b1cf7473ef1a7d7da7612d10d04"
+    },
+    "owner_lane": "",
+    "seed": {
+      "files": [
+        "README.md",
+        "family-check.py",
+        "host-cuda.c",
+        "host-norm.c",
+        "mutants.py",
+        "oracle-c.c",
+        "oracle.h",
+        "oracles.om",
+        "red.c",
+        "scalar-check.c"
+      ],
+      "purpose_auto": "Repository root standalone-oracles. Purpose not yet described by a human."
+    }
+  },
+  "layer": "root",
+  "name": "standalone-oracles",
+  "purpose": "Repository root standalone-oracles. Purpose not yet described by a human.",
+  "schema_version": "1.0.0"
+}

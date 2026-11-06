@@ -3,14 +3,14 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-01T16:47:09Z",
+      "compiled_at": "2026-11-06T11:36:12Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:4aab8fe5adcb674ef13cd30ebb293d6b31c457eb42b209bd479add4e492f2e68",
+      "digest": "sha256:211e814d2954c7e6cdc18ff28da1d72317920f4ca4b3ffefd47fd70d77c0aefc",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "files": 20,
-      "generated_at_commit": "39160652aa4b4224d64c1fa9b7c012416efa1cd0",
-      "source_tree": "sha256:37714faa582eed5abec1c4165e0960bd760732041d519ab0694f9b542df94d7b"
+      "generated_at_commit": "b6ddd22562b5729788a1439abc49f66068f10446",
+      "source_tree": "sha256:42073f159dc029f3b3688baf649896aaaf002e2a15a0a5000110899893100288"
     }
   },
   "name": "q38-head",

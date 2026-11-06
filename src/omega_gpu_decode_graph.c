@@ -9,6 +9,7 @@
 #include "omega_blackwell_codegen_dec.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
+#include "omega_gpu_graph_om.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -50,8 +51,8 @@ struct OmegaGpuDecodeGraph {
     uint64_t stamp[OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1];
 };
 
-static size_t al(size_t v) { return (v + 255u) & ~(size_t)255u; }
-static uint64_t va_of(const OmegaGpuDecodeGraph *g, size_t off) { return g->buf.va + off; }
+static size_t al(size_t v) { return omega_graph_addr(0,v,0,0,0,0,0); }
+static uint64_t va_of(const OmegaGpuDecodeGraph *g, size_t off) { return omega_graph_addr(2,g->buf.va,0,0,0,off,1); }
 static void *cpu_of(const OmegaGpuDecodeGraph *g, size_t off) { return (uint8_t *)g->buf.cpu + off; }
 static void put64(uint32_t *a, unsigned off, uint64_t v) { a[(off - 0x380) / 4] = (uint32_t)v; a[(off - 0x380) / 4 + 1] = (uint32_t)(v >> 32); }
 static void putf(uint32_t *a, unsigned off, float f) { memcpy(&a[(off - 0x380) / 4], &f, 4); }
@@ -326,6 +327,55 @@ int omega_gpu_decode_graph_record_layer(OmegaGpuDecodeGraph *g, uint32_t l, uint
     OmegaGpuDecodeGraphVas v; omega_gpu_decode_graph_vas(g, &v);
     const float eps = g->cfg.eps;
     const uint64_t norm_l = va_of(g, g->lo.norms) + (uint64_t)l * OMEGA_GPU_DGRAPH_HIDDEN * 4u, tab = va_of(g, g->lo.tabs) + (uint64_t)l * 32u;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t cfg[16] = {0,g->xq_layer!=(int)l,1,0,0,omega_gpu_decode_graph_prefetch(),
+        l,g->cfg.layers,pos,g->mutant,0,g->flush_each,OMEGA_GPU_DGRAPH_HIDDEN,
+        OMEGA_DEC_INTER,OMEGA_GPU_DGRAPH_TOPK,g->am_ctas};
+    uint64_t values[64] = {v.x,v.xq,v.qkv,0,v.attn,v.o,v.gu,v.act,v.dn,norm_l,
+        va_of(g,g->lo.fnorm),tab,0,0,v.hidden,v.attn};
+    values[21]=va_of(g,g->lo.pf_x); values[22]=va_of(g,g->lo.pf_y);
+    values[27]=omega_graph_fbits(eps); values[28]=omega_graph_fbits(SCALE_2P64); values[29]=omega_graph_fbits(1.0f);
+    static const int kernels[24] = {K_NORM,K_ADD,K_CN,K_SW,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,K_SW_M1,0,0,K_CN_M2};
+    OmegaGpuRouterDevOut router={0};
+    int rc=OMEGA_GPU_DGRAPH_OK;
+    for(uint64_t phase=0;rc==OMEGA_GPU_DGRAPH_OK;phase++) {
+        uint64_t node[64];
+        if(!omega_graph_next(cfg,values,node,phase))return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        if(node[0]==255)break;
+        uint32_t words[32];omega_graph_args(node,words);
+        switch(node[0]) {
+        case 0:break;
+        case 1:case 9:case 12:case 14: {
+            static const uint8_t kinds[15] = {[1]=OMEGA_GPU_DGRAPH_K_NORM,[9]=OMEGA_GPU_DGRAPH_K_ADD,
+                [12]=OMEGA_GPU_DGRAPH_K_SWIGLU,[14]=OMEGA_GPU_DGRAPH_K_COMBINE};
+            rc=add_glue(g,kinds[node[0]],&g->k[kernels[node[1]]],node[2],node[3],node[4],words,node[5]);break;
+        }
+        case 2:rc=after_op(g,OMEGA_GPU_DGRAPH_K_QKV,omega_gpu_fp8_gemv_grouped_record(g->cl,g->layer[l].qkv,
+            node[7],node[10],node[11],node[8],node[12]));break;
+        case 6:rc=after_op(g,OMEGA_GPU_DGRAPH_K_ATTN,omega_gpu_decode_attn_record(g->cl,g->cfg.attn,l,node[13],node[11],eps,
+            g->mutant==3?1.0f:SCALE_2P64,node[12]));break;
+        case 8:
+            rc=after_op(g,OMEGA_GPU_DGRAPH_K_O,omega_gpu_fp8_gemv_grouped_record(g->cl,g->layer[l].o,
+                node[7],node[10],node[11],node[8],node[12]));
+            if(!rc&&g_prefetch_red&&!g->flush_each&&omega_gpu_cmdlist_mark_independent(g->cl))rc=OMEGA_GPU_DGRAPH_CHIP_FAIL;
+            break;
+        case 10:
+            rc=after_op(g,OMEGA_GPU_DGRAPH_K_ROUTER,omega_gpu_router_record(g->cl,g->cfg.router,l,node[11],eps,g->cfg.norm_topk,SCALE_2P64,&router));
+            values[16]=router.tab_gu_va;values[17]=router.tab_dn_va;values[18]=router.xout_va;values[19]=router.wts_va;break;
+        case 11:rc=after_op(g,OMEGA_GPU_DGRAPH_K_GATE_UP,omega_gpu_fp8_gemv_grouped_record(g->cl,g->layer[l].gu,
+            node[7],node[10],node[11],node[8],node[12]));break;
+        case 13:rc=after_op(g,OMEGA_GPU_DGRAPH_K_DOWN,omega_gpu_fp8_gemv_grouped_record(g->cl,g->layer[l].dn,
+            node[7],node[10],node[11],node[8],node[12]));break;
+        case 15: {
+            int prc=omega_gpu_fp8_gemv_grouped_record(g->cl,g->layer[l].o,node[7],node[10],node[11],node[8],node[12]);
+            if(!prc&&omega_gpu_cmdlist_mark_independent(g->cl))prc=-1;
+            rc=after_op(g,OMEGA_GPU_DGRAPH_K_ATTN,prc);break;
+        }
+        default:return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        }
+    }
+    if(rc==OMEGA_GPU_DGRAPH_OK){if(l+1==g->cfg.layers)g->hidden_ready=1;else g->xq_layer=(int)l+1;}
+#else
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (g->xq_layer != (int)l) rc = omega_gpu_decode_graph_record_res(g, OMEGA_DEC_RES_NORM, v.x, 0, 0, norm_l, v.xq, eps, SCALE_2P64);
     if (rc == OMEGA_GPU_DGRAPH_OK) rc = after_op(g, OMEGA_GPU_DGRAPH_K_QKV, omega_gpu_fp8_gemv_grouped_record(g->cl, g->layer[l].qkv, 1, tab, v.xq, 1, v.qkv));
@@ -349,6 +399,7 @@ int omega_gpu_decode_graph_record_layer(OmegaGpuDecodeGraph *g, uint32_t l, uint
         rc = omega_gpu_decode_graph_record_res(g, OMEGA_DEC_RES_COMBINE | OMEGA_DEC_RES_NORM, v.x, v.dn, r.wts_va, nw, last ? v.hidden : v.xq, eps, last ? 1.0f : SCALE_2P64);
         if (rc == OMEGA_GPU_DGRAPH_OK) { if (last) g->hidden_ready = 1; else g->xq_layer = (int)l + 1; }
     }
+#endif
     return rc == OMEGA_GPU_DGRAPH_OK ? rc : fail(g, NULL, rc);
 }
 
@@ -358,6 +409,24 @@ int omega_gpu_decode_graph_record_final(OmegaGpuDecodeGraph *g) {
     if (!g->final_set) return fail(g, "decode graph: final norm not set", OMEGA_GPU_DGRAPH_BAD_ARGS);
     OmegaGpuDecodeGraphVas v; omega_gpu_decode_graph_vas(g, &v);
     int rc = OMEGA_GPU_DGRAPH_OK;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t cfg[16]={g->hidden_ready,0,0,0,g->cfg.vocab,g->am_ctas,OMEGA_GPU_DGRAPH_HIDDEN,
+        omega_graph_fbits(g->cfg.eps),omega_graph_fbits(1.0f),omega_graph_fbits(1.0f)};
+    const uint64_t values[16]={v.x,v.hidden,v.logits,v.token,va_of(g,g->lo.fnorm),0,va_of(g,g->lo.am_v),va_of(g,g->lo.am_i)};
+    for(uint64_t phase=0;rc==OMEGA_GPU_DGRAPH_OK;phase++){
+        uint64_t node[64],result=0;
+        if(omega_mg_final(&result,cfg,16,values,16,node,64,phase)!=OMEGA_OK||result!=1)return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        if(node[0]==255)break;
+        uint32_t words[32];omega_graph_args(node,words);
+        switch(node[0]){
+        case 0:break;
+        case 1:rc=add_glue(g,OMEGA_GPU_DGRAPH_K_NORM,&g->k[K_NORM],node[2],node[3],node[4],words,node[5]);break;
+        case 7:rc=after_op(g,OMEGA_GPU_DGRAPH_K_LM_HEAD,omega_gpu_bf16_gemv_record(g->cl,g->cfg.lm_head,node[11],node[12]));break;
+        case 8:rc=add_glue(g,OMEGA_GPU_DGRAPH_K_ARGMAX,&g->k[node[1]==5?K_AM0:K_AM1],node[2],node[3],node[4],words,node[5]);break;
+        default:return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        }
+    }
+#else
     if (!g->hidden_ready) rc = omega_gpu_decode_graph_record_res(g, OMEGA_DEC_RES_NORM, v.x, 0, 0, va_of(g, g->lo.fnorm), v.hidden, g->cfg.eps, 1.0f);
     if (rc == OMEGA_GPU_DGRAPH_OK) rc = after_op(g, OMEGA_GPU_DGRAPH_K_LM_HEAD, omega_gpu_bf16_gemv_record(g->cl, g->cfg.lm_head, v.hidden, v.logits));
     uint32_t a0[OMEGA_DEC_AM_WORDS], a1[OMEGA_DEC_AM_WORDS]; memset(a0, 0, sizeof a0); memset(a1, 0, sizeof a1);
@@ -366,6 +435,7 @@ int omega_gpu_decode_graph_record_final(OmegaGpuDecodeGraph *g) {
     put64(a1, OMEGA_DEC_AM_V, amv); put64(a1, OMEGA_DEC_AM_I, ami); put64(a1, OMEGA_DEC_AM_OV, v.token + 4u); put64(a1, OMEGA_DEC_AM_OI, v.token);
     if (rc == OMEGA_GPU_DGRAPH_OK) rc = add_glue(g, OMEGA_GPU_DGRAPH_K_ARGMAX, &g->k[K_AM0], g->am_ctas, 1, (size_t)g->am_ctas * OMEGA_DEC_ARGMAX_SPAN, a0, OMEGA_DEC_AM_WORDS);
     if (rc == OMEGA_GPU_DGRAPH_OK) rc = add_glue(g, OMEGA_GPU_DGRAPH_K_ARGMAX, &g->k[K_AM1], 1, 1, OMEGA_DEC_ARGMAX_SPAN, a1, OMEGA_DEC_AM_WORDS);
+#endif
     return rc == OMEGA_GPU_DGRAPH_OK ? rc : fail(g, NULL, rc);
 }
 

@@ -7,6 +7,7 @@
 #include "omega_gpu_platform.h"
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_cmdlist.h"
+#include "omega_gpu_graph_om.h"
 #include <string.h>
 
 #define PF_SLOTS 64
@@ -115,14 +116,38 @@ int omega_gpu_pf_kernel_locked(const OmegaPfKey *key, OmegaPfGen gen, OmegaPfKer
     return OMEGA_GPU_PF_OK;
 }
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+static int pf_launch_plan(const OmegaPfKernel *k, uint32_t threads, uint32_t gx, uint32_t gy,
+                          uint32_t shared, const uint32_t *args, uint32_t nargs, OmegaGpuLaunch *launch,
+                          const char *budget, const char *registers) {
+    if (!k) return OMEGA_GPU_PF_BAD_ARGS;
+    const uint64_t q[16]={k->code_va,k->gpr_declared,threads,gx,gy,shared,nargs,k->gpr_peak};
+    uint64_t d[16],result=0;
+    if(omega_mg_lauch(&result,q,16,d,16)!=OMEGA_OK)return OMEGA_GPU_PF_CHIP_FAIL;
+    if(result==0)return OMEGA_GPU_PF_BAD_ARGS;
+    if(result==2){omega_gpu_session_set_error(budget);return OMEGA_GPU_PF_TOO_LARGE;}
+    if(result==3){omega_gpu_session_set_error(registers);return OMEGA_GPU_PF_CHIP_FAIL;}
+    *launch=(OmegaGpuLaunch){.code_va=d[0],.gpr_count=d[1],.threads_x=d[2],.threads_y=1,
+        .grid_x=d[3],.grid_y=d[4],.shared_bytes=d[5],.n_args=d[6],.num_elements=d[8],
+        .timeout_ms=d[9],.spin_us=d[10],.args=args};
+    return OMEGA_GPU_PF_OK;
+}
+#endif
 int omega_gpu_pf_launch_locked(const OmegaPfKernel *k, uint32_t threads, uint32_t grid_x, uint32_t grid_y, uint32_t shared_bytes,
                                const uint32_t *args, uint32_t n_args, uint64_t *ns) {
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    OmegaGpuLaunch L;
+    int rc=pf_launch_plan(k,threads,grid_x,grid_y,shared_bytes,args,n_args,&L,
+        "prefill launch: registers x threads exceed the file","declared registers below peak + 2: refusing to launch");
+    if(rc!=OMEGA_GPU_PF_OK)return rc;
+#else
     if (!k || !threads || !grid_x || !grid_y) return OMEGA_GPU_PF_BAD_ARGS;
     if ((uint64_t)threads * k->gpr_declared > 65536u) { omega_gpu_session_set_error("prefill launch: registers x threads exceed the file"); return OMEGA_GPU_PF_TOO_LARGE; }
     if (!omega_bw_gpr_declared_ok(k->gpr_declared, k->gpr_peak)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); return OMEGA_GPU_PF_CHIP_FAIL; }
     OmegaGpuLaunch L = { .code_va = k->code_va, .gpr_count = k->gpr_declared, .threads_x = threads, .threads_y = 1, .grid_x = grid_x, .grid_y = grid_y,
                          .num_elements = (size_t)threads * grid_x * grid_y, .args = args, .n_args = n_args, .timeout_ms = PF_TIMEOUT_MS,
                          .shared_bytes = shared_bytes, .spin_us = PF_SPIN_US };
+#endif
     uint64_t t = 0;
     if (omega_gpu_session_launch(&L, &t, NULL) != 0) return OMEGA_GPU_PF_CHIP_FAIL;
     g.chip_ns += t; g.launches++;
@@ -132,26 +157,48 @@ int omega_gpu_pf_launch_locked(const OmegaPfKernel *k, uint32_t threads, uint32_
 
 int omega_gpu_pf_record_locked(OmegaGpuCmdList *cl, const OmegaPfKernel *k, uint32_t threads, uint32_t grid_x, uint32_t grid_y,
                                uint32_t shared_bytes, const uint32_t *args, uint32_t n_args) {
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    if(!cl)return OMEGA_GPU_PF_BAD_ARGS;
+    OmegaGpuLaunch L;
+    int rc=pf_launch_plan(k,threads,grid_x,grid_y,shared_bytes,args,n_args,&L,
+        "prefill record: registers x threads exceed the file","declared registers below peak + 2: refusing to record");
+    if(rc!=OMEGA_GPU_PF_OK)return rc;
+#else
     if (!cl || !k || !threads || !grid_x || !grid_y) return OMEGA_GPU_PF_BAD_ARGS;
     if ((uint64_t)threads * k->gpr_declared > 65536u) { omega_gpu_session_set_error("prefill record: registers x threads exceed the file"); return OMEGA_GPU_PF_TOO_LARGE; }
     if (!omega_bw_gpr_declared_ok(k->gpr_declared, k->gpr_peak)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to record"); return OMEGA_GPU_PF_CHIP_FAIL; }
     OmegaGpuLaunch L = { .code_va = k->code_va, .gpr_count = k->gpr_declared, .threads_x = threads, .threads_y = 1, .grid_x = grid_x, .grid_y = grid_y,
                          .num_elements = (size_t)threads * grid_x * grid_y, .args = args, .n_args = n_args, .timeout_ms = PF_TIMEOUT_MS,
                          .shared_bytes = shared_bytes, .spin_us = PF_SPIN_US };
+#endif
     return omega_gpu_cmdlist_add(cl, &L) < 0 ? OMEGA_GPU_PF_CHIP_FAIL : OMEGA_GPU_PF_OK;
 }
 
 static int gen_copy(const OmegaPfKey *key, void *prog) { (void)key; return omega_blackwell_codegen_pf_copy_prog(prog); }
 #define KIND_COPY 1u
 static int copy_locked(uint64_t dst, uint64_t src, size_t bytes) {
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    uint64_t q[16]={dst,src,bytes,0,1ull<<30,OMEGA_PF_COPY_THREADS},plan[16],result=0;
+    if(omega_mg_copy(&result,q,16,plan,16)!=OMEGA_OK||result==0)return OMEGA_GPU_PF_BAD_ARGS;
+    if(result==2)return OMEGA_GPU_PF_OK;
+#else
     if ((bytes & 15u) || (dst & 15u) || (src & 15u)) return OMEGA_GPU_PF_BAD_ARGS;
     if (bytes == 0) return OMEGA_GPU_PF_OK;
+#endif
     OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = KIND_COPY;
     OmegaPfKernel k; int rc = omega_gpu_pf_kernel_locked(&key, gen_copy, &k);
     for (size_t done = 0; rc == OMEGA_GPU_PF_OK && done < bytes;) {
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        q[3]=done;
+        if(omega_mg_copy(&result,q,16,plan,16)!=OMEGA_OK||result!=1)return OMEGA_GPU_PF_CHIP_FAIL;
+        const size_t part=plan[2];
+        const uint32_t units=plan[3],grid=plan[4];
+        const uint64_t d=plan[0],s=plan[1];
+#else
         size_t part = bytes - done; if (part > (1ull << 30)) part = 1ull << 30;
         const uint32_t units = (uint32_t)(part / 16u), grid = (units + OMEGA_PF_COPY_THREADS - 1u) / OMEGA_PF_COPY_THREADS;
         const uint64_t d = dst + done, s = src + done;
+#endif
         uint32_t args[5] = { (uint32_t)d, (uint32_t)(d >> 32), (uint32_t)s, (uint32_t)(s >> 32), units };
         rc = omega_gpu_pf_launch_locked(&k, OMEGA_PF_COPY_THREADS, grid, 1, 0, args, 5, NULL);
         done += part;
@@ -173,18 +220,32 @@ int omega_gpu_pf_copy_va(uint64_t dst_va, uint64_t src_va, size_t bytes) {
 }
 
 static int xfer(const OmegaGpuMem *dev, size_t off, void *host, size_t bytes, int up) {
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    if(!dev||!host)return OMEGA_GPU_PF_BAD_ARGS;
+    uint64_t q[16]={dev->va,off,bytes,dev->size,0,0,up!=0},plan[16],result=0;
+    if(omega_mg_xfer(&result,q,16,plan,16)!=OMEGA_OK||result==0)return OMEGA_GPU_PF_BAD_ARGS;
+#else
     if (!dev || !host || (off & 15u) || (bytes & 15u) || off + bytes > dev->size) return OMEGA_GPU_PF_BAD_ARGS;
+#endif
     omega_gpu_session_lock();
     int rc = omega_gpu_pf_open_locked();
     if (rc == OMEGA_GPU_PF_OK && omega_gpu_session_scratch(&g.stage, PF_STAGE_BYTES) != 0) rc = OMEGA_GPU_PF_CHIP_FAIL;
     for (size_t done = 0; rc == OMEGA_GPU_PF_OK && done < bytes;) {
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        q[4]=done;q[5]=g.stage.mem.va;
+        if(omega_mg_xfer(&result,q,16,plan,16)!=OMEGA_OK||result!=1){rc=OMEGA_GPU_PF_CHIP_FAIL;break;}
+        const size_t part=plan[2];
+        const uint64_t dst=plan[0],src=plan[1];
+#else
         size_t part = bytes - done; if (part > PF_STAGE_BYTES) part = PF_STAGE_BYTES;
+        const uint64_t dst=up?dev->va+off+done:g.stage.mem.va,src=up?g.stage.mem.va:dev->va+off+done;
+#endif
         if (up) {
             memcpy(g.stage.mem.cpu, (const uint8_t *)host + done, part);
             if (omega_gpu_session_sync_to_gpu(&g.stage.mem) != 0) rc = OMEGA_GPU_PF_CHIP_FAIL;
-            else rc = copy_locked(dev->va + off + done, g.stage.mem.va, part);
+            else rc = copy_locked(dst, src, part);
         } else {
-            rc = copy_locked(g.stage.mem.va, dev->va + off + done, part);
+            rc = copy_locked(dst, src, part);
             if (rc == OMEGA_GPU_PF_OK && omega_gpu_session_sync_to_cpu(&g.stage.mem) != 0) rc = OMEGA_GPU_PF_CHIP_FAIL;
             if (rc == OMEGA_GPU_PF_OK) memcpy((uint8_t *)host + done, g.stage.mem.cpu, part);
         }

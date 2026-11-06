@@ -22,7 +22,14 @@ OBSERVE="closure_code=$CLOSURE,om/moe/closure_code.om closure_launch=$CLOSURE,om
 UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathlibs/mathlibs_ir.om om/encoder/ampere_enc_sm86.om om/encoder/amp_runtime.om repack=$QUANT,om/quant/repack.om quant_wire=$QUANT,om/quant/runtime.om compose=$COMP encode=$ENC cache_runtime=om/cache/residency.om,om/cache/runtime.om lease=om/cache/residency.om,om/cache/runtime.om,om/cache/lease.om slotrev=om/cache/residency.om,om/cache/slotrev.om command=om/cache/residency.om,om/cache/command.om validate=$CACHE,$COMP,$ENC,om/components/admit.om,om/cache/validate.om digest=$REAL,om/cache/digest.om,om/cache/key.om code_digest=$REAL,om/cache/digest.om,om/cache/codekey.om templates=$REAL,om/cache/digest.om,om/cache/templates.om graph=$PIPE,om/pipeline/runtime.om context_lookup=om/pipeline/context.om,om/pipeline/context_abi.om binding=$REAL,om/pipeline/binding.om $MOE closure_pack=$CLOSURE,om/moe/closure_pack.om closure_bind=$CLOSURE,om/moe/closure_bind.om closure_blob=$CLOSURE,om/moe/closure_blob.om closure_cover=$CLOSURE,om/pipeline/mccover.om,om/pipeline/coverage_entry.om closure_intent=$CLOSURE,om/pipeline/mccover.om closure_seal=$CLOSURE,om/pipeline/mccover.om,om/pipeline/seal_entry.om closure_reseal=$CLOSURE,om/pipeline/mccover.om,om/pipeline/seal_reuse.om $OBSERVE prefill_shape=om/prefill-shape/admit.om prefill_reading=om/prefill-shape/reading.om prefill_workspace=om/prefill-shape/workspace.om prefill_order=om/prefill-shape/order.om attn_mirror_plan=om/attention-mirror/plan.om attn_mirror_step=om/attention-mirror/step.om q38_runtime=om/q38-head/envelope.om,om/q38-head/plan.om q38_emit=om/components/bw_alloc.om,om/components/bw_effect.om,om/components/bw_check.om,om/components/bw_project.om,$ENC,om/q38-head/bounds.om,om/q38-head/emit.om}"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
-  UNITS="$UNITS model_graph=om/graph/record.om"
+  GRAPH_REC=om/graph/record.om
+  GRAPH_NODE=$GRAPH_REC,om/graph/scalar.om
+  UNITS="$UNITS model_graph_wire=$GRAPH_REC,om/graph/entry_wire.om model_graph_node=$GRAPH_NODE,om/graph/entry_node.om model_graph_batch=$GRAPH_NODE,om/graph/pf_order.om,om/graph/batch.om,om/graph/entry_batch.om model_graph_launch=$GRAPH_REC,om/graph/entry_launch.om model_graph_copy=om/graph/prefill.om,om/graph/entry_copy.om model_graph_xfer=om/graph/prefill.om,om/graph/entry_xfer.om model_graph=$GRAPH_NODE,om/graph/final.om,om/graph/entry_final.om"
+  UNITS="$UNITS model_graph_expert=$GRAPH_NODE,om/graph/pf_order.om,om/graph/batch.om,om/graph/experts.om"
+  UNITS="$UNITS model_graph_group=om/graph/group.om"
+  UNITS="$UNITS model_graph_address=om/graph/address.om"
+  UNITS="$UNITS model_graph_final_batch=$GRAPH_NODE,om/graph/final_batch.om"
+  UNITS="$UNITS model_graph_window=$GRAPH_NODE,om/graph/window.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

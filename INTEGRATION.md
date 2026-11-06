@@ -411,3 +411,56 @@ before expansion. `/tmp/integ/6a-360-focused.log/.rc` rc0:
 2949 differential cases, eight compiled mutants/two missing-unit reds,
 selftest IR/encoded/cubin identity, QMMA714275/94 bit-basis, host and TGEMM sim PASS.
 Final `crumb verify: OK: 91 crumbs current`. Chip/QMMA hardware NOT_RUN.
+
+### Supplemental union and freestanding attention closure
+
+Merged `integ/stage6d` at `0acb67d2b855cf799406e055a1fd3e8707139dcc`
+through merge `c909ee57b36bba042fc183c8f0ee500a69b796a2`, containing
+#313, #315, #312, #287 and #298. The lane's detailed commands and refusal
+controls are recorded in `/tmp/integ/HANDOFF-Integrator6D.md` and
+`/tmp/integ/6d-{313,315,312,287,298}.log/.rc`.
+Main authorized #298 after compiler #1048/#1050 landed. SMI uses the separate
+`e9b635875e6d43314aedc9d85f25c8f65636ac3d` compiler artifact
+(`390629fd22590aaefca852045f8b0ace86c62cefb3b1bc203ce400773c8abc2f`);
+the general seeded compiler pin is unchanged.
+
+The combined attention path requires freestanding `attn_host`, `attention_ir`,
+`cg_replay`, `cg_life` and `cg_invar` providers. They now use the existing
+bridge#77 freestanding profile, with generated callers migrated together.
+The production NO_POSIX link includes the IR replay adapter, not the hosted
+numeric/mathlibs build/data API. The native runtime test consumes that adapter
+from the aggregate instead of compiling a second copy.
+The freestanding link passed with 68 files and only `memcmp`, `memcpy`,
+`memset`, `strcmp`, `strlen` undefined (artifact10557).
+
+CI on `f7666ac4c593af252fcf7d184057a4e0001c0039` exposed relocated latency
+oracle citations after Half A's migration guards and a clang cross-target
+preprocessing dependency on hosted libc headers. Citation lines and the exact
+fixed-class assertion window now follow the unchanged predicates; clang native
+artifact generation explicitly selects freestanding preprocessing. Assertions,
+stall values, import allowlists and workflow settings are unchanged.
+
+### PR #280 repair round (CudaInteg280b, 2026-11-06)
+
+CI on `cd2b976a74c2f4aa0f416b4e7bf42fa94ca94f40` failed three host jobs and
+raised CodeQL alert 107 (`cpp/uncontrolled-arithmetic`, HIGH).
+- `tools/gpu_engine_backend_mutations.sh` line 39 had been truncated with a literal
+  `…` in `ed00efea`; `dash -n` failed at line 56. `da433ee4` restores the SRCS line.
+- `tools/gpu_engine_mutations.sh` did not copy `omega_fixture_rest.h` into the
+  mutant tree; `cecc4ea6` adds it to COPY.
+- Alert 107 flows from `rand()` in `tests/regalloc_om/differential.c` into
+  `src/cudapp_freest_regalloc.c`. `d3f5359e` replaces `rand()`/`srand(1)` with a
+  fixed 64-bit LCG, so the differential is also identical across libcs. The
+  earlier generated-code rewrite `c2f64b60` changed `ra_u2l`/`ra_l2u` results
+  (10 boundary mismatches) and is reverted by `bc742fd4`.
+- `ed00efea` moved several units to `src/cudapp_freest_*.c`.
+  `tests/qmma_probe_rest_mutants.py` now links the exact `$(QMMA_REST_SRC)` list
+  from make, and `tests/attn_host_check.py` resolves each unit to its one
+  checked provider and regenerates freestanding mutants with `bridge-freest`.
+
+Merged `integ/stage6a` at `4b44b3594b36b28436592dc088baa9e7a72d05ca` (#351,
+chip enumeration and PCI masks in seeded Omega) through `6a7e77ea`. The m16 and
+NVRM lifecycle links keep both `cudapp_om_chip_enum.c` and
+`cudapp_om_fixture_text.c`; the unit idents were regenerated with
+`om/units.sh` (`--check` byte-identical) and `crumb verify` is current.
+Chip, QMMA hardware and NVRM lifecycle gates: NOT_RUN.

@@ -31,6 +31,7 @@
  */
 #include "omega_gpu_matmul_api.h"
 #include "omega_host_policy.h"
+#include "omega_api_plan.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_codegen.h"
@@ -86,7 +87,9 @@ const char *omega_gpu_matmul_last_error(void) { return omega_gpu_session_last_er
 static uint64_t now_ns(void) { return omega_gpu_session_now_ns(); } /* the platform clock (CLOCK_NS) */
 static inline double abs_d(double x) { return x < 0.0 ? -x : x; }
 
-static uint32_t round_up(uint32_t v, uint32_t q) { return (v + q - 1) / q * q; }
+static uint32_t round_up(uint32_t v, uint32_t q) {
+    uint64_t p[16]={v,q}; (void)ap_plan(AP_MM,3,p); return (uint32_t)p[8];
+}
 
 const char *omega_gpu_matmul_rc_name(int rc) {
     switch (rc) {
@@ -146,7 +149,7 @@ void omega_gpu_matmul_cache_clear(void) {
 
 void omega_gpu_matmul_set_cta_budget(uint32_t ctas) {
     omega_gpu_session_lock();
-    g.cta_budget = ctas ? ctas : OMEGA_GPU_MATMUL_MAX_CTAS;
+    uint64_t p[16]={ctas};(void)ap_plan(AP_MM,8,p);g.cta_budget=p[8];
     cache_clear_locked();
     omega_gpu_session_unlock();
 }
@@ -156,23 +159,17 @@ uint32_t omega_gpu_matmul_cta_budget(void) { return g.cta_budget; }
 /* ---- opt-in serving reservation (see the header) ---- */
 
 int omega_gpu_matmul_reserve(uint32_t max_rows, uint32_t max_k, uint32_t max_n, uint32_t max_n_one_row, uint32_t kernel_slots) {
-    int shape_rc = omega_host_shape(0, max_rows, max_k, max_n);
+    uint64_t p[16]={max_rows,max_k,max_n,max_n_one_row,kernel_slots};
+    int shape_rc=ap_plan(AP_MM,0,p);
     if (shape_rc == OMEGA_GPU_MATMUL_BAD_ARGS) { omega_gpu_session_set_error("matmul reserve: zero bound"); return shape_rc; }
-    if (shape_rc || max_n_one_row > OMEGA_BW_MATMUL_MAX_N ||
-        kernel_slots > CACHE_SLOTS_MAX) {
+    if (shape_rc) {
         omega_gpu_session_set_error("matmul reserve: bound past the matmul envelope");
-        return OMEGA_GPU_MATMUL_TOO_LARGE;
-    }
-    const size_t mp = round_up(max_rows, OMEGA_GPU_MATMUL_TILE_M), kp = round_up(max_k, OMEGA_GPU_MATMUL_TILE_K);
-    size_t c_bytes = mp * round_up(max_n, OMEGA_GPU_MATMUL_TILE_N) * 4u;
-    if (max_n_one_row) { /* a call of up to 16 rows (one row tile) may be wider than the batch width: lm_head */
-        size_t one = (size_t)OMEGA_GPU_MATMUL_TILE_M * round_up(max_n_one_row, OMEGA_GPU_MATMUL_TILE_N) * 4u;
-        if (one > c_bytes) c_bytes = one;
+        return shape_rc;
     }
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_MATMUL_OK;
     if (!dev_open_locked()) rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
-    else if (omega_gpu_session_scratch_reserve(&g.a_buf, mp * kp * 2u) != 0 || omega_gpu_session_scratch_reserve(&g.c_buf, c_bytes) != 0) {
+    else if (omega_gpu_session_scratch_reserve(&g.a_buf, p[11]) != 0 || omega_gpu_session_scratch_reserve(&g.c_buf, p[12]) != 0) {
         /* roll back this API's own buffers: a failed reserve leaves nothing flagged */
         omega_gpu_session_scratch_unreserve(&g.a_buf); omega_gpu_session_scratch_unreserve(&g.c_buf);
         rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
@@ -251,14 +248,9 @@ void omega_gpu_matmul_test_set_unroll(uint32_t unroll) {
  * rt = ct = 1 for decode rows (the single-tile kernel), 4 x 4 at m = 128. Every launch of a call has a row
  * count divisible by 16*rt (rows_per_launch is, and so is the remainder, since rt divides mp/16). */
 static void launch_shape(uint32_t mp, uint32_t np, uint32_t *rows_per_launch, uint32_t *grid_x, uint32_t *rt, uint32_t *ct) {
-    const uint32_t budget = g.cta_budget ? g.cta_budget : OMEGA_GPU_MATMUL_MAX_CTAS, mt = mp / 16u, nt = np / 8u;
-    omega_matmul_frag_block_shape(mt, nt, rt, ct);
-    const uint32_t rb = mt / *rt, nb = nt / *ct;
-    *rows_per_launch = rb <= budget ? mp : budget * 16u * *rt;
-    uint32_t gx = budget / (*rows_per_launch / 16u / *rt);
-    if (gx == 0) gx = 1;
-    if (gx > nb) gx = nb;
-    *grid_x = gx;
+    uint64_t p[16]={mp,np,g.cta_budget};
+    (void)ap_plan(AP_MM,1,p);
+    *rows_per_launch=p[8];*grid_x=p[9];*rt=p[10];*ct=p[11];
 }
 
 /* ---- kernel cache (caller holds the lock, device open) ---- */
@@ -292,11 +284,9 @@ static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, ui
     if (omega_matmul_spec_init(&spec, 16, kp, np, OMEGA_MATMUL_PRECISION_BF16) != 0) return OMEGA_GPU_MATMUL_TOO_LARGE;
     OmegaBlackwellKernel kernel;
     memset(&kernel, 0, sizeof kernel);
-    const bool blocked = rt > 1 || ct > 1;
-    /* the test unroll knob applies to the single-tile kernel; the blocked kernel keeps its own rule */
-    uint32_t unroll = blocked ? omega_matmul_frag_block_unroll(kp, rt, ct) : g.unroll ? g.unroll : omega_matmul_frag_unroll(kp);
-    /* the mutant drops the last pass, so it needs two: halve the unroll of a one-pass shape */
-    if (g.mutant && (blocked || !g.unroll)) while (unroll > 1 && kp / 16u / unroll < 2) unroll /= 2;
+    uint64_t plan[16]={kp,rt,ct,g.unroll,g.mutant!=0};(void)ap_plan(AP_MM,5,plan);
+    const bool blocked=plan[8];
+    uint32_t unroll=plan[9];
     /* P07 cut C: the program is built in host memory and encoded straight into the device code buffer, sized
      * exactly (omega_bw_program_code_bytes: the bytes the allocating generators produce, cut A.2 proves them
      * identical). kernel.code then points into that buffer and owns nothing. */
@@ -367,7 +357,8 @@ int omega_gpu_tensor_upload_bf16(uint32_t k, uint32_t n, const uint16_t *b, Omeg
     if (rc != OMEGA_GPU_MATMUL_OK) { omega_gpu_host_free(h); omega_gpu_host_free(t); return rc; }
     uint16_t *d = t->mem.cpu;
     for (uint32_t nt0 = 0; nt0 < nt; nt0 += FRAG_PACK_TILES) {
-        const uint32_t nt1 = nt - nt0 < FRAG_PACK_TILES ? nt : nt0 + FRAG_PACK_TILES;
+        uint64_t chunk[16]={k,nt,nt0,0};(void)ap_plan(AP_MM,2,chunk);
+        const uint32_t nt1=chunk[9];
         omega_matmul_frag_pack_b(b, k, n, t->kp, nt0, nt1, h);
         memcpy(&d[(size_t)nt0 * t->kp * 8u], h, (size_t)(nt1 - nt0) * t->kp * 8u * sizeof *h);
     }
@@ -408,13 +399,16 @@ static uint16_t g_update_stage[UPDATE_STAGE_ELEMS];
  * nt0 .. nt1 (columns past n stay zero either way). */
 static void pack_b_into(const OmegaGpuTensor *t, const uint16_t *b16, const float *b32, uint16_t *dst) {
     const uint32_t k = t->k, n = t->n, kp = t->kp, nt = t->np / 8u;
-    uint32_t chunk = FRAG_PACK_TILES;
-    if (b32 && UPDATE_STAGE_ELEMS / (k * 8u) < chunk) chunk = UPDATE_STAGE_ELEMS / (k * 8u);
+    uint64_t p[16]={k,nt,0,b32!=NULL};
+    (void)ap_plan(AP_MM,2,p);
+    const uint32_t chunk=p[8];
     for (uint32_t nt0 = 0; nt0 < nt; nt0 += chunk) {
-        const uint32_t nt1 = nt - nt0 < chunk ? nt : nt0 + chunk;
+        p[2]=nt0; (void)ap_plan(AP_MM,2,p);
+        const uint32_t nt1=p[9];
         uint16_t *out = &dst[(size_t)nt0 * kp * 8u];
         if (b16) { omega_matmul_frag_pack_b(b16, k, n, kp, nt0, nt1, out); continue; }
-        const uint32_t c0 = nt0 * 8u, w = (nt1 * 8u < n ? nt1 * 8u : n) - c0;
+        uint64_t cols[16]={nt0,nt1,n};(void)ap_plan(AP_MM,6,cols);
+        const uint32_t c0=cols[8],w=cols[9];
         for (uint32_t r = 0; r < k; r++) {
             const float *src = &b32[(size_t)r * n + c0];
             uint16_t *row = &g_update_stage[(size_t)r * w];
@@ -432,7 +426,8 @@ static void pack_b_into(const OmegaGpuTensor *t, const uint16_t *b16, const floa
  * platform, and its CPU view may be unmapped. */
 static int tensor_update(OmegaGpuTensor *t, uint32_t k, uint32_t n, const uint16_t *b16, const float *b32) {
     if (!t || !t->mem.cpu || (!b16 && !b32)) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (k != t->k || n != t->n) {
+    uint64_t shape[16]={k,n,t->k,t->n};
+    if (ap_plan(AP_MM,4,shape)) {
         omega_gpu_session_lock();
         omega_gpu_session_set_error("tensor update refused: shape differs from the tensor's");
         omega_gpu_session_unlock();
@@ -494,7 +489,8 @@ static int matmul_core(uint32_t m, const uint16_t *a16, const float *a32, const 
     if (!dev_open_locked()) { STAGE_MARK(setup_ns); stages_put(&st, 0, t0); omega_gpu_session_unlock(); return OMEGA_GPU_MATMUL_CHIP_FAIL; }
     uint32_t rows_per_launch, grid_x, rt, ct;
     launch_shape(mp, np, &rows_per_launch, &grid_x, &rt, &ct);
-    uint32_t grid_y_full = rows_per_launch / 16u / rt;
+    uint64_t full[16]={rows_per_launch,rows_per_launch,rt};(void)ap_plan(AP_MM,7,full);
+    uint32_t grid_y_full=full[9];
     if (info) {
         info->m = m; info->k = k; info->n = n; info->padded_m = mp; info->padded_n = np; info->padded_k = kp;
         info->k_slices = 1; info->rows_per_call = rows_per_launch; info->grid_x = grid_x; info->grid_y = grid_y_full;
@@ -547,8 +543,8 @@ static int matmul_core(uint32_t m, const uint16_t *a16, const float *a32, const 
     STAGE_MARK(upload_ns);
 
     for (uint32_t r0 = 0; r0 < mp && rc == OMEGA_GPU_MATMUL_OK; r0 += rows_per_launch) {
-        uint32_t rows = mp - r0 < rows_per_launch ? mp - r0 : rows_per_launch;
-        uint32_t grid_y = rows / 16u / rt;
+        uint64_t chunk[16]={mp-r0,rows_per_launch,rt};(void)ap_plan(AP_MM,7,chunk);
+        uint32_t grid_y=chunk[9];
         CacheSlot *ks = NULL; bool hit = false;
         rc = kernel_for(kp, np, grid_x, rt, ct, &ks, &hit);
         if (rc != OMEGA_GPU_MATMUL_OK) break;

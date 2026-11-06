@@ -5,6 +5,7 @@
  * mappings"); one launch = omega_gpu_session_launch. */
 #include "omega_gpu_bf16_gemv_api.h"
 #include "omega_host_policy.h"
+#include "omega_api_plan.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_cmdlist.h"
@@ -81,7 +82,8 @@ void omega_gpu_bf16_test_set_mask_mutant(int m) { omega_gpu_session_lock(); g_ma
 static uint32_t gpr_declared(uint32_t peak) { return omega_bw_gpr_declared(peak); } /* peak + 2 rounded up to 8: the chip hung at peak + 1 (omega_blackwell_codegen.h) */
 static bool register_file_fits(uint32_t warps, uint32_t peak) {
     uint32_t decl = gpr_declared(peak);
-    if ((uint64_t)32u * warps * decl <= 65536u) return true;
+    uint64_t p[16]={warps,decl};
+    if (!ap_plan(AP_BF,4,p)) return true;
     char e[160]; omega_gpu_fmt(e, sizeof e, "bf16 kernel: %u warps x %u declared registers exceed the 65536-register file", warps, decl);
     omega_gpu_session_set_error(e);
     return false;
@@ -95,13 +97,12 @@ int omega_gpu_bf16_kernel_fits(const OmegaBf16GemvSpec *spec, uint32_t *declared
 
 /* Automatic shape. DEFAULTS_BEGIN: set from the chip sweep (evidence OWN30B-BF16-*); see the report. */
 void omega_gpu_bf16_shape_for(uint32_t k, uint32_t *rows, uint32_t *warps, uint32_t *depth, uint32_t *ctas) {
-    uint32_t ks = k / 256u, w = 16u, r = 1u, d = ks;
-    while (d > 16u || ks % d || r * d > 16u) d--;
-    if (k % (32u * w) || k > 512u * w) w = 32u;
-    if (rows) *rows = g.rows ? g.rows : r;
-    if (warps) *warps = g.warps ? g.warps : w;
-    if (depth) *depth = g.depth ? g.depth : d;
-    if (ctas) *ctas = g.ctas ? g.ctas : DEFAULT_CTAS;
+    uint64_t p[16]={k,g.rows,g.warps,g.depth,g.ctas};
+    (void)ap_plan(AP_BF,0,p);
+    if(rows)*rows=p[8];
+    if(warps)*warps=p[9];
+    if(depth)*depth=p[10];
+    if(ctas)*ctas=p[11];
 }
 static void spec_for(uint32_t k, OmegaBf16GemvSpec *spec, uint32_t *ctas) {
     memset(spec, 0, sizeof *spec);
@@ -155,8 +156,9 @@ int omega_gpu_bf16_prepare(uint32_t k) {
     return prepare_spec(&spec);
 }
 int omega_gpu_bf16_prepare_xbatch(uint32_t k, uint32_t xbatch, uint32_t ystride) {
-    if (xbatch <= 1u) return omega_gpu_bf16_prepare(k);
-    if (xbatch > OMEGA_BF16_MAX_XBATCH || ystride == 0) return OMEGA_GPU_BF16_BAD_ARGS;
+    uint64_t p[16]={xbatch,ystride};
+    int rc=ap_plan(AP_BF,3,p);if(rc)return rc;
+    if(p[8])return omega_gpu_bf16_prepare(k);
     OmegaBf16GemvSpec spec; uint32_t ctas; spec_for(k, &spec, &ctas);
     spec.xbatch = xbatch; spec.ystride = ystride;
     return prepare_spec(&spec);
@@ -218,21 +220,17 @@ static int gemv_core(const OmegaGpuBf16Tensor *t, const float *x32, const uint16
     if (rec && (!dev_x || !dev_y)) return OMEGA_GPU_BF16_BAD_ARGS;
     if (!t || !t->w.cpu || (!rec && ((!x32 && !x16) || !y))) return OMEGA_GPU_BF16_BAD_ARGS;
     const uint32_t n = t->n, k = t->k;
-    if (xrows && (!rec || xrows > 65535u)) return OMEGA_GPU_BF16_BAD_ARGS; /* the ROWS form is record-only */
+    uint64_t p[16]={rec!=NULL,xrows,xbatch,ystride,mask_hi!=0,mask_tau!=0,n};
+    int plan_rc=ap_plan(AP_BF,2,p);if(plan_rc)return plan_rc;
     OmegaBf16GemvSpec spec; uint32_t ctas; spec_for(k, &spec, &ctas);
-    if (xrows) spec.ystride = n;
-    const int masked = mask_hi != 0;
-    if (masked && (!rec || xrows || xbatch > 1u || !mask_tau)) return OMEGA_GPU_BF16_BAD_ARGS; /* the MASK form is record-only */
-    if (masked) { spec.rows = 1; spec.mask = 1; if (g_mask_mutant) spec.mutant = g_mask_mutant; } /* one row per warp: each row's bits are the plain kernel's */
-    if (xbatch > 1u) { /* XBATCH form (record-only): xbatch x rows share every weight read; y row m at y + m * ystride f32 */
-        if (!rec || xrows || xbatch > OMEGA_BF16_MAX_XBATCH || ystride < n) return OMEGA_GPU_BF16_BAD_ARGS;
-        spec.xbatch = xbatch; spec.ystride = ystride;
-    }
-    if (n % spec.rows) return OMEGA_GPU_BF16_CODEGEN_FAIL;
-    const uint32_t RG = n / spec.rows;
-    uint32_t grid_x = (RG + spec.warps - 1) / spec.warps;
-    if (grid_x > ctas) grid_x = ctas;
-    if (grid_x == 0) grid_x = 1;
+    const int masked=mask_hi!=0;
+    uint64_t launch[16]={xrows,xbatch,ystride,masked,n,spec.rows};
+    (void)ap_plan(AP_BF,6,launch);
+    spec.rows=launch[8];spec.ystride=launch[9];spec.xbatch=launch[10];
+    spec.mask=masked;if(masked&&g_mask_mutant)spec.mutant=g_mask_mutant;
+    uint64_t grid[16]={n,spec.rows,spec.warps,ctas};
+    plan_rc=ap_plan(AP_BF,1,grid);if(plan_rc)return plan_rc;
+    uint32_t grid_x=grid[8],RG=grid[9];
 
     if (!rec) omega_gpu_session_lock();
 #define UNLOCK() do { if (!rec) omega_gpu_session_unlock(); } while (0)
@@ -275,8 +273,8 @@ static int gemv_core(const OmegaGpuBf16Tensor *t, const float *x32, const uint16
     if (rc == OMEGA_GPU_BF16_OK) {
         OmegaGpuLaunch L = {
             .code_va = ks->code.va, .gpr_count = gpr_declared(ks->kernel.gpr_count),
-            .threads_x = 32u * spec.warps, .threads_y = 1, .grid_x = grid_x, .grid_y = xrows ? xrows : 1u,
-            .num_elements = (size_t)n * (xrows ? xrows : xbatch > 1u ? xbatch : 1u),
+            .threads_x = 32u * spec.warps, .threads_y = 1, .grid_x = grid_x, .grid_y = launch[11],
+            .num_elements = launch[12],
             .args = args, .n_args = masked ? OMEGA_BF16_MASK_ARGS_WORDS : OMEGA_BF16_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
             .shared_bytes = omega_bf16_gemv_shared_bytes(&spec),
         };
@@ -308,7 +306,8 @@ int omega_gpu_bf16_gemv_record(OmegaGpuCmdList *cl, const OmegaGpuBf16Tensor *t,
 
 /* ROWS form record path (sc #642 prefill): see the header. Caller holds omega_gpu_session_lock(). */
 int omega_gpu_bf16_gemv_rows_record(OmegaGpuCmdList *cl, const OmegaGpuBf16Tensor *t, uint32_t rows, uint64_t x_va, uint64_t y_va) {
-    if (!cl || rows == 0) return OMEGA_GPU_BF16_BAD_ARGS;
+    if (!cl) return OMEGA_GPU_BF16_BAD_ARGS;
+    uint64_t p[16]={rows};int rc=ap_plan(AP_BF,5,p);if(rc)return rc;
     return gemv_core(t, NULL, NULL, NULL, NULL, cl, x_va, y_va, rows, 0, 0, 0, 0);
 }
 
@@ -319,7 +318,8 @@ int omega_gpu_bf16_gemv_mask_record(OmegaGpuCmdList *cl, const OmegaGpuBf16Tenso
 }
 /* XBATCH form record path (the lm_head of several conversations in one stroke): see the header. Caller holds the lock. */
 int omega_gpu_bf16_gemv_xbatch_record(OmegaGpuCmdList *cl, const OmegaGpuBf16Tensor *t, uint32_t xbatch, uint64_t x_va, uint64_t y_va, uint32_t ystride) {
-    if (!cl || xbatch == 0) return OMEGA_GPU_BF16_BAD_ARGS;
-    if (xbatch == 1u) return gemv_core(t, NULL, NULL, NULL, NULL, cl, x_va, y_va, 0, 0, 0, 0, 0);
+    if (!cl) return OMEGA_GPU_BF16_BAD_ARGS;
+    uint64_t p[16]={xbatch};int rc=ap_plan(AP_BF,5,p);if(rc)return rc;
+    if (p[8]) return gemv_core(t, NULL, NULL, NULL, NULL, cl, x_va, y_va, 0, 0, 0, 0, 0);
     return gemv_core(t, NULL, NULL, NULL, NULL, cl, x_va, y_va, 0, xbatch, ystride, 0, 0);
 }

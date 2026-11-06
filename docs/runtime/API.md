@@ -685,6 +685,106 @@ admission. Digest and semantic checks share those read-once buffers; reopening
 a mutable path cannot substitute unchecked bytes. A snapshot transfers byte
 custody only, not independent qualification or permission to activate code.
 
+### 10.1 Private API-plan policy
+
+The six RuntimeHost adapters use `om/components/api_{mm,at,ew,bf,da,rt}_plan.om`
+for scalar validation, refusal selection, padding, scratch sizing, kernel-plan
+selection and launch/chunk geometry. `src/omega_api_plan.h` is private glue,
+not a public header. Each root takes a mode and a fixed 16-word edit view:
+words 0..7 are inputs, words 8..15 are results. Router allocation also returns
+whether the caller's output pointer must be cleared in word 7, preserving
+the original order of argument refusal and that observable write. Policy
+refusals 1/2/3 map to the existing negative BAD_ARGS/TOO_LARGE/CODEGEN_FAIL
+codes. No public signature, manifest entry or version changes.
+
+The default is Omega. `CUDAPP_MIGRATION_PENDING_C_API_PLAN=1` selects the C
+oracle in that private header, not a fallback after an Omega refusal.
+Both implementations repair the old BF16 `k < 256` divide-by-zero in default
+depth derivation, and widen decode's `pos + per_split` before division to
+avoid a zero-split plan on unsigned overflow. Shell chunk counters are wide
+enough to terminate at the upper u32 input boundary.
+
+The C adapters retain pointer/object admission, ABI marshalling, buffer
+ownership, cache/session state, code generation, data packing, copies and
+acting on the returned plan. Host numerical reference kernels and the
+adapter-local device-code generators are not converted by this policy
+change. These units neither access a device nor replace independent artifact
+qualification or launch admission.
+
+`tests/runtime/api_plan_unit.c` is the executable definition of the bounded
+differential domain. Every call compares the return code and **all 16 words**,
+including unchanged inputs, unused output canaries and refusal-side writes.
+The bounds are chosen from API limits and the threshold/divisibility classes
+used by the policy, rather than from typical model shapes:
+
+| Root / adapter | Exhaustive bounds and boundary products |
+| --- | --- |
+| `api_mm_plan` / matmul | Every M 0..8193, K 0..16385 and N 0..262145 on the independent admission axes; edge Cartesian products include simultaneous invalid fields. Every column-tile count 1..32768 crosses representative row-tile and CTA-budget classes; every row-tile count 1..512 crosses budgets 0..1024 and column counts 1..8. These cover the full admitted padded dimensions, all tile divisibility residues and the 1024-CTA default. All K values cover the packing quotient; all N values cover tail width. Every K-slice count 1..1024, rt/ct in {1,2,4}, unroll override 0..128 and mutant bit covers selection and halving; every row/chunk count 1..512 crosses rt in {1,2,4}. |
+| `api_at_plan` / attention | Every query/KV-head pair 0..1025 crosses head-dimension threshold representatives and the general-path force bit; every head dimension 1..256 also crosses every legal query-head count. Head-map tests enumerate every legal divisor and every query head through 1024. All contexts 0..131073 cross both tuned dimensions; every u32 power of two and its neighbours covers exact-log refusal classes. Every legal query count crosses row/capacity edges and split logs 0..4. Causal/window tests exhaust positions and lengths 0..128, windows {-2,-1,0,1,2,INT32_MAX} and the causal bit. Layout, capacity, block, staging, reserve and overflow modes cross the u32 threshold-edge set. Scale tests cross every f32 sign/exponent with mantissas {0,1,all-ones}, both scale modes and every admitted head dimension, plus neighbours of the scale ceiling. |
+| `api_ew_plan` / elementwise | Every dimension 0..16385 crosses row-count edges; every 1-D length 0..262145 covers the 131072-element chunk cap, 128-thread residues and exchange alignment. Rope's even/odd and 2048 ceiling classes and RMS's 128 divisibility and 16384 ceiling are exhaustive within their admitted dimensions. All reconvergence operation offsets 0..6 cross length edges. |
+| `api_bf_plan` / BF16 GEMV | Every K 0..16385 crosses all combinations of default/nondefault tuning knobs; individual overrides also cross u32 edges. Every N 0..65536 crosses rows 1..4 and 16/32 warps, covering row divisibility and capped-grid classes. Every recorded row count 0..65536 crosses record, mask, tau, xbatch 0..5 and y-stride threshold classes. Register budgets exhaust warps 0..1024 and declarations 0..512. |
+| `api_da_plan` / decode attention | Every position/capacity 0..131073 crosses layers 0..65. Every legal position 0..131071 crosses every 256-aligned split size through 131072; every larger representable u32 aligned split size is exercised at the maximum legal position (the split count is then always one). The explicit UINT32_MAX-adjacent split case catches the old addition overflow. Layer/head/span boundaries cross the edge set; theta tests cover signed zero, subnormal, finite positive/negative, infinity and NaN; every declaration 0..1024 crosses the register bound. |
+| `api_rt_plan` / router | Every layer 0..65 crosses experts 0..257 and shared 0..2, including both supported expert counts and their neighbours. Every row count 0..65 crosses x-strides 8176..8224 and launch-buffer strides 16640..17152 for both launch-buffer sizes. Those stride intervals include both refusal thresholds and every modulo-16/modulo-256 class. Layer/rows/record/buffer-selection products and all tuning/stride edges exercise plan results; register budgets exhaust warps 0..1024 and declarations 0..512. |
+
+Codegen admission additionally exhausts general/tuned attention selection,
+block logs 0..33, GQA logs 0..8 and head dimensions 0..257, including refusal
+precedence when several fields are invalid. Split and elementwise mutant
+controls cross every accepted value, both rejection/clamping sides and signed
+int extremes. The matmul CTA setter crosses every budget 0..1025 and edges.
+
+The shared edge set includes zero, all policy thresholds and their neighbours,
+power-of-two/divisibility transitions, and UINT32_MAX-1/UINT32_MAX. Bounds
+cover all finite admitted shape axes; larger values select rejection,
+saturation or the same quotient/bit-mask classes, with explicit overflow
+edges. This is bounded exhaustive differential evidence, **not** a formal
+equivalence proof over the Cartesian product of arbitrary u32/u64 words or
+every floating-point mantissa. No such unbounded proof is claimed.
+
+The short-view ABI negative control must refuse before writing its result.
+`tests/runtime/api_plan_mutants.py` changes two unique source expressions in
+each root, compiles each changed `.om` with the pinned compiler, and requires
+the unchanged differential to fail. A compiler error does not count as a
+killed mutant. `test-api-plan` is registered in `CARRIED_HOST_TESTS`;
+source mutation is separate because it executes the AArch64 compiler.
+
+The max-position adapter gate retains seven controls against five checked
+generated-binding mutants. Its read-position, write-count and step-position
+controls now target the same shared Omega span predicate, but must each emit
+their own failed API expectation. The other controls cover both cap boundaries,
+the separate write-position guard, and short RoPE allocation. A
+`--revert-first` runner invocation deliberately restores the first mutation;
+the unchanged binding must pass the API battery, and the mutation gate must
+reject it with exit 1. Both the ordinary and reverted runs use the device-free
+wrapper below. These portable binding controls do not replace the two pinned
+`.om` source mutants per new unit.
+
+Focused host-only reproduction, with the existing pinned compiler/bridge:
+
+```sh
+export OMEGA_OMC=/path/to/omega-mv/seed/out/omc
+export OMEGA_BRIDGE=/path/to/omega-bridge
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-api-plan test-api-plan-mutants
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-matmul-api test-gpu-elementwise \
+  test-gpu-attention test-gpu-bf16-gemv test-gpu-decode-attn test-gpu-router
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 OUT_DIR=build/api-plan-c \
+  CC='cc -DCUDAPP_MIGRATION_PENDING_C_API_PLAN=1' \
+  test-gpu-matmul-api test-gpu-elementwise test-gpu-attention \
+  test-gpu-bf16-gemv test-gpu-decode-attn test-gpu-router
+```
+
+The separate output directory prevents stale objects from hiding a switch
+change. These targets exercise existing host and simulator cases only.
+Full host integration remains a separate integrator gate; chip qualification
+and deployment require their own authorization and receipts.
+
+The f32 ceiling-neighbour literals in the differential come from
+`WolframLanguageEvaluator:
+n=Round[(3*10^38/2^127)*2^23];
+Table[IntegerString[(127+127)*2^23+n-2^23+i,16],{i,-2,2}]`
+→ `{"7f61b1e4","7f61b1e5","7f61b1e6","7f61b1e7","7f61b1e8"}`.
+Other numerical policy literals are unchanged from the incumbent adapters.
+
 ## 11. Checking this file
 
 `make test-runtime-api` runs `tools/runtime_api_check.sh` on the real headers and then `tools/runtime_api_negative.sh`. The

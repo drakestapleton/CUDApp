@@ -62,7 +62,7 @@ CFLAGS ?= -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc \
 	-I$(NVIDIA_OPEN)/kernel-open/nvidia-uvm \
 	-I$(NVIDIA_OPEN)/src/nvidia/arch/nvalloc/unix/include \
 	-I$(PHYSICS_DIR)/third_party/aien-gpu-abi1
--include mk/*.mk
+-include $(filter-out mk/host-policy.mk,$(wildcard mk/*.mk))
 
 # sm_121 instruction encoder (CUDApp#79): om (default) = om/encoder/bw_enc_sm121.om through the generated binding
 # portable generated C units in CUDAPP_BINDING_SRCS; c = the migration-pending C encoder, the differential oracle; diff = both on every call,
@@ -683,6 +683,9 @@ DS_SHA_SRC = src/sha256.c src/cudapp_om_core_sha.c
 RX_CM_OBJ = $(OUT_DIR)/rx_costmodel.o
 RX_CM_BINDING = src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c
 RX_CM_BINDING += src/cudapp_om_cm_route.c
+
+# Host-policy prerequisites expand while this include is parsed.
+include mk/host-policy.mk
 
 $(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_sort.h src/runtime/rx_cm_math.h src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ src/runtime/rx_costmodel.c

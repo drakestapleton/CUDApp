@@ -94,3 +94,32 @@ pending #339's escaping repair and must not be described as parsed valid JSON.
 Stage 5, the NO_POSIX BF16 cutover and `full-2` remain **NOT_RUN** at this checkpoint.
 The inherited C BF16 boundary above remains explicit. Chip/live-RM/VFIO/hardware
 and merge-to-main are **NOT_RUN**. Integration is only on draft #280.
+
+### Stage-6 Half A receipts (Integrator6A, 2026-11-06)
+
+Half A uses bridge #73 `79e8c361` and the pinned e5b32567 compiler. Every
+execution is isolated by bwrap with an empty `/dev`, cores 10–14 and nice 10.
+These are host/simulator results, not chip qualification.
+
+#339 `e2b8e8a523088a0132ae849cf51afa3d150181cb` repairs the JSON receipt.
+The regenerated `/tmp/integ/6a-339-backend.json` parses losslessly: 109 rows,
+100 KILLED, 9 SURVIVED_REDUNDANT, zero gaps. Main accepted these current counts
+instead of the older 120/107/13/0. `/tmp/integ/6a-339-reconcile.tsv` maps every
+historical row: 109 retained, 10 relocated to `tests/om_eng_mutants.sh`, one
+redundant page-minimum guard removed by #321 `1ecaf8c40802dee63c9534944fae492005076033`.
+The relocated rows account for seven historical kills and three historical
+redundancies; the removed guard accounts for the fourth redundancy. All ten
+relocated rows are now killed in the 16/16 semantic sweep.
+
+Logs: `/tmp/integ/6a-339.log` records byte-identical regeneration, JSON PASS,
+engine C49/49 and OM21/21 kills, and backend109/100/9/0. Its aggregate rc2 came
+from a second invocation with a missing relative receipt directory. The absolute
+rerun `/tmp/integ/6a-339-final.log` completed the valid backend receipt before
+its deadline interrupted the semantic sweep. `/tmp/integ/6a-339-semantic.log`
+returned rc0: `PASS om eng mutants: 16/16 killed`, with 44584 differential records
+identical. The runner now fails immediately if it cannot open its receipt; the
+JSON regression includes that negative control. Historical evidence is untouched.
+
+An inherited clean-build repair delays `mk/host-policy.mk` until its cost-model
+object and binding variables exist, so target prerequisites include their providers.
+Its focused acceptance is recorded with the dagsim/cost-model integration below.

@@ -33,15 +33,18 @@ callback after releasing it.
 
 ## Files
 
-Every run used `bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 <cmd>` (no NVIDIA device
-nodes inside, so a path that opened the device would fail).
+Every receipt here comes from one rerun on 2026-11-06 at head `92f9aa4`, each command inside
+`bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 <cmd>` (no NVIDIA device nodes inside,
+so a path that opened the device would fail); builds at `-j3`. The rerun replaced the earlier development runs, whose
+wrapping was not independently audited; host and sim output is line-for-line identical to them. The pre-fix reentry
+probe was linked against a library built from a detached worktree at `199f3e9`.
 
 | File | Command | Result |
 |---|---|---|
 | `host-run.txt` | `./build/gpu_mathlibs_test --host-only` | rc 0, `mathlibs host: PASS (477 checks)` |
 | `sim-receipt.txt` | `./build/gpu_mathlibs_test --sim` | rc 0, `mathlibs sim: PASS (6265 checks)` |
 | `negative-control.txt` | `./build/gpu_mathlibs_test --host-only --dist-fixture pd_bad.txt` (one curand_uniform row changed, `3f6169c6` to `3f6169c7`) | rc 1, `FAIL: philox dist 1 reference: 1 of 896 cuRAND rows disagree`, `mathlibs host: FAIL (1 of 477)` |
-| `reentry-deadlock.txt` | `./reentry-probe` (`reentry-probe.c`: a plan_walk callback that calls `omega_gpu_fft_twiddles`) | before the fix (`199f3e9`): killed by its 20 s alarm, rc 1; after (`f2ef5ff`): rc 0 in 0.01 s |
+| `reentry-deadlock.txt` | `./reentry-probe` (`reentry-probe.c`: a plan_walk callback that calls `omega_gpu_fft_twiddles`) | before the fix (`199f3e9`): killed by its 20 s alarm, rc 1; after (`f2ef5ff`): rc 0 in 0.012 s |
 | `wolfram-many-tolerances.txt` | radix constants, the curand_normal bound, the mixed-radix and Bluestein tolerances | each a Wolfram Language evaluation |
 
 The simulator tier is CUDA++'s own sm_121 warp simulator, not the chip. `tests/gpu_mathlibs_test.c` also carries the

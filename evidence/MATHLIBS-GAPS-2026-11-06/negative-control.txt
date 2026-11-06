@@ -1,4 +1,4 @@
-$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ./build/gpu_mathlibs_test --host-only --dist-fixture pd_bad.txt   (source f2ef5ff)
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ./build/gpu_mathlibs_test --host-only --dist-fixture pd_bad.txt   (head 92f9aa4; log /tmp/mlgap/rerun/neg.log)
 # pd_bad.txt = tests/fixtures/philox_curand_dist_oracle.txt with one curand_uniform row changed: 1 0 0 0 1 000000003f6169c6 -> ...c7
 # rc=1
 mathlibs tier=host fixture=tests/fixtures/mathlibs_rng_aienmath.txt philox_fixture=tests/fixtures/philox_curand_oracle.txt dist_fixture=/tmp/mlgap/neg/pd_bad.txt

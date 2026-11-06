@@ -945,6 +945,9 @@ removed function, a missing MAJOR and a missing PATCH version macro, a changed f
 changed constant, a version line in this file that disagrees with the macro, a quoted signature in this file that no header
 has, a quoted signature that only appears inside a longer one (`int32_t` inside `uint32_t`), a STABLE entry with no section
 here, an added undeclared function, an added undeclared macro, an added undeclared enumerator, and a stale INTERNAL entry.
+The scratch header tree includes all `src/*.h` dependencies, including generated
+bridge declarations, so a control must fail for its intended API mismatch rather
+than an unrelated missing include.
 It then breaks a copy of the manifest five ways and requires `tools/runtime_api_semver.sh` to fail each time (a removed
 STABLE function with no bump on a 0.x base, a removed STABLE function with only a MINOR bump on a base already at 1.x, a
 changed STABLE signature with no bump, an added function with no bump, a version that goes down) and to pass two correct

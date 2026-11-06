@@ -17,7 +17,7 @@ bad=0
 # control NAME EXPECTED_TEXT FILE SED_EXPR   (FILE: a header under src/, API.md, manifest, or internal)
 control() {
   name=$1; expect=$2; file=$3; expr=$4
-  d=$WORK/neg-$name; rm -rf "$d"; mkdir -p "$d/src"; cp "$ROOT"/src/omega_*.h "$d/src/"; cp "$APIMD" "$d/API.md"
+  d=$WORK/neg-$name; rm -rf "$d"; mkdir -p "$d/src"; cp "$ROOT"/src/*.h "$d/src/"; cp "$APIMD" "$d/API.md"
   # the check reads the INTERNAL list next to the manifest (.manifest -> .internal), so both copies keep that pairing
   cp "$MANIFEST" "$d/api.manifest"; cp "${MANIFEST%.manifest}.internal" "$d/api.internal"
   case $file in

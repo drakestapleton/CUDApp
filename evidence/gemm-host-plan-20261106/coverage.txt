@@ -1,0 +1,180 @@
+Source: gcov -b -c of the retained C policy oracle (-O0 --coverage).
+
+function esz called 94966 returned 100% blocks executed 100%
+function kstep called 47485 returned 100% blocks executed 100%
+function pow124 called 305676 returned 100% blocks executed 100%
+function type_ok called 93936 returned 100% blocks executed 100%
+function band_ok called 75965 returned 100% blocks executed 100%
+function main_regs called 1200 returned 100% blocks executed 100%
+function omega_gpu_gemm_cfg_ok called 93933 returned 100% blocks executed 100%
+function roundup called 142440 returned 100% blocks executed 100%
+function omega_gpu_gemm_plan called 92732 returned 100% blocks executed 100%
+function ld_span called 14156 returned 100% blocks executed 100%
+function omega_gpu_gemm_span called 2465 returned 100% blocks executed 100%
+function omega_gpu_gemm_drive_ld called 9601 returned 100% blocks executed 100%
+function packed_locked called 0 returned 0% blocks executed 0%
+function up16 called 16 returned 100% blocks executed 100%
+
+Owned-function branch counters (raw gcov output):
+esz | 94966:   25:static uint32_t esz(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 1u : t == OMEGA_GPU_GEMM_F32_FFMA ? 4u : 2u; } | branch  0 taken 71225 (fallthrough)
+esz | 94966:   25:static uint32_t esz(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 1u : t == OMEGA_GPU_GEMM_F32_FFMA ? 4u : 2u; } | branch  1 taken 23741
+esz | 94966:   25:static uint32_t esz(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 1u : t == OMEGA_GPU_GEMM_F32_FFMA ? 4u : 2u; } | branch  2 taken 23741 (fallthrough)
+esz | 94966:   25:static uint32_t esz(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 1u : t == OMEGA_GPU_GEMM_F32_FFMA ? 4u : 2u; } | branch  3 taken 47484
+kstep | 47485:   26:static uint32_t kstep(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 32u : 16u; } | branch  0 taken 11871 (fallthrough)
+kstep | 47485:   26:static uint32_t kstep(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 32u : 16u; } | branch  1 taken 35614
+pow124 | 305676:   27:static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; } | branch  0 taken 214940 (fallthrough)
+pow124 | 305676:   27:static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; } | branch  1 taken 90736
+pow124 | 305676:   27:static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; } | branch  2 taken 107578 (fallthrough)
+pow124 | 305676:   27:static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; } | branch  3 taken 107362
+pow124 | 305676:   27:static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; } | branch  4 taken 107146 (fallthrough)
+pow124 | 305676:   27:static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; } | branch  5 taken 432
+band_ok | 75965:   29:static int band_ok(uint32_t b) { return b <= 32u && (b & (b - 1u)) == 0u; } | branch  0 taken 75905 (fallthrough)
+band_ok | 75965:   29:static int band_ok(uint32_t b) { return b <= 32u && (b & (b - 1u)) == 0u; } | branch  1 taken 60
+band_ok | 75965:   29:static int band_ok(uint32_t b) { return b <= 32u && (b & (b - 1u)) == 0u; } | branch  2 taken 75873 (fallthrough)
+band_ok | 75965:   29:static int band_ok(uint32_t b) { return b <= 32u && (b & (b - 1u)) == 0u; } | branch  3 taken 32
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  1 taken 76581 (fallthrough)
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  2 taken 17350
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  4 taken 76473 (fallthrough)
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  5 taken 108
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  7 taken 76365 (fallthrough)
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  8 taken 108
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch  9 taken 76257 (fallthrough)
+omega_gpu_gemm_cfg_ok | 170296:   71:    return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) && | branch 10 taken 108
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  0 taken 93931 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  1 taken 2
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  4 taken 76149 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  5 taken 108
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  6 taken 76145 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  7 taken 4
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  8 taken 76069 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch  9 taken 76
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch 10 taken 76061 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch 11 taken 8
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch 12 taken 75965 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch 13 taken 96
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch 14 taken 75873 (fallthrough)
+omega_gpu_gemm_cfg_ok | 340194:   72:           pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 && | branch 15 taken 92
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  1 taken 75721 (fallthrough)
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  2 taken 17011
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  3 taken 75720 (fallthrough)
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  4 taken 1
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  5 taken 73196 (fallthrough)
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  6 taken 2524
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  7 taken 70928 (fallthrough)
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  8 taken 2268
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  9 taken 2268 (fallthrough)
+omega_gpu_gemm_plan | 92732:  377:    if (!omega_gpu_gemm_cfg_ok(c) || !p || !M || !N || !K) return OMEGA_GPU_GEMM_BAD_ARGS; | branch 10 taken 68660
+omega_gpu_gemm_plan | 68660:  378:    if (M > OMEGA_GPU_GEMM_MAX_DIM || N > OMEGA_GPU_GEMM_MAX_DIM || K > OMEGA_GPU_GEMM_MAX_DIM) return OMEGA_GPU_GEMM_TOO_LARGE; | branch  0 taken 61088 (fallthrough)
+omega_gpu_gemm_plan | 68660:  378:    if (M > OMEGA_GPU_GEMM_MAX_DIM || N > OMEGA_GPU_GEMM_MAX_DIM || K > OMEGA_GPU_GEMM_MAX_DIM) return OMEGA_GPU_GEMM_TOO_LARGE; | branch  1 taken 7572
+omega_gpu_gemm_plan | 68660:  378:    if (M > OMEGA_GPU_GEMM_MAX_DIM || N > OMEGA_GPU_GEMM_MAX_DIM || K > OMEGA_GPU_GEMM_MAX_DIM) return OMEGA_GPU_GEMM_TOO_LARGE; | branch  2 taken 54284 (fallthrough)
+omega_gpu_gemm_plan | 68660:  378:    if (M > OMEGA_GPU_GEMM_MAX_DIM || N > OMEGA_GPU_GEMM_MAX_DIM || K > OMEGA_GPU_GEMM_MAX_DIM) return OMEGA_GPU_GEMM_TOO_LARGE; | branch  3 taken 6804
+omega_gpu_gemm_plan | 68660:  378:    if (M > OMEGA_GPU_GEMM_MAX_DIM || N > OMEGA_GPU_GEMM_MAX_DIM || K > OMEGA_GPU_GEMM_MAX_DIM) return OMEGA_GPU_GEMM_TOO_LARGE; | branch  4 taken 6804 (fallthrough)
+omega_gpu_gemm_plan | 68660:  378:    if (M > OMEGA_GPU_GEMM_MAX_DIM || N > OMEGA_GPU_GEMM_MAX_DIM || K > OMEGA_GPU_GEMM_MAX_DIM) return OMEGA_GPU_GEMM_TOO_LARGE; | branch  5 taken 47480
+omega_gpu_gemm_plan | 47480:  390:    if (c->band > 1u) { p->grid[OMEGA_GEMM_K_MAIN][0] = c->band * gy; p->grid[OMEGA_GEMM_K_MAIN][1] = (gx + c->band - 1u) / c->band; } | branch  0 taken 35816 (fallthrough)
+omega_gpu_gemm_plan | 47480:  390:    if (c->band > 1u) { p->grid[OMEGA_GEMM_K_MAIN][0] = c->band * gy; p->grid[OMEGA_GEMM_K_MAIN][1] = (gx + c->band - 1u) / c->band; } | branch  1 taken 11664
+omega_gpu_gemm_plan | 47480:  393:    if (c->type == OMEGA_GPU_GEMM_F32_FFMA) { /* no packs: one thread per C element */ | branch  0 taken 11870 (fallthrough)
+omega_gpu_gemm_plan | 47480:  393:    if (c->type == OMEGA_GPU_GEMM_F32_FFMA) { /* no packs: one thread per C element */ | branch  1 taken 35610
+ld_span | 14156:  406:    const uint64_t outer = col ? K : rows_m, inner = col ? rows_m : K; /* stored rows, stored row length */ | branch  0 taken 7078 (fallthrough)
+ld_span | 14156:  406:    const uint64_t outer = col ? K : rows_m, inner = col ? rows_m : K; /* stored rows, stored row length */ | branch  1 taken 7078
+ld_span | 14156:  406:    const uint64_t outer = col ? K : rows_m, inner = col ? rows_m : K; /* stored rows, stored row length */ | branch  2 taken 7078 (fallthrough)
+ld_span | 14156:  406:    const uint64_t outer = col ? K : rows_m, inner = col ? rows_m : K; /* stored rows, stored row length */ | branch  3 taken 7078
+ld_span | 14156:  407:    if (ld == 0) ld = inner; | branch  0 taken 5106 (fallthrough)
+ld_span | 14156:  407:    if (ld == 0) ld = inner; | branch  1 taken 9050
+ld_span | 14156:  408:    if (ld < inner || ld > 0xffffffffull) return -1; | branch  0 taken 13331 (fallthrough)
+ld_span | 14156:  408:    if (ld < inner || ld > 0xffffffffull) return -1; | branch  1 taken 825
+ld_span | 14156:  408:    if (ld < inner || ld > 0xffffffffull) return -1; | branch  2 taken 128 (fallthrough)
+ld_span | 14156:  408:    if (ld < inner || ld > 0xffffffffull) return -1; | branch  3 taken 13203
+ld_span | 13203:  410:    return *span > 0xffffffffull ? -1 : 0; /* the packs index elements with 32-bit arithmetic */ | branch  0 taken 2140 (fallthrough)
+ld_span | 13203:  410:    return *span > 0xffffffffull ? -1 : 0; /* the packs index elements with 32-bit arithmetic */ | branch  1 taken 11063
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  0 taken 1985 (fallthrough)
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  1 taken 480
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  2 taken 1921 (fallthrough)
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  3 taken 64
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  4 taken 1857 (fallthrough)
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  5 taken 64
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  6 taken 1793 (fallthrough)
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  7 taken 64
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch  9 taken 683 (fallthrough)
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch 10 taken 1110
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch 11 taken 319 (fallthrough)
+omega_gpu_gemm_span | 3148:  415:    if ((layout & ~3u) || !M || !N || !K || ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sa, &ea) != 0 || | branch 12 taken 364
+omega_gpu_gemm_span | 364:  417:    if (a_elems) *a_elems = sa; | branch  0 taken 363 (fallthrough)
+omega_gpu_gemm_span | 364:  417:    if (a_elems) *a_elems = sa; | branch  1 taken 1
+omega_gpu_gemm_span | 364:  418:    if (b_elems) *b_elems = sb; | branch  0 taken 363 (fallthrough)
+omega_gpu_gemm_span | 364:  418:    if (b_elems) *b_elems = sb; | branch  1 taken 1
+omega_gpu_gemm_drive_ld | 9601:  424:    if (!launch || (layout & ~3u)) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  0 taken 9600 (fallthrough)
+omega_gpu_gemm_drive_ld | 9601:  424:    if (!launch || (layout & ~3u)) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  1 taken 1
+omega_gpu_gemm_drive_ld | 9601:  424:    if (!launch || (layout & ~3u)) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  2 taken 1920 (fallthrough)
+omega_gpu_gemm_drive_ld | 9601:  424:    if (!launch || (layout & ~3u)) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  3 taken 7680
+omega_gpu_gemm_drive_ld | 7680:  427:    if (rc != OMEGA_GPU_GEMM_OK) return rc; | branch  0 taken 1024 (fallthrough)
+omega_gpu_gemm_drive_ld | 7680:  427:    if (rc != OMEGA_GPU_GEMM_OK) return rc; | branch  1 taken 6656
+omega_gpu_gemm_drive_ld | 11680:  429:    if (ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sp, &ea) != 0 || | branch  1 taken 5024 (fallthrough)
+omega_gpu_gemm_drive_ld | 11680:  429:    if (ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sp, &ea) != 0 || | branch  2 taken 1632
+omega_gpu_gemm_drive_ld | 11680:  429:    if (ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sp, &ea) != 0 || | branch  3 taken 32 (fallthrough)
+omega_gpu_gemm_drive_ld | 11680:  429:    if (ld_span(layout & OMEGA_GPU_GEMM_A_COL, M, K, lda, &sp, &ea) != 0 || | branch  4 taken 4992
+omega_gpu_gemm_drive_ld | 4992:  432:    if (c->type == OMEGA_GPU_GEMM_F32_FFMA) { /* dense row-major A and B only */ | branch  0 taken 1248 (fallthrough)
+omega_gpu_gemm_drive_ld | 4992:  432:    if (c->type == OMEGA_GPU_GEMM_F32_FFMA) { /* dense row-major A and B only */ | branch  1 taken 3744
+omega_gpu_gemm_drive_ld | 1248:  433:        if (layout || ea != K || eb != N) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  0 taken 312 (fallthrough)
+omega_gpu_gemm_drive_ld | 1248:  433:        if (layout || ea != K || eb != N) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  1 taken 936
+omega_gpu_gemm_drive_ld | 1248:  433:        if (layout || ea != K || eb != N) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  2 taken 208 (fallthrough)
+omega_gpu_gemm_drive_ld | 1248:  433:        if (layout || ea != K || eb != N) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  3 taken 104
+omega_gpu_gemm_drive_ld | 1248:  433:        if (layout || ea != K || eb != N) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  4 taken 104 (fallthrough)
+omega_gpu_gemm_drive_ld | 1248:  433:        if (layout || ea != K || eb != N) return OMEGA_GPU_GEMM_BAD_ARGS; | branch  5 taken 104
+omega_gpu_gemm_drive_ld | 104:  436:        return launch(ctx, OMEGA_GEMM_K_MAIN, a, p.grid[2][0], p.grid[2][1], p.threads[2]) != 0 ? OMEGA_GPU_GEMM_CHIP_FAIL : OMEGA_GPU_GEMM_OK; | branch  1 taken 26 (fallthrough)
+omega_gpu_gemm_drive_ld | 104:  436:        return launch(ctx, OMEGA_GEMM_K_MAIN, a, p.grid[2][0], p.grid[2][1], p.threads[2]) != 0 ? OMEGA_GPU_GEMM_CHIP_FAIL : OMEGA_GPU_GEMM_OK; | branch  2 taken 78
+omega_gpu_gemm_drive_ld | 3744:  441:    a[6] = layout & OMEGA_GPU_GEMM_A_COL ? 1u : (uint32_t)ea; a[7] = layout & OMEGA_GPU_GEMM_A_COL ? (uint32_t)ea : 1u; a[8] = p.KS2; | branch  0 taken 1872 (fallthrough)
+omega_gpu_gemm_drive_ld | 3744:  441:    a[6] = layout & OMEGA_GPU_GEMM_A_COL ? 1u : (uint32_t)ea; a[7] = layout & OMEGA_GPU_GEMM_A_COL ? (uint32_t)ea : 1u; a[8] = p.KS2; | branch  1 taken 1872
+omega_gpu_gemm_drive_ld | 3744:  441:    a[6] = layout & OMEGA_GPU_GEMM_A_COL ? 1u : (uint32_t)ea; a[7] = layout & OMEGA_GPU_GEMM_A_COL ? (uint32_t)ea : 1u; a[8] = p.KS2; | branch  2 taken 1872 (fallthrough)
+omega_gpu_gemm_drive_ld | 3744:  441:    a[6] = layout & OMEGA_GPU_GEMM_A_COL ? 1u : (uint32_t)ea; a[7] = layout & OMEGA_GPU_GEMM_A_COL ? (uint32_t)ea : 1u; a[8] = p.KS2; | branch  3 taken 1872
+omega_gpu_gemm_drive_ld | 3744:  442:    if (launch(ctx, OMEGA_GEMM_K_PACK_A, a, p.grid[0][0], p.grid[0][1], p.threads[0]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL; | branch  1 taken 936 (fallthrough)
+omega_gpu_gemm_drive_ld | 3744:  442:    if (launch(ctx, OMEGA_GEMM_K_PACK_A, a, p.grid[0][0], p.grid[0][1], p.threads[0]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL; | branch  2 taken 2808
+omega_gpu_gemm_drive_ld | 2808:  446:    a[6] = layout & OMEGA_GPU_GEMM_B_COL ? (uint32_t)eb : 1u; a[7] = layout & OMEGA_GPU_GEMM_B_COL ? 1u : (uint32_t)eb; a[8] = p.KS2; | branch  0 taken 1404 (fallthrough)
+omega_gpu_gemm_drive_ld | 2808:  446:    a[6] = layout & OMEGA_GPU_GEMM_B_COL ? (uint32_t)eb : 1u; a[7] = layout & OMEGA_GPU_GEMM_B_COL ? 1u : (uint32_t)eb; a[8] = p.KS2; | branch  1 taken 1404
+omega_gpu_gemm_drive_ld | 2808:  446:    a[6] = layout & OMEGA_GPU_GEMM_B_COL ? (uint32_t)eb : 1u; a[7] = layout & OMEGA_GPU_GEMM_B_COL ? 1u : (uint32_t)eb; a[8] = p.KS2; | branch  2 taken 1404 (fallthrough)
+omega_gpu_gemm_drive_ld | 2808:  446:    a[6] = layout & OMEGA_GPU_GEMM_B_COL ? (uint32_t)eb : 1u; a[7] = layout & OMEGA_GPU_GEMM_B_COL ? 1u : (uint32_t)eb; a[8] = p.KS2; | branch  3 taken 1404
+omega_gpu_gemm_drive_ld | 2808:  447:    if (launch(ctx, OMEGA_GEMM_K_PACK_B, a, p.grid[1][0], p.grid[1][1], p.threads[1]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL; | branch  1 taken 936 (fallthrough)
+omega_gpu_gemm_drive_ld | 2808:  447:    if (launch(ctx, OMEGA_GEMM_K_PACK_B, a, p.grid[1][0], p.grid[1][1], p.threads[1]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL; | branch  2 taken 1872
+omega_gpu_gemm_drive_ld | 1872:  451:    if (launch(ctx, OMEGA_GEMM_K_MAIN, a, p.grid[2][0], p.grid[2][1], p.threads[2]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL; | branch  1 taken 936 (fallthrough)
+omega_gpu_gemm_drive_ld | 1872:  451:    if (launch(ctx, OMEGA_GEMM_K_MAIN, a, p.grid[2][0], p.grid[2][1], p.threads[2]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL; | branch  2 taken 936
+packed_locked | #####:  543:    if (hook_locked() != 0) return -1; | branch  1 never executed (fallthrough)
+packed_locked | #####:  543:    if (hook_locked() != 0) return -1; | branch  2 never executed
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  0 never executed (fallthrough)
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  1 never executed
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  2 never executed (fallthrough)
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  3 never executed
+packed_locked | #####:  549:    if (g.pk.cpu) { | branch  0 never executed (fallthrough)
+packed_locked | #####:  549:    if (g.pk.cpu) { | branch  1 never executed
+packed_locked | #####:  550:        if (g.pk_cached) (void)omega_gpu_session_sync_to_gpu(&g.pk); | branch  0 never executed (fallthrough)
+packed_locked | #####:  550:        if (g.pk_cached) (void)omega_gpu_session_sync_to_gpu(&g.pk); | branch  1 never executed
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  0 never executed (fallthrough)
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  1 never executed
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  2 never executed (fallthrough)
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  3 never executed
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  4 never executed (fallthrough)
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  5 never executed
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  0 never executed (fallthrough)
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  1 never executed
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  4 never executed (fallthrough)
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  5 never executed
+
+Uncovered branches:
+packed_locked | #####:  543:    if (hook_locked() != 0) return -1; | branch  1 never executed (fallthrough)
+packed_locked | #####:  543:    if (hook_locked() != 0) return -1; | branch  2 never executed
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  0 never executed (fallthrough)
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  1 never executed
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  2 never executed (fallthrough)
+packed_locked | #####:  545:    if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; } | branch  3 never executed
+packed_locked | #####:  549:    if (g.pk.cpu) { | branch  0 never executed (fallthrough)
+packed_locked | #####:  549:    if (g.pk.cpu) { | branch  1 never executed
+packed_locked | #####:  550:        if (g.pk_cached) (void)omega_gpu_session_sync_to_gpu(&g.pk); | branch  0 never executed (fallthrough)
+packed_locked | #####:  550:        if (g.pk_cached) (void)omega_gpu_session_sync_to_gpu(&g.pk); | branch  1 never executed
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  0 never executed (fallthrough)
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  1 never executed
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  2 never executed (fallthrough)
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  3 never executed
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  4 never executed (fallthrough)
+packed_locked | #####:  556:    g.pk_cached = !(v && v[0] == '0' && v[1] == 0); | branch  5 never executed
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  0 never executed (fallthrough)
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  1 never executed
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  4 never executed (fallthrough)
+packed_locked | #####:  561:    if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; } | branch  5 never executed

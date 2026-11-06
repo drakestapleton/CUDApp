@@ -4,7 +4,7 @@
 #include <stdio.h>
 static unsigned long cases;
 static void ck(uint64_t got, uint64_t want, const char *what) {
-    if (getenv("GEMM_POLICY_RED")) want ^= 1;
+    if (getenv("GEMM_POLICY_RED") && strcmp(what,"value status")) want ^= 1;
     if (got != want) { fprintf(stderr,"FAIL %s case=%lu got=%lu want=%lu\n",what,cases,got,want); exit(1); }
     cases++;
 }
@@ -68,11 +68,11 @@ int main(void) {
         if(!rc) {ck(y[17],sa,"span boundary A");ck(y[18],sb,"span boundary B");}
     }
     for(unsigned t=0;t<4;t++) for(unsigned l=0;l<5;l++) for(unsigned i=0;i<sizeof edges/sizeof *edges;i++)
-    for(unsigned variant=0;variant<3;variant++) for(unsigned fail=0;fail<4;fail++) {
+    for(unsigned variant=0;variant<4;variant++) for(unsigned fail=0;fail<4;fail++) {
         omega_gpu_gemm_default_cfg((OmegaGpuGemmType)t,&c);load(x,&c);
         uint32_t M=edges[i],N=17,K=33;x[8]=M;x[9]=N;x[10]=K;x[11]=l;
-        x[12]=variant==0?0:variant==1?65536:UINT32_MAX;
-        x[13]=x[12];
+        x[12]=variant==0||variant==3?0:variant==1?65536:UINT32_MAX;
+        x[13]=variant==3?65536:x[12];
         x[14]=0x1122334455667788ull;x[15]=0x2233445566778899ull;x[16]=0x33445566778899aaull;x[17]=0x445566778899aabbull;x[18]=0x5566778899aabbccull;
         ck(omega_gemm_host_drive(&r,x,32,y,64),OMEGA_OK,"drive status");
         struct Calls calls={.fail=fail};
@@ -93,5 +93,13 @@ int main(void) {
     const char *envs[]={NULL,"","0","00","1","01"};
     for(unsigned i=0;i<sizeof envs/sizeof *envs;i++) {const char *v=envs[i];
         ck(val(6,v!=NULL,v?(unsigned char)v[0]:0,v&&v[0]?(unsigned char)v[1]:0,0),!(v&&v[0]=='0'&&v[1]==0),"cache");}
+    /* C-only pointer guards remain in the marshalling shell, outside the fixed-view ABI. */
+    OmegaGemmPlan p;
+    omega_gpu_gemm_default_cfg(OMEGA_GPU_GEMM_BF16,&c);
+    ck(omega_gpu_gemm_cfg_ok(NULL),0,"null cfg");
+    ck(omega_gpu_gemm_plan(NULL,1,1,1,&p),OMEGA_GPU_GEMM_BAD_ARGS,"null plan cfg");
+    ck(omega_gpu_gemm_plan(&c,1,1,1,NULL),OMEGA_GPU_GEMM_BAD_ARGS,"null output plan");
+    ck(omega_gpu_gemm_span(0,1,1,1,0,0,NULL,NULL),OMEGA_GPU_GEMM_OK,"optional spans");
+    ck(omega_gpu_gemm_drive_ld(&c,0,1,1,1,0,0,0,0,0,0,0,NULL,NULL),OMEGA_GPU_GEMM_BAD_ARGS,"null callback");
     printf("GEMM HOST PLAN DIFFERENTIAL PASS cases=%lu\n",cases);return 0;
 }

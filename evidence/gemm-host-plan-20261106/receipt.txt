@@ -1,5 +1,5 @@
 python3 tests/gemm_host_plan_check.py
-GEMM HOST PLAN DIFFERENTIAL PASS cases=964420
+GEMM HOST PLAN DIFFERENTIAL PASS cases=1005729
 RED COMPARATOR: PASS (nonzero mismatch)
 STRONG LINK NEGATIVE: PASS (Omega planner symbols undefined)
 MUTANT tile-set: KILLED FAIL cfg case=7 got=0 want=1
@@ -8,20 +8,20 @@ MUTANT rounding: KILLED FAIL plan field case=970 got=0 want=16
 MUTANT pack-padding: KILLED FAIL plan field case=976 got=3072 want=4096
 MUTANT span-edge: KILLED FAIL span rc case=868995 got=1 want=0
 MUTANT band-grid: KILLED FAIL plan field case=1714 got=4 want=2
-MUTANT alignment: KILLED FAIL alignment case=963419 got=0 want=256
+MUTANT alignment: KILLED FAIL alignment case=1004723 got=0 want=256
 MUTANT main-registers: KILLED FAIL registers case=9 got=88 want=96
-function esz called 91637 returned 100% blocks executed 100%
-function kstep called 45821 returned 100% blocks executed 100%
-function pow124 called 297992 returned 100% blocks executed 100%
-function type_ok called 92015 returned 100% blocks executed 100%
-function band_ok called 74044 returned 100% blocks executed 100%
+function esz called 94966 returned 100% blocks executed 100%
+function kstep called 47485 returned 100% blocks executed 100%
+function pow124 called 305676 returned 100% blocks executed 100%
+function type_ok called 93936 returned 100% blocks executed 100%
+function band_ok called 75965 returned 100% blocks executed 100%
 function main_regs called 1200 returned 100% blocks executed 100%
-function omega_gpu_gemm_cfg_ok called 92010 returned 100% blocks executed 100%
-function roundup called 137448 returned 100% blocks executed 100%
-function omega_gpu_gemm_plan called 90810 returned 100% blocks executed 100%
-function ld_span called 10826 returned 100% blocks executed 100%
-function omega_gpu_gemm_span called 2464 returned 100% blocks executed 100%
-function omega_gpu_gemm_drive_ld called 7200 returned 100% blocks executed 100%
+function omega_gpu_gemm_cfg_ok called 93933 returned 100% blocks executed 100%
+function roundup called 142440 returned 100% blocks executed 100%
+function omega_gpu_gemm_plan called 92732 returned 100% blocks executed 100%
+function ld_span called 14156 returned 100% blocks executed 100%
+function omega_gpu_gemm_span called 2465 returned 100% blocks executed 100%
+function omega_gpu_gemm_drive_ld called 9601 returned 100% blocks executed 100%
 function packed_locked called 0 returned 0% blocks executed 0%
 function up16 called 16 returned 100% blocks executed 100%
 GEMM --host-only: rc=0 C3 gemm host: PASS (209 checks)

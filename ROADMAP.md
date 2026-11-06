@@ -147,3 +147,5 @@ and freestanding fallback are default-off in hosted builds; C still marshals
 records, pointers and external effects. The runtime-view converter remains
 pending omega-bridge #71 and #73. Chip qualification is NOT_RUN, and no roadmap
 row status is upgraded.
+
+2026-11-06: elementwise and attention API kernel generation, scheduling, reconvergence and loop-liveness metadata now default to seeded `om/kgen/{ew,attention}_*.om` through the existing single `omega_gpu_om_ir_replay` entry. `CUDAPP_MIGRATION_PENDING_C_API_KGEN` retains the default-OFF C oracles. Complete source-derived IR, solved allocation, text and cubin differential checks, altered-IR/final-cubin controls and ten seeded semantic mutants are recorded in `evidence/api-kgen/README.md` and `evidence/api-kernel-gen-attn/2026-11-06/README.md`. Required host/model/simulator targets and byte-for-byte unit regeneration passed. This is host evidence, not chip qualification; chip NOT_RUN and the status rows above are unchanged.

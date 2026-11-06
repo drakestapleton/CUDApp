@@ -1,0 +1,309 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -Itests -o build/gpu_tc_probe_test tests/gpu_tc_probe_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=512 -Itests -o build/gpu_tcgemm_test tests/gpu_tcgemm_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=256 -Itests -o build/gpu_prefill_attn_test tests/gpu_prefill_attn_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=512 -Itests -o build/gpu_pf_mem_test tests/gpu_pf_mem_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=512 -Itests -o build/gpu_pfgemm_test tests/gpu_pfgemm_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -Itests -o build/gpu_qmma_probe_test tests/gpu_qmma_probe_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=1024 -Itests -o build/gpu_qgemm_test tests/gpu_qgemm_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -ffp-contract=off -DWS_MAX_THREADS=1024 -Itests -o build/gpu_pfhost_test tests/gpu_pfhost_test.c build/libomega_gpu.a -lpthread -lm
+./build/gpu_tc_probe_test --host-only
+host-only model self-checks: PASS (0 failures)
+./build/gpu_qmma_probe_test --host-only
+QMMA patch self-test: PASS (QMMA.16832.F32.E4M3.E4M3 and F2FP.SATFINITE.E4M3.F32.PACK_AB_MERGE_C match the oracle bits, HMMA untouched)
+host-only checks: PASS (0 failures)
+GPU_QMMA_PROBE: PASS
+./build/gpu_pf_mem_test --host-only
+sim copy: ran, peak 12 registers, 0 wrong, 0 written past the end
+GPU_PF_MEM: PASS
+./build/gpu_tcgemm_test --host-only
+SHFL.BFLY / F2FP.BF16 golden words: ok (rc 0)
+shape k 2048 rt 4 ct 2 warps 8: rc 0, 539 instructions, peak 124, declared 128, shared 16384, span 128: ok
+shape k 768 rt 4 ct 2 warps 8: rc 0, 539 instructions, peak 124, declared 128, shared 16384, span 128: ok
+shape k 4096 rt 4 ct 2 warps 8: rc 0, 539 instructions, peak 124, declared 128, shared 16384, span 128: ok
+shape k 2048 rt 4 ct 1 warps 8: rc 0, 392 instructions, peak 88, declared 96, shared 16384, span 64: ok
+shape k 2048 rt 2 ct 2 warps 4: rc 0, 411 instructions, peak 96, declared 104, shared 8192, span 64: ok
+shape k 2048 rt 4 ct 2 warps 4: rc -1, 0 instructions, peak 0, declared 8, shared 16384, span 64: REFUSED
+shape k 768 rt 4 ct 2 warps 4: rc -1, 0 instructions, peak 0, declared 8, shared 16384, span 64: REFUSED
+shape k 5120 rt 4 ct 2 warps 8: rc 0, 539 instructions, peak 124, declared 128, shared 16384, span 128: ok
+shape k 17408 rt 4 ct 2 warps 8: rc 0, 539 instructions, peak 124, declared 128, shared 16384, span 128: ok
+shape k 32768 rt 4 ct 2 warps 8: rc 0, 539 instructions, peak 124, declared 128, shared 16384, span 128: ok
+emulation vs double oracle: worst |err| / sum|terms| = 2.46e-07 (ok, bound 1e-6)
+host-only: PASS
+GPU_TCGEMM: PASS
+./build/gpu_tcgemm_test --sim
+sim E 3 n 256 k 256 M 40 rt 4 ct 2 warps 8 order 0: ok 0 of 10240 differ from the emulation, 0 unwritten (bit-identical)
+sim E 3 n 256 k 256 M 40 rt 4 ct 2 warps 8 order 1: ok 0 of 10240 differ from the emulation, 0 unwritten (bit-identical)
+sim E 2 n 128 k 384 M 70 rt 4 ct 2 warps 8 order 0: ok 0 of 8960 differ from the emulation, 0 unwritten (bit-identical)
+sim E 2 n 128 k 384 M 70 rt 4 ct 2 warps 8 order 1: ok 0 of 8960 differ from the emulation, 0 unwritten (bit-identical)
+sim E 4 n 128 k 128 M 37 rt 2 ct 2 warps 4 order 0: ok 0 of 4736 differ from the emulation, 0 unwritten (bit-identical)
+sim E 4 n 128 k 128 M 37 rt 2 ct 2 warps 4 order 1: ok 0 of 4736 differ from the emulation, 0 unwritten (bit-identical)
+sim E 2 n 256 k 256 M 20 rt 4 ct 1 warps 8 order 0: ok 0 of 5120 differ from the emulation, 0 unwritten (bit-identical)
+sim E 2 n 256 k 256 M 20 rt 4 ct 1 warps 8 order 1: ok 0 of 5120 differ from the emulation, 0 unwritten (bit-identical)
+sim E 2 n 128 k 256 M 33 rt 1 ct 4 warps 4 order 0: ok 0 of 4224 differ from the emulation, 0 unwritten (bit-identical)
+sim E 2 n 128 k 256 M 33 rt 1 ct 4 warps 4 order 1: ok 0 of 4224 differ from the emulation, 0 unwritten (bit-identical)
+sim E 1 n 512 k 256 M 64 rt 4 ct 2 warps 8 order 0: ok 0 of 32768 differ from the emulation, 0 unwritten (bit-identical)
+sim E 1 n 512 k 256 M 64 rt 4 ct 2 warps 8 order 1: ok 0 of 32768 differ from the emulation, 0 unwritten (bit-identical)
+sim E 1 n 128 k 17408 M 64 rt 4 ct 2 warps 8 order 0: ok 0 of 8192 differ from the emulation, 0 unwritten (bit-identical)
+sim E 1 n 128 k 17408 M 64 rt 4 ct 2 warps 8 order 1: ok 0 of 8192 differ from the emulation, 0 unwritten (bit-identical)
+sim mutant 1: caught (6400 of 6400 differ)
+sim mutant 2: caught (6400 of 6400 differ)
+sim mutant 3: caught (6144 of 6400 differ)
+sim mutant 4: caught (6400 of 6400 differ)
+sim: PASS
+GPU_TCGEMM: PASS
+./build/gpu_prefill_attn_test --host-only
+codegen warps 4 mode 0: 917 instructions, 120 registers (declared 128, 128 threads -> 16384 of 65536)
+codegen warps 4 mode 1: 174 instructions, 56 registers (declared 64, 128 threads -> 8192 of 65536)
+codegen warps 4 mode 2: 782 instructions, 124 registers (declared 128, 128 threads -> 16384 of 65536)
+codegen warps 8 mode 0: 866 instructions, 120 registers (declared 128, 256 threads -> 32768 of 65536)
+codegen warps 8 mode 1: 174 instructions, 56 registers (declared 64, 256 threads -> 16384 of 65536)
+codegen warps 8 mode 2: 731 instructions, 124 registers (declared 128, 256 threads -> 32768 of 65536)
+codegen warps 8 APPEND + mirror: 187 instructions, 56 registers
+gpu_prefill_attn_test: 69 checks, 0 failed: PASS
+./build/gpu_prefill_attn_test --sim
+codegen warps 4 mode 0: 917 instructions, 120 registers (declared 128, 128 threads -> 16384 of 65536)
+codegen warps 4 mode 1: 174 instructions, 56 registers (declared 64, 128 threads -> 8192 of 65536)
+codegen warps 4 mode 2: 782 instructions, 124 registers (declared 128, 128 threads -> 16384 of 65536)
+codegen warps 8 mode 0: 866 instructions, 120 registers (declared 128, 256 threads -> 32768 of 65536)
+codegen warps 8 mode 1: 174 instructions, 56 registers (declared 64, 256 threads -> 16384 of 65536)
+codegen warps 8 mode 2: 731 instructions, 124 registers (declared 128, 256 threads -> 32768 of 65536)
+codegen warps 8 APPEND + mirror: 187 instructions, 56 registers
+sim one token at position 0                  W=8: ok bad=0 worst=0.000 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim 5 tokens from 0 (partial CTA)            W=8: ok bad=0 worst=0.257 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim 19 tokens from 37, warps 4               W=4: ok bad=0 worst=0.112 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim 19 tokens from 37, sharp q (x4)          W=8: ok bad=0 worst=0.107 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim 64 tokens from 100 (full chunk)          W=8: ok bad=0 worst=0.067 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim 70 tokens from 0 (two chunks)            W=8: ok bad=0 worst=0.291 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim 33 tokens from 200, warps 4              W=4: ok bad=0 worst=0.051 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim split: one token at position 0           W=8: ok bad=0 worst=0.000 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim split: 5 tokens from 0                   W=8: ok bad=0 worst=0.255 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim split: 19 tokens from 37, warps 4        W=4: ok bad=0 worst=0.108 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim split: 70 tokens from 0                  W=8: ok bad=0 worst=0.276 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim split: 141 tokens from 37, sharp q       W=8: ok bad=0 worst=0.117 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim mirror: 5 tokens from 0                  W=8: ok bad=0 worst=0.227 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim mirror: 19 tokens from 37, warps 4       W=4: ok bad=0 worst=0.095 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim mirror: 141 tokens from 37, sharp q      W=8: ok bad=0 worst=0.126 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim mirror: 45 tokens from 300               W=8: ok bad=0 worst=0.042 rows: k 0 v 0 words differ from the emulation (max 0 ulp)
+sim fused mutant 1 at 24 tokens from 40: caught (bad=1083432 worst=41.538 rows: k 7851 v 0 words differ from the emulation (max 34162 ulp))
+sim fused mutant 2 at 24 tokens from 40: caught (bad=65059 worst=33.577 rows: k 0 v 0 words differ from the emulation (max 0 ulp))
+sim fused mutant 3 at 24 tokens from 40: caught (bad=1000000 worst=0.083 rows: k 12288 v 12288 words differ from the emulation (max 49195 ulp))
+sim fused mutant 4 at 24 tokens from 40: caught (bad=53792 worst=183.288 rows: k 0 v 0 words differ from the emulation (max 0 ulp))
+sim split mutant 1 at 24 tokens from 40: caught (bad=1083432 worst=41.538 rows: k 7851 v 0 words differ from the emulation (max 34162 ulp))
+sim split mutant 2 at 24 tokens from 40: caught (bad=75048 worst=66.804 rows: k 0 v 0 words differ from the emulation (max 0 ulp))
+sim split mutant 3 at 24 tokens from 40: caught (bad=1000000 worst=0.083 rows: k 12288 v 12288 words differ from the emulation (max 49195 ulp))
+sim split mutant 4 at 24 tokens from 40: caught (bad=53792 worst=183.288 rows: k 0 v 0 words differ from the emulation (max 0 ulp))
+sim mirror mutant 1 at 24 tokens from 40: caught (bad=1083432 worst=41.538 rows: k 7851 v 0 words differ from the emulation (max 34162 ulp))
+sim mirror mutant 2 at 24 tokens from 40: caught (bad=75048 worst=66.804 rows: k 0 v 0 words differ from the emulation (max 0 ulp))
+sim mirror mutant 3 at 24 tokens from 40: caught (bad=1000000 worst=0.083 rows: k 12288 v 12288 words differ from the emulation (max 49195 ulp))
+sim mirror mutant 4 at 24 tokens from 40: caught (bad=53792 worst=183.288 rows: k 0 v 0 words differ from the emulation (max 0 ulp))
+sim: 10233092 warp issues in total
+gpu_prefill_attn_test: 97 checks, 0 failed: PASS
+./build/gpu_pfgemm_test --host-only
+spec k 2048 rt 8 ct 2 warps 16 aqn 1 epi 0 direct 0: built, 798 instructions, peak 120, declared 128 -> fits
+spec k 2048 rt 8 ct 2 warps 16 aqn 1 epi 1 direct 0: built, 994 instructions, peak 120, declared 128 -> fits
+spec k 768 rt 8 ct 2 warps 16 aqn 1 epi 0 direct 1: built, 795 instructions, peak 120, declared 128 -> fits
+spec k 4096 rt 8 ct 2 warps 16 aqn 1 epi 0 direct 0: built, 798 instructions, peak 120, declared 128 -> fits
+spec k 2048 rt 8 ct 2 warps 16 aqn 2 epi 0 direct 0: built, 798 instructions, peak 124, declared 128 -> fits
+spec k 2048 rt 8 ct 2 warps 16 aqn 2 epi 1 direct 0: built, 994 instructions, peak 124, declared 128 -> fits
+spec k 768 rt 8 ct 2 warps 16 aqn 2 epi 0 direct 1: built, 795 instructions, peak 124, declared 128 -> fits
+spec k 2048 rt 4 ct 2 warps 8 aqn 2 epi 0 direct 0: built, 550 instructions, peak 92, declared 96 -> fits
+SWIGLU layout + emulation vs double oracle on the original weights: worst relative error 0.00379 (bf16 output: < 1e-2 expected)
+SWIGLU reference vs chip-observed MUFU.RCP flush window: 6/6 match; control g -87 -> a73e (nonzero), g -89 -> 8000 (-0): ok
+GPU_PFGEMM: PASS
+./build/gpu_pfgemm_test --sim
+sim case 0 (E 3 n 256 k 256 M 70 F32 rt 8 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 0 (E 3 n 256 k 256 M 70 F32 rt 8 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 0 mutant 1: caught
+sim case 0 mutant 2: caught
+sim case 0 mutant 3: caught
+sim case 0 mutant 4: caught
+sim case 1 (E 3 n 256 k 384 M 70 SWIGLU rt 8 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 1 (E 3 n 256 k 384 M 70 SWIGLU rt 8 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 1 mutant 1: caught
+sim case 1 mutant 2: caught
+sim case 1 mutant 3: caught
+sim case 1 mutant 4: caught
+sim case 2 (E 3 n 256 k 256 M 150 F32 direct rt 8 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 2 (E 3 n 256 k 256 M 150 F32 direct rt 8 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 3 (E 2 n 256 k 256 M 40 F32 rt 4 warps 8 aqn 2) order 0: ran, 0 differ
+sim case 3 (E 2 n 256 k 256 M 40 F32 rt 4 warps 8 aqn 2) order 1: ran, 0 differ
+sim case 4 (E 2 n 512 k 128 M 300 SWIGLU rt 8 warps 16 aqn 2) order 0: ran, 0 differ
+sim case 4 (E 2 n 512 k 128 M 300 SWIGLU rt 8 warps 16 aqn 2) order 1: ran, 0 differ
+sim case 5 (E 3 n 512 k 256 M 150 SWIGLU rt 4 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 5 (E 3 n 512 k 256 M 150 SWIGLU rt 4 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 6 (E 3 n 256 k 384 M 130 F32 direct rt 4 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 6 (E 3 n 256 k 384 M 130 F32 direct rt 4 warps 16 aqn 1) order 1: ran, 0 differ
+GPU_PFGEMM: PASS
+./build/gpu_qgemm_test --host-only
+quantiser reference: PASS (amax/scale in (224, 448], error within half an e4m3 ulp)
+PASS qgemm SwiGLU: MUFU flush vs IEEE, 15859204 inputs, 0 differ (t-cap keeps it unobservable, #462)
+PASS 128-row shape 0 peak 144 declared 152 max-store 7864356
+PASS 128-row shape 1 peak 144 declared 152 max-store 6881316
+PASS 128-row shape 2 peak 144 declared 152 max-store 2457636
+PASS 128-row shape 3 peak 145 declared 152 max-store 4177920
+PASS 128-row shape 4 peak 144 declared 152 max-store 2457636
+qgemm emulation vs double oracle (plain): worst error 2.31e-07 of the sum of |terms| PASS
+qgemm emulation vs double oracle (swiglu_nat): worst error 2.19e-07 of the sum of |terms| PASS
+GPU_QGEMM: PASS
+./build/gpu_qgemm_test --sim
+sim quantiser k 2048 f32 groups 0: ran, 0 differ
+sim quantiser k 768 bf16 groups 0: ran, 0 differ
+sim quantiser k 4096 f32 groups 0: ran, 0 differ
+sim quantiser k 128 bf16 groups 0: ran, 0 differ
+sim quantiser k 5120 f32 groups 20: ran, 0 differ
+sim quantiser k 6144 bf16 groups 24: ran, 0 differ
+sim quantiser k 17408 bf16 groups 17: ran, 0 differ
+sim quantiser k 2048 f32 groups 4: ran, 0 differ
+sim quantiser mutant 1: caught
+sim quantiser mutant 2: caught
+sim quantiser mutant 3: caught
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 0 mutant 1: caught
+sim qgemm case 0 mutant 2: caught
+sim qgemm case 0 mutant 3: caught
+sim qgemm case 0 mutant 4: caught
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 1 mutant 1: caught
+sim qgemm case 1 mutant 2: caught
+sim qgemm case 1 mutant 3: caught
+sim qgemm case 1 mutant 4: caught
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 4 mutant 1: caught
+sim qgemm case 4 mutant 2: caught
+sim qgemm case 4 mutant 3: caught
+sim qgemm case 4 mutant 4: caught
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 5 mutant 1: caught
+sim qgemm case 5 mutant 2: caught
+sim qgemm case 5 mutant 3: caught
+sim qgemm case 5 mutant 4: caught
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 4) order 1: ran, 0 differ
+sim qgemm case 8 mutant 1: caught
+sim qgemm case 8 mutant 2: caught
+sim qgemm case 8 mutant 3: caught
+sim qgemm case 8 mutant 4: caught
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 4) order 1: ran, 0 differ
+sim qgemm case 9 mutant 1: caught
+sim qgemm case 9 mutant 2: caught
+sim qgemm case 9 mutant 3: caught
+sim qgemm case 9 mutant 4: caught
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 4) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 4) order 1: ran, 0 differ
+GPU_QGEMM: PASS
+./build/gpu_pfhost_test --host-only
+host pack R4: 0 wrong
+host -0.0 start: -0 + (-0) = -0 (ok)
+host router mutant 1 reference differs in 89 of 160
+host router mutant 2 reference differs in 128 of 160
+host combine mutant 1 reference differs in 176 of 384
+host combine mutant 2 reference differs in 381 of 384
+GPU_PFHOST: PASS
+./build/gpu_pfhost_test --sim
+sim router k 2048 e 128 t 16 rows 37 order 0: ran, 0 of 4736 differ
+sim router k 2048 e 128 t 16 rows 37 order 1: ran, 0 of 4736 differ
+sim router mutant 1: caught
+sim router mutant 2: caught
+sim router k 256 e 32 t 4 rows 9 order 0: ran, 0 of 288 differ
+sim router k 256 e 32 t 4 rows 9 order 1: ran, 0 of 288 differ
+sim router k 384 e 64 t 8 rows 21 order 0: ran, 0 of 1344 differ
+sim router k 384 e 64 t 8 rows 21 order 1: ran, 0 of 1344 differ
+sim router k 2048 e 128 t 4 rows 16 order 0: ran, 0 of 2048 differ
+sim router k 2048 e 128 t 4 rows 16 order 1: ran, 0 of 2048 differ
+sim combine h 2048 top_k 8 rows 7 order 0: ran, 0 of 14336 differ
+sim combine h 2048 top_k 8 rows 7 order 1: ran, 0 of 14336 differ
+sim combine mutant 1: caught
+sim combine mutant 2: caught
+sim combine h 128 top_k 4 rows 5 order 0: ran, 0 of 640 differ
+sim combine h 128 top_k 4 rows 5 order 1: ran, 0 of 640 differ
+sim combine h 384 top_k 16 rows 3 order 0: ran, 0 of 1152 differ
+sim combine h 384 top_k 16 rows 3 order 1: ran, 0 of 1152 differ
+GPU_PFHOST: PASS
+test-gpu-prefill-host: PASS (8 prefill tests, host model + warp simulator, no device)

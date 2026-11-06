@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T09:30:42Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:1f9c4a6f95d8c9e477189581d43e5cec9e610e0229009b6573a8367a9f9078e9",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 9,
+      "generated_at_commit": "a61802d5681e32cbd4fb86e4902da430e91139f3",
+      "source_tree": "sha256:4f62e09e9cc43f9b80c14d804e7eb1af386470bc958a239ae904405e14c49886"
+    }
+  },
+  "name": "kgen",
+  "purpose": "Seeded API kernel IR generators replayed through the common IR ABI",
+  "schema_version": "1.0.0"
+}

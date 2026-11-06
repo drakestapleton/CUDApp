@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* omega_gpu_elementwise_api.c: FB-1 cut 4 (2026-10-04). See the header.
  *
- * Layout of this file: (1) kernel codegen on top of the BlackwellIR, with a
- * small scheduler that writes every control word; (2) one launcher cloned from
- * the chip-proven tensor matmul path (omega_blackwell_execute_matmul_tensor);
+ * Kernel IR and control words are computed by seeded om/kgen/ew_*.om and
+ * materialized through omega_gpu_om_ir_replay. The retained C emitter is a
+ * default-OFF differential oracle. (2) The launcher follows the chip-proven tensor matmul path;
  * (3) the public entry points, which split work into <= OMEGA_GPU_EW_MAX_CTAS
  * launches and run the host-side bookkeeping.
  *
@@ -15,13 +15,15 @@
  *   - a predicate producer (ISETP) stalls 14 before @P0 use (NAK SM120 padding);
  *   - stores (STG, STS) set a read barrier so the next instruction cannot overwrite
  *     the source register early.
- * The emitter below serialises: every instruction waits on everything still
- * pending. A final local pass tightens supported adjacent ALU pairs to 5 cycles.
+ * The Omega emitter serialises: every instruction waits on everything still
+ * pending. Its final pass tightens supported adjacent ALU pairs to 5 cycles.
  */
 #include "omega_gpu_elementwise_api.h"
 #include "omega_host_policy.h"
 #include "omega_api_plan.h"
 #include "omega_blackwell_codegen.h"
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
@@ -35,6 +37,12 @@
 #include "omega_gpu_apiviews.h"
 
 /* ------------------------------------------------------------------ codegen */
+#ifndef CUDAPP_MIGRATION_PENDING_C_API_KGEN
+#define CUDAPP_MIGRATION_PENDING_C_API_KGEN 0
+#endif
+#define EW_GPR_BUDGET 64u
+#if CUDAPP_MIGRATION_PENDING_C_API_KGEN
+/* Differential oracle only. Production computation is om/kgen/ew_*.om. */
 
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
@@ -763,7 +771,6 @@ static int check_loop_invariant(const Em *e) {
     return 0;
 }
 
-#define EW_GPR_BUDGET 64u /* the QMD declares 64 registers, as the matmul launcher does */
 
 /* Mesa NAK sm120_instr_latencies.rs + sm100/reg_raw.csv: ALU/dual-ALU pairs
  * and FMA/FMA pairs need 4 + 1 cycles; mixed pairs need 5 + 1. CSV rows are
@@ -803,10 +810,12 @@ static void schedule_fixed_pairs(BlackwellIRProgram *p) {
         a->control = (a->control & ~(15u << 9)) | (5u << 9);
     }
 }
+#endif /* CUDAPP_MIGRATION_PENDING_C_API_KGEN */
 
 static int build_kernel(OmegaGpuEwOp op, int mutant, OmegaBlackwellKernel *kernel, BlackwellIRProgram *prog_out, int test_path) {
     BlackwellIRProgram *prog = calloc(1, sizeof *prog);
     if (!prog) return OMEGA_GPU_EW_CODEGEN_FAIL;
+#if CUDAPP_MIGRATION_PENDING_C_API_KGEN
     omega_bw_ir_init(prog);
     Em e; memset(&e, 0, sizeof e); e.p = prog; e.test_path = test_path;
     /* mutant 1 = the op's math mutant (as before); 2 = the join (BSYNC) dropped; 3 = the BSSY
@@ -839,14 +848,22 @@ static int build_kernel(OmegaGpuEwOp op, int mutant, OmegaBlackwellKernel *kerne
     }
     if (e.rg.depth != 0) e.err = -1; /* a region left open has no join: refuse the build */
     schedule_fixed_pairs(prog);
-    int rc = OMEGA_GPU_EW_CODEGEN_FAIL;
-    int ra_rc = (e.err == 0) ? omega_bw_regalloc_solve(prog) : -1;
+    int emit_rc = e.err;
+    int ra_rc = (emit_rc == 0) ? omega_bw_regalloc_solve(prog) : -1;
     int loop_rc = (ra_rc == 0) ? check_loop_invariant(&e) : -1;
+#else
+    uint64_t emit_err = 0;
+    int emit_rc = omega_gpu_om_ir_replay(omega_ew_ir, (uint64_t)op, (uint64_t)mutant,
+                                        (uint64_t)test_path, 0, prog, &emit_err);
+    int ra_rc = (emit_rc == OMEGA_OM_IR_OK) ? 0 : -1; /* common replay already solves the allocator */
+    int loop_rc = (emit_rc == OMEGA_OM_IR_OK) ? 0 : -1;
+#endif
+    int rc = OMEGA_GPU_EW_CODEGEN_FAIL;
 #ifdef OMEGA_EW_DEBUG
     fprintf(stderr, "ew codegen op=%d mutant=%d emit_err=%d insns=%zu vregs=%d regalloc=%d loops=%d peak_gpr=%u\n",
-            (int)op, mutant, e.err, prog->count, prog->regalloc.num_vregs, ra_rc, loop_rc, prog->regalloc.peak_gpr_usage);
+            (int)op, mutant, emit_rc, prog->count, prog->regalloc.num_vregs, ra_rc, loop_rc, prog->regalloc.peak_gpr_usage);
 #endif
-    if (e.err == 0 && ra_rc == 0 && loop_rc == 0 && prog->regalloc.peak_gpr_usage <= EW_GPR_BUDGET) {
+    if (emit_rc == 0 && ra_rc == 0 && loop_rc == 0 && prog->regalloc.peak_gpr_usage <= EW_GPR_BUDGET) {
         size_t max_bytes = (size_t)BW_MAX_IR_INSNS * 16;
         memset(kernel, 0, sizeof *kernel);
         kernel->code = malloc(max_bytes);

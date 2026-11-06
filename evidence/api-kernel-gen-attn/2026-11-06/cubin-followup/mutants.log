@@ -1,0 +1,18 @@
+python3 tests/attention_kgen_mutants.py build/api-kgen
+ATTENTION-IR DIFFERENTIAL PASS cases=39423 cubins=39392 records+allocation+encoded-bytes+cubins identical
+KILLED descriptor-offset: rc=1 record 0 mismatch op=7/7
+attention parity failed f32=0 general=1 hd=1 bs=31 gqa=0 split=-1 mutant=0 divergent=0 status=0 result=0 err=0 n=175/175
+vregs=97/97 uvregs=1/1 loops=2/2 metadata=0,0 Cerror=0 depth=0 region=0
+KILLED query-argument-offset: rc=1 record 1 mismatch op=5/5
+attention parity failed f32=0 general=1 hd=1 bs=31 gqa=0 split=-1 mutant=0 divergent=0 status=0 result=0 err=0 n=175/175
+vregs=97/97 uvregs=1/1 loops=2/2 metadata=0,0 Cerror=0 depth=0 region=0
+KILLED thread-register: rc=1 record 12 mismatch op=3/3
+attention parity failed f32=0 general=1 hd=1 bs=31 gqa=0 split=-1 mutant=0 divergent=0 status=0 result=0 err=0 n=175/175
+vregs=97/97 uvregs=1/1 loops=2/2 metadata=0,0 Cerror=0 depth=0 region=0
+KILLED argument-scalar-offset: rc=1 record 5 mismatch op=4/4
+attention parity failed f32=0 general=1 hd=1 bs=31 gqa=0 split=-1 mutant=0 divergent=0 status=0 result=0 err=0 n=175/175
+vregs=97/97 uvregs=1/1 loops=2/2 metadata=0,0 Cerror=0 depth=0 region=0
+KILLED stall-control-field: rc=1 record 0 mismatch op=7/7
+attention parity failed f32=0 general=1 hd=1 bs=31 gqa=0 split=-1 mutant=0 divergent=0 status=0 result=0 err=0 n=175/175
+vregs=97/97 uvregs=1/1 loops=2/2 metadata=0,0 Cerror=0 depth=0 region=0
+PASS attention seeded semantic mutants: 5 killed

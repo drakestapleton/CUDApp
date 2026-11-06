@@ -162,3 +162,16 @@ integrated API, retaining the successful non-NULL session-pointer contract.
 `/tmp/integ/6a-282.log/.rc` returned0: host/warp-sim reference and shape sweep,
 six generated source mutants plus the session-open abort control, NULL/non-NULL
 shell contract, byte-identical units and `crumb verify: OK: 90 crumbs current`.
+
+### Half A: #340 kernel-family API generation
+
+Merged refreshed lane head `0463629a6d1651ed13e928e99b56a7b3f1b1d4e4`.
+`/tmp/integ/6a-340.log/.rc`: rc0 under device-isolated bwrap, bridge #73.
+Byte-identical unit regeneration; EW differential 127 accepted/73 refused,
+shape partition 4189/4001; attention 39423 cases/39392 complete cubins;
+five EW and five attention semantic mutants killed, IR/final-cubin red controls.
+Elementwise, reconvergence, attention, decode/decode256, eight prefill host/sim,
+hello-sim, GEMM-ex-sim and engine-sim gates passed. Final:
+`crumb verify: OK: 91 crumbs current`.
+Merge retained the existing root union and dated notes; no acceptance weakened.
+Hardware/live-RM/VFIO/chip remain NOT_RUN.

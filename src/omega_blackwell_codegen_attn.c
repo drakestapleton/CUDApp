@@ -5,6 +5,10 @@
  */
 #include "omega_blackwell_codegen_attn.h"
 #include <string.h>
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_CODEGEN_ATTN)
 
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
@@ -540,6 +544,15 @@ int omega_blackwell_codegen_decode_attn_prog(const OmegaDecodeAttnSpec *spec, Bl
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_decode_attn_prog(const OmegaDecodeAttnSpec *spec, BlackwellIRProgram *prog) {
+    uint64_t error = 0;
+    if (!spec || !prog || spec->depth < 1 || spec->depth > OMEGA_DATTN_MAX_DEPTH ||
+        spec->mutant < 0 || spec->mutant > 4) return -1;
+    return omega_gpu_om_ir_replay((OmegaOmIrUnit)omega_cg_attn, 0, spec->depth,
+                                  (uint64_t)spec->mutant, 0, prog, &error) == 0 ? 0 : -1;
+}
+#endif
 
 int omega_decode_attn_prog_stats(const OmegaDecodeAttnSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog;

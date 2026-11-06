@@ -3,7 +3,19 @@
 #include "omega_blackwell_codegen_pf.h"
 #include "omega_bw_em.h"
 
+int omega_cg_pf_copy_from_omega(BlackwellIRProgram *prog, int mutant);
+int omega_blackwell_codegen_pf_copy_prog_c(BlackwellIRProgram *prog);
+
 int omega_blackwell_codegen_pf_copy_prog(BlackwellIRProgram *prog) {
+    if (!prog) return -1;
+#if defined(CUDAPP_MIGRATION_PENDING_C_CODEGEN_PF)
+    return omega_blackwell_codegen_pf_copy_prog_c(prog);
+#else
+    return omega_cg_pf_copy_from_omega(prog, 0);
+#endif
+}
+
+int omega_blackwell_codegen_pf_copy_prog_c(BlackwellIRProgram *prog) {
     if (!prog) return -1;
     omega_bw_ir_init(prog);
     Em em; memset(&em, 0, sizeof em); em.p = prog; Em *e = &em;

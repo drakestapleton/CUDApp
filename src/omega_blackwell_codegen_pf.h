@@ -17,6 +17,8 @@ extern "C" {
 #endif
 #define OMEGA_PF_COPY_THREADS 256u
 int omega_blackwell_codegen_pf_copy_prog(BlackwellIRProgram *prog);
+int omega_blackwell_codegen_pf_copy_prog_c(BlackwellIRProgram *prog);
+int omega_cg_pf_copy_from_omega(BlackwellIRProgram *prog, int mutant);
 #ifdef __cplusplus
 }
 #endif

@@ -5,14 +5,19 @@
  *
  *   --host-only  no device: the xoshiro reference against the aien-math fixture (792 rows); the Philox reference
  *                against the Random123 known-answer vectors (a 9-round control must fail all three) and against
- *                the cuRAND fixture (1024 rows); refusals; every kernel through the unit, the allocator and the
+ *                the cuRAND fixture (1024 rows); the Philox distribution mirror (curand_uniform, _uniform_double,
+ *                _uniform2_double bit-exact; curand_normal within 2^-21 sqrt(-2 log u)) against the cuRAND
+ *                distribution fixture (4480 rows, the 896 normal_double rows counted, not compared) with three
+ *                negative controls; refusals; every kernel through the unit, the allocator and the
  *                .om encoder, digest and listing checks; the twiddle tables up to n = 4096; the unit's pass plans
  *                and the launches they become; the normal transform's f32 model swept over every one of its 2^23
  *                inputs against an f64 erfinv (Newton on libm erf/erfc) within the Wolfram bound 2.87e-6
  *   --sim        --host-only plus the real kernels through the warp simulator (tests/bw_warp_sim.h): xoshiro raw
  *                and uniform outputs bit-exact against the reference, normal outputs bit-exact against the f32
- *                model and within the bound; Philox bit-exact against the KAT, the reference and every cuRAND
- *                fixture row; FFT N = 4..2048, R2C and C2R N = 8..4096 and 2-D / 3-D shapes within the Wolfram
+ *                model and within the bound; Philox raw words bit-exact against the KAT, the reference and every
+ *                cuRAND fixture row, every distribution at offsets of every residue mod 4, partial groups and the
+ *                counter carry bit-exact against the mirror and covering every cuRAND distribution row; FFT N = 4..2048,
+ *                R2C and C2R N = 8..4096 and 2-D / 3-D shapes within the Wolfram
  *                normwise tolerances of an f64 DFT under three warp orders; every mutant must be caught
  *   (no flag)    the GB10: 4096 streams x 17 at offset 0 and x 16 at offset 1000 for bases 0, 1729, 2^64-4
  *                against the fixture and the reference, uniform and normal runs, a 131072-stream run, the FFT at
@@ -21,6 +26,7 @@
  *                caught. --out FILE writes the receipt lines there as well.
  *   --fixture F         the aien-math fixture (default tests/fixtures/mathlibs_rng_aienmath.txt)
  *   --philox-fixture F  the cuRAND fixture (default tests/fixtures/philox_curand_oracle.txt)
+ *   --dist-fixture F    the cuRAND distribution fixture (default tests/fixtures/philox_curand_dist_oracle.txt)
  * Last line: "mathlibs <tier>: PASS (<checks> checks)" or "mathlibs <tier>: FAIL (<failed> of <checks>)". */
 #include "omega_gpu_mathlibs_api.h"
 #include "omega_gpu_om_ir.h"
@@ -341,15 +347,6 @@ static uint32_t philox_ref(uint64_t seed, uint64_t sub, uint64_t offset, uint32_
     philox_block(ctr, seed, 10, o);
     return o[k % 4];
 }
-/* the API's layout: out[(j * ns + g) * 4 + c] = word c of block j of the stream with subsequence subseq0 + g */
-static void ref_philox(uint64_t seed, uint64_t sub0, uint32_t ns, uint64_t offset, uint32_t per, uint32_t *out) {
-    for (uint32_t j = 0; j < per / 4; j++)
-        for (uint32_t g = 0; g < ns; g++) {
-            uint32_t ctr[4];
-            philox_ctr(offset / 4 + j, sub0 + g, ctr);
-            philox_block(ctr, seed, 10, &out[((size_t)j * ns + g) * 4]);
-        }
-}
 
 /* ------------------------------------------------------------------ fixture */
 
@@ -442,6 +439,175 @@ static size_t ph_distinct(void) {
 static const uint64_t PH_SEEDS[4] = { 0, 1729, 0x123456789abcdefull, 0xffffffffffffffffull };
 static const uint64_t PH_OFFS[4] = { 0, 4, 1000, 0x400000000ull };
 
+/* ------------------------------------------------------------------ cuRAND Philox distributions */
+
+/* The kernel's arithmetic, operation for operation in f32 (the file builds with -ffp-contract=off; every fused step
+ * is an explicit fmaf), so the simulator must match it bit for bit. Against cuRAND (the host-built oracle
+ * tests/fixtures/philox_curand_dist_oracle.txt) the uniforms are bit-exact and the normal is within
+ * 2^-21 sqrt(-2 log u) (the bound is derived in the evidence README; the formulas are cuRAND's: curand_kernel.h,
+ * curand_uniform.h, curand_normal.h of cuRAND 10.4.0). */
+static uint64_t ph_d2u(double d) { uint64_t u; memcpy(&u, &d, 8); return u; }
+/* (float)x by two exact halves and one rounding */
+static float ph_frn(uint32_t x) { return fmaf((float)(int32_t)(x >> 16), 65536.0f, (float)(int32_t)(x & 0xffff)); }
+/* _curand_uniform: x * 2^-32 + 2^-33, one FFMA */
+static float ph_unif(uint32_t x) { return fmaf(ph_frn(x), 0x1p-32f, 0x1p-33f); }
+/* logf of u in (0, 1]: u = 2^k m, m in [sqrt(1/2), sqrt(2)), log1p(m - 1) by the degree-10 polynomial */
+static float ph_log(float u) {
+    static const uint32_t LC[9] = { 0x3eaaaaaa, 0xbe7ffffc, 0x3e4cceac, 0xbe2aae50, 0x3e11e9bf,
+                                    0xbdfe5d4f, 0x3def251a, 0xbdebd1b6, 0x3d9021ba };
+    uint32_t t = f2u(u) + 0x004afb0du;
+    float m = u2f((t & 0x7fffffu) + 0x3f3504f3u);
+    float f = m + u2f(0xbf800000u);
+    float k = (float)(int32_t)(t >> 23) + u2f(0xc2fe0000u);
+    float r = u2f(LC[8]);
+    for (int i = 7; i >= 0; i--) r = fmaf(r, f, u2f(LC[i]));
+    float p = fmaf(f, r, -0.5f);
+    p = fmaf(f * f, p, f);
+    return fmaf(k, u2f(0x3f317180u), fmaf(k, u2f(0x3717f7d2u), p));
+}
+/* sqrtf by the chip's MUFU.RSQ and one Newton correction */
+static float ph_sqrt(float w) {
+    float y0 = ws_mufu_rsq(fmaxf(w, u2f(0x00800000u)));
+    float s0 = w * y0;
+    float r = fmaf(s0 * -1.0f, s0, w);
+    return fmaf(r, y0 * 0.5f, s0);
+}
+/* sincosf of v in [pi 2^-32 / 2, 2 pi]: quadrant q by round-to-nearest of v 2/pi, Cody-Waite in three parts,
+ * the sin and cos polynomials, then the quadrant's signs without a branch */
+static void ph_sincos(float v, float *sn, float *cs) {
+    float kf = fmaf(v, u2f(0x3f22f983u), u2f(0x4b400000u)) + u2f(0xcb400000u);
+    float r = fmaf(kf, u2f(0xbfc90fdbu), v);
+    r = fmaf(kf, u2f(0x333bbd2eu), r);
+    r = fmaf(kf, u2f(0x26f72cedu), r);
+    float r2 = r * r;
+    float ps = fmaf(r2, u2f(0x3638ef1du), u2f(0xb9500d01u));
+    ps = fmaf(r2, ps, u2f(0x3c088889u));
+    ps = fmaf(r2, ps, u2f(0xbe2aaaabu));
+    float sinr = fmaf(r * r2, ps, r);
+    float pc = fmaf(r2, u2f(0xb493f27eu), u2f(0x37d00d01u));
+    pc = fmaf(r2, pc, u2f(0xbab60b61u));
+    pc = fmaf(r2, pc, u2f(0x3d2aaaabu));
+    pc = fmaf(r2, pc, -0.5f);
+    float cosr = fmaf(r2, pc, 1.0f);
+    float q = kf + -2.0f;
+    float aq = fmaxf(q, q * -1.0f);
+    float a = aq + -1.0f, b = q * (aq + -2.0f);
+    *sn = fmaf(sinr, a, cosr * b);
+    *cs = fmaf(cosr, a, sinr * (b * -1.0f));
+}
+/* _curand_box_muller(x, y): u = uniform(x), v = y 2pi 2^-32 + pi 2^-32, s = sqrt(-2 log u); (sin v s, cos v s) */
+static void ph_box_muller(uint32_t x, uint32_t y, float *n0, float *n1) {
+    float v = ph_frn(y) * u2f(0x30c90fdbu) + u2f(0x30490fdbu);
+    float s = ph_sqrt(ph_log(ph_unif(x)) * -2.0f);
+    float sn, cs;
+    ph_sincos(v, &sn, &cs);
+    *n0 = sn * s;
+    *n1 = cs * s;
+}
+/* _curand_uniform_double_hq(x, y): z = x ^ (y << 21), z 2^-53 + 2^-54 */
+static double ph_hq(uint32_t x, uint32_t y) { return (double)((uint64_t)x ^ (uint64_t)y << 21) * 0x1p-53 + 0x1p-54; }
+/* the scale of the normal tolerance: sqrt(-2 log u) in f64 for the u of the pair at word p */
+static double ph_normal_scale(uint32_t x) { return sqrt(-2.0 * log((double)ph_unif(x))); }
+static uint32_t ph_word(uint64_t seed, uint64_t sub, uint64_t pos) {
+    return philox_ref(seed, sub, pos - pos % 4, (uint32_t)(pos % 4));
+}
+/* output k of a stream curand_init(seed, sub, off) as bits (u32 or f32 in the low word, f64 whole) */
+static uint64_t ph_dist_ref(int d, uint64_t seed, uint64_t sub, uint64_t off, uint64_t k) {
+    if (d == OMEGA_GPU_PHILOX_RAW) return ph_word(seed, sub, off + k);
+    if (d == OMEGA_GPU_PHILOX_UNIFORM) return f2u(ph_unif(ph_word(seed, sub, off + k)));
+    if (d == OMEGA_GPU_PHILOX_UNIFORM_DOUBLE) return ph_d2u(((double)ph_word(seed, sub, off + k) + 1.0) * 0x1p-32);
+    if (d == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE) {
+        uint64_t p = off + 4 * (k / 2) + 2 * (k & 1);
+        return ph_d2u(ph_hq(ph_word(seed, sub, p), ph_word(seed, sub, p + 1)));
+    }
+    uint64_t p = off + 2 * (k / 2);
+    float a, b;
+    ph_box_muller(ph_word(seed, sub, p), ph_word(seed, sub, p + 1), &a, &b);
+    return f2u(k & 1 ? b : a);
+}
+static uint32_t ph_esz(int d) { return d == OMEGA_GPU_PHILOX_UNIFORM_DOUBLE || d == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2 : 1; }
+/* the API layout: G outputs per group of four words; whole groups interleave across streams, partial groups follow */
+static size_t ph_index(int d, uint32_t ns, uint32_t per, uint32_t g, uint32_t k) {
+    uint32_t G = d == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2 : 4, J = per / G;
+    if (k < J * G) return ((size_t)(k / G) * ns + g) * G + k % G;
+    return (size_t)J * ns * G + (size_t)g * (per % G) + (k - J * G);
+}
+/* a whole run in the API layout, as 32-bit words (2 per f64 element) */
+static void ref_dist(int d, uint64_t seed, uint64_t sub0, uint32_t ns, uint64_t off, uint32_t per, uint32_t *out) {
+    uint32_t esz = ph_esz(d);
+    for (uint32_t g = 0; g < ns; g++)
+        for (uint32_t k = 0; k < per; k++) {
+            uint64_t v = ph_dist_ref(d, seed, sub0 + g, off, k);
+            size_t i = ph_index(d, ns, per, g, k);
+            if (esz == 1) out[i] = (uint32_t)v;
+            else { out[2 * i] = (uint32_t)v; out[2 * i + 1] = (uint32_t)(v >> 32); }
+        }
+}
+static void ref_philox(uint64_t seed, uint64_t sub0, uint32_t ns, uint64_t offset, uint32_t per, uint32_t *out) {
+    ref_dist(OMEGA_GPU_PHILOX_RAW, seed, sub0, ns, offset, per, out);
+}
+
+/* the distribution fixture: "dist seed subseq offset k value_hex16" (dist 5, curand_normal_double, is not provided:
+ * its rows are loaded and counted, never compared) */
+typedef struct { uint64_t seed, sub, off, val; uint32_t d, k; } PdRow;
+#define PD_ROWS 4480
+static PdRow g_pd[PD_ROWS];
+static size_t g_npd;
+static unsigned char g_pd_hit[PD_ROWS];
+static int load_dist_fixture(const char *path) {
+    FILE *f = fopen(path, "r");
+    if (!f) return -1;
+    char line[256];
+    int rc = 0;
+    while (rc == 0 && fgets(line, sizeof line, f)) {
+        if (line[0] == '#' || line[0] == '\n') continue;
+        char *e[6];
+        unsigned long d = strtoul(line, &e[0], 10);
+        uint64_t s = strtoull(e[0], &e[1], 10);
+        uint64_t sub = strtoull(e[1], &e[2], 10);
+        uint64_t off = strtoull(e[2], &e[3], 10);
+        unsigned long k = strtoul(e[3], &e[4], 10);
+        uint64_t v = strtoull(e[4], &e[5], 16);
+        if (e[0] == line || e[1] == e[0] || e[2] == e[1] || e[3] == e[2] || e[4] == e[3] || e[5] == e[4] || d < 1 ||
+            d > 5 || k > 7 || (d != 2 && d != 3 && d != 5 && v > 0xffffffffull))
+            rc = -2;
+        else if (g_npd == PD_ROWS) rc = -3;
+        else g_pd[g_npd++] = (PdRow){ s, sub, off, v, (uint32_t)d, (uint32_t)k };
+    }
+    fclose(f);
+    return rc;
+}
+/* one value against a fixture row: bit-exact for the uniforms, within 2^-21 sqrt(-2 log u) for the normal (both 0
+ * when that scale is 0) */
+static int pd_agrees(const PdRow *r, uint64_t got) {
+    if (r->d != OMEGA_GPU_PHILOX_NORMAL) return got == r->val;
+    double s = ph_normal_scale(ph_word(r->seed, r->sub, r->off + 2 * (r->k / 2)));
+    double e = fabs((double)u2f((uint32_t)got) - (double)u2f((uint32_t)r->val));
+    return s > 0 ? e <= 0x1p-21 * s : got == r->val;
+}
+/* fixture rows of dist d, this seed and offset, subseq0 <= sub < subseq0 + ns and k < per against a run's output */
+static size_t pd_compare(int d, const uint32_t *out, uint64_t seed, uint64_t sub0, uint32_t ns, uint64_t off,
+                         uint32_t per, size_t *bad) {
+    size_t used = 0;
+    for (size_t i = 0; i < g_npd; i++) {
+        const PdRow *r = &g_pd[i];
+        uint64_t g = r->sub - sub0;
+        if ((int)r->d != d || r->seed != seed || r->off != off || g >= ns || r->k >= per) continue;
+        size_t j = ph_index(d, ns, per, (uint32_t)g, r->k);
+        uint64_t v = ph_esz(d) == 1 ? out[j] : out[2 * j] | (uint64_t)out[2 * j + 1] << 32;
+        used++;
+        g_pd_hit[i] = 1;
+        *bad += !pd_agrees(r, v);
+    }
+    return used;
+}
+static size_t pd_distinct(int d) {
+    size_t n = 0;
+    for (size_t i = 0; i < g_npd; i++) n += g_pd_hit[i] && (int)g_pd[i].d == d;
+    return n;
+}
+static const uint64_t PD_OFFS[7] = { 0, 1, 2, 3, 6, 1001, 0x400000003ull };
+
 /* ------------------------------------------------------------------ host tier */
 
 static int build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint32_t threads, BlackwellIRProgram *prog,
@@ -510,8 +676,16 @@ static void host_refusals(void) {
     uint32_t pw[8];
     check(omega_gpu_philox_generate(0, 0, 0, 0, 4, pw, NULL) == OMEGA_GPU_ML_BAD_ARGS, "philox ns=0");
     check(omega_gpu_philox_generate(0, 0, 1, 0, 0, pw, NULL) == OMEGA_GPU_ML_BAD_ARGS, "philox per=0");
-    check(omega_gpu_philox_generate(0, 0, 1, 0, 6, pw, NULL) == OMEGA_GPU_ML_BAD_ARGS, "philox per=6");
-    check(omega_gpu_philox_generate(0, 0, 1, 2, 4, pw, NULL) == OMEGA_GPU_ML_BAD_ARGS, "philox offset=2");
+    check(omega_gpu_philox_generate_dist((OmegaGpuPhiloxDist)5, 0, 0, 1, 0, 4, pw, NULL) == OMEGA_GPU_ML_BAD_ARGS,
+          "philox dist 5 (normal_double, not provided)");
+    check(omega_gpu_philox_generate_dist((OmegaGpuPhiloxDist)-1, 0, 0, 1, 0, 4, pw, NULL) == OMEGA_GPU_ML_BAD_ARGS,
+          "philox dist -1");
+    check(omega_gpu_philox_generate_dist(OMEGA_GPU_PHILOX_NORMAL, 0, 0, 1, 0, 4, NULL, NULL) == OMEGA_GPU_ML_BAD_ARGS,
+          "philox dist out NULL");
+    check(omega_gpu_philox_generate_dist(OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE, 0, 0, 1, 3, 0, pw, NULL) ==
+              OMEGA_GPU_ML_BAD_ARGS, "philox dist per=0");
+    check(omega_gpu_philox_generate_dist(OMEGA_GPU_PHILOX_UNIFORM, 0, 0, OMEGA_GPU_PHILOX_MAX_STREAMS, 1, 2049, pw,
+                                         NULL) == OMEGA_GPU_ML_TOO_LARGE, "philox dist outputs past 2^28");
     check(omega_gpu_philox_generate(0, 0, 1, 0, 4, NULL, NULL) == OMEGA_GPU_ML_BAD_ARGS, "philox out NULL");
     check(omega_gpu_philox_generate(0, 0, OMEGA_GPU_PHILOX_MAX_STREAMS + 1, 0, 4, pw, NULL) == OMEGA_GPU_ML_TOO_LARGE,
           "philox streams past 131072");
@@ -558,8 +732,8 @@ static void host_refusals(void) {
     OmegaBlackwellKernel k;
     const uint64_t refuse[][4] = {
         { 0, 3, 0, 0 },  { 0, 0, 1, 0 },  { 0, 0, 0, 3 },  { 1, 1, 0, 0 },  { 1, 12, 0, 0 }, { 1, 4, 2, 0 },
-        { 1, 4, 0, 3 },  { 2, 1, 0, 0 },  { 2, 4, 0, 1 },  { 2, 13, 0, 0 }, { 2, 12, 2, 0 }, { 3, 1, 0, 0 },
-        { 3, 0, 1, 0 },  { 3, 0, 0, 3 },  { 4, 2, 0, 0 },  { 4, 13, 0, 0 }, { 4, 4, 2, 0 },  { 4, 4, 0, 3 },
+        { 1, 4, 0, 3 },  { 2, 1, 0, 0 },  { 2, 4, 0, 1 },  { 2, 13, 0, 0 }, { 2, 12, 2, 0 }, { 3, 5, 0, 0 },
+        { 3, 0, 4, 0 },  { 3, 0, 0, 7 },  { 4, 2, 0, 0 },  { 4, 13, 0, 0 }, { 4, 4, 2, 0 },  { 4, 4, 0, 3 },
         { 5, 1, 4, 0 },  { 5, 4, 1, 0 },  { 5, 4, 12, 0 }, { 5, 20, 8, 0 }, { 5, 26, 2, 0 }, { 5, 4, 4, 3 },
         { 7, 0, 0, 0 },
     };
@@ -640,6 +814,43 @@ static void host_codegen(void) {
         omega_gpu_mathlibs_test_set_mutant(3, lvl);
         check(omega_gpu_philox_codegen(&a) == OMEGA_GPU_ML_OK, "philox mutant %d codegen", lvl);
         check(memcmp(a.code_digest, base_ph, 32) != 0, "philox mutant %d: digest unchanged", lvl);
+    }
+    omega_gpu_mathlibs_test_set_mutant(0, 0);
+    /* the distribution kernels (a = dist, b = offset % 4): each builds, lists, and differs under exactly the mutants
+     * that reach it (1, 2 all; 3 the uniform of dists 1 and 4; 4 b > 0; 5 dist 4; 6 dist 3) */
+    {
+        BlackwellIRProgram *pp = calloc(1, sizeof *pp);
+        uint8_t *pc0 = malloc(OMEGA_BW_CODE_CAP_MAX), *pc = malloc(OMEGA_BW_CODE_CAP_MAX);
+        OmegaBlackwellKernel pk0, pk;
+        size_t wrong = 0, built = 0;
+        for (uint64_t d = 0; d <= 4; d++)
+            for (uint64_t bb = 0; bb < 4; bb++) {
+                rc = build(3, d, bb, 0, OMEGA_GPU_PHILOX_THREADS, pp, pc0, &pk0);
+                check(rc == OMEGA_OM_IR_OK, "philox build dist %" PRIu64 " b %" PRIu64 ": %s", d, bb,
+                      omega_gpu_om_ir_rc_name(rc));
+                if (rc != OMEGA_OM_IR_OK) continue;
+                built++;
+                char *ls = listing_of(&pk0);
+                check(ls != NULL, "philox dist %" PRIu64 " b %" PRIu64 ": listing has unknown words", d, bb);
+                free(ls);
+                receipt("host philox_dist_codegen dist=%" PRIu64 " b=%" PRIu64 " code_bytes=%zu", d, bb, pk0.code_size);
+                for (uint64_t lvl = 1; lvl <= 6; lvl++) {
+                    rc = build(3, d, bb, lvl, OMEGA_GPU_PHILOX_THREADS, pp, pc, &pk);
+                    int differs = rc == OMEGA_OM_IR_OK &&
+                                  (pk.code_size != pk0.code_size || memcmp(pc, pc0, pk0.code_size) != 0);
+                    int want = lvl <= 2 || (lvl == 3 && (d == 1 || d == 4)) || (lvl == 4 && bb > 0) ||
+                               (lvl == 5 && d == 4) || (lvl == 6 && d == 3);
+                    if (differs != want) {
+                        wrong++;
+                        printf("philox dist %" PRIu64 " b %" PRIu64 " mutant %" PRIu64 ": rc %s, code %s\n", d, bb, lvl,
+                               omega_gpu_om_ir_rc_name(rc), differs ? "differs" : "unchanged");
+                    }
+                }
+            }
+        check(built == 20 && wrong == 0, "philox dist kernels: %zu of 20 built, %zu mutant targeting errors", built,
+              wrong);
+        receipt("host philox_dist_mutant_targeting kernels=%zu errors=%zu", built, wrong);
+        free(pp); free(pc0); free(pc);
     }
     omega_gpu_mathlibs_test_set_mutant(0, 0);
     /* split / merge and transpose: built through the unit directly; both mutants change the code at every shape */
@@ -778,6 +989,47 @@ static void host_philox(void) {
     check(g_nph == 1024, "cuRAND fixture: %zu rows, want 1024", g_nph);
     check(bad == 0, "philox reference: %zu of %zu cuRAND fixture rows differ", bad, g_nph);
     receipt("host philox_reference_vs_curand rows=%zu mismatches=%zu", g_nph, bad);
+    /* the distribution mirror against cuRAND, with three negative controls: the uniform of the next word (one
+     * position late), the normal with sin and cos swapped, uniform2_double without its 2^-54 half step */
+    size_t rows[6] = { 0 }, dbad[6] = { 0 }, exact4 = 0, ctl_u = 0, ctl_n = 0, ctl_h = 0;
+    double worst = 0;
+    for (size_t i = 0; i < g_npd; i++) {
+        const PdRow *r = &g_pd[i];
+        rows[r->d]++;
+        if (r->d == 5) continue;
+        uint64_t v = ph_dist_ref((int)r->d, r->seed, r->sub, r->off, r->k);
+        dbad[r->d] += !pd_agrees(r, v);
+        if (r->d == OMEGA_GPU_PHILOX_UNIFORM) {
+            ctl_u += f2u(ph_unif(ph_word(r->seed, r->sub, r->off + r->k + 1))) != r->val;
+        } else if (r->d == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE) {
+            uint64_t p = r->off + 4 * (r->k / 2) + 2 * (r->k & 1);
+            uint64_t z = (uint64_t)ph_word(r->seed, r->sub, p) ^ (uint64_t)ph_word(r->seed, r->sub, p + 1) << 21;
+            ctl_h += ph_d2u((double)z * 0x1p-53) != r->val;
+        } else if (r->d == OMEGA_GPU_PHILOX_NORMAL) {
+            exact4 += v == r->val;
+            double s = ph_normal_scale(ph_word(r->seed, r->sub, r->off + 2 * (r->k / 2)));
+            double e = fabs((double)u2f((uint32_t)v) - (double)u2f((uint32_t)r->val));
+            if (s > 0 && e / s > worst) worst = e / s;
+            PdRow sw = *r;
+            sw.k ^= 1u; /* the other half of the pair at the same position: what a sin / cos swap would store */
+            ctl_n += !pd_agrees(r, ph_dist_ref(OMEGA_GPU_PHILOX_NORMAL, sw.seed, sw.sub, sw.off, sw.k));
+        }
+    }
+    check(g_npd == PD_ROWS && rows[1] == 896 && rows[2] == 896 && rows[3] == 896 && rows[4] == 896 && rows[5] == 896,
+          "cuRAND distribution fixture: %zu rows (%zu %zu %zu %zu %zu), want 5 x 896", g_npd, rows[1], rows[2], rows[3],
+          rows[4], rows[5]);
+    for (int d = 1; d <= 4; d++)
+        check(dbad[d] == 0, "philox dist %d reference: %zu of %zu cuRAND rows disagree", d, dbad[d], rows[d]);
+    check(ctl_u > rows[1] / 2 && ctl_n > rows[4] / 2 && ctl_h > rows[3] / 4,
+          "negative controls: next word %zu of %zu, sin/cos swapped %zu of %zu, no 2^-54 %zu of %zu rows caught", ctl_u,
+          rows[1], ctl_n, rows[4], ctl_h, rows[3]);
+    receipt("host philox_dist_reference_vs_curand uniform=%zu/%zu uniform_double=%zu/%zu uniform2_double=%zu/%zu "
+            "normal_within_2^-21s=%zu/%zu normal_bit_exact=%zu worst_err_over_s=%.3f*2^-24 normal_double_rows=%zu "
+            "(not compared: no f64 IR)",
+            rows[1] - dbad[1], rows[1], rows[2] - dbad[2], rows[2], rows[3] - dbad[3], rows[3], rows[4] - dbad[4], rows[4],
+            exact4, worst * 0x1p24, rows[5]);
+    receipt("host philox_dist_negative_controls uniform_next_word=%zu/%zu normal_sin_cos_swapped=%zu/%zu "
+            "uniform2_no_half_step=%zu/%zu (must be caught)", ctl_u, rows[1], ctl_n, rows[4], ctl_h, rows[3]);
 }
 
 static uint64_t pstep(uint64_t k, uint64_t a, uint64_t b, uint64_t s, uint64_t d, uint64_t r) {
@@ -1050,10 +1302,13 @@ static void sim_fft_tier(void) {
     free(in); free(out); free(out2);
 }
 
-/* Philox through the API's argument block: out, key, subseq0, first block, blocks per stream, streams */
-static int sim_philox(int mut, uint64_t key, uint64_t sub0, uint64_t blk0, uint32_t nblk, uint32_t ns, uint32_t *out) {
-    if (sim_prog(3, 0, 0, (uint64_t)mut, OMEGA_GPU_PHILOX_THREADS) != 0) return -1;
-    size_t bytes = (size_t)ns * nblk * 16;
+/* Philox through the API's argument block (omega_gpu_philox_generate_dist): out, key, subseq0, first counter block
+ * q0, groups T = ceil(per / G), streams, tail delta. q0 is passed whole so a KAT counter block 2^64 - 1 fits. */
+static int sim_philox(int dist, int mut, uint64_t key, uint64_t sub0, uint64_t q0, uint32_t b, uint32_t ns,
+                      uint32_t per, uint32_t *out) {
+    if (sim_prog(3, (uint64_t)dist, b, (uint64_t)mut, OMEGA_GPU_PHILOX_THREADS) != 0) return -1;
+    uint32_t G = dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2 : 4, r = per % G;
+    size_t bytes = (size_t)ns * per * ph_esz(dist) * 4;
     memset(out, 0xa5, bytes);
     memset(&g_sim, 0, sizeof g_sim);
     g_sim.p = g_prog;
@@ -1062,13 +1317,14 @@ static int sim_philox(int mut, uint64_t key, uint64_t sub0, uint64_t blk0, uint3
     put64(&cb[0], (uint64_t)(uintptr_t)out);
     put64(&cb[2], key);
     put64(&cb[4], sub0);
-    put64(&cb[6], blk0);
-    cb[8] = nblk;
+    put64(&cb[6], q0);
+    cb[8] = per / G + (r != 0);
     cb[9] = ns;
+    cb[10] = r ? r - G : 0;
     g_sim.ranges[0] = (WsRange){ (uintptr_t)out, (uintptr_t)out + bytes };
     g_sim.nranges = 1;
     int rc = ws_run(&g_sim, (ns + OMEGA_GPU_PHILOX_THREADS - 1) / OMEGA_GPU_PHILOX_THREADS, 1);
-    check(rc == 0, "sim philox mut=%d: %s", mut, g_sim.msg);
+    check(rc == 0, "sim philox dist=%d mut=%d: %s", dist, mut, g_sim.msg);
     return rc;
 }
 
@@ -1076,6 +1332,14 @@ static size_t diff_words(const uint32_t *a, const uint32_t *b, size_t n) {
     size_t bad = 0;
     for (size_t i = 0; i < n; i++) bad += a[i] != b[i];
     return bad;
+}
+/* one run against the mirror: the number of differing words (all of them when the run fails) */
+static size_t sim_dist_run(int d, int mut, uint64_t seed, uint64_t sub0, uint32_t ns, uint64_t off, uint32_t per,
+                           uint32_t *got, uint32_t *ref) {
+    size_t n = (size_t)ns * per * ph_esz(d);
+    ref_dist(d, seed, sub0, ns, off, per, ref);
+    if (sim_philox(d, mut, seed, sub0, off / 4, (uint32_t)(off % 4), ns, per, got) != 0) return n;
+    return diff_words(got, ref, n);
 }
 
 static void sim_philox_tier(void) {
@@ -1085,47 +1349,93 @@ static void sim_philox_tier(void) {
     for (int i = 0; i < 3; i++) {
         const uint32_t *c = PH_KAT[i].ctr;
         uint64_t key = PH_KAT[i].key[0] | (uint64_t)PH_KAT[i].key[1] << 32;
-        if (sim_philox(0, key, c[2] | (uint64_t)c[3] << 32, c[0] | (uint64_t)c[1] << 32, 1, 1, got) != 0) { kat_bad++; continue; }
+        if (sim_philox(OMEGA_GPU_PHILOX_RAW, 0, key, c[2] | (uint64_t)c[3] << 32, c[0] | (uint64_t)c[1] << 32, 0, 1, 4,
+                       got) != 0) { kat_bad++; continue; }
         kat_bad += memcmp(got, PH_KAT[i].want, 16) != 0;
     }
     check(kat_bad == 0, "sim philox: %zu of 3 KAT vectors differ", kat_bad);
     receipt("sim philox_kat vectors=3 mismatches=%zu", kat_bad);
-    /* 4 seeds x 4 offsets x (130 streams from subseq 0, 2 streams across subseq 2^32), 8 words each */
-    size_t bad = 0, words = 0, used = 0, fbad = 0;
+    /* raw words: 4 seeds x 4 block-aligned offsets x (130 streams from subseq 0, 2 streams across subseq 2^32) */
+    size_t bad = 0, words = 0, used = 0, fbad = 0, runs = 0;
     memset(g_ph_hit, 0, sizeof g_ph_hit);
     for (int s = 0; s < 4; s++)
         for (int o = 0; o < 4; o++)
             for (int r = 0; r < 2; r++) {
                 uint64_t sub0 = r ? 0xFFFFFFFFull : 0;
                 uint32_t ns = r ? 2 : 130;
-                ref_philox(PH_SEEDS[s], sub0, ns, PH_OFFS[o], 8, ref);
-                if (sim_philox(0, PH_SEEDS[s], sub0, PH_OFFS[o] / 4, 2, ns, got) != 0) { bad++; continue; }
-                bad += diff_words(got, ref, (size_t)ns * 8);
+                bad += sim_dist_run(OMEGA_GPU_PHILOX_RAW, 0, PH_SEEDS[s], sub0, ns, PH_OFFS[o], 8, got, ref);
                 words += (size_t)ns * 8;
+                runs++;
                 used += ph_compare(got, PH_SEEDS[s], sub0, ns, PH_OFFS[o], 8, &fbad);
             }
     check(bad == 0, "sim philox streams: %zu of %zu words differ from the reference", bad, words);
     check(ph_distinct() == g_nph && g_nph == 1024 && fbad == 0,
           "sim philox cuRAND fixture: %zu of %zu rows covered, %zu of %zu comparisons differ", ph_distinct(), g_nph, fbad,
           used);
-    receipt("sim philox_streams runs=32 words=%zu mismatches=%zu", words, bad);
+    receipt("sim philox_streams runs=%zu words=%zu mismatches=%zu", runs, words, bad);
     receipt("sim philox_curand_fixture rows_covered=%zu of %zu comparisons=%zu mismatches=%zu", ph_distinct(), g_nph,
             used, fbad);
-    /* 17 blocks per stream; and the block counter carrying from its low word into its high word */
-    ref_philox(1729, 5, 130, 1000, 68, ref);
-    bad = sim_philox(0, 1729, 5, 250, 17, 130, got) == 0 ? diff_words(got, ref, (size_t)130 * 68) : 1;
+    /* every distribution: 4 seeds x the fixture's 7 offsets (any offset mod 4) x the same two stream ranges, 8 outputs
+     * each, bit for bit against the mirror; the cuRAND rows they cover against cuRAND */
+    memset(g_pd_hit, 0, sizeof g_pd_hit);
+    for (int d = 0; d <= 4; d++) {
+        size_t dbad = 0, dwords = 0, dused = 0, dfbad = 0;
+        for (int s = 0; s < 4; s++)
+            for (int o = 0; o < 7; o++)
+                for (int r = 0; r < 2; r++) {
+                    uint64_t sub0 = r ? 0xFFFFFFFFull : 0;
+                    uint32_t ns = r ? 2 : 130;
+                    dbad += sim_dist_run(d, 0, PH_SEEDS[s], sub0, ns, PD_OFFS[o], 8, got, ref);
+                    dwords += (size_t)ns * 8 * ph_esz(d);
+                    if (d > 0) dused += pd_compare(d, got, PH_SEEDS[s], sub0, ns, PD_OFFS[o], 8, &dfbad);
+                }
+        check(dbad == 0, "sim philox dist %d: %zu of %zu words differ from the mirror", d, dbad, dwords);
+        if (d > 0)
+            check(pd_distinct(d) == 896 && dfbad == 0,
+                  "sim philox dist %d cuRAND fixture: %zu of 896 rows covered, %zu of %zu comparisons disagree", d,
+                  pd_distinct(d), dfbad, dused);
+        receipt("sim philox_dist dist=%d runs=56 words=%zu mismatches=%zu curand_rows_covered=%zu curand_disagree=%zu", d,
+                dwords, dbad, d > 0 ? pd_distinct(d) : 0, dfbad);
+    }
+    /* partial groups: per 1, 3, 5, 7, 9 at offsets 0 and 3, every distribution */
+    bad = 0;
+    runs = 0;
+    for (int d = 0; d <= 4; d++)
+        for (uint32_t per = 1; per <= 9; per += 2)
+            for (uint64_t off = 0; off <= 3; off += 3) {
+                size_t b1 = sim_dist_run(d, 0, 1729, 5, 130, off, per, got, ref);
+                if (b1) printf("sim philox tail dist %d per %u offset %" PRIu64 ": %zu differ\n", d, per, off, b1);
+                bad += b1;
+                runs++;
+            }
+    check(bad == 0, "sim philox partial groups: %zu words differ", bad);
+    receipt("sim philox_partial_groups runs=%zu mismatches=%zu", runs, bad);
+    /* 17 blocks per stream; the block counter carrying from its low word into its high word at every offset mod 4 */
+    bad = sim_dist_run(OMEGA_GPU_PHILOX_RAW, 0, 1729, 5, 130, 1000, 68, got, ref);
     check(bad == 0, "sim philox 17 blocks: %zu differ", bad);
     receipt("sim philox seed=1729 subseq0=5 ns=130 offset=1000 per=68 mismatches=%zu", bad);
-    ref_philox(7, 0, 3, 0x3FFFFFFF4ull, 32, ref);
-    bad = sim_philox(0, 7, 0, 0xFFFFFFFDull, 8, 3, got) == 0 ? diff_words(got, ref, (size_t)3 * 32) : 1;
+    bad = 0;
+    for (int d = 0; d <= 4; d++)
+        for (uint64_t b = 0; b < 4; b++) bad += sim_dist_run(d, 0, 7, 0, 3, 4 * 0xFFFFFFFDull + b, 31, got, ref);
     check(bad == 0, "sim philox block carry: %zu differ", bad);
-    receipt("sim philox seed=7 ns=3 offset=4*(2^32-3) per=32 mismatches=%zu", bad);
-    /* mutants: key Weyl step W0 for the second word, nine rounds */
-    ref_philox(0x123456789abcdefull, 0, 130, 0, 8, ref);
-    for (int mut = 1; mut <= 2; mut++) {
-        size_t mb = sim_philox(mut, 0x123456789abcdefull, 0, 0, 2, 130, got) == 0 ? diff_words(got, ref, (size_t)130 * 8) : 0;
+    receipt("sim philox_carry seed=7 ns=3 offset=4*(2^32-3)+0..3 per=31 dists=5 mismatches=%zu", bad);
+    /* mutants: 1 key Weyl step W0 for the second word, 2 nine rounds, 3 the uniform without its 2^-33 half step (at
+     * a position whose word is below 2^23, where the step is representable), 4 the unaligned offset ignoring the
+     * previous block, 5 the normal pair swapped, 6 uniform2_double without its round-to-even half step */
+    uint64_t small = 0;
+    while (ph_word(0x123456789abcdefull, 0, small) >= 1u << 23) small++;
+    const struct { int d; uint64_t off; } mt[7] = {
+        { 0, 0 }, { 0, 0 }, { 0, 0 }, { 1, 0 }, { 0, 1 }, { 4, 0 }, { 3, 0 },
+    };
+    for (int mut = 1; mut <= 6; mut++) {
+        uint64_t off = mut == 3 ? small : mt[mut].off;
+        size_t n = (size_t)130 * 8 * ph_esz(mt[mut].d);
+        ref_dist(mt[mut].d, 0x123456789abcdefull, 0, 130, off, 8, ref);
+        size_t mb = sim_philox(mt[mut].d, mut, 0x123456789abcdefull, 0, off / 4, (uint32_t)(off % 4), 130, 8, got) == 0
+                        ? diff_words(got, ref, n) : 0;
         check(mb > 0, "sim philox mutant %d not caught", mut);
-        receipt("sim philox_mutant%d mismatches=%zu of %u (must be > 0)", mut, mb, 130u * 8);
+        receipt("sim philox_mutant%d dist=%d offset=%" PRIu64 " mismatches=%zu of %zu (must be > 0)", mut, mt[mut].d, off,
+                mb, n);
     }
 }
 
@@ -1483,6 +1793,37 @@ static void chip_philox(void) {
           ph_distinct(), g_nph, fbad, used);
     receipt("chip philox_curand_fixture rows_covered=%zu of %zu comparisons=%zu mismatches=%zu", ph_distinct(), g_nph,
             used, fbad);
+    /* the distributions: dists 0..3 bit for bit against the mirror; the normal within 2^-21 sqrt(-2 log u) of it (the
+     * chip's MUFU.RSQ is modelled, not proven, bit-exact); covered cuRAND rows against cuRAND */
+    memset(g_pd_hit, 0, sizeof g_pd_hit);
+    for (int d = 1; d <= 4; d++) {
+        size_t dbad = 0, dused = 0, dfbad = 0;
+        for (int s = 0; s < 4; s++)
+            for (int o = 0; o < 7; o++)
+                for (int r = 0; r < 2; r++) {
+                    uint64_t sub0 = r ? 0xFFFFFFFFull : 0;
+                    uint32_t n = r ? 2 : ns, per = r ? 8 : 34;
+                    ref_dist(d, PH_SEEDS[s], sub0, n, PD_OFFS[o], per, ref);
+                    int rc = omega_gpu_philox_generate_dist((OmegaGpuPhiloxDist)d, PH_SEEDS[s], sub0, n, PD_OFFS[o], per,
+                                                            got, &info);
+                    check(rc == OMEGA_GPU_ML_OK, "chip philox dist %d: rc %d (%s)", d, rc, omega_gpu_mathlibs_last_error());
+                    if (rc != OMEGA_GPU_ML_OK) continue;
+                    if (d != OMEGA_GPU_PHILOX_NORMAL) dbad += diff_words(got, ref, (size_t)n * per * ph_esz(d));
+                    else
+                        for (uint32_t g = 0; g < n; g++)
+                            for (uint32_t k = 0; k < per; k++) {
+                                size_t i = ph_index(d, n, per, g, k);
+                                PdRow row = { PH_SEEDS[s], sub0 + g, PD_OFFS[o], ref[i], (uint32_t)d, k };
+                                dbad += !pd_agrees(&row, got[i]);
+                            }
+                    dused += pd_compare(d, got, PH_SEEDS[s], sub0, n, PD_OFFS[o], per, &dfbad);
+                }
+        check(dbad == 0 && pd_distinct(d) == 896 && dfbad == 0,
+              "chip philox dist %d: %zu differ from the mirror; cuRAND %zu of 896 rows covered, %zu of %zu disagree", d,
+              dbad, pd_distinct(d), dfbad, dused);
+        receipt("chip philox_dist dist=%d mismatches=%zu curand_rows_covered=%zu curand_disagree=%zu", d, dbad,
+                pd_distinct(d), dfbad);
+    }
     free(got); free(ref);
     /* the full launch: 131072 streams x 64 words */
     const uint32_t big = OMEGA_GPU_PHILOX_MAX_STREAMS, per = 64;
@@ -1497,13 +1838,19 @@ static void chip_philox(void) {
                 info.elapsed_ns, info.ctas_last_launch, info.completion_marker);
     }
     /* mutants */
-    for (int mut = 1; mut <= 2; mut++) {
+    for (int mut = 1; mut <= 6; mut++) {
+        static const int md[7] = { 0, 0, 0, 1, 0, 4, 3 };
+        uint64_t off = 0;
+        if (mut == 3) while (ph_word(42, 0, off) >= 1u << 23) off++;
+        if (mut == 4) off = 1;
         omega_gpu_mathlibs_test_set_mutant(3, mut);
-        rc = omega_gpu_philox_generate(42, 0, 256, 0, 8, g2, NULL);
-        ref_philox(42, 0, 256, 0, 8, r2);
-        size_t bad = rc == OMEGA_GPU_ML_OK ? diff_words(g2, r2, 256 * 8) : 0;
+        rc = omega_gpu_philox_generate_dist((OmegaGpuPhiloxDist)md[mut], 42, 0, 256, off, 8, g2, NULL);
+        ref_dist(md[mut], 42, 0, 256, off, 8, r2);
+        size_t n = (size_t)256 * 8 * ph_esz(md[mut]);
+        size_t bad = rc == OMEGA_GPU_ML_OK ? diff_words(g2, r2, n) : 0;
         check(bad > 0, "chip philox mutant %d not caught (rc %d)", mut, rc);
-        receipt("chip philox_mutant%d mismatches=%zu of %u (must be > 0)", mut, bad, 256 * 8);
+        receipt("chip philox_mutant%d dist=%d offset=%" PRIu64 " mismatches=%zu of %zu (must be > 0)", mut, md[mut], off,
+                bad, n);
     }
     omega_gpu_mathlibs_test_set_mutant(0, 0);
     free(g2); free(r2);
@@ -1587,22 +1934,25 @@ static void chip_real_nd(void) {
 
 int main(int argc, char **argv) {
     const char *tier = "chip", *fixture = "tests/fixtures/mathlibs_rng_aienmath.txt", *out = NULL,
-               *phfix = "tests/fixtures/philox_curand_oracle.txt";
+               *phfix = "tests/fixtures/philox_curand_oracle.txt", *pdfix = "tests/fixtures/philox_curand_dist_oracle.txt";
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--host-only")) tier = "host";
         else if (!strcmp(argv[i], "--sim")) tier = "sim";
         else if (!strcmp(argv[i], "--fixture") && i + 1 < argc) fixture = argv[++i];
         else if (!strcmp(argv[i], "--philox-fixture") && i + 1 < argc) phfix = argv[++i];
+        else if (!strcmp(argv[i], "--dist-fixture") && i + 1 < argc) pdfix = argv[++i];
         else if (!strcmp(argv[i], "--out") && i + 1 < argc) out = argv[++i];
         else {
-            fprintf(stderr, "usage: %s [--host-only | --sim] [--fixture F] [--philox-fixture F] [--out FILE]\n", argv[0]);
+            fprintf(stderr, "usage: %s [--host-only | --sim] [--fixture F] [--philox-fixture F] [--dist-fixture F] [--out FILE]\n",
+                    argv[0]);
             return 2;
         }
     }
     if (out && !(g_rcpt = test_out_open(out))) { fprintf(stderr, "cannot write %s\n", out); return 2; }
     if (load_fixture(fixture) != 0) { fprintf(stderr, "cannot read fixture %s\n", fixture); return 2; }
     if (load_philox_fixture(phfix) != 0) { fprintf(stderr, "cannot read Philox fixture %s\n", phfix); return 2; }
-    receipt("mathlibs tier=%s fixture=%s philox_fixture=%s", tier, fixture, phfix);
+    if (load_dist_fixture(pdfix) != 0) { fprintf(stderr, "cannot read Philox distribution fixture %s\n", pdfix); return 2; }
+    receipt("mathlibs tier=%s fixture=%s philox_fixture=%s dist_fixture=%s", tier, fixture, phfix, pdfix);
     host_tier();
     if (!strcmp(tier, "sim")) sim_tier();
     else if (!strcmp(tier, "chip")) { chip_rng(); chip_fft(); chip_philox(); chip_real_nd(); }

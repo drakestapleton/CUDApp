@@ -29,7 +29,7 @@ typedef struct {
     OmegaBlackwellKernel kernel;
     OmegaGpuMem code;
 } Slot;
-static Slot g_cache[16];
+static Slot g_cache[64];
 static int g_mutant_which, g_mutant_level;
 static OmegaGpuScratch g_in, g_out, g_tw, g_scr;
 static bool g_hooked;
@@ -68,7 +68,7 @@ static void on_session_close(void) {
 void omega_gpu_mathlibs_test_set_mutant(int which, int level) {
     omega_gpu_session_lock();
     g_mutant_which = which;
-    g_mutant_level = level < 0 ? 0 : level > 2 ? 2 : level;
+    g_mutant_level = level < 0 ? 0 : level > 6 ? 6 : level;
     cache_clear_locked();
     omega_gpu_session_unlock();
 }
@@ -347,50 +347,66 @@ static int philox_pass(const Slot *s, const uint32_t *args, uint32_t grid, size_
     uint32_t *dev = (uint32_t *)g_out.mem.cpu;
     for (size_t i = 0; i < count; i++) dev[i] = poison;
     if (omega_gpu_session_sync_to_gpu(&g_out.mem) != 0) return OMEGA_GPU_ML_CHIP_FAIL;
-    int rc = launch(s, args, 10, grid, count, 0, info);
+    int rc = launch(s, args, 11, grid, count, 0, info);
     if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
     if (rc == OMEGA_GPU_ML_OK) memcpy(out, dev, count * 4u);
     return rc;
 }
 
-int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams, uint64_t offset, uint32_t per_stream,
-                              uint32_t *out, OmegaGpuMathInfo *info) {
-    if (!out || nstreams == 0 || per_stream == 0 || per_stream % 4u != 0 || offset % 4u != 0)
+int omega_gpu_philox_generate_dist(OmegaGpuPhiloxDist dist, uint64_t seed, uint64_t subseq0, uint32_t nstreams,
+                                   uint64_t offset, uint32_t per_stream, void *out, OmegaGpuMathInfo *info) {
+    if (!out || (unsigned)dist > OMEGA_GPU_PHILOX_NORMAL || nstreams == 0 || per_stream == 0)
         return OMEGA_GPU_ML_BAD_ARGS;
     if (nstreams > OMEGA_GPU_PHILOX_MAX_STREAMS || (uint64_t)nstreams * per_stream > OMEGA_GPU_RNG_MAX_OUTPUTS)
         return OMEGA_GPU_ML_TOO_LARGE;
     uint64_t t0 = now_ns();
-    size_t count = (size_t)nstreams * per_stream;
+    /* G outputs per group of four words; 64-bit outputs are two words each */
+    uint32_t g = dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2u : 4u;
+    uint32_t esz = dist == OMEGA_GPU_PHILOX_UNIFORM_DOUBLE || dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2u : 1u;
+    size_t count = (size_t)nstreams * per_stream * esz;
+    uint32_t *words = (uint32_t *)out;
     omega_gpu_session_lock();
     Slot *s;
-    int rc = begin(3, 0, 0, OMEGA_GPU_PHILOX_THREADS, &s, info);
+    int rc = begin(3, (uint64_t)dist, offset % 4u, OMEGA_GPU_PHILOX_THREADS, &s, info);
     if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_scratch(&g_out, count * 4u) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
     if (rc == OMEGA_GPU_ML_OK) {
-        /* 0x380 out, 0x388 key, 0x390 subsequence of stream 0, 0x398 first block, 0x3a0 blocks, 0x3a4 streams */
-        uint32_t args[10];
+        /* 0x380 out, 0x388 key, 0x390 subsequence of stream 0, 0x398 first counter block (offset / 4), 0x3a0 groups
+         * T = ceil(per / G), 0x3a4 streams, 0x3a8 tail delta (per % G - G mod 2^32, 0 without a partial group) */
+        uint32_t args[11];
         put64(&args[0], g_out.mem.va);
         put64(&args[2], seed);
         put64(&args[4], subseq0);
         put64(&args[6], offset / 4u);
-        args[8] = per_stream / 4u;
+        uint32_t r = per_stream % g;
+        args[8] = per_stream / g + (r != 0);
         args[9] = nstreams;
+        args[10] = r ? r - g : 0u;
         uint32_t grid = (nstreams + OMEGA_GPU_PHILOX_THREADS - 1) / OMEGA_GPU_PHILOX_THREADS;
-        rc = philox_pass(s, args, grid, count, ML_POISON32, out, info);
-        /* Every 32-bit value is a possible output: a word equal to the poison is unwritten only if a second
-         * run with another poison leaves that poison there too. */
-        uint64_t hits = 0;
-        for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) hits += out[i] == ML_POISON32;
+        rc = philox_pass(s, args, grid, count, ML_POISON32, words, info);
         uint64_t unwritten = 0;
-        if (rc == OMEGA_GPU_ML_OK && hits) {
-            uint32_t *first = (uint32_t *)malloc(count * 4u);
-            if (!first) rc = OMEGA_GPU_ML_CHIP_FAIL;
-            if (first) {
-                memcpy(first, out, count * 4u);
-                rc = philox_pass(s, args, grid, count, ML_POISON32_ALT, out, info);
-                for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++)
-                    unwritten += first[i] == ML_POISON32 && out[i] == ML_POISON32_ALT;
-                free(first);
+        if (dist == OMEGA_GPU_PHILOX_RAW) {
+            /* Every 32-bit value is a possible output: a word equal to the poison is unwritten only if a second
+             * run with another poison leaves that poison there too. */
+            uint64_t hits = 0;
+            for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) hits += words[i] == ML_POISON32;
+            if (rc == OMEGA_GPU_ML_OK && hits) {
+                uint32_t *first = (uint32_t *)malloc(count * 4u);
+                if (!first) rc = OMEGA_GPU_ML_CHIP_FAIL;
+                if (first) {
+                    memcpy(first, words, count * 4u);
+                    rc = philox_pass(s, args, grid, count, ML_POISON32_ALT, words, info);
+                    for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++)
+                        unwritten += first[i] == ML_POISON32 && words[i] == ML_POISON32_ALT;
+                    free(first);
+                }
             }
+        } else if (esz == 1) {
+            /* the poison is a NaN: no f32 output of these distributions */
+            for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) unwritten += words[i] == ML_POISON32;
+        } else {
+            /* the poison pair is a NaN: no f64 output */
+            const uint64_t *d = (const uint64_t *)out;
+            for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count / 2; i++) unwritten += d[i] == ML_POISON64;
         }
         if (info) info->unwritten_words = unwritten;
         if (rc == OMEGA_GPU_ML_OK && unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
@@ -398,6 +414,11 @@ int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams
     omega_gpu_session_unlock();
     if (info) info->call_ns = now_ns() - t0;
     return rc;
+}
+
+int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams, uint64_t offset, uint32_t per_stream,
+                              uint32_t *out, OmegaGpuMathInfo *info) {
+    return omega_gpu_philox_generate_dist(OMEGA_GPU_PHILOX_RAW, seed, subseq0, nstreams, offset, per_stream, out, info);
 }
 
 /* ------------------------------------------------------------------ FFT plans (R2C, C2R, 2-D, 3-D) */

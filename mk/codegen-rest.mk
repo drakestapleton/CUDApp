@@ -2,7 +2,7 @@
 CARRIED_HOST_TESTS += test-codegen-rest
 .PHONY: test-codegen-rest
 test-codegen-rest:
-	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" \
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" CODEGEN_REST_BINDING="$(BW_CODEGEN_BINDING) src/sha256.c" \
 	  python3 tests/codegen_rest_check.py --coverage --mutants --build-dir $(OUT_DIR)/codegen-rest
 
 .PHONY: test-codegen-rest-sim

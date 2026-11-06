@@ -37,7 +37,9 @@ def main():
     out = (args.build_dir or Path(scratch.name)).resolve()
     out.mkdir(parents=True, exist_ok=True)
     cc = os.environ.get("CC", "cc")
-    flags = ["-D_GNU_SOURCE", "-DOMEGA_GPU_NO_POSIX", "-std=gnu11", "-O1", "-ffp-contract=off", "-ffunction-sections", "-fdata-sections", "-I"+str(ROOT/"src")]
+    # Keep the independent allocator/matmul prerequisites without selecting the
+    # separate native NO_POSIX encoder ABI; this gate links the portable encoder.
+    flags = ["-D_GNU_SOURCE", "-DCUDAPP_MIGRATION_PENDING_C_REGALLOC=1", "-DCUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL=1", "-DCUDAPP_MIGRATION_PENDING_C_PACK=1", "-std=gnu11", "-O1", "-ffp-contract=off", "-ffunction-sections", "-fdata-sections", "-I"+str(ROOT/"src")]
 
     def run(cmd, expected=0, stdout=None, cwd=ROOT):
         r = subprocess.run([str(x) for x in cmd], cwd=cwd, text=True, stdout=stdout or subprocess.PIPE, stderr=subprocess.PIPE)
@@ -53,10 +55,15 @@ def main():
         jobs.append((src, out/(family+".o"), []))
         defines = ["-DCUDAPP_MIGRATION_PENDING_C_CODEGEN_"+family.upper()+"=1"]
         defines += ["-D"+name+"=legacy_"+name for name in EXPORTS[family]]
+        if family == "bf16":
+            defines.append("-Domega_blackwell_codegen_bf16_gemv=legacy_omega_blackwell_codegen_bf16_gemv")
         jobs.append((src, out/(family+"-legacy.o"), defines))
         jobs.append((ROOT/"src"/("cudapp_om_cg_"+family+".c"), out/("cg_"+family+".o"), []))
     for name in ("omega_gpu_om_ir", "omega_blackwell_codegen", "cudapp_om_prefill_shape", "cudapp_om_prefill_order", "cudapp_om_bw_enc_sm121"):
         jobs.append((ROOT/"src"/(name+".c"), out/(name+".o"), []))
+    for source in os.environ["CODEGEN_REST_BINDING"].split():
+        source = ROOT / source
+        jobs.append((source, out / (source.stem + ".o"), []))
     jobs.append((ROOT/"tests/gpu_codegen_rest_test.c", out/"test.o", []))
 
     def compile(job):

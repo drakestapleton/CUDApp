@@ -102,6 +102,12 @@ bwrap --dev-bind / / --dev /dev --proc /proc -- \
 bwrap --dev-bind / / --dev /dev --proc /proc -- \
   taskset -c 10-14 nice -n 10 sh om/units.sh --check
 ```
+The make target supplies `CODEGEN_REST_BINDING` from the shared
+`BW_CODEGEN_BINDING` provider list plus `src/sha256.c`. The differential uses
+the portable encoder ABI, with explicit retained C allocator/matmul/packing
+prerequisites; it does not select the separate native NO_POSIX encoder ABI.
+Hosted BF16 allocation wrappers are renamed in the C oracle as well.
+
 
 `tests/codegen_rest_check.py` independently compiles the C oracle with renamed
 symbols and the default Omega path. It checks IR fields, the complete allocator

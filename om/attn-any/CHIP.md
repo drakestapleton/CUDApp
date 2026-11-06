@@ -21,7 +21,7 @@ services, NVIDIA modules and vfio untouched.
    taskset -c 10-14 nice -n 10 build/gpu_attn_any_test --chip
    ```
 
-   The command executes f32 and bf16 attention against the independent double
+   The command executes f32, bf16 and f16 attention against the independent double
    host reference, including rectangular sequences, tails, causal modes and
    GQA. The same wrong-mask negative control must disagree. Unsupported-shape
    checks must return REFUSED before device open. Record complete output and

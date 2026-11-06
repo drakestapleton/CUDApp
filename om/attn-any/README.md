@@ -6,9 +6,11 @@ launch geometry. The C API is an allocation/copy/session-launch shell. This is a
 new entry, not a replacement of the tuned attention generators. No existing
 attn/pattn/attn256/pattn256 generator is changed.
 
-The branch is stacked on CodegenA's generic replay prerequisite `22ebf8f`
-(`feat/omega-codegen-a`, CUDApp #275). Replay files are not lane-owned and are not
-modified here. Compiler: omega-mv `e5b32567`, omc SHA-256
+The original attention branch stacks on CodegenA's generic replay prerequisite
+`22ebf8f` (`feat/omega-codegen-a`, CUDApp #275). The DNN follow-on includes
+the separately authorized replay admission repair `a8c6a22`: the opcode bound
+uses `BW_IR_LAST`, with a compiled reverting mutant and boundary regression.
+Compiler: omega-mv `e5b32567`, omc SHA-256
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
 Generated C uses the pinned `om/units.sh` bridge frontend and stays generated.
 This does not adopt an outside production implementation. The existing host IR
@@ -18,8 +20,8 @@ replay/register allocator and session remain migration-pending dependencies.
 
 Contiguous Q `[q_heads][seq_q][head_dim]`, K/V
 `[kv_heads][seq_kv][head_dim]`; output `[q_heads][seq_q][head_dim]` in f32.
-Inputs are f32 or bf16; the scalar IR has no f16-to-f32 conversion, so f16 is
-explicitly refused. Head dimension is any integer 1..256, not just multiples
+Inputs are f32, bf16 or IEEE binary16. Native half widening uses the seeded
+sm_121 IR conversion; head dimension is any integer 1..256, not just multiples
 of 32. Sequence lengths are independently any integer 1..65535; Q and KV head
 counts are positive, Q heads at most 65535, KV heads divide Q heads, and each
 Q/KV tensor has at most 1073741824 elements. GQA groups are contiguous.
@@ -44,6 +46,13 @@ admission, recurrence, grouping or instruction helpers. The test fixtures use
 exactly representable dyadics: |Q|, |K|, |V| <= 1/8, head_dim <= 256,
 seq_kv <= 513, and |scale| <= 1/4. Simulator EX2/RCP use the host floating
 oracle; their passing does not qualify the chip's approximations.
+
+For binary16 fixtures the independent reference decodes integer fields directly
+to double, without using the production conversion instruction:
+`WolframLanguageEvaluator: {FullSimplify[e-15-10],1-15-10,N[2^-24],N[2^-10]}`
+returned `{e-25,-24,5.960464477539063*^-8,0.0009765625}`.
+Normal values use `ldexp(1024+fraction,exponent-25)`; subnormals use
+`ldexp(fraction,-24)`. Storage decoding introduces no approximate half arithmetic.
 
 WolframLanguageEvaluator query:
 
@@ -85,19 +94,19 @@ taskset -c 10-14 nice -n 10 make -j3 test-gpu-attn-any test-gpu-attn-any-mutants
 
 The mixed-factor sweep covers sequence lengths 1, 2, 7, 64, 65, 513 independently
 for Q/KV, head dimensions 64, 80, 96, 128, 256, GQA groups 1, 4, 8,
-both causal modes and both dtypes. It is a documented mixed-factor sweep, not
+both causal modes and all three dtypes. It is a documented mixed-factor sweep, not
 an exhaustive Cartesian product. Additional cases cover dimensions 1,3,31,33,255,
-negative and zero scale, rectangular wrong-mask control, distinct KV-head grouping and a
+eight additional f16 head dimensions, negative and zero scale, rectangular wrong-mask control, distinct KV-head grouping and a
 513-by-513 case. Allocation ranges guard all global memory accesses.
 Refusal controls cover dimension 257, non-dividing/zero heads, zero KV length,
-over-limit sequences/tensors, invalid causal flags, nonfinite scale and f16.
+over-limit sequences/tensors, invalid causal flags, nonfinite scale and invalid dtype 3.
 The execution API is also checked to refuse an invalid shape before opening a session.
-Source mutants change mask, GQA mapping, normalization, component tails
-and dimension admission in isolated copies. They must generate successfully
+Source mutants change mask, GQA mapping, normalization, component tails,
+dimension admission and native half widening in isolated copies. All six must generate successfully
 and then fail behavior checks; a compile error does not count as a kill.
 
 Chip execution and qualification: **NOT_RUN**. See [CHIP.md](CHIP.md). A passing
 host reference/simulator is EXERCISED only. ROADMAP's status remains PARTIAL.
-No omega-harness language/compiler/pin/host-word/gate/ownership guide contract
-changes; the new experimental API and lane-local commands are documented here
-and in `docs/runtime/API.md`.
+The native half encoder seam is documented in `../dnn-layers/README.md`.
+The compiler pin and seeded language are unchanged. The new experimental API
+and lane-local commands are documented here and in `docs/runtime/API.md`.

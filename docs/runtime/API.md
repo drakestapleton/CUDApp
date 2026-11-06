@@ -38,7 +38,7 @@ signature against the headers on every run.
 
 The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.15.0**. It is a property of the list of entries and
 their behaviour, not of the library build. Changes so far:
-- 0.15.0: adds the experimental shared DNN scalar storage-format contract. Native scalar f16 conversion is implemented in the seeded sm_121 encoder; hardware qualification is NOT_RUN.
+- 0.15.0: adds the experimental shared DNN scalar storage-format contract and native f16 inputs to any-shape attention. Native scalar f16 conversion is implemented in the seeded sm_121 encoder; hardware qualification is NOT_RUN.
 - 0.14.0: adds experimental seeded-Omega arbitrary-shape f32/bf16 attention, `omega_gpu_attn_any`, with a CPU-only code-generation entry. Geometry, GQA and causal tails are decided in `om/attn-any/`; hardware qualification is NOT_RUN. Existing tuned model-shape entries are unchanged.
 - 0.13.0: adds experimental `omega_gpu_prefill_attn256_scoped` in `omega_gpu_attention_mirror.h`. Mode 0 preserves ordinary attention; mode 1 copies the complete original 27B K/V into one GPU-private reusable buffer before attention; mode 2 uses the provisional Omega-selected 1024-row threshold. Omega checks geometry, bounds, allocation capacity and completed PREP/copy/ATTEND ordering. Other modes and unsupported mirrored shapes are refused. `copy_ns` reports copy chip time separately from the unchanged attention info layout; total call time includes allocation and copying. Existing host/device/recorded entries and defaults are unchanged. See `om/attention-mirror/README.md` for qualification status.
 - 0.12.0: adds experimental `omega_gpu_pf_qgemm_reading_option` with `(rows, index)`. The checked Omega policy returns the scoped rt, warps, wait and group values at indices 0..3, or UINT32_MAX for invalid input. This proposed adaptive profile uses 64 rows for requests at most 64 rows and 128 above that threshold. Callers obtain the checked height and use `omega_gpu_pf_qgemm_workspace_fits` to check existing row, padded-row and tile capacities before switching profiles. The query returns 1 only when all capacities cover the request; otherwise callers allocate a compatible workspace.
@@ -713,7 +713,8 @@ function-like macro.
 Header: `src/omega_gpu_attn_any_api.h`. `OmegaGpuAttnAnyShape` carries
 `seq_q`, `seq_kv`, `head_dim`, `q_heads`, `kv_heads`, `causal`, `dtype` (u32)
 and `scale` (f32), in that order. Contiguous `[head][sequence][component]`
-Q/K/V use dtype `OMEGA_GPU_ATTN_ANY_F32` (0) or `OMEGA_GPU_ATTN_ANY_BF16` (1);
+Q/K/V use dtype `OMEGA_GPU_ATTN_ANY_F32` (0), `OMEGA_GPU_ATTN_ANY_BF16` (1)
+or `OMEGA_GPU_ATTN_ANY_F16` (2);
 output is f32. Head dimensions 1..`OMEGA_GPU_ATTN_ANY_MAX_HEAD_DIM` (256),
 sequence lengths 1..65535 and head counts 1..65535 are admitted when KV heads
 divide Q heads and each tensor has at most 1073741824 elements. No padding or
@@ -721,7 +722,7 @@ power-of-two restriction exists. Causal mode 1 means top-left alignment
 (`key <= query`), including rectangular matrices; mode 0 is non-causal.
 Scale is a finite caller-provided multiplier, including zero and negative values.
 Inputs and intermediate dots must be finite; the call does not scan input values.
-f16 and all other dtype values are refused, not widened or reinterpreted.
+All other dtype values are refused, not widened or reinterpreted.
 
 ```c
 int omega_gpu_attn_any(const OmegaGpuAttnAnyShape *shape, const void *q, const void *k, const void *v, float *out);

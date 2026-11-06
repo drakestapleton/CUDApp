@@ -8,6 +8,11 @@
 /* Independent materialized-score softmax. No online recurrence, IR or production helpers. */
 static double aa_input(const void *p, size_t i, unsigned dtype) {
     if (!dtype) return ((const float *)p)[i];
+    if (dtype==2) {
+        unsigned h=((const uint16_t *)p)[i], e=(h>>10)&31u, f=h&1023u;
+        double value=e==31?(f?NAN:INFINITY):ldexp(e?1024.0+f:f,e?(int)e-25:-24);
+        return copysign(value,(h&32768u)?-1.0:1.0);
+    }
     uint32_t u = (uint32_t)((const uint16_t *)p)[i] << 16;
     float f; memcpy(&f, &u, sizeof f); return f;
 }

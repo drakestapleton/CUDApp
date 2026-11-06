@@ -10,7 +10,7 @@ extern "C" {
 /* Contiguous [head][sequence][component], no padding. Output is always f32.
  * Causal is top-left aligned: key j is visible iff j <= query i.
  * Finite inputs and finite intermediate dot products are required.
- * f16 is not supported by the scalar IR and is refused, never reinterpreted.
+ * Inputs are f32, bf16 or IEEE binary16; no 16-bit format is reinterpreted.
  * This is experimental and host/simulator exercised, not chip qualified. */
 typedef struct {
     uint32_t seq_q, seq_kv, head_dim, q_heads, kv_heads, causal, dtype;
@@ -19,6 +19,7 @@ typedef struct {
 #define OMEGA_GPU_ATTN_ANY_MAX_HEAD_DIM 256u
 #define OMEGA_GPU_ATTN_ANY_F32 0u
 #define OMEGA_GPU_ATTN_ANY_BF16 1u
+#define OMEGA_GPU_ATTN_ANY_F16 2u
 #define OMEGA_GPU_ATTN_ANY_OK 0
 #define OMEGA_GPU_ATTN_ANY_REFUSED 1
 #define OMEGA_GPU_ATTN_ANY_BAD_ARGS 2

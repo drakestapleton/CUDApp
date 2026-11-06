@@ -11,7 +11,7 @@ OUT_DIR=${OUT_DIR:-build}
 CC=${CC:-cc}
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT HUP INT TERM
-for mutant in mask group normalize tail refusal; do
+for mutant in mask group normalize tail refusal half; do
     mkdir -p "$T/$mutant/src" "$T/$mutant/gen"
     cp om/attn-any/*.om "$T/$mutant/src/"
     python3 - "$T/$mutant/src" "$mutant" <<'PY'
@@ -23,6 +23,7 @@ changes = {
     'normalize': ('kernel.om', 'aa_rg get r 22 get r 12 AN AN', 'aa_rg get r 22 get r 44 AN AN'),
     'tail': ('kernel.om', 'flags = or flags 1536', 'flags = ulong 0'),
     'refusal': ('plan.om', 'gt get s 2 256', 'gt get s 2 257'),
+    'half': ('emit.om', 'if eq and mode 255 2', 'if eq and mode 255 3'),
 }
 f, old, new = changes[sys.argv[2]]
 p = root/f
@@ -39,4 +40,4 @@ PY
     fi
     echo "attn-any mutant KILLED: $mutant"
 done
-echo 'attn-any source mutants: PASS (5 killed after successful generation)'
+echo 'attn-any source mutants: PASS (6 killed after successful generation)'

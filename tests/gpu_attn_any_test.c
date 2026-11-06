@@ -12,7 +12,8 @@ static void *input(size_t n, unsigned dtype, unsigned salt) {
     for (size_t i=0;i<n;++i) {
         /* Exact dyadic inputs, differing heads and rows, bounded by 1/8. */
         float f=(float)((int)((i*17+salt*13)%9)-4)*0.03125f;
-        if (dtype) { uint32_t u; memcpy(&u,&f,4); ((uint16_t*)p)[i]=(uint16_t)(u>>16); }
+        if (dtype==2) { _Float16 h=(_Float16)f; memcpy(&((uint16_t*)p)[i],&h,sizeof h); }
+        else if (dtype==1) { uint32_t u; memcpy(&u,&f,4); ((uint16_t*)p)[i]=(uint16_t)(u>>16); }
         else ((float*)p)[i]=f;
     }
     return p;
@@ -66,7 +67,7 @@ static void refusals(void) {
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
     s.q_heads=4;s.kv_heads=1;s.seq_kv=0;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
-    s.seq_kv=1;s.dtype=2;
+    s.seq_kv=1;s.dtype=3;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
     s.dtype=0;s.causal=2;
     CHECK(omega_gpu_attn_any_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&k)==OMEGA_GPU_ATTN_ANY_REFUSED);
@@ -94,15 +95,20 @@ int main(int argc,char **argv) {
     OmegaGpuAttnAnyShape grouped={2,7,96,8,2,0,1,0.125f};
     CHECK(run_shape(grouped,chip,0));
     grouped.scale=0; CHECK(run_shape(grouped,chip,0)); /* Uniform weights, including bf16 input. */
+    static const uint32_t half_dims[]={1,33,64,80,96,128,255,256};
+    for (unsigned i=0;i<8;++i) {
+        OmegaGpuAttnAnyShape half={2,7,half_dims[i],4,1,i%2,2,0.125f};
+        CHECK(run_shape(half,chip,0));
+    }
     if (!quick) {
         static const uint32_t seq[]={1,2,7,64,65,513}, dim[]={64,80,96,128,256}, groups[]={1,4,8};
         for (unsigned i=0;i<30;++i) {
-            OmegaGpuAttnAnyShape s={seq[i%6],seq[(i/6+i+1)%6],dim[i%5],2*groups[i%3],2,(i/3)%2,i%2,0.125f};
+            OmegaGpuAttnAnyShape s={seq[i%6],seq[(i/6+i+1)%6],dim[i%5],2*groups[i%3],2,(i/3)%2,(i/3)%3,0.125f};
             CHECK(run_shape(s,chip,0));
         }
         static const uint32_t tails[]={1,3,31,33,255};
         for (unsigned i=0;i<5;++i) {
-            OmegaGpuAttnAnyShape s={2,7,tails[i],1,1,i%2,i%2,-0.25f};
+            OmegaGpuAttnAnyShape s={2,7,tails[i],1,1,i%2,i%3,-0.25f};
             CHECK(run_shape(s,chip,0));
         }
         OmegaGpuAttnAnyShape square={513,513,64,1,1,1,0,0.125f}; CHECK(run_shape(square,chip,0));

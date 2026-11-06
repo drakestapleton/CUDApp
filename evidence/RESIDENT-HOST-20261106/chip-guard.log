@@ -1,0 +1,3 @@
+command: build/gpu_resident_chip (no arguments)
+rc=2
+NOT_RUN: --chip and an authorized SPARK_WINDOW are required

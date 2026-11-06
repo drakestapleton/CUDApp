@@ -112,6 +112,7 @@ typedef struct {
     uint32_t warp_sched;      /* warp visit order per barrier phase: 0 ascending, 1 descending, else a seed for a fresh shuffle each phase */
     int trace;                /* print every issue of warp 0 of CTA (0,0) */
     uint64_t step_budget;     /* scheduling steps per warp before "step budget" (0 = 2e9); tests of a dropped loop guard set it low */
+    uint32_t quantum;         /* 0 preserves ws_run; nonzero yields warp after this many issues (return 2) */
     /* results */
     int err; int err_pc; char msg[200];
     uint64_t warp_issues;     /* fragment-instruction issues (the chip's cost unit for divergence) */
@@ -225,6 +226,8 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
     case BW_IR_LDG_STRONG_SYS: { uint64_t ad = ws_rd64(l, in->src1_vreg, p); if (!ws_mem_ok(s, ad, 4, pc)) return; uint32_t x; memcpy(&x, (const void *)(uintptr_t)ad, 4); ws_wrs(l, in->dst_vreg, in->dst_subreg, x, p); break; }
     case BW_IR_STG_STRONG_SYS: { uint64_t ad = ws_rd64(l, in->src1_vreg, p); if (!ws_mem_ok(s, ad, 4, pc)) return; memcpy((void *)(uintptr_t)ad, &b, 4); break; }
     case BW_IR_ATOMG_ADD_STRONG_SYS: { uint64_t ad = ws_rd64(l, in->src1_vreg, p); if (!ws_mem_ok(s, ad, 4, pc)) return; uint32_t old; memcpy(&old, (const void *)(uintptr_t)ad, 4); uint32_t nw = old + b; memcpy((void *)(uintptr_t)ad, &nw, 4); ws_wrs(l, in->dst_vreg, in->dst_subreg, old, p); break; }
+    case BW_IR_ATOMG_EXCH_STRONG_SYS: { uint64_t ad = ws_rd64(l, in->src1_vreg, p); if (!ws_mem_ok(s, ad, 4, pc)) return; uint32_t old; memcpy(&old, (const void *)(uintptr_t)ad, 4); memcpy((void *)(uintptr_t)ad, &b, 4); ws_wrs(l, in->dst_vreg, in->dst_subreg, old, p); break; }
+    case BW_IR_MEMBAR_SC_SYS: break;
     case BW_IR_MEMBAR_ALL_SYS: break;
     default: ws_fail(s, WS_E_OP, pc, "opcode not modelled"); return;
     }
@@ -254,6 +257,7 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
     const BlackwellIRProgram *p = s->p;
     const uint32_t live_all = 0xffffffffu;
     for (uint64_t guard = 0;; guard++) {
+        if (s->quantum && guard >= s->quantum) return 2;
         if (s->err) return -1;
         if (guard > (s->step_budget ? s->step_budget : 2000000000ull)) { ws_fail(s, WS_E_STEPS, -1, "step budget"); return -1; }
         int fi = ws_pick(s, w);

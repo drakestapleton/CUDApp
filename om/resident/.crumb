@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T03:11:17Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:4a3e27e97daed314b0224dcfc911ff584f0cf60b1a99f2f2959a77cdd2384f7f",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 3,
+      "generated_at_commit": "30845d9f2165028b8bac9ccd882ea65a649c9f1a",
+      "source_tree": "sha256:7593f01fc1cc6ba5db5503b76a493a6e38c08aa4ad241260db64c31fd5511db1"
+    }
+  },
+  "layer": "realization",
+  "name": "resident-kernel",
+  "purpose": "Seeded descriptor interpreter and persistent grid barrier with host verification",
+  "schema_version": "1.0.0"
+}

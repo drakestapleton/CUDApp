@@ -1,0 +1,14 @@
+Script started on 2026-11-05 20:50:33-06:00 [COMMAND="taskset -c 10-14 nice -n 10 env OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge make -j3 test-gpu-resident" <not executed on terminal>]
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_resident_chip tests/gpu_resident_chip.c build/libomega_gpu.a -lpthread -lm
+./build/gpu_resident_test --sim
+GPU RESIDENT PASS (reference, interleaved CTAs, barrier and descriptor controls); chip NOT_RUN
+python3 tests/gpu_resident_mutants.py build/libomega_gpu.a
+drop-grid-barrier: KILLED rc=1
+wrong-matvec: KILLED rc=1
+descriptor-output-bound: KILLED rc=1
+contracted-matvec: KILLED rc=1
+stale-generation: KILLED rc=1
+wrong-queue-stride: KILLED rc=1
+GPU RESIDENT SOURCE MUTANTS PASS
+
+Script done on 2026-11-05 20:51:51-06:00 [COMMAND_EXIT_CODE="0"]

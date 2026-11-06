@@ -29,7 +29,7 @@ int omega_gpu_dnn_rows(const OmegaGpuDnnRowsShape *s,const void *input,float *ou
     if(!program||!code){free(program);free(code);return OMEGA_GPU_DNN_ROWS_CODEGEN;}
     rc=omega_gpu_dnn_rows_codegen(s,program,code,65536,&kernel);if(rc){free(program);free(code);return rc;}
     OmegaGpuMem b[3]={0};omega_gpu_session_lock();
-    if(omega_gpu_session_open()||omega_gpu_session_alloc(p[0],&b[0])||omega_gpu_session_alloc(p[1],&b[1])||omega_gpu_session_alloc_code(kernel.code_size,&b[2])){rc=OMEGA_GPU_DNN_ROWS_CHIP;goto cleanup;}
+    if(omega_gpu_session_open()==NULL||omega_gpu_session_alloc(p[0],&b[0])||omega_gpu_session_alloc(p[1],&b[1])||omega_gpu_session_alloc_code(kernel.code_size,&b[2])){rc=OMEGA_GPU_DNN_ROWS_CHIP;goto cleanup;}
     memcpy(b[0].cpu,input,p[0]);memset(b[1].cpu,0,p[1]);memcpy(b[2].cpu,code,kernel.code_size);
     for(unsigned i=0;i<3;++i)if(omega_gpu_session_sync_to_gpu(&b[i])){rc=OMEGA_GPU_DNN_ROWS_CHIP;goto cleanup;}
     uint32_t args[5];putptr(args,b[0].va);putptr(args+2,b[1].va);args[4]=(uint32_t)words[4];

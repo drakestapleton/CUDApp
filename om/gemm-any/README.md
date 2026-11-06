@@ -2,7 +2,7 @@
 
 `gemm_ir.om` owns the default BF16, E4M3 and F16 PACK_A, PACK_B and MAIN builders. The public GEMM API, planner, existing encoder/cubin path and runtime launch path are unchanged. F32 retains its existing scalar FFMA reference builder. `src/omega_gpu_gemm.c` only replays the checked records into the existing register allocator. `om/units.sh` regenerates the committed checked C binding with the repository's pinned seeded compiler and bridge.
 
-The old tensor builder is an oracle behind `CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=1`; the default is zero. All existing rt/ct/wm/wn, band, layout, leading-dimension and stall configurations remain accepted. The Omega kernel deliberately serializes operand loads rather than copying the C builder's double-buffering. Consequently the differential contract is **sim-equal output**, not byte-identical instructions or equivalent speed. No tensor-core performance claim is made without a chip receipt.
+The old tensor builder is an oracle behind `CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=1`; the default is zero. All existing rt/ct/wm/wn, band, layout and stall configurations remain accepted; the planner's derived strides are unchanged. The Omega kernel deliberately serializes operand loads rather than copying the C builder's double-buffering. Consequently the differential contract is **sim-equal output**, not byte-identical instructions or equivalent speed. No tensor-core performance claim is made without a chip receipt.
 
 ## Edges and accumulation
 
@@ -28,9 +28,9 @@ The tolerance applies to this bounded test corpus, not all possible BF16 bit pat
 The shape generator is independent of kernel tile sizes:
 
 ```
-d=Join[Range[1,64],{127,128,129,255,256,257,511,512,513,
+d=Join[Range[64],{127,128,129,255,256,257,511,512,513,
   1023,1024,1025,2047,2048,2049,4095,4096,4097,8191,8192}];
-axis=DeleteDuplicates[Flatten[Table[{{x,3,5},{3,x,5},{3,5,x}},{x,d}],1]];
+axis=DeleteDuplicates[Flatten[Table[{{v,3,5},{3,v,5},{3,5,v}},{v,d}],1]];
 s=DeleteDuplicates[Join[axis,Table[{i,2 i+1,3 i+7},{i,30}],
   {{17,19,33},{31,33,65},{63,65,17},{65,67,33},{127,129,3},{129,127,5}}]];
 {Length[s],Min[Flatten[s]],Max[Flatten[s]],Max[Times@@@s],

@@ -96,7 +96,9 @@ static int predicates(BlackwellIRProgram *p) {
                 .predicate_p0=guard!=0,.predicate_not=guard==2};
             WsWarp w={0};
             WsSim s={.p=p};
+#ifdef DNN_HALF_ALT_SIM
             w.present=UINT32_MAX;
+#endif
             w.nfrag=1;
             w.frag[0].mask=UINT32_MAX;
             for(unsigned lane=0;lane<WS_WARP;lane++) {

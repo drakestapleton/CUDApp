@@ -13,7 +13,10 @@
  *
  * Record (8 x u64): op, dst, src1, src2, src3 (vreg, or all-ones for none), ureg (or all-ones), imm | control << 32,
  * uniform | p0 << 1 | not << 2 | dst_sub << 16 | src1_sub << 24 | src2_sub << 32 | src3_sub << 40 | bar_reg << 48.
- * Meta (512 x u64): 0 records, 1 vregs, 2 uvregs, 4 emitter error, 5 closed loops, 6 open loops,
+ * Meta (512 x u64): 0 records, 1 vregs, 2 uvregs, 4 emitter error, 5 closed loops,
+ * 6 requested exclusive GPR limit at successful return (0 retains the initializer's historical default;
+ * otherwise BW_PHYS_GPR_MAX < limit <= BW_PHYS_GPR_HW_LIMIT). Emitters may use slot 6 as scratch before
+ * successful return, but must clear it unless requesting the extended allocator.
  * 16 + 2L / 17 + 2L loop L first record / closing BRA, 64 + v vreg kind (1 scalar, 2 pair, 4 quad), 320 + u uvreg kind.
  */
 #include <stddef.h>

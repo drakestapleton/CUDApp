@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "codegen",
+  "layer": "unit",
+  "purpose": "Omega successors of handwritten Blackwell kernel builders"
+}

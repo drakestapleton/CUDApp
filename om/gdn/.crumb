@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "gdn",
+  "layer": "unit",
+  "purpose": "Omega admission and pack-layout validation for the GDN decode API"
+}

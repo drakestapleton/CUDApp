@@ -75,6 +75,7 @@ uint32_t omega_cm_digest(uint64_t *result, uint64_t p0, void *p1, uint64_t p1_n,
 uint32_t omega_artifact_format(uint64_t *result, void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_artifact_admit(uint64_t *result, void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_artifact_elf(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_cm_route(uint64_t *result, uint64_t p0, void *p1, uint64_t p1_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

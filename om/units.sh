@@ -28,6 +28,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS cm_blob=om/components/cm_blob.om cm_digest=om/cache/digest.om,om/components/cm_digest.om"
     UNITS="$UNITS artifact_format=om/components/artifact_format.om artifact_admit=om/components/artifact_parse.om,om/components/artifact_policy.om,om/components/artifact_format.om,om/components/artifact_admit.om"
     UNITS="$UNITS artifact_elf=om/components/artifact_elf.om"
+    UNITS="$UNITS cm_route=om/components/cm_route.om"
 fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"

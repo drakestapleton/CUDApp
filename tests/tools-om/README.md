@@ -44,6 +44,17 @@ self-test (which passes in both builds); it holds no profile decision.
 Mutants (8, all killed): expected-stage bound, completion position, dropped increment, the gate/up width, the
 gap subtraction order, the attention byte formula, the decimal printer, and the re-arm after a head.
 
+## fmt (`om/tools/fmt.om`, shared by the tool units)
+
+`fm_f x pr o` writes `printf("%.Pf", x)` and `fm_g x pr o` writes `printf("%.Pg", x)`, exactly: the f64 is
+expanded into its full decimal digits (base-10^9 limbs of m·2^k, or of m·5^s with the point s places left;
+at most 767 significant digits) and rounded once, ties to even, as glibc does. `fmt.sh` composes the file
+with a test export `fmtt` and `fmt_diff.c` compares it with glibc `snprintf` on the specials (±0, ±inf,
+±nan, ties such as 0.125, 2.5, 0.0005, the extremes 2^-1074, 2^-1022, DBL_MAX) and `FMT_DIFF_N` (40000)
+splitmix64 doubles in five families, each at `%.0f %.1f %.2f %.6f %.17f %.0g %.1g %.6g %.17g`: 360351
+conversions byte-identical. Mutants (6, all killed): ties to even, the round-down test, the 5^13 step,
+the two-digit exponent minimum, and both `%g` style bounds (exponent below −4, exponent at least P).
+
 ## doctor (`tools/doctor/cudapp_doctor.c`, switch `..._TOOLS_DOCTOR`)
 
 The unit is `doctor=om/tools/fmt.om,om/tools/doctor.om`: `fmt.om` is an exact `%.Pf`/`%.Pg` formatter

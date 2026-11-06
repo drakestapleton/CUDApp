@@ -2,5 +2,5 @@
   "schema_version": "1.0.0",
   "name": "platform-linux",
   "layer": "platform",
-  "purpose": "Linux RM platform policy, publication and marker poll in Omega: request words, reply codes, allocation class, ring-byte store, cpufence and mapget. ioctl and channel submit stay in C.",
+  "purpose": "Linux RM platform policy, publication and marker poll in Omega: request words, reply codes, allocation class, ring-byte store, cpufence and mapget. ioctl and channel submit stay in C."
 }

@@ -9,6 +9,7 @@ mkdir -p "$tmp"
 . tests/tools-om/lib.sh
 tom_pin
 srcs="tools/dagsim/dagsim_cli.c tools/dagsim/dagsim.c src/runtime/rx_costmodel.c src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c"
+srcs="$srcs src/cudapp_om_dag_jstr.c"
 $CC $TOM_CFLAGS -Itools/dagsim -DCUDAPP_MIGRATION_PENDING_C_TOOLS=1 -DCUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE=1 -DCUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE=1 $srcs -lm -o "$tmp/ds_c"
 $CC $TOM_CFLAGS -Itools/dagsim $srcs -lm -o "$tmp/ds_om"
 python3 tests/dagsim/corpus_diff.py "$tmp/ds_c" "$tmp/ds_om" 1200

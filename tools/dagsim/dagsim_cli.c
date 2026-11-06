@@ -27,13 +27,25 @@ static double fmt_seconds(double x) {
     uint64_t a[16] = {ds_bits(x)}; return ds_unbits(ds_decide(18, a));
 }
 #endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE
+#define CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE 0
+#endif
+#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE
+#include "../../src/cudapp_native.h"
+#endif
 
 static void jstr(const char *s) {
     putchar('"');
     for (; *s; s++) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE
         if (*s == '"' || *s == '\\') { putchar('\\'); putchar(*s); }
         else if ((unsigned char)*s < 0x20) printf("\\u%04x", *s);
         else putchar(*s);
+#else
+        uint8_t bytes[6]; uint64_t n;
+        if (omega_dag_jstr(&n, (uint8_t)*s, bytes, sizeof bytes)) abort();
+        fwrite(bytes, 1, n, stdout);
+#endif
     }
     putchar('"');
 }

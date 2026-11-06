@@ -21,6 +21,7 @@ for name in ['oracle','resolve']:
     cov=run(['gcov','-b','-c','-t','-o',out/(name+'.gcno'),'tools/dagsim/dagsim.c'],capture_output=True)
     (out/(name+'.gcov')).write_bytes(cov.stdout);(out/(name+'-coverage.log')).write_bytes(cov.stderr)
 missing=[cc,*flags,'tools/dagsim/dagsim_cli.c',out/'resolve.o',*sources[3:5],*sources[6:],'-lm','-lgcov','-o',out/'missing-scheduler']
+missing.insert(-3, 'src/cudapp_om_dag_jstr.c')
 neg=subprocess.run([str(x) for x in missing],capture_output=True)
 symbols=run(['nm',out/'resolve.o'],capture_output=True).stdout
 (out/'scheduler-boundary.log').write_bytes(('COMMAND '+' '.join(str(x) for x in missing)+'\n').encode()+neg.stdout+neg.stderr+f'\nRC {neg.returncode}\nDEFAULT OBJECT SYMBOLS\n'.encode()+symbols)

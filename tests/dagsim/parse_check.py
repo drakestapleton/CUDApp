@@ -25,6 +25,7 @@ print('parser red control: caught (rc=1)',flush=True)
 run([cc,*flags,'tests/dagsim/format_diff.c',*sources[1:],'-lm','-lgcov','-o',out/'format-diff'])
 run([out/'format-diff'])
 cli_sources=['tools/dagsim/dagsim_cli.c','tools/dagsim/dagsim.c','src/runtime/rx_costmodel.c','src/sha256.c','src/cudapp_om_dag_eval.c','src/cudapp_om_dag_parse.c','src/cudapp_om_dag_fmt.c','src/cudapp_om_dag_res.c','src/cudapp_om_dag_diff.c']
+cli_sources.append('src/cudapp_om_dag_jstr.c')
 for name,defs in [('cli',[]),('cli-oracle',['-DCUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE=1'])]:
     run([cc,*flags,*defs,*cli_sources,'-lm','-o',out/name])
 fixtures=sorted(Path('tests/dagsim/fixtures').glob('*.oev'))

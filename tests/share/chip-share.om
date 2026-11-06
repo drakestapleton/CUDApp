@@ -1,0 +1,222 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Chip gate for native/share/share.om: two processes, two RM clients, one buffer.
+note Compose after native/nvrm/context.om and native/share/share.om, then fn main returning cmain.
+note make test only compiles this unit. Running it opens /dev/nvidia*: authorized GPU window only.
+note The parent forks before either process opens a device, so each has its own RM client.
+note Parent (owner): nvfull, nvalloc 65536, fill, nvexport, send the 24-byte record.
+note Child (importer): nvfull, import read-write and read-only, verify the owner's bytes through
+note both, write a marker through the read-write import, then acknowledge.
+note Parent sees the child's marker in its own mapping (zero copy), frees its buffer, says so.
+note Child re-verifies both imports after the owner's free, drops them, stops, exits 0.
+note Exit codes: 0 pass; 20..32 owner step; 40..53 importer step; 60..64 pipe, fork, reap.
+note stdout names the failing step.
+note Sizes (Wolfram): 2^16 65536 (16 pages); wait 10*10^9 ns 10000000000.
+text cpass "ZERO_COPY_SHARE_CHIP_PASS\n"
+text cstep "ZERO_COPY_SHARE_CHIP_FAIL step "
+text cnl "\n"
+global cfds uchar 16
+global cbuf uchar 4096
+global cbyte uchar 1
+global cstat uchar 4
+fn cdigit fd int v ulong to void
+if ge v 10
+cdigit fd div v 10
+end
+put cbyte 0 uchar add 48 rem v 10
+w = write fd cbyte 0 1
+end
+fn cfail step int to int
+w = write 1 cstep 0 len cstep
+cdigit 1 ulong step
+w = write 1 cnl 0 len cnl
+ret step
+end
+fn cfd off ulong to int
+x = ulong 0
+for i ulong 4
+x = or x shl ulong get cfds add off i mul i 8
+end
+ret int x
+end
+note Pattern byte for offset o of a buffer: 13*o + 90 mod 256.
+fn cfill v long size ulong to bool
+off = ulong 0
+while lt off size bound 4096
+for j ulong 4096
+put cbuf j uchar and add mul add off j 13 90 255
+end
+if ne mapwrite v off cbuf 0 4096 4096
+ret false
+end
+off = add off 4096
+end
+ret true
+end
+fn cverify v long size ulong marker bool to bool
+off = ulong 0
+while lt off size bound 4096
+if ne mapread v off cbuf 0 4096 4096
+ret false
+end
+for j ulong 4096
+want = uchar and add mul add off j 13 90 255
+if and marker eq add off j 0
+want = 165
+end
+if ne get cbuf j want
+ret false
+end
+end
+off = add off 4096
+end
+ret true
+end
+note Read exactly n bytes from fd within the wait budget: into nvshrec when rec, else one byte to cbyte.
+fn cget fd int rec bool n ulong to bool
+got = ulong 0
+while lt got n bound 64
+r = waitio fd 1 10000000000
+if le r 0
+ret false
+end
+if rec
+r = read fd nvshrec got sub n got
+else
+r = read fd cbyte 0 1
+end
+if le r 0
+ret false
+end
+got = add got ulong r
+end
+ret true
+end
+fn cput fd int b uchar to bool
+put cbyte 0 b
+ret eq write fd cbyte 0 1 1
+end
+fn cowner tox int rx int to int
+if not nvfull
+ret cfail 20
+end
+m = nvalloc 65536 false
+if le m 0
+ret cfail 21
+end
+if not cfill m 65536
+ret cfail 22
+end
+if not nvexport m
+ret cfail 23
+end
+if ne write tox nvshrec 0 24 24
+ret cfail 24
+end
+if not cget rx false 1
+ret cfail 25
+end
+if ne get cbyte 0 1
+ret cfail 26
+end
+note Zero copy: the child's write through its import is in the owner's pages.
+if not cverify m 65536 true
+ret cfail 27
+end
+if not nvdrop m
+ret cfail 28
+end
+if not cput tox 2
+ret cfail 29
+end
+if not cget rx false 1
+ret cfail 30
+end
+if ne get cbyte 0 3
+ret cfail 31
+end
+if not nvstop
+ret cfail 32
+end
+ret 0
+end
+fn cimport rx int tox int to int
+if not cget rx true 24
+ret cfail 40
+end
+if not nvfull
+ret cfail 41
+end
+rw = nvimport 65536 false
+if le rw 0
+ret cfail 42
+end
+ro = nvimport 65536 true
+if le ro 0
+ret cfail 43
+end
+if or not cverify rw 65536 false not cverify ro 65536 false
+ret cfail 44
+end
+put cbuf 0 165
+if ne mapwrite rw 0 cbuf 0 1 1
+ret cfail 45
+end
+note The read-only import sees the write made through the read-write one.
+if not cverify ro 65536 true
+ret cfail 46
+end
+if not cput tox 1
+ret cfail 47
+end
+if not cget rx false 1
+ret cfail 48
+end
+if ne get cbyte 0 2
+ret cfail 49
+end
+note The owner has freed its buffer; the duplicates keep the pages alive.
+if or not cverify rw 65536 true not cverify ro 65536 true
+ret cfail 50
+end
+if or not nvdrop ro not nvdrop rw
+ret cfail 51
+end
+if not nvstop
+ret cfail 52
+end
+if not cput tox 3
+ret cfail 53
+end
+ret 0
+end
+fn cmain to int
+r = pipefds cfds 0 8 524288
+if ne r 0
+ret cfail 60
+end
+r = pipefds cfds 8 8 524288
+if ne r 0
+ret cfail 61
+end
+pid = fork
+if lt pid 0
+ret cfail 62
+end
+if eq pid 0
+note Child: reads pipe 1, writes pipe 2.
+ret cimport cfd 0 cfd 12
+end
+st = cowner cfd 4 cfd 8
+if ne st 0
+ret st
+end
+r = waitpid int pid cstat 0 len cstat 0
+if ne r pid
+ret cfail 63
+end
+if or ne get cstat 0 0 ne get cstat 1 0
+ret cfail 64
+end
+w = write 1 cpass 0 len cpass
+ret 0
+end

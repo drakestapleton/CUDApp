@@ -1,0 +1,340 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Host test for native/share/share.om against tests/share/fake-rm.om. The runner appends
+note fn main returning tall (full suite) or trowrite (read-only write must trap 103).
+note Records are forged here byte by byte ("OMZC" = 79 77 90 67), not via nvexport, so a
+note wrong layout in share.om cannot agree with itself.
+note Size constants (Wolfram): 2^13 8192, 2^14 16384, 2^36 68719476736, 2^36+2^12 68719480832.
+global tchecks ulong 1
+global tbuf uchar 64
+global tnum uchar 24
+text tok "ZERO_COPY_SHARE_HOST_PASS\n"
+text tarmed "ZERO_COPY_SHARE_RO_ARMED\n"
+text tbad "ZERO_COPY_SHARE_HOST_FAIL check "
+text tnl "\n"
+fn tprintn fd int v ulong to void
+i = ulong 23
+x = v
+put tnum i uchar add 48 rem x 10
+x = div x 10
+while ne x 0 bound 24
+i = sub i 1
+put tnum i uchar add 48 rem x 10
+x = div x 10
+end
+w = write fd tnum i sub 24 i
+end
+fn tcheck yes bool to void
+put tchecks 0 add get tchecks 0 1
+if not yes
+w = write 2 tbad 0 len tbad
+tprintn 2 get tchecks 0
+w = write 2 tnl 0 len tnl
+tprintn 2 ulong neg get nverr 0
+w = write 2 tnl 0 len tnl
+exit int 1
+end
+end
+fn tsetup to void
+put nvfd 0 900
+put nvfd 1 901
+put nvfd 2 902
+put nvfd 3 903
+put nvobj 0 1000001
+put nvobj 1 1000002
+put nvobj 2 1000003
+put nvobj 3 1000004
+put nvobj 4 1000005
+put nvseq 0 1000100
+put nvstate 0 1
+put nvreg 0 1
+put nvreg 1 1
+put nvfault 0 0
+put nvnext 0 68719476736
+for i ulong 16
+put nvuuid i uchar add i 1
+end
+end
+fn tslots to ulong
+n = ulong 0
+for i ulong 96
+if ne get nvmflag i 0
+n = add n 1
+end
+end
+ret n
+end
+fn trec cli uint h uint size ulong to void
+for i ulong 24
+put nvshrec i 0
+end
+put nvshrec 0 79
+put nvshrec 1 77
+put nvshrec 2 90
+put nvshrec 3 67
+put nvshrec 4 1
+for i ulong 4
+put nvshrec add 8 i uchar and shr cli mul i 8 255
+put nvshrec add 12 i uchar and shr h mul i 8 255
+end
+for i ulong 8
+put nvshrec add 16 i uchar and shr size mul i 8 255
+end
+end
+fn tfill v long size ulong seed ulong to void
+off = ulong 0
+ok = true
+while lt off size bound 4096
+for j ulong 64
+put tbuf j uchar and add add seed j shr off 6 255
+end
+if ne mapwrite v off tbuf 0 64 64
+ok = false
+end
+off = add off 64
+end
+tcheck ok
+end
+fn tverify v long size ulong seed ulong to void
+off = ulong 0
+ok = true
+while lt off size bound 4096
+if ne mapread v off tbuf 0 64 64
+ok = false
+end
+for j ulong 64
+if ne ulong get tbuf j and add add seed j shr off 6 255
+ok = false
+end
+end
+off = add off 64
+end
+tcheck ok
+end
+note Every refused import: no slot, no fault, descriptors balanced, no extra live object.
+fn tclean slots ulong live ulong to void
+tcheck eq tslots slots
+tcheck eq get nvfault 0 0
+tcheck eq get fcnt 10 get fcnt 11
+tcheck eq fklivecnt get nvobj 0 live
+end
+note A malformed or mismatched record is refused before any RM or UVM call.
+fn tnocall want ulong code long to void
+c = get fcnt 0
+s = tslots
+l = fklivecnt get nvobj 0
+tcheck eq nvimport want false neg long 1
+tcheck eq get nverr 0 code
+tcheck eq get fcnt 0 c
+tclean s l
+end
+note An RM refusal of the dup: -1 with the RM status in nverr, nothing kept, no further call.
+fn trmref want ulong status ulong to void
+d = get fcnt 2
+c = get fcnt 0
+s = tslots
+l = fklivecnt get nvobj 0
+tcheck eq nvimport want false neg long 1
+tcheck eq get nverr 0 long status
+tcheck eq get fcnt 2 d
+tcheck eq get fcnt 0 add c 1
+tclean s l
+end
+note A size the object does not have: dup made, proven wrong by RM_MAP_MEMORY, then freed.
+note maps is how many RM_MAP_MEMORY calls RM accepts on the way (the probe, for a larger object).
+fn tsize want ulong maps ulong to void
+d = get fcnt 2
+f = get fcnt 3
+m = get fcnt 4
+s = tslots
+l = fklivecnt get nvobj 0
+tcheck eq nvimport want false neg long 1
+tcheck eq get nverr 0 neg long 34
+tcheck eq get fcnt 2 add d 1
+tcheck eq get fcnt 3 add f 1
+tcheck eq get fcnt 4 add m maps
+tclean s l
+end
+
+fn town to long
+m = nvalloc 8192 false
+tcheck gt m 0
+s = nvfind m
+tcheck lt s 96
+h = get nvmobj s
+tcheck nvexport m
+tcheck eq get fcnt 1 1
+tcheck eq get flast 4 0
+tcheck eq ulong get flast 5 kshdupbit
+tcheck eq ulong get flast 6 kshtoken
+tcheck eq get flast 7 0
+tcheck eq get nvshrec 0 79
+tcheck eq get nvshrec 1 77
+tcheck eq get nvshrec 2 90
+tcheck eq get nvshrec 3 67
+tcheck eq nvshget 4 1
+tcheck eq nvshget 8 get nvobj 0
+tcheck eq nvshget 12 h
+tcheck eq nvshg64 16 8192
+tcheck eq get fkshr fkfind get nvobj 0 h 1
+note Export refusals: unknown mapping, faulted context. No RM call either way.
+c = get fcnt 0
+tcheck not nvexport 777
+tcheck eq get nverr 0 neg long 22
+put nvfault 0 1
+tcheck not nvexport m
+tcheck eq get nverr 0 neg long 5
+put nvfault 0 0
+tcheck eq get fcnt 0 c
+tcheck eq get fcnt 1 1
+note Same-process import of the owner's record aliases the owner's pages.
+tfill m 8192 11
+i = nvimport 8192 false
+tcheck gt i 0
+tcheck ne i m
+tverify i 8192 11
+tfill i 8192 23
+tverify m 8192 23
+tcheck nvdrop i
+tverify m 8192 23
+ret m
+end
+fn tforeign to void
+note Owner process B (RM client 2000001) shares object 5001; this process imports it.
+fi = fkforeign 2000001 5001 16384 true
+b = get fkbk fi
+tfill get fbview b 16384 7
+trec 2000001 5001 16384
+d = get fcnt 2
+s = tslots
+i = nvimport 16384 false
+tcheck gt i 0
+tcheck eq tslots add s 1
+tcheck eq get fcnt 2 add d 1
+tcheck eq ulong and get flast 0 3 0
+tcheck eq get flast 3 3
+tcheck eq ulong and get flast 1 3 0
+tcheck eq ulong get flast 2 kextrw
+tcheck eq ulong get flast 8 kdupflagsnone
+tverify i 16384 7
+tfill i 16384 41
+tverify get fbview b 16384 41
+note Read-only import of the same object.
+ro = nvimport 16384 true
+tcheck gt ro 0
+tcheck eq ulong and get flast 0 3 kmapro
+tcheck eq get flast 3 1
+tcheck eq ulong and get flast 1 3 kdmaro
+tcheck eq ulong get flast 2 kextro
+tverify ro 16384 41
+note An import is not re-exportable.
+c = get fcnt 0
+tcheck not nvexport i
+tcheck eq get nverr 0 neg long 1
+tcheck eq get fcnt 0 c
+note Owner frees first: the backing lives on through both dups.
+r = get fcnt 12
+fkunobj fi
+tcheck eq get fcnt 12 r
+tverify i 16384 41
+tverify ro 16384 41
+u = get fcnt 9
+x = get fcnt 6
+f = get fcnt 3
+tcheck nvdrop i
+tcheck eq get fcnt 9 add u 1
+tcheck eq get fcnt 6 add x 1
+tcheck eq get fcnt 3 add f 1
+tcheck eq get fcnt 12 r
+tcheck nvdrop ro
+tcheck eq get fcnt 12 add r 1
+tcheck eq tslots s
+end
+fn tnegative m long to void
+f2 = fkforeign 2000001 5002 8192 true
+f3 = fkforeign 2000001 5003 8192 false
+f4 = fkforeign 2000001 5004 16384 true
+note Wrong handle, wrong client, object not shared.
+trec 2000001 5099 8192
+trmref 8192 kerrnotfound
+trec 3000001 5002 8192
+trmref 8192 kerrclient
+trec 2000001 5003 8192
+trmref 8192 kerrperm
+note Size mismatch against the real object, both directions.
+trec 2000001 5002 16384
+tsize 16384 0
+trec 2000001 5004 8192
+tsize 8192 1
+note Caller's expected size differs from the record.
+trec 2000001 5002 8192
+tnocall 4096 neg long 34
+note Malformed records.
+trec 2000001 5002 8192
+put nvshrec 0 80
+tnocall 8192 neg long 22
+trec 2000001 5002 8192
+put nvshrec 4 2
+tnocall 8192 neg long 22
+trec 0 5002 8192
+tnocall 8192 neg long 22
+trec 2000001 0 8192
+tnocall 8192 neg long 22
+trec 2000001 5002 0
+tnocall 0 neg long 22
+trec 2000001 5002 4097
+tnocall 4097 neg long 22
+trec 2000001 5002 68719480832
+tnocall 68719480832 neg long 22
+note Faulted context.
+trec 2000001 5002 8192
+put nvfault 0 1
+c = get fcnt 0
+tcheck eq nvimport 8192 false neg long 1
+tcheck eq get nverr 0 neg long 5
+tcheck eq get fcnt 0 c
+put nvfault 0 0
+note GPU-side failure after the CPU map: quarantined slot and faulted context, as nvalloc.
+s = tslots
+put finj 0 kuvmrange
+put finjst 0 uint kerrlimit
+tcheck eq nvimport 8192 false neg long 1
+tcheck eq get nvfault 0 1
+tcheck eq tslots add s 1
+q = ulong 96
+for i ulong 96
+if and ne get nvmflag i 0 ne i nvfind m
+q = i
+end
+end
+tcheck lt q 96
+tcheck eq get nvmflag q 3
+tcheck nvmrel q
+tcheck eq tslots s
+put nvfault 0 0
+end
+fn tall to int
+tsetup
+m = town
+tforeign
+tnegative m
+tcheck nvdrop m
+tcheck eq tslots 0
+tcheck eq fklivecnt get nvobj 0 0
+tcheck eq get fcnt 10 get fcnt 11
+for j ulong 16
+tcheck eq get frlive j 0
+tcheck eq get fdmlive j 0
+end
+w = write 1 tok 0 len tok
+ret 0
+end
+fn trowrite to int
+tsetup
+fi = fkforeign 2000001 6001 8192 true
+trec 2000001 6001 8192
+ro = nvimport 8192 true
+tcheck gt ro 0
+w = write 1 tarmed 0 len tarmed
+x = mapwrite ro 0 tbuf 0 1
+ret 1
+end

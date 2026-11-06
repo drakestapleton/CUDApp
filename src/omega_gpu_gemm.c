@@ -5,6 +5,10 @@
 #include "omega_bw_em_q.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_mem_cached.h"
+#include "cudapp_native.h"
+#ifndef CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
+#define CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER 0
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +69,7 @@ static void mma(Em *e, OmegaGpuGemmType t, int d, int a, int b, unsigned bsub, i
  *   A fragment f = u * rt + i: row 16 (rt cy + i) + g + 8 (q & 1), k = 2 step cx + step u + r t + 4 r (q >> 1)
  *   B fragment f = j:          row 8 (ct cy + j) + g,             k = 2 step cx + step (q >> 1) + r t + 4 r (q & 1)
  * Element (row, k) of the source is at (row * row_stride + k * k_stride) * esz; past rows or kdim it is 0. */
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
 static int gen_pack(Em *e, const OmegaGemmCfg *c, int isb) {
     const int fp8 = c->type == OMEGA_GPU_GEMM_E4M3;
     const uint32_t ks = kstep(c->type), r = 4u / esz(c->type), F = isb ? c->ct : 2u * c->rt;
@@ -220,6 +225,7 @@ static int gen_main(Em *e, const OmegaGemmCfg *c) {
     tail(e);
     return e->err;
 }
+#endif
 
 /* ------------------------------------------------------------------ F32_FFMA (the reference path, GemmGeneral)
  * CTA (cx, row m = cy), FFMA_THREADS threads; thread tid owns C[m][n], n = cx FFMA_THREADS + tid, and runs
@@ -265,14 +271,60 @@ static int gen_ffma(Em *e, const OmegaGemmCfg *c) {
     return e->err;
 }
 
+/* Checked Omega records are replayed into the existing allocator/encoder. No GPU arithmetic lives here. */
+#if !CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
+static int gen_omega(const OmegaGemmCfg *c, OmegaGemmKind kind, BlackwellIRProgram *p) {
+    uint64_t cfg[8] = { c->type, c->rt, c->ct, c->wm, c->wn, c->stall, (uint64_t)c->mutant, c->band };
+    uint64_t ins[8192], meta[512], result;
+    if (omega_gemm_any_ir(&result, cfg, 8, kind, ins, 8192, meta, 512) || result ||
+        meta[0] > 1024 || meta[1] > 256 || meta[2] != 1 || meta[4] || meta[5] > 1) return -1;
+    for (uint64_t j = 0; j < meta[1]; j++) {
+        uint64_t k = meta[64 + j];
+        int v = k == 4 ? omega_bw_ir_alloc_vreg128(p) : k == 2 ? omega_bw_ir_alloc_vreg64(p) :
+                k == 1 ? omega_bw_ir_alloc_vreg(p) : -1;
+        if (v != (int)j) return -1;
+    }
+    if (omega_bw_ir_alloc_uvreg64(p) != 0) return -1;
+    for (uint64_t j = 0; j < meta[0]; j++) {
+        uint64_t *r = ins + j * 8;
+        BlackwellIRInsn i = I0((BlackwellIROpcode)r[0]);
+        i.dst_vreg = r[1] == UINT64_MAX ? -1 : (int)r[1];
+        i.src1_vreg = r[2] == UINT64_MAX ? -1 : (int)r[2];
+        i.src2_vreg = r[3] == UINT64_MAX ? -1 : (int)r[3];
+        i.src3_vreg = r[4] == UINT64_MAX ? -1 : (int)r[4];
+        i.ureg = r[5] == UINT64_MAX ? -1 : (int)r[5];
+        i.imm = (uint32_t)r[6]; i.control = (uint32_t)(r[6] >> 32);
+        i.is_uniform = (r[7] & 1) != 0; i.predicate_p0 = (r[7] & 2) != 0; i.predicate_not = (r[7] & 4) != 0;
+        i.dst_subreg = (uint8_t)(r[7] >> 16); i.src1_subreg = (uint8_t)(r[7] >> 24);
+        i.src2_subreg = (uint8_t)(r[7] >> 32); i.src3_subreg = (uint8_t)(r[7] >> 40);
+        if (omega_bw_ir_append(p, &i) < 0) return -1;
+    }
+    if (meta[5]) {
+        /* Apply the standard back-edge lifetime fixup at the loop end, before later stores. */
+        int end = (int)meta[17];
+        for (int v = 0; v < p->regalloc.num_vregs; v++) {
+            OmegaLiveInterval *iv = &p->regalloc.intervals[v];
+            if (iv->first_def >= 0 && iv->first_def < (int)meta[16] && iv->last_use >= (int)meta[16] && iv->last_use < end)
+                iv->last_use = end;
+        }
+    }
+    return 0;
+}
+#endif
+
 int omega_gpu_gemm_codegen(const OmegaGemmCfg *cfg, OmegaGemmKind kind, BlackwellIRProgram *prog) {
     if (!omega_gpu_gemm_cfg_ok(cfg) || !prog || (unsigned)kind >= OMEGA_GEMM_K_COUNT) return -1;
     if (cfg->type == OMEGA_GPU_GEMM_F32_FFMA && kind != OMEGA_GEMM_K_MAIN) return -1; /* no packs */
     omega_bw_ir_init(prog);
     if (kind == OMEGA_GEMM_K_MAIN && main_regs(cfg) > MAIN_REGS_DEFAULT && omega_bw_ir_set_gpr_limit(prog, BW_PHYS_GPR_HW_LIMIT) != 0) return -1;
     Em em; memset(&em, 0, sizeof em); em.p = prog;
-    int rc = cfg->type == OMEGA_GPU_GEMM_F32_FFMA ? gen_ffma(&em, cfg)
-           : kind == OMEGA_GEMM_K_MAIN ? gen_main(&em, cfg) : gen_pack(&em, cfg, kind == OMEGA_GEMM_K_PACK_B);
+    int rc;
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
+    rc = cfg->type == OMEGA_GPU_GEMM_F32_FFMA ? gen_ffma(&em, cfg)
+       : kind == OMEGA_GEMM_K_MAIN ? gen_main(&em, cfg) : gen_pack(&em, cfg, kind == OMEGA_GEMM_K_PACK_B);
+#else
+    rc = cfg->type == OMEGA_GPU_GEMM_F32_FFMA ? gen_ffma(&em, cfg) : gen_omega(cfg, kind, prog);
+#endif
     if (rc != 0 || em.err || em.depth != 0) return -1;
     return omega_bw_regalloc_solve(prog);
 }

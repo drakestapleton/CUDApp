@@ -24,10 +24,11 @@ static uint32_t mutant_unit(uint64_t *result,uint64_t k,uint64_t x,uint64_t y,ui
     return rc;
 }
 static BlackwellIRProgram a,b;
+static uint8_t x[BW_MAX_IR_INSNS*16],y[BW_MAX_IR_INSNS*16];
+static size_t nx,ny;
 static unsigned cases;
 static int same(int ca,int cb,const char *label) {
-    static uint8_t x[BW_MAX_IR_INSNS*16],y[BW_MAX_IR_INSNS*16];
-    size_t nx=0,ny=0;
+    nx=ny=0;
     if ((ca==0)!=(cb==0)) {fprintf(stderr,"%s refusal C=%d Omega=%d\n",label,ca,cb);return 0;}
     if(ca) return 1;
     if(omega_bw_encode_program(&a,x,sizeof x,&nx)||omega_bw_encode_program(&b,y,sizeof y,&ny)||nx!=ny||memcmp(x,y,nx)) {
@@ -89,21 +90,106 @@ static int patch_refusals(void) {
     return oracle_qmma_patch_code(NULL,x,0)==-1 && omega_qmma_patch_code(NULL,x,0)==-1 &&
            oracle_qmma_patch_code(&a,NULL,0)==-1 && omega_qmma_patch_code(&a,NULL,0)==-1;
 }
+/* MOV_IMM stores its imm32 in word 1; see omega_blackwell_codegen.c.
+ * Locate the niter=7 MOVI, rather than assuming its instruction index. */
+static int iteration_field(const BlackwellIRProgram *p,size_t len,size_t *field) {
+    size_t found=p->count;
+    for(size_t i=0;i<p->count;i++) if(p->insns[i].op==BW_IR_MOV_IMM && p->insns[i].imm==7) {
+        if(found!=p->count) return 0;
+        found=i;
+    }
+    if(found==p->count || found*16+2*sizeof(uint32_t)>len) return 0;
+    *field=found*16+sizeof(uint32_t);
+    return 1;
+}
+static int iteration_only(const uint8_t *code,size_t len,const uint8_t *base,size_t base_len,
+                          size_t field,uint32_t iterations) {
+    if(len!=base_len || field+sizeof(uint32_t)>len) return 0;
+    uint32_t decoded=0;
+    for(unsigned i=0;i<sizeof(uint32_t);i++) decoded|=(uint32_t)code[field+i]<<(8*i);
+    return decoded==iterations && !memcmp(code,base,field) &&
+           !memcmp(code+field+sizeof(uint32_t),base+field+sizeof(uint32_t),len-field-sizeof(uint32_t));
+}
+static void add_iterations(uint32_t *values,size_t *count,uint32_t value) {
+    for(size_t i=0;i<*count;i++) if(values[i]==value) return;
+    values[(*count)++]=value;
+}
+static int peak_structure(void) {
+    uint32_t values[3*32+3];size_t count=0;
+    add_iterations(values,&count,1);
+    add_iterations(values,&count,UINT32_MAX);
+    add_iterations(values,&count,7);
+    for(unsigned bit=0;bit<32;bit++) {
+        uint32_t value=UINT32_C(1)<<bit;
+        add_iterations(values,&count,value);
+        add_iterations(values,&count,value-1);
+        add_iterations(values,&count,value+1);
+    }
+    static uint8_t base_c[BW_MAX_IR_INSNS*16],base_om[BW_MAX_IR_INSNS*16];
+    for(unsigned chains=1;chains<=16;chains++) for(unsigned stall=1;stall<=15;stall++)
+        for(unsigned threads=32;threads<=1024;threads+=32) {
+            int ca=oracle_qmma_peak(7,chains,stall,threads,&a);
+            int cb=omega_blackwell_codegen_qmma_peak_prog(7,chains,stall,threads,&b);
+            size_t field_c=0,field_om=0,base_len=0;
+            if(!same(ca,cb,"peak baseline") || ca || !iteration_field(&a,nx,&field_c) ||
+               !iteration_field(&b,ny,&field_om) || field_c!=field_om) return 0;
+            base_len=nx;memcpy(base_c,x,nx);memcpy(base_om,y,ny);
+            for(size_t v=0;v<count;v++) {
+                uint32_t iterations=values[v];
+                if(iterations!=7) {
+                    ca=oracle_qmma_peak(iterations,chains,stall,threads,&a);
+                    cb=omega_blackwell_codegen_qmma_peak_prog(iterations,chains,stall,threads,&b);
+                    if(!same(ca,cb,"peak iteration")) return 0;
+                }
+                if(!iterations) {
+                    if(!ca || !cb) return 0;
+                    continue;
+                }
+                /* The baseline is already checked, and the zero case has no output. */
+                const uint8_t *cx=iterations==7?base_c:x,*cy=iterations==7?base_om:y;
+                size_t lx=iterations==7?base_len:nx,ly=iterations==7?base_len:ny;
+                if(!iteration_only(cx,lx,base_c,base_len,field_c,iterations) ||
+                   !iteration_only(cy,ly,base_om,base_len,field_om,iterations)) {
+                    fprintf(stderr,"QMMA niter confinement failed: chains=%u stall=%u threads=%u niter=%u\n",
+                            chains,stall,threads,iterations);
+                    return 0;
+                }
+            }
+        }
+    printf("CODEGEN QMMA STRUCTURE EXHAUSTIVE NITER BIT-BASIS PASS (%zu values, zero refused)\n",count);
+    return 1;
+}
+static uint32_t dependency_mutant_unit(uint64_t *result,uint64_t k,uint64_t iterations,uint64_t chains,
+                                     uint64_t shape,void *ins,uint64_t ni,void *meta,uint64_t nm) {
+    uint32_t rc=omega_cg_qmma(result,k,iterations,chains,shape,ins,ni,meta,nm);
+    /* A valid but wrong extra dependence: niter parity changes a prologue stall. */
+    if(!rc && !*result && k==1 && (iterations&1)) ((uint64_t *)ins)[6]^=UINT64_C(1)<<32;
+    return rc;
+}
+static int dependency_mutant(void) {
+    static uint8_t base[BW_MAX_IR_INSNS*16],changed[BW_MAX_IR_INSNS*16];
+    const uint64_t shape=UINT64_C(1)|(UINT64_C(32)<<32);
+    size_t base_len=0,changed_len=0,field=0;
+    if(omega_gpu_om_ir_replay(dependency_mutant_unit,1,7,1,shape,&b,NULL) ||
+       omega_bw_encode_program(&b,base,sizeof base,&base_len) ||
+       omega_qmma_patch_code(&b,base,base_len)<0 || !iteration_field(&b,base_len,&field) ||
+       omega_gpu_om_ir_replay(dependency_mutant_unit,1,2,1,shape,&b,NULL) ||
+       omega_bw_encode_program(&b,changed,sizeof changed,&changed_len) ||
+       omega_qmma_patch_code(&b,changed,changed_len)<0) return 0;
+    if(iteration_only(changed,changed_len,base,base_len,field,2)) {
+        fprintf(stderr,"QMMA niter-dependent non-immediate mutant escaped confinement check\n");
+        return 0;
+    }
+    printf("CODEGEN QMMA NITER DEPENDENCE MUTANT CAUGHT\n");
+    return 1;
+}
 int main(void) {
     if(!refusals() || !patch_refusals()){fprintf(stderr,"QMMA refusal differential failed\n");return 1;}
     for(int mut=0;mut<2;mut++) for(unsigned wait=0;wait<=16;wait++) {
         int ca=oracle_qmma_probe(mut,wait,&a),cb=omega_blackwell_codegen_qmma_probe_prog(mut,wait,&b);
         if(!same(ca,cb,"probe"))return 1;
     }
-    for(unsigned chains=1;chains<=16;chains++) for(unsigned stall=1;stall<=15;stall++) for(unsigned threads=32;threads<=1024;threads+=32) {
-        int ca=oracle_qmma_peak(7,chains,stall,threads,&a),cb=omega_blackwell_codegen_qmma_peak_prog(7,chains,stall,threads,&b);
-        if(!same(ca,cb,"peak")){fprintf(stderr,"chains=%u stall=%u threads=%u\n",chains,stall,threads);return 1;}
-    }
-    for(unsigned bit=0;bit<32;bit++) {
-        uint32_t iterations=UINT32_C(1)<<bit;
-        if(!same(oracle_qmma_peak(iterations,1,1,32,&a),omega_blackwell_codegen_qmma_peak_prog(iterations,1,1,32,&b),"iteration bit"))return 1;
-    }
-    if(!same(oracle_qmma_peak(UINT32_MAX,16,15,1024,&a),omega_blackwell_codegen_qmma_peak_prog(UINT32_MAX,16,15,1024,&b),"iteration max"))return 1;
+    if(!peak_structure() || !dependency_mutant()) return 1;
     if(!same(oracle_f2e4_probe(&a),omega_blackwell_codegen_f2e4_probe_prog(&b),"f2e4"))return 1;
     if(oracle_qmma_probe(0,0,&a) || omega_gpu_om_ir_replay(mutant_unit,0,0,0,0,&b,NULL))return 1;
     if(same(0,0,"deliberate mutant")){fprintf(stderr,"QMMA mutant escaped\n");return 1;}

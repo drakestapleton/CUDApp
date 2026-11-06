@@ -197,17 +197,36 @@ through checked portable Omega IR replay. `cg_qmma_patch.om` owns placeholder
 validation and rewriting. `CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA=1` selects
 the old C oracle; it defaults to zero.
 
-The differential checks both probe variants at every supported wait count,
-and every supported peak chain count, issue stall and thread count at an
-iteration count of seven, plus the F2E4 probe. It compares encoded bytes,
-then patched bytes, patch counts and packed cubins. It also checks each
-single-bit iteration immediate and the maximum iteration immediate.
-Its deliberately corrupted control word must be detected.
-The same target rejects unsupported builder configurations and null outputs,
-and corrupts each placeholder kind's opcode, reserved field and control word
-to compare C/Omega patch rejection, including short buffers.
-The iteration immediate is not exhaustively enumerated; this receipt is not
-a claim that all possible iteration immediates were run.
+The differential is **exhaustive over structure, bit-basis over niter**.
+For every supported peak chain count, issue stall and thread count it tests
+the unique union of `{1,7,UINT32_MAX}` and
+`{2^k,2^k-1,2^k+1 | k=0..31}`. Zero is a matched refusal.
+It also checks both probe variants at every supported wait count and F2E4.
+Each accepted case compares encoded bytes, patched bytes, patch counts and
+packed cubins between C and Omega. For each structural configuration, both
+implementations' patched bytes must differ from their niter=7 baseline only
+in the same MOVI word-1 immediate field, whose decoded value must equal niter.
+The field is located from the baseline IR, not a hard-coded instruction index.
+A parity-dependent stall mutant must fail this confinement check independently
+of C/Omega equality; a separate corrupted-control-word mutant must fail byte equality.
+Unsupported configurations, null outputs, corrupt placeholders and short
+buffers are also compared with C.
+
+Source-level scalar dependence: `src/omega_blackwell_codegen_qmma.c:110-122`
+rejects zero and copies `iters` only into `movi(e,cnt,iters)`.
+On the peak path, `om/codegen/cg_qmma.om:416-419` copies the scalar into spec
+slot 1, `:98-101` rejects zero, and `:294-297` copies it into the single MOVI
+immediate. No other peak emission depends on that scalar. The executable
+confinement checks strengthen this source argument; they do not claim literal
+enumeration of every uint32 iteration count.
+
+Domain query:
+`WolframLanguageEvaluator: v=Union[Join[{1,7,2^32-1},Flatten[Table[{2^k,2^k-1,2^k+1},{k,0,31}]]]]; {Length[v],Count[v,_?(#>0&)],Length[v]*16*15*32}`
+→ `{94,93,721920}` (including the refused-zero probes).
+The strengthened matrix/confinement target is **NOT_RUN** to completion:
+its focused run was cancelled at the operator's wrap-up directive. The initial
+receipt below predates this strengthening and must not be cited as its PASS.
+Initial pre-confinement receipt:
 The focused command exited zero and printed
 `CODEGEN QMMA DIFF PASS (7748 cases)` on 2026-11-06, after printing
 `CODEGEN QMMA MUTANT CAUGHT`. This is host parity, not chip qualification.

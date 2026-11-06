@@ -1,0 +1,441 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Fake NVIDIA RM and UVM for the zero-copy host test. No device file is opened.
+note The runner renames devctl, devcall, uvmctl, fopen, fclose, mapbind and mapnew in a private
+note copy of context.om plus share.om to the fk words below. Layouts, request numbers and
+note statuses come from the generated k functions (tests/share/abi-oracle.c), not from share.om.
+note Each memory object's pages are a memfd, so a CPU import really aliases the owner's bytes.
+note Map bounds follow 580.173.02 mapping_cpu.c: offset at or past the end is INVALID_BASE,
+note zero length or a span past the end is INVALID_LIMIT.
+text fkname "fake-rm-memory"
+global fkcli uint 64
+global fkhnd uint 64
+global fkbk ulong 64
+global fklive uchar 64
+global fkshr uchar 64
+global fbfd int 16
+global fbsize ulong 16
+global fbref uint 16
+global fbview long 16
+global fbn ulong 1
+global fdopen uchar 32
+global fdbk ulong 32
+global fdro uchar 32
+global fdn ulong 1
+global frbase ulong 16
+global frlive uchar 16
+global fdmh uint 16
+global fdmlive uchar 16
+note Counters: 0 RM and UVM calls, 1 shares, 2 dups, 3 frees, 4 maps accepted, 5 DMA maps,
+note 6 DMA unmaps, 7 UVM ranges, 8 UVM external maps, 9 UVM frees, 10 opens, 11 closes,
+note 12 backings released, 13 binds.
+global fcnt ulong 16
+note Last seen: 0 map flags, 1 DMA flags, 2 UVM mapping type, 3 bind access, 4 share target,
+note 5 share mask, 6 share type, 7 share action, 8 dup flags.
+global flast uint 16
+global finj ulong 1
+global finjst uint 1
+global fkchk ulong 1
+text fkbad "ZERO_COPY_SHARE_HOST_FAIL fake check "
+text fknl "\n"
+note A fake-side contract breach: share.om sent something the RM ABI does not allow.
+fn fkok yes bool to void
+put fkchk 0 add get fkchk 0 1
+if not yes
+w = write 2 fkbad 0 len fkbad
+tprintn 2 get fkchk 0
+w = write 2 fknl 0 len fknl
+exit int 1
+end
+end
+fn fkbump i ulong to void
+put fcnt i add get fcnt i 1
+end
+fn fkfind cli uint h uint to ulong
+for i ulong 64
+if and ne get fklive i 0 and eq get fkcli i cli eq get fkhnd i h
+ret i
+end
+end
+ret 64
+end
+fn fkhascli cli uint to bool
+for i ulong 64
+if and ne get fklive i 0 eq get fkcli i cli
+ret true
+end
+end
+ret false
+end
+fn fklivecnt cli uint to ulong
+n = ulong 0
+for i ulong 64
+if and ne get fklive i 0 eq get fkcli i cli
+n = add n 1
+end
+end
+ret n
+end
+fn fkback size ulong to ulong
+b = get fbn 0
+fkok lt b 16
+m = int memfd fkname 0 len fkname 0
+fkok ge m 0
+fkok eq ftrunc m long size 0
+v = mapnew m 0 size 3 1
+fkok gt v 0
+put fbfd b m
+put fbsize b size
+put fbref b 0
+put fbview b v
+put fbn 0 add b 1
+ret b
+end
+fn fkobj cli uint h uint b ulong to ulong
+fkok eq fkfind cli h 64
+for i ulong 64
+if eq get fklive i 0
+put fkcli i cli
+put fkhnd i h
+put fkbk i b
+put fkshr i 0
+put fklive i 1
+put fbref b add get fbref b 1
+ret i
+end
+end
+fkok false
+ret 64
+end
+fn fkunobj i ulong to void
+b = get fkbk i
+put fklive i 0
+put fkshr i 0
+fkok gt get fbref b 0
+put fbref b sub get fbref b 1
+if eq get fbref b 0
+fkok eq mapdrop get fbview b 0
+fkok eq fclose get fbfd b 0
+fkbump 12
+end
+end
+note An object owned by another process's RM client.
+fn fkforeign cli uint h uint size ulong shared bool to ulong
+i = fkobj cli h fkback size
+if shared
+put fkshr i 1
+end
+ret i
+end
+
+fn fkopen code ulong to long
+fkok or eq code 1 eq code 3
+i = get fdn 0
+fkok lt i 32
+put fdn 0 add i 1
+put fdopen i 1
+put fdbk i 0
+put fdro i 0
+fkbump 10
+ret long add 1000 i
+end
+fn fkfdi fd int to ulong
+fkok and ge fd 1000 lt fd 1032
+i = ulong sub fd 1000
+fkok lt i get fdn 0
+ret i
+end
+fn fkclose fd int to long
+i = fkfdi fd
+fkok eq get fdopen i 1
+put fdopen i 0
+fkbump 11
+ret 0
+end
+fn fknew fd int off ulong n ulong acc int mode int to long
+fkok false
+ret neg long 5
+end
+fn fkbind m long fd int off ulong acc int to long
+i = fkfdi fd
+fkok eq get fdopen i 1
+fkok eq off 0
+fkok ne get fdbk i 0
+put flast 3 uint acc
+b = sub get fdbk i 1
+if and ne get fdro i 0 ne acc 1
+ret neg long 13
+end
+fkbump 13
+if eq acc 1
+ret mapbind m get fbfd b 0 1
+end
+ret mapbind m get fbfd b 0 3
+end
+
+fn fkctl fd int req uint off ulong n ulong to long
+fkok eq off 0
+fkok eq fd get nvfd 0
+fkbump 0
+r = ulong req
+if eq r kreqfree
+fkok eq n kszfree
+fkfreeop
+ret 0
+end
+if eq r kreqshare
+fkok eq n kszshare
+fkshareop
+ret 0
+end
+if eq r kreqdup
+fkok eq n kszdup
+fkdupop
+ret 0
+end
+if eq r kreqmap
+fkok eq n kszmap
+fkmapop
+ret 0
+end
+if eq r kreqdma
+fkok eq n kszdma
+fkdmaop
+ret 0
+end
+if eq r krequndma
+fkok eq n kszundma
+fkundmaop
+ret 0
+end
+fkok false
+ret neg long 22
+end
+fn fkcall fd int req uint ho ulong hn ulong po ulong pn ulong to long
+fkok eq fd get nvfd 0
+fkok eq ulong req kreqalloc
+fkok and eq ho 0 eq hn 32
+fkok eq po 0
+fkbump 0
+fkok eq nhget kalcclient get nvobj 0
+fkok eq nhget kalcparent get nvobj 1
+fkok eq nhget kalcclass 62
+h = nhget kalcnew
+fkok ne h 0
+size = npg64 kmemsize
+fkok and gt size 0 eq and size 4095 0
+i = fkobj get nvobj 0 h fkback size
+nhput kalcstatus 0
+ret 0
+end
+fn fkuvm fd int cmd uint off ulong n ulong to long
+fkok eq fd get nvfd 2
+fkok eq off 0
+fkbump 0
+c = ulong cmd
+if and ne get finj 0 0 eq c get finj 0
+put finj 0 0
+if eq c kuvmrange
+npput krangestatus get finjst 0
+end
+if eq c kuvmmapext
+npput kextstatus get finjst 0
+end
+ret 0
+end
+if eq c kuvmrange
+fkok eq n kszrange
+fkrangeop
+ret 0
+end
+if eq c kuvmmapext
+fkok eq n kszmapext
+fkextop
+ret 0
+end
+if eq c kuvmfree
+fkok eq n kszuvmfree
+fkufreeop
+ret 0
+end
+fkok false
+ret neg long 22
+end
+
+fn fkfreeop to void
+fkok eq nhget kfreeclient get nvobj 0
+fkok eq nhget kfreeparent get nvobj 1
+i = fkfind get nvobj 0 nhget kfreeobj
+if eq i 64
+nhput kfreestatus uint kerrnotfound
+ret
+end
+for j ulong 16
+if and ne get fdmlive j 0 eq get fdmh j get fkhnd i
+put fdmlive j 0
+end
+end
+fkunobj i
+fkbump 3
+nhput kfreestatus 0
+end
+fn fkshareop to void
+i = fkfind npget kshclient npget kshobj
+put flast 4 npget kshtarget
+put flast 5 npget kshmask
+put flast 6 and npget kshtype 65535
+put flast 7 uint get nvpar kshaction
+if eq i 64
+npput kshstatus uint kerrnotfound
+ret
+end
+if and eq ulong npget kshmask kshdupbit eq ulong get flast 6 kshtoken
+put fkshr i 1
+end
+fkbump 1
+npput kshstatus 0
+end
+fn fkdupop to void
+cli = npget kdupclient
+fkok eq cli get nvobj 0
+fkok eq npget kdupparent get nvobj 1
+h = npget kdupobj
+fkok ne h 0
+put flast 8 npget kdupflags
+scli = npget kdupsrcclient
+if not fkhascli scli
+npput kdupstatus uint kerrclient
+ret
+end
+s = fkfind scli npget kdupsrcobj
+if eq s 64
+npput kdupstatus uint kerrnotfound
+ret
+end
+if and ne scli cli eq get fkshr s 0
+npput kdupstatus uint kerrperm
+ret
+end
+i = fkobj cli h get fkbk s
+fkbump 2
+npput kdupstatus 0
+end
+fn fkmapop to void
+fkok eq npget kmapclient get nvobj 0
+fkok eq npget kmapdevice get nvobj 1
+i = fkfind get nvobj 0 npget kmapmem
+if eq i 64
+npput kmapstatus uint kerrnotfound
+ret
+end
+size = get fbsize get fkbk i
+off = npg64 kmapoffset
+n = npg64 kmaplength
+fl = npget kmapflags
+put flast 0 fl
+if ge off size
+npput kmapstatus uint kerrbase
+ret
+end
+if or eq n 0 gt add off n size
+npput kmapstatus uint kerrlimit
+ret
+end
+d = fkfdi int npget kmapfd
+fkok eq get fdopen d 1
+put fdbk d add get fkbk i 1
+put fdro d 0
+if eq ulong and fl 3 kmapro
+put fdro d 1
+end
+fkbump 4
+npput kmapstatus 0
+end
+fn fkdmaop to void
+fkok eq npget kdmaclient get nvobj 0
+fkok eq npget kdmadevice get nvobj 1
+fkok eq npget kdmactx get nvobj 3
+h = npget kdmamem
+put flast 1 npget kdmaflags
+o = fkfind get nvobj 0 h
+if eq o 64
+npput kdmastatus uint kerrnotfound
+ret
+end
+note GPU VA is fixed at a reserved UVM range and covers the whole object.
+fkok fkhasrange npg64 kdmaoffset
+fkok eq npg64 kdmalength get fbsize get fkbk o
+for j ulong 16
+if eq get fdmlive j 0
+put fdmh j h
+put fdmlive j 1
+fkbump 5
+npput kdmastatus 0
+ret
+end
+end
+fkok false
+end
+fn fkundmaop to void
+h = npget kundmamem
+for j ulong 16
+if and ne get fdmlive j 0 eq get fdmh j h
+put fdmlive j 0
+fkbump 6
+npput kundmastatus 0
+ret
+end
+end
+npput kundmastatus uint kerrnotfound
+end
+fn fkrangeop to void
+b = npg64 krangebase
+fkok gt npg64 krangelength 0
+for j ulong 16
+if eq get frlive j 0
+put frbase j b
+put frlive j 1
+fkbump 7
+npput krangestatus 0
+ret
+end
+end
+fkok false
+end
+fn fkhasrange b ulong to bool
+for j ulong 16
+if and ne get frlive j 0 eq get frbase j b
+ret true
+end
+end
+ret false
+end
+fn fkextop to void
+fkok fkhasrange npg64 kextbase
+fkok eq npg64 kextcount 1
+fkok eq npget kextfd uint get nvfd 0
+fkok eq npget kextclient get nvobj 0
+put flast 2 npget kexttype
+for i ulong 16
+fkok eq get nvpar add kextuuid i get nvuuid i
+end
+o = fkfind get nvobj 0 npget kextmem
+if eq o 64
+npput kextstatus uint kerrnotfound
+ret
+end
+fkok eq npg64 kextlength get fbsize get fkbk o
+fkbump 8
+npput kextstatus 0
+end
+fn fkufreeop to void
+b = npg64 kfreebase
+for j ulong 16
+if and ne get frlive j 0 eq get frbase j b
+put frlive j 0
+fkbump 9
+npput kfreestat 0
+ret
+end
+end
+fkok false
+end

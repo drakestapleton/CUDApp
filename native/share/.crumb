@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T01:56:58Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:3a647728cb90544427e65d2ee95bb11060dc56605a1ab65343fd831fecd91f20",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "native-policy",
+  "name": "zero-copy-share",
+  "purpose": "Omega export and import of RM memory between processes: RM_SHARE, RM_DUP_OBJECT, size proof, CPU and GPU maps, read-only variants",
+  "schema_version": "1.0.0"
+}

@@ -43,7 +43,7 @@ Things a CUDA stack does not do, because it does not own the whole path. Omega `
 | --- | --- | --- |
 | One submission per generated word | CUDA launches go through the runtime and driver per kernel or per graph; I write the command list myself | PARTIAL: command lists exist (`src/omega_gpu_cmdlist.*`); extra launch in a list costs 24 to 31 us today with wait-for-idle (`evidence/OWN30B-LAUNCH-COST-20261014T0120Z/`) |
 | Resident whole-model kernel | needs control of scheduling and memory below the CUDA API | MISSING (AIEN L272) |
-| Zero-copy shared memory | the GB10's CPU and GPU share one memory; CUDA still stages through its own allocators | PARTIAL: weights shared between processes through the driver client (physics `feat/shared-mem` 82467f19, 1 GiB import in 171 ms; not yet in CUDA++ main) |
+| Zero-copy shared memory | the GB10's CPU and GPU share one memory; CUDA still stages through its own allocators | PARTIAL: weights shared between processes through the driver client (physics `feat/shared-mem` 82467f19, 1 GiB import in 171 ms; not yet in CUDA++ main). 2026-11-05: Omega export and import, read-only included, in `native/share/share.om`; host only (fake RM, read-only write trap, 20 mutants caught; `make test-zero-copy-share`, `docs/share/README.md`); chip NOT_RUN |
 
 ## 4. Speed
 

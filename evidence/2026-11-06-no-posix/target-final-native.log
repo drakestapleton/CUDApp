@@ -1,0 +1,443 @@
+/tmp/bridge-pin-merge/tools/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/host ~/work/cudastack/lanes/NoPosixOm/build/no_posix/sources/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/sources/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/sources/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/host/libomega_native.so + omega_native.{c,h,py,rs,zig,go} + omega_api.h, omega_api_decl.h, omega_api_defs.c (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/bare
+rc=0
+
+
+nm -u ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/bare
+rc=0
+
+
+readelf -lW ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/bare
+rc=0
+
+Elf file type is EXEC (Executable file)
+Entry point 0x400180
+There are 5 program headers, starting at offset 64
+
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  LOAD           0x000000 0x0000000000400000 0x0000000000400000 0x00cc20 0x00cc20 R E 0x10000
+  LOAD           0x00fee0 0x000000000041fee0 0x000000000041fee0 0x000100 0x9014e10 RW  0x10000
+  NOTE           0x000158 0x0000000000400158 0x0000000000400158 0x000024 0x000024 R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x000000 RW  0x10
+  GNU_RELRO      0x00fee0 0x000000000041fee0 0x000000000041fee0 0x000100 0x000120 R   0x1
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .note.gnu.build-id .text .rodata .eh_frame 
+   01     .data.rel.ro .bss 
+   02     .note.gnu.build-id 
+   03     
+   04     .data.rel.ro 
+
+
+readelf -SW ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/bare
+rc=0
+There are 11 section headers, starting at offset 0x10938:
+
+Section Headers:
+  [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            0000000000000000 000000 000000 00      0   0  0
+  [ 1] .note.gnu.build-id NOTE            0000000000400158 000158 000024 00   A  0   0  4
+  [ 2] .text             PROGBITS        0000000000400180 000180 00c620 00  AX  0   0 16
+  [ 3] .rodata           PROGBITS        000000000040c7a0 00c7a0 0002b8 00   A  0   0 16
+  [ 4] .eh_frame         PROGBITS        000000000040ca58 00ca58 0001c8 00   A  0   0  8
+  [ 5] .data.rel.ro      PROGBITS        000000000041fee0 00fee0 000100 00  WA  0   0 16
+  [ 6] .bss              NOBITS          000000000041fff0 00ffe0 9014d00 00  WA  0   0 16
+  [ 7] .comment          PROGBITS        0000000000000000 00ffe0 00002d 01  MS  0   0  1
+  [ 8] .symtab           SYMTAB          0000000000000000 010010 000678 18      9  51  8
+  [ 9] .strtab           STRTAB          0000000000000000 010688 00024b 00      0   0  1
+  [10] .shstrtab         STRTAB          0000000000000000 0108d3 000061 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), p (processor specific)
+
+
+readelf -SW ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/bare
+rc=0
+There are 11 section headers, starting at offset 0x10938:
+
+Section Headers:
+  [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            0000000000000000 000000 000000 00      0   0  0
+  [ 1] .note.gnu.build-id NOTE            0000000000400158 000158 000024 00   A  0   0  4
+  [ 2] .text             PROGBITS        0000000000400180 000180 00c620 00  AX  0   0 16
+  [ 3] .rodata           PROGBITS        000000000040c7a0 00c7a0 0002b8 00   A  0   0 16
+  [ 4] .eh_frame         PROGBITS        000000000040ca58 00ca58 0001c8 00   A  0   0  8
+  [ 5] .data.rel.ro      PROGBITS        000000000041fee0 00fee0 000100 00  WA  0   0 16
+  [ 6] .bss              NOBITS          000000000041fff0 00ffe0 9014d00 00  WA  0   0 16
+  [ 7] .comment          PROGBITS        0000000000000000 00ffe0 00002d 01  MS  0   0  1
+  [ 8] .symtab           SYMTAB          0000000000000000 010010 000678 18      9  51  8
+  [ 9] .strtab           STRTAB          0000000000000000 010688 00024b 00      0   0  1
+  [10] .shstrtab         STRTAB          0000000000000000 0108d3 000061 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), p (processor specific)
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/bare
+rc=0
+HEX:0002000000000000010000000000000000000000000000000080000000000000803f000000000000803f000000000000823f000000000000c07f000000000000ffff000000000000807f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/host ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c -L ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/host -Wl,-rpath,~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/host -lomega_native -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/hosted
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/hosted
+rc=0
+HEX:0002000000000000010000000000000000000000000000000080000000000000803f000000000000803f000000000000823f000000000000c07f000000000000ffff000000000000807f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -DNO_POSIX_RED -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/red
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/red
+rc=90
+
+
+/tmp/bridge-pin-merge/tools/native --freestanding ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/bare
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-word/bare
+rc=2
+
+
+/tmp/bridge-pin-merge/tools/native --freestanding ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/bare
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nop-control/bare
+rc=2
+
+
+/tmp/bridge-pin-merge/tools/native --freestanding ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/bare
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/pad-floor/bare
+rc=1
+
+
+/tmp/bridge-pin-merge/tools/native --freestanding ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/bare
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/byte-size/bare
+rc=1
+
+
+/tmp/bridge-pin-merge/tools/native --freestanding ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/bare
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/nan-quiet/bare
+rc=7
+
+
+/tmp/bridge-pin-merge/tools/native --freestanding ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/native ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/bw_enc_sm121.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/cubin_elf.om ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/no_bf16.om
+rc=0
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -DNO_POSIX_BARE -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_native.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/native/omega_api_defs.o -nostdlib -static -no-pie -Wl,-e,_start -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/bare
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/rne-tie/bare
+rc=7
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -O0 --coverage -DOMEGA_GPU_NO_POSIX -DCUDAPP_MIGRATION_PENDING_CUBIN_DIFF -I ~/work/cudastack/lanes/NoPosixOm/src -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_cubin.c ~/work/cudastack/lanes/NoPosixOm/src/omega_cubin.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_api_defs.o -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/cubin
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/cubin
+rc=0
+cubin sweep: 854 calls, each packed by cubin_elf.om and the C writer and compared; OK 740 ARG 12 TEXT 8 PARAMS 53 CBANK 35 GPR 2 SHARED 4 MEM 0; 111037984 image bytes
+PASS explicit sm_86/sm_121 image differential, target boundaries and null parameter refusal
+
+
+gcov -b -f -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/cubin-omega_cubin.gcno ~/work/cudastack/lanes/NoPosixOm/src/omega_cubin.c
+rc=0
+Function 'omega_cubin_pack'
+Lines executed:100.00% of 2
+
+Function 'omega_cubin_pack_target'
+Lines executed:100.00% of 11
+
+Function 'cubin_pack_impl'
+Lines executed:100.00% of 16
+
+Function 'cubin_diff_note'
+Lines executed:45.45% of 11
+
+Function 'om_cubin_pack'
+Lines executed:89.58% of 48
+
+Function 'om_cubin_refusal'
+Lines executed:78.57% of 28
+
+Function 'c_cubin_pack'
+Lines executed:97.74% of 177
+
+Function 'build_param_info'
+Lines executed:100.00% of 16
+
+Function 'put_attr2'
+Lines executed:100.00% of 4
+
+Function 'put_attr3'
+Lines executed:100.00% of 4
+
+Function 'put_attr4'
+Lines executed:100.00% of 5
+
+Function 'name_ok'
+Lines executed:100.00% of 9
+
+Function 'put_phdr'
+Lines executed:100.00% of 10
+
+Function 'align_up'
+Lines executed:100.00% of 1
+
+Function 'put64'
+Lines executed:100.00% of 1
+
+Function 'put32'
+Lines executed:100.00% of 1
+
+Function 'put16'
+Lines executed:100.00% of 1
+
+Function 'omega_cubin_free'
+Lines executed:100.00% of 1
+
+Function 'omega_cubin_rc_name'
+Lines executed:91.67% of 12
+
+File '~/work/cudastack/lanes/NoPosixOm/src/omega_cubin.c'
+Lines executed:93.85% of 358
+Branches executed:96.35% of 274
+Taken at least once:78.47% of 274
+Calls executed:90.45% of 178
+Creating 'omega_cubin.c.gcov'
+
+Lines executed:93.85% of 358
+
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -O0 --coverage -DOMEGA_GPU_NO_POSIX -DCUDAPP_MIGRATION_PENDING_CUBIN_DIFF -DCUDAPP_CUBIN_DIFF_SELFTEST -I ~/work/cudastack/lanes/NoPosixOm/src -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native ~/work/cudastack/lanes/NoPosixOm/tests/no_posix_cubin.c ~/work/cudastack/lanes/NoPosixOm/src/omega_cubin.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_api_defs.o -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/cubin-red
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/cubin-red
+rc=-6
+
+CUBIN DIFF: .om and C packers disagree (rc 0, 2760 bytes)
+
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -ffp-contract=off -O0 --coverage -DOMEGA_GPU_NO_POSIX -DCUDAPP_MIGRATION_PENDING_C_NO_POSIX -I ~/work/cudastack/lanes/NoPosixOm/src -I ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native ~/work/cudastack/lanes/NoPosixOm/tests/test_omega_codegen_freestanding.c ~/work/cudastack/lanes/NoPosixOm/src/omega_blackwell_codegen.c ~/work/cudastack/lanes/NoPosixOm/src/omega_blackwell_matmul.c ~/work/cudastack/lanes/NoPosixOm/src/sha256.c ~/work/cudastack/lanes/NoPosixOm/src/cudapp_freest_f16.c ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_native.o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_api_defs.o -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/codegen-oracle
+rc=0
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/codegen-oracle --no-sweep
+rc=0
+PASS: freestanding codegen contract (14 fixtures, 0 failing checks)
+
+
+~/work/cudastack/lanes/NoPosixOm/build/test_codegen_freestanding --no-sweep
+rc=0
+PASS: freestanding codegen contract (14 fixtures, 0 failing checks)
+
+
+~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/codegen-oracle --dump
+rc=0
+dump sha256=ba363e9c32ee5d024025e00cc2481848f7d36e65e65185e296b19e7f4b4c052c
+dump sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+~/work/cudastack/lanes/NoPosixOm/build/test_codegen_freestanding --dump
+rc=0
+dump sha256=ba363e9c32ee5d024025e00cc2481848f7d36e65e65185e296b19e7f4b4c052c
+dump sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+gcov -b -f -o ~/work/cudastack/lanes/NoPosixOm/build/no_posix/check/codegen-oracle-omega_blackwell_codegen.gcno ~/work/cudastack/lanes/NoPosixOm/src/omega_blackwell_codegen.c
+rc=0
+Function 'omega_bw_ir_set_gpr_limit'
+Lines executed:0.00% of 4
+
+Function 'omega_bw_gpr_declared_ok'
+Lines executed:0.00% of 1
+
+Function 'omega_bw_gpr_declared'
+Lines executed:0.00% of 1
+
+Function 'omega_blackwell_test_regalloc_bounds'
+Lines executed:97.67% of 43
+
+Function 'omega_blackwell_verify_codegen_fixtures'
+Lines executed:100.00% of 106
+
+Function 'omega_matmul_frag_pack_b'
+Lines executed:0.00% of 12
+
+Function 'omega_matmul_frag_pack_a_row0_f32'
+Lines executed:0.00% of 3
+
+Function 'omega_matmul_result_sentinels'
+Lines executed:0.00% of 12
+
+Function 'omega_matmul_frag_pack_a_row0'
+Lines executed:0.00% of 3
+
+Function 'omega_matmul_frag_pack_a_f32'
+Lines executed:0.00% of 3
+
+Function 'omega_matmul_frag_pack_a'
+Lines executed:0.00% of 3
+
+Function 'frag_f32_to_bf16'
+Lines executed:0.00% of 4
+
+Function 'frag_a_tab_init'
+Lines executed:0.00% of 5
+
+Function 'omega_matmul_frag_unroll'
+Lines executed:100.00% of 3
+
+Function 'omega_matmul_frag_block_unroll'
+Lines executed:100.00% of 3
+
+Function 'omega_matmul_frag_block_shape'
+Lines executed:0.00% of 8
+
+Function 'omega_blackwell_codegen_matmul_frag_block_prog'
+Lines executed:98.26% of 115
+
+Function 'frag_block_store_fits'
+Lines executed:100.00% of 2
+
+Function 'omega_blackwell_codegen_matmul_frag_prog'
+Lines executed:98.99% of 99
+
+Function 'bw_live_until'
+Lines executed:100.00% of 3
+
+Function 'omega_blackwell_codegen_matmul_tensor_loop_prog'
+Lines executed:99.10% of 111
+
+Function 'bw_keep_alive'
+Lines executed:100.00% of 6
+
+Function 'omega_blackwell_codegen_matmul_tensor_prog'
+Lines executed:98.80% of 167
+
+Function 'omega_blackwell_kernel_encode_into'
+Lines executed:100.00% of 15
+
+Function 'omega_bw_program_code_bytes'
+Lines executed:100.00% of 5
+
+Function 'omega_blackwell_codegen_matmul_i32_prog'
+Lines executed:97.59% of 83
+
+Function 'omega_bw_encode_program'
+Lines executed:100.00% of 10
+
+Function 'bw_encode_program_bytes'
+Lines executed:94.44% of 18
+
+Function 'omega_kernel_dump'
+Lines executed:100.00% of 2
+
+Function 'omega_blackwell_verify_codegen_fixtures_fb1cut4'
+Lines executed:100.00% of 20
+
+Function 'omega_blackwell_verify_codegen_fixtures_atomf32'
+Lines executed:100.00% of 8
+
+Function 'omega_blackwell_verify_codegen_fixtures_bfly_f2fp'
+Lines executed:100.00% of 15
+
+Function 'omega_blackwell_verify_codegen_fixtures_reconv'
+Lines executed:100.00% of 20
+
+Function 'omega_blackwell_verify_codegen_fixtures_fragmm'
+Lines executed:100.00% of 14
+
+Function 'omega_blackwell_encode_one'
+Lines executed:100.00% of 6
+
+Function 'omega_blackwell_verify_codegen_fixtures_intops'
+Lines executed:100.00% of 10
+
+Function 'encode_single_insn'
+Lines executed:100.00% of 2
+
+Function 'bw_c_encode_insn'
+Lines executed:78.09% of 429
+
+Function 'omega_bw_regalloc_solve'
+Lines executed:93.24% of 74
+
+Function 'omega_bw_ir_append'
+Lines executed:100.00% of 31
+
+Function 'omega_bw_ir_alloc_uvreg64'
+Lines executed:100.00% of 11
+
+Function 'omega_bw_ir_alloc_uvreg'
+Lines executed:0.00% of 11
+
+Function 'omega_bw_ir_alloc_vreg128'
+Lines executed:100.00% of 13
+
+Function 'omega_bw_ir_alloc_vreg64'
+Lines executed:100.00% of 13
+
+Function 'omega_bw_ir_alloc_vreg'
+Lines executed:100.00% of 13
+
+Function 'omega_bw_ir_init'
+Lines executed:100.00% of 3
+
+File '~/work/cudastack/lanes/NoPosixOm/src/omega_blackwell_codegen.c'
+Lines executed:88.40% of 1543
+Branches executed:90.84% of 1682
+Taken at least once:53.86% of 1682
+Calls executed:97.88% of 519
+Creating 'omega_blackwell_codegen.c.gcov'
+
+Lines executed:88.40% of 1543
+
+

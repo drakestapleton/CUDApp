@@ -1,0 +1,76 @@
+Bridge: 741c1ebb2b0fbae311a77ad2118b13d5ec7a17ee
+COMMAND: bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_NATIVE_OMC=/tmp/no-posix-baseline-omc OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/tmp/bridge-pin-merge make -j3 gpu-engine-freestanding test-gpu-engine-freestanding test-codegen-freestanding
+RC: 0
+make: Nothing to be done for 'gpu-engine-freestanding'.
+./build/test_omega_gpu_engine_freestanding
+[PASS] SUCCESS_FULL_RUN
+[PASS] CALL_ORDER_FULL_RUN
+[PASS] STATE_ADVANCES_STEP_BY_STEP
+[PASS] ROLES_BYTES_AND_REVERSE_FREE_ORDER
+[PASS] PER_STEP_TIMEOUTS_FROM_JOB
+[PASS] POISON_WRITTEN_BEFORE_SUBMIT
+[PASS] NO_C3_SKIPS_MARKER2_ONLY
+[PASS] FAIL_DEVICE_OPEN
+[PASS] FAIL_CHANNEL_CREATE
+[PASS] FAIL_ALLOC
+[PASS] FAIL_PREPARE_COPY_IN
+[PASS] FAIL_PREPARE_FILL_POISON
+[PASS] FAIL_PREPARE_BUILD
+[PASS] FAIL_SUBMIT_IS_NOT_UNCERTAIN
+[PASS] FAIL_VISIBILITY_BARRIER
+[PASS] FAIL_VISIBILITY_COPY_OUT
+[PASS] UNCERTAIN_MARKER_TIMEOUT
+[PASS] UNCERTAIN_BLOCKS_NEXT_JOB_NO_BACKEND_CALL
+[PASS] UNCERTAIN_TEST_RESET_CLEARS_BLOCK
+[PASS] UNCERTAIN_MARKER2_UNKNOWN_STATE
+[PASS] UNCERTAIN_RELEASE_DRIVER_FAULT
+[PASS] UNCHANGED_NOTHING_WRITTEN
+[PASS] UNCHANGED_PARTIAL_EXACT_COUNT
+[PASS] UNCHANGED_LAST_WORD_ONLY
+[PASS] UNCHANGED_FIRST_WORD_ONLY
+[PASS] UNCHANGED_ALL_WRITTEN_IS_SUCCESS
+[PASS] UNCHANGED_NEEDS_POISON_FILL
+[PASS] CLEANUP_FREE_FAILS_AFTER_GOOD_RUN
+[PASS] CLEANUP_CLOSE_FAILS_AFTER_GOOD_RUN
+[PASS] CLEANUP_FIRST_CLEANUP_FAULT_KEPT
+[PASS] CLEANUP_FAULT_NEVER_OVERWRITES_FIRST_FAILURE
+[PASS] CLEANUP_FAULT_AFTER_UNCHANGED_KEEPS_UNCHANGED
+[PASS] INVALID_ARGS_PROGRAM
+[PASS] INVALID_ARGS_LAYOUT
+[PASS] INVALID_ARGS_ZERO_ELEMENTS
+[PASS] INVALID_ARGS_BUFFERS
+[PASS] INVALID_ARGS_OUTPUT_ALIGNMENT
+[PASS] INVALID_ARGS_POISON
+[PASS] INVALID_ARGS_UNKNOWN_FLAG
+[PASS] INVALID_ARGS_ZERO_MARKER_TIMEOUT
+[PASS] INVALID_ARGS_ZERO_RELEASE_TIMEOUT
+[PASS] INVALID_ARGS_ZERO_VISIBILITY_TIMEOUT
+[PASS] INVALID_ARGS_ZERO_MARKER2_TIMEOUT_WITH_C3
+[PASS] INVALID_ARGS_NULL_JOB
+[PASS] INVALID_ARGS_NULL_RESULT
+[PASS] BLOCKED_REFUSES_BEFORE_ANY_CHECK_OR_CALL
+[PASS] BLOCK_RESET_ALLOWS_JOBS_AGAIN
+[PASS] NO_BACKEND_NOT_IMPLEMENTED
+[PASS] BACKEND_TABLE_INCOMPLETE_REFUSED
+[PASS] FREESTANDING_NO_CLOCK_REFUSED_BEFORE_ANY_CALL
+SUMMARY passed=50 failed=0
+./build/test_omega_gpu_platform
+printf 'void *malloc(unsigned long);\nvoid *omega_gpu_fs_control(void) { return malloc(16); }\n' > build/gpu_fs/control/canary.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -Ibuild/no_posix/native -c -o build/gpu_fs/control/canary.o build/gpu_fs/control/canary.c
+PASS REFUSAL_NAMES_DISTINCT
+PASS NEGOTIATE_ABI_SERVICES_LIMITS
+PASS SERVICE_TABLE_MATCHES_CLAIMS_NO_HIDDEN_FALLBACK
+PASS SESSION_SERVICES_ABI_1_1_POLLING_NOT_IRQ
+PASS BUFFER_DESC_KIND_LENGTH_RIGHTS_CACHE
+PASS HANDLES_TYPED_GENERATIONED_LIMITED
+PASS HANDLE_AND_ADDRESS_SHAPES
+SUMMARY passed=7 failed=0
+gcc -r -nostdlib -o build/gpu_fs/control/with_canary.o build/gpu_fs/omega_gpu_engine.o build/gpu_fs/omega_gpu_platform.o build/gpu_fs/omega_blackwell_encoder.o build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/omega_blackwell_qmd.o build/gpu_fs/omega_blackwell_realize.o build/gpu_fs/sha256.o build/gpu_fs/omega_gpu_session.o build/gpu_fs/omega_gpu_fmt.o build/gpu_fs/omega_gpu_matmul_api.o build/gpu_fs/omega_gpu_attention_api.o build/gpu_fs/omega_gpu_serving.o build/gpu_fs/omega_gpu_wait.o build/gpu_fs/cudapp_freest_revision.o build/gpu_fs/cudapp_freest_epoch.o build/gpu_fs/cudapp_freest_f16.o build/gpu_fs/cudapp_freest_leftovers.o build/gpu_fs/cudapp_freest_pathcopy.o build/no_posix/native/omega_native.o build/no_posix/native/omega_api_defs.o build/gpu_fs/control/canary.o
+allowlist control: a malloc caller is refused by the nm -u check (as required)
+./build/test_codegen_hosted --dump > build/codegen_dump_hosted.txt
+./build/test_codegen_freestanding --dump > build/codegen_dump_freestanding.txt
+cmp build/codegen_dump_hosted.txt build/codegen_dump_freestanding.txt
+codegen dumps byte-identical: 14 fixtures, 24448 code bytes
+./build/test_codegen_freestanding
+bf16 sweep: all 2^32 inputs equal the hosted __bf16 cast
+PASS: freestanding codegen contract (14 fixtures, 0 failing checks)

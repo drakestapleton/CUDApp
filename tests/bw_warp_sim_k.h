@@ -197,6 +197,23 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
     case BW_IR_FSUB: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_u2f(a) - ws_u2f(b)), p); break;
     case BW_IR_FMUL: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_u2f(a) * ws_u2f(b)), p); break;
     case BW_IR_I2FP: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u((float)(int32_t)a), p); break; /* I2FP.F32.S32, round to nearest */
+    case BW_IR_I2FP_U32: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u((float)a), p); break;
+    case BW_IR_F2I_U32: {
+        float fa = ws_u2f(a);
+        uint32_t r = (fa != fa || fa <= 0.0f) ? 0u : fa >= 4294967296.0f ? 0xffffffffu : (uint32_t)fa;
+        ws_wrs(l, in->dst_vreg, in->dst_subreg, r, p);
+        break;
+    }
+    /* The simulator uses the host half conversion, independently checked against
+     * the integer E1 references by gpu_dnn_half_test.c, including all half bits. */
+    case BW_IR_F16_TO_F32: {
+        uint16_t raw=(uint16_t)a;_Float16 h;memcpy(&h,&raw,sizeof h);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,ws_f2u((float)h),p);break;
+    }
+    case BW_IR_F32_TO_F16: {
+        _Float16 h=(_Float16)ws_u2f(a);uint16_t raw;memcpy(&raw,&h,sizeof raw);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,raw,p);break;
+    }
     case BW_IR_FFMA: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fmaf(ws_u2f(a), ws_u2f(b), ws_u2f(c))), p); break;
     case BW_IR_F2FP_BF16_PACK: ws_wrs(l, in->dst_vreg, in->dst_subreg, (ws_k_bf16_rn(a) << 16) | ws_k_bf16_rn(b), p); break; /* F2FP.BF16.F32.PACK_AB (L313 bf16 state) */
     case BW_IR_FMNMX_MAX: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fmaxf(ws_u2f(a), ws_u2f(b))), p); break;
@@ -305,13 +322,16 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         case BW_IR_SHFL_DOWN: case BW_IR_SHFL_BFLY: {
+            if (!cond) { f->pc = pc + 1; break; }
             if (w->exited) { ws_fail(s, WS_E_SHFL_EXITED, pc, "SHFL on a warp with exited lanes"); return -1; }
             if (mask != live) { ws_fail(s, WS_E_SHFL_SPLIT, pc, "SHFL on a split warp"); return -1; }
             uint32_t src[WS_WARP];
             for (int L = 0; L < WS_WARP; L++) src[L] = ws_rd(&w->lane[L], in->src1_vreg, p);
-            /* SHFL.BFLY: lane L reads L ^ lane */
-            if (in->op == BW_IR_SHFL_BFLY) { for (int L = 0; L < WS_WARP; L++) ws_wr(&w->lane[L], in->dst_vreg, src[L ^ (int)(in->imm & 31)], p); f->pc = pc + 1; break; }
-            for (int L = 0; L < WS_WARP; L++) { int from = L + (int)(in->imm & 31); ws_wr(&w->lane[L], in->dst_vreg, from < WS_WARP ? src[from] : src[L], p); }
+            /* Guard predicates select destination lanes only. Snapshot every source lane
+             * before writes: a guard-inactive source still supplies its register value.
+             * Divergent fragments/exited source lanes retain the structural refusals above. */
+            if (in->op == BW_IR_SHFL_BFLY) { for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) ws_wr(&w->lane[L], in->dst_vreg, src[L ^ (int)(in->imm & 31)], p); f->pc = pc + 1; break; }
+            for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) { int from = L + (int)(in->imm & 31); ws_wr(&w->lane[L], in->dst_vreg, from < WS_WARP ? src[from] : src[L], p); }
             f->pc = pc + 1;
             break;
         }
@@ -321,7 +341,7 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         default: {
-            for (int L = 0; L < WS_WARP; L++) if (mask >> L & 1) {
+            for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) {
                 ws_lane_exec(s, &w->lane[L], in, pc, warp * WS_WARP + (uint32_t)L, cx, cy);
                 if (s->err) return -1;
             }

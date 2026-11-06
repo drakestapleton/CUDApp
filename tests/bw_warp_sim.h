@@ -217,6 +217,15 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
         ws_wrs(l, in->dst_vreg, in->dst_subreg, r, p);
         break;
     }
+    /* Independent integer E1 references check these host half conversions. */
+    case BW_IR_F16_TO_F32: {
+        uint16_t raw=(uint16_t)a;_Float16 h;memcpy(&h,&raw,sizeof h);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,ws_f2u((float)h),p);break;
+    }
+    case BW_IR_F32_TO_F16: {
+        _Float16 h=(_Float16)ws_u2f(a);uint16_t raw;memcpy(&raw,&h,sizeof raw);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,raw,p);break;
+    }
     default: ws_fail(s, WS_E_OP, pc, "opcode not modelled"); return;
     }
 }
@@ -313,6 +322,9 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         case BW_IR_SHFL_DOWN: {
+            /* Guard predicates suppress destination execution, not source
+             * register availability: guarded-off lanes still supply SHFL data.
+             * An entirely guarded-off SHFL performs no structural checks. */
             if (!cond) { f->pc = pc + 1; break; }
             if (w->exited) { ws_fail(s, WS_E_SHFL_EXITED, pc, "SHFL on a warp with exited lanes"); return -1; }
             if (mask != live) { ws_fail(s, WS_E_SHFL_SPLIT, pc, "SHFL on a split warp"); return -1; }

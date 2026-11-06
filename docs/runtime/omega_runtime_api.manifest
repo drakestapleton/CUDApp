@@ -12,7 +12,7 @@
 # After a deliberate header change: edit the line here, run `tools/runtime_api_check.sh --bless` to refresh numbers, review the diff,
 # and bump the version (MAJOR/MINOR/PATCH, rule in API.md section 2; tools/runtime_api_semver.sh checks the bump against the base).
 # Names a manifest header declares that are NOT API go in omega_runtime_api.internal, each with a reason (the check fails otherwise).
-abi omega_runtime 0.14.0
+abi omega_runtime 0.16.0
 header src/omega_runtime_api.h
 header src/omega_gpu_platform.h
 header src/omega_gpu_session.h
@@ -39,9 +39,9 @@ header src/omega_gpu_pfhost.h
 header src/omega_gpu_gemm_ex.h
 # ---- version ----
 const OMEGA_RUNTIME_API_VERSION_MAJOR 0
-const OMEGA_RUNTIME_API_VERSION_MINOR 14
+const OMEGA_RUNTIME_API_VERSION_MINOR 16
 const OMEGA_RUNTIME_API_VERSION_PATCH 0
-const OMEGA_RUNTIME_API_VERSION 14
+const OMEGA_RUNTIME_API_VERSION 16
 # ---- platform contract (src/omega_gpu_platform.h, ABI 1.2) ----
 struct OmegaGpuDeviceHandle 8 4 # STABLE
 field OmegaGpuDeviceHandle index 0 4 u32 1
@@ -1115,3 +1115,94 @@ fn omega_gpu_pf_qgemm_reading_option fn(u32, u32) -> u32 # EXPERIMENTAL
 fn omega_gpu_pf_qgemm_workspace_fits fn(u64, u64, u64, u64, u64) -> i32 # EXPERIMENTAL
 
 fn omega_gpu_prefill_attn256_scoped fn(*mut OmegaGpuDecodeAttn256Cache, u32, u32, u32, *const f32, f32, f32, *mut f32, *mut OmegaGpuPrefillAttn256Info, u32, *mut u64) -> i32 # EXPERIMENTAL
+
+header src/omega_gpu_attn_any_api.h
+struct OmegaGpuAttnAnyShape 32 4 # EXPERIMENTAL
+field OmegaGpuAttnAnyShape seq_q 0 4 u32 1
+field OmegaGpuAttnAnyShape seq_kv 4 4 u32 1
+field OmegaGpuAttnAnyShape head_dim 8 4 u32 1
+field OmegaGpuAttnAnyShape q_heads 12 4 u32 1
+field OmegaGpuAttnAnyShape kv_heads 16 4 u32 1
+field OmegaGpuAttnAnyShape causal 20 4 u32 1
+field OmegaGpuAttnAnyShape dtype 24 4 u32 1
+field OmegaGpuAttnAnyShape scale 28 4 f32 1
+const OMEGA_GPU_ATTN_ANY_MAX_HEAD_DIM 256 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_F32 0 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_BF16 1 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_F16 2 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_REFUSED 1 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_BAD_ARGS 2 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_ATTN_ANY_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_attn_any fn(*const OmegaGpuAttnAnyShape, *const c_void, *const c_void, *const c_void, *mut f32) -> i32 # EXPERIMENTAL
+fn omega_gpu_attn_any_codegen fn(*const OmegaGpuAttnAnyShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+
+header src/omega_gpu_dnn_types.h
+const OMEGA_GPU_DNN_F32 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_BF16 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_F16 2 # EXPERIMENTAL
+
+header src/omega_gpu_dnn_rows_api.h
+struct OmegaGpuDnnRowsShape 20 4 # EXPERIMENTAL
+field OmegaGpuDnnRowsShape rows 0 4 u32 1
+field OmegaGpuDnnRowsShape length 4 4 u32 1
+field OmegaGpuDnnRowsShape dtype 8 4 u32 1
+field OmegaGpuDnnRowsShape op 12 4 u32 1
+field OmegaGpuDnnRowsShape epsilon 16 4 f32 1
+const OMEGA_GPU_DNN_SOFTMAX 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_LAYERNORM 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_RMSNORM 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_REFUSED 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_BAD_ARGS 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_dnn_rows_codegen fn(*const OmegaGpuDnnRowsShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+fn omega_gpu_dnn_rows fn(*const OmegaGpuDnnRowsShape, *const c_void, *mut f32) -> i32 # EXPERIMENTAL
+
+header src/omega_gpu_dnn_activations_api.h
+struct OmegaGpuDnnActivationsShape 16 8 # EXPERIMENTAL
+field OmegaGpuDnnActivationsShape elements 0 8 u64 1
+field OmegaGpuDnnActivationsShape operation 8 4 u32 1
+field OmegaGpuDnnActivationsShape dtype 12 4 u32 1
+const OMEGA_GPU_DNN_RELU 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_GELU_ERF 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_GELU_TANH 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_SILU 3 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_BAD_ARGS 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_REFUSED 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_dnn_activations_codegen fn(*const OmegaGpuDnnActivationsShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+fn omega_gpu_dnn_activations fn(*const OmegaGpuDnnActivationsShape, *const c_void, *mut f32) -> i32 # EXPERIMENTAL
+
+header src/omega_gpu_conv2d_api.h
+struct OmegaGpuConv2dShape 72 4 # EXPERIMENTAL
+field OmegaGpuConv2dShape batch 0 4 u32 1
+field OmegaGpuConv2dShape in_channels 4 4 u32 1
+field OmegaGpuConv2dShape height 8 4 u32 1
+field OmegaGpuConv2dShape width 12 4 u32 1
+field OmegaGpuConv2dShape out_channels 16 4 u32 1
+field OmegaGpuConv2dShape kernel_h 20 4 u32 1
+field OmegaGpuConv2dShape kernel_w 24 4 u32 1
+field OmegaGpuConv2dShape stride_h 28 4 u32 1
+field OmegaGpuConv2dShape stride_w 32 4 u32 1
+field OmegaGpuConv2dShape pad_top 36 4 u32 1
+field OmegaGpuConv2dShape pad_bottom 40 4 u32 1
+field OmegaGpuConv2dShape pad_left 44 4 u32 1
+field OmegaGpuConv2dShape pad_right 48 4 u32 1
+field OmegaGpuConv2dShape dilation_h 52 4 u32 1
+field OmegaGpuConv2dShape dilation_w 56 4 u32 1
+field OmegaGpuConv2dShape groups 60 4 u32 1
+field OmegaGpuConv2dShape layout 64 4 u32 1
+field OmegaGpuConv2dShape dtype 68 4 u32 1
+const OMEGA_GPU_CONV2D_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_BAD_ARGS 1 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_REFUSED 2 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_conv2d_plan fn(*const OmegaGpuConv2dShape, u64, *mut u64) -> i32 # EXPERIMENTAL
+fn omega_gpu_conv2d_codegen fn(*const OmegaGpuConv2dShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+fn omega_gpu_conv2d fn(*const OmegaGpuConv2dShape, *const c_void, *const c_void, *mut f32) -> i32 # EXPERIMENTAL

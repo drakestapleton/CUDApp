@@ -44,6 +44,16 @@ if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS cmdlist_record=om/cmdlist/recor
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"
+    UNITS="$UNITS gemm_any=om/gemm-any/gemm_ir.om"
+    UNITS="$UNITS dnn_rows=om/attn-any/emit.om,om/dnn-rows/kernel.om dnn_rows_plan=om/dnn-rows/plan.om"
+fi
+if [ -z "${OMEGA_UNITS:-}" ]; then
+    UNITS="$UNITS dnn_activations=om/attn-any/emit.om,om/dnn-activations/kernel.om dnn_activations_plan=om/dnn-activations/plan.om"
+fi
+PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
+if [ -z "${OMEGA_UNITS:-}" ]; then
+    UNITS="$UNITS gemm_scalar=om/gemm-any/gemm_ir.om,om/conv2d/dense.om conv2d=om/gemm-any/gemm_ir.om,om/conv2d/conv.om conv_plan=om/gemm-any/gemm_ir.om,om/conv2d/conv.om,om/conv2d/plan.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

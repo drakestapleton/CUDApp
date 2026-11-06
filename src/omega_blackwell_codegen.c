@@ -894,6 +894,19 @@ static int bw_c_encode_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *ra
             w[2] = 0x0020f000;
             w[3] = insn->control ? insn->control : 0x004e2200;
             break;
+        /* Authoritative E1_CVT words: omega_numeric.c, sm_121 ptxas/nvdisasm fixtures. */
+        case BW_IR_F16_TO_F32:
+            w[0] = 0xff007230U | ((uint32_t)(dst & 0xff) << 16);
+            w[1] = 0x20000000U | (uint32_t)(src1 & 0xff);
+            w[2] = 0x00004100U;
+            w[3] = insn->control ? insn->control : 0x010fca00U;
+            break;
+        case BW_IR_F32_TO_F16:
+            w[0] = 0x7304U | ((uint32_t)(dst & 0xff) << 16);
+            w[1] = (uint32_t)(src1 & 0xff);
+            w[2] = 0x00200800U;
+            w[3] = insn->control ? insn->control : 0x010e2800U;
+            break;
         default:
             return -1;
     }
@@ -936,6 +949,9 @@ _Static_assert(BW_IR_FADD == 30 && BW_IR_FSUB == 31 && BW_IR_FMUL == 32 && BW_IR
                "bw_enc_sm121.om opcode numbers 30-59");
 _Static_assert(BW_IR_SHFL_BFLY == 60 && BW_IR_F2FP_BF16_PACK == 61 && BW_IR_ATOMG_ADD_F32_STRONG_SYS == 62 &&
                BW_IR_ATOMG_ADD_F32_STRONG_GPU == 63, "bw_enc_sm121.om opcode numbers 60-63");
+_Static_assert(BW_IR_I2FP_U32 == 64 && BW_IR_F2I_U32 == 65 &&
+               BW_IR_F16_TO_F32 == 66 && BW_IR_F32_TO_F16 == 67 && BW_IR_LAST == 67,
+               "bw_enc_sm121.om append-only opcode numbers 64-67");
 
 /* Encodes n instructions through the .om unit into code (BW_OM_CODE_LEN bytes). pad != 0 is program mode (NOP
  * padding to a multiple of 8, at least 32). Returns the bytes written; 0 = refused. */

@@ -1,6 +1,6 @@
 # Omega Runtime API v0
 
-Omega Runtime API version: 0.14.0
+Omega Runtime API version: 0.16.0
 
 Status: first written version, 2026-10-19 (slice R1, omega-mv#594, tracking #593). Source of truth is the C headers in
 `src/`. This file describes them; `docs/runtime/omega_runtime_api.manifest` lists them; `make test-runtime-api` checks the
@@ -36,9 +36,11 @@ signature against the headers on every run.
 
 ## 2. Version and compatibility rule
 
-The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.14.0**. It is a property of the list of entries and
+The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.16.0**. It is a property of the list of entries and
 their behaviour, not of the library build. Changes so far:
-- 0.14.0: adds experimental complete-access-set command-list recording and whole-program planning/submission. The seeded planner compares all outstanding dispatches, drains RAW/WAR/WAW hazards (including overlapping VA aliases), retains admission and completion ordering, and refuses programs that cannot fit one submission. Legacy recording/submission remains conservative.
+- 0.16.0: adds experimental complete-access-set command-list recording and whole-program planning/submission. The seeded planner compares all outstanding dispatches, drains RAW/WAR/WAW hazards (including overlapping VA aliases), retains admission and completion ordering, and refuses programs that cannot fit one submission. Legacy recording/submission remains conservative.
+- 0.15.0: adds experimental seeded row softmax/layernorm/rmsnorm, ReLU/GELU/SiLU and implicit conv2d, a shared DNN storage-format contract, and native f16 inputs to any-shape attention. Native scalar f16 conversion is implemented in the seeded sm_121 encoder. Shape admission and kernel arithmetic are Omega; C execution entries are memory/session shells. Hardware qualification is NOT_RUN.
+- 0.14.0: adds experimental seeded-Omega arbitrary-shape f32/bf16 attention, `omega_gpu_attn_any`, with a CPU-only code-generation entry. Geometry, GQA and causal tails are decided in `om/attn-any/`; hardware qualification is NOT_RUN. Existing tuned model-shape entries are unchanged.
 - 0.13.0: adds experimental `omega_gpu_prefill_attn256_scoped` in `omega_gpu_attention_mirror.h`. Mode 0 preserves ordinary attention; mode 1 copies the complete original 27B K/V into one GPU-private reusable buffer before attention; mode 2 uses the provisional Omega-selected 1024-row threshold. Omega checks geometry, bounds, allocation capacity and completed PREP/copy/ATTEND ordering. Other modes and unsupported mirrored shapes are refused. `copy_ns` reports copy chip time separately from the unchanged attention info layout; total call time includes allocation and copying. Existing host/device/recorded entries and defaults are unchanged. See `om/attention-mirror/README.md` for qualification status.
 - 0.12.0: adds experimental `omega_gpu_pf_qgemm_reading_option` with `(rows, index)`. The checked Omega policy returns the scoped rt, warps, wait and group values at indices 0..3, or UINT32_MAX for invalid input. This proposed adaptive profile uses 64 rows for requests at most 64 rows and 128 above that threshold. Callers obtain the checked height and use `omega_gpu_pf_qgemm_workspace_fits` to check existing row, padded-row and tile capacities before switching profiles. The query returns 1 only when all capacities cover the request; otherwise callers allocate a compatible workspace.
 - 0.11.0: adds experimental `omega_gpu_pf_qgemm_scoped` per-call options and the checked `omega_gpu_pf_qgemm_scoped_bm` tile-height query. Explicit calls neither read nor modify process-global tuning knobs. Tile storage must use the queried height; actual projection dimensions are validated on every call.
@@ -830,3 +832,153 @@ here; that every C signature quoted in this file appears verbatim in a header; a
 not check that the prose is true. A struct field added inside padding is not seen, nor a field that changes type but keeps
 its size, nor a constant value quoted in prose, nor a new type (struct or typedef) that no function uses yet, nor a
 function-like macro.
+
+## 12. Any-shape attention (EXPERIMENTAL)
+
+Header: `src/omega_gpu_attn_any_api.h`. `OmegaGpuAttnAnyShape` carries
+`seq_q`, `seq_kv`, `head_dim`, `q_heads`, `kv_heads`, `causal`, `dtype` (u32)
+and `scale` (f32), in that order. Contiguous `[head][sequence][component]`
+Q/K/V use dtype `OMEGA_GPU_ATTN_ANY_F32` (0), `OMEGA_GPU_ATTN_ANY_BF16` (1)
+or `OMEGA_GPU_ATTN_ANY_F16` (2);
+output is f32. Head dimensions 1..`OMEGA_GPU_ATTN_ANY_MAX_HEAD_DIM` (256),
+sequence lengths 1..65535 and head counts 1..65535 are admitted when KV heads
+divide Q heads and each tensor has at most 1073741824 elements. No padding or
+power-of-two restriction exists. Causal mode 1 means top-left alignment
+(`key <= query`), including rectangular matrices; mode 0 is non-causal.
+Scale is a finite caller-provided multiplier, including zero and negative values.
+Inputs and intermediate dots must be finite; the call does not scan input values.
+All other dtype values are refused, not widened or reinterpreted.
+
+```c
+int omega_gpu_attn_any(const OmegaGpuAttnAnyShape *shape, const void *q, const void *k, const void *v, float *out);
+int omega_gpu_attn_any_codegen(const OmegaGpuAttnAnyShape *shape, BlackwellIRProgram *program, uint8_t *code, size_t capacity, OmegaBlackwellKernel *kernel);
+```
+`omega_gpu_attn_any_codegen` generates an admitted shape's IR and encoded kernel
+without opening a device. The execution entry point `omega_gpu_attn_any` owns
+allocations, copies and launches; both use the same seeded admission unit.
+
+
+Both return `OMEGA_GPU_ATTN_ANY_OK` (0), `REFUSED` (1) for unsupported
+geometry/format, `BAD_ARGS` (2) for null arguments, `CODEGEN` (3) for
+generation/encoding/storage failure, or `CHIP` (4) for device execution failure.
+These names all have prefix `OMEGA_GPU_ATTN_ANY_`. Refusals happen before
+device open. Codegen is CPU-only and writes caller-owned storage; kernel code
+aliases `code` and owns nothing. The execution entry allocates GPU memory,
+launches one warp per query row per query head, then copies output back.
+The session retains its normal uncertain-completion latch/parking policy.
+Online softmax uses f32 dot/accumulator/running maximum and sum.
+See `om/attn-any/README.md` for the tested numerical envelope and
+`om/attn-any/CHIP.md` for the operator-gated chip procedure. No performance or
+chip-qualification claim is made.
+
+
+## 13. DNN layers (EXPERIMENTAL)
+
+### 13.1 Scalar formats (`src/omega_gpu_dnn_types.h`)
+
+`OMEGA_GPU_DNN_F32` (0), `OMEGA_GPU_DNN_BF16` (1) and
+`OMEGA_GPU_DNN_F16` (2) identify distinct contiguous scalar input storage
+formats. DNN kernels use f32 accumulation and f32 output. Neither 16-bit
+format is an alias for the other. These constants are EXPERIMENTAL;
+native conversion encoding is host/oracle exercised, not chip qualified.
+
+### 13.2 Row softmax and normalization (`src/omega_gpu_dnn_rows_api.h`)
+
+CPU-only builder: `omega_gpu_dnn_rows_codegen`. Execution shell:
+`omega_gpu_dnn_rows`.
+
+```c
+int omega_gpu_dnn_rows_codegen(const OmegaGpuDnnRowsShape *shape, BlackwellIRProgram *program, uint8_t *code, size_t capacity, OmegaBlackwellKernel *kernel);
+int omega_gpu_dnn_rows(const OmegaGpuDnnRowsShape *shape, const void *input, float *output);
+```
+
+`OmegaGpuDnnRowsShape` contains `uint32_t rows, length, dtype, op` and
+`float epsilon`. Input and output are contiguous `[rows][length]`; output is
+f32 for every storage type. Rows and length are independently 1..65535,
+with at most 1073741824 elements. `OMEGA_GPU_DNN_SOFTMAX` (0) selects stable
+row softmax, `OMEGA_GPU_DNN_LAYERNORM` (1) mean-centered normalization, and
+`OMEGA_GPU_DNN_RMSNORM` (2) root-mean-square normalization. Norms have no
+affine transform. Their epsilon must be positive finite **normal** f32;
+softmax ignores epsilon.
+
+Finite inputs and finite intermediate differences, sums, squares,
+variance-plus-epsilon and output are caller preconditions. The codegen entry
+is CPU-only. The execution entry requires an authorized GPU window; Omega
+rejects unsupported geometry, storage, operation and epsilon before session
+access. Status constants are `OMEGA_GPU_DNN_ROWS_OK` (0),
+`OMEGA_GPU_DNN_ROWS_REFUSED` (1), `OMEGA_GPU_DNN_ROWS_BAD_ARGS` (2),
+`OMEGA_GPU_DNN_ROWS_CODEGEN` (3), and `OMEGA_GPU_DNN_ROWS_CHIP` (4).
+See `om/dnn-rows/README.md` for the independent double oracle, MODELED test
+envelope and finite numerical test domain, and `om/dnn-rows/CHIP.md` for the
+operator-gated NOT_RUN procedure. MUFU simulation is not a chip accuracy bound.
+
+### 13.3 Elementwise activations (`src/omega_gpu_dnn_activations_api.h`)
+
+CPU-only builder: `omega_gpu_dnn_activations_codegen`. Execution shell:
+`omega_gpu_dnn_activations`.
+
+```c
+int omega_gpu_dnn_activations_codegen(const OmegaGpuDnnActivationsShape *shape, BlackwellIRProgram *program, uint8_t *code, size_t capacity, OmegaBlackwellKernel *kernel);
+int omega_gpu_dnn_activations(const OmegaGpuDnnActivationsShape *shape, const void *input, float *output);
+```
+
+`OmegaGpuDnnActivationsShape` contains `uint64_t elements` and
+`uint32_t operation, dtype`. Nonempty contiguous counts through `UINT32_MAX`
+are admitted, including non-warp multiples. Input uses the shared storage
+constants; arithmetic and output are f32. `OMEGA_GPU_DNN_RELU` (0),
+`OMEGA_GPU_DNN_GELU_ERF` (1), `OMEGA_GPU_DNN_GELU_TANH` (2) and
+`OMEGA_GPU_DNN_SILU` (3) select the operation. Inputs must be finite and caller
+buffers large enough; input values are not scanned on the host.
+
+Erf GELU uses the documented A&S 7.1.26 approximation; tanh GELU and SiLU use
+stable negative-exponential forms. Signed zero is preserved. The codegen
+entry is CPU-only; execution requires an authorized GPU window. Admission
+precedes session access. Status constants are
+`OMEGA_GPU_DNN_ACTIVATIONS_OK` (0), `OMEGA_GPU_DNN_ACTIVATIONS_BAD_ARGS` (1),
+`OMEGA_GPU_DNN_ACTIVATIONS_REFUSED` (2),
+`OMEGA_GPU_DNN_ACTIVATIONS_CODEGEN` (3), and
+`OMEGA_GPU_DNN_ACTIVATIONS_CHIP` (4).
+See `om/dnn-activations/README.md` for formulas, saturation, the Wolfram
+queries/results and the independent reference envelope, and
+`om/dnn-activations/CHIP.md` for the operator-gated NOT_RUN procedure.
+
+### 13.4 Implicit conv2d (`src/omega_gpu_conv2d_api.h`)
+
+CPU-only planner: `omega_gpu_conv2d_plan`; builder:
+`omega_gpu_conv2d_codegen`. Execution shell: `omega_gpu_conv2d`.
+
+```c
+int omega_gpu_conv2d_plan(const OmegaGpuConv2dShape *shape, uint64_t launch, uint64_t plan[32]);
+int omega_gpu_conv2d_codegen(const OmegaGpuConv2dShape *shape, BlackwellIRProgram *program, uint8_t *code, size_t capacity, OmegaBlackwellKernel *kernel);
+int omega_gpu_conv2d(const OmegaGpuConv2dShape *shape, const void *image, const void *filter, float *output);
+```
+
+`OmegaGpuConv2dShape` has eighteen `uint32_t` fields in declaration order:
+`batch, in_channels, height, width, out_channels, kernel_h, kernel_w,
+stride_h, stride_w, pad_top, pad_bottom, pad_left, pad_right, dilation_h,
+dilation_w, groups, layout, dtype`. Image/output layout is contiguous
+NCHW (`layout=0`) or NHWC (`layout=1`); filters are always OIHW
+`[out_channels][in_channels/groups][kernel_h][kernel_w]`.
+This is cross-correlation with independent top/bottom/left/right zero
+padding, positive stride/dilation and groups, including depthwise cases.
+There is no fused bias or activation. Input/filter storage uses the shared
+DNN constants; accumulation/output are f32.
+
+Positive dimensions, strides, dilations and groups are at most 65535;
+padding is 0..65535. Channels must divide by groups, output must be nonempty,
+and every tensor element count and launch count must be below 1073741824.
+The CPU-only planner returns output extents, byte counts, grid and launch
+offsets in `plan[32]`; caller storage must cover those byte counts. The
+codegen entry is CPU-only. The execution entry is a memory/session shell
+requiring an authorized GPU window; admission occurs first.
+
+Convolution supplies virtual image/filter addresses to the same seeded
+scalar dot-product reduction as default dense f32 GEMM. No global im2col or
+production host arithmetic kernel is used. Existing tensor GEMM interfaces
+remain unchanged; the old C scalar generator is a default-OFF differential
+oracle. Status constants are `OMEGA_GPU_CONV2D_OK` (0),
+`OMEGA_GPU_CONV2D_BAD_ARGS` (1), `OMEGA_GPU_CONV2D_REFUSED` (2),
+`OMEGA_GPU_CONV2D_CODEGEN` (3), and `OMEGA_GPU_CONV2D_CHIP` (4).
+See `om/conv2d/README.md` for planner output slots, independent reference
+tolerances and test scope, and `om/conv2d/CHIP.md` for the operator-gated
+NOT_RUN procedure. Performance and chip qualification remain NOT_RUN.

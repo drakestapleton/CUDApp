@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# Wolfram Language evaluations behind the constants and error bounds of the MathLibs gaps lane (2026-11-06).
+# Every evaluation ran through the Wolfram MCP tool WolframLanguageEvaluator. Query -> result, verbatim.
+
+== 1. Stockham radix 3/5/7 butterfly constants (om/mathlibs/mathlibs_ir.om fn rcv): f32 bits vs exact value, in ulps
+
+QUERY:
+dec[b_] := Module[{s = BitShiftRight[b, 31], e = BitAnd[BitShiftRight[b, 23], 255], m = BitAnd[b, 2^23 - 1]}, (-1)^s (1 + m/2^23) 2^(e - 127)];
+ulp[x_] := 2^(Floor[Log2[Abs[x]]] - 23);
+c = {{"R3C1", 3204448256, Cos[2 Pi/3]}, {"R3S1", 1063105495, Sin[2 Pi/3]},
+ {"R5C1", 1050556282, Cos[2 Pi/5]}, {"R5S1", 1064532081, Sin[2 Pi/5]}, {"R5C2", 3209632701, Cos[4 Pi/5]}, {"R5S2", 1058437400, Sin[4 Pi/5]},
+ {"R7C1", 1059036423, Cos[2 Pi/7]}, {"R7S1", 1061692956, Sin[2 Pi/7]}, {"R7C2", 3194215559, Cos[4 Pi/7]}, {"R7S2", 1064932576, Sin[4 Pi/7]},
+ {"R7C3", 3211175397, Cos[6 Pi/7]}, {"R7S3", 1054746114, Sin[6 Pi/7]}};
+Table[{k[[1]], k[[2]], N[Abs[dec[k[[2]]] - k[[3]]]/ulp[k[[3]]], 6]}, {k, c}]
+
+RESULT:
+Out[1]= {{"R3C1", 3204448256, 0}, {"R3S1", 1063105495, 0.2607787446155026846`6.}, {"R5C1", 1050556282, 0.2754014441543844345`6.}, {"R5S1", 1064532081, 0.3979086887674309202`6.}, {"R5C2", 3209632701, 0.1377007220771922173`6.}, {"R5S2", 1058437400, 0.1393253168622592802`6.}, {"R7C1", 1059036423, 0.0795811739280606003`6.}, {"R7S1", 1061692956, 0.3430336508048597452`6.}, {"R7C2", 3194215559, 0.0940272852986649789`6.}, {"R7S2", 1064932576, 0.1671034859288423112`6.}, {"R7C3", 3211175397, 0.3060743526033943556`6.}, {"R7S3", 1054746114, 0.4201258439595519762`6.}}
+
+Every constant is within half an ulp of the exact value (round to nearest); R3C1 = -1/2 is exact.
+
+== 2. curand_normal bound (Box-Muller on the chip's MUFU paths vs the cuRAND host oracle), in units of u = 2^-24 times s = sqrt(-2 log x)
+
+QUERY:
+u=2^-24; logpoly=3.5358*10^-9; sinpoly=2.485*10^-9; logRel=logpoly+3/2u; sRel=logRel/2+u; trigAbs=sinpoly+3/2u+u/2; prodRel=u/2; kernel=sRel+trigAbs+prodRel; oracle=u/2+u/2+u+u/2+u/2; {N[kernel/u],N[oracle/u],N[(kernel+oracle)/u],2^-21==8u,N[2^-21]}
+
+RESULT:
+{4.3213518219264, 3., 7.3213518219264, True, 4.76837158203125*^-7}
+
+kernel error <= 4.33 u s, oracle error <= 3 u s, sum 7.33 u s <= 8 u s = 2^-21 s: the host tier accepts |gpu - curand| <= 2^-21 s.
+logpoly and sinpoly are the residuals of the unit's log1p and sin/cos polynomials (coefficients LC0..LC8, S3..S9,
+CC4..CC10 of om/mathlibs/mathlibs_ir.om, decoded from their f32 bits), sampled at 4001 points with 30-digit arithmetic:
+
+QUERY:
+dec[b_] := Module[{s = BitShiftRight[b, 31], e = BitAnd[BitShiftRight[b, 23], 255], m = BitAnd[b, 2^23 - 1]}, (-1)^s (1 + m/2^23) 2^(e - 127)];
+lc = dec /@ {16^^3eaaaaaa, 16^^be7ffffc, 16^^3e4cceac, 16^^be2aae50, 16^^3e11e9bf, 16^^bdfe5d4f, 16^^3def251a, 16^^bdebd1b6, 16^^3d9021ba};
+rr[f_] := Fold[#1 f + #2 &, lc[[9]], Reverse[lc[[1 ;; 8]]]];
+pl[f_] := f + f^2 (f rr[f] - 1/2);
+s = dec /@ {16^^be2aaaab, 16^^3c088889, 16^^b9500d01, 16^^3638ef1d};
+c = dec /@ {16^^3d2aaaab, 16^^bab60b61, 16^^37d00d01, 16^^b493f27e};
+ps[r_] := r + r^3 (s[[1]] + r^2 (s[[2]] + r^2 (s[[3]] + r^2 s[[4]])));
+pc[r_] := 1 + r^2 (-1/2 + r^2 (c[[1]] + r^2 (c[[2]] + r^2 (c[[3]] + r^2 c[[4]]))));
+lo = Sqrt[1/2] - 1; hi = Sqrt[2] - 1;
+logRel = Max[Table[Abs[(pl[f] - Log[1 + f])/Log[1 + f]], {f, Select[N[Subdivide[lo, hi, 4000], 30], # != 0 &]}]];
+sinAbs = Max[Table[Abs[ps[r] - Sin[r]], {r, N[Subdivide[-Pi/4, Pi/4, 4000], 30]}]];
+cosAbs = Max[Table[Abs[pc[r] - Cos[r]], {r, N[Subdivide[-Pi/4, Pi/4, 4000], 30]}]];
+N[{logRel, sinAbs, cosAbs}, 6]
+
+RESULT:
+Out[1]= {3.53579601278879893031888121999`6.*^-9, 1.14246986789029733615917163934`6.*^-9, 3.5002845202495333655473633983`6.*^-10}
+
+logpoly = 3.5358e-9 is the sampled relative maximum of the log polynomial; the bound uses sinpoly = 2.485e-9, above both
+sampled sin (1.142e-9) and cos (3.500e-10) maxima. Observed in the host tier: worst |gpu - curand| = 1.848 u s.
+
+== 3. Mixed-radix and Bluestein FFT tolerances (tests/gpu_mathlibs_test.c many tiers)
+
+The "Symbol::undefined2" lint warning names Module-local symbols (M, L1); it does not affect the values,
+which the test's tolerance function reproduces (sim receipt: tol column, e.g. C2C 97 tol=2.7179e-05).
+
+QUERY:
+
+u = 2^-24; mu = 2u + 10^-15; g[k_] := k u/(1 - k u); eta = Sqrt[2] g[2] (1 + mu) + mu;
+etaD[2] = u; etaD[4] = (1 + u)^2 - 1; etaD[3] = Sqrt[6] g[4]; etaD[5] = Sqrt[10] g[5]; etaD[7] = Sqrt[14] g[6];
+rad[n_] := Module[{x = n, l = {}}, While[Mod[x, 4] == 0, AppendTo[l, 4]; x /= 4]; If[Mod[x, 2] == 0, AppendTo[l, 2]; x /= 2];
+  Do[While[Mod[x, r] == 0, AppendTo[l, r]; x /= r], {r, {3, 5, 7}}]; {l, x}];
+eS[n_] := With[{l = First[rad[n]]}, (1 + etaD[l[[1]]]) Product[(1 + etaD[l[[p]]]) (1 + eta), {p, 2, Length[l]}] - 1];
+mm[n_] := 2^Ceiling[Log2[2 n - 1]];
+beta[n_] := Module[{M = mm[n], b}, b = N[Table[With[{j = Min[m, M - m]}, If[j < n, Exp[I Pi j^2/n], 0]], {m, 0, M - 1}]];
+  Max[Abs[Fourier[b, FourierParameters -> {1, -1}]]]];
+eB[n_] := Module[{M = mm[n], bb, eA, eBb, be, dC, nC, dZ}, bb = eS[M]; eA = (1 + eta) (1 + bb) - 1; eBb = (1 + mu) (1 + bb) - 1;
+  be = beta[n] (1 + 10^-10);
+  dC = be eA Sqrt[M] + (Sqrt[n] + eA Sqrt[M]) Sqrt[M] Sqrt[2 n - 1] eBb + Sqrt[2] g[2] (be + Sqrt[M] Sqrt[2 n - 1] eBb) (1 + eA) Sqrt[M];
+  nC = be Sqrt[M] + dC; dZ = Sqrt[M] dC + bb Sqrt[M] nC; dZ (1 + eta)/(M Sqrt[n]) + eta];
+e1[n_] := If[Last[rad[n]] == 1, eS[n], eB[n]];
+rr[n_] := Sqrt[n] (n + 10) 2^-53/(1 - (n + 10) 2^-53);
+tol[e_, r_] := (e + r)/(1 - r);
+c2c[d_List] := tol[Product[1 + e1[k], {k, d}] - 1, Product[1 + rr[k], {k, d}] - 1];
+r2c[d_List] := tol[(1 + Sqrt[2] e1[Last[d]]) Product[1 + e1[k], {k, Most[d]}] - 1, Sqrt[2] (Product[1 + rr[k], {k, d}] - 1)];
+c2r[d_List] := tol[(1 + Sqrt[2] (Product[1 + e1[k], {k, Most[d]}] - 1)) (1 + e1[Last[d]]) - 1, Product[1 + rr[k], {k, d}] - 1];
+L1 = {3, 5, 6, 7, 12, 100, 97, 1000, 4095, 11, 26};
+c2cS = Join[List /@ L1, {{3, 5}, {6, 7, 12}, {12, 97}, {6, 10}, {3, 4, 5}, {7}}];
+r2cS = Join[List /@ L1, {{6, 10}, {5, 4, 6}, {12, 9}, {5, 8}}];
+c2rS = Join[List /@ L1, {{6, 10}, {5, 4, 6}, {12, 9}}];
+f[x_] := ScientificForm[N[x], 10, NumberFormat -> (Row[{#1, "e", #3}] &)];
+{N[{etaD[2], etaD[4], etaD[3], etaD[5], etaD[7], eta}/u],
+ Table[{n, rad[n], If[Last[rad[n]] == 1, 0, {mm[n], beta[n], N[beta[n]/Sqrt[n]]}], N[e1[n]]}, {n, L1}],
+ {"C2C", Table[{d, NumberForm[N[c2c[d]], 10]}, {d, c2cS}]}, {"R2C", Table[{d, NumberForm[N[r2c[d]], 10]}, {d, r2cS}]},
+ {"C2R", Table[{d, NumberForm[N[c2r[d]], 10]}, {d, c2rS}]}}
+
+RESULT:
+Symbol::undefined2: Warning: Global symbols "M, M, M, M, M, M, M, M, M, M, M, M, M, M, L1, L1, L1, L1, L1" are undefined.
+General::messages: Messages were generated which may indicate errors.
+
+Out[1]= {{1., 2.0000000596046448, 9.797961307148725, 15.811393013004217, 22.449952349372257, 4.828427815873065}, {{3, {{3}, 1}, 0, 5.840040032356218*^-7}, {5, {{5}, 1}, 0, 9.424324639442096*^-7}, {6, {{2, 3}, 1}, 0, 9.314055926523679*^-7}, {7, {{7}, 1}, 0, 1.3381214350087796*^-6}, {12, {{4, 3}, 1}, 0, 9.910102929389097*^-7}, {100, {{4, 5, 5}, 1}, 0, 2.579670019375868*^-6}, {97, {{}, 97}, {256, 20.771402358333738, 2.1090163728981572}, 0.00002717869919829033}, {1000, {{4, 2, 5, 5, 5}, 1}, 0, 4.1573053628507495*^-6}, {4095, {{3, 3, 5, 7}, 13}, {8192, 130.71656947301474, 2.04269576574745}, 0.00024861103076333744}, {11, {{}, 11}, {32, 7.593870617619984, 2.2896381404681736}, 9.88300737321719*^-6}, {26, {{2}, 13}, {64, 11.057327314850097, 2.168520297946275}, 0.00001284078717465214}}, {"C2C", {{{3}, NumberForm[5.840040057354749*^-7, 10]}, {{5}, NumberForm[9.424324676680144*^-7, 10]}, {{6}, NumberForm[9.314055969822418*^-7, 10]}, {{7}, NumberForm[1.3381214400023221*^-6, 10]}, {{12}, NumberForm[9.91010301376613*^-7, 10]}, {{100}, NumberForm[2.579670141500716*^-6, 10]}, {{97}, NumberForm[0.000027178699315328508, 10]}, {{1000}, NumberForm[4.15730890880681*^-6, 10]}, {{4095}, NumberForm[0.0002486110599348151, 10]}, {{11}, NumberForm[9.88300738087864*^-6, 10]}, {{26}, NumberForm[0.000012840787195052779, 10]}, {{3, 5}, NumberForm[1.5264370236689568*^-6, 10]}, {{6, 7, 12}, NumberForm[3.2605408339936884*^-6, 10]}, {{12, 97}, NumberForm[0.000028169736550957206, 10]}, {{6, 10}, NumberForm[2.2212409835909145*^-6, 10]}, {{3, 4, 5}, NumberForm[1.645646501957658*^-6, 10]}, {{7}, NumberForm[1.3381214400023221*^-6, 10]}}}, {"R2C", {{{3}, NumberForm[8.259063853913241*^-7, 10]}, {{5}, NumberForm[1.3328007773968514*^-6, 10]}, {{6}, NumberForm[1.317206427352618*^-6, 10]}, {{7}, NumberForm[1.8923894885535037*^-6, 10]}, {{12}, NumberForm[1.4015002086912684*^-6, 10]}, {{100}, NumberForm[3.6482045005594186*^-6, 10]}, {{97}, NumberForm[0.00003843648517936002, 10]}, {{1000}, NumberForm[5.879322641818405*^-6, 10]}, {{4095}, NumberForm[0.00035158913272009205, 10]}, {{11}, NumberForm[0.000013976683075178643, 10]}, {{26}, NumberForm[0.000018159615402702437, 10]}, {{6, 10}, NumberForm[2.7555082952047014*^-6, 10]}, {{5, 4, 6}, NumberForm[2.3788497049981698*^-6, 10]}, {{12, 9}, NumberForm[3.0498321068606704*^-6, 10]}, {{5, 8}, NumberForm[1.6023203092130559*^-6, 10]}}}, {"C2R", {{{3}, NumberForm[5.840040057354749*^-7, 10]}, {{5}, NumberForm[9.424324676680144*^-7, 10]}, {{6}, NumberForm[9.314055969822418*^-7, 10]}, {{7}, NumberForm[1.3381214400023221*^-6, 10]}, {{12}, NumberForm[9.91010301376613*^-7, 10]}, {{100}, NumberForm[2.579670141500716*^-6, 10]}, {{97}, NumberForm[0.000027178699315328508, 10]}, {{1000}, NumberForm[4.15730890880681*^-6, 10]}, {{4095}, NumberForm[0.0002486110599348151, 10]}, {{11}, NumberForm[9.88300738087864*^-6, 10]}, {{26}, NumberForm[0.000012840787195052779, 10]}, {{6, 10}, NumberForm[2.6070423095881113*^-6, 10]}, {{5, 4, 6}, NumberForm[2.4327953322967053*^-6, 10]}, {{12, 9}, NumberForm[2.8573076602534255*^-6, 10]}}}}
+

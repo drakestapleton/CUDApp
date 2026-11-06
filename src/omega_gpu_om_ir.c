@@ -5,6 +5,11 @@
 #include <string.h>
 
 #include "cudapp_native.h"
+#ifdef OMEGA_GPU_NO_POSIX
+#include "cudapp_freest_native.h"
+#else
+#include "cudapp_hosted_native.h"
+#endif
 
 #define NONE64 UINT64_MAX
 
@@ -79,6 +84,12 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
     if (meta[6] != 0 &&
         (meta[6] <= (uint64_t)BW_PHYS_GPR_MAX || meta[6] > (uint64_t)BW_PHYS_GPR_HW_LIMIT))
         return OMEGA_OM_IR_REPLAY;
+    if (meta[7] != 0) {
+        uint64_t check = 0;
+        if (omega2_ra_live(&check, 0, meta[7], meta[1], 0, 0, 0) != 0)
+            return OMEGA_OM_IR_BRIDGE;
+        if (check != 0) return (int)check;
+    }
 
     omega_bw_ir_init(prog);
     if (meta[6] != 0 && omega_bw_ir_set_gpr_limit(prog, (uint32_t)meta[6]) != 0)
@@ -125,6 +136,17 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
         }
     }
     if (next_loop != meta[5]) return OMEGA_OM_IR_REPLAY;
+    if (meta[7] != 0) {
+        for (int v = 0; v < prog->regalloc.num_vregs; ++v) {
+            uint64_t hint = meta[352 + v], check = 0;
+            OmegaLiveInterval *iv = &prog->regalloc.intervals[v];
+            if (omega2_ra_live(&check, 1, hint, (uint64_t)iv->first_def,
+                               (uint64_t)iv->last_use, n, (uint64_t)v) != 0)
+                return OMEGA_OM_IR_BRIDGE;
+            if (check != 0) return (int)check;
+            if (hint != 0) iv->last_use = (int)hint;
+        }
+    }
 
     if (omega_bw_regalloc_solve(prog) != 0) return OMEGA_OM_IR_REGALLOC;
     if (!loop_invariant_ok(prog, meta)) return OMEGA_OM_IR_LOOP;
@@ -158,6 +180,8 @@ const char *omega_gpu_om_ir_rc_name(int rc) {
     case OMEGA_OM_IR_LOOP: return "loop";
     case OMEGA_OM_IR_BUDGET: return "budget";
     case OMEGA_OM_IR_ENCODE: return "encode";
+    case OMEGA_OM_IR_LIVE_FLAG: return "liveness-flag";
+    case OMEGA_OM_IR_LIVE_RANGE: return "liveness-range";
     default: return "?";
     }
 }

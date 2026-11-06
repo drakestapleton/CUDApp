@@ -25,7 +25,7 @@ deployment is part of this receipt.
 | C-oracle differential | `make -j3 test-codegen-gdn-diff` | 0 | `CODEGEN GDN DIFF PASS (448 programs: decode 80 multi 80 copy 48 prep 80 scan 80 post 80; 4592 refusals)` | PASS |
 | Record negative control | (inside the differential) | — | `CODEGEN GDN RECORD NEGATIVE CONTROL CAUGHT` | PASS |
 | Omega source mutants | `make -j3 test-codegen-gdn-mutants` | 0 | `CODEGEN GDN OMEGA MUTANTS PASS (7 source mutants killed)` | PASS |
-| Host + warp simulator | `make -j3 test-codegen-gdn-sim` | 0 | `gpu_gdn_test: 46 checks, 0 failed: PASS`, `gpu_gdn_multi_test: 14 checks, 0 failed: PASS` | PASS |
+| Host + warp simulator | `make -j3 test-codegen-gdn-sim` | 0 | `gpu_gdn_test: 68 checks, 0 failed: PASS` (`--host-only`), `gpu_gdn_test: 46 checks, 0 failed: PASS` (`--sim`), `gpu_gdn_multi_test: 14 checks, 0 failed: PASS` (`--sim`) | PASS |
 | GB10 chip battery | `build/gpu_gdn_test`, `build/gpu_gdn_multi_test` | — | — | NOT_RUN (no GPU window) |
 | Full `make test` | — | — | — | NOT_RUN (integration owner) |
 

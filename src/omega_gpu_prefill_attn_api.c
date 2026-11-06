@@ -150,7 +150,15 @@ static int kernel_for(const OmegaPrefillAttnSpec *spec, Slot **out, bool *hit) {
     int cg = omega_blackwell_codegen_prefill_attn_prog(spec, prog);
     size_t need = cg == 0 ? omega_bw_program_code_bytes(prog) : 0;
     if (cg != 0 || need == 0) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill attn codegen refused the spec"); return OMEGA_GPU_DATTN_CODEGEN_FAIL; }
-    if ((uint64_t)32u * spec->warps * omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage) > 65536u) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill attn: register file"); return OMEGA_GPU_DATTN_TOO_LARGE; }
+#ifdef CUDAPP_MIGRATION_PENDING_C_PREFILL_HOST_REST
+    int regbad = (uint64_t)32u * spec->warps * omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage) > 65536u;
+#else
+    uint64_t regbad = 0;
+    if (omega_arpfreg(&regbad, spec->warps, omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage)) != OMEGA_OK) {
+        omega_gpu_host_free(prog); return OMEGA_GPU_DATTN_CODEGEN_FAIL;
+    }
+#endif
+    if (regbad) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill attn: register file"); return OMEGA_GPU_DATTN_TOO_LARGE; }
     OmegaGpuMem code;
     if (omega_gpu_session_alloc_code(need, &code) != 0) { omega_gpu_host_free(prog); return OMEGA_GPU_DATTN_CHIP_FAIL; }
     OmegaBlackwellKernel kernel;
@@ -302,8 +310,15 @@ int omega_gpu_prefill_attn(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint32_t 
         rc = run_locked(&r, pos0 + done, mp, g.qkv.va, g.out.va, info);
         if (rc != OMEGA_GPU_DATTN_OK) break;
         if (omega_gpu_session_sync_to_cpu(&g.out) != 0) { rc = OMEGA_GPU_DATTN_CHIP_FAIL; break; }
+#ifdef CUDAPP_MIGRATION_PENDING_C_PREFILL_HOST_REST
         size_t unchanged = 0;
         for (size_t i = 0; i < (size_t)mp * OMEGA_PATTN_OUT_WORDS; i++) if (od[i] == POISON_F32) unchanged++;
+#else
+        uint64_t unchanged = 0;
+        if (omega_pfcount(&unchanged, od, (size_t)mp * OMEGA_PATTN_OUT_WORDS) != OMEGA_OK) {
+            rc = OMEGA_GPU_DATTN_CHIP_FAIL; break;
+        }
+#endif
         if (unchanged) { omega_gpu_session_set_error("prefill attn: output poison survived"); rc = OMEGA_GPU_DATTN_CHIP_FAIL; break; }
         memcpy(out + (size_t)done * OMEGA_PATTN_OUT_WORDS, od, (size_t)mp * OMEGA_PATTN_OUT_WORDS * 4u);
     }

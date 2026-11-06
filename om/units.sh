@@ -23,6 +23,9 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_qmma=om/codegen/cg_qmma.om cg_qmma_patch=om/codegen/cg_qmma_patch.om"
 fi
+if [ -z "${OMEGA_UNITS:-}" ]; then
+  UNITS="$UNITS cg_moe=om/codegen/cg_moe_emit.om,om/codegen/cg_moe.om cg_moe2=om/codegen/cg_moe_emit.om,om/codegen/cg_moe2.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

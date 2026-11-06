@@ -1,0 +1,12 @@
+Revision: 3bdfcfa
+Job: bg_332 (Python Eval)
+Command: taskset -c 10-14 nice -n 10 make -j3 test
+Environment: OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=$HOME/work/cudastack/omega-bridge OMEGA_MV=$HOME/work/cudastack/omega-mv OMEGA_BRIDGE_DIR=$HOME/work/cudastack/omega-bridge
+Observed tool result:
+[eval cell timed out after 3600s; kernel interrupted but remains running. Reset the kernel via { reset: true } if state appears corrupted.]
+KeyboardInterrupt: Execution interrupted
+
+Full tier: INCONCLUSIVE (shared-core deadline). No exit code or CUDA++ HOST TESTS PASS marker was observed.
+The interrupted runner captured child stdout in memory and had not yet persisted it. This file is the deadline receipt, not a fabricated full test-output log. Child output from the interrupted call is unavailable.
+After interruption, subprocess._active was empty and pgrep -a -P 1693111 exited 1 with no output (no remaining direct child of this lane's kernel).
+Main instructed CUDApp lanes to let active full runs finish, not retry a timed-out full run, finish focused targets, and hand off to Integrator for the unbounded integrated full gate.

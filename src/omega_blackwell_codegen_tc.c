@@ -8,9 +8,15 @@
  *   a consumer of an HMMA result (dependent HMMA, store): HMMA stall 15 then NOP stall 13..14 (about 29 cycles), as
  *   omega_blackwell_verify_codegen_fixtures_fragmm records. */
 #include "omega_blackwell_codegen_tc.h"
+#include <string.h>
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 #include "omega_bw_em.h"
+#endif
 #include "omega_gpu_fmt.h"
 
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 int omega_blackwell_codegen_tc_probe_prog(int mutant, BlackwellIRProgram *prog) {
     if (!prog || mutant < 0 || mutant > 1) return -1;
     omega_bw_ir_init(prog);
@@ -36,6 +42,12 @@ int omega_blackwell_codegen_tc_probe_prog(int mutant, BlackwellIRProgram *prog) 
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_tc_probe_prog(int mutant, BlackwellIRProgram *prog) {
+    if (!prog || mutant < 0 || mutant > 1) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_tc, 0, (uint64_t)mutant, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+#endif
 
 /* ======================= grouped FP8 GEMM on tensor cores (see the header) ======================= */
 
@@ -66,6 +78,7 @@ void omega_tcgemm_permute_x(const float *x, uint32_t k, uint16_t *out) {
 }
 uint16_t omega_tcgemm_w_bf16(uint8_t c) { return (uint16_t)(((c & 0x7Fu) << 4) | ((c & 0x80u) << 8)); }
 
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 /* one e4m3 word (bytes b0..b3) -> B register pair: lo = (bf(b0), bf(b2)), hi = (bf(b1), bf(b3)) */
 static void decode_word(Em *e, int bpair, int wq, unsigned word, int m, int s, int t) {
     andi(e, m, wq, word, 0x007F007Fu); andi(e, s, wq, word, 0x00800080u);
@@ -286,3 +299,22 @@ int omega_blackwell_codegen_tc_bw_prog(uint32_t iters, uint32_t groups, uint32_t
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_tcgemm_prog(const OmegaTcGemmSpec *s, BlackwellIRProgram *prog) {
+    if (!prog || !omega_tcgemm_spec_ok(s)) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_tc, 3, s->k,
+        (uint64_t)s->rt | (uint64_t)s->ct << 32,
+        (uint64_t)s->warps | (uint64_t)(uint32_t)s->mutant << 32, prog, NULL) == 0 ? 0 : -1;
+}
+int omega_blackwell_codegen_tc_peak_prog(uint32_t iters, uint32_t chains, uint32_t stall,
+                                        uint32_t threads, BlackwellIRProgram *prog) {
+    if (!prog) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_tc, 1, iters,
+        (uint64_t)chains | (uint64_t)stall << 32, threads, prog, NULL) == 0 ? 0 : -1;
+}
+int omega_blackwell_codegen_tc_bw_prog(uint32_t iters, uint32_t groups, uint32_t threads,
+                                      BlackwellIRProgram *prog) {
+    if (!prog) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_tc, 2, iters, groups, threads, prog, NULL) == 0 ? 0 : -1;
+}
+#endif

@@ -30,6 +30,9 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/streams/streams.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
+if [ -z "${OMEGA_UNITS:-}" ]; then
+  UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"
+fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }

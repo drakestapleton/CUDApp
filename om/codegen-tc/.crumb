@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:41:43Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:956e011849effe0fa67169632c4074252fb475c4f0696153316180592070ef21",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 4,
+      "generated_at_commit": "7846719e4bff11b53fc2919be156d3cdd6f0d2cb",
+      "source_tree": "sha256:ef09f4da8350b794658743825b5268c9d9d08afcca093ba6358eee924f27d00b"
+    }
+  },
+  "layer": "implementation",
+  "name": "codegen-tc",
+  "purpose": "Tensor-core Omega builder documentation and host receipts",
+  "schema_version": "1.0.0"
+}

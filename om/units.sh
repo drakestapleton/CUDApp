@@ -44,10 +44,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS artifact_format=om/components/artifact_format.om artifact_admit=om/components/artifact_parse.om,om/components/artifact_policy.om,om/components/artifact_format.om,om/components/artifact_admit.om"
     UNITS="$UNITS artifact_elf=om/components/artifact_elf.om"
     UNITS="$UNITS api_mm_plan=om/components/api_mm_plan.om api_at_plan=om/components/api_at_plan.om api_ew_plan=om/components/api_ew_plan.om api_bf_plan=om/components/api_bf_plan.om api_da_plan=om/components/api_da_plan.om api_rt_plan=om/components/api_rt_plan.om"
-    UNITS="$UNITS om/codegen/regalloc.om om/codegen/regalloc_ir.om om/codegen/regalloc_live.om om/codegen/cg_matmul.om om/codegen/cg_matmul_params.om om/codegen/cg_matmul_i32.om om/codegen/cg_matmul_tensor.om om/codegen/cg_matmul_loop.om om/codegen/cg_matmul_frag.om om/codegen/cg_matmul_block.om om/codegen/cg_vecadd.om om/codegen/bw_hazard.om bw_hazard_dec=om/codegen/bw_hazard.om,om/codegen/bw_hazard_dec.om om/codegen/cg_bind.om"
 fi
-# C3 scan and sort (CUB/Thrust row): the kernel IR and the launch plans
-if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan_plan.om"; fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS ew_ir=om/kgen/ew_emit.om,om/kgen/ew_scalar.om,om/kgen/ew_reconv.om,om/kgen/ew_prime.om,om/kgen/ew_ir.om"
     UNITS="$UNITS attention_ir=om/kgen/attention_emit.om,om/kgen/attention_tuned.om,om/kgen/attention_general.om,om/kgen/attention_ir.om"

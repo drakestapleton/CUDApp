@@ -21,6 +21,7 @@
  */
 #include "omega_numeric_reduce.h"
 #include "omega_numeric.h"
+#include "omega_numeric_om.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -44,11 +45,23 @@ float omega_reduce_identity(OmegaReduceOp op) {
 }
 
 unsigned omega_reduce_levels(size_t n) {
-    if (n == 0) return 0;
-    unsigned l = 1;
-    size_t cap = 32;
-    while (cap < n) { cap = (cap > ((size_t)-1) / 32) ? (size_t)-1 : cap * 32; l++; }
+#if defined(OMEGA_NUMERIC_C_BODIES)
+    unsigned l = 0;
+    if (n != 0) {
+        l = 1;
+        size_t cap = 32;
+        while (cap < n) { cap = (cap > ((size_t)-1) / 32) ? (size_t)-1 : cap * 32; l++; }
+    }
+#endif
+#if defined(OMEGA_NUMERIC_OM_PATH)
+    unsigned om = (unsigned)omega_numeric_om(OMEGA_NUMERIC_OM_REDUCE_LEVELS, n, 0, 0);
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
+    omega_numeric_om_diff("reduce_levels", n, 0, 0, l, om);
+#endif
+    return om;
+#else
     return l;
+#endif
 }
 
 static float empty_result(OmegaReduceOp op) {
@@ -69,6 +82,15 @@ static int common_checks(OmegaReduceOp op, const float *x, size_t n, const float
  * omega_warp_reduce_sum itself, so the tile order is the declared warp order. */
 static float ref_tile(OmegaReduceOp op, const float tile[32]) {
     if (op == OMEGA_RED_SUM || op == OMEGA_RED_MEAN) return omega_warp_reduce_sum(tile);
+#if defined(OMEGA_NUMERIC_OM_PATH)
+    uint32_t bits[32];
+    memcpy(bits, tile, sizeof(bits));
+    uint32_t om = omega_numeric_om_tile((unsigned)op, bits);
+#if !defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
+    return omega_bits_to_float(om);
+#endif
+#endif
+#if defined(OMEGA_NUMERIC_C_BODIES)
     float val[32];
     memcpy(val, tile, sizeof(val));
     static const int deltas[5] = { 16, 8, 4, 2, 1 };
@@ -77,7 +99,11 @@ static float ref_tile(OmegaReduceOp op, const float tile[32]) {
         for (int i = 0; i + d < 32; i++)
             val[i] = (op == OMEGA_RED_MAX) ? omega_ref_fmax(val[i], val[i + d]) : omega_ref_fmin(val[i], val[i + d]);
     }
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
+    omega_numeric_om_diff("reduce_tile", op, bits[0], bits[31], omega_float_to_bits(val[0]), om);
+#endif
     return val[0];
+#endif
 }
 
 static int ref_sum_like(OmegaReduceOp op, const float *x, size_t n, float *out) {

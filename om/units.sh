@@ -29,6 +29,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tern=om/codegen/cg_tern_common.om,om/codegen/cg_tern.om cg_tern_sched=om/codegen/cg_tern_sched.om cg_tern_policy=om/codegen/cg_tern_common.om,om/codegen/cg_tern_policy.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/streams/streams.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric=om/numeric/numeric.om numeric_tile=om/numeric/numeric.om,om/numeric/tile.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

@@ -34,18 +34,62 @@
 #include <xmmintrin.h>
 #endif
 
+#include "omega_numeric_om.h"
+#include "cudapp_native.h"
+#include <stdlib.h>
+
+/* Migration (om/numeric/numeric.om): the pure reference functions below are
+ * Omega by default. The C bodies compile only under
+ * CUDAPP_MIGRATION_PENDING_C_NUMERIC (they are the implementation) or
+ * CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF (they are the oracle, renamed to
+ * numeric_c_*; the public names at the end of this file then compare both). */
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
+#define omega_numeric_bits_equal numeric_c_bits_equal
+#define omega_ref_fadd numeric_c_ref_fadd
+#define omega_ref_fsub numeric_c_ref_fsub
+#define omega_ref_fmul numeric_c_ref_fmul
+#define omega_ref_ffma numeric_c_ref_ffma
+#define omega_ref_fmin numeric_c_ref_fmin
+#define omega_ref_fmax numeric_c_ref_fmax
+#define omega_ref_fsetp_ge numeric_c_ref_fsetp_ge
+#define omega_ref_i2f numeric_c_ref_i2f
+#define omega_ref_f2i numeric_c_ref_f2i
+#define omega_ref_f2i_floor numeric_c_ref_f2i_floor
+#define omega_ref_f2i_ceil numeric_c_ref_f2i_ceil
+#define omega_ref_f2i_rni numeric_c_ref_f2i_rni
+#define omega_ref_f2u numeric_c_ref_f2u
+#define omega_ref_u2f numeric_c_ref_u2f
+#define omega_ref_f32_to_f16 numeric_c_ref_f32_to_f16
+#define omega_ref_f32_to_bf16 numeric_c_ref_f32_to_bf16
+#define omega_ref_f16_to_f32 numeric_c_ref_f16_to_f32
+#define omega_ref_bf16_to_f32 numeric_c_ref_bf16_to_f32
+#define omega_ref_ffma_int numeric_c_ref_ffma_int
+#define omega_ref_fsetp_pred numeric_c_ref_fsetp_pred
+#define omega_ieee_div numeric_c_ieee_div
+#define omega_ieee_sqrt numeric_c_ieee_sqrt
+#define omega_numeric_host_rcp_seed numeric_c_host_rcp_seed
+#define omega_math_div numeric_c_math_div
+#define omega_math_sqrt numeric_c_math_sqrt
+#define omega_math_exp numeric_c_math_exp
+#define omega_math_log numeric_c_math_log
+#define omega_warp_reduce_sum numeric_c_warp_reduce_sum
+#define omega_numeric_compare_equal numeric_c_compare_equal
+#define omega_numeric_launch_shape numeric_c_launch_shape
+#endif
 atomic_int omega_numeric_native_state = ATOMIC_VAR_INIT(OMEGA_NUMERIC_NATIVE_IDLE);
 
 #if !defined(__aarch64__) && !defined(__x86_64__)
 #error "OMEGA-NUMERIC-0 supports AArch64 and x86-64 host tiers"
 #endif
 
+#if defined(OMEGA_NUMERIC_C_BODIES)
 bool omega_numeric_bits_equal(float a, float b) {
     if (omega_isnan(a) && omega_isnan(b)) {
         return true; /* NaN equivalence class */
     }
     return omega_float_to_bits(a) == omega_float_to_bits(b);
 }
+#endif
 
 /* ---- Required FP environment ----------------------------------------------- */
 
@@ -70,13 +114,27 @@ bool omega_numeric_fpenv_ok(void) {
     return (omega_numeric_read_fpcr() & OMEGA_NUMERIC_FPCR_REQUIRED_CLEAR) == 0;
 }
 
+#if defined(OMEGA_NUMERIC_C_BODIES)
 /* ---- Semantic Reference Tier (Zero Libm) --------------------------------- */
 
-float omega_ref_fadd(float a, float b) { return a + b; }
-float omega_ref_fsub(float a, float b) { return a - b; }
-float omega_ref_fmul(float a, float b) { return a * b; }
+/* Every float result that is NaN is the canonical NaN, 0x7fffffff, whatever the
+ * host. The PTX ISA leaves single-precision NaN results unspecified ("Single-
+ * precision instructions return an unspecified NaN", 9.7.3 Floating-Point
+ * Instructions) and names 0x7fffffff00000000 the canonical f64 NaN; NVIDIA
+ * documents 0x7fffffff as the f32 NaN the GPU produces. Host NaN propagation
+ * (AArch64 keeps a payload, x86 SSE makes 0xffc00000) never reaches a result. */
+static float ref_canon(float r) {
+    return omega_isnan(r) ? omega_bits_to_float(OMEGA_NUMERIC_CANON_NAN_BITS) : r;
+}
 
-float omega_ref_ffma(float a, float b, float c) {
+static float omega_ref_fadd_raw(float a, float b) { return a + b; }
+float omega_ref_fadd(float a, float b) { return ref_canon(omega_ref_fadd_raw(a, b)); }
+static float omega_ref_fsub_raw(float a, float b) { return a - b; }
+float omega_ref_fsub(float a, float b) { return ref_canon(omega_ref_fsub_raw(a, b)); }
+static float omega_ref_fmul_raw(float a, float b) { return a * b; }
+float omega_ref_fmul(float a, float b) { return ref_canon(omega_ref_fmul_raw(a, b)); }
+
+static float omega_ref_ffma_raw(float a, float b, float c) {
 #if defined(__aarch64__)
     float r;
     __asm__("fmadd %s0, %s1, %s2, %s3" : "=w"(r) : "w"(a), "w"(b), "w"(c));
@@ -86,8 +144,9 @@ float omega_ref_ffma(float a, float b, float c) {
     return fmaf(a, b, c);
 #endif
 }
+float omega_ref_ffma(float a, float b, float c) { return ref_canon(omega_ref_ffma_raw(a, b, c)); }
 
-float omega_ref_fmin(float a, float b) {
+static float omega_ref_fmin_raw(float a, float b) {
     if (omega_isnan(a)) return b;
     if (omega_isnan(b)) return a;
     if (omega_iszero(a) && omega_iszero(b)) {
@@ -95,8 +154,9 @@ float omega_ref_fmin(float a, float b) {
     }
     return (a < b) ? a : b;
 }
+float omega_ref_fmin(float a, float b) { return ref_canon(omega_ref_fmin_raw(a, b)); }
 
-float omega_ref_fmax(float a, float b) {
+static float omega_ref_fmax_raw(float a, float b) {
     if (omega_isnan(a)) return b;
     if (omega_isnan(b)) return a;
     if (omega_iszero(a) && omega_iszero(b)) {
@@ -104,6 +164,7 @@ float omega_ref_fmax(float a, float b) {
     }
     return (a > b) ? a : b;
 }
+float omega_ref_fmax(float a, float b) { return ref_canon(omega_ref_fmax_raw(a, b)); }
 
 bool omega_ref_fsetp_ge(float a, float b) {
     if (omega_isnan(a) || omega_isnan(b)) return false;
@@ -270,7 +331,7 @@ static int32_t ref_msb(ref_u128 v) {
  * far more than the 26 bits rounding needs and the sticky bit only breaks
  * ties, which is all it has to do.
  */
-float omega_ref_ffma_int(float a, float b, float c) {
+static float omega_ref_ffma_int_raw(float a, float b, float c) {
     uint32_t ua = omega_float_to_bits(a), ub = omega_float_to_bits(b), uc = omega_float_to_bits(c);
     uint32_t ps = (ua ^ ub) & 0x80000000U, cs = uc & 0x80000000U;
     uint32_t xa = ua & 0x7fffffffU, xb = ub & 0x7fffffffU, xc = uc & 0x7fffffffU;
@@ -316,6 +377,8 @@ float omega_ref_ffma_int(float a, float b, float c) {
     if (m == 0) return 0.0f;                 /* exact cancellation: +0 under RNE */
     return omega_bits_to_float(s | ref_round_small(m, ex, 23, 127, 0xffU));
 }
+float omega_ref_ffma_int(float a, float b, float c) { return ref_canon(omega_ref_ffma_int_raw(a, b, c)); }
+#endif
 
 #ifndef HWCAP2_BF16
 #define HWCAP2_BF16 (1UL << 14)
@@ -355,6 +418,7 @@ static unsigned fsetp_mask(int op) {
     }
 }
 
+#if defined(OMEGA_NUMERIC_C_BODIES)
 /* Comparison outcome from the bit patterns: sign-magnitude to a signed key,
  * so -0 and +0 both map to 0. */
 static unsigned ref_order(uint32_t ua, uint32_t ub) {
@@ -370,7 +434,7 @@ int omega_ref_fsetp_pred(int op, float a, float b) {
     return (m & ref_order(omega_float_to_bits(a), omega_float_to_bits(b))) ? 1 : 0;
 }
 
-float omega_ieee_div(float x, float y) {
+static float omega_ieee_div_raw(float x, float y) {
 #if defined(__aarch64__)
     float r;
     __asm__("fdiv %s0, %s1, %s2" : "=w"(r) : "w"(x), "w"(y));
@@ -379,8 +443,9 @@ float omega_ieee_div(float x, float y) {
     return _mm_cvtss_f32(_mm_div_ss(_mm_set_ss(x), _mm_set_ss(y)));
 #endif
 }
+float omega_ieee_div(float x, float y) { return ref_canon(omega_ieee_div_raw(x, y)); }
 
-float omega_ieee_sqrt(float x) {
+static float omega_ieee_sqrt_raw(float x) {
 #if defined(__aarch64__)
     float r;
     __asm__("fsqrt %s0, %s1" : "=w"(r) : "w"(x));
@@ -389,6 +454,7 @@ float omega_ieee_sqrt(float x) {
     return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(x)));
 #endif
 }
+float omega_ieee_sqrt(float x) { return ref_canon(omega_ieee_sqrt_raw(x)); }
 
 /* ---- Host seed used only by the raw-seed negative test ------------------- */
 /* Magic-constant reciprocal seed. It is not a model of the hardware MUFU unit. */
@@ -450,7 +516,7 @@ static uint32_t omega_round_pack(uint32_t sign, uint64_t sig, int32_t exp2, bool
     return sign | (uint32_t)bits;
 }
 
-float omega_math_div(float x, float y) {
+static float omega_math_div_raw(float x, float y) {
     if (omega_isnan(x) || omega_isnan(y)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     uint32_t sign = (omega_float_to_bits(x) ^ omega_float_to_bits(y)) & 0x80000000U;
     bool neg = sign != 0;
@@ -481,8 +547,9 @@ float omega_math_div(float x, float y) {
     }
     return omega_bits_to_float(omega_round_pack(sign, q, ex - ey - 26, rem != 0));
 }
+float omega_math_div(float x, float y) { return ref_canon(omega_math_div_raw(x, y)); }
 
-float omega_math_sqrt(float x) {
+static float omega_math_sqrt_raw(float x) {
     if (omega_isnan(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (omega_iszero(x)) return x;
     if (omega_signbit(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
@@ -505,10 +572,11 @@ float omega_math_sqrt(float x) {
     }
     return omega_bits_to_float(omega_round_pack(0, s, e / 2 - 14, op != 0));
 }
+float omega_math_sqrt(float x) { return ref_canon(omega_math_sqrt_raw(x)); }
 
 /* ---- Omega-Defined Exp Polynomial Sequence -------------------------------- */
 
-float omega_math_exp(float x) {
+static float omega_math_exp_raw(float x) {
     if (omega_isnan(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (x < -104.0f) return 0.0f;
     if (x > 88.722839f) return omega_bits_to_float(OMEGA_INF_POS);
@@ -548,10 +616,11 @@ float omega_math_exp(float x) {
     }
     return poly * omega_bits_to_float((uint32_t)(k + 127) << 23);
 }
+float omega_math_exp(float x) { return ref_canon(omega_math_exp_raw(x)); }
 
 /* ---- Omega-Defined Log Polynomial Sequence -------------------------------- */
 
-float omega_math_log(float x) {
+static float omega_math_log_raw(float x) {
     if (omega_isnan(x)) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (x < 0.0f) return omega_bits_to_float(OMEGA_QNAN_BITS);
     if (omega_iszero(x)) return omega_bits_to_float(OMEGA_INF_NEG);
@@ -585,6 +654,7 @@ float omega_math_log(float x) {
     const float LN2 = 0.6931471805599453f;
     return (float)e * LN2 + ln_m;
 }
+float omega_math_log(float x) { return ref_canon(omega_math_log_raw(x)); }
 
 /* ---- Declared-Order Warp Reduction ---------------------------------------- */
 
@@ -597,12 +667,13 @@ float omega_warp_reduce_sum(const float warp_inputs[32]) {
         int d = deltas[s];
         for (int i = 0; i < 32; i++) {
             if (i + d < 32) {
-                val[i] = val[i] + val[i + d];
+                val[i] = omega_ref_fadd(val[i], val[i + d]);
             }
         }
     }
     return val[0];
 }
+#endif
 
 /* ---- Op registry ---------------------------------------------------------- */
 
@@ -712,6 +783,7 @@ const char *omega_numeric_compare_name(OmegaNumericCompare c) {
     return "UNKNOWN";
 }
 
+#if defined(OMEGA_NUMERIC_C_BODIES)
 bool omega_numeric_compare_equal(OmegaNumericCompare mode, uint32_t expect, uint32_t got) {
     switch (mode) {
     case OMEGA_CMP_BIT_EXACT:
@@ -733,6 +805,7 @@ bool omega_numeric_compare_equal(OmegaNumericCompare mode, uint32_t expect, uint
     return false;
 }
 
+#endif
 /* ---- Refused variants ------------------------------------------------------ */
 
 static const struct { const char *name; const char *reason; } REFUSED_VARIANTS[] = {
@@ -759,11 +832,13 @@ const char *omega_numeric_refused_variant_at(size_t index) {
     return index < REFUSED_VARIANT_COUNT ? REFUSED_VARIANTS[index].name : NULL;
 }
 
+#if defined(OMEGA_NUMERIC_C_BODIES)
 void omega_numeric_launch_shape(size_t count, uint32_t *threads_per_block, uint32_t *grid_width) {
     uint32_t g = (uint32_t)((count + OMEGA_NUMERIC_CTA_THREADS - 1u) / OMEGA_NUMERIC_CTA_THREADS);
     if (threads_per_block) *threads_per_block = OMEGA_NUMERIC_CTA_THREADS;
     if (grid_width) *grid_width = g ? g : 1u;
 }
+#endif
 
 static int refuse(char *err, size_t err_len, int rc, const char *fmt, const char *a, const char *b) {
     if (err && err_len) snprintf(err, err_len, fmt, a ? a : "", b ? b : "");
@@ -1659,3 +1734,192 @@ int omega_numeric_reference_ftz(OmegaNumericOp op, const float *a, const float *
     }
     return OMEGA_NUMERIC_OK;
 }
+
+/* ---- Omega path (om/numeric/numeric.om, om/numeric/tile.om) ----------------
+ * Every value crosses as raw bits. Under CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF
+ * each public function also runs its C body (numeric_c_*) and aborts unless
+ * the bits agree, NaN payloads included. */
+#if defined(OMEGA_NUMERIC_OM_PATH)
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
+#undef omega_numeric_bits_equal
+#undef omega_ref_fadd
+#undef omega_ref_fsub
+#undef omega_ref_fmul
+#undef omega_ref_ffma
+#undef omega_ref_fmin
+#undef omega_ref_fmax
+#undef omega_ref_fsetp_ge
+#undef omega_ref_i2f
+#undef omega_ref_f2i
+#undef omega_ref_f2i_floor
+#undef omega_ref_f2i_ceil
+#undef omega_ref_f2i_rni
+#undef omega_ref_f2u
+#undef omega_ref_u2f
+#undef omega_ref_f32_to_f16
+#undef omega_ref_f32_to_bf16
+#undef omega_ref_f16_to_f32
+#undef omega_ref_bf16_to_f32
+#undef omega_ref_ffma_int
+#undef omega_ref_fsetp_pred
+#undef omega_ieee_div
+#undef omega_ieee_sqrt
+#undef omega_numeric_host_rcp_seed
+#undef omega_math_div
+#undef omega_math_sqrt
+#undef omega_math_exp
+#undef omega_math_log
+#undef omega_warp_reduce_sum
+#undef omega_numeric_compare_equal
+#undef omega_numeric_launch_shape
+
+uint64_t omega_numeric_om_diff(const char *what, uint64_t a, uint64_t b, uint64_t c, uint64_t c_bits,
+                               uint64_t om_bits) {
+    if (c_bits != om_bits) {
+        fprintf(stderr,
+                "FAIL numeric diff %s(0x%llx, 0x%llx, 0x%llx): C 0x%llx, Omega 0x%llx\n", what,
+                (unsigned long long)a, (unsigned long long)b, (unsigned long long)c,
+                (unsigned long long)c_bits, (unsigned long long)om_bits);
+        abort();
+    }
+    return om_bits;
+}
+#define NUM_DIFF(what, a, b, c, cexpr, om) omega_numeric_om_diff(what, a, b, c, (cexpr), (om))
+#else
+#define NUM_DIFF(what, a, b, c, cexpr, om) (om)
+#endif
+
+uint64_t omega_numeric_om(unsigned op, uint64_t a, uint64_t b, uint64_t c) {
+    uint64_t r = 0;
+    if (omega_numeric_ref(&r, op, a, b, c) != OMEGA_OK) __builtin_trap();
+    return r;
+}
+
+uint32_t omega_numeric_om_tile(unsigned op, const uint32_t tile[32]) {
+    uint64_t lanes[32], r = 0;
+    for (int i = 0; i < 32; i++) lanes[i] = tile[i];
+    if (omega_numeric_tile(&r, op, lanes, 32) != OMEGA_OK) __builtin_trap();
+    return (uint32_t)r;
+}
+
+#define FB(x) ((uint64_t)omega_float_to_bits(x))
+#define BF(x) omega_bits_to_float((uint32_t)(x))
+#define U32(x) ((uint64_t)(uint32_t)(x))
+/* name, Omega op, the three operand bit patterns, the C oracle call in bits */
+#define NUM(name, op, a, b, c, cbits) NUM_DIFF(name, a, b, c, cbits, omega_numeric_om(op, a, b, c))
+
+bool omega_numeric_bits_equal(float a, float b) {
+    return NUM("bits_equal", OMEGA_NUMERIC_OM_BITS_EQUAL, FB(a), FB(b), 0, numeric_c_bits_equal(a, b)) != 0;
+}
+float omega_ref_fadd(float a, float b) {
+    return BF(NUM("fadd", OMEGA_NUMERIC_OM_FADD, FB(a), FB(b), 0, FB(numeric_c_ref_fadd(a, b))));
+}
+float omega_ref_fsub(float a, float b) {
+    return BF(NUM("fsub", OMEGA_NUMERIC_OM_FSUB, FB(a), FB(b), 0, FB(numeric_c_ref_fsub(a, b))));
+}
+float omega_ref_fmul(float a, float b) {
+    return BF(NUM("fmul", OMEGA_NUMERIC_OM_FMUL, FB(a), FB(b), 0, FB(numeric_c_ref_fmul(a, b))));
+}
+float omega_ref_ffma(float a, float b, float c) {
+    return BF(NUM("ffma", OMEGA_NUMERIC_OM_FFMA, FB(a), FB(b), FB(c), FB(numeric_c_ref_ffma(a, b, c))));
+}
+float omega_ref_fmin(float a, float b) {
+    return BF(NUM("fmin", OMEGA_NUMERIC_OM_FMIN, FB(a), FB(b), 0, FB(numeric_c_ref_fmin(a, b))));
+}
+float omega_ref_fmax(float a, float b) {
+    return BF(NUM("fmax", OMEGA_NUMERIC_OM_FMAX, FB(a), FB(b), 0, FB(numeric_c_ref_fmax(a, b))));
+}
+bool omega_ref_fsetp_ge(float a, float b) {
+    return NUM("fsetp_ge", OMEGA_NUMERIC_OM_FSETP_GE, FB(a), FB(b), 0, numeric_c_ref_fsetp_ge(a, b)) != 0;
+}
+float omega_ref_i2f(int32_t a) {
+    return BF(NUM("i2f", OMEGA_NUMERIC_OM_I2F, U32(a), 0, 0, FB(numeric_c_ref_i2f(a))));
+}
+int32_t omega_ref_f2i(float a) {
+    return (int32_t)(uint32_t)NUM("f2i", OMEGA_NUMERIC_OM_F2I, FB(a), 0, 0, U32(numeric_c_ref_f2i(a)));
+}
+int32_t omega_ref_f2i_floor(float a) {
+    return (int32_t)(uint32_t)NUM("f2i_floor", OMEGA_NUMERIC_OM_F2I_FLOOR, FB(a), 0, 0,
+                                  U32(numeric_c_ref_f2i_floor(a)));
+}
+int32_t omega_ref_f2i_ceil(float a) {
+    return (int32_t)(uint32_t)NUM("f2i_ceil", OMEGA_NUMERIC_OM_F2I_CEIL, FB(a), 0, 0,
+                                  U32(numeric_c_ref_f2i_ceil(a)));
+}
+int32_t omega_ref_f2i_rni(float a) {
+    return (int32_t)(uint32_t)NUM("f2i_rni", OMEGA_NUMERIC_OM_F2I_RNI, FB(a), 0, 0,
+                                  U32(numeric_c_ref_f2i_rni(a)));
+}
+uint32_t omega_ref_f2u(float a) {
+    return (uint32_t)NUM("f2u", OMEGA_NUMERIC_OM_F2U, FB(a), 0, 0, U32(numeric_c_ref_f2u(a)));
+}
+float omega_ref_u2f(uint32_t a) {
+    return BF(NUM("u2f", OMEGA_NUMERIC_OM_U2F, U32(a), 0, 0, FB(numeric_c_ref_u2f(a))));
+}
+uint16_t omega_ref_f32_to_f16(float a) {
+    return (uint16_t)NUM("f32_to_f16", OMEGA_NUMERIC_OM_F32_TO_F16, FB(a), 0, 0, numeric_c_ref_f32_to_f16(a));
+}
+uint16_t omega_ref_f32_to_bf16(float a) {
+    return (uint16_t)NUM("f32_to_bf16", OMEGA_NUMERIC_OM_F32_TO_BF16, FB(a), 0, 0, numeric_c_ref_f32_to_bf16(a));
+}
+float omega_ref_f16_to_f32(uint16_t h) {
+    return BF(NUM("f16_to_f32", OMEGA_NUMERIC_OM_F16_TO_F32, h, 0, 0, FB(numeric_c_ref_f16_to_f32(h))));
+}
+float omega_ref_bf16_to_f32(uint16_t h) {
+    return BF(NUM("bf16_to_f32", OMEGA_NUMERIC_OM_BF16_TO_F32, h, 0, 0, FB(numeric_c_ref_bf16_to_f32(h))));
+}
+float omega_ref_ffma_int(float a, float b, float c) {
+    return BF(NUM("ffma_int", OMEGA_NUMERIC_OM_FFMA_INT, FB(a), FB(b), FB(c), FB(numeric_c_ref_ffma_int(a, b, c))));
+}
+int omega_ref_fsetp_pred(int op, float a, float b) {
+    unsigned m = fsetp_mask(op);
+    if (!m) return -1;
+    return (int)NUM("fsetp_pred", OMEGA_NUMERIC_OM_FSETP_PRED, FB(a), FB(b), m,
+                    (uint64_t)numeric_c_ref_fsetp_pred(op, a, b));
+}
+float omega_ieee_div(float x, float y) {
+    return BF(NUM("ieee_div", OMEGA_NUMERIC_OM_IEEE_DIV, FB(x), FB(y), 0, FB(numeric_c_ieee_div(x, y))));
+}
+float omega_ieee_sqrt(float x) {
+    return BF(NUM("ieee_sqrt", OMEGA_NUMERIC_OM_IEEE_SQRT, FB(x), 0, 0, FB(numeric_c_ieee_sqrt(x))));
+}
+float omega_numeric_host_rcp_seed(float y) {
+    return BF(NUM("rcp_seed", OMEGA_NUMERIC_OM_RCP_SEED, FB(y), 0, 0, FB(numeric_c_host_rcp_seed(y))));
+}
+float omega_math_div(float x, float y) {
+    return BF(NUM("math_div", OMEGA_NUMERIC_OM_MATH_DIV, FB(x), FB(y), 0, FB(numeric_c_math_div(x, y))));
+}
+float omega_math_sqrt(float x) {
+    return BF(NUM("math_sqrt", OMEGA_NUMERIC_OM_MATH_SQRT, FB(x), 0, 0, FB(numeric_c_math_sqrt(x))));
+}
+float omega_math_exp(float x) {
+    return BF(NUM("math_exp", OMEGA_NUMERIC_OM_MATH_EXP, FB(x), 0, 0, FB(numeric_c_math_exp(x))));
+}
+float omega_math_log(float x) {
+    return BF(NUM("math_log", OMEGA_NUMERIC_OM_MATH_LOG, FB(x), 0, 0, FB(numeric_c_math_log(x))));
+}
+float omega_warp_reduce_sum(const float warp_inputs[32]) {
+    uint32_t t[32];
+    memcpy(t, warp_inputs, sizeof(t));
+    return BF(NUM_DIFF("warp_reduce_sum", t[0], t[1], t[31], FB(numeric_c_warp_reduce_sum(warp_inputs)),
+                       omega_numeric_om_tile(0, t)));
+}
+bool omega_numeric_compare_equal(OmegaNumericCompare mode, uint32_t expect, uint32_t got) {
+    if ((unsigned)mode > OMEGA_CMP_BF16_BITS) {
+        return NUM_DIFF("compare_equal", (uint64_t)mode, expect, got,
+                        numeric_c_compare_equal(mode, expect, got), 0) != 0;
+    }
+    return NUM("compare_equal", OMEGA_NUMERIC_OM_COMPARE_EQUAL, (uint64_t)mode, expect, got,
+               numeric_c_compare_equal(mode, expect, got)) != 0;
+}
+void omega_numeric_launch_shape(size_t count, uint32_t *threads_per_block, uint32_t *grid_width) {
+    uint32_t g = (uint32_t)omega_numeric_om(OMEGA_NUMERIC_OM_LAUNCH_SHAPE, count, 0, 0);
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
+    uint32_t ct = 0, cg = 0;
+    numeric_c_launch_shape(count, &ct, &cg);
+    omega_numeric_om_diff("launch_shape", count, 0, 0, cg, g);
+#endif
+    if (threads_per_block) *threads_per_block = OMEGA_NUMERIC_CTA_THREADS;
+    if (grid_width) *grid_width = g;
+}
+#endif

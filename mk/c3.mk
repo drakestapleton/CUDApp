@@ -4,8 +4,8 @@
 # test-gpu-scan / test-gpu-gemm run the host and warp-simulator tiers; the chip tier is the binary with
 # no flag, under `flock -w 900 /tmp/aien-gb10.lock`.
 GPU_SCAN_TEST = $(OUT_DIR)/gpu_scan_test
-$(GPU_SCAN_TEST): tests/gpu_scan_test.c tests/bw_warp_sim.h src/omega_gpu_scan.h src/omega_numeric_reduce.c src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a
-	$(CC) $(CFLAGS) -ffp-contract=off -Itests -o $@ tests/gpu_scan_test.c src/omega_numeric_reduce.c src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
+$(GPU_SCAN_TEST): tests/gpu_scan_test.c tests/bw_warp_sim.h src/omega_gpu_scan.h src/omega_numeric_reduce.c src/omega_numeric.c src/omega_numeric_om.h $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) $(CUDAPP_NUMERIC_DEFS) -ffp-contract=off -Itests -o $@ tests/gpu_scan_test.c src/omega_numeric_reduce.c src/omega_numeric.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 GPU_GEMM_TEST = $(OUT_DIR)/gpu_gemm_test
 $(GPU_GEMM_TEST): tests/gpu_gemm_test.c tests/bw_warp_sim_tc.h tests/bw_hmma_model.h tests/bw_qmma_model.h src/omega_gpu_gemm.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -ffp-contract=off -Itests -o $@ tests/gpu_gemm_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm

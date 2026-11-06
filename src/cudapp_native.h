@@ -67,6 +67,8 @@ uint32_t omega_cg_tern(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, 
 uint32_t omega_cg_tern_sched(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n, const void *p4, uint64_t p4_n);
 uint32_t omega_cg_tern_policy(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5);
 uint32_t omega_streams_words(uint64_t *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_numeric_ref(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3);
+uint32_t omega_numeric_tile(uint64_t *result, uint64_t p0, const void *p1, uint64_t p1_n);
 uint32_t omega_cg_tc(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);

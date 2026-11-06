@@ -16,6 +16,26 @@ static void same(unsigned mode, uint64_t a[16], double expected) {
 int main(void) {
     const char *dates[]={"1970-01-01","1969-12-31","2000-02-29","1900-03-01","2026-11-06","2026-0-0","2026-13-32","2026--1-1","2026-11-06junk","-1-1-1","2026-11","2026-11-x","+2026-+11-+6"};
     for (unsigned i=0;i<sizeof dates/sizeof *dates;i++) CHECK(ds_day_from_date(dates[i])==oracle_ds_day_from_date(dates[i]));
+    const unsigned cuts[]={255,256,257,511,512,513};
+    char longdate[2048];
+    for (unsigned i=0;i<sizeof cuts/sizeof *cuts;i++) {
+        const char *prefix[]={"","2026-","2026-11-"}, *tail[]={"2026-11-06","11-06","06"};
+        for (unsigned j=0;j<3;j++) {
+            size_t n=strlen(prefix[j]);
+            strcpy(longdate,prefix[j]); memset(longdate+n,'0',cuts[i]); strcpy(longdate+n+cuts[i],tail[j]);
+            CHECK(ds_day_from_date(longdate)==oracle_ds_day_from_date(longdate));
+            memset(longdate+n,' ',cuts[i]); strcpy(longdate+n+cuts[i],tail[j]);
+            CHECK(ds_day_from_date(longdate)==oracle_ds_day_from_date(longdate));
+        }
+        memset(longdate,' ',cuts[i]-1); strcpy(longdate+cuts[i]-1,"+2026-11-06");
+        CHECK(ds_day_from_date(longdate)==oracle_ds_day_from_date(longdate));
+        memset(longdate,' ',cuts[i]-1); strcpy(longdate+cuts[i]-1,"-1-1-1");
+        CHECK(ds_day_from_date(longdate)==oracle_ds_day_from_date(longdate));
+        memset(longdate,' ',cuts[i]); strcpy(longdate+cuts[i],"2026-11-+");
+        CHECK(ds_day_from_date(longdate)==oracle_ds_day_from_date(longdate));
+        strcpy(longdate,"2026-11-06"); memset(longdate+10,'x',cuts[i]); longdate[10+cuts[i]]=0;
+        CHECK(ds_day_from_date(longdate)==oracle_ds_day_from_date(longdate));
+    }
     for (int i=-1;i<=10;i++) CHECK(!strcmp(ds_status_name(i),oracle_ds_status_name(i)));
     for (int i=-1;i<=5;i++) CHECK(!strcmp(ds_prov_name(i),oracle_ds_prov_name(i)));
     double v[]={0.0,-0.0,1.0,-1.0,0.5,0.05,1e-6,1e-9,1e15,1e14,INFINITY,-INFINITY,NAN};

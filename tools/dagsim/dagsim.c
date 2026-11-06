@@ -83,12 +83,17 @@ const char *ds_prov_name(int p) {
 }
 int ds_day_from_date(const char *s) {
     if (!s) return -1;
-    char in[256] = {0};
-    size_t n = strnlen(s, sizeof in);
-    if (n == sizeof in) return -1;
-    memcpy(in, s, n);
-    uint64_t a[16] = {n}, v = ds_fmt(6, a, in);
-    return v >> 32 ? (int32_t)v : -1;
+    char in[256];
+    uint64_t a[16] = {0};
+    for (;;) {
+        size_t n = strnlen(s, sizeof in);
+        memcpy(in, s, n);
+        a[0] = n; a[13] = n < sizeof in;
+        uint64_t rc = ds_fmt(21, a, in);
+        if (rc == 1) return (int32_t)a[12];
+        if (rc == 2) return -1;
+        s += n;
+    }
 }
 #endif
 

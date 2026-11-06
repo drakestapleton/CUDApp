@@ -1,0 +1,3 @@
+parse differential: 492 cases, 2 failures
+build/dagsim-parse/corpus/0445-resources-32.oev: production 9 'line 35: too many resources (max 32)'; oracle 0 ''
+build/dagsim-parse/corpus/0446-resources-33.oev: production 9 'line 35: too many resources (max 32)'; oracle 9 'line 36: too many resources (max 32)'

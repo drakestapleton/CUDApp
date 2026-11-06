@@ -1,0 +1,2315 @@
+        -:    0:Source:tools/dagsim/dagsim.c
+        -:    0:Graph:build/dagsim-parse/parser.gcno
+        -:    0:Data:build/dagsim-parse/parser.gcda
+        -:    0:Runs:9
+        -:    1:/*
+        -:    2: * dagsim.c -- offline resource-DAG cost evaluator (omega-mv#583).
+        -:    3: *
+        -:    4: * See dagsim.h and spec/offline-evidence-v1.md. The scheduler is a
+        -:    5: * deterministic fluid simulation: compute engines have slots, bandwidth
+        -:    6: * resources are shared equally among the ops streaming on them at any
+        -:    7: * instant, launches are serialized per launch resource, and an op finishes
+        -:    8: * when both its own busy time and its traffic are done (perfect overlap
+        -:    9: * inside one op, which is the issue's stated floor max(F/P, Q/B)). Ops are
+        -:   10: * dispatched in file order, so the same file always gives the same bytes.
+        -:   11: */
+        -:   12:#include "dagsim.h"
+        -:   13:#include "runtime/rx_costmodel.h"
+        -:   14:
+        -:   15:#include <ctype.h>
+        -:   16:#include <math.h>
+        -:   17:#include <stdio.h>
+        -:   18:#include <stdlib.h>
+        -:   19:#include <string.h>
+        -:   20:#include <time.h>
+        -:   21:#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:   22:#include "dagsim_format.h"
+        -:   23:#endif
+        -:   24:
+        -:   25:/* ---------------------------------------------------------------- names */
+        -:   26:
+        -:   27:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:   28:const char *ds_status_name(int s) {
+        -:   29:    switch (s) {
+        -:   30:    case DS_OK: return "OK";
+        -:   31:    case DS_REFUSED_UNKNOWN: return "REFUSED_UNKNOWN";
+        -:   32:    case DS_REFUSED_STALE: return "REFUSED_STALE";
+        -:   33:    case DS_REFUSED_NO_CALIBRATION: return "REFUSED_NO_CALIBRATION";
+        -:   34:    case DS_REFUSED_CAPACITY: return "REFUSED_CAPACITY";
+        -:   35:    case DS_REFUSED_CYCLE: return "REFUSED_CYCLE";
+        -:   36:    case DS_REFUSED_UNSUPPORTED: return "REFUSED_UNSUPPORTED";
+        -:   37:    case DS_REFUSED_REMOVED_REQUIRED: return "REFUSED_REMOVED_REQUIRED";
+        -:   38:    case DS_REFUSED_LIFETIME: return "REFUSED_LIFETIME";
+        -:   39:    case DS_PARSE_ERROR: return "PARSE_ERROR";
+        -:   40:    default: return "?";
+        -:   41:    }
+        -:   42:}
+        -:   43:
+        -:   44:const char *ds_prov_name(int p) {
+        -:   45:    switch (p) {
+        -:   46:    case DS_PROV_UNKNOWN: return "unknown";
+        -:   47:    case DS_PROV_SYNTHETIC: return "synthetic";
+        -:   48:    case DS_PROV_FITTED: return "fitted";
+        -:   49:    case DS_PROV_MEASURED: return "measured";
+        -:   50:    case DS_PROV_SPECIFIED: return "specified";
+        -:   51:    default: return "?";
+        -:   52:    }
+        -:   53:}
+        -:   54:
+        -:   55:static int prov_from_name(const char *s) {
+        -:   56:    if (!strcmp(s, "unknown")) return DS_PROV_UNKNOWN;
+        -:   57:    if (!strcmp(s, "synthetic")) return DS_PROV_SYNTHETIC;
+        -:   58:    if (!strcmp(s, "fitted")) return DS_PROV_FITTED;
+        -:   59:    if (!strcmp(s, "measured")) return DS_PROV_MEASURED;
+        -:   60:    if (!strcmp(s, "specified")) return DS_PROV_SPECIFIED;
+        -:   61:    return -1;
+        -:   62:}
+        -:   63:
+        -:   64:/* days since 1970-01-01 for a civil date (Howard Hinnant's days_from_civil) */
+        -:   65:int ds_day_from_date(const char *s) {
+        -:   66:    int y, m, d;
+        -:   67:    if (!s || sscanf(s, "%d-%d-%d", &y, &m, &d) != 3) return -1;
+        -:   68:    y -= m <= 2;
+        -:   69:    int era = (y >= 0 ? y : y - 399) / 400;
+        -:   70:    unsigned yoe = (unsigned)(y - era * 400);
+        -:   71:    unsigned doy = (153u * (unsigned)(m + (m > 2 ? -3 : 9)) + 2u) / 5u + (unsigned)d - 1u;
+        -:   72:    unsigned doe = yoe * 365u + yoe / 4u - yoe / 100u + doy;
+        -:   73:    return era * 146097 + (int)doe - 719468;
+        -:   74:}
+        -:   75:#else
+function ds_status_name called 12 returned 100% blocks executed 100%
+       12:   76:const char *ds_status_name(int s) {
+        -:   77:    static _Thread_local char out[256];
+       12:   78:    uint64_t a[16] = {(uint32_t)s}; ds_fmt(0, a, out); return out;
+call    0 returned 12
+        -:   79:}
+function ds_prov_name called 7 returned 100% blocks executed 100%
+        7:   80:const char *ds_prov_name(int p) {
+        -:   81:    static _Thread_local char out[256];
+        7:   82:    uint64_t a[16] = {(uint32_t)p}; ds_fmt(1, a, out); return out;
+call    0 returned 7
+        -:   83:}
+function ds_day_from_date called 73 returned 100% blocks executed 100%
+       73:   84:int ds_day_from_date(const char *s) {
+       73:   85:    if (!s) return -1;
+branch  0 taken 73 (fallthrough)
+branch  1 taken 0
+        -:   86:    char in[256];
+       73:   87:    uint64_t a[16] = {0};
+       81:   88:    for (;;) {
+      154:   89:        size_t n = strnlen(s, sizeof in);
+call    0 returned 154
+        -:   90:        memcpy(in, s, n);
+      154:   91:        a[0] = n; a[13] = n < sizeof in;
+      154:   92:        uint64_t rc = ds_fmt(21, a, in);
+call    0 returned 154
+      154:   93:        if (rc == 1) return (int32_t)a[12];
+branch  0 taken 65 (fallthrough)
+branch  1 taken 89
+       89:   94:        if (rc == 2) return -1;
+branch  0 taken 81 (fallthrough)
+branch  1 taken 8
+       81:   95:        s += n;
+        -:   96:    }
+        -:   97:}
+        -:   98:#endif
+        -:   99:
+function ds_find_op called 0 returned 0% blocks executed 0%
+    #####:  100:int ds_find_op(const ds_model *m, const char *id) {
+    #####:  101:    for (int i = 0; i < m->n_ops; i++) if (!strcmp(m->ops[i].id, id)) return i;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+        -:  102:    return -1;
+        -:  103:}
+function ds_find_res called 0 returned 0% blocks executed 0%
+    #####:  104:int ds_find_res(const ds_model *m, const char *id) {
+    #####:  105:    for (int i = 0; i < m->n_res; i++) if (!strcmp(m->res[i].id, id)) return i;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+        -:  106:    return -1;
+        -:  107:}
+        -:  108:
+        -:  109:/* ---------------------------------------------------------------- parse */
+        -:  110:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  111:/* bounded string copy; ids and sources are truncated, never overflowed */
+        -:  112:static void sset(char *dst, size_t cap, const char *src) {
+        -:  113:    size_t n = strlen(src);
+        -:  114:    if (n >= cap) n = cap - 1;
+        -:  115:    memcpy(dst, src, n); dst[n] = 0;
+        -:  116:}
+        -:  117:
+        -:  118:
+        -:  119:typedef struct { char key[32]; char val[DS_SRC]; int used; } kv;
+        -:  120:
+        -:  121:static int split_kv(char *line, char *keyword, size_t kwcap, kv *kvs, int maxkv, char *positional[], int *npos) {
+        -:  122:    int n = 0; *npos = 0; keyword[0] = 0;
+        -:  123:    char *p = strchr(line, '#'); if (p) *p = 0;
+        -:  124:    char *save = NULL;
+        -:  125:    char *tok = strtok_r(line, " \t\r\n", &save);
+        -:  126:    if (!tok) return -1;   /* empty */
+        -:  127:    snprintf(keyword, kwcap, "%s", tok);
+        -:  128:    while ((tok = strtok_r(NULL, " \t\r\n", &save))) {
+        -:  129:        char *eq = strchr(tok, '=');
+        -:  130:        if (!eq) { if (*npos < 8) positional[(*npos)++] = tok; continue; }
+        -:  131:        if (n >= maxkv) return -2;
+        -:  132:        *eq = 0;
+        -:  133:        sset(kvs[n].key, sizeof kvs[n].key, tok);
+        -:  134:        sset(kvs[n].val, sizeof kvs[n].val, eq + 1);
+        -:  135:        kvs[n].used = 0;
+        -:  136:        n++;
+        -:  137:    }
+        -:  138:    return n;
+        -:  139:}
+        -:  140:
+        -:  141:static const char *get(kv *kvs, int n, const char *key) {
+        -:  142:    for (int i = 0; i < n; i++) if (!strcmp(kvs[i].key, key)) { kvs[i].used = 1; return kvs[i].val; }
+        -:  143:    return NULL;
+        -:  144:}
+        -:  145:
+        -:  146:static int unused_key(kv *kvs, int n, char *out, size_t cap) {
+        -:  147:    for (int i = 0; i < n; i++) if (!kvs[i].used) { snprintf(out, cap, "%s", kvs[i].key); return 1; }
+        -:  148:    return 0;
+        -:  149:}
+        -:  150:
+        -:  151:static int parse_real(const char *s, double *out) {
+        -:  152:    if (!s) return 0;
+        -:  153:    char *end; double v = strtod(s, &end);
+        -:  154:    if (end == s || *end) return 0;
+        -:  155:    if (!(v == v) || v < 0) return 0;
+        -:  156:    *out = v; return 1;
+        -:  157:}
+        -:  158:
+        -:  159:#define PERR(...) do { snprintf(err, errcap, "line %d: ", lineno); size_t _l = strlen(err); snprintf(err + _l, errcap - _l, __VA_ARGS__); return DS_PARSE_ERROR; } while (0)
+        -:  160:
+        -:  161:static int parse_prov_src(kv *kvs, int n, int *prov, char *src, size_t srccap, int required, char *err, size_t errcap, int lineno) {
+        -:  162:    const char *p = get(kvs, n, "prov");
+        -:  163:    const char *s = get(kvs, n, "src");
+        -:  164:    if (!p) { if (required) PERR("prov= is required wherever a number appears"); *prov = -1; return DS_OK; }
+        -:  165:    int v = prov_from_name(p);
+        -:  166:    if (v < 0) PERR("prov=%s is not one of specified|measured|fitted|synthetic|unknown", p);
+        -:  167:    *prov = v;
+        -:  168:    if ((v == DS_PROV_MEASURED || v == DS_PROV_FITTED) && !s) PERR("prov=%s needs src=", p);
+        -:  169:    snprintf(src, srccap, "%s", s ? s : "");
+        -:  170:    return DS_OK;
+        -:  171:}
+        -:  172:
+        -:  173:int ds_parse_text(const char *text, ds_model *m, char *err, size_t errcap) {
+        -:  174:    memset(m, 0, sizeof *m);
+        -:  175:    err[0] = 0;
+        -:  176:    int lineno = 0;
+        -:  177:    const char *cur = text;
+        -:  178:    int seen_oev = 0, seen_machine = 0, seen_build = 0;
+        -:  179:    /* two-pass is not needed: ops before deps/buffers is the convention; we
+        -:  180:     * resolve references at use and require definition before use. */
+        -:  181:    while (*cur) {
+        -:  182:        const char *nl = strchr(cur, '\n');
+        -:  183:        size_t len = nl ? (size_t)(nl - cur) : strlen(cur);
+        -:  184:        char line[1024];
+        -:  185:        lineno++;
+        -:  186:        if (len >= sizeof line) PERR("line too long");
+        -:  187:        memcpy(line, cur, len); line[len] = 0;
+        -:  188:        cur = nl ? nl + 1 : cur + len;
+        -:  189:        char keyword[32]; kv kvs[24]; char *pos[8]; int npos;
+        -:  190:        int n = split_kv(line, keyword, sizeof keyword, kvs, 24, pos, &npos);
+        -:  191:        if (n == -1) continue;
+        -:  192:        if (n == -2) PERR("too many fields");
+        -:  193:        if (!strcmp(keyword, "oev")) {
+        -:  194:            const char *v = get(kvs, n, "version");
+        -:  195:            if (!v || strcmp(v, "1")) PERR("oev version=1 required");
+        -:  196:            m->version = 1; seen_oev = 1;
+        -:  197:        } else if (!strcmp(keyword, "machine")) {
+        -:  198:            const char *v;
+        -:  199:            if (!(v = get(kvs, n, "id"))) PERR("machine needs id=");
+        -:  200:            sset(m->machine_id, sizeof m->machine_id, v);
+        -:  201:            if ((v = get(kvs, n, "soc"))) sset(m->soc, sizeof m->soc, v);
+        -:  202:            if ((v = get(kvs, n, "cores"))) m->cores = atoi(v);
+        -:  203:            if ((v = get(kvs, n, "mem_bytes")) && !parse_real(v, &m->mem_bytes)) PERR("bad mem_bytes");
+        -:  204:            int prov; char src[DS_SRC];
+        -:  205:            int rc = parse_prov_src(kvs, n, &prov, src, sizeof src, 1, err, errcap, lineno); if (rc) return rc;
+        -:  206:            seen_machine = 1;
+        -:  207:        } else if (!strcmp(keyword, "build")) {
+        -:  208:            const char *v;
+        -:  209:            if ((v = get(kvs, n, "repo"))) sset(m->repo, sizeof m->repo, v);
+        -:  210:            if (!(v = get(kvs, n, "sha")) || strlen(v) != 40) PERR("build needs sha=<40 hex>");
+        -:  211:            sset(m->build_sha, sizeof m->build_sha, v);
+        -:  212:            if ((v = get(kvs, n, "physics"))) sset(m->physics, sizeof m->physics, v);
+        -:  213:            seen_build = 1;
+        -:  214:        } else if (!strcmp(keyword, "calibration")) {
+        -:  215:            const char *v;
+        -:  216:            if (m->has_calibration) PERR("one calibration record only");
+        -:  217:            if (!(v = get(kvs, n, "id"))) PERR("calibration needs id=");
+        -:  218:            sset(m->cal_id, sizeof m->cal_id, v);
+        -:  219:            if (!(v = get(kvs, n, "taken")) || (m->cal_taken_day = ds_day_from_date(v)) < 0) PERR("calibration needs taken=YYYY-MM-DD");
+        -:  220:            if (!(v = get(kvs, n, "valid_days"))) PERR("calibration needs valid_days=");
+        -:  221:            m->cal_valid_days = atoi(v);
+        -:  222:            if (!(v = get(kvs, n, "load1")) || !parse_real(v, &m->cal_load1)) PERR("calibration needs load1=");
+        -:  223:            if (!(v = get(kvs, n, "src"))) PERR("calibration needs src=");
+        -:  224:            sset(m->cal_src, sizeof m->cal_src, v);
+        -:  225:            if ((v = get(kvs, n, "model"))) sset(m->cal_model, sizeof m->cal_model, v);
+        -:  226:            m->has_calibration = 1;
+        -:  227:        } else if (!strcmp(keyword, "resource")) {
+        -:  228:            if (m->n_res >= DS_MAX_RES) PERR("too many resources (max %d)", DS_MAX_RES);
+        -:  229:            ds_resource *r = &m->res[m->n_res];
+        -:  230:            memset(r, 0, sizeof *r);
+        -:  231:            const char *v;
+        -:  232:            if (!(v = get(kvs, n, "id"))) PERR("resource needs id=");
+        -:  233:            if (ds_find_res(m, v) >= 0) PERR("duplicate resource %s", v);
+        -:  234:            sset(r->id, sizeof r->id, v);
+        -:  235:            if (!(v = get(kvs, n, "kind"))) PERR("resource needs kind=");
+        -:  236:            if (!strcmp(v, "compute")) {
+        -:  237:                r->kind = DS_RES_COMPUTE;
+        -:  238:                if (!(v = get(kvs, n, "slots")) || (r->slots = atoi(v)) < 1) PERR("compute resource needs slots>=1");
+        -:  239:            } else if (!strcmp(v, "bandwidth")) {
+        -:  240:                r->kind = DS_RES_BANDWIDTH;
+        -:  241:                if (!parse_real(get(kvs, n, "cap"), &r->cap) || r->cap <= 0) PERR("bandwidth resource needs cap>0");
+        -:  242:                r->lo = r->hi = r->cap;
+        -:  243:                if ((v = get(kvs, n, "lo")) && !parse_real(v, &r->lo)) PERR("bad lo");
+        -:  244:                if ((v = get(kvs, n, "hi")) && !parse_real(v, &r->hi)) PERR("bad hi");
+        -:  245:                if (r->lo > r->cap || r->hi < r->cap) PERR("need lo <= cap <= hi");
+        -:  246:            } else if (!strcmp(v, "capacity")) {
+        -:  247:                r->kind = DS_RES_CAPACITY;
+        -:  248:                if (!parse_real(get(kvs, n, "cap"), &r->cap) || r->cap <= 0) PERR("capacity resource needs cap>0");
+        -:  249:            } else if (!strcmp(v, "launch")) {
+        -:  250:                r->kind = DS_RES_LAUNCH;
+        -:  251:            } else PERR("resource kind=%s unknown", v);
+        -:  252:            int rc = parse_prov_src(kvs, n, &r->prov, r->src, sizeof r->src, 1, err, errcap, lineno); if (rc) return rc;
+        -:  253:            m->n_res++;
+        -:  254:        } else if (!strcmp(keyword, "op")) {
+        -:  255:            if (m->n_ops >= DS_MAX_OPS) PERR("too many ops (max %d)", DS_MAX_OPS);
+        -:  256:            ds_op *o = &m->ops[m->n_ops];
+        -:  257:            memset(o, 0, sizeof *o);
+        -:  258:            o->engine = o->bw = o->launcher = -1;
+        -:  259:            const char *v;
+        -:  260:            if (!(v = get(kvs, n, "id"))) PERR("op needs id=");
+        -:  261:            if (ds_find_op(m, v) >= 0) PERR("duplicate op %s", v);
+        -:  262:            sset(o->id, sizeof o->id, v);
+        -:  263:            if (!(v = get(kvs, n, "kind"))) PERR("op needs kind=");
+        -:  264:            if (!strcmp(v, "compute")) o->kind = DS_OP_COMPUTE;
+        -:  265:            else if (!strcmp(v, "copy")) o->kind = DS_OP_COPY;
+        -:  266:            else if (!strcmp(v, "matvec")) o->kind = DS_OP_MATVEC;
+        -:  267:            else if (!strcmp(v, "barrier")) o->kind = DS_OP_BARRIER;
+        -:  268:            else if (!strcmp(v, "storage")) o->kind = DS_OP_STORAGE;
+        -:  269:            else if (!strcmp(v, "persist")) o->kind = DS_OP_PERSIST;
+        -:  270:            else PERR("op kind=%s unknown", v);
+        -:  271:            if ((v = get(kvs, n, "engine"))) {
+        -:  272:                o->engine = ds_find_res(m, v);
+        -:  273:                if (o->engine < 0 || m->res[o->engine].kind != DS_RES_COMPUTE) PERR("engine=%s is not a compute resource defined above", v);
+        -:  274:            }
+        -:  275:            if ((v = get(kvs, n, "t_ns"))) { if (!parse_real(v, &o->t_ns)) PERR("bad t_ns"); o->has_t = 1; o->lo = o->hi = o->t_ns; }
+        -:  276:            if ((v = get(kvs, n, "lo"))) { if (!o->has_t || !parse_real(v, &o->lo) || o->lo > o->t_ns) PERR("lo needs t_ns and lo <= t_ns"); }
+        -:  277:            if ((v = get(kvs, n, "hi"))) { if (!o->has_t || !parse_real(v, &o->hi) || o->hi < o->t_ns) PERR("hi needs t_ns and hi >= t_ns"); }
+        -:  278:            if ((v = get(kvs, n, "bytes"))) {
+        -:  279:                if (!parse_real(v, &o->bytes)) PERR("bad bytes");
+        -:  280:                const char *b = get(kvs, n, "bw");
+        -:  281:                if (!b || (o->bw = ds_find_res(m, b)) < 0 || m->res[o->bw].kind != DS_RES_BANDWIDTH) PERR("bytes= needs bw=<bandwidth resource defined above>");
+        -:  282:            }
+        -:  283:            if ((v = get(kvs, n, "launch_ns"))) {
+        -:  284:                if (!parse_real(v, &o->launch_ns)) PERR("bad launch_ns");
+        -:  285:                const char *l = get(kvs, n, "launcher");
+        -:  286:                if (!l || (o->launcher = ds_find_res(m, l)) < 0 || m->res[o->launcher].kind != DS_RES_LAUNCH) PERR("launch_ns= needs launcher=<launch resource defined above>");
+        -:  287:            }
+        -:  288:            if ((v = get(kvs, n, "M"))) o->M = (uint32_t)strtoul(v, NULL, 10);
+        -:  289:            if ((v = get(kvs, n, "N"))) o->N = (uint32_t)strtoul(v, NULL, 10);
+        -:  290:            if ((v = get(kvs, n, "core"))) o->core = (uint32_t)strtoul(v, NULL, 10);
+        -:  291:            if ((v = get(kvs, n, "arm"))) o->arm = (uint32_t)strtoul(v, NULL, 10);
+        -:  292:            if (o->kind == DS_OP_MATVEC && !o->has_t && (o->M == 0 || o->N == 0)) PERR("matvec needs M= and N= (or t_ns=)");
+        -:  293:            if (o->kind != DS_OP_BARRIER && o->engine < 0) PERR("op %s needs engine=", o->id);
+        -:  294:            int required = o->has_t || o->bytes > 0 || o->launch_ns > 0 || o->kind == DS_OP_MATVEC;
+        -:  295:            int rc = parse_prov_src(kvs, n, &o->t_prov, o->src, sizeof o->src, required, err, errcap, lineno); if (rc) return rc;
+        -:  296:            if (o->t_prov < 0) o->t_prov = DS_PROV_SPECIFIED;   /* a costless barrier: ordering only */
+        -:  297:            if (!o->has_t && o->kind != DS_OP_MATVEC && o->t_prov == DS_PROV_UNKNOWN) { /* fine: explicitly unknown */ }
+        -:  298:            m->n_ops++;
+        -:  299:        } else if (!strcmp(keyword, "dep")) {
+        -:  300:            if (npos != 2 || n != 0) PERR("dep <from> <to>");
+        -:  301:            if (m->n_deps >= DS_MAX_DEPS) PERR("too many deps");
+        -:  302:            int a = ds_find_op(m, pos[0]), b = ds_find_op(m, pos[1]);
+        -:  303:            if (a < 0 || b < 0) PERR("dep names an op not defined above: %s %s", pos[0], pos[1]);
+        -:  304:            m->deps[m->n_deps].from = a; m->deps[m->n_deps].to = b; m->n_deps++;
+        -:  305:        } else if (!strcmp(keyword, "buffer")) {
+        -:  306:            if (m->n_buf >= DS_MAX_BUF) PERR("too many buffers");
+        -:  307:            ds_buffer *b = &m->buf[m->n_buf];
+        -:  308:            memset(b, 0, sizeof *b); b->first = b->last = -1;
+        -:  309:            const char *v;
+        -:  310:            if (!(v = get(kvs, n, "id"))) PERR("buffer needs id=");
+        -:  311:            sset(b->id, sizeof b->id, v);
+        -:  312:            if (!parse_real(get(kvs, n, "bytes"), &b->bytes) || !isfinite(b->bytes))
+        -:  313:                PERR("buffer bytes must be a finite number >= 0");
+        -:  314:            if (!(v = get(kvs, n, "cap")) || (b->cap = ds_find_res(m, v)) < 0 || m->res[b->cap].kind != DS_RES_CAPACITY) PERR("buffer needs cap=<capacity resource>");
+        -:  315:            if ((v = get(kvs, n, "first")) && (b->first = ds_find_op(m, v)) < 0) PERR("first=%s not an op", v);
+        -:  316:            if ((v = get(kvs, n, "last")) && (b->last = ds_find_op(m, v)) < 0) PERR("last=%s not an op", v);
+        -:  317:            m->n_buf++;
+        -:  318:        } else if (!strcmp(keyword, "sync")) {
+        -:  319:            /* a barrier op that depends on every listed op */
+        -:  320:            if (m->n_ops >= DS_MAX_OPS) PERR("too many ops");
+        -:  321:            const char *v, *list;
+        -:  322:            if (!(v = get(kvs, n, "id"))) PERR("sync needs id=");
+        -:  323:            if (ds_find_op(m, v) >= 0) PERR("duplicate op %s", v);
+        -:  324:            if (!(list = get(kvs, n, "ops"))) PERR("sync needs ops=a,b,...");
+        -:  325:            ds_op *o = &m->ops[m->n_ops];
+        -:  326:            memset(o, 0, sizeof *o);
+        -:  327:            o->engine = o->bw = o->launcher = -1; o->kind = DS_OP_BARRIER; o->t_prov = DS_PROV_SPECIFIED;
+        -:  328:            sset(o->id, sizeof o->id, v);
+        -:  329:            int self = m->n_ops++;
+        -:  330:            char tmp[DS_SRC]; sset(tmp, sizeof tmp, list);
+        -:  331:            char *save = NULL;
+        -:  332:            for (char *t = strtok_r(tmp, ",", &save); t; t = strtok_r(NULL, ",", &save)) {
+        -:  333:                int a = ds_find_op(m, t);
+        -:  334:                if (a < 0 || a == self) PERR("sync lists unknown op %s", t);
+        -:  335:                if (m->n_deps >= DS_MAX_DEPS) PERR("too many deps");
+        -:  336:                m->deps[m->n_deps].from = a; m->deps[m->n_deps].to = self; m->n_deps++;
+        -:  337:            }
+        -:  338:        } else if (!strcmp(keyword, "energy")) {
+        -:  339:            const char *v;
+        -:  340:            if (m->has_energy) PERR("one energy record only");
+        -:  341:            if (!(v = get(kvs, n, "instrument"))) PERR("energy needs instrument=");
+        -:  342:            sset(m->instrument, sizeof m->instrument, v);
+        -:  343:            if ((v = get(kvs, n, "boundary"))) sset(m->boundary, sizeof m->boundary, v);
+        -:  344:            const char *j = get(kvs, n, "joules"), *pw = get(kvs, n, "power_w");
+        -:  345:            int prov = -1; char src[DS_SRC];
+        -:  346:            int rc = parse_prov_src(kvs, n, &prov, src, sizeof src, j || pw ? 1 : 0, err, errcap, lineno); if (rc) return rc;
+        -:  347:            m->energy_prov = prov;
+        -:  348:            if (j) {
+        -:  349:                if (!strcmp(m->instrument, "none") || !m->boundary[0]) PERR("joules= needs a named instrument and boundary=");
+        -:  350:                if (prov != DS_PROV_MEASURED) PERR("joules= must be prov=measured with src=");
+        -:  351:                if (!parse_real(j, &m->joules)) PERR("bad joules");
+        -:  352:            }
+        -:  353:            if (pw) {
+        -:  354:                if (prov != DS_PROV_SYNTHETIC) PERR("power_w= is allowed only as prov=synthetic (a sensitivity figure); measured power must be integrated into joules= by the instrument");
+        -:  355:                if (!parse_real(pw, &m->power_w)) PERR("bad power_w");
+        -:  356:            }
+        -:  357:            m->has_energy = 1;
+        -:  358:        } else if (!strcmp(keyword, "removed")) {
+        -:  359:            if (m->n_removed >= DS_MAX_REMOVED) PERR("too many removed records");
+        -:  360:            ds_removed *r = &m->removed[m->n_removed];
+        -:  361:            memset(r, 0, sizeof *r);
+        -:  362:            const char *v;
+        -:  363:            if (!(v = get(kvs, n, "op"))) PERR("removed needs op=");
+        -:  364:            sset(r->op, sizeof r->op, v);
+        -:  365:            if (ds_find_op(m, v) >= 0) PERR("removed op %s is still present in this DAG", v);
+        -:  366:            if (!(v = get(kvs, n, "reason"))) PERR("removed needs reason=");
+        -:  367:            if (!strcmp(v, "eliminated")) r->reason = DS_RM_ELIMINATED;
+        -:  368:            else if (!strcmp(v, "reused")) r->reason = DS_RM_REUSED;
+        -:  369:            else if (!strcmp(v, "unchanged_dep")) r->reason = DS_RM_UNCHANGED_DEP;
+        -:  370:            else if (!strcmp(v, "deferred")) r->reason = DS_RM_DEFERRED;
+        -:  371:            else if (!strcmp(v, "moved")) r->reason = DS_RM_MOVED;
+        -:  372:            else if (!strcmp(v, "shared")) r->reason = DS_RM_SHARED;
+        -:  373:            else if (!strcmp(v, "lookup")) r->reason = DS_RM_LOOKUP;
+        -:  374:            else PERR("removed reason=%s unknown", v);
+        -:  375:            if ((v = get(kvs, n, "ref"))) sset(r->ref, sizeof r->ref, v);
+        -:  376:            if ((v = get(kvs, n, "proof"))) sset(r->proof, sizeof r->proof, v);
+        -:  377:            m->n_removed++;
+        -:  378:        } else PERR("unknown record '%s'", keyword);
+        -:  379:        char bad[32];
+        -:  380:        if (unused_key(kvs, n, bad, sizeof bad)) PERR("unknown field %s= on '%s'", bad, keyword);
+        -:  381:    }
+        -:  382:    lineno = 0;
+        -:  383:    if (!seen_oev) PERR("missing 'oev version=1'");
+        -:  384:    if (!seen_machine) PERR("missing machine record");
+        -:  385:    if (!seen_build) PERR("missing build record");
+        -:  386:    if (!m->has_energy) PERR("missing energy record (use instrument=none for UNMEASURED)");
+        -:  387:    return DS_OK;
+        -:  388:}
+        -:  389:#else
+        -:  390:/* Copy only the already-bounded source spans selected by the Omega parser. */
+function dp_copy called 43643 returned 100% blocks executed 100%
+    43643:  391:static void dp_copy(char *dst, const unsigned char *text, const uint64_t *w, size_t i) {
+    43643:  392:    memcpy(dst, text + w[i], (size_t)w[i + 1]);
+    43643:  393:    dst[w[i + 1]] = 0;
+    43643:  394:}
+        -:  395:static double dp_double(const uint64_t *w, size_t i) {
+    13359:  396:    return ds_unbits(w[i]);
+        -:  397:}
+function ds_parse_text called 3445 returned 100% blocks executed 92%
+     3445:  398:int ds_parse_text(const char *text, ds_model *m, char *err, size_t errcap) {
+branch  0 taken 3445 (fallthrough)
+branch  1 taken 0
+        -:  399:    memset(m, 0, sizeof *m);
+     3445:  400:    if (errcap) err[0] = 0;
+branch  0 taken 3445 (fallthrough)
+branch  1 taken 0
+     3445:  401:    size_t n = strnlen(text, 1048576);
+     3445:  402:    if (n == 1048576) {
+branch  0 taken 14 (fallthrough)
+branch  1 taken 3431
+       14:  403:        if (errcap) snprintf(err, errcap, "file size out of range");
+branch  0 taken 14 (fallthrough)
+branch  1 taken 0
+       14:  404:        return DS_PARSE_ERROR;
+        -:  405:    }
+     3431:  406:    unsigned char *t = malloc(1048576);
+     3431:  407:    uint64_t *w = malloc(16384 * sizeof *w);
+     3431:  408:    if (!t || !w) {
+branch  0 taken 0 (fallthrough)
+branch  1 taken 3431
+    #####:  409:        free(t); free(w);
+    #####:  410:        if (errcap) snprintf(err, errcap, "out of memory");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  411:        return DS_PARSE_ERROR;
+        -:  412:    }
+     3431:  413:    memcpy(t, text, n + 1);
+call    0 returned 3431
+     3431:  414:    unsigned char error[256] = {0};
+     3431:  415:    uint64_t rc = 0;
+     3431:  416:    uint32_t trap = omega_dag_parse(&rc, t, 1048576, n, w, 16384, error, 256);
+call    0 returned 3431
+     3431:  417:    if (trap || rc) {
+branch  0 taken 3431 (fallthrough)
+branch  1 taken 0
+branch  2 taken 2099 (fallthrough)
+branch  3 taken 1332
+     2099:  418:        if (errcap) snprintf(err, errcap, "%s", trap ? "Omega parser trap" : (char *)error);
+branch  0 taken 2099 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 2099
+     2099:  419:        free(t); free(w); return DS_PARSE_ERROR;
+        -:  420:    }
+     1332:  421:    m->version = (int32_t)w[0]; m->cores = (int32_t)w[1];
+     1332:  422:    m->mem_bytes = dp_double(w, 2); m->has_calibration = (int32_t)w[3];
+     1332:  423:    m->cal_taken_day = (int32_t)w[4]; m->cal_valid_days = (int32_t)w[5];
+     1332:  424:    m->cal_load1 = dp_double(w, 6); m->has_energy = (int32_t)w[7];
+     1332:  425:    m->joules = dp_double(w, 8); m->power_w = dp_double(w, 9);
+     1332:  426:    m->energy_prov = (int32_t)w[10];
+     1332:  427:    m->n_res = (int32_t)w[11]; m->n_ops = (int32_t)w[12];
+     1332:  428:    m->n_buf = (int32_t)w[13]; m->n_deps = (int32_t)w[14]; m->n_removed = (int32_t)w[15];
+     1332:  429:    dp_copy(m->machine_id, t, w, 17); dp_copy(m->soc, t, w, 19);
+call    0 returned 1332
+call    1 returned 1332
+     1332:  430:    dp_copy(m->repo, t, w, 21); dp_copy(m->build_sha, t, w, 23);
+call    0 returned 1332
+call    1 returned 1332
+     1332:  431:    dp_copy(m->physics, t, w, 25); dp_copy(m->cal_id, t, w, 27);
+call    0 returned 1332
+call    1 returned 1332
+     1332:  432:    dp_copy(m->cal_src, t, w, 29); dp_copy(m->cal_model, t, w, 31);
+call    0 returned 1332
+call    1 returned 1332
+     1332:  433:    dp_copy(m->instrument, t, w, 33); dp_copy(m->boundary, t, w, 35);
+call    0 returned 1332
+call    1 returned 1332
+     5420:  434:    for (int i = 0; i < m->n_res; i++) {
+branch  0 taken 4088
+branch  1 taken 1332
+     4088:  435:        ds_resource *r = &m->res[i]; const uint64_t *p = w + 64 + i * 12;
+     4088:  436:        dp_copy(r->id, t, p, 0); r->kind = (int32_t)p[2]; r->slots = (int32_t)p[3];
+call    0 returned 4088
+     4088:  437:        r->cap = dp_double(p, 4); r->lo = dp_double(p, 5); r->hi = dp_double(p, 6);
+     4088:  438:        r->prov = (int32_t)p[7]; dp_copy(r->src, t, p, 8);
+call    0 returned 4088
+        -:  439:    }
+     6048:  440:    for (int i = 0; i < m->n_ops; i++) {
+branch  0 taken 4716
+branch  1 taken 1332
+     4716:  441:        ds_op *o = &m->ops[i]; const uint64_t *p = w + 448 + i * 26;
+     4716:  442:        dp_copy(o->id, t, p, 0); o->kind = (int32_t)p[2]; o->engine = (int32_t)p[3];
+call    0 returned 4716
+     4716:  443:        o->t_ns = dp_double(p, 4); o->lo = dp_double(p, 5); o->hi = dp_double(p, 6);
+     4716:  444:        o->t_prov = (int32_t)p[7]; o->has_t = (int32_t)p[8]; o->bytes = dp_double(p, 9);
+     4716:  445:        o->bw = (int32_t)p[10]; o->launch_ns = dp_double(p, 11); o->launcher = (int32_t)p[12];
+     4716:  446:        o->M = (uint32_t)p[13]; o->N = (uint32_t)p[14]; o->core = (uint32_t)p[15]; o->arm = (uint32_t)p[16];
+     4716:  447:        dp_copy(o->src, t, p, 17);
+call    0 returned 4716
+        -:  448:    }
+    13678:  449:    for (int i = 0; i < m->n_deps; i++) {
+branch  0 taken 12346
+branch  1 taken 1332
+    12346:  450:        m->deps[i].from = (int32_t)w[7104 + i * 2];
+    12346:  451:        m->deps[i].to = (int32_t)w[7105 + i * 2];
+        -:  452:    }
+     4555:  453:    for (int i = 0; i < m->n_buf; i++) {
+branch  0 taken 3223
+branch  1 taken 1332
+     3223:  454:        ds_buffer *b = &m->buf[i]; const uint64_t *p = w + 9152 + i * 8;
+     3223:  455:        dp_copy(b->id, t, p, 0); b->bytes = dp_double(p, 2); b->cap = (int32_t)p[3];
+call    0 returned 3223
+     3223:  456:        b->first = (int32_t)p[4]; b->last = (int32_t)p[5];
+        -:  457:    }
+     4496:  458:    for (int i = 0; i < m->n_removed; i++) {
+branch  0 taken 3164
+branch  1 taken 1332 (fallthrough)
+     3164:  459:        ds_removed *r = &m->removed[i]; const uint64_t *p = w + 11200 + i * 8;
+     3164:  460:        dp_copy(r->op, t, p, 0); r->reason = (int32_t)p[2];
+call    0 returned 3164
+     3164:  461:        dp_copy(r->ref, t, p, 3); dp_copy(r->proof, t, p, 5);
+call    0 returned 3164
+call    1 returned 3164
+        -:  462:    }
+     1332:  463:    free(t); free(w);
+     1332:  464:    return DS_OK;
+        -:  465:}
+        -:  466:#endif
+        -:  467:
+function ds_parse_file called 0 returned 0% blocks executed 0%
+    #####:  468:int ds_parse_file(const char *path, ds_model *m, char *err, size_t errcap) {
+    #####:  469:    FILE *fp = fopen(path, "r");
+call    0 never executed
+    #####:  470:    if (!fp) { snprintf(err, errcap, "cannot open %s", path); return DS_PARSE_ERROR; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  471:    fseek(fp, 0, SEEK_END); long n = ftell(fp); fseek(fp, 0, SEEK_SET);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+    #####:  472:    if (n < 0 || n > (1 << 20)) { fclose(fp); snprintf(err, errcap, "file size out of range"); return DS_PARSE_ERROR; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  473:    char *buf = malloc((size_t)n + 1);
+    #####:  474:    if (!buf) { fclose(fp); snprintf(err, errcap, "out of memory"); return DS_PARSE_ERROR; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  475:    size_t got = fread(buf, 1, (size_t)n, fp); buf[got] = 0; fclose(fp);
+call    0 never executed
+    #####:  476:    int rc = ds_parse_text(buf, m, err, errcap);
+call    0 never executed
+    #####:  477:    free(buf);
+    #####:  478:    return rc;
+        -:  479:}
+        -:  480:
+        -:  481:/* ---------------------------------------------------------------- evaluate */
+        -:  482:
+        -:  483:/* resolved per-op numbers for one evaluation mode */
+        -:  484:typedef struct { double t, launch, bytes, cap; int prov; } ds_num;   /* cap in B/ns */
+        -:  485:
+        -:  486:static double res_cap(const ds_resource *r, int mode) {
+    #####:  487:    if (mode < 0) return r->lo;
+    #####:  488:    if (mode > 0) return r->hi;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  489:    return r->cap;
+        -:  490:}
+        -:  491:
+function refuse called 0 returned 0% blocks executed 0%
+    #####:  492:static int refuse(ds_result *r, int status, const char *fmt, const char *a, const char *b) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  493:    memset(r, 0, sizeof *r);
+    #####:  494:    r->status = status;
+    #####:  495:    snprintf(r->reason, sizeof r->reason, fmt, a ? a : "", b ? b : "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  496:    return status;
+        -:  497:}
+        -:  498:
+function refuse_msg called 0 returned 0% blocks executed 0%
+    #####:  499:static int refuse_msg(ds_result *r, int status, const char *msg) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  500:    memset(r, 0, sizeof *r);
+    #####:  501:    r->status = status;
+    #####:  502:    snprintf(r->reason, sizeof r->reason, "%s", msg ? msg : "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  503:    return status;
+        -:  504:}
+        -:  505:
+        -:  506:/* An unsupported operation and a refused prediction are the same as an
+        -:  507: * unknown cell: no certificate. known alone is not enough. */
+        -:  508:static int predict_unusable(int st, const RxCmPrediction *p) {
+    #####:  509:    return st == RX_CM_ERR_UNSUPPORTED || p->refused || !p->known || p->n == 0; /* PREDICT_REFUSAL_CHECK */
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed
+branch  5 never executed (fallthrough)
+branch  6 never executed
+branch  7 never executed (fallthrough)
+        -:  510:}
+        -:  511:
+function resolve called 0 returned 0% blocks executed 0%
+    #####:  512:static int resolve(const ds_model *m, const ds_opts *o, ds_num *num, ds_result *r) {
+        -:  513:    int any_cal = 0;
+    #####:  514:    for (int i = 0; i < m->n_res; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  515:        if (m->res[i].prov == DS_PROV_UNKNOWN) return refuse(r, DS_REFUSED_UNKNOWN, "resource %s has prov=unknown; unknown stays unknown%s", m->res[i].id, "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  516:        if (m->res[i].prov == DS_PROV_MEASURED || m->res[i].prov == DS_PROV_FITTED) any_cal = 1;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  517:    }
+    #####:  518:    for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  519:        const ds_op *op = &m->ops[i];
+    #####:  520:        ds_num *x = &num[i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  521:        memset(x, 0, sizeof *x);
+    #####:  522:        x->prov = op->t_prov;
+    #####:  523:        x->launch = op->launch_ns;
+    #####:  524:        x->bytes = op->bytes;
+    #####:  525:        x->cap = op->bw >= 0 ? res_cap(&m->res[op->bw], o->mode) * 1e-9 : 0;   /* B/s -> B/ns */
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  526:        if (op->kind == DS_OP_MATVEC && !op->has_t) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  527:            const RxCostModel *cm = (const RxCostModel *)o->costmodel;
+    #####:  528:            if (!cm) return refuse(r, DS_REFUSED_UNKNOWN, "op %s is a matvec with no rx_costmodel blob supplied (calibration model=)%s", op->id, "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  529:            RxCmFeatures f; memset(&f, 0, sizeof f);
+    #####:  530:            f.op = RX_CM_OP_MATVEC; f.M = op->M; f.N = op->N;
+    #####:  531:            f.state_bytes = ((uint64_t)op->M * op->N + op->M + op->N) * 8u;
+    #####:  532:            f.cache_bytes = 1u << 20; f.core = op->core; f.eligible = 1u << op->arm; f.current_arm = op->arm;
+        -:  533:            RxCmPrediction p;
+    #####:  534:            int st = rx_cm_predict(cm, &f, op->arm, &p);
+call    0 never executed
+    #####:  535:            if (predict_unusable(st, &p)) return refuse(r, DS_REFUSED_UNKNOWN, "op %s: rx_costmodel has no known cell for this (op, core, pressure) and arm; measure it first%s", op->id, "");
+call    0 never executed
+    #####:  536:            double q = o->interval_q > 0 && o->interval_q < 1 ? o->interval_q : 0.9;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  537:            double k = rx_cm_t_quantile(q, p.dof);
+call    0 never executed
+    #####:  538:            double l2 = p.mean_log2_ps + (o->mode < 0 ? k * p.sd_log2 : o->mode > 0 ? -k * p.sd_log2 : 0);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  539:            x->t = pow(2.0, l2) / 1000.0;   /* ps -> ns */
+    #####:  540:            x->prov = DS_PROV_FITTED;
+        -:  541:            any_cal = 1;
+        -:  542:        } else {
+    #####:  543:            if (op->t_prov == DS_PROV_UNKNOWN) return refuse(r, DS_REFUSED_UNKNOWN, "op %s has prov=unknown (%s); unknown stays unknown", op->id, op->src[0] ? op->src : "no source");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+    #####:  544:            x->t = o->mode < 0 ? op->hi : o->mode > 0 ? op->lo : op->t_ns;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  545:            if (op->t_prov == DS_PROV_MEASURED || op->t_prov == DS_PROV_FITTED) any_cal = 1;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  546:        }
+    #####:  547:        if (op->engine < 0 && op->kind != DS_OP_BARRIER) return refuse(r, DS_REFUSED_UNSUPPORTED, "op %s has no engine%s", op->id, "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+    #####:  548:        if (op->launcher >= 0 && op->engine < 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "op %s: launch without an engine%s", op->id, "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+        -:  549:    }
+    #####:  550:    if (any_cal) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  551:        if (!m->has_calibration) return refuse(r, DS_REFUSED_NO_CALIBRATION, "measured or fitted values need a calibration record naming when and under what load they were taken%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  552:        int asof = o->asof_day;
+    #####:  553:        if (asof <= 0) asof = (int)(time(NULL) / 86400);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  554:        if (asof > m->cal_taken_day + m->cal_valid_days) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  555:            char d[64]; snprintf(d, sizeof d, "asof is %d day(s) past the validity envelope", asof - m->cal_taken_day - m->cal_valid_days);
+call    0 never executed
+    #####:  556:            return refuse(r, DS_REFUSED_STALE, "calibration %s is stale: %s", m->cal_id, d);
+call    0 never executed
+        -:  557:        }
+        -:  558:    }
+        -:  559:    return DS_OK;
+        -:  560:}
+        -:  561:
+        -:  562:static void pk_d(uint64_t *dst, double x) {
+        -:  563:    uint64_t b;
+        -:  564:    memcpy(&b, &x, 8);
+    #####:  565:    *dst = b;
+        -:  566:}
+        -:  567:
+        -:  568:/* Pack post-resolve numbers for omega_dag_eval. Refusal strings stay in C. */
+function ds_resolved_pack called 0 returned 0% blocks executed 0%
+    #####:  569:int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_result *r) {
+    #####:  570:    if (m->n_ops == 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "empty DAG%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  571:    ds_num num[DS_MAX_OPS];
+    #####:  572:    int rc = resolve(m, o, num, r);
+call    0 never executed
+    #####:  573:    if (rc) return rc;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  574:    memset(model, 0, 8192 * sizeof *model);
+    #####:  575:    model[0] = (uint64_t)m->n_ops;
+    #####:  576:    model[1] = (uint64_t)m->n_res;
+    #####:  577:    model[2] = (uint64_t)m->n_deps;
+    #####:  578:    model[3] = (uint64_t)m->n_buf;
+    #####:  579:    model[4] = m->has_energy ? 1u : 0u;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  580:    pk_d(&model[5], m->joules);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  581:    pk_d(&model[6], m->power_w);
+    #####:  582:    model[7] = (uint64_t)m->energy_prov;
+    #####:  583:    model[8] = strcmp(m->instrument, "none") == 0 ? 1u : 0u;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  584:    model[9] = 1u;
+    #####:  585:    for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  586:        uint64_t *p = &model[32 + i * 10];
+    #####:  587:        pk_d(&p[0], num[i].t);
+    #####:  588:        pk_d(&p[1], num[i].bytes);
+    #####:  589:        pk_d(&p[2], num[i].launch);
+    #####:  590:        pk_d(&p[3], num[i].cap);
+    #####:  591:        p[4] = (uint64_t)(int64_t)m->ops[i].engine;
+    #####:  592:        p[5] = (uint64_t)(int64_t)m->ops[i].bw;
+    #####:  593:        p[6] = (uint64_t)(int64_t)m->ops[i].launcher;
+    #####:  594:        p[7] = (uint64_t)m->ops[i].kind;
+    #####:  595:        p[8] = (uint64_t)num[i].prov;
+        -:  596:    }
+    #####:  597:    for (int i = 0; i < m->n_res; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  598:        uint64_t *p = &model[2592 + i * 4];
+    #####:  599:        p[0] = (uint64_t)m->res[i].kind;
+    #####:  600:        p[1] = (uint64_t)m->res[i].slots;
+    #####:  601:        pk_d(&p[2], m->res[i].cap);
+    #####:  602:        p[3] = (uint64_t)m->res[i].prov;
+        -:  603:    }
+    #####:  604:    for (int i = 0; i < m->n_deps; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  605:        uint64_t *p = &model[2720 + i * 2];
+    #####:  606:        p[0] = (uint64_t)m->deps[i].from;
+    #####:  607:        p[1] = (uint64_t)m->deps[i].to;
+        -:  608:    }
+    #####:  609:    for (int i = 0; i < m->n_buf; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  610:        uint64_t *p = &model[4768 + i * 4];
+    #####:  611:        pk_d(&p[0], m->buf[i].bytes);
+    #####:  612:        p[1] = (uint64_t)m->buf[i].cap;
+    #####:  613:        p[2] = (uint64_t)(int64_t)m->buf[i].first;
+    #####:  614:        p[3] = (uint64_t)(int64_t)m->buf[i].last;
+        -:  615:    }
+        -:  616:    return DS_OK;
+        -:  617:}
+        -:  618:
+        -:  619:/* Kahn topological order; returns 0 on a cycle */
+function topo called 0 returned 0% blocks executed 0%
+    #####:  620:static int topo(const ds_model *m, int *order) {
+    #####:  621:    int indeg[DS_MAX_OPS] = {0};
+    #####:  622:    for (int i = 0; i < m->n_deps; i++) indeg[m->deps[i].to]++;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  623:    int n = 0, head = 0;
+    #####:  624:    for (int i = 0; i < m->n_ops; i++) if (indeg[i] == 0) order[n++] = i;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  625:    while (head < n) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  626:        int u = order[head++];
+    #####:  627:        for (int i = 0; i < m->n_deps; i++) if (m->deps[i].from == u && --indeg[m->deps[i].to] == 0) order[n++] = m->deps[i].to;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+branch  5 never executed (fallthrough)
+        -:  628:    }
+    #####:  629:    return n == m->n_ops;
+        -:  630:}
+        -:  631:
+        -:  632:enum { ST_WAIT = 0, ST_READY, ST_LAUNCH, ST_RUN, ST_DONE };
+        -:  633:enum { BLK_NONE = 0, BLK_SLOT, BLK_LAUNCHER };
+        -:  634:
+        -:  635:/* Half-open [start, end). Missing first -> 0; missing last -> makespan. */
+        -:  636:static void buffer_window(const ds_model *m, const ds_result *r, int b, double *s, double *e) {
+    #####:  637:    *s = m->buf[b].first >= 0 ? r->start_ns[m->buf[b].first] : 0.0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  638:    *e = m->buf[b].last >= 0 ? r->end_ns[m->buf[b].last] : r->makespan_ns;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+        -:  639:}
+        -:  640:
+        -:  641:static const char *endpoint_name(const ds_model *m, int op) {
+    #####:  642:    return op >= 0 ? m->ops[op].id : "omitted";
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  643:}
+        -:  644:
+        -:  645:/* Resolved end earlier than start is not an interval. Refuse before the ledger. */
+function reject_inverted_lifetimes called 0 returned 0% blocks executed 0%
+    #####:  646:static int reject_inverted_lifetimes(const ds_model *m, ds_result *r) {
+    #####:  647:    for (int b = 0; b < m->n_buf; b++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  648:        double s, e;
+        -:  649:        buffer_window(m, r, b, &s, &e);
+    #####:  650:        if (e + 1e-9 < s) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  651:            char msg[256];
+        -:  652:            snprintf(msg, sizeof msg,
+        -:  653:                     "inverted lifetime for buffer %s: first=%s start_ns=%.9g last=%s end_ns=%.9g",
+    #####:  654:                     m->buf[b].id, endpoint_name(m, m->buf[b].first), s,
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  655:                     endpoint_name(m, m->buf[b].last), e);
+    #####:  656:            return refuse_msg(r, DS_REFUSED_LIFETIME, msg);
+call    0 never executed
+        -:  657:        }
+        -:  658:    }
+        -:  659:    return DS_OK;
+        -:  660:}
+        -:  661:
+function ds_eval_c called 0 returned 0% blocks executed 0%
+    #####:  662:int ds_eval_c(const ds_model *m, const ds_opts *o, ds_result *r) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  663:    memset(r, 0, sizeof *r);
+    #####:  664:    if (m->n_ops == 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "empty DAG%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  665:    ds_num num[DS_MAX_OPS];
+    #####:  666:    int rc = resolve(m, o, num, r);
+call    0 never executed
+    #####:  667:    if (rc) return rc;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  668:    int order[DS_MAX_OPS];
+    #####:  669:    if (!topo(m, order)) return refuse(r, DS_REFUSED_CYCLE, "dependency cycle%s%s", "", "");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+        -:  670:    /* a buffer that never fits */
+    #####:  671:    for (int i = 0; i < m->n_buf; i++)
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  672:        if (m->buf[i].bytes > m->res[m->buf[i].cap].cap)
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  673:            return refuse(r, DS_REFUSED_CAPACITY, "buffer %s alone exceeds capacity %s", m->buf[i].id, m->res[m->buf[i].cap].id);
+call    0 never executed
+        -:  674:
+        -:  675:    /* provenance mask */
+    #####:  676:    for (int i = 0; i < m->n_ops; i++) r->prov_mask |= 1u << num[i].prov;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  677:    for (int i = 0; i < m->n_res; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  678:        int used = 0;
+    #####:  679:        for (int j = 0; j < m->n_ops; j++) if (m->ops[j].engine == i || m->ops[j].bw == i || m->ops[j].launcher == i) used = 1;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed
+branch  7 never executed
+    #####:  680:        for (int j = 0; j < m->n_buf; j++) if (m->buf[j].cap == i) used = 1;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  681:        if (used) r->prov_mask |= 1u << m->res[i].prov;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  682:    }
+        -:  683:
+        -:  684:    /* ---- fluid simulation ---- */
+    #####:  685:    int state[DS_MAX_OPS] = {0}, blocked[DS_MAX_OPS] = {0}, npred[DS_MAX_OPS] = {0}, done_pred[DS_MAX_OPS] = {0};
+        -:  686:    double rem_t[DS_MAX_OPS], rem_b[DS_MAX_OPS], rem_l[DS_MAX_OPS], run_start[DS_MAX_OPS], bytes_end[DS_MAX_OPS];
+    #####:  687:    int free_slots[DS_MAX_RES], launcher_busy[DS_MAX_RES] = {0};
+    #####:  688:    for (int i = 0; i < m->n_res; i++) free_slots[i] = m->res[i].slots;
+branch  0 never executed
+branch  1 never executed
+    #####:  689:    for (int i = 0; i < m->n_deps; i++) npred[m->deps[i].to]++;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  690:    for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  691:        rem_t[i] = num[i].t; rem_b[i] = num[i].bytes; rem_l[i] = num[i].launch;
+    #####:  692:        run_start[i] = bytes_end[i] = -1;
+    #####:  693:        r->n_ops++;
+    #####:  694:        r->total_bytes += num[i].bytes; r->total_busy_ns += num[i].t; r->total_launch_ns += num[i].launch;
+        -:  695:    }
+        -:  696:    double t = 0;
+        -:  697:    int remaining = m->n_ops, guard = 0;
+    #####:  698:    while (remaining > 0) {
+branch  0 never executed
+branch  1 never executed
+    #####:  699:        if (++guard > 8 * DS_MAX_OPS + 16) return refuse(r, DS_REFUSED_UNSUPPORTED, "scheduler did not converge%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  700:        /* deps satisfied -> ready */
+    #####:  701:        for (int i = 0; i < m->n_ops; i++) if (state[i] == ST_WAIT && done_pred[i] == npred[i]) { state[i] = ST_READY; r->ready_ns[i] = t; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed
+branch  5 never executed
+        -:  702:        /* dispatch in file order */
+    #####:  703:        for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  704:            if (state[i] != ST_READY) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  705:            const ds_op *op = &m->ops[i];
+    #####:  706:            if (op->engine >= 0 && free_slots[op->engine] <= 0) { blocked[i] = BLK_SLOT; continue; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  707:            if (op->launcher >= 0 && rem_l[i] > 0 && launcher_busy[op->launcher]) { blocked[i] = BLK_LAUNCHER; continue; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  708:            if (op->engine >= 0) free_slots[op->engine]--;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  709:            r->start_ns[i] = t;
+    #####:  710:            if (op->launcher >= 0 && rem_l[i] > 0) { launcher_busy[op->launcher] = 1; state[i] = ST_LAUNCH; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  711:            else { state[i] = ST_RUN; run_start[i] = t; }
+        -:  712:        }
+        -:  713:        /* next event */
+    #####:  714:        int active[DS_MAX_RES] = {0};
+    #####:  715:        for (int i = 0; i < m->n_ops; i++) if (state[i] == ST_RUN && rem_b[i] > 0) active[m->ops[i].bw]++;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed
+branch  5 never executed
+        -:  716:        double dt = -1; int any = 0;
+    #####:  717:        for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  718:            if (state[i] == ST_LAUNCH) { any = 1; if (dt < 0 || rem_l[i] < dt) dt = rem_l[i]; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  719:            else if (state[i] == ST_RUN) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  720:                any = 1;
+        -:  721:                /* next event for this op: the earlier of its two progress bars */
+        -:  722:                double d = -1;
+    #####:  723:                if (rem_t[i] > 0) d = rem_t[i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  724:                if (rem_b[i] > 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  725:                    double share = num[i].cap / active[m->ops[i].bw];
+    #####:  726:                    double db = rem_b[i] / share;
+    #####:  727:                    if (d < 0 || db < d) d = db;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+        -:  728:                }
+    #####:  729:                if (d < 0) d = 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  730:                if (dt < 0 || d < dt) dt = d;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  731:            }
+        -:  732:        }
+    #####:  733:        if (!any) return refuse(r, DS_REFUSED_UNSUPPORTED, "no op can make progress (slots=0 or all blocked)%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  734:        if (dt < 0) dt = 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  735:        t += dt;
+        -:  736:        const double eps = 1e-9;
+    #####:  737:        for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  738:            if (state[i] == ST_LAUNCH) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  739:                rem_l[i] -= dt;
+    #####:  740:                if (rem_l[i] <= eps) { rem_l[i] = 0; launcher_busy[m->ops[i].launcher] = 0; state[i] = ST_RUN; run_start[i] = t; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  741:            } else if (state[i] == ST_RUN) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  742:                if (rem_t[i] > 0) { rem_t[i] -= dt; if (rem_t[i] <= eps) rem_t[i] = 0; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  743:                if (rem_b[i] > 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  744:                    double share = num[i].cap / active[m->ops[i].bw];
+    #####:  745:                    rem_b[i] -= share * dt;
+    #####:  746:                    if (rem_b[i] <= eps * (num[i].bytes > 1 ? num[i].bytes : 1)) { rem_b[i] = 0; bytes_end[i] = t; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  747:                }
+    #####:  748:                if (rem_t[i] <= 0 && rem_b[i] <= 0) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  749:                    state[i] = ST_DONE; r->end_ns[i] = t; remaining--;
+    #####:  750:                    if (m->ops[i].engine >= 0) free_slots[m->ops[i].engine]++;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  751:                    for (int d = 0; d < m->n_deps; d++) if (m->deps[d].from == i) done_pred[m->deps[d].to]++;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  752:                    if (num[i].bytes > 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  753:                        double ideal = num[i].bytes / num[i].cap;
+    #####:  754:                        double actual = (bytes_end[i] >= 0 ? bytes_end[i] : t) - run_start[i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  755:                        r->op_contention_ns[i] = actual - ideal > 0 ? actual - ideal : 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  756:                    }
+        -:  757:                }
+        -:  758:            }
+        -:  759:        }
+    #####:  760:        if (t > r->makespan_ns) r->makespan_ns = t;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  761:    }
+        -:  762:
+        -:  763:    /* ---- bounds ---- */
+        -:  764:    double cp[DS_MAX_OPS];
+    #####:  765:    for (int k = 0; k < m->n_ops; k++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  766:        int i = order[k];
+    #####:  767:        double floor_ = num[i].t;
+    #####:  768:        if (num[i].bytes > 0 && num[i].bytes / num[i].cap > floor_) floor_ = num[i].bytes / num[i].cap;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  769:        floor_ += num[i].launch;
+    #####:  770:        r->op_floor_ns[i] = floor_;
+        -:  771:        double best = 0;
+    #####:  772:        for (int d = 0; d < m->n_deps; d++) if (m->deps[d].to == i && cp[m->deps[d].from] > best) best = cp[m->deps[d].from];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+branch  5 never executed (fallthrough)
+    #####:  773:        cp[i] = best + floor_;
+    #####:  774:        if (cp[i] > r->bound_critical_path_ns) r->bound_critical_path_ns = cp[i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  775:    }
+    #####:  776:    r->bound_ns = r->bound_critical_path_ns;
+    #####:  777:    for (int i = 0; i < m->n_res; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  778:        double w = 0;
+    #####:  779:        for (int j = 0; j < m->n_ops; j++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  780:            if (m->res[i].kind == DS_RES_BANDWIDTH && m->ops[j].bw == i) w += num[j].bytes / num[j].cap;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  781:            if (m->res[i].kind == DS_RES_COMPUTE && m->ops[j].engine == i) w += (num[j].t + num[j].launch) / m->res[i].slots;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  782:            if (m->res[i].kind == DS_RES_LAUNCH && m->ops[j].launcher == i) w += num[j].launch;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  783:        }
+    #####:  784:        r->bound_resource_ns[i] = w;
+    #####:  785:        if (w > r->bound_ns) r->bound_ns = w;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  786:    }
+        -:  787:
+        -:  788:    /* Inverted lifetimes never enter the ledger (and never rank). */
+    #####:  789:    if ((rc = reject_inverted_lifetimes(m, r)) != DS_OK) return rc; /* LIFETIME_ORDER_CHECK */
+call    0 never executed
+branch  1 never executed
+branch  2 never executed
+        -:  790:
+        -:  791:    /* ---- capacity ledger: frees before allocations at the same instant ----
+        -:  792:     * Positive intervals only. A zero-duration [s, e) is empty and emits no
+        -:  793:     * event, so a same-time free cannot pull the ledger negative or offset
+        -:  794:     * another buffer. Frees of earlier intervals still precede allocs, which
+        -:  795:     * is the completion/allocation tie. */
+    #####:  796:    for (int c = 0; c < m->n_res; c++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  797:        if (m->res[c].kind != DS_RES_CAPACITY) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  798:        double live = 0, peak = 0, peak_at = 0;
+        -:  799:        /* event list */
+        -:  800:        double et[2 * DS_MAX_BUF]; double ev[2 * DS_MAX_BUF]; int en = 0;
+    #####:  801:        for (int b = 0; b < m->n_buf; b++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  802:            if (m->buf[b].cap != c) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  803:            double s, e;
+        -:  804:            buffer_window(m, r, b, &s, &e);
+    #####:  805:            if (!(s + 1e-9 < e)) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  806:            et[en] = s; ev[en] = m->buf[b].bytes; en++;
+    #####:  807:            et[en] = e; ev[en] = -m->buf[b].bytes; en++;
+        -:  808:        }
+        -:  809:        /* insertion sort by time, frees (negative) first on ties; stable */
+    #####:  810:        for (int i = 1; i < en; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  811:            double kt = et[i], kv_ = ev[i]; int j = i - 1;
+    #####:  812:            while (j >= 0 && (et[j] > kt || (et[j] == kt && ev[j] > 0 && kv_ < 0))) { et[j + 1] = et[j]; ev[j + 1] = ev[j]; j--; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+branch  8 never executed
+branch  9 never executed (fallthrough)
+    #####:  813:            et[j + 1] = kt; ev[j + 1] = kv_;
+        -:  814:        }
+    #####:  815:        for (int i = 0; i < en; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  816:            live += ev[i];
+        -:  817:            /* Reachable by rounding: 1e20 + 1 sums to 1e20, so the later
+        -:  818:             * frees overshoot (dagsim_unit rounding_drives_live_negative). */
+    #####:  819:            if (live < -1e-6) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  820:                char msg[256];
+    #####:  821:                snprintf(msg, sizeof msg,
+        -:  822:                         "capacity %s live bytes went negative (%.9g at t=%.9g); refusing the certificate",
+    #####:  823:                         m->res[c].id, live, et[i]);
+call    0 never executed
+    #####:  824:                return refuse_msg(r, DS_REFUSED_LIFETIME, msg);
+call    0 never executed
+        -:  825:            }
+    #####:  826:            if (live > peak) { peak = live; peak_at = et[i]; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  827:        }
+    #####:  828:        r->peak_live_bytes[c] = peak; r->peak_live_at_ns[c] = peak_at;
+    #####:  829:        if (peak > m->res[c].cap + 1e-9) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  830:            char names[160] = ""; size_t L = 0;
+    #####:  831:            for (int b = 0; b < m->n_buf && L < sizeof names - 8; b++) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  832:                if (m->buf[b].cap != c) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  833:                double s, e;
+        -:  834:                buffer_window(m, r, b, &s, &e);
+    #####:  835:                if (s <= peak_at && e > peak_at) { snprintf(names + L, sizeof names - L, "%s%s", L ? "," : "", m->buf[b].id); L = strlen(names); }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+        -:  836:            }
+        -:  837:            char what[200]; snprintf(what, sizeof what, "%.0f B live at t=%.0f ns (%s) exceeds", peak, peak_at, names);
+    #####:  838:            int st = refuse(r, DS_REFUSED_CAPACITY, "%s %s", what, m->res[c].id);
+call    0 never executed
+        -:  839:            return st;
+        -:  840:        }
+        -:  841:    }
+        -:  842:
+        -:  843:    /* ---- attribution along the schedule's critical chain ---- */
+        -:  844:    int cur = 0;
+    #####:  845:    for (int i = 1; i < m->n_ops; i++) if (r->end_ns[i] > r->end_ns[cur]) cur = i;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+        -:  846:    double accounted = 0;
+        -:  847:    int chain[DS_MAX_OPS]; int nc = 0;
+    #####:  848:    while (cur >= 0 && nc < DS_MAX_OPS) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  849:        chain[nc++] = cur;
+        -:  850:        const ds_op *op = &m->ops[cur];
+    #####:  851:        double runtime = r->end_ns[cur] - (run_start[cur] >= 0 ? run_start[cur] : r->start_ns[cur]);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  852:        r->attr_ns[DS_ATTR_LAUNCH] += num[cur].launch;
+    #####:  853:        accounted += num[cur].launch;
+    #####:  854:        if (op->kind == DS_OP_BARRIER) r->attr_ns[DS_ATTR_SYNC] += runtime;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  855:        else if (num[cur].bytes > 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  856:            double ideal = num[cur].bytes / num[cur].cap;
+    #####:  857:            double actual = ideal + r->op_contention_ns[cur];
+    #####:  858:            if (num[cur].t >= actual) r->attr_ns[DS_ATTR_COMPUTE] += runtime;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  859:            else { r->attr_ns[DS_ATTR_BANDWIDTH] += ideal; r->attr_ns[DS_ATTR_CONTENTION] += r->op_contention_ns[cur]; if (runtime > actual) r->attr_ns[DS_ATTR_RESIDUAL] += runtime - actual; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  860:        } else r->attr_ns[DS_ATTR_COMPUTE] += runtime;
+    #####:  861:        accounted += runtime;
+        -:  862:        /* predecessor: the dep that finished last */
+        -:  863:        int pred = -1;
+    #####:  864:        for (int d = 0; d < m->n_deps; d++) if (m->deps[d].to == cur && (pred < 0 || r->end_ns[m->deps[d].from] > r->end_ns[pred])) pred = m->deps[d].from;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed
+branch  7 never executed (fallthrough)
+    #####:  865:        double gap = r->start_ns[cur] - (pred >= 0 ? r->end_ns[pred] : 0);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  866:        if (gap > 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  867:            if (blocked[cur] == BLK_SLOT) r->attr_ns[DS_ATTR_SERIALIZATION] += gap;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  868:            else if (blocked[cur] == BLK_LAUNCHER) r->attr_ns[DS_ATTR_LAUNCH] += gap;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  869:            else r->attr_ns[DS_ATTR_RESIDUAL] += gap;
+    #####:  870:            accounted += gap;
+        -:  871:        }
+        -:  872:        cur = pred;
+        -:  873:    }
+    #####:  874:    for (int i = 0; i < nc; i++) r->critical_path[i] = chain[nc - 1 - i];
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  875:    r->n_critical = nc;
+    #####:  876:    double leftover = r->makespan_ns - accounted;
+    #####:  877:    if (fabs(leftover) > 1e-6) r->attr_ns[DS_ATTR_RESIDUAL] += leftover;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  878:
+        -:  879:    /* ---- energy ---- */
+    #####:  880:    if (m->has_energy && m->joules > 0 && strcmp(m->instrument, "none")) { r->energy_measured = 1; r->energy_j = m->joules; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  881:    else if (m->has_energy && m->power_w > 0 && m->energy_prov == DS_PROV_SYNTHETIC) { r->energy_synthetic = 1; r->energy_j = m->power_w * r->makespan_ns * 1e-9; r->prov_mask |= 1u << DS_PROV_SYNTHETIC; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  882:    r->synthetic = (r->prov_mask & (1u << DS_PROV_SYNTHETIC)) ? 1 : 0;
+    #####:  883:    r->status = DS_OK;
+    #####:  884:    return DS_OK;
+        -:  885:}
+        -:  886:
+        -:  887:#ifndef CUDAPP_MIGRATION_PENDING_C_TOOLS
+        -:  888:extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n) __attribute__((weak));
+        -:  889:
+        -:  890:static double om_f(const uint64_t *s, int i) {
+        -:  891:    double x;
+    #####:  892:    memcpy(&x, &s[i], 8);
+        -:  893:    return x;
+        -:  894:}
+        -:  895:
+function om_names called 0 returned 0% blocks executed 0%
+    #####:  896:static void om_names(const ds_model *m, const uint64_t *s, char *names, size_t cap) {
+    #####:  897:    names[0] = 0;
+        -:  898:    size_t L = 0;
+    #####:  899:    for (int b = 0; b < m->n_buf && L < cap - 8; b++) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  900:        if (!(s[6336 + b / 64] & (1ull << (b % 64)))) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  901:        snprintf(names + L, cap - L, "%s%s", L ? "," : "", m->buf[b].id);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  902:        L = strlen(names);
+        -:  903:    }
+    #####:  904:}
+        -:  905:
+function om_refuse called 0 returned 0% blocks executed 0%
+    #####:  906:static int om_refuse(const ds_model *m, const uint64_t *s, ds_result *r) {
+    #####:  907:    int why = (int)s[5], a = (int)s[6], b = (int)s[7];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  908:    double fa = om_f(s, 8), fb = om_f(s, 9);
+        -:  909:    char msg[256];
+    #####:  910:    if (why == 2) return refuse(r, DS_REFUSED_CYCLE, "dependency cycle%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  911:    if (why == 3 && a >= 0 && a < m->n_buf && b >= 0 && b < m->n_res)
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  912:        return refuse(r, DS_REFUSED_CAPACITY, "buffer %s alone exceeds capacity %s", m->buf[a].id, m->res[b].id);
+call    0 never executed
+    #####:  913:    if (why == 4) return refuse(r, DS_REFUSED_UNSUPPORTED, "no op can make progress (slots=0 or all blocked)%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  914:    if (why == 5) return refuse(r, DS_REFUSED_UNSUPPORTED, "scheduler did not converge%s%s", "", "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  915:    if (why == 6 && a >= 0 && a < m->n_buf) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  916:        snprintf(msg, sizeof msg, "inverted lifetime for buffer %s: first=%s start_ns=%.9g last=%s end_ns=%.9g",
+    #####:  917:                 m->buf[a].id, endpoint_name(m, m->buf[a].first), fa, endpoint_name(m, m->buf[a].last), fb);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  918:        return refuse_msg(r, DS_REFUSED_LIFETIME, msg);
+call    0 never executed
+        -:  919:    }
+    #####:  920:    if (why == 7 && a >= 0 && a < m->n_res) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  921:        snprintf(msg, sizeof msg, "capacity %s live bytes went negative (%.9g at t=%.9g); refusing the certificate",
+    #####:  922:                 m->res[a].id, fa, fb);
+call    0 never executed
+    #####:  923:        return refuse_msg(r, DS_REFUSED_LIFETIME, msg);
+call    0 never executed
+        -:  924:    }
+    #####:  925:    if (why == 8 && a >= 0 && a < m->n_res) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  926:        char names[160], what[200];
+    #####:  927:        om_names(m, s, names, sizeof names);
+call    0 never executed
+        -:  928:        snprintf(what, sizeof what, "%.0f B live at t=%.0f ns (%s) exceeds", fa, fb, names);
+    #####:  929:        return refuse(r, DS_REFUSED_CAPACITY, "%s %s", what, m->res[a].id);
+call    0 never executed
+        -:  930:    }
+    #####:  931:    return refuse(r, DS_REFUSED_UNSUPPORTED, "omega refusal %s%s", "", "");
+call    0 never executed
+        -:  932:}
+        -:  933:
+function om_fill called 0 returned 0% blocks executed 0%
+    #####:  934:static int om_fill(const ds_model *m, const uint64_t *s, ds_result *r) {
+    #####:  935:    if ((int)s[4] != DS_OK) return om_refuse(m, s, r);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  936:    memset(r, 0, sizeof *r);
+        -:  937:    r->status = DS_OK;
+    #####:  938:    r->makespan_ns = om_f(s, 3);
+    #####:  939:    r->total_bytes = om_f(s, 15);
+    #####:  940:    r->total_busy_ns = om_f(s, 16);
+    #####:  941:    r->total_launch_ns = om_f(s, 17);
+    #####:  942:    r->bound_ns = om_f(s, 19);
+    #####:  943:    r->bound_critical_path_ns = om_f(s, 20);
+    #####:  944:    r->n_critical = (int)s[21];
+    #####:  945:    r->prov_mask = (uint32_t)s[11];
+    #####:  946:    r->energy_measured = (int)s[22];
+    #####:  947:    r->energy_synthetic = (int)s[23];
+    #####:  948:    r->energy_j = om_f(s, 24);
+    #####:  949:    r->synthetic = (int)s[26];
+    #####:  950:    r->n_ops = m->n_ops;
+    #####:  951:    for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####:  952:        r->start_ns[i] = om_f(s, 4512 + i);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  953:        r->end_ns[i] = om_f(s, 4768 + i);
+    #####:  954:        r->ready_ns[i] = om_f(s, 5024 + i);
+    #####:  955:        r->op_contention_ns[i] = om_f(s, 5536 + i);
+    #####:  956:        r->op_floor_ns[i] = om_f(s, 5280 + i);
+    #####:  957:        if (i < r->n_critical) r->critical_path[i] = (int)s[6080 + i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  958:    }
+    #####:  959:    for (int i = 0; i < DS_ATTR_N; i++) r->attr_ns[i] = om_f(s, 5824 + i);
+branch  0 never executed
+branch  1 never executed
+    #####:  960:    for (int i = 0; i < m->n_res; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  961:        r->bound_resource_ns[i] = om_f(s, 5792 + i);
+    #####:  962:        r->peak_live_bytes[i] = om_f(s, 6344 + i);
+    #####:  963:        r->peak_live_at_ns[i] = om_f(s, 6376 + i);
+        -:  964:    }
+        -:  965:    return DS_OK;
+        -:  966:}
+        -:  967:
+        -:  968:#endif
+function ds_eval called 0 returned 0% blocks executed 0%
+    #####:  969:int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
+        -:  970:#if defined(CUDAPP_MIGRATION_PENDING_C_TOOLS)
+        -:  971:    return ds_eval_c(m, o, r);
+        -:  972:#else
+    #####:  973:    if (!omega_dag_eval) return ds_eval_c(m, o, r);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  974:    memset(r, 0, sizeof *r);
+    #####:  975:    uint64_t model[8192], scratch[8192], result = 0;
+    #####:  976:    int rc = ds_resolved_pack(m, o, model, r);
+call    0 never executed
+    #####:  977:    if (rc) return rc;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  978:    memset(scratch, 0, sizeof scratch);
+    #####:  979:    if (omega_dag_eval(&result, model, 8192, scratch, 8192))
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  980:        return refuse(r, DS_REFUSED_UNSUPPORTED, "omega trap%s%s", "", "");
+call    0 never executed
+    #####:  981:    return om_fill(m, scratch, r);
+call    0 never executed
+        -:  982:#endif
+        -:  983:}
+        -:  984:
+function ds_eval_interval called 0 returned 0% blocks executed 0%
+    #####:  985:int ds_eval_interval(const ds_model *m, const ds_opts *o, ds_result *nominal, double *lo_ns, double *hi_ns) {
+    #####:  986:    ds_opts x = *o; x.mode = 0;
+    #####:  987:    int rc = ds_eval(m, &x, nominal);
+call    0 never executed
+    #####:  988:    *lo_ns = *hi_ns = 0;
+    #####:  989:    if (rc) return rc;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  990:    ds_result tmp;
+    #####:  991:    x.mode = +1; if (ds_eval(m, &x, &tmp) == DS_OK) *lo_ns = tmp.makespan_ns;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  992:    x.mode = -1; if (ds_eval(m, &x, &tmp) == DS_OK) *hi_ns = tmp.makespan_ns;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  993:    return rc;
+        -:  994:}
+        -:  995:
+function ds_counterfactual called 0 returned 0% blocks executed 0%
+    #####:  996:double ds_counterfactual(const ds_model *m, const ds_opts *o, int res_index) {
+    #####:  997:    if (res_index < 0 || res_index >= m->n_res) return -DS_REFUSED_UNSUPPORTED;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  998:    ds_model *c = malloc(sizeof *c);
+    #####:  999:    if (!c) return -DS_REFUSED_UNSUPPORTED;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####: 1000:    *c = *m;
+        -: 1001:    ds_resource *r = &c->res[res_index];
+    #####: 1002:    switch (r->kind) {
+branch  0 never executed
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+branch  4 never executed
+    #####: 1003:    case DS_RES_BANDWIDTH: r->cap *= 2; r->lo *= 2; r->hi *= 2; break;
+    #####: 1004:    case DS_RES_COMPUTE: r->slots *= 2; break;
+    #####: 1005:    case DS_RES_LAUNCH: for (int i = 0; i < c->n_ops; i++) if (c->ops[i].launcher == res_index) c->ops[i].launch_ns = 0; break;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+    #####: 1006:    case DS_RES_CAPACITY: r->cap *= 2; break;
+        -: 1007:    }
+    #####: 1008:    ds_result res; ds_opts x = *o; x.mode = 0;
+    #####: 1009:    int rc = ds_eval(c, &x, &res);
+call    0 never executed
+    #####: 1010:    free(c);
+    #####: 1011:    return rc == DS_OK ? res.makespan_ns : -(double)rc;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -: 1012:}
+        -: 1013:
+        -: 1014:/* ---------------------------------------------------------------- diff */
+        -: 1015:
+function in_changed called 0 returned 0% blocks executed 0%
+    #####: 1016:static int in_changed(const char *list, const char *id) {
+    #####: 1017:    if (!list) return 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1018:    const char *p = list; size_t L = strlen(id);
+    #####: 1019:    while (*p) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####: 1020:        const char *q = strchr(p, ','); size_t n = q ? (size_t)(q - p) : strlen(p);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1021:        if (n == L && !strncmp(p, id, L)) return 1;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####: 1022:        if (!q) break;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1023:        p = q + 1;
+        -: 1024:    }
+        -: 1025:    return 0;
+        -: 1026:}
+        -: 1027:
+function ds_diff_models called 0 returned 0% blocks executed 0%
+    #####: 1028:int ds_diff_models(const ds_model *b, const ds_model *t, const ds_opts *o, ds_diff *d) {
+        -: 1029:    memset(d, 0, sizeof *d);
+    #####: 1030:    for (int i = 0; i < t->n_ops; i++) if (ds_find_op(b, t->ops[i].id) < 0) d->n_added++;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+    #####: 1031:    for (int i = 0; i < b->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed
+    #####: 1032:        int j = ds_find_op(t, b->ops[i].id);
+    #####: 1033:        if (j >= 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1034:            d->n_kept++;
+    #####: 1035:            if (b->ops[i].t_ns != t->ops[j].t_ns || b->ops[i].bytes != t->ops[j].bytes)
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####: 1036:                snprintf(d->reason, sizeof d->reason, "op %s kept but its demand changed; trace conservation broken", b->ops[i].id);
+    #####: 1037:            continue;
+        -: 1038:        }
+    #####: 1039:        d->n_removed++;
+        -: 1040:        /* find its removed record(s) */
+        -: 1041:        int found = 0; const ds_removed *rec = NULL;
+    #####: 1042:        for (int k = 0; k < t->n_removed; k++) if (!strcmp(t->removed[k].op, b->ops[i].id)) { found++; rec = &t->removed[k]; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####: 1043:        if (found == 0) { d->required_removed = 1; snprintf(d->reason, sizeof d->reason, "op %s vanished without a removed record", b->ops[i].id); return DS_REFUSED_REMOVED_REQUIRED; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1044:        if (found > 1) { d->double_counted = 1; snprintf(d->reason, sizeof d->reason, "op %s removed %d times (double counted)", b->ops[i].id, found); return DS_REFUSED_REMOVED_REQUIRED; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -: 1045:        /* consumers of the removed op in the baseline that still exist */
+        -: 1046:        int has_consumer = 0;
+    #####: 1047:        for (int k = 0; k < b->n_deps; k++) if (b->deps[k].from == i && ds_find_op(t, b->ops[b->deps[k].to].id) >= 0) has_consumer = 1;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+branch  5 never executed (fallthrough)
+        -: 1048:        int ok = 1;
+    #####: 1049:        switch (rec->reason) {
+branch  0 never executed
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+branch  4 never executed
+branch  5 never executed
+    #####: 1050:        case DS_RM_ELIMINATED: if (has_consumer && !rec->proof[0]) ok = 0; break;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+    #####: 1051:        case DS_RM_REUSED: case DS_RM_LOOKUP: case DS_RM_MOVED: if (!rec->ref[0] || ds_find_op(t, rec->ref) < 0) ok = 0; break;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+    #####: 1052:        case DS_RM_UNCHANGED_DEP: if (!rec->ref[0] || ds_find_op(b, rec->ref) < 0 || in_changed(o ? o->changed : NULL, rec->ref)) ok = 0; break;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+call    6 never executed
+branch  7 never executed
+branch  8 never executed
+    #####: 1053:        case DS_RM_DEFERRED: if (has_consumer) ok = 0; break;
+branch  0 never executed
+branch  1 never executed
+    #####: 1054:        case DS_RM_SHARED:
+    #####: 1055:            if (!rec->ref[0] || ds_find_op(t, rec->ref) < 0) ok = 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####: 1056:            for (int k = 0; k < t->n_removed; k++) if (!strcmp(t->removed[k].op, rec->ref)) { d->double_counted = 1; ok = 0; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+        -: 1057:            break;
+        -: 1058:        }
+    #####: 1059:        if (!ok) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1060:            d->required_removed = 1;
+    #####: 1061:            snprintf(d->reason, sizeof d->reason, "op %s: removal reason %d not supported by its evidence (ref=%s proof=%s changed=%s)",
+    #####: 1062:                     b->ops[i].id, rec->reason, rec->ref, rec->proof, o && o->changed ? o->changed : "");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####: 1063:            return DS_REFUSED_REMOVED_REQUIRED;
+        -: 1064:        }
+    #####: 1065:        double w = b->ops[i].t_ns + b->ops[i].launch_ns;
+    #####: 1066:        if (b->ops[i].bytes > 0 && b->ops[i].bw >= 0) { double tb = b->ops[i].bytes / (b->res[b->ops[i].bw].cap * 1e-9); if (tb > b->ops[i].t_ns) w = tb + b->ops[i].launch_ns; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####: 1067:        d->removed_ns[rec->reason] += w;
+        -: 1068:    }
+        -: 1069:    /* removed records that name ops never in the baseline are fabricated savings */
+    #####: 1070:    for (int k = 0; k < t->n_removed; k++) if (ds_find_op(b, t->removed[k].op) < 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####: 1071:        d->double_counted = 1;
+    #####: 1072:        snprintf(d->reason, sizeof d->reason, "removed record for %s, which was never in the baseline", t->removed[k].op);
+    #####: 1073:        return DS_REFUSED_REMOVED_REQUIRED;
+        -: 1074:    }
+        -: 1075:    return DS_OK;
+        -: 1076:}
+        -:    0:Source:/usr/include/aarch64-linux-gnu/bits/string_fortified.h
+        -:    0:Graph:build/dagsim-parse/parser.gcno
+        -:    0:Data:build/dagsim-parse/parser.gcda
+        -:    0:Runs:9
+        -:    1:/* Copyright (C) 2004-2024 Free Software Foundation, Inc.
+        -:    2:   This file is part of the GNU C Library.
+        -:    3:
+        -:    4:   The GNU C Library is free software; you can redistribute it and/or
+        -:    5:   modify it under the terms of the GNU Lesser General Public
+        -:    6:   License as published by the Free Software Foundation; either
+        -:    7:   version 2.1 of the License, or (at your option) any later version.
+        -:    8:
+        -:    9:   The GNU C Library is distributed in the hope that it will be useful,
+        -:   10:   but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   11:   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+        -:   12:   Lesser General Public License for more details.
+        -:   13:
+        -:   14:   You should have received a copy of the GNU Lesser General Public
+        -:   15:   License along with the GNU C Library; if not, see
+        -:   16:   <https://www.gnu.org/licenses/>.  */
+        -:   17:
+        -:   18:#ifndef _BITS_STRING_FORTIFIED_H
+        -:   19:#define _BITS_STRING_FORTIFIED_H 1
+        -:   20:
+        -:   21:#ifndef _STRING_H
+        -:   22:# error "Never use <bits/string_fortified.h> directly; include <string.h> instead."
+        -:   23:#endif
+        -:   24:
+        -:   25:__fortify_function void *
+        -:   26:__NTH (memcpy (void *__restrict __dest, const void *__restrict __src,
+        -:   27:	       size_t __len))
+        -:   28:{
+    3585*:   29:  return __builtin___memcpy_chk (__dest, __src, __len,
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+call    6 returned 3431
+call    7 returned 154
+        -:   30:				 __glibc_objsize0 (__dest));
+        -:   31:}
+        -:   32:
+        -:   33:__fortify_function void *
+        -:   34:__NTH (memmove (void *__dest, const void *__src, size_t __len))
+        -:   35:{
+        -:   36:  return __builtin___memmove_chk (__dest, __src, __len,
+        -:   37:				  __glibc_objsize0 (__dest));
+        -:   38:}
+        -:   39:
+        -:   40:#ifdef __USE_GNU
+        -:   41:__fortify_function void *
+        -:   42:__NTH (mempcpy (void *__restrict __dest, const void *__restrict __src,
+        -:   43:		size_t __len))
+        -:   44:{
+        -:   45:  return __builtin___mempcpy_chk (__dest, __src, __len,
+        -:   46:				  __glibc_objsize0 (__dest));
+        -:   47:}
+        -:   48:#endif
+        -:   49:
+        -:   50:
+        -:   51:/* The first two tests here help to catch a somewhat common problem
+        -:   52:   where the second and third parameter are transposed.  This is
+        -:   53:   especially problematic if the intended fill value is zero.  In this
+        -:   54:   case no work is done at all.  We detect these problems by referring
+        -:   55:   non-existing functions.  */
+        -:   56:__fortify_function void *
+        -:   57:__NTH (memset (void *__dest, int __ch, size_t __len))
+        -:   58:{
+    3445*:   59:  return __builtin___memset_chk (__dest, __ch, __len,
+call    0 never executed
+call    1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+call    8 never executed
+branch  9 never executed (fallthrough)
+branch 10 never executed
+branch 11 never executed (fallthrough)
+branch 12 never executed
+branch 13 taken 3445 (fallthrough)
+branch 14 taken 0
+        -:   60:				 __glibc_objsize0 (__dest));
+        -:   61:}
+        -:   62:
+        -:   63:#ifdef __USE_MISC
+        -:   64:# include <bits/strings_fortified.h>
+        -:   65:
+        -:   66:void __explicit_bzero_chk (void *__dest, size_t __len, size_t __destlen)
+        -:   67:  __THROW __nonnull ((1)) __fortified_attr_access (__write_only__, 1, 2);
+        -:   68:
+        -:   69:__fortify_function void
+        -:   70:__NTH (explicit_bzero (void *__dest, size_t __len))
+        -:   71:{
+        -:   72:  __explicit_bzero_chk (__dest, __len, __glibc_objsize0 (__dest));
+        -:   73:}
+        -:   74:#endif
+        -:   75:
+        -:   76:__fortify_function char *
+        -:   77:__NTH (strcpy (char *__restrict __dest, const char *__restrict __src))
+        -:   78:{
+        -:   79:  return __builtin___strcpy_chk (__dest, __src, __glibc_objsize (__dest));
+        -:   80:}
+        -:   81:
+        -:   82:#ifdef __USE_XOPEN2K8
+        -:   83:__fortify_function char *
+        -:   84:__NTH (stpcpy (char *__restrict __dest, const char *__restrict __src))
+        -:   85:{
+        -:   86:  return __builtin___stpcpy_chk (__dest, __src, __glibc_objsize (__dest));
+        -:   87:}
+        -:   88:#endif
+        -:   89:
+        -:   90:
+        -:   91:__fortify_function char *
+        -:   92:__NTH (strncpy (char *__restrict __dest, const char *__restrict __src,
+        -:   93:		size_t __len))
+        -:   94:{
+        -:   95:  return __builtin___strncpy_chk (__dest, __src, __len,
+        -:   96:				  __glibc_objsize (__dest));
+        -:   97:}
+        -:   98:
+        -:   99:#ifdef __USE_XOPEN2K8
+        -:  100:# if __GNUC_PREREQ (4, 7) || __glibc_clang_prereq (2, 6)
+        -:  101:__fortify_function char *
+        -:  102:__NTH (stpncpy (char *__dest, const char *__src, size_t __n))
+        -:  103:{
+        -:  104:  return __builtin___stpncpy_chk (__dest, __src, __n,
+        -:  105:				  __glibc_objsize (__dest));
+        -:  106:}
+        -:  107:# else
+        -:  108:extern char *__stpncpy_chk (char *__dest, const char *__src, size_t __n,
+        -:  109:			    size_t __destlen) __THROW
+        -:  110:  __fortified_attr_access (__write_only__, 1, 3)
+        -:  111:  __attr_access ((__read_only__, 2));
+        -:  112:extern char *__REDIRECT_NTH (__stpncpy_alias, (char *__dest, const char *__src,
+        -:  113:					       size_t __n), stpncpy);
+        -:  114:
+        -:  115:__fortify_function char *
+        -:  116:__NTH (stpncpy (char *__dest, const char *__src, size_t __n))
+        -:  117:{
+        -:  118:  if (__bos (__dest) != (size_t) -1
+        -:  119:      && (!__builtin_constant_p (__n) || __n > __bos (__dest)))
+        -:  120:    return __stpncpy_chk (__dest, __src, __n, __bos (__dest));
+        -:  121:  return __stpncpy_alias (__dest, __src, __n);
+        -:  122:}
+        -:  123:# endif
+        -:  124:#endif
+        -:  125:
+        -:  126:
+        -:  127:__fortify_function char *
+        -:  128:__NTH (strcat (char *__restrict __dest, const char *__restrict __src))
+        -:  129:{
+        -:  130:  return __builtin___strcat_chk (__dest, __src, __glibc_objsize (__dest));
+        -:  131:}
+        -:  132:
+        -:  133:
+        -:  134:__fortify_function char *
+        -:  135:__NTH (strncat (char *__restrict __dest, const char *__restrict __src,
+        -:  136:		size_t __len))
+        -:  137:{
+        -:  138:  return __builtin___strncat_chk (__dest, __src, __len,
+        -:  139:				  __glibc_objsize (__dest));
+        -:  140:}
+        -:  141:
+        -:  142:#ifdef __USE_MISC
+        -:  143:extern size_t __strlcpy_chk (char *__dest, const char *__src, size_t __n,
+        -:  144:			     size_t __destlen) __THROW;
+        -:  145:extern size_t __REDIRECT_NTH (__strlcpy_alias,
+        -:  146:			      (char *__dest, const char *__src, size_t __n),
+        -:  147:			      strlcpy);
+        -:  148:
+        -:  149:__fortify_function size_t
+        -:  150:__NTH (strlcpy (char *__restrict __dest, const char *__restrict __src,
+        -:  151:		size_t __n))
+        -:  152:{
+        -:  153:  if (__glibc_objsize (__dest) != (size_t) -1
+        -:  154:      && (!__builtin_constant_p (__n > __glibc_objsize (__dest))
+        -:  155:	  || __n > __glibc_objsize (__dest)))
+        -:  156:    return __strlcpy_chk (__dest, __src, __n, __glibc_objsize (__dest));
+        -:  157:  return __strlcpy_alias (__dest, __src, __n);
+        -:  158:}
+        -:  159:
+        -:  160:extern size_t __strlcat_chk (char *__dest, const char *__src, size_t __n,
+        -:  161:			     size_t __destlen) __THROW;
+        -:  162:extern size_t __REDIRECT_NTH (__strlcat_alias,
+        -:  163:			      (char *__dest, const char *__src, size_t __n),
+        -:  164:			      strlcat);
+        -:  165:
+        -:  166:__fortify_function size_t
+        -:  167:__NTH (strlcat (char *__restrict __dest, const char *__restrict __src,
+        -:  168:		size_t __n))
+        -:  169:{
+        -:  170:  if (__glibc_objsize (__dest) != (size_t) -1
+        -:  171:      && (!__builtin_constant_p (__n > __glibc_objsize (__dest))
+        -:  172:	  || __n > __glibc_objsize (__dest)))
+        -:  173:    return __strlcat_chk (__dest, __src, __n, __glibc_objsize (__dest));
+        -:  174:  return __strlcat_alias (__dest, __src, __n);
+        -:  175:}
+        -:  176:#endif /* __USE_MISC */
+        -:  177:
+        -:  178:#endif /* bits/string_fortified.h */
+        -:    0:Source:/usr/include/aarch64-linux-gnu/bits/stdio2.h
+        -:    0:Graph:build/dagsim-parse/parser.gcno
+        -:    0:Data:build/dagsim-parse/parser.gcda
+        -:    0:Runs:9
+        -:    1:/* Checking macros for stdio functions.
+        -:    2:   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+        -:    3:   This file is part of the GNU C Library.
+        -:    4:
+        -:    5:   The GNU C Library is free software; you can redistribute it and/or
+        -:    6:   modify it under the terms of the GNU Lesser General Public
+        -:    7:   License as published by the Free Software Foundation; either
+        -:    8:   version 2.1 of the License, or (at your option) any later version.
+        -:    9:
+        -:   10:   The GNU C Library is distributed in the hope that it will be useful,
+        -:   11:   but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   12:   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+        -:   13:   Lesser General Public License for more details.
+        -:   14:
+        -:   15:   You should have received a copy of the GNU Lesser General Public
+        -:   16:   License along with the GNU C Library; if not, see
+        -:   17:   <https://www.gnu.org/licenses/>.  */
+        -:   18:
+        -:   19:#ifndef _BITS_STDIO2_H
+        -:   20:#define _BITS_STDIO2_H 1
+        -:   21:
+        -:   22:#ifndef _STDIO_H
+        -:   23:# error "Never include <bits/stdio2.h> directly; use <stdio.h> instead."
+        -:   24:#endif
+        -:   25:
+        -:   26:#ifdef __va_arg_pack
+        -:   27:__fortify_function int
+        -:   28:__NTH (sprintf (char *__restrict __s, const char *__restrict __fmt, ...))
+        -:   29:{
+        -:   30:  return __builtin___sprintf_chk (__s, __USE_FORTIFY_LEVEL - 1,
+        -:   31:				  __glibc_objsize (__s), __fmt,
+        -:   32:				  __va_arg_pack ());
+        -:   33:}
+        -:   34:#elif !defined __cplusplus
+        -:   35:# define sprintf(str, ...) \
+        -:   36:  __builtin___sprintf_chk (str, __USE_FORTIFY_LEVEL - 1,		      \
+        -:   37:			   __glibc_objsize (str), __VA_ARGS__)
+        -:   38:#endif
+        -:   39:
+        -:   40:__fortify_function int
+        -:   41:__NTH (vsprintf (char *__restrict __s, const char *__restrict __fmt,
+        -:   42:		 __gnuc_va_list __ap))
+        -:   43:{
+        -:   44:  return __builtin___vsprintf_chk (__s, __USE_FORTIFY_LEVEL - 1,
+        -:   45:				   __glibc_objsize (__s), __fmt, __ap);
+        -:   46:}
+        -:   47:
+        -:   48:#if defined __USE_ISOC99 || defined __USE_UNIX98
+        -:   49:# ifdef __va_arg_pack
+        -:   50:__fortify_function int
+        -:   51:__NTH (snprintf (char *__restrict __s, size_t __n,
+        -:   52:		 const char *__restrict __fmt, ...))
+        -:   53:{
+    2113*:   54:  return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+call    5 never executed
+call    6 never executed
+        -:   55:				   __glibc_objsize (__s), __fmt,
+        -:   56:				   __va_arg_pack ());
+        -:   57:}
+        -:   58:# elif !defined __cplusplus
+        -:   59:#  define snprintf(str, len, ...) \
+        -:   60:  __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1,		      \
+        -:   61:			    __glibc_objsize (str), __VA_ARGS__)
+        -:   62:# endif
+        -:   63:
+        -:   64:__fortify_function int
+        -:   65:__NTH (vsnprintf (char *__restrict __s, size_t __n,
+        -:   66:		  const char *__restrict __fmt, __gnuc_va_list __ap))
+        -:   67:{
+        -:   68:  return __builtin___vsnprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+        -:   69:				    __glibc_objsize (__s), __fmt, __ap);
+        -:   70:}
+        -:   71:
+        -:   72:#endif
+        -:   73:
+        -:   74:#if __USE_FORTIFY_LEVEL > 1
+        -:   75:# ifdef __va_arg_pack
+        -:   76:__fortify_function __nonnull ((1)) int
+        -:   77:fprintf (FILE *__restrict __stream, const char *__restrict __fmt, ...)
+        -:   78:{
+        -:   79:  return __fprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt,
+        -:   80:			__va_arg_pack ());
+        -:   81:}
+        -:   82:
+        -:   83:__fortify_function int
+        -:   84:printf (const char *__restrict __fmt, ...)
+        -:   85:{
+        -:   86:  return __printf_chk (__USE_FORTIFY_LEVEL - 1, __fmt, __va_arg_pack ());
+        -:   87:}
+        -:   88:# elif !defined __cplusplus
+        -:   89:#  define printf(...) \
+        -:   90:  __printf_chk (__USE_FORTIFY_LEVEL - 1, __VA_ARGS__)
+        -:   91:#  define fprintf(stream, ...) \
+        -:   92:  __fprintf_chk (stream, __USE_FORTIFY_LEVEL - 1, __VA_ARGS__)
+        -:   93:# endif
+        -:   94:
+        -:   95:__fortify_function int
+        -:   96:vprintf (const char *__restrict __fmt, __gnuc_va_list __ap)
+        -:   97:{
+        -:   98:#ifdef __USE_EXTERN_INLINES
+        -:   99:  return __vfprintf_chk (stdout, __USE_FORTIFY_LEVEL - 1, __fmt, __ap);
+        -:  100:#else
+        -:  101:  return __vprintf_chk (__USE_FORTIFY_LEVEL - 1, __fmt, __ap);
+        -:  102:#endif
+        -:  103:}
+        -:  104:
+        -:  105:__fortify_function __nonnull ((1)) int
+        -:  106:vfprintf (FILE *__restrict __stream,
+        -:  107:	  const char *__restrict __fmt, __gnuc_va_list __ap)
+        -:  108:{
+        -:  109:  return __vfprintf_chk (__stream, __USE_FORTIFY_LEVEL - 1, __fmt, __ap);
+        -:  110:}
+        -:  111:
+        -:  112:# ifdef __USE_XOPEN2K8
+        -:  113:#  ifdef __va_arg_pack
+        -:  114:__fortify_function int
+        -:  115:dprintf (int __fd, const char *__restrict __fmt, ...)
+        -:  116:{
+        -:  117:  return __dprintf_chk (__fd, __USE_FORTIFY_LEVEL - 1, __fmt,
+        -:  118:			__va_arg_pack ());
+        -:  119:}
+        -:  120:#  elif !defined __cplusplus
+        -:  121:#   define dprintf(fd, ...) \
+        -:  122:  __dprintf_chk (fd, __USE_FORTIFY_LEVEL - 1, __VA_ARGS__)
+        -:  123:#  endif
+        -:  124:
+        -:  125:__fortify_function int
+        -:  126:vdprintf (int __fd, const char *__restrict __fmt, __gnuc_va_list __ap)
+        -:  127:{
+        -:  128:  return __vdprintf_chk (__fd, __USE_FORTIFY_LEVEL - 1, __fmt, __ap);
+        -:  129:}
+        -:  130:# endif
+        -:  131:
+        -:  132:# ifdef __USE_GNU
+        -:  133:#  ifdef __va_arg_pack
+        -:  134:__fortify_function int
+        -:  135:__NTH (asprintf (char **__restrict __ptr, const char *__restrict __fmt, ...))
+        -:  136:{
+        -:  137:  return __asprintf_chk (__ptr, __USE_FORTIFY_LEVEL - 1, __fmt,
+        -:  138:			 __va_arg_pack ());
+        -:  139:}
+        -:  140:
+        -:  141:__fortify_function int
+        -:  142:__NTH (__asprintf (char **__restrict __ptr, const char *__restrict __fmt,
+        -:  143:		   ...))
+        -:  144:{
+        -:  145:  return __asprintf_chk (__ptr, __USE_FORTIFY_LEVEL - 1, __fmt,
+        -:  146:			 __va_arg_pack ());
+        -:  147:}
+        -:  148:
+        -:  149:__fortify_function int
+        -:  150:__NTH (obstack_printf (struct obstack *__restrict __obstack,
+        -:  151:		       const char *__restrict __fmt, ...))
+        -:  152:{
+        -:  153:  return __obstack_printf_chk (__obstack, __USE_FORTIFY_LEVEL - 1, __fmt,
+        -:  154:			       __va_arg_pack ());
+        -:  155:}
+        -:  156:#  elif !defined __cplusplus
+        -:  157:#   define asprintf(ptr, ...) \
+        -:  158:  __asprintf_chk (ptr, __USE_FORTIFY_LEVEL - 1, __VA_ARGS__)
+        -:  159:#   define __asprintf(ptr, ...) \
+        -:  160:  __asprintf_chk (ptr, __USE_FORTIFY_LEVEL - 1, __VA_ARGS__)
+        -:  161:#   define obstack_printf(obstack, ...) \
+        -:  162:  __obstack_printf_chk (obstack, __USE_FORTIFY_LEVEL - 1, __VA_ARGS__)
+        -:  163:#  endif
+        -:  164:
+        -:  165:__fortify_function int
+        -:  166:__NTH (vasprintf (char **__restrict __ptr, const char *__restrict __fmt,
+        -:  167:		  __gnuc_va_list __ap))
+        -:  168:{
+        -:  169:  return __vasprintf_chk (__ptr, __USE_FORTIFY_LEVEL - 1, __fmt, __ap);
+        -:  170:}
+        -:  171:
+        -:  172:__fortify_function int
+        -:  173:__NTH (obstack_vprintf (struct obstack *__restrict __obstack,
+        -:  174:			const char *__restrict __fmt, __gnuc_va_list __ap))
+        -:  175:{
+        -:  176:  return __obstack_vprintf_chk (__obstack, __USE_FORTIFY_LEVEL - 1, __fmt,
+        -:  177:				__ap);
+        -:  178:}
+        -:  179:
+        -:  180:# endif
+        -:  181:
+        -:  182:#endif
+        -:  183:
+        -:  184:#if __GLIBC_USE (DEPRECATED_GETS)
+        -:  185:__fortify_function __wur char *
+        -:  186:gets (char *__str)
+        -:  187:{
+        -:  188:  if (__glibc_objsize (__str) != (size_t) -1)
+        -:  189:    return __gets_chk (__str, __glibc_objsize (__str));
+        -:  190:  return __gets_warn (__str);
+        -:  191:}
+        -:  192:#endif
+        -:  193:
+        -:  194:__fortify_function __wur __fortified_attr_access (__write_only__, 1, 2)
+        -:  195:__nonnull ((3)) char *
+        -:  196:fgets (char *__restrict __s, int __n, FILE *__restrict __stream)
+        -:  197:{
+        -:  198:  size_t sz = __glibc_objsize (__s);
+        -:  199:  if (__glibc_safe_or_unknown_len (__n, sizeof (char), sz))
+        -:  200:    return __fgets_alias (__s, __n, __stream);
+        -:  201:  if (__glibc_unsafe_len (__n, sizeof (char), sz))
+        -:  202:    return __fgets_chk_warn (__s, sz, __n, __stream);
+        -:  203:  return __fgets_chk (__s, sz, __n, __stream);
+        -:  204:}
+        -:  205:
+        -:  206:__fortify_function __wur __nonnull ((4)) size_t
+        -:  207:fread (void *__restrict __ptr, size_t __size, size_t __n,
+        -:  208:       FILE *__restrict __stream)
+        -:  209:{
+    #####:  210:  size_t sz = __glibc_objsize0 (__ptr);
+    #####:  211:  if (__glibc_safe_or_unknown_len (__n, __size, sz))
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  212:    return __fread_alias (__ptr, __size, __n, __stream);
+call    0 never executed
+        -:  213:  if (__glibc_unsafe_len (__n, __size, sz))
+    #####:  214:    return __fread_chk_warn (__ptr, sz, __size, __n, __stream);
+call    0 never executed
+    #####:  215:  return __fread_chk (__ptr, sz, __size, __n, __stream);
+call    0 never executed
+        -:  216:}
+        -:  217:
+        -:  218:#ifdef __USE_GNU
+        -:  219:__fortify_function __wur __fortified_attr_access (__write_only__, 1, 2)
+        -:  220:__nonnull ((3)) char *
+        -:  221:fgets_unlocked (char *__restrict __s, int __n, FILE *__restrict __stream)
+        -:  222:{
+        -:  223:  size_t sz = __glibc_objsize (__s);
+        -:  224:  if (__glibc_safe_or_unknown_len (__n, sizeof (char), sz))
+        -:  225:    return __fgets_unlocked_alias (__s, __n, __stream);
+        -:  226:  if (__glibc_unsafe_len (__n, sizeof (char), sz))
+        -:  227:    return __fgets_unlocked_chk_warn (__s, sz, __n, __stream);
+        -:  228:  return __fgets_unlocked_chk (__s, sz, __n, __stream);
+        -:  229:}
+        -:  230:#endif
+        -:  231:
+        -:  232:#ifdef __USE_MISC
+        -:  233:# undef fread_unlocked
+        -:  234:__fortify_function __wur __nonnull ((4)) size_t
+        -:  235:fread_unlocked (void *__restrict __ptr, size_t __size, size_t __n,
+        -:  236:		FILE *__restrict __stream)
+        -:  237:{
+        -:  238:  size_t sz = __glibc_objsize0 (__ptr);
+        -:  239:  if (__glibc_safe_or_unknown_len (__n, __size, sz))
+        -:  240:    {
+        -:  241:# ifdef __USE_EXTERN_INLINES
+        -:  242:      if (__builtin_constant_p (__size)
+        -:  243:	  && __builtin_constant_p (__n)
+        -:  244:	  && (__size | __n) < (((size_t) 1) << (8 * sizeof (size_t) / 2))
+        -:  245:	  && __size * __n <= 8)
+        -:  246:	{
+        -:  247:	  size_t __cnt = __size * __n;
+        -:  248:	  char *__cptr = (char *) __ptr;
+        -:  249:	  if (__cnt == 0)
+        -:  250:	    return 0;
+        -:  251:
+        -:  252:	  for (; __cnt > 0; --__cnt)
+        -:  253:	    {
+        -:  254:	      int __c = getc_unlocked (__stream);
+        -:  255:	      if (__c == EOF)
+        -:  256:		break;
+        -:  257:	      *__cptr++ = __c;
+        -:  258:	    }
+        -:  259:	  return (__cptr - (char *) __ptr) / __size;
+        -:  260:	}
+        -:  261:# endif
+        -:  262:      return __fread_unlocked_alias (__ptr, __size, __n, __stream);
+        -:  263:    }
+        -:  264:  if (__glibc_unsafe_len (__n, __size, sz))
+        -:  265:    return __fread_unlocked_chk_warn (__ptr, sz, __size, __n, __stream);
+        -:  266:  return __fread_unlocked_chk (__ptr, sz, __size, __n, __stream);
+        -:  267:
+        -:  268:}
+        -:  269:#endif
+        -:  270:
+        -:  271:#endif /* bits/stdio2.h.  */
+        -:    0:Source:tools/dagsim/dagsim_format.h
+        -:    0:Graph:build/dagsim-parse/parser.gcno
+        -:    0:Data:build/dagsim-parse/parser.gcda
+        -:    0:Runs:9
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        -:    2: * Fixed-view ABI marshalling only; decisions and arithmetic live in dag_fmt.om. */
+        -:    3:#ifndef DAGSIM_FORMAT_H
+        -:    4:#define DAGSIM_FORMAT_H
+        -:    5:#include "cudapp_native.h"
+        -:    6:#include <stdint.h>
+        -:    7:#include <stdlib.h>
+        -:    8:#include <string.h>
+function ds_fmt called 173 returned 100% blocks executed 75%
+      173:    9:static inline uint64_t ds_fmt(unsigned mode, uint64_t a[16], char s[256]) {
+      173:   10:    uint64_t result = 0;
+     173*:   11:    if (omega_dag_fmt(&result, mode, a, 16, s, 256)) abort();
+call    0 returned 173
+branch  1 taken 0 (fallthrough)
+branch  2 taken 173
+call    3 never executed
+      173:   12:    return result;
+        -:   13:}
+        -:   14:static inline uint64_t ds_bits(double d) {
+        -:   15:    uint64_t u; memcpy(&u, &d, sizeof u); return u;
+        -:   16:}
+        -:   17:static inline double ds_unbits(uint64_t u) {
+        -:   18:    double d; memcpy(&d, &u, sizeof d); return d;
+        -:   19:}
+        -:   20:static inline uint64_t ds_decide(unsigned mode, uint64_t a[16]) {
+        -:   21:    char s[256]; return ds_fmt(mode, a, s);
+        -:   22:}
+        -:   23:#endif

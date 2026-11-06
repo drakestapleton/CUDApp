@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T09:04:37Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:03b910714e335c774a50b63f787e877106386da289cb9c7f3befe30c3abe5566",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "e68f87b8a903e691383bc5f39d924991e2c4acb1",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "evidence",
+  "name": "dagsim-parse-om",
+  "purpose": "Host differential, negative-control and mutation receipts for the seeded dagsim parser and formatter",
+  "schema_version": "1.0.0"
+}

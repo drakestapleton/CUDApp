@@ -24,12 +24,15 @@ records = [
  'op id=extra kind=compute engine=c t_ns=2 lo=1 hi=3 bytes=8 bw=b launch_ns=1 launcher=l M=1 N=1 core=0 arm=0 prov=measured src=x',
  'dep a z', 'buffer id=extra bytes=10 cap=v first=a last=z',
  'sync id=extra ops=a,z', 'energy instrument=m boundary=box joules=2 prov=measured src=x',
- 'removed op=gone reason=reused ref=a proof=receipt']
+ 'removed op=gone reason=reused ref=a proof=receipt',
+ 'energy instrument=m boundary=box power_w=2 prov=synthetic src=x',
+ 'resource id=extra kind=bandwidth cap=10 lo=8 hi=12 prov=measured src=x',
+ 'resource id=extra kind=capacity cap=100 prov=measured src=x']
 def add(label, text): cases.append((label, text))
 add('empty',''); add('valid',base+energy)
 for ri, rec in enumerate(records):
     prefix = base if ri not in (0,1,2) else ''
-    suffix = energy if ri != 9 else ''
+    suffix = energy if not rec.startswith('energy ') else ''
     # singleton records also exercise missing mandatory records at EOF.
     add(f'record-{ri}', prefix+rec+'\n'+suffix)
     tokens = rec.split()
@@ -59,6 +62,8 @@ for val in ['0','1','-1','+2','2147483647','2147483648','4294967295','4294967296
     add('uint-'+str(len(cases)),base+f'op id=q kind=matvec engine=c M={val} N=2\n'+energy)
 for date in ['1970-01-01','1969-12-31','2026-11-06','2000-02-29','1900-03-01','2026-0-0','2026-13-32','2026-11-06junk','2026-11','+2026-+11-+6','-1-1-1','2026--1-1','2026-11-x']:
     add('date-'+str(len(cases)),header+'calibration id=q taken='+date+' valid_days=1 load1=0 src=x\n'+energy)
+for date in ['0-1-1','9223372036854775808-1-1','-9223372036854775809-1-1','2026-9223372036854775808-1','2026-1-9223372036854775808']:
+    add('date-overflow-'+str(len(cases)),header+'calibration id=q taken='+date+' valid_days=1 load1=0 src=x\n'+energy)
 for sep in [' ', '\t', '\r', '\v', '\f', '\n']:
     add('whitespace-'+str(len(cases)),header+('resource id=q kind=compute slots=1 prov=specified'.replace(' ',sep))+'\n'+energy)
 for tail in ['# ignored', ' # id=bad', '\x00garbage', '\n\n', '\r\n', ' unknown', '=bad', ' x=y=z']:
@@ -80,6 +85,7 @@ for text in ['sync id=q ops=a,,z,','sync id=a ops=a','sync id=q ops=q','dep z a'
     add('refusal-'+str(len(cases)),base+text+'\n'+energy)
 for length in [46,47,48,49,126,127,128,129]:
     add('physics-src-'+str(length),header+'build sha='+'a'*40+' physics='+'p'*length+'\nmachine id=m prov=measured src='+'s'*length+'\n'+energy)
+    add('stored-src-'+str(length),header+'resource id=c kind=compute slots=1 prov=measured src='+'s'*length+'\n'+energy)
 for space in ['\v','\f']:
     add('numeric-space-'+str(len(cases)),header+'machine id=m cores='+space+'1 mem_bytes='+space+'1.25 prov=specified\n'+energy)
     add('date-space-'+str(len(cases)),header+'calibration id=q taken='+space+'2026-11-06 valid_days='+space+'2 load1='+space+'0.5 src=x\n'+energy)

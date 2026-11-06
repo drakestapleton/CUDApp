@@ -201,6 +201,10 @@ words 0–39 and the record map are documented at the top of `om/tools/dag_parse
 1048576 bytes. There is no oversized-input C fallback. The formatter takes a mode, `ulong[16]`, and
 `uchar[256]`: 64 bytes cannot hold the existing CLI's next-experiment strings. Its mode table is at the
 top of `dag_fmt.om`; modes 17–20 also own subtraction, seconds conversion, maximum and stable sorting.
+Mode 21 streams date text across 256-byte chunks, preserving C `sscanf` behavior for long leading
+zero/space runs, split signs and ignored trailing text without adding a date-length refusal. Its
+private state is in words 4–12, word 13 marks the final chunk, and the return is 0 for more input,
+1 for a completed day in word 12, or 2 for malformed input. C only copies chunks and dispatches status.
 
 The numeric parser converts decimal and hexadecimal finite values through bounded integer ratios and
 rounds ties to even. It also matches the oracle's infinity, signed-zero, saturation and malformed-token

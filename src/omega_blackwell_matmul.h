@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "omega_bw_policy.h"
 
 #define OMEGA_BW_MATMUL_MAX_M   8192
 #define OMEGA_BW_MATMUL_MAX_K   16384
@@ -60,15 +61,11 @@ float omega_fp16_to_fp32(uint16_t h);
 float omega_bf16_to_fp32(uint16_t b);
 uint16_t omega_fp32_to_fp16(float f);
 uint16_t omega_fp32_to_bf16(float f);
-/* The integer form of omega_fp32_to_bf16, inline for bulk loops: round to nearest even, NaN kept quiet with its
- * sign and top payload bits. It equals the hosted __bf16 cast on all 2^32 inputs (the freestanding
- * omega_fp32_to_bf16 is this function; make test-codegen-freestanding sweeps it against the cast). The hosted
- * cast is a libgcc call per element (about 5 ns on the Spark), so bulk converters use this form. */
+/* Checked import-free Omega round-to-nearest-even conversion. NaNs preserve
+ * sign/top payload and are quieted; the caller transfers raw binary32 bits. */
 static inline uint16_t omega_fp32_to_bf16_rne(float f) {
     union { float f; uint32_t u; } v = {f};
-    const uint32_t u = v.u;
-    if ((u & 0x7f800000u) == 0x7f800000u && (u & 0x007fffffu)) return (uint16_t)((u >> 16) | 0x0040u);
-    return (uint16_t)((u + 0x7fffu + ((u >> 16) & 1u)) >> 16);
+    return (uint16_t)omega_bw_value(3, v.u, 0, 0, 0, 0);
 }
 
 /* Dynamic sm_121 code generator: transforms G_S semantic spec into machine code */

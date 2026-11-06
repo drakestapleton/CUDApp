@@ -25,9 +25,10 @@ static inline int64_t omega_native_cache_call(OmegaGpuNativeCache *c, uint64_t o
                                                const uint64_t req[16], const uint64_t tok[16]) {
     uint64_t bits = 0;
     uint32_t rc = omega_native_cache(&bits, c->pool, 528, req, 16, tok, 16, op);
+    bits = omega_bw_value(7, bits, rc, 0, 0, 0);
     int64_t result;
     memcpy(&result, &bits, sizeof result);
-    return rc == OMEGA_OK ? result : -1;
+    return result;
 }
 static inline void omega_native_context(uint64_t req[16]) {
     memset(req, 0, sizeof(uint64_t) * 16);
@@ -45,9 +46,10 @@ static inline int omega_native_cache_refresh(OmegaGpuNativeCache *c, unsigned sl
 static inline int omega_native_shape_key(const void *shape, size_t bytes, uint8_t key[32]) {
     uint8_t data[4096] = {0};
     uint64_t result = 0;
-    if (!shape || bytes > sizeof data) return -1;
+    if (!shape || !omega_bw_value(15, bytes, 0, 0, 0, 0)) return -1;
     memcpy(data, shape, bytes);
-    return omega_native_key(&result, data, sizeof data, bytes, key, 32) == OMEGA_OK && result == 0 ? 0 : -1;
+    uint32_t rc = omega_native_key(&result, data, sizeof data, bytes, key, 32);
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
 }
 static inline int omega_native_cache_reserve(OmegaGpuNativeCache *c, const uint8_t key[32],
                                              size_t charged, uint64_t req[16]) {
@@ -57,23 +59,23 @@ static inline int omega_native_cache_reserve(OmegaGpuNativeCache *c, const uint8
     memcpy(req + 3, key, 32);
     int64_t slot = omega_native_cache_call(c, 18, req, tok);
     req[7] = c->pool[12]; /* accepted authoritative reservation owner */
-    return slot > 0 ? (int)(slot - 1) : -1;
+    return (int)(int64_t)omega_bw_value(9, (uint64_t)slot, 0, 0, 0, 0);
 }
 static inline int omega_native_cache_finish(OmegaGpuNativeCache *c, unsigned slot,
                                             const uint64_t req[16], int commit) {
     uint64_t tok[16] = {0};
     tok[0] = slot; tok[2] = req[7];
-    return (int)omega_native_cache_call(c, commit ? 2 : 3, req, tok);
+    return (int)omega_native_cache_call(c, omega_bw_value(10, (uint64_t)commit, 0, 0, 0, 0), req, tok);
 }
 static inline int omega_native_cache_victim(OmegaGpuNativeCache *c, unsigned slot, int erase) {
     uint64_t req[16], tok[16] = {0};
     omega_native_context(req); tok[0] = slot;
-    return (int)omega_native_cache_call(c, erase ? 14 : 13, req, tok);
+    return (int)omega_native_cache_call(c, omega_bw_value(11, (uint64_t)erase, 0, 0, 0, 0), req, tok);
 }
 static inline OmegaGpuNativeLease omega_native_cache_lease(OmegaGpuNativeCache *c, unsigned slot) {
     uint64_t revision = 0, epoch = omega_gpu_session_epoch();
     uint32_t rc = omega_native_slotrev(&revision, c->pool, 528, slot, epoch);
-    OmegaGpuNativeLease lease = { c, slot, rc == OMEGA_OK ? revision : 0, epoch };
+    OmegaGpuNativeLease lease = { c, slot, omega_bw_value(12, revision, rc, 0, 0, 0), epoch };
     return lease;
 }
 static inline int64_t omega_native_live_call(const OmegaGpuNativeLease *lease, unsigned op,
@@ -82,10 +84,11 @@ static inline int64_t omega_native_live_call(const OmegaGpuNativeLease *lease, u
     int64_t result;
     if (!lease || !lease->cache) return -1;
     tok[0] = lease->slot; tok[1] = lease->revision;
-    tok[3] = on ? 1 : 0; tok[4] = lease->epoch;
+    tok[3] = omega_bw_value(13, (uint64_t)on, 0, 0, 0, 0); tok[4] = lease->epoch;
     uint32_t rc = omega_native_lease(&bits, lease->cache->pool, 528, req, 16, tok, 16, op);
+    bits = omega_bw_value(7, bits, rc, 0, 0, 0);
     memcpy(&result, &bits, sizeof result);
-    return rc == OMEGA_OK ? result : -1;
+    return result;
 }
 static inline int omega_native_lease_op(const OmegaGpuNativeLease *lease, unsigned op, int on) {
     uint64_t req[16];
@@ -102,8 +105,10 @@ typedef struct {
  * immutable payload snapshot, not an admission or qualification assertion. */
 static inline int omega_native_payload(const OmegaGpuNativeArtifact *a, uint8_t key[32]) {
     uint64_t result = 0;
-    return a && omega_native_validate(&result, a->canonical, 4096, a->sizes, 4,
-        a->code, 16384, a->launch, 4096, a->realization, 32, key, 32) == OMEGA_OK && result == 0 ? 0 : -1;
+    if (!a) return -1;
+    uint32_t rc = omega_native_validate(&result, a->canonical, 4096, a->sizes, 4,
+        a->code, 16384, a->launch, 4096, a->realization, 32, key, 32);
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
 }
 /* Narrow custody projection into generated predicates. Expected manifest and
  * launch remain selected immutable inputs; none is obtained from the snapshot.
@@ -115,11 +120,9 @@ static inline int omega_native_admitted(const OmegaGpuNativeArtifact *a, uint8_t
     size_t name;
     if (!s || omega_native_payload(a, key) != 0) return -1;
     name = strnlen(s->kernel_function, sizeof s->kernel_function);
-    if (s->sizes[OMEGA_SNAPSHOT_CUBIN] > sizeof cubin ||
-        s->sizes[OMEGA_SNAPSHOT_TEXT] > sizeof text ||
-        s->sizes[OMEGA_SNAPSHOT_QMD0] != 384 || s->sizes[OMEGA_SNAPSHOT_QMD1] != 384 ||
-        s->sizes[OMEGA_SNAPSHOT_CBANK] > 128 || name >= sizeof s->kernel_function)
-        return -1;
+    if (!omega_bw_value(14, s->sizes[OMEGA_SNAPSHOT_CUBIN], s->sizes[OMEGA_SNAPSHOT_TEXT],
+        s->sizes[OMEGA_SNAPSHOT_QMD0], s->sizes[OMEGA_SNAPSHOT_QMD1],
+        s->sizes[OMEGA_SNAPSHOT_CBANK]) || name >= sizeof s->kernel_function) return -1;
     memcpy(cubin, s->bytes[OMEGA_SNAPSHOT_CUBIN], s->sizes[OMEGA_SNAPSHOT_CUBIN]);
     memcpy(text, s->bytes[OMEGA_SNAPSHOT_TEXT], s->sizes[OMEGA_SNAPSHOT_TEXT]);
     memcpy(observed, s->bytes[OMEGA_SNAPSHOT_QMD0], 384);
@@ -130,18 +133,20 @@ static inline int omega_native_admitted(const OmegaGpuNativeArtifact *a, uint8_t
     memcpy(observed + 1024, s->id, 64);
     sizes[0] = s->sizes[OMEGA_SNAPSHOT_CUBIN];
     sizes[1] = s->sizes[OMEGA_SNAPSHOT_CBANK]; sizes[2] = name;
-    if (omega_native_templates(&result, a->launch, 4096, cubin, 32768,
-        observed, 2048, sizes, 8) != OMEGA_OK || result != 0) return -1;
+    uint32_t rc = omega_native_templates(&result, a->launch, 4096, cubin, 32768,
+        observed, 2048, sizes, 8);
+    if (omega_bw_value(8, rc, result, 0, 0, 0) != 0) return -1;
     memcpy(payload_sizes, a->sizes, sizeof payload_sizes);
     payload_sizes[1] = s->sizes[OMEGA_SNAPSHOT_TEXT];
-    return omega_native_validate(&result, a->canonical, 4096, payload_sizes, 4,
-        text, 16384, a->launch, 4096, a->realization, 32, key, 32) == OMEGA_OK &&
-        result == 0 ? 0 : -1;
+    rc = omega_native_validate(&result, a->canonical, 4096, payload_sizes, 4,
+        text, 16384, a->launch, 4096, a->realization, 32, key, 32);
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
 }
 static inline int omega_native_launch(const OmegaGpuNativeArtifact *a, const uint64_t call[12], uint64_t launch[32]) {
     uint64_t result = 0;
-    return omega_native_binding(&result, a->canonical, 4096, a->launch, 4096,
-        call, 12, launch, 32) == OMEGA_OK && result == 0 ? 0 : -1;
+    uint32_t rc = omega_native_binding(&result, a->canonical, 4096, a->launch, 4096,
+        call, 12, launch, 32);
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
 }
 static inline int omega_native_bound(const OmegaGpuNativeArtifact *a, const OmegaGpuNativeLease *lease) {
     uint8_t key[32]; uint64_t req[16];

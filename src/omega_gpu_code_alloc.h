@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* Size of a GPU code buffer. Header only: no device, no physics headers.
+/* Size of a GPU code buffer. Import-free scalar Omega, no device or physics headers.
  *
  * The SM instruction cache prefetches past the last instruction of a kernel, so the code buffer must
  * stay mapped for 2 KB after the code. Source (NVIDIA guidance as recorded by Mesa NVK,
@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "omega_bw_policy.h"
 
 #define OMEGA_GPU_CODE_PREFETCH_TAIL 2048u
 #define OMEGA_GPU_CODE_PAGE 0x1000u
@@ -29,9 +30,7 @@ static inline size_t omega_gpu_code_alloc_bytes(size_t code_size) {
 #else
     const size_t tail = OMEGA_GPU_CODE_PREFETCH_TAIL;
 #endif
-    if (code_size > SIZE_MAX - tail - (OMEGA_GPU_CODE_PAGE - 1u)) return 0;
-    size_t b = (code_size + tail + (OMEGA_GPU_CODE_PAGE - 1u)) & ~(size_t)(OMEGA_GPU_CODE_PAGE - 1u);
-    return b < OMEGA_GPU_CODE_PAGE ? OMEGA_GPU_CODE_PAGE : b;
+    return (size_t)omega_bw_value(4, code_size, tail, 0, 0, 0);
 }
 
 #endif

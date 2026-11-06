@@ -5,6 +5,7 @@
 #include "cudapp_native.h"
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 int omega_codegen_attn_oracle(const OmegaDecodeAttnSpec *, BlackwellIRProgram *);
 int omega_codegen_pattn_oracle(const OmegaPrefillAttnSpec *, BlackwellIRProgram *);
 static BlackwellIRProgram c, o;
@@ -56,6 +57,23 @@ int main(void) {
             }
         }
     if (omega_blackwell_codegen_decode_attn_prog(NULL, &o) != -1 || omega_blackwell_codegen_prefill_attn_prog(NULL, &o) != -1) return 3;
+    const OmegaDecodeAttnSpec bad_decode[] = {{UINT32_MAX, 0}, {1, INT_MIN}, {1, INT_MAX}};
+    const OmegaPrefillAttnSpec bad_prefill[] = {
+        {UINT32_MAX, 0, 0, 0}, {4, INT_MIN, 0, 0}, {4, INT_MAX, 0, 0},
+        {4, 0, UINT32_MAX, 0}, {4, 0, 1, UINT32_MAX}
+    };
+    for (unsigned i = 0; i < sizeof bad_decode / sizeof bad_decode[0]; ++i)
+        if (omega_codegen_attn_oracle(&bad_decode[i], &c) != -1 ||
+            omega_blackwell_codegen_decode_attn_prog(&bad_decode[i], &o) != -1) return 5;
+    for (unsigned i = 0; i < sizeof bad_prefill / sizeof bad_prefill[0]; ++i)
+        if (omega_codegen_pattn_oracle(&bad_prefill[i], &c) != -1 ||
+            omega_blackwell_codegen_prefill_attn_prog(&bad_prefill[i], &o) != -1) return 5;
+    const OmegaDecodeAttnSpec ds = {1, 0};
+    const OmegaPrefillAttnSpec ps = {4, 0, 0, 0};
+    if (omega_blackwell_codegen_decode_attn_prog(&ds, NULL) != -1 ||
+        omega_blackwell_codegen_prefill_attn_prog(&ps, NULL) != -1) return 5;
+    /* Freeze the complete accepted set measured from the retained oracle. */
+    if (accepted != 60 || changed != accepted || mutants != accepted) return 6;
     printf("PASS attention differential cases=%u accepted=%u record-negative-controls=%u Omega-mutants-killed=%u IR+allocation+encoded-bytes\n", cases, accepted, changed, mutants);
     return 0;
 }

@@ -229,5 +229,9 @@ build/gpu_prefill_attn_test --sim
 
 The compiler pin is omega-mv `e5b32567`, as checked by `om/units.sh`. These are
 host/simulator checks, not chip qualification. A separately authorized GB10
-window is required for `tools/run_gpu_decode_attn_chip.sh` and
-`tools/run_gpu_prefill_attn_chip.sh`; neither is run by the migration tests.
+window is required before running either test binary without `--host-only` or
+`--sim`. During that window, follow the current hardware authorization and
+service-safety procedure, then run `build/gpu_decode_attn_test --out decode.json`
+and `build/gpu_prefill_attn_test --out prefill.json`. Both default modes open the
+GPU; neither is run by the migration tests. Preserve the receipts separately
+from the host evidence and perform the window's required closeout checks.

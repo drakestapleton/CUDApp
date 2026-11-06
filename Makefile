@@ -184,6 +184,12 @@ $(GPU_MATHLIBS_TEST): tests/gpu_mathlibs_test.c tests/bw_warp_sim.h src/omega_gp
 test-gpu-mathlibs: $(GPU_MATHLIBS_TEST)
 	./$(GPU_MATHLIBS_TEST) --sim
 
+# Host-policy migration gate: C oracle, source-derived partitions, red/link
+# negatives, gcov and seeded .om mutants. Run with the device-masked wrapper.
+.PHONY: test-mathlibs-host-om
+test-mathlibs-host-om:
+	python3 tests/mathlibs_host_om.py
+
 # omega #308: structured warp reconvergence (BSSY/BSYNC regions). test-gpu-reconv is
 # host-only (encoder goldens, region bookkeeping, refusals, nvdisasm listing, every probe
 # kernel through the SIMT warp simulator tests/bw_warp_sim.h against the oracle, mutation

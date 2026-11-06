@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T07:25:33Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:3b8d8f544315909249a864148f46577cca9a9721f0f3493910917bb58c218bb7",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "0e4417ae62ce2fbfbdda6be4a2c3e684d373c2cd",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "numeric",
+  "name": "apiviews",
+  "purpose": "Host data loops and fixed descriptors for the elementwise, matmul, gdn, fp8 and scan API residue, in seeded Omega",
+  "schema_version": "1.0.0"
+}

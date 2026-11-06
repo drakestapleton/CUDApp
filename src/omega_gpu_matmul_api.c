@@ -34,6 +34,7 @@
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_codegen.h"
 #include "omega_blackwell_matmul.h"
+#include "omega_gpu_apiviews.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
 #include <string.h>
@@ -380,7 +381,7 @@ int omega_gpu_tensor_upload_f32(uint32_t k, uint32_t n, const float *b, OmegaGpu
     size_t cnt = (size_t)k * n;
     uint16_t *h = omega_gpu_host_alloc(cnt * sizeof *h);
     if (!h) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    for (size_t i = 0; i < cnt; i++) h[i] = omega_fp32_to_bf16(b[i]);
+    if (av_bf16_n(0, cnt, b, h)) { omega_gpu_host_free(h); return OMEGA_GPU_MATMUL_BAD_ARGS; }
     int rc = omega_gpu_tensor_upload_bf16(k, n, h, out);
     omega_gpu_host_free(h);
     return rc;
@@ -413,7 +414,7 @@ static void pack_b_into(const OmegaGpuTensor *t, const uint16_t *b16, const floa
         for (uint32_t r = 0; r < k; r++) {
             const float *src = &b32[(size_t)r * n + c0];
             uint16_t *row = &g_update_stage[(size_t)r * w];
-            for (uint32_t j = 0; j < w; j++) row[j] = omega_fp32_to_bf16_rne(src[j]);
+            if (av_bf16_n(0, w, src, row)) return;
         }
         omega_matmul_frag_pack_b(g_update_stage, k, w, kp, 0, nt1 - nt0, out);
     }
@@ -653,8 +654,11 @@ int omega_gpu_matmul_f32(uint32_t m, uint32_t k, uint32_t n,
     uint16_t *ab = omega_gpu_host_alloc(na * sizeof *ab);
     uint16_t *bb = omega_gpu_host_alloc(nb * sizeof *bb);
     if (!ab || !bb) { omega_gpu_host_free(ab); omega_gpu_host_free(bb); return OMEGA_GPU_MATMUL_BAD_ARGS; }
-    for (size_t i = 0; i < na; i++) ab[i] = omega_fp32_to_bf16(a[i]);
-    for (size_t i = 0; i < nb; i++) bb[i] = omega_fp32_to_bf16(b[i]);
+    if (av_bf16_n(0, na, a, ab) || av_bf16_n(0, nb, b, bb)) {
+        omega_gpu_host_free(ab);
+        omega_gpu_host_free(bb);
+        return OMEGA_GPU_MATMUL_BAD_ARGS;
+    }
     int rc = omega_gpu_matmul_bf16(m, k, n, ab, bb, c, info);
     omega_gpu_host_free(ab);
     omega_gpu_host_free(bb);

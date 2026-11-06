@@ -9,6 +9,9 @@ CONVERTER_PIN=b8f41bf19e8cf3f60842198e1f771dcbec03ce9d61272b95ab781690d481ad95
 FRONTEND_PIN=65778db0d82c994f8606f6b868645f7b89c0a5062a1f23d1eccc65690f1b55d0
 FREEST_CONVERTER_PIN=836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661
 FREEST_FRONTEND_PIN=51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d
+RUNTIME_REV=79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538
+RUNTIME_CONVERTER_PIN=d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538
+RUNTIME_FRONTEND_PIN=a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 QUANT=om/quant/quant.om
 REAL="$QUANT,om/components/realize.om"
@@ -23,7 +26,10 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 GXNUM=om/gemmex/num.om
 GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.om gemm_ex_x3=$GXNUM,om/gemmex/x3.om gemm_ex_acc=$GXNUM,om/gemmex/acc.om gemm_ex_dot=$GXNUM,om/gemmex/dot.om gemm_ex_epi=$GXNUM,om/gemmex/epi.om gemm_ex_fp8=$GXNUM,om/gemmex/fp8.om"
-[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $GEMMEX"
+AV=om/apiviews
+APIVIEWS="av_ewarg=$AV/ewarg.om av_fp8am=$AV/fp8am.om av_fp8en=$AV/fp8en.om av_fp8q=$AV/fp8q.om av_e4m3=$AV/e4m3.om av_fp8sc=$AV/fp8sc.om av_gdnch=$AV/gdnch.om av_gdnsl=$AV/gdnsl.om av_scan=$AV/scan.om"
+APIVIEWS_RT="av_bf16=$AV/bf16.om av_widen=$AV/widen.om av_rope=$AV/rope.om av_gdnsc=$AV/gdnsc.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $GEMMEX $APIVIEWS $APIVIEWS_RT"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -37,7 +43,8 @@ T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 cat > "$T/cudapp_native.h" <<'HEADER'
 /* Generated checked portable Omega declarations. Regenerate with om/units.sh.
  * Status: 0 done, 1..14 trap, 32 argument refused, 33 reentry.
- * Only a successful call writes result. Views use exact declared lengths.
+ * Only a successful call writes result. Fixed views use the declared length.
+ * Runtime-extent units pass the live count under the bridge runtime-views profile.
  * Implementation is Omega lowered by omega-bridge, not the native AArch64 ABI. */
 #ifndef CUDAPP_PORTABLE_OMEGA_H
 #define CUDAPP_PORTABLE_OMEGA_H
@@ -65,20 +72,33 @@ for u in $UNITS $PURE_UNITS; do
   done
   IFS=$old_ifs
   frontend=bridge-seeded
+  abi_name=bridge-seeded
   converter_pin=$CONVERTER_PIN
   frontend_pin=$FRONTEND_PIN
+  bridge=$OMEGA_BRIDGE
+  flags=
   file=cudapp_om_$name.c
   case "$name" in
     revision|epoch|f16)
       frontend=bridge-freest
+      abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
+    av_bf16|av_widen|av_rope|av_gdnsc)
+      flags=--runtime-views
+      abi_name=bridge-seeded-runtime
+      bridge=${OMEGA_BRIDGE_RT:?NOT_RUN: set OMEGA_BRIDGE_RT}
+      converter_pin=$RUNTIME_CONVERTER_PIN
+      frontend_pin=$RUNTIME_FRONTEND_PIN
+      [ "$(sha256sum < "$bridge/src/toc.om" | cut -c1-64)" = "$RUNTIME_CONVERTER_PIN" ] || { echo "NOT_RUN: runtime toc.om is not the pinned converter"; exit 3; }
+      [ "$(sha256sum < "$bridge/tools/bridge-seeded" | cut -c1-64)" = "$RUNTIME_FRONTEND_PIN" ] || { echo "NOT_RUN: runtime bridge-seeded is not the pinned frontend"; exit 3; }
+      [ "$(git -C "$bridge" rev-parse HEAD)" = "$RUNTIME_REV" ] || { echo "NOT_RUN: runtime bridge is not $RUNTIME_REV"; exit 3; } ;;
   esac
-  printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" c "$src" > "$T/$file"
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" h "$src" >> "$T/cudapp_native.h"
-  identity="omega-ident 2 unit=$name abi=$frontend src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
+  printf 'generating portable unit %s (%s%s)\n' "$name" "$frontend" "$flags" >&2
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$bridge/tools/$frontend" $flags c "$src" > "$T/$file"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$bridge/tools/$frontend" $flags h "$src" >> "$T/cudapp_native.h"
+  identity="omega-ident 2 unit=$name abi=$abi_name src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
   printf '%s\n' "$identity" > "$T/cudapp_om_$name.ident"
   printf '%s\n' "$identity" >> "$T/cudapp_om_units.ident"
   OUTS="$OUTS $file cudapp_om_$name.ident"

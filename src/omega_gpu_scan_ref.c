@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "omega_gpu_apiviews.h"
 
 #define PAD_SUM 0x80000000u    /* -0.0 */
 #define PAD_MINMAX 0x7fc00000u /* quiet NaN */
@@ -30,9 +31,8 @@ int omega_gpu_reduce_reference(OmegaGpuRedOp op, const float *x, size_t n, float
         if (!next) { free(cur); return -1; }
         for (size_t j = 0; j < nt; j++) {
             float v[32];
-            for (size_t i = 0; i < 32; i++) v[i] = j * 32 + i < len ? in[j * 32 + i] : pad;
-            for (size_t d = 16; d >= 1; d /= 2)
-                for (size_t i = 0; i + d < 32; i++) v[i] = combine(op, v[i], v[i + d]); /* ascending: v[i + d] is still old */
+            size_t live = len - j * 32 < 32 ? len - j * 32 : 32;
+            if (av_scan_tile(op, live, in + j * 32, v)) { free(next); free(cur); return -1; }
             next[j] = v[0];
         }
         free(cur);
@@ -47,9 +47,8 @@ int omega_gpu_reduce_reference(OmegaGpuRedOp op, const float *x, size_t n, float
 static void ref_scan_level(const float *in, float *out, float *tot, size_t len) {
     for (size_t j = 0; j * 32 < len; j++) {
         float v[32];
-        for (size_t i = 0; i < 32; i++) v[i] = j * 32 + i < len ? in[j * 32 + i] : u2f(PAD_SUM);
-        for (size_t d = 1; d <= 16; d *= 2)
-            for (size_t i = 31; i >= d; i--) v[i] = v[i - d] + v[i]; /* descending: v[i - d] is still old */
+        size_t live = len - j * 32 < 32 ? len - j * 32 : 32;
+        if (av_scan_tile(3, live, in + j * 32, v)) return;
         for (size_t i = 0; i < 32 && j * 32 + i < len; i++) out[j * 32 + i] = v[i];
         tot[j] = v[31];
     }

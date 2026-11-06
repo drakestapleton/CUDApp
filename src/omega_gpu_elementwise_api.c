@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "omega_gpu_apiviews.h"
 
 /* ------------------------------------------------------------------ codegen */
 
@@ -1047,12 +1048,16 @@ int omega_gpu_rmsnorm_f32(uint32_t rows, uint32_t dim, const float *x, const flo
     Slot *k = NULL;
     int rc = begin(OMEGA_GPU_EW_RMSNORM, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
-    uint32_t params[4] = { dim / OMEGA_GPU_EW_THREADS, f2u(1.0f / (float)dim), f2u(eps), dim };
-    for (uint32_t r0 = 0; r0 < rows && rc == OMEGA_GPU_EW_OK; r0 += OMEGA_GPU_EW_MAX_CTAS) {
-        uint32_t nr = rows - r0 < OMEGA_GPU_EW_MAX_CTAS ? rows - r0 : OMEGA_GPU_EW_MAX_CTAS;
+    uint32_t epsb; memcpy(&epsb, &eps, 4);
+    for (uint32_t r0 = 0; r0 < rows && rc == OMEGA_GPU_EW_OK; ) {
+        uint64_t rec[8];
+        if (av_ew_rec(2, rows - r0, epsb, dim, rec)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
+        uint32_t nr = (uint32_t)rec[0];
+        uint32_t params[4] = { (uint32_t)rec[1], (uint32_t)rec[2], (uint32_t)rec[3], (uint32_t)rec[4] };
         size_t bytes = (size_t)nr * dim * 4;
         rc = run_abc(k, x + (size_t)r0 * dim, bytes, weight, (size_t)dim * 4, out + (size_t)r0 * dim, bytes,
-                     OMEGA_GPU_EW_THREADS, nr, params, info);
+                     (uint32_t)rec[6], nr, params, info);
+        r0 += nr;
     }
     UNLOCK();
     info_end(info, t0);
@@ -1067,21 +1072,20 @@ int omega_gpu_rope_f32(uint32_t heads, uint32_t head_dim, const float *v,
     Slot *k = NULL;
     int rc = begin(OMEGA_GPU_EW_ROPE, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
-    uint32_t half = head_dim / 2;
-    uint32_t params[4] = { head_dim, half, 0, 0 };
-    for (uint32_t h0 = 0; h0 < heads && rc == OMEGA_GPU_EW_OK; h0 += OMEGA_GPU_EW_MAX_CTAS) {
-        uint32_t nh = heads - h0 < OMEGA_GPU_EW_MAX_CTAS ? heads - h0 : OMEGA_GPU_EW_MAX_CTAS;
+    for (uint32_t h0 = 0; h0 < heads && rc == OMEGA_GPU_EW_OK; ) {
+        uint64_t rec[8];
+        if (av_ew_rec(1, heads - h0, head_dim, 0, rec)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
+        uint32_t nh = (uint32_t)rec[0];
+        uint32_t half = (uint32_t)rec[1];
+        uint32_t params[4] = { (uint32_t)rec[2], half, 0, 0 };
         size_t bytes = (size_t)nh * head_dim * 4;
-        /* table: cos in the first half of each head, sin in the second, written straight into
-         * the staging buffer (one copy per head of this launch) */
         if (omega_gpu_session_scratch(&g_b, bytes) != 0) { rc = OMEGA_GPU_EW_CHIP_FAIL; break; }
         float *table = g_b.mem.cpu;
-        for (uint32_t h = 0; h < nh; h++) {
-            memcpy(table + (size_t)h * head_dim, cos_half, half * sizeof *table);
-            memcpy(table + (size_t)h * head_dim + half, sin_half, half * sizeof *table);
-        }
-        /* out may alias v: v is copied into the staging buffer before the result lands in out */
+        for (uint32_t h = 0; h < nh; h++)
+            if (av_rope_head(half, cos_half, sin_half, table + (size_t)h * head_dim)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
+        if (rc != OMEGA_GPU_EW_OK) break;
         rc = run_abc(k, v + (size_t)h0 * head_dim, bytes, NULL, bytes, out + (size_t)h0 * head_dim, bytes, half, nh, params, info);
+        h0 += nh;
     }
     UNLOCK();
     info_end(info, t0);
@@ -1093,14 +1097,16 @@ static int run_1d(OmegaGpuEwOp op, uint32_t n, const void *a, const void *b, voi
     Slot *k = NULL;
     int rc = begin(op, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
-    const uint32_t chunk = OMEGA_GPU_EW_MAX_CTAS * OMEGA_GPU_EW_THREADS;
-    for (uint32_t i0 = 0; i0 < n && rc == OMEGA_GPU_EW_OK; i0 += chunk) {
-        uint32_t ni = n - i0 < chunk ? n - i0 : chunk;
-        uint32_t grid = (ni + OMEGA_GPU_EW_THREADS - 1) / OMEGA_GPU_EW_THREADS;
+    for (uint32_t i0 = 0; i0 < n && rc == OMEGA_GPU_EW_OK; ) {
+        uint64_t rec[8];
+        if (av_ew_rec(0, n - i0, 0, 0, rec)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
+        uint32_t ni = (uint32_t)rec[0];
+        uint32_t grid = (uint32_t)rec[1];
         uint32_t params[4] = { ni, 0, 0, 0 };
         size_t bytes = (size_t)ni * 4;
         rc = run_abc(k, (const uint8_t *)a + (size_t)i0 * 4, bytes, b ? (const uint8_t *)b + (size_t)i0 * 4 : a, bytes,
-                     (uint8_t *)c + (size_t)i0 * 4, bytes, OMEGA_GPU_EW_THREADS, grid, params, info);
+                     (uint8_t *)c + (size_t)i0 * 4, bytes, (uint32_t)rec[6], grid, params, info);
+        i0 += ni;
     }
     UNLOCK();
     info_end(info, t0);

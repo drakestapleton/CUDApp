@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "omega_gpu_mem_cached.h"
+#include "omega_gpu_apiviews.h"
 
 #define MARKER_TIMEOUT_MS 20000ull
 #define POISON_F32 (-999.0f)
@@ -84,10 +85,7 @@ const char *omega_gpu_gdn_rc_name(int rc) {
 /* ---- host layout ---- */
 /* the qkv channel slot s of value head h reads */
 static uint32_t slot_channel(const OmegaGdnShape *shp, uint32_t h, uint32_t s) {
-    const uint32_t hk = h / (shp->vh / OMEGA_GDN_KEY_HEADS), D = OMEGA_GDN_HEAD_DIM;
-    if (s < D) return hk * D + s;
-    if (s < 2u * D) return OMEGA_GDN_KEY_HEADS * D + hk * D + (s - D);
-    return 2u * OMEGA_GDN_KEY_HEADS * D + h * D + (s - 2u * D);
+    return av_gdn_channel(h, s, shp->vh);
 }
 
 static int shape_of(uint32_t ratio, OmegaGdnShape *s) { OmegaGdnSpec sp; memset(&sp, 0, sizeof sp); sp.ratio = ratio; return omega_gdn_shape(&sp, s); }
@@ -101,7 +99,11 @@ int omega_gdn_pack_params_r(uint32_t ratio, const float *conv_w, const float *a_
     if (shape_of(ratio, &S) || !conv_w || !a_log || !dt_bias || !norm_w || !block) return -1;
     memcpy(block + OMEGA_GDN_PAR_CONV, conv_w, (size_t)shp->conv * OMEGA_GDN_TAPS * 4u);
     float *sc = (float *)(block + shp->par_scal);
-    for (uint32_t h = 0; h < shp->vh; h++) { sc[2 * h] = -(float)omega_hostmath_exp((double)a_log[h]); /* libm-free: omegatool links without -lm */ sc[2 * h + 1] = dt_bias[h]; }
+    float *ng = malloc((size_t)shp->vh * sizeof *ng);
+    if (!ng) return -1;
+    for (uint32_t h = 0; h < shp->vh; h++) ng[h] = -(float)omega_hostmath_exp((double)a_log[h]);
+    av_gdn_scales(shp->vh, ng, dt_bias, sc);
+    free(ng);
     memcpy(block + shp->par_norm, norm_w, OMEGA_GDN_HEAD_DIM * 4u);
     return 0;
 }
@@ -115,8 +117,9 @@ int omega_gdn_pack_tail_r(uint32_t ratio, const float *tail, float *dev) {
         for (uint32_t s = 0; s < OMEGA_GDN_SLOTS; s++) {
             float *d = dev + ((size_t)h * OMEGA_GDN_SLOTS + s) * 4u;
             const uint32_t ch = slot_channel(shp, h, s);
-            for (uint32_t j = 0; j < 3; j++) d[j] = tail[(size_t)j * shp->conv + ch];
-            d[3] = 0.0f;
+            float src[3];
+            for (uint32_t j = 0; j < 3; j++) src[j] = tail[(size_t)j * shp->conv + ch];
+            av_gdn_slot(d, src);
         }
     return 0;
 }
@@ -222,16 +225,11 @@ int omega_gpu_gdn_reset(OmegaGpuGdn *g) {
  * F2FP.BF16.F32 rule; widen exact). */
 static void state_put(const OmegaGpuGdn *g, void *dst, const float *src) {
     if (!g->bf16) { memcpy(dst, src, g->sh.state_bytes); return; }
-    uint16_t *d = dst;
-    for (size_t i = 0; i < g->sh.state_bytes / 2u; i++) {
-        uint32_t b; memcpy(&b, &src[i], 4);
-        d[i] = (b & 0x7fffffffu) > 0x7f800000u ? (uint16_t)0x7fc0u : (uint16_t)((b + 0x7fffu + ((b >> 16) & 1u)) >> 16);
-    }
+    av_bf16_n(1, g->sh.state_bytes / 2u, src, dst);
 }
 static void state_get(const OmegaGpuGdn *g, float *dst, const void *src) {
     if (!g->bf16) { memcpy(dst, src, g->sh.state_bytes); return; }
-    const uint16_t *s = src;
-    for (size_t i = 0; i < g->sh.state_bytes / 2u; i++) { uint32_t b = (uint32_t)s[i] << 16; memcpy(&dst[i], &b, 4); }
+    av_widen_n(g->sh.state_bytes / 2u, src, dst);
 }
 
 /* cached: the staging buffer [state][tail] of one layer (uncached), made on first use */

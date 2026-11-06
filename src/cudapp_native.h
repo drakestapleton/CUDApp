@@ -1,6 +1,7 @@
 /* Generated checked portable Omega declarations. Regenerate with om/units.sh.
  * Status: 0 done, 1..14 trap, 32 argument refused, 33 reentry.
- * Only a successful call writes result. Views use exact declared lengths.
+ * Only a successful call writes result. Fixed views use the declared length.
+ * Runtime-extent units pass the live count under the bridge runtime-views profile.
  * Implementation is Omega lowered by omega-bridge, not the native AArch64 ABI. */
 #ifndef CUDAPP_PORTABLE_OMEGA_H
 #define CUDAPP_PORTABLE_OMEGA_H
@@ -65,6 +66,23 @@ uint32_t omega_gemm_ex_acc(uint64_t  *result, const void *p0, uint64_t p0_n, con
 uint32_t omega_gemm_ex_dot(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n);
 uint32_t omega_gemm_ex_epi(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n, const void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_gemm_ex_fp8(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_av_ewarg(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n);
+uint32_t omega_av_fp8am(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_av_fp8en(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, void *p5, uint64_t p5_n);
+uint32_t omega_av_fp8q(uint64_t  *result, uint64_t p0, uint64_t p1, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_av_e4m3(uint64_t  *result, uint64_t p0);
+uint32_t omega_av_fp8sc(uint64_t  *result, uint64_t p0);
+uint32_t omega_av_gdnch(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2);
+uint32_t omega_av_gdnsl(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_av_scan(uint64_t  *result, uint64_t p0, uint64_t p1, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_bf16(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_widen(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_rope(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_av_gdnsc(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

@@ -1,0 +1,586 @@
+        -:    0:Source:ampere_families.c
+        -:    0:Graph:af_cov-ampere_families.gcno
+        -:    0:Data:af_cov-ampere_families.gcda
+        -:    0:Runs:1331
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* Producer coverage absent from the older SM121 corpus: head-dim256 attention,
+        -:    3: * multi-token variants, all GDN generators and ternary layouts/epilogues. */
+        -:    4:#include "omega_ampere_codegen.h"
+        -:    5:#include "omega_blackwell_codegen_attn256.h"
+        -:    6:#include "omega_blackwell_codegen_pattn256.h"
+        -:    7:#include "omega_blackwell_codegen_gdn.h"
+        -:    8:#include "omega_blackwell_codegen_tern.h"
+        -:    9:#include "omega_blackwell_codegen_attn.h"
+        -:   10:#include "omega_blackwell_codegen_bf16.h"
+        -:   11:#include "omega_blackwell_codegen_dec.h"
+        -:   12:#include "omega_blackwell_codegen_gemm.h"
+        -:   13:#include "omega_blackwell_codegen_moe2.h"
+        -:   14:#include "omega_blackwell_codegen_pattn.h"
+        -:   15:#include "omega_blackwell_codegen_pf.h"
+        -:   16:#include "omega_blackwell_codegen_pfhost.h"
+        -:   17:#include "omega_blackwell_codegen_qg.h"
+        -:   18:#include "omega_blackwell_codegen_qmma.h"
+        -:   19:#include "omega_blackwell_codegen_router.h"
+        -:   20:#include "omega_blackwell_codegen_tc.h"
+        -:   21:#include "omega_blackwell_codegen_tc2.h"
+        -:   22:#include <stdio.h>
+        -:   23:#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM
+        -:   24:static BlackwellIRProgram program;
+function encode called 86277 returned 100% blocks executed 100%
+    86277:   25:static int encode(void)
+        -:   26:{
+    86277:   27:    uint8_t reference[16384], ampere[16384]; size_t a = 0, b = 0;
+   172443:   28:    return omega_bw_encode_program(&program, reference, sizeof(reference), &a) ||
+call    0 returned 86277
+branch  1 taken 85833 (fallthrough)
+branch  2 taken 333
+   172443:   29:           omega_gpu_encode_program_target(&program, 86, ampere, sizeof(ampere), &b) || a != b;
+branch  0 taken 86166 (fallthrough)
+branch  1 taken 111
+call    2 returned 86166
+branch  3 taken 222 (fallthrough)
+branch  4 taken 85611
+        -:   30:}
+        -:   31:#define EMIT(call) do { if ((call) || encode()) { fprintf(stderr, "Ampere family producer failed at line %d\n", __LINE__); return 1; } } while (0)
+        -:   32:
+function refused called 18647 returned 100% blocks executed 100%
+    18647:   33:static int refused(void)
+        -:   34:{
+    18647:   35:    uint8_t reference[16384], ampere[16384]; size_t a = 0, b = 1;
+    37272:   36:    return omega_bw_encode_program(&program, reference, sizeof(reference), &a) ||
+call    0 returned 18647
+branch  1 taken 18559 (fallthrough)
+branch  2 taken 66
+    37272:   37:           omega_gpu_encode_program_target(&program, 86, ampere, sizeof(ampere), &b) != -2 || b != 0;
+branch  0 taken 18625 (fallthrough)
+branch  1 taken 22
+call    2 returned 18625
+branch  3 taken 66 (fallthrough)
+branch  4 taken 18493
+        -:   38:}
+        -:   39:#define REFUSE(call) do { if ((call) || refused()) { fprintf(stderr, "Ampere unsupported family accepted at line %d\n", __LINE__); return 1; } } while (0)
+function remaining_families called 1331 returned 100% blocks executed 100%
+     1331:   40:static int remaining_families(void)
+        -:   41:{
+     6575:   42:    for (unsigned depth = 1; depth <= 4; ++depth) {
+branch  0 taken 5276
+branch  1 taken 1299 (fallthrough)
+     5276:   43:        OmegaDecodeAttnSpec s = { .depth = depth };
+     5276:   44:        EMIT(omega_blackwell_codegen_decode_attn_prog(&s, &program));
+call    0 returned 5276
+branch  1 taken 5268 (fallthrough)
+branch  2 taken 8
+call    3 returned 5268
+branch  4 taken 24 (fallthrough)
+branch  5 taken 5244
+call    6 returned 32
+        -:   45:    }
+        -:   46:    /* FUSED and ATTEND emit SHFL.BFLY and F2FP.BF16.F32.PACK_AB. APPEND returns
+        -:   47:     * before that softmax, so SM86 still encodes it. */
+     5144:   48:    for (unsigned mode = OMEGA_PATTN_MODE_FUSED; mode <= OMEGA_PATTN_MODE_ATTEND; ++mode) {
+branch  0 taken 3871
+branch  1 taken 1273 (fallthrough)
+     3871:   49:        OmegaPrefillAttnSpec s = { .warps = 4, .mode = mode, .mirror = mode == OMEGA_PATTN_MODE_APPEND };
+     3889:   50:        if (mode == OMEGA_PATTN_MODE_APPEND) EMIT(omega_blackwell_codegen_prefill_attn_prog(&s, &program));
+branch  0 taken 1290 (fallthrough)
+branch  1 taken 2581
+call    2 returned 1290
+branch  3 taken 1288 (fallthrough)
+branch  4 taken 2
+call    5 returned 1288
+branch  6 taken 6 (fallthrough)
+branch  7 taken 1282
+call    8 returned 8
+     2581:   51:        else REFUSE(omega_blackwell_codegen_prefill_attn_prog(&s, &program));
+call    0 returned 2581
+branch  1 taken 2577 (fallthrough)
+branch  2 taken 4
+call    3 returned 2577
+branch  4 taken 14 (fallthrough)
+branch  5 taken 2563
+call    6 returned 18
+        -:   52:    }
+     1273:   53:    OmegaBf16GemvSpec bf = { .k = 256, .rows = 1, .warps = 4, .depth = 1 };
+     1273:   54:    EMIT(omega_blackwell_codegen_bf16_gemv_prog(&bf, &program));
+call    0 returned 1273
+branch  1 taken 1271 (fallthrough)
+branch  2 taken 2
+call    3 returned 1271
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1265
+call    6 returned 8
+     1265:   55:    bf.mask = 1; EMIT(omega_blackwell_codegen_bf16_gemv_prog(&bf, &program));
+call    0 returned 1265
+branch  1 taken 1263 (fallthrough)
+branch  2 taken 2
+call    3 returned 1263
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1257
+call    6 returned 8
+     1257:   56:    bf.mask = 0; bf.ystride = 256; bf.xbatch = 2;
+     1257:   57:    EMIT(omega_blackwell_codegen_bf16_gemv_prog(&bf, &program));
+call    0 returned 1257
+branch  1 taken 1255 (fallthrough)
+branch  2 taken 2
+call    3 returned 1255
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1249
+call    6 returned 8
+     1249:   58:    OmegaFp8GemvSpec mv = { .k = 256, .lane_bytes = 8, .rows = 1, .warps = 8 };
+     1249:   59:    EMIT(omega_blackwell_codegen_fp8_gemv_prog(&mv, &program));
+call    0 returned 1249
+branch  1 taken 1247 (fallthrough)
+branch  2 taken 2
+call    3 returned 1247
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1241
+call    6 returned 8
+     1241:   60:    mv.depth = 1; EMIT(omega_blackwell_codegen_fp8_gemv_prog(&mv, &program));
+call    0 returned 1241
+branch  1 taken 1239 (fallthrough)
+branch  2 taken 2
+call    3 returned 1239
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1233
+call    6 returned 8
+     1233:   61:    EMIT(omega_blackwell_codegen_fp8_gemv2_prog(&mv, &program));
+call    0 returned 1233
+branch  1 taken 1231 (fallthrough)
+branch  2 taken 2
+call    3 returned 1231
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1225
+call    6 returned 8
+     1225:   62:    OmegaFp8GemmSpec gemm = { .k = 256, .lane_bytes = 8, .mt = 2, .warps = 8 };
+     1225:   63:    EMIT(omega_blackwell_codegen_fp8gemm_prog(&gemm, &program));
+call    0 returned 1225
+branch  1 taken 1223 (fallthrough)
+branch  2 taken 2
+call    3 returned 1223
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1217
+call    6 returned 8
+     1217:   64:    gemm.rowmap = 1; EMIT(omega_blackwell_codegen_fp8gemm_prog(&gemm, &program));
+call    0 returned 1217
+branch  1 taken 1215 (fallthrough)
+branch  2 taken 2
+call    3 returned 1215
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1209
+call    6 returned 8
+     1209:   65:    OmegaRouterSpec router = { .warps = 8, .depth = 1 };
+     1209:   66:    EMIT(omega_blackwell_codegen_router_prog(&router, &program));
+call    0 returned 1209
+branch  1 taken 1207 (fallthrough)
+branch  2 taken 2
+call    3 returned 1207
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1201
+call    6 returned 8
+     1201:   67:    router.experts = 256; router.shared = 1;
+     1201:   68:    EMIT(omega_blackwell_codegen_router_prog(&router, &program));
+call    0 returned 1201
+branch  1 taken 1199 (fallthrough)
+branch  2 taken 2
+call    3 returned 1199
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1193
+call    6 returned 8
+     1193:   69:    EMIT(omega_blackwell_codegen_pf_copy_prog(&program));
+call    0 returned 1193
+branch  1 taken 1191 (fallthrough)
+branch  2 taken 2
+call    3 returned 1191
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1185
+call    6 returned 8
+     1185:   70:    OmegaRlSpec rl = { .k = 128, .e = 32, .t = 1 };
+     1185:   71:    EMIT(omega_blackwell_codegen_rl_prog(&rl, &program));
+call    0 returned 1185
+branch  1 taken 1183 (fallthrough)
+branch  2 taken 2
+call    3 returned 1183
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1177
+call    6 returned 8
+     1177:   72:    OmegaMcSpec mc = { .h = 128, .top_k = 4 };
+     1177:   73:    EMIT(omega_blackwell_codegen_mc_prog(&mc, &program));
+call    0 returned 1177
+branch  1 taken 1175 (fallthrough)
+branch  2 taken 2
+call    3 returned 1175
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1169
+call    6 returned 8
+     1169:   74:    EMIT(omega_blackwell_codegen_tc_probe_prog(0, &program));
+call    0 returned 1169
+branch  1 taken 1167 (fallthrough)
+branch  2 taken 2
+call    3 returned 1167
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1161
+call    6 returned 8
+     1161:   75:    EMIT(omega_blackwell_codegen_tc_peak_prog(2, 2, 8, 128, &program));
+call    0 returned 1161
+branch  1 taken 1159 (fallthrough)
+branch  2 taken 2
+call    3 returned 1159
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1153
+call    6 returned 8
+     1153:   76:    EMIT(omega_blackwell_codegen_tc_bw_prog(2, 1, 128, &program));
+call    0 returned 1153
+branch  1 taken 1151 (fallthrough)
+branch  2 taken 2
+call    3 returned 1151
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1145
+call    6 returned 8
+     1145:   77:    OmegaTcGemmSpec tc = { .k = 128, .rt = 2, .ct = 2, .warps = 4 };
+     1145:   78:    EMIT(omega_blackwell_codegen_tcgemm_prog(&tc, &program));
+call    0 returned 1145
+branch  1 taken 1143 (fallthrough)
+branch  2 taken 2
+call    3 returned 1143
+branch  4 taken 6 (fallthrough)
+branch  5 taken 1137
+call    6 returned 8
+     3361:   79:    for (unsigned epi = OMEGA_TC2_EPI_F32; epi <= OMEGA_TC2_EPI_SWIGLU; ++epi)
+branch  0 taken 2258
+branch  1 taken 1103 (fallthrough)
+     6723:   80:        for (unsigned direct = 0; direct <= 1; ++direct) {
+branch  0 taken 4499
+branch  1 taken 2224 (fallthrough)
+     4499:   81:            OmegaTc2Spec s = { .k = 128, .rt = 2, .ct = 2, .warps = 4, .aqn = 2, .epi = epi, .direct = direct, .n = 256 };
+        -:   82:            /* SwiGLU stores through F2FP.BF16.F32.PACK_AB. The f32 epilogue does not. */
+     4517:   83:            if (epi == OMEGA_TC2_EPI_F32) EMIT(omega_blackwell_codegen_tc2_prog(&s, &program));
+branch  0 taken 2266 (fallthrough)
+branch  1 taken 2233
+call    2 returned 2266
+branch  3 taken 2262 (fallthrough)
+branch  4 taken 4
+call    5 returned 2262
+branch  6 taken 12 (fallthrough)
+branch  7 taken 2250
+call    8 returned 16
+     2233:   84:            else REFUSE(omega_blackwell_codegen_tc2_prog(&s, &program));
+call    0 returned 2233
+branch  1 taken 2229 (fallthrough)
+branch  2 taken 4
+call    3 returned 2229
+branch  4 taken 14 (fallthrough)
+branch  5 taken 2215
+call    6 returned 18
+        -:   85:        }
+     9639:   86:    for (unsigned kind = OMEGA_DEC_AXPY; kind <= OMEGA_DEC_XBOUND; ++kind) {
+branch  0 taken 8600
+branch  1 taken 1039 (fallthrough)
+     8600:   87:        OmegaDecSpec s = { .kind = (OmegaDecKind)kind };
+     8600:   88:        if (kind == OMEGA_DEC_AXPY) s.stride = 256;
+branch  0 taken 1103 (fallthrough)
+branch  1 taken 7497
+     8600:   89:        if (kind == OMEGA_DEC_RES) s.mode = OMEGA_DEC_RES_ADD | OMEGA_DEC_RES_NORM;
+branch  0 taken 1095 (fallthrough)
+branch  1 taken 7505
+     8600:   90:        if (kind == OMEGA_DEC_GATHER) { s.width = 256; s.stride = 256; }
+branch  0 taken 1071 (fallthrough)
+branch  1 taken 7529
+     8600:   91:        EMIT(omega_blackwell_codegen_dec_prog(&s, &program));
+call    0 returned 8600
+branch  1 taken 8584 (fallthrough)
+branch  2 taken 16
+call    3 returned 8584
+branch  4 taken 48 (fallthrough)
+branch  5 taken 8536
+call    6 returned 64
+        -:   92:    }
+     3090:   93:    for (unsigned in_type = OMEGA_QG_IN_F32; in_type <= OMEGA_QG_IN_BF16; ++in_type) {
+branch  0 taken 2069
+branch  1 taken 1021 (fallthrough)
+     2069:   94:        OmegaPqSpec s = { .k = 128, .in_type = in_type };
+     2069:   95:        REFUSE(omega_blackwell_codegen_pq_prog(&s, &program));
+call    0 returned 2069
+branch  1 taken 2065 (fallthrough)
+branch  2 taken 4
+call    3 returned 2065
+branch  4 taken 14 (fallthrough)
+branch  5 taken 2051
+call    6 returned 18
+        -:   96:    }
+     1021:   97:    OmegaQgSpec qg = { .k = 128, .rt = 4, .warps = 8, .n = 128 };
+     1021:   98:    REFUSE(omega_blackwell_codegen_qgemm_prog(&qg, &program));
+call    0 returned 1021
+branch  1 taken 1019 (fallthrough)
+branch  2 taken 2
+call    3 returned 1019
+branch  4 taken 7 (fallthrough)
+branch  5 taken 1012
+call    6 returned 9
+     1012:   99:    REFUSE(omega_blackwell_codegen_qmma_probe_prog(0, 8, &program));
+call    0 returned 1012
+branch  1 taken 1010 (fallthrough)
+branch  2 taken 2
+call    3 returned 1010
+branch  4 taken 7 (fallthrough)
+branch  5 taken 1003
+call    6 returned 9
+     1003:  100:    REFUSE(omega_blackwell_codegen_qmma_peak_prog(2, 2, 8, 128, &program));
+call    0 returned 1003
+branch  1 taken 1001 (fallthrough)
+branch  2 taken 2
+call    3 returned 1001
+branch  4 taken 7 (fallthrough)
+branch  5 taken 994
+call    6 returned 9
+      994:  101:    REFUSE(omega_blackwell_codegen_f2e4_probe_prog(&program));
+call    0 returned 994
+branch  1 taken 992 (fallthrough)
+branch  2 taken 2
+call    3 returned 992
+branch  4 taken 7 (fallthrough)
+branch  5 taken 985
+call    6 returned 9
+      985:  102:    return 0;
+        -:  103:}
+function main called 1331 returned 100% blocks executed 100%
+     1331:  104:int main(void)
+        -:  105:{
+     1331:  106:    if (remaining_families()) return 1;
+call    0 returned 1331
+branch  1 taken 346 (fallthrough)
+branch  2 taken 985
+     2544:  107:    for (unsigned shape = 0; shape < 2; ++shape) {
+branch  0 taken 1833
+branch  1 taken 711 (fallthrough)
+     8525:  108:        for (unsigned depth = 1; depth <= 4; ++depth) {
+branch  0 taken 6948
+branch  1 taken 1577 (fallthrough)
+    47612:  109:            for (unsigned prep = 0; prep < 2; ++prep) for (unsigned multi = 0; multi < 2; ++multi) {
+branch  0 taken 27408
+branch  1 taken 13512 (fallthrough)
+branch  2 taken 13768
+branch  3 taken 6692 (fallthrough)
+    27408:  110:                OmegaDecodeAttn256Spec s = { .depth = depth, .prep = prep, .multi = multi };
+    27408:  111:                if (shape) { s.q_heads = 16; s.kv_heads = 2; s.q_per_cta = 4; }
+branch  0 taken 12608 (fallthrough)
+branch  1 taken 14800
+    27408:  112:                EMIT(omega_blackwell_codegen_decode_attn256_prog(&s, &program));
+call    0 returned 27408
+branch  1 taken 27344 (fallthrough)
+branch  2 taken 64
+call    3 returned 27344
+branch  4 taken 192 (fallthrough)
+branch  5 taken 27152
+call    6 returned 256
+        -:  113:            }
+        -:  114:        }
+     1577:  115:        OmegaPrefillAttn256Spec s = {0};
+     1577:  116:        if (shape) { s.q_heads = 16; s.kv_heads = 2; }
+branch  0 taken 720 (fallthrough)
+branch  1 taken 857
+     1577:  117:        REFUSE(omega_blackwell_codegen_prefill_attn256_prog(&s, &program));
+call    0 returned 1577
+branch  1 taken 1573 (fallthrough)
+branch  2 taken 4
+call    3 returned 1573
+branch  4 taken 14 (fallthrough)
+branch  5 taken 1559
+call    6 returned 18
+        -:  118:    }
+     4298:  119:    for (unsigned ratio = 2; ratio <= 3; ++ratio) for (unsigned bf16 = 0; bf16 < 2; ++bf16) {
+branch  0 taken 2590
+branch  1 taken 1167 (fallthrough)
+branch  2 taken 1337
+branch  3 taken 541 (fallthrough)
+     2590:  120:        OmegaGdnSpec s = { .ratio = ratio, .state_bf16 = bf16 };
+        -:  121:        /* bf16 state stores F2FP.BF16.F32.PACK_AB. f32 state stays on SM86. */
+     2742:  122:        if (bf16) REFUSE(omega_blackwell_codegen_gdn_prog(&s, &program));
+branch  0 taken 1253 (fallthrough)
+branch  1 taken 1337
+call    2 returned 1253
+branch  3 taken 1249 (fallthrough)
+branch  4 taken 4
+call    5 returned 1249
+branch  6 taken 14 (fallthrough)
+branch  7 taken 1235
+call    8 returned 18
+     1337:  123:        else EMIT(omega_blackwell_codegen_gdn_prog(&s, &program));
+call    0 returned 1337
+branch  1 taken 1333 (fallthrough)
+branch  2 taken 4
+call    3 returned 1333
+branch  4 taken 12 (fallthrough)
+branch  5 taken 1321
+call    6 returned 16
+     2556:  124:        EMIT(omega_blackwell_codegen_gdn_multi_prog(&s, &program));
+call    0 returned 2556
+branch  1 taken 2548 (fallthrough)
+branch  2 taken 8
+call    3 returned 2548
+branch  4 taken 24 (fallthrough)
+branch  5 taken 2524
+call    6 returned 32
+     2524:  125:        EMIT(omega_blackwell_codegen_gdn_prep_prog(&s, &program));
+call    0 returned 2524
+branch  1 taken 2516 (fallthrough)
+branch  2 taken 8
+call    3 returned 2516
+branch  4 taken 24 (fallthrough)
+branch  5 taken 2492
+call    6 returned 32
+        -:  126:        /* The scan and the post epilogue reduce with SHFL.BFLY. */
+     2492:  127:        REFUSE(omega_blackwell_codegen_gdn_scan_prog(&s, &program));
+call    0 returned 2492
+branch  1 taken 2484 (fallthrough)
+branch  2 taken 8
+call    3 returned 2484
+branch  4 taken 28 (fallthrough)
+branch  5 taken 2456
+call    6 returned 36
+     2456:  128:        REFUSE(omega_blackwell_codegen_gdn_post_prog(&s, &program));
+call    0 returned 2456
+branch  1 taken 2448 (fallthrough)
+branch  2 taken 8
+call    3 returned 2448
+branch  4 taken 28 (fallthrough)
+branch  5 taken 2420
+call    6 returned 36
+        -:  129:    }
+     1599:  130:    for (unsigned kind = OMEGA_GDN_COPY; kind <= OMEGA_GDN_ZERO; ++kind) {
+branch  0 taken 1074
+branch  1 taken 525 (fallthrough)
+     1074:  131:        OmegaGdnSpec s = { .copy = (int)kind };
+     1074:  132:        EMIT(omega_blackwell_codegen_gdn_copy_prog(&s, &program));
+call    0 returned 1074
+branch  1 taken 1070 (fallthrough)
+branch  2 taken 4
+call    3 returned 1070
+branch  4 taken 12 (fallthrough)
+branch  5 taken 1058
+call    6 returned 16
+        -:  133:    }
+      525:  134:    const unsigned shapes[][2] = { { OMEGA_TERN_LAYOUT_ROWMAJOR, 1 }, { OMEGA_TERN_LAYOUT_ROWMAJOR, 2 },
+        -:  135:        { OMEGA_TERN_LAYOUT_ROWMAJOR, 4 }, { OMEGA_TERN_LAYOUT_BLOCK, 2 }, { OMEGA_TERN_LAYOUT_BLOCK, 4 } };
+      525:  136:    const unsigned ks[] = { 256, 2560, 8192, OMEGA_TERN_MAX_K };
+     1865:  137:    for (unsigned k = 0; k < sizeof(ks)/sizeof(ks[0]); ++k)
+branch  0 taken 1620
+branch  1 taken 245 (fallthrough)
+     8880:  138:        for (unsigned shape = 0; shape < sizeof(shapes)/sizeof(shapes[0]); ++shape)
+branch  0 taken 7540
+branch  1 taken 1340 (fallthrough)
+    22180:  139:            for (unsigned epi = 0; epi < 2; ++epi) {
+branch  0 taken 14920
+branch  1 taken 7260 (fallthrough)
+        -:  140:                /* The existing generator supports the multi-chunk epilogue
+        -:  141:                 * only for integer output, independently of GPU target. */
+    14920:  142:                if (ks[k] > OMEGA_TERN_CHUNK_MAX && epi == OMEGA_TERN_EPI_F32) continue;
+branch  0 taken 2650 (fallthrough)
+branch  1 taken 12270
+branch  2 taken 1305 (fallthrough)
+branch  3 taken 1345
+    13615:  143:                OmegaTernGemvSpec s = { ks[k], shapes[shape][0], shapes[shape][1], 4, 1, epi, 0 };
+    13615:  144:                EMIT(omega_blackwell_codegen_tern_gemv_prog(&s, &program));
+call    0 returned 13615
+branch  1 taken 13545 (fallthrough)
+branch  2 taken 70
+call    3 returned 13545
+branch  4 taken 210 (fallthrough)
+branch  5 taken 13335
+call    6 returned 280
+        -:  145:            }
+      245:  146:    puts("Ampere extended existing generator families encoded (host only)");
+call    0 returned 245
+      245:  147:    return 0;
+        -:  148:}
+        -:  149:#else
+        -:  150:/* The step order, every specification, which steps must encode and which must be refused, the
+        -:  151: * short-circuit of a failing step and the message (with the source line of the former C above) are
+        -:  152: * om/tools/ampfam.om. This shell only calls what the unit asks for: the generator with the fields it
+        -:  153: * gives, the SM121 encoder or the SM86 encoder, and prints the unit's text. The former C keeps its line
+        -:  154: * numbers, so the messages name the same lines in both builds. */
+        -:  155:#include "cudapp_native.h"
+        -:  156:#include <stdlib.h>
+        -:  157:
+        -:  158:static BlackwellIRProgram program;
+        -:  159:static int generate(const uint64_t *v, uint64_t id)
+        -:  160:{
+        -:  161:#define U(i) ((uint32_t)v[i])
+        -:  162:    switch (id) {
+        -:  163:    case 1: { OmegaDecodeAttnSpec s = { .depth = U(0) }; return omega_blackwell_codegen_decode_attn_prog(&s, &program); }
+        -:  164:    case 2: { OmegaPrefillAttnSpec s = { .warps = U(0), .mode = U(1), .mirror = U(2) };
+        -:  165:              return omega_blackwell_codegen_prefill_attn_prog(&s, &program); }
+        -:  166:    case 3: { OmegaBf16GemvSpec s = { .k = U(0), .rows = U(1), .warps = U(2), .depth = U(3), .mask = U(4),
+        -:  167:                                      .ystride = U(5), .xbatch = U(6) };
+        -:  168:              return omega_blackwell_codegen_bf16_gemv_prog(&s, &program); }
+        -:  169:    case 4: case 5: { OmegaFp8GemvSpec s = { .k = U(0), .lane_bytes = U(1), .rows = U(2), .warps = U(3), .depth = U(4) };
+        -:  170:              return id == 4 ? omega_blackwell_codegen_fp8_gemv_prog(&s, &program) : omega_blackwell_codegen_fp8_gemv2_prog(&s, &program); }
+        -:  171:    case 6: { OmegaFp8GemmSpec s = { .k = U(0), .lane_bytes = U(1), .mt = U(2), .warps = U(3), .rowmap = U(4) };
+        -:  172:              return omega_blackwell_codegen_fp8gemm_prog(&s, &program); }
+        -:  173:    case 7: { OmegaRouterSpec s = { .warps = U(0), .depth = U(1), .experts = U(2), .shared = U(3) };
+        -:  174:              return omega_blackwell_codegen_router_prog(&s, &program); }
+        -:  175:    case 8: return omega_blackwell_codegen_pf_copy_prog(&program);
+        -:  176:    case 9: { OmegaRlSpec s = { .k = U(0), .e = U(1), .t = U(2) }; return omega_blackwell_codegen_rl_prog(&s, &program); }
+        -:  177:    case 10: { OmegaMcSpec s = { .h = U(0), .top_k = U(1) }; return omega_blackwell_codegen_mc_prog(&s, &program); }
+        -:  178:    case 11: return omega_blackwell_codegen_tc_probe_prog((int)v[0], &program);
+        -:  179:    case 12: return omega_blackwell_codegen_tc_peak_prog(U(0), U(1), U(2), U(3), &program);
+        -:  180:    case 13: return omega_blackwell_codegen_tc_bw_prog(U(0), U(1), U(2), &program);
+        -:  181:    case 14: { OmegaTcGemmSpec s = { .k = U(0), .rt = U(1), .ct = U(2), .warps = U(3) };
+        -:  182:               return omega_blackwell_codegen_tcgemm_prog(&s, &program); }
+        -:  183:    case 15: { OmegaTc2Spec s = { .k = U(0), .rt = U(1), .ct = U(2), .warps = U(3), .aqn = U(4), .epi = U(5),
+        -:  184:                                  .direct = U(6), .n = U(7) };
+        -:  185:               return omega_blackwell_codegen_tc2_prog(&s, &program); }
+        -:  186:    case 16: { OmegaDecSpec s = { .kind = (OmegaDecKind)v[0], .stride = U(1), .mode = U(2), .width = U(3) };
+        -:  187:               return omega_blackwell_codegen_dec_prog(&s, &program); }
+        -:  188:    case 17: { OmegaPqSpec s = { .k = U(0), .in_type = U(1) }; return omega_blackwell_codegen_pq_prog(&s, &program); }
+        -:  189:    case 18: { OmegaQgSpec s = { .k = U(0), .rt = U(1), .warps = U(2), .n = U(3) };
+        -:  190:               return omega_blackwell_codegen_qgemm_prog(&s, &program); }
+        -:  191:    case 19: return omega_blackwell_codegen_qmma_probe_prog((int)v[0], U(1), &program);
+        -:  192:    case 20: return omega_blackwell_codegen_qmma_peak_prog(U(0), U(1), U(2), U(3), &program);
+        -:  193:    case 21: return omega_blackwell_codegen_f2e4_probe_prog(&program);
+        -:  194:    case 22: { OmegaDecodeAttn256Spec s = { .depth = U(0), .prep = U(1), .multi = U(2), .q_heads = U(3),
+        -:  195:                                            .kv_heads = U(4), .q_per_cta = U(5) };
+        -:  196:               return omega_blackwell_codegen_decode_attn256_prog(&s, &program); }
+        -:  197:    case 23: { OmegaPrefillAttn256Spec s = { .q_heads = U(0), .kv_heads = U(1) };
+        -:  198:               return omega_blackwell_codegen_prefill_attn256_prog(&s, &program); }
+        -:  199:    case 24: case 25: case 26: case 27: case 28: {
+        -:  200:        OmegaGdnSpec s = { .ratio = U(0), .state_bf16 = U(1) };
+        -:  201:        return id == 24 ? omega_blackwell_codegen_gdn_prog(&s, &program)
+        -:  202:             : id == 25 ? omega_blackwell_codegen_gdn_multi_prog(&s, &program)
+        -:  203:             : id == 26 ? omega_blackwell_codegen_gdn_prep_prog(&s, &program)
+        -:  204:             : id == 27 ? omega_blackwell_codegen_gdn_scan_prog(&s, &program)
+        -:  205:             : omega_blackwell_codegen_gdn_post_prog(&s, &program); }
+        -:  206:    case 29: { OmegaGdnSpec s = { .copy = (int)v[0] }; return omega_blackwell_codegen_gdn_copy_prog(&s, &program); }
+        -:  207:    case 30: { OmegaTernGemvSpec s = { U(0), U(1), U(2), U(3), U(4), U(5), 0 };
+        -:  208:               return omega_blackwell_codegen_tern_gemv_prog(&s, &program); }
+        -:  209:    }
+        -:  210:#undef U
+        -:  211:    abort();
+        -:  212:}
+        -:  213:
+        -:  214:int main(void)
+        -:  215:{
+        -:  216:    const uint64_t facts[32] = { OMEGA_PATTN_MODE_FUSED, OMEGA_PATTN_MODE_ATTEND, OMEGA_PATTN_MODE_APPEND,
+        -:  217:        OMEGA_TC2_EPI_F32, OMEGA_TC2_EPI_SWIGLU, OMEGA_DEC_AXPY, OMEGA_DEC_XBOUND, OMEGA_DEC_RES, OMEGA_DEC_GATHER,
+        -:  218:        OMEGA_DEC_RES_ADD | OMEGA_DEC_RES_NORM, OMEGA_QG_IN_F32, OMEGA_QG_IN_BF16, OMEGA_GDN_COPY, OMEGA_GDN_ZERO,
+        -:  219:        OMEGA_TERN_LAYOUT_ROWMAJOR, OMEGA_TERN_LAYOUT_BLOCK, OMEGA_TERN_MAX_K, OMEGA_TERN_CHUNK_MAX, OMEGA_TERN_EPI_F32 };
+        -:  220:    uint64_t s[64] = {0}, act = 0;
+        -:  221:    uint8_t text[128], reference[16384], ampere[16384];
+        -:  222:    for (;;) {
+        -:  223:        if (omega_ampfam(&act, facts, 32, s, 64, text, sizeof(text))) abort();
+        -:  224:        if ((act & 255) == 1) s[2] = (uint64_t)(int64_t)generate(s + 16, s[9]);
+        -:  225:        else if (act == 2) {
+        -:  226:            size_t a = 0;
+        -:  227:            s[2] = (uint64_t)(int64_t)omega_bw_encode_program(&program, reference, sizeof(reference), &a);
+        -:  228:            s[3] = a;
+        -:  229:        } else if (act == 3) {
+        -:  230:            size_t b = s[10];
+        -:  231:            s[2] = (uint64_t)(int64_t)omega_gpu_encode_program_target(&program, 86, ampere, sizeof(ampere), &b);
+        -:  232:            s[4] = b;
+        -:  233:        } else if ((act & 255) == 4 || (act & 255) == 5) {
+        -:  234:            FILE *to = (act & 255) == 4 ? stderr : stdout;
+        -:  235:            fwrite(text, 1, act >> 8, to);
+        -:  236:            return (act & 255) == 4;
+        -:  237:        } else abort();
+        -:  238:    }
+        -:  239:}
+        -:  240:#endif

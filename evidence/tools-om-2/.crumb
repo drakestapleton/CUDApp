@@ -1,0 +1,24 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T06:25:16Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:7acd9683f6f7b12c42ac46a97d99c94813b8988e088c3261a6c9bad88c49ec6f",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "115bf714e79a63b7a21639e2b06095cad24832c5",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "invariants": [
+    "Host differential evidence is not GPU or chip qualification; chip tiers are NOT_RUN.",
+    "Receipts are immutable once committed."
+  ],
+  "layer": "evidence",
+  "name": "tools-om-2",
+  "purpose": "Host receipts for the tools/ C to seeded Omega migration continued on CUDApp#314 (lane ToolsOm2).",
+  "schema_version": "1.0.0"
+}

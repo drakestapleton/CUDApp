@@ -1,0 +1,8 @@
+File 'ampere_corpus.c'
+Lines executed:100.00% of 45
+Branches executed:100.00% of 62
+Taken at least once:96.77% of 62
+Calls executed:86.96% of 23
+Creating 'ampere_corpus.c.gcov'
+
+Lines executed:100.00% of 45

@@ -1,0 +1,15 @@
+differential: 116 cases identical, 266 files written (exits: 32 exit 0 54 exit 2 30 exit 3 )
+negative control: flipped record caught (om.out)
+mutant ktile: killed (<   err matmul-bf16-v1 export needs m%16 == 0, n%8 == 0, k%1)
+mutant single: killed (<   out artifact_id=b97a1fa6086ebd0a490e18576fe0675b8fa0d750)
+mutant colgrid: killed (<   out artifact_id=b97a1fa6086ebd0a490e18576fe0675b8fa0d750)
+mutant hexbase: killed (<   out artifact_id=b97a1fa6086ebd0a490e18576fe0675b8fa0d750)
+mutant overflow: killed (<   err usage: artifact-export matmul --m M --k K --n N --co)
+mutant u32max: killed (<   err usage: artifact-export matmul --m M --k K --n N --co)
+mutant shared: killed (<   out artifact_id=35e4efffd36d539d527debc812c6c0b4d7b576eb)
+mutant lowhex: killed (<   err contract id is not matmul-bf16-v1)
+mutant pow2: killed (<   out artifact_id=35e4efffd36d539d527debc812c6c0b4d7b576eb)
+mutant hbound: killed (<   out artifact_id=5e6d7ed3baa555ffb302390d93c7af3f3de3696a)
+artexp mutants: 10 killed
+coverage: /tmp/toolsom2/cov/artexp.gcov.txt
+tools-om artexp: PASS (differential 116 cases, 266 files, negative control, 10 mutants killed)

@@ -1,7 +1,27 @@
 {
-  "schema_version": "1.0.0",
-  "name": "platform-linux-gen",
+  "extensions": {
+    "generated": {
+      "children": [
+        {
+          "digest": "29a38d19a26de765466e6455081a8391e28d222e2a5d257cab75ae3d593b81be",
+          "last_commit": "dc78a03",
+          "name": "link",
+          "purpose": "Platform Omega bindings with runtime symbols renamed so fence and wait can link together."
+        }
+      ],
+      "children_root": "sha256:525687b5453c920bf9b3207b396a0aa10cba4b151c28c3db8511694f1ccda663",
+      "compiled_at": "2026-11-06T07:33:36Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:0db282c5220f40dda8c00366ba197a89a1b557ca44b2e6fb39656b78f5962ec0",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 6,
+      "generated_at_commit": "313b12497a3ff42cde7620834b3245a99a0dc208",
+      "source_tree": "sha256:f0971ad9a06cdad7822ead62b3a30e434305610e18900b48d62fae3e8831c05c"
+    }
+  },
   "layer": "platform",
+  "name": "platform-linux-gen",
   "purpose": "Generated Omega native bindings for the Linux platform units. Do not edit; regenerate with gen_effects.sh.",
-  "extensions": {"generated": "compile"}
+  "schema_version": "1.0.0"
 }

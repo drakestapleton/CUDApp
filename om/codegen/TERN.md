@@ -58,6 +58,12 @@ deep staging, and chunked input. Temporary mutated sources/C/binaries are delete
 Python and the retained C/algebra oracle are verification tools, not production
 implementations or new build/runtime dependencies.
 
+The simulator target combines the pinned Omega ternary/algebra battery with
+CUDApp's current `bw_warp_sim_k.h`. CUDApp's simulator honors scalar LDG immediate
+offsets; the older simulator at the pinned Omega revision does not. The adapter
+pre-includes the current simulator and calls only the simulator battery, while
+the linker discards the original device-capable entry point.
+
 PR #229 was inspected before migration. Its ternary-header change only corrects
 the QMD staging-cap comment from 32 KiB to 64 KiB. It changes no builder-read
 field or accepted configuration. The untouched public header therefore supports

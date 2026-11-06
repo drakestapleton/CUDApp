@@ -69,3 +69,14 @@ The research in `docs/PAIN_POINTS.md` ranks what developers hit with CUDA and it
 | D12 | Work per answer, against the machine's own ceiling | simulator DONE; chip open |
 | D13 | Our own disassembler, in plain text | PLANNED (L386, Omega bar C6) |
 | D14 | Recover from a fault without restarting | PLANNED (L386, Omega bar C5) |
+
+## 2026-11-06: engine fixture and clock scalars (pending integration)
+
+Qualification scalars, bounded fixture text checks, submission sizing, flush
+words and the six engine/m16/wait/submit clock conversions now call seeded
+Omega in `om/engine/fixture_rest.om`. C retains device, mapping, clock and proc
+effects. The four hardware fixtures are BUILD_ONLY; their extracted logic is
+host-differentially EXERCISED with overflow partitions and seven killed Omega
+mutants. Receipts and the unexecuted chip runbook are in
+`evidence/engine-fixture-rest-20261106/README.md`. Hardware qualification remains
+NOT_RUN, and no roadmap status row is upgraded.

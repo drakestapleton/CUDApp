@@ -7,12 +7,13 @@
 #define ENG_C_PART 1
 #endif
 #include "omega_eng_dec.h"
+#include "omega_fixture_rest.h"
 
 static uint64_t real_now_ns(void *ctx) {
     (void)ctx;
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+    return omega_fixture_calc(FR_NS, (uint64_t)ts.tv_sec, (uint64_t)ts.tv_nsec, 0);
 }
 
 static void real_barrier(void *ctx) {

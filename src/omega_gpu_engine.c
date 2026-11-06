@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_fixture_rest.h"
 /*
  * Omega GPU Engine core (A3a). See src/omega_gpu_engine.h and
  * docs/numeric/OMEGA_GPU_ENGINE.md.
@@ -166,7 +167,7 @@ static uint64_t mono_ms(void)
 {
     struct timespec ts;
     if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) return 0u;
-    return (uint64_t)ts.tv_sec * 1000u + (uint64_t)ts.tv_nsec / 1000000u;
+    return omega_fixture_calc(FR_MS, (uint64_t)ts.tv_sec, (uint64_t)ts.tv_nsec, 0);
 }
 
 static uint64_t now_ms(void)

@@ -41,7 +41,7 @@ GPU_ENGINE_PHYS_INC = -I$(PHYSICS_DIR)/m16 -I$(PHYSICS_DIR)/nvrm \
 	-I$(PHYSICS_DIR)/third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
 	-I$(PHYSICS_DIR)/third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include
 
-build/omega_blackwell_engine_syntax.o: src/omega_blackwell_engine.c src/omega_blackwell_engine.h src/omega_gpu_engine.h
+build/omega_blackwell_engine_syntax.o: src/omega_blackwell_engine.c src/omega_blackwell_engine.h src/omega_gpu_engine.h src/omega_fixture_rest.h
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc $(GPU_ENGINE_PHYS_INC) -c -o $@ src/omega_blackwell_engine.c
 test-gpu-engine-backend-compile: build/omega_blackwell_engine_syntax.o
@@ -60,14 +60,14 @@ GPU_ENGINE_SIM_SRCS = src/omega_blackwell_submit.c src/omega_blackwell_engine.c 
 	src/omega_core.c src/omega_canonical.c src/sha256.c
 
 build/test_omega_blackwell_engine: tests/test_omega_blackwell_engine.c tests/fake_m16_native.c tests/fake_m16_native.h \
-	$(GPU_ENGINE_SIM_SRCS) src/omega_gpu_engine.h src/omega_blackwell_engine.h
+	$(GPU_ENGINE_SIM_SRCS) src/omega_gpu_engine.h src/omega_blackwell_engine.h src/omega_fixture_rest.h
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections \
 		-Isrc -Itests $(GPU_ENGINE_PHYS_INC) -o $@ tests/test_omega_blackwell_engine.c tests/fake_m16_native.c \
 		$(GPU_ENGINE_SIM_SRCS) -Wl,--gc-sections -lm
 # The matmul wrappers' dimension and code-size refusals (they also need the fixed-deadline wait).
 build/test_omega_blackwell_matmul_bounds: tests/test_omega_blackwell_matmul_bounds.c tests/fake_m16_native.c \
-	tests/fake_m16_native.h $(GPU_ENGINE_SIM_SRCS) src/omega_gpu_wait.c src/omega_blackwell_submit.h
+	tests/fake_m16_native.h $(GPU_ENGINE_SIM_SRCS) src/omega_gpu_wait.c src/omega_blackwell_submit.h src/omega_fixture_rest.h
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections \
 		-Isrc -Itests $(GPU_ENGINE_PHYS_INC) -o $@ tests/test_omega_blackwell_matmul_bounds.c tests/fake_m16_native.c \

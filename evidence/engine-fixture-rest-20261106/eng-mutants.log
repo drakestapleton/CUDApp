@@ -1,0 +1,36 @@
+build/om-qmd/eng_c build/om-qmd/eng_c.txt 2>/dev/null
+C build: 44584 records, 0 unit calls
+OM_ENG_BUILD_LINE='gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -Wl,--wrap=omega_eng tests/om_eng_diff_test.c src/omega_gpu_engine.c src/omega_gpu_wait.c src/omega_gpu_platform.c src/omega_gpu_mem_reserve.c src/omega_gpu_mem_cached.c src/omega_gpu_serving.c src/omega_gpu_platform_linux.c src/omega_gpu_fmt.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c m16/m16_gpu_wait.c m16/m16_native.c nvrm/nvrm.c' sh tests/om_eng_mutants.sh
+om build: 44584 records, 111205 unit calls, all 28 ops reached
+KILLED m_seqge_bit diff=1 be=0 (FAIL om eng diff: record 3009 differs)
+om build: 44584 records, 109715 unit calls, all 28 ops reached
+KILLED m_wrest_stale_stall diff=1 be=0 (FAIL om eng diff: record 3009 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED m_mmshape_no_u32 diff=1 be=0 (FAIL om eng diff: record 17915 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED m_cache_page diff=1 be=0 (FAIL om eng diff: record 15005 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED m_life_floor diff=1 be=0 (FAIL om eng diff: record 34335 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED m_reqf_sign diff=1 be=0 (FAIL om eng diff: record 17325 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED BE_ROUND_PAGES_ZERO_ACCEPTED diff=1 be=1 (FAIL om eng diff: record 17063 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED BE_ROUND_PAGES_NO_ROUNDING diff=1 be=1 (FAIL om eng diff: record 17002 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED BE_BUILD_COUNT_OVERFLOW diff=1 be=0 (FAIL om eng diff: record 19400 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED BE_THREADS_WRONG diff=1 be=1 (FAIL om eng diff: record 17023 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED BE_GRID_ROUNDS_DOWN diff=1 be=1 (FAIL om eng diff: record 17032 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED BE_QMD_RELEASE_CHECK diff=1 be=0 (FAIL om eng diff: record 17035 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED WRAP_MARKER_TIMEOUT diff=1 be=1 (FAIL om eng diff: record 17011 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED WRAP_SEMAPHORE_TIMEOUT diff=1 be=1 (FAIL om eng diff: record 17011 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED WRAP_MARKER2_TIMEOUT diff=1 be=1 (FAIL om eng diff: record 17011 differs)
+om build: 44584 records, 110752 unit calls, all 28 ops reached
+KILLED WRAP_VISIBILITY_TIMEOUT diff=1 be=0 (FAIL om eng diff: record 17011 differs)
+PASS om eng mutants: 16/16 killed

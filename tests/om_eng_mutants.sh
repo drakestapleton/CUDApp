@@ -43,7 +43,8 @@ run_one() {
   fi
   python3 -c 'import sys; p,a,b=sys.argv[1:]; t=open(p).read(); open(p+".mut","w").write(t.replace(a,b,1))' "$SRC" "$from" "$to"
   mv "$SRC.mut" "$m/eng.om"
-  OMEGA_SEEDED_OMC="$OMC" sh "$BRIDGE/tools/bridge-seeded" c "$m/eng.om" > "$m/eng.c"
+  cat "$ROOT/om/engine/fixture_rest.om" "$m/eng.om" > "$m/unit.om"
+  OMEGA_SEEDED_OMC="$OMC" sh "$BRIDGE/tools/bridge-seeded" c "$m/unit.om" > "$m/eng.c"
   (cd "$ROOT" && $ENG "$m/eng.c" -o "$m/eng_om")
   (cd "$ROOT" && gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread \
     -ffunction-sections -fdata-sections -Isrc -Itests $INC -o "$m/be" tests/test_omega_blackwell_engine.c \

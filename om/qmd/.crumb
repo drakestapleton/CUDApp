@@ -1,5 +1,19 @@
 {
-  "schema_version": "1.0.0",
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T11:00:26Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:ab93a73f6de14ead3ce7d95663f4c436144e9c110f73a44c3c1a04695b0ab0c7",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 1,
+      "generated_at_commit": "1ecaf8c40802dee63c9534944fae492005076033",
+      "source_tree": "sha256:68455df915588b5331091a7d2ed71d4f3bcace60a7b5aebb679e6290688382b8"
+    }
+  },
   "name": "qmd",
-  "purpose": "Blackwell QMD and constant-bank packing decisions"
+  "purpose": "Blackwell QMD and constant-bank packing decisions",
+  "schema_version": "1.0.0"
 }

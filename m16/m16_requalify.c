@@ -23,6 +23,7 @@
 #define ENG_C_PART 1
 #endif
 #include "omega_eng_gates.h"
+#include "omega_fixture_rest.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,10 +32,11 @@
 static int check_proc_maps(void) {
     FILE *f = fopen("/proc/self/maps", "r");
     if (!f) return -1;
-    char line[512];
+    unsigned char line[512] = {0};
     int hit = 0;
-    while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, "libcuda.so") || strstr(line, "libcudart.so")) {
+    while (fgets((char *)line, sizeof(line), f)) {
+        if (omega_fixture_text(line, (const unsigned char[32]){"libcuda.so"}, 10) ||
+            omega_fixture_text(line, (const unsigned char[32]){"libcudart.so"}, 12)) {
             hit = 1;
             break;
         }
@@ -79,7 +81,7 @@ int main(int argc, char **argv) {
 
     uint32_t methods[32];
     uint32_t payload = omega_gate_reqf_payload();
-    if (payload != 0x16c0ffeeu) {
+    if (!omega_fixture_calc(FR_EQ, payload, 0x16c0ffeeu, 0)) {
         fprintf(stderr, "FATAL: requalify payload unavailable (0x%08x)\n", payload);
         m16_native_close(&ctx);
         return 1;
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     printf("[OBSERVED] Enqueued %d words to GPFIFO index %u. Withholding doorbell notification...\n",
-           nwords, ctx.rm.put - 1);
+           nwords, (uint32_t)omega_fixture_calc(FR_PREV32, ctx.rm.put, 0, 0));
 
     /* Wait 100ms and verify marker has NOT changed */
     usleep(100000);

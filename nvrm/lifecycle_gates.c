@@ -18,6 +18,7 @@
 #define ENG_C_PART 1
 #endif
 #include "omega_eng_gates.h"
+#include "omega_fixture_rest.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -34,15 +35,15 @@ _Static_assert(ENOMEM == 12, "eng.om life k3 expects ENOMEM 12");
 static int g_total = 0, g_passed = 0, g_failed = 0;
 
 static void gate_result(const char *name, int ok) {
-    g_total++;
-    if (ok) { g_passed++; printf("[PASS] %s\n", name); }
-    else    { g_failed++; printf("[FAIL] %s\n", name); }
+    g_total = (int)omega_fixture_calc(FR_ADD, (uint64_t)g_total, 1, 0);
+    if (ok) { g_passed = (int)omega_fixture_calc(FR_ADD, (uint64_t)g_passed, 1, 0); printf("[PASS] %s\n", name); }
+    else    { g_failed = (int)omega_fixture_calc(FR_ADD, (uint64_t)g_failed, 1, 0); printf("[FAIL] %s\n", name); }
 }
 
 static uint64_t now_ms(void) {
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
-    return (uint64_t)t.tv_sec * 1000ull + (uint64_t)t.tv_nsec / 1000000ull;
+    return omega_fixture_calc(FR_MS, (uint64_t)t.tv_sec, (uint64_t)t.tv_nsec, 0);
 }
 
 /* ---- NVRM_FREE_CHURN ---------------------------------------------------
@@ -54,54 +55,46 @@ static uint64_t now_ms(void) {
 #define CHURN_CYCLES 20000
 
 static int gate_free_churn(Nvrm *rm, uint64_t *out_bytes, uint64_t *out_high_water_delta) {
-    static const uint64_t sizes[] = {
-        4ull * 1024,               /* 4 KiB   */
-        64ull * 1024,              /* 64 KiB  */
-        1024ull * 1024,            /* 1 MiB   */
-        4ull * 1024 * 1024,        /* 4 MiB   */
-        16ull * 1024 * 1024,       /* 16 MiB  */
-        32ull * 1024 * 1024,       /* 32 MiB  */
-        64ull * 1024 * 1024,       /* 64 MiB  */
-        64ull * 1024 * 1024,       /* 64 MiB  */
-    };
-    const int nsizes = (int)(sizeof(sizes) / sizeof(sizes[0]));
     uint64_t va_start = rm->va_next;
     uint64_t va_high = rm->va_next;
     uint64_t total_bytes = 0;
 
     for (int i = 0; i < CHURN_CYCLES; i++) {
-        uint64_t size = sizes[i % nsizes];
+        uint64_t size = omega_fixture_calc(FR_SIZE, (uint64_t)i, 0, 0);
         NvrmMem m;
         if (nvrm_alloc(rm, size, &m) != 0) {
             fprintf(stderr, "  churn: nvrm_alloc failed at cycle %d (size 0x%lx): %s\n",
                     i, (unsigned long)size, rm->err);
             return -1;
         }
-        if (rm->va_next > va_high) va_high = rm->va_next;
+        va_high = omega_fixture_calc(FR_MAX, rm->va_next, va_high, 0);
 
         volatile uint8_t *p = (volatile uint8_t *)m.cpu;
-        uint8_t first = (uint8_t)(i & 0xff);
-        uint8_t last  = (uint8_t)((i ^ 0xff) & 0xff);
+        uint8_t first = (uint8_t)omega_fixture_calc(FR_FIRST, (uint64_t)i, 0, 0);
+        uint8_t last = (uint8_t)omega_fixture_calc(FR_LAST, (uint64_t)i, 0, 0);
+        uint64_t tail = omega_fixture_calc(FR_PREV, m.size, 0, 0);
         p[0] = first;
-        p[m.size - 1] = last;
-        if (p[0] != first || p[m.size - 1] != last) {
+        p[tail] = last;
+        uint8_t seen_first = p[0], seen_last = p[tail];
+        if (!omega_fixture_calc(FR_BOTH, omega_fixture_calc(FR_EQ, seen_first, first, 0),
+                                omega_fixture_calc(FR_EQ, seen_last, last, 0), 0)) {
             fprintf(stderr, "  churn: readback mismatch at cycle %d\n", i);
             nvrm_free(rm, &m);
             return -1;
         }
 
-        total_bytes += m.size;
+        total_bytes = omega_fixture_calc(FR_ADD, total_bytes, m.size, 0);
         if (nvrm_free(rm, &m) != 0) {
             fprintf(stderr, "  churn: nvrm_free failed at cycle %d: %s\n", i, rm->err);
             return -1;
         }
-        if ((i % 2000) == 0) {
+        if (omega_fixture_calc(FR_LOG, (uint64_t)i, 0, 0)) {
             fprintf(stderr, "  churn: cycle %d/%d, %" PRIu64 " bytes so far\n", i, CHURN_CYCLES, total_bytes);
         }
     }
 
     *out_bytes = total_bytes;
-    *out_high_water_delta = va_high - va_start;
+    *out_high_water_delta = omega_fixture_calc(FR_SUB, va_high, va_start, 0);
     return 0;
 }
 
@@ -127,7 +120,7 @@ static int gate_free_unmaps(Nvrm *rm) {
     int rc = msync(va, size, MS_ASYNC);
     int en = errno;
     if (!omega_gate_life(OMEGA_LIFE_UNMAPPED, (uint64_t)(int64_t)rc, (uint64_t)(int64_t)en, 0, 0, 0, 0)) {
-        if (rc == 0)
+        if (omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)rc, 0, 0))
             fprintf(stderr, "  unmaps: msync unexpectedly succeeded on freed range %p\n", va);
         else
             fprintf(stderr, "  unmaps: msync failed with errno %d (%s), expected ENOMEM\n", en, strerror(en));
@@ -154,7 +147,7 @@ static int gate_idempotent_and_stale(Nvrm *rm) {
         fprintf(stderr, "  idempotent: first free failed: %s\n", rm->err);
         return -1;
     }
-    if (!omega_gate_life(OMEGA_LIFE_ZEROED, m.handle, m.va, m.size, m.cpu != NULL, 0, 0)) {
+    if (!omega_gate_life(OMEGA_LIFE_ZEROED, m.handle, m.va, m.size, (uint64_t)(uintptr_t)m.cpu, 0, 0)) {
         fprintf(stderr, "  idempotent: nvrm_free did not zero the NvrmMem on success\n");
         return -1;
     }
@@ -197,7 +190,7 @@ static int gate_alloc_after_free_reuses_va(Nvrm *rm) {
                 (unsigned long)va, (unsigned long)b.va);
     }
     nvrm_free(rm, &b);
-    return ok ? 0 : -1;
+    return (int32_t)(uint32_t)omega_fixture_calc(FR_RESULT, (uint64_t)ok, 0, 0);
 }
 
 static int gate_injected_free_failure(int uvm_failure) {
@@ -213,14 +206,14 @@ static int gate_injected_free_failure(int uvm_failure) {
     int refused = omega_gate_life(OMEGA_LIFE_QUARANTINE, (uint64_t)(int64_t)frc, rm.faulted, m.handle,
                                   rm.live_count, rm.free_count, free_before);
     NvrmMem other;
-    refused = refused && omega_gate_life(OMEGA_LIFE_NONZERO, (uint64_t)(int64_t)nvrm_alloc(&rm, 0x4000, &other),
-                                         0, 0, 0, 0, 0);
+    if (refused)
+        refused = omega_gate_life(OMEGA_LIFE_NONZERO, (uint64_t)(int64_t)nvrm_alloc(&rm, 0x4000, &other), 0, 0, 0, 0, 0);
     int rrc = nvrm_free(&rm, &m);
-    uint64_t last_va = rm.free_count ? rm.free_list[rm.free_count - 1].va : 0u;
+    uint64_t last_va = rm.free_count ? rm.free_list[omega_fixture_calc(FR_PREV, rm.free_count, 0, 0)].va : 0u;
     int recovered_release = omega_gate_life(OMEGA_LIFE_RECOVERED, (uint64_t)(int64_t)rrc, rm.free_count,
                                             free_before, last_va, va, 0);
     nvrm_close(&rm);
-    return refused && recovered_release ? 0 : -1;
+    return (int32_t)(uint32_t)omega_fixture_calc(FR_RESULT, omega_fixture_calc(FR_BOTH, refused, recovered_release, 0), 0, 0);
 }
 
 static int gate_corrupt_table_refusal(void) {
@@ -236,7 +229,7 @@ static int gate_corrupt_table_refusal(void) {
     rm.live[0].cpu = cpu;
     int released = omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)nvrm_free(&rm, &m), 0, 0, 0, 0, 0);
     nvrm_close(&rm);
-    return refused && released ? 0 : -1;
+    return (int32_t)(uint32_t)omega_fixture_calc(FR_RESULT, omega_fixture_calc(FR_BOTH, refused, released, 0), 0, 0);
 }
 
 static int gate_allocation_overflow(Nvrm *rm) {
@@ -244,9 +237,11 @@ static int gate_allocation_overflow(Nvrm *rm) {
     uint32_t before = rm->live_count;
     uint64_t va_before = rm->va_next;
     int r1 = nvrm_alloc(rm, UINT64_MAX, &m);
-    int r2 = r1 != 0 ? nvrm_alloc(rm, 0, &m) : 0;
-    return omega_gate_life(OMEGA_LIFE_OVERFLOW, (uint64_t)(int64_t)r1, (uint64_t)(int64_t)r2, rm->live_count,
-                           before, rm->va_next, va_before) ? 0 : -1;
+    int r2 = 0;
+    if (omega_fixture_calc(FR_FAILED, (uint64_t)(int64_t)r1, 0, 0)) r2 = nvrm_alloc(rm, 0, &m);
+    int ok = omega_gate_life(OMEGA_LIFE_OVERFLOW, (uint64_t)(int64_t)r1, (uint64_t)(int64_t)r2, rm->live_count,
+                             before, rm->va_next, va_before);
+    return (int32_t)(uint32_t)omega_fixture_calc(FR_RESULT, (uint64_t)ok, 0, 0);
 }
 
 /* ---- M16_WAIT_GE_SERIAL --------------------------------------------------
@@ -268,7 +263,7 @@ static int gate_wait_ge_serial(void) {
     marker = 0xFFFFFFE0u;
     uint64_t t0 = now_ms();
     int rc = m16_native_wait_marker_ge(&marker, 0xFFFFFFF0u, 100);
-    uint64_t elapsed = now_ms() - t0;
+    uint64_t elapsed = omega_fixture_calc(FR_SUB, now_ms(), t0, 0);
     if (!omega_gate_life(OMEGA_LIFE_NONZERO, (uint64_t)(int64_t)rc, 0, 0, 0, 0, 0)) {
         fprintf(stderr, "  wait_ge: not-yet-satisfied case unexpectedly returned success\n");
         return -1;
@@ -343,7 +338,7 @@ static int gate_channel_no_memory_retried(void) {
     if (!ok) printf("  channel after 3 injected NV_ERR_NO_MEMORY: rc=%d retries=%u err=\"%s\"\n",
                     rc, rm.channel_no_memory_retries, rm.err);
     nvrm_close(&rm);
-    return ok ? 0 : -1;
+    return (int32_t)(uint32_t)omega_fixture_calc(FR_RESULT, (uint64_t)ok, 0, 0);
 }
 
 /* The retry is bounded: one refusal more than the budget is final, the channel
@@ -352,17 +347,22 @@ static int gate_channel_no_memory_retried(void) {
 static int gate_channel_no_memory_bounded(void) {
     Nvrm rm;
     if (nvrm_open(&rm) != 0) return -1;
-    rm.inject_rm_alloc_no_memory = (uint8_t)(NVRM_CHANNEL_NO_MEMORY_RETRIES + 1);
+    rm.inject_rm_alloc_no_memory = (uint8_t)omega_fixture_calc(FR_ADD, NVRM_CHANNEL_NO_MEMORY_RETRIES, 1, 0);
     rm.channel_no_memory_retry_ms = 1;
     int rc = nvrm_channel(&rm);
-    int hits = (strstr(rm.err, "NV_ERR_NO_MEMORY") != NULL) + (strstr(rm.err, "attempts") != NULL) +
-               (strstr(rm.err, "2 MiB blocks") != NULL);
+    unsigned char error_text[512] = {0};
+    _Static_assert(sizeof rm.err <= sizeof error_text, "fixture text transport bound");
+    memcpy(error_text, rm.err, sizeof rm.err);
+    int hits = (int)omega_fixture_calc(FR_SUM3,
+        omega_fixture_text(error_text, (const unsigned char[32]){"NV_ERR_NO_MEMORY"}, 16),
+        omega_fixture_text(error_text, (const unsigned char[32]){"attempts"}, 8),
+        omega_fixture_text(error_text, (const unsigned char[32]){"2 MiB blocks"}, 12));
     int ok = omega_gate_life(OMEGA_LIFE_BOUNDED, (uint64_t)(int64_t)rc, rm.compute_obj, rm.channel_no_memory_retries,
                              NVRM_CHANNEL_NO_MEMORY_RETRIES, (uint64_t)hits, 0);
     if (!ok) printf("  bounded retry: rc=%d retries=%u err=\"%s\"\n", rc, rm.channel_no_memory_retries, rm.err);
     int closed = omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)nvrm_close(&rm), 0, 0, 0, 0, 0);
     if (!closed) printf("  bounded retry: close after refused channel failed: %s\n", rm.err);
-    return ok && closed ? 0 : -1;
+    return (int32_t)(uint32_t)omega_fixture_calc(FR_RESULT, omega_fixture_calc(FR_BOTH, ok, closed, 0), 0, 0);
 }
 
 /* The extra channel owns a subcontext as well as a FIFO. Rebuild each supported
@@ -370,7 +370,7 @@ static int gate_channel_no_memory_bounded(void) {
 static void gate_extra_channel_contexts(void) {
     for (uint32_t n = 0; n <= NVRM_MAX_EXTRA_CHANNELS; n++) {
         Nvrm rm;
-        int opened = nvrm_open(&rm) == 0;
+        int opened = (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)nvrm_open(&rm), 0, 0);
         int ok = opened;
         uint32_t baseline = opened ? rm.live_count : 0;
         for (int round = 0; ok && round < 3; round++) {
@@ -382,7 +382,7 @@ static void gate_extra_channel_contexts(void) {
                     ok = omega_gate_life(OMEGA_LIFE_DISTINCT, rm.extra[i].ctxshare, rm.extra[j].ctxshare, 0, 0, 0, 0);
             }
             if (nvrm_channel_destroy(&rm) != 0) ok = 0;
-            ok = ok && omega_gate_life(OMEGA_LIFE_TORNDOWN, rm.n_extra, rm.ctxshare, rm.live_count, baseline, 0, 0);
+            if (ok) ok = omega_gate_life(OMEGA_LIFE_TORNDOWN, rm.n_extra, rm.ctxshare, rm.live_count, baseline, 0, 0);
             for (uint32_t i = 0; ok && i < n; i++)
                 ok = omega_gate_life(OMEGA_LIFE_BOTHZERO, rm.extra[i].ctxshare, rm.extra[i].gpfifo, 0, 0, 0, 0);
         }
@@ -398,12 +398,12 @@ int main(int argc, char **argv) {
     if (argc == 2 && strcmp(argv[1], "--channels-only") == 0) {
         gate_extra_channel_contexts();
         printf("TOTAL: %d PASSED: %d FAILED: %d\n", g_total, g_passed, g_failed);
-        return g_failed ? 1 : 0;
+        return (int)omega_fixture_calc(FR_FAILED, (uint64_t)g_failed, 0, 0);
     }
     if (argc != 1) { fprintf(stderr, "usage: %s [--channels-only]\n", argv[0]); return 2; }
     printf("=== M19R NVRM LIFECYCLE GATES ===\n");
 
-    gate_result("M16_WAIT_GE_SERIAL", gate_wait_ge_serial() == 0);
+    gate_result("M16_WAIT_GE_SERIAL", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_wait_ge_serial(), 0, 0));
 
     Nvrm rm;
     if (nvrm_open(&rm) != 0) {
@@ -422,23 +422,23 @@ int main(int argc, char **argv) {
     /* churn_ok: 256 GiB of traffic, high-water delta under 2 GiB (eng.om life k8). */
     int churn_ok = omega_gate_life(OMEGA_LIFE_CHURN, (uint64_t)(int64_t)churn_rc, churn_bytes, high_water_delta, 0, 0, 0);
     printf("  churn: bytes=%" PRIu64 " (%.2f GiB) high_water_delta=%" PRIu64 " (%.2f MiB)\n",
-           churn_bytes, (double)churn_bytes / (1024.0 * 1024.0 * 1024.0),
-           high_water_delta, (double)high_water_delta / (1024.0 * 1024.0));
+           churn_bytes, omega_fixture_scale(churn_bytes, 0),
+           high_water_delta, omega_fixture_scale(high_water_delta, 1));
     gate_result("NVRM_FREE_CHURN", churn_ok);
 
-    gate_result("NVRM_FREE_UNMAPS", gate_free_unmaps(&rm) == 0);
-    gate_result("NVRM_FREE_IDEMPOTENT_AND_STALE", gate_idempotent_and_stale(&rm) == 0);
-    gate_result("NVRM_ALLOC_AFTER_FREE_REUSES_VA", gate_alloc_after_free_reuses_va(&rm) == 0);
-    gate_result("NVRM_ALLOCATION_OVERFLOW_REFUSED", gate_allocation_overflow(&rm) == 0);
-    gate_result("GPU_SUBMIT_AFTER_CHURN", gate_gpu_submit_after_churn(&rm) == 0);
+    gate_result("NVRM_FREE_UNMAPS", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_free_unmaps(&rm), 0, 0));
+    gate_result("NVRM_FREE_IDEMPOTENT_AND_STALE", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_idempotent_and_stale(&rm), 0, 0));
+    gate_result("NVRM_ALLOC_AFTER_FREE_REUSES_VA", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_alloc_after_free_reuses_va(&rm), 0, 0));
+    gate_result("NVRM_ALLOCATION_OVERFLOW_REFUSED", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_allocation_overflow(&rm), 0, 0));
+    gate_result("GPU_SUBMIT_AFTER_CHURN", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_gpu_submit_after_churn(&rm), 0, 0));
 
     nvrm_close(&rm);
-    gate_result("UVM_FREE_FAILURE_QUARANTINES", gate_injected_free_failure(1) == 0);
-    gate_result("RM_FREE_FAILURE_QUARANTINES", gate_injected_free_failure(0) == 0);
-    gate_result("CORRUPT_TABLE_REFUSED", gate_corrupt_table_refusal() == 0);
-    gate_result("CHANNEL_NO_MEMORY_RETRIED", gate_channel_no_memory_retried() == 0);
-    gate_result("CHANNEL_NO_MEMORY_BOUNDED", gate_channel_no_memory_bounded() == 0);
+    gate_result("UVM_FREE_FAILURE_QUARANTINES", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_injected_free_failure(1), 0, 0));
+    gate_result("RM_FREE_FAILURE_QUARANTINES", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_injected_free_failure(0), 0, 0));
+    gate_result("CORRUPT_TABLE_REFUSED", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_corrupt_table_refusal(), 0, 0));
+    gate_result("CHANNEL_NO_MEMORY_RETRIED", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_channel_no_memory_retried(), 0, 0));
+    gate_result("CHANNEL_NO_MEMORY_BOUNDED", (int)omega_fixture_calc(FR_EQ, (uint64_t)(int64_t)gate_channel_no_memory_bounded(), 0, 0));
     gate_extra_channel_contexts();
     printf("TOTAL: %d PASSED: %d FAILED: %d\n", g_total, g_passed, g_failed);
-    return (g_failed == 0) ? 0 : 1;
+    return (int)omega_fixture_calc(FR_FAILED, (uint64_t)g_failed, 0, 0);
 }

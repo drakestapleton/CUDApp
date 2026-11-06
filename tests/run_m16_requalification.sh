@@ -5,8 +5,8 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd -P)
-EVIDENCE_DIR="$REPO_ROOT/evidence/m16-requalification"
-RECEIPT_FILE="$REPO_ROOT/evidence/m16-blackwell-native-path-requalification-receipt.json"
+EVIDENCE_DIR="${EVIDENCE_DIR:-$REPO_ROOT/evidence/m16-requalification}"
+RECEIPT_FILE="${RECEIPT_FILE:-$REPO_ROOT/evidence/m16-blackwell-native-path-requalification-receipt.json}"
 
 mkdir -p "$EVIDENCE_DIR"
 cd "$REPO_ROOT"
@@ -44,20 +44,24 @@ GATE_RECEIPT=false
 echo -e "\n[*] Step 1: Compiling M16 binaries..."
 {
   gcc -O2 -Wall -Wextra -Werror \
-    -I./nvrm -I./m16 \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+    -I./src -I./nvrm -I./m16 \
     -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
     -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
-    nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c -o m16/m16_requalify
+    nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c \
+    src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o m16/m16_requalify
 
   gcc -O2 -Wall -Wextra -Werror \
-    -I./nvrm -I./m16 \
+    -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
+    -I./src -I./nvrm -I./m16 \
     -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
     -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
     -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
-    nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c -o m16/m16_concurrent
+    nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c \
+    src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_nvrm_*.c -o m16/m16_concurrent
 } > "$EVIDENCE_DIR/build.log" 2>&1
 
 if [ -x m16/m16_requalify ] && [ -x m16/m16_concurrent ]; then
@@ -362,6 +366,12 @@ sha256sum \
   "$REPO_ROOT/m16/m16_gpu_wait.c" \
   "$REPO_ROOT/nvrm/nvrm.h" \
   "$REPO_ROOT/nvrm/nvrm.c" \
+  "$REPO_ROOT/nvrm/native_client.h" \
+  "$REPO_ROOT"/native/nvrm/*.om \
+  "$REPO_ROOT/src/cudapp_native.h" \
+  "$REPO_ROOT/src/cudapp_nvrm_native.h" \
+  "$REPO_ROOT"/src/cudapp_om_nvrm_*.c \
+  "$REPO_ROOT"/src/cudapp_om_nvrm_*.ident \
   "$REPO_ROOT/tests/run_m16_requalification.sh" \
   "$RECEIPT_FILE" \
   "build.log" \

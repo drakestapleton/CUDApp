@@ -9,6 +9,8 @@
 #include "nvrm.h"
 #include "omega_ampere_qmd.h"
 #include "cpu_barrier.h"
+#include "cudapp_native.h"
+
 
 #include <errno.h>
 #include <stddef.h>
@@ -51,6 +53,97 @@
 #include "ctrl/ctrl2080/ctrl2080gr.h"
 #include "ctrl/ctrla06c.h"
 #include "ctrl/ctrlc36f.h"
+/* Keep the vendor C layout as an explicit differential oracle, not a fallback. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_NVRM
+#define CUDAPP_MIGRATION_PENDING_C_NVRM 0
+#endif
+
+#if !CUDAPP_MIGRATION_PENDING_C_NVRM
+static int rm_wire(void *out, size_t size, uint64_t op, const uint64_t fields[16]) {
+    unsigned char bytes[64];
+    uint64_t length = 0;
+    if (omega_nvrm_wire_pack(&length, op, fields, 16, bytes, 64) || length != size) {
+        errno = EPROTO;
+        return -1;
+    }
+    memcpy(out, bytes, size);
+    return 0;
+}
+/* Marshal API values, then let Omega own every byte of the UVM request,
+ * including unused per-GPU attributes and ABI padding. */
+static int uvm_wire(unsigned long cmd, void *params) {
+    uint64_t a[16] = {0}, n = 0;
+    unsigned char uuid[16] = {0}, bytes[56];
+    size_t size = 0;
+    switch (cmd) {
+    case UVM_INITIALIZE: {
+        UVM_INITIALIZE_PARAMS *p = params; a[0] = p->flags; size = sizeof *p; break;
+    }
+    case UVM_MM_INITIALIZE: {
+        UVM_MM_INITIALIZE_PARAMS *p = params; a[0] = (uint32_t)p->uvmFd; size = sizeof *p; break;
+    }
+    case UVM_REGISTER_GPU: {
+        UVM_REGISTER_GPU_PARAMS *p = params;
+        memcpy(uuid, p->gpu_uuid.uuid, sizeof uuid);
+        a[0] = (uint32_t)p->rmCtrlFd; a[1] = p->hClient; a[2] = p->hSmcPartRef;
+        size = sizeof *p; break;
+    }
+    case UVM_UNREGISTER_GPU: {
+        UVM_UNREGISTER_GPU_PARAMS *p = params;
+        memcpy(uuid, p->gpu_uuid.uuid, sizeof uuid); size = sizeof *p; break;
+    }
+    case UVM_REGISTER_GPU_VASPACE: {
+        UVM_REGISTER_GPU_VASPACE_PARAMS *p = params;
+        memcpy(uuid, p->gpuUuid.uuid, sizeof uuid);
+        a[0] = (uint32_t)p->rmCtrlFd; a[1] = p->hClient; a[2] = p->hVaSpace;
+        size = sizeof *p; break;
+    }
+    case UVM_UNREGISTER_GPU_VASPACE: {
+        UVM_UNREGISTER_GPU_VASPACE_PARAMS *p = params;
+        memcpy(uuid, p->gpuUuid.uuid, sizeof uuid); size = sizeof *p; break;
+    }
+    case UVM_REGISTER_CHANNEL: {
+        UVM_REGISTER_CHANNEL_PARAMS *p = params;
+        memcpy(uuid, p->gpuUuid.uuid, sizeof uuid);
+        a[0] = (uint32_t)p->rmCtrlFd; a[1] = p->hClient; a[2] = p->hChannel;
+        a[3] = p->base; a[4] = p->length; size = sizeof *p; break;
+    }
+    case UVM_UNREGISTER_CHANNEL: {
+        UVM_UNREGISTER_CHANNEL_PARAMS *p = params;
+        memcpy(uuid, p->gpuUuid.uuid, sizeof uuid);
+        a[0] = p->hClient; a[1] = p->hChannel; size = sizeof *p; break;
+    }
+    case UVM_CREATE_EXTERNAL_RANGE: {
+        UVM_CREATE_EXTERNAL_RANGE_PARAMS *p = params;
+        a[0] = p->base; a[1] = p->length; size = sizeof *p; break;
+    }
+    case UVM_FREE: {
+        UVM_FREE_PARAMS *p = params;
+        a[0] = p->base; a[1] = p->length; size = sizeof *p; break;
+    }
+    case UVM_MAP_EXTERNAL_ALLOCATION: {
+        UVM_MAP_EXTERNAL_ALLOCATION_PARAMS *p = params;
+        memcpy(uuid, p->perGpuAttributes[0].gpuUuid.uuid, sizeof uuid);
+        a[0] = p->base; a[1] = p->length; a[2] = p->offset; a[3] = p->gpuAttributesCount;
+        a[4] = (uint32_t)p->rmCtrlFd; a[5] = p->hClient; a[6] = p->hMemory;
+        a[7] = p->perGpuAttributes[0].gpuMappingType;
+        /* The client deliberately maps exactly one GPU. Never silently drop a
+         * future multi-GPU caller's attributes. */
+        if (a[3] != 1 || omega_nvrm_uvm_map_wire(&n, a, 16, uuid, 16,
+                                               params, sizeof *p) || n != sizeof *p) {
+            errno = EPROTO; return -1;
+        }
+        return 0;
+    }
+    default: errno = EINVAL; return -1;
+    }
+    if (omega_nvrm_uvm_wire(&n, cmd, a, 16, uuid, 16, bytes, sizeof bytes) || n != size) {
+        errno = EPROTO; return -1;
+    }
+    memcpy(params, bytes, size);
+    return 0;
+}
+#endif
 
 static int fail(Nvrm *rm, const char *fmt, ...);
 
@@ -80,6 +173,7 @@ static int select_classes(Nvrm *rm, const uint32_t *classes, uint32_t count,
     return 0;
 }
 #define NV_IOWR(nr, sz) _IOC(_IOC_READ | _IOC_WRITE, NV_IOCTL_MAGIC, (nr), (sz))
+#include "native_client.h"
 
 static int fail(Nvrm *rm, const char *fmt, ...) {
     va_list ap;
@@ -158,7 +252,7 @@ static int fail_channel_no_memory(Nvrm *rm, uint32_t attempts, uint32_t delay_ms
 }
 
 static int nv_ioctl(int fd, unsigned nr, void *arg, size_t sz) {
-    return ioctl(fd, NV_IOWR(nr, sz), arg);
+    return nvrm_rm_ioctl(fd, nr, arg, sz);
 }
 
 static int uvm(Nvrm *rm, int fd, unsigned long cmd, void *params, NV_STATUS *st);
@@ -174,6 +268,7 @@ static int rm_alloc(Nvrm *rm, uint32_t parent, uint32_t cls, void *params, uint3
         (cls != NV01_ROOT_CLIENT && rm->next_handle == UINT32_MAX))
         return fail(rm, "RM handle or accounting space exhausted");
     NVOS21_PARAMETERS p;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&p, 0, sizeof p);
     p.hRoot = rm->root;
     p.hObjectParent = parent;
@@ -181,6 +276,11 @@ static int rm_alloc(Nvrm *rm, uint32_t parent, uint32_t cls, void *params, uint3
     p.hClass = cls;
     p.pAllocParms = NV_PTR_TO_NvP64(params);
     p.paramsSize = psz;
+#else
+    uint64_t fields[16] = {rm->root, parent,
+        cls == NV01_ROOT_CLIENT ? 0 : rm->next_handle++, cls, (uintptr_t)params, psz};
+    if (rm_wire(&p, sizeof p, 1, fields)) return fail(rm, "RM_ALLOC wire refused");
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_ALLOC, &p, sizeof p) != 0)
         return fail(rm, "RM_ALLOC class 0x%x ioctl errno %d", cls, errno);
     rm->last_rm_status = p.status;
@@ -200,10 +300,15 @@ static int rm_free(Nvrm *rm, uint32_t parent, uint32_t obj) {
         return fail(rm, "injected RM_FREE failure for handle 0x%x", obj);
     }
     NVOS00_PARAMETERS f;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&f, 0, sizeof f);
     f.hRoot = rm->root;
     f.hObjectParent = parent;
     f.hObjectOld = obj;
+#else
+    uint64_t fields[16] = {rm->root, parent, obj};
+    if (rm_wire(&f, sizeof f, 3, fields)) return fail(rm, "RM_FREE wire refused");
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_FREE, &f, sizeof f) != 0)
         return fail(rm, "RM_FREE handle 0x%x errno %d", obj, errno);
     if (f.status != NV_OK) return fail(rm, "RM_FREE handle 0x%x status 0x%x", obj, f.status);
@@ -225,6 +330,7 @@ static int uvm_free_checked(Nvrm *rm, uint64_t va, uint64_t size) {
 
 static int dma_unmap_checked(Nvrm *rm, uint32_t hmem, uint64_t va, uint64_t size) {
     NVOS47_PARAMETERS p;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&p, 0, sizeof p);
     p.hClient = rm->root;
     p.hDevice = rm->device;
@@ -232,6 +338,10 @@ static int dma_unmap_checked(Nvrm *rm, uint32_t hmem, uint64_t va, uint64_t size
     p.hMemory = hmem;
     p.dmaOffset = va;
     p.size = size;
+#else
+    uint64_t fields[16] = {rm->root, rm->device, rm->virtmem, hmem, 0, va, size};
+    if (rm_wire(&p, sizeof p, 6, fields)) return fail(rm, "RM_UNMAP_MEMORY_DMA wire refused");
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_UNMAP_MEMORY_DMA, &p, sizeof p) != 0)
         return fail(rm, "RM_UNMAP_MEMORY_DMA errno %d", errno);
     if (p.status != NV_OK) return fail(rm, "RM_UNMAP_MEMORY_DMA status 0x%x", p.status);
@@ -240,12 +350,17 @@ static int dma_unmap_checked(Nvrm *rm, uint32_t hmem, uint64_t va, uint64_t size
 
 static int rm_control(Nvrm *rm, uint32_t obj, uint32_t cmd, void *params, uint32_t psz) {
     NVOS54_PARAMETERS p;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&p, 0, sizeof p);
     p.hClient = rm->root;
     p.hObject = obj;
     p.cmd = cmd;
     p.params = NV_PTR_TO_NvP64(params);
     p.paramsSize = psz;
+#else
+    uint64_t fields[16] = {rm->root, obj, cmd, 0, (uintptr_t)params, psz};
+    if (rm_wire(&p, sizeof p, 2, fields)) return fail(rm, "RM_CONTROL wire refused");
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_CONTROL, &p, sizeof p) != 0)
         return fail(rm, "RM_CONTROL 0x%x ioctl errno %d", cmd, errno);
     if (p.status != 0) return fail(rm, "RM_CONTROL 0x%x status 0x%x", cmd, p.status);
@@ -253,7 +368,10 @@ static int rm_control(Nvrm *rm, uint32_t obj, uint32_t cmd, void *params, uint32
 }
 
 static int uvm(Nvrm *rm, int fd, unsigned long cmd, void *params, NV_STATUS *st) {
-    if (ioctl(fd, cmd, params) != 0) return fail(rm, "UVM 0x%lx errno %d", cmd, errno);
+#if !CUDAPP_MIGRATION_PENDING_C_NVRM
+    if (uvm_wire(cmd, params)) return fail(rm, "UVM 0x%lx wire refused", cmd);
+#endif
+    if (nvrm_uvm_ioctl(fd, cmd, params) != 0) return fail(rm, "UVM 0x%lx errno %d", cmd, errno);
     if (st && *st != NV_OK) return fail(rm, "UVM 0x%lx status 0x%x", cmd, *st);
     return 0;
 }
@@ -261,18 +379,25 @@ static int uvm(Nvrm *rm, int fd, unsigned long cmd, void *params, NV_STATUS *st)
 static int open_dev_fd(Nvrm *rm) {
     char path[32];
     snprintf(path, sizeof path, "/dev/nvidia%u", rm->minor);
-    int fd = open(path, O_RDWR | O_CLOEXEC);
+    int fd = nvrm_file_open(path);
     if (fd < 0) return fail(rm, "open %s errno %d", path, errno);
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     nv_ioctl_register_fd_t r = { .ctl_fd = rm->fd_ctl };
-    if (nv_ioctl(fd, NV_ESC_REGISTER_FD, &r, sizeof r) != 0) { close(fd); return fail(rm, "REGISTER_FD errno %d", errno); }
+#else
+    nv_ioctl_register_fd_t r;
+    uint64_t fields[16] = {(uint32_t)rm->fd_ctl};
+    if (rm_wire(&r, sizeof r, 7, fields)) { nvrm_file_close(fd); return fail(rm, "REGISTER_FD wire refused"); }
+#endif
+    if (nv_ioctl(fd, NV_ESC_REGISTER_FD, &r, sizeof r) != 0) { nvrm_file_close(fd); return fail(rm, "REGISTER_FD errno %d", errno); }
     return fd;
 }
 
 /* Map an RM memory object into this process at a fixed CPU address. */
 static void *map_to_cpu(Nvrm *rm, uint32_t hmem, uint64_t size, void *target, uint32_t flags, int system) {
-    int fd = system ? open("/dev/nvidiactl", O_RDWR | O_CLOEXEC) : open_dev_fd(rm);
+    int fd = system ? nvrm_file_open("/dev/nvidiactl") : open_dev_fd(rm);
     if (fd < 0) { fail(rm, "map fd"); return MAP_FAILED; }
     nv_ioctl_nvos33_parameters_with_fd m;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&m, 0, sizeof m);
     m.fd = fd;
     m.params.hClient = rm->root;
@@ -280,13 +405,17 @@ static void *map_to_cpu(Nvrm *rm, uint32_t hmem, uint64_t size, void *target, ui
     m.params.hMemory = hmem;
     m.params.length = size;
     m.params.flags = flags;
+#else
+    uint64_t fields[16] = {rm->root, rm->device, hmem, 0, size, 0, flags, (uint32_t)fd};
+    if (rm_wire(&m, sizeof m, 4, fields)) { nvrm_file_close(fd); fail(rm, "RM_MAP_MEMORY wire refused"); return MAP_FAILED; }
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_MAP_MEMORY, &m, sizeof m) != 0 || m.params.status != 0) {
         fail(rm, "RM_MAP_MEMORY errno %d status 0x%x", errno, m.params.status);
-        close(fd);
+        nvrm_file_close(fd);
         return MAP_FAILED;
     }
-    void *p = mmap(target, size, PROT_READ | PROT_WRITE, MAP_SHARED | (target ? MAP_FIXED : 0), fd, 0);
-    close(fd);
+    void *p = nvrm_cpu_map(rm, fd, size, target);
+    nvrm_file_close(fd);
     if (p == MAP_FAILED) fail(rm, "mmap errno %d", errno);
     return p;
 }
@@ -368,9 +497,9 @@ int nvrm_open(Nvrm *rm) {
     rm->va_next = acquire_va_slot();
     if (!rm->va_next) return fail(rm, "VA slot space exhausted");
     rm->va_slot_base = rm->va_next;
-    rm->fd_ctl = open("/dev/nvidiactl", O_RDWR | O_CLOEXEC);
-    rm->fd_uvm = open("/dev/nvidia-uvm", O_RDWR | O_CLOEXEC);
-    rm->fd_uvm2 = open("/dev/nvidia-uvm", O_RDWR | O_CLOEXEC);
+    rm->fd_ctl = nvrm_file_open("/dev/nvidiactl");
+    rm->fd_uvm = nvrm_file_open("/dev/nvidia-uvm");
+    rm->fd_uvm2 = nvrm_file_open("/dev/nvidia-uvm");
     if (rm->fd_ctl < 0 || rm->fd_uvm < 0 || rm->fd_uvm2 < 0) return fail(rm, "open control nodes errno %d", errno);
 
     if (rm_alloc(rm, 0, NV01_ROOT_CLIENT, NULL, 0, &rm->root)) return -1;
@@ -381,7 +510,10 @@ int nvrm_open(Nvrm *rm) {
     UVM_MM_INITIALIZE_PARAMS mi;
     memset(&mi, 0, sizeof mi);
     mi.uvmFd = rm->fd_uvm;
-    (void)ioctl(rm->fd_uvm2, UVM_MM_INITIALIZE, &mi); /* libcuda also tolerates failure here */
+#if !CUDAPP_MIGRATION_PENDING_C_NVRM
+    if (uvm_wire(UVM_MM_INITIALIZE, &mi)) return fail(rm, "UVM_MM_INITIALIZE wire refused");
+#endif
+    (void)nvrm_uvm_ioctl(rm->fd_uvm2, UVM_MM_INITIALIZE, &mi); /* libcuda also tolerates failure here */
 
     nv_ioctl_card_info_t cards[64];
     memset(cards, 0, sizeof cards);
@@ -571,6 +703,7 @@ static int uvm_map(Nvrm *rm, uint64_t va, uint64_t size, uint32_t hmem,
     *uvm_created = 1;
 
     NVOS46_PARAMETERS d;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&d, 0, sizeof d);
     d.hClient = rm->root;
     d.hDevice = rm->device;
@@ -579,6 +712,12 @@ static int uvm_map(Nvrm *rm, uint64_t va, uint64_t size, uint32_t hmem,
     d.length = size;
     d.flags = (NVOS46_FLAGS_PAGE_SIZE_4KB << 8) | (NVOS46_FLAGS_CACHE_SNOOP_ENABLE << 4) | (NVOS46_FLAGS_DMA_OFFSET_FIXED_TRUE << 15);
     d.dmaOffset = va;
+#else
+    uint64_t fields[16] = {rm->root, rm->device, rm->virtmem, hmem, 0, size,
+        (NVOS46_FLAGS_PAGE_SIZE_4KB << 8) | (NVOS46_FLAGS_CACHE_SNOOP_ENABLE << 4) | (NVOS46_FLAGS_DMA_OFFSET_FIXED_TRUE << 15),
+        0, 0, va};
+    if (rm_wire(&d, sizeof d, 5, fields)) return fail(rm, "RM_MAP_MEMORY_DMA wire refused");
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_MAP_MEMORY_DMA, &d, sizeof d) != 0 || d.status != 0)
         return fail(rm, "RM_MAP_MEMORY_DMA errno %d status 0x%x", errno, d.status);
     if (d.dmaOffset != va) return fail(rm, "dmaOffset mismatch");
@@ -603,6 +742,7 @@ static void quarantine_allocation(Nvrm *rm, uint32_t h, uint64_t va, uint64_t si
     *e = (NvrmLiveAlloc){ .handle = h, .va = va, .size = size, .cpu = cpu,
                          .uvm_live = uvm_live, .dma_live = dma_live,
                          .rm_live = 1, .cpu_live = 1, .quarantined = 1 };
+    nvrm_mapping_transfer(rm, e);
     rm->faulted = 1;
 }
 
@@ -632,11 +772,18 @@ int nvrm_vram_info(Nvrm *rm, uint64_t *free_bytes, uint64_t *total_bytes) {
     /* NVIDIA nvos.h NVOS32_FUNCTION_INFO, Info.attr LOCATION_VIDMEM.
      * This ioctl queries the selected device's framebuffer heap, not host RAM. */
     NVOS32_PARAMETERS p;
+#if CUDAPP_MIGRATION_PENDING_C_NVRM
     memset(&p, 0, sizeof p);
     p.hRoot = rm->root;
     p.hObjectParent = rm->device;
     p.function = NVOS32_FUNCTION_INFO;
     p.data.Info.attr = NVOS32_ATTR_LOCATION_VIDMEM << 25;
+#else
+    uint64_t fields[16] = {rm->root, rm->device, NVOS32_FUNCTION_INFO, NVOS32_ATTR_LOCATION_VIDMEM << 25};
+    uint64_t bytes = 0;
+    if (omega_nvrm_heap_wire(&bytes, fields, 16, (unsigned char *)&p, sizeof p) || bytes != sizeof p)
+        return fail(rm, "VID_HEAP_INFO wire refused");
+#endif
     if (nv_ioctl(rm->fd_ctl, NV_ESC_RM_VID_HEAP_CONTROL, &p, sizeof p) != 0 || p.status)
         return fail(rm, "VID_HEAP_INFO errno %d status 0x%x", errno, p.status);
     if (!p.total || p.free > p.total) return fail(rm, "invalid framebuffer heap information");
@@ -653,9 +800,9 @@ static int alloc_with_cacheability(Nvrm *rm, uint64_t size, NvrmMem *out, uint32
     uint64_t va = va_take(rm, size, 0x1000);
     if (!va) return fail(rm, "GPU VA exhausted: this client's VA slot is full (the next slot belongs to another client) or the VA overflowed");
     /* Reserve the CPU range first so the fixed mapping can never clobber anything. */
-    void *res = mmap((void *)va, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+    void *res = nvrm_cpu_reserve(rm, va, size);
     if (res != (void *)va) {
-        if (res != MAP_FAILED) munmap(res, size);
+        if (res != MAP_FAILED) nvrm_cpu_drop(rm, res, size);
         rm->faulted = 1;
         return fail(rm, "VA 0x%lx unavailable", (unsigned long)va);
     }
@@ -677,7 +824,7 @@ static int alloc_with_cacheability(Nvrm *rm, uint64_t size, NvrmMem *out, uint32
     mp.limit = size - 1;
     uint32_t h;
     if (rm_alloc(rm, rm->device, local ? NV01_MEMORY_LOCAL_USER : NV01_MEMORY_SYSTEM, &mp, sizeof mp, &h)) {
-        if (munmap(res, size) != 0) rm->faulted = 1;
+        if (nvrm_cpu_drop(rm, res, size) != 0) rm->faulted = 1;
         if (local && !rm->faulted && rm->last_rm_status != 0) {
             (void)va_release(rm, va, size);
             return -1;
@@ -722,6 +869,7 @@ static int alloc_with_cacheability(Nvrm *rm, uint64_t size, NvrmMem *out, uint32
     rm->live[rm->live_count].dma_live = 1;
     rm->live[rm->live_count].rm_live = 1;
     rm->live[rm->live_count].cpu_live = 1;
+    nvrm_mapping_transfer(rm, &rm->live[rm->live_count]);
     rm->live_count++;
     return 0;
 }
@@ -810,7 +958,7 @@ int nvrm_free(Nvrm *rm, NvrmMem *m) {
         live->rm_live = 0;
     }
     if (live->cpu_live) {
-        if (munmap(m->cpu, m->size) != 0) {
+        if (nvrm_cpu_drop(rm, m->cpu, m->size) != 0) {
             live->quarantined = 1;
             rm->faulted = 1;
             return fail(rm, "munmap VA 0x%lx errno %d", (unsigned long)m->va, errno);
@@ -1139,13 +1287,15 @@ int nvrm_close(Nvrm *rm) {
             rm->faulted = 1;
             /* Closing the client tears down driver state. The CPU mapping is
              * process state, so explicitly unmap it even on teardown error. */
-            if (e.cpu_live && e.cpu) (void)munmap(e.cpu, e.size);
+            if (e.cpu_live && e.cpu) (void)nvrm_cpu_drop(rm, e.cpu, e.size);
         } else if (i < rm->live_count) i++;
     }
     if (rm->usermode_cpu) {
-        if (munmap(rm->usermode_cpu, 0x10000) != 0) rm->faulted = 1;
-        rm->usermode_cpu = NULL;
-        rm->doorbell = NULL;
+        if (nvrm_cpu_drop(rm, rm->usermode_cpu, 0x10000) != 0) rm->faulted = 1;
+        else {
+            rm->usermode_cpu = NULL;
+            rm->doorbell = NULL;
+        }
     }
     if (rm->vas_registered) {
         UVM_UNREGISTER_GPU_VASPACE_PARAMS p;
@@ -1176,14 +1326,15 @@ int nvrm_close(Nvrm *rm) {
     if (rm->root && rm_free(rm, rm->root, rm->root)) rm->faulted = 1;
     rm->root = 0;
     /* F12: clear each descriptor after closing it, so a second nvrm_close cannot close a number reused since */
-    if (rm->fd_dev > 0) close(rm->fd_dev);
+    if (rm->fd_dev > 0) nvrm_file_close(rm->fd_dev);
     rm->fd_dev = 0;
-    if (rm->fd_uvm2 > 0) close(rm->fd_uvm2);
+    if (rm->fd_uvm2 > 0) nvrm_file_close(rm->fd_uvm2);
     rm->fd_uvm2 = 0;
-    if (rm->fd_uvm > 0) close(rm->fd_uvm);
+    if (rm->fd_uvm > 0) nvrm_file_close(rm->fd_uvm);
     rm->fd_uvm = 0;
-    if (rm->fd_ctl > 0) close(rm->fd_ctl);
+    if (rm->fd_ctl > 0) nvrm_file_close(rm->fd_ctl);
     rm->fd_ctl = 0;
+    if (nvrm_mapping_finish(rm)) rm->faulted = 1;
     if (!rm->faulted && rm->live_count == 0 && !rm->channel_registered &&
         rm->va_slot_base && rm->va_next >= rm->va_slot_base &&
         rm->va_next - rm->va_slot_base <= 0x100000000ull)

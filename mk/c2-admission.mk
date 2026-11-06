@@ -6,7 +6,9 @@
 #   make test-chip-admission-mutants   each mutant (.om decision or the nvrm_open call sites) must turn the test red
 #       (needs OMEGA_MV and OMEGA_BRIDGE_DIR as in mk/om-encoder.mk; without them exit 3, NOT_RUN, never PASS).
 CHIP_ADMIT_DIR = $(OUT_DIR)/chip-admission
-CHIP_ADMIT_BUILD = $(CC) -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc $(GPU_ENGINE_PHYS_INC)
+# The simulated driver replaces open/ioctl/close/mmap by macro; since NVRM #281 nvrm.c only takes those through
+# the explicitly selected C test boundary (nvrm/native_client.h), as mk/ampere-runtime.mk does.
+CHIP_ADMIT_BUILD = $(CC) -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DCUDAPP_NVRM_TEST_TRANSPORT=1 -Isrc $(GPU_ENGINE_PHYS_INC)
 CHIP_ADMIT_SRCS = src/omega_gpu_chip.c src/omega_ampere_qmd.c
 CHIP_ADMIT_OTHER_UNITS = $(filter-out src/cudapp_om_chip_admit.c,$(CUDAPP_BINDING_SRCS))
 CHIP_ADMIT_OM_MUTANTS = 's/eq device 11794/eq device 11795/' 's/ne shr cls 16 3/ne shr cls 16 4/' \

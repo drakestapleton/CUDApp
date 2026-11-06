@@ -34,7 +34,7 @@ for name, old, new, check in mutants:
         if check == 'sim':
             command += [str(root/os.environ.get('OUT_DIR','build')/'libomega_gpu.a'), '-lpthread', '-lm']
         else:
-            command += ['src/cudapp_om_cmdlist_record.c', 'src/cudapp_om_cmdlist_layout.c', 'src/omega_blackwell_qmd.c']
+            command += ['src/cudapp_om_cmdlist_record.c', 'src/cudapp_om_cmdlist_layout.c', 'src/omega_blackwell_qmd.c', 'src/cudapp_om_bw_qmd.c']
         command += ['-o', str(directory/'check')]
         subprocess.run(command, cwd=root, stdout=log, stderr=log, check=True)
     run = subprocess.run([str(directory/'check')], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)

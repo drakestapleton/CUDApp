@@ -7,7 +7,7 @@ endif
 OM_CMDLIST_DIR = $(OUT_DIR)/om-cmdlist
 OM_CMDLIST_TEST = $(OM_CMDLIST_DIR)/planner
 CARRIED_HOST_TESTS += test-om-cmdlist
-OM_CMDLIST_BINDINGS = src/cudapp_om_cmdlist_record.c src/cudapp_om_cmdlist_plan.c src/cudapp_om_cmdlist_layout.c
+OM_CMDLIST_BINDINGS = src/cudapp_om_cmdlist_record.c src/cudapp_om_cmdlist_plan.c src/cudapp_om_cmdlist_layout.c src/cudapp_om_bw_qmd.c
 $(OM_CMDLIST_TEST): tests/cmdlist_plan_test.c $(OM_CMDLIST_BINDINGS) src/omega_blackwell_qmd.c src/cudapp_native.h
 	@mkdir -p $(OM_CMDLIST_DIR)
 	$(CC) $(CFLAGS) -o $@ tests/cmdlist_plan_test.c $(OM_CMDLIST_BINDINGS) src/omega_blackwell_qmd.c

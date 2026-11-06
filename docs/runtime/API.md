@@ -648,6 +648,15 @@ are TEST ONLY (INTERNAL list).
 
 ## 10. INTERNAL (not part of the API)
 
+The INTERNAL CPU verification helpers `omega_matmul_cpu_oracle_i32`,
+`omega_matmul_cpu_oracle_f16` and `omega_matmul_cpu_oracle_bf16` in
+`src/omega_blackwell_matmul.h` take positive row-major m/k/n dimensions. The output
+must not overlap either input; read-only inputs may overlap. Hosted checked Omega
+views return -1 before touching an aliased output. The hosted implementation uses
+runtime extents; the `OMEGA_GPU_NO_POSIX` C exception is pending omega-bridge#72.
+These verification helpers are not production GPU dispatch and are not manifest
+entries. No public ABI signature or layout changes with this migration.
+
 Not in the manifest; may change or vanish without notice. The complete list of such names in the manifest headers, each
 with its reason, is `docs/runtime/omega_runtime_api.internal` (195 names in 0.9.0: test hooks, kernel builders, encoder
 probes, serving-daemon internals and launch limits; the 25 serving internals and launch limits are marked "candidate

@@ -11,6 +11,11 @@ OMC = os.environ['OMEGA_OMC']
 ENV = dict(os.environ, OMEGA_SEEDED_OMC=OMC)
 SCALAR = ROOT / 'om/blackwell/scalar.om'
 IDENT = ROOT / 'om/blackwell/identity.om'
+CPUI = ROOT / 'om/blackwell/cpui.om'
+CPUH = ROOT / 'om/blackwell/cpuf16.om'
+CPUB = ROOT / 'om/blackwell/cpubf16.om'
+SHAPE = ROOT / 'om/blackwell/shape.om'
+NAME = ROOT / 'om/blackwell/name.om'
 CASES = [
     ('half-exponent', SCALAR, 'shl add exp 112 23', 'shl add exp 111 23'),
     ('half-subnormal', SCALAR, 'shl sub BEXP 10 23', 'shl sub BEXP 9 23'),
@@ -19,6 +24,11 @@ CASES = [
     ('alloc-round', SCALAR, 'b = and add add x y 4095', 'b = and add add x y 4094'),
     ('admit-cbank', SCALAR, 'gt v 128', 'gt v 127'),
     ('identity-byte', IDENT, 'put msg i get data i', 'put msg i xor get data i uchar 1'),
+    ('integer-product', CPUI, 'mul ulong a ulong b', 'add ulong a ulong b'),
+    ('half-dot-zero', CPUH, 'sum = bitcast f32 uint 0', 'sum = bitcast f32 uint 1065353216'),
+    ('bf16-dot-stride', CPUB, 'bi = and add bi nn 4294967295', 'bi = and add bi 1 4294967295'),
+    ('shape-root-equality', SHAPE, 'if le mid div x mid', 'if lt mid div x mid'),
+    ('name-terminator', NAME, 'if eq get data i 0', 'if ne get data i 0'),
 ]
 
 
@@ -37,11 +47,21 @@ with tempfile.TemporaryDirectory(prefix='bw-mutants-') as td:
         text = text.replace(old, new)
         if source == IDENT:
             text = (ROOT / 'om/cache/digest.om').read_text() + '\n' + text
+        elif source in (CPUI, CPUH, CPUB, SHAPE):
+            parts = [ROOT / 'om/blackwell/views.om']
+            if source == CPUH:
+                parts.append(SCALAR)
+            if source == SHAPE:
+                text += '\n' + (ROOT / 'om/blackwell/shape_probe.om').read_text()
+            else:
+                parts.append(SHAPE)
+            text = '\n'.join(p.read_text() for p in parts) + '\n' + text
         unit = t / f'{name}.om'
         unit.write_text(text)
         generated = t / f'{name}.c'
         frontend = 'bridge-freest' if source == SCALAR else 'bridge-seeded'
-        generated.write_bytes(run([BRIDGE / 'tools' / frontend, 'c', unit]))
+        profile = ['--runtime-views'] if source in (CPUI, CPUH, CPUB, SHAPE, NAME) else []
+        generated.write_bytes(run([BRIDGE / 'tools' / frontend, *profile, 'c', unit]))
         exe = t / name
         run(['cc', '-std=gnu11', '-O0', '-g', '-Wall', '-Wextra', '-Werror',
              '-ffp-contract=off', '-Isrc', '-DCUDAPP_MIGRATION_PENDING_BW_MATMUL=1',

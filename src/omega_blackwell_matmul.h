@@ -49,7 +49,11 @@ typedef struct {
 /* Initializes semantic MatMul specification and computes canonical spec_id */
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision);
 
-/* Mathematical CPU reference oracle for verification (zero tolerance) */
+/* Mathematical CPU reference oracles for verification (zero tolerance).
+ * Row-major positive m/k/n; c must not overlap either input (inputs may overlap).
+ * Hosted checked views return -1 for an aliased output before touching memory.
+ * The freestanding C exception is pending omega-bridge#72.
+ */
 int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n);
 
 /* Mathematical CPU reference oracle for FP16 and BF16 tensor matrix multiplication */

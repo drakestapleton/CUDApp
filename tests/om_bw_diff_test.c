@@ -32,6 +32,77 @@ static int nan16(uint16_t h) { return (h&0x7c00)==0x7c00 && (h&0x3ff); }
 static int nanbf(uint16_t h) { return (h&0x7f80)==0x7f80 && (h&0x7f); }
 static uint32_t rng = 0x6123abcd;
 static uint32_t next(void) { rng ^= rng<<13; rng ^= rng>>17; rng ^= rng<<5; return rng; }
+static int same_float(float a, float b) {
+    uint32_t x=bits(a), y=bits(b);
+    return x==y || ((x&0x7fffffff)>0x7f800000 && (y&0x7fffffff)>0x7f800000);
+}
+static int cpu_views(void) {
+    uint32_t a[81], b[81], c[81], expected[81];
+    uint16_t h[81], q[81];
+    float out[81], want[81];
+    uint64_t result=0;
+    uint8_t name[64];
+    uint64_t length=0;
+    for(unsigned i=0;i<64;i++) {
+        memset(name,0x61,sizeof name); name[i]=0;
+        CHECK(omega_bw_name(&result,name,sizeof name,&length,1)==0 && result==0);
+        CHECK(length==strnlen((const char *)name,sizeof name));
+    }
+    memset(name,0x61,sizeof name); length=123;
+    CHECK(omega_bw_name(&result,name,sizeof name,&length,1)==0 && result==UINT64_MAX && length==123);
+    CHECK(omega_bw_name(&result,name,63,&length,1)!=0);
+    for(unsigned trial=0;trial<100;trial++) {
+        uint32_t m=1+next()%9,k=1+next()%9,n=1+next()%9;
+        for(unsigned i=0;i<81;i++) { a[i]=next(); b[i]=next(); h[i]=(uint16_t)next(); q[i]=(uint16_t)next(); }
+        CHECK(omega_matmul_cpu_oracle_i32(a,b,c,m,k,n)==0);
+        CHECK(oracle_omega_matmul_cpu_oracle_i32(a,b,expected,m,k,n)==0);
+        CHECK(memcmp(c,expected,(size_t)m*n*sizeof(*c))==0);
+        CHECK(omega_matmul_cpu_oracle_f16(h,q,out,m,k,n)==0);
+        CHECK(oracle_omega_matmul_cpu_oracle_f16(h,q,want,m,k,n)==0);
+        for(unsigned i=0;i<m*n;i++) CHECK(same_float(out[i],want[i]));
+        CHECK(omega_matmul_cpu_oracle_bf16(h,q,out,m,k,n)==0);
+        CHECK(oracle_omega_matmul_cpu_oracle_bf16(h,q,want,m,k,n)==0);
+        for(unsigned i=0;i<m*n;i++) CHECK(same_float(out[i],want[i]));
+        m=next()|1; k=next()|1; n=next()|1;
+        CHECK(omega_bw_shape(&result,(uint64_t)m*k,(uint64_t)k*n,(uint64_t)m*n)==0);
+        CHECK(result==n);
+    }
+    CHECK(omega_bw_shape(&result,(uint64_t)UINT32_MAX*UINT32_MAX,(uint64_t)UINT32_MAX*UINT32_MAX,(uint64_t)UINT32_MAX*UINT32_MAX)==0 && result==UINT32_MAX);
+    const uint64_t invalid[][3]={{1,2,3},{2,1,8},{3,2,2},{1,UINT64_MAX,2},{UINT64_MAX,UINT64_MAX,1},{UINT64_MAX,1,UINT64_MAX},{0,1,1},{1,0,1},{1,1,0}};
+    for(unsigned i=0;i<sizeof invalid/sizeof invalid[0];i++)
+        CHECK(omega_bw_shape(&result,invalid[i][0],invalid[i][1],invalid[i][2])==0 && result==0);
+    /* Red controls: a non-square quotient and k not divisible by recovered n. */
+    for(unsigned i=0;i<2;i++) {
+        memset(c,0x5a,sizeof c); memcpy(expected,c,sizeof c);
+        memset(out,0x5a,sizeof out); memcpy(want,out,sizeof out);
+        CHECK(omega_bw_cpui(&result,a,invalid[i][0],b,invalid[i][1],c,invalid[i][2])==0 && result==UINT64_MAX);
+        CHECK(memcmp(c,expected,sizeof c)==0);
+        CHECK(omega_bw_cpuf16(&result,h,invalid[i][0],q,invalid[i][1],out,invalid[i][2])==0 && result==UINT64_MAX);
+        CHECK(memcmp(out,want,sizeof out)==0);
+        CHECK(omega_bw_cpubf16(&result,h,invalid[i][0],q,invalid[i][1],out,invalid[i][2])==0 && result==UINT64_MAX);
+        CHECK(memcmp(out,want,sizeof out)==0);
+    }
+    CHECK(omega_bw_cpui(&result,a,1,b,1,a,1)!=0);
+    CHECK(omega_matmul_cpu_oracle_i32(a,b,a,1,1,1)!=0);
+    CHECK(omega_matmul_cpu_oracle_f16((const uint16_t *)a,q,(float *)a,1,1,1)!=0);
+    CHECK(omega_matmul_cpu_oracle_bf16((const uint16_t *)a,q,(float *)a,1,1,1)!=0);
+    CHECK(omega_matmul_cpu_oracle_i32(a,b,a+1,1,2,2)!=0);
+    /* Read-only inputs may alias; only writable output must be disjoint. */
+    CHECK(omega_matmul_cpu_oracle_i32(a,a,c,1,2,1)==0);
+    CHECK(oracle_omega_matmul_cpu_oracle_i32(a,a,expected,1,2,1)==0 && c[0]==expected[0]);
+    CHECK(omega_matmul_cpu_oracle_f16(h,h,out,1,2,1)==0);
+    CHECK(oracle_omega_matmul_cpu_oracle_f16(h,h,want,1,2,1)==0 && same_float(out[0],want[0]));
+    CHECK(omega_matmul_cpu_oracle_bf16(h,h,out,1,2,1)==0);
+    CHECK(oracle_omega_matmul_cpu_oracle_bf16(h,h,want,1,2,1)==0 && same_float(out[0],want[0]));
+    /* Exercise a dot beyond the implicit one-million runtime-loop guard. */
+    size_t count=1000001;
+    uint32_t *long_a=calloc(count,sizeof(*long_a)),*long_b=calloc(count,sizeof(*long_b));
+    CHECK(long_a && long_b);
+    long_a[count-1]=7; long_b[count-1]=9;
+    CHECK(omega_matmul_cpu_oracle_i32(long_a,long_b,c,1,(uint32_t)count,1)==0 && c[0]==63);
+    free(long_a); free(long_b);
+    return 0;
+}
 static uint64_t policy(unsigned op,uint64_t x,uint64_t y,uint64_t z,uint64_t w,uint64_t v) {
     switch(op) {
     case 4: {
@@ -169,6 +240,10 @@ int main(void) {
     BAD_ORACLE(oracle_omega_matmul_cpu_oracle_i32,ai,bi,ci);
     BAD_ORACLE(oracle_omega_matmul_cpu_oracle_f16,ah,bh,cf);
     BAD_ORACLE(oracle_omega_matmul_cpu_oracle_bf16,ah,bh,cf);
+    BAD_ORACLE(omega_matmul_cpu_oracle_i32,ai,bi,ci);
+    BAD_ORACLE(omega_matmul_cpu_oracle_f16,ah,bh,cf);
+    BAD_ORACLE(omega_matmul_cpu_oracle_bf16,ah,bh,cf);
+    CHECK(cpu_views()==0);
 #ifdef OMEGA_BW_DIFF_RED
     hash[0] ^= 1;
     CHECK(memcmp(hash,saved,32)==0);

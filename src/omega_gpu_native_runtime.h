@@ -117,12 +117,21 @@ static inline int omega_native_admitted(const OmegaGpuNativeArtifact *a, uint8_t
     const OmegaNativeArtifactSnapshot *s = a ? a->admission : NULL;
     uint8_t cubin[32768] = {0}, observed[2048] = {0}, text[16384] = {0};
     uint64_t sizes[8] = {0}, payload_sizes[4], result = 0;
-    size_t name;
+    uint64_t name = 0;
     if (!s || omega_native_payload(a, key) != 0) return -1;
+#if defined(OMEGA_GPU_NO_POSIX) || (defined(CUDAPP_MIGRATION_PENDING_BW_NAME) && CUDAPP_MIGRATION_PENDING_BW_NAME)
+    /* Freestanding checked-view exception pending omega-bridge#72. */
     name = strnlen(s->kernel_function, sizeof s->kernel_function);
+    if (name >= sizeof s->kernel_function) return -1;
+#else
+    {
+        uint32_t rc = omega_bw_name(&result, s->kernel_function, sizeof s->kernel_function, &name, 1);
+        if (omega_bw_value(8, rc, result, 0, 0, 0) != 0) return -1;
+    }
+#endif
     if (!omega_bw_value(14, s->sizes[OMEGA_SNAPSHOT_CUBIN], s->sizes[OMEGA_SNAPSHOT_TEXT],
         s->sizes[OMEGA_SNAPSHOT_QMD0], s->sizes[OMEGA_SNAPSHOT_QMD1],
-        s->sizes[OMEGA_SNAPSHOT_CBANK]) || name >= sizeof s->kernel_function) return -1;
+        s->sizes[OMEGA_SNAPSHOT_CBANK])) return -1;
     memcpy(cubin, s->bytes[OMEGA_SNAPSHOT_CUBIN], s->sizes[OMEGA_SNAPSHOT_CUBIN]);
     memcpy(text, s->bytes[OMEGA_SNAPSHOT_TEXT], s->sizes[OMEGA_SNAPSHOT_TEXT]);
     memcpy(observed, s->bytes[OMEGA_SNAPSHOT_QMD0], 384);

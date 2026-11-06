@@ -1,0 +1,335 @@
+        -:    0:Source:/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c
+        -:    1:#if defined(CUDAPP_MIGRATION_PENDING_BW_MATMUL) && CUDAPP_MIGRATION_PENDING_BW_MATMUL
+        -:    2:/* Frozen b774723 independent verification oracle; never production linked. */
+        -:    3:#define omega_matmul_spec_init oracle_omega_matmul_spec_init
+        -:    4:#define omega_matmul_cpu_oracle_i32 oracle_omega_matmul_cpu_oracle_i32
+        -:    5:#define omega_matmul_cpu_oracle_f16 oracle_omega_matmul_cpu_oracle_f16
+        -:    6:#define omega_matmul_cpu_oracle_bf16 oracle_omega_matmul_cpu_oracle_bf16
+        -:    7:#define omega_fp16_to_fp32 oracle_omega_fp16_to_fp32
+        -:    8:#define omega_bf16_to_fp32 oracle_omega_bf16_to_fp32
+        -:    9:#define omega_fp32_to_fp16 oracle_omega_fp32_to_fp16
+        -:   10:#define omega_fp32_to_bf16 oracle_omega_fp32_to_bf16
+        -:   11:#define omega_blackwell_kernel_free oracle_omega_blackwell_kernel_free
+        -:   12:#define omega_blackwell_bind_matmul_realization oracle_omega_blackwell_bind_matmul_realization
+        -:   13:#define omega_blackwell_codegen_matmul oracle_omega_blackwell_codegen_matmul
+        -:   14:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:   15:#include "omega_blackwell_matmul.h"
+        -:   16:#include "sha256.h"
+        -:   17:#ifndef OMEGA_GPU_NO_POSIX
+        -:   18:#include <stdlib.h>
+        -:   19:#endif
+        -:   20:#include <string.h>
+        -:   21:#ifdef OMEGA_GPU_NO_POSIX
+        -:   22:#include "cudapp_native.h"
+        -:   23:#endif
+        -:   24:
+function oracle_omega_matmul_spec_init called 1001 returned 100% blocks executed 100%
+     1001:   25:int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
+     1001:   26:    if (!spec || m == 0 || k == 0 || n == 0) return -1;
+branch  0 taken 1000 (fallthrough)
+branch  1 taken 1
+branch  2 taken 900 (fallthrough)
+branch  3 taken 100
+branch  4 taken 810 (fallthrough)
+branch  5 taken 90
+branch  6 taken 81 (fallthrough)
+branch  7 taken 729
+      729:   27:    if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return -1;
+branch  0 taken 243 (fallthrough)
+branch  1 taken 486
+branch  2 taken 135 (fallthrough)
+branch  3 taken 108
+branch  4 taken 30 (fallthrough)
+branch  5 taken 105
+        -:   28:
+      105:   29:    spec->m = m;
+      105:   30:    spec->k = k;
+      105:   31:    spec->n = n;
+      105:   32:    spec->precision = precision;
+        -:   33:
+        -:   34:    /* Canonical spec_id computed over (m, k, n, precision) */
+        -:   35:    uint8_t spec_buf[16];
+      105:   36:    spec_buf[0] = (uint8_t)(m & 0xff);
+      105:   37:    spec_buf[1] = (uint8_t)((m >> 8) & 0xff);
+      105:   38:    spec_buf[2] = (uint8_t)((m >> 16) & 0xff);
+      105:   39:    spec_buf[3] = (uint8_t)((m >> 24) & 0xff);
+        -:   40:
+      105:   41:    spec_buf[4] = (uint8_t)(k & 0xff);
+      105:   42:    spec_buf[5] = (uint8_t)((k >> 8) & 0xff);
+      105:   43:    spec_buf[6] = (uint8_t)((k >> 16) & 0xff);
+      105:   44:    spec_buf[7] = (uint8_t)((k >> 24) & 0xff);
+        -:   45:
+      105:   46:    spec_buf[8] = (uint8_t)(n & 0xff);
+      105:   47:    spec_buf[9] = (uint8_t)((n >> 8) & 0xff);
+      105:   48:    spec_buf[10] = (uint8_t)((n >> 16) & 0xff);
+      105:   49:    spec_buf[11] = (uint8_t)((n >> 24) & 0xff);
+        -:   50:
+      105:   51:    spec_buf[12] = (uint8_t)(precision & 0xff);
+      105:   52:    spec_buf[13] = 0;
+      105:   53:    spec_buf[14] = 0;
+      105:   54:    spec_buf[15] = 0;
+        -:   55:
+      105:   56:    sha256_hash(spec_buf, sizeof(spec_buf), spec->spec_id);
+call    0 returned 105
+      105:   57:    return 0;
+        -:   58:}
+        -:   59:
+function oracle_omega_matmul_cpu_oracle_i32 called 108 returned 100% blocks executed 100%
+      108:   60:int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
+      108:   61:    if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
+branch  0 taken 107 (fallthrough)
+branch  1 taken 1
+branch  2 taken 106 (fallthrough)
+branch  3 taken 1
+branch  4 taken 105 (fallthrough)
+branch  5 taken 1
+branch  6 taken 104 (fallthrough)
+branch  7 taken 1
+branch  8 taken 103 (fallthrough)
+branch  9 taken 1
+branch 10 taken 1 (fallthrough)
+branch 11 taken 102
+        -:   62:
+      666:   63:    for (uint32_t i = 0; i < m; i++) {
+branch  0 taken 564
+branch  1 taken 102 (fallthrough)
+     3407:   64:        for (uint32_t j = 0; j < n; j++) {
+branch  0 taken 2843
+branch  1 taken 564 (fallthrough)
+     2843:   65:            uint32_t acc = 0;
+    16228:   66:            for (uint32_t p = 0; p < k; p++) {
+branch  0 taken 13385
+branch  1 taken 2843 (fallthrough)
+    13385:   67:                acc += a[i * k + p] * b[p * n + j];
+        -:   68:            }
+     2843:   69:            c[i * n + j] = acc;
+        -:   70:        }
+        -:   71:    }
+      102:   72:    return 0;
+        -:   73:}
+        -:   74:
+        -:   75:
+function oracle_omega_fp16_to_fp32 called 157842 returned 100% blocks executed 100%
+   157842:   76:float omega_fp16_to_fp32(uint16_t h) {
+   157842:   77:    uint32_t sign = (uint32_t)(h & 0x8000) << 16;
+   157842:   78:    uint32_t exp  = (uint32_t)(h & 0x7c00) >> 10;
+   157842:   79:    uint32_t mant = (uint32_t)(h & 0x03ff);
+        -:   80:    uint32_t val;
+   157842:   81:    if (exp == 0) {
+branch  0 taken 4957 (fallthrough)
+branch  1 taken 152885
+     4957:   82:        if (mant == 0) {
+branch  0 taken 10 (fallthrough)
+branch  1 taken 4947
+       10:   83:            val = sign;
+        -:   84:        } else {
+     4947:   85:            exp = 1;
+    14797:   86:            while ((mant & 0x0400) == 0) {
+branch  0 taken 9850
+branch  1 taken 4947 (fallthrough)
+     9850:   87:                mant <<= 1;
+     9850:   88:                exp--;
+        -:   89:            }
+     4947:   90:            mant &= 0x03ff;
+     4947:   91:            val = sign | ((exp + (127 - 15)) << 23) | (mant << 13);
+        -:   92:        }
+   152885:   93:    } else if (exp == 31) {
+branch  0 taken 4961 (fallthrough)
+branch  1 taken 147924
+     4961:   94:        val = sign | 0x7f800000 | (mant << 13);
+        -:   95:    } else {
+   147924:   96:        val = sign | ((exp + (127 - 15)) << 23) | (mant << 13);
+        -:   97:    }
+        -:   98:    float f;
+   157842:   99:    memcpy(&f, &val, 4);
+   157842:  100:    return f;
+        -:  101:}
+        -:  102:
+function oracle_omega_bf16_to_fp32 called 92306 returned 100% blocks executed 100%
+    92306:  103:float omega_bf16_to_fp32(uint16_t b) {
+    92306:  104:    uint32_t val = (uint32_t)b << 16;
+        -:  105:    float f;
+    92306:  106:    memcpy(&f, &val, 4);
+    92306:  107:    return f;
+        -:  108:}
+        -:  109:
+function oracle_omega_fp32_to_fp16 called 165536 returned 100% blocks executed 100%
+   165536:  110:uint16_t omega_fp32_to_fp16(float f) {
+        -:  111:#ifdef OMEGA_GPU_NO_POSIX
+        -:  112:    /* The host cast can import libgcc __truncsfhf2 on x86. Keep the
+        -:  113:     * freestanding conversion in checked, import-free Omega instead. */
+        -:  114:    uint32_t bits;
+        -:  115:    uint64_t out;
+        -:  116:    memcpy(&bits, &f, sizeof(bits));
+        -:  117:    if (omega_native_f16(&out, bits) != OMEGA_OK) __builtin_trap();
+        -:  118:    return (uint16_t)out;
+        -:  119:#else
+   165536:  120:    _Float16 h = (_Float16)f;
+        -:  121:    uint16_t u;
+   165536:  122:    memcpy(&u, &h, 2);
+   165536:  123:    return u;
+        -:  124:#endif
+        -:  125:}
+        -:  126:
+function oracle_omega_fp32_to_bf16 called 100000 returned 100% blocks executed 100%
+   100000:  127:uint16_t omega_fp32_to_bf16(float f) {
+        -:  128:#ifndef OMEGA_GPU_NO_POSIX
+   100000:  129:    __bf16 b = (__bf16)f;
+        -:  130:    uint16_t u;
+   100000:  131:    memcpy(&u, &b, 2);
+   100000:  132:    return u;
+        -:  133:#else
+        -:  134:    /* Freestanding (cut A.2): the __bf16 cast calls libgcc __truncsfbf2. Same rounding in integer form
+        -:  135:     * (omega_fp32_to_bf16_rne); the hosted cast and it agree on every one of the 2^32 inputs
+        -:  136:     * (make test-codegen-freestanding, bf16 sweep). */
+        -:  137:    return omega_fp32_to_bf16_rne(f);
+        -:  138:#endif
+        -:  139:}
+        -:  140:
+function oracle_omega_matmul_cpu_oracle_f16 called 108 returned 100% blocks executed 100%
+      108:  141:int omega_matmul_cpu_oracle_f16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
+      108:  142:    if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
+branch  0 taken 107 (fallthrough)
+branch  1 taken 1
+branch  2 taken 106 (fallthrough)
+branch  3 taken 1
+branch  4 taken 105 (fallthrough)
+branch  5 taken 1
+branch  6 taken 104 (fallthrough)
+branch  7 taken 1
+branch  8 taken 103 (fallthrough)
+branch  9 taken 1
+branch 10 taken 1 (fallthrough)
+branch 11 taken 102
+      666:  143:    for (uint32_t i = 0; i < m; i++) {
+branch  0 taken 564
+branch  1 taken 102 (fallthrough)
+     3407:  144:        for (uint32_t j = 0; j < n; j++) {
+branch  0 taken 2843
+branch  1 taken 564 (fallthrough)
+     2843:  145:            float sum = 0.0f;
+    16228:  146:            for (uint32_t p = 0; p < k; p++) {
+branch  0 taken 13385
+branch  1 taken 2843 (fallthrough)
+    13385:  147:                sum += omega_fp16_to_fp32(a[i * k + p]) * omega_fp16_to_fp32(b[p * n + j]);
+call    0 returned 13385
+call    1 returned 13385
+        -:  148:            }
+     2843:  149:            c[i * n + j] = sum;
+        -:  150:        }
+        -:  151:    }
+      102:  152:    return 0;
+        -:  153:}
+        -:  154:
+function oracle_omega_matmul_cpu_oracle_bf16 called 108 returned 100% blocks executed 100%
+      108:  155:int omega_matmul_cpu_oracle_bf16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
+      108:  156:    if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
+branch  0 taken 107 (fallthrough)
+branch  1 taken 1
+branch  2 taken 106 (fallthrough)
+branch  3 taken 1
+branch  4 taken 105 (fallthrough)
+branch  5 taken 1
+branch  6 taken 104 (fallthrough)
+branch  7 taken 1
+branch  8 taken 103 (fallthrough)
+branch  9 taken 1
+branch 10 taken 1 (fallthrough)
+branch 11 taken 102
+      666:  157:    for (uint32_t i = 0; i < m; i++) {
+branch  0 taken 564
+branch  1 taken 102 (fallthrough)
+     3407:  158:        for (uint32_t j = 0; j < n; j++) {
+branch  0 taken 2843
+branch  1 taken 564 (fallthrough)
+     2843:  159:            float sum = 0.0f;
+    16228:  160:            for (uint32_t p = 0; p < k; p++) {
+branch  0 taken 13385
+branch  1 taken 2843 (fallthrough)
+    13385:  161:                sum += omega_bf16_to_fp32(a[i * k + p]) * omega_bf16_to_fp32(b[p * n + j]);
+call    0 returned 13385
+call    1 returned 13385
+        -:  162:            }
+     2843:  163:            c[i * n + j] = sum;
+        -:  164:        }
+        -:  165:    }
+      102:  166:    return 0;
+        -:  167:}
+        -:  168:#ifndef OMEGA_GPU_NO_POSIX /* frees what the hosted allocating generators malloc (omega_blackwell_codegen.h, cut A.2) */
+function oracle_omega_blackwell_kernel_free called 5 returned 100% blocks executed 100%
+        5:  169:void omega_blackwell_kernel_free(OmegaBlackwellKernel *kernel) {
+        5:  170:    if (!kernel) return;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 4
+        4:  171:    if (kernel->code) {
+branch  0 taken 1 (fallthrough)
+branch  1 taken 3
+        1:  172:        free(kernel->code);
+        1:  173:        kernel->code = NULL;
+        -:  174:    }
+        4:  175:    kernel->code_size = 0;
+        4:  176:    kernel->insn_count = 0;
+        -:  177:}
+        -:  178:#endif
+        -:  179:
+function oracle_omega_blackwell_bind_matmul_realization called 103 returned 100% blocks executed 100%
+      103:  180:int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const OmegaBlackwellKernel *kernel, OmegaBlackwellRealizationIdentity *id) {
+      103:  181:    if (!spec || !kernel || !id) return -1;
+branch  0 taken 102 (fallthrough)
+branch  1 taken 1
+branch  2 taken 101 (fallthrough)
+branch  3 taken 1
+branch  4 taken 1 (fallthrough)
+branch  5 taken 100
+        -:  182:
+      100:  183:    memcpy(id->spec_id, spec->spec_id, 32);
+        -:  184:    /* NVIDIA_DGX_SPARK_GB10_SM121 canonical machine descriptor digest */
+      100:  185:    const char *machine_str = "NVIDIA_DGX_SPARK_GB10_SM121";
+      100:  186:    sha256_hash((const uint8_t *)machine_str, strlen(machine_str), id->machine_id);
+call    0 returned 100
+      100:  187:    memcpy(id->code_digest, kernel->code_digest, 32);
+      100:  188:    id->sm_arch = 121;
+        -:  189:
+        -:  190:    /* Realization ID = SHA-256(spec_id || machine_id || code_digest || sm_arch) */
+        -:  191:    uint8_t bound[100];
+      100:  192:    memcpy(bound + 0, id->spec_id, 32);
+      100:  193:    memcpy(bound + 32, id->machine_id, 32);
+      100:  194:    memcpy(bound + 64, id->code_digest, 32);
+      100:  195:    bound[96] = (uint8_t)(id->sm_arch & 0xff);
+      100:  196:    bound[97] = (uint8_t)((id->sm_arch >> 8) & 0xff);
+      100:  197:    bound[98] = (uint8_t)((id->sm_arch >> 16) & 0xff);
+      100:  198:    bound[99] = (uint8_t)((id->sm_arch >> 24) & 0xff);
+        -:  199:
+      100:  200:    sha256_hash(bound, sizeof(bound), id->realization_id);
+call    0 returned 100
+      100:  201:    return 0;
+        -:  202:}
+        -:  203:
+        -:  204:#include "omega_blackwell_codegen.h"
+        -:  205:
+        -:  206:#ifndef OMEGA_GPU_NO_POSIX
+function oracle_omega_blackwell_codegen_matmul called 6 returned 100% blocks executed 100%
+        6:  207:int omega_blackwell_codegen_matmul(const OmegaMatMulSpec *spec, OmegaBlackwellKernel *kernel) {
+        6:  208:    if (!spec || !kernel) return -1;
+branch  0 taken 5 (fallthrough)
+branch  1 taken 1
+branch  2 taken 1 (fallthrough)
+branch  3 taken 4
+        4:  209:    if (spec->precision == OMEGA_MATMUL_PRECISION_INT32) {
+branch  0 taken 1 (fallthrough)
+branch  1 taken 3
+        1:  210:        return omega_blackwell_codegen_matmul_i32(spec, kernel);
+call    0 returned 1
+        3:  211:    } else if (spec->precision == OMEGA_MATMUL_PRECISION_FP16 || spec->precision == OMEGA_MATMUL_PRECISION_BF16) {
+branch  0 taken 2 (fallthrough)
+branch  1 taken 1
+branch  2 taken 1 (fallthrough)
+branch  3 taken 1
+        2:  212:        return omega_blackwell_codegen_matmul_tensor(spec, kernel);
+call    0 returned 2
+        -:  213:    }
+        1:  214:    return -1;
+        -:  215:}
+        -:  216:#endif
+        -:  217:
+        -:  218:#endif

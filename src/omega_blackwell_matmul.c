@@ -59,6 +59,8 @@ int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32
 }
 #endif /* BW_BIND_C_PRIMARY */
 
+#if defined(OMEGA_GPU_NO_POSIX) || (defined(CUDAPP_MIGRATION_PENDING_BW_CPU) && CUDAPP_MIGRATION_PENDING_BW_CPU)
+/* Freestanding exception pending omega-bridge#72; otherwise a default-OFF C oracle. */
 int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
     if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
 
@@ -73,6 +75,17 @@ int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *
     }
     return 0;
 }
+#else
+int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
+    if (!a || !b || !c) return -1;
+    if (!omega_bw_value(16, m, k, n, 0, 0)) return -1;
+    uint64_t result = 0;
+    uint32_t rc = omega_bw_cpui(&result, a, omega_bw_value(17, m, k, 0, 0, 0),
+                              b, omega_bw_value(17, k, n, 0, 0, 0),
+                              c, omega_bw_value(17, m, n, 0, 0, 0));
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
+}
+#endif
 
 
 float omega_fp16_to_fp32(uint16_t h) {
@@ -101,6 +114,8 @@ uint16_t omega_fp32_to_bf16(float f) {
     return omega_fp32_to_bf16_rne(f);
 }
 
+#if defined(OMEGA_GPU_NO_POSIX) || (defined(CUDAPP_MIGRATION_PENDING_BW_CPU) && CUDAPP_MIGRATION_PENDING_BW_CPU)
+/* Freestanding exception pending omega-bridge#72; otherwise default-OFF C oracles. */
 int omega_matmul_cpu_oracle_f16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
     if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
     for (uint32_t i = 0; i < m; i++) {
@@ -128,6 +143,26 @@ int omega_matmul_cpu_oracle_bf16(const uint16_t *a, const uint16_t *b, float *c,
     }
     return 0;
 }
+#else
+int omega_matmul_cpu_oracle_f16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
+    if (!a || !b || !c) return -1;
+    if (!omega_bw_value(16, m, k, n, 0, 0)) return -1;
+    uint64_t result = 0;
+    uint32_t rc = omega_bw_cpuf16(&result, a, omega_bw_value(17, m, k, 0, 0, 0),
+                                b, omega_bw_value(17, k, n, 0, 0, 0),
+                                c, omega_bw_value(17, m, n, 0, 0, 0));
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
+}
+int omega_matmul_cpu_oracle_bf16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
+    if (!a || !b || !c) return -1;
+    if (!omega_bw_value(16, m, k, n, 0, 0)) return -1;
+    uint64_t result = 0;
+    uint32_t rc = omega_bw_cpubf16(&result, a, omega_bw_value(17, m, k, 0, 0, 0),
+                                 b, omega_bw_value(17, k, n, 0, 0, 0),
+                                 c, omega_bw_value(17, m, n, 0, 0, 0));
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
+}
+#endif
 #ifndef OMEGA_GPU_NO_POSIX /* frees what the hosted allocating generators malloc (omega_blackwell_codegen.h, cut A.2) */
 void omega_blackwell_kernel_free(OmegaBlackwellKernel *kernel) {
     if (!kernel) return;

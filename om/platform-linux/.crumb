@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "platform-linux",
+  "layer": "platform",
+  "purpose": "Linux RM platform policy in Omega: request words, reply codes, and allocation class. Effectful nvrm calls stay in C."
+}

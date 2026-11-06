@@ -1,4 +1,5 @@
-# Checked portable hosted and import-free scalar Omega converters, with seeded C f64/f32 constants, float ops and
-# ushort/uint/f32 typed views. Draft omega-bridge#71 head (on main after #56); move to #71's merge sha once it lands.
-# Exact source and frontend hashes checked by om/units.sh.
-758d74aadf465ed5d4b3c80d798615c8ed4e18f8
+# Checked portable hosted and import-free scalar Omega converters.
+# Hosted attention views opt into runtime extents; freestanding remains unchanged.
+# Draft omega-bridge#73 at 79e8c361, stacked on unmerged #71.
+# Exact source and frontend hashes are checked by om/units.sh.
+79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538

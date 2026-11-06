@@ -322,11 +322,12 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         case BW_IR_SHFL_DOWN: {
+            if (!cond) { f->pc = pc + 1; break; }
             if (w->exited) { ws_fail(s, WS_E_SHFL_EXITED, pc, "SHFL on a warp with exited lanes"); return -1; }
             if (mask != live) { ws_fail(s, WS_E_SHFL_SPLIT, pc, "SHFL on a split warp"); return -1; }
             uint32_t src[WS_WARP];
             for (int L = 0; L < WS_WARP; L++) src[L] = ws_rd(&w->lane[L], in->src1_vreg, p);
-            for (int L = 0; L < WS_WARP; L++) { int from = L + (int)(in->imm & 31); ws_wr(&w->lane[L], in->dst_vreg, from < WS_WARP ? src[from] : src[L], p); }
+            for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) { int from = L + (int)(in->imm & 31); ws_wr(&w->lane[L], in->dst_vreg, from < WS_WARP ? src[from] : src[L], p); }
             f->pc = pc + 1;
             break;
         }
@@ -336,7 +337,7 @@ static int ws_run_warp(WsSim *s, WsWarp *w, uint32_t warp, uint32_t cx, uint32_t
             break;
         }
         default: {
-            for (int L = 0; L < WS_WARP; L++) if (mask >> L & 1) {
+            for (int L = 0; L < WS_WARP; L++) if (cond >> L & 1) {
                 ws_lane_exec(s, &w->lane[L], in, pc, warp * WS_WARP + (uint32_t)L, cx, cy);
                 if (s->err) return -1;
             }

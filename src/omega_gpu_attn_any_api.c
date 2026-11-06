@@ -42,7 +42,7 @@ int omega_gpu_attn_any(const OmegaGpuAttnAnyShape *s, const void *q, const void 
     if (rc) { free(code); free(program); return rc; }
     OmegaGpuMem buffers[5] = {0};
     omega_gpu_session_lock();
-    if (omega_gpu_session_open() != 0 || omega_gpu_session_alloc(p[0], &buffers[0]) != 0 ||
+    if (omega_gpu_session_open() == NULL || omega_gpu_session_alloc(p[0], &buffers[0]) != 0 ||
         omega_gpu_session_alloc(p[1], &buffers[1]) != 0 || omega_gpu_session_alloc(p[1], &buffers[2]) != 0 ||
         omega_gpu_session_alloc(p[2], &buffers[3]) != 0 || omega_gpu_session_alloc_code(kernel.code_size, &buffers[4]) != 0) {
         rc = OMEGA_GPU_ATTN_ANY_CHIP;

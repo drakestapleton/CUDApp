@@ -8,6 +8,10 @@ Sources: Omega `docs/OMEGA.md` sections 2 to 5 (branch `docs/what-omega-is`, 202
 The clean-base red reproduction, host green gate and compiled mutants are in
 `evidence/graph-table-tail-20261106/README.md`. Chip remains NOT_RUN.
 
+2026-11-06: final hidden-vector head scaling now defaults to seeded Omega.
+The default-OFF C oracle is `CUDAPP_MIGRATION_PENDING_C_GRAPH_HEAD_SCALE`.
+See `evidence/graph-head-scale-20261106/README.md`; hardware remains NOT_RUN.
+
 2026-11-06 — Slice 8 moves graph dimension/configuration checks, gather tables,
 timeline admission, prefill budget/rounding and hello host plans/checking into
 seeded Omega. Wrapped host differential, negative controls, simulator and seven

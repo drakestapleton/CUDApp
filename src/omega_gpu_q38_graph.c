@@ -709,7 +709,15 @@ int omega_gpu_q38_graph_read(OmegaGpuQ38Graph *g, float *x, float *hidden, float
     if (rc == OMEGA_GPU_DGRAPH_OK) {
         if (x) memcpy(x, cpu_of(g, g->lo.x), H * 4u);
         if (hidden) memcpy(hidden, cpu_of(g, g->lo.hidden), H * 4u);
-        if (hidden && g->head8) for (unsigned i = 0; i < H; i++) hidden[i] *= 0x1p-64f; /* exact: a power of two */
+        if (hidden && g->head8) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPH_HEAD_SCALE
+            for (unsigned i = 0; i < H; i++) hidden[i] *= 0x1p-64f;
+#else
+            uint64_t result = 0;
+            if (omega_ghscale(&result, hidden, H) != OMEGA_OK || result)
+                rc = OMEGA_GPU_DGRAPH_CHIP_FAIL;
+#endif
+        }
         if (logits) memcpy(logits, cpu_of(g, g->lo.logits), (size_t)g->cfg.vocab * 4u);
     }
     omega_gpu_session_unlock();

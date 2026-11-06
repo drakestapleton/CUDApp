@@ -39,8 +39,9 @@ Retained C oracles are selected by `CUDAPP_MIGRATION_PENDING_C_ARTIFACT`,
 `CUDAPP_MIGRATION_PENDING_C_API_POLICY`, and `CUDAPP_MIGRATION_PENDING_C_CM_`
 with suffix `SORT`, `MATH`, `FIT`, `STATS`, `FEATURES`, `QUANTILE`, `PREDICTION`,
 `DECISION`, `CALIBRATION`, `BLOB`, or `DIGEST`. Every switch defaults to zero.
-No public API or manifest changed. Generate with `sh om/units.sh` using the
-existing pinned compiler and bridge; explicit `OMEGA_UNITS` overrides are honored.
+No exported signature or ABI manifest entry changed. Generate with
+`sh om/units.sh` using the existing pinned compiler and bridge; explicit
+`OMEGA_UNITS` overrides are honored.
 
 ### Binary64 contract — semantic change for review
 

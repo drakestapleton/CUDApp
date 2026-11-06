@@ -34,6 +34,12 @@
  * This is not authority learning. No feature is derived from a capability,
  * and a realization is eligible only if the caller says it was verified.
  *
+ * Numerical contract: non-contracting IEEE binary64, round-to-nearest, with
+ * each operation rounded separately. First-party Omega math is canonical.
+ * The retained C algorithm is built with -ffp-contract=off; results can differ
+ * from older implicitly contracted/glibc builds. Measured differences and the
+ * exact differential gate are documented in tests/runtime/HOST_POLICY.md.
+ *
  * Predictor: one Bayesian linear regression (normal-inverse-gamma, ridge
  * prior) per (cell, arm), on log2 picoseconds per call. A cell is
  * (operation class, core class, pressure bucket). Pressure cells hold a

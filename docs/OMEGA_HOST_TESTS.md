@@ -248,3 +248,6 @@ with a scale-drop negative control. Neither host path opens a device or
 models scoreboard timing. The exact structural domain, compiler pin,
 arithmetic provenance and separately authorized chip runbook are in
 `evidence/codegen-moe-20261106/REPORT.md`. Chip qualification is **NOT_RUN**.
+Launch these host checks inside the device-free namespace:
+`bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 <command>`.
+This also isolates the mutation runner's child builds and test processes.

@@ -33,11 +33,20 @@ Use the pinned environment:
 ```
 export OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc
 export OMEGA_BRIDGE=$HOME/work/cudastack/omega-bridge
-taskset -c 10-14 nice -n 10 sh om/units.sh --check
-taskset -c 10-14 nice -n 10 make -j3 test-codegen-moe-diff test-codegen-moe-sim
-taskset -c 10-14 nice -n 10 python3 om/codegen/moe_mutants.py
-taskset -c 10-14 nice -n 10 make -j3 test
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh --check
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-codegen-moe-diff test-codegen-moe-sim
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 python3 om/codegen/moe_mutants.py
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test
 ```
+
+Main subsequently required the device-free namespace wrapper shown above for all
+new host/test launches. The initial receipts were launched before that policy;
+their commands are preserved as actually run, not rewritten. These lane tests
+link only builders, replay, encoder/cubin formatting and independent C oracles,
+with no session/platform/device-open backend. Fresh wrapped simulator and
+representative differential controls also passed; the namespace hid NVIDIA,
+cuse and vfio nodes (`device-free.log`). The integrated full gate must use the
+same wrapper.
 
 The source-mutant runner requires baseline success, successful compilation of each altered `.om` input, and the differential harness's ordinary mismatch exit (not a crash). The independent functional simulator fixture uses `bw_warp_sim_k.h`, both builders, both fragment orders and ascending/descending/shuffled warp visits. The scale-drop negative control must change every output. The simulator does not model scoreboard timing.
 
@@ -54,3 +63,15 @@ WolframLanguageEvaluator: `{(1+Mod[56,8]/8)*2^(Quotient[56,8]-7),512*(1+Mod[56,8
 No GPU window was authorized. No command in the host acceptance paths opens a device. No ROADMAP qualification status is upgraded.
 
 In a separately authorized exclusive GB10 window, first build `taskset -c 10-14 nice -n 10 make -j3 build/gpu_fp8_api_test`. Capture the current revision, compiler/bridge pins and current window authorization in a new receipt directory. Run `./build/gpu_fp8_api_test --host-only` and `./build/gpu_fp8_api_test --sim`; then use the existing FP8 chip runner/authorization procedure to execute the chip parity and shipped negative-control battery with `./build/gpu_fp8_api_test --variant 1 --out <new-receipt>/variant1.json` and `./build/gpu_fp8_api_test --variant 2 --out <new-receipt>/variant2.json`. The checked CLI also supports `--sched`, `--depth`, `--coal` and `--wfirst`; exercise the default and scheduling/deep/coalesced/weight-first arms in separately named receipts. Record exit codes and output digests and preserve the shipped arithmetic/parity negative controls. Stop on a failed gate; do not weaken it. Chip qualification remains separate from host differential and simulator evidence.
+
+## Receipt state
+
+- IMPLEMENTED: both default seeded builders, unchanged public APIs, C oracles and all host tiers.
+- EXERCISED/PASS: device-free final generated-unit `om/units.sh --check`, exit 0; final stdout line `PASS portable Omega units regenerate byte for byte` (`units-check-device-free.log`).
+- EXERCISED/PASS: device-free final-unit warp simulation and two representative byte differentials, combined exit 0 (`device-free.log`; original pre-policy run in `sim.log`).
+- EXERCISED/PASS: device-free seven seeded-source mutants compiled and were killed by ordinary differential mismatches, runner exit 0; final line `CODEGEN MOE OMEGA MUTANTS PASS (7 source-mutant controls)` (`mutants-device-free.log`; original pre-policy run in `mutants.log`).
+- Full host suite: **NOT_RUN in this lane**, per Main's full-suite scheduling instruction. Integrator owns the no-deadline gate in `integ/omega-cuda-stack`, draft PR #280; no lane full-suite PASS line is claimed.
+- QUALIFIED: **NOT_RUN**, chip window not authorized.
+- MERGED / DEPLOYED: no.
+
+Draft PR: https://github.com/aien-dev/CUDApp/pull/284, stacked on CodegenA.

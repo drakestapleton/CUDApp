@@ -21,6 +21,8 @@ int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32
     return 0;
 }
 #else
+/* Explicit freestanding exception: portable view conversion refuses NO_POSIX.
+ * Pending omega-bridge#72 and its authorized pin; hosted defaults use .om. */
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
     if (!spec || m == 0 || k == 0 || n == 0) return -1;
     if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return -1;

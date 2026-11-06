@@ -27,6 +27,8 @@ int omega_blackwell_realization_compute_id(OmegaBlackwellRealization *real) {
     return 0;
 }
 #else
+/* Explicit NO_POSIX exception pending omega-bridge#72; this is also the
+ * default-OFF C_BIND differential path. Hosted identities use Omega SHA. */
 
 int omega_blackwell_get_machine_id(SemanticId *out_machine_id) {
     if (!out_machine_id) return -1;

@@ -68,26 +68,33 @@ static int alloc_one(BlackwellIRProgram *p, unsigned w, int old, int uni) {
     if (old) return w==4 ? legacy_omega_bw_ir_alloc_vreg128(p) : w==2 ? legacy_omega_bw_ir_alloc_vreg64(p) : legacy_omega_bw_ir_alloc_vreg(p);
     return w==4 ? omega_bw_ir_alloc_vreg128(p) : w==2 ? omega_bw_ir_alloc_vreg64(p) : omega_bw_ir_alloc_vreg(p);
 }
-static int operand(unsigned nv) { return rand() % (nv + 1) - 1; }
+/* Fixed-seed 64-bit LCG (Knuth MMIX constants), high 31 bits: the same case stream on
+ * every libc, unlike rand(). Values span rand()'s [0, 2^31-1] range used below. */
+static int rnd(void) {
+    static uint64_t s = 1;
+    s = s * 6364136223846793005ULL + 1442695040888963407ULL;
+    return (int)(s >> 33);
+}
+static int operand(unsigned nv) { return rnd() % (nv + 1) - 1; }
 static void random_case(unsigned at) {
     omega_bw_ir_init(&a); legacy_omega_bw_ir_init(&b);
-    unsigned nv = 1u + (unsigned)rand()%256u, nu=(unsigned)rand()%33u;
+    unsigned nv = 1u + (unsigned)rnd()%256u, nu=(unsigned)rnd()%33u;
     static const unsigned widths[]={1,2,4};
     for (unsigned v=0;v<nv;++v) {
-        unsigned w=widths[rand()%3];
+        unsigned w=widths[rnd()%3];
         if (alloc_one(&a,w,0,0)!=alloc_one(&b,w,1,0)) fail("alloc",at);
     }
     for (unsigned u=0;u<nu;++u) {
-        unsigned w=(rand()%2) ? 1 : 2;
+        unsigned w=(rnd()%2) ? 1 : 2;
         if (alloc_one(&a,w,0,1)!=alloc_one(&b,w,1,1)) fail("ualloc",at);
     }
-    unsigned n=1u+(unsigned)rand()%1024u;
+    unsigned n=1u+(unsigned)rnd()%1024u;
     static const BlackwellIROpcode ops[]={BW_IR_MOV_IMM,BW_IR_IMAD,BW_IR_LDCU,BW_IR_LDCU64,BW_IR_MOV_RZ,BW_IR_IADD3};
     for (unsigned i=0;i<n;++i) {
         BlackwellIRInsn in={0};
-        in.op=ops[rand()%6]; in.dst_vreg=operand(nv); in.src1_vreg=operand(nv);
+        in.op=ops[rnd()%6]; in.dst_vreg=operand(nv); in.src1_vreg=operand(nv);
         in.src2_vreg=operand(nv); in.src3_vreg=operand(nv); in.ureg=operand(nu);
-        in.imm=(uint32_t)rand(); in.is_uniform=rand()%2;
+        in.imm=(uint32_t)rnd(); in.is_uniform=rnd()%2;
         if (in.op==BW_IR_LDCU || in.op==BW_IR_LDCU64) in.dst_vreg=operand(nu);
         int ar=omega_bw_ir_append(&a,&in),br=legacy_omega_bw_ir_append(&b,&in);
         if(ar!=br) fail("append",at);
@@ -141,8 +148,8 @@ static void canonical_builders(void) {
 static void policies(void) {
     static const uint32_t edge[]={0,1,2,7,8,127,128,129,245,246,247,UINT32_MAX-9,UINT32_MAX-2,UINT32_MAX};
     for (unsigned i=0;i<10000;++i) {
-        uint32_t x=i<sizeof edge/sizeof edge[0] ? edge[i] : ((uint32_t)rand()<<1)^(uint32_t)rand();
-        uint32_t y=((uint32_t)rand()<<1)^(uint32_t)rand(), z=(uint32_t)rand();
+        uint32_t x=i<sizeof edge/sizeof edge[0] ? edge[i] : ((uint32_t)rnd()<<1)^(uint32_t)rnd();
+        uint32_t y=((uint32_t)rnd()<<1)^(uint32_t)rnd(), z=(uint32_t)rnd();
         if(omega_bw_gpr_declared(x)!=legacy_omega_bw_gpr_declared(x)) fail("declared-gpr",i);
         if(omega_bw_gpr_declared_ok(x,y)!=legacy_omega_bw_gpr_declared_ok(x,y)) fail("declared-gpr-refusal",i);
         omega_bw_ir_init(&a); legacy_omega_bw_ir_init(&b);
@@ -157,7 +164,7 @@ static void policies(void) {
     puts("PASS scalar register and matmul policies cases=10000 including uint32 wrap boundaries");
 }
 int main(int argc, char **argv) {
-    (void)argv; srand(1);
+    (void)argv;
     /* Exhaust every public register-count boundary, including one refusal beyond capacity. */
     omega_bw_ir_init(&a); legacy_omega_bw_ir_init(&b);
     for(unsigned i=0;i<=256;++i) if(alloc_one(&a,1,0,0)!=alloc_one(&b,1,1,0)) fail("capacity",i);

@@ -15,7 +15,7 @@ grep -q 'reject_inverted_lifetimes' "$tmp/dagsim.c" || { echo "mutant: deleted m
 CC=${CC:-cc}
 # -Wno-unused-function: deleting the call leaves reject_inverted_lifetimes unreferenced.
 # The mutant has to run. The kill is the named assertion, not a compile error.
-cflags="-std=gnu11 -Wall -Wextra -Werror -Wno-unused-function -D_GNU_SOURCE -O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_TOOLS -Isrc -Itools/dagsim"
+cflags="-std=gnu11 -Wall -Wextra -Werror -Wno-unused-function -D_GNU_SOURCE -O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_TOOLS -DCUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE=1 -Isrc -Itools/dagsim"
 $CC $cflags -c -o "$tmp/dagsim.o" "$tmp/dagsim.c"
 $CC $cflags -c -o "$tmp/rx_costmodel.o" src/runtime/rx_costmodel.c
 # CUDA++ has no src/omega_om_units.c; src/sha256.c is sha256_hash on every host (Makefile DS_SHA_SRC).

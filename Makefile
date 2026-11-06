@@ -699,13 +699,13 @@ test-costmodel: $(RX_CM_UNIT)
 	    cat $$dir/err.txt; exit 1; fi; \
 	  echo "mutant restore-op-clamp: killed by unsupported-op-not-aliased-to-matvec (exit $$rc)"
 
-$(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h tools/dagsim/dagsim_format.h src/cudapp_native.h src/runtime/rx_costmodel.h | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -c -o $@ tools/dagsim/dagsim.c
+$(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h tools/dagsim/dagsim_format.h tools/dagsim/dagsim_resolve.h src/cudapp_native.h src/runtime/rx_costmodel.h | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -c -o $@ tools/dagsim/dagsim.c
 	@if nm -u $@ | grep -E 'rx_gen_|aienos_cap_|rx_caproot_|rx_capadmin_|rx_world_|mmap|mprotect|fork|exec|dlopen|system' ; then \
 		echo "dagsim.o references an operation an offline evaluator must not have"; \
 		rm -f $@; exit 1; fi
 
-DS_OM = src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c
+DS_OM = src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c
 $(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(DS_OM) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(DS_OM) -Wl,--wrap=rx_cm_predict -lm
 
@@ -722,6 +722,10 @@ test-dagsim: $(DS_UNIT) $(DS_CLI)
 .PHONY: test-dagsim-parse-om
 test-dagsim-parse-om:
 	python3 tests/dagsim/parse_check.py
+
+.PHONY: test-dagsim-resolve-om
+test-dagsim-resolve-om:
+	python3 tests/dagsim/resolve_check.py
 
 .PHONY: test-dagsim-corpus-om
 test-dagsim-corpus-om:

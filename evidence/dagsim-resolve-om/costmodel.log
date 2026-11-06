@@ -1,0 +1,9 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/rx_costmodel_unit tests/runtime/rx_costmodel_unit.c build/rx_costmodel.o src/sha256.c -lm
+./build/rx_costmodel_unit
+    held-out synthetic (truth in basis): rmse 0.085 log2 (noise 0.08), coverage 80%: 0.825, 95%: 0.964
+    held-out synthetic (truth outside basis): rmse 0.093 log2 (noise 0.08), coverage 80%: 0.945, 95%: 0.997
+    calibration scale after drift: 3.23
+    80% coverage on later, drifted data: 0.323 before calibration, 0.820 after
+    model blob: 28112 bytes
+checks 127 failures 0
+mutant restore-op-clamp: killed by unsupported-op-not-aliased-to-matvec (exit 1)

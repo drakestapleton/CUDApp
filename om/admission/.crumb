@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T01:47:26Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:8a0523b98e3c5dce310da07a07f0b8f11d35fcd8aa0f459aa55d73bc255ab431",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "realization",
+  "name": "chip-admission",
+  "purpose": "Library GPU admission decision in Omega: which PCI display functions CUDA++ may open (D2, D6)",
+  "schema_version": "1.0.0"
+}

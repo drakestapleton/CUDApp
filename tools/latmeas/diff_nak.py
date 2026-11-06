@@ -58,11 +58,11 @@ def check_sources(cat):
     sched = os.path.join(ROOT, "src/omega_gpu_elementwise_api.c")
     with open(sched, encoding="utf-8") as f:
         text = f.read().splitlines()
-    window = "\n".join(text[783:792])
+    window = "\n".join(text[791:801])
     if "IMAD_WIDE" in window or "FMNMX" in window:
         errors.append("fixed_pair_class now names IMAD_WIDE or FMNMX; the catalog's blanket-6 claim changed")
-    if "case K_FIXED: in.control = CW(6," not in text[67]:
-        errors.append("K_FIXED blanket stall is not 6 at src/omega_gpu_elementwise_api.c:68")
+    if "case K_FIXED: in.control = CW(6," not in text[76]:
+        errors.append("K_FIXED blanket stall is not 6 at src/omega_gpu_elementwise_api.c:77")
     return errors
 
 

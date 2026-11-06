@@ -6,6 +6,11 @@
 #include "omega_blackwell_codegen_tc.h"
 #include <string.h>
 #pragma GCC diagnostic ignored "-Wunused-function"
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_EM)
+#define BW_EM_C_PRIMARY 1
+#else
+#include "cudapp_native.h"
+#endif
 
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
@@ -27,7 +32,19 @@ typedef struct {
     int depth;
 } Em;
 
+#ifndef BW_EM_C_PRIMARY
+/* Fixed wire carries only the mutable scoreboard and control fields. */
+static int64_t em_step(Em *e, uint64_t act, int64_t a, int64_t b, int64_t c, int end, uint32_t *cw) {
+    uint64_t w[4] = {e->pending, e->held, 0, (uint32_t)end}, r = UINT64_MAX;
+    uint32_t status = omega_cg_em(&r, act, a, b, c, w, 4);
+    e->pending = (uint32_t)w[0]; e->held = (uint32_t)w[1];
+    if (cw) *cw = (uint32_t)w[2];
+    return status ? -1 : (int64_t)r;
+}
+#endif
+
 static void emit(Em *e, BlackwellIRInsn in, int kind) {
+#ifdef BW_EM_C_PRIMARY
     uint32_t wait = e->pending;
     switch (kind) {
     case K_FIXED: in.control = CW(6, SB_NONE, SB_NONE, wait); e->pending = 0; break;
@@ -48,6 +65,9 @@ static void emit(Em *e, BlackwellIRInsn in, int kind) {
     case K_BSYNC: in.control = CW(5, SB_NONE, SB_NONE, wait) | CW_YIELD; e->pending = 0; break;
     default: e->err = -1; return;
     }
+#else
+    if (em_step(e, 0, kind, in.predicate_p0, 0, 0, &in.control) < 0) { e->err = -1; return; }
+#endif
     if (omega_bw_ir_append(e->p, &in) < 0) e->err = -1;
 }
 
@@ -89,11 +109,19 @@ static void fadd(Em *e, int d, int a, int b) { BlackwellIRInsn i = I0(BW_IR_FADD
 static void ffma(Em *e, int d, int a, int b, unsigned bsub, int c) { BlackwellIRInsn i = I0(BW_IR_FFMA); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; i.src2_subreg = (uint8_t)bsub; i.src3_vreg = c; emit(e, i, K_FIXED); }
 static void shfl_down(Em *e, int d, int a, uint32_t off) { BlackwellIRInsn i = I0(BW_IR_SHFL_DOWN); i.dst_vreg = d; i.src1_vreg = a; i.imm = off; emit(e, i, K_VAR); }
 static void isetp_ge_u32(Em *e, int a, int b) { BlackwellIRInsn i = I0(BW_IR_ISETP_GE_U32); i.src1_vreg = a; i.src2_vreg = b; emit(e, i, K_PRED); }
-static void bra_if_p0(Em *e, int target) { BlackwellIRInsn i = I0(BW_IR_BRA); i.predicate_p0 = true; i.imm = (uint32_t)(target - here(e)); emit(e, i, K_BRA); }
-static void bra(Em *e, int target) { BlackwellIRInsn i = I0(BW_IR_BRA); i.imm = (uint32_t)(target - here(e)); emit(e, i, K_BRA); }
+static uint32_t em_rel(Em *e, int target, int at) {
+#ifdef BW_EM_C_PRIMARY
+    (void)e;
+    return (uint32_t)(target - at);
+#else
+    return (uint32_t)em_step(e, 8, target, at, 0, 0, NULL);
+#endif
+}
+static void bra_if_p0(Em *e, int target) { BlackwellIRInsn i = I0(BW_IR_BRA); i.predicate_p0 = true; i.imm = em_rel(e, target, here(e)); emit(e, i, K_BRA); }
+static void bra(Em *e, int target) { BlackwellIRInsn i = I0(BW_IR_BRA); i.imm = em_rel(e, target, here(e)); emit(e, i, K_BRA); }
 /* a forward branch whose target is patched when known: returns the instruction index */
 static int bra_if_p0_fwd(Em *e) { int at = here(e); BlackwellIRInsn i = I0(BW_IR_BRA); i.predicate_p0 = true; i.imm = 1; emit(e, i, K_BRA); return at; }
-static void patch_bra(Em *e, int at, int target) { if (!e->err) e->p->insns[at].imm = (uint32_t)(target - at); }
+static void patch_bra(Em *e, int at, int target) { if (!e->err) e->p->insns[at].imm = em_rel(e, target, at); }
 static int bssy_fwd(Em *e) { int at = here(e); BlackwellIRInsn i = I0(BW_IR_BSSY); i.bar_reg = 0; i.imm = 2; emit(e, i, K_BSSY); return at; }
 static void bsync(Em *e) { BlackwellIRInsn i = I0(BW_IR_BSYNC); i.bar_reg = 0; emit(e, i, K_BSYNC); }
 static void tail(Em *e) {
@@ -105,14 +133,35 @@ static void tail(Em *e) {
 
 /* Loops: a value defined before the loop and read inside it stays live until the back-branch
  * (the linear-scan allocator knows no back edges; same rule as the elementwise emitter). */
-static void loop_begin(Em *e) { if (e->depth >= MAX_LOOPS) { e->err = -1; return; } e->open_start[e->depth++] = here(e); }
+static void loop_begin(Em *e) {
+#ifdef BW_EM_C_PRIMARY
+    if (e->depth >= MAX_LOOPS) { e->err = -1; return; }
+    e->open_start[e->depth++] = here(e);
+#else
+    int d = e->depth;
+    int next = (int)em_step(e, 3, d, 0, 0, 0, NULL);
+    if (next < 0) { e->err = -1; return; }
+    e->open_start[d] = here(e); e->depth = next;
+#endif
+}
 static void loop_end(Em *e) {
+#ifdef BW_EM_C_PRIMARY
     if (e->depth <= 0) { e->err = -1; return; }
     int start = e->open_start[--e->depth], end = here(e) - 1;
+#else
+    int d = (int)em_step(e, 4, e->depth, 0, 0, 0, NULL);
+    if (d < 0) { e->err = -1; return; }
+    e->depth = d;
+    int start = e->open_start[d], end = here(e) - 1;
+#endif
     OmegaRegAlloc *ra = &e->p->regalloc;
     for (int v = 0; v < ra->num_vregs; v++) {
         OmegaLiveInterval *iv = &ra->intervals[v];
+#ifdef BW_EM_C_PRIMARY
         if (iv->first_def >= 0 && iv->first_def < start && iv->last_use >= start && iv->last_use < end) iv->last_use = end;
+#else
+        iv->last_use = (int)em_step(e, 5, iv->first_def, start, iv->last_use, end, NULL);
+#endif
     }
 }
 
@@ -120,27 +169,61 @@ static void loop_end(Em *e) {
 /* A weight/scale prefetch load: scoreboard `sb` (3 or 4) is held, not waited for, until consume() */
 static void ldw_pf(Em *e, BlackwellIROpcode op, int d, int addr64, uint32_t imm, int udesc, unsigned sb) {
     BlackwellIRInsn in = I0(op); in.dst_vreg = d; in.src1_vreg = addr64; in.imm = imm; in.ureg = udesc;
+#ifdef BW_EM_C_PRIMARY
     in.control = CW(4, sb, SB_RD, (e->pending & (1u << SB_RD))) | CW_YIELD;
     e->pending |= 1u << SB_RD; e->held |= 1u << sb;
+#else
+    if (em_step(e, 1, sb, 0, 0, 0, &in.control) < 0) { e->err = -1; return; }
+#endif
     if (omega_bw_ir_append(e->p, &in) < 0) e->err = -1;
 }
-static void consume(Em *e, unsigned sb) { e->pending |= e->held & (1u << sb); e->held &= ~(1u << sb); }
+static void consume(Em *e, unsigned sb) {
+#ifdef BW_EM_C_PRIMARY
+    e->pending |= e->held & (1u << sb); e->held &= ~(1u << sb);
+#else
+    if (em_step(e, 2, sb, 0, 0, 0, NULL) < 0) e->err = -1;
+#endif
+}
 
-static int log2u(uint32_t v) { int l = 0; while ((1u << l) < v) l++; return (1u << l) == v ? l : -1; }
+static int log2u(uint32_t v) {
+#ifdef BW_EM_C_PRIMARY
+    int l = 0; while ((1u << l) < v) l++; return (1u << l) == v ? l : -1;
+#else
+    Em e = {0};
+    return (int)em_step(&e, 6, v, 0, 0, 0, NULL);
+#endif
+}
 
 /* HMMA d = a * b + c (a quad, b pair, c/d quad; c NOREG = RZ). stall 8: the next instruction must not read d (nvcc's
  * spacing for independent HMMAs); hmma_wait15 + nop14 before any reader of d. */
 static void hmma(Em *e, int d, int a, int b, int c, uint32_t stall) {
     BlackwellIRInsn i = I0(BW_IR_HMMA_BF16); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; i.src3_vreg = c;
+#ifdef BW_EM_C_PRIMARY
     i.control = CW(stall, SB_NONE, SB_NONE, e->pending); e->pending = 0;
+#else
+    if (em_step(e, 7, stall, 0, 0, 0, &i.control) < 0) { e->err = -1; return; }
+#endif
     if (omega_bw_ir_append(e->p, &i) < 0) e->err = -1;
 }
 static void nop(Em *e, uint32_t stall) {
-    BlackwellIRInsn i = I0(BW_IR_NOP); i.control = CW(stall, SB_NONE, SB_NONE, e->pending); e->pending = 0;
+    BlackwellIRInsn i = I0(BW_IR_NOP);
+#ifdef BW_EM_C_PRIMARY
+    i.control = CW(stall, SB_NONE, SB_NONE, e->pending); e->pending = 0;
+#else
+    if (em_step(e, 7, stall, 0, 0, 0, &i.control) < 0) { e->err = -1; return; }
+#endif
     if (omega_bw_ir_append(e->p, &i) < 0) e->err = -1;
 }
 static void lop3(Em *e, int d, int a, int b, int c, uint32_t lut) { BlackwellIRInsn i = I0(BW_IR_LOP3_LUT); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; i.src3_vreg = c; i.imm = lut; emit(e, i, K_FIXED); }
 static void iadd(Em *e, int d, int a, int b) { BlackwellIRInsn i = I0(BW_IR_IADD3); i.dst_vreg = d; i.src1_vreg = a; i.src2_vreg = b; emit(e, i, K_FIXED); }
-static void shfl_bfly(Em *e, int d, int a, uint32_t lane) { BlackwellIRInsn i = I0(BW_IR_SHFL_BFLY); i.dst_vreg = d; i.src1_vreg = a; i.imm = lane & 31u; emit(e, i, K_VAR); }
+static void shfl_bfly(Em *e, int d, int a, uint32_t lane) {
+    BlackwellIRInsn i = I0(BW_IR_SHFL_BFLY); i.dst_vreg = d; i.src1_vreg = a;
+#ifdef BW_EM_C_PRIMARY
+    i.imm = lane & 31u;
+#else
+    i.imm = (uint32_t)em_step(e, 9, lane, 0, 0, 0, NULL);
+#endif
+    emit(e, i, K_VAR);
+}
 static void f2fp_pack(Em *e, int d, int hi, int lo) { BlackwellIRInsn i = I0(BW_IR_F2FP_BF16_PACK); i.dst_vreg = d; i.src1_vreg = hi; i.src2_vreg = lo; emit(e, i, K_FIXED); }
 #endif

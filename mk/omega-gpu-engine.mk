@@ -421,30 +421,8 @@ test-gpu-platform-aien-effects-mutants: test-gpu-platform-aien-effects
 	  judge $$name $$md; done; \
 	echo "test-gpu-platform-aien-effects-mutants: $$k of $$n mutants killed"
 
-GPU_SESSION_MUT_DIR = build/gpu_session_mut
+# Compile the hosted session against the explicit fake provider: NO_POSIX would
+# select the C oracle and leave the default Omega units untested. The runner
+# rejects missing sites/build failures before counting behavioral mutant kills.
 test-gpu-session-mutants: $(GPU_FS_LINK)
-	@mkdir -p $(GPU_SESSION_MUT_DIR)
-	@set -e; killed=0; \
-	smut() { name=$$1; script=$$2; \
-	  sed -e "$$script" src/omega_gpu_session.c > $(GPU_SESSION_MUT_DIR)/$$name.c; \
-	  if cmp -s src/omega_gpu_session.c $(GPU_SESSION_MUT_DIR)/$$name.c; then echo "mutant $$name: pattern not found"; exit 1; fi; \
-	  gcc $(GPU_FS_CFLAGS) -c -o $(GPU_SESSION_MUT_DIR)/$$name.o $(GPU_SESSION_MUT_DIR)/$$name.c; \
-	  objs=$$(echo $(GPU_FS_OBJS) | tr ' ' '\n' | grep -v '/omega_gpu_session.o$$' | tr '\n' ' '); \
-	  gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -o $(GPU_SESSION_MUT_DIR)/$$name \
-	    tests/test_omega_gpu_session_platform.c $$objs $(GPU_SESSION_MUT_DIR)/$$name.o; \
-	  if ./$(GPU_SESSION_MUT_DIR)/$$name > $(GPU_SESSION_MUT_DIR)/$$name.log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
-	  echo "mutant $$name killed: $$(grep -c '^FAIL' $(GPU_SESSION_MUT_DIR)/$$name.log) case(s) failed"; killed=$$((killed+1)); }; \
-	smut release-when-latched 's|if (LOAD(g_blocked)) {$$|if (0) {|'; \
-	smut ignore-cancel 's|if (LOAD(g_cancel)) return WAIT_CANCELLED;|;|g'; \
-	smut no-latch-on-timeout 's|latch(w == WAIT_TIMED_OUT|omega_gpu_session_set_error(w == WAIT_TIMED_OUT|'; \
-	smut stale-not-counted 's|else { BUMP(g_stats.stale_refusals, 1u); fail_plat("dma_free", rc); }|else {}|'; \
-	smut marker-not-polled 's|RIGHTS_MARKER, PAGE|RIGHTS_DATA, PAGE|'; \
-	smut close-while-latched 's|if (g_open \&\& !LOAD(g_blocked) \&\& p) {|if (g_open \&\& p) {|; s|if (!LOAD(g_blocked)) { /\* a hook|if (1) { /* a hook|'; \
-	smut recover-keeps-latch 's|STORE(g_blocked, 0u);|;|'; \
-	smut recover-without-close 's|const int prc = p->device_close(p->ctx, g_s.dev);|const int prc = OMEGA_GPU_PLAT_OK;|'; \
-	smut recover-when-not-latched 's|const int latched = LOAD(g_blocked) \|\| LOAD(g_module_latched);|const int latched = 1;|'; \
-	smut recover-ignores-teardown-fault 's|if (prc != OMEGA_GPU_PLAT_OK) {|if (0) {|'; \
-	smut recover-ignores-module-latch 's|const int latched = LOAD(g_blocked) \|\| LOAD(g_module_latched);|const int latched = LOAD(g_blocked);|'; \
-	smut legacy-per-marker-deadline 's|#define CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT 0|#define CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT 1|'; \
-	grep -q '^FAIL SUBMISSION_DEADLINE_SHARED_BY_BOTH_MARKERS$$' $(GPU_SESSION_MUT_DIR)/legacy-per-marker-deadline.log; \
-	echo "test-gpu-session-mutants: $$killed of 12 mutants killed"
+	SESSION_FS_OBJECTS='$(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)' CC='$(CC)' python3 tests/check_session_mutants.py

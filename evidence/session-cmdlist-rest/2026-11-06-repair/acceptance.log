@@ -1,0 +1,103 @@
+bg_1489 [bash] — completed — Recording final acceptance results — bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_OMC=~/work/c...
+./build/om-cmdlist/planner
+SESSION_FS_OBJECTS='build/gpu_fs/omega_gpu_engine.o build/gpu_fs/omega_gpu_platform.o build/gpu_fs/omega_blackwell_encoder.o build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/omega_blackwell_qmd.o build/gpu_fs/omega_blackwell_realize.o build/gpu_fs/sha256.o build/gpu_fs/omega_gpu_session.o build/gpu_fs/omega_gpu_fmt.o build/gpu_fs/omega_gpu_matmul_api.o build/gpu_fs/omega_gpu_attention_api.o build/gpu_fs/omega_gpu_serving.o build/gpu_fs/omega_gpu_wait.o build/gpu_fs/cudapp_freest_revision.o build/gpu_fs/cudapp_freest_epoch.o build/gpu_fs/cudapp_freest_f16.o' CC='cc' python3 tests/check_session_mutants.py
+PASS cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records
+./build/om-cmdlist/sim
+PASS sim data: seven dispatches, independent overlap and nonadjacent RAW/WAR/WAW, two warp orders
+./build/om-cmdlist/shell
+PASS real command-list shell: 2000 record/plan/emit programs, PCAS/INLINE/stamps, exact C method differential; no device opened
+./build/om-cmdlist/cost
+program,launches,old_per_kernel_submits,old_list_waits,old_list_submits,new_submits,new_waits,new_words
+decode-fp8-gemv-split-1,1,1,2,1,1,2,57
+decode-fp8-gemv-split-2,2,2,3,1,1,2,67
+decode-fp8-gemv-split-4,4,4,5,1,1,2,87
+decode-fp8-gemv-split-8,8,8,9,1,1,2,127
+decode-fp8-gemv-split-16,16,16,17,1,1,2,207
+decode-glue,5,5,5,1,1,3,67
+qwen3-30b-token-legacy-unknown,289,289,289,1,1,289,2347
+PASS unmodified hosted Omega session and policy boundaries
+PASS behavioral mutant killed: free-while-latched [session_admit]
+PASS behavioral mutant killed: open-while-latched [session_admit]
+PASS behavioral mutant killed: recover-without-latch [session_admit]
+PASS behavioral mutant killed: marker-payload [session_words]
+PASS behavioral mutant killed: parked-generation [session_park]
+PASS behavioral mutant killed: stale-epoch [cmdlist_book]
+PASS behavioral mutant killed: latch-generation [cmdlist_book]
+PASS behavioral mutant killed: ignore-cancel [shell]
+PASS behavioral mutant killed: no-latch-on-timeout [shell]
+PASS behavioral mutant killed: stale-not-counted [shell]
+PASS behavioral mutant killed: marker-not-polled [shell]
+PASS behavioral mutant killed: close-while-latched [shell]
+PASS behavioral mutant killed: recover-keeps-latch [shell]
+PASS behavioral mutant killed: recover-without-close [shell]
+PASS behavioral mutant killed: recover-ignores-teardown-fault [shell]
+PASS behavioral mutant killed: recover-ignores-module-latch [shell]
+test-gpu-session-mutants: 16 of 16 mutants killed; 7 regenerated Omega-unit mutants
+./build/test_omega_gpu_session_platform
+PASS INSTALL_REFUSALS_ABI_1_1
+PASS FREESTANDING_NO_DEFAULT_PLATFORM
+PASS OPEN_LAUNCH_CLOSE_TYPED_UNCACHED_POLLING
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS CANCEL_BEFORE_SUBMIT_NOT_LATCHED
+PASS CANCEL_AFTER_SUBMIT_LATCHES_AND_PARKS
+PASS TIMEOUT_PARKS_NEVER_RELEASES
+PASS TIMEOUT_LATCH_REFUSES_CLOSE_REOPEN_INSTALL
+PASS TIMEOUT_RECOVER_SAME_PROCESS
+PASS RECOVER_TEARDOWN_FAULT_STAYS_LATCHED
+PASS RECOVER_MODULE_LATCH
+PASS STALE_HANDLE_REFUSED_AFTER_CLOSE_REOPEN
+PASS SERVING_RESERVATION_REFUSES_WITHOUT_ALLOC
+PASS MATMUL_CODE_BUFFER_ENCODED_IN_PLACE
+PASS WAIT_REFUSES_WITHOUT_CLOCK
+PASS FMT_BOUNDED_MATCHES_SNPRINTF
+test_omega_gpu_session_platform: 16 passed, 0 failed
+./build/test_omega_gpu_platform_linux
+PASS LINUX_REF_CAPS_NO_MMIO_NO_IRQ
+PASS HOSTED_DEFAULT_IS_LINUX_REFERENCE
+PASS SAME_DRIVER_CALLS_AND_ORDER_AS_BEFORE
+PASS REFERENCE_REFUSALS_CACHED_POLLED_RING_STALE
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS MARKER_NEVER_LATCHES_AND_PARKS
+PASS L2_INVAL_PREFIX_ONCE_AFTER_CACHED_HOST_WRITE
+PASS CMDLIST_NEAR_CAP_SUBMITS_WITH_L2_INVAL_PENDING
+  refusal: dma_alloc: refused 2.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+  session: dma_alloc: refused 2.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+PASS D1_MEMORY_RESERVE_REFUSES_BEFORE_THE_DRIVER
+PASS QUEUE_SUBMIT_REFUSED_WHILE_UNRETIRED
+PASS EXTRA_QUEUE_SUBMIT_REFUSED_WHILE_UNRETIRED
+  submits 1, error: cmdlist: marker wait timed out (latched)
+PASS CMDLIST_TIMEOUT_LATCHES_WITHOUT_LAUNCH_BEHIND_IT
+PASS ZERO_TIMEOUT_REFUSED_BEFORE_SUBMIT
+  refusal: dma_alloc: refused 0.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 17179869184.0 GiB free (CUDAPP_MEM_RESERVE_MIB=17592186044416), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+PASS D1_RESERVE_AND_MEMINFO_OVERFLOW_SATURATE
+PASS AMPERE_D1_USES_VRAM_REFUSES_BEFORE_RM_ALLOC
+PASS AMPERE_REJECTS_IMPLICIT_OR_MISMATCHED_LAUNCH_TARGET
+  test meminfo regular file (honoured): read
+  test meminfo symlink to that file: /proc/meminfo read, refused
+  test meminfo FIFO: /proc/meminfo read, refused
+  test meminfo directory: /proc/meminfo read, refused
+  test meminfo missing file: /proc/meminfo read, refused
+  test meminfo empty (restores /proc/meminfo): /proc/meminfo read, refused
+  test meminfo regular file again (honoured): read
+  test meminfo NULL (restores /proc/meminfo): /proc/meminfo read, refused
+  env CUDAPP_MEMINFO=<fake>: ignored, refused
+PASS D1_MEMINFO_TEST_PATH_REGULAR_ENV_IGNORED
+test_omega_gpu_platform_linux (reference only, simulated driver): 17 passed, 0 failed
+./build/test_nvrm_va_slots
+[PASS] va_two_slots_adjacent
+[PASS] va_whole_slot_fits
+  slot A full, next take: 0x0 (slot B starts at 0x1100000000)
+[PASS] va_slot_full_refused_not_into_next_slot
+[PASS] va_last_slot_grows_past_4gib
+  after B took 8 GiB, next slot: 0x1300000000 (B ends at 0x1300000000)
+[PASS] va_next_slot_after_grown_slot
+[PASS] va_grown_slot_cannot_grow_into_later_slot
+[PASS] va_later_slot_still_usable
+[PASS] close_first
+[PASS] close_fds_cleared
+  reused fd 5 (fd_ctl was 5)
+[PASS] close_twice_leaves_reused_fd_open
+SUMMARY passed=10 failed=0
+
+
+Wall time: 25.94 seconds

@@ -1,0 +1,33 @@
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+	-o build/test_omega_gpu_platform_linux tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_gpu_mem_cached.c src/omega_gpu_cmdlist.c src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_cmdlist_access.c src/cudapp_om_cmdlist_layout.c src/cudapp_om_cmdlist_plan.c src/cudapp_om_cmdlist_record.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_streams.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/omega_blackwell_encoder.c src/omega_blackwell_matmul.c src/omega_blackwell_realize.c src/sha256.c -lm
+PASS LINUX_REF_CAPS_NO_MMIO_NO_IRQ
+PASS HOSTED_DEFAULT_IS_LINUX_REFERENCE
+PASS SAME_DRIVER_CALLS_AND_ORDER_AS_BEFORE
+PASS REFERENCE_REFUSALS_CACHED_POLLED_RING_STALE
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS MARKER_NEVER_LATCHES_AND_PARKS
+PASS L2_INVAL_PREFIX_ONCE_AFTER_CACHED_HOST_WRITE
+PASS CMDLIST_NEAR_CAP_SUBMITS_WITH_L2_INVAL_PENDING
+  refusal: dma_alloc: refused 2.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+  session: dma_alloc: refused 2.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+PASS D1_MEMORY_RESERVE_REFUSES_BEFORE_THE_DRIVER
+PASS QUEUE_SUBMIT_REFUSED_WHILE_UNRETIRED
+PASS EXTRA_QUEUE_SUBMIT_REFUSED_WHILE_UNRETIRED
+  submits 1, error: cmdlist: marker wait timed out (latched)
+PASS CMDLIST_TIMEOUT_LATCHES_WITHOUT_LAUNCH_BEHIND_IT
+PASS ZERO_TIMEOUT_REFUSED_BEFORE_SUBMIT
+  refusal: dma_alloc: refused 0.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 17179869184.0 GiB free (CUDAPP_MEM_RESERVE_MIB=17592186044416), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+PASS D1_RESERVE_AND_MEMINFO_OVERFLOW_SATURATE
+PASS AMPERE_D1_USES_VRAM_REFUSES_BEFORE_RM_ALLOC
+PASS AMPERE_REJECTS_IMPLICIT_OR_MISMATCHED_LAUNCH_TARGET
+  test meminfo regular file (honoured): read
+  test meminfo symlink to that file: /proc/meminfo read, refused
+  test meminfo FIFO: /proc/meminfo read, refused
+  test meminfo directory: /proc/meminfo read, refused
+  test meminfo missing file: /proc/meminfo read, refused
+  test meminfo empty (restores /proc/meminfo): /proc/meminfo read, refused
+  test meminfo regular file again (honoured): read
+  test meminfo NULL (restores /proc/meminfo): /proc/meminfo read, refused
+  env CUDAPP_MEMINFO=<fake>: ignored, refused
+PASS D1_MEMINFO_TEST_PATH_REGULAR_ENV_IGNORED
+test_omega_gpu_platform_linux (reference only, simulated driver): 17 passed, 0 failed

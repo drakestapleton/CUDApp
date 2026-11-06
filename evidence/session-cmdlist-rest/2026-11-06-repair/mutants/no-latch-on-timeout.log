@@ -1,0 +1,45 @@
+=== platform ===
+PASS INSTALL_REFUSALS_ABI_1_1
+PASS FREESTANDING_NO_DEFAULT_PLATFORM
+PASS OPEN_LAUNCH_CLOSE_TYPED_UNCACHED_POLLING
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS CANCEL_BEFORE_SUBMIT_NOT_LATCHED
+PASS CANCEL_AFTER_SUBMIT_LATCHES_AND_PARKS
+  expect failed at line 405: user.cpu == NULL && omega_gpu_session_is_parked(uh)
+  expect failed at line 406: omega_gpu_session_is_parked(s->marker.handle) && omega_gpu_session_is_parked(s->pb.handle)
+  expect failed at line 409: ps.buffers == 5
+  expect failed at line 410: fk.frees == 0 && fk.t.nlive == 1 + 1 + 5
+  expect failed at line 412: omega_gpu_session_is_blocked()
+  expect failed at line 414: fk.dev_closes == 0 && fk.frees == 0
+FAIL TIMEOUT_PARKS_NEVER_RELEASES
+  expect failed at line 367: omega_gpu_session_is_blocked()
+  expect failed at line 369: ps.buffers == 4 && ps.untracked == 0 && ps.bytes >= 0x10000 + 0x1000 + 0x1000 + 0x10000
+  expect failed at line 373: omega_gpu_session_alloc(64, &m) != 0
+  expect failed at line 377: fk.dev_closes == 0 && fk.frees == frees_before
+  expect failed at line 379: omega_gpu_session_open() == NULL && strstr(omega_gpu_session_last_error(), "latched") != NULL
+  expect failed at line 382: strstr(omega_gpu_session_last_error(), "process latched") != NULL
+FAIL TIMEOUT_LATCH_REFUSES_CLOSE_REOPEN_INSTALL
+  expect failed at line 463: omega_gpu_session_launch(&L, NULL, NULL) == -1 && omega_gpu_session_is_blocked()
+  expect failed at line 467: omega_gpu_session_recover() == 0
+  expect failed at line 468: !omega_gpu_session_is_blocked() && omega_gpu_session_recoveries() == 1
+  expect failed at line 469: fk.dev_closes == 1 && fk.frees == 0 && fk.t.nlive == 0
+  expect failed at line 476: s != NULL && s->dev.generation != old_dev.generation && fk.dev_opens == 2
+  expect failed at line 480: fk.dev_closes == 2 && fk.t.nlive == 0
+FAIL TIMEOUT_RECOVER_SAME_PROCESS
+  expect failed at line 491: omega_gpu_session_launch(&L, NULL, NULL) == -1 && omega_gpu_session_is_blocked()
+  expect failed at line 494: omega_gpu_session_recover() == -1 && strstr(omega_gpu_session_last_error(), "teardown fault") != NULL
+  expect failed at line 495: omega_gpu_session_is_blocked() && omega_gpu_session_recoveries() == 0 && fk.dev_closes == 1
+  expect failed at line 497: omega_gpu_session_recover() == -1 && omega_gpu_session_is_blocked()
+  expect failed at line 499: omega_gpu_session_open() == NULL
+FAIL RECOVER_TEARDOWN_FAULT_STAYS_LATCHED
+PASS RECOVER_MODULE_LATCH
+PASS STALE_HANDLE_REFUSED_AFTER_CLOSE_REOPEN
+PASS SERVING_RESERVATION_REFUSES_WITHOUT_ALLOC
+PASS MATMUL_CODE_BUFFER_ENCODED_IN_PLACE
+PASS WAIT_REFUSES_WITHOUT_CLOCK
+PASS FMT_BOUNDED_MATCHES_SNPRINTF
+test_omega_gpu_session_platform: 12 passed, 4 failed
+
+=== policy ===
+PASS session policy: stale argument order, latch generation, size_t page and scratch high-water boundaries
+

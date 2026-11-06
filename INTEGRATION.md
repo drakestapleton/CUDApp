@@ -6,7 +6,7 @@ This branch is not permission to merge or deploy. Host acceptance does not quali
 
 | Branch | SHA | PR | Merged-at | Focused verdict | Conflicts resolved |
 | --- | --- | --- | --- | --- | --- |
-| feat/omega-codegen-a | af70a66cf94e85042e508c08a6e7d6780e6b544f | #275 | 2026-11-05T20:41:13-06:00 (`b7af547`) | Namespace long runs RUNNING; prior unnamespaced attempt INCONCLUSIVE/interrupted | None |
+| feat/omega-codegen-a | af70a66cf94e85042e508c08a6e7d6780e6b544f | #275 | 2026-11-05T20:41:13-06:00 (`b7af547`) | PASS: completed namespaced QMMA/TGEMM receipts below; prior unnamespaced attempt INCONCLUSIVE/interrupted | None |
 | feat/omega-codegen-b | f219a04eff8ff28e2d8d0b8cd65f210e552bbd54 | #274 | 2026-11-05T21:10:38-06:00 (`52d071e`) | PASS: pf copy 18 instructions, mutant caught (`/tmp/integ/codegen-b-tern.log`) | Additive units/header/identity entries retained; codegen crumb regenerated |
 | feat/omega-codegen-tern | bc22ce1e75883eeea7bdafd11f37909a5bbf0247 | #279 | 2026-11-05T21:12:39-06:00 (`9dcefcc`) | PASS: 213120 programs, 14258 refusals; 24 source-mutant controls; simulator 34 checks (`/tmp/integ/codegen-b-tern.log`, rc 0) | Additive registrations retained; missing common-source composition repaired |
 | feat/c4-streams-om | daee8b6fc054df8fe40830a04127f10e21ba9184 | #272 | 2026-11-05T21:47:59-06:00 (`7eac35d`) | PASS: host/simulator/differential and four source mutants (`/tmp/integ/streams.log`, rc 0) | Additive units/header/identity entries retained |
@@ -25,7 +25,7 @@ Full host suite: INCONCLUSIVE, interrupted pre-namespace attempt `bg_601`, sourc
 
 Every subsequent test, mutant, simulator, differential, and full-suite command runs inside `bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ...`. This hides NVIDIA, CUSE, and VFIO device nodes; a host/simulator device-open path is a defect, not permission to retry outside the namespace.
 
-Replay bound repair: pending integration of C1Kernels' `BW_IR_LAST` declaration and AttentionC's Main-approved `a8c6a22` bound repair. Required boundary cases: opcodes 64 and 65 accepted, `BW_IR_LAST + 1` refused. Literal 66 is refused only before the subsequent DNN 66/67 extension lands.
+Replay uses the append-only `BW_IR_LAST` bound, including binary64 opcode 78; values above the bound are refused. The integrated allocator also reserves metadata slots 6 and 7 for the GPR-limit and live-hint protocols. MoE's emitter-local counters are copied to slots 1 and 2, then cleared before replay.
 
 ## Hosted native-library boundary
 
@@ -37,45 +37,21 @@ EXERCISED host-only candidates: one immutable #69@248a198 bridge invocation gene
 
 Device-word acceptance remains dependent on Drake approving these draft compiler/bridge changes. Hardware: NOT_RUN.
 
-## Resume handoff
+## Staged host integration
 
-Main will resume Integrator to continue the same goal. The full integrated host gate is still pending; no successful final line or target count is claimed. Do not rerun completed focused gates merely to recover their output.
+Stage 2 was pushed at `249f7b25c1c8aa550ff68fde2ccd1058dd97870c`. Stage 3 starts from `f4a8a6985c65e302c066be7fcc49cf5da5892895`, including the API plans, model graphs, core utilities, C3Gemm, allocator, tools, API shells, GemmEx, engine-submit and freestanding-leftovers lane heads.
 
-Immediate pending queue, preserving dependencies:
+Stage-3 link repairs cover allocator leftovers, backend vector/spec/SHA units, DAG cost-model/SHA units, and engine NVRM admission/platform links. Native effect units remain mutually exclusive. The engine differential uses the test transport and the Linux effects/wait pair; it does not combine independent native effect runtimes.
 
-| Input | Revision / required action |
-| --- | --- |
-| Numeric #288 | `1b78bfe99aba346e68274e4922f60791456295ab` |
-| CodegenTern #279 | Isolated latency repair `1aa98b14e4e86d276082dbb9ccc3ce251fed099d` requires TC `57b1974` and Numeric `1b78bfe`; final lane head `1b7c4526def6c800e350b7f80ccec7536605a33b`. Preserve existing evidence; the repair's source paths are `tools/latmeas/catalog.json`, `diff_nak.py`, and `REPRODUCE.md`. |
-| RuntimeHost #291 | `40ee08e`; union registrations with ApiPlanOm and ArtifactOm, not competing replacements |
-| CmdList #304 | `581c048799f13b5b29a5172031c15889d6067672` |
-| C1 #301 | `7de6da63c83dabec2f36569b75e67f60e9092390`; preserve predicate/SHFL semantics; `test-c1` stays outside carried host tests until its language draft merges |
-| AttentionC | Early simulator `732e10a`, replay bound `a8c6a22`; native-half `9be13fb` then `2224f60`, safe simulator/session guard `b4c616c`, and C1-compatible scheduler guard `a3a9e98`. Do not pick the safety fix without its DNN prefix. |
-| RegAllocOm | Signed GE simulator repair `6a855fc` before allocator cutover; meta[6] `5604269` before isolated meta[7] `af8358a`; allocator branch still evolving |
-| Live-marker repair | APPROVED but NOT IMPLEMENTED; no commit exists. After NVRM + Streams submission + Linux devwords, define `omega_gpu_live_marker(const Nvrm *, cpu, mapping, offset, ctx)` in `nvrm/nvrm.c` through `nvrm_live_token(..., sizeof(uint32_t), ...)`, returning that same `rm->omega_context`. Update `m16/m16_native.h`, the sole callsite and #297 fixture in one commit. Fake-RM right-context, foreign-context, NULL, and wrong-context mutant checks are required. |
-| NVML #305 | `d31e68e7`; depends on Smi, NVRM and shared hosted aggregate |
-| Runtime API versions | Main superseded the single-0.14 proposal: HelloC2 #296, MathLibs #303, CmdList #304 receive sequential minors 0.14 / 0.15 / 0.16 in merge order. Change header, manifest and `API.md` together. |
+| Gate | Observed status | Evidence |
+| --- | --- | --- |
+| stage3-c | FAIL: missing chip-admission C wrapper; wrapper logging failed after the make error | `/tmp/integ/stage3-c.log` |
+| stage3-c2 | rc 2: backend vector-spec/SHA link dependencies missing | `/tmp/integ/stage3-c2.log`, `.rc` |
+| stage3-c3 | rc 2: first supported MoE spec refused due to metadata scratch-slot collision | `/tmp/integ/stage3-c3.log`, `.rc` |
+| stage3-c4 | rc 0: repaired replay, build and focused gates; final `crumb verify: OK: 81 crumbs current` | `/tmp/integ/stage3-c4.log`, `.rc`; source `84d2331` |
 
-Other ready lane inputs awaiting the same units/focused/crumb sequence:
+The stage3-c3 backend mutation sweep completed: 109 total, 100 killed, 9 documented redundant, 0 test gaps. The engine mutation sweep completed: `PASS om eng mutants: 16/16 killed`. These successful sweeps are retained rather than rerun solely for their output.
 
-| Lane / PR | Revision |
-| --- | --- |
-| CodegenAttn #277 | `463b49547bab01a6621160e8b213da488465daa6` |
-| CodegenPfhost #276 | `1a56f317002e174c481641cc2cd082c6950f87a3` |
-| C3Gemm #283 | `04f16fe8b553148ef6af3b15e484152b1414f57b` |
-| ScanSort #294 | `220fe47dfdecb715e0d49be223808c211b889169` |
-| GemmEx #295 | `891d6d42116ac61970990ef6e1678467b16f50bd` |
-| Profiler #289 | `da228b26beee4bdb0ef01bef7837900aeaec266e` |
-| Resident #290 | `7e47b45` |
-| Smi #286 | `85f48ad056ba4f6ee7d9ad310d005c69dde1624f` |
-| ZeroCopy #285 | `7217f5b7` |
-| Sharing #300 | `e9bd0da228f420d523703744e2fc2c5657b52a6f` |
-| HelloC2 #296 | `00f88e178f9bd31ee07e4cf6f7fc0df85ab10446` |
-| MathLibs #303 | `10df33bbbf7c21b19a414ac7ac5e92f82d0c84cd` |
-| ArtifactOm #299 | `88556d67337ac64c6ead1b819dcadb733d83a5a9`; inspect RuntimeHost ancestry before redundant integration |
-| Nvrm #281 | `e2086965ba8ec60d7e385b98abd7565caa13293d` |
-| Streams freest #287 / submit #293 | `dc8b3e9` / `16f11c47`; submit follows NVRM |
-| PlatformLinux #273 / devwords #297 | `e4153cfd3a00a770d07049ea4fea56ecad250aeb` / `313b1249`; devwords follows NVRM + submit and requires live-marker repair |
-| PlatformAien #292 / effects #302 | `36b2e237c51d731d12879919bde42199720b2aec` / `5f3b17d823aee2bc400960a0ed4dc8c3b5ac1a41` |
+Stage 4 uses the single portable converter pin omega-bridge #73 at `79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538`. The ordered groups are the converter regeneration, #319/#323, #325, #322 and #324, then finished residual lanes. WIP #333 is not accepted as finished. A later stage may adopt the combined #76 pin and #330 only under Main's explicit pin decision; no second concurrent converter pin is introduced.
 
-Shared hosted wiring is not implemented. The immutable six-unit candidate remains `/tmp/integ/hosted-248-six`, with detached bridge oracle `/tmp/integ/bridge-69-248a198` owned by Integrator. Matching x86 draft pair was subsequently published as omega-mv #1050 `9101aee8f4f47476a8dd056d132007221d691946` / compiler SHA `c5ac9979232afd0d750e1d5088af69692032997136f761e585a25aa9a1cfc87e`, omega-bridge #70 `2156ca177c954130fa2fdedf86da0f836e8c8a95`. These are not selected integration pins; BridgeHost reports x86 EMULATED gates passing but the existing A64 `NATIVE-V2 FAIL1` hoist failure remains. Pure OM2-array freestanding qualification is separate and still pending; do not silently use the old bridge profile.
+Hardware/chip, live-RM and VFIO tiers remain NOT_RUN. A host PASS is not hardware qualification. The full integrated host suite still requires its rc and final `CUDA++ HOST TESTS PASS` line; no target count is inferred.

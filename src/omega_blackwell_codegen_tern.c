@@ -8,6 +8,14 @@
  * dependencies so every user still sits >= 6 cycles behind its producer (see the pass). */
 #include "omega_blackwell_codegen_tern.h"
 #include <string.h>
+#include "cudapp_native.h"
+#include "omega_gpu_om_ir.h"
+
+/* Independent differential oracle only; the seeded Omega successor is the default. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_TERN
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_TERN 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TERN
 
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
@@ -593,3 +601,77 @@ int omega_tern_gemv_prog_stats(const OmegaTernGemvSpec *spec, uint32_t *insns, u
     if (gprs) *gprs = prog.regalloc.peak_gpr_usage;
     return 0;
 }
+#else
+
+/* C owns API/null handling and serialization only. Policy, construction, branches,
+ * allocation requests, loop events and every scheduling decision are seeded Omega. */
+static uint64_t omega_tern_policy(uint64_t query, const OmegaTernGemvSpec *s) {
+    uint64_t result = 0;
+    if (!s) return 0;
+    if (omega_cg_tern_policy(&result, query, s->k,
+            (uint64_t)s->layout | ((uint64_t)s->rows << 32),
+            (uint64_t)s->warps | ((uint64_t)s->depth << 32),
+            (uint64_t)s->epi | ((uint64_t)(uint32_t)s->mutant << 32), 0) != OMEGA_OK)
+        return 0;
+    return result;
+}
+uint32_t omega_tern_gemv_chunks(const OmegaTernGemvSpec *s) { return (uint32_t)omega_tern_policy(1, s); }
+int omega_tern_gemv_spec_ok(const OmegaTernGemvSpec *s) { return (int)omega_tern_policy(0, s); }
+uint32_t omega_tern_gemv_steps(const OmegaTernGemvSpec *s) { return (uint32_t)omega_tern_policy(2, s); }
+int omega_tern_gemv_coalesced_out(const OmegaTernGemvSpec *s) { return (int)omega_tern_policy(3, s); }
+uint32_t omega_tern_gemv_out_slot_bytes(const OmegaTernGemvSpec *s) { return (uint32_t)omega_tern_policy(4, s); }
+uint32_t omega_tern_gemv_shared_bytes(const OmegaTernGemvSpec *s) { return (uint32_t)omega_tern_policy(5, s); }
+uint64_t omega_tern_word_offset(uint32_t layout, uint32_t rows, uint32_t k, uint32_t row, uint32_t col) {
+    uint64_t result = 0;
+    if (omega_cg_tern_policy(&result, 6, layout, rows, k, row, col) != OMEGA_OK) return 0;
+    return result;
+}
+
+static void omega_tern_schedule_pack(const BlackwellIRProgram *p, uint64_t *b, uint64_t *m) {
+    for (unsigned v = 0; v < BW_MAX_VREGS; ++v) m[v] = UINT64_MAX;
+    for (int v = 0; v < p->regalloc.num_vregs; ++v) {
+        m[v] = (uint64_t)(int64_t)p->regalloc.vreg_to_phys[v];
+        m[BW_MAX_VREGS + v] = p->regalloc.intervals[v].bundle_size;
+    }
+    for (size_t i = 0; i < p->count; ++i) {
+        const BlackwellIRInsn *in = &p->insns[i];
+        b[8*i] = in->op; b[8*i+1] = in->control; b[8*i+2] = in->imm;
+        b[8*i+3] = (uint64_t)(int64_t)in->dst_vreg;
+        b[8*i+4] = (uint64_t)(int64_t)in->src1_vreg;
+        b[8*i+5] = (uint64_t)(int64_t)in->src2_vreg;
+        b[8*i+6] = (uint64_t)(int64_t)in->src3_vreg;
+    }
+}
+long omega_tern_i2fp_violations(const BlackwellIRProgram *p) {
+    uint64_t b[8192] = {0}, m[512] = {0}, result = 0;
+    if (!p) return -1;
+    omega_tern_schedule_pack(p, b, m);
+    if (omega_cg_tern_sched(&result, 1, p->count, 19, b, 8192, m, 512) != OMEGA_OK || result == UINT64_MAX)
+        return -1;
+    return (long)result;
+}
+int omega_blackwell_codegen_tern_gemv_prog(const OmegaTernGemvSpec *s, BlackwellIRProgram *p) {
+    uint64_t b[8192] = {0}, m[512] = {0}, result = 0;
+    if (!s || !p) return -1;
+    if (omega_gpu_om_ir_replay(omega_cg_tern, s->k,
+            (uint64_t)s->layout | ((uint64_t)s->rows << 32),
+            (uint64_t)s->warps | ((uint64_t)s->depth << 32),
+            (uint64_t)s->epi | ((uint64_t)(uint32_t)s->mutant << 32), p, NULL) != OMEGA_OM_IR_OK)
+        return -1;
+    omega_tern_schedule_pack(p, b, m);
+    /* The mutant latency is selected inside Omega from the original selector. */
+    if (omega_cg_tern_sched(&result, 0, p->count, (uint32_t)s->mutant, b, 8192, m, 512) != OMEGA_OK || result != 0)
+        return -1;
+    for (size_t i = 0; i < p->count; ++i) p->insns[i].control = (uint32_t)b[8*i+1];
+    if (omega_cg_tern_sched(&result, 1, p->count, 19, b, 8192, m, 512) != OMEGA_OK || result != 0)
+        return -1;
+    return 0;
+}
+int omega_tern_gemv_prog_stats(const OmegaTernGemvSpec *s, uint32_t *insns, uint32_t *gprs) {
+    static BlackwellIRProgram p;
+    if (omega_blackwell_codegen_tern_gemv_prog(s, &p) != 0) return -1;
+    if (insns) *insns = (uint32_t)p.count;
+    if (gprs) *gprs = p.regalloc.peak_gpr_usage;
+    return 0;
+}
+#endif

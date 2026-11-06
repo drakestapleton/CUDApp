@@ -62,6 +62,17 @@ taskset -c 10-14 nice -n 10 env \
 
 Full tier: **INCONCLUSIVE**. The tool terminated the command at its 3600-second deadline; no numeric process return code was returned and no final `CUDA++ HOST TESTS PASS` line was observed. The interrupted targets were `test-gpu-engine-backend-mutants`, `test-gpu-decode-attn-maxpos`, and `test-gpu-attention`; this is not a full-suite PASS. Local stdout is `build/gemm-any-make-test.log`; combined tool output is `artifact://1455`. Main explicitly directed no local retry because the cores were saturated and assigned the deadline-free integrated full gate to Integrator. The focused final command above completed after this interruption.
 
+Supplemental existing API/F16 caller acceptance (rc=0; stdout `build/gemm-any-f16-callers.log`, combined output `artifact://2655`):
+
+```
+set -o pipefail
+taskset -c 10-14 nice -n 10 make -j3 \
+  test-gpu-gemm-ex test-gpu-gemm-ex-sim \
+  | tee build/gemm-any-f16-callers.log
+```
+
+Observed final verdicts: `gemm_ex host: PASS (225 checks)` and `gemm_ex sim: PASS (253 checks)`. The native F16 path, mixed-type routes, layouts, padded/batched callers and numerical mutants remain covered by this existing test; its source was not edited.
+
 ## Fingerprints
 
 SHA256:

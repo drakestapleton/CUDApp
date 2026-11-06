@@ -123,10 +123,11 @@ test-gpu-serving-alloc: build/gpu_serving_alloc_count_test
 GPU_FS_DIR = build/gpu_fs
 GPU_NO_POSIX_DIR = build/no_posix/native
 GPU_NO_POSIX_OBJS = $(GPU_NO_POSIX_DIR)/omega_native.o $(GPU_NO_POSIX_DIR)/omega_api_defs.o
-$(GPU_NO_POSIX_OBJS) &: om/units.sh om/no-posix.sh om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om
+$(GPU_NO_POSIX_OBJS) &: om/units.sh om/no-posix.sh om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om om/session/admit.om om/session/words.om om/session/park.om om/cmdlist/book.om om/streams/streams.om
 	sh om/units.sh --native-no-posix
+CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION ?= 0
 GPU_FS_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector \
-	-U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -I$(GPU_NO_POSIX_DIR)
+	-U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -DCUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION=$(CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) -Isrc -I$(GPU_NO_POSIX_DIR)
 # P07 cut C (session part): the persistent session, the matmul and attention APIs, the serving reservation and the
 # bounded wait join the link. Their machine comes from an installed OmegaGpuPlatform; the Linux reference
 # (src/omega_gpu_platform_linux.c) is deliberately NOT in this list. Still outside it: the elementwise API, the
@@ -137,7 +138,7 @@ GPU_FS_SRCS = src/omega_gpu_engine.c src/omega_gpu_platform.c src/omega_blackwel
 	src/omega_gpu_serving.c src/omega_gpu_wait.c $(CUDAPP_FS_BINDING)
 GPU_FS_HDRS = src/omega_gpu_engine.h src/omega_gpu_platform.h src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h \
 	src/omega_gpu_session.h src/omega_gpu_fmt.h src/omega_gpu_matmul_api.h src/omega_gpu_attention_api.h \
-	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h src/omega_api_plan.h src/omega_host_policy.h src/omega_gpu_apiviews.h
+	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h src/omega_api_plan.h src/omega_host_policy.h src/omega_gpu_apiviews.h src/omega_no_posix_session.h
 GPU_FS_OBJS = $(patsubst src/%.c,$(GPU_FS_DIR)/%.o,$(GPU_FS_SRCS))
 GPU_FS_LINK = $(GPU_FS_DIR)/omega_gpu_freestanding.o
 GPU_FS_ALLOWED = memcpy|memmove|memset|memcmp|strlen|strcmp
@@ -156,6 +157,10 @@ gpu-engine-freestanding: $(GPU_FS_LINK)
 .PHONY: test-no-posix-native
 test-no-posix-native: $(GPU_NO_POSIX_OBJS) build/test_codegen_freestanding
 	python3 tests/no_posix_native.py
+
+.PHONY: test-no-posix-session
+test-no-posix-session: $(GPU_NO_POSIX_OBJS)
+	python3 tests/no_posix_session.py
 
 build/test_omega_gpu_engine_freestanding: tests/test_omega_gpu_engine.c $(GPU_FS_DIR)/omega_gpu_engine.o src/omega_gpu_engine.h
 	@mkdir -p build

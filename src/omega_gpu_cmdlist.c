@@ -14,19 +14,26 @@
 #include "omega_blackwell_submit.h"
 #include "omega_gpu_native_runtime.h"
 #include "cudapp_native.h"
+#include "omega_no_posix_session.h"
 #include <string.h>
 
 /* Command-list bookkeeping decisions are Omega (om/cmdlist/book.om). The C
  * copies are the default-OFF differential oracle. */
-#if defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2) || defined(CUDAPP_MIGRATION_PENDING_CMDLIST2_DIFF)
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2) || defined(CUDAPP_MIGRATION_PENDING_CMDLIST2_DIFF)
 #define CMDLIST2_C_ORACLE 1
 #endif
 
-static uint64_t clbook(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3) {
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2)
+#ifdef CMDLIST2_C_ORACLE
+static uint64_t clbook_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3) {
     if (op == 0) return (i0 == i1 && i2 == i3) ? 0u : 1u;
     if (op == 1) return i0 == (uint32_t)(i1 + 1u) ? 1u : 0u;
     return UINT64_MAX;
+}
+#endif
+
+static uint64_t clbook(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3) {
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_CMDLIST2)
+    return clbook_c(op, i0, i1, i2, i3);
 #else
     uint64_t r = 0, a[16] = {i0, i1, i2, i3}, o[4] = {0};
     if (omega_book(&r, op, a, 16, o, 4) != 0) return UINT64_MAX;

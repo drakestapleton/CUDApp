@@ -20,6 +20,13 @@ compiled semantic mutants are EXERCISED; see
 `evidence/graph-residue-20261106/README.md`. Hardware remains NOT_RUN for this
 change; `examples/hello_gpu/README.md` is its chip runbook. No existing hardware
 status is upgraded by these host receipts.
+2026-11-06: NO_POSIX session admission, parked-handle lookup, packet encoding,
+extra-queue admission and command-list bookkeeping now select freestanding
+seeded Omega by default. The C oracle requires
+`CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION=1`; host differential and mutation
+receipts are in `evidence/no-posix-session-20261106/`. Chip qualification is
+NOT_RUN. This branch merges the #335 native mechanism into #334; neither
+dependency is implicitly merged or deployed by this receipt.
 
 ## 1. NVIDIA software on the Spark today
 

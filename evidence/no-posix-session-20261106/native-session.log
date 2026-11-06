@@ -1,0 +1,8 @@
+python3 tests/no_posix_session.py
+KILLED gpr-floor
+KILLED arg-offset
+KILLED packet-tag
+KILLED park-found
+KILLED book-successor
+KILLED queue-bound
+PASS no-posix session: 5 exports hosted/freestanding differential; ABI refusal; symbol OFF/ON red; 6 killed mutants

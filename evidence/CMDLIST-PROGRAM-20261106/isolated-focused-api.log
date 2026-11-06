@@ -1,0 +1,60 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_cmdlist.c -o build/omega_gpu_cmdlist.o
+CC="cc" tools/runtime_api_check.sh docs/runtime/omega_runtime_api.manifest . build/runtime-api/real docs/runtime/API.md
+ar rcs build/libomega_gpu.a build/omega_ampere_codegen.o build/omega_ampere_qmd.o build/omega_blackwell_codegen.o build/omega_blackwell_codegen_attn.o build/omega_blackwell_codegen_attn256.o build/omega_blackwell_codegen_bf16.o build/omega_blackwell_codegen_dec.o build/omega_blackwell_codegen_gdn.o build/omega_blackwell_codegen_gemm.o build/omega_blackwell_codegen_moe.o build/omega_blackwell_codegen_moe2.o build/omega_blackwell_codegen_pattn.o build/omega_blackwell_codegen_pattn256.o build/omega_blackwell_codegen_pf.o build/omega_blackwell_codegen_pfhost.o build/omega_blackwell_codegen_qg.o build/omega_blackwell_codegen_qmma.o build/omega_blackwell_codegen_router.o build/omega_blackwell_codegen_tc.o build/omega_blackwell_codegen_tc2.o build/omega_blackwell_codegen_tern.o build/omega_blackwell_codegen_tgemm.o build/omega_blackwell_encoder.o build/omega_blackwell_engine.o build/omega_blackwell_matmul.o build/omega_blackwell_qmd.o build/omega_blackwell_realize.o build/omega_blackwell_submit.o build/omega_gpu_attention_api.o build/omega_gpu_bf16_gemv_api.o build/omega_gpu_chip.o build/omega_gpu_cmdlist.o build/omega_gpu_decode_attn256_api.o build/omega_gpu_decode_attn_api.o build/omega_gpu_decode_graph.o build/omega_gpu_elementwise_api.o build/omega_gpu_engine.o build/omega_gpu_fmt.o build/omega_gpu_fp8_api.o build/omega_gpu_fp8_pack.o build/omega_gpu_fp8_slots.o build/omega_gpu_fp8gemm_api.o build/omega_gpu_gdn_api.o build/omega_gpu_gemm.o build/omega_gpu_gemm_ex.o build/omega_gpu_hostmath.o build/omega_gpu_mathlibs_api.o build/omega_gpu_matmul_api.o build/omega_gpu_mem_cached.o build/omega_gpu_mem_reserve.o build/omega_gpu_moe_api.o build/omega_gpu_om_ir.o build/omega_gpu_pfgemm.o build/omega_gpu_pfhost.o build/omega_gpu_platform.o build/omega_gpu_platform_aien.o build/omega_gpu_platform_linux.o build/omega_gpu_prefill.o build/omega_gpu_prefill_attn256_api.o build/omega_gpu_prefill_attn_api.o build/omega_gpu_q36_graph.o build/omega_gpu_q38_graph.o build/omega_gpu_router_api.o build/omega_gpu_scan.o build/omega_gpu_scan_ref.o build/omega_gpu_serving.o build/omega_gpu_session.o build/omega_gpu_tcgemm_api.o build/omega_gpu_tern_api.o build/omega_gpu_tgemm_api.o build/omega_gpu_wait.o build/omega_fp8_slot_table.o build/omega_cubin.o build/omega_native_artifact.o build/omega_sm121_disasm.o build/sha256.o build/omega_canonical.o build/omega_core.o build/omega_vector.o build/cudapp_om_ampere_enc_sm86.o build/cudapp_om_amp_runtime.o build/cudapp_om_attn_mirror_plan.o build/cudapp_om_attn_mirror_step.o build/cudapp_om_binding.o build/cudapp_om_bw_enc_sm121.o build/cudapp_om_cache_runtime.o build/cudapp_om_closure_alloc.o build/cudapp_om_closure_bind.o build/cudapp_om_closure_blob.o build/cudapp_om_closure_code.o build/cudapp_om_closure_cover.o build/cudapp_om_closure_dir.o build/cudapp_om_closure_intent.o build/cudapp_om_closure_launch.o build/cudapp_om_closure_pack.o build/cudapp_om_closure_reseal.o build/cudapp_om_closure_seal.o build/cudapp_om_closure_series.o build/cudapp_om_cmdlist_access.o build/cudapp_om_cmdlist_layout.o build/cudapp_om_cmdlist_plan.o build/cudapp_om_cmdlist_record.o build/cudapp_om_code_digest.o build/cudapp_om_command.o build/cudapp_om_compose.o build/cudapp_om_context_lookup.o build/cudapp_om_cubin_elf.o build/cudapp_om_digest.o build/cudapp_om_encode.o build/cudapp_om_graph.o build/cudapp_om_lease.o build/cudapp_om_mathlibs_ir.o build/cudapp_om_moe_admission.o build/cudapp_om_moe_group.o build/cudapp_om_moe_ids32.o build/cudapp_om_moe_maps32.o build/cudapp_om_moe_plan.o build/cudapp_om_moe_segs32.o build/cudapp_om_moe_windows.o build/cudapp_om_prefill_order.o build/cudapp_om_prefill_reading.o build/cudapp_om_prefill_shape.o build/cudapp_om_prefill_workspace.o build/cudapp_om_q38_emit.o build/cudapp_om_q38_runtime.o build/cudapp_om_quant_wire.o build/cudapp_om_repack.o build/cudapp_om_slotrev.o build/cudapp_om_streams.o build/cudapp_om_templates.o build/cudapp_om_validate.o build/cudapp_freest_revision.o build/cudapp_freest_epoch.o build/cudapp_freest_f16.o build/m16_native.o build/nvrm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/om-cmdlist/shell tests/cmdlist_shell_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/om-cmdlist/sim tests/cmdlist_sim_test.c src/cudapp_om_cmdlist_plan.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_launch_cost_test tests/gpu_launch_cost_test.c build/libomega_gpu.a -lpthread -lm
+./build/om-cmdlist/planner
+RESULT: PASS (runtime API 0.14.0: 309 functions, 49 structs, 464 fields, 235 constants match the headers; surface 741 names, 197 INTERNAL)
+python3 tests/check_cmdlist_mutants.py
+CC="cc" tools/runtime_api_negative.sh docs/runtime/omega_runtime_api.manifest . build/runtime-api docs/runtime/API.md
+PASS cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records
+./build/om-cmdlist/sim
+PASS sim data: seven dispatches, independent overlap and nonadjacent RAW/WAR/WAW, two warp orders
+./build/om-cmdlist/shell
+PASS real command-list shell: 2000 record/plan/emit programs, PCAS/INLINE/stamps, exact C method differential; no device opened
+./build/om-cmdlist/cost
+program,launches,old_per_kernel_submits,old_list_waits,old_list_submits,new_submits,new_waits,new_words
+decode-fp8-gemv-split-1,1,1,2,1,1,2,57
+decode-fp8-gemv-split-2,2,2,3,1,1,2,67
+decode-fp8-gemv-split-4,4,4,5,1,1,2,87
+decode-fp8-gemv-split-8,8,8,9,1,1,2,127
+decode-fp8-gemv-split-16,16,16,17,1,1,2,207
+decode-glue,5,5,5,1,1,3,67
+qwen3-30b-token-legacy-unknown,289,289,289,1,1,289,2347
+PASS red mutant: drop-required-barrier rc=1 FAIL sim data: queue epochs differ from serialized execution (warp order 0)
+PASS red mutant: capacity-off-by-one rc=1 FAIL cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records
+PASS red mutant: wrong-RAW-class rc=1 FAIL cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records
+PASS red mutant: adjacent-only rc=1 FAIL cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records
+PASS red mutant: under-count-pushbuffer rc=1 FAIL cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records
+PASS five compiled Omega mutants rejected by behavior
+NEGATIVE CONTROL removed-function: FAILED as it must (header disagrees with manifest: fn omega_gpu_session_alloc_code)
+NEGATIVE CONTROL missing-version: FAILED as it must (version macro missing: OMEGA_RUNTIME_API_VERSION_MAJOR)
+NEGATIVE CONTROL changed-signature: FAILED as it must (header disagrees with manifest: fn omega_gpu_session_free)
+NEGATIVE CONTROL changed-struct: FAILED as it must (manifest says `struct OmegaGpuLaunch )
+NEGATIVE CONTROL changed-constant: FAILED as it must (manifest says `const OMEGA_GPU_SESSION_MAX_ARGS )
+NEGATIVE CONTROL version-doc-mismatch: FAILED as it must (must contain the line "Omega Runtime API version:)
+NEGATIVE CONTROL stable-without-doc: FAILED as it must (STABLE entry omega_gpu_session_launch has no)
+NEGATIVE CONTROL wrong-quoted-signature: FAILED as it must (signature quoted in)
+NEGATIVE CONTROL signature-inside-another: FAILED as it must (signature quoted in)
+NEGATIVE CONTROL missing-patch-version: FAILED as it must (version macro missing: OMEGA_RUNTIME_API_VERSION_PATCH)
+NEGATIVE CONTROL added-undeclared-function: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_session_sneaky)
+NEGATIVE CONTROL added-undeclared-constant: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): const OMEGA_GPU_SESSION_SNEAKY)
+NEGATIVE CONTROL added-undeclared-enumerator: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): const OMEGA_GPU_CMDLIST_BARRIER_SNEAKY)
+NEGATIVE CONTROL stale-internal-entry: FAILED as it must (stale INTERNAL entry (no manifest header declares it): fn omega_gpu_session_set_error)
+NEGATIVE CONTROL removed-recover: FAILED as it must (header disagrees with manifest: fn omega_gpu_session_recover)
+NEGATIVE CONTROL removed-padding-field: FAILED as it must (header disagrees with manifest: field OmegaGpuCmdListOpts first_barrier_none)
+NEGATIVE CONTROL new-fnptr-function: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_session_zzz_fp)
+NEGATIVE CONTROL manifest-fn-dropped: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_serving_seal)
+NEGATIVE CONTROL internal-unlisted: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_session_set_error)
+NEGATIVE CONTROL internal-also-manifest: FAILED as it must (entry is both in the manifest and INTERNAL: fn omega_gpu_session_launch)
+NEGATIVE CONTROL internal-without-reason: FAILED as it must (INTERNAL entry fn omega_gpu_session_set_error gives no reason)
+NEGATIVE CONTROL stale-doc-section: FAILED as it must (stale API.md section (no manifest fn or struct): omega_gpu_session_retired)
+POSITIVE CONTROL semver-removed-stable-minor-under-zero: PASSED as it must (the entry changes need MINOR (MAJOR-class under major version zero))
+NEGATIVE CONTROL semver-removed-stable-unbumped-under-zero: FAILED as it must (needs at least a MINOR bump)
+NEGATIVE CONTROL semver-removed-stable-minor-only-at-one: FAILED as it must (needs a MAJOR bump)
+NEGATIVE CONTROL semver-changed-stable-unbumped: FAILED as it must (needs at least a MINOR bump)
+NEGATIVE CONTROL semver-added-unbumped: FAILED as it must (needs at least a MINOR bump)
+NEGATIVE CONTROL semver-version-down: FAILED as it must (version goes down)
+POSITIVE CONTROL semver-added-with-minor: PASSED as it must (the entry changes need MINOR)
+RESULT: PASS (every negative control was caught)

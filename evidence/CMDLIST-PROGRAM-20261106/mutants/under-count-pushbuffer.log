@@ -1,0 +1,11 @@
+FAIL exact words/waits/submissions
+FAIL exact words/waits/submissions
+FAIL word capacity+1 refused
+FAIL exact words/waits/submissions
+FAIL exact words/waits/submissions
+FAIL exact words/waits/submissions
+FAIL exact words/waits/submissions
+FAIL exact words/waits/submissions
+FAIL platform prefix overflow refused
+FAIL exact words/waits/submissions
+FAIL cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records

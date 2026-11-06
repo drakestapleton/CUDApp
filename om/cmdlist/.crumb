@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:30:34Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:d867f9c62eccc8473fa2a0b8f1c71352473eabb304ba0d674ebf5410d26d5bbf",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 5,
+      "generated_at_commit": "3a95f8ee3be615bd2fa8b191c47fa7d2a60f9bbc",
+      "source_tree": "sha256:da6d231cd307c84444df39dd99b49f5ad256a9e1da2290355965f0b726fcf21e"
+    }
+  },
+  "layer": "component",
+  "name": "cmdlist",
+  "purpose": "Seeded command-list record layout and whole-program RAW WAR WAW submission planner",
+  "schema_version": "1.0.0"
+}

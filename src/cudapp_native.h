@@ -68,6 +68,13 @@ uint32_t omega_nvrm_uvm_map_wire(uint64_t  *result, const void *p0, uint64_t p0_
 uint32_t omega_nvrm_policy(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_nvrm_struct(uint64_t  *result, uint64_t p0, uint64_t p1, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_nvrm_va(uint64_t  *result, uint64_t p0, void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_nvrm_alloc_scalar(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_nvrm_counts(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_nvrm_alloc_push(uint64_t  *result, const void *p0, uint64_t p0_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

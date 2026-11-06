@@ -24,6 +24,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_uvm_wire=native/nvrm/uvm_fields.om,native/nvrm/uvm_wire.om nvrm_uvm_map_wire=native/nvrm/uvm_fields.om,native/nvrm/uvm_map_wire.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_policy=native/nvrm/policy.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_struct=native/nvrm/uvm_fields.om,native/nvrm/struct.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_va=native/nvrm/alloc_profile.om,native/nvrm/alloc.om nvrm_alloc_scalar=native/nvrm/policy.om,native/nvrm/alloc_scalar.om nvrm_counts=native/nvrm/counts.om nvrm_alloc_push=native/nvrm/alloc_profile.om,om/encoder/amp_runtime.om,native/nvrm/alloc_push.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -69,7 +70,7 @@ for u in $UNITS $PURE_UNITS; do
   converter_pin=$CONVERTER_PIN
   frontend_pin=$FRONTEND_PIN
   profile=
-  case "$name" in nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire) profile=--runtime-views ;; esac
+  case "$name" in nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire|nvrm_va|nvrm_counts|nvrm_alloc_push) profile=--runtime-views ;; esac
   file=cudapp_om_$name.c
   case "$name" in
     revision|epoch|f16)

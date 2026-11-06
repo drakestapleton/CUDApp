@@ -175,3 +175,17 @@ NOT_RUN here; the integrator owns the combined full gate.
 
 These are reference calculations. Test counts/coverage/byte counts quoted
 above are measured outputs, not modeled hardware performance.
+
+## Addendum: inherited session-mutant consumer
+
+The stacked base's legacy session-mutant link also consumes `GPU_FS_OBJS`.
+It now links `GPU_NO_POSIX_OBJS`, keeping this draft self-contained before the
+session lane's replacement recipe lands. SessionCmdlist2 agreed to this
+one-line shared-file change; its #334 recipe already carries the same objects.
+No session source or mutant semantics changed.
+
+`make -j3 test-gpu-session-mutants` under the same wrapper and combined bridge
+environment returned 0: **11 of 11 mutants killed**. Exact output is recorded
+in [session-mutants.log](session-mutants.log). On integration retain #334's
+replacement `SESSION_FS_OBJECTS='$(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)'` recipe
+rather than the superseded base recipe.

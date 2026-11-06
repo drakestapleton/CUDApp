@@ -1,0 +1,14 @@
+COMMAND: bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_NATIVE_OMC=/tmp/no-posix-baseline-omc OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/tmp/bridge-pin-merge make -j3 test-gpu-session-mutants
+RC: 0
+mutant release-when-latched killed: 2 case(s) failed
+mutant ignore-cancel killed: 1 case(s) failed
+mutant no-latch-on-timeout killed: 4 case(s) failed
+mutant stale-not-counted killed: 1 case(s) failed
+mutant marker-not-polled killed: 7 case(s) failed
+mutant close-while-latched killed: 3 case(s) failed
+mutant recover-keeps-latch killed: 1 case(s) failed
+mutant recover-without-close killed: 3 case(s) failed
+mutant recover-when-not-latched killed: 1 case(s) failed
+mutant recover-ignores-teardown-fault killed: 1 case(s) failed
+mutant recover-ignores-module-latch killed: 1 case(s) failed
+test-gpu-session-mutants: 11 of 11 mutants killed

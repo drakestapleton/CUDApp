@@ -5,7 +5,7 @@
 # Device-free: the shipped binary only ever reads a fixture root; --rm runs only in the fake build,
 # whose OS effects are rewritten out of private copies of native/nvrm/context.om and native/smi/util.om.
 # Usage: tests/smi/run.sh [OMC [BASE_OMC]]   (default $CUDAPP_SMI_OMC)
-# OMC is the aien-dev/omega-mv#1048 candidate (devcall bound 1048576, issue #1042): util.om issues a
+# OMC is the aien-dev/omega-mv#1048 dedicated compiler (landed via #1050; devcall bound 1048576): util.om issues a
 # 55888-byte control. BASE_OMC, when given, is the omega-mv e5b32567 pin; the bound probe must trap
 # under it (the negative control).
 set -u
@@ -15,13 +15,13 @@ if [ "$(uname -s)" != Linux ] || [ "$(uname -m)" != aarch64 ]; then
 fi
 omc=${1:-${CUDAPP_SMI_OMC:-}}
 if [ -z "$omc" ] || [ ! -x "$omc" ]; then
-  echo 'NOT_RUN: set CUDAPP_SMI_OMC to the aien-dev/omega-mv#1048 candidate omc (not yet approved)' >&2
+  echo 'NOT_RUN: set CUDAPP_SMI_OMC to the dedicated aien-dev/omega-mv#1048 omc (landed via #1050)' >&2
   exit 77
 fi
 pin=390629fd22590aaefca852045f8b0ace86c62cefb3b1bc203ce400773c8abc2f
 got=$(sha256sum "$omc") || exit 74
 if [ "${got%% *}" != "$pin" ]; then
-  echo "REFUSED: omc digest ${got%% *} is not the omega-mv#1048 candidate (e9b63587)" >&2
+  echo "REFUSED: omc digest ${got%% *} is not the dedicated omega-mv#1048 pin (e9b63587)" >&2
   exit 69
 fi
 base=${2:-}

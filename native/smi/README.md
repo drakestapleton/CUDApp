@@ -10,12 +10,12 @@ cannot import into libcudapp today (omega-bridge#29).
 (`native/smi/util.om`) passes 55888 bytes of params to `devcall`. omc at
 omega-mv `e5b32567` (sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`)
 traps 3 above 16383 bytes (omc.om L5585-5588), so this tree builds with the
-candidate omc of aien-dev/omega-mv#1048 (issue #1042; branch
-`fix/devcall-param-cap-1042` at `e9b63587`, omc sha256
+dedicated omc of aien-dev/omega-mv#1048 (issue #1042), landed through #1050.
+The pin is `e9b635875e6d43314aedc9d85f25c8f65636ac3d`, omc sha256
 `390629fd22590aaefca852045f8b0ace86c62cefb3b1bc203ce400773c8abc2f`, bound
-1048576 bytes). That compiler is PROPOSED: not merged, and it needs Drake's
-approval before it becomes the pin. Until then `make test-smi` is NOT_RUN
-(exit 2) unless `CUDAPP_SMI_OMC` names the candidate.
+1048576 bytes. `CUDAPP_SMI_OMC` must name this compiler for `make test-smi`;
+otherwise that target is NOT_RUN (exit 2). CUDApp's general `OMEGA_OMC` pin
+remains `e5b32567`; no live resource-manager qualification is implied.
 
 ## Build and test
 
@@ -35,7 +35,7 @@ one-GPU rule), a guard negative control (an unrewritten `context.om` is
 refused, so no fake build can reach a device; `util.om` must hold exactly one
 device word), the devcall bound probe (`tests/smi/capprobe.om`: a 55888-byte
 control on `/dev/null`, which is not a GPU device, must return ENOTTY under
-the candidate and trap 3, exit 103, under the `e5b32567` omc given as the
+the dedicated compiler and trap 3, exit 103, under the `e5b32567` omc given as the
 second argument), a checker negative control and 22 source mutants. Last
 line: `CUDAPP-SMI HOST PASS`.
 

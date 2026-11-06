@@ -59,6 +59,8 @@ uint32_t omega_native_attnmirnext(uint64_t *result, uint64_t p0, uint64_t p1, ui
 uint32_t omega_q38_runtime(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_q38_emit(uint64_t *result, void *p0, uint64_t p0_n);
 uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_dag_parse(uint64_t *result, const void *p0, uint64_t p0_n, uint64_t p1, void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_dag_fmt(uint64_t *result, uint64_t p0, void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_own30b_prof(uint64_t *result, uint64_t p0, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
 uint32_t omega_doctor(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_ampcorp(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n, void *p4, uint64_t p4_n);

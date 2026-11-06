@@ -635,6 +635,8 @@ if(({uint64_t _a=v5;uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
 ({uint64_t p2=15ULL;uint64_t p3=4ULL;uint64_t p4=37ULL;f22(v0, v0_n, v1, v1_n, p2, p3, p4);});
 }
 }
+({uint64_t p2=37ULL;f10(v0, v0_n, v1, v1_n, p2);});
+({uint64_t p2=2ULL;uint64_t p3=0ULL;uint64_t p4=37ULL;f22(v0, v0_n, v1, v1_n, p2, p3, p4);});
 ({uint64_t p2=v2;f28(v0, v0_n, v1, v1_n, p2);});
 return o_leave(0);
 }

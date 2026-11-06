@@ -156,3 +156,9 @@ returned0. JSON byte differential all256, exact stream parity, red/link and five
 mutants passed; parser/resolver/scheduler families passed and units regenerate
 byte-for-byte. Combined dag_jstr with integrated runtime providers in direct
 links. Final `crumb verify: OK: 90 crumbs current`.
+
+#282 `62abe5eadfdc674a1180f8e2b8a542e5b50c902d` merged cleanly on the newer
+integrated API, retaining the successful non-NULL session-pointer contract.
+`/tmp/integ/6a-282.log/.rc` returned0: host/warp-sim reference and shape sweep,
+six generated source mutants plus the session-open abort control, NULL/non-NULL
+shell contract, byte-identical units and `crumb verify: OK: 90 crumbs current`.

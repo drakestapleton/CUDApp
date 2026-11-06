@@ -125,10 +125,11 @@ GEMM_EX_MUTANTS = \
 	'row|s/^if ne and a gx_wh es 0$$/if ne and a 0 0/' \
 	'row|s/^gx_put edit dst i ce uint get tab ulong get src i$$/gx_put edit dst i ce uint get tab 0/' \
 	'x3|s/^p1 = gx_lane p1 shr s 16 kk$$/p1 = gx_lane p1 shr s 15 kk/' \
-	'acc|s/^f = f64 bitcast f32 gx_get view s add ix 1 4$$/f = f64 bitcast f32 gx_get view s add ix 2 4/' \
+	'acc|s/^f = f64 get s add ix 1$$/f = f64 get s add ix 2/' \
 	'dot|s/^s = add s mul x f$$/s = add s x/' \
 	'epi|s/^if ne bt bitcast f64 ulong 0$$/if eq bt bitcast f64 ulong 0/' \
-	'fp8|s/^ret ulong gx_wel view s sub cb sb 4$$/ret ulong gx_wel view s 0 4/' \
+	'epi|s/^put c add k 1 ushort shr u 16$$/put c add k 1 ushort and shr u 15 65535/' \
+	'fp8|s/^ret ulong get s sub cb sb$$/ret ulong get s ulong 0/' \
 	'fp8|s/^cb = add cb 1$$/cb = add cb 0/'
 test-gemm-ex-om-mutants: $(OUT_DIR)/libomega_gpu.a
 	@$(GEMM_EX_TOOLS)

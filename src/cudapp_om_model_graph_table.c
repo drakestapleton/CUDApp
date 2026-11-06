@@ -93,7 +93,7 @@ uint64_t __attribute__((unused)) v3=({uint64_t _a=v0;uint64_t _b=128ULL;o_op(2, 
 if(({uint64_t _a=v3;uint64_t _b=v2;o_op(8, 5, _a,_b);})){
 return o_leave(({uint64_t _a=v2;uint64_t _b=v3;o_op(1, 5, _a,_b);}));
 }
-return o_leave(({uint64_t _a=v1;uint64_t _b=({uint64_t _a=({uint64_t _a=128ULL;uint64_t _b=v3;o_op(1, 5, _a,_b);});uint64_t _b=v2;o_op(2, 5, _a,_b);});o_op(1, 5, _a,_b);}));
+return o_leave(v0);
 }
 static uint64_t f1(uint64_t v0){
 o_enter();

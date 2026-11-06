@@ -332,7 +332,7 @@ test-gpu-bf16-gemv: $(GPU_BF16_TEST)
 # control (mutant 4, the pre-fix stall 6, must be refused). No reference oracle needed, so it lives here.
 .PHONY: test-gpu-tern-sched
 GPU_TERN_SCHED_TEST = $(OUT_DIR)/gpu_tern_sched_test
-$(GPU_TERN_SCHED_TEST): tests/gpu_tern_sched_test.c src/omega_blackwell_codegen_tern.h $(OUT_DIR)/libomega_gpu.a
+$(GPU_TERN_SCHED_TEST): tests/gpu_tern_sched_test.c tests/bw_warp_sim_k.h tests/bw_mufu_ftz.h src/omega_blackwell_codegen_tern.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/gpu_tern_sched_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 test-gpu-tern-sched: $(GPU_TERN_SCHED_TEST)
 	$(GPU_TERN_SCHED_TEST)

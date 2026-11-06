@@ -46,6 +46,19 @@ make test-omega-binding-portable  # revision and epoch vectors
 make test-omega-target-only       # names the checks this host does not run
 ```
 
+The ternary `test-gpu-tern-sched` target also runs an independent row-major
+warp-simulator regression. Its packed weights and expected row values do not
+use the API packer or Omega's algebra oracle.
+
+When reusing the pinned Omega `tests/gpu_tern_test.c` battery, pre-include
+CUDA++'s `tests/bw_warp_sim_k.h` in the test translation unit. Quoted includes
+otherwise select the simulator beside the external test, which at Omega
+`e5b32567` ignores scalar `LDG.E` immediate offsets. That stale simulator fails
+row-major cases even with the unchanged C builder. Do not alter the generator,
+packing, or expected values to accommodate it. The integration
+`test-codegen-tern-sim` target already uses a current-simulator adapter.
+
+
 ## Memory ordering
 
 `nvrm/cpu_barrier.h` is the publication barrier.

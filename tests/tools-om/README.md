@@ -43,3 +43,40 @@ self-test (which passes in both builds); it holds no profile decision.
 
 Mutants (8, all killed): expected-stage bound, completion position, dropped increment, the gate/up width, the
 gap subtraction order, the attention byte formula, the decimal printer, and the re-arm after a head.
+
+## doctor (`tools/doctor/cudapp_doctor.c`, switch `..._TOOLS_DOCTOR`)
+
+The unit is `doctor=om/tools/fmt.om,om/tools/doctor.om`: `fmt.om` is an exact `%.Pf`/`%.Pg` formatter
+(base-10^9 limbs of m·2^k or m·5^s, ties to even), `doctor.om` picks every line, parses the module version,
+formats the memory figures and counts the FAIL lines. The C shell keeps the probes and passes them as facts:
+`fopen`/`fgets` of the version file, `access(2)` of the device files and nvcc paths, the PCI scan and chip
+table (`src/omega_gpu_chip.c`), the meminfo `sscanf("%llu")` (glibc parsing of the number stays the probe) and
+`uname(2)`. Exit 2 is new: the unit refuses an ABI or compiler text holding `%` or a newline (the C printed them
+inside a printf format) and a chip refusal text without a newline after its `GPU <bdf>: ` prefix.
+
+`doctor.sh` builds both and compares stdout, stderr and exit on 40 machines: 38 fake roots under
+`CUDAPP_DOCTOR_ROOT`, one 4300-byte root (the C `path()` truncates at 4200 bytes, the root still prints in
+full) and the real machine with `CUDAPP_DOCTOR_ROOT` unset (its memory line is dropped: MemAvailable changes
+between runs).
+
+Partition, from the source: version file missing, empty (`fgets` fails), first line with an open module of the
+ABI, a closed module, another version (open and closed), a version before `Module`, no `Module`, digit runs of
+length 2, without a dot, of 63 and 64 bytes, a run followed by a letter, no digits, a first line over 1023
+bytes (`fgets` cut) and of exactly 120 bytes with its newline (the `%.120s` edge), `Open Kernel Module` split;
+each device file missing or not readable and writable, all three missing; PCI folder missing, empty, an audio
+function only, the GB10, an unknown GPU, both, 17 unknown GPUs (the 16 cap), a bdf holding a newline (the
+refusal's first newline falls inside its prefix: `%.*s` with a negative precision prints to the end), a bdf
+of 70 bytes (`%.63s`), a bdf holding `%`; meminfo missing, without the two keys, the ties 0.25 and 0.75 GiB,
+2^64−1 and 2^53+1 kB, ordinary values, unified (GB10) and system wording; nvcc at either path, not executable;
+one FAIL (singular) and several.
+
+Coverage of the oracle under the differential: lines 100% of 121, branches executed 100% and taken 95.24%
+of 84. The four untaken branches cannot be reached:
+- `more()`'s `while (*s)` exit: every text handed to `more()` ends without a newline (the fixed texts and the
+  chip refusal, which ends `attached.` and is under 2047 bytes), so the loop always leaves through `!nl`;
+- `s += k ? k - 1 : 0` with `k == 0`: `s` points at a digit, so `k >= 1`;
+- `r->device == 0x2e12u` false: the chip table has one row, the GB10;
+- `uname(&u) != 0`: `uname(2)` cannot fail with a valid buffer on Linux.
+
+Mutants (10, all killed): the 120-byte cut, the run minimum and maximum, the unified flag, the 16-GPU cap,
+the refusal prefix length, the GiB precision, the plural, the closed-module test and the `more()` segment step.

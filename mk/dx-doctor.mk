@@ -8,8 +8,10 @@ DOCTOR = $(OUT_DIR)/cudapp-doctor
 CUDAPP_NVIDIA_OPEN_ABI := $(patsubst nvidia-open-%,%,$(notdir $(NVIDIA_OPEN)))
 
 .PHONY: doctor test-doctor
-$(DOCTOR): tools/doctor/cudapp_doctor.c $(wildcard src/omega_gpu_chip.c src/omega_gpu_chip.h) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -DCUDAPP_NVIDIA_OPEN_ABI='"$(CUDAPP_NVIDIA_OPEN_ABI)"' -o $@ tools/doctor/cudapp_doctor.c $(wildcard src/omega_gpu_chip.c)
+# The checklist itself is the seeded Omega unit om/tools/doctor.om (src/cudapp_om_doctor.c, from sh om/units.sh);
+# cudapp_doctor.c probes and passes the facts in.
+$(DOCTOR): tools/doctor/cudapp_doctor.c src/cudapp_om_doctor.c $(wildcard src/omega_gpu_chip.c src/omega_gpu_chip.h) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -DCUDAPP_NVIDIA_OPEN_ABI='"$(CUDAPP_NVIDIA_OPEN_ABI)"' -o $@ tools/doctor/cudapp_doctor.c src/cudapp_om_doctor.c $(wildcard src/omega_gpu_chip.c)
 doctor: $(DOCTOR)
 	$(DOCTOR); rc=$$?; sh tools/multitarget/targets-doctor.sh '$(OMC)' $(OUT_DIR)/multitarget || rc=1; exit $$rc
 test-doctor: $(DOCTOR)

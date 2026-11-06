@@ -8,6 +8,12 @@
 #include "omega_blackwell_codegen_tc.h"
 #include <string.h>
 
+/* Independent differential oracle only; the seeded Omega successor (om/codegen/cg_gdn*.om) is the default. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_GDN
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_GDN 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_GDN
+
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -432,14 +438,6 @@ int omega_blackwell_codegen_gdn_prog(const OmegaGdnSpec *spec, BlackwellIRProgra
     tail(e);
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
-}
-
-int omega_gdn_prog_stats(const OmegaGdnSpec *spec, uint32_t *insns, uint32_t *gprs) {
-    static BlackwellIRProgram prog;
-    if (omega_blackwell_codegen_gdn_prog(spec, &prog) != 0) return -1;
-    if (insns) *insns = (uint32_t)prog.count;
-    if (gprs) *gprs = prog.regalloc.peak_gpr_usage;
-    return 0;
 }
 
 /* ======== state copy / zero (see the header) ======== */
@@ -875,17 +873,6 @@ int omega_blackwell_codegen_gdn_post_prog(const OmegaGdnSpec *spec, BlackwellIRP
     return omega_bw_regalloc_solve(prog);
 }
 
-int omega_gdn_pf_prog_stats(unsigned kind, const OmegaGdnSpec *spec, uint32_t *insns, uint32_t *gprs) {
-    static BlackwellIRProgram prog;
-    int rc = kind == 0 ? omega_blackwell_codegen_gdn_prep_prog(spec, &prog)
-           : kind == 1 ? omega_blackwell_codegen_gdn_scan_prog(spec, &prog)
-           : kind == 2 ? omega_blackwell_codegen_gdn_post_prog(spec, &prog) : -1;
-    if (rc != 0) return -1;
-    if (insns) *insns = (uint32_t)prog.count;
-    if (gprs) *gprs = prog.regalloc.peak_gpr_usage;
-    return 0;
-}
-
 /* ======== multi-token decode (L369, see the header): T decode steps of one head in one CTA, state and tails on chip ========
  * Every token runs the decode program's phases A..E with the same instructions in the same order on the same values; the
  * changes are where values live: S stays in the 64 registers between tokens (one load before the loop, one store after
@@ -1107,6 +1094,64 @@ int omega_blackwell_codegen_gdn_multi_prog(const OmegaGdnSpec *spec, BlackwellIR
     tail(e);
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
+}
+#else
+#include "cudapp_native.h"
+#include "omega_gpu_om_ir.h"
+
+/* C owns API/null handling and serialization only. The shape policy, every refusal, every allocation request, branch,
+ * loop event and scheduling decision are seeded Omega, replayed through omega_gpu_om_ir_replay. */
+static uint64_t gdn_policy(const OmegaGdnSpec *spec, uint64_t query) {
+    uint64_t result = 0;
+    if (omega_cg_gdn_policy(&result, query, spec->ratio, spec->state_bf16 != 0) != OMEGA_OK) return 0;
+    return result;
+}
+int omega_gdn_shape(const OmegaGdnSpec *spec, OmegaGdnShape *s) {
+    if (!gdn_policy(spec, 0)) return -1;
+    s->r = (uint32_t)gdn_policy(spec, 1);
+    s->vh = (uint32_t)gdn_policy(spec, 2);
+    s->vdim = (uint32_t)gdn_policy(spec, 3);
+    s->conv = (uint32_t)gdn_policy(spec, 4);
+    s->par_scal = (uint32_t)gdn_policy(spec, 5);
+    s->par_norm = (uint32_t)gdn_policy(spec, 6);
+    s->par_bytes = (uint32_t)gdn_policy(spec, 7);
+    s->tail_bytes = (uint32_t)gdn_policy(spec, 8);
+    s->state_bytes = (uint32_t)gdn_policy(spec, 9);
+    s->post_grid_y = (uint32_t)gdn_policy(spec, 10);
+    return 0;
+}
+/* kind: 0 decode, 1 multi, 2 copy, 3 prep, 4 scan, 5 post (cg_gdn in om/codegen/cg_gdn.om). */
+static int gdn_build(uint64_t kind, const OmegaGdnSpec *spec, BlackwellIRProgram *prog) {
+    if (!spec || !prog) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_gdn, kind, (uint32_t)spec->mutant, (uint32_t)spec->copy,
+                                  (uint64_t)spec->ratio | ((uint64_t)(spec->state_bf16 != 0) << 32), prog, NULL)
+               == OMEGA_OM_IR_OK ? 0 : -1;
+}
+int omega_blackwell_codegen_gdn_prog(const OmegaGdnSpec *spec, BlackwellIRProgram *prog) { return gdn_build(0, spec, prog); }
+int omega_blackwell_codegen_gdn_multi_prog(const OmegaGdnSpec *spec, BlackwellIRProgram *prog) { return gdn_build(1, spec, prog); }
+int omega_blackwell_codegen_gdn_copy_prog(const OmegaGdnSpec *spec, BlackwellIRProgram *prog) { return gdn_build(2, spec, prog); }
+int omega_blackwell_codegen_gdn_prep_prog(const OmegaGdnSpec *spec, BlackwellIRProgram *prog) { return gdn_build(3, spec, prog); }
+int omega_blackwell_codegen_gdn_scan_prog(const OmegaGdnSpec *spec, BlackwellIRProgram *prog) { return gdn_build(4, spec, prog); }
+int omega_blackwell_codegen_gdn_post_prog(const OmegaGdnSpec *spec, BlackwellIRProgram *prog) { return gdn_build(5, spec, prog); }
+#endif
+
+int omega_gdn_prog_stats(const OmegaGdnSpec *spec, uint32_t *insns, uint32_t *gprs) {
+    static BlackwellIRProgram prog;
+    if (omega_blackwell_codegen_gdn_prog(spec, &prog) != 0) return -1;
+    if (insns) *insns = (uint32_t)prog.count;
+    if (gprs) *gprs = prog.regalloc.peak_gpr_usage;
+    return 0;
+}
+
+int omega_gdn_pf_prog_stats(unsigned kind, const OmegaGdnSpec *spec, uint32_t *insns, uint32_t *gprs) {
+    static BlackwellIRProgram prog;
+    int rc = kind == 0 ? omega_blackwell_codegen_gdn_prep_prog(spec, &prog)
+           : kind == 1 ? omega_blackwell_codegen_gdn_scan_prog(spec, &prog)
+           : kind == 2 ? omega_blackwell_codegen_gdn_post_prog(spec, &prog) : -1;
+    if (rc != 0) return -1;
+    if (insns) *insns = (uint32_t)prog.count;
+    if (gprs) *gprs = prog.regalloc.peak_gpr_usage;
+    return 0;
 }
 
 int omega_gdn_multi_prog_stats(const OmegaGdnSpec *spec, uint32_t *insns, uint32_t *gprs) {

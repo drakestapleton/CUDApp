@@ -3,7 +3,8 @@
 #include "omega_gpu_fmt.h"
 #include <stdarg.h>
 #include <stdint.h>
-#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+/* Freestanding (OMEGA_GPU_NO_POSIX) keeps the C oracle: MIGRATION-PENDING, see omega_core_binding.h. */
+#if !defined(CUDAPP_MIGRATION_PENDING_C_CORE) && !defined(OMEGA_GPU_NO_POSIX)
 #include "omega_core_binding.h"
 #include <stdlib.h>
 #include <string.h>

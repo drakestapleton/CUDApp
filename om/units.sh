@@ -44,6 +44,7 @@ for entry in pfcopy pfratio segok segb tspec; do
   REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_shp.om,om/apirest/$entry.om"
 done
 REST="$REST ar_calc=om/apirest/calc.om ar_launch=om/apirest/launch.om ar_cache=om/apirest/cache.om"
+REST="$REST ar_tcspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/tcspec.om ar_tcperm=om/apiviews/bf16.om,om/apirest/tcperm.om ar_tcinfo=om/apirest/tcinfo.om ar_gtile=om/apirest/tiledata.om,om/apirest/gtile.om"
 for entry in slot sgate; do
   REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_slot.om,om/apirest/$entry.om"
 done

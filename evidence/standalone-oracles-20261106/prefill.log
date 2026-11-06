@@ -1,0 +1,158 @@
+prefill cache admission: PASS
+PASS shape admission and unsafe-shape refusal controls
+PASS exact emitted-offset boundary oracle 282 cases
+quantiser reference: PASS (amax/scale in (224, 448], error within half an e4m3 ulp)
+PASS qgemm SwiGLU: MUFU flush vs IEEE, 15859204 inputs, 0 differ (t-cap keeps it unobservable, #462)
+PASS 128-row shape 0 peak 144 declared 152 max-store 7864356
+PASS 128-row shape 1 peak 144 declared 152 max-store 6881316
+PASS 128-row shape 2 peak 144 declared 152 max-store 2457636
+PASS 128-row shape 3 peak 145 declared 152 max-store 4177920
+PASS 128-row shape 4 peak 144 declared 152 max-store 2457636
+qgemm emulation vs double oracle (plain): worst error 2.31e-07 of the sum of |terms| PASS
+qgemm emulation vs double oracle (swiglu_nat): worst error 2.19e-07 of the sum of |terms| PASS
+GPU_QGEMM: PASS
+sim quantiser k 2048 f32 groups 0: ran, 0 differ
+sim quantiser k 768 bf16 groups 0: ran, 0 differ
+sim quantiser k 4096 f32 groups 0: ran, 0 differ
+sim quantiser k 128 bf16 groups 0: ran, 0 differ
+sim quantiser k 5120 f32 groups 20: ran, 0 differ
+sim quantiser k 6144 bf16 groups 24: ran, 0 differ
+sim quantiser k 17408 bf16 groups 17: ran, 0 differ
+sim quantiser k 2048 f32 groups 4: ran, 0 differ
+sim quantiser mutant 1: caught
+sim quantiser mutant 2: caught
+sim quantiser mutant 3: caught
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 0 (n 256 k 384 M 300 swiglu indexed rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 0 mutant 1: caught
+sim qgemm case 0 mutant 2: caught
+sim qgemm case 0 mutant 3: caught
+sim qgemm case 0 mutant 4: caught
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 1 (n 256 k 256 M 200 f32 direct rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 1 mutant 1: caught
+sim qgemm case 1 mutant 2: caught
+sim qgemm case 1 mutant 3: caught
+sim qgemm case 1 mutant 4: caught
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 2 (n 256 k 128 M 150 f32 indexed rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 3 (n 512 k 1024 M 140 swiglu direct rt 4 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 4 (n 256 k 384 M 259 swiglu indexed rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 4 mutant 1: caught
+sim qgemm case 4 mutant 2: caught
+sim qgemm case 4 mutant 3: caught
+sim qgemm case 4 mutant 4: caught
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 5 (n 256 k 256 M 257 f32 direct rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 5 mutant 1: caught
+sim qgemm case 5 mutant 2: caught
+sim qgemm case 5 mutant 3: caught
+sim qgemm case 5 mutant 4: caught
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 6 (n 256 k 128 M 127 f32 indexed rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 0) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 0) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 1) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 1) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 3) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 3) order 1: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 4) order 0: ran, 0 differ
+sim qgemm case 7 (n 512 k 1024 M 129 swiglu direct rt 8 warps 8 group 4) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 8 (n 256 k 384 M 97 swiglu indexed rt 2 warps 4 group 4) order 1: ran, 0 differ
+sim qgemm case 8 mutant 1: caught
+sim qgemm case 8 mutant 2: caught
+sim qgemm case 8 mutant 3: caught
+sim qgemm case 8 mutant 4: caught
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 9 (n 256 k 256 M 65 f32 direct rt 2 warps 4 group 4) order 1: ran, 0 differ
+sim qgemm case 9 mutant 1: caught
+sim qgemm case 9 mutant 2: caught
+sim qgemm case 9 mutant 3: caught
+sim qgemm case 9 mutant 4: caught
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 10 (n 256 k 128 M 31 f32 indexed rt 2 warps 4 group 4) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 0) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 0) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 1) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 1) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 3) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 3) order 1: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 4) order 0: ran, 0 differ
+sim qgemm case 11 (n 512 k 1024 M 30 swiglu direct rt 2 warps 4 group 4) order 1: ran, 0 differ
+GPU_QGEMM: PASS
+drop_column_offset: caught
+overflow_offset_boundary: caught
+drop_last_row_group: caught
+drop_large_shape: caught
+admit_large_overbudget_warps: caught
+drop_small_shape: caught
+drop_incumbent: caught
+admit_unsafe_one_row_group: caught
+ignore_warp_count: caught
+scoped qgemm isolation: PASS
+ignore_scoped_options: caught
+leak_options_to_global: caught
+wrong_tile_height: caught

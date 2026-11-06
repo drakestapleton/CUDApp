@@ -28,6 +28,13 @@ now defaults to seeded `om/numeric` units, stacked on the scalar migration.
 Host differential, mutation and simulator evidence is recorded in
 [`numeric-rest-20261106`](evidence/numeric-rest-20261106/README.md).
 Chip qualification is NOT_RUN; no roadmap status row is upgraded.
+2026-11-06 migration note: the eight standalone CUDA-fixture, interop, mirror,
+prefill and exact-head checkers use the seeded `standalone_oracles` unit for
+reference arithmetic and verdict aggregation. The binary128 reference oracles
+remain independent C oracles because seeded Omega has no binary128 type. The
+CUDA fixture has new v2 identities; v1 remains frozen and CUDA imports are
+unchanged. Host/simulator evidence and the NOT_RUN chip runbook are in
+`evidence/standalone-oracles-20261106/README.md`; no hardware status row changes.
 
 ## 1. NVIDIA software on the Spark today
 

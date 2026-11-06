@@ -94,6 +94,7 @@ fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_rest=om/numeric/numeric.om,om/numeric/rest.om numeric_patch=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/patch.om numeric_check=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/patch.om,om/numeric/check.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_trace=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/trace.om numeric_reduce=om/numeric/numeric.om,om/numeric/tile.om,om/numeric/rest.om,om/numeric/reduce.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS mathlibs_host=om/mathlibs/host.om,om/mathlibs/host_scalar.om mathlibs_walk=om/mathlibs/host.om,om/mathlibs/host_walk.om mathlibs_step=om/mathlibs/host.om,om/mathlibs/host_step.om mathlibs_many=om/mathlibs/host.om,om/mathlibs/host_many.om mathlibs_index=om/mathlibs/host.om,om/mathlibs/host_index.om mathlibs_fft=om/mathlibs/host.om,om/mathlibs/host_fft.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS standalone_oracles=om/standalone-oracles/oracles.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

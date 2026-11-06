@@ -1,0 +1,6 @@
+compat/cuda/profile-c0-aarch64-v1.tsv: byte-identical to b774723f537cec16a359fe082b8100317a5b5490; sha256=fba4fd4f91e93dd9543038998494b2a5263e042f8394e373647b2321a7278fe8
+compat/cuda/profile-c0-x86_64-v1.tsv: byte-identical to b774723f537cec16a359fe082b8100317a5b5490; sha256=28d405fe1ffe05cf08125a2f110df1948fbba7acfade814c7bb8733036d13a11
+cc -dumpmachine -> aarch64-linux-gnu
+cc -dumpfullversion -> 13.3.0
+python3 --version -> Python 3.12.3
+cc -E -P -xc - [__LDBL_MANT_DIG__] -> 113

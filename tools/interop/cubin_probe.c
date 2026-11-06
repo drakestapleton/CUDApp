@@ -25,9 +25,24 @@
 #include <string.h>
 
 #include "omega_blackwell_matmul.h"
+#include "../../om/standalone-oracles/oracle.h"
 
 #define CK(x) do { CUresult r_ = (x); if (r_) { const char *s_ = "?"; cuGetErrorString(r_, &s_); \
     fprintf(stderr, "FAIL %s -> %d %s\n", #x, (int)r_, s_); return 4; } } while (0)
+
+static void reference(const uint16_t *a,const uint16_t *b,float *out,
+                      uint32_t m,uint32_t k,uint32_t n) {
+#if CUDAPP_MIGRATION_PENDING_C_STANDALONE_ORACLES
+    omega_matmul_cpu_oracle_bf16(a,b,out,m,k,n);
+#else
+    /* The loops only marshal indexed scalar cells; Omega owns multiply/add. */
+    for(uint32_t i=0;i<m;i++) for(uint32_t j=0;j<n;j++) {
+        uint64_t sum=so_bits(0.0f);
+        for(uint32_t p=0;p<k;p++)sum=so_call(43,sum,a[(size_t)i*k+p],b[(size_t)p*n+j],0);
+        out[(size_t)i*n+j]=so_float(sum);
+    }
+#endif
+}
 
 #define LOG_BYTES 8192
 #define SENTINEL (-12345.0f)
@@ -76,7 +91,7 @@ int main(int argc, char **argv) {
     const uint32_t M = (uint32_t)strtoul(argv[a + 2], NULL, 0);
     const uint32_t K = (uint32_t)strtoul(argv[a + 3], NULL, 0);
     const uint32_t N = (uint32_t)strtoul(argv[a + 4], NULL, 0);
-    if (!M || !K || !N) return 2;
+    if (!so_all(M,K,N)) return 2;
     size_t cub_n = 0;
     uint8_t *cub = slurp(path, &cub_n);
     if (!cub) { fprintf(stderr, "cannot read %s\n", path); return 2; }
@@ -102,27 +117,28 @@ int main(int argc, char **argv) {
         if (lr == CUDA_SUCCESS) cuModuleUnload(mod);
         cuCtxDestroy(ctx);
         free(cub);
-        if (lr != CUDA_SUCCESS || fr != CUDA_SUCCESS) {
+        if (!so_all(so_eq(lr,CUDA_SUCCESS),so_eq(fr,CUDA_SUCCESS),1)) {
             printf("REJECT-PASS cubin=%s fn=%s window=%s\n", path, fname, getenv("SPARK_WINDOW"));
             return 0;
         }
         printf("REJECT-FAIL accepted cubin=%s fn=%s window=%s\n", path, fname, getenv("SPARK_WINDOW"));
         return 6;
     }
-    if (lr != CUDA_SUCCESS || fr != CUDA_SUCCESS) return 4;
+    if (!so_all(so_eq(lr,CUDA_SUCCESS),so_eq(fr,CUDA_SUCCESS),1)) return 4;
     if (load_only) {
         printf("LOAD-PASS cubin=%s fn=%s window=%s\n", path, fname, getenv("SPARK_WINDOW"));
         cuModuleUnload(mod); cuCtxDestroy(ctx); free(cub);
         return 0;
     }
 
-    const size_t asz = (size_t)M * K * 2, bsz = (size_t)K * N * 2, csz = (size_t)M * N * 4;
+    const size_t asz = so_bytes(M,so_bytes(K,2,0),0), bsz = so_bytes(K,so_bytes(N,2,0),0), csz = so_bytes(M,so_bytes(N,4,0),0);
     uint16_t *A = malloc(asz), *B = malloc(bsz);
     float *C = malloc(csz), *ref = malloc(csz);
     if (!A || !B || !C || !ref) return 4;
-    for (size_t i = 0; i < (size_t)M * K; i++) A[i] = omega_fp32_to_bf16((float)((int)(i % 7) - 3) * 0.25f);
-    for (size_t i = 0; i < (size_t)K * N; i++) B[i] = omega_fp32_to_bf16((float)((int)(i % 5) - 2) * 0.5f);
-    omega_matmul_cpu_oracle_bf16(A, B, ref, M, K, N);
+    /* These fixture values are exactly BF16-representable; op42 is a bit narrowing, not a general quantizer. */
+    for (uint32_t i = 0; i < (uint32_t)so_bytes(M,K,0); i++) A[i] = (uint16_t)so_call(42,so_call(18,i,0,0,0),0,0,0);
+    for (uint32_t i = 0; i < (uint32_t)so_bytes(K,N,0); i++) B[i] = (uint16_t)so_call(42,so_call(19,i,0,0,0),0,0,0);
+    reference(A, B, ref, M, K, N);
 
     CUdeviceptr dA, dB, dC;
     CK(cuMemAlloc(&dA, asz)); CK(cuMemAlloc(&dB, bsz)); CK(cuMemAlloc(&dC, csz));
@@ -130,19 +146,19 @@ int main(int argc, char **argv) {
     float sentinel = SENTINEL;
     uint32_t sbits;
     memcpy(&sbits, &sentinel, sizeof sbits);
-    CK(cuMemsetD32(dC, sbits, (size_t)M * N));
+    CK(cuMemsetD32(dC, sbits, so_bytes(M,N,0)));
     void *args[] = { &dA, &dB, &dC };
     CK(cuLaunchKernel(fn, 1, 1, 1, 32, 1, 1, 0, NULL, args, NULL));
     CK(cuCtxSynchronize());
     CK(cuMemcpyDtoH(C, dC, csz));
     int bad = 0, untouched = 0;
     double worst = 0;
-    for (uint32_t i = 0; i < M * N; i++) {
-        if (C[i] == SENTINEL) untouched++;
-        double d = (double)C[i] - (double)ref[i];
-        if (d < 0) d = -d;
-        if (d > worst) worst = d;
-        if (d > 1e-4) bad++;
+    for (uint32_t i = 0; i < (uint32_t)so_bytes(M,N,0); i++) {
+        untouched=(int)so_call(5,untouched,so_eq(so_bits(C[i]),so_bits(sentinel)),0,0);
+        uint64_t error=so_call(20,so_bits(C[i]),so_bits(ref[i]),0,0), old;
+        memcpy(&old,&worst,sizeof old);
+        worst=so_double(so_call(38,error,old,0,0));
+        bad=(int)so_call(5,bad,so_call(21,error,0,0,0),0,0);
     }
     printf("cubin=%s fn=%s M=%u K=%u N=%u worst_abs=%.9g bad=%d untouched=%d window=%s\n",
            path, fname, M, K, N, worst, bad, untouched, getenv("SPARK_WINDOW"));

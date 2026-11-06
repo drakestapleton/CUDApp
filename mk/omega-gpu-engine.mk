@@ -95,7 +95,7 @@ GPU_SERVE_ALLOC_SRCS = src/omega_gpu_session.c src/omega_gpu_platform.c src/omeg
 build/gpu_serving_alloc_count_test: tests/gpu_serving_alloc_count_test.c tests/fake_m16_native.c tests/fake_m16_native.h $(GPU_SERVE_ALLOC_SRCS)
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -ffp-contract=off -Isrc -Itests $(GPU_ENGINE_PHYS_INC) \
-		-o $@ tests/gpu_serving_alloc_count_test.c tests/fake_m16_native.c $(GPU_SERVE_ALLOC_SRCS) -lm
+		-o $@ tests/gpu_serving_alloc_count_test.c tests/fake_m16_native.c tests/omega_gpu_live_marker_fixture.c $(GPU_SERVE_ALLOC_SRCS) -lm
 .PHONY: test-gpu-serving-alloc
 test-gpu-serving-alloc: build/gpu_serving_alloc_count_test
 	./build/gpu_serving_alloc_count_test plain
@@ -262,7 +262,7 @@ GPU_AIEN_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -D
 build/test_omega_gpu_platform_aien: tests/test_omega_gpu_platform_aien.c $(GPU_AIEN_SRCS) src/omega_gpu_platform_aien.h \
 		src/omega_gpu_mem_reserve.h third_party/aien-gpu-abi1/aien_gpu_uapi.h
 	@mkdir -p build
-	gcc $(GPU_AIEN_CFLAGS) -o $@ tests/test_omega_gpu_platform_aien.c $(GPU_AIEN_SRCS)
+	gcc $(GPU_AIEN_CFLAGS) -o $@ tests/test_omega_gpu_platform_aien.c tests/omega_gpu_live_marker_fixture.c $(GPU_AIEN_SRCS)
 GPU_AIEN_MUT_DIR = build/gpu_aien_mut
 .PHONY: test-gpu-platform-aien test-gpu-platform-aien-mutants
 test-gpu-platform-aien: build/test_omega_gpu_platform_aien test-gpu-platform-aien-mutants
@@ -274,7 +274,7 @@ test-gpu-platform-aien-mutants: build/test_omega_gpu_platform_aien
 	  sed -e "$$script" src/omega_gpu_platform_aien.c > $(GPU_AIEN_MUT_DIR)/$$name.c; \
 	  if cmp -s src/omega_gpu_platform_aien.c $(GPU_AIEN_MUT_DIR)/$$name.c; then echo "mutant $$name: pattern not found"; exit 1; fi; \
 	  srcs=$$(echo $(GPU_AIEN_SRCS) | tr ' ' '\n' | grep -v '^src/omega_gpu_platform_aien.c$$' | tr '\n' ' '); \
-	  gcc $(GPU_AIEN_CFLAGS) -o $(GPU_AIEN_MUT_DIR)/$$name tests/test_omega_gpu_platform_aien.c $(GPU_AIEN_MUT_DIR)/$$name.c $$srcs; \
+	  gcc $(GPU_AIEN_CFLAGS) -o $(GPU_AIEN_MUT_DIR)/$$name tests/test_omega_gpu_platform_aien.c tests/omega_gpu_live_marker_fixture.c $(GPU_AIEN_MUT_DIR)/$$name.c $$srcs; \
 	  if ./$(GPU_AIEN_MUT_DIR)/$$name > $(GPU_AIEN_MUT_DIR)/$$name.log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
 	  echo "mutant $$name killed: $$(grep -c '^FAIL' $(GPU_AIEN_MUT_DIR)/$$name.log) case(s) failed"; killed=$$((killed+1)); }; \
 	amut no-doorbell 's|= r->token;|= 0;|'; \

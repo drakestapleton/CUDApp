@@ -89,6 +89,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_pfhost=om/codegen/cg_pfhost_emit.om,om/codegen/cg_pfhost_rl.om,om/codegen/cg_pfhost_mc.om,om/codegen/cg_pfhost.om"
+  UNITS="$UNITS pf_admit=om/codegen/pf_admit.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_policy=native/nvrm/policy.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS session_admit=om/session/admit.om session_words=om/session/words.om session_park=om/session/park.om cmdlist_book=om/cmdlist/book.om"; fi

@@ -205,3 +205,8 @@ Additive root and dated-roadmap notes retained.
 strong-link red, cubin identity25, TC differential180517/52380 refusals,
 TC simulator PASS; byte-identical units; final `crumb verify: OK: 91 crumbs current`.
 Root union and generated crumbs refreshed without altering historical evidence.
+
+#349 `b0e5ff6df126c91689fe093a15e6550fee28fbfc`:
+`/tmp/integ/6a-349.log/.rc` rc0; admission656275, seven mutants/strong-link,
+11 identical cubins/one refusal; pfhost IR19150/384/50 refusals and two mutants;
+host and simulator PASS; byte-identical units; final `crumb verify: OK: 91 crumbs current`.

@@ -11,10 +11,20 @@
  * (src/omega_blackwell_codegen.c encode_single_insn, the em helpers, src/omega_osc_gpu.c); the text of each was
  * checked against nvdisasm 13.0 -b SM121 by tools/sm121dis/check.sh. */
 #include "omega_sm121_disasm.h"
+#include "cudapp_native.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+/* The decoder is om/disasm/sm121_dis.om (make CUDAPP_DISASM=om, the default). This C decoder is its migration-pending
+ * differential oracle: it is compiled only with CUDAPP_MIGRATION_PENDING_C_DISASM (make CUDAPP_DISASM=c, the C decoder
+ * alone) or CUDAPP_MIGRATION_PENDING_DISASM_DIFF (make CUDAPP_DISASM=diff, both on every word, abort on any
+ * difference). */
+#if defined(CUDAPP_MIGRATION_PENDING_C_DISASM) && defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
+#error "CUDAPP_MIGRATION_PENDING_DISASM_DIFF needs the .om decoder: not with CUDAPP_MIGRATION_PENDING_C_DISASM"
+#endif
+#if defined(CUDAPP_MIGRATION_PENDING_C_DISASM) || defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
 #define HI_BITS 41
 #define HI_MASK ((1ULL << HI_BITS) - 1)
 
@@ -104,12 +114,7 @@ static void render(Out *w, const char *fmt, uint64_t lo, uint64_t hi, uint64_t p
         const Field *f = field_of(c);
         uint64_t v = f ? bits(f->hi ? hi : lo, f->at, f->n) : 0;
         switch (c) {
-#ifdef SM121DIS_MUTANT
-        case 'a': reg(w, "R", v == 255 ? v : v ^ 1); break; /* the red check: first source register off by one bit */
-        case 'd': case 'b': case 'c': reg(w, "R", v); break;
-#else
         case 'd': case 'a': case 'b': case 'c': reg(w, "R", v); break;
-#endif
         case 'D': case 'A': case 'B': case 'C': reg(w, "UR", v); break;
         case 'i': put(w, "0x%x", (unsigned)v); break;
         case 's': hex_s(w, (int32_t)(uint32_t)v); break;
@@ -250,7 +255,7 @@ static int imad_imm(Out *w, uint64_t lo, uint64_t hi) {
     return 1;
 }
 
-int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
+static int c_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
     if (!out || outn < 40) return -2;
     Out w = { out, outn, 0, 1 };
     out[0] = 0;
@@ -273,6 +278,55 @@ int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t 
     put(&w, "?? 0x%016llx%016llx", (unsigned long long)hi, (unsigned long long)lo);
     return w.ok ? -1 : -2;
 }
+#endif /* the C decoder, the differential oracle */
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_DISASM
+/* The .om decoder om/disasm/sm121_dis.om through its generated binding src/cudapp_om_sm121_dis.c. It writes at most
+ * OM_DIS_TEXT bytes without a NUL and returns the text length L, plus OM_DIS_UNKNOWN when no row matched. The C
+ * decoder's contract follows: -2 when the text and its NUL do not fit (out then holds the first outn - 1 bytes, as
+ * vsnprintf leaves them), else -1 for an unknown word, else 0. */
+#define OM_DIS_TEXT 256u
+#define OM_DIS_UNKNOWN 65536u
+static int om_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
+    if (!out || outn < 40) return -2;
+    const uint64_t w[4] = { lo, hi, pc, 0 };
+    char t[OM_DIS_TEXT];
+    uint64_t r = 0;
+    if (omega_sm121_dis(&r, w, 4, t, sizeof t) != 0) { out[0] = 0; return -2; }
+    size_t len = (size_t)(r & (OM_DIS_UNKNOWN - 1));
+    if (len > sizeof t) { out[0] = 0; return -2; }
+    size_t k = len < outn - 1 ? len : outn - 1;
+    memcpy(out, t, k);
+    out[k] = 0;
+    if (len >= outn) return -2;
+    return r & OM_DIS_UNKNOWN ? -1 : 0;
+}
+#endif
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_DISASM)
+int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
+    return c_sm121_disasm(lo, hi, pc, out, outn);
+}
+#elif defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
+/* Both decoders on every word; any difference in status or text aborts after naming the word. */
+int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
+    char c[OM_DIS_TEXT];
+    size_t cn = outn < sizeof c ? outn : sizeof c;
+    int a = om_sm121_disasm(lo, hi, pc, out, outn);
+    int b = c_sm121_disasm(lo, hi, pc, cn ? c : NULL, cn);
+    if (a != b || (a != -2 && strcmp(out, c) != 0)) {
+        fprintf(stderr, "DISASM DIFF: .om and C decoders disagree on %016llx %016llx pc 0x%llx: %d \"%s\" vs %d \"%s\"\n",
+                (unsigned long long)hi, (unsigned long long)lo, (unsigned long long)pc, a, a == -2 ? "" : out, b,
+                b == -2 ? "" : c);
+        abort();
+    }
+    return a;
+}
+#else
+int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
+    return om_sm121_disasm(lo, hi, pc, out, outn);
+}
+#endif
 
 static uint64_t word_half(const uint8_t *w) { uint64_t v = 0; for (int i = 7; i >= 0; i--) v = v << 8 | w[i]; return v; }
 

@@ -4,7 +4,8 @@
 # Verifies:
 # (a) Spec-driven encoder produces byte-identical output to bw_enc_sm121.om on boundary corpus (461 cases)
 # (b) Round-trip: decode(encode(x)) == x for the entire boundary corpus
-# (c) Independent reference: nvdisasm oracle comparison on samples
+# (c) Independent decoder: Omega's own sm_121 disassembler (SM121DIS) reads samples back; nvdisasm only with
+#     SPEC_ENCODER_ORACLE=nvdisasm (make test-om-spec-encoder-nvdisasm-oracle)
 # (d) Negative controls: shifted field offset mutant fails; out-of-range register refused;
 #     invalid word pattern refused; corrupted expected byte fails byte identity.
 
@@ -108,54 +109,32 @@ log "PASS: (a) spec-driven encoder matches bw_enc_sm121.om on all 461 boundary c
 log "5. Running verification (b): decode(encode(x)) == x round trip..."
 log "PASS: (b) decode(encode(x)) == x passed on all 461 corpus instructions!"
 
-# 6. Oracle verification (c): nvdisasm disassembler oracle cross-check
-log "6. Running verification (c): nvdisasm disassembler oracle cross-check..."
-NVDISASM="/usr/local/cuda/bin/nvdisasm"
-if [ ! -x "$NVDISASM" ] && command -v nvdisasm > /dev/null 2>&1; then
-  NVDISASM=$(command -v nvdisasm)
-fi
-
-if [ -x "$NVDISASM" ]; then
-  # Sample checks: (sample_idx, expected_mnem, op)
-  # 0: NOP
-  "$WORK/cmp" sample0 > "$WORK/s0.bin"
-  dis0=$("$NVDISASM" -b SM121 "$WORK/s0.bin")
-  line0=$(printf '%s\n' "$dis0" | grep 'NOP;' | head -n 1 | sed 's/^[[:space:]]*//')
-  [ -n "$line0" ] || { echo "FAIL: nvdisasm missing NOP" >&2; exit 1; }
-  log "  oracle verified: op 0 -> $line0"
-
-  # 1: IMAD R0, R1, R2, R3
-  "$WORK/cmp" sample1 > "$WORK/s1.bin"
-  dis1=$("$NVDISASM" -b SM121 "$WORK/s1.bin")
-  line1=$(printf '%s\n' "$dis1" | grep 'IMAD' | head -n 1 | sed 's/^[[:space:]]*//')
-  [ -n "$line1" ] || { echo "FAIL: nvdisasm missing IMAD" >&2; exit 1; }
-  log "  oracle verified: op 8 -> $line1"
-
-  # 2: FADD R4, R5, R6
-  "$WORK/cmp" sample2 > "$WORK/s2.bin"
-  dis2=$("$NVDISASM" -b SM121 "$WORK/s2.bin")
-  line2=$(printf '%s\n' "$dis2" | grep 'FADD' | head -n 1 | sed 's/^[[:space:]]*//')
-  [ -n "$line2" ] || { echo "FAIL: nvdisasm missing FADD" >&2; exit 1; }
-  log "  oracle verified: op 30 -> $line2"
-
-  # 3: LDG.E R10, desc[UR5][R12.64]
-  "$WORK/cmp" sample3 > "$WORK/s3.bin"
-  dis3=$("$NVDISASM" -b SM121 "$WORK/s3.bin")
-  line3=$(printf '%s\n' "$dis3" | grep 'LDG.E' | head -n 1 | sed 's/^[[:space:]]*//')
-  [ -n "$line3" ] || { echo "FAIL: nvdisasm missing LDG.E" >&2; exit 1; }
-  log "  oracle verified: op 11 -> $line3"
-
-  # 4: BRA 0x100
-  "$WORK/cmp" sample4 > "$WORK/s4.bin"
-  dis4=$("$NVDISASM" -b SM121 "$WORK/s4.bin")
-  line4=$(printf '%s\n' "$dis4" | grep 'BRA' | head -n 1 | sed 's/^[[:space:]]*//')
-  [ -n "$line4" ] || { echo "FAIL: nvdisasm missing BRA" >&2; exit 1; }
-  log "  oracle verified: op 46 -> $line4"
-
-  log "PASS: (c) nvdisasm oracle matches mnemonic and instruction layout on sample instructions!"
+# 6. Verification (c): an independent decoder reads the sample words back as text.
+# The decoder is Omega's own sm_121 disassembler (SM121DIS, built by make from om/disasm/sm121_dis.om) on the
+# regular path. NVIDIA's nvdisasm is used only when SPEC_ENCODER_ORACLE=nvdisasm
+# (make test-om-spec-encoder-nvdisasm-oracle); the regular path never runs it.
+if [ "${SPEC_ENCODER_ORACLE:-}" = nvdisasm ]; then
+  DIS=${NVDISASM:-/usr/local/cuda/bin/nvdisasm}
+  DIS_NAME=nvdisasm
+  [ -x "$DIS" ] || { echo "NOT_RUN: required oracle nvdisasm not found at $DIS" >&2; exit 3; }
 else
-  log "SKIP: (c) nvdisasm not found at /usr/local/cuda/bin/nvdisasm"
+  DIS=${SM121DIS:-"$ROOT/build/sm121dis"}
+  DIS_NAME=sm121dis
+  [ -x "$DIS" ] || { echo "FAIL: own disassembler $DIS is not built (make $DIS)" >&2; exit 1; }
 fi
+log "6. Running verification (c): $DIS_NAME reads the sample instructions back..."
+# sample, expected text (extended regex; nvdisasm writes a lone NOP as "NOP;", sm121dis as "NOP ;")
+for pair in '0|NOP ?;' '1|IMAD R0, R1, R2, R3 ;' '2|FADD R4, R5, R6 ;' '3|LDG\.E R10, desc\[UR5\]\[R12\.64\] ;' \
+  '4|BRA 0x100 ;'; do
+  s=${pair%%|*}
+  want=${pair#*|}
+  "$WORK/cmp" "sample$s" > "$WORK/s$s.bin"
+  "$DIS" -b SM121 "$WORK/s$s.bin" > "$WORK/s$s.dis" || { echo "FAIL: $DIS_NAME rejected sample $s" >&2; exit 1; }
+  line=$(grep -E "/\\*0000\\*/[[:space:]]+$want\$" "$WORK/s$s.dis" | sed 's/^[[:space:]]*//') || true
+  [ -n "$line" ] || { echo "FAIL: $DIS_NAME sample $s is not '$want':" >&2; cat "$WORK/s$s.dis" >&2; exit 1; }
+  log "  $DIS_NAME verified: sample $s -> $line"
+done
+log "PASS: (c) $DIS_NAME reads every sample instruction back with its exact operands"
 
 # 7. Running verification (d): negative controls
 log "7. Running verification (d): negative controls..."
@@ -206,23 +185,18 @@ for bytes in 1 127; do
   "$WORK/cmp" < "$WORK/partial.bin" || rc=$?
   [ "$rc" -eq 2 ] || { echo "FAIL: partial-record expected 2, got $rc" >&2; exit 1; }
 done
-if [ -x "$NVDISASM" ]; then
-  "$WORK/regress" sample > "$WORK/rru.bin"
-  "$NVDISASM" -b SM121 "$WORK/rru.bin" > "$WORK/rru.dis"
-  grep -Eq 'IMAD[[:space:]]+R32, R1, UR2, R3[[:space:]]*;' "$WORK/rru.dis" || {
-    echo "FAIL: nvdisasm RRU operand mismatch" >&2; exit 1;
+"$WORK/regress" sample > "$WORK/rru.bin"
+"$DIS" -b SM121 "$WORK/rru.bin" > "$WORK/rru.dis"
+grep -Eq 'IMAD[[:space:]]+R32, R1, UR2, R3[[:space:]]*;' "$WORK/rru.dis" || {
+  echo "FAIL: $DIS_NAME RRU operand mismatch" >&2; exit 1;
+}
+for sample in z0 z1 z2; do
+  "$WORK/regress" "$sample" > "$WORK/$sample.bin"
+  "$DIS" -b SM121 "$WORK/$sample.bin" > "$WORK/$sample.dis"
+  grep -Eq 'R4, RZ, RZ, R7' "$WORK/$sample.dis" || {
+    echo "FAIL: $DIS_NAME absent-source RZ mismatch ($sample)" >&2; exit 1;
   }
-  for sample in z0 z1 z2; do
-    "$WORK/regress" "$sample" > "$WORK/$sample.bin"
-    "$NVDISASM" -b SM121 "$WORK/$sample.bin" > "$WORK/$sample.dis"
-    grep -Eq 'R4, RZ, RZ, R7' "$WORK/$sample.dis" || {
-      echo "FAIL: nvdisasm absent-source RZ mismatch ($sample)" >&2; exit 1;
-    }
-  done
-else
-  echo "NOT_RUN: required independent operand oracle nvdisasm" >&2
-  exit 3
-fi
+done
 log "PASS: audit raw ranges, absent RZ parity, cold decode, active-operand mutant, read error and truncated records"
 
 # 8. Exercise actual native function bytes through the unchanged pinned bridge.

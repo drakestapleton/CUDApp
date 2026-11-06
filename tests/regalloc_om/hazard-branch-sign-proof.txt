@@ -1,0 +1,22 @@
+hazard-branch-sign: EQUIVALENT, not killed and not counted in mutant totals.
+Source: om/codegen/bw_hazard.om:224-237, omega-mv seeded compiler e5b32567.
+Mutation: s = or s 3221225472 -> s = or s 1073741824.
+
+w0,w1 are uint32 words. If w1's high bit is clear, neither variant executes
+this assignment. Otherwise s = w1 >> 2 is an integer in [0,2^30), and both
+constants have no bits in that interval. Therefore the two OR operations
+are exactly s+3221225472 and s+1073741824. The next operation is
+(s << 6) & 4294967295. Its low six bits are clear; OR with
+l = (w0 >> 18) & 63 is exactly addition of l. Equal u implies the identical
+signed conversion, +1 with int32 wrap, and written target thereafter.
+
+WolframLanguageEvaluator query (executed):
+{Reduce[0 <= s < 2^30 && 0 <= l < 64 && Mod[64 (s + 3221225472) + l, 4294967296] != Mod[64 (s + 1073741824) + l, 4294967296], {s,l}, Integers], FullSimplify[Mod[64 (s + 3221225472) + l, 4294967296] == Mod[64 (s + 1073741824) + l, 4294967296], Element[{s,l},Integers]], {BitAnd[3221225472,2^30-1],BitAnd[1073741824,2^30-1],64 (3221225472-1073741824)/4294967296}}
+Observed result:
+{False, True, {0, 0, 32}}
+
+Reduce searched the entire normalized domain, not sampled w0/w1 pairs.
+False means no differing pair exists. FullSimplify independently gives True
+for all integer s,l. The last two zero bit intersections establish disjoint
+OR/addition; the difference shifted by six is an integer number (32) of
+uint32 moduli. No floating-point calculation is involved.

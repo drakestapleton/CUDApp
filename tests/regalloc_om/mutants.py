@@ -19,7 +19,10 @@ CC = ENV.get('CC', 'cc')
 UNITS = ['regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_params', 'cg_matmul_i32',
          'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block', 'cg_vecadd', 'cg_bind',
          'bw_hazard', 'bw_hazard_dec']
-FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c']
+FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c',
+         'src/cudapp_om_bw_identity.c', 'src/cudapp_freest_bw_scalar.c', 'src/cudapp_om_bw_cpui.c',
+         'src/cudapp_om_bw_cpuf16.c', 'src/cudapp_om_bw_cpubf16.c', 'src/cudapp_om_bw_shape.c',
+         'src/cudapp_om_bw_name.c']
 FLAGS = ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections', '-Isrc']
 LINK = {
     'liveness': ['tests/regalloc_om/liveness.c', str(OUT / 'successor.o'), 'src/omega_gpu_om_ir.c'],
@@ -50,8 +53,16 @@ CASES = [
     ('pad-minimum', 'cg_bind.om', 'if lt p 32\n', 'if lt p 16\n', 'bind'),
     ('fit-boundary', 'cg_bind.om', 'if lt b need\n', 'if le b need\n', 'bind'),
     ('hazard-size-6', 'bw_hazard.om', 'ret long 4\n', 'ret long 8\n', 'hazard'),
+    ('hazard-size-class', 'bw_hazard.om', 'if le s 4\n', 'if lt s 4\n', 'hazard'),
     ('hazard-op-2433', 'bw_hazard.om', 'if eq op 2433\n', 'if eq op 2434\n', 'hazard'),
     ('arch-le', 'cg_bind.om', 'cb_le32 w 96 and a 4294967295\n', 'cb_le32 w 96 and a 255\n', 'bind'),
+]
+
+# Listed explicitly, never credited as killed. The exact source formula first
+# shifts the extension left six and masks to uint32, erasing their only differing bit.
+EQUIVALENTS = [
+    ('hazard-branch-sign', 'bw_hazard.om', 's = or s 3221225472\n', 's = or s 1073741824\n',
+     'tests/regalloc_om/hazard-branch-sign-proof.txt'),
 ]
 
 
@@ -114,6 +125,12 @@ def main():
         summary.append(f'{name}\tcompile=0\texercise={rc}\t{final}')
         print('KILLED', summary[-1], flush=True)
     (OUT / 'mutants.tsv').write_text('\n'.join(summary) + '\n')
+    for name, unit, before, after, proof in EQUIVALENTS:
+        if (ROOT / 'om/codegen' / unit).read_text().count(before) != 1:
+            raise RuntimeError(f'{name}: equivalent anchor is not unique')
+        if not (ROOT / proof).is_file():
+            raise RuntimeError(f'{name}: missing proof')
+        print(f'EQUIVALENT {name} not counted as killed; proof={proof}', flush=True)
     print(f'PASS recompiled Omega semantic mutants={len(summary)}')
 
 

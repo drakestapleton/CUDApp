@@ -31,3 +31,9 @@ Mesa citations and other third-party references are listed in THIRD_PARTY.md.
 First-party SPDX headers are Apache-2.0 WITH LLVM-exception. Third-party
 notices and historical receipt text are not covered by that grant;
 docs/LICENSING_TRANSITION.md records the completed relicense.
+
+AIEN-GPU INTERFACE HEADER:
+third_party/aien-gpu-abi1/aien_gpu_uapi.h is the aien-gpu.ko user-space
+interface, copied unchanged from aien-gpu commit
+eab436b052d8cd92ec8d471bafe51e76c84b8b7b. It is licensed MIT OR GPL-2.0-only
+(its SPDX line), not under this repository's licence.

@@ -54,7 +54,8 @@ CFLAGS ?= -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc \
 	-I$(NVIDIA_OPEN)/src/common/sdk/nvidia/inc \
 	-I$(NVIDIA_OPEN)/kernel-open/common/inc \
 	-I$(NVIDIA_OPEN)/kernel-open/nvidia-uvm \
-	-I$(NVIDIA_OPEN)/src/nvidia/arch/nvalloc/unix/include
+	-I$(NVIDIA_OPEN)/src/nvidia/arch/nvalloc/unix/include \
+	-I$(PHYSICS_DIR)/third_party/aien-gpu-abi1
 -include mk/*.mk
 
 # sm_121 instruction encoder (CUDApp#79): om (default) = om/encoder/bw_enc_sm121.om through the generated binding
@@ -564,7 +565,7 @@ HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-latmea
 	test-portable-receipts test-gpu-qmd-shared test-model-capacity test-gpu-qmd-shared-clean-build \
 	test-omega-slice-runner test-omega-arch-guard test-omega-barrier-contract test-omega-binding-portable \
 	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz \
-	test-zero-cuda-tool-argv $(CARRIED_HOST_TESTS)
+	test-zero-cuda-tool-argv $(CARRIED_HOST_TESTS) test-gpu-platform-aien
 ifneq ($(CUDAPP_TARGET_ONLY_TESTS),)
 HOST_TESTS := $(filter-out $(CUDAPP_TARGET_ONLY_TESTS),$(HOST_TESTS)) test-omega-target-only
 endif

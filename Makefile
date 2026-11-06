@@ -106,9 +106,9 @@ artifact-export: $(ARTIFACT_EXPORT)
 ARTIFACT_TEST = $(OUT_DIR)/gpu_artifact_export_test
 # These two recipes compile omega_cubin.c on the command line, which overrides the
 # archive member with the same .om packer the library links.
-$(ARTIFACT_EXPORT): tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
+$(ARTIFACT_EXPORT): tools/artifact_export.c src/omega_native_artifact.c src/omega_native_artifact_om.inc src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
-$(ARTIFACT_TEST): tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
+$(ARTIFACT_TEST): tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_native_artifact_om.inc src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 # cubin-probe is the only target that links NVIDIA's libcuda: an interop check that NVIDIA's own loader accepts
 # CUDA++'s cubin. It is not in `make test`; zero-cuda-gate (in HOST_TESTS) checks hello_gpu and the API test link no CUDA.
@@ -125,8 +125,8 @@ test-native-artifact: $(ARTIFACT_EXPORT) $(ARTIFACT_TEST)
 	./$(ARTIFACT_TEST) $(OUT_DIR)/artifact-test
 # Pure artifact-format boundary: portable host test, no driver or device objects.
 .PHONY: test-native-artifact-manifest
-$(OUT_DIR)/native_artifact_manifest_test: tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_BINDING_SRCS) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o $@ $^ -lpthread
+$(OUT_DIR)/native_artifact_manifest_test: tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_native_artifact_om.inc src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_BINDING_SRCS) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o $@ $(filter %.c,$^) -lpthread
 test-native-artifact-manifest: $(OUT_DIR)/native_artifact_manifest_test
 	./$(OUT_DIR)/native_artifact_manifest_test
 .PHONY: libomega_gpu test-gpu-matmul-api

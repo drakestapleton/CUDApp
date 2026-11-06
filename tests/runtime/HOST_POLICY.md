@@ -160,3 +160,92 @@ Require each battery's green parity checks and deliberately wrong kernel checks,
 record exact SHA/toolchain and exit statuses, and compare with C-oracle builds
 using the same shapes. Host references and simulators are not chip qualification.
 Pure cost-model/blob tests themselves require no GPU window.
+
+## Artifact format and admission
+
+The artifact public API is unchanged. The admitted input remains the canonical
+`.manifest`, not JSON. The `.json` file is an output-only mirror; no JSON admission
+endpoint or parser has been invented. Adversarial JSON-looking bytes are tested
+as malformed manifest input. Python's independent JSON parser checks emitted
+mirrors, rejects duplicate keys and invalid escapes, and distinguishes legacy
+raw invalid UTF-8 from valid JSON rather than changing its encoding contract.
+
+`artifact_format.om` owns ordered manifest layout, identity/export record
+construction, JSON quoting and key order, numeric spelling, and checksum-list
+emission. `artifact_admit.om` owns hash syntax and equality, field limits, launch,
+contract, constant-bank and driver refusals and the admission sequence.
+`artifact_elf.om` owns ELF section selection, bounds and exact text matching.
+The default C shell owns pointers, retained allocations, file reads/writes and
+SHA-256 calls. `CUDAPP_MIGRATION_PENDING_C_ARTIFACT=1` selects the original C
+oracle. No public declaration or runtime API manifest entry changes.
+
+The format wire has a 65,536-byte buffer (input below 20,000, QMD snapshots at
+24,576 and 24,832, driver at 25,088, digest text at 26,000, output at 32,768)
+and 128 scalar slots. Field offsets/lengths are at `8+k`/`48+k`; slots 88–98
+hold export numeric values; slots 100–105 hold retained-file sizes. Admission
+stages request an identity digest, five file digests, then ELF/text comparison.
+The ELF pull protocol uses 512 bytes and 32 scalar slots; return 2 requests a
+bounded byte copy, 1 accepts, and 0 refuses. Policy is never inferred from a
+host-side pointer or a re-opened file. Existing read-once snapshot tests remain
+the acceptance path.
+
+Regenerate with the existing pinned `om/units.sh` tools. The ELF magic literal
+comes from `WolframLanguageEvaluator:
+FromDigits[Reverse[{127,69,76,70}],256] -> 1179403647`; this is a byte encoding,
+not measured hardware evidence.
+
+Focused host checks (no full suite or GPU):
+
+```sh
+taskset -c 10-14 nice -n 10 make -j3 test-artifact-format
+taskset -c 10-14 nice -n 10 make -j3 test-artifact-format-pending
+taskset -c 10-14 nice -n 10 env OMEGA_OMC=/path/to/pinned/omc \
+  OMEGA_BRIDGE=/path/to/omega-bridge make -j3 test-artifact-format-mutants
+```
+
+The fixed-seed corpus is `0xA17FAC7`: 6,000 admission cases plus export/escape
+cases, comparing exact refusal codes, artifact identities and all eight export
+files. It includes duplicate/reordered records, malformed JSON-looking bytes,
+oversize fields, invalid hashes, strict driver strings, and escape cases.
+The differential's flipped expected byte must fail; source mutants must compile
+and then be rejected, never count a compiler failure as a kill.
+
+### ArtifactOm host receipt
+
+IMPLEMENTED and EXERCISED on `feat/omega-artifact-format`, stacked on
+RuntimeHost `16da758961c165dac9aef585137172175651c372` (#291). This receipt
+supersedes the artifact-only host work listed under Remaining acceptance work;
+it does not upgrade the cost-model, full-stack, or hardware claims.
+
+The checked generator used omega-mv
+`e5b32567a7aff3ce594e3254a622a846a6cd190b` and omc SHA-256
+`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
+`om/units.sh` completed with rc 0. The focused commands above ran serially,
+under cores 10–14 and nice 10, with these observed results:
+
+| Tier | rc | Observed verdict |
+| --- | --- | --- |
+| Default existing manifest fixtures | 0 | `native_artifact_manifest: 70 checks, 0 failed` |
+| Default existing export fixtures | 0 | `test_gpu_artifact_export: 47 checks, 0 failed` |
+| Existing CLI shape fixtures | 0 | `ARTIFACT EXPORT SHAPES PASS` |
+| C/Omega differential of all three existing fixture sets | 0 | Same three verdicts; exact return codes, retained bytes, IDs and export files |
+| Fixed-seed generated corpus | 0 | `ARTIFACT-FORMAT PASS export=256 admission=6000 seed=0xa17fac7 byte-exact strict-json` |
+| Independent JSON codec/parser | 0 | `ARTIFACT-FORMAT codec PASS byte-domain=256 valid-utf8 strict-escapes duplicate-keys invalid-utf8-classified` |
+| Flipped expected manifest byte | 0 | `ARTIFACT-FORMAT negative-control PASS expected-byte-flip rc=1` |
+| PENDING C existing fixtures | 0 | 70 manifest checks and 47 export checks, zero failed; CLI shapes PASS |
+| Compiled Omega source mutants | 0 | `ARTIFACT-FORMAT mutants PASS killed=3 compiled=3` |
+
+The three compiled mutants remove backslash escaping, invert identity-digest
+acceptance, and change the ELF machine constant. Each is rejected by a runtime
+differential assertion, not a compile failure. Logs remain in
+`build/artifact-format/mutant-artifact_{format,admit,elf}.log` and
+`build/artifact-format/negative-control.log`.
+
+The differential target clears only its generated export/shape fixture
+directories before each run, preserving EXCL refusal behavior while making the
+host gate repeatable. The direct existing test recipes also track the new C
+shell include, so changing it cannot silently reuse an old test binary.
+
+PASS applies to the focused host tiers only. Full `make test` and chip/device
+qualification are NOT_RUN. No service, GPU device, driver, gate, or compiler pin
+was changed. This work is not MERGED or DEPLOYED.

@@ -1,6 +1,27 @@
 {
-  "schema_version": "1.0.0",
+  "extensions": {
+    "generated": {
+      "children": [
+        {
+          "digest": "d093bc6ac88acc6c4def6a9cc92180630a213fa20c895c0c99d1eaf6c39394c3",
+          "last_commit": "",
+          "name": "2026-11-06",
+          "purpose": "Host differential, mutant and family-test receipt for the API shell port. Chip tier is not run."
+        }
+      ],
+      "children_root": "sha256:bb92840ac6b00c7ef6e7020a303353513e381d8061c31a4a2be81721935acef9",
+      "compiled_at": "2026-11-06T06:31:14Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:590ea1b549f1a701a2cd54d8dae91b305ec9d4dfd71bb418d6a28ee32e7f1735",
+      "evidence_files": 2,
+      "evidence_root": "sha256:c7f4b4b05603ad32208bf317280bf39e3b4e9957a8789f42316af9736fe3766f",
+      "files": 2,
+      "generated_at_commit": "0e4417ae62ce2fbfbdda6be4a2c3e684d373c2cd",
+      "source_tree": "sha256:8f56f37cf6bc51ff7f10d6a7e9661f7dc2d5aa27c4f5139bd6c1871eeeed89f4"
+    }
+  },
+  "layer": "evidence",
   "name": "api-shells",
   "purpose": "Host receipts for the kernel-family API shell Omega port",
-  "layer": "evidence"
+  "schema_version": "1.0.0"
 }

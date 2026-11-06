@@ -28,7 +28,7 @@ def run(args, expected=0):
     return p.stdout
 
 sources = sorted((ROOT / 'build/no_posix/sources').glob('*.om'))
-assert len(sources) == 3
+assert {p.stem for p in sources} == {'bw_enc_sm121', 'cubin_elf', 'no_bf16', 'no_avbf'}
 native = ROOT / 'build/no_posix/native'
 host = OUT / 'host'
 run([BRIDGE / 'tools/native', host, *sources])

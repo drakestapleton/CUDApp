@@ -8,6 +8,12 @@
 #define OMEGA_GPU_APIVIEWS_H
 
 #include "cudapp_native.h"
+#ifndef CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION
+#define CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION 0
+#endif
+#ifdef OMEGA_GPU_NO_POSIX
+#include "omega_native.h"
+#endif
 
 #include <stdint.h>
 #include <stdio.h>
@@ -87,7 +93,10 @@ static uint8_t av_e4m3_c(float v) {
     return (uint8_t)(s | code);
 }
 
-static uint16_t av_bf16_c(uint32_t md, uint32_t u) {
+#endif
+
+#if AV_C || (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION)
+static uint16_t av_bf16_c(uint64_t md, uint32_t u) {
     if (md == 0) {
         if ((u & 0x7f800000u) == 0x7f800000u && (u & 0x007fffffu)) return (uint16_t)((u >> 16) | 0x0040u);
         return (uint16_t)((u + 0x7fffu + ((u >> 16) & 1u)) >> 16);
@@ -95,6 +104,9 @@ static uint16_t av_bf16_c(uint32_t md, uint32_t u) {
     if ((u & 0x7fffffffu) > 0x7f800000u) return 0x7fc0u;
     return (uint16_t)((u + 0x7fffu + ((u >> 16) & 1u)) >> 16);
 }
+#endif
+
+#if AV_C
 
 static uint32_t av_gdn_channel_c(uint32_t h, uint32_t s, uint32_t vh) {
     const uint32_t hk = h / (vh / 16u), D = 128u;
@@ -128,11 +140,27 @@ static inline uint8_t av_e4m3(float v) {
 }
 
 static inline int av_bf16_n(uint64_t md, uint64_t n, const float *x, uint16_t *y) {
+#ifdef OMEGA_GPU_NO_POSIX
+    /* Integer-public freestanding ABI: only view transport remains in C.
+     * The canonical view unit uses a hosted floating-view public ABI. */
+    if (n && (!x || !y)) __builtin_trap();
+    for (uint64_t i = 0; i < n; i++) {
+        uint32_t u;
+        memcpy(&u, &x[i], sizeof u);
+#if CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION
+        y[i] = av_bf16_c(md, u);
+#else
+        uint64_t r = 0;
+        if (omega2_no_avbf(&r, md, u) != OMEGA_OK) __builtin_trap();
+        y[i] = (uint16_t)r;
+#endif
+    }
+#else
 #if AV_C
     for (uint64_t i = 0; i < n; i++) {
         uint32_t u;
         memcpy(&u, &x[i], 4);
-        y[i] = av_bf16_c((uint32_t)md, u);
+        y[i] = av_bf16_c(md, u);
     }
 #endif
 #if AV_OM
@@ -148,6 +176,7 @@ static inline int av_bf16_n(uint64_t md, uint64_t n, const float *x, uint16_t *y
 #if AV_DIFF
     if (memcmp(y, tmp, (size_t)n * 2u) != 0) av_die("output bytes differ");
     free(tmp);
+#endif
 #endif
 #endif
     return 0;

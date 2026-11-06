@@ -4,6 +4,8 @@ The goal is a DGX Spark where CUDA++ does the jobs of NVIDIA's user-space softwa
 
 Sources: Omega `docs/OMEGA.md` sections 2 to 5 (branch `docs/what-omega-is`, 2026-10-21). Driver policy changed on 2026-10-30: my own driver replaces `nvidia.ko` and `nvidia-uvm.ko`, as aien-dev/omega `docs/OMEGA.md` on main (f56a372a) already says; the earlier line here, that the L332 work was a research harness and GB10 support belonged only upstream, is withdrawn. The route analysis (user-space Omega over `vfio-pci`, nouveau and nova, or a kernel module) is `docs/nvidia-out/DESIGN.md`, layer L4.
 
+2026-11-06: `av_bf16_n` now uses the integer-public freestanding Omega variant `om/apiviews/no_avbf.om` under `OMEGA_GPU_NO_POSIX`; its canonical hosted view remains `om/apiviews/bf16.om`. The explicit default-OFF `CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION` flag selects the temporary C oracle. Hosted/freestanding differential, production-object OFF/ON symbol controls and six behavioral mutants PASS; chip NOT_RUN. Receipt: `evidence/no-posix-bf16-20261106/README.md`.
+
 ## 1. NVIDIA software on the Spark today
 
 | NVIDIA piece | What it does | CUDA++ replacement | Status | Receipt or where the work is |

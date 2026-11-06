@@ -726,6 +726,10 @@ f16 and all other dtype values are refused, not widened or reinterpreted.
 int omega_gpu_attn_any(const OmegaGpuAttnAnyShape *shape, const void *q, const void *k, const void *v, float *out);
 int omega_gpu_attn_any_codegen(const OmegaGpuAttnAnyShape *shape, BlackwellIRProgram *program, uint8_t *code, size_t capacity, OmegaBlackwellKernel *kernel);
 ```
+`omega_gpu_attn_any_codegen` generates an admitted shape's IR and encoded kernel
+without opening a device. The execution entry point `omega_gpu_attn_any` owns
+allocations, copies and launches; both use the same seeded admission unit.
+
 
 Both return `OMEGA_GPU_ATTN_ANY_OK` (0), `REFUSED` (1) for unsupported
 geometry/format, `BAD_ARGS` (2) for null arguments, `CODEGEN` (3) for

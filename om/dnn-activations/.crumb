@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:10:10Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:783875a76e0504e9153fa2fcb3f845efabc1ac345dcf2859b36fcb2446c9cd31",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "8d491f206fb4ade96c82a9d01a241bb49ff4c22f",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "library",
+  "name": "dnn-activations",
+  "purpose": "Seeded elementwise activation IR and admission",
+  "schema_version": "1.0.0"
+}

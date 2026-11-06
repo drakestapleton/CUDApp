@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "aiengpu",
+  "layer": "native/aiengpu",
+  "purpose": "Seeded Omega decisions and request bytes of the aien-gpu.ko ABI 1 compute client (CUDApp#128); effects stay migration-pending C in src/omega_gpu_platform_aien.c"
+}

@@ -1,5 +1,5 @@
-$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ./build/gpu_mathlibs_test --sim   (source f2ef5ff)
-# rc=0, wall about 94s
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ./build/gpu_mathlibs_test --sim   (head 92f9aa4, code = f2ef5ff; rerun 2026-11-06 under bwrap, log /tmp/mlgap/rerun/sim.log)
+# rc=0, wall 133.7 s
 mathlibs tier=sim fixture=tests/fixtures/mathlibs_rng_aienmath.txt philox_fixture=tests/fixtures/philox_curand_oracle.txt dist_fixture=tests/fixtures/philox_curand_dist_oracle.txt
 host rng_reference_vs_aienmath rows=792 mismatches=0
 host philox_reference_vs_random123_kat vectors=3 mismatches=0 nine_round_control_mismatches=3

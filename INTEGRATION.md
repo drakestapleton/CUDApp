@@ -94,3 +94,20 @@ pending #339's escaping repair and must not be described as parsed valid JSON.
 Stage 5, the NO_POSIX BF16 cutover and `full-2` remain **NOT_RUN** at this checkpoint.
 The inherited C BF16 boundary above remains explicit. Chip/live-RM/VFIO/hardware
 and merge-to-main are **NOT_RUN**. Integration is only on draft #280.
+
+### Stage-6 Half B converter adoption
+
+Half B starts at `0d38145a697290f2cd00578fbaa168b824a38015` on
+`integ/stage6b`. The single converter lock selects omega-bridge draft #76
+`741c1ebb2b0fbae311a77ad2118b13d5ec7a17ee`. Its portable and freestanding
+converter/frontend source digests match the preceding #73 selection.
+Regenerating every portable unit changed no generated C, header or identity
+file. The lock text is the only converter-switch change.
+
+The first representative gate exposed an inherited #332 attention-view
+freestanding provider defect: `test-gpu-native-runtime` failed with unresolved
+`omega_av_*` symbols. Repeating the gate at the starting source revision with
+#73 reproduced it (`/tmp/integ/6b-baseline73.log`, rc 2). This is not a
+converter-regeneration difference. The unchanged native import allowlist
+remains enforced. Full integrated host acceptance and hardware qualification
+remain NOT_RUN.

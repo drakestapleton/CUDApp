@@ -15,6 +15,7 @@
  */
 #include "omega_gpu_moe_api.h"
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_codegen.h"
@@ -294,7 +295,12 @@ int omega_gpu_moe_tensor_upload_f32(uint32_t k, uint32_t n, const float *b, Omeg
     size_t cnt = (size_t)k * n;
     uint16_t *h = omega_gpu_host_alloc(cnt * sizeof *h);
     if (!h) return OMEGA_GPU_MATMUL_BAD_ARGS;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (size_t i = 0; i < cnt; i++) h[i] = omega_fp32_to_bf16(b[i]);
+#else
+    uint64_t converted = 0;
+    ar_check(omega_ar_bf16(&converted, b, cnt, h, cnt));
+#endif
     int rc = omega_gpu_moe_tensor_upload_bf16(k, n, h, out);
     omega_gpu_host_free(h);
     return rc;

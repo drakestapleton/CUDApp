@@ -4,6 +4,7 @@
 #include "omega_blackwell_codegen_tc2.h"
 #include "omega_gpu_fp8_api.h"
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include "omega_gpu_cmdlist.h"
 #include "omega_gpu_fmt.h"
 #include "cudapp_native.h"
@@ -17,10 +18,13 @@ void omega_gpu_pf_gemm_test_set_mutant(int m) { g.mutant = m; }
 static uint32_t RT(void) { return (uint32_t)(omega_api_pfbm(g.rt) >> 4); }
 uint32_t omega_gpu_pf_gemm_bm(void) { return omega_api_pfbm(g.rt); }
 
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
 static uint32_t perm4(uint32_t q) { return omega_api_perm4(q); }
+#endif
 
 int omega_gpu_pf_weights_host_form(uint32_t E, uint32_t n, uint32_t k, const uint8_t *w, const uint16_t *sinv, uint32_t layout, uint8_t *pw, float *ratio) {
     if (!E || omega_api_pfargs(n, k, layout) || !w || !sinv || !pw || !ratio) return OMEGA_GPU_PF_BAD_ARGS;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t KB = k / 128u, NB = n / 128u, I = n / 2u;
     float *sf = malloc((size_t)NB * KB * 4u);
     if (!sf) return OMEGA_GPU_PF_TOO_LARGE;
@@ -43,6 +47,28 @@ int omega_gpu_pf_weights_host_form(uint32_t E, uint32_t n, uint32_t k, const uin
     }
     free(sf);
     return rc;
+#else
+    uint64_t plan[32] = {3, E, n, k};
+    if (ar_plan(plan)) return OMEGA_GPU_PF_BAD_ARGS;
+    float *sf = malloc((size_t)plan[25]);
+    if (!sf) return OMEGA_GPU_PF_TOO_LARGE;
+    const uint64_t cfg[4] = {n, k, layout};
+    int rc = OMEGA_GPU_PF_OK;
+    /* Shell sequencing preserves the one-expert scratch allocation. Each Omega
+     * entry receives acquired slices; no host-data transform remains here. */
+    for (uint32_t e = 0; e < E && rc == OMEGA_GPU_PF_OK; e++) {
+        plan[4] = e;
+        if (ar_plan(plan)) { rc = OMEGA_GPU_PF_BAD_ARGS; break; }
+        if (omega_fp8_pack_scales(sinv + plan[22], (size_t)plan[16], sf, 0) != 0) {
+            rc = OMEGA_GPU_PF_BAD_ARGS; break;
+        }
+        uint64_t done = 0;
+        ar_check(omega_arpfcopy(&done, cfg, 4, w + plan[23], plan[17], pw + plan[23], plan[17]));
+        ar_check(omega_arpfrat(&done, cfg, 4, sf, plan[16], ratio + plan[26], plan[27]));
+    }
+    free(sf);
+    return rc;
+#endif
 }
 
 int omega_gpu_pf_weights_upload(uint32_t E, uint32_t n, uint32_t k, const uint8_t *w, const uint16_t *sinv, uint32_t layout, OmegaPfWeights *out) {
@@ -67,6 +93,7 @@ typedef struct { uint64_t w_va, r_va; uint32_t row0, cnt; uint64_t pad; } Tile;
 _Static_assert(sizeof(Tile) == OMEGA_TC2_TILE_BYTES, "tile entry");
 uint32_t omega_gpu_pf_gemm_tiles(const OmegaPfWeights *w, const uint32_t *counts, void *tab, uint32_t max) {
     if (!w || !counts || !tab) return 0;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t bm = omega_gpu_pf_gemm_bm(), KB = w->k / 128u;
     Tile *t = tab; uint32_t nt = 0, row = 0;
     for (uint32_t e = 0; e < w->experts; e++) {
@@ -79,6 +106,14 @@ uint32_t omega_gpu_pf_gemm_tiles(const OmegaPfWeights *w, const uint32_t *counts
         row += counts[e];
     }
     return nt;
+#else
+    uint64_t plan[32] = {3, w->experts, w->n, w->k};
+    if (ar_plan(plan)) return 0;
+    const uint64_t cfg[8] = {max, w->w.va, w->r.va, plan[17], plan[18], omega_gpu_pf_gemm_bm()};
+    uint64_t nt = 0;
+    ar_check(omega_artiles(&nt, cfg, 8, counts, w->experts, tab, (uint64_t)max * 4));
+    return (uint32_t)nt;
+#endif
 }
 
 static int gen_tc2(const OmegaPfKey *key, void *prog) { OmegaTc2Spec s; memcpy(&s, key->words, sizeof s); return omega_blackwell_codegen_tc2_prog(&s, prog); }
@@ -93,12 +128,18 @@ int omega_gpu_pf_gemm(const OmegaPfWeights *w, uint64_t tiles_va, uint32_t ntile
     if (!omega_tc2_spec_ok(&s)) return OMEGA_GPU_PF_BAD_ARGS;
     const uint32_t span = omega_tc2_span(&s);
     if (w->n % span) return OMEGA_GPU_PF_BAD_ARGS;
-    OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = KIND_TC2; memcpy(key.words, &s, sizeof s);
+    OmegaPfKey key;
+    ar_key(&key, sizeof key / sizeof(uint32_t), KIND_TC2, &s, sizeof s / sizeof(uint32_t));
     _Static_assert(sizeof(OmegaTc2Spec) <= sizeof key.words, "spec fits the key");
     uint32_t args[OMEGA_TC2_ARGS_WORDS];
     const uint64_t va[4] = { tiles_va, rowidx_va, x_va, y_va };
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (int i = 0; i < 4; i++) { args[2 * i] = (uint32_t)va[i]; args[2 * i + 1] = (uint32_t)(va[i] >> 32); }
     args[8] = w->n;
+#else
+    const uint32_t tail[] = {w->n};
+    ar_args_extra(args, OMEGA_TC2_ARGS_WORDS, va, 4, tail, 1);
+#endif
     omega_gpu_session_lock();
     int rc = omega_gpu_pf_open_locked();
     OmegaPfKernel k;
@@ -122,8 +163,11 @@ static int pq_core(OmegaGpuCmdList *cl, uint32_t k, uint32_t in_type, uint32_t r
     const uint32_t g = s.groups ? s.groups : kb, gy = s.groups ? kb / s.groups : 1u;
     if (!omega_pq_spec_ok(&s) || !x_va || !q_va || !s_va) return OMEGA_GPU_PF_BAD_ARGS;
     if (rows == 0) return OMEGA_GPU_PF_OK;
-    OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = KIND_PQ; memcpy(key.words, &s, sizeof s);
-    const uint32_t args[OMEGA_PQ_ARGS_WORDS] = { (uint32_t)x_va, (uint32_t)(x_va >> 32), (uint32_t)q_va, (uint32_t)(q_va >> 32), (uint32_t)s_va, (uint32_t)(s_va >> 32) };
+    OmegaPfKey key;
+    ar_key(&key, sizeof key / sizeof(uint32_t), KIND_PQ, &s, sizeof s / sizeof(uint32_t));
+    uint32_t args[OMEGA_PQ_ARGS_WORDS];
+    const uint64_t va[] = {x_va, q_va, s_va};
+    ar_args(args, OMEGA_PQ_ARGS_WORDS, va, 3);
     if (!cl) omega_gpu_session_lock();
     int rc = omega_gpu_pf_open_locked();
     OmegaPfKernel kern;
@@ -157,6 +201,7 @@ uint32_t omega_gpu_pf_qgemm_bm(void) { return 16u * QRT(); }
 uint32_t omega_gpu_pf_qgemm_tiles_va(uint32_t E, const uint64_t *w_va, const uint64_t *s_va, const uint32_t *counts, void *tab, uint32_t max) {
     if (!E || !w_va || !s_va || !counts || !tab) return 0;
     const uint32_t bm = omega_gpu_pf_qgemm_bm();
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     Tile *tl = tab; uint32_t nt = 0, row = 0;
     for (uint32_t e = 0; e < E; e++) {
         for (uint32_t r = 0; r < counts[e]; r += bm) {
@@ -167,12 +212,25 @@ uint32_t omega_gpu_pf_qgemm_tiles_va(uint32_t E, const uint64_t *w_va, const uin
         row += counts[e];
     }
     return nt;
+#else
+    uint64_t cfg[12] = {0, 0, 0, bm};
+    uint64_t more = 0, nt = 0;
+    for (;;) {
+        ar_check(omega_arnext(&more, cfg, 12, counts, E));
+        if (!more) return (uint32_t)nt;
+        cfg[4] = w_va[cfg[6]]; cfg[5] = s_va[cfg[6]];
+        ar_check(omega_artile(&nt, cfg, 8, tab, (uint64_t)max * 4));
+        if (!nt) return 0;
+        cfg[0] = nt;
+    }
+#endif
 }
 /* the same straight from an FP8 GEMV tensor (omega_gpu_fp8_tensor_entry, read in place, no copy) */
 uint32_t omega_gpu_pf_qgemm_tiles(const OmegaGpuFp8Tensor *t, const uint32_t *counts, void *tab, uint32_t max) {
     if (!t || !counts || !tab) return 0;
     uint32_t E = 0, n = 0, k = 0; omega_gpu_fp8_tensor_shape(t, &E, &n, &k);
     const uint32_t bm = omega_gpu_pf_qgemm_bm();
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     Tile *tl = tab; uint32_t nt = 0, row = 0;
     for (uint32_t e = 0; e < E; e++) {
         if (!counts[e]) continue;
@@ -186,6 +244,18 @@ uint32_t omega_gpu_pf_qgemm_tiles(const OmegaGpuFp8Tensor *t, const uint32_t *co
         row += counts[e];
     }
     return nt;
+#else
+    uint64_t cfg[12] = {0, 0, 0, bm};
+    uint64_t more = 0, nt = 0;
+    for (;;) {
+        ar_check(omega_arnext(&more, cfg, 12, counts, E));
+        if (!more) return (uint32_t)nt;
+        if (omega_gpu_fp8_tensor_entry(t, (uint32_t)cfg[6], &cfg[4], &cfg[5]) != 0) return 0;
+        ar_check(omega_artile(&nt, cfg, 8, tab, (uint64_t)max * 4));
+        if (!nt) return 0;
+        cfg[0] = nt;
+    }
+#endif
 }
 
 static int gen_qg(const OmegaPfKey *key, void *prog) { OmegaQgSpec s; memcpy(&s, key->words, sizeof s); return omega_blackwell_codegen_qgemm_prog(&s, prog); }
@@ -203,13 +273,19 @@ static int qg_core(OmegaGpuCmdList *cl, const OmegaQgSpec *scoped, uint32_t n, u
     s.epi = layout == OMEGA_GPU_PF_SWIGLU_NAT ? OMEGA_QG_EPI_SWIGLU : OMEGA_QG_EPI_F32; s.direct = rowidx_va == 0;
     if (!omega_qg_spec_ok(&s)) return OMEGA_GPU_PF_BAD_ARGS;
     const uint32_t span = omega_qg_span(&s);
-    OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = KIND_QG; memcpy(key.words, &s, sizeof s);
+    OmegaPfKey key;
+    ar_key(&key, sizeof key / sizeof(uint32_t), KIND_QG, &s, sizeof s / sizeof(uint32_t));
     _Static_assert(sizeof(OmegaQgSpec) <= sizeof key.words, "spec fits the key");
     _Static_assert(sizeof(Tile) == OMEGA_QG_TILE_BYTES, "tile entry");
     uint32_t args[OMEGA_QG_ARGS_WORDS];
     const uint64_t va[5] = { tiles_va, rowidx_va, xq_va, y_va, xs_va };
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (int i = 0; i < 5; i++) { args[2 * i] = (uint32_t)va[i]; args[2 * i + 1] = (uint32_t)(va[i] >> 32); }
     args[10] = n; args[11] = ntiles;
+#else
+    const uint32_t tail[] = {n, ntiles};
+    ar_args_extra(args, OMEGA_QG_ARGS_WORDS, va, 5, tail, 2);
+#endif
     uint64_t plan[64] = {0}, ok = 0;
     if (omega_native_qgorder(&ok, plan, 64, s.group, n / span, ntiles, 1) != OMEGA_OK || ok != 1) return OMEGA_GPU_PF_BAD_ARGS;
     if (!cl) omega_gpu_session_lock();

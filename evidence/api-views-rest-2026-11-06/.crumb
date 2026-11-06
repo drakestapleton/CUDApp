@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T08:30:30Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:f5ad7204bae469c8366250bfbc314a16642edd88d2cdba03c1604ffdee9e1f03",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "90a13e85a65233bc9e0578c19635237110ff8ac5",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "evidence",
+  "name": "api-views-rest-2026-11-06",
+  "purpose": "WIP host API typed-view migration checks and exact continuation handoff; hardware tiers are NOT_RUN.",
+  "schema_version": "1.0.0"
+}

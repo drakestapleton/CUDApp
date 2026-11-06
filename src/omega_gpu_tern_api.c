@@ -11,6 +11,7 @@
 #include "omega_gpu_cmdlist.h"
 #include <math.h>
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include <string.h>
 
 #define CACHE_SLOTS 8
@@ -111,10 +112,16 @@ void omega_gpu_tern_shape_for(uint32_t k, uint32_t layout, uint32_t R, uint32_t 
 }
 
 static int kernel_for(const OmegaTernGemvSpec *spec, Slot **out, bool *hit) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (unsigned i = 0; i < CACHE_SLOTS; i++) {
         Slot *s = &g.cache[i];
         if (s->valid && memcmp(&s->spec, spec, sizeof *spec) == 0) { *out = s; *hit = true; return OMEGA_GPU_TERN_OK; }
     }
+#else
+    const size_t found = ar_cache(g.cache, sizeof g.cache, CACHE_SLOTS, sizeof(Slot),
+                                  offsetof(Slot, valid), offsetof(Slot, spec), spec, sizeof *spec);
+    if (found != SIZE_MAX) { *out = &g.cache[found]; *hit = true; return OMEGA_GPU_TERN_OK; }
+#endif
     Slot *s = &g.cache[g.next];
     if (g_rec && s->valid) { omega_gpu_session_set_error("tern record: kernel cache miss would evict a resident kernel (warm up before recording)"); return OMEGA_GPU_TERN_TOO_LARGE; }
     BlackwellIRProgram *prog = omega_gpu_host_calloc(1, sizeof *prog);
@@ -142,6 +149,7 @@ uint32_t omega_gpu_tern_padded_rows(uint32_t n) { return omega_api_pad8(n); }
 
 int omega_gpu_tern_pack(uint32_t n, uint32_t k, const int8_t *w, uint32_t layout, uint32_t R, uint32_t *out, uint32_t n_padded) {
     if (!w || !out || omega_api_tpack(n, k, layout == OMEGA_TERN_LAYOUT_BLOCK ? 1u : 0u, R, n_padded)) return OMEGA_GPU_TERN_BAD_ARGS;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t kw = k / 16u;
     memset(out, 0, (size_t)n_padded * kw * 4u);
     for (uint32_t r = 0; r < n; r++) {
@@ -157,19 +165,33 @@ int omega_gpu_tern_pack(uint32_t n, uint32_t k, const int8_t *w, uint32_t layout
             out[omega_tern_word_offset(layout, R, k, r, c) / 4u] = word;
         }
     }
+#else
+    const uint64_t q[4] = { n, k, layout == OMEGA_TERN_LAYOUT_BLOCK, R };
+    uint64_t r = 0;
+    ar_check(omega_artern(&r, q, 4, w, (uint64_t)n * k, out, (uint64_t)n_padded * (k / 16u)));
+    if (r) return OMEGA_GPU_TERN_BAD_TRIT;
+#endif
     return OMEGA_GPU_TERN_OK;
 }
 
 int omega_gpu_tern_segment_bounds(uint32_t n, const OmegaGpuTernSegments *seg, int mutant, uint32_t b[3]) {
     const uint32_t cnt = seg ? seg->count : 1u;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     if (omega_api_segend(0, cnt, 1u, 1u, 0u)) return OMEGA_GPU_TERN_BAD_ARGS;
     for (uint32_t i = 0; i < 3; i++)
         b[i] = omega_api_segb(i, cnt, n, seg ? seg->end[i] : 0u, mutant == 2 ? 2u : 0u);
+#else
+    const uint32_t zero[3] = {0, 0, 0};
+    uint64_t r = 0;
+    ar_check(omega_arsegb(&r, n, cnt, mutant == 2 ? 2u : 0u, seg ? seg->end : zero, 3, b, 3));
+    if (r) return OMEGA_GPU_TERN_BAD_ARGS;
+#endif
     return OMEGA_GPU_TERN_OK;
 }
 
 static int seg_ok(uint32_t n, const OmegaGpuTernSegments *seg) {
     if (!seg) return 1;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     if (omega_api_segend(0, seg->count, 1u, 1u, 0u)) return 0;
     uint32_t prev = 0;
     for (uint32_t i = 0; i < seg->count; i++) {
@@ -179,6 +201,11 @@ static int seg_ok(uint32_t n, const OmegaGpuTernSegments *seg) {
         prev = seg->end[i];
     }
     return 1;
+#else
+    uint64_t r = 0;
+    ar_check(omega_arsegok(&r, n, seg->count, seg->end, 3, seg->scale, 3));
+    return r != 0;
+#endif
 }
 
 void omega_gpu_tern_tensor_shape(const OmegaGpuTernTensor *t, uint32_t *n, uint32_t *k) {
@@ -197,11 +224,21 @@ int omega_gpu_tern_tensor_upload(uint32_t n, uint32_t k, const int8_t *w, const 
     omega_gpu_session_unlock();
     if (omega_api_layok(layout, R)) return OMEGA_GPU_TERN_BAD_ARGS;
     const size_t count = (size_t)n * k;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (size_t i = 0; i < count; i++) if (!omega_api_tritok((uint8_t)w[i])) {
         char e[120]; omega_gpu_fmt(e, sizeof e, "tern upload: value %d at element %zu is not a trit", (int)w[i], i);
         omega_gpu_session_set_error(e);
         return OMEGA_GPU_TERN_BAD_TRIT;
     }
+#else
+    uint64_t bad = 0;
+    ar_check(omega_artrits(&bad, w, count));
+    if (bad != count) {
+        char e[120]; omega_gpu_fmt(e, sizeof e, "tern upload: value %d at element %zu is not a trit", (int)w[bad], (size_t)bad);
+        omega_gpu_session_set_error(e);
+        return OMEGA_GPU_TERN_BAD_TRIT;
+    }
+#endif
     OmegaGpuTernTensor *t = omega_gpu_host_calloc(1, sizeof *t);
     if (!t) return OMEGA_GPU_TERN_BAD_ARGS;
     t->n = n; t->k = k; t->n_padded = omega_gpu_tern_padded_rows(n); t->layout = layout; t->R = R; t->cached = !uncached;
@@ -215,7 +252,12 @@ int omega_gpu_tern_tensor_upload(uint32_t n, uint32_t k, const int8_t *w, const 
     if (rc == OMEGA_GPU_TERN_OK) rc = omega_gpu_tern_pack(n, k, w, layout, R, t->w.cpu, t->n_padded);
     if (rc == OMEGA_GPU_TERN_OK) {
         float rev[4] = { 0, 0, 0, 0 };
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         for (uint32_t i = 0; i < t->seg.count; i++) rev[3u - i] = t->seg.scale[i];
+#else
+        uint64_t r = 0;
+        ar_check(omega_arrev(&r, t->seg.scale, t->seg.count, rev, 4));
+#endif
         memcpy(t->ws.cpu, rev, sizeof rev);
         if (omega_gpu_session_sync_to_gpu(&t->w) != 0 || omega_gpu_session_sync_to_gpu(&t->ws) != 0) rc = OMEGA_GPU_TERN_CHIP_FAIL;
     }
@@ -256,11 +298,17 @@ static int gemv_core(const OmegaGpuTernTensor *t, const int8_t *x, int f32, floa
         omega_gpu_session_set_error("tern: kernel shape refused for this tensor");
         UNLOCK(); return OMEGA_GPU_TERN_CODEGEN_FAIL;
     }
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t U = t->n_padded / (2u * spec.rows);
     if (t->n_padded % (2u * spec.rows)) { UNLOCK(); return OMEGA_GPU_TERN_CODEGEN_FAIL; }
     uint32_t grid_x = (U + spec.warps - 1u) / spec.warps;
     if (grid_x > ctas) grid_x = ctas;
     if (grid_x == 0) grid_x = 1;
+#else
+    uint64_t plan[32] = {4, t->n_padded, spec.rows, spec.warps, ctas, n, bounds[0], bounds[1], bounds[2]};
+    if (ar_plan(plan)) { UNLOCK(); return OMEGA_GPU_TERN_CODEGEN_FAIL; }
+    const uint32_t U = (uint32_t)plan[16], grid_x = (uint32_t)plan[17];
+#endif
 
     int rc = OMEGA_GPU_TERN_OK;
     if (!dev_open_locked()) { UNLOCK(); return OMEGA_GPU_TERN_CHIP_FAIL; }
@@ -282,12 +330,17 @@ static int gemv_core(const OmegaGpuTernTensor *t, const int8_t *x, int f32, floa
         memcpy(g.x_buf.mem.cpu, x, k);
         memcpy(g.as_buf.mem.cpu, &a_scale, 4);
         const uint32_t poison = f32 ? OMEGA_GPU_TERN_POISON_F32_BITS : (uint32_t)OMEGA_GPU_TERN_POISON_I32;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         for (size_t i = 0; i < n; i++) yd[i] = poison;
+#else
+        ar_fill(yd, n, poison);
+#endif
         if (omega_gpu_session_sync_to_gpu(&g.x_buf.mem) != 0 || omega_gpu_session_sync_to_gpu(&g.y_buf.mem) != 0
             || omega_gpu_session_sync_to_gpu(&g.as_buf.mem) != 0) rc = OMEGA_GPU_TERN_CHIP_FAIL;
     }
 
     uint32_t args[OMEGA_TERN_ARGS_WORDS];
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     memset(args, 0, sizeof args);
     const uint64_t x_va = rec ? dev_x : g.x_buf.mem.va, y_va = rec ? dev_y : g.y_buf.mem.va;
     const uint64_t as_va = rec ? dev_as : g.as_buf.mem.va, ws_va = t->ws.va;
@@ -299,6 +352,13 @@ static int gemv_core(const OmegaGpuTernTensor *t, const int8_t *x, int f32, floa
     args[10] = U; args[11] = grid_x * spec.warps;
     args[12] = 0u - n;
     for (int i = 0; i < 3; i++) args[13 + i] = 0u - bounds[i];
+#else
+    const uint64_t va[] = {t->w.va, rec ? dev_x : g.x_buf.mem.va, rec ? dev_y : g.y_buf.mem.va,
+                           t->ws.va, rec ? dev_as : g.as_buf.mem.va};
+    const uint32_t tail[] = {U, (uint32_t)plan[18], (uint32_t)plan[19],
+                             (uint32_t)plan[20], (uint32_t)plan[21], (uint32_t)plan[22]};
+    ar_args_extra(args, OMEGA_TERN_ARGS_WORDS, va, 5, tail, 6);
+#endif
     if (info) {
         info->n = n; info->k = k; info->n_padded = t->n_padded; info->layout = t->layout; info->rows_per_half = spec.rows;
         info->warps_per_cta = spec.warps; info->depth = spec.depth; info->grid_x = grid_x;
@@ -310,6 +370,7 @@ static int gemv_core(const OmegaGpuTernTensor *t, const int8_t *x, int f32, floa
         info->sm_architecture = 121;
     }
     if (rc == OMEGA_GPU_TERN_OK) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         OmegaGpuLaunch L = {
             .code_va = ks->code.va, .gpr_count = gpr_declared(ks->kernel.gpr_count),
             .threads_x = 32u * spec.warps, .threads_y = 1, .grid_x = grid_x, .grid_y = 1,
@@ -317,6 +378,13 @@ static int gemv_core(const OmegaGpuTernTensor *t, const int8_t *x, int f32, floa
             .args = args, .n_args = OMEGA_TERN_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
             .shared_bytes = omega_tern_gemv_shared_bytes(&spec),
         };
+#else
+        OmegaGpuLaunch L;
+        const uint64_t launch[16] = {ks->code.va, gpr_declared(ks->kernel.gpr_count), plan[23], 1,
+                                     grid_x, 1, n, (uintptr_t)args, OMEGA_TERN_ARGS_WORDS,
+                                     MARKER_TIMEOUT_MS, omega_tern_gemv_shared_bytes(&spec)};
+        ar_launch(&L, launch);
+#endif
         if (!omega_bw_gpr_declared_ok(L.gpr_count, ks->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); rc = OMEGA_GPU_TERN_CHIP_FAIL; }
         else if (rec) { if (omega_gpu_cmdlist_add(rec, &L) < 0) rc = OMEGA_GPU_TERN_CHIP_FAIL; }
         else if (omega_gpu_session_launch(&L, info ? &info->elapsed_ns : NULL, info ? &info->completion_marker : NULL) != 0) rc = OMEGA_GPU_TERN_CHIP_FAIL;
@@ -324,8 +392,12 @@ static int gemv_core(const OmegaGpuTernTensor *t, const int8_t *x, int f32, floa
     if (rc == OMEGA_GPU_TERN_OK && !rec && omega_gpu_session_sync_to_cpu(&g.y_buf.mem) != 0) rc = OMEGA_GPU_TERN_CHIP_FAIL;
     if (rc == OMEGA_GPU_TERN_OK && !rec) {
         const uint32_t poison = f32 ? OMEGA_GPU_TERN_POISON_F32_BITS : (uint32_t)OMEGA_GPU_TERN_POISON_I32;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         size_t unchanged = 0;
         for (size_t i = 0; i < n; i++) if (yd[i] == poison) unchanged++;
+#else
+        size_t unchanged = ar_count(yd, n, poison);
+#endif
         if (unchanged) {
             char e[120]; omega_gpu_fmt(e, sizeof e, "tern: output poison survived in %zu of %u rows", unchanged, n);
             omega_gpu_session_set_error(e); rc = OMEGA_GPU_TERN_CHIP_FAIL;

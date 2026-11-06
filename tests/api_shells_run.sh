@@ -23,8 +23,12 @@ cc -std=c11 -O2 -ffp-contract=off -I"$ROOT/src" -c "$ROOT/src/omega_gpu_fp8_pack
 for name in shp pack slot blk trit; do
   cc -std=c11 -O2 -ffp-contract=off -I"$ROOT/src" -c "$GEN/cudapp_om_apish_$name.c" -o "$OUT/unit_$name.o"
 done
+for name in nan scale fold foldh acc mag; do
+  cc -std=c11 -O2 -ffp-contract=off -I"$ROOT/src" -c "$ROOT/src/cudapp_om_ar_$name.c" -o "$OUT/ar_$name.o"
+done
 cc -o "$OUT/api_shells_diff" \
   "$OUT/diff.o" "$OUT/oracle.o" "$OUT/slot_table.o" "$OUT/gpu_pack.o" \
   "$OUT/unit_shp.o" "$OUT/unit_pack.o" "$OUT/unit_slot.o" "$OUT/unit_blk.o" "$OUT/unit_trit.o" \
+  "$OUT/ar_nan.o" "$OUT/ar_scale.o" "$OUT/ar_fold.o" "$OUT/ar_foldh.o" "$OUT/ar_acc.o" "$OUT/ar_mag.o" \
   -lpthread -lm
 "$OUT/api_shells_diff"

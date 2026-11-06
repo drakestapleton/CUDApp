@@ -6,6 +6,9 @@
 #endif
 #include <string.h>
 #include "cudapp_native.h"
+#ifdef OMEGA_GPU_NO_POSIX
+#include "omega_native.h"
+#endif
 #include "omega_bw_bind.h"
 #ifndef BW_BIND_C_PRIMARY
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
@@ -111,7 +114,15 @@ uint16_t omega_fp32_to_fp16(float f) {
 }
 
 uint16_t omega_fp32_to_bf16(float f) {
+#if defined(OMEGA_GPU_NO_POSIX) && !defined(CUDAPP_MIGRATION_PENDING_C_NO_POSIX)
+    uint32_t bits;
+    uint64_t out;
+    memcpy(&bits, &f, sizeof(bits));
+    if (omega2_no_bf16(&out, bits) != OMEGA_OK) __builtin_trap();
+    return (uint16_t)out;
+#else
     return omega_fp32_to_bf16_rne(f);
+#endif
 }
 
 #if defined(OMEGA_GPU_NO_POSIX) || (defined(CUDAPP_MIGRATION_PENDING_BW_CPU) && CUDAPP_MIGRATION_PENDING_BW_CPU)

@@ -149,6 +149,10 @@ uint32_t omega_argtile(uint64_t  *result, void *p0, uint64_t p0_n, void *p1, uin
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_argspec(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_pfcount(uint64_t  *result, const void *p0, uint64_t p0_n);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_arpfreg(uint64_t  *result, uint64_t p0, uint64_t p1);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_argargs(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_argseg(uint64_t  *result, void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);

@@ -118,6 +118,12 @@ return o_leave(({uint64_t _a=v1;uint64_t _b=v2;o_op(3, 5, _a,_b);}));
 if(({uint64_t _a=v0;uint64_t _b=6ULL;o_op(6, 5, _a,_b);})){
 return o_leave(({uint64_t _a=({uint64_t _a=v1;uint64_t _b=v2;o_op(3, 5, _a,_b);});uint64_t _b=v3;o_op(3, 5, _a,_b);}));
 }
+if(({uint64_t _a=v0;uint64_t _b=7ULL;o_op(6, 5, _a,_b);})){
+if(({uint64_t _a=v1;uint64_t _b=0ULL;o_op(7, 5, _a,_b);})){
+return o_leave(1ULL);
+}
+return o_leave(v2);
+}
 return o_leave(0ULL);
 }
 uint32_t omega_gemm_ex_policy(uint64_t  *result, volatile uint64_t p0, volatile uint64_t p1, volatile uint64_t p2, volatile uint64_t p3, volatile uint64_t p4){

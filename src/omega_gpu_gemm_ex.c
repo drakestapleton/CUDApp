@@ -8,6 +8,10 @@
 #include "omega_gpu_session.h"
 
 #include <string.h>
+#include <stdlib.h>
+#ifndef CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
+#define CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY 0
+#endif
 
 #ifndef CUDAPP_MIGRATION_PENDING_GEMM_EX
 #define CUDAPP_MIGRATION_PENDING_GEMM_EX 0
@@ -579,7 +583,21 @@ typedef struct {
 
 static uint64_t gx_fbits(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
 static uint64_t gx_dbits(double d) { uint64_t u; memcpy(&u, &d, 8); return u; }
-static uint64_t gx_min(uint64_t a, uint64_t b) { return a < b ? a : b; }
+#if !CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
+/* Pure scalar calls have no refusal path for validated shell inputs. A trap is a shell defect. */
+static uint64_t gx_policy(uint64_t op, uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
+    uint64_t result;
+    if (omega_gemm_ex_policy(&result, op, a, b, c, d) != OMEGA_OK) abort();
+    return result;
+}
+#endif
+static uint64_t gx_min(uint64_t a, uint64_t b) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
+    return a < b ? a : b;
+#else
+    return gx_policy(0, a, b, 0, 0);
+#endif
+}
 
 static void gx_load(Gx *g, const OmegaGemmExArgs *a) {
     uint64_t *x = g->x;
@@ -623,16 +641,31 @@ static void gx_gather(uint8_t *dst, const uint8_t *src, uint64_t i0, uint64_t st
 
 /* the start element and stride of: row i of op(A) from k0; column j of op(B) from k0; row kk of op(B) from column n0 */
 static uint64_t gx_arow(const Gx *g, uint64_t i, uint64_t k0, uint64_t *st) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
     *st = g->x[0] ? g->p[2] : 1u;
     return g->x[0] ? k0 * g->p[2] + i : i * g->p[2] + k0;
+#else
+    *st = gx_policy(2, g->x[0], g->p[2], 0, 0);
+    return gx_policy(1, g->x[0], g->p[2], i, k0);
+#endif
 }
 static uint64_t gx_bcol(const Gx *g, uint64_t j, uint64_t k0, uint64_t *st) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
     *st = g->p[5] ? 1u : g->p[3];
     return g->p[5] ? j * g->p[3] + k0 : k0 * g->p[3] + j;
+#else
+    *st = gx_policy(7, g->p[5], g->p[3], 0, 0);
+    return gx_policy(1, g->p[5], g->p[3], k0, j);
+#endif
 }
 static uint64_t gx_brow(const Gx *g, uint64_t kk, uint64_t n0, uint64_t *st) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
     *st = g->p[5] ? g->p[3] : 1u;
     return g->p[5] ? n0 * g->p[3] + kk : kk * g->p[3] + n0;
+#else
+    *st = gx_policy(2, g->p[5], g->p[3], 0, 0);
+    return gx_policy(1, g->p[5], g->p[3], kk, n0);
+#endif
 }
 
 /* the scale arrays: count floats in each of batches copies stride apart; a non-finite scale refuses the call */
@@ -650,18 +683,31 @@ static int gx_scales(Gx *g, const float *s, uint64_t count, uint64_t batches, ui
 /* rows of n elements per packed unit run: as many as fit the byte windows of src (es bytes each) and dst (ce bytes each);
  * 1 when the op is not element-wise (5 6, the bf16x3 planes) */
 static uint64_t gx_pack(uint64_t op, uint64_t n, uint64_t es, uint64_t ce) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
     const uint64_t w = n * (es > ce ? es : ce);
     return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u;
+#else
+    return gx_policy(3, op, n, es, ce);
+#endif
 }
 
 /* convert rn packed rows of n elements in src into dst rows ld bytes apart (ce bytes per converted element): straight
  * into dst when the rows are adjacent there, else through gc */
 static int gx_conv(Gx *g, uint64_t op, uint64_t t, uint64_t n, uint64_t rn, const uint8_t *src, uint8_t *dst, uint64_t ld,
                    uint64_t ce) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY
     if (rn == 1u || ld == n * ce) return gx_row(g, op, t, rn * n, src, dst);
     if (gx_row(g, op, t, rn * n, src, g->gc)) return GX_FAULT;
     for (uint64_t r = 0; r < rn; r++) memcpy(dst + r * ld, g->gc + r * n * ce, n * ce);
     return OMEGA_GPU_GEMM_OK;
+#else
+    const uint64_t count = gx_policy(5, rn, n, 0, 0), bytes = gx_policy(5, n, ce, 0, 0);
+    if (gx_policy(4, rn, ld, n, ce)) return gx_row(g, op, t, count, src, dst);
+    if (gx_row(g, op, t, count, src, g->gc)) return GX_FAULT;
+    for (uint64_t r = 0; r < rn; r++)
+        memcpy(dst + gx_policy(5, r, ld, 0, 0), g->gc + gx_policy(6, r, n, ce, 0), bytes);
+    return OMEGA_GPU_GEMM_OK;
+#endif
 }
 
 /* op 7 over the n elements (es bytes) at *s: read in place when *s is word aligned and a whole window from it lies before

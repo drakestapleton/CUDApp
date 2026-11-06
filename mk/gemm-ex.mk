@@ -18,6 +18,12 @@
 # Picked up by the `-include mk/*.mk` line of the Makefile, after CFLAGS and before HOST_TESTS.
 CUDAPP_MIGRATION_PENDING_GEMM_EX ?= 0
 CFLAGS += -DCUDAPP_MIGRATION_PENDING_GEMM_EX=$(CUDAPP_MIGRATION_PENDING_GEMM_EX)
+# Pure gather/packing policy C is an independent, default-OFF oracle; this does not enable GX_C.
+CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY ?= 0
+$(OUT_DIR)/omega_gpu_gemm_ex.o: CFLAGS += -DCUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY=$(CUDAPP_MIGRATION_PENDING_C_GEMM_EX_HOST_POLICY)
+.PHONY: test-gemm-ex-host-policy
+test-gemm-ex-host-policy:
+	python3 tests/gemm_ex_policy_check.py
 # The C oracle sums in double; a fused multiply-add rounds once where the C rounds twice, so contraction stays off.
 $(OUT_DIR)/omega_gpu_gemm_ex.o: CFLAGS += -ffp-contract=off
 # The checked Omega-to-C units do every operation through small generic helpers (o_op, o_get, o_norm, ...); at -O2's

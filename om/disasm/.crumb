@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T03:05:36Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:8c9d70e6e59f2ea11e45669a32498fbcee0286b18be1f948369a5ab007692df5",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 2,
+      "generated_at_commit": "63fb094998b390a2057f33edf641183c3119c81c",
+      "source_tree": "sha256:1afc2807e706c361099b768839f6a7456d3622ad8375520256a7ed0a6ad35d15"
+    }
+  },
+  "layer": "realization",
+  "name": "disasm",
+  "purpose": "Omega's own sm_121 disassembler: instruction words to nvdisasm-compatible text",
+  "schema_version": "1.0.0"
+}

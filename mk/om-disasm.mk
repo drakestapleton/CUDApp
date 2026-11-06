@@ -3,8 +3,8 @@
 # binding src/cudapp_om_sm121_dis.c (om/units.sh). The C decoder in src/omega_sm121_disasm.c is migration-pending:
 # CUDAPP_DISASM=c builds it alone, CUDAPP_DISASM=diff runs both on every word and aborts on a difference.
 #   make test-om-disasm          (in `make test`; no Omega tool, no NVIDIA tool) tests/sm121_dis_diff_test.c:
-#       1. nine golden words print their text, and each with one flipped bit (the corrupted word) does not;
-#       2. .om vs C on 25,928 words: every row of the C table with random operands, random words, IMAD immediates;
+#       1. eleven golden words print their text, and each with one flipped bit (the corrupted word) does not;
+#       2. .om vs C on 26,528 words: every row of the C table with random operands, random words, IMAD immediates;
 #       3. red checks: one planted byte in one .om text must FAIL step 2; corrupted words held to the golden text
 #          must FAIL step 1.
 #   make test-om-disasm-fimm     (pinned OMEGA_OMC and OMEGA_BRIDGE) the float-immediate printer, .om vs C, over a
@@ -36,9 +36,9 @@ test-om-disasm: $(OM_DIS_DIR)/diff
 	else echo "red check: the planted .om text difference FAILS, as it must"; fi
 	@if $(OM_DIS_DIR)/diff --corrupt > $(OM_DIS_DIR)/corrupt.log 2>&1; then \
 		echo "RED CHECK BROKEN: corrupted words passed as golden"; exit 1; \
-	elif ! grep -q '^FAIL corrupted words read as golden: 9 of 9 differ' $(OM_DIS_DIR)/corrupt.log; then \
+	elif ! grep -q '^FAIL corrupted words read as golden: 11 of 11 differ' $(OM_DIS_DIR)/corrupt.log; then \
 		echo "RED CHECK BROKEN: not every corrupted word failed"; tail -3 $(OM_DIS_DIR)/corrupt.log; exit 1; \
-	else echo "red check: every corrupted word FAILS the golden text, as it must (9 of 9)"; fi
+	else echo "red check: every corrupted word FAILS the golden text, as it must (11 of 11)"; fi
 
 test-om-disasm-fimm: tests/sm121_dis_fimm_test.c $(OM_DIS_DEPS) src/cudapp_om_sm121_dis.c om/disasm/sm121_dis.om om/disasm/fimm_probe.om
 	@$(OM_DIS_PIN_CHECK)
@@ -74,3 +74,4 @@ test-om-disasm-mutants: tests/sm121_dis_fimm_test.c $(OM_DIS_DEPS) om/disasm/sm1
 	if [ $$w = 0 ] && [ $$f = 0 ]; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): words $$( [ $$w = 1 ] && echo FAIL || echo pass ), floats $$( [ $$f = 1 ] && echo FAIL || echo pass )"; \
 	done
+	@echo "OM_DISASM_MUTANTS PASS (4/4 killed)"

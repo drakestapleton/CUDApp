@@ -1,8 +1,12 @@
 # sm121dis: Omega's own GB10 disassembler
 
 A disassembler turns the GPU's machine code back into readable instructions. Omega used to borrow NVIDIA's
-`nvdisasm` for that, in every check that reads a kernel back. `sm121dis` is our own (row C6 of `docs/OMEGA.md`):
-the decoder is `src/omega_sm121_disasm.c`, this folder holds the command line and the comparison with NVIDIA's tool.
+`nvdisasm` for that, in every check that reads a kernel back. `sm121dis` is our own (row C6 of `docs/OMEGA.md`).
+The decoder is Omega: `om/disasm/sm121_dis.om`, built by `om/units.sh` into the checked-in
+`src/cudapp_om_sm121_dis.c` and called from `src/omega_sm121_disasm.c`. The earlier C decoder in that file stays
+behind `CUDAPP_MIGRATION_PENDING_C_DISASM` (off by default) as the differential oracle. `make CUDAPP_DISASM=c`
+builds the C decoder, `CUDAPP_DISASM=diff` runs both on every word and aborts on the first difference, and the
+default `CUDAPP_DISASM=om` uses Omega's. This folder holds the command line and the comparison with NVIDIA's tool.
 
 ## What it proves
 
@@ -11,17 +15,26 @@ the decoder is `src/omega_sm121_disasm.c`, this folder holds the command line an
   `nvdisasm`, text and spacing included. All 2,980 kernels (1,218,992 instruction words) agree (2026-10-30, host).
   The receipts in `evidence/C6-DISASM/` predate the sweep kernels: 331 kernels (59,152 words) on 2026-10-24, 402 kernels
   (74,096 words) on 2026-10-25.
-- A copy of the decoder with one planted fault (`SM121DIS_MUTANT`, first source register off by one bit) must fail
-  that comparison with a verdict, and does on 2,979 of the 2,980 kernels. The one it cannot touch is a sweep kernel of
-  32 words that is only EXIT, a branch and padding: it has no source register for the fault to change.
+- A copy of the `.om` decoder with one planted fault (field a read as `v ^ 1` unless it is RZ, the same fault the
+  old C `SM121DIS_MUTANT` planted) is generated with the pinned omc and must fail that comparison with a verdict.
+  On 2026-10-30 the C version of that fault failed on 2,979 of the 2,980 kernels. The one it cannot touch is a
+  sweep kernel of 32 words that is only EXIT, a branch and padding: it has no source register for the fault to change.
+- The `.om` decoder and the C oracle print the same text for every word of every collected kernel
+  (`om_vs_c.sh`, inside `make test-sm121dis`), and for 26,528 generated words plus 37,088 float immediates
+  (`make test-om-disasm`, `make test-om-disasm-fimm`). Four `.om` mutants must each fail one of those
+  (`make test-om-disasm-mutants`).
 - A kernel that could not be saved whole (a full disk) fails the collection; it is never compared cut short.
 - A word the decoder does not know is printed as `?? <hex>` and fails the check. It is never guessed.
 
 ## How to run it
 
-    make test-sm121dis          # collect, compare with nvdisasm, then the red check
+    make test-sm121dis          # collect, compare with nvdisasm, the red check, then .om vs C on the corpus
+    make test-om-disasm         # in `make test`: golden words, corrupted-word control, .om vs C differential
+    make test-om-disasm-fimm test-om-disasm-mutants   # pinned omc: float sweep, four .om mutants
 
-`nvdisasm` is used only here, as the reference to compare against. Nothing it prints goes into a kernel.
+`nvdisasm` is used only by oracle targets that are not part of `make test` (`make test-sm121dis`,
+`make test-om-spec-encoder-nvdisasm-oracle`, `make test-sm121-mmio` and the Ampere oracle targets), as the reference
+to compare against. Nothing it prints goes into a kernel.
 
 ## Who uses it
 
@@ -32,7 +45,9 @@ The checks that used to call `nvdisasm` now call ours:
 - `tools/divsqrt_nvdisasm_check.sh`, `tools/ldst_nvdisasm_check.sh` and `make test-numeric-reduce-nvdisasm`
   (the `build/sm121dis` command);
 - the hazard checker's register cross-check, `tests/bw_hazard_test.c --disasm` (`make test-bw-hazard-nvdisasm`,
-  linked in, `omega_sm121_disasm`), over every kernel its sweep builds. Those kernels are in the comparison corpus.
+  linked in, `omega_sm121_disasm`), over every kernel its sweep builds. Those kernels are in the comparison corpus;
+- the read-back of the spec encoder's samples, `tools/test_bw_spec_encoder.sh` (`make test-om-spec-encoder`, the
+  `build/sm121dis` command, since 2026-11-05).
 
 The script and target names are kept so older receipts still line up. `make test-zero-nvdisasm` proves that none
 of these checks runs `nvdisasm`.
@@ -45,6 +60,7 @@ of these checks runs `nvdisasm`.
 | `corpus.sh` | runs every GPU test with `OMEGA_KERNEL_DUMP_DIR` set, so each kernel the library encodes is saved |
 | `check.sh` | compares our text with nvdisasm's for every saved kernel, `SM121DIS_JOBS` at a time (default: every CPU the process may use); PASS only when every word agrees |
 | `oracle_pairs.sh` | turns nvdisasm's listing into the same one-line-per-word form |
+| `om_vs_c.sh` | runs the `.om` build and the C build (`build/sm121dis_c`) over every saved kernel; PASS only when every listing and exit status is identical |
 
 ## Exact MMIO semantic contract (issue #171)
 

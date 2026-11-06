@@ -114,9 +114,9 @@ log "PASS: (b) decode(encode(x)) == x passed on all 461 corpus instructions!"
 # regular path. NVIDIA's nvdisasm is used only when SPEC_ENCODER_ORACLE=nvdisasm
 # (make test-om-spec-encoder-nvdisasm-oracle); the regular path never runs it.
 if [ "${SPEC_ENCODER_ORACLE:-}" = nvdisasm ]; then
-  DIS=${NVDISASM:-/usr/local/cuda/bin/nvdisasm}
+  DIS=${NVDISASM:-}
   DIS_NAME=nvdisasm
-  [ -x "$DIS" ] || { echo "NOT_RUN: required oracle nvdisasm not found at $DIS" >&2; exit 3; }
+  [ -n "$DIS" ] && [ -x "$DIS" ] || { echo "NOT_RUN: SPEC_ENCODER_ORACLE=nvdisasm needs NVDISASM=<path to nvdisasm> (got '$DIS')" >&2; exit 3; }
 else
   DIS=${SM121DIS:-"$ROOT/build/sm121dis"}
   DIS_NAME=sm121dis

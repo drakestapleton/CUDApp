@@ -233,6 +233,10 @@ static const Row ROWS[] = {
     { 0x0000000000007945ull, 0x03800200ull, "BSSY.RECONVERGENT %y, %Y" },
     { 0x0000000000007941ull, 0x03800200ull, "BSYNC.RECONVERGENT %y" },
     { 0x0000000000007b1dull, 0x00010000ull, "BAR.SYNC.DEFER_BLOCKING 0x0" },
+    /* half and narrowing conversions the native f16 IR ops write (AttentionC, numeric fixture words): only the exact
+     * forms checked with nvdisasm 13.0.85 -b SM121 on 2026-11-05; other modifiers stay reported, not guessed */
+    { 0x20000000ff007230ull, 0x00004100ull, "HADD2.F32 %d, -RZ, %b.H0_H0" },
+    { 0x0000000000007304ull, 0x00200800ull, "F2F.F16.F32 %d, %b" },
 };
 
 /* IMAD with an immediate: nvdisasm names the special cases. Returns 0 for another instruction, 1 when printed. */

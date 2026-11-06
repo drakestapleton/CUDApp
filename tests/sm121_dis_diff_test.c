@@ -11,7 +11,8 @@
  *   --plant         the comparator's red check: one byte of one .om text is changed; the run must report FAIL.
  *   --corrupt       the golden red check: the corrupted words are checked as if they were the golden ones; FAIL.
  * Host only: no GPU, no NVIDIA tool. The golden texts are what nvdisasm 13.0.85 -b SM121 printed for these words on
- * 2026-11-05 (the tools/test_bw_spec_encoder.sh samples); make test-sm121dis is where nvdisasm itself is compared. */
+ * 2026-11-05 (the tools/test_bw_spec_encoder.sh samples, and the HADD2.F32 and F2F.F16.F32 fixture words of the native
+ * f16 IR ops); make test-sm121dis is where nvdisasm itself is compared. */
 #define CUDAPP_MIGRATION_PENDING_DISASM_DIFF 1
 #include "../src/omega_sm121_disasm.c"
 
@@ -41,6 +42,8 @@ static const struct { uint64_t lo, hi; const char *text; } GOLD[] = {
     { 0x000000ffff047212ull, 0x001fca00078e0007ull, "LOP3.LUT R4, RZ, RZ, R7, 0x0, !PT" },
     { 0x000000ffff047219ull, 0x001fca0000000607ull, "SHF.L.U32 R4, RZ, RZ, R7" },
     { 0x000000ffff047227ull, 0x001fca00078e0007ull, "IMAD.HI.U32 R4, RZ, RZ, R7" },
+    { 0x20000002ff097230ull, 0x0000000000004100ull, "HADD2.F32 R9, -RZ, R2.H0_H0" },
+    { 0x0000000200097304ull, 0x0000000000200800ull, "F2F.F16.F32 R9, R2" },
 };
 
 /* corrupt = 0: each golden word must print its text and its corrupted copy must not; corrupt = 1: the corrupted

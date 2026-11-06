@@ -1,4 +1,4 @@
-OMEGA_OMC="~/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="~/work/cudastack/omega-bridge" sh tests/nvml/run.sh
+OMEGA_OMC="/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="/home/drakestapleton/work/cudastack/omega-bridge" sh tests/nvml/run.sh
 PASS committed src/cudapp_om_nvml_step.c is the bridge output of native/nvml
 PASS committed src/cudapp_om_nvml_errstr.c is the bridge output of native/nvml
 PASS fake tier: CUDAPP-NVML HOST PASS (476 checks)

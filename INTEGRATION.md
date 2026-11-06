@@ -199,3 +199,9 @@ to the existing flags/ABI runtime-views dispatch rather than stale profile synta
 `/tmp/integ/6a-342.log/.rc` rc0; disasm words differential/red/link/five mutants,
 Omega disasm and byte-identical units PASS; final `crumb verify: OK: 91 crumbs current`.
 Additive root and dated-roadmap notes retained.
+
+#347 `ee34d8d8b2c0892ac1230147ba6acf0143908913`:
+`/tmp/integ/6a-347.log/.rc` rc0; TC host988323 cases, eight compiled mutants,
+strong-link red, cubin identity25, TC differential180517/52380 refusals,
+TC simulator PASS; byte-identical units; final `crumb verify: OK: 91 crumbs current`.
+Root union and generated crumbs refreshed without altering historical evidence.

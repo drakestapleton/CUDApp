@@ -31,6 +31,7 @@ change; `examples/hello_gpu/README.md` is its chip runbook. No existing hardware
 status is upgraded by these host receipts.
 2026-11-06: dagsim JSON byte escaping defaults to seeded `om/tools/dag_jstr.om`; all-byte differential and five mutants are recorded in `evidence/dagsim-jstr-20261106/README.md`. Host only; chip NOT_RUN and no status row upgraded.
 2026-11-06: disassembly byte assembly and EXIT-padding policy now default to `om/disasm/words.om`; focused host differential and mutants are recorded in `evidence/disasm-words-20261106/README.md`. Chip NOT_RUN; no status row upgraded.
+2026-11-06: TC/TC2 host admission, sizing, span and input/weight conversion now default to seeded Omega, reusing the canonical numeric BF16 rounding unit. Host/simulator/cubin identity evidence and the NOT_RUN chip runbook are in `evidence/codegen-tc-host-20261106/README.md`; no hardware status row is upgraded.
 
 ## 1. NVIDIA software on the Spark today
 

@@ -25,11 +25,24 @@ test-ampere-cubin-disasm: test-ampere-cubin
 	@grep -q 'EXIT' $(AMPERE_CUBIN_DIR)/sm86.sass || { echo 'FAIL: sm86 EXIT not decoded'; exit 1; }
 	@echo 'AMPERE CUBIN NVDISASM PASS; device NOT_RUN'
 
+# Numeric reference (src/omega_numeric.c, src/omega_numeric_reduce.c): om (default) = om/numeric/numeric.om and
+# om/numeric/tile.om through the generated units; c = the migration-pending C bodies, the differential oracle;
+# diff = both on every call, abort on any bit difference (test-numeric-om-diff in mk/numeric.mk).
+CUDAPP_NUMERIC ?= om
+CUDAPP_NUMERIC_DEFS_om :=
+CUDAPP_NUMERIC_DEFS_c := -DCUDAPP_MIGRATION_PENDING_C_NUMERIC
+CUDAPP_NUMERIC_DEFS_diff := -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF
+CUDAPP_NUMERIC_DEFS = $(CUDAPP_NUMERIC_DEFS_$(CUDAPP_NUMERIC))
+ifeq ($(filter om c diff,$(CUDAPP_NUMERIC)),)
+$(error CUDAPP_NUMERIC must be om, c or diff)
+endif
+NUMERIC_SRCS := src/omega_numeric.c src/omega_numeric_reduce.c src/cudapp_om_numeric.c src/cudapp_om_numeric_tile.c
+
 # Independently runnable on a native x86 host before the bridge prerequisite.
 .PHONY: test-ampere-numeric-host
-$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c src/omega_numeric.c src/omega_numeric.h src/omega_numeric_reduce.c src/omega_numeric_reduce.h
+$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) src/omega_numeric.h src/omega_numeric_reduce.h src/omega_numeric_om.h
 	@mkdir -p $(AMPERE_CUBIN_DIR)
-	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ tests/ampere_numeric_host_test.c src/omega_numeric.c src/omega_numeric_reduce.c -lm
+	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections $(CUDAPP_NUMERIC_DEFS) -o $@ tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) -lm
 
 test-ampere-numeric-host: $(AMPERE_CUBIN_DIR)/numeric-host
 	$(AMPERE_CUBIN_DIR)/numeric-host

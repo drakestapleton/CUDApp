@@ -3,18 +3,22 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-10-28T19:58:29Z",
+      "compiled_at": "2026-11-06T02:00:58Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:19bf03508a03ea9fe4a98949a6144d2590f4500c3d7c6226c0c004a2d31f7508",
+      "digest": "sha256:f29abca82c33ae72eae3d4b52342d819992a7e96f8d3e7ce639383b766421fb0",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "files": 1,
-      "generated_at_commit": "067815f8580206f1bbccd7fa302c1ac354029910",
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
       "source_tree": "sha256:4c752a1a64a5b6c9c7df491445eb1f6ed00794628aa43a133b6e358b601036d9"
     }
   },
+  "invariants": [
+    "numeric.om and tile.om are bit-identical to the C oracle under CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF (make test-numeric-om-diff)",
+    "FP32 constants are written as bit patterns (f32of), never decimal literals"
+  ],
   "layer": "numeric",
   "name": "numeric",
-  "purpose": "Portable scalar numeric conversions, IEEE binary32 to binary16 RNE",
+  "purpose": "Portable scalar numeric Omega units: binary32 to binary16 RNE (f16.om) and the numeric reference of src/omega_numeric.c and src/omega_numeric_reduce.c (numeric.om, tile.om)",
   "schema_version": "1.0.0"
 }

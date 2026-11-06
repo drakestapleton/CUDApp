@@ -25,6 +25,9 @@
 #include "omega_gpu_platform_linux.h"
 #include <pthread.h>
 #endif
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+void cudapp_streams_diff_note(int same, const char *line); /* diff builds: tests/streams_diff_test.c */
+#endif
 
 #define PAGE 0x1000ull
 
@@ -403,13 +406,42 @@ OmegaGpuSession *omega_gpu_session_open(void) {
     return &g_s;
 }
 
+/* Extra queue i against the open set (CUDApp#115): 0 index outside 1..XQ_MAX, 1 already open, 2 an earlier one is not
+ * open yet, 3 open it now. Hosted builds ask seeded Omega (om/streams/streams.om op 6); the freestanding link carries
+ * no hosted binding and CUDAPP_MIGRATION_PENDING_C_STREAMS selects the C rule, which _STREAMS_DIFF keeps as oracle. */
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+static uint32_t xq_admit_c(uint32_t i) {
+    if (i == 0u || i > XQ_MAX) return 0u;
+    if (g_xq[i - 1u].generation != 0u) return 1u;
+    for (uint32_t j = 0; j + 1u < i; j++) if (g_xq[j].generation == 0u) return 2u;
+    return 3u;
+}
+#endif
+static uint32_t xq_admit(uint32_t i) {
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS)
+    return xq_admit_c(i);
+#else
+    uint64_t in[16] = { i }, out[32], r = 0;
+    for (uint32_t j = 0; j < XQ_MAX; j++) in[j + 1u] = g_xq[j].generation != 0u;
+    if (omega_streams_words(&r, 6u, in, 16u, out, 32u) != 0 || r > 3u) return 0u;
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+    if (r != xq_admit_c(i)) {
+        char line[96];
+        omega_gpu_fmt(line, sizeof line, "streams diff: extra_queue %u Omega %llu C %u", i, (unsigned long long)r, xq_admit_c(i));
+        cudapp_streams_diff_note(0, line);
+    }
+#endif
+    return (uint32_t)r;
+#endif
+}
+
 int omega_gpu_session_extra_queue(uint32_t i, OmegaGpuQueueHandle *out) {
     const OmegaGpuPlatform *p = platform();
-    if (!out || i == 0u || i > XQ_MAX) { omega_gpu_session_set_error("extra_queue: index outside 1..3"); return -1; }
+    const uint32_t adm = out ? xq_admit(i) : 0u;
+    if (adm == 0u) { omega_gpu_session_set_error("extra_queue: index outside 1..3"); return -1; }
     if (LOAD(g_blocked) || !g_open || !p) { omega_gpu_session_set_error("extra_queue: device not open or latched"); return -1; }
-    if (g_xq[i - 1u].generation != 0u) { *out = g_xq[i - 1u]; return 0; }
-    for (uint32_t j = 0; j + 1u < i; j++)
-        if (g_xq[j].generation == 0u) { omega_gpu_session_set_error("extra_queue: open queues in order (1, then 2, ...)"); return -1; }
+    if (adm == 1u) { *out = g_xq[i - 1u]; return 0; }
+    if (adm == 2u) { omega_gpu_session_set_error("extra_queue: open queues in order (1, then 2, ...)"); return -1; }
     if (mem_alloc(OMEGA_GPU_HANDLE_BUF_QUEUE, RIGHTS_RING, 0x10000, &g_xpb[i - 1u])) return -1;
     const int rc = p->queue_open(p->ctx, g_s.dev, g_xpb[i - 1u].handle, &g_xq[i - 1u]);
     if (rc != OMEGA_GPU_PLAT_OK) {

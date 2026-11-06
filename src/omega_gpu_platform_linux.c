@@ -19,6 +19,7 @@
  */
 #include "omega_gpu_platform_linux.h"
 #include "cpu_barrier.h"
+#include "cudapp_native.h"
 
 #include "m16_native.h"
 #include "nvrm.h"
@@ -145,10 +146,27 @@ static int ref_unlock_id(void *ctx, uint32_t id) {
     return pthread_mutex_unlock(&r->locks[id]) == 0 ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_PLAT_REFUSED_ARGS;
 }
 
+/* AIEN_OMEGA_GPU_CHANNELS: one digit 2..1+NVRM_MAX_EXTRA_CHANNELS, else 1 (CUDApp#115: the rule is seeded Omega,
+ * om/streams/streams.om op 4; the C rule stays as the CUDAPP_MIGRATION_PENDING_C_STREAMS / _STREAMS_DIFF oracle). */
+#if defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+static uint32_t channels_c(const char *e) {
+    if (!e || e[0] == '\0' || e[1] != '\0' || e[0] < '2' || e[0] > (char)('1' + NVRM_MAX_EXTRA_CHANNELS)) return 1u;
+    return (uint32_t)(e[0] - '0');
+}
+#endif
 uint32_t omega_gpu_platform_linux_channels_env(void) {
     const char *e = getenv("AIEN_OMEGA_GPU_CHANNELS");
-    if (!e || e[1] != '\0' || e[0] < '2' || e[0] > (char)('1' + NVRM_MAX_EXTRA_CHANNELS)) return 1u;
-    return (uint32_t)(e[0] - '0');
+#ifdef CUDAPP_MIGRATION_PENDING_C_STREAMS
+    return channels_c(e);
+#else
+    uint64_t in[16] = { e != NULL, e ? strlen(e) : 0u, e ? (uint64_t)(unsigned char)e[0] : 0u, NVRM_MAX_EXTRA_CHANNELS };
+    uint64_t out[32], r = 0;
+    if (omega_streams_words(&r, 4u, in, 16u, out, 32u) != 0 || r < 1u || r > 1u + NVRM_MAX_EXTRA_CHANNELS) r = 1u;
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+    if (r != channels_c(e)) { fprintf(stderr, "streams diff: AIEN_OMEGA_GPU_CHANNELS Omega %llu C %u\n", (unsigned long long)r, channels_c(e)); abort(); }
+#endif
+    return (uint32_t)r;
+#endif
 }
 
 /* Extra queue slot of q (0..nchan-2), or -1 when q is not an open extra queue. Caller holds r->mu. */

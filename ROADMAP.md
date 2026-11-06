@@ -32,6 +32,7 @@ From Omega `docs/OMEGA.md` section 3. Each needs a receipt on the exact commit; 
 - **C2** a stranger runs hello-GPU from an empty folder with only the README commands, and the zero-CUDA gate passes on the binary; the runtime API is written down and versioned.
 - **C3** any-shape GEMM in BF16 and FP8 (200+ shapes, 1 to 8192, each checked against a host reference, speed as a fraction of the measured tensor-core ceiling); reductions and prefix sums from 1 to 2^28 elements, bit-exact.
 - **C4** streams and events: two queues finish in under 0.75 of the sum of their solo times; an event wait orders two jobs, checked by data.
+  2026-11-05 (CUDApp#115): the pure part (method words of a submission incl. wait_for ACQUIRE and barrier choice, submit_pair markers, AIEN_OMEGA_GPU_CHANNELS, extra queue admission) is seeded Omega, `om/streams/streams.om`; C writes and submits. Host and sim tiers PASS, C vs Omega identical on 102400 swept chunks (`make test-om-streams`), 4 mutants red. Chip NOT_RUN; status unchanged.
 - **C5** two processes share the GPU safely, and a kernel that never ends is timed out with the process still usable.
 - **C6** my disassembler agrees with `nvdisasm` on every library kernel, and nothing calls `nvdisasm` any more.
 

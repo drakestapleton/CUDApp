@@ -562,7 +562,7 @@ HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-latmea
 	test-gpu-engine-backend-mutants test-gpu-engine-gb10-compile test-gpu-serving-alloc test-gpu-engine-freestanding \
 	test-codegen-freestanding test-gpu-session-platform test-gpu-native-runtime test-gpu-wait test-gpu-wait-mutants host-tests-m16 \
 	test-runtime-api test-runtime-portability test-doctor test-hello-sim test-native-artifact-manifest test-gemm-selectors \
-	test-native-artifact zero-cuda-gate verify-vendored test-swap-cli test-om-encoder test-om-spec-encoder test-om-cubin \
+	test-native-artifact zero-cuda-gate verify-vendored test-swap-cli test-om-encoder test-om-spec-encoder test-om-cubin test-om-streams \
 	test-ampere-encoder test-ampere-cubin test-ampere-numeric-host test-ampere-f16-host test-ampere-runtime test-ampere-plan \
 	test-portable-receipts test-gpu-qmd-shared test-model-capacity test-gpu-qmd-shared-clean-build \
 	test-omega-slice-runner test-omega-arch-guard test-omega-barrier-contract test-omega-binding-portable \

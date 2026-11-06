@@ -13,17 +13,43 @@
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
 #include "omega_gpu_native_runtime.h"
+#include "cudapp_native.h"
 #include <string.h>
+
+/* C4 streams (CUDApp#115): the method words of a submission (setup, wait_for ACQUIRE, barrier choice, stamps, PCAS or
+ * inline QMD headers, completion tail) and the submit_pair marker layout come from seeded Omega, om/streams/streams.om,
+ * through the generated binding src/cudapp_om_streams.c. This file still writes them into the ring and submits.
+ * The C generator below is migration-pending, the differential oracle only:
+ *   CUDAPP_MIGRATION_PENDING_C_STREAMS     the C generator alone;
+ *   CUDAPP_MIGRATION_PENDING_STREAMS_DIFF  both on every chunk, abort on any word difference
+ *                                          (a SAME line per chunk to $CUDAPP_STREAMS_DIFF_LOG). */
+#if defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) && defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+#error "CUDAPP_MIGRATION_PENDING_STREAMS_DIFF compares C against Omega: not with CUDAPP_MIGRATION_PENDING_C_STREAMS"
+#endif
+#if defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+#define STREAMS_C_ORACLE 1
+#endif
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+#include "omega_gpu_fmt.h"
+/* Diff builds only: the driver (tests/streams_diff_test.c) logs a SAME line, or prints a difference and aborts. This
+ * file stays free of hosted includes (tools/portability table). */
+void cudapp_streams_diff_note(int same, const char *line);
+#endif
+#define TAIL_WORDS 17u
+#define STAMP_WORDS 6u
 
 #define PAGE 0x1000ull
 #define RING_WORDS (0x10000u / 4u)         /* the session ring: 64 KB */
 #define DEFAULT_TIMEOUT_MS 20000ull
+#ifdef STREAMS_C_ORACLE
 #define MTHD_WAIT_FOR_IDLE 0x0110u         /* clcec0.h NVCEC0_WAIT_FOR_IDLE */
+#endif
 /* Completion markers live on the SESSION marker page (OmegaGpuSession.marker, allocated by the session with
  * OMEGA_GPU_RIGHT_HOST_POLLED, GPU-uncached): the platform refuses poll_word on any buffer without that right
  * (omega_gpu_platform_linux.c ref_poll_word, chip run cmdlist-r1 2026-10-13: "marker poll refused"), and the session
  * exposes no polled allocation. The session uses bytes 0..0x1f of the page; this module uses 0x100..0x11f. */
 #define MARKER_OFF 0x100ull
+#ifdef STREAMS_C_ORACLE
 #define MTHD_SEND_PCAS_A 0x02b4u           /* clcec0.h NVCEC0_SEND_PCAS_A, QMD_ADDRESS_SHIFTED8 */
 #define MTHD_SEND_SIGNALING_PCAS2_B 0x02c0u /* clcec0.h, PCAS_ACTION 3:0 */
 #define PCAS_ACTION_INVALIDATE_COPY_SCHEDULE 3u
@@ -37,6 +63,7 @@ static const uint32_t SETUP_WORDS[18] = {
     0x2001255e, 0x20000000, 0x2001255f, 0x000fffff, 0x20012557, 0x00000003, 0x20012558, 0x22000000,
     0x20012559, 0x00000000,
 };
+#endif
 
 typedef struct {
     OmegaGpuNativeCache *cache;
@@ -337,6 +364,7 @@ static void force_latch(OmegaGpuCmdList *cl, const char *why) {
     omega_gpu_session_set_error(why);
 }
 
+#ifdef STREAMS_C_ORACLE
 static size_t emit_tail(uint32_t *pb, size_t n, uint64_t marker_va) {
     pb[n++] = bw_mthd(0, 0x005c, 5);
     pb[n++] = (uint32_t)marker_va; pb[n++] = (uint32_t)(marker_va >> 32);
@@ -347,13 +375,11 @@ static size_t emit_tail(uint32_t *pb, size_t n, uint64_t marker_va) {
     pb[n++] = OMEGA_BW_MARKER2_PAYLOAD; pb[n++] = 0; pb[n++] = 0x1 | (1u << 20);
     return n;
 }
-#define TAIL_WORDS 17u
 
 /* Compute-class four-word report {u64 payload = slot, u64 GPU timestamp} to stamps slot `slot` (mesa clcec0.h: PAYLOAD_LOWER 0x0158,
  * PAYLOAD_UPPER 0x015c, ADDRESS_LOWER 0x0160, ADDRESS_UPPER 0x0164, EXECUTE 0x0168 = OPERATION_RELEASE 0 | STRUCTURE_SIZE_FOUR_WORDS 0).
  * Ordered after the preceding WAIT_FOR_IDLE, like nvk_query_pool.c timestamp queries. */
 #define MTHD_REPORT_SEMAPHORE_PAYLOAD_LOWER 0x0158u
-#define STAMP_WORDS 6u
 /* INVALIDATE_SHADER_CACHES (NVCEC0 0x021c) fields, clc6c0.h:222-236 (same layout on Blackwell): INSTRUCTION 0:0, FLUSH_DATA 2:2, DATA 4:4, CONSTANT 12:12 */
 #define INVALIDATE_DATA (1u << 4)
 #define INVALIDATE_FLUSH_DATA (1u << 2)
@@ -369,6 +395,7 @@ static size_t emit_inline_qmd(uint32_t *pb, size_t n, uint64_t va, const uint32_
     pb[n++] = (1u << 30) | (uint32_t)((va >> 40) & 0x1ff); pb[n++] = (uint32_t)(va >> 8);
     memcpy(&pb[n], words, 96 * 4); return n + 96;
 }
+#endif
 
 /* Finalize ALL retained slots before observation, synchronization or any queue
  * commit. INLINE consumes the same bytes, including after PCAS reuse. */
@@ -380,10 +407,11 @@ static void prepare_qmd_mode(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op)
         q1[12] = op->mode == OMEGA_GPU_CMDLIST_INLINE ? (uint32_t)((q1_va + 0x200) >> 8) : 0;
     }
 }
+#ifdef STREAMS_C_ORACLE
 /* One submission's method stream for launches [done,end), followed by completion. */
-static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va) {
+static size_t emit_chunk_c(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va,
+                           uint32_t *pb) {
     const OmegaGpuCmdListOpts o = *op;
-    uint32_t *pb = cl->words;
     size_t n = 0;
     memcpy(pb, SETUP_WORDS, sizeof SETUP_WORDS); n += 18;
     for (uint32_t i = done; i < end; i++) {
@@ -428,6 +456,117 @@ static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uin
     n = emit_tail(pb, n, marker_va);
     return n;
 }
+#endif
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_STREAMS
+/* One call of the Omega generator, om/streams/streams.om (the exported streams_words). The result is the word count
+ * (or the op's value); UINT64_MAX when the binding refused or the unit refused its inputs. */
+#define STREAMS_OM_IN 16u
+#define STREAMS_OM_OUT 32u
+enum { STREAMS_OP_SETUP, STREAMS_OP_LAUNCH, STREAMS_OP_INLINE, STREAMS_OP_FINISH, STREAMS_OP_CHANNELS, STREAMS_OP_PAIR };
+static uint64_t streams_om(uint64_t op, const uint64_t *in, uint64_t *out) {
+    uint64_t r = 0;
+    if (omega_streams_words(&r, op, in, STREAMS_OM_IN, out, STREAMS_OM_OUT) != 0) return UINT64_MAX;
+    return r;
+}
+/* Append the generator's first k ulongs as method words; 0 when k is not a word count the op can produce. */
+static int streams_put(uint32_t *pb, size_t *n, const uint64_t *w, uint64_t k, uint64_t max) {
+    if (k > max) return 0;
+    for (uint64_t j = 0; j < k; j++) pb[(*n)++] = (uint32_t)w[j];
+    return 1;
+}
+/* Launches [done,end) and completion, words from Omega; the inline QMD payload (96 words each) is copied here.
+ * Returns 0 when the generator failed: nothing is submitted. */
+static size_t emit_chunk_om(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va,
+                            uint32_t *pb) {
+    uint64_t in[STREAMS_OM_IN] = {0}, out[STREAMS_OM_OUT];
+    size_t n = 0;
+    if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_SETUP, in, out), 18)) return 0;
+    for (uint32_t i = done; i < end; i++) {
+        const uint64_t q1_va = cl->qmds.va + (uint64_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
+        const uint64_t a[11] = { i, done, cl->wait_va[i], cl->indep[i] ? 1u : 0u, (uint64_t)op->skip_launch,
+                                 op->first_barrier_none ? 1u : 0u, (uint64_t)op->barrier, op->stamps ? 1u : 0u,
+                                 cl->stamps.va, (uint64_t)op->mode, q1_va };
+        memset(in, 0, sizeof in); memcpy(in, a, sizeof a);
+        if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_LAUNCH, in, out), 30)) return 0;
+        if (out[31] != 2) continue; /* 0 skipped, 1 PCAS words already emitted */
+        const uint8_t *qs = (const uint8_t *)cl->qmds.cpu + (size_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
+        for (int h = 0; h < 2; h++) { /* the second-level QMD (q1 + 0x200) first, then q1 */
+            memset(in, 0, sizeof in); in[0] = h == 0 ? q1_va + 0x200 : q1_va;
+            if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_INLINE, in, out), 3)) return 0;
+            memcpy(&pb[n], qs + (h == 0 ? 0x200 : 0), 96 * 4); n += 96;
+        }
+    }
+    memset(in, 0, sizeof in);
+    in[0] = op->stamps ? 1u : 0u; in[1] = cl->stamps.va; in[2] = end; in[3] = marker_va;
+    if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_FINISH, in, out), 2 + STAMP_WORDS + TAIL_WORDS)) return 0;
+    return n;
+}
+#endif
+
+/* One submission's method stream for launches [done,end), followed by completion, in cl->words; 0 on generator failure. */
+static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_STREAMS
+    return emit_chunk_c(cl, op, done, end, marker_va, cl->words);
+#else
+    const size_t n = emit_chunk_om(cl, op, done, end, marker_va, cl->words);
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+    char line[200];
+    uint32_t *ref = omega_gpu_host_calloc(cl->words_cap, 4u);
+    if (!ref) { cudapp_streams_diff_note(0, "streams diff: no memory for the C reference"); return 0; }
+    const size_t nc = emit_chunk_c(cl, op, done, end, marker_va, ref);
+#ifdef CUDAPP_STREAMS_DIFF_SELFTEST
+    if (n) cl->words[n - 1u] ^= 1u; /* red check: one flipped Omega word must abort */
+#endif
+    if (n != nc || memcmp(ref, cl->words, n * 4u) != 0) {
+        size_t j = 0;
+        while (j < n && j < nc && ref[j] == cl->words[j]) j++;
+        omega_gpu_fmt(line, sizeof line, "streams diff: launches [%u,%u) C %zu words, Omega %zu words, first difference at word %zu",
+                      done, end, nc, n, j);
+        cudapp_streams_diff_note(0, line);
+    }
+    omega_gpu_host_free(ref);
+    omega_gpu_fmt(line, sizeof line, "SAME chunk launches=[%u,%u) mode=%d barrier=%d stamps=%d words=%zu", done, end,
+                  (int)op->mode, (int)op->barrier, op->stamps ? 1 : 0, n);
+    cudapp_streams_diff_note(1, line);
+#endif
+    return n;
+#endif
+}
+
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+/* Host differential sweep (CUDApp#115, diff builds only; the host and sim tiers never submit a cmdlist): every
+ * combination of mode, barrier, stamps, first_barrier_none, skip_launch, first launch, per-launch waits and
+ * independence marks over a 4-launch list goes through emit_chunk, which aborts on any C vs Omega difference.
+ * Then both pair markers. Returns the number of chunks compared. */
+static uint64_t pair_marker(uint64_t page_va, uint64_t k, uint32_t clr[2]);
+uint64_t omega_gpu_cmdlist_streams_diff_sweep(void);
+uint64_t omega_gpu_cmdlist_streams_diff_sweep(void) {
+    enum { L = 4 };
+    static uint32_t qmd_words[L * OMEGA_GPU_CMDLIST_QMD_BYTES / 4];
+    static uint32_t words[8192];
+    uint8_t indep[L]; uint64_t wait_va[L];
+    OmegaGpuCmdList cl; memset(&cl, 0, sizeof cl);
+    for (size_t j = 0; j < sizeof qmd_words / 4; j++) qmd_words[j] = (uint32_t)(j * 2654435761u);
+    cl.n = cl.cap = L; cl.words = words; cl.words_cap = sizeof words / 4; cl.indep = indep; cl.wait_va = wait_va;
+    cl.qmds.cpu = qmd_words; cl.qmds.va = 0x123456789000ull; cl.stamps.va = 0x2000abcd0000ull;
+    uint64_t chunks = 0;
+    for (unsigned wm = 0; wm < 16u; wm++) for (unsigned im = 0; im < 16u; im++)
+    for (int mode = 0; mode < 2; mode++) for (int bar = 0; bar < 5; bar++) for (int st = 0; st < 2; st++)
+    for (int fn = 0; fn < 2; fn++) for (int skip = 0; skip <= L; skip++) for (uint32_t done = 0; done < 2u; done++) {
+        for (unsigned i = 0; i < L; i++) { indep[i] = (im >> i) & 1u; wait_va[i] = (wm >> i) & 1u ? 0xfedc00001230ull + 16u * i : 0; }
+        OmegaGpuCmdListOpts o; memset(&o, 0, sizeof o);
+        o.mode = (OmegaGpuCmdListMode)mode; o.barrier = (OmegaGpuCmdListBarrier)bar; o.stamps = st;
+        o.first_barrier_none = fn; o.skip_launch = (uint32_t)skip;
+        if (!emit_chunk(&cl, &o, done, L, 0x7000beef0110ull)) cudapp_streams_diff_note(0, "streams diff: generator failed");
+        chunks++;
+    }
+    uint32_t clr[4];
+    if (pair_marker(0x7000beef0000ull, 0, clr) == UINT64_MAX || pair_marker(0x7000beef0000ull, 1, clr + 2) == UINT64_MAX)
+        cudapp_streams_diff_note(0, "streams diff: pair marker generator failed");
+    return chunks;
+}
+#endif
 
 static int submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts, OmegaGpuCmdListStats *st,
                            OmegaGpuCmdListObserver observer, void *context) {
@@ -489,6 +628,7 @@ static int submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
         const uint32_t end = (cl->n - done > room) ? done + room : cl->n;
         uint32_t *pb = cl->words;
         size_t n = emit_chunk(cl, &o, done, end, marker_va);
+        if (!n) { omega_gpu_session_set_error("cmdlist submit: method word generator failed"); return -1; }
         mk[0] = 0; mk[4] = 0;
         (void)p->sync_cpu_to_gpu(p->ctx, marker->handle, MARKER_OFF, 0x20);
         const uint64_t t0 = p->time_now_ns(p->ctx);
@@ -533,6 +673,30 @@ int omega_gpu_cmdlist_submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdList
  * the same prefix as submit (semaphores INIT, banks / QMDs / semaphores synced) and the same words (emit_chunk); b's
  * completion markers sit at MARKER_OFF + PAIR_B_MARKER on the same uncached page. */
 #define PAIR_B_MARKER 0x80ull
+/* Queue k's (0 or 1) completion marker VA on the marker page at page_va, and the two marker words (u32 index from
+ * MARKER_OFF) to clear before submitting; UINT64_MAX when the generator refused. */
+static uint64_t pair_marker(uint64_t page_va, uint64_t k, uint32_t clr[2]) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_STREAMS
+    clr[0] = (uint32_t)(k * PAIR_B_MARKER / 4u); clr[1] = clr[0] + 4u;
+    return page_va + MARKER_OFF + k * PAIR_B_MARKER;
+#else
+    uint64_t in[STREAMS_OM_IN] = { page_va, k }, out[STREAMS_OM_OUT];
+    const uint64_t va = streams_om(STREAMS_OP_PAIR, in, out);
+    if (va == UINT64_MAX || out[0] > PAIR_B_MARKER / 4u || out[1] > PAIR_B_MARKER / 4u + 4u) return UINT64_MAX;
+    clr[0] = (uint32_t)out[0]; clr[1] = (uint32_t)out[1];
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+    char line[120];
+    if (va != page_va + MARKER_OFF + k * PAIR_B_MARKER || clr[0] != k * PAIR_B_MARKER / 4u || clr[1] != clr[0] + 4u) {
+        omega_gpu_fmt(line, sizeof line, "streams diff: pair marker k=%llu Omega va 0x%llx clears %u %u", (unsigned long long)k,
+                      (unsigned long long)va, clr[0], clr[1]);
+        cudapp_streams_diff_note(0, line);
+    }
+    omega_gpu_fmt(line, sizeof line, "SAME pair marker k=%llu", (unsigned long long)k);
+    cudapp_streams_diff_note(1, line);
+#endif
+    return va;
+#endif
+}
 static int pair_prep(const OmegaGpuPlatform *p, OmegaGpuCmdList *cl) {
     uint32_t *sem = cl->sems.cpu;
     for (uint32_t i = 0; i < cl->n; i++) sem[4 * i] = OMEGA_BW_SEMAPHORE_INTERMEDIATE_INIT;
@@ -595,9 +759,13 @@ int omega_gpu_cmdlist_submit_pair(OmegaGpuCmdList *a, OmegaGpuCmdList *b, const 
     }
     prepare_qmd_mode(a, &o); prepare_qmd_mode(b, &o);
     if (pair_prep(p, a) || pair_prep(p, b)) { omega_gpu_session_set_error("cmdlist pair: sync_cpu_to_gpu"); return -1; }
-    const size_t na = emit_chunk(a, &o, 0, a->n, marker_va), nb = emit_chunk(b, &o, 0, b->n, marker_va + PAIR_B_MARKER);
+    uint32_t clr[4];
+    const uint64_t va_a = pair_marker(marker->va, 0, clr), va_b = pair_marker(marker->va, 1, clr + 2);
+    if (va_a != marker_va || va_b == UINT64_MAX) { omega_gpu_session_set_error("cmdlist pair: marker layout generator failed"); return -1; }
+    const size_t na = emit_chunk(a, &o, 0, a->n, va_a), nb = emit_chunk(b, &o, 0, b->n, va_b);
+    if (!na || !nb) { omega_gpu_session_set_error("cmdlist pair: method word generator failed"); return -1; }
     volatile uint32_t *mk = (volatile uint32_t *)((uint8_t *)marker->cpu + MARKER_OFF);
-    mk[0] = 0; mk[4] = 0; mk[PAIR_B_MARKER / 4] = 0; mk[PAIR_B_MARKER / 4 + 4] = 0;
+    for (int k = 0; k < 4; k++) mk[clr[k]] = 0;
     if (p->sync_cpu_to_gpu(p->ctx, a->qmds.handle, 0, (uint64_t)a->n * OMEGA_GPU_CMDLIST_QMD_BYTES) != OMEGA_GPU_PLAT_OK ||
         p->sync_cpu_to_gpu(p->ctx, b->qmds.handle, 0, (uint64_t)b->n * OMEGA_GPU_CMDLIST_QMD_BYTES) != OMEGA_GPU_PLAT_OK ||
         p->sync_cpu_to_gpu(p->ctx, marker->handle, MARKER_OFF, PAIR_B_MARKER + 0x20) != OMEGA_GPU_PLAT_OK) {

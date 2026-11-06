@@ -10,13 +10,30 @@
 #ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
 #define CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA 0
 #endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_QMMA_PROBE_REST
+#define CUDAPP_MIGRATION_PENDING_C_QMMA_PROBE_REST 0
+#endif
 
+#if CUDAPP_MIGRATION_PENDING_C_QMMA_PROBE_REST
 static uint32_t rd32q(const uint8_t *p) { return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24; }
+#else
+static uint32_t rd32q(const uint8_t *p) {
+    uint64_t r = 0;
+    return omega_qm_host(&r, 1, p[0], p[1], p[2], p[3], 0) == OMEGA_OK ? (uint32_t)r : 0;
+}
+#endif
 #if CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
 static void wr32q(uint8_t *p, uint32_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24); }
 #endif
 
+#if CUDAPP_MIGRATION_PENDING_C_QMMA_PROBE_REST
 int omega_qmma_is_mark(const BlackwellIRInsn *in) { return in && in->op == BW_IR_HMMA_BF16 && in->imm == OMEGA_QMMA_MARK; }
+#else
+int omega_qmma_is_mark(const BlackwellIRInsn *in) {
+    uint64_t r = 0;
+    return in && omega_qm_host(&r, 0, in->op, in->imm, 0, 0, 0) == OMEGA_OK && r == 1;
+}
+#endif
 
 int omega_qmma_patch_code(const BlackwellIRProgram *prog, uint8_t *code, size_t len) {
     if (!prog || !code || len < prog->count * 16u) return -1;
@@ -47,6 +64,7 @@ int omega_qmma_patch_code(const BlackwellIRProgram *prog, uint8_t *code, size_t 
     return n;
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_QMMA_PROBE_REST
 int omega_qmma_patch_selftest(char *msg, size_t msgn) {
     static BlackwellIRProgram p; static uint8_t buf[64 * 16]; size_t len = 0;
     omega_bw_ir_init(&p);
@@ -82,6 +100,31 @@ int omega_qmma_patch_selftest(char *msg, size_t msgn) {
     omega_gpu_fmt(msg, msgn, "QMMA.16832.F32.E4M3.E4M3 and F2FP.SATFINITE.E4M3.F32.PACK_AB_MERGE_C match the oracle bits, HMMA untouched");
     return 0;
 }
+#else
+int omega_qmma_patch_selftest(char *msg, size_t msgn) {
+    static BlackwellIRProgram p;
+    static uint8_t buf[64 * 16];
+    size_t len = 0;
+    if (omega_gpu_om_ir_replay(omega_qm_self, 0, 0, 0, 0, &p, NULL) != OMEGA_OM_IR_OK ||
+        omega_bw_encode_program(&p, buf, sizeof buf, &len) != 0) {
+        omega_gpu_fmt(msg, msgn, "build/encode failed"); return -1;
+    }
+    int np = omega_qmma_patch_code(&p, buf, len);
+    if (np != 2) { omega_gpu_fmt(msg, msgn, "patched %d placeholders, expected 2", np); return -1; }
+    uint64_t seen = 2;
+    for (size_t i = 0; i < p.count; i++) {
+        const uint8_t *w = buf + i * 16u;
+        if (omega_qm_host(&seen, seen, p.insns[i].op, p.insns[i].imm,
+                          rd32q(w), rd32q(w + 4), rd32q(w + 8)) != OMEGA_OK ||
+            seen == UINT64_MAX) {
+            omega_gpu_fmt(msg, msgn, "QMMA selftest word %zu changed", i); return -1;
+        }
+    }
+    if (seen != 65795) { omega_gpu_fmt(msg, msgn, "QMMA selftest counts changed"); return -1; }
+    omega_gpu_fmt(msg, msgn, "QMMA.16832.F32.E4M3.E4M3 and F2FP.SATFINITE.E4M3.F32.PACK_AB_MERGE_C match the oracle bits, HMMA untouched");
+    return 0;
+}
+#endif
 
 #if CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
 int omega_blackwell_codegen_qmma_probe_prog(int mutant, uint32_t wait_nops, BlackwellIRProgram *prog) {

@@ -2,7 +2,7 @@
 # Host-only first-party builder/oracle parity. No driver or device objects.
 CARRIED_HOST_TESTS += test-codegen-qmma-diff
 .PHONY: test-codegen-qmma-diff
-$(OUT_DIR)/codegen_qmma_diff_test: tests/codegen_qmma_diff_test.c src/omega_blackwell_codegen_qmma.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_cg_qmma.c src/cudapp_om_cg_qmma_patch.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cubin_elf.c src/omega_cubin.c src/omega_gpu_fmt.c src/sha256.c | $(OUT_DIR)
+$(OUT_DIR)/codegen_qmma_diff_test: tests/codegen_qmma_diff_test.c src/omega_blackwell_codegen_qmma.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_cg_qmma.c src/cudapp_om_cg_qmma_patch.c src/cudapp_om_qm_host.c src/cudapp_om_qm_self.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cubin_elf.c src/omega_cubin.c src/omega_gpu_fmt.c src/sha256.c | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ $^ -lm
 test-codegen-qmma-diff: $(OUT_DIR)/codegen_qmma_diff_test
 	./$(OUT_DIR)/codegen_qmma_diff_test
@@ -25,3 +25,14 @@ CARRIED_HOST_TESTS += test-codegen-tgemm-sim
 test-codegen-qmma-host: $(OUT_DIR)/gpu_qmma_probe_test
 	./$(OUT_DIR)/gpu_qmma_probe_test --host-only
 CARRIED_HOST_TESTS += test-codegen-qmma-host
+
+CARRIED_HOST_TESTS += test-qmma-probe-rest test-qmma-probe-rest-mutants
+.PHONY: test-qmma-probe-rest test-qmma-probe-rest-mutants
+QMMA_REST_SRC = src/omega_blackwell_codegen_qmma.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_cg_qmma.c src/cudapp_om_cg_qmma_patch.c src/cudapp_om_qm_host.c src/cudapp_om_qm_self.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cubin_elf.c src/omega_cubin.c src/omega_gpu_fmt.c src/sha256.c
+$(OUT_DIR)/qmma_probe_rest_test: tests/qmma_probe_rest_test.c $(QMMA_REST_SRC) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ $^ -lm
+test-qmma-probe-rest: $(OUT_DIR)/qmma_probe_rest_test
+	./$(OUT_DIR)/qmma_probe_rest_test
+	@if ./$(OUT_DIR)/qmma_probe_rest_test --red; then echo 'QMMA-REST RED FAIL'; exit 1; else echo 'QMMA-REST RED PASS'; fi
+test-qmma-probe-rest-mutants:
+	OUT_DIR=$(OUT_DIR) python3 tests/qmma_probe_rest_mutants.py

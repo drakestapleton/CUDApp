@@ -1,0 +1,6 @@
+sh tools/latmeas/selftest.sh build/gpu_latmeas_test
+emitted kernels in /tmp/latmeas-load-HY3kWK (1408 launches when run)
+gpu_latmeas_test --self-test PASS (0 checks failed)
+FAIL: qmma_reader: src/omega_blackwell_codegen_qmma.c:42 does not contain 'nop(e, 15)'
+make: *** [Makefile:174: test-gpu-latmeas] Error 1
+make: *** Waiting for unfinished jobs....

@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 import urllib.request
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -34,8 +35,25 @@ def check_sources(cat):
         with open(path, encoding="utf-8") as f:
             lines = f.read().splitlines()
         n = row["encoder_line"]
-        if n < 1 or n > len(lines) or row["encoder_substr"] not in lines[n - 1]:
-            errors.append("%s: %s:%d does not contain %r" % (row["id"], row["encoder_file"], n, row["encoder_substr"]))
+        omega = row["encoder_file"].endswith(".om")
+        actual = lines[n - 1].strip() if 1 <= n <= len(lines) else None
+        expected = row["encoder_substr"]
+        if actual is None or (actual != expected if omega else expected not in actual):
+            errors.append("%s: %s:%d does not match %r" % (row["id"], row["encoder_file"], n, expected))
+        # The Omega stall assignment is a separate statement from NOP creation.
+        # Also retain the preceding tensor instruction's stall in the total.
+        contexts = {
+            "qmma_reader": ((-4, "put x 7 15"), (-1, "omega_cg_qmma_i x 0"),
+                            (1, "omega_cg_qmma_emit b m x 11")),
+            "hmma_reader": ((-5, "put x 7 ulong 15"), (-1, "tc_i x 0"),
+                            (1, "tc_emit b m x 11")),
+        }
+        if omega:
+            for offset, expected in contexts.get(row["id"], ()):
+                index = n - 1 + offset
+                if not 0 <= index < len(lines) or lines[index].strip() != expected:
+                    errors.append("%s: %s:%d does not match %r" %
+                                  (row["id"], row["encoder_file"], n + offset, expected))
     # The pair tightener's default class excludes IMAD.WIDE and FMNMX.
     sched = os.path.join(ROOT, "src/omega_gpu_elementwise_api.c")
     with open(sched, encoding="utf-8") as f:
@@ -94,6 +112,27 @@ def self_check(cat):
     p1 = [r["id"] for r in disagreements(cat) if r["priority"] == 1]
     if p1:
         return "priority 1 rows differ from NAK: %s" % p1
+    # Exercise the real source checker, not a parallel string-match oracle.
+    # A neighboring line and both changed/prefix-preserving stall values fail.
+    for row in cat["rows"]:
+        if not row["encoder_file"].endswith(".om"):
+            continue
+        bad = dict(row, encoder_line=row["encoder_line"] - 1)
+        if not any(e.startswith(row["id"] + ":") for e in check_sources({"rows": [bad]})):
+            return row["id"] + ": wrong-line negative control escaped"
+        with open(os.path.join(ROOT, row["encoder_file"]), encoding="utf-8") as f:
+            source = f.read().splitlines()
+        n = row["encoder_line"] - 1
+        with tempfile.TemporaryDirectory(prefix="latmeas-source-") as directory:
+            path = os.path.join(directory, "mutant.om")
+            bad = dict(row, encoder_file=path)
+            for replacement in (source[n].rsplit(" ", 1)[0] + " 0", source[n] + "0"):
+                changed = source[:]
+                changed[n] = replacement
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write("\n".join(changed) + "\n")
+                if not any(e.startswith(row["id"] + ":") for e in check_sources({"rows": [bad]})):
+                    return row["id"] + ": changed-stall negative control escaped"
     return None
 
 

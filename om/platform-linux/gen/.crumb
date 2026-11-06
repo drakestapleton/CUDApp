@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "name": "platform-linux-gen",
+  "layer": "platform",
+  "purpose": "Generated Omega native bindings for the Linux platform units. Do not edit; regenerate with gen_effects.sh.",
+  "extensions": {"generated": "compile"}
+}

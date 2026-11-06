@@ -135,7 +135,7 @@ test-native-artifact-manifest: $(OUT_DIR)/native_artifact_manifest_test
 # they compile the physics checkout path into the object (-DOMEGA_PHYSICS_DIR), which made the
 # archive digest depend on where physics was checked out. Without them libomega_gpu.a is
 # byte-identical for any PHYSICS_DIR and any omega checkout directory.
-GPU_API_OBJS = $(OBJS)
+GPU_API_OBJS = $(OBJS) $(OUT_DIR)/plat_fx_effects.o $(OUT_DIR)/plat_fx_wait.o
 GPU_API_TEST = $(OUT_DIR)/gpu_matmul_api_test
 GPU_R4_RECEIPT = $(OUT_DIR)/gpu_matmul_r4_receipt
 $(OUT_DIR)/libomega_gpu.a: $(GPU_API_OBJS)

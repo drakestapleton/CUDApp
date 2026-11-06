@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "name": "platform-linux-gen-link",
+  "layer": "platform",
+  "purpose": "Platform Omega bindings with runtime symbols renamed so fence and wait can link together.",
+  "extensions": {"generated": "compile"}
+}

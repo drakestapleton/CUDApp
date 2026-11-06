@@ -39,6 +39,9 @@
 #else
 uint32_t omega_plat_policy(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 #endif
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX)
+#include "cudapp_plat_effects.h"
+#endif
 
 /* CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX defaults OFF. The .om unit is the path; C is the oracle. */
 static uint64_t plat_decide(const uint64_t m_in[16], uint64_t q_out[16]) {
@@ -67,6 +70,29 @@ static void plat_l2_words(uint32_t out[5]) {
     for (int i = 0; i < 5; i++) out[i] = (uint32_t)q[i];
 #endif
 }
+
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+/* Same contract as nvrm/native_client.h nvrm_live_token (Streams). One live
+ * unquarantined owner, or -1 with EINVAL/EFAULT. Delete this copy when that
+ * header is on this branch; do not add a second mapping table. */
+static int plat_live_token(const Nvrm *rm, const void *p, size_t n, uint64_t *token, uint64_t *offset) {
+    if (!rm || !p || !n || !token || !offset || !rm->omega_context) { errno = EINVAL; return -1; }
+    uintptr_t a = (uintptr_t)p;
+    if (a > UINTPTR_MAX - n) { errno = EINVAL; return -1; }
+    uint32_t hits = 0;
+    for (uint32_t i = 0; i < rm->live_count; i++) {
+        const NvrmLiveAlloc *l = &rm->live[i];
+        uintptr_t b = (uintptr_t)l->cpu;
+        if (!l->cpu_live || l->quarantined || !l->omega_mapping || !b) continue;
+        if (a < b || a + n > b + l->size) continue;
+        *token = l->omega_mapping;
+        *offset = a - b;
+        hits++;
+    }
+    if (hits != 1) { errno = EFAULT; return -1; }
+    return 0;
+}
+#endif
 
 #define LINUX_REF_BUFFERS (OMEGA_GPU_HANDLE_SLOTS - 2u) /* one slot each for the device and the queue */
 
@@ -370,9 +396,27 @@ static int ref_dma_free(void *ctx, OmegaGpuBufferHandle b) {
     return OMEGA_GPU_PLAT_OK;
 }
 
-static void barrier(void) {
-    nvrm_cpu_barrier();
+#if defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX)
+static int plat_publish(void *dst, const void *src, uint64_t n) {
+    memcpy(dst, src, (size_t)n);
+    return 0;
 }
+static int plat_fence(void) {
+    nvrm_cpu_barrier();
+    return 0;
+}
+#else
+static int plat_publish(void *dst, const void *src, uint64_t n) {
+    uint64_t wrote = 0;
+    if (n == 0) return 0;
+    if (omega2_plat_ring_store(&wrote, dst, n, src, n, n) != 0 || wrote != n) return -1;
+    return 0;
+}
+static int plat_fence(void) {
+    uint64_t result = 0;
+    return omega2_plat_fence(&result) == 0 && result == 1 ? 0 : -1;
+}
+#endif
 
 static int ref_sync(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint64_t len, const char *stage, int to_gpu) {
     LinuxRef *r = ctx;
@@ -388,7 +432,7 @@ static int ref_sync(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint64_t le
         if (plat_decide(pm, NULL)) { r->l2_inval_pending = 1; memset(r->x_l2_pending, 1, sizeof r->x_l2_pending); }
     }
     ref_unlock(r);
-    if (rc == OMEGA_GPU_PLAT_OK) barrier(); /* uncached system memory: a full barrier is the whole sync */
+    if (rc == OMEGA_GPU_PLAT_OK && plat_fence() != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
     return rc;
 }
 static int ref_sync_to_gpu(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint64_t len) { return ref_sync(ctx, b, off, len, "sync_cpu_to_gpu", 1); }
@@ -405,8 +449,20 @@ static int ref_poll_word(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint32
     if (rc == OMEGA_GPU_PLAT_OK) rc = range_ok(r, b, off, 4u);
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "poll_word"); ref_unlock(r); return rc; }
     volatile uint32_t *w = (volatile uint32_t *)((uint8_t *)r->mem[b.index].cpu + off);
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+    uint64_t token = 0, base = 0, polls = 0, result = 0;
+    int have = plat_live_token(&r->m16.rm, (const void *)w, 4, &token, &base) == 0
+               && omega2_plat_wait_budget(&polls, timeout_ms) == 0;
+    ref_unlock(r);
+    if (have) {
+        uint32_t st = omega2_ctx_plat_wait_ge(r->m16.rm.omega_context, &result, token, base, expected, polls);
+        rc = (st == 0 && (int64_t)result == 0) ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_POLL_TIMED_OUT;
+    } else
+        rc = m16_native_wait_marker(w, expected, timeout_ms) == 0 ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_POLL_TIMED_OUT;
+#else
     ref_unlock(r); /* never hold the table lock while polling */
     rc = m16_native_wait_marker(w, expected, timeout_ms) == 0 ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_POLL_TIMED_OUT;
+#endif
     if (observed) *observed = *w;
     return rc;
 }
@@ -483,11 +539,11 @@ static int ref_queue_submit(void *ctx, OmegaGpuQueueHandle q, const uint32_t *wo
         if (plat_decide(fm, NULL) != 0) rc = OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH;
         else {
             uint32_t *dst = ring->cpu;
-            if (xpre) memcpy(dst, prefix, sizeof prefix);
-            memcpy(dst + xpre, words, (size_t)nwords * 4u);
-            barrier();
-            if (nvrm_chan_submit(&r->m16.rm, (uint32_t)slot + 1u, ring, 0, nwords + xpre) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
-            else { r->x_l2_pending[slot] = 0; r->xinflight[slot]++; }
+            if (xpre && plat_publish(dst, prefix, sizeof prefix) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
+            else if (plat_publish(dst + xpre, words, (uint64_t)nwords * 4u) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
+            else if (plat_fence() != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
+            if (rc == OMEGA_GPU_PLAT_OK && nvrm_chan_submit(&r->m16.rm, (uint32_t)slot + 1u, ring, 0, nwords + xpre) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
+            if (rc == OMEGA_GPU_PLAT_OK) { r->x_l2_pending[slot] = 0; r->xinflight[slot]++; }
         }
         if (rc != OMEGA_GPU_PLAT_OK) rc = refuse(r, rc, "submit_methods (extra channel)");
         ref_unlock(r);
@@ -508,8 +564,8 @@ static int ref_queue_submit(void *ctx, OmegaGpuQueueHandle q, const uint32_t *wo
         else {
             uint32_t prefix[5];
             plat_l2_words(prefix);
-            memcpy(buf, prefix, sizeof prefix);
-            memcpy(buf + pre, words, (size_t)nwords * 4u);
+            if (plat_publish(buf, prefix, sizeof prefix) != 0 || plat_publish(buf + pre, words, (uint64_t)nwords * 4u) != 0)
+                rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
         }
     }
     if (rc == OMEGA_GPU_PLAT_OK && m16_native_submit_methods(&r->m16, buf ? buf : words, nwords + pre) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;

@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "tools-om-tests",
+  "layer": "tests",
+  "purpose": "Differentials, coverage and mutants that hold the om/tools units of the host tools to their C oracles"
+}

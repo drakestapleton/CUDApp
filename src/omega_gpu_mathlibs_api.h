@@ -17,10 +17,21 @@
  *   OMEGA_GPU_RNG_NORMAL:  f32 standard normal, Phi^-1(A / 2^24) with A = (r >> 41) * 2 + 1 (an odd
  *                          24-bit numerator, never 0 or 2^24), by Giles' single-precision erfinv with the
  *                          chip's MUFU.LG2 and MUFU.RSQ; a relative error bound is derived in the evidence.
+ * Philox: Philox4x32-10 (Salmon et al., SC'11; Random123), the stream of cuRAND's curandStatePhilox4_32_10_t:
+ * stream g is curand_init(seed, subseq0 + g, offset) and out[(j * nstreams + g) * 4 + c] is its curand() output
+ * number offset + 4 j + c (j < per_stream / 4, c < 4): output blocks of four words interleave across streams.
+ * offset and per_stream must be multiples of 4; the uniform and normal transforms are not provided.
  * FFT: batched in-order complex-to-complex f32 transform of n = 2^k points (4 <= n <= 2048), interleaved
  * (re, im). Forward is X[m] = sum x[l] exp(-2 pi i l m / n), inverse uses +i and is NOT normalised (as cuFFT).
  * Stockham radix 4 (one radix-2 stage first when k is odd), one CTA of n / 4 threads per transform, shared
  * memory between stages, f32 twiddles computed by the unit in f64.
+ * Real FFT (cuFFT R2C / C2R layout, 8 <= n <= 4096): R2C maps n reals to the n / 2 + 1 complex outputs X[0..n/2];
+ * C2R maps those back to n reals, unnormalised (C2R(R2C(x)) = n x); its input must be Hermitian data with
+ * Im X[0] = Im X[n/2] = 0 (other values of those two words change the result: the kernel does not clear them).
+ * Both run an n / 2-point complex FFT plus one split (R2C) or merge (C2R) pass.
+ * 2-D and 3-D: complex transform of a row-major [d0][d1][d2] array (last index fastest, as cufftPlan3d), each
+ * dims[i] in 4..2048, by one batched 1-D pass per axis followed by a transpose. The unit plans the passes (kind 6);
+ * omega_gpu_fft_plan_walk exposes the plan and its launches.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -46,6 +57,11 @@ typedef enum { OMEGA_GPU_RNG_U64 = 0, OMEGA_GPU_RNG_UNIFORM = 1, OMEGA_GPU_RNG_N
 #define OMEGA_GPU_FFT_MIN_N 4u
 #define OMEGA_GPU_FFT_MAX_N 2048u
 #define OMEGA_GPU_FFT_MAX_CTAS 1024u /* transforms per launch; larger batches take several launches */
+#define OMEGA_GPU_FFT_REAL_MIN_N 8u
+#define OMEGA_GPU_FFT_REAL_MAX_N 4096u
+#define OMEGA_GPU_FFT_MAX_ELEMENTS (1u << 27) /* batch * n (R2C, C2R) or batch * prod(dims) (2-D, 3-D) */
+#define OMEGA_GPU_PHILOX_THREADS 128u
+#define OMEGA_GPU_PHILOX_MAX_STREAMS (1024u * OMEGA_GPU_PHILOX_THREADS)
 
 typedef struct {
     int kernel_cache_hit;
@@ -65,6 +81,7 @@ typedef struct {
 /* Host only: build (and cache) the kernel, fill the codegen fields of info. No device is opened. */
 int omega_gpu_rng_codegen(OmegaGpuRngKind kind, OmegaGpuMathInfo *info);
 int omega_gpu_fft_codegen(uint32_t n, int inverse, OmegaGpuMathInfo *info);
+int omega_gpu_philox_codegen(OmegaGpuMathInfo *info);
 
 /* out holds nstreams * per_stream values: u64 for OMEGA_GPU_RNG_U64, float otherwise. */
 int omega_gpu_rng_generate(OmegaGpuRngKind kind, uint64_t seed, uint64_t stream0, uint32_t nstreams,
@@ -76,9 +93,47 @@ int omega_gpu_fft_twiddles(uint32_t n, int inverse, float *tw);
 /* in, out: batch * n interleaved complex f32 (2 * n * batch floats); in and out may not overlap. */
 int omega_gpu_fft_c2c(const float *in, float *out, uint32_t n, uint32_t batch, int inverse, OmegaGpuMathInfo *info);
 
-/* Negative controls (tests only): which 0 none, 1 RNG, 2 FFT; level 1 or 2 (see om/mathlibs/mathlibs_ir.om:
- * RNG 1 rotates by 8 instead of 7, RNG 2 perturbs the central erfinv constant; FFT 1 flips the direction of the
- * butterflies, FFT 2 drops the twiddles of the first twiddled stage). Clears the kernel cache. */
+/* out: nstreams * per_stream words (see Philox above); nstreams * per_stream <= OMEGA_GPU_RNG_MAX_OUTPUTS. */
+int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams, uint64_t offset, uint32_t per_stream,
+                              uint32_t *out, OmegaGpuMathInfo *info);
+
+/* R2C: in batch * n f32, out batch * (n / 2 + 1) interleaved complex. C2R: the reverse. in and out may not overlap. */
+int omega_gpu_fft_r2c(const float *in, float *out, uint32_t n, uint32_t batch, OmegaGpuMathInfo *info);
+int omega_gpu_fft_c2r(const float *in, float *out, uint32_t n, uint32_t batch, OmegaGpuMathInfo *info);
+
+/* ndim 1..3 dims, in and out batch * prod(dims) interleaved complex f32, not overlapping. */
+int omega_gpu_fft_c2c_nd(const float *in, float *out, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+                         OmegaGpuMathInfo *info);
+
+typedef enum { OMEGA_GPU_FFT_C2C_ND = 0, OMEGA_GPU_FFT_R2C = 1, OMEGA_GPU_FFT_C2R = 2 } OmegaGpuFftPlanMode;
+
+/* One launch of a plan step. Buffers: 0 in, 1 out, 2 scratch. */
+typedef struct {
+    uint32_t kind;             /* unit kernel: 1 complex FFT, 4 real split (b 0) or merge (b 1), 5 transpose */
+    uint32_t a, b;             /* unit arguments: kind 1 log2 n and direction; kind 4 log2 n of the real
+                                * transform and split/merge; kind 5 log2 rows and log2 columns */
+    uint32_t src, dst;         /* buffers read and written */
+    uint64_t src_off, dst_off; /* byte offsets of this launch's first row in src and dst */
+    uint32_t threads, grid, shared_bytes;
+    uint32_t total, first;     /* kind 5: elements of the whole step, first element of this launch */
+    uint32_t tw_n, tw_inverse; /* twiddle table the launch reads (tw_n 0: none) */
+    const float *tw;           /* that table, 2 * tw_n floats, valid during the callback only */
+    size_t elements;           /* f32 words the launch writes */
+} OmegaGpuFftLaunch;
+typedef int (*OmegaGpuFftLaunchFn)(void *ctx, const OmegaGpuFftLaunch *launch);
+
+/* Validate a plan (R2C and C2R: ndim 1, dims[0] = n, inverse 0), set bytes[] to the in, out and scratch sizes and,
+ * when fn is set, call it for every launch in order (a nonzero return stops the walk and is returned). Runs under
+ * the session lock: fn must not call back into this API. Host only; opens no device. */
+int omega_gpu_fft_plan_walk(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+                            size_t bytes[3], OmegaGpuFftLaunchFn fn, void *ctx);
+
+/* Negative controls (tests only): which 0 none, 1 RNG, 2 FFT, 3 Philox, 4 real split/merge, 5 transpose; level 1
+ * or 2 (see om/mathlibs/mathlibs_ir.om: RNG 1 rotates by 8 instead of 7, RNG 2 perturbs the central erfinv
+ * constant; FFT 1 flips the direction of the butterflies, FFT 2 drops the twiddles of the first twiddled stage;
+ * Philox 1 steps the second key word by W0 instead of W1, Philox 2 runs 9 rounds; split/merge 1 drops the
+ * twiddle multiply, 2 skips the bin n / 4 element; transpose 1 copies without transposing, 2 drops the high index
+ * part). Clears the kernel cache. */
 void omega_gpu_mathlibs_test_set_mutant(int which, int level);
 void omega_gpu_mathlibs_cache_clear(void);
 const char *omega_gpu_mathlibs_last_error(void);

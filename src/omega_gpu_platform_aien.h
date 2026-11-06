@@ -31,8 +31,10 @@
  * CUDAPP_AIEN_GPU_DEV names another device node (default /dev/aien-gpu).
  *
  * Migration-pending C: the definition exists only when built with CUDAPP_MIGRATION_PENDING_AIEN_GPU=1 (OFF in
- * libomega_gpu.a; ON for the host test and its mutants). Successor native/aiengpu/context.om, aien-dev/CUDApp#128,
- * blocked on the bridge extension aien-dev/omega-bridge#29.
+ * libomega_gpu.a; ON for the host test and its mutants). Its decisions and request bytes (and
+ * omega_gpu_aien_gp_entry) come from native/aiengpu/context.om, aien-dev/CUDApp#128; the C rules they replaced stay
+ * behind CUDAPP_MIGRATION_PENDING_C_PLATFORM_AIEN (OFF) as the differential oracle. The effects (open, ioctl, mmap,
+ * stores, diagnostics, the function table) wait on the bridge extension aien-dev/omega-bridge#29.
  */
 #ifndef OMEGA_GPU_PLATFORM_AIEN_H
 #define OMEGA_GPU_PLATFORM_AIEN_H

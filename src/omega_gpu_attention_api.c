@@ -30,6 +30,8 @@
 #include "omega_host_policy.h"
 #include "omega_api_plan.h"
 #include "omega_blackwell_codegen.h"
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
@@ -42,6 +44,11 @@
 #include <string.h>
 
 /* ------------------------------------------------------------------ codegen */
+#ifndef CUDAPP_MIGRATION_PENDING_C_API_KGEN
+#define CUDAPP_MIGRATION_PENDING_C_API_KGEN 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_API_KGEN
+/* Differential oracle only. Production kernel computation is om/kgen/attention*.om. */
 
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
@@ -239,6 +246,7 @@ static int check_loop_invariant(const Em *e) {
         }
     return 0;
 }
+#endif /* CUDAPP_MIGRATION_PENDING_C_API_KGEN */
 
 /* Kernel argument words (constant bank 0 at 0x380; the bank is 1024 bytes, so 32 words fit). */
 #define ARG_Q 0x380u
@@ -284,6 +292,7 @@ static uint32_t heads_per_cta(uint32_t hd, uint32_t log2gqa) { uint64_t p[16]={h
 static uint32_t shared_bytes_for(uint32_t hd, uint32_t log2gqa) { uint64_t p[16]={hd,log2gqa};(void)ap_plan(AP_AT,21,p);return p[9]; }
 uint32_t omega_gpu_attention_heads_per_cta(uint32_t head_dim, uint32_t log2_gqa) { return heads_per_cta(head_dim, log2_gqa); }
 
+#if CUDAPP_MIGRATION_PENDING_C_API_KGEN
 static void gen_attention(Em *e, const KSpec *k) {
     const uint32_t elem = k->f32 ? 4u : 2u;
     const uint32_t HD = k->hd, GC = heads_per_cta(HD, k->log2gqa), log2gc = GC == 4u ? 2u : GC == 2u ? 1u : 0u;
@@ -696,6 +705,7 @@ static void gen_attention(Em *e, const KSpec *k) {
     }
     tail(e);
 }
+#endif /* CUDAPP_MIGRATION_PENDING_C_API_KGEN */
 
 /* ---------------------------------------------------------- general kernel
  * AttnGeneral (2026-10-27, runtime API 0.6.0): the fallback for every shape the tuned kernel above does not take.
@@ -717,6 +727,7 @@ static void gen_attention(Em *e, const KSpec *k) {
 static uint32_t gen_threads(uint32_t hd) { return (hd + 31u) & ~31u; }
 static uint32_t gen_shared_bytes(uint32_t hd) { return 16u * gen_threads(hd); }
 
+#if CUDAPP_MIGRATION_PENDING_C_API_KGEN
 static void gen_attention_general(Em *e, const KSpec *k) {
     const uint32_t elem = k->f32 ? 4u : 2u, D = k->hd, T = gen_threads(D), NW = T / 32u;
     const uint32_t SH_S_ = 4u * T, SH_O_ = 8u * T, SH_R_ = 12u * T, D4 = D / 4u, DT = D % 4u;
@@ -919,26 +930,40 @@ static void gen_attention_general(Em *e, const KSpec *k) {
     stg(e, oaddr, o, udesc);
     tail(e);
 }
+#endif /* CUDAPP_MIGRATION_PENDING_C_API_KGEN */
 
 #define AT_GPR_BUDGET 96u /* cut K: the GQA-group hd 128 kernel carries four heads of running state (the matmul blocked kernels launch at 108) */
 
 static int build_kernel(const KSpec *k, OmegaBlackwellKernel *kernel, BlackwellIRProgram **keep) {
     BlackwellIRProgram *prog = omega_gpu_host_calloc(1, sizeof *prog);
     if (!prog) return OMEGA_GPU_ATTN_CODEGEN_FAIL;
+    int rc = OMEGA_GPU_ATTN_CODEGEN_FAIL;
+#if CUDAPP_MIGRATION_PENDING_C_API_KGEN
     omega_bw_ir_init(prog);
     Em e; av_memset(&e, 0, sizeof e); e.p = prog;
     e.rg_mutant = (k->divergent == 2) ? 1 : 0;
     if (k->general) gen_attention_general(&e, k); else gen_attention(&e, k);
     if (e.depth != 0) e.err = -1;
     if (e.rg.depth != 0) e.err = -1; /* a region left open has no join: refuse the build */
-    int rc = OMEGA_GPU_ATTN_CODEGEN_FAIL;
     int ra_rc = (e.err == 0) ? omega_bw_regalloc_solve(prog) : -1;
     int loop_rc = (ra_rc == 0) ? check_loop_invariant(&e) : -1;
+    int emit_rc = e.err;
+#else
+    uint64_t emit_err = 0;
+    uint64_t kind = (uint64_t)k->f32 | ((uint64_t)k->general << 1) |
+                    ((uint64_t)k->divergent << 2) | ((uint64_t)k->mutant << 8) |
+                    ((uint64_t)(k->split + 1) << 40);
+    int emit_rc = omega_gpu_om_ir_replay(omega_attention_ir, kind, k->hd, k->log2bs,
+                                        k->log2gqa, prog, &emit_err);
+    /* The single replay entry already solves allocation and checks closed loops. */
+    int ra_rc = emit_rc == OMEGA_OM_IR_OK ? 0 : -1;
+    int loop_rc = ra_rc;
+#endif
 #ifdef OMEGA_ATTN_DEBUG
     fprintf(stderr, "attn codegen f32=%d log2bs=%u log2gqa=%u mutant=%d emit_err=%d insns=%zu vregs=%d regalloc=%d loops=%d peak_gpr=%u\n",
-            (int)k->f32, k->log2bs, k->log2gqa, k->mutant, e.err, prog->count, prog->regalloc.num_vregs, ra_rc, loop_rc, prog->regalloc.peak_gpr_usage);
+            (int)k->f32, k->log2bs, k->log2gqa, k->mutant, emit_rc, prog->count, prog->regalloc.num_vregs, ra_rc, loop_rc, prog->regalloc.peak_gpr_usage);
 #endif
-    if (e.err == 0 && ra_rc == 0 && loop_rc == 0 && prog->regalloc.peak_gpr_usage <= AT_GPR_BUDGET) {
+    if (emit_rc == 0 && ra_rc == 0 && loop_rc == 0 && prog->regalloc.peak_gpr_usage <= AT_GPR_BUDGET) {
         size_t max_bytes = (size_t)BW_MAX_IR_INSNS * 16;
         av_memset(kernel, 0, sizeof *kernel);
         kernel->code = omega_gpu_host_alloc(max_bytes);

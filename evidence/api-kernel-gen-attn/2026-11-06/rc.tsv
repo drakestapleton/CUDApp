@@ -1,0 +1,11 @@
+name	rc	command	final line
+differential	0	make -j3 -f Makefile -f tests/attention_kgen.mk test-api-kgen-attention	PASS attention red control detected perturbed IR record
+mutants	0	make -j3 -f Makefile -f tests/attention_kgen.mk test-api-kgen-attention-mutants	PASS attention seeded semantic mutants: 5 killed
+attention	0	make -j3 test-gpu-attention	PASS: 348 checks, 0 failed
+decode	0	make -j3 test-gpu-decode-attn	gpu_decode_attn_test: 12 checks, 0 failed: PASS
+maxpos	0	make -j3 test-gpu-decode-attn-maxpos	test-gpu-decode-attn-maxpos: 7 of 7 controls killed (5 binding mutants)
+decode256	0	make -j3 test-gpu-decode-attn256	gpu_decode_attn256_test: 14 checks, 0 failed: PASS
+prefill	0	make -j3 test-gpu-prefill-host	test-gpu-prefill-host: PASS (8 prefill tests, host model + warp simulator, no device)
+units	0	sh om/units.sh --check	PASS portable Omega units regenerate byte for byte
+crumb-compile	0	crumb compile .	crumb compile: 46 crumbs, 0 rewritten, HEAD 51e0f36
+crumb-verify	0	crumb verify .	crumb verify: OK: 46 crumbs current

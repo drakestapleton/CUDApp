@@ -14,8 +14,8 @@ SM121DIS_K = $(OUT_DIR)/sm121dis-kernels
 
 SM121DIS_C = $(OUT_DIR)/sm121dis_c
 SM121DIS_DEPS = tools/sm121dis/sm121dis.c src/omega_sm121_disasm.c src/omega_sm121_disasm.h src/cudapp_om_sm121_dis.c \
-	src/cudapp_native.h
-SM121DIS_BUILD = $(CC) -std=gnu11 -Wall -Wextra -Werror -O2 -Isrc
+	src/cudapp_native.h src/omega_dis_words.h src/cudapp_om_words.c
+SM121DIS_BUILD = $(CC) -std=gnu11 -Wall -Wextra -Werror -O2 -Isrc src/cudapp_om_words.c
 SM121DIS_RED_DIR = $(OUT_DIR)/om-disasm/red
 # The red decoder's fault, ported from the former C mutant: field a (first source register) prints one bit off.
 SM121DIS_RED_SED = 's/^if or or eq c 100 eq c 97 or eq c 98 eq c 99$$/if and eq c 97 ne v 255\nret preg o p 0 xor v 1\nend\n&/'

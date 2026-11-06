@@ -14,8 +14,8 @@
 # make test-sm121dis (mk/sm121dis.mk) is the nvdisasm oracle and the .om vs C comparison over the kernel corpus.
 CARRIED_HOST_TESTS += test-om-disasm
 OM_DIS_DIR = $(OUT_DIR)/om-disasm
-OM_DIS_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc
-OM_DIS_DEPS = tests/sm121_dis_diff_test.c src/omega_sm121_disasm.c src/omega_sm121_disasm.h src/cudapp_native.h
+OM_DIS_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc src/cudapp_om_words.c
+OM_DIS_DEPS = tests/sm121_dis_diff_test.c src/omega_sm121_disasm.c src/omega_sm121_disasm.h src/cudapp_native.h src/omega_dis_words.h src/cudapp_om_words.c
 OM_DIS_PIN_CHECK = [ -x "$(OMEGA_OMC)" ] && [ -f "$(OMEGA_BRIDGE)/src/toc.om" ] && [ -f "$(OMEGA_BRIDGE)/src/freest.om" ] || \
 	{ echo "NOT_RUN: set pinned OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
 # om/units.sh generates both units of a directory: the decoder and the float probe (the decoder with fimm_probe.om

@@ -194,3 +194,8 @@ mapping and all five compiled mutants; byte-identical units;
 and compiled mutants PASS; byte-identical units;
 `crumb verify: OK: 91 crumbs current`. Root union adds graph_headscale
 to the existing flags/ABI runtime-views dispatch rather than stale profile syntax.
+
+#342 `1ad73a6b8f05eddc7826c4ed9c7436312ccf2337`:
+`/tmp/integ/6a-342.log/.rc` rc0; disasm words differential/red/link/five mutants,
+Omega disasm and byte-identical units PASS; final `crumb verify: OK: 91 crumbs current`.
+Additive root and dated-roadmap notes retained.

@@ -10,6 +10,7 @@
  *
  * Exit 0 when every word was a known form, 1 when some were not (printed "?? ..."), 2 for a usage or file error. */
 #include "omega_sm121_disasm.h"
+#include "omega_dis_words.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,8 +45,8 @@ int main(int argc, char **argv) {
     size_t pad = omega_sm121_padding_start(code, len);
     if (!pairs) unknown = omega_sm121_listing(code, len, stdout);
     else for (size_t at = 0; at < len; at += 16) {
-        uint64_t lo = 0, hi = 0;
-        for (int i = 7; i >= 0; i--) { lo = lo << 8 | code[at + i]; hi = hi << 8 | code[at + 8 + i]; }
+        uint64_t lo = omega_dis_word(code + at, 0, 0, 0);
+        uint64_t hi = omega_dis_word(code + at + 8, 0, 0, 0);
         char t[256];
         int rc = omega_sm121_disasm(lo, hi, at, t, sizeof t);
         if (rc == -2) { unknown = -1; break; }

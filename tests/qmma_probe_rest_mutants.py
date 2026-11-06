@@ -9,9 +9,10 @@ BRIDGE=Path(os.environ['OMEGA_BRIDGE'])
 ENV=dict(os.environ,OMEGA_SEEDED_OMC=os.environ['OMEGA_OMC'])
 host=(ROOT/'om/codegen/qm_host.om').read_text()
 selfsrc=(ROOT/'om/codegen/qm_self.om').read_text()
-sources=['src/omega_blackwell_codegen_qmma.c','src/omega_blackwell_codegen.c','src/omega_gpu_om_ir.c','src/cudapp_om_cg_qmma.c','src/cudapp_om_cg_qmma_patch.c','src/cudapp_om_qm_host.c','src/cudapp_om_qm_self.c','src/cudapp_om_bw_enc_sm121.c','src/cudapp_om_cubin_elf.c','src/omega_cubin.c','src/omega_gpu_fmt.c','src/sha256.c']
-sources += ['src/cudapp_om_'+name+'.c' for name in ('regalloc','regalloc_ir','regalloc_live','cg_bind','core_sha','cg_fields','cg_em','cg_replay','cg_life','cg_invar','core_cubinmsg','core_cubadmit','core_fmt','core_fmtnum','core_fmtclip')]
-sources += ['src/cudapp_freest_leftovers.c']
+# Link exactly what test-qmma-probe-rest links: the make recipe passes $(QMMA_REST_SRC).
+sources=os.environ.get('QMMA_REST_SRC','').split()
+for unit in ('src/cudapp_om_qm_host.c','src/cudapp_om_qm_self.c'):
+ if unit not in sources:raise SystemExit('FAIL QMMA_REST_SRC lacks '+unit+'; run make test-qmma-probe-rest-mutants')
 mutants=[('mark','host','eq a 16 eq b','eq a 15 eq b'),('read','host','shl b 8','shl b 9'),('f2-word','host','ne e 75526399','ne e 75526398'),('qmma-word','host','65535 29306','65535 29307'),('hmma-word','host','4294967040 268288','4294967040 268289'),('counts','host','add op 65536','add op 65535'),('self-store','self','put x 6 64','put x 6 68'),('self-f2','self','put x 13 1\nput x 6 1178940467','put x 13 0\nput x 6 1178940467')]
 def run(args,**kwargs):return subprocess.run(args,cwd=ROOT,env=ENV,text=True,**kwargs)
 def link(src,exe):return run(['cc','-std=gnu11','-O2','-Isrc','-ffunction-sections','-fdata-sections','-Wl,--gc-sections','tests/qmma_probe_rest_test.c',*src,'-lm','-o',str(exe)],capture_output=True)

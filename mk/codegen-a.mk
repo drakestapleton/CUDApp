@@ -35,4 +35,4 @@ test-qmma-probe-rest: $(OUT_DIR)/qmma_probe_rest_test
 	./$(OUT_DIR)/qmma_probe_rest_test
 	@if ./$(OUT_DIR)/qmma_probe_rest_test --red; then echo 'QMMA-REST RED FAIL'; exit 1; else echo 'QMMA-REST RED PASS'; fi
 test-qmma-probe-rest-mutants:
-	OUT_DIR=$(OUT_DIR) python3 tests/qmma_probe_rest_mutants.py
+	OUT_DIR=$(OUT_DIR) QMMA_REST_SRC='$(QMMA_REST_SRC)' python3 tests/qmma_probe_rest_mutants.py

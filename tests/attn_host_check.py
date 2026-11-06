@@ -16,9 +16,15 @@ def run(cmd,expect=0):
  return r
 cc=os.environ.get('CC','cc');flags=['-std=gnu11','-O2','-ffp-contract=off','-Isrc']
 units={'attn_host':'om/api/attn_host.om','attn_scanchk':'om/scan/scan_check.om','attn_clock':'om/api/clock_ns.om'}
+# om/units.sh generates each unit either seeded (cudapp_om_) or freestanding (cudapp_freest_).
+providers={}
+for name in units:
+ found=[p for p in ('src/cudapp_om_'+name+'.c','src/cudapp_freest_'+name+'.c') if (ROOT/p).is_file()]
+ if len(found)!=1:raise SystemExit('FAIL expected exactly one checked provider for '+name+': '+str(found))
+ providers[name]=found[0]
 objects={}
 for name in units:
- obj=out/(name+'.o');run([cc,*flags,'-c','src/cudapp_om_'+name+'.c','-o',obj]);objects[name]=obj
+ obj=out/(name+'.o');run([cc,*flags,'-c',providers[name],'-o',obj]);objects[name]=obj
 fixtures=[]
 for prefix in ['om','c']:
  obj=out/(prefix+'.o');extra=['-DHOST(x)='+prefix+'_ ## x']
@@ -41,7 +47,8 @@ if a.mutants:
   source=(ROOT/units[name]).read_text()
   if source.count(site)!=1:raise SystemExit('FAIL mutant site '+name)
   om=out/('mutant-'+str(num)+'.om');om.write_text(source.replace(site,replacement))
-  cmd=['sh',str(Path(env['OMEGA_BRIDGE'])/'tools/bridge-seeded'),'--runtime-views','c',str(om)]
+  freest=providers[name].startswith('src/cudapp_freest_')
+  cmd=['sh',str(Path(env['OMEGA_BRIDGE'])/('tools/bridge-freest' if freest else 'tools/bridge-seeded')),*([] if freest else ['--runtime-views']),'c',str(om)]
   r=subprocess.run(cmd,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
   commands.append({'command':cmd,'rc':r.returncode,'output':r.stderr})
   if r.returncode:raise SystemExit('FAIL mutant generation '+r.stderr)

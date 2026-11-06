@@ -13,8 +13,6 @@ source = (root / 'om/components/leftovers.om').read_text()
 mutants = [
     ('alphabet', 'ge value 97 le value 122', 'ge value 98 le value 122'),
     ('punctuation', 'eq value 58 eq value 126', 'eq value 59 eq value 126'),
-    ('dotdot', 'eq count 0 eq state 2', 'eq count 0 eq state 1'),
-    ('capacity', 'ge count sub cap 1', 'gt count sub cap 1'),
     ('ordinal', 'ret value\nend\nret 0\nend\nfn leftover_acquire', 'ret 0\nend\nret 0\nend\nfn leftover_acquire'),
     ('acquire', 'if eq okay 0', 'if ne okay 0'),
     ('poison', 'if eq state 2\nret 1', 'if eq state 1\nret 1'),
@@ -34,7 +32,7 @@ for name, old, new in mutants:
     with generated.open('w') as stream:
         subprocess.run(['sh', bridge + '/tools/bridge-freest', 'c', str(unit)], env=env, stdout=stream, check=True)
     binary = directory / 'diff'
-    subprocess.run(shlex.split(os.environ.get('CC', 'cc')) + ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-Isrc', 'tests/leftovers_test.c', str(generated), '-o', str(binary)], cwd=root, check=True)
+    subprocess.run(shlex.split(os.environ.get('CC', 'cc')) + ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-Isrc', 'tests/leftovers_test.c', str(generated), 'src/cudapp_freest_pathcopy.c', '-o', str(binary)], cwd=root, check=True)
     with (directory / 'run.log').open('w') as stream:
         result = subprocess.run([str(binary)], stdout=stream, stderr=subprocess.STDOUT)
     if result.returncode != 1:

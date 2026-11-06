@@ -3,14 +3,14 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-06T06:44:14Z",
+      "compiled_at": "2026-11-06T08:14:09Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:8a7d3b6befbb4a645f4caea131b72f7fc05adc2dfda27cf03db740c60fa81da3",
-      "evidence_files": 0,
-      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 0,
-      "generated_at_commit": "d46b5a77a7a8805350536bda474bb842a71e92b8",
-      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "digest": "sha256:c3f64b34847a5fd155279739b24e72f36c20bb1c583702e25aa97d4c535b25cf",
+      "evidence_files": 17,
+      "evidence_root": "sha256:6409bc6ed754861b5279c1ecfa9c52a26993fd0e3d2317b06b84b71045c63bb9",
+      "files": 17,
+      "generated_at_commit": "1cc4a152650a3c526259d013d0a9a78bf704e382",
+      "source_tree": "sha256:7befacd6c4be1af6ead3e9ad661000275b4ba331726600f0db2351f9ac3c822f"
     }
   },
   "name": "freest-leftovers",

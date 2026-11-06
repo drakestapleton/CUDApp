@@ -6,9 +6,9 @@
  *
  * A path is accepted only when it is 1..cap-1 bytes long, every byte is in the POSIX portable file name set
  * [A-Za-z0-9._-] or one of / + , = @ : ~ (no space, quote, control, shell or non-ASCII byte), and no
- * component is "..". Absolute and relative paths are both accepted. The accepted path is copied byte by byte
- * through omega_path_byte, so the bytes the caller later opens are exactly the bytes that were checked.
- * A refused path leaves out as the empty string.
+ * component is "..". Absolute and relative paths are both accepted. The default path asks Omega for the
+ * index of the first 0 inside the destination capacity, then asks Omega to classify and store that bounded
+ * view. Neither call walks the pointer in C. A refused path leaves out as the empty string.
  */
 #ifndef OMEGA_PATH_CHECK_H
 #define OMEGA_PATH_CHECK_H
@@ -56,8 +56,12 @@ static inline int omega_path_copy(char *out, size_t cap, const char *in) {
     return 0;
 }
 #else
-/* Pointer custody and stores stay here; the scalar Omega transducer owns
- * alphabet, component and length decisions. No fixed-size path truncation. */
+/* Default path. Length, classification and stores are Omega (src/cudapp_freest_pathcopy.c).
+ * omega2_pathlen stops at the first 0 inside cap and never reads past that bound, so a NUL-terminated
+ * source is not read past its allocation. omega2_pathcopy then receives exactly the bytes through that 0.
+ * Empty NULL is a refusal here; a nonempty NULL is refused by the binding. */
+uint32_t omega2_pathlen(uint64_t *result, const uint8_t *a, uint64_t a_n);
+uint32_t omega2_pathcopy(uint64_t *result, const uint8_t *src, uint64_t src_n, uint8_t *dst, uint64_t dst_n);
 static inline int omega_path_byte(int c) {
     uint64_t value = 256;
     if (omega_leftovers(&value, 0, (uint64_t)(int64_t)c, 0, 0, 0) != OMEGA_OK)
@@ -65,22 +69,17 @@ static inline int omega_path_byte(int c) {
     return value == 256 ? -1 : (int)value;
 }
 static inline int omega_path_copy(char *out, size_t cap, const char *in) {
+    uint64_t n = 0;
+    uint64_t wrote = 0;
     if (!out || cap == 0) return -1;
     out[0] = '\0';
     if (!in) return -1;
-    uint64_t state = 0;
-    for (size_t k = 0;; ++k) {
-        unsigned char value = (unsigned char)in[k];
-        uint64_t next = 4;
-        if (omega_leftovers(&next, 1, state, value, k, cap) != OMEGA_OK ||
-            next == 4) {
-            out[0] = '\0';
-            return -1;
-        }
-        out[k] = (char)value;
-        if (next == 5) return 0;
-        state = next;
+    if (omega2_pathlen(&n, (const uint8_t *)in, (uint64_t)cap) != 0 || n == cap) return -1;
+    if (omega2_pathcopy(&wrote, (const uint8_t *)in, n + 1, (uint8_t *)out, (uint64_t)cap) != 0 || wrote != 1) {
+        out[0] = '\0';
+        return -1;
     }
+    return 0;
 }
 #endif
 

@@ -13,5 +13,6 @@ cat <<EOF
 test-om-spec-encoder: NOT_RUN (requires the pinned AArch64 omc and nvdisasm; not part of the portable host suite)
 test-portable-receipts: NOT_RUN (requires the pinned AArch64 omc; not part of the portable host suite)
 test-model-capacity: NOT_RUN (requires the pinned AArch64 omc; not part of the portable host suite)
+test-prof: NOT_RUN (requires the pinned AArch64 omc; not part of the portable host suite)
 target-only report: the lines above are refusals. make test-om-spec-encoder and the other named targets exit 2 unless OMEGA_OMC is given and executes on this host. This report exiting 0 is not a pass of them.
 EOF

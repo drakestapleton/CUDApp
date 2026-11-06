@@ -1,0 +1,21 @@
+WolframLanguageEvaluator queries for tools/prof constants. Quoted, not recomputed by hand.
+
+Header word of emit_stamp, bw_mthd(1, 0x0158, 5):
+BitOr[BitShiftLeft[2, 28], BitShiftLeft[5, 16], BitShiftLeft[1, 13], BitShiftRight[16^^0158, 2]] -> 537206870
+
+Little-endian byte word of PROF (80, 82, 79, 70), not stored as an integer in prof.om:
+80 + 82*256 + 79*256^2 + 70*256^3 -> 1179603536
+
+Address split for stamps_va 4294967408, slot 0:
+BitAnd[4294967408, 16^^FFFFFFFF] -> 112
+BitShiftRight[4294967408, 32] -> 1
+
+Probe ridge 115140000000000/195100000000 -> 1151400/1951, N[..., 10] -> 590.1588928754
+Kernel 0 is below that ridge: 115140000000*1951 < 195100000000*1151400 -> True
+Kernel 1 is above it: 115140000000000*1951 > 195100000*1151400 -> True
+Kernel 2 is on it: 57570000000000*1951 == 97550000000*1151400 -> True
+
+Report integers, Quotient[numer*1000, denom] in fixture order
+(ai0, ai1, ai2, mem0, flop0, sec5_237_0, sec5_207_0, sec5_flop0,
+ mem1, flop1, sec5_flop1, mem2, flop2, sec5_237_2, sec5_207_2, sec5_flop2):
+{590, 590158892, 590158, 1000, 1, 823, 942, 0, 1, 1000, 484, 500, 500, 411, 471, 242}

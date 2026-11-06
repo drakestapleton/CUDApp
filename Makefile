@@ -41,7 +41,7 @@ CC ?= gcc
 CUDAPP_HOST_IS_AARCH64 := 1
 CUDAPP_OMC_HOST := 1
 endif
-CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-portable-receipts test-model-capacity)
+CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-portable-receipts test-model-capacity test-prof)
 # Portable checked Omega-to-C output; each unit has a separate private runtime namespace.
 CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
 CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c
@@ -549,12 +549,22 @@ HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-latmea
 	test-portable-receipts test-gpu-qmd-shared test-model-capacity test-gpu-qmd-shared-clean-build \
 	test-omega-slice-runner test-omega-arch-guard test-omega-barrier-contract test-omega-binding-portable \
 	test-gpu-imadhi-rc test-dagsim test-costmodel test-gpu-fp8-slots test-bw-hazard test-mufu-ftz \
-	test-zero-cuda-tool-argv $(CARRIED_HOST_TESTS) test-gpu-platform-aien
+	test-zero-cuda-tool-argv $(CARRIED_HOST_TESTS) test-gpu-platform-aien test-prof
 ifneq ($(CUDAPP_TARGET_ONLY_TESTS),)
 HOST_TESTS := $(filter-out $(CUDAPP_TARGET_ONLY_TESTS),$(HOST_TESTS)) test-omega-target-only
 endif
 test: $(HOST_TESTS)
 	@echo "CUDA++ HOST TESTS PASS ($(words $(HOST_TESTS)) targets)"
+
+.PHONY: test-prof
+ifeq ($(CUDAPP_OMC_HOST),1)
+test-prof:
+	OMEGA_OMC="$${OMEGA_OMC:-$(HOME)/work/cudastack/omega-mv/seed/out/omc}" bash tools/prof/selftest.sh
+else
+test-prof:
+	@echo "test-prof: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
+	@exit 2
+endif
 
 .PHONY: test-model-capacity
 ifeq ($(CUDAPP_OMC_HOST),1)

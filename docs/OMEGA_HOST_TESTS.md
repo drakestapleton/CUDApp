@@ -101,6 +101,7 @@ present:
 make test-om-spec-encoder
 make test-portable-receipts
 make test-model-capacity
+make test-prof
 ```
 
 `make test-codegen-freestanding` on x86-64 still runs the freestanding C
@@ -175,6 +176,7 @@ make test-gpu-native-runtime    # AArch64; seeded native units
 make test-om-spec-encoder       # pinned omc and nvdisasm
 make test-portable-receipts     # pinned omc
 make test-model-capacity        # pinned omc
+make test-prof                  # pinned omc; profiler host and simulator tiers, chip stays NOT_RUN
 make hello-gpu                  # GB10, opens the NVIDIA device nodes
 ./build/gpu_<name>_test --out receipt.json
 ```

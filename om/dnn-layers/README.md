@@ -41,13 +41,17 @@ not the integer reference. No tolerance is applied to finite conversion bits.
 Host-only commands:
 
 ```sh
-taskset -c 10-14 nice -n 10 make -j3 test-dnn-half test-om-ir-boundary
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dnn-half test-om-ir-boundary
 mkdir -p build/dnn-half-bins
-taskset -c 10-14 nice -n 10 build/dnn_half_test build/dnn-half-bins/half.bin
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/dnn_half_test build/dnn-half-bins/half.bin
 # Compare the generated words with the seeded disassembler and offline nvdisasm:
-SM121DIS_JOBS=3 tools/sm121dis/check.sh /path/to/sm121dis \
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env SM121DIS_JOBS=3 tools/sm121dis/check.sh /path/to/sm121dis \
   build/dnn-half-bins build/dnn-half-oracle
 ```
+
+Every host, simulator, source-mutant or offline-oracle command runs inside
+that device-free namespace. Native encoding/disassembly does not require a
+GPU node; an attempted session/device open during those paths is a defect.
 
 The disassembler is a read-only verification oracle, not a production dependency.
 Its exact source revision and the exercised commands belong in the dated receipt.

@@ -1,11 +1,51 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 #include "omega_gpu_attn_any_api.h"
+#include "omega_gpu_session.h"
 #include "cudapp_native.h"
 #include "bw_warp_sim_k.h"
 #include "gpu_attn_any_ref.h"
 #include <stdio.h>
 static int failures;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"attn-any failure line %d: %s\n",__LINE__,#x); ++failures; } } while (0)
+static int chip_mode, shell_mode, open_success;
+static unsigned open_calls, alloc_calls, lock_calls, unlock_calls, free_calls;
+static max_align_t fake_session;
+OmegaGpuSession *__real_omega_gpu_session_open(void);
+void __real_omega_gpu_session_lock(void);
+void __real_omega_gpu_session_unlock(void);
+void __real_omega_gpu_session_free(OmegaGpuMem *);
+int __real_omega_gpu_session_alloc(size_t, OmegaGpuMem *);
+static _Noreturn void forbidden(const char *name) {
+    fprintf(stderr,"attn-any host guard: forbidden %s\n",name);
+    abort();
+}
+OmegaGpuSession *__wrap_omega_gpu_session_open(void) {
+    if (chip_mode) return __real_omega_gpu_session_open();
+    if (!shell_mode) forbidden("session_open");
+    ++open_calls;
+    return open_success ? (OmegaGpuSession *)&fake_session : NULL;
+}
+void __wrap_omega_gpu_session_lock(void) {
+    if (chip_mode) { __real_omega_gpu_session_lock(); return; }
+    if (!shell_mode) forbidden("session_lock");
+    ++lock_calls;
+}
+void __wrap_omega_gpu_session_unlock(void) {
+    if (chip_mode) { __real_omega_gpu_session_unlock(); return; }
+    if (!shell_mode) forbidden("session_unlock");
+    ++unlock_calls;
+}
+void __wrap_omega_gpu_session_free(OmegaGpuMem *mem) {
+    if (chip_mode) { __real_omega_gpu_session_free(mem); return; }
+    if (!shell_mode) forbidden("session_free");
+    ++free_calls;
+}
+int __wrap_omega_gpu_session_alloc(size_t bytes, OmegaGpuMem *mem) {
+    if (chip_mode) return __real_omega_gpu_session_alloc(bytes,mem);
+    if (!shell_mode) forbidden("session_alloc");
+    (void)bytes; (void)mem; ++alloc_calls;
+    return -1;
+}
 static void put64(uint32_t *p, uintptr_t x) { p[0]=(uint32_t)x; p[1]=(uint32_t)((uint64_t)x>>32); }
 static void *input(size_t n, unsigned dtype, unsigned salt) {
     void *p=malloc(n*(dtype ? 2u:4u)); if (!p) abort();
@@ -84,10 +124,26 @@ static void refusals(void) {
     CHECK(omega_gpu_attn_any(NULL,NULL,NULL,NULL,NULL)==OMEGA_GPU_ATTN_ANY_BAD_ARGS);
     free(p);free(code);
 }
+static int session_contract(void) {
+    OmegaGpuAttnAnyShape shape={1,1,1,1,1,0,0,0.125f};
+    float value=0;
+    shell_mode=1;
+    for (open_success=0;open_success<2;++open_success) {
+        open_calls=alloc_calls=lock_calls=unlock_calls=free_calls=0;
+        CHECK(omega_gpu_attn_any(&shape,&value,&value,&value,&value)==OMEGA_GPU_ATTN_ANY_CHIP);
+        CHECK(open_calls==1 && alloc_calls==(unsigned)open_success);
+        CHECK(lock_calls==1 && unlock_calls==1 && free_calls==5);
+    }
+    puts(failures?"attn-any shell contract: FAIL":"attn-any shell contract: PASS (NULL refusal; non-NULL reaches allocation)");
+    return failures?1:0;
+}
 int main(int argc,char **argv) {
     int chip=argc==2 && !strcmp(argv[1],"--chip");
-    int quick=argc==2 && !strcmp(argv[1],"--quick");
+    int quick=(argc==2 && !strcmp(argv[1],"--quick")) ||
+        (argc==3 && !strcmp(argv[1],"--sim") && !strcmp(argv[2],"--quick"));
+    if (argc==2 && !strcmp(argv[1],"--shell-contract")) return session_contract();
     if (!chip && !quick && !(argc==2 && !strcmp(argv[1],"--sim"))) return 2;
+    chip_mode=chip;
     refusals();
     OmegaGpuAttnAnyShape control={7,65,80,4,1,1,0,0.125f};
     CHECK(run_shape(control,chip,0));

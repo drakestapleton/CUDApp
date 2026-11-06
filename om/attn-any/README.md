@@ -88,8 +88,8 @@ reference; NaNs fail. No empirical error or speed is inferred from these models.
 ```sh
 export OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc
 export OMEGA_BRIDGE=$HOME/work/cudastack/omega-bridge
-taskset -c 10-14 nice -n 10 sh om/units.sh
-taskset -c 10-14 nice -n 10 make -j3 test-gpu-attn-any test-gpu-attn-any-mutants
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-attn-any test-gpu-attn-any-mutants
 ```
 
 The mixed-factor sweep covers sequence lengths 1, 2, 7, 64, 65, 513 independently
@@ -104,6 +104,18 @@ The execution API is also checked to refuse an invalid shape before opening a se
 Source mutants change mask, GQA mapping, normalization, component tails,
 dimension admission and native half widening in isolated copies. All six must generate successfully
 and then fail behavior checks; a compile error does not count as a kill.
+
+Both baseline and mutant links interpose session open/lock/unlock/free.
+Simulation and quick modes abort on any such call. A seventh compiled
+test-source mutant calls `session_open` directly and must die with SIGABRT,
+not merely return a device error. The separate `--shell-contract` mode uses
+an isolated fake session and forces allocation failure: NULL must stop before
+allocation, while a non-NULL open must reach it. That regression checks the
+C shell's pointer-success contract without opening hardware; it is not chip
+execution. Only the explicit `--chip` mode forwards interposed session calls.
+Every host, simulator, mutation or differential command must run inside the
+device-free namespace above. Interposition is an additional defense, not a
+replacement for hiding all device nodes.
 
 Chip execution and qualification: **NOT_RUN**. See [CHIP.md](CHIP.md). A passing
 host reference/simulator is EXERCISED only. ROADMAP's status remains PARTIAL.

@@ -61,7 +61,7 @@ Five separately regenerated seeded semantic mutants were killed: descriptor
 offset, B-pointer offset, CTA special register, tightened pair latency and EX2
 dispatch. Compilation/generation failures do not count as killed mutants.
 
-Commands exercised so far (all with private `/dev` and cores 10–14):
+Elementwise commands exercised (all with private `/dev` and cores 10–14):
 
 ```sh
 bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-api-kgen-ew
@@ -77,6 +77,45 @@ and disassembly controls, not chip execution.
 seeded-mutant gate. `simulator-targets.log` records all three named `mk/`
 simulator targets listed below, with exit 0. Logs replace the user's home
 directory with `~` where present; no outputs or verdicts are otherwise changed.
+
+## Integrated attention and final acceptance
+
+`integrated-differential.log` records the final, serial combined commands:
+
+```sh
+make -j3 test-api-kgen-ew
+make -j3 test-api-kgen-ew-mutants
+make -j3 test-api-kgen-attention
+make -j3 test-api-kgen-attention-mutants
+```
+
+The entire sequence ran inside the same mandatory bwrap/CPU/nice wrapper with
+the pinned compiler/converter environment above, and exited **0**.
+Attention compared **39,423 cases** and **39,392 complete cubins**: every raw
+record, loop interval, register width, solved allocator, encoded instruction
+byte and successfully allocated final cubin matched. The partition exhausts
+general dimensions 1..256 and tuned block/GQA shifts, plus all existing mutant,
+divergence and split selectors and adjacent invalid boundaries. See the exact
+partition, coverage receipt and per-case packing contract in
+`../api-kernel-gen-attn/2026-11-06/README.md` and its `cubin-followup/README.md`.
+Both the altered-IR and altered-final-cubin controls were detected with exit 1.
+Five attention semantic mutants were killed, in addition to the five EW mutants.
+Generation, compilation failures and crashes are not counted as semantic kills.
+
+Additional integration-owned receipts, all exit **0**:
+
+| Receipt | Exercised targets / result |
+|---|---|
+| `default-api-targets.log` | Default-Omega `test-gpu-elementwise`, `test-gpu-reconv`, `test-gpu-attention` including every target-specified host and simulator mode |
+| `decode-prefill-targets.log` | `test-gpu-decode-attn` (including maxpos controls), `test-gpu-decode-attn256`, `test-gpu-prefill-host`; seven of seven maxpos controls killed |
+| `simulator-targets.log` | All three explicitly named simulator targets enumerated below |
+| `units-crumb.log` | Full `om/units.sh --check` byte-for-byte regeneration; `crumb compile .` and `crumb verify .`, 46 current crumbs |
+
+All named acceptance paths are host/model **EXERCISED**. Hardware qualification
+is **NOT_RUN**; this draft is neither **MERGED** nor **DEPLOYED**. The harness
+skill/compiler/encoding/bridge/gate contracts are intentionally unchanged:
+this adds consumers of the existing replay ABI and existing converter, not a
+language, compiler, protocol, ownership or trust-path change.
 
 ## Existing target inventory
 

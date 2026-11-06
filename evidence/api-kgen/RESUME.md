@@ -1,29 +1,51 @@
-# API kernel generator integration checkpoint
+# API kernel generator integration receipt
 
-This is an active-work checkpoint, not a completion receipt.
+Implementation and assigned host acceptance are complete. This is not a merge,
+deployment or chip-qualification receipt.
 
 - Worktree: `lanes/KernGenApiOm`, branch `feat/api-kernel-gen-om`.
 - Draft PR: https://github.com/aien-dev/CUDApp/pull/340, base `feat/api-views-attn-om`.
-- Published registration head at this checkpoint: `20b33b52`.
-- Verified base: `c1fec738fb3dfe4fd48bf9115a19ca9d4d3d6367`.
-- Prerequisite merge commits: `7113117` (#309 replay), `bac386c` (#294 scan).
-- EW registration: `73b11c57`; EW cutover: `c331928f`.
-- Attention source registration: `f965e67a`, export-order repair `a61802d5`, shared native registration `20b33b52`.
+- Exact source/test revision exercised by the final combined gate:
+  `e727962885a3f5878065498448ef1bd4402465c9`.
+- Verified stacked base: `c1fec738fb3dfe4fd48bf9115a19ca9d4d3d6367`.
+- Prerequisite merges: `7113117` (#309 replay), `bac386c` (#294 scan).
+- EW registration/cutover: `73b11c57`, `c331928f`.
+- Attention registration: `f965e67a`, `a61802d5`, `20b33b52`, `aff2669c`.
+- Attention cutover: `913f5bec`; full-cubin acceptance follow-up: `e7279628`.
 
-## Proven host evidence
+## Proven acceptance
 
-`elementwise-differential.log`: complete generator-spec parity, solved allocation, text and cubin bytes; 127 accepted / 73 refused; shape-plan partition 4189 admitted / 4001 refused; red killed; five regenerated seeded semantic mutants killed.
+`integrated-differential.log` records the final serial EW and attention
+IR/allocator/text/cubin differential, red controls and mutation gates, exit 0.
+EW: 127 accepted / 73 refused; shape-plan partition 4189 admitted / 4001 refused.
+Attention: 39423 cases / 39392 complete cubins. Five EW and five attention seeded
+semantic mutants were killed. Altered IR records and altered final cubins were
+detected as required failures, not accepted as green results.
 
-`simulator-targets.log`: `test-hello-sim`, `test-gpu-gemm-ex-sim`, `test-gpu-engine-sim`, exit 0.
+`default-api-targets.log`: default-Omega elementwise, reconvergence and attention
+host/model/simulator targets, exit 0.
 
-`decode-prefill-targets.log`: `test-gpu-decode-attn` (includes maxpos controls), `test-gpu-decode-attn256`, `test-gpu-prefill-host`, exit 0. Seven of seven maxpos controls killed. Prefill's eight binaries include attention host and sim.
+`decode-prefill-targets.log`: decode (including maxpos), decode256 and the existing
+prefill-host aggregate, exit 0. Seven of seven maxpos controls killed. The prefill
+aggregate includes attention host and simulator modes; no separately named
+`test-gpu-prefill-attn*` target exists on the assigned base.
 
-Production-default EW and reconvergence targets passed: 24 checks / 0 failures, 119 checks / 0 failures. Full unit generation and crumb verification passed after attention registration.
+`simulator-targets.log`: hello, gemm-ex and engine simulator targets enumerated
+from `mk/`, exit 0.
 
-All test commands use the mandatory bwrap private `/dev`, CPU 10–14 and nice 10 wrapper. No GPU qualification or deployment occurred.
+`units-crumb.log`: full pinned `om/units.sh --check`, crumb compile and verification,
+exit 0; 46 current crumbs. Compiler, converter, opcode, replay ABI and trust/gate
+contracts are unchanged by the final fixture-only follow-up.
 
-## Ownership and acceptance state
+Every test uses private `/dev` under the mandatory bwrap wrapper with CPU10–14,
+nice10 and build parallelism at most 3. No full `make test` was run. Chip remains
+NOT_RUN, requiring a fresh explicitly authorized exclusive window and the README
+runbook. No device, service, GPU lock or serving process was changed.
 
-Main's parent-managed `KernGenAttnOm` owns attention `.om` sources, attention C cutover and attention fixtures. It was instructed to merge `20b33b52` before its cutover. Its initial differential exposed a general-case metadata mismatch; that repair and final attention handoff remain in its active lane. This lane owns shared unit generation, mk integration, aggregate evidence and the single PR. Attention has not yet been cut over in this checkpoint.
+## Integration custody
 
-Final combined attention differential/mutants, default attention target, final units `--check`, crumb verification and final PR receipt are not completion claims here. Chip remains NOT_RUN and requires a fresh explicitly authorized exclusive window. No merge authority exists.
+The attention child has completed its owned source/test/evidence handoff and
+reported no remaining jobs. Integrator5 is Main's current integration owner;
+Integrator4 has been superseded. This branch retains the single draft PR. Final
+commit and claim-close receipts are supplied in the owner's final handoff, not
+inferred from this file. No merge or deployment authority exists here.

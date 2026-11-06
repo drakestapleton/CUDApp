@@ -12,13 +12,15 @@ default `CUDAPP_DISASM=om` uses Omega's. This folder holds the command line and 
 
 - Every kernel the library builds without the chip (each GPU test in its host-only and simulator modes, the
   numeric kernels, and every kernel the hazard checker's sweep builds) is collected and compared word by word with
-  `nvdisasm`, text and spacing included. All 2,980 kernels (1,218,992 instruction words) agree (2026-10-30, host).
+  `nvdisasm`, text and spacing included. All 3,191 kernels (1,237,248 instruction words) agree with `nvdisasm`
+  13.0.85, and the `.om` decoder and the C oracle print the same text for all of them (2026-11-05, host, run
+  device-free under bwrap). On 2026-10-30 the count was 2,980 kernels (1,218,992 words).
   The receipts in `evidence/C6-DISASM/` predate the sweep kernels: 331 kernels (59,152 words) on 2026-10-24, 402 kernels
   (74,096 words) on 2026-10-25.
 - A copy of the `.om` decoder with one planted fault (field a read as `v ^ 1` unless it is RZ, the same fault the
   old C `SM121DIS_MUTANT` planted) is generated with the pinned omc and must fail that comparison with a verdict.
-  On 2026-10-30 the C version of that fault failed on 2,979 of the 2,980 kernels. The one it cannot touch is a
-  sweep kernel of 32 words that is only EXIT, a branch and padding: it has no source register for the fault to change.
+  On 2026-11-05 it failed on 3,190 of the 3,191 kernels (the C version of the fault failed on 2,979 of 2,980 on
+  2026-10-30). The one it cannot touch is a sweep kernel of 32 words that is only EXIT, a branch and padding: it has no source register for the fault to change.
 - The `.om` decoder and the C oracle print the same text for every word of every collected kernel
   (`om_vs_c.sh`, inside `make test-sm121dis`), and for 26,528 generated words plus 37,088 float immediates
   (`make test-om-disasm`, `make test-om-disasm-fimm`). Four `.om` mutants must each fail one of those

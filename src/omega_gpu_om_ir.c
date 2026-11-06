@@ -5,11 +5,6 @@
 #include <string.h>
 
 #include "cudapp_native.h"
-#ifdef OMEGA_GPU_NO_POSIX
-#include "cudapp_freest_native.h"
-#else
-#include "cudapp_hosted_native.h"
-#endif
 
 #define NONE64 UINT64_MAX
 
@@ -86,7 +81,7 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
         return OMEGA_OM_IR_REPLAY;
     if (meta[7] != 0) {
         uint64_t check = 0;
-        if (omega2_ra_live(&check, 0, meta[7], meta[1], 0, 0, 0) != 0)
+        if (omega_ra_live(&check, 0, meta[7], meta[1], 0, 0, 0) != 0)
             return OMEGA_OM_IR_BRIDGE;
         if (check != 0) return (int)check;
     }
@@ -140,7 +135,7 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
         for (int v = 0; v < prog->regalloc.num_vregs; ++v) {
             uint64_t hint = meta[352 + v], check = 0;
             OmegaLiveInterval *iv = &prog->regalloc.intervals[v];
-            if (omega2_ra_live(&check, 1, hint, (uint64_t)iv->first_def,
+            if (omega_ra_live(&check, 1, hint, (uint64_t)iv->first_def,
                                (uint64_t)iv->last_use, n, (uint64_t)v) != 0)
                 return OMEGA_OM_IR_BRIDGE;
             if (check != 0) return (int)check;

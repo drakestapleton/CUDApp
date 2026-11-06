@@ -19,7 +19,7 @@ OMEGA_OMC ?= $(OMEGA_MV)/seed/out/omc
 OMEGA_BRIDGE ?= $(OMEGA_BRIDGE_DIR)
 OM_ENC_DIR = $(OUT_DIR)/om-encoder
 OM_ENC_TEST_DEPS = tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h
-OM_ENC_SRCS = src/omega_blackwell_codegen.c src/omega_blackwell_matmul.c src/sha256.c
+OM_ENC_SRCS = src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/omega_blackwell_matmul.c src/sha256.c
 OM_ENC_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc
 
 .PHONY: test-om-encoder test-om-encoder-corpus test-om-units test-om-encoder-mutants

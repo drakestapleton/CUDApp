@@ -19,39 +19,45 @@ replay implementation handles allocation and encoding. Builder-specific
 exact liveness in meta[7] and meta[352..511], documented next to meta[6] in
 `src/omega_gpu_om_ir.h`. No instruction enum entries are renumbered.
 
-## Aggregate integration
+## Portable registration
 
-Integrator owns the single hosted/freestanding aggregate and its generated public
-headers. Register these eleven units there, rather than creating a second
-production aggregate:
+All eleven units are registered in the default `UNITS` list of `om/units.sh`
+and lowered by the pinned portable bridge (OM-1, no `om2` header) into checked
+generated C. The declarations are in `src/cudapp_native.h`. The default build
+needs only the pinned omc; `sh om/units.sh --check` proves the committed C
+regenerates byte for byte.
 
-| Source under om/codegen | Native export |
-| --- | --- |
-| regalloc.om | omega2_ra_run |
-| regalloc_ir.om | omega2_ra_ir |
-| regalloc_live.om | omega2_ra_live |
-| cg_matmul.om | omega2_cg_matmul |
-| cg_matmul_params.om | omega2_cg_par |
-| cg_matmul_i32.om | omega2_cg_i32 |
-| cg_matmul_tensor.om | omega2_cg_tens |
-| cg_matmul_loop.om | omega2_cg_loop |
-| cg_matmul_frag.om | omega2_cg_frag |
-| cg_matmul_block.om | omega2_cg_block |
-| cg_vecadd.om | omega2_cg_vec |
+| Source under om/codegen | Generated C | Export |
+| --- | --- | --- |
+| regalloc.om | src/cudapp_om_regalloc.c | omega_ra_run |
+| regalloc_ir.om | src/cudapp_om_regalloc_ir.c | omega_ra_ir |
+| regalloc_live.om | src/cudapp_om_regalloc_live.c | omega_ra_live |
+| cg_matmul.om | src/cudapp_om_cg_matmul.c | omega_cg_matmul |
+| cg_matmul_params.om | src/cudapp_om_cg_matmul_params.c | omega_cg_par |
+| cg_matmul_i32.om | src/cudapp_om_cg_matmul_i32.c | omega_cg_i32 |
+| cg_matmul_tensor.om | src/cudapp_om_cg_matmul_tensor.c | omega_cg_tens |
+| cg_matmul_loop.om | src/cudapp_om_cg_matmul_loop.c | omega_cg_loop |
+| cg_matmul_frag.om | src/cudapp_om_cg_matmul_frag.c | omega_cg_frag |
+| cg_matmul_block.om | src/cudapp_om_cg_matmul_block.c | omega_cg_block |
+| cg_vecadd.om | src/cudapp_om_cg_vecadd.c | omega_cg_vec |
 
-`tests/regalloc_om/run.sh` creates only a private test aggregate. It compiles the
-C oracle under renamed exports, compares the complete program including maps
-and refusal state, compares successful encodings, exercises exact-liveness
-boundaries, and runs existing encoder fixtures and BF16 warp simulation.
-`mutants.py` recompiles altered Omega source and requires semantic failures;
-compile failure is not counted as detection.
+The portable bridge has no integer-to-integer bitcast. `regalloc.om` stores
+signed words through `ra_u2l`/`ra_l2u`, a portable two's-complement
+reinterpretation. Freestanding builds (`OMEGA_GPU_NO_POSIX`) keep the
+migration-pending C, as the encoder does, because the portable binding uses
+hosted trap handling; `make test-codegen-freestanding` compares hosted Omega
+and freestanding C instruction dumps.
+
+`tests/regalloc_om/run.sh` checks regeneration, then links the generated units.
+It compiles the C oracle under renamed exports, compares the complete program
+including maps and refusal state, compares successful encodings, exercises
+exact-liveness boundaries, and runs existing encoder fixtures and BF16 warp
+simulation. `mutants.py` lowers altered Omega source with the pinned bridge,
+relinks only that unit's generated C and requires semantic failures; compile
+failure is not counted as detection.
 
 Pinned seeded compiler: omega-mv e5b32567, omc SHA-256
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
-The frozen bridge bc11b30b supports the hosted OM2 route. Its freestanding route
-refuses OM2 arrays with rc110. BridgeHost owns the explicit freestanding OM2
-array extension; this branch does not bypass that refusal or silently use a
-hosted runtime for freestanding execution.
 
 See `evidence/regalloc-om/2026-11-06/README.md` for measured results and the
 remaining unported assigned files. This is not a claim that all CUDApp CUDA

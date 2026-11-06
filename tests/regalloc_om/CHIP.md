@@ -4,10 +4,12 @@
 are not hardware qualification. Do not access live RM, VFIO, NVIDIA devices,
 service ports, modules, or the GB10 lock under the present assignment.
 
-1. Integrator first adopts all eleven units listed in
-   `om/codegen/REGALLOC.md`, the exact-liveness replay change, and BridgeHost's
-   separately reviewed freestanding OM2 array support. Freeze source/compiler/
-   bridge revisions and generated aggregate identities in a new receipt.
+1. Integrator first adopts the eleven portable units registered in
+   `om/units.sh` and listed in `om/codegen/REGALLOC.md`, and the exact-liveness
+   replay change. Freeze source, compiler and bridge revisions and the
+   `src/cudapp_om_*.ident` identities in a new receipt. Freestanding builds
+   still use the migration-pending C until the portable freestanding binding
+   covers these units.
 2. Run the lane's host gate, ten semantic mutants, and signed-GE negative
    control in the required device-free namespace:
 

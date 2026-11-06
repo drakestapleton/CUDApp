@@ -2,7 +2,7 @@
 
 Source comparison, 2026-10-30. No device was opened. No cubin was packed. Nothing here was run on GB10 or any other GPU. Device results quoted from comments or from omega-mv#864 are marked hardware-unverified.
 
-This note records the duplication and the owner. It does not move, merge, or rewrite either writer. ARCH-0042 decision 7 (Drake, 2026-10-27, accepted 2026-10-30) keeps existing copies where they are. Consolidating them waits for a decision by Drake, recorded on [#108](https://github.com/aien-dev/CUDApp/issues/108). New work on the cubin container writer goes to this repository, or to a new aien-dev repository that pins this one. It does not go into the omega-mv copy.
+This note records the duplication and the owner. It does not move, merge, or rewrite either writer. ARCH-0042 decision 7 (Drake, 2026-10-27, accepted 2026-10-30) keeps existing copies where they are. The consolidation decision it required was taken in [ADR 0044](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0044-one-cubin-writer-per-nvidia-target-family.md) (option B, Accepted by Drake 2026-10-30); see [Decision](#decision-adr-0044) below. [#108](https://github.com/aien-dev/CUDApp/issues/108) tracks the consolidation work. New work on the cubin container writer goes to this repository, or to a new aien-dev repository that pins this one. It does not go into the omega-mv copy.
 
 [#106](https://github.com/aien-dev/CUDApp/issues/106) and [#107](https://github.com/aien-dev/CUDApp/issues/107) are other copies (GPU C sources, driver client). They are not resolved here.
 
@@ -11,6 +11,29 @@ This note records the duplication and the owner. It does not move, merge, or rew
 [ARCH-0042](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0042-omega-cudapp-bridge-ownership.md) is Accepted (Main, delegated by Drake, 2026-10-30, merged as aien-architecture-mv#342). The consequences table names one owner for the cubin writer: CUDApp. Omega owns computation. Omega Bridge owns compatibility and does not write cubins.
 
 The container writer is the ELF a loader would read: sections, `.nv.info` attributes, the register count, the ABI version. That is GPU execution, so it is this repository's.
+
+## Decision (ADR 0044)
+
+[ADR 0044](https://github.com/aien-dev/aien-architecture-mv/blob/main/docs/adr/0044-one-cubin-writer-per-nvidia-target-family.md) (merged as aien-architecture-mv#357 at `e5262c3`, status Accepted by Drake 2026-10-30) chose option B: one cubin writer per NVIDIA target family, owned by CUDApp, with `cubin_elf.om` canonical. As the ADR states it:
+
+- CUDApp owns all cubin writing, the sm_80 family included, under `backend/<target>/`. That directory does not exist on CUDApp yet. It is created when the work moves.
+- New writer work goes only into `.om`.
+- `src/omega_cubin.c` is frozen. It is retired only after the `.om` writer produces byte-identical sm_121 cubins and loads on GB10. That removal is a later, separate PR.
+- No writer stays in omega-mv except a declared, pinned oracle (ADR 0042 Decision 4).
+
+The ADR is an ownership decision. It moves no code, and it does not clear the licence restriction on omega-mv#864.
+
+### Boundary: omega-mv#864 is not a source
+
+The [closure comment on omega-mv#864](https://github.com/aien-dev/omega-mv/pull/864#issuecomment-6441131998) (2026-10-27, CudaLicenseRisk Q6) says `seed/sm80/cubin.om` is not merged, labelled or built on. The branch `ck/cubin-om` at `76639738a` is kept and is reopened only if counsel answers Q6 "cured". No counsel answer exists. The path that needs no counsel answer is a fresh writer by an author who never saw the extracts or that file, from Class A sources only (LLVM `ELF.h`, CUDA Binary Utilities docs, Mesa NAK) plus Class B own-probe facts, with its provenance recorded.
+
+ADR 0044 says omega-mv#864's ABI 8 and register-reserve findings "are ported into CUDApp as new work". Under the restriction above, that means re-deriving them from permitted sources with recorded provenance. It does not mean copying, translating or porting `cubin.om`. ADR 0044's option B is not evidence that the restriction was cleared (review comment on [#191](https://github.com/aien-dev/CUDApp/issues/191), 2026-10-30).
+
+### Three gates, kept separate
+
+1. **alu.s2 race diagnosis** ([#191](https://github.com/aien-dev/CUDApp/issues/191)). Reported by omega-mv#864 on sm_89 through NVIDIA libcuda. Root cause not established. It must be reproduced or explained, and get a host-side regression check, before an sm_80-family writer is relied on. NOT_RUN here.
+2. **sm_121 retirement gate** for `src/omega_cubin.c`: byte-identical sm_121 cubins from the `.om` writer, then a load on GB10. NOT_RUN.
+3. **Hardware**: every device tier above stays NOT_RUN until an authorized window. No result in this note is a GB10 result.
 
 ## What was read
 
@@ -89,8 +112,8 @@ Three windows ran on the DGX Spark GB10 under ledger L881 with NVIDIA `libcuda` 
 
 ## Open questions
 
-1. Whether the two writers are ever consolidated is Drake's decision, on #108. This note does not choose a date or a design for that.
-2. omega-mv#864's close comment says a later cubin writer is not a port of `cubin.om`. ARCH-0042 puts new cubin-writer work in CUDApp. Nobody has decided that a second, clean writer for the sm_80 family will be written.
+1. Consolidation is decided (ADR 0044, option B). Today `src/omega_cubin.c` with its `cubin_elf.om` body is the only cubin writer on any main branch: omega-mv main has no `seed/sm80/` files. The `.om`-only writer and the retirement of the C body are the open work on #108.
+2. omega-mv#864's close comment says a later cubin writer is not a port of `cubin.om`. ADR 0044 puts the sm_80 family in CUDApp. Who writes that fresh sm_80-family writer, under the provenance rules above, is not assigned.
 3. Answered for the CUDApp writer on GB10: attributes `0x1b` and `0x2f` both carry the declared count (peak + 2 rounded up to 8); the peak alone faults (G2 window `20261030T235858Z-10fa8c`). The exact minimum across kernels is still the INFERRED rule, measured on one kernel.
 4. Answered: an sm_121 ABI 8 image needs `.note.nv.tkinfo`; without it GB10 refuses the image with 200. The CUDApp writer emits it (section 11).
 5. Whether the program headers are necessary is open; the 200 previously blamed on them was the missing tkinfo note (`src/omega_cubin.h:40-44`, `src/omega_cubin.c:71-75`).

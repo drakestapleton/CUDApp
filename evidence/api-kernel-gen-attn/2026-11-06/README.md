@@ -58,10 +58,17 @@ These are verification/build tools, not replacement attention implementations.
 migration flag ON. Before either allocator runs, it compares every field of
 every eight-word instruction record, both virtual register width spaces and
 all closed-loop endpoints. It then compares allocation success/refusal,
-encoded instruction bytes and physical GPR usage using the unchanged encoder.
-The deliberately perturbed-record invocation flips a serialized immediate and
-must return **1**. The make target requires that red result rather than treating
-any crash or generation failure as a passing negative control.
+the full solved allocator (including uniform allocation), encoded instruction
+bytes, and complete final cubin containers. Both containers use identical valid
+attention parameter/shared-memory descriptors and independently derived
+declared register counts. A perturbed-record invocation flips a serialized
+immediate; a second invocation flips the final byte of the packed Omega cubin.
+Both must return **1**. The make target requires those red results rather than
+treating a crash or generation failure as a passing negative control.
+
+The original receipts below establish IR/encoded-text equality only; they did
+not compare final cubin bytes. The acceptance extension and its separately
+preserved receipts are in [cubin-followup/README.md](cubin-followup/README.md).
 
 The partition is derived from `gen_attention`, `gen_attention_general`,
 `heads_per_cta`, `gen_threads` and the admitted `KSpec` fields:
@@ -208,8 +215,9 @@ HD128 host/simulator, divergent HD128 simulator and general simulator modes.
 `test-gpu-decode-attn` also depends on the max-position gate; that gate is run
 explicitly once more because it is independently named in the assignment.
 `test-gpu-decode-attn256` and `test-gpu-prefill-host` are host/simulator-only.
-No full `make test` is run by this lane. Paths in checked logs are normalized
-from the local home directory to `~`; commands and other output are unchanged.
+No full `make test` is run by this lane. Paths in the original runner's logs are
+normalized from the local home directory to `~`; commands and other output are
+unchanged. Follow-up receipts describe their own capture conventions.
 
 ## Wolfram queries
 

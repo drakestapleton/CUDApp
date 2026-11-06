@@ -3,11 +3,30 @@
 #define CUDAPP_MIGRATION_PENDING_C_API_KGEN 1
 #include "../src/omega_gpu_attention_api.c"
 #include "omega_gpu_om_ir.h"
+#include "omega_cubin.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 extern uint32_t omega_attention_ir(uint64_t *,uint64_t,uint64_t,uint64_t,uint64_t,void *,uint64_t,void *,uint64_t);
-static unsigned cases;
+static unsigned cases, cubins;
+static int cubin_same(const KSpec *k, const BlackwellIRProgram *cp, const BlackwellIRProgram *op,
+                      const uint8_t *ct, const uint8_t *ot, size_t nt, int red) {
+    static const OmegaCubinParam params[] = {
+        {ARG_Q,8,1},{ARG_POOL,8,1},{ARG_OUT,8,1},{ARG_TAB,8,1},
+        {ARG_MAXB,4,0},{ARG_SCALE,4,0},{ARG_BSTRIDE,4,0},{ARG_TSTRIDE,4,0},
+        {ARG_KVP,4,0},{ARG_HSTRIDE,4,0},{ARG_NQH,4,0},{ARG_CTXOFF,4,0}
+    };
+    uint8_t *cc=NULL,*oc=NULL;size_t cn=0,on=0;char ce[128]={0},oe[128]={0};
+    uint32_t shared=kspec_shared(k);
+    int cr=omega_cubin_pack("attention_kgen",ct,nt,params,sizeof params/sizeof *params,
+        OMEGA_CUBIN_CBANK_MAX,omega_bw_gpr_declared(cp->regalloc.peak_gpr_usage),shared,&cc,&cn,ce,sizeof ce);
+    int orc=omega_cubin_pack("attention_kgen",ot,nt,params,sizeof params/sizeof *params,
+        OMEGA_CUBIN_CBANK_MAX,omega_bw_gpr_declared(op->regalloc.peak_gpr_usage),shared,&oc,&on,oe,sizeof oe);
+    if(red && orc==0 && on)oc[on-1]^=1;
+    int same=cr==0 && orc==0 && cn==on && memcmp(cc,oc,cn)==0;
+    if(!same)fprintf(stderr,"cubin mismatch status=%d/%d bytes=%zu/%zu error=%s/%s\n",cr,orc,cn,on,ce,oe);
+    omega_cubin_free(cc);omega_cubin_free(oc);return same;
+}
 static int compare(const KSpec *k, int red) {
     BlackwellIRProgram *cp=calloc(1,sizeof *cp), *op=calloc(1,sizeof *op);
     uint64_t words[8192]={0},meta[512]={0},res=99,err=0;
@@ -18,7 +37,7 @@ static int compare(const KSpec *k, int red) {
     if(k->general)gen_attention_general(&e,k);else gen_attention(&e,k);
     uint32_t st=omega_attention_ir(&res,kind,k->hd,k->log2bs,k->log2gqa,words,8192,meta,512);
     if(st||res||meta[4]||meta[6]||meta[7]||e.err||e.depth||e.rg.depth||meta[0]!=cp->count||meta[1]!=(uint64_t)cp->regalloc.num_vregs||meta[2]!=(uint64_t)cp->regalloc.num_uvregs||meta[5]!=(uint64_t)e.n_loops)goto bad;
-    if(red)words[6]^=1;
+    if(red==1)words[6]^=1;
     for(size_t i=0;i<cp->count;i++) {
         BlackwellIRInsn *in=&cp->insns[i];uint64_t *w=words+8*i;
         uint64_t flags=in->is_uniform|((uint64_t)in->predicate_p0<<1)|((uint64_t)in->predicate_not<<2)|((uint64_t)in->dst_subreg<<16)|((uint64_t)in->src1_subreg<<24)|((uint64_t)in->src2_subreg<<32)|((uint64_t)in->src3_subreg<<40)|((uint64_t)in->bar_reg<<48);
@@ -32,9 +51,12 @@ static int compare(const KSpec *k, int red) {
     if((cr==0)!=(orc==0)){fprintf(stderr,"allocation result %d/%d replay_error=%llu\n",cr,orc,(unsigned long long)err);goto bad;}
     if(cr==0){
         if(check_loop_invariant(&e)!=0){fprintf(stderr,"C oracle loop invariant failed\n");goto bad;}
+        if(memcmp(&cp->regalloc,&op->regalloc,sizeof cp->regalloc)){fprintf(stderr,"solved register allocation mismatch\n");goto bad;}
         uint8_t cb[BW_MAX_IR_INSNS*16],ob[BW_MAX_IR_INSNS*16];size_t cn=0,on=0;
         int ce=omega_bw_encode_program(cp,cb,sizeof cb,&cn),oe=omega_bw_encode_program(op,ob,sizeof ob,&on);
-        if(ce!=oe||cn!=on||(ce==0&&memcmp(cb,ob,cn))||cp->regalloc.peak_gpr_usage!=op->regalloc.peak_gpr_usage){fprintf(stderr,"encode %d/%d bytes=%zu/%zu gpr=%u/%u\n",ce,oe,cn,on,cp->regalloc.peak_gpr_usage,op->regalloc.peak_gpr_usage);goto bad;}
+        if(ce||oe||cn!=on||memcmp(cb,ob,cn)){fprintf(stderr,"encode %d/%d bytes=%zu/%zu gpr=%u/%u\n",ce,oe,cn,on,cp->regalloc.peak_gpr_usage,op->regalloc.peak_gpr_usage);goto bad;}
+        if(!cubin_same(k,cp,op,cb,ob,cn,red==2))goto bad;
+        cubins++;
     }
     cases++;free(cp);free(op);return 0;
 bad:
@@ -49,9 +71,8 @@ static int refused(uint64_t kind,uint64_t hd,uint64_t bs,uint64_t gqa){
     cases++;return 0;
 }
 int main(int argc,char **argv){
-    (void)argv;
     KSpec k={.hd=64,.split=-1};
-    if(argc>1)return compare(&k,1);
+    if(argc>1)return compare(&k,strcmp(argv[1],"--cubin-red")==0?2:1);
     /* All hd residues, warp boundaries, D4/DT branches. */
     for(unsigned f=0;f<2;f++)for(unsigned d=1;d<=256;d++){
         k=(KSpec){.f32=f,.hd=d,.general=true,.split=-1,.log2bs=31};if(compare(&k,0))return 1;
@@ -73,5 +94,5 @@ int main(int argc,char **argv){
     const uint32_t sh_bad[]={32,33,UINT32_MAX};
     for(size_t i=0;i<sizeof sh_bad/sizeof *sh_bad;i++)if(refused(0,64,sh_bad[i],0)||refused(0,64,0,sh_bad[i]))return 1;
     if(refused(UINT32_MAX,64,0,0)||refused(1ull<<44,64,0,0)||refused(6ull<<40,64,0,0)||refused(7ull<<8,64,0,0)||refused(3ull<<2,64,0,0))return 1;
-    printf("ATTENTION-IR DIFFERENTIAL PASS cases=%u records+encoded-bytes identical\n",cases);return 0;
+    printf("ATTENTION-IR DIFFERENTIAL PASS cases=%u cubins=%u records+allocation+encoded-bytes+cubins identical\n",cases,cubins);return 0;
 }

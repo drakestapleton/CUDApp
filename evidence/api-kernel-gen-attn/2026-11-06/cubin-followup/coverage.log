@@ -1,0 +1,482 @@
+Function 'main'
+Lines executed:100.00% of 19
+
+Function 'refused'
+Lines executed:100.00% of 5
+
+Function 'compare'
+Lines executed:100.00% of 34
+
+Function 'cubin_same'
+Lines executed:100.00% of 11
+
+Function 'omega_gpu_attention_test_set_divergent'
+Lines executed:0.00% of 6
+
+Function 'omega_gpu_attention_rc_name'
+Lines executed:0.00% of 9
+
+Function 'omega_gpu_attention_general_mutant_name'
+Lines executed:0.00% of 2
+
+Function 'omega_gpu_attention_test_set_general_mutant'
+Lines executed:0.00% of 6
+
+Function 'omega_gpu_attention_mutant_name'
+Lines executed:0.00% of 2
+
+Function 'omega_gpu_paged_attention_batch_bf16'
+Lines executed:0.00% of 17
+
+Function 'omega_gpu_paged_attention_bf16'
+Lines executed:0.00% of 5
+
+Function 'paged_core'
+Lines executed:0.00% of 126
+
+Function 'combine_splits'
+Lines executed:0.00% of 3
+
+Function 'omega_gpu_gqa_attention_rows_f32'
+Lines executed:0.00% of 43
+
+Function 'rows_per_launch'
+Lines executed:0.00% of 3
+
+Function 'omega_gpu_gqa_attention_f32'
+Lines executed:0.00% of 34
+
+Function 'omega_gpu_attention_general'
+Lines executed:0.00% of 43
+
+Function 'general_run'
+Lines executed:0.00% of 22
+
+Function 'head_map'
+Lines executed:0.00% of 3
+
+Function 'begin'
+Lines executed:0.00% of 8
+
+Function 'check_heads'
+Lines executed:0.00% of 5
+
+Function 'general_scale'
+Lines executed:0.00% of 3
+
+Function 'score_scale'
+Lines executed:0.00% of 3
+
+Function 'log2_exact'
+Lines executed:0.00% of 4
+
+Function 'f2u'
+Lines executed:0.00% of 1
+
+Function 'info_begin'
+Lines executed:0.00% of 8
+
+Function 'omega_gpu_attention_unreserve'
+Lines executed:0.00% of 6
+
+Function 'omega_gpu_attention_reserve_rows'
+Lines executed:0.00% of 18
+
+Function 'omega_gpu_attention_reserve'
+Lines executed:0.00% of 18
+
+Function 'launch'
+Lines executed:0.00% of 6
+
+Function 'run_launch'
+Lines executed:0.00% of 37
+
+Function 'kspec_shared'
+Lines executed:100.00% of 1
+
+Function 'kspec_threads'
+Lines executed:0.00% of 1
+
+Function 'stage_target'
+Lines executed:0.00% of 7
+
+Function 'dev_open_locked'
+Lines executed:0.00% of 3
+
+Function 'now_ns'
+Lines executed:0.00% of 1
+
+Function 'omega_gpu_attention_last_error'
+Lines executed:0.00% of 1
+
+Function 'omega_gpu_attention_codegen_general'
+Lines executed:0.00% of 8
+
+Function 'omega_gpu_attention_codegen'
+Lines executed:0.00% of 2
+
+Function 'omega_gpu_attention_codegen_hd'
+Lines executed:0.00% of 8
+
+Function 'kernel_for'
+Lines executed:0.00% of 23
+
+Function 'omega_gpu_attention_test_set_mutant'
+Lines executed:0.00% of 6
+
+Function 'on_session_close'
+Lines executed:0.00% of 6
+
+Function 'omega_gpu_attention_cache_clear'
+Lines executed:0.00% of 5
+
+Function 'cache_clear_locked'
+Lines executed:0.00% of 4
+
+Function 'omega_gpu_attention_pool_free'
+Lines executed:0.00% of 6
+
+Function 'omega_gpu_attention_pool_alloc'
+Lines executed:0.00% of 16
+
+Function 'omega_gpu_attention_test_resident_fits'
+Lines executed:0.00% of 2
+
+Function 'resident_fits'
+Lines executed:0.00% of 3
+
+Function 'gmutant_kernel'
+Lines executed:0.00% of 2
+
+Function 'omega_gpu_attention_test_force_general'
+Lines executed:0.00% of 1
+
+Function 'omega_gpu_attention_test_threads'
+Lines executed:0.00% of 1
+
+Function 'omega_gpu_attention_test_set_split'
+Lines executed:0.00% of 4
+
+Function 'omega_gpu_attention_test_set_dedupe'
+Lines executed:0.00% of 1
+
+Function 'omega_gpu_attention_test_shared_bytes'
+Lines executed:0.00% of 1
+
+Function 'omega_gpu_attention_test_set_simulator'
+Lines executed:0.00% of 1
+
+Function 'build_kernel'
+Lines executed:0.00% of 28
+
+Function 'gen_attention_general'
+Lines executed:100.00% of 176
+
+Function 'gen_shared_bytes'
+Lines executed:100.00% of 1
+
+Function 'gen_threads'
+Lines executed:100.00% of 1
+
+Function 'gen_attention'
+Lines executed:100.00% of 312
+
+Function 'omega_gpu_attention_heads_per_cta'
+Lines executed:0.00% of 1
+
+Function 'shared_bytes_for'
+Lines executed:100.00% of 1
+
+Function 'heads_per_cta'
+Lines executed:100.00% of 1
+
+Function 'check_loop_invariant'
+Lines executed:100.00% of 11
+
+Function 'loop_end'
+Lines executed:100.00% of 8
+
+Function 'loop_begin'
+Lines executed:100.00% of 3
+
+Function 'tail'
+Lines executed:100.00% of 6
+
+Function 'region_join'
+Lines executed:100.00% of 10
+
+Function 'region_exit'
+Lines executed:100.00% of 7
+
+Function 'region_begin'
+Lines executed:100.00% of 7
+
+Function 'patch_fwd'
+Lines executed:100.00% of 1
+
+Function 'bra_fwd_if_p0'
+Lines executed:100.00% of 1
+
+Function 'bra_back_if_not_p0'
+Lines executed:100.00% of 1
+
+Function 'isetp_ge_u32'
+Lines executed:100.00% of 1
+
+Function 'bar_sync'
+Lines executed:100.00% of 1
+
+Function 'lds32'
+Lines executed:100.00% of 1
+
+Function 'sts32'
+Lines executed:100.00% of 1
+
+Function 'shfl_down'
+Lines executed:100.00% of 1
+
+Function 'in_region'
+Lines executed:100.00% of 1
+
+Function 'mufu'
+Lines executed:100.00% of 1
+
+Function 'e_fmax'
+Lines executed:100.00% of 1
+
+Function 'e_ffma'
+Lines executed:100.00% of 1
+
+Function 'e_fmul'
+Lines executed:100.00% of 1
+
+Function 'e_fsub'
+Lines executed:100.00% of 1
+
+Function 'e_fadd'
+Lines executed:100.00% of 1
+
+Function 'stg'
+Lines executed:100.00% of 1
+
+Function 'wide_s_b'
+Lines executed:100.00% of 1
+
+Function 'wide_s'
+Lines executed:100.00% of 1
+
+Function 'lop3andi_s'
+Lines executed:100.00% of 1
+
+Function 'imadi_s'
+Lines executed:100.00% of 1
+
+Function 'e_ffma_s'
+Lines executed:100.00% of 1
+
+Function 'lds128_b'
+Lines executed:100.00% of 1
+
+Function 'ldg16_b'
+Lines executed:100.00% of 1
+
+Function 'ldg_b'
+Lines executed:100.00% of 1
+
+Function 'ldg128_b'
+Lines executed:100.00% of 1
+
+Function 'emit_fixed_in_batch'
+Lines executed:100.00% of 5
+
+Function 'emit_batched'
+Lines executed:100.00% of 6
+
+Function 'ldg'
+Lines executed:100.00% of 1
+
+Function 'wide'
+Lines executed:100.00% of 1
+
+Function 'shri'
+Lines executed:100.00% of 1
+
+Function 'lop3andi'
+Lines executed:100.00% of 1
+
+Function 'lop3xor'
+Lines executed:100.00% of 1
+
+Function 'iadd3'
+Lines executed:100.00% of 1
+
+Function 'imadr'
+Lines executed:100.00% of 1
+
+Function 'imadi'
+Lines executed:100.00% of 1
+
+Function 'movrz'
+Lines executed:100.00% of 1
+
+Function 'movf'
+Lines executed:100.00% of 1
+
+Function 'movi'
+Lines executed:100.00% of 1
+
+Function 's2r'
+Lines executed:100.00% of 1
+
+Function 'ldc32'
+Lines executed:100.00% of 1
+
+Function 'ldc64'
+Lines executed:100.00% of 1
+
+Function 'ldcu64'
+Lines executed:100.00% of 1
+
+Function 'I0'
+Lines executed:100.00% of 4
+
+Function 'here'
+Lines executed:100.00% of 1
+
+Function 'UV64'
+Lines executed:100.00% of 1
+
+Function 'V128'
+Lines executed:100.00% of 1
+
+Function 'V64'
+Lines executed:100.00% of 1
+
+Function 'V'
+Lines executed:100.00% of 1
+
+Function 'emit'
+Lines executed:93.75% of 16
+
+Function 'bw_regions_join'
+Lines executed:100.00% of 12
+
+Function 'bw_regions_exit'
+Lines executed:100.00% of 6
+
+Function 'bw_regions_begin'
+Lines executed:100.00% of 8
+
+Function 'bw_regions_next_bar'
+Lines executed:100.00% of 2
+
+Function 'av_fold'
+Lines executed:0.00% of 3
+
+Function 'av_max'
+Lines executed:0.00% of 2
+
+Function 'av_best'
+Lines executed:0.00% of 2
+
+Function 'av_eff'
+Lines executed:0.00% of 4
+
+Function 'av_headmap'
+Lines executed:0.00% of 3
+
+Function 'av_reset'
+Lines executed:0.00% of 3
+
+Function 'av_stage'
+Lines executed:0.00% of 8
+
+Function 'av_gather'
+Lines executed:0.00% of 3
+
+Function 'av_resfit'
+Lines executed:0.00% of 2
+
+Function 'av_blocks'
+Lines executed:0.00% of 2
+
+Function 'av_table'
+Lines executed:0.00% of 13
+
+Function 'av_total'
+Lines executed:0.00% of 2
+
+Function 'av_ranges'
+Lines executed:0.00% of 3
+
+Function 'av_gentab'
+Lines executed:0.00% of 5
+
+Function 'ap_plan'
+Lines executed:100.00% of 2
+
+Function 'ap_om'
+Lines executed:50.00% of 10
+
+Function 'av_context'
+Lines executed:0.00% of 3
+
+Function 'av_rowtab'
+Lines executed:0.00% of 3
+
+Function 'av_compact32'
+Lines executed:0.00% of 4
+
+Function 'av_count32'
+Lines executed:0.00% of 4
+
+Function 'av_fill32'
+Lines executed:0.00% of 3
+
+Function 'av_memset'
+Lines executed:100.00% of 2
+
+Function 'av_memcpy'
+Lines executed:100.00% of 5
+
+Function 'av_args'
+Lines executed:0.00% of 2
+
+File 'tests/api_kernel_gen_attention.c'
+Lines executed:100.00% of 69
+Branches executed:98.92% of 186
+Taken at least once:67.20% of 186
+Calls executed:81.25% of 48
+
+File 'tests/../src/omega_gpu_attention_api.c'
+Lines executed:51.50% of 1204
+Branches executed:43.43% of 868
+Taken at least once:39.40% of 868
+Calls executed:71.64% of 1174
+
+File 'tests/../src/omega_bw_reconv.h'
+Lines executed:100.00% of 28
+Branches executed:100.00% of 42
+Taken at least once:52.38% of 42
+No calls
+
+File 'tests/../src/omega_attn_tables.h'
+Lines executed:0.00% of 55
+Branches executed:0.00% of 66
+Taken at least once:0.00% of 66
+Calls executed:0.00% of 34
+
+File 'tests/../src/omega_api_plan.h'
+Lines executed:58.33% of 12
+Branches executed:100.00% of 11
+Taken at least once:27.27% of 11
+Calls executed:28.57% of 7
+
+File 'tests/../src/omega_attn_views.h'
+Lines executed:26.92% of 26
+Branches executed:33.33% of 30
+Taken at least once:16.67% of 30
+Calls executed:13.33% of 15
+
+Creating 'attention_diff.gcov.json.gz'
+Lines executed:52.44% of 1394

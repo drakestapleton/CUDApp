@@ -29,7 +29,7 @@ mutants = [
     ('parked-generation', 'session_park', [('if eq get gen i wgen', 'if ne get gen i wgen', 1)]),
     ('stale-epoch', 'cmdlist_book', [('if eq get a 2 get a 3', 'if ne get a 2 get a 3', 1)]),
     ('latch-generation', 'cmdlist_book', [('and add get a 1 1 WMASK', 'get a 1', 1)]),
-    ('ignore-cancel', 'shell', [('if (LOAD(g_cancel)) return WAIT_CANCELLED;', ';', 2)]),
+    ('ignore-cancel', 'shell', [('if (LOAD(g_cancel)) return WAIT_CANCELLED;', ';', 3)]),
     ('no-latch-on-timeout', 'shell', [('latch(w == WAIT_TIMED_OUT', 'omega_gpu_session_set_error(w == WAIT_TIMED_OUT', 1)]),
     ('stale-not-counted', 'shell', [('else { BUMP(g_stats.stale_refusals, 1u); fail_plat("dma_free", rc); }', 'else {}', 1)]),
     ('marker-not-polled', 'shell', [('RIGHTS_MARKER, PAGE', 'RIGHTS_DATA, PAGE', 1)]),

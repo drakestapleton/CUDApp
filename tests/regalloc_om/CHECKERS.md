@@ -37,4 +37,6 @@ The metadata is `ulong[12]={kind,m,k,mp,kp,n,nt0,nt1,source_bytes,destination_us
 
 `cg_mrow.om` provides the shared `mrow(q[3]={m,n,np}, source f32*, destination f32*)` compaction policy. It checks dimensions and view extents and copies forward without changing floating-point bits. The portable ABI refuses overlapping input/output views.
 
+`cg_sentin.om` supplies result-sentinel placement/counting under the same default-off C_PACK oracle switch. Its metadata is `{m,n,np,set_as_uint32,poison_f32_bits}`; C marshals the float bits and buffer extent, and Omega chooses the last real word in each tile and performs the exact float comparisons. The differential also compares every sentinel count and full destination for positive/negative set flags, signed zero, infinities and NaN poisons.
+
 With the bwrap prefix above, run `sh tests/regalloc_om/packers.sh`, then `env OMEGA_OMC=... OMEGA_BRIDGE=... python3 tests/regalloc_om/packers_mutants.py`. The differential compares every destination and guard word across all five packers, including partial A/B tiles, empty inputs, extra padding blocks, B subranges and f32 edge bit patterns. Six recompiled semantic mutants must execute successfully and produce different complete outputs; a compile failure or trap is not credited.

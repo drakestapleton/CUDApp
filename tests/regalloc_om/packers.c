@@ -18,6 +18,26 @@ static void row0_regression(void) {
     if (d[0] != *s || d[256] != 0 || d[512] != 0 || d[2] != 0x5a5a) abort();
     free(s);
 }
+static void sentinels(const uint32_t *dims, size_t nd, const uint32_t *bits, size_t nb) {
+    for (size_t mi = 0; mi < nd; ++mi) for (size_t ni = 0; ni < nd; ++ni) {
+        uint32_t m = dims[mi], n = dims[ni], np = n + 3;
+        size_t size = (size_t)m * np;
+        float *d = malloc((size + 2) * sizeof *d);
+        if (!d) abort();
+        for (size_t pi = 0; pi < nb; ++pi) {
+            float poison;
+            memcpy(&poison, bits + pi, sizeof poison);
+            for (size_t i = 0; i < size + 2; ++i) memcpy(d + i, bits + i % nb, sizeof *d);
+            uint64_t counts[3];
+            counts[0] = omega_matmul_result_sentinels(d + 1, m, n, np, poison, 0);
+            counts[1] = omega_matmul_result_sentinels(d + 1, m, n, np, poison, pi & 1 ? -1 : 1);
+            counts[2] = omega_matmul_result_sentinels(d + 1, m, n, np, poison, 0);
+            if (fwrite(counts, sizeof *counts, 3, stdout) != 3 ||
+                fwrite(d, sizeof *d, size + 2, stdout) != size + 2) abort();
+        }
+        free(d);
+    }
+}
 int main(int argc, char **argv) {
     if (argc == 1 || strcmp(argv[1], "--mutant") != 0) row0_regression();
     if (argc > 1 && strcmp(argv[1], "--row0") == 0) return 0;
@@ -25,6 +45,7 @@ int main(int argc, char **argv) {
     const uint32_t bits[] = {0, 0x80000000u, 0x3f800000u, 0x3f808000u,
         0x3f818000u, 0x7f800000u, 0xff800000u, 0x7f800001u, 0xffc12345u,
         0x00000001u, 0x007fffffu, 0x7fffffffu, 0xffffffffu};
+    sentinels(dims, sizeof dims / sizeof *dims, bits, sizeof bits / sizeof *bits);
     for (unsigned mi = 0; mi < sizeof dims / sizeof *dims; ++mi) {
         uint32_t m = dims[mi], mp = ((m + 15u) / 16u + 1u) * 16u;
         for (unsigned ki = 0; ki < sizeof dims / sizeof *dims; ++ki) {

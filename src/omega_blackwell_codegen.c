@@ -2717,6 +2717,7 @@ void omega_matmul_frag_pack_a_row0(const uint16_t *a, uint32_t k, uint32_t kp, u
     FRAG_PACK_A_ROW0_BODY(FRAG_ID);
 }
 #endif /* BW_PACK_C_PRIMARY */
+#ifdef BW_PACK_C_PRIMARY
 size_t omega_matmul_result_sentinels(float *cd, uint32_t m, uint32_t n, uint32_t np, float poison, int set) {
     /* one word per 16 x 8 fragment tile that holds a real output word: the tile's last real row and column */
     size_t count = 0;
@@ -2733,6 +2734,15 @@ size_t omega_matmul_result_sentinels(float *cd, uint32_t m, uint32_t n, uint32_t
     }
     return count;
 }
+#else
+size_t omega_matmul_result_sentinels(float *cd, uint32_t m, uint32_t n, uint32_t np, float poison, int set) {
+    uint32_t bits;
+    memcpy(&bits, &poison, sizeof bits);
+    uint64_t q[5] = {m, n, np, (uint32_t)set, bits}, count = 0;
+    if (omega_sentin(&count, q, 5, cd, (uint64_t)m * np)) return 0;
+    return (size_t)count;
+}
+#endif
 
 #ifdef BW_PACK_C_PRIMARY
 void omega_matmul_frag_pack_a_row0_f32(const float *a, uint32_t k, uint32_t kp, uint16_t *dst) {

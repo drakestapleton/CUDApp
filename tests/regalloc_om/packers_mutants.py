@@ -33,7 +33,8 @@ for name, old, new in CASES:
     binary=work/'packers'
     with (work/'link.log').open('wb') as log:
         subprocess.run([os.environ.get('CC','cc'),'-std=gnu11','-O2','-ffunction-sections','-fdata-sections','-Isrc',
-            'tests/regalloc_om/packers.c','src/omega_blackwell_codegen.c','src/cudapp_om_cg_pack_len.c',str(generated),
+            'tests/regalloc_om/packers.c','src/omega_blackwell_codegen.c','src/cudapp_om_cg_pack_len.c',
+            'src/cudapp_om_cg_sentin.c',str(generated),
             '-Wl,--gc-sections','-o',str(binary)],stdout=log,stderr=subprocess.STDOUT,check=True)
     with (work/'output').open('wb') as output:
         exercised=subprocess.run([str(binary),'--mutant'],stdout=output,stderr=subprocess.PIPE)

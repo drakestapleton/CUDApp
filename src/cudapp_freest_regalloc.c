@@ -93,7 +93,7 @@ o_enter();
 if(({uint64_t _a=v0;uint64_t _b=9223372036854775808ULL;o_op(8, 5, _a,_b);})){
 return o_leave(o_cast(9, 5, v0));
 }
-return o_leave(({uint64_t _a=18446744073709551615ULL;uint64_t _b=o_cast(9, 5, ({uint64_t _a=v0;uint64_t _b=18446744073709551615ULL;o_op(14, 5, _a,_b);}));o_op(2, 9, _a,_b);}));
+return o_leave(18446744073709551615ULL);
 fs_fail: __attribute__((unused));--fs->depth;return 0;
 }
 static uint64_t f1(struct ombr_fs_ctx *fs, uint64_t v0){
@@ -101,7 +101,7 @@ o_enter();
 if(({uint64_t _a=v0;uint64_t _b=0ULL;o_op(11, 9, _a,_b);})){
 return o_leave(o_cast(5, 9, v0));
 }
-return o_leave(({uint64_t _a=o_cast(5, 9, ({uint64_t _a=18446744073709551615ULL;uint64_t _b=v0;o_op(2, 9, _a,_b);}));uint64_t _b=18446744073709551615ULL;o_op(14, 5, _a,_b);}));
+return o_leave(18446744073709551615ULL);
 fs_fail: __attribute__((unused));--fs->depth;return 0;
 }
 static uint64_t f2(struct ombr_fs_ctx *fs, const void *v0, uint64_t v0_n, uint64_t v1){

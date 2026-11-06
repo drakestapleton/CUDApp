@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "api",
+  "purpose": "Seeded Omega decisions for the kernel-family API shells: FP8 pack, slot table, shape and refusal",
+  "layer": "api"
+}

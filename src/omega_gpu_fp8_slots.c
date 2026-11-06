@@ -6,6 +6,7 @@
 #include "omega_gpu_fmt.h"
 #include <stdlib.h>
 #include <string.h>
+#include "omega_api_shells.h"
 
 struct OmegaGpuFp8Slots {
     uint32_t slots, n, k;
@@ -104,8 +105,10 @@ int omega_gpu_fp8_slots_entry(OmegaGpuFp8Slots *p, uint32_t slot, uint64_t versi
     OmegaFp8SlotRec r;
     int rc = omega_fp8_slot_query(&p->tab, slot, &r);
     if (rc != OMEGA_FP8_SLOT_OK) return rc;
-    if (r.state != OMEGA_FP8_SLOT_READY || r.version != version || version == 0) return OMEGA_GPU_FP8_SLOTS_STALE;
-    if (r.pins == 0) { omega_gpu_session_set_error("fp8 slot entry: slot not pinned (pin before taking its address)"); return OMEGA_GPU_FP8_BAD_ARGS; }
+    uint64_t gate[16] = { r.state, r.pins, r.key, r.version };
+    int gate_rc = omega_api_slot(7, version, gate);
+    if (gate_rc == OMEGA_GPU_FP8_SLOTS_STALE) return gate_rc;
+    if (gate_rc != 0) { omega_gpu_session_set_error("fp8 slot entry: slot not pinned (pin before taking its address)"); return gate_rc; }
     return omega_gpu_fp8_tensor_entry(p->t, slot, w_va, s_va);
 }
 

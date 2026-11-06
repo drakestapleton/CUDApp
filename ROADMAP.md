@@ -69,3 +69,5 @@ The research in `docs/PAIN_POINTS.md` ranks what developers hit with CUDA and it
 | D12 | Work per answer, against the machine's own ceiling | simulator DONE; chip open |
 | D13 | Our own disassembler, in plain text | PLANNED (L386, Omega bar C6) |
 | D14 | Recover from a fault without restarting | PLANNED (L386, Omega bar C5) |
+
+2026-11-06: kernel-family API shell decisions (shape, alignment, overflow, refusal, FP8 pack, slot table) now default to seeded Omega in `om/api/`. The previous C expressions stay behind `CUDAPP_MIGRATION_PENDING_C_API_SHELLS` (default off) as the differential oracle. Public entry points are unchanged. Host differential and family host/sim gates are recorded under `evidence/api-shells/2026-11-06/`. Chip tier is NOT_RUN: no GPU window was authorized. Status rows above are not upgraded.

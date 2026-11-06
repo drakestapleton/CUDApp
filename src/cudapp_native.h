@@ -65,6 +65,11 @@ uint32_t omega_gemm_ex_acc(uint64_t  *result, const void *p0, uint64_t p0_n, con
 uint32_t omega_gemm_ex_dot(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n);
 uint32_t omega_gemm_ex_epi(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, const void *p3, uint64_t p3_n, const void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_gemm_ex_fp8(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_apishp(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5);
+uint32_t omega_apishk(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5);
+uint32_t omega_apishl(uint64_t  *result, uint64_t p0, uint64_t p1, void *p2, uint64_t p2_n);
+uint32_t omega_apishb(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2);
+uint32_t omega_apishr(uint64_t  *result, const void *p0, uint64_t p0_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

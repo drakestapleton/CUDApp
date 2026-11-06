@@ -20,6 +20,7 @@
 #endif
 
 #define MANIFEST_CAP 8192u
+#if CUDAPP_MIGRATION_PENDING_C_ARTIFACT
 
 const char *omega_native_artifact_rc_name(int rc) {
     switch (rc) {
@@ -800,3 +801,6 @@ void omega_native_artifact_snapshot_free(OmegaNativeArtifactSnapshot *snapshot) 
     for (unsigned i = 0; i < OMEGA_SNAPSHOT_FILES; ++i) free(snapshot->bytes[i]);
     memset(snapshot, 0, sizeof *snapshot);
 }
+#else
+#include "omega_native_artifact_om.inc"
+#endif

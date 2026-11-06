@@ -66,6 +66,13 @@ static int matmul(void){
     }
     for(unsigned i=0;i<96;i++)a[i]=b[i]=0x3f80;c[0]=1.0f;
     OmegaGpuMatmulInfo x={0},y={0};om_oracle(1,1,1,a,b,c,&x);CHECK(x.parity_verified);c[0]=2.0f;om_oracle(1,1,1,a,b,c,&y);CHECK(!y.parity_verified&&y.mismatch_count==1);
+    const uint32_t near[]={0x3f800053,0x3f800054,0x3f800055};
+    for(unsigned i=0;i<sizeof near/sizeof*near;i++){
+        memcpy(c,&near[i],4);memset(&x,0,sizeof x);memset(&y,0,sizeof y);
+        om_oracle(1,1,1,a,b,c,&x);c_oracle(1,1,1,a,b,c,&y);
+        CHECK(x.mismatch_count==y.mismatch_count&&x.mismatch_count==(i!=0));
+        CHECK(!memcmp(&x.max_abs_err,&y.max_abs_err,sizeof(float)));CHECK(!memcmp(&x.max_rel_err,&y.max_rel_err,sizeof(float)));
+    }
     puts("PASS matmul double oracle float classes and error reduction; red wrong output rejected");return 0;
 }
 int main(void){CHECK(!scalars());CHECK(!artifacts());CHECK(!matmul());puts("API-REST-DIFF PASS");return 0;}

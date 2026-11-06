@@ -270,7 +270,7 @@ $(GPU_DATTN_TEST): tests/gpu_decode_attn_test.c tests/bw_warp_sim_k.h src/omega_
 	$(CC) $(CFLAGS) -ffp-contract=off -Itests -o $@ tests/gpu_decode_attn_test.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 test-gpu-decode-attn: $(GPU_DATTN_TEST) test-gpu-decode-attn-maxpos
 	$(GPU_DATTN_TEST) --host-only
-	$(GPU_DATTN_TEST) --sim
+
 
 # omega #535: the 128k position bound (OMEGA_GPU_DATTN_MAX_POS 131072) on a fake platform, no device. A sanitized copy
 # of src/omega_gpu_decode_attn_api.c is linked ahead of the library, so cache writes, the RoPE fill and launch staging

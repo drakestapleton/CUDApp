@@ -17,7 +17,7 @@ grep -q 'predict_unusable' "$tmp/dagsim.c" || { echo "mutant: deleted the call";
 CC=${CC:-cc}
 # -Wno-unused-parameter: dropping the use of st must not die at compile time.
 # The kill is the named assertion, not a warning.
-cflags="-std=gnu11 -Wall -Wextra -Werror -Wno-unused-parameter -D_GNU_SOURCE -O2 -Isrc -Itools/dagsim"
+cflags="-std=gnu11 -Wall -Wextra -Werror -Wno-unused-parameter -D_GNU_SOURCE -O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_TOOLS -Isrc -Itools/dagsim"
 $CC $cflags -c -o "$tmp/dagsim.o" "$tmp/dagsim.c"
 $CC $cflags -c -o "$tmp/rx_costmodel.o" src/runtime/rx_costmodel.c
 # CUDA++ has no src/omega_om_units.c; src/sha256.c is sha256_hash on every host (Makefile DS_SHA_SRC).

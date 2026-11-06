@@ -55,7 +55,7 @@ test-gpu-engine-prod-build:
 # m16_native.c and nvrm.c. Opens no device. OMEGA_BLACKWELL_HOST_SIMULATOR opts this
 # binary into the fake driver. The production library build does not set it.
 GPU_ENGINE_SIM_SRCS = src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c \
-	src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_encoder.c \
+	src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_encoder.c \
 	src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c \
 	src/omega_core.c src/omega_canonical.c src/sha256.c
 
@@ -90,7 +90,7 @@ test-gpu-engine-gb10-compile: build/test_omega_gpu_engine_gb10.o
 # APIs while serving a Qwen3-4B-shaped sequence, against the simulated driver. Host only, no device.
 # Prints MEASURE lines; asserts only bookkeeping. Links no physics C sources, only its headers.
 GPU_SERVE_ALLOC_SRCS = src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_gpu_matmul_api.c src/omega_gpu_attention_api.c src/omega_gpu_serving.c \
-	src/omega_gpu_wait.c src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c \
+	src/omega_gpu_wait.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c \
 	src/omega_blackwell_matmul.c src/omega_ampere_qmd.c src/sha256.c
 build/gpu_serving_alloc_count_test: tests/gpu_serving_alloc_count_test.c tests/fake_m16_native.c tests/fake_m16_native.h $(GPU_SERVE_ALLOC_SRCS)
 	@mkdir -p build
@@ -172,10 +172,10 @@ CODEGEN_FS_TEST_DEPS = tests/test_omega_codegen_freestanding.c src/omega_blackwe
 # The hosted side encodes through the .om encoder (om/encoder/bw_enc_sm121.om via portable generated C), the
 # freestanding side through the migration-pending C encoder, so the cmp below is also an .om-vs-C differential.
 build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/cudapp_native.h \
-		src/omega_blackwell_matmul.c src/sha256.c
+		src/omega_blackwell_matmul.c src/sha256.c src/omega_gpu_om_ir.c
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc -o $@ tests/test_omega_codegen_freestanding.c \
-		src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_matmul.c src/sha256.c
+		src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_matmul.c src/sha256.c src/omega_gpu_om_ir.c
 build/test_codegen_freestanding: $(CODEGEN_FS_TEST_DEPS) $(GPU_FS_LINK)
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -o $@ tests/test_omega_codegen_freestanding.c \
@@ -230,7 +230,7 @@ test-gpu-native-runtime: build/test_omega_gpu_native_runtime
 GPU_LINUX_REF_SRCS = src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c $(CUDAPP_FS_BINDING)
 # omega #459: the command list over the reference (near-full ring with the #457 L2 invalidate prefix pending) needs the
 # cached allocation, the command list and the codegen behind its nop kernel.
-GPU_LINUX_REF_CMDLIST_SRCS = src/omega_gpu_mem_cached.c src/omega_gpu_cmdlist.c src/omega_blackwell_codegen.c $(CUDAPP_HOST_BINDING) src/omega_blackwell_encoder.c \
+GPU_LINUX_REF_CMDLIST_SRCS = src/omega_gpu_mem_cached.c src/omega_gpu_cmdlist.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CUDAPP_HOST_BINDING) src/omega_blackwell_encoder.c \
 	src/omega_blackwell_matmul.c src/omega_blackwell_realize.c src/sha256.c
 build/test_omega_gpu_platform_linux: tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c tests/fake_m16_native.h $(GPU_LINUX_REF_SRCS) $(GPU_FS_HDRS) src/omega_gpu_platform_linux.h \
 		src/omega_gpu_cmdlist.h src/omega_gpu_mem_cached.h $(GPU_LINUX_REF_CMDLIST_SRCS)

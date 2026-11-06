@@ -59,15 +59,6 @@ return ombr_fs_op(13, 5, v1, ombr_fs_op(13, 5, 2139095040ULL, ombr_fs_op(15, 5, 
 return ombr_fs_op(12, 5, ombr_fs_op(13, 5, v1, ombr_fs_op(13, 5, ombr_fs_op(15, 5, ombr_fs_op(1, 5, v2, 112ULL), 23ULL), ombr_fs_op(15, 5, v3, 13ULL))), 4294967295ULL);
 }
 static uint64_t f2(uint64_t v0, uint64_t v1, uint64_t v2, uint64_t v3, uint64_t v4, uint64_t v5){
-if(ombr_fs_op(6, 5, v0, 0ULL)){
-if(ombr_fs_op(13, 1, ombr_fs_op(6, 5, v1, 0ULL), ombr_fs_op(13, 1, ombr_fs_op(6, 5, v2, 0ULL), ombr_fs_op(6, 5, v3, 0ULL)))){
-return 0ULL;
-}
-if(ombr_fs_op(13, 1, ombr_fs_op(10, 5, v1, 8192ULL), ombr_fs_op(13, 1, ombr_fs_op(10, 5, v2, 16384ULL), ombr_fs_op(10, 5, v3, 262144ULL)))){
-return 0ULL;
-}
-return 1ULL;
-}
 if(ombr_fs_op(6, 5, v0, 1ULL)){
 return f1(v1);
 }
@@ -87,22 +78,6 @@ return 0ULL;
 uint64_t v6=ombr_fs_op(12, 5, ombr_fs_op(1, 5, ombr_fs_op(1, 5, v1, v2), 4095ULL), 18446744073709547520ULL);
 if(ombr_fs_op(8, 5, v6, 4096ULL)){
 return 4096ULL;
-}
-return v6;
-}
-if(ombr_fs_op(6, 5, v0, 5ULL)){
-if(ombr_fs_op(6, 5, v1, 0ULL)){
-return 0ULL;
-}
-if(ombr_fs_op(13, 1, ombr_fs_op(6, 5, v1, 1ULL), ombr_fs_op(6, 5, v1, 2ULL))){
-return 1ULL;
-}
-return 18446744073709551615ULL;
-}
-if(ombr_fs_op(6, 5, v0, 6ULL)){
-uint64_t v6=ombr_fs_op(16, 5, ombr_fs_op(12, 5, ombr_fs_op(1, 5, v1, 63ULL), 4294967295ULL), 6ULL);
-if(ombr_fs_op(6, 5, v6, 0ULL)){
-return 1ULL;
 }
 return v6;
 }

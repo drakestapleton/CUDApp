@@ -61,8 +61,7 @@ static uint64_t f8(const void *v0, uint64_t v0_n, void *v1, uint64_t v1_n);
 static uint64_t f9(void *v0, uint64_t v0_n, void *v1, uint64_t v1_n, const void *v2, uint64_t v2_n, void *v3, uint64_t v3_n, uint64_t v4);
 static uint64_t f10(const void *v0, uint64_t v0_n, uint64_t v1, void *v2, uint64_t v2_n);
 static uint64_t f11(const void *v0, uint64_t v0_n, uint64_t v1, void *v2, uint64_t v2_n);
-static uint64_t f12(void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2);
-static uint64_t f13(uint64_t v0, const void *v1, uint64_t v1_n, const void *v2, uint64_t v2_n, void *v3, uint64_t v3_n);
+static uint64_t f12(const void *v0, uint64_t v0_n, uint64_t v1, void *v2, uint64_t v2_n);
 static uint64_t f0(uint64_t v0, uint64_t v1){
 o_enter();
 return o_leave(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=v1;o_op(16, 4, _a,_b);});uint64_t _b=({uint64_t _a=v0;uint64_t _b=({uint64_t _a=32ULL;uint64_t _b=v1;o_op(2, 4, _a,_b);});o_op(15, 4, _a,_b);});o_op(13, 4, _a,_b);}));
@@ -395,91 +394,35 @@ if(c1++>=1000000)o_trap(4);
 ({f8(v4, v4_n, v2, v2_n);});
 return o_leave(0ULL);
 }
-static uint64_t f12(void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2){
+static uint64_t f12(const void *v0, uint64_t v0_n, uint64_t v1, void *v2, uint64_t v2_n){
 o_enter();
-{
-uint64_t v3=0;
-uint64_t k1=4ULL;
-for(;o_op(8,5, v3, k1);v3=o_op(1,5, v3,1)){
-uint64_t __attribute__((unused)) v4=({uint64_t _a=({uint64_t _a=v2;uint64_t _b=({uint64_t _a=v3;uint64_t _b=8ULL;o_op(3, 5, _a,_b);});o_op(16, 5, _a,_b);});uint64_t _b=255ULL;o_op(12, 5, _a,_b);});
-{uint64_t _i=({uint64_t _a=v1;uint64_t _b=v3;o_op(1, 5, _a,_b);});uint64_t _v=o_cast(2, 5, v4);o_put(v0, v0_n, _i,_v,2);}
-}
-}
-return o_leave(0);
-}
-static uint64_t f13(uint64_t v0, const void *v1, uint64_t v1_n, const void *v2, uint64_t v2_n, void *v3, uint64_t v3_n){
-o_enter();
-uint8_t v4[4096]={0};
-uint64_t v4_n=4096;
-o_fill(v4, v4_n, 0ULL, 2);
-if(({uint64_t _a=v0;uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
-{
-uint64_t v5=0;
-uint64_t k2=3ULL;
-for(;o_op(8,5, v5, k2);v5=o_op(1,5, v5,1)){
-({uint64_t p1=({uint64_t _a=v5;uint64_t _b=4ULL;o_op(3, 5, _a,_b);});uint64_t p2=o_get(v1, v1_n, v5, 5);f12(v4, v4_n, p1, p2);});
-}
-}
-{uint64_t _i=12ULL;uint64_t _v=o_cast(2, 5, ({uint64_t _a=o_get(v1, v1_n, 3ULL, 5);uint64_t _b=255ULL;o_op(12, 5, _a,_b);}));o_put(v4, v4_n, _i,_v,2);}
-return o_leave(({uint64_t p1=16ULL;f10(v4, v4_n, p1, v3, v3_n);}));
-}
-if(({uint64_t _a=v0;uint64_t _b=1ULL;o_op(6, 5, _a,_b);})){
-{uint64_t _i=0ULL;uint64_t _v=78ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=1ULL;uint64_t _v=86ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=2ULL;uint64_t _v=73ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=3ULL;uint64_t _v=68ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=4ULL;uint64_t _v=73ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=5ULL;uint64_t _v=65ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=6ULL;uint64_t _v=95ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=7ULL;uint64_t _v=68ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=8ULL;uint64_t _v=71ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=9ULL;uint64_t _v=88ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=10ULL;uint64_t _v=95ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=11ULL;uint64_t _v=83ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=12ULL;uint64_t _v=80ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=13ULL;uint64_t _v=65ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=14ULL;uint64_t _v=82ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=15ULL;uint64_t _v=75ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=16ULL;uint64_t _v=95ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=17ULL;uint64_t _v=71ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=18ULL;uint64_t _v=66ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=19ULL;uint64_t _v=49ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=20ULL;uint64_t _v=48ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=21ULL;uint64_t _v=95ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=22ULL;uint64_t _v=83ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=23ULL;uint64_t _v=77ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=24ULL;uint64_t _v=49ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=25ULL;uint64_t _v=50ULL;o_put(v4, v4_n, _i,_v,2);}
-{uint64_t _i=26ULL;uint64_t _v=49ULL;o_put(v4, v4_n, _i,_v,2);}
-return o_leave(({uint64_t p1=27ULL;f10(v4, v4_n, p1, v3, v3_n);}));
-}
-if(({uint64_t _a=v0;uint64_t _b=2ULL;o_op(6, 5, _a,_b);})){
-{
-uint64_t v5=0;
-uint64_t k2=96ULL;
-for(;o_op(8,5, v5, k2);v5=o_op(1,5, v5,1)){
-{uint64_t _i=v5;uint64_t _v=o_get(v2, v2_n, v5, 2);o_put(v4, v4_n, _i,_v,2);}
-}
-}
-({uint64_t p1=96ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);f12(v4, v4_n, p1, p2);});
-return o_leave(({uint64_t p1=100ULL;f10(v4, v4_n, p1, v3, v3_n);}));
-}
+if(({uint64_t _a=v1;uint64_t _b=256ULL;o_op(10, 5, _a,_b);})){
 return o_leave(18446744073709551615ULL);
 }
-uint32_t omega_bw_identity(uint64_t *result, volatile uint64_t p0, const void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n){
+uint8_t v3[4096]={0};
+uint64_t v3_n=4096;
+o_fill(v3, v3_n, 0ULL, 2);
+{
+uint64_t v4=0;
+uint64_t c1=0;
+for(;o_op(8,5, v4, v1);v4=o_op(1,5, v4,1)){
+if(c1++>=1000000)o_trap(4);
+{uint64_t _i=v4;uint64_t _v=o_get(v0, v0_n, v4, 2);o_put(v3, v3_n, _i,_v,2);}
+}
+}
+return o_leave(({uint64_t p1=v1;f10(v3, v3_n, p1, v2, v2_n);}));
+}
+uint32_t omega_bw_identity(uint64_t *result, const void *p0, uint64_t p0_n, volatile uint64_t p1, void *p2, uint64_t p2_n){
 if(!o_buf(result,1,1,5))return 32;
-if(!o_valid(5, p0))return 32;
-if(!o_buf(p1, p1_n,4, 5))return 32;
-if(o_overlap(result,8,p1, p1_n*8))return 32;
-if(!o_buf(p2, p2_n,96, 2))return 32;
+if(!o_buf(p0, p0_n,256, 2))return 32;
+if(o_overlap(result,8,p0, p0_n*1))return 32;
+if(!o_valid(5, p1))return 32;
+if(!o_buf(p2, p2_n,32, 2))return 32;
 if(o_overlap(result,8,p2, p2_n*1))return 32;
-if(!o_buf(p3, p3_n,32, 2))return 32;
-if(o_overlap(result,8,p3, p3_n*1))return 32;
-if(o_overlap(p3, p3_n*1, p1, p1_n*8))return 32;
-if(o_overlap(p3, p3_n*1, p2, p2_n*1))return 32;
+if(o_overlap(p2, p2_n*1, p0, p0_n*1))return 32;
 if(o_busy)return 33;
 o_busy=1;o_depth=0;int code=setjmp(o_jmp);
-if(!code)*result=f13(p0, p1, p1_n, p2, p2_n, p3, p3_n);
+if(!code)*result=f12(p0, p0_n, p1, p2, p2_n);
 o_busy=0;o_depth=0;return (uint32_t)code;
 }
 #if defined(__GNUC__)

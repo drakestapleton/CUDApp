@@ -12,10 +12,9 @@ static inline uint64_t omega_bw_value(uint64_t op, uint64_t x, uint64_t y,
     return result;
 }
 #ifndef OMEGA_GPU_NO_POSIX
-static inline int omega_bw_id(uint64_t op, const uint64_t nums[4],
-                               const uint8_t ids[96], uint8_t out[32]) {
+static inline int omega_bw_id(const uint8_t data[256], uint64_t n, uint8_t out[32]) {
     uint64_t result = 0;
-    uint32_t rc = omega_bw_identity(&result, op, nums, 4, ids, 96, out, 32);
+    uint32_t rc = omega_bw_identity(&result, data, 256, n, out, 32);
     return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
 }
 #endif

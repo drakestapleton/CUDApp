@@ -5,19 +5,31 @@
 #include <stdlib.h>
 #endif
 #include <string.h>
-#include "omega_bw_policy.h"
-
+#include "cudapp_native.h"
+#include "omega_bw_bind.h"
+#ifndef BW_BIND_C_PRIMARY
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
-    if (!spec || !omega_bw_value(0, m, k, n, 0, 0)) return -1;
+    uint8_t w[256] = {0};
+    if (!spec) return -1;
+    if (omega_bw_bind(0, (uint64_t)m | (uint64_t)k << 32, (uint64_t)n | (uint64_t)(uint32_t)precision << 32, w) != 16)
+        return -1;
+    spec->m = m;
+    spec->k = k;
+    spec->n = n;
+    spec->precision = precision;
+    if (omega_bw_id(w, 16, spec->spec_id) != 0) return -1;
+    return 0;
+}
+#else
+int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
+    if (!spec || m == 0 || k == 0 || n == 0) return -1;
+    if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return -1;
 
     spec->m = m;
     spec->k = k;
     spec->n = n;
     spec->precision = precision;
 
-#ifdef OMEGA_GPU_NO_POSIX
-    /* Freestanding exception pending omega-bridge#72 adoption: the portable
-     * import-free converter refuses SHA array units. Hosted uses Omega below. */
     /* Canonical spec_id computed over (m, k, n, precision) */
     uint8_t spec_buf[16];
     spec_buf[0] = (uint8_t)(m & 0xff);
@@ -41,13 +53,9 @@ int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32
     spec_buf[15] = 0;
 
     sha256_hash(spec_buf, sizeof(spec_buf), spec->spec_id);
-#else
-    const uint64_t nums[4] = {m, k, n, (uint32_t)precision};
-    const uint8_t ids[96] = {0};
-    return omega_bw_id(0, nums, ids, spec->spec_id);
-#endif
     return 0;
 }
+#endif /* BW_BIND_C_PRIMARY */
 
 int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
     if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
@@ -68,7 +76,7 @@ int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *
 float omega_fp16_to_fp32(uint16_t h) {
     uint32_t val = (uint32_t)omega_bw_value(1, h, 0, 0, 0, 0);
     float f;
-    memcpy(&f, &val, sizeof f);
+    memcpy(&f, &val, 4);
     return f;
 }
 
@@ -130,11 +138,28 @@ void omega_blackwell_kernel_free(OmegaBlackwellKernel *kernel) {
 }
 #endif
 
+#ifndef BW_BIND_C_PRIMARY
+int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const OmegaBlackwellKernel *kernel, OmegaBlackwellRealizationIdentity *id) {
+    uint8_t w[256] = {0};
+    if (!spec || !kernel || !id) return -1;
+    if (omega_bw_bind(2, 0, 0, w) != 27) return -1;
+    int64_t arch = omega_bw_bind(9, 0, 0, w);
+    if (arch < 0) return -1;
+    memcpy(id->spec_id, spec->spec_id, 32);
+    if (omega_bw_id(w, 27, id->machine_id) != 0) return -1;
+    memcpy(id->code_digest, kernel->code_digest, 32);
+    id->sm_arch = (uint32_t)arch;
+    memcpy(w + 128, id->spec_id, 32);
+    memcpy(w + 160, id->machine_id, 32);
+    memcpy(w + 192, id->code_digest, 32);
+    if (omega_bw_bind(1, id->sm_arch, 0, w) != 100) return -1;
+    if (omega_bw_id(w, 100, id->realization_id) != 0) return -1;
+    return 0;
+}
+#else
 int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const OmegaBlackwellKernel *kernel, OmegaBlackwellRealizationIdentity *id) {
     if (!spec || !kernel || !id) return -1;
 
-#ifdef OMEGA_GPU_NO_POSIX
-    /* Same freestanding SHA exception as omega_matmul_spec_init. */
     memcpy(id->spec_id, spec->spec_id, 32);
     /* NVIDIA_DGX_SPARK_GB10_SM121 canonical machine descriptor digest */
     const char *machine_str = "NVIDIA_DGX_SPARK_GB10_SM121";
@@ -153,32 +178,28 @@ int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const O
     bound[99] = (uint8_t)((id->sm_arch >> 24) & 0xff);
 
     sha256_hash(bound, sizeof(bound), id->realization_id);
-#else
-    const uint64_t nums[4] = {121, 0, 0, 0};
-    uint8_t ids[96] = {0};
-    memcpy(id->spec_id, spec->spec_id, 32);
-    if (omega_bw_id(1, nums, ids, id->machine_id) != 0) return -1;
-    memcpy(id->code_digest, kernel->code_digest, 32);
-    id->sm_arch = 121;
-    memcpy(ids, id->spec_id, 32);
-    memcpy(ids + 32, id->machine_id, 32);
-    memcpy(ids + 64, id->code_digest, 32);
-    return omega_bw_id(2, nums, ids, id->realization_id);
-#endif
     return 0;
 }
+#endif /* BW_BIND_C_PRIMARY */
 
 #include "omega_blackwell_codegen.h"
 
 #ifndef OMEGA_GPU_NO_POSIX
 int omega_blackwell_codegen_matmul(const OmegaMatMulSpec *spec, OmegaBlackwellKernel *kernel) {
     if (!spec || !kernel) return -1;
-    uint64_t route = omega_bw_value(5, (uint32_t)spec->precision, 0, 0, 0, 0);
-    if (route == 0) {
+#ifndef BW_BIND_C_PRIMARY
+    uint8_t w[256] = {0};
+    int64_t g = omega_bw_bind(3, (uint32_t)spec->precision, 0, w);
+    if (g == 0) return omega_blackwell_codegen_matmul_i32(spec, kernel);
+    if (g == 1) return omega_blackwell_codegen_matmul_tensor(spec, kernel);
+    return -1;
+#else
+    if (spec->precision == OMEGA_MATMUL_PRECISION_INT32) {
         return omega_blackwell_codegen_matmul_i32(spec, kernel);
-    } else if (route == 1) {
+    } else if (spec->precision == OMEGA_MATMUL_PRECISION_FP16 || spec->precision == OMEGA_MATMUL_PRECISION_BF16) {
         return omega_blackwell_codegen_matmul_tensor(spec, kernel);
     }
     return -1;
+#endif
 }
 #endif

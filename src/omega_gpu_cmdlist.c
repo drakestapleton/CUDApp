@@ -13,17 +13,43 @@
 #include "omega_blackwell_qmd.h"
 #include "omega_blackwell_submit.h"
 #include "omega_gpu_native_runtime.h"
+#include "cudapp_native.h"
 #include <string.h>
+
+/* C4 streams (CUDApp#115): the method words of a submission (setup, wait_for ACQUIRE, barrier choice, stamps, PCAS or
+ * inline QMD headers, completion tail) and the submit_pair marker layout come from seeded Omega, om/streams/streams.om,
+ * through the generated binding src/cudapp_om_streams.c. This file still writes them into the ring and submits.
+ * The C generator below is migration-pending, the differential oracle only:
+ *   CUDAPP_MIGRATION_PENDING_C_STREAMS     the C generator alone;
+ *   CUDAPP_MIGRATION_PENDING_STREAMS_DIFF  both on every chunk, abort on any word difference
+ *                                          (a SAME line per chunk to $CUDAPP_STREAMS_DIFF_LOG). */
+#if defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) && defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+#error "CUDAPP_MIGRATION_PENDING_STREAMS_DIFF compares C against Omega: not with CUDAPP_MIGRATION_PENDING_C_STREAMS"
+#endif
+#if defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+#define STREAMS_C_ORACLE 1
+#endif
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+#include "omega_gpu_fmt.h"
+/* Diff builds only: the driver (tests/streams_diff_test.c) logs a SAME line, or prints a difference and aborts. This
+ * file stays free of hosted includes (tools/portability table). */
+void cudapp_streams_diff_note(int same, const char *line);
+#endif
+#define TAIL_WORDS 17u
+#define STAMP_WORDS 6u
 
 #define PAGE 0x1000ull
 #define RING_WORDS (0x10000u / 4u)         /* the session ring: 64 KB */
 #define DEFAULT_TIMEOUT_MS 20000ull
+#ifdef STREAMS_C_ORACLE
 #define MTHD_WAIT_FOR_IDLE 0x0110u         /* clcec0.h NVCEC0_WAIT_FOR_IDLE */
+#endif
 /* Completion markers live on the SESSION marker page (OmegaGpuSession.marker, allocated by the session with
  * OMEGA_GPU_RIGHT_HOST_POLLED, GPU-uncached): the platform refuses poll_word on any buffer without that right
  * (omega_gpu_platform_linux.c ref_poll_word, chip run cmdlist-r1 2026-10-13: "marker poll refused"), and the session
  * exposes no polled allocation. The session uses bytes 0..0x1f of the page; this module uses 0x100..0x11f. */
 #define MARKER_OFF 0x100ull
+#ifdef STREAMS_C_ORACLE
 #define MTHD_SEND_PCAS_A 0x02b4u           /* clcec0.h NVCEC0_SEND_PCAS_A, QMD_ADDRESS_SHIFTED8 */
 #define MTHD_SEND_SIGNALING_PCAS2_B 0x02c0u /* clcec0.h, PCAS_ACTION 3:0 */
 #define PCAS_ACTION_INVALIDATE_COPY_SCHEDULE 3u
@@ -37,6 +63,7 @@ static const uint32_t SETUP_WORDS[18] = {
     0x2001255e, 0x20000000, 0x2001255f, 0x000fffff, 0x20012557, 0x00000003, 0x20012558, 0x22000000,
     0x20012559, 0x00000000,
 };
+#endif
 
 typedef struct {
     OmegaGpuNativeCache *cache;
@@ -66,7 +93,38 @@ struct OmegaGpuCmdList {
     uint64_t record_generation; /* advanced only by generated policy on safe reset */
     NativeRef *native;    /* per-launch exact code ownership, metadata only */
     uint8_t *seal_cache;  /* optional per-slot normalized byte memo; no ownership authority */
+    uint64_t *program;    /* bounded bridge descriptor view, allocated only for program API */
+    uint64_t *barriers;   /* generated hazard classes, one per launch */
+    int program_active;   /* only while submit_program consumes the generated plan */
 };
+
+#define CMDLIST_DESCRIPTOR_WORDS 49u
+#define CMDLIST_PROGRAM_WORDS (OMEGA_GPU_CMDLIST_MAX_LAUNCHES * CMDLIST_DESCRIPTOR_WORDS)
+static uint64_t list_layout(uint64_t op, const uint64_t a[16], uint64_t out[16]) {
+    uint64_t r = UINT64_MAX;
+    if (omega_cmdlist_layout(&r, op, a, 16, out, 16) != OMEGA_OK) return UINT64_MAX;
+    return r;
+}
+static uint32_t list_room(const OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *o, uint32_t prefix) {
+#ifdef CUDAPP_MIGRATION_PENDING_CMDLIST
+    uint32_t per = (o->mode == OMEGA_GPU_CMDLIST_INLINE ? 202u : 8u) + (o->stamps ? 6u : 0u) + (cl->nwaits ? 6u : 0u);
+    if (cl->words_cap < 43u || prefix > cl->words_cap - 43u) return 0;
+    return (cl->words_cap - 43u - prefix) / per;
+#else
+    uint64_t a[16] = {cl->words_cap, prefix, o->mode, o->stamps ? 1u : 0u, cl->nwaits}, out[16];
+    uint64_t room = list_layout(1, a, out);
+    return room == UINT64_MAX ? 0 : (uint32_t)room;
+#endif
+}
+static int program_storage(OmegaGpuCmdList *cl) {
+    if (!cl->program) {
+        cl->program = omega_gpu_host_calloc(CMDLIST_PROGRAM_WORDS, sizeof *cl->program);
+        if (!cl->program) return -1;
+        for (uint32_t i = 0; i < cl->n; i++) cl->program[i * CMDLIST_DESCRIPTOR_WORDS] = 17;
+    }
+    if (!cl->barriers) cl->barriers = omega_gpu_host_calloc(OMEGA_GPU_CMDLIST_MAX_LAUNCHES, sizeof *cl->barriers);
+    return cl->barriers ? 0 : -1;
+}
 
 static uint64_t next_record_generation(uint64_t previous) {
     uint64_t next = 0;
@@ -171,7 +229,8 @@ static int build_nop(OmegaGpuCmdList *cl) {
 }
 
 int omega_gpu_cmdlist_create(uint32_t cap, OmegaGpuCmdList **out) {
-    if (!out || cap == 0 || cap > OMEGA_GPU_CMDLIST_MAX_LAUNCHES) { omega_gpu_session_set_error("cmdlist create: arguments"); return -1; }
+    uint64_t shape[16] = {cap}, sizes[16];
+    if (!out || list_layout(0, shape, sizes) != 0) { omega_gpu_session_set_error("cmdlist create: arguments"); return -1; }
     *out = NULL;
     OmegaGpuCmdList *cl = omega_gpu_host_calloc(1, sizeof *cl);
     if (!cl) return -1;
@@ -187,10 +246,10 @@ int omega_gpu_cmdlist_create(uint32_t cap, OmegaGpuCmdList **out) {
     int rc = cl->words && cl->indep && cl->wait_va && cl->native ? 0 : -1;
     omega_gpu_session_lock();
     if (rc == 0 && !omega_gpu_session_open()) rc = -1;
-    if (rc == 0 && (omega_gpu_session_alloc((size_t)cap * OMEGA_GPU_CMDLIST_BANK_BYTES, &cl->banks) != 0 ||
-                    omega_gpu_session_alloc((size_t)cap * OMEGA_GPU_CMDLIST_QMD_BYTES, &cl->qmds) != 0 ||
-                    omega_gpu_session_alloc((size_t)cap * 16u, &cl->sems) != 0 ||
-                    omega_gpu_session_alloc((size_t)(cap + 1u) * 16u, &cl->stamps) != 0 ||
+    if (rc == 0 && (omega_gpu_session_alloc((size_t)sizes[0], &cl->banks) != 0 ||
+                    omega_gpu_session_alloc((size_t)sizes[0], &cl->qmds) != 0 ||
+                    omega_gpu_session_alloc((size_t)sizes[1], &cl->sems) != 0 ||
+                    omega_gpu_session_alloc((size_t)sizes[2], &cl->stamps) != 0 ||
                     omega_gpu_session_alloc(0x4000, &cl->scratch) != 0))
         rc = -1;
     if (rc == 0 && build_nop(cl) != 0) { omega_gpu_session_set_error("cmdlist create: nop kernel"); rc = -1; }
@@ -219,15 +278,22 @@ void omega_gpu_cmdlist_free(OmegaGpuCmdList *cl) {
     omega_gpu_host_free(cl->wait_va);
     omega_gpu_host_free(cl->native);
     omega_gpu_host_free(cl->seal_cache);
+    omega_gpu_host_free(cl->program);
+    omega_gpu_host_free(cl->barriers);
     omega_gpu_host_free(cl);
 }
 
+#ifdef CUDAPP_MIGRATION_PENDING_CMDLIST
 static uint32_t round8(uint32_t v) { return (v + 7u) / 8u * 8u; }
+#endif
 
 static int add_recorded(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L, NativeRef *pending) {
-    if (!cl || !L || !L->args || L->n_args == 0 || L->n_args > OMEGA_GPU_SESSION_MAX_ARGS || L->threads_x == 0 || L->grid_x == 0 || L->grid_y == 0 ||
-        L->code_va == 0) { omega_gpu_session_set_error("cmdlist add: arguments"); return -1; }
+    if (!cl || !L || !L->args) { omega_gpu_session_set_error("cmdlist add: arguments"); return -1; }
     if (stale(cl)) return -1;
+#ifdef CUDAPP_MIGRATION_PENDING_CMDLIST
+    if (L->n_args == 0 || L->n_args > OMEGA_GPU_SESSION_MAX_ARGS || L->threads_x == 0 || L->grid_x == 0 || L->grid_y == 0 || L->code_va == 0) {
+        omega_gpu_session_set_error("cmdlist add: arguments"); return -1;
+    }
     if (cl->n >= cl->cap) { omega_gpu_session_set_error("cmdlist add: list full"); return -1; }
     const uint32_t i = cl->n;
     const uint32_t ty = L->threads_y ? L->threads_y : 1;
@@ -254,6 +320,23 @@ static int add_recorded(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L, NativeRef 
     uint8_t *qs = (uint8_t *)cl->qmds.cpu + (size_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
     memcpy(qs, q1, sizeof q1);
     memcpy(qs + 0x200, q0, sizeof q0);
+#else
+    uint64_t a[16] = {cl->cap, cl->n, L->n_args, L->threads_x, L->threads_y, L->grid_x, L->grid_y,
+                      L->code_va, L->gpr_count, L->shared_bytes, cl->banks.va, cl->qmds.va, cl->sems.va, cl->scratch.va};
+    uint64_t args[OMEGA_GPU_SESSION_MAX_ARGS] = {0}, record[512], result = 1;
+    for (uint32_t j = 0; j < L->n_args && j < OMEGA_GPU_SESSION_MAX_ARGS; j++) args[j] = L->args[j];
+    if (omega_cmdlist_record(&result, a, 16, args, OMEGA_GPU_SESSION_MAX_ARGS, record, 512) != OMEGA_OK || result != 0) {
+        omega_gpu_session_set_error(result == 2 ? "cmdlist add: list full" : result == 3 ? "cmdlist add: qmd" : "cmdlist add: arguments");
+        return -1;
+    }
+    const uint32_t i = cl->n;
+    uint8_t *bank = (uint8_t *)cl->banks.cpu + (size_t)i * OMEGA_GPU_CMDLIST_BANK_BYTES;
+    uint8_t *qs = (uint8_t *)cl->qmds.cpu + (size_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
+    for (uint32_t j = 0; j < 256; j++) {
+        ((uint32_t *)bank)[j] = (uint32_t)record[j];
+        ((uint32_t *)qs)[j] = (uint32_t)record[256 + j];
+    }
+#endif
     if (pending) {
         uint64_t result = 0;
         uint32_t seal_rc = cl->seal_cache ?
@@ -275,11 +358,65 @@ static int add_recorded(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L, NativeRef 
     cl->wait_va[cl->n] = cl->pending_wait;
     if (cl->pending_wait) cl->nwaits++;
     cl->pending_wait = 0;
+    if (cl->program) cl->program[cl->n * CMDLIST_DESCRIPTOR_WORDS] = 17;
     cl->n++;
     return (int)i;
 }
 int omega_gpu_cmdlist_add(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L) {
     return add_recorded(cl, L, NULL);
+}
+
+int omega_gpu_cmdlist_add_accesses(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L,
+                                  const OmegaGpuCmdListAccess *accesses, uint32_t count) {
+    if (!cl || !L || (count && !accesses) || count > OMEGA_GPU_CMDLIST_MAX_ACCESSES ||
+        cl->n >= cl->cap || stale(cl) || program_storage(cl) != 0) return -1;
+    uint64_t *p = cl->program + cl->n * CMDLIST_DESCRIPTOR_WORDS;
+    p[0] = count;
+    for (uint32_t j = 0; j < count; j++) {
+        p[1 + 3*j] = accesses[j].va; p[2 + 3*j] = accesses[j].bytes; p[3 + 3*j] = accesses[j].flags;
+    }
+    uint64_t r = 0;
+    if (omega_cmdlist_access(&r, cl->program, CMDLIST_PROGRAM_WORDS, cl->n) != OMEGA_OK || r != 1) {
+        omega_gpu_session_set_error("cmdlist add: invalid memory access set"); return -1;
+    }
+    int index = add_recorded(cl, L, NULL);
+    if (index >= 0) p[0] = count; /* add_recorded marks legacy entries unknown */
+    return index;
+}
+int omega_gpu_cmdlist_set_accesses(OmegaGpuCmdList *cl, uint32_t index,
+                                  const OmegaGpuCmdListAccess *accesses, uint32_t count) {
+    if (!cl || index >= cl->n || (count && !accesses) ||
+        count > OMEGA_GPU_CMDLIST_MAX_ACCESSES || stale(cl) || program_storage(cl) != 0) return -1;
+    uint64_t *p = cl->program + index * CMDLIST_DESCRIPTOR_WORDS, saved[CMDLIST_DESCRIPTOR_WORDS];
+    memcpy(saved, p, sizeof saved);
+    p[0] = count;
+    for (uint32_t j = 0; j < count; j++) {
+        p[1 + 3*j] = accesses[j].va; p[2 + 3*j] = accesses[j].bytes; p[3 + 3*j] = accesses[j].flags;
+    }
+    uint64_t r = 0;
+    if (omega_cmdlist_access(&r, cl->program, CMDLIST_PROGRAM_WORDS, index) != OMEGA_OK || r != 1) {
+        memcpy(p, saved, sizeof saved);
+        omega_gpu_session_set_error("cmdlist set: invalid memory access set"); return -1;
+    }
+    return 0;
+}
+
+
+int omega_gpu_cmdlist_plan_program(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
+                                  OmegaGpuCmdListProgramPlan *plan) {
+    OmegaGpuCmdListOpts o = {0};
+    if (opts) o = *opts;
+    if (!cl || !plan || stale(cl) || program_storage(cl) != 0) return -1;
+    uint64_t a[16] = {cl->n, cl->cap, o.mode, o.stamps ? 1u : 0u, cl->words_cap,
+        omega_gpu_session_submit_prefix_words(), o.barrier, (uint64_t)o.skip_launch,
+        o.first_barrier_none ? 1u : 0u, cl->nwaits}, out[16], r = 1;
+    if (omega_cmdlist_plan(&r, a, 16, cl->program, CMDLIST_PROGRAM_WORDS, cl->barriers,
+                           OMEGA_GPU_CMDLIST_MAX_LAUNCHES, out, 16) != OMEGA_OK || r != 0) {
+        omega_gpu_session_set_error("cmdlist program: invalid options/accesses or program does not fit one submission"); return -1;
+    }
+    plan->launches = cl->n; plan->words = (uint32_t)out[0];
+    plan->waits = (uint32_t)out[1]; plan->submissions = (uint32_t)out[2];
+    return 0;
 }
 
 int omega_gpu_cmdlist_add_native(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L, const OmegaGpuNativeLease *lease) {
@@ -337,6 +474,7 @@ static void force_latch(OmegaGpuCmdList *cl, const char *why) {
     omega_gpu_session_set_error(why);
 }
 
+#ifdef STREAMS_C_ORACLE
 static size_t emit_tail(uint32_t *pb, size_t n, uint64_t marker_va) {
     pb[n++] = bw_mthd(0, 0x005c, 5);
     pb[n++] = (uint32_t)marker_va; pb[n++] = (uint32_t)(marker_va >> 32);
@@ -347,13 +485,11 @@ static size_t emit_tail(uint32_t *pb, size_t n, uint64_t marker_va) {
     pb[n++] = OMEGA_BW_MARKER2_PAYLOAD; pb[n++] = 0; pb[n++] = 0x1 | (1u << 20);
     return n;
 }
-#define TAIL_WORDS 17u
 
 /* Compute-class four-word report {u64 payload = slot, u64 GPU timestamp} to stamps slot `slot` (mesa clcec0.h: PAYLOAD_LOWER 0x0158,
  * PAYLOAD_UPPER 0x015c, ADDRESS_LOWER 0x0160, ADDRESS_UPPER 0x0164, EXECUTE 0x0168 = OPERATION_RELEASE 0 | STRUCTURE_SIZE_FOUR_WORDS 0).
  * Ordered after the preceding WAIT_FOR_IDLE, like nvk_query_pool.c timestamp queries. */
 #define MTHD_REPORT_SEMAPHORE_PAYLOAD_LOWER 0x0158u
-#define STAMP_WORDS 6u
 /* INVALIDATE_SHADER_CACHES (NVCEC0 0x021c) fields, clc6c0.h:222-236 (same layout on Blackwell): INSTRUCTION 0:0, FLUSH_DATA 2:2, DATA 4:4, CONSTANT 12:12 */
 #define INVALIDATE_DATA (1u << 4)
 #define INVALIDATE_FLUSH_DATA (1u << 2)
@@ -369,6 +505,7 @@ static size_t emit_inline_qmd(uint32_t *pb, size_t n, uint64_t va, const uint32_
     pb[n++] = (1u << 30) | (uint32_t)((va >> 40) & 0x1ff); pb[n++] = (uint32_t)(va >> 8);
     memcpy(&pb[n], words, 96 * 4); return n + 96;
 }
+#endif
 
 /* Finalize ALL retained slots before observation, synchronization or any queue
  * commit. INLINE consumes the same bytes, including after PCAS reuse. */
@@ -376,14 +513,21 @@ static void prepare_qmd_mode(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op)
     for (uint32_t i = 0; i < cl->n; i++) {
         uint32_t *q1 = (uint32_t *)((uint8_t *)cl->qmds.cpu + (size_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES);
         const uint64_t q1_va = cl->qmds.va + (uint64_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
+#ifdef CUDAPP_MIGRATION_PENDING_CMDLIST
         q1[10] = op->mode == OMEGA_GPU_CMDLIST_INLINE ? 0x00190000u : 0;
         q1[12] = op->mode == OMEGA_GPU_CMDLIST_INLINE ? (uint32_t)((q1_va + 0x200) >> 8) : 0;
+#else
+        uint64_t a[16] = {op->mode, q1_va}, out[16];
+        (void)list_layout(2, a, out);
+        q1[10] = (uint32_t)out[0]; q1[12] = (uint32_t)out[1];
+#endif
     }
 }
+#ifdef STREAMS_C_ORACLE
 /* One submission's method stream for launches [done,end), followed by completion. */
-static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va) {
+static size_t emit_chunk_c(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va,
+                           uint32_t *pb) {
     const OmegaGpuCmdListOpts o = *op;
-    uint32_t *pb = cl->words;
     size_t n = 0;
     memcpy(pb, SETUP_WORDS, sizeof SETUP_WORDS); n += 18;
     for (uint32_t i = done; i < end; i++) {
@@ -398,7 +542,7 @@ static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uin
         if (o.skip_launch && i == (uint32_t)(o.skip_launch - 1)) continue;
         /* the first launch of a submission gets the full barrier (CPU-written QMDs, code and banks before it), unless
          * opts.first_barrier_none (C4 streams measurement: a WAIT_FOR_IDLE may also wait for another queue's grids) */
-        const int indep = i != done && cl->indep[i]; /* marked independent: no barrier, overlaps the launch before it */
+        const int indep = i != done && (cl->program_active ? cl->barriers[i] == 0 : cl->indep[i]);
         /* a launch that waited (wait_for) always gets the full barrier: its invalidate must come after the wait */
         const OmegaGpuCmdListBarrier b = cl->wait_va[i] ? OMEGA_GPU_CMDLIST_BARRIER_WFI
                                        : i == done ? (i == 0 && o.first_barrier_none ? OMEGA_GPU_CMDLIST_BARRIER_NONE : OMEGA_GPU_CMDLIST_BARRIER_WFI)
@@ -428,6 +572,118 @@ static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uin
     n = emit_tail(pb, n, marker_va);
     return n;
 }
+#endif
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_STREAMS
+/* One call of the Omega generator, om/streams/streams.om (the exported streams_words). The result is the word count
+ * (or the op's value); UINT64_MAX when the binding refused or the unit refused its inputs. */
+#define STREAMS_OM_IN 16u
+#define STREAMS_OM_OUT 32u
+enum { STREAMS_OP_SETUP, STREAMS_OP_LAUNCH, STREAMS_OP_INLINE, STREAMS_OP_FINISH, STREAMS_OP_CHANNELS, STREAMS_OP_PAIR };
+static uint64_t streams_om(uint64_t op, const uint64_t *in, uint64_t *out) {
+    uint64_t r = 0;
+    if (omega_streams_words(&r, op, in, STREAMS_OM_IN, out, STREAMS_OM_OUT) != 0) return UINT64_MAX;
+    return r;
+}
+/* Append the generator's first k ulongs as method words; 0 when k is not a word count the op can produce. */
+static int streams_put(uint32_t *pb, size_t *n, const uint64_t *w, uint64_t k, uint64_t max) {
+    if (k > max) return 0;
+    for (uint64_t j = 0; j < k; j++) pb[(*n)++] = (uint32_t)w[j];
+    return 1;
+}
+/* Launches [done,end) and completion, words from Omega; the inline QMD payload (96 words each) is copied here.
+ * Returns 0 when the generator failed: nothing is submitted. */
+static size_t emit_chunk_om(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va,
+                            uint32_t *pb) {
+    uint64_t in[STREAMS_OM_IN] = {0}, out[STREAMS_OM_OUT];
+    size_t n = 0;
+    if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_SETUP, in, out), 18)) return 0;
+    for (uint32_t i = done; i < end; i++) {
+        const uint64_t q1_va = cl->qmds.va + (uint64_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
+        const uint64_t a[11] = { i, done, cl->wait_va[i],
+                                 cl->program_active ? (cl->barriers[i] == 0 ? 1u : 0u) : (cl->indep[i] ? 1u : 0u),
+                                 (uint64_t)op->skip_launch, op->first_barrier_none ? 1u : 0u,
+                                 (uint64_t)op->barrier, op->stamps ? 1u : 0u, cl->stamps.va, (uint64_t)op->mode, q1_va };
+        memset(in, 0, sizeof in); memcpy(in, a, sizeof a);
+        if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_LAUNCH, in, out), 30)) return 0;
+        if (out[31] != 2) continue; /* 0 skipped, 1 PCAS words already emitted */
+        const uint8_t *qs = (const uint8_t *)cl->qmds.cpu + (size_t)i * OMEGA_GPU_CMDLIST_QMD_BYTES;
+        for (int h = 0; h < 2; h++) { /* the second-level QMD (q1 + 0x200) first, then q1 */
+            memset(in, 0, sizeof in); in[0] = h == 0 ? q1_va + 0x200 : q1_va;
+            if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_INLINE, in, out), 3)) return 0;
+            memcpy(&pb[n], qs + (h == 0 ? 0x200 : 0), 96 * 4); n += 96;
+        }
+    }
+    memset(in, 0, sizeof in);
+    in[0] = op->stamps ? 1u : 0u; in[1] = cl->stamps.va; in[2] = end; in[3] = marker_va;
+    if (!streams_put(pb, &n, out, streams_om(STREAMS_OP_FINISH, in, out), 2 + STAMP_WORDS + TAIL_WORDS)) return 0;
+    return n;
+}
+#endif
+
+/* One submission's method stream for launches [done,end), followed by completion, in cl->words; 0 on generator failure. */
+static size_t emit_chunk(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *op, uint32_t done, uint32_t end, uint64_t marker_va) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_STREAMS
+    return emit_chunk_c(cl, op, done, end, marker_va, cl->words);
+#else
+    const size_t n = emit_chunk_om(cl, op, done, end, marker_va, cl->words);
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+    char line[200];
+    uint32_t *ref = omega_gpu_host_calloc(cl->words_cap, 4u);
+    if (!ref) { cudapp_streams_diff_note(0, "streams diff: no memory for the C reference"); return 0; }
+    const size_t nc = emit_chunk_c(cl, op, done, end, marker_va, ref);
+#ifdef CUDAPP_STREAMS_DIFF_SELFTEST
+    if (n) cl->words[n - 1u] ^= 1u; /* red check: one flipped Omega word must abort */
+#endif
+    if (n != nc || memcmp(ref, cl->words, n * 4u) != 0) {
+        size_t j = 0;
+        while (j < n && j < nc && ref[j] == cl->words[j]) j++;
+        omega_gpu_fmt(line, sizeof line, "streams diff: launches [%u,%u) C %zu words, Omega %zu words, first difference at word %zu",
+                      done, end, nc, n, j);
+        cudapp_streams_diff_note(0, line);
+    }
+    omega_gpu_host_free(ref);
+    omega_gpu_fmt(line, sizeof line, "SAME chunk launches=[%u,%u) mode=%d barrier=%d stamps=%d words=%zu", done, end,
+                  (int)op->mode, (int)op->barrier, op->stamps ? 1 : 0, n);
+    cudapp_streams_diff_note(1, line);
+#endif
+    return n;
+#endif
+}
+
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+/* Host differential sweep (CUDApp#115, diff builds only; the host and sim tiers never submit a cmdlist): every
+ * combination of mode, barrier, stamps, first_barrier_none, skip_launch, first launch, per-launch waits and
+ * independence marks over a 4-launch list goes through emit_chunk, which aborts on any C vs Omega difference.
+ * Then both pair markers. Returns the number of chunks compared. */
+static uint64_t pair_marker(uint64_t page_va, uint64_t k, uint32_t clr[2]);
+uint64_t omega_gpu_cmdlist_streams_diff_sweep(void);
+uint64_t omega_gpu_cmdlist_streams_diff_sweep(void) {
+    enum { L = 4 };
+    static uint32_t qmd_words[L * OMEGA_GPU_CMDLIST_QMD_BYTES / 4];
+    static uint32_t words[8192];
+    uint8_t indep[L]; uint64_t wait_va[L];
+    OmegaGpuCmdList cl; memset(&cl, 0, sizeof cl);
+    for (size_t j = 0; j < sizeof qmd_words / 4; j++) qmd_words[j] = (uint32_t)(j * 2654435761u);
+    cl.n = cl.cap = L; cl.words = words; cl.words_cap = sizeof words / 4; cl.indep = indep; cl.wait_va = wait_va;
+    cl.qmds.cpu = qmd_words; cl.qmds.va = 0x123456789000ull; cl.stamps.va = 0x2000abcd0000ull;
+    uint64_t chunks = 0;
+    for (unsigned wm = 0; wm < 16u; wm++) for (unsigned im = 0; im < 16u; im++)
+    for (int mode = 0; mode < 2; mode++) for (int bar = 0; bar < 5; bar++) for (int st = 0; st < 2; st++)
+    for (int fn = 0; fn < 2; fn++) for (int skip = 0; skip <= L; skip++) for (uint32_t done = 0; done < 2u; done++) {
+        for (unsigned i = 0; i < L; i++) { indep[i] = (im >> i) & 1u; wait_va[i] = (wm >> i) & 1u ? 0xfedc00001230ull + 16u * i : 0; }
+        OmegaGpuCmdListOpts o; memset(&o, 0, sizeof o);
+        o.mode = (OmegaGpuCmdListMode)mode; o.barrier = (OmegaGpuCmdListBarrier)bar; o.stamps = st;
+        o.first_barrier_none = fn; o.skip_launch = (uint32_t)skip;
+        if (!emit_chunk(&cl, &o, done, L, 0x7000beef0110ull)) cudapp_streams_diff_note(0, "streams diff: generator failed");
+        chunks++;
+    }
+    uint32_t clr[4];
+    if (pair_marker(0x7000beef0000ull, 0, clr) == UINT64_MAX || pair_marker(0x7000beef0000ull, 1, clr + 2) == UINT64_MAX)
+        cudapp_streams_diff_note(0, "streams diff: pair marker generator failed");
+    return chunks;
+}
+#endif
 
 static int submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts, OmegaGpuCmdListStats *st,
                            OmegaGpuCmdListObserver observer, void *context) {
@@ -467,12 +723,10 @@ static int submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
         omega_gpu_session_set_error("cmdlist submit: sync_cpu_to_gpu"); return -1;
     }
 
-    const uint32_t per_launch = (o.mode == OMEGA_GPU_CMDLIST_INLINE ? 4u + 2u * 99u : 8u) + (o.stamps ? STAMP_WORDS : 0u) + (cl->nwaits ? 6u : 0u);
-    /* The platform may put its own words ahead of ours in the ring (the Linux reference: the omega #457 L2 invalidate
-     * after a host write to a GPU-cached buffer). Budget what it publishes, or a near-full submission is refused. */
+    /* The published platform prefix is part of the generated ring budget. */
     const uint32_t prefix = omega_gpu_session_submit_prefix_words();
-    const uint32_t avail = cl->words_cap - 18u - TAIL_WORDS - 2u - STAMP_WORDS;
-    if (prefix > avail || avail - prefix < per_launch) { omega_gpu_session_set_error("cmdlist submit: the platform submit prefix leaves no room for a launch"); return -1; }
+    const uint32_t room = cl->program_active ? cl->n : list_room(cl, &o, prefix);
+    if (!room) { omega_gpu_session_set_error("cmdlist submit: the platform submit prefix leaves no room for a launch"); return -1; }
     uint64_t *stamp_cpu = cl->stamps.cpu;
     cl->stamped = o.stamps ? 1 : 0;
     if (o.stamps) {
@@ -481,14 +735,21 @@ static int submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
             omega_gpu_session_set_error("cmdlist submit: sync stamps"); return -1;
         }
     }
-    const uint32_t room = (avail - prefix) / per_launch;
     uint64_t elapsed = 0, host = p->time_now_ns(p->ctx) - th0;
     uint32_t done = 0, submits = 0, words = 0;
     while (done < cl->n) {
         const uint64_t tb = p->time_now_ns(p->ctx);
+#ifdef CUDAPP_MIGRATION_PENDING_CMDLIST
         const uint32_t end = (cl->n - done > room) ? done + room : cl->n;
+#else
+        uint64_t bounds[16] = {cl->n, done, room}, unused[16];
+        uint64_t planned_end = list_layout(3, bounds, unused);
+        if (planned_end == UINT64_MAX) return -1;
+        const uint32_t end = (uint32_t)planned_end;
+#endif
         uint32_t *pb = cl->words;
         size_t n = emit_chunk(cl, &o, done, end, marker_va);
+        if (!n) { omega_gpu_session_set_error("cmdlist submit: method word generator failed"); return -1; }
         mk[0] = 0; mk[4] = 0;
         (void)p->sync_cpu_to_gpu(p->ctx, marker->handle, MARKER_OFF, 0x20);
         const uint64_t t0 = p->time_now_ns(p->ctx);
@@ -523,6 +784,16 @@ static int submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
 int omega_gpu_cmdlist_submit(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts, OmegaGpuCmdListStats *st) {
     return submit_observed(cl, opts, st, NULL, NULL);
 }
+int omega_gpu_cmdlist_submit_program(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts, OmegaGpuCmdListStats *stats) {
+    OmegaGpuCmdListProgramPlan plan;
+    if (stats) { memset(stats, 0, sizeof *stats); stats->first_missing = -1; }
+    if (omega_gpu_cmdlist_plan_program(cl, opts, &plan) != 0) return -1;
+    if (!plan.launches) return 0;
+    cl->program_active = 1;
+    int rc = submit_observed(cl, opts, stats, NULL, NULL);
+    cl->program_active = 0;
+    return rc;
+}
 int omega_gpu_cmdlist_submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts, OmegaGpuCmdListStats *st,
                                      OmegaGpuCmdListObserver observer, void *context) {
     if (!observer) return -1;
@@ -533,6 +804,30 @@ int omega_gpu_cmdlist_submit_observed(OmegaGpuCmdList *cl, const OmegaGpuCmdList
  * the same prefix as submit (semaphores INIT, banks / QMDs / semaphores synced) and the same words (emit_chunk); b's
  * completion markers sit at MARKER_OFF + PAIR_B_MARKER on the same uncached page. */
 #define PAIR_B_MARKER 0x80ull
+/* Queue k's (0 or 1) completion marker VA on the marker page at page_va, and the two marker words (u32 index from
+ * MARKER_OFF) to clear before submitting; UINT64_MAX when the generator refused. */
+static uint64_t pair_marker(uint64_t page_va, uint64_t k, uint32_t clr[2]) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_STREAMS
+    clr[0] = (uint32_t)(k * PAIR_B_MARKER / 4u); clr[1] = clr[0] + 4u;
+    return page_va + MARKER_OFF + k * PAIR_B_MARKER;
+#else
+    uint64_t in[STREAMS_OM_IN] = { page_va, k }, out[STREAMS_OM_OUT];
+    const uint64_t va = streams_om(STREAMS_OP_PAIR, in, out);
+    if (va == UINT64_MAX || out[0] > PAIR_B_MARKER / 4u || out[1] > PAIR_B_MARKER / 4u + 4u) return UINT64_MAX;
+    clr[0] = (uint32_t)out[0]; clr[1] = (uint32_t)out[1];
+#ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
+    char line[120];
+    if (va != page_va + MARKER_OFF + k * PAIR_B_MARKER || clr[0] != k * PAIR_B_MARKER / 4u || clr[1] != clr[0] + 4u) {
+        omega_gpu_fmt(line, sizeof line, "streams diff: pair marker k=%llu Omega va 0x%llx clears %u %u", (unsigned long long)k,
+                      (unsigned long long)va, clr[0], clr[1]);
+        cudapp_streams_diff_note(0, line);
+    }
+    omega_gpu_fmt(line, sizeof line, "SAME pair marker k=%llu", (unsigned long long)k);
+    cudapp_streams_diff_note(1, line);
+#endif
+    return va;
+#endif
+}
 static int pair_prep(const OmegaGpuPlatform *p, OmegaGpuCmdList *cl) {
     uint32_t *sem = cl->sems.cpu;
     for (uint32_t i = 0; i < cl->n; i++) sem[4 * i] = OMEGA_BW_SEMAPHORE_INTERMEDIATE_INIT;
@@ -590,14 +885,17 @@ int omega_gpu_cmdlist_submit_pair(OmegaGpuCmdList *a, OmegaGpuCmdList *b, const 
     const uint32_t prefix = omega_gpu_session_submit_prefix_words();
     const OmegaGpuCmdList *L[2] = { a, b };
     for (int k = 0; k < 2; k++) {
-        const uint32_t avail = L[k]->words_cap - 18u - TAIL_WORDS - 2u - STAMP_WORDS;
-        if (prefix > avail || (avail - prefix) / (L[k]->nwaits ? 14u : 8u) < L[k]->n) { omega_gpu_session_set_error("cmdlist pair: a list does not fit one submission"); return -1; }
+        if (list_room(L[k], &o, prefix) < L[k]->n) { omega_gpu_session_set_error("cmdlist pair: a list does not fit one submission"); return -1; }
     }
     prepare_qmd_mode(a, &o); prepare_qmd_mode(b, &o);
     if (pair_prep(p, a) || pair_prep(p, b)) { omega_gpu_session_set_error("cmdlist pair: sync_cpu_to_gpu"); return -1; }
-    const size_t na = emit_chunk(a, &o, 0, a->n, marker_va), nb = emit_chunk(b, &o, 0, b->n, marker_va + PAIR_B_MARKER);
+    uint32_t clr[4];
+    const uint64_t va_a = pair_marker(marker->va, 0, clr), va_b = pair_marker(marker->va, 1, clr + 2);
+    if (va_a != marker_va || va_b == UINT64_MAX) { omega_gpu_session_set_error("cmdlist pair: marker layout generator failed"); return -1; }
+    const size_t na = emit_chunk(a, &o, 0, a->n, va_a), nb = emit_chunk(b, &o, 0, b->n, va_b);
+    if (!na || !nb) { omega_gpu_session_set_error("cmdlist pair: method word generator failed"); return -1; }
     volatile uint32_t *mk = (volatile uint32_t *)((uint8_t *)marker->cpu + MARKER_OFF);
-    mk[0] = 0; mk[4] = 0; mk[PAIR_B_MARKER / 4] = 0; mk[PAIR_B_MARKER / 4 + 4] = 0;
+    for (int k = 0; k < 4; k++) mk[clr[k]] = 0;
     if (p->sync_cpu_to_gpu(p->ctx, a->qmds.handle, 0, (uint64_t)a->n * OMEGA_GPU_CMDLIST_QMD_BYTES) != OMEGA_GPU_PLAT_OK ||
         p->sync_cpu_to_gpu(p->ctx, b->qmds.handle, 0, (uint64_t)b->n * OMEGA_GPU_CMDLIST_QMD_BYTES) != OMEGA_GPU_PLAT_OK ||
         p->sync_cpu_to_gpu(p->ctx, marker->handle, MARKER_OFF, PAIR_B_MARKER + 0x20) != OMEGA_GPU_PLAT_OK) {

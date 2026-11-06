@@ -1,0 +1,4 @@
+FAIL hazard classes and outstanding epoch
+FAIL overlapping VA alias RAW
+FAIL hazard classes and outstanding epoch
+FAIL cmdlist independent differential: 12000 randomized programs, edges, 1000 launch records

@@ -58,6 +58,11 @@ uint32_t omega_native_attnmirplan(uint64_t *result, const void *p0, uint64_t p0_
 uint32_t omega_native_attnmirnext(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3);
 uint32_t omega_q38_runtime(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_q38_emit(uint64_t *result, void *p0, uint64_t p0_n);
+uint32_t omega_streams_words(uint64_t *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_cmdlist_record(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_cmdlist_plan(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_cmdlist_layout(uint64_t *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_cmdlist_access(uint64_t *result, const void *p0, uint64_t p0_n, uint64_t p1);
 uint32_t omega_mg_wire(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
 uint32_t omega_mg_node(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n, uint64_t p3);
 uint32_t omega_mg_batch(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n, uint64_t p3);

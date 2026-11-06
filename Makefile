@@ -737,6 +737,7 @@ $(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h tools/dagsim/dagsim_forma
 		rm -f $@; exit 1; fi
 
 DS_OM = src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c src/cudapp_om_dag_res.c src/cudapp_om_dag_diff.c
+DS_OM += src/cudapp_om_dag_jstr.c
 $(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) -Wl,--wrap=rx_cm_predict -lm
 

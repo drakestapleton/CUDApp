@@ -1,0 +1,834 @@
+        -:    0:Source:~/work/cudastack/lanes/ToolsJstr/tests/dagsim/jstr_diff.c
+        -:    0:Graph:~/work/cudastack/lanes/ToolsJstr/build/dagsim-jstr/c-jstr_diff.gcno
+        -:    0:Data:~/work/cudastack/lanes/ToolsJstr/build/dagsim-jstr/c-jstr_diff.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#define main dagsim_unused_main
+        -:    3:#include "../../tools/dagsim/dagsim_cli.c"
+        -:    4:#undef main
+        -:    5:#include "../../src/cudapp_native.h"
+function main called 1 returned 100% blocks executed 30%
+        1:    6:int main(int argc, char **argv) {
+        1:    7:    if (argc > 1 && !strcmp(argv[1], "--stream")) {
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+branch  2 taken 1 (fallthrough)
+branch  3 taken 0
+        1:    8:        char s[2] = {0, 0};
+        1:    9:        jstr(s);
+call    0 returned 1
+      256:   10:        for (unsigned c = 1; c < 256; ++c) { s[0] = (char)c; jstr(s); }
+call    0 returned 255
+branch  1 taken 255
+branch  2 taken 1 (fallthrough)
+        1:   11:        return 0;
+        -:   12:    }
+    #####:   13:    for (unsigned c = 0; c < 256; ++c) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:   14:        unsigned char b[6] = {0}; uint64_t n = 0; char want[8]; int len;
+    #####:   15:        if (c == '"' || c == '\\') len = snprintf(want, sizeof want, "\\%c", c);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:   16:        else if (c < 32) len = snprintf(want, sizeof want, "\\u%04x", c);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:   17:        else { want[0] = (char)c; len = 1; }
+    #####:   18:        if (omega_dag_jstr(&n, c, b, sizeof b)) return 2;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:   19:        if (argc > 1) b[0] ^= 1;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:   20:        if (n != (uint64_t)len || memcmp(b, want, n)) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:   21:            fprintf(stderr, "byte %u differs\n", c); return 1;
+call    0 never executed
+        -:   22:        }
+        -:   23:    }
+    #####:   24:    puts("JSON BYTE DIFFERENTIAL PASS all 256 bytes"); return 0;
+call    0 never executed
+        -:   25:}
+        -:    0:Source:~/work/cudastack/lanes/ToolsJstr/tools/dagsim/dagsim_cli.c
+        -:    0:Graph:~/work/cudastack/lanes/ToolsJstr/build/dagsim-jstr/c-jstr_diff.gcno
+        -:    0:Data:~/work/cudastack/lanes/ToolsJstr/build/dagsim-jstr/c-jstr_diff.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2: * dagsim_cli -- reproducible command line for the offline resource-DAG
+        -:    3: * evaluator (omega-mv#583). No GPU, no execution: it reads OEV1 files and
+        -:    4: * prints JSON. Every number it prints names the provenance it came from.
+        -:    5: *
+        -:    6: *   dagsim eval FILE [--asof YYYY-MM-DD] [--model BLOB]
+        -:    7: *   dagsim pareto FILE... [--asof YYYY-MM-DD] [--model BLOB]
+        -:    8: *   dagsim diff BASELINE TRANSFORMED [--changed a,b,...]
+        -:    9: */
+        -:   10:#include "dagsim.h"
+        -:   11:#include "runtime/rx_costmodel.h"
+        -:   12:
+        -:   13:#include <math.h>
+        -:   14:#include <stdio.h>
+        -:   15:#include <stdlib.h>
+        -:   16:#include <string.h>
+        -:   17:#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:   18:#include "dagsim_format.h"
+function fmt_name called 0 returned 0% blocks executed 0%
+    #####:   19:static const char *fmt_name(unsigned mode, unsigned k, unsigned p) {
+    #####:   20:    static _Thread_local char s[256]; uint64_t a[16] = {k, p};
+    #####:   21:    ds_fmt(mode, a, s); return s;
+call    0 never executed
+        -:   22:}
+function fmt_pair called 0 returned 0% blocks executed 0%
+    #####:   23:static uint64_t fmt_pair(unsigned mode, double x, double y) {
+    #####:   24:    uint64_t a[16] = {ds_bits(x), ds_bits(y)}; return ds_decide(mode, a);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+        -:   25:}
+function fmt_seconds called 0 returned 0% blocks executed 0%
+    #####:   26:static double fmt_seconds(double x) {
+    #####:   27:    uint64_t a[16] = {ds_bits(x)}; return ds_unbits(ds_decide(18, a));
+call    0 never executed
+call    1 never executed
+call    2 never executed
+        -:   28:}
+        -:   29:#endif
+        -:   30:#ifndef CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE
+        -:   31:#define CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE 0
+        -:   32:#endif
+        -:   33:#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE
+        -:   34:#include "../../src/cudapp_native.h"
+        -:   35:#endif
+        -:   36:
+function jstr called 256 returned 100% blocks executed 100%
+      256:   37:static void jstr(const char *s) {
+      256:   38:    putchar('"');
+call    0 returned 256
+      511:   39:    for (; *s; s++) {
+branch  0 taken 255
+branch  1 taken 256 (fallthrough)
+        -:   40:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_JSON_ESCAPE
+      255:   41:        if (*s == '"' || *s == '\\') { putchar('\\'); putchar(*s); }
+branch  0 taken 254 (fallthrough)
+branch  1 taken 1
+branch  2 taken 1 (fallthrough)
+branch  3 taken 253
+call    4 returned 2
+call    5 returned 2
+      253:   42:        else if ((unsigned char)*s < 0x20) printf("\\u%04x", *s);
+branch  0 taken 31 (fallthrough)
+branch  1 taken 222
+call    2 returned 31
+      222:   43:        else putchar(*s);
+call    0 returned 222
+        -:   44:#else
+        -:   45:        uint8_t bytes[6]; uint64_t n;
+        -:   46:        if (omega_dag_jstr(&n, (uint8_t)*s, bytes, sizeof bytes)) abort();
+        -:   47:        fwrite(bytes, 1, n, stdout);
+        -:   48:#endif
+        -:   49:    }
+      256:   50:    putchar('"');
+call    0 returned 256
+      256:   51:}
+        -:   52:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:   53:static void jnum(double v) { if (v == floor(v) && fabs(v) < 1e15) printf("%.0f", v); else printf("%.6g", v); }
+        -:   54:#else
+function jnum called 0 returned 0% blocks executed 0%
+    #####:   55:static void jnum(double v) {
+    #####:   56:    uint64_t a[16] = {ds_bits(v)};
+call    0 never executed
+    #####:   57:    printf(ds_decide(7, a) ? "%.6g" : "%.0f", v);
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+    #####:   58:}
+        -:   59:#endif
+        -:   60:
+function load_model called 0 returned 0% blocks executed 0%
+    #####:   61:static int load_model(const char *path, RxCostModel *cm) {
+    #####:   62:    FILE *fp = fopen(path, "rb");
+call    0 never executed
+    #####:   63:    if (!fp) return 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:   64:    size_t cap = rx_cm_blob_size();
+call    0 never executed
+    #####:   65:    uint8_t *buf = malloc(cap);
+    #####:   66:    if (!buf) { fclose(fp); return 0; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:   67:    size_t got = fread(buf, 1, cap, fp);
+call    0 never executed
+    #####:   68:    fclose(fp);
+call    0 never executed
+    #####:   69:    int ok = rx_cm_deserialize(cm, buf, got) == RX_CM_OK;
+call    0 never executed
+    #####:   70:    free(buf);
+    #####:   71:    return ok;
+        -:   72:}
+        -:   73:
+        -:   74:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:   75:static const char *attr_name[DS_ATTR_N] = { "compute", "bandwidth", "contention", "launch", "serialization", "sync", "residual" };
+        -:   76:static const char *res_kind_name(int k) {
+        -:   77:    switch (k) { case DS_RES_COMPUTE: return "compute"; case DS_RES_BANDWIDTH: return "bandwidth"; case DS_RES_CAPACITY: return "capacity"; case DS_RES_LAUNCH: return "launch"; default: return "?"; }
+        -:   78:}
+        -:   79:#else
+function res_kind_name called 0 returned 0% blocks executed 0%
+    #####:   80:static const char *res_kind_name(int k) { return fmt_name(3, k, 0); }
+call    0 never executed
+        -:   81:#endif
+        -:   82:
+function emit_result_json called 0 returned 0% blocks executed 0%
+    #####:   83:static void emit_result_json(const char *path, const ds_model *m, const ds_opts *o, const ds_result *r, double lo, double hi) {
+    #####:   84:    printf("{\n  \"schema\": \"oev1\", \"tool\": \"dagsim\", \"file\": "); jstr(path);
+call    0 never executed
+call    1 never executed
+    #####:   85:    printf(",\n  \"machine\": "); jstr(m->machine_id);
+call    0 never executed
+call    1 never executed
+    #####:   86:    printf(", \"build_sha\": "); jstr(m->build_sha);
+call    0 never executed
+call    1 never executed
+    #####:   87:    printf(",\n  \"calibration\": {\"id\": "); jstr(m->has_calibration ? m->cal_id : "");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+    #####:   88:    printf(", \"taken_day\": %d, \"valid_days\": %d, \"load1\": ", m->cal_taken_day, m->cal_valid_days); jnum(m->cal_load1);
+call    0 never executed
+call    1 never executed
+    #####:   89:    printf(", \"src\": "); jstr(m->cal_src); printf("},\n  \"asof_day\": %d,\n", o->asof_day);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+    #####:   90:    printf("  \"status\": "); jstr(ds_status_name(r->status)); printf(", \"reason\": "); jstr(r->reason);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+    #####:   91:    printf(",\n  \"provenance\": ["); int first = 1;
+call    0 never executed
+    #####:   92:    for (int p = 0; p <= DS_PROV_SPECIFIED; p++) if (r->prov_mask & (1u << p)) { if (!first) printf(", "); jstr(ds_prov_name(p)); first = 0; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+call    5 never executed
+call    6 never executed
+branch  7 never executed
+branch  8 never executed (fallthrough)
+    #####:   93:    printf("], \"synthetic\": %d, \"offline\": true, \"gpu_executed\": false", r->synthetic);
+call    0 never executed
+    #####:   94:    if (r->status != DS_OK) { printf("\n}\n"); return; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:   95:    printf(",\n  \"makespan_ns\": {\"nominal\": "); jnum(r->makespan_ns); printf(", \"lo\": "); jnum(lo); printf(", \"hi\": "); jnum(hi);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+call    5 never executed
+        -:   96:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:   97:    printf(", \"interval_known\": %s}", (lo > 0 && hi > 0) ? "true" : "false");
+        -:   98:#else
+    #####:   99:    printf(", \"interval_known\": %s}", fmt_pair(8, lo, hi) ? "true" : "false");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+        -:  100:#endif
+    #####:  101:    printf(",\n  \"bounds_ns\": {\"critical_path\": "); jnum(r->bound_critical_path_ns); printf(", \"max\": "); jnum(r->bound_ns); printf(", \"resources\": {");
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+    #####:  102:    for (int i = 0; i < m->n_res; i++) { if (i) printf(", "); jstr(m->res[i].id); printf(": "); jnum(r->bound_resource_ns[i]); }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+call    5 never executed
+branch  6 never executed
+branch  7 never executed (fallthrough)
+        -:  103:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  104:    printf("}, \"makespan_ge_bounds\": %s}", r->makespan_ns + 1e-6 >= r->bound_ns ? "true" : "false");
+        -:  105:#else
+    #####:  106:    printf("}, \"makespan_ge_bounds\": %s}", fmt_pair(9, r->makespan_ns, r->bound_ns) ? "true" : "false");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+        -:  107:#endif
+    #####:  108:    printf(",\n  \"ops\": [");
+call    0 never executed
+    #####:  109:    for (int i = 0; i < m->n_ops; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  110:        printf("%s\n    {\"id\": ", i ? "," : ""); jstr(m->ops[i].id);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+call    3 never executed
+    #####:  111:        printf(", \"start_ns\": "); jnum(r->start_ns[i]); printf(", \"end_ns\": "); jnum(r->end_ns[i]);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+    #####:  112:        printf(", \"floor_ns\": "); jnum(r->op_floor_ns[i]); printf(", \"contention_ns\": "); jnum(r->op_contention_ns[i]);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+        -:  113:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  114:        printf(", \"prov\": "); jstr(ds_prov_name(m->ops[i].kind == DS_OP_MATVEC && !m->ops[i].has_t ? DS_PROV_FITTED : m->ops[i].t_prov));
+        -:  115:#else
+    #####:  116:        uint64_t a[16] = {m->ops[i].kind, m->ops[i].has_t, m->ops[i].t_prov};
+    #####:  117:        printf(", \"prov\": "); jstr(ds_prov_name((int)ds_decide(13, a)));
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+        -:  118:#endif
+    #####:  119:        printf(", \"src\": "); jstr(m->ops[i].src); printf("}");
+call    0 never executed
+call    1 never executed
+call    2 never executed
+        -:  120:    }
+    #####:  121:    printf("\n  ],\n  \"critical_path\": [");
+call    0 never executed
+    #####:  122:    for (int i = 0; i < r->n_critical; i++) { if (i) printf(", "); jstr(m->ops[r->critical_path[i]].id); }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+call    3 never executed
+branch  4 never executed
+branch  5 never executed (fallthrough)
+    #####:  123:    printf("],\n  \"peak_live_bytes\": {");
+call    0 never executed
+    #####:  124:    first = 1;
+    #####:  125:    for (int i = 0; i < m->n_res; i++) if (m->res[i].kind == DS_RES_CAPACITY) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  126:        if (!first) printf(", ");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  127:        first = 0;
+    #####:  128:        jstr(m->res[i].id); printf(": {\"bytes\": "); jnum(r->peak_live_bytes[i]); printf(", \"at_ns\": "); jnum(r->peak_live_at_ns[i]); printf(", \"cap\": "); jnum(m->res[i].cap); printf("}");
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+call    5 never executed
+call    6 never executed
+call    7 never executed
+        -:  129:    }
+    #####:  130:    printf("},\n  \"attribution_ns\": {");
+call    0 never executed
+    #####:  131:    for (int i = 0; i < DS_ATTR_N; i++) { if (i) printf(", ");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed
+branch  4 never executed (fallthrough)
+        -:  132:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  133:        jstr(attr_name[i]);
+        -:  134:#else
+    #####:  135:        jstr(fmt_name(4, i, 0));
+call    0 never executed
+call    1 never executed
+        -:  136:#endif
+    #####:  137:        printf(": "); jnum(r->attr_ns[i]); }
+call    0 never executed
+call    1 never executed
+    #####:  138:    printf("},\n  \"energy\": {\"status\": ");
+call    0 never executed
+        -:  139:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  140:    jstr(r->energy_measured ? "MEASURED" : r->energy_synthetic ? "SYNTHETIC_SENSITIVITY_ONLY" : "UNMEASURED");
+        -:  141:#else
+    #####:  142:    jstr(fmt_name(10, r->energy_measured, r->energy_synthetic));
+call    0 never executed
+call    1 never executed
+        -:  143:#endif
+    #####:  144:    printf(", \"joules\": "); if (r->energy_measured || r->energy_synthetic) jnum(r->energy_j); else printf("null");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+call    5 never executed
+call    6 never executed
+    #####:  145:    printf(", \"instrument\": "); jstr(m->instrument); printf(", \"boundary\": "); jstr(m->boundary);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+        -:  146:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  147:    printf(", \"ranking_valid\": %s}", r->energy_measured ? "true" : "false");
+        -:  148:#else
+    #####:  149:    uint64_t rank[16] = {r->energy_measured};
+    #####:  150:    printf(", \"ranking_valid\": %s}", ds_decide(11, rank) ? "true" : "false");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+        -:  151:#endif
+    #####:  152:    printf(",\n  \"conservation\": {\"n_ops\": %d, \"total_bytes\": ", r->n_ops); jnum(r->total_bytes);
+call    0 never executed
+call    1 never executed
+    #####:  153:    printf(", \"total_busy_ns\": "); jnum(r->total_busy_ns); printf(", \"total_launch_ns\": "); jnum(r->total_launch_ns);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+    #####:  154:    printf(", \"instrument_overhead_ns\": null}");
+call    0 never executed
+        -:  155:    /* counterfactual sensitivities, ranked by how much they could move the makespan,
+        -:  156:     * weighted by how uncertain the resource's own figure is */
+    #####:  157:    printf(",\n  \"sensitivities\": [");
+call    0 never executed
+        -:  158:    double score[DS_MAX_RES]; int idx[DS_MAX_RES]; double cf[DS_MAX_RES]; double width[DS_MAX_RES];
+    #####:  159:    for (int i = 0; i < m->n_res; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  160:        cf[i] = ds_counterfactual(m, o, i);
+call    0 never executed
+        -:  161:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  162:        width[i] = m->res[i].kind == DS_RES_BANDWIDTH && m->res[i].cap > 0 ? (m->res[i].hi - m->res[i].lo) / m->res[i].cap : 0;
+        -:  163:        if (m->res[i].prov == DS_PROV_SPECIFIED) width[i] = 1.0;    /* a datasheet number is not a measurement */
+        -:  164:        score[i] = cf[i] >= 0 ? fabs(r->makespan_ns - cf[i]) * (width[i] > 0 ? width[i] : 0.05) : 0;
+        -:  165:#else
+    #####:  166:        uint64_t wa[16] = {m->res[i].kind, ds_bits(m->res[i].cap), ds_bits(m->res[i].lo), ds_bits(m->res[i].hi), m->res[i].prov};
+call    0 never executed
+call    1 never executed
+call    2 never executed
+    #####:  167:        width[i] = ds_unbits(ds_decide(15, wa));
+call    0 never executed
+call    1 never executed
+    #####:  168:        uint64_t sa[16] = {ds_bits(r->makespan_ns), ds_bits(cf[i]), ds_bits(width[i])};
+call    0 never executed
+call    1 never executed
+call    2 never executed
+    #####:  169:        score[i] = ds_unbits(ds_decide(16, sa));
+call    0 never executed
+call    1 never executed
+        -:  170:#endif
+    #####:  171:        idx[i] = i;
+        -:  172:    }
+        -:  173:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  174:    for (int a = 1; a < m->n_res; a++) {
+        -:  175:        int k = idx[a]; int b = a - 1;
+        -:  176:        while (b >= 0 && score[idx[b]] < score[k]) { idx[b + 1] = idx[b]; b--; }
+        -:  177:        idx[b + 1] = k;
+        -:  178:    }
+        -:  179:#else
+    #####:  180:    char sorted[256] = {0}; uint64_t sort[16] = {(uint32_t)m->n_res};
+    #####:  181:    memcpy(sorted, score, (size_t)m->n_res * sizeof *score);
+    #####:  182:    if (ds_fmt(20, sort, sorted)) abort();
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+    #####:  183:    for (int a = 0; a < m->n_res; a++) idx[a] = (unsigned char)sorted[a];
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  184:#endif
+    #####:  185:    for (int a = 0; a < m->n_res; a++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  186:        int i = idx[a];
+    #####:  187:        printf("%s\n    {\"resource\": ", a ? "," : ""); jstr(m->res[i].id);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+call    3 never executed
+    #####:  188:        printf(", \"kind\": "); jstr(res_kind_name(m->res[i].kind));
+call    0 never executed
+call    1 never executed
+call    2 never executed
+    #####:  189:        printf(", \"makespan_if_doubled_ns\": "); if (cf[i] >= 0) jnum(cf[i]); else printf("null");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+call    4 never executed
+    #####:  190:        printf(", \"delta_ns\": "); if (cf[i] >= 0) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  191:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  192:            jnum(r->makespan_ns - cf[i]);
+        -:  193:#else
+    #####:  194:            jnum(ds_unbits(fmt_pair(17, r->makespan_ns, cf[i])));
+call    0 never executed
+call    1 never executed
+call    2 never executed
+        -:  195:#endif
+    #####:  196:        } else printf("null");
+call    0 never executed
+    #####:  197:        printf(", \"interval_width_frac\": "); jnum(width[i]);
+call    0 never executed
+call    1 never executed
+    #####:  198:        printf(", \"decision_score\": "); jnum(score[i]);
+call    0 never executed
+call    1 never executed
+    #####:  199:        printf(", \"next_experiment\": ");
+call    0 never executed
+        -:  200:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  201:        if (m->res[i].kind == DS_RES_BANDWIDTH) jstr(m->res[i].prov == DS_PROV_SPECIFIED ? "measure this bandwidth on this DAG's shapes (datasheet figure, never attained)" : "repeat the bandwidth receipt on a quiet box to tighten lo/hi");
+        -:  202:        else if (m->res[i].kind == DS_RES_LAUNCH) jstr("measure launch with the device context held open (M1 block2 follow-up)");
+        -:  203:        else if (m->res[i].kind == DS_RES_COMPUTE) jstr("measure the critical op at the next larger shape");
+        -:  204:        else jstr("none: capacity is a ledger, not a rate");
+        -:  205:#else
+    #####:  206:        jstr(fmt_name(12, m->res[i].kind, m->res[i].prov));
+call    0 never executed
+call    1 never executed
+        -:  207:#endif
+    #####:  208:        printf("}");
+call    0 never executed
+        -:  209:    }
+    #####:  210:    printf("\n  ],\n  \"unresolved_residual_ns\": "); jnum(r->attr_ns[DS_ATTR_RESIDUAL]);
+call    0 never executed
+call    1 never executed
+    #####:  211:    printf(",\n  \"note\": \"loaded-box calibration (load1 above); bounds are floors, not predictions; no performance claim from this simulation alone\"\n}\n");
+call    0 never executed
+        -:  212:}
+        -:  213:
+function cmd_eval called 0 returned 0% blocks executed 0%
+    #####:  214:static int cmd_eval(const char *path, const ds_opts *o) {
+    #####:  215:    ds_model *m = malloc(sizeof *m); char err[256];
+    #####:  216:    if (!m) return 2;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  217:    if (ds_parse_file(path, m, err, sizeof err) != DS_OK) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  218:        printf("{\"schema\": \"oev1\", \"tool\": \"dagsim\", \"file\": "); jstr(path); printf(", \"status\": \"PARSE_ERROR\", \"reason\": "); jstr(err); printf("}\n");
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+    #####:  219:        free(m); return 1;
+        -:  220:    }
+    #####:  221:    ds_result *r = malloc(sizeof *r); double lo, hi;
+    #####:  222:    if (!r) { free(m); return 2; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  223:    int rc = ds_eval_interval(m, o, r, &lo, &hi);
+call    0 never executed
+    #####:  224:    emit_result_json(path, m, o, r, lo, hi);
+call    0 never executed
+    #####:  225:    free(r); free(m);
+    #####:  226:    return rc == DS_OK ? 0 : 1;
+        -:  227:}
+        -:  228:
+        -:  229:typedef struct { const char *path; int status; double t, lo, hi, peak, e; int e_meas, e_syn, front; char reason[256]; } prow;
+        -:  230:
+function cmd_pareto called 0 returned 0% blocks executed 0%
+    #####:  231:static int cmd_pareto(int n, const char **paths, const ds_opts *o) {
+    #####:  232:    prow rows[64]; if (n > 64) n = 64;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  233:    int all_energy = 1;
+    #####:  234:    for (int k = 0; k < n; k++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  235:        prow *p = &rows[k]; memset(p, 0, sizeof *p); p->path = paths[k];
+    #####:  236:        ds_model *m = malloc(sizeof *m); ds_result *r = malloc(sizeof *r); char err[256];
+    #####:  237:        if (!m || !r) return 2;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  238:        if (ds_parse_file(paths[k], m, err, sizeof err) != DS_OK) { p->status = DS_PARSE_ERROR; snprintf(p->reason, sizeof p->reason, "%s", err); free(m); free(r); all_energy = 0; continue; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  239:        p->status = ds_eval_interval(m, o, r, &p->lo, &p->hi);
+call    0 never executed
+    #####:  240:        snprintf(p->reason, sizeof p->reason, "%s", r->reason);
+    #####:  241:        if (p->status == DS_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  242:            p->t = r->makespan_ns;
+    #####:  243:            for (int i = 0; i < m->n_res; i++) if (m->res[i].kind == DS_RES_CAPACITY) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+        -:  244:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  245:                if (r->peak_live_bytes[i] > p->peak) p->peak = r->peak_live_bytes[i];
+        -:  246:#else
+    #####:  247:                p->peak = ds_unbits(fmt_pair(19, p->peak, r->peak_live_bytes[i]));
+call    0 never executed
+call    1 never executed
+        -:  248:#endif
+        -:  249:            }
+    #####:  250:            p->e = r->energy_j; p->e_meas = r->energy_measured; p->e_syn = r->energy_synthetic;
+    #####:  251:            if (!p->e_meas) all_energy = 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  252:        } else all_energy = 0;
+    #####:  253:        free(m); free(r);
+        -:  254:    }
+        -:  255:    /* non-dominated on (time, peak bytes[, measured joules]) among OK rows */
+    #####:  256:    for (int a = 0; a < n; a++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  257:        if (rows[a].status != DS_OK) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  258:        rows[a].front = 1;
+    #####:  259:        for (int b = 0; b < n; b++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  260:            if (a == b || rows[b].status != DS_OK) continue;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  261:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  262:            int le = rows[b].t <= rows[a].t && rows[b].peak <= rows[a].peak && (!all_energy || rows[b].e <= rows[a].e);
+        -:  263:            int lt = rows[b].t < rows[a].t || rows[b].peak < rows[a].peak || (all_energy && rows[b].e < rows[a].e);
+        -:  264:            if (le && lt) { rows[a].front = 0; break; }
+        -:  265:#else
+    #####:  266:            uint64_t d[16] = {ds_bits(rows[a].t), ds_bits(rows[a].peak), ds_bits(rows[a].e), ds_bits(rows[b].t), ds_bits(rows[b].peak), ds_bits(rows[b].e), all_energy};
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+call    5 never executed
+    #####:  267:            if (ds_decide(14, d)) { rows[a].front = 0; break; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  268:#endif
+        -:  269:        }
+        -:  270:    }
+    #####:  271:    printf("# dagsim pareto: objectives = seconds, peak bytes%s. Energy %s.\n", all_energy ? ", joules" : "",
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+        -:  272:           all_energy ? "measured on every row and part of the dominance test" : "not measured on every row: shown, never ranked");
+    #####:  273:    printf("# %-36s %-24s %14s %14s %14s %12s %-14s %s\n", "file", "status", "seconds", "lo_s", "hi_s", "peak_bytes", "energy", "front");
+call    0 never executed
+    #####:  274:    for (int k = 0; k < n; k++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  275:        prow *p = &rows[k];
+        -:  276:        char e[32];
+    #####:  277:        if (p->e_meas) snprintf(e, sizeof e, "%.3f J", p->e); else if (p->e_syn) snprintf(e, sizeof e, "syn %.3f J", p->e); else snprintf(e, sizeof e, "UNMEASURED");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  278:        if (p->status == DS_OK)
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  279:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  280:            printf("  %-36s %-24s %14.6f %14.6f %14.6f %12.0f %-14s %s\n", p->path, "OK", p->t * 1e-9, p->lo * 1e-9, p->hi * 1e-9, p->peak, e, p->front ? "yes" : "no");
+        -:  281:#else
+    #####:  282:            printf("  %-36s %-24s %14.6f %14.6f %14.6f %12.0f %-14s %s\n", p->path, "OK", fmt_seconds(p->t), fmt_seconds(p->lo), fmt_seconds(p->hi), p->peak, e, p->front ? "yes" : "no");
+call    0 never executed
+call    1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+call    5 never executed
+        -:  283:#endif
+        -:  284:        else
+    #####:  285:            printf("  %-36s %-24s %14s %14s %14s %12s %-14s %s   # %s\n", p->path, ds_status_name(p->status), "-", "-", "-", "-", "-", "refused", p->reason);
+call    0 never executed
+call    1 never executed
+        -:  286:    }
+    #####:  287:    return 0;
+        -:  288:}
+        -:  289:
+function cmd_diff called 0 returned 0% blocks executed 0%
+    #####:  290:static int cmd_diff(const char *a, const char *b, const ds_opts *o) {
+    #####:  291:    ds_model *ma = malloc(sizeof *ma), *mb = malloc(sizeof *mb); char err[256]; ds_diff d;
+    #####:  292:    if (!ma || !mb) return 2;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  293:    if (ds_parse_file(a, ma, err, sizeof err) != DS_OK) { fprintf(stderr, "%s: %s\n", a, err); return 1; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+    #####:  294:    if (ds_parse_file(b, mb, err, sizeof err) != DS_OK) { fprintf(stderr, "%s: %s\n", b, err); return 1; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+    #####:  295:    int rc = ds_diff_models(ma, mb, o, &d);
+call    0 never executed
+        -:  296:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  297:    static const char *rn[8] = { "", "eliminated", "reused", "unchanged_dep", "deferred", "moved", "shared", "lookup" };
+        -:  298:#endif
+    #####:  299:    printf("{\"tool\": \"dagsim diff\", \"baseline\": "); jstr(a); printf(", \"transformed\": "); jstr(b);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+    #####:  300:    printf(", \"status\": "); jstr(ds_status_name(rc)); printf(", \"reason\": "); jstr(d.reason);
+call    0 never executed
+call    1 never executed
+call    2 never executed
+call    3 never executed
+call    4 never executed
+    #####:  301:    printf(", \"kept\": %d, \"added\": %d, \"removed\": %d, \"double_counted\": %d, \"required_removed\": %d, \"removed_ns\": {", d.n_kept, d.n_added, d.n_removed, d.double_counted, d.required_removed);
+call    0 never executed
+    #####:  302:    for (int i = 1; i < 8; i++) { if (i > 1) printf(", ");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed
+branch  4 never executed (fallthrough)
+        -:  303:#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE
+        -:  304:        jstr(rn[i]);
+        -:  305:#else
+    #####:  306:        jstr(fmt_name(2, i, 0));
+call    0 never executed
+call    1 never executed
+        -:  307:#endif
+    #####:  308:        printf(": "); jnum(d.removed_ns[i]); }
+call    0 never executed
+call    1 never executed
+    #####:  309:    printf("}, \"changed\": "); jstr(o->changed ? o->changed : ""); printf("}\n");
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+call    4 never executed
+    #####:  310:    free(ma); free(mb);
+    #####:  311:    return rc == DS_OK ? 0 : 1;
+        -:  312:}
+        -:  313:
+function dagsim_unused_main called 0 returned 0% blocks executed 0%
+    #####:  314:int main(int argc, char **argv) {
+    #####:  315:    if (argc < 3) { fprintf(stderr, "usage: dagsim eval FILE | pareto FILE... | diff BASE TRANSFORMED  [--asof YYYY-MM-DD] [--model BLOB] [--changed a,b]\n"); return 2; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  316:    ds_opts o; memset(&o, 0, sizeof o); o.interval_q = 0.9;
+    #####:  317:    RxCostModel *cm = NULL;
+    #####:  318:    const char *files[64]; int nf = 0;
+    #####:  319:    for (int i = 2; i < argc; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  320:        if (!strcmp(argv[i], "--asof") && i + 1 < argc) { o.asof_day = ds_day_from_date(argv[++i]); if (o.asof_day < 0) { fprintf(stderr, "bad --asof\n"); return 2; } }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+branch  5 never executed (fallthrough)
+branch  6 never executed
+call    7 never executed
+    #####:  321:        else if (!strcmp(argv[i], "--model") && i + 1 < argc) { cm = malloc(sizeof *cm); if (!cm || !load_model(argv[++i], cm)) { fprintf(stderr, "cannot load rx_costmodel blob %s\n", argv[i]); return 2; } o.costmodel = cm; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+call    6 never executed
+branch  7 never executed (fallthrough)
+branch  8 never executed
+call    9 never executed
+    #####:  322:        else if (!strcmp(argv[i], "--changed") && i + 1 < argc) o.changed = argv[++i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  323:        else if (nf < 64) files[nf++] = argv[i];
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  324:    }
+    #####:  325:    if (o.asof_day == 0) { fprintf(stderr, "dagsim: --asof YYYY-MM-DD is required so the run is reproducible (calibration validity is checked against it)\n"); return 2; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  326:    int rc;
+    #####:  327:    if (!strcmp(argv[1], "eval") && nf == 1) rc = cmd_eval(files[0], &o);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+    #####:  328:    else if (!strcmp(argv[1], "pareto") && nf >= 1) rc = cmd_pareto(nf, files, &o);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+    #####:  329:    else if (!strcmp(argv[1], "diff") && nf == 2) rc = cmd_diff(files[0], files[1], &o);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+    #####:  330:    else { fprintf(stderr, "usage: dagsim eval FILE | pareto FILE... | diff BASE TRANSFORMED\n"); rc = 2; }
+call    0 never executed
+    #####:  331:    free(cm);
+    #####:  332:    return rc;
+        -:  333:}
+        -:    0:Source:~/work/cudastack/lanes/ToolsJstr/tools/dagsim/dagsim_format.h
+        -:    0:Graph:~/work/cudastack/lanes/ToolsJstr/build/dagsim-jstr/c-jstr_diff.gcno
+        -:    0:Data:~/work/cudastack/lanes/ToolsJstr/build/dagsim-jstr/c-jstr_diff.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        -:    2: * Fixed-view ABI marshalling only; decisions and arithmetic live in dag_fmt.om. */
+        -:    3:#ifndef DAGSIM_FORMAT_H
+        -:    4:#define DAGSIM_FORMAT_H
+        -:    5:#include "cudapp_native.h"
+        -:    6:#include <stdint.h>
+        -:    7:#include <stdlib.h>
+        -:    8:#include <string.h>
+function ds_fmt called 0 returned 0% blocks executed 0%
+    #####:    9:static inline uint64_t ds_fmt(unsigned mode, uint64_t a[16], char s[256]) {
+    #####:   10:    uint64_t result = 0;
+    #####:   11:    if (omega_dag_fmt(&result, mode, a, 16, s, 256)) abort();
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+    #####:   12:    return result;
+        -:   13:}
+function ds_bits called 0 returned 0% blocks executed 0%
+    #####:   14:static inline uint64_t ds_bits(double d) {
+    #####:   15:    uint64_t u; memcpy(&u, &d, sizeof u); return u;
+        -:   16:}
+function ds_unbits called 0 returned 0% blocks executed 0%
+    #####:   17:static inline double ds_unbits(uint64_t u) {
+    #####:   18:    double d; memcpy(&d, &u, sizeof d); return d;
+        -:   19:}
+function ds_decide called 0 returned 0% blocks executed 0%
+    #####:   20:static inline uint64_t ds_decide(unsigned mode, uint64_t a[16]) {
+    #####:   21:    char s[256]; return ds_fmt(mode, a, s);
+call    0 never executed
+        -:   22:}
+        -:   23:#endif

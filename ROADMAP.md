@@ -20,6 +20,7 @@ compiled semantic mutants are EXERCISED; see
 `evidence/graph-residue-20261106/README.md`. Hardware remains NOT_RUN for this
 change; `examples/hello_gpu/README.md` is its chip runbook. No existing hardware
 status is upgraded by these host receipts.
+2026-11-06: dagsim JSON byte escaping defaults to seeded `om/tools/dag_jstr.om`; all-byte differential and five mutants are recorded in `evidence/dagsim-jstr-20261106/README.md`. Host only; chip NOT_RUN and no status row upgraded.
 
 ## 1. NVIDIA software on the Spark today
 

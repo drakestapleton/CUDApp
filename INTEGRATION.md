@@ -150,3 +150,9 @@ red and missing-scheduler controls passed. Parser/scheduler/corpus/tools and
 cost-model families passed. Final `crumb verify: OK: 90 crumbs current`.
 Merge retained integrated runtime/SHA providers in all standalone oracle links
 and combined dag_res/dag_diff roots rather than dropping earlier registrations.
+
+#344 `cfe1f8180c42c04257b99bb40e903659acf8be40`: `/tmp/integ/6a-344.log/.rc`
+returned0. JSON byte differential all256, exact stream parity, red/link and five
+mutants passed; parser/resolver/scheduler families passed and units regenerate
+byte-for-byte. Combined dag_jstr with integrated runtime providers in direct
+links. Final `crumb verify: OK: 90 crumbs current`.

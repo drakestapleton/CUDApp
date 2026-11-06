@@ -88,6 +88,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/codegen/cg_fields.om om/codegen/cg_replay.om om/codegen/cg_life.om om/codegen/cg_invar.om om/codegen/cg_budget.om"
     UNITS="$UNITS cm_route=om/components/cm_route.om"
 fi
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/tools/dag_jstr.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

@@ -220,7 +220,7 @@ static void open_refused(const char *root, const char *bdf, const char *expect) 
                 strlen(rm.err), n_opened, expect);
         exit(1);
     }
-    CHECK(nvrm_close(&rm) == 0 || 1);
+    (void)nvrm_close(&rm);
     printf("refused, 0 device opens: %s\n", rm.err);
 }
 

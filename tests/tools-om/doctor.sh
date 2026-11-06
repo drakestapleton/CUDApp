@@ -17,8 +17,8 @@ tom_pin
 SRC=tools/doctor/cudapp_doctor.c
 OFF=-DCUDAPP_MIGRATION_PENDING_C_TOOLS_DOCTOR
 ABI='-DCUDAPP_NVIDIA_OPEN_ABI="580.173.02"'
-# src/omega_gpu_chip.c calls the HelloC2 #296 chip-admission unit (omega_chip_admit).
-CHIP="src/omega_gpu_chip.c src/cudapp_om_chip_admit.c"
+# src/omega_gpu_chip.c calls the HelloC2 #296 chip-admission unit (omega_chip_admit) and the chip enumeration unit.
+CHIP="src/omega_gpu_chip.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c"
 
 $CC $TOM_CFLAGS "$ABI" $OFF -o "$tmp/doc_c" $SRC $CHIP
 $CC $TOM_CFLAGS "$ABI" -o "$tmp/doc_om" $SRC src/cudapp_om_doctor.c $CHIP
@@ -144,7 +144,7 @@ echo "doctor mutants: $killed killed"
 if [ -n "${TOOLS_OM_COVERAGE:-}" ]; then
   mkdir -p "$TOOLS_OM_COVERAGE" "$tmp/cov"
   cp $SRC "$tmp/cov/cudapp_doctor.c"
-  (cd "$tmp/cov" && $CC -std=gnu11 -D_GNU_SOURCE -O0 --coverage -I"$ROOT/src" "$ABI" $OFF -o doc_cov cudapp_doctor.c "$ROOT/src/omega_gpu_chip.c" "$ROOT/src/cudapp_om_chip_admit.c")
+  (cd "$tmp/cov" && $CC -std=gnu11 -D_GNU_SOURCE -O0 --coverage -I"$ROOT/src" "$ABI" $OFF -o doc_cov cudapp_doctor.c "$ROOT/src/omega_gpu_chip.c" "$ROOT/src/cudapp_om_chip_admit.c" "$ROOT/src/cudapp_om_chip_enum.c")
   run_all "$tmp/cov/doc_cov" "$tmp/cov/r"
   (cd "$tmp/cov" && gcov -b -c doc_cov-cudapp_doctor.c > "$TOOLS_OM_COVERAGE/doctor.gcov.txt" 2>&1)
   cp "$tmp/cov/cudapp_doctor.c.gcov" "$TOOLS_OM_COVERAGE/cudapp_doctor.c.gcov"

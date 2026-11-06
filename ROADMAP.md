@@ -66,6 +66,7 @@ Live RM and chip qualification remain NOT_RUN; no status row is upgraded.
 2026-11-06: TC/TC2 host admission, sizing, span and input/weight conversion now default to seeded Omega, reusing the canonical numeric BF16 rounding unit. Host/simulator/cubin identity evidence and the NOT_RUN chip runbook are in `evidence/codegen-tc-host-20261106/README.md`; no hardware status row is upgraded.
 2026-11-06: Router-logit admission/shared sizing and MoE-combine admission now default to seeded Omega. Host differential, source mutants, simulator and cubin identity evidence is in `evidence/codegen-pfhost-admit-20261106/README.md`; chip qualification remains NOT_RUN and no status row is upgraded.
 2026-11-06: QMMA mark recognition, little-endian probe word reads and patch-selftest construction/verification now default to seeded Omega, reusing existing record emission. Host, simulator and cubin evidence is in `evidence/qmma-probe-rest-20261106/README.md`; chip remains NOT_RUN with no status-row upgrade.
+2026-11-06: chip-table lookup, sysfs enumeration selection and PCI address masks default to seeded `om/admission/chip_enum.om`; fixture differential and seven mutants are recorded in `evidence/chip-enum-policy-20261106/README.md`. Qualified chip identities unchanged; chip NOT_RUN and no status row upgraded.
 
 ## 1. NVIDIA software on the Spark today
 

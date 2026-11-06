@@ -24,4 +24,4 @@ test-streams-submit: $(OUT_DIR)/streams-submit-omega $(OUT_DIR)/streams-submit-c
 # Needs the pinned generator toolchain (native/nvrm/units.sh variables); regenerates
 # AArch64 only from a mutated submit.om and expects the fixture to fail.
 test-streams-submit-mutants:
-	sh tests/streams_submit_mutants.sh
+	STREAMS_SUBMIT_LINK='$(STREAMS_SUBMIT_LINK)' sh tests/streams_submit_mutants.sh

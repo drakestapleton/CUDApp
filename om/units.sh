@@ -109,6 +109,7 @@ fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_va=native/nvrm/alloc_profile.om,native/nvrm/alloc.om nvrm_alloc_scalar=native/nvrm/policy.om,native/nvrm/alloc_scalar.om nvrm_counts=native/nvrm/counts.om nvrm_alloc_push=native/nvrm/alloc_profile.om,om/encoder/amp_runtime.om,native/nvrm/alloc_push.om"
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/tools/dag_jstr.om"
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/disasm/words.om"
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/admission/chip_enum.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

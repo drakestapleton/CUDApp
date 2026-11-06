@@ -1,0 +1,134 @@
+python3 tests/chip_enum_check.py
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_NVIDIA_OPEN_ABI='"580.173.02"' -o build/cudapp-doctor tools/doctor/cudapp_doctor.c \
+	src/omega_gpu_chip.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c
+cc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/chip-admission/test_chip_admission tests/test_chip_admission.c src/omega_gpu_chip.c src/omega_ampere_qmd.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c
+cc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/test_ampere_runtime tests/test_ampere_runtime.c src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c
+CHIP ENUM DIFFERENTIAL PASS cases=460712
+RED and strong-link missing-unit controls PASS
+FIXTURE scan differential PASS vendor/class/device edges, capacities -1/0/1/2/3, null output, missing sysfs
+KILLED row-vendor
+KILLED row-device
+KILLED vendor
+KILLED class
+KILLED mask
+KILLED capacity
+KILLED dot
+CHIP ENUM DIFFERENTIAL RED LINK SEVEN MUTANTS PASS
+cc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc -o build/test_ampere_session tests/test_ampere_session.c src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+	-o build/test_omega_gpu_platform_linux tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_gpu_mem_cached.c src/omega_gpu_cmdlist.c src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/omega_blackwell_encoder.c src/omega_blackwell_matmul.c src/omega_blackwell_realize.c src/sha256.c -lm
+OMEGA_OMC="~/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="~/work/cudastack/omega-bridge" sh om/units.sh --check
+PASS portable Omega units regenerate byte for byte
+TMPDIR=~/work/cudastack/lanes/ToolsChip/build/chip-admission ./build/chip-admission/test_chip_admission
+sh tests/doctor/run.sh build/cudapp-doctor
+PASS gb10-ready
+chip admission: decision cases (bridge, audio, two GPUs, address, duplicates, more than 16, Ampere) pass
+chip admission: .om decision equals the C host reference on 524288 single-GPU inputs (8 admitted)
+refused, 0 device opens: GPU 0000:01:00.0: NVIDIA device 0x2b85 is not one CUDA++ has qualified, so the library opened no /dev/nvidia node. Run `make doctor` for why, what is missing and what to do.
+refused, 0 device opens: GPU 0000:01:00.0: NVIDIA device 0x2b85 is not one CUDA++ has qualified, so the library opened no /dev/nvidia node. Run `make doctor` for why, what is missing and what to do.
+refused, 0 device opens: no NVIDIA GPU under /sys/bus/pci/devices, so the library opened no /dev/nvidia node. Run `make doctor`.
+refused, 0 device opens: cannot read ~/work/cudastack/lanes/ToolsChip/build/chip-admission/cudapp-chip-admission-ooFtmO/absent/sys/bus/pci/devices to name the GPU, so the library opened no /dev/nvidia node. Run `make doctor`.
+refused, 0 device opens: CUDAPP_GPU_BDF=0000:02:00.0 names no NVIDIA GPU under /sys/bus/pci/devices, so the library opened no /dev/nvidia node. Run `make doctor` for the addresses.
+refused, 0 device opens: CUDAPP_GPU_BDF=000f:00:00.0 names no NVIDIA GPU under /sys/bus/pci/devices, so the library opened no /dev/nvidia node. Run `make doctor` for the addresses.
+guard passed, 4 simulated opens (last /dev/nvidia0): RM_ALLOC class 0xc661 status 0x40
+guard passed, 3 simulated opens (last /dev/nvidia-uvm): GPU 000f:01:00.0: the driver reports NVIDIA device 0x2e13, which is not one CUDA++ has qualified; refused before opening the device node. Run `make doctor`.
+guard passed, 4 simulated opens (last /dev/nvidia0): GPU admission admitted sm_86 but the driver classes select sm_121; refused
+guard passed, 4 simulated opens (last /dev/nvidia0): RM_ALLOC class 0xc661 status 0x40
+chip admission tests passed (HOST_ONLY: simulated driver, fake PCI trees; chip NOT_RUN)
+PASS no-module
+PASS module-version
+PASS closed-module
+PASS unknown-chip
+PASS no-gpu
+PASS no-uvm
+PASS no-permission
+PASS memory-line
+doctor tests: 9 passed, 0 failed
+./build/test_ampere_runtime
+Ampere simulated RM allocation/class/QMD tests passed (HOST_ONLY; device NOT_RUN)
+./build/test_ampere_session
+Ampere session ordering/argument/code serialization simulation passed (HOST_ONLY; device NOT_RUN)
+./build/test_omega_gpu_platform_linux
+PASS LINUX_REF_CAPS_NO_MMIO_NO_IRQ
+PASS HOSTED_DEFAULT_IS_LINUX_REFERENCE
+PASS SAME_DRIVER_CALLS_AND_ORDER_AS_BEFORE
+PASS REFERENCE_REFUSALS_CACHED_POLLED_RING_STALE
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS MARKER_NEVER_LATCHES_AND_PARKS
+PASS L2_INVAL_PREFIX_ONCE_AFTER_CACHED_HOST_WRITE
+PASS CMDLIST_NEAR_CAP_SUBMITS_WITH_L2_INVAL_PENDING
+  refusal: dma_alloc: refused 2.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+  session: dma_alloc: refused 2.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 4.0 GiB free (CUDAPP_MEM_RESERVE_MIB=4096), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+PASS D1_MEMORY_RESERVE_REFUSES_BEFORE_THE_DRIVER
+PASS QUEUE_SUBMIT_REFUSED_WHILE_UNRETIRED
+PASS EXTRA_QUEUE_SUBMIT_REFUSED_WHILE_UNRETIRED
+  submits 1, error: cmdlist: marker wait timed out (latched)
+PASS CMDLIST_TIMEOUT_LATCHES_WITHOUT_LAUNCH_BEHIND_IT
+PASS ZERO_TIMEOUT_REFUSED_BEFORE_SUBMIT
+  refusal: dma_alloc: refused 0.0 MiB: 4.0 GiB of memory is free and CUDA++ keeps 17179869184.0 GiB free (CUDAPP_MEM_RESERVE_MIB=17592186044416), because the CPU and GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.
+PASS D1_RESERVE_AND_MEMINFO_OVERFLOW_SATURATE
+PASS AMPERE_D1_USES_VRAM_REFUSES_BEFORE_RM_ALLOC
+PASS AMPERE_REJECTS_IMPLICIT_OR_MISMATCHED_LAUNCH_TARGET
+  test meminfo regular file (honoured): read
+  test meminfo symlink to that file: /proc/meminfo read, refused
+  test meminfo FIFO: /proc/meminfo read, refused
+  test meminfo directory: /proc/meminfo read, refused
+  test meminfo missing file: /proc/meminfo read, refused
+  test meminfo empty (restores /proc/meminfo): /proc/meminfo read, refused
+  test meminfo regular file again (honoured): read
+  test meminfo NULL (restores /proc/meminfo): /proc/meminfo read, refused
+  env CUDAPP_MEMINFO=<fake>: ignored, refused
+PASS D1_MEMINFO_TEST_PATH_REGULAR_ENV_IGNORED
+test_omega_gpu_platform_linux (reference only, simulated driver): 17 passed, 0 failed
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit chip_enum (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)

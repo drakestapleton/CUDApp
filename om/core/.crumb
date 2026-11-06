@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T03:51:28Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:f391c3e0f4a2f74c66ac5aead4d2cb2e1a7387d4ce64b4bfbdcb76b4740ce6d0",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "name": "core",
+  "purpose": "Seeded core utility algorithms and local attributed SHA implementation",
+  "schema_version": "1.0.0"
+}

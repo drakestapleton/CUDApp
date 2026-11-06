@@ -15,6 +15,7 @@
 #include "omega_gpu_session.h"
 #include "omega_gpu_code_alloc.h"
 #include "cudapp_native.h"
+#include "omega_no_posix_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_qmd.h"
 #include "omega_ampere_qmd.h"
@@ -35,7 +36,7 @@ void cudapp_session_diff_note(int same, const char *line); /* diff builds: tests
 /* Session admission, bookkeeping and method-word decisions are Omega
  * (om/session/admit.om, om/session/park.om, om/session/words.om). The C copies
  * are the default-OFF differential oracle. */
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION) || defined(CUDAPP_MIGRATION_PENDING_SESSION_DIFF)
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION) || defined(CUDAPP_MIGRATION_PENDING_SESSION_DIFF)
 #define SESSION_C_ORACLE 1
 #endif
 
@@ -44,9 +45,11 @@ static uint64_t ses(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t
 #define PAGE 0x1000ull
 
 /* Push-buffer method header (the nvrm_mthd encoding, physics nvrm.h): increasing, count words, subchannel. */
+#ifdef SESSION_C_ORACLE
 static inline uint32_t bw_mthd(uint32_t subc, uint32_t mthd, uint32_t count) {
     return (2u << 28) | (count << 16) | (subc << 13) | (mthd >> 2);
 }
+#endif
 
 #ifdef SESSION_C_ORACLE
 /* Same words as src/omega_blackwell_submit.c SETUP_WORDS (compute class setup). */
@@ -246,7 +249,7 @@ int omega_gpu_session_is_parked(OmegaGpuBufferHandle h) {
     uint32_t n = LOAD(g_park.buffers) - LOAD(g_park.untracked);
     if (h.generation == 0u) return 0;
     if (n > OMEGA_GPU_SESSION_PARK_MAX) n = OMEGA_GPU_SESSION_PARK_MAX;
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
     for (uint32_t i = 0; i < n; i++)
         if (g_parked[i].index == h.index && g_parked[i].generation == h.generation) return 1;
     return 0;
@@ -435,9 +438,9 @@ OmegaGpuSession *omega_gpu_session_open(void) {
 }
 
 /* Extra queue i against the open set (CUDApp#115): 0 index outside 1..XQ_MAX, 1 already open, 2 an earlier one is not
- * open yet, 3 open it now. Hosted builds ask seeded Omega (om/streams/streams.om op 6); the freestanding link carries
- * no hosted binding and CUDAPP_MIGRATION_PENDING_C_STREAMS selects the C rule, which _STREAMS_DIFF keeps as oracle. */
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+ * open yet, 3 open it now. Both hosted and NO_POSIX builds ask seeded Omega
+ * (om/streams/streams.om op 6); the default-OFF migration flags retain the C oracle. */
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
 static uint32_t xq_admit_c(uint32_t i) {
     if (i == 0u || i > XQ_MAX) return 0u;
     if (g_xq[i - 1u].generation != 0u) return 1u;
@@ -446,7 +449,7 @@ static uint32_t xq_admit_c(uint32_t i) {
 }
 #endif
 static uint32_t xq_admit(uint32_t i) {
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS)
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS)
     return xq_admit_c(i);
 #else
     uint64_t in[16] = { i }, out[32], r = 0;
@@ -567,7 +570,7 @@ uint64_t omega_gpu_session_epoch(void) { return LOAD(g_epoch); }
 /* ---- launch ---- */
 
 #ifdef SESSION_C_ORACLE
-static uint32_t round_up(uint32_t v, uint32_t q) { return (v + q - 1) / q * q; }
+static uint32_t round_up(uint32_t v, uint32_t q) { return q ? (uint32_t)(((uint64_t)v + q - 1u) / q * q) : 0u; }
 #endif
 
 #ifdef SESSION_C_ORACLE
@@ -579,10 +582,10 @@ static uint64_t ses_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64
     switch (op) {
     case 0: return round_up((uint32_t)i0, (uint32_t)i1);
     case 1: return page_up(i0);
-    case 2: return i0 > i1 ? 1u : 0u;
-    case 3: return (i0 + 7u) / 8u;
-    case 4: return (i0 + 1u + 3u) / 4u;
-    case 5: return i0 + 0x160u * i1 + 0x10u;
+    case 2: return (uint32_t)i0 > (uint32_t)i1 ? 1u : 0u;
+    case 3: return (uint32_t)i0 > 64u ? round_up((uint32_t)i0, 8u) : 64u;
+    case 4: return (uint32_t)i0 ? 352u : 896u;
+    case 5: return (uint32_t)i0 ? i1 + 32u : i2 + 8192u;
     case 6:
         b = i0; c = i1;
         if (i2) { if (b > c || !i3) { if (out0) *out0 = high; return 2; } }
@@ -598,10 +601,7 @@ static uint64_t ses_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64
     case 9: return (i0 || i1 || i2) ? 1u : 0u;
     case 10: if (!i0) return 2; if (!i1 || !i2) return 1; return 0;
     case 11: return (i0 < 8u && i1) ? 0u : 1u;
-    case 12:
-        if (i0 >= i1) return 0;
-        b = (i1 - i0) / (1000u * i2);
-        return b > 1u ? b : 1u;
+    case 12: return (uint32_t)i0 < 1u ? (uint32_t)i0 : 1u;
     case 13: return ((int32_t)(i0 - i1) >= 0) ? 0u : 1u;
     default: return UINT64_MAX;
     }
@@ -610,7 +610,7 @@ static uint64_t ses_c(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64
 
 static uint64_t ses(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3, uint64_t i4, uint64_t *out0) {
     uint64_t r = 0;
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
     r = ses_c(op, i0, i1, i2, i3, i4, out0);
 #else
     uint64_t a[16] = {i0, i1, i2, i3, i4}, o[4] = {0};
@@ -631,7 +631,7 @@ static uint64_t ses(uint64_t op, uint64_t i0, uint64_t i1, uint64_t i2, uint64_t
 /* Append one method packet from om/session/words.om. The blob copies stay in C. */
 static size_t ses_pkt(uint32_t *pb, size_t n, uint64_t op, uint64_t a0, uint64_t a1, uint64_t a2) {
     uint64_t r = 0, a[16] = {a0, a1, a2}, o[32] = {0};
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
+#if (defined(OMEGA_GPU_NO_POSIX) && CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION) || defined(CUDAPP_MIGRATION_PENDING_C_SESSION)
     switch (op) {
     case 0:
         o[0] = bw_mthd(1, 0, 1); o[1] = OMEGA_AMPERE_COMPUTE_B; o[2] = bw_mthd(1, 0x021c, 1); o[3] = (1u << 0) | (1u << 4) | (1u << 12);

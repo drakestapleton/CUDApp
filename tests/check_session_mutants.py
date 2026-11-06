@@ -23,7 +23,7 @@ units = {'session_admit': 'om/session/admit.om', 'session_words': 'om/session/wo
 # name, source, exact replacements (old, new, expected occurrence count)
 mutants = [
     ('free-while-latched', 'session_admit', [('if ne and blocked WMASK 0\nret 0', 'if ne and blocked WMASK 0\nret 2', 1)]),
-    ('open-while-latched', 'session_admit', [('fn opendec blocked ulong epoch ulong plat ulong open ulong to ulong\nif ne and blocked WMASK 0\nret 1', 'fn opendec blocked ulong epoch ulong plat ulong open ulong to ulong\nif ne and blocked WMASK 0\nret 0', 1)]),
+    ('open-while-latched', 'session_admit', [('fn opendec blocked ulong epoch ulong plat ulong opened ulong to ulong\nif ne and blocked WMASK 0\nret 1', 'fn opendec blocked ulong epoch ulong plat ulong opened ulong to ulong\nif ne and blocked WMASK 0\nret 0', 1)]),
     ('recover-without-latch', 'session_admit', [('if eq and latched WMASK 0\nret 2', 'if eq and latched WMASK 0\nret 0', 1)]),
     ('marker-payload', 'session_words', [('const MARKER1 ulong 1145324612', 'const MARKER1 ulong 0', 1)]),
     ('parked-generation', 'session_park', [('if eq get gen i wgen', 'if ne get gen i wgen', 1)]),

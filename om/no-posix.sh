@@ -10,9 +10,10 @@ ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 [ "$(sha256sum < "$OMEGA_BRIDGE/src/native.om" | cut -c1-64)" = e2077722aaeffb1121b70160e22357ea47f369e0039ab1ea06dc700f6f4e45d7 ] || { echo 'NOT_RUN: native generator pin mismatch'; exit 3; }
 OUT=${1:-$ROOT/build/no_posix}
 mkdir -p "$OUT/sources"
-for pair in encoder/bw_enc_sm121 cubin/cubin_elf numeric/no_bf16; do
+for pair in encoder/bw_enc_sm121 cubin/cubin_elf numeric/no_bf16 session/admit session/words session/park cmdlist/book streams/streams; do
   name=${pair##*/}
   { printf 'om2\n'; cat "$ROOT/om/$pair.om"; } > "$OUT/sources/$name.om"
 done
 OMEGA_NATIVE_OMC2="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/native" --freestanding "$OUT/native" \
-  "$OUT/sources/bw_enc_sm121.om" "$OUT/sources/cubin_elf.om" "$OUT/sources/no_bf16.om"
+  "$OUT/sources/bw_enc_sm121.om" "$OUT/sources/cubin_elf.om" "$OUT/sources/no_bf16.om" \
+  "$OUT/sources/admit.om" "$OUT/sources/words.om" "$OUT/sources/park.om" "$OUT/sources/book.om" "$OUT/sources/streams.om"

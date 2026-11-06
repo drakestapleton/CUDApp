@@ -40,6 +40,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 static int g_checks, g_failed;
 static FILE *g_rcpt;
@@ -309,6 +312,128 @@ static double nd_err(const float *in, const float *out, uint32_t nd, const uint3
     }
     free(x);
     return worst;
+}
+
+/* ------------------------------------------------------------------ cufftPlanMany: layouts and the f64 reference */
+
+static size_t many_prod(uint32_t rank, const uint32_t *n) {
+    size_t p = 1;
+    for (uint32_t i = 0; i < rank; i++) p *= n[i];
+    return p;
+}
+/* one side of a many plan, recomputed here from the header's formula (not from the library): extents, embeds,
+ * stride, dist and whether its elements are complex */
+typedef struct { uint32_t rank, ext[3], e[3], stride, dist, cplx; } TLay;
+static void tlay(const OmegaGpuFftMany *p, int in_place, int out, TLay *t) {
+    uint32_t r = p->rank, h = p->n[r - 1] / 2 + 1;
+    const uint32_t *emb = out ? p->onembed : p->inembed;
+    memset(t, 0, sizeof *t);
+    t->rank = r;
+    t->cplx = p->type == OMEGA_GPU_FFT_TYPE_C2C || (p->type == OMEGA_GPU_FFT_TYPE_R2C ? out : !out);
+    memcpy(t->ext, p->n, sizeof t->ext);
+    if (p->type != OMEGA_GPU_FFT_TYPE_C2C && t->cplx) t->ext[r - 1] = h;
+    if (p->inembed[0] == 0 && p->inembed[1] == 0 && p->inembed[2] == 0 && p->onembed[0] == 0 && p->onembed[1] == 0 &&
+        p->onembed[2] == 0) {
+        memcpy(t->e, t->ext, sizeof t->e);
+        if (in_place && p->type != OMEGA_GPU_FFT_TYPE_C2C && !t->cplx) t->e[r - 1] = 2 * h;
+        t->stride = 1;
+        t->dist = 1;
+        for (uint32_t i = 0; i < r; i++) t->dist *= t->e[i];
+    } else {
+        memcpy(t->e, emb, sizeof t->e);
+        t->stride = out ? p->ostride : p->istride;
+        t->dist = out ? p->odist : p->idist;
+    }
+}
+static size_t tlay_points(const TLay *t) {
+    size_t p = 1;
+    for (uint32_t i = 0; i < t->rank; i++) p *= t->ext[i];
+    return p;
+}
+/* float index of dense point i (row-major over ext) of transform b */
+static size_t tlay_at(const TLay *t, uint32_t b, size_t i) {
+    uint32_t x[3];
+    for (uint32_t d = t->rank; d-- > 0;) { x[d] = (uint32_t)(i % t->ext[d]); i /= t->ext[d]; }
+    size_t a = 0;
+    for (uint32_t d = 0; d < t->rank; d++) a = a * t->e[d] + x[d];
+    a = (size_t)b * t->dist + (size_t)t->stride * a;
+    return t->cplx ? 2 * a : a;
+}
+/* floats spanned by the side: one past its highest addressed float */
+static size_t tlay_span(const TLay *t, uint32_t batch) {
+    size_t pts = tlay_points(t), top = 0;
+    for (uint32_t b = 0; b < batch; b++)
+        for (size_t i = 0; i < pts; i++) {
+            size_t f = tlay_at(t, b, i) + (t->cplx ? 2 : 1);
+            if (f > top) top = f;
+        }
+    return top;
+}
+/* index of the point mirrored through the origin on the outer axes (all but the last) of a [ext] row-major array */
+static size_t outer_mirror(uint32_t rank, const uint32_t *n, size_t o) {
+    uint32_t x[3] = { 0, 0, 0 };
+    for (uint32_t d = rank - 1; d-- > 0;) { x[d] = (uint32_t)(o % n[d]); o /= n[d]; }
+    size_t m = 0;
+    for (uint32_t d = 0; d + 1 < rank; d++) m = m * n[d] + (x[d] ? n[d] - x[d] : 0);
+    return m;
+}
+/* random dense logical input of a plan; for C2R a Hermitian half spectrum (the points of the last-axis bins 0 and
+ * n / 2 that are their own mirrors are real, the others equal the conjugate of their mirror) */
+static void many_input(const OmegaGpuFftMany *p, float *x) {
+    uint32_t r = p->rank, l = p->n[r - 1], h = l / 2 + 1;
+    size_t P = many_prod(r, p->n), outer = P / l;
+    if (p->type == OMEGA_GPU_FFT_TYPE_C2C) { fill_rand(x, 2 * P * p->batch); return; }
+    if (p->type == OMEGA_GPU_FFT_TYPE_R2C) { fill_rand(x, P * p->batch); return; }
+    fill_rand(x, 2 * outer * h * p->batch);
+    for (uint32_t b = 0; b < p->batch; b++)
+        for (uint32_t k = 0; k <= l / 2; k += (l % 2 == 0 && l / 2 > 0) ? l / 2 : l) {
+            float *H = x + 2 * outer * h * b;
+            for (size_t o = 0; o < outer; o++) {
+                size_t i = o * h + k, m = outer_mirror(r, p->n, o) * h + k;
+                if (m == i) H[2 * i + 1] = 0;
+                else if (m < i) { H[2 * i] = H[2 * m]; H[2 * i + 1] = -H[2 * m + 1]; }
+            }
+        }
+}
+/* f64 reference of a many plan over dense logical arrays (batch-major, last index fastest): y gets the dense
+ * logical output (C2C complex, R2C the half rows, C2R reals, unnormalised) */
+static void many_ref(const OmegaGpuFftMany *p, const float *x, double *y) {
+    uint32_t r = p->rank, l = p->n[r - 1], h = l / 2 + 1;
+    size_t P = many_prod(r, p->n), outer = P / l;
+    double *z = malloc(2 * P * sizeof *z);
+    for (uint32_t b = 0; b < p->batch; b++) {
+        if (p->type == OMEGA_GPU_FFT_TYPE_C2C)
+            for (size_t i = 0; i < 2 * P; i++) z[i] = x[2 * P * b + i];
+        else if (p->type == OMEGA_GPU_FFT_TYPE_R2C)
+            for (size_t i = 0; i < P; i++) { z[2 * i] = x[P * b + i]; z[2 * i + 1] = 0; }
+        else {
+            const float *H = x + 2 * outer * h * b;
+            for (size_t o = 0; o < outer; o++)
+                for (uint32_t k = 0; k < l; k++) {
+                    size_t s = k < h ? o * h + k : outer_mirror(r, p->n, o) * h + (l - k);
+                    z[2 * (o * l + k)] = H[2 * s];
+                    z[2 * (o * l + k) + 1] = k < h ? H[2 * s + 1] : -H[2 * s + 1];
+                }
+        }
+        int inv = p->type == OMEGA_GPU_FFT_TYPE_C2C ? p->inverse : p->type == OMEGA_GPU_FFT_TYPE_C2R;
+        for (uint32_t ax = 0; ax < r; ax++) {
+            size_t ou = 1, in = 1;
+            for (uint32_t d = 0; d < ax; d++) ou *= p->n[d];
+            for (uint32_t d = ax + 1; d < r; d++) in *= p->n[d];
+            dft_axis(z, ou, p->n[ax], in, inv);
+        }
+        if (p->type == OMEGA_GPU_FFT_TYPE_C2C)
+            for (size_t i = 0; i < 2 * P; i++) y[2 * P * b + i] = z[i];
+        else if (p->type == OMEGA_GPU_FFT_TYPE_R2C)
+            for (size_t o = 0; o < outer; o++)
+                for (uint32_t k = 0; k < h; k++) {
+                    y[2 * (outer * h * b + o * h + k)] = z[2 * (o * l + k)];
+                    y[2 * (outer * h * b + o * h + k) + 1] = z[2 * (o * l + k) + 1];
+                }
+        else
+            for (size_t i = 0; i < P; i++) y[P * b + i] = z[2 * i];
+    }
+    free(z);
 }
 
 /* ------------------------------------------------------------------ Philox4x32-10 reference (Random123, cuRAND) */
@@ -661,11 +786,17 @@ static void host_refusals(void) {
     check(omega_gpu_rng_generate(OMEGA_GPU_RNG_U64, 0, 0, OMEGA_GPU_RNG_MAX_STREAMS, 0, 2049, buf, NULL) ==
               OMEGA_GPU_ML_TOO_LARGE, "rng outputs past 2^28");
     check(omega_gpu_rng_codegen((OmegaGpuRngKind)3, NULL) == OMEGA_GPU_ML_BAD_ARGS, "rng codegen kind 3");
-    const uint32_t badn[] = { 0, 1, 2, 3, 6, 1000, 4096, 8192 };
-    for (size_t i = 0; i < sizeof badn / sizeof badn[0]; i++) {
+    /* lengths no transform takes (the others in 2..4096 run through omega_gpu_fft_many; never opened here) */
+    const uint32_t badn[] = { 0, 1, 4097, 8192 }, badcg[] = { 0, 1, 2, 3, 6, 1000, 4096, 8192 };
+    for (size_t i = 0; i < sizeof badn / sizeof badn[0]; i++)
         check(omega_gpu_fft_c2c(fb, fo, badn[i], 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft n=%u", badn[i]);
-        check(omega_gpu_fft_codegen(badn[i], 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft codegen n=%u", badn[i]);
-    }
+    for (size_t i = 0; i < sizeof badcg / sizeof badcg[0]; i++)
+        check(omega_gpu_fft_codegen(badcg[i], 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft codegen n=%u", badcg[i]);
+    check(omega_gpu_fft_c2c(fb, fb, 12, 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft n=12 in == out");
+    check(omega_gpu_fft_c2c(fb, fb + 4, 3, 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft n=3 overlapping in/out");
+    check(omega_gpu_fft_c2c(fb, fo, 12, 1, 2, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft n=12 inverse=2");
+    check(omega_gpu_fft_c2c(fb, fo, 12, 0, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft n=12 batch=0");
+    check(omega_gpu_fft_c2c(fb, fo, 4095, 65536, 0, NULL) == OMEGA_GPU_ML_TOO_LARGE, "fft n=4095 past 2^27 elements");
     check(omega_gpu_fft_c2c(fb, fo, 4, 0, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft batch=0");
     check(omega_gpu_fft_c2c(fb, fo, 4, 1, 2, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft inverse=2");
     check(omega_gpu_fft_c2c(NULL, fo, 4, 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "fft in NULL");
@@ -691,7 +822,7 @@ static void host_refusals(void) {
           "philox streams past 131072");
     check(omega_gpu_philox_generate(0, 0, OMEGA_GPU_PHILOX_MAX_STREAMS, 0, 2052, pw, NULL) == OMEGA_GPU_ML_TOO_LARGE,
           "philox outputs past 2^28");
-    const uint32_t badr[] = { 0, 4, 6, 12, 8192 };
+    const uint32_t badr[] = { 0, 1, 4097, 8192 };
     for (size_t i = 0; i < sizeof badr / sizeof badr[0]; i++) {
         check(omega_gpu_fft_r2c(fb, fo, badr[i], 1, NULL) == OMEGA_GPU_ML_BAD_ARGS, "r2c n=%u", badr[i]);
         check(omega_gpu_fft_c2r(fb, fo, badr[i], 1, NULL) == OMEGA_GPU_ML_BAD_ARGS, "c2r n=%u", badr[i]);
@@ -702,8 +833,11 @@ static void host_refusals(void) {
     check(omega_gpu_fft_r2c(fb, fb + 4, 8, 1, NULL) == OMEGA_GPU_ML_BAD_ARGS, "r2c overlapping in/out");
     check(omega_gpu_fft_c2r(fb + 4, fb, 8, 1, NULL) == OMEGA_GPU_ML_BAD_ARGS, "c2r overlapping in/out");
     check(omega_gpu_fft_r2c(fb, fo, 4096, 32769, NULL) == OMEGA_GPU_ML_TOO_LARGE, "r2c past 2^27 elements");
+    check(omega_gpu_fft_r2c(fb, fb + 2, 12, 1, NULL) == OMEGA_GPU_ML_BAD_ARGS, "r2c n=12 overlapping in/out");
+    check(omega_gpu_fft_c2r(fb, fb, 7, 1, NULL) == OMEGA_GPU_ML_BAD_ARGS, "c2r n=7 in == out");
+    check(omega_gpu_fft_r2c(fb, fo, 4095, 65536, NULL) == OMEGA_GPU_ML_TOO_LARGE, "r2c n=4095 past 2^27 elements");
     const uint32_t d2[] = { 8, 16 }, d4[] = { 4, 4, 4, 4 }, dbig[] = { 2048, 2048, 64 };
-    const uint32_t dbad[][3] = { { 2, 4, 4 }, { 4096, 4, 4 }, { 4, 6, 4 }, { 4, 4, 0 } };
+    const uint32_t dbad[][3] = { { 1, 4, 4 }, { 4097, 4, 4 }, { 4, 8192, 4 }, { 4, 4, 0 } };
     check(omega_gpu_fft_c2c_nd(fb, fo, 0, d2, 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "nd ndim=0");
     check(omega_gpu_fft_c2c_nd(fb, fo, 4, d4, 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "nd ndim=4");
     check(omega_gpu_fft_c2c_nd(fb, fo, 2, NULL, 1, 0, NULL) == OMEGA_GPU_ML_BAD_ARGS, "nd dims NULL");
@@ -735,7 +869,8 @@ static void host_refusals(void) {
         { 1, 4, 0, 3 },  { 2, 1, 0, 0 },  { 2, 4, 0, 1 },  { 2, 13, 0, 0 }, { 2, 12, 2, 0 }, { 3, 5, 0, 0 },
         { 3, 0, 4, 0 },  { 3, 0, 0, 7 },  { 4, 2, 0, 0 },  { 4, 13, 0, 0 }, { 4, 4, 2, 0 },  { 4, 4, 0, 3 },
         { 5, 1, 4, 0 },  { 5, 4, 1, 0 },  { 5, 4, 12, 0 }, { 5, 20, 8, 0 }, { 5, 26, 2, 0 }, { 5, 4, 4, 3 },
-        { 7, 0, 0, 0 },
+        { 7, 0, 0, 0 },  { 7, 6, 0, 0 },  { 7, 8, 0, 0 },  { 7, 2, 2, 0 },  { 7, 2, 0, 3 },  { 8, 4, 5, 0 },
+        { 8, 0, 4, 0 },  { 8, 0, 14, 0 }, { 8, 0, 5, 3 },  { 9, 4, 0, 0 },  { 9, 0, 1, 0 },  { 9, 0, 0, 3 },
     };
     for (size_t i = 0; i < sizeof refuse / sizeof refuse[0]; i++)
         check(build(refuse[i][0], refuse[i][1], refuse[i][2], refuse[i][3], 128, prog, code, &k) == OMEGA_OM_IR_REFUSED,
@@ -1128,6 +1263,278 @@ static void host_plans(void) {
     receipt("host fft_plan_launches r2c_4096x2500=%u nd_4x2048x4=%u nd_16x2048x16_transposes=%u", 6u, 11u, tr);
 }
 
+/* A walk callback that calls back into the API (it takes the session lock). Before the walks released the lock
+ * around their callbacks this deadlocked; the child below gets 20 s and SIGALRM ends a hung walk. */
+static int reenter_cb(void *ctx, const OmegaGpuFftLaunch *l) {
+    (void)l;
+    float tw[16];
+    int *calls = ctx;
+    if (omega_gpu_fft_twiddles(8, 0, tw) != OMEGA_GPU_ML_OK) return 99;
+    (*calls)++;
+    return 0;
+}
+static int reenter_many_cb(void *ctx, const OmegaGpuFftManyLaunch *l) {
+    (void)l;
+    float tw[16];
+    int *calls = ctx;
+    if (omega_gpu_fft_twiddles(8, 0, tw) != OMEGA_GPU_ML_OK) return 99;
+    (*calls)++;
+    return 0;
+}
+static void host_reentry(void) {
+    for (int which = 0; which < 2; which++) {
+        fflush(stdout);
+        pid_t pid = fork();
+        if (pid == 0) {
+            alarm(20);
+            int calls = 0, rc;
+            if (which == 0) {
+                size_t bytes[3];
+                uint32_t n = 8;
+                rc = omega_gpu_fft_plan_walk(OMEGA_GPU_FFT_R2C, 1, &n, 1, 0, bytes, reenter_cb, &calls);
+            } else {
+                size_t bytes[8];
+                OmegaGpuFftMany p = { .rank = 1, .n = { 12 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2C };
+                rc = omega_gpu_fft_many_walk(&p, 0, bytes, reenter_many_cb, &calls);
+            }
+            _exit(rc == 0 && calls > 0 ? 0 : 3);
+        }
+        int st = 0;
+        check(pid > 0 && waitpid(pid, &st, 0) == pid, "reentry %d: fork/wait", which);
+        check(WIFEXITED(st) && WEXITSTATUS(st) == 0, "reentry %d: walk callback calling the API %s (status %#x)", which,
+              WIFSIGNALED(st) && WTERMSIG(st) == SIGALRM ? "deadlocked" : "failed", st);
+    }
+}
+
+/* kind 12 of every length against the rule in the header: radices 4, at most one 2, then 3, 5, 7 when they divide n,
+ * else Bluestein over the least power of two M >= 2n - 1 */
+static void host_many_plans(void) {
+    static uint64_t w[OMEGA_OM_IR_WORDS];
+    size_t bad = 0, blue = 0;
+    for (uint32_t n = 2; n <= OMEGA_GPU_FFT_MANY_MAX_N; n++) {
+        if (omega_gpu_om_ir_data(12, n, 0, 0, w) != OMEGA_OM_IR_OK) { bad++; continue; }
+        uint32_t rest = n;
+        while (rest % 2 == 0) rest /= 2;
+        while (rest % 3 == 0) rest /= 3;
+        while (rest % 5 == 0) rest /= 5;
+        while (rest % 7 == 0) rest /= 7;
+        uint32_t M = n, flag = 0;
+        if (rest != 1) { for (M = 1; M < 2 * n - 1; M *= 2) {} flag = 1; blue++; }
+        uint32_t want[32] = { 0 }, np = 0, x = M;
+        while (x % 4 == 0) { want[np++] = 4; x /= 4; }
+        if (x % 2 == 0) { want[np++] = 2; x /= 2; }
+        for (uint32_t rd = 3; rd <= 7; rd += 2)
+            while (x % rd == 0) { want[np++] = rd; x /= rd; }
+        int ok = x == 1 && w[0] == M && w[1] == flag && w[2] == np;
+        for (uint32_t i = 0; ok && i <= np; i++) ok = w[3 + i] == want[i];
+        if (!ok) bad++;
+    }
+    check(bad == 0, "%zu of 4095 kind 12 factor plans wrong", bad);
+    static const uint32_t refused[] = { 0, 1, 4097, 8192 };
+    for (size_t i = 0; i < sizeof refused / sizeof refused[0]; i++)
+        check(omega_gpu_om_ir_data(12, refused[i], 0, 0, w) == OMEGA_OM_IR_REFUSED, "kind 12 n=%u refused", refused[i]);
+    receipt("host many_plans lengths=4095 bluestein=%zu wrong=%zu", blue, bad);
+}
+
+/* kind 13 and the unit's division (om/mathlibs mdiv): q0 = hi32(x * mg), t = x - (q0 + 1) d, q = q0 + (t >= 2^31 ?
+ * 0 : 1) gives floor(x / d) for every x < 2^32 and d in 1..2^31 - 1 (mg = min(floor(2^32 / d), 2^32 - 1)); swept
+ * over every d the plans use with x < 2^16, the multiples of d near 2^28 and 2^32, and random x */
+static uint32_t mdiv_model(uint32_t x, uint32_t d, uint32_t mg) {
+    uint32_t q0 = (uint32_t)(((uint64_t)x * mg) >> 32), t = x - (q0 + 1u) * d;
+    return q0 + ((~t) >> 31);
+}
+static void host_many_magic(void) {
+    static uint64_t w[OMEGA_OM_IR_WORDS];
+    size_t bad = 0, tried = 0;
+    Xo rng;
+    xo_seed(&rng, 0x6D646976ull);
+    static const uint32_t big[] = { 4097, 65535, 65536, 1u << 20, 268435455u, 268435456u, 2147483647u };
+    for (uint32_t i = 0; i < 8192u + sizeof big / sizeof big[0]; i++) {
+        uint32_t d = i < 8192 ? i + 1 : big[i - 8192];
+        if (omega_gpu_om_ir_data(13, d, 0, 0, w) != OMEGA_OM_IR_OK) { bad++; continue; }
+        uint64_t want = d == 1 ? 0xffffffffull : (1ull << 32) / d;
+        if (w[0] != want) { bad++; continue; }
+        uint32_t mg = (uint32_t)w[0];
+        for (uint32_t x = 0; x < (i < 4096 ? 65536u : 4096u); x++, tried++) bad += mdiv_model(x, d, mg) != x / d;
+        for (int k = -2; k <= 2; k++)
+            for (int e = 0; e < 2; e++) {
+                uint64_t base = e ? 0xffffffffull : (1ull << 28);
+                uint64_t q = base / d;
+                for (int64_t j = -1; j <= 1; j++) {
+                    int64_t x = (int64_t)((q + (uint64_t)(k + 2)) * d) - 2 * (int64_t)d + j;
+                    if (x < 0 || x > 0xffffffffll) continue;
+                    tried++;
+                    bad += mdiv_model((uint32_t)x, d, mg) != (uint32_t)x / d;
+                }
+            }
+        for (int k = 0; k < 64; k++, tried++) {
+            uint32_t x = (uint32_t)xo_next(&rng);
+            bad += mdiv_model(x, d, mg) != x / d;
+        }
+        tried++;
+        bad += mdiv_model(0xffffffffu, d, mg) != 0xffffffffu / d;
+    }
+    check(bad == 0, "%zu of %zu magic divisions wrong", bad, tried);
+    check(omega_gpu_om_ir_data(13, 0, 0, 0, w) == OMEGA_OM_IR_REFUSED, "kind 13 d=0 refused");
+    check(omega_gpu_om_ir_data(13, 2147483648ull, 0, 0, w) == OMEGA_OM_IR_REFUSED, "kind 13 d=2^31 refused");
+    receipt("host many_magic divisors=%u divisions=%zu wrong=%zu", 8192u + (unsigned)(sizeof big / sizeof big[0]), tried,
+            bad);
+}
+
+/* kinds 10 (w^k of n points, n 2..8192) and 11 (chirp exp(-+ i pi k^2 / n), n 2..4096): each part within half an
+ * f32 ulp of the libm value. The reference reduces the angle to its quadrant in integers first: libm cos of the
+ * rounded double 3 pi / 2 is -1.07e-15, not the exact 0 the unit returns. */
+static void ref_w(uint64_t k, uint64_t n, uint32_t inv, double *c, double *s) {
+    uint64_t q = (4 * k) / n, r = 4 * k - q * n;
+    double th = (M_PI / 2) * (double)r / (double)n, c0 = cos(th), s0 = sin(th);
+    double cc[4] = { c0, -s0, -c0, s0 }, ss[4] = { s0, c0, -s0, -c0 };
+    *c = cc[q & 3];
+    *s = (inv ? 1.0 : -1.0) * ss[q & 3];
+}
+static int tw_off(uint64_t word, double c, double s) {
+    uint32_t rb = (uint32_t)word, ib = (uint32_t)(word >> 32);
+    float tc, ts;
+    memcpy(&tc, &rb, 4);
+    memcpy(&ts, &ib, 4);
+    double uc = fabs(nextafterf(tc, INFINITY) - tc), us = fabs(nextafterf(ts, INFINITY) - ts);
+    return fabs(tc - c) > 0.5 * uc + 1e-15 || fabs(ts - s) > 0.5 * us + 1e-15;
+}
+static void host_many_tables(void) {
+    static uint64_t w[OMEGA_OM_IR_WORDS];
+    size_t bad = 0, total = 0, cbad = 0, ctotal = 0;
+    for (uint32_t n = 2; n <= 8192; n++)
+        for (uint32_t inv = 0; inv < 2; inv++) {
+            if (omega_gpu_om_ir_data(10, n, inv, 0, w) != OMEGA_OM_IR_OK) { bad++; continue; }
+            double c, s;
+            for (uint32_t k = 0; k < n; k++, total++) {
+                ref_w(k, n, inv, &c, &s);
+                bad += tw_off(w[k], c, s);
+            }
+            if (n > 4096) continue;
+            if (omega_gpu_om_ir_data(11, n, inv, 0, w) != OMEGA_OM_IR_OK) { cbad++; continue; }
+            for (uint32_t k = 0; k < n; k++, ctotal++) {
+                ref_w(((uint64_t)k * k) % (2ull * n), 2ull * n, inv, &c, &s);
+                cbad += tw_off(w[k], c, s);
+            }
+        }
+    check(bad == 0, "%zu of %zu any-length twiddles not the correctly rounded f32", bad, total);
+    check(cbad == 0, "%zu of %zu chirp entries not the correctly rounded f32", cbad, ctotal);
+    static const uint32_t r10[][2] = { { 1, 0 }, { 8193, 0 }, { 8, 2 } }, r11[][2] = { { 1, 0 }, { 4097, 0 }, { 8, 2 } };
+    for (int i = 0; i < 3; i++) {
+        check(omega_gpu_om_ir_data(10, r10[i][0], r10[i][1], 0, w) == OMEGA_OM_IR_REFUSED, "kind 10 %u/%u refused",
+              r10[i][0], r10[i][1]);
+        check(omega_gpu_om_ir_data(11, r11[i][0], r11[i][1], 0, w) == OMEGA_OM_IR_REFUSED, "kind 11 %u/%u refused",
+              r11[i][0], r11[i][1]);
+    }
+    check(omega_gpu_om_ir_data(10, 8, 0, 1, w) == OMEGA_OM_IR_REFUSED, "kind 10 c=1 refused");
+    receipt("host many_tables twiddles=%zu chirps=%zu off_by_more_than_half_ulp=%zu", total, ctotal, bad + cbad);
+}
+
+/* the walk: refusals, buffer sizes against the layouts recomputed here, and launch shapes */
+typedef struct { size_t launches, words; uint32_t bad, kinds; } WalkStat;
+static int many_stat_cb(void *ctx, const OmegaGpuFftManyLaunch *l) {
+    WalkStat *s = ctx;
+    s->launches++;
+    s->kinds |= 1u << l->kind;
+    uint32_t np = l->kind == 9 ? 2 : 3, nw = l->kind == 7 ? 8 : l->kind == 8 ? 3 : 18;
+    if (l->kind < 7 || l->kind > 9 || l->nptr != np || l->nwords != nw || l->threads != OMEGA_GPU_FFT_MANY_THREADS ||
+        l->grid == 0 || l->grid > OMEGA_GPU_FFT_MAX_CTAS || l->table == NULL ||
+        (uint64_t)l->grid * l->threads < 1 || l->words[1] % l->threads != 0 ||
+        (uint64_t)l->words[1] + (uint64_t)l->grid * l->threads < l->words[0] ||
+        (uint64_t)l->words[1] >= l->words[0])
+        s->bad++;
+    for (uint32_t i = 0; i < l->nptr; i++)
+        if (l->buf[i] >= OMEGA_GPU_FFT_MANY_BUFS) s->bad++;
+    return 0;
+}
+static void host_many_walk(void) {
+    typedef struct { OmegaGpuFftMany p; int in_place, rc; const char *what; } Ref;
+    const int BAD = OMEGA_GPU_ML_BAD_ARGS, BIG = OMEGA_GPU_ML_TOO_LARGE;
+    static const Ref refs[] = {
+        { { .rank = 0, .n = { 8 }, .batch = 1 }, 0, -1, "rank 0" },
+        { { .rank = 4, .n = { 8, 8, 8 }, .batch = 1 }, 0, -1, "rank 4" },
+        { { .rank = 1, .n = { 1 }, .batch = 1 }, 0, -1, "n 1" },
+        { { .rank = 1, .n = { 4097 }, .batch = 1 }, 0, -1, "n 4097" },
+        { { .rank = 2, .n = { 8, 0 }, .batch = 1 }, 0, -1, "n 0" },
+        { { .rank = 1, .n = { 8 }, .batch = 0 }, 0, -1, "batch 0" },
+        { { .rank = 1, .n = { 8 }, .batch = 1, .type = (OmegaGpuFftType)3 }, 0, -1, "type 3" },
+        { { .rank = 1, .n = { 8 }, .batch = 1, .inverse = 2 }, 0, -1, "C2C inverse 2" },
+        { { .rank = 1, .n = { 8 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_R2C, .inverse = 1 }, 0, -1, "R2C inverse 1" },
+        { { .rank = 1, .n = { 8 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2R, .inverse = 1 }, 0, -1, "C2R inverse 1" },
+        { { .rank = 1, .n = { 8 }, .inembed = { 8 }, .istride = 1, .idist = 8, .batch = 1 }, 0, -1, "inembed only" },
+        { { .rank = 2, .n = { 4, 8 }, .inembed = { 4, 7 }, .istride = 1, .idist = 32, .onembed = { 4, 8 },
+            .ostride = 1, .odist = 32, .batch = 1 }, 0, -1, "inembed[1] < n[1]" },
+        { { .rank = 1, .n = { 8 }, .inembed = { 8 }, .istride = 0, .idist = 8, .onembed = { 8 }, .ostride = 1,
+            .odist = 8, .batch = 1 }, 0, -1, "istride 0" },
+        { { .rank = 1, .n = { 8 }, .inembed = { 8 }, .istride = 1, .idist = 8, .onembed = { 8 }, .ostride = 1,
+            .odist = 4, .batch = 2 }, 0, -1, "output batches overlap" },
+        { { .rank = 2, .n = { 4, 8 }, .inembed = { 4, 8 }, .istride = 1, .idist = 32, .onembed = { 4, 8 },
+            .ostride = 0, .odist = 32, .batch = 1 }, 0, -1, "ostride 0" },
+        { { .rank = 1, .n = { 8 }, .inembed = { 8 }, .istride = 1, .idist = 0x80000000u, .onembed = { 8 },
+            .ostride = 1, .odist = 8, .batch = 3 }, 0, -2, "input index >= 2^32" },
+        { { .rank = 1, .n = { 8 }, .inembed = { 8 }, .istride = 1, .idist = 0x10000000u, .onembed = { 8 },
+            .ostride = 1, .odist = 8, .batch = 2 }, 0, -2, "input extent > 2^28" },
+        { { .rank = 1, .n = { 4096 }, .batch = 32769 }, 0, -2, "batch * n > 2^27" },
+    };
+    size_t bytes[OMEGA_GPU_FFT_MANY_BUFS];
+    for (size_t i = 0; i < sizeof refs / sizeof refs[0]; i++) {
+        int want = refs[i].rc == -1 ? BAD : BIG;
+        int rc = omega_gpu_fft_many_walk(&refs[i].p, refs[i].in_place, bytes, NULL, NULL);
+        check(rc == want, "many walk %s: rc %d, want %d", refs[i].what, rc, want);
+    }
+    OmegaGpuFftMany ok = { .rank = 1, .n = { 12 }, .batch = 1 };
+    check(omega_gpu_fft_many_walk(NULL, 0, bytes, NULL, NULL) == BAD, "many walk NULL plan");
+    check(omega_gpu_fft_many_walk(&ok, 0, NULL, NULL, NULL) == BAD, "many walk NULL bytes");
+    /* omega_gpu_fft_many refuses partial overlap and NULL before it opens a device */
+    static float fb[64];
+    OmegaGpuMathInfo info;
+    check(omega_gpu_fft_many(&ok, fb, fb + 2, &info) == BAD, "many partial overlap");
+    check(omega_gpu_fft_many(&ok, NULL, fb, &info) == BAD, "many NULL in");
+    check(omega_gpu_fft_many(&ok, fb, NULL, &info) == BAD, "many NULL out");
+    OmegaGpuFftMany bad1 = ok;
+    bad1.n[0] = 1;
+    check(omega_gpu_fft_many(&bad1, fb, fb + 32, &info) == BAD, "many n 1");
+    /* sizes: every user buffer covers the side's span, in place the larger one; launches well formed */
+    static const OmegaGpuFftMany shapes[] = {
+        { .rank = 1, .n = { 12 }, .batch = 3, .type = OMEGA_GPU_FFT_TYPE_R2C },
+        { .rank = 1, .n = { 97 }, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_C2R },
+        { .rank = 3, .n = { 3, 4, 5 }, .batch = 2 },
+        { .rank = 2, .n = { 6, 10 }, .inembed = { 6, 13 }, .istride = 2, .idist = 161, .onembed = { 7, 11 },
+          .ostride = 1, .odist = 77, .batch = 2 },
+        { .rank = 1, .n = { 4095 }, .batch = 1 },
+    };
+    size_t worst_short = 0;
+    WalkStat st = { 0, 0, 0, 0 };
+    for (size_t i = 0; i < sizeof shapes / sizeof shapes[0]; i++)
+        for (int ip = 0; ip < 2; ip++) {
+            int rc = omega_gpu_fft_many_walk(&shapes[i], ip, bytes, many_stat_cb, &st);
+            check(rc == OMEGA_GPU_ML_OK, "many walk shape %zu in_place %d: rc %d", i, ip, rc);
+            if (rc != OMEGA_GPU_ML_OK) continue;
+            TLay li, lo;
+            tlay(&shapes[i], ip, 0, &li);
+            tlay(&shapes[i], ip, 1, &lo);
+            size_t si = 4 * tlay_span(&li, shapes[i].batch), so = 4 * tlay_span(&lo, shapes[i].batch);
+            size_t need_in = ip ? (si > so ? si : so) : si, need_out = ip ? 0 : so;
+            if (bytes[OMEGA_GPU_FFT_BUF_IN] < need_in) worst_short++;
+            check(ip ? bytes[OMEGA_GPU_FFT_BUF_OUT] == 0 : bytes[OMEGA_GPU_FFT_BUF_OUT] >= need_out,
+                  "many walk shape %zu in_place %d: out bytes %zu", i, ip, bytes[OMEGA_GPU_FFT_BUF_OUT]);
+            check(bytes[OMEGA_GPU_FFT_BUF_S0] > 0 && bytes[OMEGA_GPU_FFT_BUF_TABLE] > 0,
+                  "many walk shape %zu: scratch and table sized", i);
+        }
+    check(worst_short == 0, "%zu many in buffers smaller than the layout span", worst_short);
+    check(st.bad == 0 && st.launches > 0 && st.kinds == (1u << 7 | 1u << 8 | 1u << 9),
+          "many launches well formed (bad %u, launches %zu, kinds %#x)", st.bad, st.launches, st.kinds);
+    receipt("host many_walk refusals=%zu shapes=%zu launches=%zu malformed=%u", sizeof refs / sizeof refs[0],
+            2 * (sizeof shapes / sizeof shapes[0]), st.launches, st.bad);
+}
+
+static void host_many(void) {
+    host_many_plans();
+    host_many_magic();
+    host_many_tables();
+    host_many_walk();
+}
+
 static void host_tier(void) {
     host_fixture();
     host_philox();
@@ -1136,6 +1543,8 @@ static void host_tier(void) {
     host_twiddles();
     host_plans();
     host_normal_sweep();
+    host_reentry();
+    host_many();
 }
 
 /* ------------------------------------------------------------------ simulator tier */
@@ -1602,6 +2011,237 @@ static void sim_nd_tier(void) {
     free(in); free(out); free(out2);
 }
 
+/* cufftPlanMany through the simulator: the plan walk drives every launch against host buffers (scratch poisoned
+ * with 0xff), the logical input is scattered into its layout with gaps of NaN, and the output is gathered back.
+ * Tolerances: evidence/MATHLIBS-GAPS-2026-11-06/wolfram-many-tolerances.txt (normwise relative error of each
+ * transform against the f64 reference; per-pass bounds of radices 2, 4, 3, 5, 7 and of Bluestein, then the
+ * R2C and C2R and multi-axis compositions). */
+static const struct { OmegaGpuFftType type; uint32_t rank, n[3]; double tol; } MANY_TOL[] = {
+    { OMEGA_GPU_FFT_TYPE_C2C, 1, { 3 }, 5.840040057e-7 },        { OMEGA_GPU_FFT_TYPE_C2C, 1, { 5 }, 9.424324677e-7 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 1, { 6 }, 9.314055970e-7 },        { OMEGA_GPU_FFT_TYPE_C2C, 1, { 7 }, 1.338121440e-6 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 1, { 12 }, 9.910103014e-7 },       { OMEGA_GPU_FFT_TYPE_C2C, 1, { 100 }, 2.579670142e-6 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 1, { 97 }, 2.717869932e-5 },       { OMEGA_GPU_FFT_TYPE_C2C, 1, { 1000 }, 4.157308909e-6 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 1, { 4095 }, 2.486110600e-4 },     { OMEGA_GPU_FFT_TYPE_C2C, 1, { 11 }, 9.883007381e-6 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 1, { 26 }, 1.284078720e-5 },       { OMEGA_GPU_FFT_TYPE_C2C, 2, { 3, 5 }, 1.526437024e-6 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 3, { 6, 7, 12 }, 3.260540834e-6 }, { OMEGA_GPU_FFT_TYPE_C2C, 2, { 12, 97 }, 2.816973655e-5 },
+    { OMEGA_GPU_FFT_TYPE_C2C, 2, { 6, 10 }, 2.221240984e-6 },    { OMEGA_GPU_FFT_TYPE_C2C, 3, { 3, 4, 5 }, 1.645646502e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 1, { 3 }, 8.259063854e-7 },        { OMEGA_GPU_FFT_TYPE_R2C, 1, { 5 }, 1.332800778e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 1, { 6 }, 1.317206428e-6 },        { OMEGA_GPU_FFT_TYPE_R2C, 1, { 7 }, 1.892389489e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 1, { 12 }, 1.401500209e-6 },       { OMEGA_GPU_FFT_TYPE_R2C, 1, { 100 }, 3.648204501e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 1, { 97 }, 3.843648518e-5 },       { OMEGA_GPU_FFT_TYPE_R2C, 1, { 1000 }, 5.879322642e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 1, { 4095 }, 3.515891328e-4 },     { OMEGA_GPU_FFT_TYPE_R2C, 1, { 11 }, 1.397668308e-5 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 1, { 26 }, 1.815961541e-5 },       { OMEGA_GPU_FFT_TYPE_R2C, 2, { 6, 10 }, 2.755508296e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 3, { 5, 4, 6 }, 2.378849705e-6 },  { OMEGA_GPU_FFT_TYPE_R2C, 2, { 12, 9 }, 3.049832107e-6 },
+    { OMEGA_GPU_FFT_TYPE_R2C, 2, { 5, 8 }, 1.602320310e-6 },     { OMEGA_GPU_FFT_TYPE_C2R, 1, { 3 }, 5.840040057e-7 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 1, { 5 }, 9.424324677e-7 },        { OMEGA_GPU_FFT_TYPE_C2R, 1, { 6 }, 9.314055970e-7 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 1, { 7 }, 1.338121440e-6 },        { OMEGA_GPU_FFT_TYPE_C2R, 1, { 12 }, 9.910103014e-7 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 1, { 100 }, 2.579670142e-6 },      { OMEGA_GPU_FFT_TYPE_C2R, 1, { 97 }, 2.717869932e-5 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 1, { 1000 }, 4.157308909e-6 },     { OMEGA_GPU_FFT_TYPE_C2R, 1, { 4095 }, 2.486110600e-4 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 1, { 11 }, 9.883007381e-6 },       { OMEGA_GPU_FFT_TYPE_C2R, 1, { 26 }, 1.284078720e-5 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 2, { 6, 10 }, 2.607042310e-6 },    { OMEGA_GPU_FFT_TYPE_C2R, 3, { 5, 4, 6 }, 2.432795333e-6 },
+    { OMEGA_GPU_FFT_TYPE_C2R, 2, { 12, 9 }, 2.857307661e-6 },
+};
+static double many_tol(const OmegaGpuFftMany *p) {
+    for (size_t i = 0; i < sizeof MANY_TOL / sizeof MANY_TOL[0]; i++)
+        if (MANY_TOL[i].type == p->type && MANY_TOL[i].rank == p->rank &&
+            !memcmp(MANY_TOL[i].n, p->n, p->rank * sizeof p->n[0]))
+            return MANY_TOL[i].tol;
+    check(0, "no tolerance for many type %d rank %u n %u", (int)p->type, p->rank, p->n[0]);
+    return 0;
+}
+
+typedef struct {
+    uint8_t *buf[OMEGA_GPU_FFT_MANY_BUFS];
+    size_t bytes[OMEGA_GPU_FFT_MANY_BUFS];
+    uint32_t mut_kind, mut, sched, have, kind, a, b, m, table_done;
+    size_t launches;
+} SimMany;
+static int sim_many_cb(void *ctx, const OmegaGpuFftManyLaunch *l) {
+    SimMany *s = ctx;
+    uint32_t mut = l->kind == s->mut_kind ? s->mut : 0;
+    if (!s->have || s->kind != l->kind || s->a != l->a || s->b != l->b || s->m != mut) {
+        if (sim_prog(l->kind, l->a, l->b, mut, l->threads) != 0) return -1;
+        s->have = 1; s->kind = l->kind; s->a = l->a; s->b = l->b; s->m = mut;
+    }
+    if (!s->table_done && s->bytes[OMEGA_GPU_FFT_BUF_TABLE]) {
+        memcpy(s->buf[OMEGA_GPU_FFT_BUF_TABLE], l->table, s->bytes[OMEGA_GPU_FFT_BUF_TABLE]);
+        s->table_done = 1;
+    }
+    memset(&g_sim, 0, sizeof g_sim);
+    g_sim.p = g_prog;
+    g_sim.threads = l->threads;
+    g_sim.warp_sched = s->sched;
+    uint32_t *cb = &g_sim.cbank[0x380 / 4];
+    for (uint32_t k = 0; k < l->nptr; k++) put64(&cb[2 * k], (uint64_t)(uintptr_t)s->buf[l->buf[k]] + l->off[k]);
+    for (uint32_t w = 0; w < l->nwords; w++) cb[2 * l->nptr + w] = l->words[w];
+    for (int i = 0; i < OMEGA_GPU_FFT_MANY_BUFS; i++)
+        if (s->bytes[i])
+            g_sim.ranges[g_sim.nranges++] = (WsRange){ (uintptr_t)s->buf[i], (uintptr_t)s->buf[i] + s->bytes[i] };
+    int rc = ws_run(&g_sim, l->grid, 1);
+    check(rc == 0, "sim many kind %u a %u b %u: %s", l->kind, l->a, l->b, g_sim.msg);
+    s->launches++;
+    return rc == 0 ? 0 : -1;
+}
+/* result of one simulated many plan: dense logical output, worst per-transform error, poison accounting */
+typedef struct { double err; size_t unwritten, gaps_changed, input_changed, launches; int rc; } ManyRun;
+static ManyRun sim_many_run(const OmegaGpuFftMany *p, int in_place, uint32_t mut_kind, uint32_t mut, uint32_t sched,
+                            const float *x, const double *ref, float *y) {
+    ManyRun r = { -1, 0, 0, 0, 0, 0 };
+    SimMany s;
+    memset(&s, 0, sizeof s);
+    s.mut_kind = mut_kind; s.mut = mut; s.sched = sched;
+    r.rc = omega_gpu_fft_many_walk(p, in_place, s.bytes, NULL, NULL);
+    check(r.rc == OMEGA_GPU_ML_OK, "sim many walk sizes: %d", r.rc);
+    if (r.rc != OMEGA_GPU_ML_OK) return r;
+    for (int i = 0; i < OMEGA_GPU_FFT_MANY_BUFS; i++)
+        if (s.bytes[i]) { s.buf[i] = malloc(s.bytes[i]); memset(s.buf[i], 0xff, s.bytes[i]); }
+    TLay ti, to;
+    tlay(p, in_place, 0, &ti);
+    tlay(p, in_place, 1, &to);
+    float *in = (float *)s.buf[OMEGA_GPU_FFT_BUF_IN];
+    float *out = in_place ? in : (float *)s.buf[OMEGA_GPU_FFT_BUF_OUT];
+    size_t ipts = tlay_points(&ti), opts = tlay_points(&to), iw = ti.cplx ? 2 : 1, ow = to.cplx ? 2 : 1;
+    for (uint32_t b = 0; b < p->batch; b++)
+        for (size_t i = 0; i < ipts; i++)
+            for (size_t c = 0; c < iw; c++) in[tlay_at(&ti, b, i) + c] = x[(b * ipts + i) * iw + c];
+    uint8_t *before = NULL, *addressed = NULL;
+    size_t onf = in_place ? 0 : s.bytes[OMEGA_GPU_FFT_BUF_OUT] / 4;
+    if (!in_place) {
+        before = malloc(s.bytes[OMEGA_GPU_FFT_BUF_IN]);
+        memcpy(before, in, s.bytes[OMEGA_GPU_FFT_BUF_IN]);
+        addressed = calloc(onf, 1);
+    }
+    r.rc = omega_gpu_fft_many_walk(p, in_place, s.bytes, sim_many_cb, &s);
+    r.launches = s.launches;
+    if (r.rc == OMEGA_GPU_ML_OK) {
+        double worst = 0;
+        for (uint32_t b = 0; b < p->batch; b++) {
+            double num = 0, den = 0;
+            for (size_t i = 0; i < opts; i++)
+                for (size_t c = 0; c < ow; c++) {
+                    size_t f = tlay_at(&to, b, i) + c, d = (b * opts + i) * ow + c;
+                    uint32_t bits;
+                    memcpy(&bits, &out[f], 4);
+                    if (!in_place) { r.unwritten += bits == 0xffffffffu; addressed[f] = 1; }
+                    y[d] = out[f];
+                    double e = (double)out[f] - ref[d];
+                    num += e * e; den += ref[d] * ref[d];
+                }
+            double e = sqrt(num / den);
+            if (!(e <= worst)) worst = e;
+        }
+        r.err = worst;
+        if (!in_place) {
+            uint32_t *ow32 = (uint32_t *)out;
+            for (size_t f = 0; f < onf; f++) r.gaps_changed += !addressed[f] && ow32[f] != 0xffffffffu;
+            r.input_changed = memcmp(before, in, s.bytes[OMEGA_GPU_FFT_BUF_IN]) != 0;
+        }
+    }
+    free(before); free(addressed);
+    for (int i = 0; i < OMEGA_GPU_FFT_MANY_BUFS; i++) free(s.buf[i]);
+    return r;
+}
+
+typedef struct { OmegaGpuFftMany p; int in_place; const char *what; } ManyCase;
+#define MC1(T, N, INV) { { .rank = 1, .n = { N }, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_##T, .inverse = INV }, 0, \
+                         #T " " #N " inverse=" #INV }
+static void sim_many_tier(void) {
+    static const ManyCase cases[] = {
+#define MCL(N) MC1(C2C, N, 0), MC1(C2C, N, 1), MC1(R2C, N, 0), MC1(C2R, N, 0)
+        MCL(3), MCL(5), MCL(6), MCL(7), MCL(12), MCL(100), MCL(97), MCL(1000), MCL(4095), MCL(11), MCL(26),
+#undef MCL
+        { { .rank = 2, .n = { 3, 5 }, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_C2C }, 0, "C2C {3,5}" },
+        { { .rank = 3, .n = { 6, 7, 12 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2C }, 0, "C2C {6,7,12}" },
+        { { .rank = 3, .n = { 6, 7, 12 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2C, .inverse = 1 }, 0,
+          "C2C {6,7,12} inverse" },
+        { { .rank = 2, .n = { 12, 97 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2C }, 0, "C2C {12,97}" },
+        { { .rank = 2, .n = { 6, 10 }, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_R2C }, 0, "R2C {6,10}" },
+        { { .rank = 3, .n = { 5, 4, 6 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_R2C }, 0, "R2C {5,4,6}" },
+        { { .rank = 2, .n = { 12, 9 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_R2C }, 0, "R2C {12,9}" },
+        { { .rank = 2, .n = { 6, 10 }, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_C2R }, 0, "C2R {6,10}" },
+        { { .rank = 3, .n = { 5, 4, 6 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2R }, 0, "C2R {5,4,6}" },
+        { { .rank = 2, .n = { 12, 9 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2R }, 0, "C2R {12,9}" },
+        /* layouts */
+        { { .rank = 1, .n = { 12 }, .batch = 3, .type = OMEGA_GPU_FFT_TYPE_R2C }, 1, "L1 R2C 12 basic in place" },
+        { { .rank = 1, .n = { 12 }, .batch = 3, .type = OMEGA_GPU_FFT_TYPE_C2R }, 1, "L2 C2R 12 basic in place" },
+        { { .rank = 2, .n = { 6, 10 }, .inembed = { 6, 13 }, .istride = 2, .idist = 161, .onembed = { 7, 11 },
+            .ostride = 1, .odist = 77, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_C2C },
+          0, "L3 C2C {6,10} embedded strided" },
+        { { .rank = 1, .n = { 7 }, .inembed = { 7 }, .istride = 4, .idist = 1, .onembed = { 7 }, .ostride = 1,
+            .odist = 7, .batch = 4, .type = OMEGA_GPU_FFT_TYPE_C2C, .inverse = 1 },
+          0, "L4 C2C 7 interleaved batches" },
+        { { .rank = 2, .n = { 5, 8 }, .inembed = { 5, 9 }, .istride = 1, .idist = 50, .onembed = { 5, 5 },
+            .ostride = 3, .odist = 80, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_R2C },
+          0, "L5 R2C {5,8} embedded" },
+        { { .rank = 1, .n = { 97 }, .inembed = { 49 }, .istride = 2, .idist = 100, .onembed = { 97 }, .ostride = 1,
+            .odist = 101, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_C2R },
+          0, "L6 C2R 97 strided" },
+        { { .rank = 3, .n = { 3, 4, 5 }, .batch = 2, .type = OMEGA_GPU_FFT_TYPE_C2C }, 1, "L7 C2C {3,4,5} in place" },
+    };
+    const size_t ncase = sizeof cases / sizeof cases[0];
+    const uint32_t sched[3] = { 0, 1, 0x9E3779B9u };
+    for (size_t c = 0; c < ncase; c++) {
+        const OmegaGpuFftMany *p = &cases[c].p;
+        TLay ti, to;
+        tlay(p, cases[c].in_place, 0, &ti);
+        tlay(p, cases[c].in_place, 1, &to);
+        size_t nx = tlay_points(&ti) * (ti.cplx ? 2 : 1) * p->batch, ny = tlay_points(&to) * (to.cplx ? 2 : 1) * p->batch;
+        float *x = malloc(nx * 4), *y = malloc(ny * 4), *y2 = malloc(ny * 4);
+        double *ref = malloc(ny * sizeof *ref);
+        many_input(p, x);
+        many_ref(p, x, ref);
+        double tol = many_tol(p);
+        ManyRun r = sim_many_run(p, cases[c].in_place, 0, 0, sched[0], x, ref, y);
+        int same = 1;
+        for (int s = 1; s < 3 && r.rc == OMEGA_GPU_ML_OK; s++) {
+            ManyRun r2 = sim_many_run(p, cases[c].in_place, 0, 0, sched[s], x, ref, y2);
+            same &= r2.rc == OMEGA_GPU_ML_OK && !memcmp(y, y2, ny * 4);
+        }
+        check(r.rc == OMEGA_GPU_ML_OK && r.err >= 0 && r.err <= tol, "sim many %s: rc %d error %.4e, tolerance %.4e",
+              cases[c].what, r.rc, r.err, tol);
+        check(same, "sim many %s: output depends on the warp order", cases[c].what);
+        check(r.unwritten == 0 && r.gaps_changed == 0 && r.input_changed == 0,
+              "sim many %s: %zu outputs unwritten, %zu gap words changed, input changed %zu", cases[c].what, r.unwritten,
+              r.gaps_changed, r.input_changed);
+        receipt("sim many case=\"%s\" batch=%u in_place=%d launches=%zu normwise_err=%.4e tol=%.4e unwritten=%zu "
+                "gaps_changed=%zu input_changed=%zu warp_orders_identical=%d",
+                cases[c].what, p->batch, cases[c].in_place, r.launches, r.err, tol, r.unwritten, r.gaps_changed,
+                r.input_changed, same);
+        free(x); free(y); free(y2); free(ref);
+    }
+    /* mutants of kinds 7, 8 and 9 (see the header): each must break its case; 9/2 drops the source batch stride,
+     * invisible with one transform (the expected miss) */
+    static const struct { ManyCase c; uint32_t kind, mut; int caught; } mm[] = {
+        { MC1(C2C, 12, 0), 7, 1, 1 },
+        { MC1(C2C, 12, 0), 7, 2, 1 },
+        { MC1(C2C, 97, 0), 8, 1, 1 },
+        { MC1(C2C, 97, 0), 8, 2, 1 },
+        { MC1(C2R, 12, 0), 9, 1, 1 },
+        { MC1(C2C, 6, 0), 9, 2, 1 },
+        { { { .rank = 1, .n = { 6 }, .batch = 1, .type = OMEGA_GPU_FFT_TYPE_C2C }, 0, "C2C 6 batch 1" }, 9, 2, 0 },
+    };
+    for (size_t i = 0; i < sizeof mm / sizeof mm[0]; i++) {
+        const OmegaGpuFftMany *p = &mm[i].c.p;
+        TLay ti, to;
+        tlay(p, 0, 0, &ti);
+        tlay(p, 0, 1, &to);
+        size_t nx = tlay_points(&ti) * (ti.cplx ? 2 : 1) * p->batch, ny = tlay_points(&to) * (to.cplx ? 2 : 1) * p->batch;
+        float *x = malloc(nx * 4), *y = malloc(ny * 4);
+        double *ref = malloc(ny * sizeof *ref);
+        many_input(p, x);
+        many_ref(p, x, ref);
+        double tol = many_tol(p);
+        ManyRun r = sim_many_run(p, 0, mm[i].kind, mm[i].mut, 0, x, ref, y);
+        int caught = r.rc != OMEGA_GPU_ML_OK || !(r.err <= tol);
+        check(caught == mm[i].caught, "sim many mutant %u/%u on %s: error %.4e, %s", mm[i].kind, mm[i].mut,
+              mm[i].c.what, r.err, caught ? "caught" : "not caught");
+        receipt("sim many_mutant kind=%u level=%u case=\"%s\" batch=%u normwise_err=%.4e tol=%.4e caught=%d expected=%d",
+                mm[i].kind, mm[i].mut, mm[i].c.what, p->batch, r.err, tol, caught, mm[i].caught);
+        free(x); free(y); free(ref);
+    }
+}
+#undef MC1
+
 static void sim_tier(void) {
     g_prog = calloc(1, sizeof *g_prog);
     g_code = malloc(OMEGA_BW_CODE_CAP_MAX);
@@ -1610,6 +2250,7 @@ static void sim_tier(void) {
     sim_philox_tier();
     sim_real_tier();
     sim_nd_tier();
+    sim_many_tier();
     free(g_prog);
     free(g_code);
 }

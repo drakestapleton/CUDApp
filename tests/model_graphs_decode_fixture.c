@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 #include "model_graphs_fixture.h"
+#ifdef MODEL_GRAPHS_NESTED
+#include "model_graphs_nested_objects.h"
+#endif
 #include "../src/omega_gpu_decode_graph.c"
 int mg_decode_run(const MgCase *c){
     OmegaGpuDecodeGraph g={0};
@@ -28,6 +31,17 @@ int mg_decode_run(const MgCase *c){
     g.cfg.router=(void*)0x100;g.cfg.norm_topk=(c->flags>>1)&1;g_prefetch=c->flags&1;g_prefetch_red=(c->flags>>2)&1;
     for(unsigned i=0;i<c->layers;i++){g.layer[i].set=1;g.layer[i].qkv=(void*)0x10;g.layer[i].o=(void*)0x20;g.layer[i].gu=(void*)0x30;g.layer[i].dn=(void*)0x40;}
     if(c->mode)g.hidden_ready=(c->flags>>7)&1;
+#ifdef MODEL_GRAPHS_NESTED
+    g.cfg.lm_head=mg_nested_bf16(0,g.cfg.vocab,OMEGA_GPU_DGRAPH_HIDDEN);g.cfg.attn=mg_nested_attn(0,c->layers);
+    g.cfg.router=mg_nested_router(c->layers,128,0);
+    for(unsigned l=0;l<c->layers;l++){
+        g.layer[l].qkv=mg_nested_fp8(0,1,OMEGA_GPU_DGRAPH_QKV,OMEGA_GPU_DGRAPH_HIDDEN);
+        g.layer[l].o=mg_nested_fp8(1,1,OMEGA_GPU_DGRAPH_HIDDEN,OMEGA_GPU_DGRAPH_ATTN);
+        g.layer[l].gu=mg_nested_fp8(2,128,2*OMEGA_GPU_DGRAPH_INTER,OMEGA_GPU_DGRAPH_HIDDEN);
+        g.layer[l].dn=mg_nested_fp8(3,128,OMEGA_GPU_DGRAPH_HIDDEN,OMEGA_GPU_DGRAPH_INTER);
+    }
+    mg_nested_record_begin();
+#endif
     int rc=0;if(c->mode<2)rc=c->mode?omega_gpu_decode_graph_record_final(&g):omega_gpu_decode_graph_record_layer(&g,c->layer,c->pos);
     if(c->mode==2){g.xq_layer=-1;g.hidden_ready=0;rc=0;for(unsigned l=0;l<c->layers&&!rc;l++)rc=omega_gpu_decode_graph_record_layer(&g,l,c->pos);if(!rc)rc=omega_gpu_decode_graph_record_final(&g);}
     if(c->mode==3){const unsigned modes[3]={OMEGA_DEC_RES_NORM,OMEGA_DEC_RES_ADD,OMEGA_DEC_RES_COMBINE|OMEGA_DEC_RES_NORM};rc=omega_gpu_decode_graph_record_res(&g,modes[c->flags%3],c->seed,c->seed+16,c->seed+32,c->seed+48,c->seed+64,g.cfg.eps,0x1p-64f);}

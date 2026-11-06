@@ -46,7 +46,7 @@ Things a CUDA stack does not do, because it does not own the whole path. Omega `
 | Resident whole-model kernel | needs control of scheduling and memory below the CUDA API | MISSING (AIEN L272) |
 | Zero-copy shared memory | the GB10's CPU and GPU share one memory; CUDA still stages through its own allocators | PARTIAL: weights shared between processes through the driver client (physics `feat/shared-mem` 82467f19, 1 GiB import in 171 ms; not yet in CUDA++ main) |
 
-2026-11-06: ModelGraphsOm adds seeded graph plans and an old-C/default-Omega differential (`om/graph/README.md`). This does not upgrade the row: nested-kernel end-to-end parity and chip qualification remain NOT_RUN. Host adapters isolate graph recording decisions; see `om/graph/CHIP.md`.
+2026-11-06: ModelGraphsOm adds seeded graph plans and an old-C/default-Omega differential (`om/graph/README.md`). The independent nested gate also compares real production GDN/attention/FP8/BF16/GEMM/router command lists and submitted words, including device-free native artifact admission; old/new each submit once per complete word. This does not upgrade the row: chip qualification and complete model-graph effect annotations remain separate. See `om/graph/CHIP.md`.
 
 ## 4. Speed
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-CARRIED_HOST_TESTS += test-model-graphs-om test-model-graphs-warp
-.PHONY: test-model-graphs-om test-model-graphs-warp
+CARRIED_HOST_TESTS += test-model-graphs-om test-model-graphs-warp test-model-graphs-nested
+.PHONY: test-model-graphs-om test-model-graphs-warp test-model-graphs-nested
 MODEL_GRAPH_UNITS := $(wildcard src/cudapp_om_model_graph*.c)
 $(OUT_DIR)/model-graphs-check: tests/test_model_graphs_om.c $(MODEL_GRAPH_UNITS)
 	@mkdir -p $(OUT_DIR)
@@ -19,3 +19,5 @@ test-model-graphs-om: $(OUT_DIR)/model-graphs-check $(OUT_DIR)/model-graphs-plan
 ifeq ($(CUDAPP_OMC_HOST),1)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/graph/mutants.py
 endif
+test-model-graphs-nested: $(OUT_DIR)/libomega_gpu.a
+	OUT_DIR="$(OUT_DIR)" CC="$(CC)" python3 tests/model_graphs_nested.py

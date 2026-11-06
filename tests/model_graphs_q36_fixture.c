@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 #include "model_graphs_fixture.h"
+#ifdef MODEL_GRAPHS_NESTED
+#include "model_graphs_nested_objects.h"
+#endif
 #include "../src/omega_gpu_q36_graph.c"
 int mg_q36_run(const MgCase *c) {
     OmegaGpuQ36Graph g={0};
@@ -88,6 +91,17 @@ int mg_q36_run(const MgCase *c) {
         g.layer[i].mix=(void*)0x10;g.layer[i].ab=(void*)0x20;g.layer[i].o=(void*)0x30;
         g.layer[i].gu=(void*)0x40;g.layer[i].dn=(void*)0x50;
     }
+#ifdef MODEL_GRAPHS_NESTED
+    g.cfg.router=mg_nested_router(c->layers,256,1);g.cfg.lm_head=mg_nested_bf16(0,g.cfg.vocab,H);
+    g.head8=(c->flags&4)?mg_nested_fp8(4,1,g.cfg.vocab,H):NULL;g.xh.screen=mg_nested_fp8(5,1,g.cfg.vocab,H);
+    for(unsigned h=0;h<c->heads;h++){g.gdn_h[h]=mg_nested_gdn(h,2,c->layers);g.attn_h[h]=mg_nested_attn256(h,c->layers,16,2,4);}
+    for(unsigned l=0;l<c->layers;l++){
+        g.layer[l].mix=mg_nested_fp8(0,1,c->attn?OMEGA_GPU_Q36_ATT_MIX:OMEGA_GPU_Q36_GDN_MIX,H);
+        g.layer[l].ab=mg_nested_bf16(1,OMEGA_GPU_Q36_AB,H);g.layer[l].o=mg_nested_fp8(1,1,H,OMEGA_GPU_Q36_MIXER_OUT);
+        g.layer[l].gu=mg_nested_fp8(2,257,2*EI,H);g.layer[l].dn=mg_nested_fp8(3,257,H,EI);
+    }
+    mg_nested_record_begin();
+#endif
     uint32_t pos[OMEGA_GPU_Q36_MAX_HEADS];for(unsigned h=0;h<c->heads;h++)pos[h]=c->pos+h;
     uint32_t a=0,b=0,d=0;int rc;
     switch(c->mode){
@@ -103,6 +117,9 @@ int mg_q36_run(const MgCase *c) {
         m.router.xout_va=m.router.ids_va+256;m.router.tab_gu_va=m.router.ids_va+16384;m.router.tab_dn_va=m.router.ids_va+24576;
         m.windows[1]=c->heads;m.windows[2]=c->heads*NG;m.windows[3]=8192;m.windows[4]=16384;m.windows[5]=24576;m.windows[6]=32768;m.windows[7]=g.lo.lb_stride;
         m.pair[0].artifact[0]=(void*)0xb0;m.pair[0].artifact[1]=(void*)0xc0;
+#ifdef MODEL_GRAPHS_NESTED
+        if(c->mode==6 && mg_nested_window(c->heads*NG,m.pair[0].artifact,m.pair[0].lease))return -1;
+#endif
         rc=c->mode==6?pf_record_moe_window(&g,0):pf_record_moe_combine(&g,128);break;
     }
     case 8:

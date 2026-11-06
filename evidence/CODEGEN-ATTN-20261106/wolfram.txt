@@ -1,0 +1,9 @@
+Source hexadecimal literal conversion, preserving the original C encodings:
+WolframLanguageEvaluator: Map[FromDigits[#,16]&,{
+"000fc000","2000","21","22","25","26","358","380","388","390","398","3a0","3a8","3b0","3b8","3bc","3c0","3c000000","3c4","3c8","3cc","3d0","3d4","3d8","3dc","3e0","3f800000","7fff","80000000","F149F2CA","ffff","ffff0000","ffffffe0","ffffffe1","fffffff0","ffffffff"}]
+-> {1032192,8192,33,34,37,38,856,896,904,912,920,928,936,944,952,956,960,1006632960,964,968,972,976,980,984,988,992,1065353216,32767,2147483648,4048155338,65535,4294901760,4294967264,4294967265,4294967280,4294967295}
+
+WolframLanguageEvaluator: BitShiftLeft[2^32-1,32] -> 18446744069414584320
+This is the high-word preservation mask used when patching an immediate without modifying the control word.
+
+No GPU performance estimate or derived numerical accuracy claim is made. Differential counts and simulator outputs are measured test results, not modeled quantities.

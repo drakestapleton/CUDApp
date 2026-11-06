@@ -10,6 +10,16 @@
 #include "omega_blackwell_codegen_pattn.h"
 #include "omega_blackwell_codegen_tc.h"
 #include <string.h>
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
+
+int omega_pattn_spec_ok(const OmegaPrefillAttnSpec *s) {
+    return s && (s->warps == 4u || s->warps == 8u) && s->mutant >= 0 && s->mutant <= 4 &&
+           s->mode <= OMEGA_PATTN_MODE_ATTEND &&
+           (s->mirror == 0 || (s->mirror == 1 && s->mode == OMEGA_PATTN_MODE_APPEND));
+}
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_CODEGEN_PATTN)
 
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
@@ -198,9 +208,6 @@ static void norm_rope(Em *e, const NR *n, int x4, int w4, int cos4, int sin4, in
     if (rope) for (unsigned i = 0; i < 4; i++) { fmul(e, R(n->ts), S(x4, i), S(cos4, i)); ffma(e, S(x4, i), S(n->pt4, i), S(sin4, i), R(n->ts)); }
 }
 
-int omega_pattn_spec_ok(const OmegaPrefillAttnSpec *s) {
-    return s && (s->warps == 4u || s->warps == 8u) && s->mutant >= 0 && s->mutant <= 4 && s->mode <= OMEGA_PATTN_MODE_ATTEND && (s->mirror == 0 || (s->mirror == 1 && s->mode == OMEGA_PATTN_MODE_APPEND));
-}
 
 int omega_blackwell_codegen_prefill_attn_prog(const OmegaPrefillAttnSpec *spec, BlackwellIRProgram *prog) {
     if (!omega_pattn_spec_ok(spec) || !prog) return -1;
@@ -539,6 +546,15 @@ int omega_blackwell_codegen_prefill_attn_prog(const OmegaPrefillAttnSpec *spec, 
     if (omega_bw_regalloc_solve(prog) != 0) return -1;
     return 0;
 }
+#else
+int omega_blackwell_codegen_prefill_attn_prog(const OmegaPrefillAttnSpec *spec, BlackwellIRProgram *prog) {
+    uint64_t error = 0;
+    if (!omega_pattn_spec_ok(spec) || !prog) return -1;
+    return omega_gpu_om_ir_replay((OmegaOmIrUnit)omega_cg_pattn, 0, spec->warps,
+                                  (uint64_t)spec->mutant, spec->mode | ((uint64_t)spec->mirror << 8),
+                                  prog, &error) == 0 ? 0 : -1;
+}
+#endif
 
 int omega_prefill_attn_prog_stats(const OmegaPrefillAttnSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram p;

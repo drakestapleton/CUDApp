@@ -299,3 +299,50 @@ run `./build/gpu_tgemm_test --host-only` and
 receipt procedure. Only the last command opens the device. Its carried chip
 path checks both uncached and cached buffers, output poisoning, repeat
 identity, arithmetic reference and mutant 4. Host parity is not chip qualification.
+
+## Seeded attention IR builders
+
+The decode and tensor-prefill attention builders use
+`om/codegen/cg_attn*.om` and `om/codegen/cg_pattn*.om` by default. Omega owns
+configuration loops, RMSNorm/RoPE instruction selection, scoreboard scheduling,
+branch fixups, and loop metadata. The C adapter only validates the public spec
+and invokes `omega_gpu_om_ir_replay`; the public headers are unchanged.
+
+The original builders remain differential oracles behind
+`CUDAPP_MIGRATION_PENDING_C_CODEGEN_ATTN` and
+`CUDAPP_MIGRATION_PENDING_C_CODEGEN_PATTN` (both off by default).
+`make test-codegen-attn`, carried by `make test`, builds those oracles separately
+and enumerates every accepted spec: decode depth 1 through 4 and mutant 0 through
+4; prefill warps 4 or 8 and mutant 0 through 4, with FUSED/APPEND/ATTEND and
+mirror permitted only for APPEND. These spec guards define a finite complete
+accepted space; invalid-boundary and null cases are checked separately.
+
+The differential checks the full IR, register allocation, and padded encoded
+bytes. Every accepted spec also runs a one-record negative control and an
+Omega scheduling mutant (`kind=1`, changing the first load's stall).
+Production adapters always use `kind=0`. Runtime launch parameters, including
+sequence length and pointer addresses, do not change the generated program.
+
+Regenerate and check the committed bridge output with the pins in
+`om/units.sh`:
+
+```sh
+OMEGA_OMC=/path/to/omega-mv/seed/out/omc \
+OMEGA_BRIDGE=/path/to/omega-bridge sh om/units.sh
+OMEGA_OMC=/path/to/omega-mv/seed/out/omc \
+OMEGA_BRIDGE=/path/to/omega-bridge sh om/units.sh --check
+make test-codegen-attn
+build/gpu_decode_attn_test --host-only
+build/gpu_decode_attn_test --sim
+build/gpu_prefill_attn_test --host-only
+build/gpu_prefill_attn_test --sim
+```
+
+The compiler pin is omega-mv `e5b32567`, as checked by `om/units.sh`. These are
+host/simulator checks, not chip qualification. A separately authorized GB10
+window is required before running either test binary without `--host-only` or
+`--sim`. During that window, follow the current hardware authorization and
+service-safety procedure, then run `build/gpu_decode_attn_test --out decode.json`
+and `build/gpu_prefill_attn_test --out prefill.json`. Both default modes open the
+GPU; neither is run by the migration tests. Preserve the receipts separately
+from the host evidence and perform the window's required closeout checks.

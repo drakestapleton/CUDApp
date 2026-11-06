@@ -1,6 +1,20 @@
 {
-  "schema_version": "1.0.0",
-  "name": "codegen",
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T11:05:30Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:ccc884b760d4d516969a6b1d6e0c543d346738ead3d8002d11fef457a2bf186a",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 5,
+      "generated_at_commit": "1a56f317002e174c481641cc2cd082c6950f87a3",
+      "source_tree": "sha256:8a36770e7db7d9922da868f70127466e43be2baf7cdd324a3a048665a82dffef"
+    }
+  },
   "layer": "unit",
-  "purpose": "Omega successors of handwritten Blackwell kernel builders"
+  "name": "codegen",
+  "purpose": "Omega successors of handwritten Blackwell kernel builders",
+  "schema_version": "1.0.0"
 }

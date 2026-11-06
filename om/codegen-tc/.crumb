@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T01:56:28Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:9092493c1675fc338b9cd259bc387476d092c2ace9af084350ac4e8547d57766",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "22ebf8fc281faabe8df241b04eaff62e6a91d2f6",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "implementation",
+  "name": "codegen-tc",
+  "purpose": "Seeded Omega tensor-core IR builders and differential gates",
+  "schema_version": "1.0.0"
+}

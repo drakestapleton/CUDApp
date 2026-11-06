@@ -1,0 +1,65 @@
+[
+  {
+    "unit": "attn_host",
+    "site": "31 4294967264",
+    "replacement": "30 4294967264",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_host",
+    "site": "put q 9 ulong mul v 16",
+    "replacement": "put q 9 ulong mul v 8",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_host",
+    "site": "put q 9 add add mul get q 3 4 get q 1 idw",
+    "replacement": "put q 9 add add mul get q 3 3 get q 1 idw",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_host",
+    "site": "if gt nr get q 3",
+    "replacement": "if lt nr get q 3",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_host",
+    "site": "put q 21 ulong mul uint get q 12 4",
+    "replacement": "put q 21 ulong mul uint get q 12 8",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_scanchk",
+    "site": "if eq get w i 2141195181",
+    "replacement": "if eq get w i 2141195180",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_scanchk",
+    "site": "v = sub v get w sub i 1",
+    "replacement": "v = add v get w sub i 1",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_scanchk",
+    "site": "if lt get w i get w sub i 1",
+    "replacement": "if gt get w i get w sub i 1",
+    "rc": 1,
+    "verdict": "KILLED"
+  },
+  {
+    "unit": "attn_clock",
+    "site": "mul s 1000000000",
+    "replacement": "mul s 1000000",
+    "rc": 1,
+    "verdict": "KILLED"
+  }
+]

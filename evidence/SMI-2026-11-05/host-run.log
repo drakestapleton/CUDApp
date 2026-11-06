@@ -1,0 +1,20 @@
+PASS guard negative control (unrewritten context.om refused)
+PASS fixture tier (gb10, optional-absent, no-gpus, 16 refusals, usage)
+PASS rm fake tier (report, pstate unsupported, 9 faults, teardown counts, one-GPU rule)
+PASS checker negative control (altered count rejected)
+  mutant 'if and ge ven 0 ne ven 0x10de': caught
+  mutant 'if lnpre 0 sg1': caught
+  mutant 'chkbus g': caught
+  mutant 'put gseen g 1': caught
+  mutant 'if not lnpre o tgpup': caught
+  mutant 'ofileu get gst 4 get gst 5': caught
+  mutant 'if or eq n 0 gt n 3': caught
+  mutant 'if or eq n 0 eq n 64': caught
+  mutant 'if or ne npget add o 4 1 ne npget o 0': caught
+  mutant 'if gt n 200': caught
+  mutant 'odec shr m 20': caught
+  mutant 'refuse code msg': caught
+  mutant 'if ne nhget 28 86': caught
+  mutant 'if eq v shl uint 1 k': caught
+mutants caught 14/14
+CUDAPP-SMI HOST PASS

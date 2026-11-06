@@ -1,0 +1,25 @@
+field	cudapp-smi	nvidia-smi	verdict
+driver_version	580.173.02	580.173.02	MATCH
+count	1	1	MATCH
+pci.bus_id	0000000F:01:00.0	0000000F:01:00.0	MATCH
+pci.domain	0x000F	0x000F	MATCH
+pci.bus	0x01	0x01	MATCH
+pci.device	0x00	0x00	MATCH
+uuid	GPU-fb8e53f0-3207-e89b-d02f-acdfe2695b59	GPU-fb8e53f0-3207-e89b-d02f-acdfe2695b59	MATCH
+vbios_version	9A.0B.2D.00.00	9A.0B.2D.00.00	MATCH
+pci.device_id	0x2E1210DE	0x2E1210DE	MATCH
+pci.sub_device_id	0x000010DE	0x10DE	MATCH
+pci.baseClass	0x3	0x3	MATCH
+pci.subClass	0x0	0x0	MATCH
+pcie.link.gen.current	1	1	MATCH
+pcie.link.gen.max	1	1	MATCH
+pcie.link.width.current	1	1	MATCH
+pcie.link.width.max	16	16	MATCH
+minor_number	0	0	MATCH
+gsp_firmware_version	580.173.02	580.173.02	MATCH
+name	[N/A]	NVIDIA GB10	RM_NOT_RUN
+temperature.gpu	[N/A]	41	RM_NOT_RUN
+pstate	[N/A]	P8	RM_NOT_RUN
+compute_app.pid=68451	holder.0	68451	MATCH
+compute_app.68451.process_name	~/.local/share/omega-tool-model/round40-fast/server	~/.local/share/omega-tool-model/round40-fast/server	MATCH
+compute_app.68451.used_memory	[rm]	335 MiB	RM_NOT_RUN

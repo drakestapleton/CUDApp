@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T01:49:06Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:b56d3411573ecf75120ffa52beba30f8ba3ebfc2689269873ca7b31e3d78b487",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 16,
+      "generated_at_commit": "61cb049c4eb6fcd4a0601abf1b0b9fa5688bf695",
+      "source_tree": "sha256:935d5c3de9fb303c723e8046e9c846587a19c2a31192994b5e4f7d29a0efbd9c"
+    }
+  },
+  "layer": "development",
+  "name": "cudapp-smi-tests",
+  "purpose": "Host tier for cudapp-smi: fixtures, fake resource manager, mutants; live.sh read-only comparison against nvidia-smi",
+  "schema_version": "1.0.0"
+}

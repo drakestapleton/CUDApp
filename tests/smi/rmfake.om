@@ -1,0 +1,247 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note rmfake.om: host-only stand-in for the NVIDIA resource manager, for the cudapp-smi --rm tier.
+note tests/smi/run.sh rewrites every OS effect in a private copy of native/nvrm/context.om into the
+note words below and appends this unit between it and native/smi/rm.om. No device file is opened.
+note Replies imitate a GB10 with one GPU; they are synthetic, not a hardware record.
+note SMIFAULT=<c> in the environment selects one fault:
+note   o open of the control node fails     s subdevice reports a different SM version
+note   c name control fails (0x56)         n name has no terminating zero
+note   t a thermal instruction is not executed
+note   p GET_PIDS count above its table    f the device free fails
+note   u pstate control not supported      m pstate reply has two bits set
+note   q pstate control refused with NV_ERR_INSUFFICIENT_PERMISSIONS (0x1b)
+note Without a fault the pstate is P8 (0x100), the value nvidia-smi showed on the live GB10.
+note Every control command outside the allowlist fails with 0x56 and logs "FAKE UNKNOWN".
+note Each effect writes one stderr line "FAKE <what>" for the runner to count.
+
+text sfkey "SMIFAULT="
+text sfalc "FAKE alloc\n"
+text sfctl "FAKE control\n"
+text sffree "FAKE free\n"
+text sfcls "FAKE close\n"
+text sfopn "FAKE open\n"
+text sfunk "FAKE UNKNOWN\n"
+text sfbad "FAKE UNEXPECTED\n"
+text sfgpu "NVIDIA GB10"
+global sfenv uchar 256
+global sfst ulong 4
+
+fn sflog t view uchar * to void
+n = write 2 t 0 len t
+end
+
+note Fault letter from SMIFAULT, read once (gst-like cache: sfst 0 = letter + 1, 0 unread).
+fn sfmode to uchar
+if ne get sfst 0 0
+ret uchar sub get sfst 0 1
+end
+m = uchar 0
+ec = envcnt
+for i ulong ulong ec
+n = envread i sfenv 0 len sfenv
+if le n long len sfkey
+continue
+end
+same = true
+for k ulong len sfkey
+if ne get sfenv k get sfkey k
+same = false
+end
+end
+if same
+m = get sfenv len sfkey
+end
+end
+put sfst 0 add ulong m 1
+ret m
+end
+
+fn sfcard to void
+put nvcard 0 1
+put nvcard 16 0
+put nvcard 17 15
+end
+
+fn sfname bad bool to void
+for i ulong len sfgpu
+put nvpar add 4 i get sfgpu i
+end
+if bad
+for i ulong 64
+put nvpar add 4 i 65
+end
+end
+end
+
+fn sftherm to void
+n = ulong npget 20
+for k ulong n
+o = add 24 mul k 44
+op = npget add o 8
+npput o 0
+npput add o 4 1
+if eq op 256
+npput add o 12 1
+end
+if eq op 1280
+npput add o 12 1
+end
+if eq op 257
+npput add o 16 1
+end
+if eq op 1312
+npput add o 16 0
+end
+if eq op 5376
+npput add o 16 37
+end
+end
+if eq sfmode 116
+npput 28 0
+end
+end
+
+fn sfpinfo to void
+n = ulong npget 0
+for i ulong n
+o = add 8 mul i 72
+npput add o 8 0
+npp64 add o 16 add mul ulong 335 1048576 12345
+end
+end
+
+fn sfctrl to uint
+cmd = nhget 8
+sflog sfctl
+if eq cmd 517
+npput 8 7
+ret 0
+end
+if eq cmd 8389266
+npput 0 3
+npput 4 52928
+npput 8 51567
+npput 12 50017
+ret 0
+end
+if eq cmd 545264168
+if eq sfmode 115
+npput 8 2561
+else
+npput 8 2564
+end
+ret 0
+end
+if eq cmd 545259792
+if eq sfmode 99
+ret 86
+end
+sfname eq sfmode 110
+ret 0
+end
+if eq cmd 545260819
+sftherm
+ret 0
+end
+if eq cmd 545259917
+if eq sfmode 112
+npput 8 951
+else
+npput 8 1
+npput 12 4242
+end
+ret 0
+end
+if eq cmd 545267816
+if eq sfmode 113
+ret 27
+end
+if eq sfmode 117
+ret 86
+end
+if eq sfmode 109
+npput 0 384
+else
+npput 0 256
+end
+ret 0
+end
+if eq cmd 545259918
+sfpinfo
+ret 0
+end
+sflog sfunk
+ret 86
+end
+
+note Every RM ioctl request number context.om uses on the smi path; anything else is unexpected.
+fn smdrv q uint to long
+if eq q 3223340587
+sflog sfalc
+if eq nhget 12 65
+nhput 8 3251634177
+end
+nhput 28 0
+ret 0
+end
+if eq q 3223340586
+nhput 28 sfctrl
+ret 0
+end
+if eq q 3222292009
+sflog sffree
+if and eq sfmode 102 eq nhget 8 nvbad
+nhput 12 86
+else
+nhput 12 0
+end
+ret 0
+end
+if eq q 3523233480
+sfcard
+ret 0
+end
+if eq q 3221505737
+ret 0
+end
+sflog sfbad
+ret neg long 1
+end
+
+note The device handle context.om allocates first after the root (its handle counter start).
+fn nvbad to uint
+ret 3472883713
+end
+
+fn smfopen to long
+sflog sfopn
+if eq sfmode 111
+ret neg long 2
+end
+put sfst 1 add get sfst 1 1
+ret long add 39 get sfst 1
+end
+
+fn smclose fd int to long
+sflog sfcls
+if or lt fd 40 gt fd 41
+sflog sfbad
+ret neg long 9
+end
+ret 0
+end
+
+fn smbad to long
+sflog sfbad
+ret neg long 1
+end
+
+fn smget m long off ulong w ulong to ulong
+sflog sfbad
+ret 0
+end
+
+fn smaddr m long to ulong
+sflog sfbad
+ret 0
+end

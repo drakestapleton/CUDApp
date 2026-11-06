@@ -27,8 +27,8 @@ PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/n
 GXNUM=om/gemmex/num.om
 GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.om gemm_ex_x3=$GXNUM,om/gemmex/x3.om gemm_ex_acc=$GXNUM,om/gemmex/acc.om gemm_ex_dot=$GXNUM,om/gemmex/dot.om gemm_ex_epi=$GXNUM,om/gemmex/epi.om gemm_ex_fp8=$GXNUM,om/gemmex/fp8.om"
 AV=om/apiviews
-APIVIEWS="av_ewarg=$AV/ewarg.om av_fp8am=$AV/fp8am.om av_fp8en=$AV/fp8en.om av_fp8q=$AV/fp8q.om av_e4m3=$AV/e4m3.om av_fp8sc=$AV/fp8sc.om av_gdnch=$AV/gdnch.om av_gdnsl=$AV/gdnsl.om av_scan=$AV/scan.om"
-APIVIEWS_RT="av_bf16=$AV/bf16.om av_widen=$AV/widen.om av_rope=$AV/rope.om av_gdnsc=$AV/gdnsc.om av_gdnex=$AV/gdnex.om av_gdnpt=$AV/gdnpt.om av_gdnut=$AV/gdnut.om av_fp8x=$AV/fp8x.om av_fp8xb=$AV/fp8xb.om"
+APIVIEWS="av_ewarg=$AV/ewarg.om av_fp8am=$AV/fp8am.om av_fp8en=$AV/fp8en.om av_fp8q=$AV/fp8q.om av_e4m3=$AV/e4m3.om av_fp8sc=$AV/fp8sc.om av_gdnch=$AV/gdnch.om av_gdnsl=$AV/gdnsl.om av_scan=$AV/scan.om ah_rest=$AV/hostrest.om"
+APIVIEWS_RT="av_bf16=$AV/bf16.om av_widen=$AV/widen.om av_rope=$AV/rope.om av_gdnsc=$AV/gdnsc.om av_gdnex=$AV/gdnex.om av_gdnpt=$AV/gdnpt.om av_gdnut=$AV/gdnut.om av_fp8x=$AV/fp8x.om av_fp8xb=$AV/fp8xb.om ar_carry=$AV/scancarry.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $GEMMEX $APIVIEWS $APIVIEWS_RT"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -85,7 +85,7 @@ for u in $UNITS $PURE_UNITS; do
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
-    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb)
+    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|ar_carry)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime
       bridge=${OMEGA_BRIDGE_RT:?NOT_RUN: set OMEGA_BRIDGE_RT}

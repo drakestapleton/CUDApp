@@ -1,24 +1,37 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# cudapp-smi host tier: fixture parsing, refusals, the --rm path against a host fake, and mutants.
+# cudapp-smi host tier: fixture parsing, refusals, the --rm path against a host fake, the devcall
+# bound probe, and mutants.
 # Device-free: the shipped binary only ever reads a fixture root; --rm runs only in the fake build,
-# whose OS effects are rewritten out of a private copy of native/nvrm/context.om.
-# Usage: tests/smi/run.sh [OMC]   (default $OMEGA_OMC)
+# whose OS effects are rewritten out of private copies of native/nvrm/context.om and native/smi/util.om.
+# Usage: tests/smi/run.sh [OMC [BASE_OMC]]   (default $CUDAPP_SMI_OMC)
+# OMC is the aien-dev/omega-mv#1048 candidate (devcall bound 1048576, issue #1042): util.om issues a
+# 55888-byte control. BASE_OMC, when given, is the omega-mv e5b32567 pin; the bound probe must trap
+# under it (the negative control).
 set -u
 if [ "$(uname -s)" != Linux ] || [ "$(uname -m)" != aarch64 ]; then
   echo 'NOT_RUN: cudapp-smi host tier needs Linux AArch64 (the pinned omc emits AArch64 Linux code)' >&2
   exit 77
 fi
-omc=${1:-${OMEGA_OMC:-}}
+omc=${1:-${CUDAPP_SMI_OMC:-}}
 if [ -z "$omc" ] || [ ! -x "$omc" ]; then
-  echo 'NOT_RUN: set OMEGA_OMC to the pinned seeded omc' >&2
+  echo 'NOT_RUN: set CUDAPP_SMI_OMC to the aien-dev/omega-mv#1048 candidate omc (not yet approved)' >&2
   exit 77
 fi
-pin=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+pin=390629fd22590aaefca852045f8b0ace86c62cefb3b1bc203ce400773c8abc2f
 got=$(sha256sum "$omc") || exit 74
 if [ "${got%% *}" != "$pin" ]; then
-  echo "REFUSED: omc digest ${got%% *} is not the omega-mv e5b32567 pin" >&2
+  echo "REFUSED: omc digest ${got%% *} is not the omega-mv#1048 candidate (e9b63587)" >&2
   exit 69
+fi
+base=${2:-}
+basepin=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+if [ -n "$base" ]; then
+  got=$(sha256sum "$base") || exit 74
+  if [ "${got%% *}" != "$basepin" ]; then
+    echo "REFUSED: base omc digest ${got%% *} is not the omega-mv e5b32567 pin" >&2
+    exit 69
+  fi
 fi
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
 t=$root/tests/smi
@@ -27,7 +40,7 @@ trap 'rm -rf "$out"' EXIT
 fails=0
 fail() { echo "FAIL: $*" >&2; fails=$((fails + 1)); }
 
-# Rewrites OS effects in context.om into the rmfake.om words; the request number is kept.
+# Rewrites OS effects in context.om or util.om into the rmfake.om words; the request number is kept.
 fakectx() {
   awk '
     $1 == "note" { print; next }
@@ -48,7 +61,8 @@ fakectx() {
   ' "$1"
 }
 
-# Device words: none may survive in the fake context; rm.om and smi.om may never hold any.
+# Device words: none may survive in the fake context; rm.om and smi.om may never hold any; util.om
+# holds exactly one (its devcall).
 dev='devcall|devctl|uvmctl|mapnew|mapdrop|mapget|mapset|mapread|mapwrite|maphold|mapbind|mapaddr'
 guard() {
   awk -v re="^($dev$2)\$" '$1 != "note" { for (i = 1; i <= NF; i++) if ($i ~ re || $i == "REWRITE_FAILED") { print FILENAME ":" NR ": " $i; bad = 1 } } END { exit bad }' "$1"
@@ -57,10 +71,12 @@ guard() {
 build() { # smi.om rm.om out [fake]
   if [ "${4:-}" = fake ]; then
     fakectx "$root/native/nvrm/context.om" > "$out/ctx-fake.om" || return 1
+    fakectx "$root/native/smi/util.om" > "$out/util-fake.om" || return 1
     guard "$out/ctx-fake.om" '|fopen|fclose' || { echo 'REFUSED: unbound OS effect in fake context' >&2; exit 69; }
-    cat "$1" "$out/ctx-fake.om" "$t/rmfake.om" "$2" > "$3.om"
+    guard "$out/util-fake.om" '|fopen|fclose' || { echo 'REFUSED: unbound OS effect in fake util' >&2; exit 69; }
+    cat "$1" "$out/ctx-fake.om" "$out/util-fake.om" "$t/rmfake.om" "$2" > "$3.om"
   else
-    cat "$1" "$root/native/nvrm/context.om" "$2" > "$3.om"
+    cat "$1" "$root/native/nvrm/context.om" "$root/native/smi/util.om" "$2" > "$3.om"
   fi
   "$omc" < "$3.om" > "$3" 2> "$3.log" && [ -s "$3" ] && chmod 700 "$3"
 }
@@ -163,8 +179,21 @@ check_rm() { # fake-built bin -> 0 when the --rm expectations hold
      || [ "$(cnt free "$out/u.err")" != 3 ] || grep -q 'UNKNOWN\|UNEXPECTED' "$out/u.err"; then
     echo "  rm pstate unsupported: rc=$rc" >&2; ok=1
   fi
+  # Unsupported utilization, an empty ring and a zero newest timestamp print [N/A] for both fields.
+  sed -e 's/^gpu\.0\.utilization\.gpu=42$/gpu.0.utilization.gpu=[N\/A]/' \
+      -e 's/^gpu\.0\.utilization\.memory=13$/gpu.0.utilization.memory=[N\/A]/' "$t/expected-gb10-rm.txt" > "$out/w.want"
+  if cmp -s "$out/w.want" "$t/expected-gb10-rm.txt"; then
+    echo "  rm utilization [N/A] expectation equals the default report" >&2; ok=1
+  fi
+  for l in w e z; do
+    SMIFAULT=$l "$b" --root "$out/r" --rm > "$out/w.out" 2> "$out/w.err"; rc=$?
+    if [ "$rc" -ne 0 ] || ! cmp -s "$out/w.out" "$out/w.want" \
+       || [ "$(cnt free "$out/w.err")" != 3 ] || grep -q 'UNKNOWN\|UNEXPECTED' "$out/w.err"; then
+      echo "  rm utilization fault $l: rc=$rc" >&2; ok=1
+    fi
+  done
   # letter|rc|frees|closes|opens
-  for f in 'o|30|0|0|1' 's|30|3|2|2' 'c|31|3|2|2' 'q|31|3|2|2' 'n|32|3|2|2' 't|32|3|2|2' 'm|32|3|2|2' 'p|32|3|2|2' 'f|33|3|2|2'; do
+  for f in 'o|30|0|0|1' 's|30|3|2|2' 'c|31|3|2|2' 'q|31|3|2|2' 'y|31|3|2|2' 'n|32|3|2|2' 't|32|3|2|2' 'm|32|3|2|2' 'p|32|3|2|2' 'r|32|3|2|2' 'x|32|3|2|2' 'f|33|3|2|2'; do
     IFS='|' read -r l want fr cl op <<EOF
 $f
 EOF
@@ -191,6 +220,8 @@ build "$smi" "$rmu" "$out/cudapp-smi" || { cat "$out/cudapp-smi.log" >&2; fail '
 build "$smi" "$rmu" "$out/smi-fake" fake || { cat "$out/smi-fake.log" >&2; fail 'fake build did not compile'; exit 1; }
 guard "$rmu" '|fopen|fclose' || fail 'rm.om holds an OS effect word'
 guard "$smi" '' || fail 'smi.om holds a device word'
+nu=$(awk -v re="^($dev|fopen|fclose)\$" '$1 != "note" { for (i = 1; i <= NF; i++) if ($i ~ re) n++ } END { print n + 0 }' "$root/native/smi/util.om")
+[ "$nu" = 1 ] || fail "util.om holds $nu OS effect words, not exactly its one devcall"
 if guard "$root/native/nvrm/context.om" '|fopen|fclose' > /dev/null; then
   fail 'guard negative control: unrewritten context.om was not refused'
 else
@@ -198,7 +229,20 @@ else
 fi
 
 if check_fixture "$out/cudapp-smi"; then echo 'PASS fixture tier (gb10, optional-absent, no-gpus, 16 refusals, usage)'; else fail 'fixture tier'; fi
-if check_rm "$out/smi-fake"; then echo 'PASS rm fake tier (report, pstate unsupported, 9 faults, teardown counts, one-GPU rule)'; else fail 'rm fake tier'; fi
+if check_rm "$out/smi-fake"; then echo 'PASS rm fake tier (report, pstate and utilization [N/A], 12 faults, teardown counts, one-GPU rule)'; else fail 'rm fake tier'; fi
+
+# Devcall bound probe: a 55888-byte control on /dev/null (not a GPU device) returns ENOTTY under OMC;
+# under BASE_OMC it must trap 3 (exit 103), proving the bound is what this branch depends on.
+"$omc" < "$t/capprobe.om" > "$out/cap" 2> "$out/cap.log" && chmod 700 "$out/cap" || fail 'capprobe did not compile'
+"$out/cap"; rc=$?
+if [ "$rc" -eq 0 ]; then echo 'PASS devcall bound probe (55888-byte devcall made, ENOTTY)'; else fail "capprobe rc=$rc under OMC"; fi
+if [ -n "$base" ]; then
+  "$base" < "$t/capprobe.om" > "$out/cap0" 2> "$out/cap0.log" && chmod 700 "$out/cap0" || fail 'capprobe did not compile under BASE_OMC'
+  "$out/cap0"; rc=$?
+  if [ "$rc" -eq 103 ]; then echo 'PASS devcall bound negative control (BASE_OMC traps 3, exit 103)'; else fail "capprobe rc=$rc under BASE_OMC, want 103"; fi
+else
+  echo 'NOT_RUN devcall bound negative control (no BASE_OMC)'
+fi
 
 # Checker negative control: one altered expected byte must be rejected.
 mkroot "$out/r"
@@ -227,6 +271,14 @@ rm|odec shr m 20|odec m
 rm|refuse code msg|exit 0
 rm|if ne nhget 28 86|if false
 rm|if eq v shl uint 1 k|if ne v 0
+rm|o = add 16 mul rem add ulong sbget 12 71 72 776|o = add 16 mul rem ulong sbget 12 72 776
+rm|if or gt sbget 8 72 ge sbget 12 72|if false
+rm|if or eq sbget 8 0 eq sbg64 o 0|if eq sbget 8 0
+rm|if or gt g 10000 gt m 10000|if false
+rm|odec ulong div g 100|odec ulong g
+rm|m = sbget add o 8|m = sbget add o 136
+rm|if not eq nhget 28 86|if false
+rm|sbput 4 55872|sbput 4 55888
 '
 mk=0; caught=0
 printf '%s\n' "$mutants" | { while IFS='|' read -r unit from to; do

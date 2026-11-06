@@ -62,17 +62,17 @@ static void extend_loop(BlackwellIRProgram *p, int start, int end) {
     }
 }
 
-int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint32_t threads,
-                          BlackwellIRProgram *prog, uint8_t *code, size_t code_cap,
-                          OmegaBlackwellKernel *kernel, uint32_t *declared, uint64_t *emit_err) {
-    static uint64_t ins[OMEGA_OM_IR_WORDS], meta[OMEGA_OM_IR_META];
-    uint64_t result;
+int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64_t b, uint64_t c,
+                           BlackwellIRProgram *prog, uint64_t *emit_err) {
+    uint64_t ins[OMEGA_OM_IR_WORDS] = {0}, meta[OMEGA_OM_IR_META] = {0};
+    uint64_t result = 0;
     if (emit_err) *emit_err = 0;
-    if (!prog || !code || !kernel || !declared || threads == 0) return OMEGA_OM_IR_REPLAY;
-    memset(ins, 0, sizeof ins);
-    int rc = call_unit(kind, a, b, c, ins, meta, &result);
+    if (!unit || !prog) return OMEGA_OM_IR_REPLAY;
+    uint32_t status = unit(&result, kind, a, b, c, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META);
     if (emit_err) *emit_err = meta[4];
-    if (rc != OMEGA_OM_IR_OK) return rc;
+    if (status != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+    if (result == 1) return OMEGA_OM_IR_REFUSED;
+    if (result != 0) return OMEGA_OM_IR_EMIT;
     uint64_t n = meta[0];
     if (n == 0 || n > BW_MAX_IR_INSNS || meta[1] > BW_MAX_VREGS || meta[2] > BW_MAX_UVREGS || meta[5] > 24)
         return OMEGA_OM_IR_REPLAY;
@@ -80,12 +80,13 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
     omega_bw_ir_init(prog);
     for (uint64_t v = 0; v < meta[1]; v++) {
         uint64_t k = meta[64 + v];
-        int got = k == 2 ? omega_bw_ir_alloc_vreg64(prog) : k == 1 ? omega_bw_ir_alloc_vreg(prog) : -1;
+        int got = k == 4 ? omega_bw_ir_alloc_vreg128(prog) :
+                  k == 2 ? omega_bw_ir_alloc_vreg64(prog) : k == 1 ? omega_bw_ir_alloc_vreg(prog) : -1;
         if (got != (int)v) return OMEGA_OM_IR_REPLAY;
     }
     for (uint64_t u = 0; u < meta[2]; u++) {
         uint64_t k = meta[320 + u];
-        int got = k == 2 ? omega_bw_ir_alloc_uvreg64(prog) : omega_bw_ir_alloc_uvreg(prog);
+        int got = k == 2 ? omega_bw_ir_alloc_uvreg64(prog) : k == 1 ? omega_bw_ir_alloc_uvreg(prog) : -1;
         if (got != (int)u) return OMEGA_OM_IR_REPLAY;
     }
 
@@ -94,7 +95,7 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
         const uint64_t *r = &ins[i * 8];
         BlackwellIRInsn in;
         memset(&in, 0, sizeof in);
-        if (r[0] > (uint64_t)BW_IR_MUFU_LG2) return OMEGA_OM_IR_REPLAY;
+        if (r[0] > (uint64_t)BW_IR_ATOMG_ADD_F32_STRONG_GPU) return OMEGA_OM_IR_REPLAY;
         in.op = (BlackwellIROpcode)r[0];
         if (field(r[1], &in.dst_vreg) || field(r[2], &in.src1_vreg) || field(r[3], &in.src2_vreg) ||
             field(r[4], &in.src3_vreg))
@@ -111,6 +112,7 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
         in.src1_subreg = (uint8_t)(r[7] >> 24);
         in.src2_subreg = (uint8_t)(r[7] >> 32);
         in.src3_subreg = (uint8_t)(r[7] >> 40);
+        in.bar_reg = (uint8_t)(r[7] >> 48);
         if (omega_bw_ir_append(prog, &in) < 0) return OMEGA_OM_IR_REPLAY;
         while (next_loop < meta[5] && meta[17 + 2 * next_loop] == i) {
             extend_loop(prog, (int)meta[16 + 2 * next_loop], (int)i);
@@ -121,6 +123,15 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
 
     if (omega_bw_regalloc_solve(prog) != 0) return OMEGA_OM_IR_REGALLOC;
     if (!loop_invariant_ok(prog, meta)) return OMEGA_OM_IR_LOOP;
+    return OMEGA_OM_IR_OK;
+}
+
+int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint32_t threads,
+                          BlackwellIRProgram *prog, uint8_t *code, size_t code_cap,
+                          OmegaBlackwellKernel *kernel, uint32_t *declared, uint64_t *emit_err) {
+    if (!prog || !code || !kernel || !declared || threads == 0) return OMEGA_OM_IR_REPLAY;
+    int rc = omega_gpu_om_ir_replay(omega_mathlibs_ir, kind, a, b, c, prog, emit_err);
+    if (rc != OMEGA_OM_IR_OK) return rc;
     uint32_t peak = prog->regalloc.peak_gpr_usage;
     uint32_t decl = omega_bw_gpr_declared(peak);
     if (decl < 64u) decl = 64u;

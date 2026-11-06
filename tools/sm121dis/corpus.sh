@@ -37,9 +37,11 @@ for t in gpu_tcgemm_test gpu_prefill_attn_test gpu_pfgemm_test gpu_qgemm_test gp
     run "$OUT/$t" --host-only; run "$OUT/$t" --sim
 done
 run "$OUT/gpu_gpr_boundary_test"
-for t in gpu_scan_test gpu_gemm_test gpu_streams_test gpu_mathlibs_test; do
+for t in gpu_gemm_test gpu_streams_test gpu_mathlibs_test; do
     run "$OUT/$t" --host-only; run "$OUT/$t" --sim
 done
+# the scan kernels depend only on kind and mutant, so the short simulator sweep builds the same set as the full one
+run "$OUT/gpu_scan_test" --host-only; run "$OUT/gpu_scan_test" --sim --quick
 run "$OUT/gpu_isolation_test" --host-only
 # the hazard checker's sweep (every generator over its accepted shapes, patched as the launchers do): bw_hazard_test
 # --disasm reads each of these kernels through our disassembler, so each is compared with nvdisasm here

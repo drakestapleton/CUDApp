@@ -182,8 +182,12 @@ make hello-gpu                  # GB10, opens the NVIDIA device nodes
 `make test-gpu-engine-gb10-compile` only compiles the Phase B chip source. It
 does not run it. `make test-gpu-scan` compiles `src/omega_numeric.c`, whose
 host reference uses AArch64 FP instructions (`mrs fpcr`, `fmadd`). On x86-64
-that compile fails in the assembler. It is not in `make test`. `make test-gpu-gemm`
-is the separate GEMM host and simulator target and is also outside `make test`.
+that compile fails in the assembler. So `make test` runs `test-gpu-scan`,
+`test-gpu-scan-diff` and `test-gpu-scan-diff-selftest` on AArch64 hosts only
+(`mk/scan-sort.mk`); an x86-64 `make test` leaves them out.
+`make test-gpu-scan-mutants` needs `OMEGA_MV` and `OMEGA_BRIDGE_DIR` and is
+outside `make test`. `make test-gpu-gemm` is the separate GEMM host and
+simulator target and is also outside `make test`.
 
 An AArch64 host build of this tree keeps `dsb sy` in `nvrm_cpu_barrier`. A
 GB10 run of the device path is a separate receipt. A host or simulator pass

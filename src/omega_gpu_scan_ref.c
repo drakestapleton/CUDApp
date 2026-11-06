@@ -74,3 +74,32 @@ int omega_gpu_prefix_sum_reference(const float *x, size_t n, float *y) {
     return ref_prefix(x, y, n);
 }
 
+
+/* u32 additions wrap modulo 2^32 and are associative, so the running total equals the tile order bit for bit */
+int omega_gpu_prefix_sum_u32_reference(const uint32_t *x, size_t n, uint32_t *y) {
+    if (!x || !y || n == 0) return -1;
+    uint32_t s = 0;
+    for (size_t i = 0; i < n; i++) { s += x[i]; y[i] = s; }
+    return 0;
+}
+
+/* least significant digit first, 4-bit digits, a stable counting pass per digit: the one sorted order */
+int omega_gpu_radix_sort_reference(uint32_t *keys, uint32_t *vals, size_t n) {
+    if (!keys || n == 0) return -1;
+    uint32_t *tk = malloc(n * sizeof *tk), *tv = vals ? malloc(n * sizeof *tv) : NULL;
+    if (!tk || (vals && !tv)) { free(tk); free(tv); return -1; }
+    for (unsigned sh = 0; sh < 32; sh += 4) {
+        size_t at[16] = { 0 };
+        for (size_t i = 0; i < n; i++) at[(keys[i] >> sh) & 15u]++;
+        for (size_t d = 0, s = 0; d < 16; d++) { size_t c = at[d]; at[d] = s; s += c; }
+        for (size_t i = 0; i < n; i++) {
+            size_t to = at[(keys[i] >> sh) & 15u]++;
+            tk[to] = keys[i];
+            if (vals) tv[to] = vals[i];
+        }
+        memcpy(keys, tk, n * sizeof *tk);
+        if (vals) memcpy(vals, tv, n * sizeof *tv);
+    }
+    free(tk); free(tv);
+    return 0;
+}

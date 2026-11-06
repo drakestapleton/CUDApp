@@ -65,6 +65,20 @@ uint32_t omega2_ctx_nvrm_map_address(omega_native_context *context, uint64_t *re
 uint32_t omega2_nvrm_drop(uint64_t *result, uint64_t o_token);
 /* export fn nvrm_drop token long to long */
 uint32_t omega2_ctx_nvrm_drop(omega_native_context *context, uint64_t *result, uint64_t o_token);
+#define OMEGA2_IDENT_submit "omega-ident 1 unit=submit abi=2 profile=OM-2 src=fadc748d995de33c4c6171ebea2fc419b72cc0a3e85d49d150bd8e0e613f3327 omc=d1a3047153e14676c4baf9248fa2b88bb1b68c37cfeb71d76f30f5230c7d2765 host=mapset"
+const char *omega2_ident_submit(void);
+/* export fn streams_gp_entry va ulong nwords ulong to ulong */
+uint32_t omega2_streams_gp_entry(uint64_t *result, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_gp_entry va ulong nwords ulong to ulong */
+uint32_t omega2_ctx_streams_gp_entry(omega_native_context *context, uint64_t *result, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_gp_publish fifo long entries ulong pos ulong gpput ulong va ulong nwords ulong to long */
+uint32_t omega2_streams_gp_publish(uint64_t *result, uint64_t o_fifo, uint64_t o_entries, uint64_t o_pos, uint64_t o_gpput, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_gp_publish fifo long entries ulong pos ulong gpput ulong va ulong nwords ulong to long */
+uint32_t omega2_ctx_streams_gp_publish(omega_native_context *context, uint64_t *result, uint64_t o_fifo, uint64_t o_entries, uint64_t o_pos, uint64_t o_gpput, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_ring bell long off ulong token ulong to long */
+uint32_t omega2_streams_ring(uint64_t *result, uint64_t o_bell, uint64_t o_off, uint64_t o_token);
+/* export fn streams_ring bell long off ulong token ulong to long */
+uint32_t omega2_ctx_streams_ring(omega_native_context *context, uint64_t *result, uint64_t o_bell, uint64_t o_off, uint64_t o_token);
 #ifdef __cplusplus
 }
 #endif
@@ -133,6 +147,20 @@ uint32_t omega2_ctx_nvrm_map_address(omega_native_context *context, uint64_t *re
 uint32_t omega2_nvrm_drop(uint64_t *result, uint64_t o_token);
 /* export fn nvrm_drop token long to long */
 uint32_t omega2_ctx_nvrm_drop(omega_native_context *context, uint64_t *result, uint64_t o_token);
+#define OMEGA2_IDENT_submit "omega-ident 1 unit=submit abi=2 profile=OM-2 src=fadc748d995de33c4c6171ebea2fc419b72cc0a3e85d49d150bd8e0e613f3327 omc=cf4fcbbb4752c5dd0652b426c0f2d08f82e380e8fc6f5114acf51a4c077bb579 host=mapset"
+const char *omega2_ident_submit(void);
+/* export fn streams_gp_entry va ulong nwords ulong to ulong */
+uint32_t omega2_streams_gp_entry(uint64_t *result, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_gp_entry va ulong nwords ulong to ulong */
+uint32_t omega2_ctx_streams_gp_entry(omega_native_context *context, uint64_t *result, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_gp_publish fifo long entries ulong pos ulong gpput ulong va ulong nwords ulong to long */
+uint32_t omega2_streams_gp_publish(uint64_t *result, uint64_t o_fifo, uint64_t o_entries, uint64_t o_pos, uint64_t o_gpput, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_gp_publish fifo long entries ulong pos ulong gpput ulong va ulong nwords ulong to long */
+uint32_t omega2_ctx_streams_gp_publish(omega_native_context *context, uint64_t *result, uint64_t o_fifo, uint64_t o_entries, uint64_t o_pos, uint64_t o_gpput, uint64_t o_va, uint64_t o_nwords);
+/* export fn streams_ring bell long off ulong token ulong to long */
+uint32_t omega2_streams_ring(uint64_t *result, uint64_t o_bell, uint64_t o_off, uint64_t o_token);
+/* export fn streams_ring bell long off ulong token ulong to long */
+uint32_t omega2_ctx_streams_ring(omega_native_context *context, uint64_t *result, uint64_t o_bell, uint64_t o_off, uint64_t o_token);
 #ifdef __cplusplus
 }
 #endif

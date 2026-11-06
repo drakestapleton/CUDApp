@@ -1210,6 +1210,49 @@ static int validate_ampere_push(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint3
     return 0;
 }
 
+/* GPFIFO submit stores (C4 streams, CUDApp#115). The Omega path is
+ * native/streams/submit.om on the client's mapping context: the fifo and
+ * usermode pages are owned handles there, each store one aligned access
+ * bracketed by DSB SY / MFENCE, the barrier nvrm_cpu_barrier issues below.
+ * CUDAPP_MIGRATION_PENDING_C_SUBMIT=1 (or the C transport, which has no
+ * handles) keeps the C stores as the differential oracle. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_SUBMIT
+#define CUDAPP_MIGRATION_PENDING_C_SUBMIT 0
+#endif
+#define NVRM_C_SUBMIT (NVRM_C_TRANSPORT || CUDAPP_MIGRATION_PENDING_C_SUBMIT)
+static int nvrm_publish(Nvrm *rm, const NvrmMem *fifo, uint32_t entries, uint32_t put,
+                        uint32_t userd_off, uint64_t va, uint32_t nwords) {
+#if NVRM_C_SUBMIT
+    (void)rm;
+    volatile uint64_t *ring = (volatile uint64_t *)fifo->cpu;
+    ring[put % entries] = nvrm_gp_entry(va, nwords);
+    nvrm_cpu_barrier();
+    *(volatile uint32_t *)((uint8_t *)fifo->cpu + userd_off + offsetof(Nvc96fControl, GPPut)) = (put + 1u) % entries;
+    nvrm_cpu_barrier();
+    return 0;
+#else
+    uint64_t token = 0, base = 0, result = 0;
+    /* The ring starts at the mapping: GP slot offsets are relative to the handle. */
+    if (nvrm_live_token(rm, fifo->cpu, fifo->size, &token, &base)) return -1;
+    if (base) { errno = EFAULT; return -1; }
+    uint32_t status = omega2_ctx_streams_gp_publish(rm->omega_context, &result, token, entries, put,
+                                                    (uint64_t)userd_off + offsetof(Nvc96fControl, GPPut), va, nwords);
+    return nvrm_native_ok(status, result);
+#endif
+}
+static int nvrm_doorbell(Nvrm *rm, uint32_t token) {
+#if NVRM_C_SUBMIT
+    *rm->doorbell = token;
+    return 0;
+#else
+    uint64_t result = 0;
+    if (!rm->omega_usermode_mapping || !rm->omega_context) { errno = EINVAL; return -1; }
+    uint32_t status = omega2_ctx_streams_ring(rm->omega_context, &result, rm->omega_usermode_mapping,
+                                              NVC361_NOTIFY_CHANNEL_PENDING, token);
+    return nvrm_native_ok(status, result);
+#endif
+}
+
 int nvrm_enqueue(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint32_t nwords) {
     if (!rm || !pb || rm->faulted || !rm->gpfifo || !rm->fifo.cpu || rm->entries < 2)
         return rm ? fail(rm, "channel not ready") : -1;
@@ -1220,12 +1263,9 @@ int nvrm_enqueue(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint32_t nwords) {
     /* Blackwell USERD documents no GPGet (clc96f.h), so consumption is tracked by the
      * caller via nvrm_retire() after it observes completion. Never overrun unretired entries. */
     if (rm->put - rm->retired >= rm->entries - 1) return fail(rm, "GPFIFO full: %u entries unretired", rm->put - rm->retired);
-    volatile uint64_t *ring = (volatile uint64_t *)rm->fifo.cpu;
-    ring[rm->put % rm->entries] = nvrm_gp_entry(pb->va + off, nwords);
+    if (nvrm_publish(rm, &rm->fifo, rm->entries, rm->put, rm->userd_off, pb->va + off, nwords))
+        return fail(rm, "GPFIFO publish refused");
     rm->put++;
-    nvrm_cpu_barrier();
-    *nvrm_userd_gpput(rm) = rm->put % rm->entries;
-    nvrm_cpu_barrier();
     return 0;
 }
 
@@ -1234,7 +1274,7 @@ void nvrm_retire(Nvrm *rm, uint32_t upto) {
 }
 
 void nvrm_ring(Nvrm *rm) {
-    *rm->doorbell = rm->token;  /* NVC361_NOTIFY_CHANNEL_PENDING */
+    if (nvrm_doorbell(rm, rm->token)) rm->faulted = 1;  /* NVC361_NOTIFY_CHANNEL_PENDING */
 }
 
 int nvrm_submit(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint32_t nwords) {
@@ -1253,13 +1293,11 @@ int nvrm_chan_submit(Nvrm *rm, uint32_t ch, const NvrmMem *pb, uint32_t off, uin
     if (pb->va > UINT64_MAX - off) return fail(rm, "pushbuffer VA overflow");
     if (validate_ampere_push(rm, pb, off, nwords)) return -1;
     if (c->put - c->retired >= c->entries - 1) return fail(rm, "GPFIFO full (channel %u): %u entries unretired", ch, c->put - c->retired);
-    volatile uint64_t *ring = (volatile uint64_t *)c->fifo.cpu;
-    ring[c->put % c->entries] = nvrm_gp_entry(pb->va + off, nwords);
+    if (nvrm_publish(rm, &c->fifo, c->entries, c->put, c->userd_off, pb->va + off, nwords))
+        return fail(rm, "GPFIFO publish refused (channel %u)", ch);
     c->put++;
-    nvrm_cpu_barrier();
-    *(volatile uint32_t *)((uint8_t *)c->fifo.cpu + c->userd_off + offsetof(Nvc96fControl, GPPut)) = c->put % c->entries;
-    nvrm_cpu_barrier();
-    *rm->doorbell = c->token; /* NVC361_NOTIFY_CHANNEL_PENDING: one doorbell page, the token names the channel */
+    /* NVC361_NOTIFY_CHANNEL_PENDING: one doorbell page, the token names the channel */
+    if (nvrm_doorbell(rm, c->token)) return fail(rm, "doorbell refused (channel %u)", ch);
     return 0;
 }
 

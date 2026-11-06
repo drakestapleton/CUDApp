@@ -1,0 +1,40 @@
+WolframLanguageEvaluator, host binary64 constant conversion
+
+Query:
+With[{ss={"6.93147180369123816490e-01","1.90821492927058770002e-10","1.44269504088896338700e+00","1.41421356237309504880e+00","709.78e+00","-745.2e+00","1.57079632673412561417e+00","6.07710050630396597660e-11","2.02226624871116645580e-21","8.47842766036889956997e-32","6.36619772367581382433e-01"}}, Table[With[{x=N[ToExpression[StringReplace[s,"e"->"`80*^"]],MachinePrecision]}, With[{d=RealDigits[Abs[x],2,53]}, {s,If[x<0,2^63,0]+(d[[2]]-1+1023)2^52+FromDigits[Rest[d[[1]]],2]}]],{s,ss}]]
+
+Result (source decimal -> binary64 bit pattern, expressed as an unsigned integer):
+6.93147180369123816490e-01 -> 4604418534311723008
+1.90821492927058770002e-10 -> 4461442080421002358
+1.44269504088896338700e+00 -> 4609176140021203710
+1.41421356237309504880e+00 -> 4609047870845172685
+709.78e+00 -> 4649454506724284170
+-745.2e+00 -> 13873138101193906586
+1.57079632673412561417e+00 -> 4609753056924401664
+6.07710050630396597660e-11 -> 4454258360616747008
+2.02226624871116645580e-21 -> 4297306550709518336
+8.47842766036889956997e-32 -> 4142048980368378305
+6.36619772367581382433e-01 -> 4603909380684499075
+
+The first exploratory query used RealDigits on an arbitrary-precision decimal without rounding it to MachinePrecision first. That truncated SQRT2 to 4609047870845172684. The query above corrects the rounding before digit extraction; only the corrected value is in the final source.
+
+Query:
+FullSimplify[a 2^i == Mod[a 2^i, 2^64] + 2^64 Quotient[a 2^i, 2^64], Assumptions -> Element[{a,i},Integers] && 0<=a<2^64 && 0<=i<64]
+Result: True
+Use: the evaluator's split high/low multiplication identity. This is an algebraic check, not hardware qualification.
+
+Query:
+{FullSimplify[Mod[Mod[n,2^64],4]==Mod[n,4],Assumptions->Element[n,Integers]], Table[4609047870845172685+d,{d,{-1,0,1}}]}
+Result: {True, {4609047870845172684, 4609047870845172685, 4609047870845172686}}
+Wolfram also emitted MinValue::lpsub / MaxValue::lpsub diagnostics while simplifying the symbolic identity; the returned identity result was True.
+Use: negative-quadrant masking preserves the low two bits before a checked unsigned cast; adjacent SQRT2 threshold encodings are explicit regression boundaries.
+
+Query:
+FullSimplify[c+If[Mod[c,64]<56,56-Mod[c,64],120-Mod[c,64]]+8 == c+64-Mod[c,64]+If[Mod[c,64]>=56,64,0], Assumptions->Element[c,Integers]&&c>=0]
+Result: True (with a MaxValue::lpsub diagnostic).
+Use: finalization advances the public SHA context count exactly as the C padding updates do.
+
+Query:
+{Table[4649454506724284170+d,{d,{-1,0,1}}],Table[13873138101193906586+d,{d,{-1,0,1}}],Table[2^52+d,{d,{-1,0,1}}]}
+Result: {{4649454506724284169,4649454506724284170,4649454506724284171},{13873138101193906585,13873138101193906586,13873138101193906587},{4503599627370495,4503599627370496,4503599627370497}}
+Use: neighboring exponential threshold and normal/subnormal boundary encodings.

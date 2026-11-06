@@ -20,6 +20,54 @@
 #include "sha256.h"
 #include <string.h>
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+#include "omega_core_binding.h"
+#include <stdlib.h>
+_Static_assert(sizeof(OmegaVectorSpec)==144 && offsetof(OmegaVectorSpec,element_count)==104, "vector bootstrap ABI");
+static void vec_status(uint32_t s) { if(s!=OMEGA_OK)CORE_STOP(); }
+int omega_vector_spec_init(OmegaVectorSpec *s,const char *name,uint32_t n) {
+    if(!s||!name)return -1;
+    char nm[64]={0}; strncpy(nm,name,63); uint64_t r;
+    vec_status(CORE_CALL(omvspec, &r,s,sizeof *s,nm,sizeof nm,n));
+    if(r)return (int)(int64_t)r;
+    sha256_ctx c;sha256_init(&c);
+    sha256_update(&c,(const uint8_t *)"OMEGA_VECADD_U32",16);
+    sha256_update(&c,(const uint8_t *)&s->element_width,sizeof s->element_width);
+    sha256_update(&c,(const uint8_t *)&s->element_count,sizeof s->element_count);
+    uint8_t ov=(uint8_t)s->overflow;sha256_update(&c,&ov,1);
+    sha256_final(&c,s->spec_digest);memcpy(s->spec_id.bytes,s->spec_digest,32);return 0;
+}
+static int vec_partial_overlap(const void *a,const void *b,uint32_t n) {
+    uintptr_t x=(uintptr_t)a,y=(uintptr_t)b;
+    return x!=y&&(x<y?y-x:x-y)<(uint64_t)n*4;
+}
+static int vec_batch(const uint32_t *a,const uint32_t *b,uint32_t *c,uint32_t n,size_t *idx,uint64_t mode) {
+    uint32_t av[1024],bv[1024],cv[1024];
+    int sequential=mode!=1&&(vec_partial_overlap(a,c,n)||vec_partial_overlap(b,c,n)||
+                              (mode==2&&vec_partial_overlap(a,b,n)));
+    for(uint64_t base=0;base<n;) {
+        size_t count=sequential?1:n-base>1024?1024:n-base;
+        if(mode!=2){memcpy(av,a+base,count*4);memcpy(bv,b+base,count*4);}
+        if(mode==1)memcpy(cv,c+base,count*4);
+        uint64_t r;vec_status(CORE_CALL(omvec, &r,av,sizeof av,bv,sizeof bv,cv,sizeof cv,count,base,mode));
+        if(mode==1&&r!=1024){if(idx)*idx=base+r;return -1;}
+        if(mode==2){memcpy((uint32_t *)a+base,av,count*4);memcpy((uint32_t *)b+base,bv,count*4);}
+        if(mode!=1)memcpy(c+base,cv,count*4);
+        base+=count;
+    }
+    return 0;
+}
+void omega_vector_oracle_u32(const uint32_t *a,const uint32_t *b,uint32_t *c,uint32_t n) {
+    if(a&&b&&c&&n)vec_batch(a,b,c,n,NULL,0);
+}
+int omega_vector_verify_oracle(const uint32_t *a,const uint32_t *b,const uint32_t *c,uint32_t n,size_t *idx) {
+    if(!a||!b||!c||!n)return -1;
+    return vec_batch(a,b,(uint32_t *)c,n,idx,1);
+}
+void omega_vector_generate_deterministic(uint32_t *a,uint32_t *b,uint32_t *c,uint32_t n) {
+    if(a&&b&&c&&n)vec_batch(a,b,c,n,NULL,2);
+}
+#else
 int omega_vector_spec_init(OmegaVectorSpec *spec, const char *name, uint32_t n) {
     if (!spec || !name || n == 0) return -1;
     memset(spec, 0, sizeof(*spec));
@@ -80,6 +128,7 @@ void omega_vector_generate_deterministic(uint32_t *a, uint32_t *b, uint32_t *c_p
         c_poison[i] = OMEGA_VECTOR_POISON_VALUE;
     }
 }
+#endif
 
 int omega_vector_build_spec_graph(OmegaGraph *g, uint32_t n, SemanticId *out_spec_id) {
     if (!g || n == 0 || !out_spec_id) return -1;
@@ -100,12 +149,16 @@ int omega_vector_build_spec_graph(OmegaGraph *g, uint32_t n, SemanticId *out_spe
     omega_object_add_relation(spec_obj, REL_DERIVED_FROM, &op_add->id);
     omega_object_add_relation(spec_obj, REL_DEPENDS_ON, &t_seq->id);
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+    vec_status(CORE_VOID(omvpay,spec_obj,sizeof *spec_obj,n));
+#else
     uint8_t payload[8];
     memcpy(payload, &n, sizeof(n));
     uint32_t elem_sz = 4;
     memcpy(payload + 4, &elem_sz, sizeof(elem_sz));
     memcpy(spec_obj->payload, payload, sizeof(payload));
     spec_obj->payload_len = sizeof(payload);
+#endif
 
     if (omega_compute_semantic_id(spec_obj) != 0) return -1;
     *out_spec_id = spec_obj->id;

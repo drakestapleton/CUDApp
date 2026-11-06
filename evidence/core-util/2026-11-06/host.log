@@ -1,0 +1,22 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test-core-util tests/test_core_util.c src/sha256.c build/core-util-sha-ref.o src/cudapp_om_core_sha.c -lpthread
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_CORE -include tests/core_util_rename.h -c src/omega_canonical.c -o build/core-util-ref-omega_canonical.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_CORE -include tests/core_util_rename.h -c src/omega_vector.c -o build/core-util-ref-omega_vector.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/test-core-algorithms tests/test_core_algorithms.c src/omega_core.c src/omega_canonical.c src/omega_vector.c src/omega_gpu_fmt.c src/omega_gpu_hostmath.c src/sha256.c build/core-util-ref-omega_core.o build/core-util-ref-omega_canonical.o build/core-util-ref-omega_vector.o build/core-util-ref-omega_gpu_fmt.o build/core-util-ref-omega_gpu_hostmath.o build/core-util-sha-ref.o src/cudapp_om_core_effect.c src/cudapp_om_core_eval.c src/cudapp_om_core_fmt.c src/cudapp_om_core_fmtclip.c src/cudapp_om_core_fmtnum.c src/cudapp_om_core_graph.c src/cudapp_om_core_hostmath.c src/cudapp_om_core_object.c src/cudapp_om_core_omcanon.c src/cudapp_om_core_omcheck.c src/cudapp_om_core_omcidcmp.c src/cudapp_om_core_omcidhex.c src/cudapp_om_core_omcver.c src/cudapp_om_core_omparse.c src/cudapp_om_core_param.c src/cudapp_om_core_payload.c src/cudapp_om_core_sha.c src/cudapp_om_core_vecspec.c src/cudapp_om_core_vector.c src/cudapp_om_core_vpay.c src/cudapp_freest_f16.c -lpthread
+./build/test-core-util
+CAVP tests/vectors/core/SHA256ShortMsg.rsp PASS (65 records)
+CAVP tests/vectors/core/SHA256LongMsg.rsp PASS (64 records)
+CORE-UTIL SHA PASS: FIPS/CAVP vectors, 10000 random and streaming cases
+./build/test-core-sha-state
+CORE-UTIL SHA context PASS: padding boundaries, chunk splits and repeated finalization
+SHA differential case 0 length 0
+CAVP tests/vectors/core/SHA256ShortMsg.rsp PASS (65 records)
+CAVP tests/vectors/core/SHA256LongMsg.rsp PASS (64 records)
+CORE-UTIL negative control caught
+./build/test-core-algorithms
+CORE-UTIL canonical PASS: 10000 objects, all header pairs, 16384 parser pairs
+CORE-UTIL effects/eval PASS: 10000 generated cases
+CORE-UTIL vector PASS: 10000 cases, chunk and refusal boundaries
+CORE-UTIL fmt PASS: 10000 cases and truncated format tokens
+CORE-UTIL hostmath PASS: 10000 bitwise non-contracting cases and exponent boundaries
+CORE-UTIL f16 PASS: all 65536 binary16 inputs, NaNs quieted with payload preserved
+CORE-UTIL builders PASS: graph full boundary, every constructor and aliasing ID lookup

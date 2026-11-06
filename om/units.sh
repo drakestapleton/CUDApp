@@ -23,6 +23,17 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS core_sha=om/core/sha256.om"
+  CORE=om/core
+  for entry in omcanon omcidcmp omcidhex; do
+    UNITS="$UNITS core_$entry=$CORE/canonical.om,$CORE/$entry.om"
+  done
+  for entry in omparse omcver omcheck; do
+    UNITS="$UNITS core_$entry=$CORE/idparse.om,$CORE/$entry.om"
+  done
+  for unit in object graph payload param effect eval vector vecspec vpay fmt fmtnum fmtclip hostmath; do
+    UNITS="$UNITS core_$unit=$CORE/$unit.om"
+  done
+  UNITS="$UNITS core_cubinmsg=$CORE/fmtnum.om,$CORE/cubinmsg.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

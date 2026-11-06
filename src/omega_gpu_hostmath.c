@@ -3,6 +3,26 @@
 #include "omega_gpu_hostmath.h"
 #include <stdint.h>
 #include <string.h>
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+#include "omega_core_binding.h"
+#include <stdlib.h>
+static uint64_t host_call(uint64_t mode,double a,double b,uint64_t *second) {
+    uint64_t av,bv,out[2];memcpy(&av,&a,8);memcpy(&bv,&b,8);
+    if(CORE_VOID(omhost, mode,av,bv,out,2)!=OMEGA_OK)CORE_STOP();
+    if(second)*second=out[1];
+    return out[0];
+}
+static double host_double(uint64_t u){double d;memcpy(&d,&u,8);return d;}
+double omega_hostmath_log(double x){return host_double(host_call(0,x,0,NULL));}
+double omega_hostmath_exp(double x){return host_double(host_call(1,x,0,NULL));}
+double omega_hostmath_pow(double x,double e){return host_double(host_call(2,x,e,NULL));}
+void omega_hostmath_sincos(double x,double *s,double *c){
+    uint64_t cb;uint64_t sb=host_call(3,x,0,&cb);memcpy(s,&sb,8);memcpy(c,&cb,8);
+}
+float omega_hostmath_pow2f(int e){
+    uint32_t u=(uint32_t)host_call(4,(double)e,0,NULL);float f;memcpy(&f,&u,4);return f;
+}
+#else
 
 static double bits_d(uint64_t u) { double d; memcpy(&d, &u, 8); return d; }
 static uint64_t d_bits(double d) { uint64_t u; memcpy(&u, &d, 8); return u; }
@@ -90,3 +110,4 @@ float omega_hostmath_pow2f(int e) {
     else u = 0;
     float f; memcpy(&f, &u, 4); return f;
 }
+#endif

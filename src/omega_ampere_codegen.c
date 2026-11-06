@@ -2,7 +2,7 @@
 /* Foreign ABI packing only. The complete SM86 encoding implementation is
  * om/encoder/ampere_enc_sm86.om, translated by the pinned omega-bridge. */
 #include "omega_ampere_codegen.h"
-#include "cudapp_native.h"
+#include "omega_core_binding.h"
 
 int omega_gpu_encode_program_target(const BlackwellIRProgram *prog, uint32_t target_sm,
                                     uint8_t *code_buf, size_t max_len, size_t *out_len)
@@ -39,7 +39,7 @@ int omega_gpu_encode_program_target(const BlackwellIRProgram *prog, uint32_t tar
     for (size_t i = 0; i < BW_MAX_UVREGS; ++i)
         phys[256 + i] = (uint64_t)(int64_t)prog->regalloc.uvreg_to_phys[i];
     uint64_t bytes = 0;
-    uint32_t status = omega_ampere_enc_sm86(&bytes, ins, 8192, phys, 288,
+    uint32_t status = CORE_CALL(ampere_enc_sm86, &bytes, ins, 8192, phys, 288,
                                           prog->count, 1, code, 16384);
     if (status != OMEGA_OK || bytes != needed) return OMEGA_GPU_ENCODE_UNSUPPORTED;
     for (size_t i = 0; i < needed; ++i) code_buf[i] = code[i];

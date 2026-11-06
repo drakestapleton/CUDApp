@@ -1,3 +1,6 @@
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+#include "omega_core_om.inc"
+#else
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
  *
@@ -472,3 +475,4 @@ int omega_eval_pure_binary_uint(OpCode op, OverflowPolicy ov, uint16_t width, ui
     *out_res = res & mask;
     return 0;
 }
+#endif

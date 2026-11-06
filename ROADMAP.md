@@ -69,3 +69,13 @@ The research in `docs/PAIN_POINTS.md` ranks what developers hit with CUDA and it
 | D12 | Work per answer, against the machine's own ceiling | simulator DONE; chip open |
 | D13 | Our own disassembler, in plain text | PLANNED (L386, Omega bar C6) |
 | D14 | Recover from a fault without restarting | PLANNED (L386, Omega bar C5) |
+
+## 2026-11-06: core utility Omega migration
+
+Core hashing, canonical encoding, object/effect/evaluation utilities, vectors,
+formatting, host math and cubin refusal rendering use local `om/core/*.om` by
+default. The existing cubin ELF, Ampere encoder, binary16, revision and epoch
+Omega implementations are reused. The handwritten C oracle is opt-in through
+`CUDAPP_MIGRATION_PENDING_C_CORE`; no hardware status is upgraded.
+See `om/core/README.md` and `evidence/core-util/2026-11-06/` for host evidence,
+negative controls, recompiled mutants and the authorization-gated chip runbook.

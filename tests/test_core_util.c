@@ -9,12 +9,49 @@ static uint64_t rng = 0x4f4d454741ULL;
 static uint32_t random32(void) { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; return (uint32_t)rng; }
 static void hex(const uint8_t *d, char *h) { for(unsigned i=0;i<32;i++) sprintf(h+2*i,"%02x",d[i]); }
 static int vector(const uint8_t *p,size_t n,const char *want) { uint8_t d[32]; char h[65]; sha256_hash(p,n,d); hex(d,h); if(strcmp(h,want)) { fprintf(stderr,"SHA vector length %zu: %s\n",n,h);return 1;} return 0; }
+static int unhex(char c) {
+    if(c>='0'&&c<='9')return c-'0';
+    if(c>='a'&&c<='f')return c-'a'+10;
+    return -1;
+}
+static int cavp(const char *path) {
+    FILE *f=fopen(path,"r");if(!f){perror(path);return 1;}
+    char *line=NULL;size_t cap=0,n=0;unsigned count=0;
+    uint8_t message[65536];int have_message=0,result=0;
+    while(getline(&line,&cap,f)>=0) {
+        if(!strncmp(line,"Len = ",6)) {
+            unsigned long bits=strtoul(line+6,NULL,10);
+            if(bits%8||bits/8>sizeof message){result=1;break;}
+            n=bits/8;have_message=0;
+        } else if(!strncmp(line,"Msg = ",6)) {
+            if(strlen(line+6)<n*2){result=1;break;}
+            for(size_t i=0;i<n;i++) {
+                int a=unhex(line[6+i*2]),b=unhex(line[7+i*2]);
+                if(a<0||b<0){result=1;break;}
+                message[i]=(uint8_t)(a*16+b);
+            }
+            if(result)break;
+            have_message=1;
+        } else if(!strncmp(line,"MD = ",5)) {
+            line[strcspn(line,"\r\n")]=0;
+            if(!have_message||strlen(line+5)!=64||vector(message,n,line+5)){result=1;break;}
+            count++;have_message=0;
+        }
+    }
+    if(ferror(f)||!count||have_message)result=1;
+    free(line);fclose(f);
+    if(!result)printf("CAVP %s PASS (%u records)\n",path,count);
+    return result;
+}
 int main(int argc,char **argv) {
     uint8_t p[32768],a[32],b[32],c[32];
     if(vector((const uint8_t *)"",0,"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")) return 1;
     if(vector((const uint8_t *)"abc",3,"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")) return 1;
     const char *msg="abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
     if(vector((const uint8_t *)msg,strlen(msg),"248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1")) return 1;
+    if(argc>1&&!strcmp(argv[1],"--quick"))return 0;
+    if(cavp("tests/vectors/core/SHA256ShortMsg.rsp")||
+       cavp("tests/vectors/core/SHA256LongMsg.rsp"))return 1;
     sha256_ctx ctx; sha256_init(&ctx); memset(p,'a',1000);
     for(unsigned i=0;i<1000;i++) sha256_update(&ctx,p,1000);
     sha256_final(&ctx,a); char h[65]; hex(a,h);
@@ -29,6 +66,6 @@ int main(int argc,char **argv) {
         if(argc>1 && !strcmp(argv[1],"--flip") && t==0) a[0]^=1;
         if(memcmp(a,b,32)||memcmp(a,c,32)) {fprintf(stderr,"SHA differential case %u length %zu\n",t,n);return 1;}
     }
-    puts("CORE-UTIL SHA PASS: FIPS vectors, 10000 random and streaming cases");
+    puts("CORE-UTIL SHA PASS: FIPS/CAVP vectors, 10000 random and streaming cases");
     return 0;
 }

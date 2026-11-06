@@ -1,3 +1,54 @@
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
+/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#include "omega_canonical.h"
+#include "sha256.h"
+#include "omega_core_binding.h"
+#include <stdlib.h>
+#include <string.h>
+_Static_assert(sizeof(OmegaObject) == 25972, "canonical bootstrap object ABI");
+_Static_assert(offsetof(OmegaObject, payload) == 24948, "canonical payload ABI");
+static void canon_status(uint32_t s) { if (s != OMEGA_OK) CORE_STOP(); }
+int omega_compare_semantic_id(const SemanticId *a, const SemanticId *b) {
+    uint64_t r;
+    canon_status(CORE_CALL(omcidcmp, &r, a->bytes, 32, b->bytes, 32));
+    return (int)(int64_t)r;
+}
+void omega_hex_semantic_id(const SemanticId *a, char out[65]) {
+    canon_status(CORE_VOID(omcidhex, a->bytes, 32, out, 65));
+}
+int omega_parse_hex_semantic_id(const char *s, SemanticId *a) {
+    uint64_t r;
+    if (!s || strlen(s) != 64) return -1;
+    canon_status(CORE_CALL(omparse, &r, s, 65, a->bytes, 32));
+    return -(int)r;
+}
+uint8_t omega_canonical_object_version(uint8_t k) {
+    uint64_t r; canon_status(CORE_CALL(omcver, &r, k)); return (uint8_t)r;
+}
+int omega_canonical_check_header(uint8_t v, uint8_t k) {
+    uint64_t r; canon_status(CORE_CALL(omcheck, &r, k, v)); return -(int)r;
+}
+int omega_canonical_encode(const OmegaObject *o, uint8_t *out, size_t cap, size_t *len) {
+    if (!o || !out || !len) return -1;
+    uint8_t staging[32768];
+    size_t limit = cap > sizeof staging ? sizeof staging : cap;
+    /* Preserve partial-output semantics on refusal without lending a short view. */
+    memcpy(staging, out, limit);
+    uint64_t r;
+    canon_status(CORE_CALL(omcanon, &r, o, sizeof *o, staging, sizeof staging, limit));
+    if (r == 65536) { memcpy(out, staging, limit); return -1; }
+    memcpy(out, staging, (size_t)r);
+    *len = (size_t)r;
+    return 0;
+}
+int omega_compute_semantic_id(OmegaObject *o) {
+    uint8_t canon[4096]; size_t n;
+    if (omega_canonical_encode(o, canon, sizeof canon, &n)) return -1;
+    sha256_hash(canon, n, o->id.bytes);
+    o->has_id = true;
+    return 0;
+}
+#else
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
  *
@@ -223,3 +274,4 @@ int omega_compute_semantic_id(OmegaObject *obj) {
     obj->has_id = true;
     return 0;
 }
+#endif

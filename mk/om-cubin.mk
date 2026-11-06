@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # The sm_121 cubin packer in seeded Omega (om/cubin/cubin_elf.om), linked through the omega-bridge native binding
 # portable generated C units $(CUDAPP_BINDING_SRCS) that om/units.sh generates. The C writer in src/omega_cubin.c is migration-pending: the
-# freestanding build and the oracle builds only (CUDAPP_MIGRATION_PENDING_C_CUBIN, CUDAPP_MIGRATION_PENDING_CUBIN_DIFF).
+# explicit oracle builds only (CUDAPP_MIGRATION_PENDING_C_CORE, CUDAPP_MIGRATION_PENDING_CUBIN_DIFF).
 #   make test-om-cubin           (in `make test`, no Omega tools needed)
 #       1. the cubin tests (gpu_artifact_export_test, native_artifact_manifest_test) through the .om packer;
 #       2. the same two tests and the sweep tests/om_cubin_sweep_test.c built with CUDAPP_MIGRATION_PENDING_CUBIN_DIFF:
@@ -33,7 +33,7 @@ $(OM_CUBIN_DIR)/manifest_diff: tests/native_artifact_manifest_test.c src/omega_n
 		tests/native_artifact_manifest_test.c src/omega_native_artifact.c \
 		src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_BINDING_SRCS) -lpthread
 
-test-om-cubin: $(ARTIFACT_TEST) $(OUT_DIR)/native_artifact_manifest_test $(OM_CUBIN_DIR)/artifact_diff \
+test-om-cubin: $(OUT_DIR)/gpu_artifact_export_test $(OUT_DIR)/native_artifact_manifest_test $(OM_CUBIN_DIR)/artifact_diff \
 		$(OM_CUBIN_DIR)/manifest_diff $(OM_CUBIN_DIR)/sweep_diff $(OM_CUBIN_DIR)/sweep_diff_red
 	rm -rf $(OM_CUBIN_DIR)/artifact-om $(OM_CUBIN_DIR)/artifact-diff $(OM_CUBIN_DIR)/diff.log
 	./$(ARTIFACT_TEST) $(OM_CUBIN_DIR)/artifact-om
@@ -63,7 +63,7 @@ test-om-cubin-mutants:
 	OMEGA_UNITS=$$(pwd)/$$d/cubin_elf.om OMEGA_UNITS_DEST=$$d OMEGA_OMC=$(OMEGA_MV)/seed/out/omc \
 		OMEGA_BRIDGE=$(OMEGA_BRIDGE_DIR) sh om/units.sh > /dev/null || exit 1; \
 	$(OM_CUBIN_BUILD) $(OM_CUBIN_DIFF) -o $$d/sweep tests/om_cubin_sweep_test.c src/omega_cubin.c \
-		$$d/cudapp_om_cubin_elf.c || exit 1; \
+		$$d/cudapp_om_cubin_elf.c src/cudapp_om_core_cubinmsg.c || exit 1; \
 	if $$d/sweep > $$d/sweep.log 2>&1; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): $$(grep -m1 -e 'CUBIN DIFF' -e FAIL $$d/sweep.log)"; \
 	done

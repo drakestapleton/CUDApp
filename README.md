@@ -424,7 +424,7 @@ On a shared machine, hold the GPU lock your operator uses around these commands 
 
 ## Run your first kernel without a GPU
 
-You need: Linux (aarch64 or x86-64) with `git`, `make`, `gcc` and `bash`, plus `readelf` and `nm` from binutils for the zero-CUDA gate. No GPU, no NVIDIA driver, no CUDA toolkit and no environment variable. From an empty folder:
+You need: Linux with `git`, `make`, `gcc` and `bash`, plus `readelf` and `nm` from binutils for the zero-CUDA gate (this block has been run on aarch64 only). No GPU, no NVIDIA driver, no CUDA toolkit and no environment variable. From an empty folder:
 
 ```bash
 git clone https://github.com/aien-dev/CUDApp

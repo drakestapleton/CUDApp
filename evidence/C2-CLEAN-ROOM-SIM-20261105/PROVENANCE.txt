@@ -1,0 +1,31 @@
+Bar C2 part 1 (no GPU): first kernel from a fresh clone, the README section "Run your first kernel without a GPU" only.
+Evidence level: EXERCISED on the host simulator, one machine (DGX Spark, aarch64), one run. Not QUALIFIED.
+No GPU was opened by anything in this run (see the trace check). Chip hello-GPU for this branch: NOT_RUN.
+
+Produced by: taskset -c 10-14 nice -n 10 tools/runtime/clean-room-sim.sh feat/c2-hello-admission-api \
+               evidence/C2-CLEAN-ROOM-SIM-20261105/run1-branch.log
+(operator drakestapleton, no sudo, no new user). The script clones https://github.com/aien-dev/CUDApp at the branch,
+extracts the first bash block under "## Run your first kernel without a GPU" from that clone's README, and runs each line
+in a new empty folder under env -i with only HOME=<new empty dir>, PATH=/usr/local/bin:/usr/bin:/bin and LANG=C.UTF-8,
+under strace -f -e trace=execve,openat. It fails (exit 4) if any /dev/nvidia* node or CUDA toolkit/library file was
+opened or executed successfully, and (exit 5) if either red control is not caught.
+
+run1-branch.log  2026-11-06T02:32:11Z  feat/c2-hello-admission-api c9b47c85fb97 (loadavg 63.16, ~22 agents on the host)
+  README commands: git clone / cd CUDApp / make hello-gpu-build / build/hello_gpu --sim / make zero-cuda-gate
+  README block exit 0 (637 s, serial build of the library on a loaded host);
+  hello_gpu --sim: runtime API 0.14 (library), program built against 0.14; 32 instructions, 12 registers, sm_121;
+    machine code sha256 9e28bd9c...e075; 1048576 of 1048576 elements right, 0 never written;
+    output sha256 72d0c1b2...b6a6, equal to the GB10 chip run in evidence/C2-CLEAN-USER/run3-branch.log; PASS;
+  zero-cuda-gate: self-test PASS (stub libcudart probe rejected), PASS on build/hello_gpu and build/gpu_matmul_api_test;
+  trace: 85807 calls, 614 programs, 0 /dev/nvidia* paths tried, TRACE PASS (the gate's own /tmp stub libcudart,
+    its red control, excluded by path);
+  red control 1 (cat /usr/local/cuda/version.json under the same trace and check): caught;
+  red control 2 (a synthetic successful openat of /dev/nvidia0 given to the checker): caught.
+  clean-room-sim exit 0.
+
+The machine code sha differs from run3 of C2-CLEAN-USER (6248b8ed...) because the kernel builder changed between
+2026-10-27 and this commit; the output bytes are identical.
+
+Commits after c9b47c8 on this branch add this receipt and a README wording change (the platform line now says the block
+was run on aarch64 only); the README bash block that the script runs is unchanged.
+GAPS.txt lists what a newcomer could not do from the README before this branch and what was changed.

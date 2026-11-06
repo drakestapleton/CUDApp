@@ -14,6 +14,7 @@
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_mem_cached.h"
 #include "cudapp_native.h"
+#include "omega_gpu_graph_om.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -73,11 +74,15 @@ struct OmegaGpuQ38Graph {
     uint64_t stamp[OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1];
 };
 
-static size_t al(size_t v) { return (v + 255u) & ~(size_t)255u; }
-static uint64_t va_of(const OmegaGpuQ38Graph *g, size_t off) { return off < g->lo.split ? g->buf.va + off : g->dbuf.va + (off - g->lo.split); }
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+static size_t al(size_t v) { return omega_graph_addr(0,v,0,0,0,0,0); }
+#endif
+static uint64_t va_of(const OmegaGpuQ38Graph *g, size_t off) { return omega_graph_addr(1,g->buf.va,g->dbuf.va,g->lo.split,off,0,0); }
 static void *cpu_of(const OmegaGpuQ38Graph *g, size_t off) { return (uint8_t *)g->buf.cpu + off; } /* host regions only (off < split) */
 static void put64(uint32_t *a, unsigned off, uint64_t v) { a[(off - 0x380) / 4] = (uint32_t)v; a[(off - 0x380) / 4 + 1] = (uint32_t)(v >> 32); }
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
 static void putf(uint32_t *a, unsigned off, float f) { memcpy(&a[(off - 0x380) / 4], &f, 4); }
+#endif
 static int fail(OmegaGpuQ38Graph *g, const char *what, int rc) {
     if (g) g->failed = 1;
     if (what) omega_gpu_session_set_error(what);
@@ -160,7 +165,17 @@ int omega_gpu_q38_graph_create(const OmegaGpuQ38GraphConfig *cfg, OmegaGpuQ38Gra
         g->layer[l].attn = (int)((cfg->attn_mask >> l) & 1u);
         g->layer[l].kind_index = g->layer[l].attn ? na++ : ng++;
     }
-    Layout *L = &g->lo; size_t o = 0;
+    Layout *L = &g->lo;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t lc[32]={2,1,cfg->layers,g->am_ctas,H,I,1,g->gqkv,g->mout,g->gmix,g->ab,g->amix,g->mout,0,0,OMEGA_DEC_ARGMAX_SPAN,0,0,COPY_ROW};
+    uint64_t ld[64],lr=0;
+    if(omega_mg_layout(&lr,lc,32,ld,64)!=OMEGA_OK||lr!=1){omega_gpu_host_free(g);return OMEGA_GPU_DGRAPH_BAD_ARGS;}
+#define FIELD(f,i) L->f=ld[i]
+    FIELD(x,0);FIELD(ab,1);FIELD(hidden,2);FIELD(logits,3);FIELD(am_v,4);FIELD(am_i,5);FIELD(token,6);FIELD(norms,7);FIELD(fnorm,8);FIELD(tabs,9);
+    FIELD(gtab,10);FIELD(idtab,11);FIELD(stage,12);FIELD(xq,13);FIELD(mix,14);FIELD(agg,15);FIELD(att,16);FIELD(o,17);FIELD(gu,18);FIELD(act,19);FIELD(split,60);FIELD(bytes,61);
+#undef FIELD
+#else
+    size_t o = 0;
 #define REG(f, bytes) do { L->f = o; o = al(o + (bytes)); } while (0)
     REG(x, H * 4); REG(ab, g->ab * 4); REG(hidden, H * 4);
     REG(logits, (size_t)g->am_ctas * OMEGA_DEC_ARGMAX_SPAN * 4); REG(am_v, OMEGA_DEC_ARGMAX_SPAN * 4); REG(am_i, OMEGA_DEC_ARGMAX_SPAN * 4);
@@ -171,6 +186,7 @@ int omega_gpu_q38_graph_create(const OmegaGpuQ38GraphConfig *cfg, OmegaGpuQ38Gra
     REG(att, g->mout * 4); REG(o, H * 4); REG(gu, 2 * I * 4); REG(act, I * 4);
 #undef REG
     L->bytes = o;
+#endif
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (omega_gpu_cmdlist_create(OMEGA_GPU_CMDLIST_MAX_LAUNCHES, &g->cl) != 0) { omega_gpu_q38_graph_free(g); return OMEGA_GPU_DGRAPH_CHIP_FAIL; }
     omega_gpu_session_lock();
@@ -413,6 +429,7 @@ static int add_glue(OmegaGpuQ38Graph *g, uint8_t kind, int ki, uint32_t gx, uint
     return after_op(g, kind, omega_gpu_cmdlist_add(g->cl, &L) < 0 ? -1 : 0);
 }
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_GRAPHS
 /* RES at the hidden width: NORM (x -> y) or ADD|NORM (x += a; y = norm(x)) */
 static int rec_res(OmegaGpuQ38Graph *g, int ki, uint64_t x, uint64_t a, uint64_t nw, uint64_t y, float scale) {
     uint32_t w[OMEGA_DEC_RES_WORDS]; memset(w, 0, sizeof w);
@@ -420,6 +437,7 @@ static int rec_res(OmegaGpuQ38Graph *g, int ki, uint64_t x, uint64_t a, uint64_t
     putf(w, OMEGA_DEC_RES_EPS, g->cfg.eps); putf(w, OMEGA_DEC_RES_SCALE, scale);
     return add_glue(g, ki == K_NORM ? OMEGA_GPU_Q38_K_NORM : OMEGA_GPU_Q38_K_RES, ki, 1, 1, H, w, OMEGA_DEC_RES_WORDS);
 }
+#endif
 
 static int g_overlap_ab = -1;
 void omega_gpu_q38_graph_set_overlap_ab(int on) { g_overlap_ab = on ? 1 : 0; }
@@ -461,6 +479,51 @@ int omega_gpu_q38_graph_record_layer(OmegaGpuQ38Graph *g, uint32_t l, uint32_t p
     const uint64_t att = va_of(g, g->lo.att), o = va_of(g, g->lo.o), gu = va_of(g, g->lo.gu), act = va_of(g, g->lo.act);
     const uint64_t in_norm = va_of(g, g->lo.norms) + (uint64_t)l * 2 * H * 4u, post_norm = in_norm + H * 4u, tab = va_of(g, g->lo.tabs) + (uint64_t)l * 64u;
     const uint32_t ki = g->layer[l].kind_index;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t cfg[16] = {2, g->xq_layer != (int)l, g->layer[l].attn, q38_overlap_ab(),
+        g->layer[l].bdn2 != NULL, 0, l, g->cfg.layers, pos, g->mutant, g->head8 != NULL,
+        g->flush_each, H, I, 1, g->am_ctas};
+    uint64_t values[64] = {x,xq,mix,agg,att,o,gu,act,0,in_norm,va_of(g,g->lo.fnorm),
+        tab,va_of(g,g->lo.ab),va_of(g,g->lo.gtab),va_of(g,g->lo.hidden),att};
+    values[20]=post_norm; values[23]=(uint64_t)g->gqkv*4u; values[24]=(uint64_t)g->aqkv*4u;
+    values[25]=g->amix; values[26]=g->mout; values[27]=omega_graph_fbits(g->cfg.eps);
+    values[28]=omega_graph_fbits(SCALE_2P64); values[29]=omega_graph_fbits(1.0f);
+    static const int kernels[25] = {K_NORM,K_ADDNORM,K_ADDNORM,K_SW,K_GATHER,K_GATE,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,K_SW_M1,K_GATHER_M1,K_GATE_M1,K_ADDNORM_M1,K_ADD};
+    int rc=OMEGA_GPU_DGRAPH_OK;
+    for (uint64_t phase=0; rc==OMEGA_GPU_DGRAPH_OK; phase++) {
+        uint64_t node[64];
+        if (!omega_graph_next(cfg,values,node,phase)) return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        if (node[0]==255) break;
+        uint32_t words[32]; omega_graph_args(node,words);
+        switch(node[0]) {
+        case 0: break;
+        case 1: case 5: case 7: case 9: case 12: case 14: {
+            static const uint8_t kinds[15] = {[1]=OMEGA_GPU_Q38_K_NORM,[5]=OMEGA_GPU_Q38_K_GATHER,
+                [7]=OMEGA_GPU_Q38_K_GATE,[9]=OMEGA_GPU_Q38_K_RES,[12]=OMEGA_GPU_Q38_K_SWIGLU,
+                [14]=OMEGA_GPU_Q38_K_RES};
+            rc=add_glue(g,kinds[node[0]],kernels[node[1]],node[2],node[3],node[4],words,node[5]); break;
+        }
+        case 2: {
+            int mrc=g->layer[l].bf16 ? omega_gpu_bf16_gemv_record(g->cl,g->layer[l].bmix,node[11],node[12])
+                : omega_gpu_fp8_gemv_grouped_record(g->cl,g->layer[l].mix,node[7],node[10],node[11],node[8],node[12]);
+            if (!mrc && node[6] && omega_gpu_cmdlist_mark_independent(g->cl)) mrc=-1;
+            rc=after_op(g,OMEGA_GPU_Q38_K_MIX,mrc); break;
+        }
+        case 3: rc=after_op(g,OMEGA_GPU_Q38_K_AB,omega_gpu_bf16_gemv_record(g->cl,g->layer[l].ab,node[11],node[12])); break;
+        case 4: rc=after_op(g,OMEGA_GPU_Q38_K_GDN,omega_gpu_gdn_record(g->cl,g->cfg.gdn,ki,node[11],node[12],node[13],
+            g->cfg.eps_l2,g->cfg.eps,1.0f,SCALE_2P64,&values[15])); break;
+        case 6: rc=after_op(g,OMEGA_GPU_Q38_K_ATTN,omega_gpu_decode_attn256_record(g->cl,g->cfg.attn,ki,node[13],node[11],
+            g->cfg.eps,SCALE_2P64,node[12])); break;
+        case 8: rc=rec_proj(g,OMEGA_GPU_Q38_K_O,g->layer[l].o,g->layer[l].bo,node[10],node[11],node[12]); break;
+        case 11: rc=rec_proj(g,OMEGA_GPU_Q38_K_GATE_UP,g->layer[l].gu,g->layer[l].bgu,node[10],node[11],node[12]); break;
+        case 13: rc=rec_proj(g,OMEGA_GPU_Q38_K_DOWN,g->layer[l].dn,g->layer[l].bdn,node[10],node[11],node[12]); break;
+        case 16: rc=rec_proj(g,OMEGA_GPU_Q38_K_DOWN,NULL,g->layer[l].bdn2,node[10],node[11],node[12]); break;
+        default: return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        }
+    }
+    if (rc==OMEGA_GPU_DGRAPH_OK) { if(l+1==g->cfg.layers) g->hidden_ready=1; else g->xq_layer=(int)l+1; }
+#else
     int rc = OMEGA_GPU_DGRAPH_OK;
     if (g->xq_layer != (int)l) rc = rec_res(g, K_NORM, x, 0, in_norm, xq, SCALE_2P64);
     /* GDN layers: the a|b GEMV (latency-bound, ~18 us) is recorded first and the mix GEMV marked independent of it: both only
@@ -514,6 +577,7 @@ int omega_gpu_q38_graph_record_layer(OmegaGpuQ38Graph *g, uint32_t l, uint32_t p
         rc = rec_res(g, K_ADDNORM, x, o, nw, last ? va_of(g, g->lo.hidden) : xq, last && !g->head8 ? 1.0f : SCALE_2P64);
         if (rc == OMEGA_GPU_DGRAPH_OK) { if (last) g->hidden_ready = 1; else g->xq_layer = (int)l + 1; }
     }
+#endif
     return rc == OMEGA_GPU_DGRAPH_OK ? rc : fail(g, NULL, rc);
 }
 
@@ -561,6 +625,28 @@ int omega_gpu_q38_graph_record_final(OmegaGpuQ38Graph *g) {
     if (!g->final_set) return fail(g, "q38 graph: final norm not set", OMEGA_GPU_DGRAPH_BAD_ARGS);
     const uint64_t x = va_of(g, g->lo.x), hidden = va_of(g, g->lo.hidden), logits = va_of(g, g->lo.logits), token = va_of(g, g->lo.token);
     int rc = OMEGA_GPU_DGRAPH_OK;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+    const uint64_t cfg[16]={g->hidden_ready,g->head8!=NULL,0,g->mutant,g->cfg.vocab,g->am_ctas,H,
+        omega_graph_fbits(g->cfg.eps),omega_graph_fbits(SCALE_2P64),omega_graph_fbits(1.0f),0,g->exact_on};
+    const uint64_t values[16]={x,hidden,logits,token,va_of(g,g->lo.fnorm),
+        va_of(g,g->lo.tabs)+(uint64_t)g->cfg.layers*64u,va_of(g,g->lo.am_v),va_of(g,g->lo.am_i)};
+    static const int kernels[7]={K_NORM,0,0,0,0,K_AM0,K_AM1};
+    for(uint64_t phase=0;rc==OMEGA_GPU_DGRAPH_OK;phase++){
+        uint64_t node[64],result=0;uint32_t words[32];
+        if(omega_mg_final(&result,cfg,16,values,16,node,64,phase)!=OMEGA_OK||result!=1)return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        if(node[0]==255)break;
+        omega_graph_args(node,words);
+        switch(node[0]){
+        case 0:break;
+        case 1:case 8:rc=add_glue(g,node[0]==1?OMEGA_GPU_Q38_K_NORM:OMEGA_GPU_Q38_K_ARGMAX,
+            kernels[node[1]],node[2],node[3],node[4],words,node[5]);break;
+        case 7:rc=g->head8?rec_fp8(g,OMEGA_GPU_Q38_K_LM_HEAD,g->head8,node[10],node[11],node[12]):
+            after_op(g,OMEGA_GPU_Q38_K_LM_HEAD,omega_gpu_bf16_gemv_record(g->cl,g->cfg.lm_head,node[11],node[12]));break;
+        case 10:rc=rec_exact_head(g,node[11],node[12]);break;
+        default:return fail(g,NULL,OMEGA_GPU_DGRAPH_CHIP_FAIL);
+        }
+    }
+#else
     if (!g->hidden_ready) rc = rec_res(g, K_NORM, x, 0, va_of(g, g->lo.fnorm), hidden, g->head8 ? SCALE_2P64 : 1.0f);
     if (rc == OMEGA_GPU_DGRAPH_OK && g->exact_on)
         rc = rec_exact_head(g,hidden,logits);
@@ -573,6 +659,7 @@ int omega_gpu_q38_graph_record_final(OmegaGpuQ38Graph *g) {
     put64(a1, OMEGA_DEC_AM_V, amv); put64(a1, OMEGA_DEC_AM_I, ami); put64(a1, OMEGA_DEC_AM_OV, token + 4u); put64(a1, OMEGA_DEC_AM_OI, token);
     if (rc == OMEGA_GPU_DGRAPH_OK) rc = add_glue(g, OMEGA_GPU_Q38_K_ARGMAX, K_AM0, g->am_ctas, 1, (size_t)g->am_ctas * OMEGA_DEC_ARGMAX_SPAN, a0, OMEGA_DEC_AM_WORDS);
     if (rc == OMEGA_GPU_DGRAPH_OK) rc = add_glue(g, OMEGA_GPU_Q38_K_ARGMAX, K_AM1, 1, 1, OMEGA_DEC_ARGMAX_SPAN, a1, OMEGA_DEC_AM_WORDS);
+#endif
     return rc == OMEGA_GPU_DGRAPH_OK ? rc : fail(g, NULL, rc);
 }
 
@@ -634,12 +721,24 @@ int omega_gpu_q38_graph_read_buf(OmegaGpuQ38Graph *g, int which, float *out, uin
     size_t from = b[which].off;
     if (from >= g->lo.split && n) {
         /* a chip-only region: K_COPY moves ceil(n / 256) rows of 256 floats into stage (every cap is a multiple of 256) */
-        uint32_t w[OMEGA_DEC_GA_WORDS]; memset(w, 0, sizeof w);
+        uint32_t w[32]; memset(w, 0, sizeof w);
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        const uint64_t c[16]={2,0,0,0,0,0,COPY_ROW,n},v[16]={va_of(g,from),va_of(g,g->lo.idtab),va_of(g,g->lo.stage)};
+        uint64_t node[64],result=0;
+        if(omega_mg_aux(&result,c,16,v,16,node,64)!=OMEGA_OK||result!=1){omega_gpu_session_unlock();return OMEGA_GPU_DGRAPH_CHIP_FAIL;}
+        omega_graph_args(node,w);
+#else
         put64(w, OMEGA_DEC_GA_IN, va_of(g, from)); put64(w, OMEGA_DEC_GA_TAB, va_of(g, g->lo.idtab)); put64(w, OMEGA_DEC_GA_OUT, va_of(g, g->lo.stage));
+#endif
         const Kern *k = &g->k[K_COPY];
         OmegaGpuLaunch L; memset(&L, 0, sizeof L);
-        L.code_va = k->code.va; L.gpr_count = k->gpr; L.threads_x = OMEGA_DEC_THREADS; L.threads_y = 1; L.grid_x = 1; L.grid_y = (n + COPY_ROW - 1) / COPY_ROW;
-        L.num_elements = (size_t)L.grid_y * COPY_ROW; L.args = w; L.n_args = OMEGA_DEC_GA_WORDS; L.timeout_ms = TIMEOUT_MS;
+        L.code_va = k->code.va; L.gpr_count = k->gpr; L.threads_x = OMEGA_DEC_THREADS; L.threads_y = 1;
+#ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
+        L.grid_x=node[2];L.grid_y=node[3];L.num_elements=node[4];L.n_args=node[5];
+#else
+        L.grid_x = 1; L.grid_y = (n + COPY_ROW - 1) / COPY_ROW;L.num_elements = (size_t)L.grid_y * COPY_ROW;L.n_args = OMEGA_DEC_GA_WORDS;
+#endif
+        L.args = w; L.timeout_ms = TIMEOUT_MS;
         if (!omega_gpu_session_open() || omega_gpu_session_launch(&L, NULL, NULL) != 0) rc = OMEGA_GPU_DGRAPH_CHIP_FAIL;
         from = g->lo.stage;
     }

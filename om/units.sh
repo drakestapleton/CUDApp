@@ -76,6 +76,16 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS core_$unit=$CORE/$unit.om"
   done
   UNITS="$UNITS core_cubinmsg=$CORE/fmtnum.om,$CORE/cubinmsg.om"
+  GRAPH_REC=om/graph/record.om
+  GRAPH_NODE=$GRAPH_REC,om/graph/scalar.om
+  UNITS="$UNITS model_graph_wire=$GRAPH_REC,om/graph/entry_wire.om model_graph_node=$GRAPH_NODE,om/graph/entry_node.om model_graph_batch=$GRAPH_NODE,om/graph/pf_order.om,om/graph/batch.om,om/graph/entry_batch.om model_graph_launch=$GRAPH_REC,om/graph/entry_launch.om model_graph_copy=om/graph/prefill.om,om/graph/entry_copy.om model_graph_xfer=om/graph/prefill.om,om/graph/entry_xfer.om model_graph=$GRAPH_NODE,om/graph/final.om,om/graph/entry_final.om"
+  UNITS="$UNITS model_graph_expert=$GRAPH_NODE,om/graph/pf_order.om,om/graph/batch.om,om/graph/experts.om"
+  UNITS="$UNITS model_graph_group=om/graph/group.om"
+  UNITS="$UNITS model_graph_address=om/graph/address.om"
+  UNITS="$UNITS model_graph_final_batch=$GRAPH_NODE,om/graph/final_batch.om"
+  UNITS="$UNITS model_graph_window=$GRAPH_NODE,om/graph/window.om"
+  UNITS="$UNITS model_graph_layout=$GRAPH_REC,om/graph/layout.om"
+  UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

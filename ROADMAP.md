@@ -75,6 +75,8 @@ Things a CUDA stack does not do, because it does not own the whole path. Omega `
 | Resident whole-model kernel | needs control of scheduling and memory below the CUDA API | MISSING (AIEN L272) |
 | Zero-copy shared memory | the GB10's CPU and GPU share one memory; CUDA still stages through its own allocators | PARTIAL: weights shared between processes through the driver client (physics `feat/shared-mem` 82467f19, 1 GiB import in 171 ms; not yet in CUDA++ main) |
 
+2026-11-06: ModelGraphsOm adds seeded graph plans and an old-C/default-Omega differential (`om/graph/README.md`). The independent nested gate also compares real production GDN/attention/FP8/BF16/GEMM/router command lists and submitted words, including device-free native artifact admission; old/new each submit once per complete word. This does not upgrade the row: chip qualification and complete model-graph effect annotations remain separate. See `om/graph/CHIP.md`.
+
 ## 4. Speed
 
 Speed is reported against the physical ceiling of this machine, not only against yesterday. The table and the ceilings are in Omega `docs/OMEGA.md` section 5; the head-to-head measurement against llama.cpp and vLLM on this Spark, same model and prompts, end to end, is bar P0 (AIEN L394; in progress, not finished, not published). Until it is published, no speed comparison with CUDA, llama.cpp, vLLM or TensorRT is claimed. Chip-only time per token and end-to-end time through the server are reported separately and never set beside each other or beside other projects' published end-to-end figures.

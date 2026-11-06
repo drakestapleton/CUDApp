@@ -76,8 +76,13 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
     uint64_t n = meta[0];
     if (n == 0 || n > BW_MAX_IR_INSNS || meta[1] > BW_MAX_VREGS || meta[2] > BW_MAX_UVREGS || meta[5] > 24)
         return OMEGA_OM_IR_REPLAY;
+    if (meta[6] != 0 &&
+        (meta[6] <= (uint64_t)BW_PHYS_GPR_MAX || meta[6] > (uint64_t)BW_PHYS_GPR_HW_LIMIT))
+        return OMEGA_OM_IR_REPLAY;
 
     omega_bw_ir_init(prog);
+    if (meta[6] != 0 && omega_bw_ir_set_gpr_limit(prog, (uint32_t)meta[6]) != 0)
+        return OMEGA_OM_IR_REPLAY;
     for (uint64_t v = 0; v < meta[1]; v++) {
         uint64_t k = meta[64 + v];
         int got = k == 4 ? omega_bw_ir_alloc_vreg128(prog) :

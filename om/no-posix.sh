@@ -38,7 +38,7 @@ export OMEGA_NATIVE_X86_OMC="$OUT/tools/omc-x86"
 for target in aarch64linux x86linux; do
   case "$target" in aarch64linux) triple=aarch64-linux-gnu ;; x86linux) triple=x86_64-linux-gnu ;; esac
   if command -v "$triple-gcc" >/dev/null 2>&1; then native_cc="$triple-gcc"
-  elif command -v clang >/dev/null 2>&1; then native_cc="clang --target=$triple"
+  elif command -v clang >/dev/null 2>&1; then native_cc="clang --target=$triple -ffreestanding"
   else echo "NO_POSIX regeneration requires $triple-gcc or clang" >&2; exit 2; fi
   CC="$native_cc" OMEGA_NATIVE_OMC2="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/native" --target "$target" --freestanding "$OUT/$target" \
     "$OUT/sources/bw_enc_sm121.om" "$OUT/sources/cubin_elf.om" "$OUT/sources/no_bf16.om" \

@@ -43,7 +43,7 @@ uint32_t omega2_scan(uint64_t *result, const uint64_t *o_idx, uint64_t o_idx_len
 const char *omega2_ident_book(void);
 /* fn book op ulong a view ulong 16 o edit ulong 4 to ulong */
 uint32_t omega2_book(uint64_t *result, uint64_t o_op, const uint64_t *o_a, uint64_t o_a_len, uint64_t *o_o, uint64_t o_o_len);
-#define OMEGA2_IDENT_streams "omega-ident 1 unit=streams abi=2 profile=OM-2 src=b75a665bf76c4642a3f889b05830af0c4895e7bce61d6a4f3ef859dfe269776e omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+#define OMEGA2_IDENT_streams "omega-ident 1 unit=streams abi=2 profile=OM-2 src=bef6bc0dd56878d6d337a39b79224c0d011b50d7090fdf41d07b319ceb29f445 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
 const char *omega2_ident_streams(void);
 /* fn streams_words op ulong a view ulong 16 o edit ulong 32 to ulong */
 uint32_t omega2_streams_words(uint64_t *result, uint64_t o_op, const uint64_t *o_a, uint64_t o_a_len, uint64_t *o_o, uint64_t o_o_len);

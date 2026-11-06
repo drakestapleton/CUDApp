@@ -5,8 +5,8 @@
 # No native x86 compiler or executable-code trampoline participates.
 set -eu
 OMC_PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
-CONVERTER_PIN=69d629df170a24ba0c2cb6d41dbfaed520e248e0d723236dd32abf0581524d84
-FRONTEND_PIN=23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37
+CONVERTER_PIN=d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538
+FRONTEND_PIN=a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629
 FREEST_CONVERTER_PIN=836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661
 FREEST_FRONTEND_PIN=51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -23,6 +23,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_wire_pack=native/nvrm/wire.om,native/nvrm/wire_pack.om nvrm_wire_reply=native/nvrm/wire.om nvrm_heap_wire=native/nvrm/heap_wire.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_uvm_wire=native/nvrm/uvm_wire.om nvrm_uvm_map_wire=native/nvrm/uvm_map_wire.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_policy=native/nvrm/policy.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_struct=native/nvrm/struct.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -67,6 +68,8 @@ for u in $UNITS $PURE_UNITS; do
   frontend=bridge-seeded
   converter_pin=$CONVERTER_PIN
   frontend_pin=$FRONTEND_PIN
+  profile=
+  [ "$name" != nvrm_struct ] || profile=--runtime-views
   file=cudapp_om_$name.c
   case "$name" in
     revision|epoch|f16)
@@ -76,8 +79,8 @@ for u in $UNITS $PURE_UNITS; do
       file=cudapp_freest_$name.c ;;
   esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" c "$src" > "$T/$file"
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" h "$src" >> "$T/cudapp_native.h"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile c "$src" > "$T/$file"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile h "$src" >> "$T/cudapp_native.h"
   identity="omega-ident 2 unit=$name abi=$frontend src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
   printf '%s\n' "$identity" > "$T/cudapp_om_$name.ident"
   printf '%s\n' "$identity" >> "$T/cudapp_om_units.ident"

@@ -1,0 +1,250 @@
+$ gcov -b -c -f -o ~/work/cudastack/lanes/MathlibsHostOm/build/mathlibs-host-om/differential-mathlibs_host_om_test.gcno tests/mathlibs_host_om_test.c
+Function 'main'
+Lines executed:100.00% of 63
+
+Function 'admission'
+Lines executed:100.00% of 28
+
+Function 'stop_walk'
+Lines executed:100.00% of 1
+
+Function 'stop_many'
+Lines executed:100.00% of 1
+
+Function 'scalar'
+Lines executed:100.00% of 31
+
+Function 'walk'
+Lines executed:100.00% of 11
+
+Function 'lc'
+Lines executed:100.00% of 6
+
+Function 'plan'
+Lines executed:77.78% of 18
+
+Function 'mc'
+Lines executed:100.00% of 6
+
+Function 'many_basic'
+Lines executed:100.00% of 9
+
+Function 'oracle_many'
+Lines executed:43.18% of 44
+
+Function 'many_copy_back'
+Lines executed:0.00% of 5
+
+Function 'many_scan'
+Lines executed:100.00% of 4
+
+Function 'oracle_many_walk'
+Lines executed:100.00% of 10
+
+Function 'many_build'
+Lines executed:100.00% of 95
+
+Function 'many_mark'
+Lines executed:100.00% of 6
+
+Function 'many_each'
+Lines executed:100.00% of 10
+
+Function 'many_side'
+Lines executed:100.00% of 24
+
+Function 'many_slots'
+Lines executed:100.00% of 5
+
+Function 'many_rows'
+Lines executed:100.00% of 5
+
+Function 'many_dense'
+Lines executed:100.00% of 6
+
+Function 'many_copy'
+Lines executed:100.00% of 16
+
+Function 'many_axis'
+Lines executed:100.00% of 35
+
+Function 'many_stockham'
+Lines executed:100.00% of 15
+
+Function 'many_step'
+Lines executed:100.00% of 23
+
+Function 'many_magic'
+Lines executed:100.00% of 4
+
+Function 'many_table'
+Lines executed:100.00% of 17
+
+Function 'many_free'
+Lines executed:100.00% of 5
+
+Function 'oracle_nd'
+Lines executed:100.00% of 8
+
+Function 'oracle_c2r'
+Lines executed:100.00% of 4
+
+Function 'oracle_r2c'
+Lines executed:100.00% of 4
+
+Function 'run_plan'
+Lines executed:38.89% of 36
+
+Function 'chip_launch'
+Lines executed:0.00% of 17
+
+Function 'oracle_walk'
+Lines executed:100.00% of 10
+
+Function 'collect'
+Lines executed:100.00% of 28
+
+Function 'walk_locked'
+Lines executed:98.53% of 68
+
+Function 'oracle_philox_generate'
+Lines executed:0.00% of 2
+
+Function 'oracle_philox_dist'
+Lines executed:10.87% of 46
+
+Function 'philox_pass'
+Lines executed:0.00% of 8
+
+Function 'oracle_philox_codegen'
+Lines executed:0.00% of 1
+
+Function 'oracle_fft_c2c'
+Lines executed:16.67% of 48
+
+Function 'oracle_fft_twiddles'
+Lines executed:0.00% of 8
+
+Function 'oracle_fft_codegen'
+Lines executed:0.00% of 4
+
+Function 'twiddles_locked'
+Lines executed:100.00% of 7
+
+Function 'fft_log2'
+Lines executed:100.00% of 1
+
+Function 'lg_in'
+Lines executed:100.00% of 5
+
+Function 'oracle_rng_generate'
+Lines executed:11.43% of 35
+
+Function 'oracle_rng_codegen'
+Lines executed:0.00% of 3
+
+Function 'rng_args_ok'
+Lines executed:100.00% of 5
+
+Function 'put64'
+Lines executed:0.00% of 1
+
+Function 'launch'
+Lines executed:0.00% of 12
+
+Function 'begin'
+Lines executed:0.00% of 6
+
+Function 'codegen_only'
+Lines executed:0.00% of 6
+
+Function 'info_begin'
+Lines executed:0.00% of 4
+
+Function 'info_kernel'
+Lines executed:0.00% of 8
+
+Function 'kernel_for'
+Lines executed:0.00% of 39
+
+Function 'oracle_last_error'
+Lines executed:0.00% of 1
+
+Function 'oracle_set_mutant'
+Lines executed:0.00% of 7
+
+Function 'on_session_close'
+Lines executed:0.00% of 11
+
+Function 'oracle_cache_clear'
+Lines executed:0.00% of 5
+
+Function 'cache_clear_locked'
+Lines executed:0.00% of 4
+
+Function 'slot_clear'
+Lines executed:0.00% of 5
+
+Function 'now_ns'
+Lines executed:100.00% of 3
+
+Function 'omega_mh_fft'
+Lines executed:100.00% of 3
+
+Function 'omega_mh_index'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_poison'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_fill'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_lg'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_phil'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_seed'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_rngval'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_rng'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_overlap'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_add'
+Lines executed:100.00% of 4
+
+Function 'omega_mh_time'
+Lines executed:100.00% of 4
+
+File 'tests/mathlibs_host_om_test.c'
+Lines executed:97.58% of 165
+Branches executed:96.06% of 254
+Taken at least once:67.72% of 254
+Calls executed:48.70% of 269
+Creating 'mathlibs_host_om_test.c.gcov'
+
+File 'src/omega_gpu_mathlibs_api.c'
+Lines executed:60.28% of 798
+Branches executed:63.08% of 856
+Taken at least once:53.15% of 856
+Calls executed:39.50% of 200
+Creating 'omega_gpu_mathlibs_api.c.gcov'
+
+File 'src/omega_gpu_mathlibs_host.h'
+Lines executed:100.00% of 47
+Branches executed:100.00% of 24
+Taken at least once:50.00% of 24
+Calls executed:52.17% of 23
+Creating 'omega_gpu_mathlibs_host.h.gcov'
+
+Lines executed:68.22% of 1010
+
+rc=0

@@ -1,8 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* GB10 RNG, Philox and FFT launchers; see omega_gpu_mathlibs_api.h. The kernels and the FFT pass plans come from
- * om/mathlibs/mathlibs_ir.om. MIGRATION-PENDING C: launch, buffers, launch chunking and poison scan only. Successor:
- * om/mathlibs/mathlibs_launch.om over the session launch path, once a seeded unit can call it through omega-bridge;
- * then this file is deleted. */
+/* Device execution and byte-moving effects for the seeded Omega mathlibs units.
+ * Host planning/admission is in om/mathlibs/host.om. The default-OFF C branch
+ * is retained solely as the migration differential oracle. */
 #include "omega_gpu_mathlibs_api.h"
 
 #include <stdbool.h>
@@ -13,12 +12,29 @@
 #include "omega_blackwell_codegen.h"
 #include "omega_gpu_om_ir.h"
 #include "omega_gpu_session.h"
+#include "omega_gpu_mathlibs_host.h"
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+#define CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST 0
+#endif
 
 #define ML_POISON32 0xffbadbadu
 #define ML_POISON32_ALT 0x00badbadu
 #define ML_POISON64 0xffbadbadffbadbadull
 #define ML_WAIT_MS 600000ull
 #define ML_GOLDEN 11400714819323198485ull /* SplitMix64 increment, 0x9E3779B97F4A7C15 */
+
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+#define ml_sub(a, b) ((a) - (b))
+#define ml_mul(a, b) ((a) * (b))
+#define ml_overlap(a, na, b, nb) ((b) < (a) + (na) && (a) < (b) + (nb))
+#define ml_scan(n, v) ((n) + ((v) == ML_POISON32))
+#else
+#define ml_sub omega_mh_sub
+#define ml_mul omega_mh_mul
+#define ml_overlap(a, na, b, nb) omega_mh_overlap((uintptr_t)(a), (na), (uintptr_t)(b), (nb))
+#define ml_scan(n, v) omega_mh_add((n), omega_mh_poison((v), 0, 0, 0))
+#endif
 
 /* One kernel per (kind, a, b, mutant), device copy uploaded once and resident for the process. */
 typedef struct {
@@ -37,7 +53,11 @@ static bool g_hooked;
 static uint64_t now_ns(void) {
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
     return (uint64_t)t.tv_sec * 1000000000ULL + (uint64_t)t.tv_nsec;
+#else
+    return omega_mh_time((uint64_t)t.tv_sec, (uint64_t)t.tv_nsec);
+#endif
 }
 
 static void slot_clear(Slot *s) {
@@ -188,6 +208,7 @@ static void put64(uint32_t *w, uint64_t v) { w[0] = (uint32_t)v; w[1] = (uint32_
 
 /* ------------------------------------------------------------------ RNG */
 
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
 static int rng_args_ok(OmegaGpuRngKind kind, uint32_t nstreams, uint32_t per) {
     if ((unsigned)kind > OMEGA_GPU_RNG_NORMAL || nstreams == 0 || per == 0) return OMEGA_GPU_ML_BAD_ARGS;
     if (nstreams > OMEGA_GPU_RNG_MAX_STREAMS || (uint64_t)nstreams * per > OMEGA_GPU_RNG_MAX_OUTPUTS)
@@ -244,14 +265,20 @@ int omega_gpu_rng_generate(OmegaGpuRngKind kind, uint64_t seed, uint64_t stream0
     if (info) info->call_ns = now_ns() - t0;
     return rc;
 }
+#endif
 
 /* ------------------------------------------------------------------ FFT */
 
 static int lg_in(uint32_t n, uint32_t lo, uint32_t hi) {
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
     if (n < lo || n > hi || (n & (n - 1)) != 0) return -1;
     int k = 0;
     while ((1u << k) < n) k++;
     return k;
+#else
+    uint64_t k = omega_mh_lg(n, lo, hi);
+    return k == UINT32_MAX ? -1 : (int)k;
+#endif
 }
 
 static int fft_log2(uint32_t n) { return lg_in(n, OMEGA_GPU_FFT_MIN_N, OMEGA_GPU_FFT_MAX_N); }
@@ -289,6 +316,7 @@ int omega_gpu_fft_twiddles(uint32_t n, int inverse, float *tw) {
 static int many_basic(OmegaGpuFftType type, uint32_t rank, const uint32_t *n, uint32_t batch, int inverse,
                       const float *in, float *out, OmegaGpuMathInfo *info);
 
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
 int omega_gpu_fft_c2c(const float *in, float *out, uint32_t n, uint32_t batch, int inverse, OmegaGpuMathInfo *info) {
     int lg = fft_log2(n);
     if (lg < 0 && n >= 2 && n <= OMEGA_GPU_FFT_MANY_MAX_N)
@@ -345,6 +373,7 @@ int omega_gpu_fft_c2c(const float *in, float *out, uint32_t n, uint32_t batch, i
     if (info) info->call_ns = now_ns() - t0;
     return rc;
 }
+#endif
 
 /* ------------------------------------------------------------------ Philox */
 
@@ -362,6 +391,7 @@ static int philox_pass(const Slot *s, const uint32_t *args, uint32_t grid, size_
     return rc;
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
 int omega_gpu_philox_generate_dist(OmegaGpuPhiloxDist dist, uint64_t seed, uint64_t subseq0, uint32_t nstreams,
                                    uint64_t offset, uint32_t per_stream, void *out, OmegaGpuMathInfo *info) {
     if (!out || (unsigned)dist > OMEGA_GPU_PHILOX_NORMAL || nstreams == 0 || per_stream == 0)
@@ -424,6 +454,7 @@ int omega_gpu_philox_generate_dist(OmegaGpuPhiloxDist dist, uint64_t seed, uint6
     if (info) info->call_ns = now_ns() - t0;
     return rc;
 }
+#endif
 
 int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams, uint64_t offset, uint32_t per_stream,
                               uint32_t *out, OmegaGpuMathInfo *info) {
@@ -434,6 +465,9 @@ int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams
 
 /* Caller holds the lock. Validates, sizes the buffers, asks the unit for the pass plan (kind 6) and, when fn is set,
  * turns each step into launches of at most OMEGA_GPU_FFT_MAX_CTAS CTAs. */
+static int walk_locked(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+                       size_t bytes[3], OmegaGpuFftLaunchFn fn, void *ctx);
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
 static int walk_locked(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
                        size_t bytes[3], OmegaGpuFftLaunchFn fn, void *ctx) {
     if (!dims || !bytes || batch == 0 || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;
@@ -514,6 +548,7 @@ static int walk_locked(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *
     }
     return OMEGA_GPU_ML_OK;
 }
+#endif
 
 /* The launches of a walk with private copies of their twiddle tables, so the caller's fn runs unlocked. */
 typedef struct {
@@ -613,7 +648,7 @@ static int run_plan(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dim
     omega_gpu_session_lock();
     int rc = walk_locked(mode, ndim, dims, batch, inverse, bytes, NULL, NULL);
     const char *pi = (const char *)in, *po = (const char *)out;
-    if (rc == OMEGA_GPU_ML_OK && po < pi + bytes[0] && pi < po + bytes[1]) rc = OMEGA_GPU_ML_BAD_ARGS;
+    if (rc == OMEGA_GPU_ML_OK && ml_overlap(pi, bytes[0], po, bytes[1])) rc = OMEGA_GPU_ML_BAD_ARGS;
     if (rc == OMEGA_GPU_ML_OK) {
         if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }
         if (!omega_gpu_session_open()) rc = OMEGA_GPU_ML_CHIP_FAIL;
@@ -637,13 +672,13 @@ static int run_plan(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dim
         if (rc == OMEGA_GPU_ML_OK) {
             memcpy(out, dev, bytes[1]);
             uint64_t unwritten = 0;
-            for (size_t i = 0; i < bytes[1] / 4u; i++) unwritten += dev[i] == ML_POISON32;
+            for (size_t i = 0; i < bytes[1] / 4u; i++) unwritten = ml_scan(unwritten, dev[i]);
             if (info) info->unwritten_words = unwritten;
             if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
         }
     }
     omega_gpu_session_unlock();
-    if (info) info->call_ns = now_ns() - t0;
+    if (info) info->call_ns = ml_sub(now_ns(), t0);
     return rc;
 }
 
@@ -681,12 +716,20 @@ typedef struct {
     OmegaGpuFftManyLaunch *l;
     size_t n, cap;
     uint64_t *tab; /* the constant table: the unit's u64 (re, im) words */
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
     size_t ntab, tabcap;
     struct { uint32_t kind, a, b; size_t at; } tk[16];
     uint32_t ntk;
     int alias;
     uint64_t w_bytes, b_bytes;
+#endif
 } Many;
+typedef struct {
+    uint32_t rank, batch, oext[3], owords; /* output: extents, f32 words per element */
+    Lay olay;
+    uint64_t oextent;
+    int obasic;
+} ManyOut;
 
 static void many_free(Many *m) {
     free(m->l);
@@ -694,6 +737,11 @@ static void many_free(Many *m) {
     memset(m, 0, sizeof *m);
 }
 
+static int many_build(const OmegaGpuFftMany *p, int in_place, int alias, Many *m, size_t bytes[OMEGA_GPU_FFT_MANY_BUFS],
+                      ManyOut *o);
+static int many_each(uint32_t rank, const Lay *l, const uint32_t *ext, uint32_t batch,
+                     int (*f)(void *, uint32_t), void *ctx);
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
 /* Caller holds the lock: byte offset of the unit's table (kind 10 twiddles, 11 chirp) of a points, appended once. */
 static int many_table(Many *m, uint32_t kind, uint32_t a, uint32_t b, uint64_t *off) {
     for (uint32_t i = 0; i < m->ntk; i++)
@@ -921,12 +969,6 @@ static int many_mark(void *ctx, uint32_t idx) {
     return 0;
 }
 
-typedef struct {
-    uint32_t rank, batch, oext[3], owords; /* output: extents, f32 words per element */
-    Lay olay;
-    uint64_t oextent;
-    int obasic;
-} ManyOut;
 
 /* Caller holds the lock. Validates p, fills bytes[] and m's launches and table; *o describes the output side. */
 static int many_build(const OmegaGpuFftMany *p, int in_place, int alias, Many *m, size_t bytes[OMEGA_GPU_FFT_MANY_BUFS],
@@ -1042,6 +1084,7 @@ static int many_build(const OmegaGpuFftMany *p, int in_place, int alias, Many *m
     }
     return OMEGA_GPU_ML_OK;
 }
+#endif
 
 int omega_gpu_fft_many_walk(const OmegaGpuFftMany *plan, int in_place, size_t bytes[OMEGA_GPU_FFT_MANY_BUFS],
                             OmegaGpuFftManyLaunchFn fn, void *ctx) {
@@ -1059,14 +1102,25 @@ int omega_gpu_fft_many_walk(const OmegaGpuFftMany *plan, int in_place, size_t by
 }
 
 typedef struct { const uint32_t *dev; uint32_t *out; uint32_t words; uint64_t unwritten; } ManyScan;
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
 static int many_scan(void *ctx, uint32_t idx) {
     ManyScan *c = (ManyScan *)ctx;
     for (uint32_t k = 0; k < c->words; k++) c->unwritten += c->dev[(size_t)idx * c->words + k] == ML_POISON32;
     return 0;
 }
+#else
+static int many_scan(void *ctx, uint32_t idx) {
+    ManyScan *c = (ManyScan *)ctx;
+    size_t first = omega_mh_mul(idx, c->words);
+    for (uint32_t k = 0; k < c->words; k++)
+        c->unwritten = omega_mh_add(c->unwritten, omega_mh_poison(c->dev[first + k], 0, 0, 0));
+    return 0;
+}
+#endif
 static int many_copy_back(void *ctx, uint32_t idx) {
     ManyScan *c = (ManyScan *)ctx;
-    memcpy(&c->out[(size_t)idx * c->words], &c->dev[(size_t)idx * c->words], 4u * c->words);
+    size_t at = ml_mul(idx, c->words);
+    memcpy(&c->out[at], &c->dev[at], ml_mul(4, c->words));
     return 0;
 }
 
@@ -1081,8 +1135,8 @@ int omega_gpu_fft_many(const OmegaGpuFftMany *plan, const float *in, float *out,
     omega_gpu_session_lock();
     int rc = many_build(plan, in_place, 0, &m, bytes, &o);
     const char *pi = (const char *)in, *po = (const char *)out;
-    if (rc == OMEGA_GPU_ML_OK && !in_place && po < pi + bytes[OMEGA_GPU_FFT_BUF_IN] &&
-        pi < po + bytes[OMEGA_GPU_FFT_BUF_OUT])
+    if (rc == OMEGA_GPU_ML_OK && !in_place &&
+        ml_overlap(pi, bytes[OMEGA_GPU_FFT_BUF_IN], po, bytes[OMEGA_GPU_FFT_BUF_OUT]))
         rc = OMEGA_GPU_ML_BAD_ARGS;
     if (rc == OMEGA_GPU_ML_OK) {
         if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }
@@ -1123,14 +1177,18 @@ int omega_gpu_fft_many(const OmegaGpuFftMany *plan, const float *in, float *out,
     }
     omega_gpu_session_unlock();
     many_free(&m);
-    if (info) info->call_ns = now_ns() - t0;
+    if (info) info->call_ns = ml_sub(now_ns(), t0);
     return rc;
 }
 
 /* The legacy entry points' other lengths: basic layout, in and out may not overlap. */
 static int many_basic(OmegaGpuFftType type, uint32_t rank, const uint32_t *n, uint32_t batch, int inverse,
                       const float *in, float *out, OmegaGpuMathInfo *info) {
+#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
     if (!in || !out || in == out || !n || rank < 1 || rank > 3) return OMEGA_GPU_ML_BAD_ARGS;
+#else
+    if (omega_mh_basic(rank, (uintptr_t)in, (uintptr_t)out, (uintptr_t)n)) return OMEGA_GPU_ML_BAD_ARGS;
+#endif
     OmegaGpuFftMany p;
     memset(&p, 0, sizeof p);
     p.rank = rank;
@@ -1140,3 +1198,7 @@ static int many_basic(OmegaGpuFftType type, uint32_t rank, const uint32_t *n, ui
     p.inverse = inverse;
     return omega_gpu_fft_many(&p, in, out, info);
 }
+
+#if !CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+#include "omega_gpu_mathlibs_host.inc"
+#endif

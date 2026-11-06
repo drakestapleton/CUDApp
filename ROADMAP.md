@@ -24,6 +24,15 @@ Sources: Omega `docs/OMEGA.md` sections 2 to 5 (branch `docs/what-omega-is`, 202
 | `nvidia-smi`, NVML | Status, clocks, power | not started | MISSING | |
 | GSP firmware (`gsp_*.bin`) | Runs inside the GPU | stays NVIDIA's: the chip checks its signature | not replaceable | the kernel module loads NVIDIA's signed file from the system's firmware folder; CUDA++ never ships it |
 
+2026-11-06 host migration note: `om/mathlibs/host.om` now owns FFT walk,
+mixed-radix/Bluestein and PlanMany layout/overlap policy, RNG admission/seed
+arithmetic and time conversion. Its six strongly linked entry units use the
+existing seeded compiler/bridge pins; the default-OFF
+`CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST` branch is the C differential oracle.
+Focused host/simulator evidence and the unrun chip procedure are in
+`evidence/mathlibs-host-20261106/README.md`. Chip qualification remains
+**NOT_RUN** for this migration; no status row is upgraded.
+
 ## 2. Bars before I say "replaces CUDA"
 
 From Omega `docs/OMEGA.md` section 3. Each needs a receipt on the exact commit; none is waived.

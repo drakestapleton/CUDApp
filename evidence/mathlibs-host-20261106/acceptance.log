@@ -1,0 +1,343 @@
+python3 tests/mathlibs_host_om.py
+build: rc=0 make[1]: Leaving directory '~/work/cudastack/lanes/MathlibsHostOm'
+compile: rc=0 (no output)
+differential: rc=0 MATHLIBS-HOST-OM PASS cases=2477
+red: rc=1 FAIL line 232 case 2477: omega_mh_index(l,e,1,1)==2
+coverage: rc=0 Lines executed:68.22% of 1010
+strip-host: rc=0 (no output)
+missing-unit: rc=1 collect2: error: ld returned 1 exit status
+rng-stream-limit-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/rng-stream-limit
+rng-stream-limit-compile: rc=0 (no output)
+rng-stream-limit: rc=1 FAIL line 100 case 72: rng_args_ok(k,ns[i],per[j])==-(int)omega_mh_rng(k,ns[i],per[j],2)
+seed-increment-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/seed-increment
+seed-increment-compile: rc=0 (no output)
+seed-increment: rc=1 FAIL line 114 case 811: omega_mh_seed(seeds[i],seeds[j],k)==seeds[i]+seeds[j]+(k+1)*ML_GOLDEN
+poison64-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/poison64
+poison64-compile: rc=0 (no output)
+poison64: rc=1 FAIL line 119 case 890: omega_mh_poison(ML_POISON64,0,1,0)==1
+chunk-bound-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/chunk-bound
+chunk-bound-compile: rc=0 (no output)
+chunk-bound: rc=1 FAIL line 89 case 1110: !memcmp(&x.v[i],&y.v[i],sizeof *x.v)
+zero-stride-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/zero-stride
+zero-stride-compile: rc=0 (no output)
+zero-stride: rc=1 FAIL line 59 case 2271: ra==rb
+real-half-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/real-half
+real-half-compile: rc=0 (no output)
+real-half: rc=1 FAIL line 61 case 1309: !memcmp(a,b,sizeof a)
+axis-rotation-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/axis-rotation
+axis-rotation-compile: rc=0 (no output)
+axis-rotation: rc=1 FAIL line 70 case 960: 0
+overlap-bit-generate: rc=0 wrote checked portable Omega units to /tmp/mathlibs-host-om-28ntdu1o/overlap-bit
+overlap-bit-compile: rc=0 (no output)
+overlap-bit: rc=1 FAIL line 125 case 941: omega_mh_fill(0,7)==128
+MATHLIBS-HOST-OM GATE PASS: differential, red, strong-link negative, gcov, 8 killed .om mutants
+./build/gpu_mathlibs_test --sim
+mathlibs tier=sim fixture=tests/fixtures/mathlibs_rng_aienmath.txt philox_fixture=tests/fixtures/philox_curand_oracle.txt dist_fixture=tests/fixtures/philox_curand_dist_oracle.txt
+host rng_reference_vs_aienmath rows=792 mismatches=0
+host philox_reference_vs_random123_kat vectors=3 mismatches=0 nine_round_control_mismatches=3
+host philox_reference_vs_curand rows=1024 mismatches=0
+host philox_dist_reference_vs_curand uniform=896/896 uniform_double=896/896 uniform2_double=896/896 normal_within_2^-21s=896/896 normal_bit_exact=743 worst_err_over_s=1.848*2^-24 normal_double_rows=896 (not compared: no f64 IR)
+host philox_dist_negative_controls uniform_next_word=896/896 normal_sin_cos_swapped=896/896 uniform2_no_half_step=655/896 (must be caught)
+host rng_codegen kind=0 insns=168 gpr_peak=24 gpr_declared=64
+host rng_codegen kind=1 insns=168 gpr_peak=23 gpr_declared=64
+host rng_codegen kind=2 insns=232 gpr_peak=24 gpr_declared=64
+host fft_codegen n=4 inverse=0 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=4 inverse=1 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=8 inverse=0 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=8 inverse=1 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=16 inverse=0 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=16 inverse=1 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=32 inverse=0 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=32 inverse=1 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=64 inverse=0 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=64 inverse=1 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=0 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=1 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=0 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=1 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=0 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=1 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=0 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=1 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=0 insns=376 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=1 insns=376 gpr_peak=44 gpr_declared=64
+host philox_codegen insns=104 gpr_peak=51 gpr_declared=64
+host philox_dist_codegen dist=0 b=0 code_bytes=1664
+host philox_dist_codegen dist=0 b=1 code_bytes=2432
+host philox_dist_codegen dist=0 b=2 code_bytes=2432
+host philox_dist_codegen dist=0 b=3 code_bytes=2432
+host philox_dist_codegen dist=1 b=0 code_bytes=2176
+host philox_dist_codegen dist=1 b=1 code_bytes=2944
+host philox_dist_codegen dist=1 b=2 code_bytes=2944
+host philox_dist_codegen dist=1 b=3 code_bytes=2944
+host philox_dist_codegen dist=2 b=0 code_bytes=3840
+host philox_dist_codegen dist=2 b=1 code_bytes=4608
+host philox_dist_codegen dist=2 b=2 code_bytes=4608
+host philox_dist_codegen dist=2 b=3 code_bytes=4608
+host philox_dist_codegen dist=3 b=0 code_bytes=3200
+host philox_dist_codegen dist=3 b=1 code_bytes=3968
+host philox_dist_codegen dist=3 b=2 code_bytes=3968
+host philox_dist_codegen dist=3 b=3 code_bytes=3968
+host philox_dist_codegen dist=4 b=0 code_bytes=4480
+host philox_dist_codegen dist=4 b=1 code_bytes=5376
+host philox_dist_codegen dist=4 b=2 code_bytes=5376
+host philox_dist_codegen dist=4 b=3 code_bytes=5376
+host philox_dist_mutant_targeting kernels=20 errors=0
+host unit_codegen kind=4 a=3 b=0 threads=2 code_bytes=896
+host unit_codegen kind=4 a=3 b=1 threads=2 code_bytes=768
+host unit_codegen kind=4 a=6 b=0 threads=16 code_bytes=896
+host unit_codegen kind=4 a=6 b=1 threads=16 code_bytes=768
+host unit_codegen kind=4 a=12 b=0 threads=1024 code_bytes=896
+host unit_codegen kind=4 a=12 b=1 threads=1024 code_bytes=768
+host unit_codegen kind=5 a=2 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=4 b=3 threads=256 code_bytes=512
+host unit_codegen kind=5 a=25 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=16 b=11 threads=256 code_bytes=512
+host fft_twiddles entries=16376 off_by_more_than_half_ulp=0
+host fft_plan_words plans=5 mismatches=0
+host fft_plan_launches r2c_4096x2500=6 nd_4x2048x4=11 nd_16x2048x16_transposes=4
+host normal_model_sweep inputs=8388608 over_tol=0 worst_rel=3.256238e-07 at_A=20783 tol=2.87e-06 central~8360300
+host many_plans lengths=4095 bluestein=3848 wrong=0
+host many_magic divisors=8199 divisions=285971042 wrong=0
+host many_tables twiddles=67117054 chirps=16781310 off_by_more_than_half_ulp=0
+host many_walk refusals=18 shapes=10 launches=130 malformed=0
+sim rng_raw seed=0 stream0=0 ns=130 offset=0 per=17 mismatches=0
+sim rng_uniform seed=0 n=2210 mismatches=0
+sim rng_normal seed=0 n=2210 model_mismatches=0 over_tol=0 worst_rel=2.1803e-07
+sim rng_raw seed=0 stream0=0 ns=130 offset=1000 per=16 mismatches=0
+sim rng_raw seed=18446744073709551612 stream0=0 ns=130 offset=0 per=17 mismatches=0
+sim rng_uniform seed=18446744073709551612 n=2210 mismatches=0
+sim rng_normal seed=18446744073709551612 n=2210 model_mismatches=0 over_tol=0 worst_rel=2.1803e-07
+sim rng_raw seed=18446744073709551612 stream0=0 ns=130 offset=1000 per=16 mismatches=0
+sim rng_raw seed=1729 stream0=0 ns=130 offset=0 per=17 mismatches=0
+sim rng_uniform seed=1729 n=2210 mismatches=0
+sim rng_normal seed=1729 n=2210 model_mismatches=0 over_tol=0 worst_rel=2.3673e-07
+sim rng_raw seed=1729 stream0=18446744073709551488 ns=130 offset=3 per=5 mismatches=0
+sim rng_uniform seed=1729 n=650 mismatches=0
+sim rng_normal seed=1729 n=650 model_mismatches=0 over_tol=0 worst_rel=2.2538e-07
+sim rng_fixture rows_covered=581 of 792 comparisons=845 mismatches=0
+sim rng_mutant1 mismatches=2210 of 2210 (must be > 0)
+sim rng_mutant2 over_tol=2204 of 2210 (must be > 0)
+sim fft n=4 inverse=0 batch=3 normwise_err=1.0527e-16 tol=1.1921e-07 warp_orders_identical=1
+sim fft n=4 inverse=1 batch=3 normwise_err=4.0945e-08 tol=1.1921e-07 warp_orders_identical=1
+sim fft n=8 inverse=0 batch=3 normwise_err=5.7501e-08 tol=4.6661e-07 warp_orders_identical=1
+sim fft n=8 inverse=1 batch=3 normwise_err=5.1918e-08 tol=4.6661e-07 warp_orders_identical=1
+sim fft n=16 inverse=0 batch=3 normwise_err=5.0998e-08 tol=5.2622e-07 warp_orders_identical=1
+sim fft n=16 inverse=1 batch=3 normwise_err=5.0840e-08 tol=5.2622e-07 warp_orders_identical=1
+sim fft n=32 inverse=0 batch=3 normwise_err=8.1410e-08 tol=8.7362e-07 warp_orders_identical=1
+sim fft n=32 inverse=1 batch=3 normwise_err=7.8295e-08 tol=8.7362e-07 warp_orders_identical=1
+sim fft n=64 inverse=0 batch=3 normwise_err=7.5134e-08 tol=9.3322e-07 warp_orders_identical=1
+sim fft n=64 inverse=1 batch=3 normwise_err=7.2958e-08 tol=9.3322e-07 warp_orders_identical=1
+sim fft n=128 inverse=0 batch=3 normwise_err=8.2555e-08 tol=1.2806e-06 warp_orders_identical=1
+sim fft n=128 inverse=1 batch=3 normwise_err=9.2727e-08 tol=1.2806e-06 warp_orders_identical=1
+sim fft n=256 inverse=0 batch=3 normwise_err=9.4556e-08 tol=1.3402e-06 warp_orders_identical=1
+sim fft n=256 inverse=1 batch=3 normwise_err=8.9474e-08 tol=1.3402e-06 warp_orders_identical=1
+sim fft n=512 inverse=0 batch=3 normwise_err=1.0249e-07 tol=1.6876e-06 warp_orders_identical=1
+sim fft n=512 inverse=1 batch=3 normwise_err=9.9499e-08 tol=1.6876e-06 warp_orders_identical=1
+sim fft n=1024 inverse=0 batch=3 normwise_err=1.0519e-07 tol=1.7472e-06 warp_orders_identical=1
+sim fft n=1024 inverse=1 batch=3 normwise_err=1.0728e-07 tol=1.7472e-06 warp_orders_identical=1
+sim fft n=2048 inverse=0 batch=3 normwise_err=1.1160e-07 tol=2.0946e-06 warp_orders_identical=1
+sim fft n=2048 inverse=1 batch=3 normwise_err=1.1208e-07 tol=2.0946e-06 warp_orders_identical=1
+sim fft_mutant1 n=4 normwise_err=8.4399e-01 caught=1 expected=1
+sim fft_mutant1 n=64 normwise_err=1.4039e+00 caught=1 expected=1
+sim fft_mutant1 n=2048 normwise_err=1.4224e+00 caught=1 expected=1
+sim fft_mutant2 n=8 normwise_err=1.1819e+00 caught=1 expected=1
+sim fft_mutant2 n=16 normwise_err=9.6535e-01 caught=1 expected=1
+sim fft_mutant2 n=2048 normwise_err=8.7679e-01 caught=1 expected=1
+sim fft_mutant2 n=4 normwise_err=1.1889e-16 caught=0 expected=0
+sim philox_kat vectors=3 mismatches=0
+sim philox_streams runs=32 words=16896 mismatches=0
+sim philox_curand_fixture rows_covered=1024 of 1024 comparisons=1024 mismatches=0
+sim philox_dist dist=0 runs=56 words=29568 mismatches=0 curand_rows_covered=0 curand_disagree=0
+sim philox_dist dist=1 runs=56 words=29568 mismatches=0 curand_rows_covered=896 curand_disagree=0
+sim philox_dist dist=2 runs=56 words=59136 mismatches=0 curand_rows_covered=896 curand_disagree=0
+sim philox_dist dist=3 runs=56 words=59136 mismatches=0 curand_rows_covered=896 curand_disagree=0
+sim philox_dist dist=4 runs=56 words=29568 mismatches=0 curand_rows_covered=896 curand_disagree=0
+sim philox_partial_groups runs=50 mismatches=0
+sim philox seed=1729 subseq0=5 ns=130 offset=1000 per=68 mismatches=0
+sim philox_carry seed=7 ns=3 offset=4*(2^32-3)+0..3 per=31 dists=5 mismatches=0
+sim philox_mutant1 dist=0 offset=0 mismatches=1040 of 1040 (must be > 0)
+sim philox_mutant2 dist=0 offset=0 mismatches=1040 of 1040 (must be > 0)
+sim philox_mutant3 dist=1 offset=161 mismatches=6 of 1040 (must be > 0)
+sim philox_mutant4 dist=0 offset=1 mismatches=1040 of 1040 (must be > 0)
+sim philox_mutant5 dist=4 offset=0 mismatches=1040 of 1040 (must be > 0)
+sim philox_mutant6 dist=3 offset=0 mismatches=263 of 2080 (must be > 0)
+sim r2c n=8 batch=3 normwise_err=6.4200e-08 tol=8.5611e-07 warp_orders_identical=1 unwritten=0
+sim c2r n=8 batch=3 normwise_err=4.6810e-08 tol=7.3690e-07 warp_orders_identical=1 unwritten=0
+sim r2c n=16 batch=3 normwise_err=8.7351e-08 tol=1.5509e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=16 batch=3 normwise_err=8.2788e-08 tol=1.0843e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=32 batch=3 normwise_err=6.9836e-08 tol=1.6701e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=32 batch=3 normwise_err=8.0322e-08 tol=1.1439e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=64 batch=3 normwise_err=8.2803e-08 tol=2.3649e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=64 batch=3 normwise_err=9.0391e-08 tol=1.4913e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=128 batch=3 normwise_err=8.5342e-08 tol=2.4841e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=128 batch=3 normwise_err=9.7134e-08 tol=1.5509e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=256 batch=3 normwise_err=9.7887e-08 tol=3.1789e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=256 batch=3 normwise_err=9.9862e-08 tol=1.8983e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=512 batch=3 normwise_err=1.0717e-07 tol=3.2981e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=512 batch=3 normwise_err=1.0454e-07 tol=1.9579e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=1024 batch=3 normwise_err=1.1061e-07 tol=3.9930e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=1024 batch=3 normwise_err=1.1097e-07 tol=2.3053e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=2048 batch=3 normwise_err=1.1879e-07 tol=4.1122e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=2048 batch=3 normwise_err=1.2007e-07 tol=2.3649e-06 warp_orders_identical=1 unwritten=0
+sim r2c n=4096 batch=3 normwise_err=1.2517e-07 tol=4.8070e-06 warp_orders_identical=1 unwritten=0
+sim c2r n=4096 batch=3 normwise_err=1.2522e-07 tol=2.7124e-06 warp_orders_identical=1 unwritten=0
+sim r2c_mutant1 n=64 normwise_err=6.2675e-01 unwritten=0 caught=1
+sim r2c_mutant2 n=8 normwise_err=-nan unwritten=6 caught=1
+sim r2c_mutant2 n=4096 normwise_err=-nan unwritten=6 caught=1
+sim c2r_mutant1 n=64 normwise_err=6.3175e-01 unwritten=0 caught=1
+sim c2r_mutant2 n=8 normwise_err=-nan unwritten=24 caught=1
+sim c2r_mutant2 n=4096 normwise_err=-nan unwritten=12288 caught=1
+sim nd ndim=1 dims=256,0,0 inverse=0 batch=2 normwise_err=9.1256e-08 tol=1.3402e-06 warp_orders_identical=1
+sim nd ndim=1 dims=256,0,0 inverse=1 batch=2 normwise_err=9.4612e-08 tol=1.3402e-06 warp_orders_identical=1
+sim nd ndim=2 dims=4,4,0 inverse=0 batch=2 normwise_err=5.0990e-08 tol=2.3842e-07 warp_orders_identical=1
+sim nd ndim=2 dims=4,4,0 inverse=1 batch=2 normwise_err=5.1703e-08 tol=2.3842e-07 warp_orders_identical=1
+sim nd ndim=2 dims=8,16,0 inverse=0 batch=2 normwise_err=6.9856e-08 tol=9.9283e-07 warp_orders_identical=1
+sim nd ndim=2 dims=8,16,0 inverse=1 batch=2 normwise_err=7.3638e-08 tol=9.9283e-07 warp_orders_identical=1
+sim nd ndim=2 dims=32,64,0 inverse=0 batch=2 normwise_err=1.0562e-07 tol=1.8068e-06 warp_orders_identical=1
+sim nd ndim=2 dims=32,64,0 inverse=1 batch=2 normwise_err=1.0753e-07 tol=1.8068e-06 warp_orders_identical=1
+sim nd ndim=2 dims=16,2048,0 inverse=0 batch=2 normwise_err=1.2985e-07 tol=2.6209e-06 warp_orders_identical=1
+sim nd ndim=2 dims=16,2048,0 inverse=1 batch=2 normwise_err=1.3047e-07 tol=2.6209e-06 warp_orders_identical=1
+sim nd ndim=2 dims=2048,4,0 inverse=0 batch=2 normwise_err=1.1634e-07 tol=2.2139e-06 warp_orders_identical=1
+sim nd ndim=2 dims=2048,4,0 inverse=1 batch=2 normwise_err=1.1928e-07 tol=2.2139e-06 warp_orders_identical=1
+sim nd ndim=3 dims=4,4,4 inverse=0 batch=2 normwise_err=5.5253e-08 tol=3.5763e-07 warp_orders_identical=1
+sim nd ndim=3 dims=4,4,4 inverse=1 batch=2 normwise_err=5.6292e-08 tol=3.5763e-07 warp_orders_identical=1
+sim nd ndim=3 dims=4,8,16 inverse=0 batch=2 normwise_err=8.2992e-08 tol=1.1120e-06 warp_orders_identical=1
+sim nd ndim=3 dims=4,8,16 inverse=1 batch=2 normwise_err=8.3674e-08 tol=1.1120e-06 warp_orders_identical=1
+sim nd ndim=3 dims=16,16,16 inverse=0 batch=2 normwise_err=1.0641e-07 tol=1.5786e-06 warp_orders_identical=1
+sim nd ndim=3 dims=16,16,16 inverse=1 batch=2 normwise_err=1.0848e-07 tol=1.5786e-06 warp_orders_identical=1
+sim nd ndim=3 dims=8,4,32 inverse=0 batch=2 normwise_err=9.6656e-08 tol=1.4594e-06 warp_orders_identical=1
+sim nd ndim=3 dims=8,4,32 inverse=1 batch=2 normwise_err=9.2734e-08 tol=1.4594e-06 warp_orders_identical=1
+sim nd_mutant kind=5 level=1 ndim=2 batch=2 normwise_err=1.4541e+00 caught=1 expected=1
+sim nd_mutant kind=5 level=2 ndim=2 batch=2 normwise_err=-nan caught=1 expected=1
+sim nd_mutant kind=5 level=2 ndim=2 batch=1 normwise_err=6.6951e-08 caught=0 expected=0
+sim nd_mutant kind=1 level=1 ndim=3 batch=2 normwise_err=1.3826e+00 caught=1 expected=1
+sim many case="C2C 3 inverse=0" batch=2 in_place=0 launches=3 normwise_err=2.2958e-08 tol=5.8400e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 3 inverse=1" batch=2 in_place=0 launches=3 normwise_err=5.1025e-08 tol=5.8400e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 3 inverse=0" batch=2 in_place=0 launches=3 normwise_err=4.4022e-08 tol=8.2591e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 3 inverse=0" batch=2 in_place=0 launches=5 normwise_err=1.5347e-08 tol=5.8400e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 5 inverse=0" batch=2 in_place=0 launches=3 normwise_err=4.5449e-08 tol=9.4243e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 5 inverse=1" batch=2 in_place=0 launches=3 normwise_err=3.7864e-08 tol=9.4243e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 5 inverse=0" batch=2 in_place=0 launches=3 normwise_err=4.7159e-08 tol=1.3328e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 5 inverse=0" batch=2 in_place=0 launches=5 normwise_err=3.7386e-08 tol=9.4243e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 6 inverse=0" batch=2 in_place=0 launches=4 normwise_err=5.8600e-08 tol=9.3141e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 6 inverse=1" batch=2 in_place=0 launches=4 normwise_err=5.3646e-08 tol=9.3141e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 6 inverse=0" batch=2 in_place=0 launches=4 normwise_err=4.4479e-08 tol=1.3172e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 6 inverse=0" batch=2 in_place=0 launches=6 normwise_err=3.7744e-08 tol=9.3141e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 7 inverse=0" batch=2 in_place=0 launches=3 normwise_err=3.8687e-08 tol=1.3381e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 7 inverse=1" batch=2 in_place=0 launches=3 normwise_err=5.1518e-08 tol=1.3381e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 7 inverse=0" batch=2 in_place=0 launches=3 normwise_err=4.2568e-08 tol=1.8924e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 7 inverse=0" batch=2 in_place=0 launches=5 normwise_err=4.3250e-08 tol=1.3381e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 12 inverse=0" batch=2 in_place=0 launches=4 normwise_err=5.6891e-08 tol=9.9101e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 12 inverse=1" batch=2 in_place=0 launches=4 normwise_err=6.9109e-08 tol=9.9101e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 12 inverse=0" batch=2 in_place=0 launches=4 normwise_err=3.9649e-08 tol=1.4015e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 12 inverse=0" batch=2 in_place=0 launches=6 normwise_err=6.2191e-08 tol=9.9101e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 100 inverse=0" batch=2 in_place=0 launches=5 normwise_err=8.0261e-08 tol=2.5797e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 100 inverse=1" batch=2 in_place=0 launches=5 normwise_err=9.8426e-08 tol=2.5797e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 100 inverse=0" batch=2 in_place=0 launches=5 normwise_err=7.8838e-08 tol=3.6482e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 100 inverse=0" batch=2 in_place=0 launches=7 normwise_err=7.5511e-08 tol=2.5797e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 97 inverse=0" batch=2 in_place=0 launches=18 normwise_err=1.6165e-07 tol=2.7179e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 97 inverse=1" batch=2 in_place=0 launches=18 normwise_err=1.7737e-07 tol=2.7179e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 97 inverse=0" batch=2 in_place=0 launches=18 normwise_err=2.0272e-07 tol=3.8436e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 97 inverse=0" batch=2 in_place=0 launches=20 normwise_err=1.4441e-07 tol=2.7179e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 1000 inverse=0" batch=2 in_place=0 launches=7 normwise_err=1.1230e-07 tol=4.1573e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 1000 inverse=1" batch=2 in_place=0 launches=7 normwise_err=1.1255e-07 tol=4.1573e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 1000 inverse=0" batch=2 in_place=0 launches=7 normwise_err=1.1136e-07 tol=5.8793e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 1000 inverse=0" batch=2 in_place=0 launches=9 normwise_err=9.5534e-08 tol=4.1573e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 4095 inverse=0" batch=2 in_place=0 launches=27 normwise_err=2.4432e-07 tol=2.4861e-04 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 4095 inverse=1" batch=2 in_place=0 launches=27 normwise_err=2.4528e-07 tol=2.4861e-04 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 4095 inverse=0" batch=2 in_place=0 launches=27 normwise_err=2.4168e-07 tol=3.5159e-04 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 4095 inverse=0" batch=2 in_place=0 launches=29 normwise_err=1.8329e-07 tol=2.4861e-04 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 11 inverse=0" batch=2 in_place=0 launches=15 normwise_err=1.3509e-07 tol=9.8830e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 11 inverse=1" batch=2 in_place=0 launches=15 normwise_err=1.8179e-07 tol=9.8830e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 11 inverse=0" batch=2 in_place=0 launches=15 normwise_err=1.1540e-07 tol=1.3977e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 11 inverse=0" batch=2 in_place=0 launches=17 normwise_err=1.5157e-07 tol=9.8830e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 26 inverse=0" batch=2 in_place=0 launches=15 normwise_err=1.9266e-07 tol=1.2841e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C 26 inverse=1" batch=2 in_place=0 launches=15 normwise_err=2.0349e-07 tol=1.2841e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C 26 inverse=0" batch=2 in_place=0 launches=15 normwise_err=1.7573e-07 tol=1.8160e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R 26 inverse=0" batch=2 in_place=0 launches=17 normwise_err=1.6004e-07 tol=1.2841e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C {3,5}" batch=2 in_place=0 launches=5 normwise_err=6.6281e-08 tol=1.5264e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C {6,7,12}" batch=1 in_place=0 launches=9 normwise_err=9.3660e-08 tol=3.2605e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C {6,7,12} inverse" batch=1 in_place=0 launches=9 normwise_err=9.3582e-08 tol=3.2605e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2C {12,97}" batch=1 in_place=0 launches=21 normwise_err=1.8714e-07 tol=2.8170e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C {6,10}" batch=2 in_place=0 launches=7 normwise_err=7.8129e-08 tol=2.7555e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C {5,4,6}" batch=1 in_place=0 launches=8 normwise_err=7.4321e-08 tol=2.3788e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="R2C {12,9}" batch=1 in_place=0 launches=7 normwise_err=9.9229e-08 tol=3.0498e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R {6,10}" batch=2 in_place=0 launches=9 normwise_err=7.6927e-08 tol=2.6070e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R {5,4,6}" batch=1 in_place=0 launches=10 normwise_err=6.4276e-08 tol=2.4328e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="C2R {12,9}" batch=1 in_place=0 launches=9 normwise_err=7.6692e-08 tol=2.8573e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L1 R2C 12 basic in place" batch=3 in_place=1 launches=4 normwise_err=6.0857e-08 tol=1.4015e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L2 C2R 12 basic in place" batch=3 in_place=1 launches=6 normwise_err=7.2493e-08 tol=9.9101e-07 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L3 C2C {6,10} embedded strided" batch=2 in_place=0 launches=7 normwise_err=8.0930e-08 tol=2.2212e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L4 C2C 7 interleaved batches" batch=4 in_place=0 launches=3 normwise_err=4.5636e-08 tol=1.3381e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L5 R2C {5,8} embedded" batch=2 in_place=0 launches=6 normwise_err=6.5359e-08 tol=1.6023e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L6 C2R 97 strided" batch=2 in_place=0 launches=20 normwise_err=1.5665e-07 tol=2.7179e-05 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many case="L7 C2C {3,4,5} in place" batch=2 in_place=1 launches=7 normwise_err=7.6273e-08 tol=1.6456e-06 unwritten=0 gaps_changed=0 input_changed=0 warp_orders_identical=1
+sim many_mutant kind=7 level=1 case="C2C 12 inverse=0" batch=2 normwise_err=1.4830e+00 tol=9.9101e-07 caught=1 expected=1
+sim many_mutant kind=7 level=2 case="C2C 12 inverse=0" batch=2 normwise_err=9.4755e-01 tol=9.9101e-07 caught=1 expected=1
+sim many_mutant kind=8 level=1 case="C2C 97 inverse=0" batch=2 normwise_err=1.4441e+00 tol=2.7179e-05 caught=1 expected=1
+sim many_mutant kind=8 level=2 case="C2C 97 inverse=0" batch=2 normwise_err=2.5500e+02 tol=2.7179e-05 caught=1 expected=1
+sim many_mutant kind=9 level=1 case="C2R 12 inverse=0" batch=2 normwise_err=7.3205e-01 tol=9.9101e-07 caught=1 expected=1
+sim many_mutant kind=9 level=2 case="C2C 6 inverse=0" batch=2 normwise_err=1.2535e+00 tol=9.3141e-07 caught=1 expected=1
+sim many_mutant kind=9 level=2 case="C2C 6 batch 1" batch=1 normwise_err=4.3644e-08 tol=9.3141e-07 caught=0 expected=0
+mathlibs sim: PASS (6265 checks)
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit mathlibs_host (bridge-seeded)
+generating portable unit mathlibs_walk (bridge-seeded)
+generating portable unit mathlibs_step (bridge-seeded)
+generating portable unit mathlibs_many (bridge-seeded)
+generating portable unit mathlibs_index (bridge-seeded)
+generating portable unit mathlibs_fft (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+PASS portable Omega units regenerate byte for byte
+
+
+Wall time: 111.45 seconds

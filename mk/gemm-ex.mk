@@ -20,6 +20,25 @@ CUDAPP_MIGRATION_PENDING_GEMM_EX ?= 0
 CFLAGS += -DCUDAPP_MIGRATION_PENDING_GEMM_EX=$(CUDAPP_MIGRATION_PENDING_GEMM_EX)
 # The C oracle sums in double; a fused multiply-add rounds once where the C rounds twice, so contraction stays off.
 $(OUT_DIR)/omega_gpu_gemm_ex.o: CFLAGS += -ffp-contract=off
+# The checked Omega-to-C units do every operation through small generic helpers (o_op, o_get, o_norm, ...); at -O2's
+# default inline limits they stay calls, at raised ones they fold to the operation itself (the growth limits matter for
+# the large unit entry functions, whose o_op calls stay calls under the per-call limit alone). With them, the host path
+# measured by `make bench-gemm-ex` (2026-11-06, core 14, 623 cases, per-case medians of 6 runs) sums 2028 ms against
+# 902 ms for the C oracle (2.25x), same output bytes (test-gpu-gemm-ex-diff). Only
+# when $(CC) takes the flags (gcc does; clang ignores some with a warning, which -Werror would make an error).
+GEMM_EX_INLINE_FLAGS := -finline-limit=1000 --param large-function-growth=1000 --param inline-unit-growth=1000 \
+	--param large-function-insns=100000
+GEMM_EX_INLINE := $(shell $(CC) -Werror $(GEMM_EX_INLINE_FLAGS) -x c -c -o /dev/null /dev/null 2>/dev/null && \
+	echo $(GEMM_EX_INLINE_FLAGS))
+$(patsubst src/%.c,$(OUT_DIR)/%.o,$(wildcard src/cudapp_om_gemm_ex_*.c)): CFLAGS += $(GEMM_EX_INLINE)
+# The op 7 scan of the row unit: inlined through to the unit entry, the C compiler sees the w window is 8192 words (the
+# entry refuses any other length) and that the scan stops at word 8192, and drops the per-word bounds checks.
+GEMM_EX_ROW_FLAGS := --param max-inline-insns-auto=1000 --param max-inline-insns-single=4000
+GEMM_EX_ROW_INLINE := $(if $(GEMM_EX_INLINE),$(shell $(CC) -Werror $(GEMM_EX_ROW_FLAGS) -x c -c -o /dev/null /dev/null \
+	2>/dev/null && echo $(GEMM_EX_ROW_FLAGS)))
+# The epi unit: under the same limits the byte-view load (gx_get) and the conversion helpers fold into the per-element
+# store helper; left calls, s111 measured 39.6 ms against 29.6 ms folded (core 13, 2026-11-06).
+$(OUT_DIR)/cudapp_om_gemm_ex_row.o $(OUT_DIR)/cudapp_om_gemm_ex_epi.o: CFLAGS += $(GEMM_EX_ROW_INLINE)
 
 GEMM_EX_DIR = $(OUT_DIR)/gemm-ex
 GEMM_EX_TEST_DEPS = tests/gpu_gemm_ex_test.c tests/bw_warp_sim_tc.h tests/bw_hmma_model.h tests/bw_qmma_model.h \
@@ -103,10 +122,14 @@ test-gemm-ex-om-num:
 GEMM_EX_MUTANTS = \
 	'plan|s/^if or gt get x 18 2 eq get x 28 0$$/if or gt get x 18 3 eq get x 28 0/' \
 	'row|s/^ret shr b 16$$/ret shr b 15/' \
+	'row|s/^if ne and a gx_wh es 0$$/if ne and a 0 0/' \
+	'row|s/^gx_put edit dst i ce uint get tab ulong get src i$$/gx_put edit dst i ce uint get tab 0/' \
+	'x3|s/^p1 = gx_lane p1 shr s 16 kk$$/p1 = gx_lane p1 shr s 15 kk/' \
 	'acc|s/^f = f64 bitcast f32 gx_get view s add ix 1 4$$/f = f64 bitcast f32 gx_get view s add ix 2 4/' \
 	'dot|s/^s = add s mul x f$$/s = add s x/' \
 	'epi|s/^if ne bt bitcast f64 ulong 0$$/if eq bt bitcast f64 ulong 0/' \
-	'fp8|s/^sv = ulong gx_get view s sub cb sb 4$$/sv = ulong gx_get view s 0 4/'
+	'fp8|s/^ret ulong gx_wel view s sub cb sb 4$$/ret ulong gx_wel view s 0 4/' \
+	'fp8|s/^cb = add cb 1$$/cb = add cb 0/'
 test-gemm-ex-om-mutants: $(OUT_DIR)/libomega_gpu.a
 	@$(GEMM_EX_TOOLS)
 	@n=0; for mu in $(GEMM_EX_MUTANTS); do n=$$((n+1)); u=$${mu%%|*}; m=$${mu#*|}; d=$$(pwd)/$(GEMM_EX_DIR)/mutant$$n; \

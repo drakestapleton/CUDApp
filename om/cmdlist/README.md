@@ -65,16 +65,18 @@ implementation. Numeric conversion used in the QMD port was checked with Wolfram
 
 ## Host acceptance
 
-Run under the assigned CPU affinity, never on a GPU:
+Every host test, simulator, mutant and differential runs in a device-free
+namespace, as required by Main's 2026-11-06 safety rule. It exposes a minimal
+`/dev`, without NVIDIA, CUSE or VFIO nodes, plus the assigned CPU affinity:
 
 ```sh
 export OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc
 export OMEGA_BRIDGE=$HOME/work/cudastack/omega-bridge
 export OMEGA_BRIDGE_DIR=$OMEGA_BRIDGE
 export OMEGA_MV=$HOME/work/cudastack/omega-mv
-taskset -c 10-14 nice -n 10 make -j3 test-om-cmdlist test-runtime-api
-taskset -c 10-14 nice -n 10 make -j3 test-om-cmdlist-mutants
-taskset -c 10-14 nice -n 10 sh om/units.sh --check
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-om-cmdlist test-runtime-api
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-om-cmdlist-mutants
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh --check
 crumb compile .
 crumb verify .
 ```
@@ -139,11 +141,13 @@ missing hazard drain must be data-red in the host simulator before any chip run.
 Build the existing chip executable on the host (this does not open a GPU):
 
 ```sh
-taskset -c 10-14 nice -n 10 make -j3 build/gpu_launch_cost_test
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 build/gpu_launch_cost_test
 ```
 
 Only inside the authorized exclusive window, through the operator's current
-hardware gate, run these commands in this order and preserve stdout plus receipts:
+hardware gate, and after explicit authorization to expose the device for chip
+testing (the host namespace rule is not implicitly waived), run these commands
+in this order and preserve stdout plus receipts:
 
 ```sh
 build/gpu_launch_cost_test --reps 20 --n 16384 --k 2048 --out baseline-before.json

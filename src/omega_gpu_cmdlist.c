@@ -368,8 +368,8 @@ int omega_gpu_cmdlist_add(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L) {
 
 int omega_gpu_cmdlist_add_accesses(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L,
                                   const OmegaGpuCmdListAccess *accesses, uint32_t count) {
-    if (!cl || (count && !accesses) || count > OMEGA_GPU_CMDLIST_MAX_ACCESSES ||
-        cl->n >= cl->cap || program_storage(cl) != 0) return -1;
+    if (!cl || !L || (count && !accesses) || count > OMEGA_GPU_CMDLIST_MAX_ACCESSES ||
+        cl->n >= cl->cap || stale(cl) || program_storage(cl) != 0) return -1;
     uint64_t *p = cl->program + cl->n * CMDLIST_DESCRIPTOR_WORDS;
     p[0] = count;
     for (uint32_t j = 0; j < count; j++) {
@@ -406,7 +406,7 @@ int omega_gpu_cmdlist_plan_program(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpt
                                   OmegaGpuCmdListProgramPlan *plan) {
     OmegaGpuCmdListOpts o = {0};
     if (opts) o = *opts;
-    if (!cl || !plan || program_storage(cl) != 0 || stale(cl)) return -1;
+    if (!cl || !plan || stale(cl) || program_storage(cl) != 0) return -1;
     uint64_t a[16] = {cl->n, cl->cap, o.mode, o.stamps ? 1u : 0u, cl->words_cap,
         omega_gpu_session_submit_prefix_words(), o.barrier, (uint64_t)o.skip_launch,
         o.first_barrier_none ? 1u : 0u, cl->nwaits}, out[16], r = 1;

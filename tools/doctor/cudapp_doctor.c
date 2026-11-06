@@ -10,7 +10,13 @@
  *
  * It reads files only (/proc, /sys, /dev): no device is opened and no GPU window is needed.
  * CUDAPP_DOCTOR_ROOT=<dir> makes it read <dir>/proc, <dir>/sys and <dir>/dev instead (tests).
- * Exit 0: READY. Exit 1: at least one FAIL line. */
+ * Exit 0: READY. Exit 1: at least one FAIL line.
+ *
+ * Which lines to print, the module version parse, the memory figures and the FAIL count are the seeded
+ * Omega unit om/tools/doctor.om (omega_doctor). This file keeps the probes: fopen/fgets of the version
+ * file, access(2) of the device files and nvcc paths, the PCI scan and chip table, the meminfo sscanf
+ * and uname. -DCUDAPP_MIGRATION_PENDING_C_TOOLS_DOCTOR builds the former C body, kept as the oracle.
+ * Exit 2: the Omega unit refused (a build text holding % or a newline, a malformed chip refusal). */
 #include "omega_gpu_chip.h"
 
 #include <stdio.h>
@@ -23,6 +29,7 @@
 #error "build with make doctor: CUDAPP_NVIDIA_OPEN_ABI comes from the third_party/nvidia-open-<version> folder"
 #endif
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_DOCTOR
 static const char *g_root = "";
 static int g_fail, g_warn;
 
@@ -202,3 +209,107 @@ int main(int argc, char **argv) {
     printf("READY. Next: make hello-gpu\n");
     return 0;
 }
+#else
+#include "cudapp_native.h"
+
+#include <stdint.h>
+
+/* Facts layout: om/tools/doctor.om. Texts go to the blob as offset and length pairs. */
+static uint64_t g_facts[256];
+static unsigned char g_blob[262144], g_out[786432];
+static size_t g_used;
+static const char *g_root = "";
+
+static void path(char *out, size_t n, const char *p) { snprintf(out, n, "%s%s", g_root, p); }
+static void text(int at, const char *s, size_t n) {
+    if (n > sizeof g_blob - g_used) { fprintf(stderr, "cudapp doctor: probe texts exceed %zu bytes\n", sizeof g_blob); exit(2); }
+    memcpy(g_blob + g_used, s, n);
+    g_facts[at] = g_used; g_facts[at + 1] = n;
+    g_used += n;
+}
+static void text0(int at, const char *s) { text(at, s, strlen(s)); }
+
+static void probe_module(void) {
+    char p[4200], buf[1024] = { 0 };
+    path(p, sizeof p, "/proc/driver/nvidia/version");
+    FILE *f = fopen(p, "r");
+    if (!f || !fgets(buf, sizeof buf, f)) { if (f) fclose(f); return; }
+    fclose(f);
+    g_facts[13] = 1;
+    text0(14, buf);
+}
+static void probe_nodes(void) {
+    static const char *const nodes[] = { "/dev/nvidiactl", "/dev/nvidia0", "/dev/nvidia-uvm" };
+    for (size_t i = 0; i < 3; i++) {
+        char p[4200];
+        path(p, sizeof p, nodes[i]);
+        if (access(p, F_OK) != 0) g_facts[16 + i] = 1;
+        else if (access(p, R_OK | W_OK) != 0) g_facts[16 + i] = 2;
+    }
+}
+static void probe_gpu(void) {
+    OmegaGpuPciDev devs[16];
+    int n = omega_gpu_chip_scan(g_root, devs, 16);
+    if (n < 0) { g_facts[20] = 1; return; }
+    g_facts[19] = (uint64_t)n; /* as scanned: the unit reports the first 16 */
+    for (int i = 0; i < n && i < 16; i++) {
+        int g = 32 + 12 * i;
+        const OmegaGpuChipRow *r = omega_gpu_chip_find(devs[i].vendor, devs[i].device);
+        text(g, devs[i].bdf, strnlen(devs[i].bdf, 63));
+        if (r) {
+            g_facts[g + 2] = 1;
+            g_facts[g + 3] = r->device == 0x2e12u; /* GB10: one memory for CPU and GPU */
+            text0(g + 4, r->name); text0(g + 6, r->sm); text0(g + 8, r->receipt);
+        } else {
+            char t[2048];
+            omega_gpu_chip_refusal(&devs[i], t, sizeof t);
+            text0(g + 4, t);
+        }
+    }
+}
+static void probe_memory(void) {
+    char p[4200], l[256];
+    path(p, sizeof p, "/proc/meminfo");
+    FILE *f = fopen(p, "r");
+    if (!f) return;
+    unsigned long long total = 0, avail = 0;
+    while (fgets(l, sizeof l, f)) {
+        sscanf(l, "MemTotal: %llu kB", &total);
+        sscanf(l, "MemAvailable: %llu kB", &avail);
+    }
+    fclose(f);
+    g_facts[21] = 1; g_facts[22] = total; g_facts[23] = avail;
+}
+static void probe_toolkit(void) {
+    const char *paths[] = { "/usr/local/cuda/bin/nvcc", "/usr/bin/nvcc" };
+    for (size_t i = 0; i < 2; i++) {
+        char p[4200];
+        path(p, sizeof p, paths[i]);
+        if (access(p, X_OK) == 0) { g_facts[24] = i + 1; return; }
+    }
+}
+
+int main(int argc, char **argv) {
+    (void)argc; (void)argv;
+    const char *r = getenv("CUDAPP_DOCTOR_ROOT");
+    if (r) g_root = r;
+    text0(0, g_root);
+    text0(2, CUDAPP_NVIDIA_OPEN_ABI);
+    text0(4, __VERSION__);
+    struct utsname u;
+    if (uname(&u) == 0) { g_facts[6] = 1; text0(7, u.sysname); text0(9, u.release); text0(11, u.machine); }
+    probe_module();
+    probe_nodes();
+    probe_gpu();
+    probe_memory();
+    probe_toolkit();
+    uint64_t res = 0;
+    uint32_t st = omega_doctor(&res, g_facts, 256, g_blob, sizeof g_blob, g_out, sizeof g_out);
+    if (st != OMEGA_OK || res >> 63) {
+        fprintf(stderr, "cudapp doctor: omega_doctor refused (status %u, code %llu)\n", st, (unsigned long long)(res & 0xffu));
+        return 2;
+    }
+    fwrite(g_out, 1, (size_t)(res & 0xffffffffu), stdout);
+    return (res >> 32) ? 1 : 0;
+}
+#endif

@@ -55,6 +55,12 @@ if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS aiengpu=native/aiengpu/context.om"
 # C6 (CUDApp#10): the sm_121 disassembler; appended only to the default list, so OMEGA_UNITS subsets still work.
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/disasm/sm121_dis.om"
+# dag_eval is the dagsim scheduler; the other om/tools units are the decisions
+# of the host tools (tools-om-2). Append only when the caller did not
+# override the unit list, so a selective OMEGA_UNITS run stays selective.
+if [ -z "${OMEGA_UNITS:-}" ]; then
+  UNITS="$UNITS om/tools/dag_eval.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

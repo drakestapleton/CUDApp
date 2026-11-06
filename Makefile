@@ -710,14 +710,16 @@ $(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h src/runtime/rx_costmodel.
 		echo "dagsim.o references an operation an offline evaluator must not have"; \
 		rm -f $@; exit 1; fi
 
-$(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -Wl,--wrap=rx_cm_predict -lm
+DS_OM = src/cudapp_om_dag_eval.c
+$(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) -Wl,--wrap=rx_cm_predict -lm
 
-$(DS_CLI): tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
+$(DS_CLI): tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Itools/dagsim -o $@ tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) $(DS_OM) -lm
 
 test-dagsim: $(DS_UNIT) $(DS_CLI)
 	./$(DS_UNIT)
 	sh tests/dagsim/run_cli.sh $(DS_CLI) $(OUT_DIR)/dagsim-cli-out
 	sh tests/dagsim/mutant_lifetime.sh
 	sh tests/dagsim/mutant_predict.sh
+	sh tests/dagsim/mutant_omega.sh $(DS_CLI)

@@ -73,6 +73,9 @@ uint32_t omega_scan_ir(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, 
 uint32_t omega_scan_plan(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, void *p5, uint64_t p5_n);
 uint32_t omega_aiengpu(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_sm121_dis(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_own30b_prof(uint64_t *result, uint64_t p0, void *p1, uint64_t p1_n, const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
+uint32_t omega_doctor(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_cg_tc(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_gemm_any_ir(uint64_t *result, const void *p0, uint64_t p0_n, uint64_t p1, void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
 uint32_t omega_dnn_rows(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);

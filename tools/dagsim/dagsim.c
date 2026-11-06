@@ -452,6 +452,63 @@ static int resolve(const ds_model *m, const ds_opts *o, ds_num *num, ds_result *
     return DS_OK;
 }
 
+static void pk_d(uint64_t *dst, double x) {
+    uint64_t b;
+    memcpy(&b, &x, 8);
+    *dst = b;
+}
+
+/* Pack post-resolve numbers for omega_dag_eval. Refusal strings stay in C. */
+int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_result *r) {
+    if (m->n_ops == 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "empty DAG%s%s", "", "");
+    ds_num num[DS_MAX_OPS];
+    int rc = resolve(m, o, num, r);
+    if (rc) return rc;
+    memset(model, 0, 8192 * sizeof *model);
+    model[0] = (uint64_t)m->n_ops;
+    model[1] = (uint64_t)m->n_res;
+    model[2] = (uint64_t)m->n_deps;
+    model[3] = (uint64_t)m->n_buf;
+    model[4] = m->has_energy ? 1u : 0u;
+    pk_d(&model[5], m->joules);
+    pk_d(&model[6], m->power_w);
+    model[7] = (uint64_t)m->energy_prov;
+    model[8] = strcmp(m->instrument, "none") == 0 ? 1u : 0u;
+    model[9] = 1u;
+    for (int i = 0; i < m->n_ops; i++) {
+        uint64_t *p = &model[32 + i * 10];
+        pk_d(&p[0], num[i].t);
+        pk_d(&p[1], num[i].bytes);
+        pk_d(&p[2], num[i].launch);
+        pk_d(&p[3], num[i].cap);
+        p[4] = (uint64_t)(int64_t)m->ops[i].engine;
+        p[5] = (uint64_t)(int64_t)m->ops[i].bw;
+        p[6] = (uint64_t)(int64_t)m->ops[i].launcher;
+        p[7] = (uint64_t)m->ops[i].kind;
+        p[8] = (uint64_t)num[i].prov;
+    }
+    for (int i = 0; i < m->n_res; i++) {
+        uint64_t *p = &model[2592 + i * 4];
+        p[0] = (uint64_t)m->res[i].kind;
+        p[1] = (uint64_t)m->res[i].slots;
+        pk_d(&p[2], m->res[i].cap);
+        p[3] = (uint64_t)m->res[i].prov;
+    }
+    for (int i = 0; i < m->n_deps; i++) {
+        uint64_t *p = &model[2720 + i * 2];
+        p[0] = (uint64_t)m->deps[i].from;
+        p[1] = (uint64_t)m->deps[i].to;
+    }
+    for (int i = 0; i < m->n_buf; i++) {
+        uint64_t *p = &model[4768 + i * 4];
+        pk_d(&p[0], m->buf[i].bytes);
+        p[1] = (uint64_t)m->buf[i].cap;
+        p[2] = (uint64_t)(int64_t)m->buf[i].first;
+        p[3] = (uint64_t)(int64_t)m->buf[i].last;
+    }
+    return DS_OK;
+}
+
 /* Kahn topological order; returns 0 on a cycle */
 static int topo(const ds_model *m, int *order) {
     int indeg[DS_MAX_OPS] = {0};
@@ -495,7 +552,7 @@ static int reject_inverted_lifetimes(const ds_model *m, ds_result *r) {
     return DS_OK;
 }
 
-int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
+int ds_eval_c(const ds_model *m, const ds_opts *o, ds_result *r) {
     memset(r, 0, sizeof *r);
     if (m->n_ops == 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "empty DAG%s%s", "", "");
     ds_num num[DS_MAX_OPS];
@@ -718,6 +775,104 @@ int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
     r->synthetic = (r->prov_mask & (1u << DS_PROV_SYNTHETIC)) ? 1 : 0;
     r->status = DS_OK;
     return DS_OK;
+}
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_TOOLS
+extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n) __attribute__((weak));
+
+static double om_f(const uint64_t *s, int i) {
+    double x;
+    memcpy(&x, &s[i], 8);
+    return x;
+}
+
+static void om_names(const ds_model *m, const uint64_t *s, char *names, size_t cap) {
+    names[0] = 0;
+    size_t L = 0;
+    for (int b = 0; b < m->n_buf && L < cap - 8; b++) {
+        if (!(s[6336 + b / 64] & (1ull << (b % 64)))) continue;
+        snprintf(names + L, cap - L, "%s%s", L ? "," : "", m->buf[b].id);
+        L = strlen(names);
+    }
+}
+
+static int om_refuse(const ds_model *m, const uint64_t *s, ds_result *r) {
+    int why = (int)s[5], a = (int)s[6], b = (int)s[7];
+    double fa = om_f(s, 8), fb = om_f(s, 9);
+    char msg[256];
+    if (why == 2) return refuse(r, DS_REFUSED_CYCLE, "dependency cycle%s%s", "", "");
+    if (why == 3 && a >= 0 && a < m->n_buf && b >= 0 && b < m->n_res)
+        return refuse(r, DS_REFUSED_CAPACITY, "buffer %s alone exceeds capacity %s", m->buf[a].id, m->res[b].id);
+    if (why == 4) return refuse(r, DS_REFUSED_UNSUPPORTED, "no op can make progress (slots=0 or all blocked)%s%s", "", "");
+    if (why == 5) return refuse(r, DS_REFUSED_UNSUPPORTED, "scheduler did not converge%s%s", "", "");
+    if (why == 6 && a >= 0 && a < m->n_buf) {
+        snprintf(msg, sizeof msg, "inverted lifetime for buffer %s: first=%s start_ns=%.9g last=%s end_ns=%.9g",
+                 m->buf[a].id, endpoint_name(m, m->buf[a].first), fa, endpoint_name(m, m->buf[a].last), fb);
+        return refuse_msg(r, DS_REFUSED_LIFETIME, msg);
+    }
+    if (why == 7 && a >= 0 && a < m->n_res) {
+        snprintf(msg, sizeof msg, "capacity %s live bytes went negative (%.9g at t=%.9g); refusing the certificate",
+                 m->res[a].id, fa, fb);
+        return refuse_msg(r, DS_REFUSED_LIFETIME, msg);
+    }
+    if (why == 8 && a >= 0 && a < m->n_res) {
+        char names[160], what[200];
+        om_names(m, s, names, sizeof names);
+        snprintf(what, sizeof what, "%.0f B live at t=%.0f ns (%s) exceeds", fa, fb, names);
+        return refuse(r, DS_REFUSED_CAPACITY, "%s %s", what, m->res[a].id);
+    }
+    return refuse(r, DS_REFUSED_UNSUPPORTED, "omega refusal %s%s", "", "");
+}
+
+static int om_fill(const ds_model *m, const uint64_t *s, ds_result *r) {
+    if ((int)s[4] != DS_OK) return om_refuse(m, s, r);
+    memset(r, 0, sizeof *r);
+    r->status = DS_OK;
+    r->makespan_ns = om_f(s, 3);
+    r->total_bytes = om_f(s, 15);
+    r->total_busy_ns = om_f(s, 16);
+    r->total_launch_ns = om_f(s, 17);
+    r->bound_ns = om_f(s, 19);
+    r->bound_critical_path_ns = om_f(s, 20);
+    r->n_critical = (int)s[21];
+    r->prov_mask = (uint32_t)s[11];
+    r->energy_measured = (int)s[22];
+    r->energy_synthetic = (int)s[23];
+    r->energy_j = om_f(s, 24);
+    r->synthetic = (int)s[26];
+    r->n_ops = m->n_ops;
+    for (int i = 0; i < m->n_ops; i++) {
+        r->start_ns[i] = om_f(s, 4512 + i);
+        r->end_ns[i] = om_f(s, 4768 + i);
+        r->ready_ns[i] = om_f(s, 5024 + i);
+        r->op_contention_ns[i] = om_f(s, 5536 + i);
+        r->op_floor_ns[i] = om_f(s, 5280 + i);
+        if (i < r->n_critical) r->critical_path[i] = (int)s[6080 + i];
+    }
+    for (int i = 0; i < DS_ATTR_N; i++) r->attr_ns[i] = om_f(s, 5824 + i);
+    for (int i = 0; i < m->n_res; i++) {
+        r->bound_resource_ns[i] = om_f(s, 5792 + i);
+        r->peak_live_bytes[i] = om_f(s, 6344 + i);
+        r->peak_live_at_ns[i] = om_f(s, 6376 + i);
+    }
+    return DS_OK;
+}
+
+#endif
+int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
+#if defined(CUDAPP_MIGRATION_PENDING_C_TOOLS)
+    return ds_eval_c(m, o, r);
+#else
+    if (!omega_dag_eval) return ds_eval_c(m, o, r);
+    memset(r, 0, sizeof *r);
+    uint64_t model[8192], scratch[8192], result = 0;
+    int rc = ds_resolved_pack(m, o, model, r);
+    if (rc) return rc;
+    memset(scratch, 0, sizeof scratch);
+    if (omega_dag_eval(&result, model, 8192, scratch, 8192))
+        return refuse(r, DS_REFUSED_UNSUPPORTED, "omega trap%s%s", "", "");
+    return om_fill(m, scratch, r);
+#endif
 }
 
 int ds_eval_interval(const ds_model *m, const ds_opts *o, ds_result *nominal, double *lo_ns, double *hi_ns) {

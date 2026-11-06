@@ -1126,3 +1126,67 @@ header src/omega_gpu_dnn_types.h
 const OMEGA_GPU_DNN_F32 0 # EXPERIMENTAL
 const OMEGA_GPU_DNN_BF16 1 # EXPERIMENTAL
 const OMEGA_GPU_DNN_F16 2 # EXPERIMENTAL
+
+header src/omega_gpu_dnn_rows_api.h
+struct OmegaGpuDnnRowsShape 20 4 # EXPERIMENTAL
+field OmegaGpuDnnRowsShape rows 0 4 u32 1
+field OmegaGpuDnnRowsShape length 4 4 u32 1
+field OmegaGpuDnnRowsShape dtype 8 4 u32 1
+field OmegaGpuDnnRowsShape op 12 4 u32 1
+field OmegaGpuDnnRowsShape epsilon 16 4 f32 1
+const OMEGA_GPU_DNN_SOFTMAX 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_LAYERNORM 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_RMSNORM 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_REFUSED 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_BAD_ARGS 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ROWS_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_dnn_rows_codegen fn(*const OmegaGpuDnnRowsShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+fn omega_gpu_dnn_rows fn(*const OmegaGpuDnnRowsShape, *const c_void, *mut f32) -> i32 # EXPERIMENTAL
+
+header src/omega_gpu_dnn_activations_api.h
+struct OmegaGpuDnnActivationsShape 16 8 # EXPERIMENTAL
+field OmegaGpuDnnActivationsShape elements 0 8 u64 1
+field OmegaGpuDnnActivationsShape operation 8 4 u32 1
+field OmegaGpuDnnActivationsShape dtype 12 4 u32 1
+const OMEGA_GPU_DNN_RELU 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_GELU_ERF 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_GELU_TANH 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_SILU 3 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_BAD_ARGS 1 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_REFUSED 2 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_DNN_ACTIVATIONS_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_dnn_activations_codegen fn(*const OmegaGpuDnnActivationsShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+fn omega_gpu_dnn_activations fn(*const OmegaGpuDnnActivationsShape, *const c_void, *mut f32) -> i32 # EXPERIMENTAL
+
+header src/omega_gpu_conv2d_api.h
+struct OmegaGpuConv2dShape 72 4 # EXPERIMENTAL
+field OmegaGpuConv2dShape batch 0 4 u32 1
+field OmegaGpuConv2dShape in_channels 4 4 u32 1
+field OmegaGpuConv2dShape height 8 4 u32 1
+field OmegaGpuConv2dShape width 12 4 u32 1
+field OmegaGpuConv2dShape out_channels 16 4 u32 1
+field OmegaGpuConv2dShape kernel_h 20 4 u32 1
+field OmegaGpuConv2dShape kernel_w 24 4 u32 1
+field OmegaGpuConv2dShape stride_h 28 4 u32 1
+field OmegaGpuConv2dShape stride_w 32 4 u32 1
+field OmegaGpuConv2dShape pad_top 36 4 u32 1
+field OmegaGpuConv2dShape pad_bottom 40 4 u32 1
+field OmegaGpuConv2dShape pad_left 44 4 u32 1
+field OmegaGpuConv2dShape pad_right 48 4 u32 1
+field OmegaGpuConv2dShape dilation_h 52 4 u32 1
+field OmegaGpuConv2dShape dilation_w 56 4 u32 1
+field OmegaGpuConv2dShape groups 60 4 u32 1
+field OmegaGpuConv2dShape layout 64 4 u32 1
+field OmegaGpuConv2dShape dtype 68 4 u32 1
+const OMEGA_GPU_CONV2D_OK 0 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_BAD_ARGS 1 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_REFUSED 2 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_CODEGEN 3 # EXPERIMENTAL
+const OMEGA_GPU_CONV2D_CHIP 4 # EXPERIMENTAL
+fn omega_gpu_conv2d_plan fn(*const OmegaGpuConv2dShape, u64, *mut u64) -> i32 # EXPERIMENTAL
+fn omega_gpu_conv2d_codegen fn(*const OmegaGpuConv2dShape, *mut BlackwellIRProgram, *mut u8, usize, *mut OmegaBlackwellKernel) -> i32 # EXPERIMENTAL
+fn omega_gpu_conv2d fn(*const OmegaGpuConv2dShape, *const c_void, *const c_void, *mut f32) -> i32 # EXPERIMENTAL

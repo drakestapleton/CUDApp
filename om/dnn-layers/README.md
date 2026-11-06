@@ -4,6 +4,95 @@ The integration branch is `feat/dnn-layers-om`, stacked on attention #282,
 any-shape GEMM #283 (`04f16fe8`) and C1's append-only unsigned-conversion
 foundation (`3bf3ac4`). No GPU execution is authorized by this work.
 
+## Operator coverage and limits
+
+| Operator | Seeded source and contract | CPU-only entry | Input/output |
+| --- | --- | --- | --- |
+| Rectangular online-softmax attention | [`attn-any`](../attn-any/README.md): sequences 1..65535, head dimension 1..256, GQA, top-left causal or non-causal, finite scale including zero/negative | `omega_gpu_attn_any_codegen` | f32/bf16/f16 Q/K/V, f32 output |
+| Row softmax, layernorm, rmsnorm | [`dnn-rows`](../dnn-rows/README.md): rows/length 1..65535, bounded total elements; pure norms with positive finite normal f32 epsilon | `omega_gpu_dnn_rows_codegen` | shared f32/bf16/f16 input, f32 output |
+| ReLU, erf-GELU, tanh-GELU, SiLU | [`dnn-activations`](../dnn-activations/README.md): contiguous counts 1..UINT32_MAX, finite inputs, tail exits and stable saturation | `omega_gpu_dnn_activations_codegen` | shared f32/bf16/f16 input, f32 output |
+| Strict implicit-GEMM conv2d | [`conv2d`](../conv2d/README.md): NCHW/NHWC, OIHW filters, groups/depthwise, stride, independent zero padding and dilation | `omega_gpu_conv2d_plan`, `omega_gpu_conv2d_codegen` | shared f32/bf16/f16 image/filter, f32 output |
+
+These are experimental bounded APIs, not complete cuDNN coverage or
+performance replacements for the unchanged tuned model kernels. Public
+signatures, distinct refusal codes and caller buffer/finite-arithmetic
+preconditions are in `docs/runtime/API.md` sections 12 and 13 and the
+individual headers. Shape admission, addressing, tails, tiling and kernel
+arithmetic are seeded Omega. Execution C is allocation, upload/download,
+pointer stepping and session/launch lifetime handling, not a host math kernel.
+
+Convolution does not materialize a global im2col tensor. Its virtual image
+addresses feed `gs_dot` in `om/gemm-any/gemm_ir.om`, the same reduction used
+by default scalar f32 dense GEMM. The former C scalar generator is retained
+only behind default-OFF `CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER`; the
+existing tensor GEMM configuration/API is unchanged.
+
+Independent double host references use libm only as verification oracles.
+Each operator guide records its exact Wolfram query/result and **MODELED**
+numerical test envelope. Simulator comparisons exercise the emitted IR;
+neither the model nor simulated MUFU behavior proves chip accuracy.
+
+## Device-free host acceptance
+
+Set `OMEGA_OMC` and `OMEGA_BRIDGE` to the pinned paths below. After writers
+finish, the integration owner runs focused checks inside the device-free
+namespace:
+
+```sh
+export OMEGA_OMC="$HOME/work/cudastack/omega-mv/seed/out/omc"
+export OMEGA_BRIDGE="$HOME/work/cudastack/omega-bridge"
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh --check
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 \
+  test-dnn-half test-dnn-half-mutants test-om-ir-boundary \
+  test-gpu-attn-any test-gpu-attn-any-mutants \
+  test-gpu-dnn-rows test-gpu-dnn-rows-mutants \
+  test-gpu-dnn-activations test-gpu-dnn-activations-mutants \
+  test-gpu-conv2d test-gpu-conv2d-mutants test-gpu-conv2d-gemm-f32 \
+  test-runtime-api test-runtime-api-semver test-omega-binding-portable
+```
+
+During the multi-lane integration wave, **Integrator alone** runs the single
+full-suite attempt, after all candidate commits land:
+
+```sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test
+```
+
+No retry, no `pkill`/`killall`, and no stopping another lane's processes.
+Judge full-suite success by both rc 0 and the final
+`CUDA++ HOST TESTS PASS (<n> targets)` line; interruption is INCONCLUSIVE,
+not PASS. These templates do not retroactively claim that historical checks
+preceding the device-free policy ran inside a namespace.
+
+The DNN and attention host/mutant links additionally wrap session
+open/lock/unlock/free/allocation. Every wrapped entry aborts under `--sim`
+or `--quick`; an explicit direct-open source mutant must die at that guard.
+Separate `--shell-contract` mode has a fake backend solely to test NULL
+versus non-NULL session pointer handling, and never forwards to a device.
+The namespace remains mandatory even with those guards.
+
+### Safety correction
+
+The initial row epsilon-admission mutant, before wrappers were installed,
+had a source-proven path from `--sim` refusal testing to `session_open` and
+the Linux nvrm client. That path could attempt `/dev/nvidiactl`,
+`/dev/nvidia-uvm` and the driver-reported `/dev/nvidia%u`; source reachability
+does not establish a successful historical device open or launch.
+`om/dnn-rows/README.md` preserves the original command and correction.
+The inverted session-pointer checks were fixed, abort guards and direct-open
+negative controls were added to all DNN slices and attention, and all new
+host/simulator/mutant commands use the mandatory device-free namespace.
+
+## Source and generation pins
+
+Native seam: `9be13fb2595f1b3668288b36c4d17ef976bcb3a7`.
+Seeded compiler: omega-mv `e5b32567`, omc SHA-256
+`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
+Bridge checkout: `bc11b30b1faa9af8b875ae6fec24e5f49cf03ac4`;
+`om/units.sh` enforces `om/omega-bridge.lock` and generates the committed
+hosted/freestanding C and declarations. Generated identities are never
+hand-edited to resolve a stacked-branch conflict.
+
 ## Native scalar half seam
 
 `BW_IR_F16_TO_F32` is opcode 66 and `BW_IR_F32_TO_F16` is 67. Existing opcodes

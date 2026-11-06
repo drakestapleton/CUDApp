@@ -141,7 +141,7 @@ The checked C and declarations are generated only by that script.
 ```sh
 export OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc
 export OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge
-taskset -c 10-14 nice -n 10 sh om/units.sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh
 bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-activations test-gpu-dnn-activations-mutants
 ```
 

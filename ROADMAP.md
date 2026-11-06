@@ -25,11 +25,22 @@ Sources: Omega `docs/OMEGA.md` sections 2 to 5 (branch `docs/what-omega-is`, 202
 | GSP firmware (`gsp_*.bin`) | Runs inside the GPU | stays NVIDIA's: the chip checks its signature | not replaceable | the kernel module loads NVIDIA's signed file from the system's firmware folder; CUDA++ never ships it |
 
 2026-11-06 attention note: `om/attn-any/` adds seeded-Omega arbitrary-shape
-f32/bf16 online-softmax attention (dimensions 1..256, rectangular sequences,
+f32/bf16/f16 online-softmax attention (dimensions 1..256, rectangular sequences,
 GQA and top-left causal/non-causal masks), with independent host reference,
 warp simulation, source-mutant controls and `om/attn-any/CHIP.md`.
 Chip qualification is NOT_RUN; the §1 row remains PARTIAL and existing
 model-tuned attention generators are unchanged.
+
+2026-11-06 DNN note: `om/dnn-rows/`, `om/dnn-activations/` and `om/conv2d/`
+add seeded row softmax/layernorm/rmsnorm, ReLU/erf-GELU/tanh-GELU/SiLU and
+strict implicit-GEMM conv2d. Shared f32/bf16/f16 input formats accumulate
+to f32; convolution supports NCHW/NHWC, groups, stride, asymmetric padding
+and dilation without a global im2col buffer. Shape admission, tail/address
+logic and arithmetic are Omega. Independent double references, warp
+simulation and compiled source mutants exercise the host path; see
+`om/dnn-layers/README.md` for scope and device-free commands.
+Chip qualification and performance are NOT_RUN. This is a dated implementation
+note, not a status upgrade or complete cuDNN feature-coverage claim.
 
 
 ## 2. Bars before I say "replaces CUDA"

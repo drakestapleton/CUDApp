@@ -105,8 +105,8 @@ sqrt(27)/2 -> (3 sqrt(3))/2.
 Set OMEGA_OMC to the pinned seeded compiler and OMEGA_BRIDGE to the pinned
 companion checkout. Regenerate with:
 
-    taskset -c 10-14 nice -n 10 sh om/units.sh
-    taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-rows test-gpu-dnn-rows-mutants
+    bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh
+    bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-dnn-rows test-gpu-dnn-rows-mutants
 
 Do not run the full suite from this slice. The integrator owns its single
 attempt. Mutation evidence is kept under build/dnn-rows-evidence/mutants.

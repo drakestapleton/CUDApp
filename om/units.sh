@@ -26,6 +26,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/tools/dag_eval.om om/tools/dag_parse.om om/tools/dag_fmt.om om/tools/dag_res.om dag_diff=om/tools/dag_res.om,om/tools/dag_diff.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
 fi
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/tools/dag_jstr.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

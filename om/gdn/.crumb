@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T05:27:54Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:8d5e90445ea79fcc01382c745eabf67bfcf5aea958247ab5c51b7f481f4f8557",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 1,
+      "generated_at_commit": "8a59e9ff86c68813a99174eb2cd01750634e7ef0",
+      "source_tree": "sha256:33da7d2b9b1ec2e9d0c0d4cf064ccd4881a61c209b98d63a071ae7e09efe8074"
+    }
+  },
+  "layer": "unit",
+  "name": "gdn",
+  "purpose": "Omega admission and pack-layout validation for the GDN decode API",
+  "schema_version": "1.0.0"
+}

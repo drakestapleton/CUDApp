@@ -1,0 +1,8 @@
+File 'src/omega_blackwell_codegen_dec.c'
+Lines executed:98.94% of 565
+Branches executed:98.03% of 305
+Taken at least once:85.90% of 305
+Calls executed:99.91% of 1096
+Creating 'omega_blackwell_codegen_dec.c.gcov'
+
+Lines executed:98.94% of 565

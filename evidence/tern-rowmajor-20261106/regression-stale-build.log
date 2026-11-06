@@ -1,0 +1,3 @@
+$ gcc -O2 -std=gnu11 -Wall -Wextra -Werror -Wno-unused-function -Isrc -Itests -I~/work/cudastack/omega-mv/src -DOMEGA_TC_MARK_F2FP=0x46320000u -ffunction-sections -fdata-sections -Wl,--gc-sections -ffp-contract=off -include ~/work/cudastack/omega-mv/tests/bw_warp_sim_k.h -o /tmp/tern-regression-stale tests/gpu_tern_sched_test.c src/omega_blackwell_codegen_tern.c src/omega_blackwell_codegen.c src/cudapp_om_bw_enc_sm121.c src/omega_gpu_fmt.c src/sha256.c -lm
+
+rc=0

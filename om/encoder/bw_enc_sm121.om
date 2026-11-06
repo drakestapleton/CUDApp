@@ -499,6 +499,18 @@ if eq op 65
 put4 w wd o 29445 rb o 2 2158592 ctl o 5120512
 ret 0
 end
+note Native half forms are the E1_CVT sm_121 fixtures in src/omega_numeric.c.
+note Widening is HADD2.F32 Rd,-RZ,Ra.H0_H0; narrowing is F2F.F16.F32 Rd,Ra.
+note WolframLanguageEvaluator: FromDigits[#,16]& /@ {"ff007230","20000000","4100","7304","00200800","010fca00","010e2800"}
+note -> {4278219312,536870912,16640,29444,2099200,17811968,17704960}.
+if eq op 66
+put4 w wd o 4278219312 or 536870912 rb o 2 16640 ctl o 17811968
+ret 0
+end
+if eq op 67
+put4 w wd o 29444 rb o 2 2099200 ctl o 17704960
+ret 0
+end
 ret 1
 end
 

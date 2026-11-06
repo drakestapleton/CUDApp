@@ -197,6 +197,23 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
     case BW_IR_FSUB: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_u2f(a) - ws_u2f(b)), p); break;
     case BW_IR_FMUL: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_u2f(a) * ws_u2f(b)), p); break;
     case BW_IR_I2FP: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u((float)(int32_t)a), p); break; /* I2FP.F32.S32, round to nearest */
+    case BW_IR_I2FP_U32: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u((float)a), p); break;
+    case BW_IR_F2I_U32: {
+        float fa = ws_u2f(a);
+        uint32_t r = (fa != fa || fa <= 0.0f) ? 0u : fa >= 4294967296.0f ? 0xffffffffu : (uint32_t)fa;
+        ws_wrs(l, in->dst_vreg, in->dst_subreg, r, p);
+        break;
+    }
+    /* The simulator uses the host half conversion, independently checked against
+     * the integer E1 references by gpu_dnn_half_test.c, including all half bits. */
+    case BW_IR_F16_TO_F32: {
+        uint16_t raw=(uint16_t)a;_Float16 h;memcpy(&h,&raw,sizeof h);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,ws_f2u((float)h),p);break;
+    }
+    case BW_IR_F32_TO_F16: {
+        _Float16 h=(_Float16)ws_u2f(a);uint16_t raw;memcpy(&raw,&h,sizeof raw);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,raw,p);break;
+    }
     case BW_IR_FFMA: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fmaf(ws_u2f(a), ws_u2f(b), ws_u2f(c))), p); break;
     case BW_IR_F2FP_BF16_PACK: ws_wrs(l, in->dst_vreg, in->dst_subreg, (ws_k_bf16_rn(a) << 16) | ws_k_bf16_rn(b), p); break; /* F2FP.BF16.F32.PACK_AB (L313 bf16 state) */
     case BW_IR_FMNMX_MAX: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fmaxf(ws_u2f(a), ws_u2f(b))), p); break;

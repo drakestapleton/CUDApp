@@ -217,6 +217,15 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
         ws_wrs(l, in->dst_vreg, in->dst_subreg, r, p);
         break;
     }
+    /* Independent integer E1 references check these host half conversions. */
+    case BW_IR_F16_TO_F32: {
+        uint16_t raw=(uint16_t)a;_Float16 h;memcpy(&h,&raw,sizeof h);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,ws_f2u((float)h),p);break;
+    }
+    case BW_IR_F32_TO_F16: {
+        _Float16 h=(_Float16)ws_u2f(a);uint16_t raw;memcpy(&raw,&h,sizeof raw);
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,raw,p);break;
+    }
     default: ws_fail(s, WS_E_OP, pc, "opcode not modelled"); return;
     }
 }

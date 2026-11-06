@@ -149,7 +149,10 @@ typedef enum {
     /* C1 kernel conversions, append-only: preserve training opcodes 60..63. */
     BW_IR_I2FP_U32, /* u32 -> f32, round to nearest even, fixed latency */
     BW_IR_F2I_U32,  /* f32 -> u32, toward zero, saturating, NaN -> 0; variable latency */
-    BW_IR_LAST = BW_IR_F2I_U32
+    /* Scalar half conversions: low f16 lane, f32 register; round-nearest-even. */
+    BW_IR_F16_TO_F32,        /* HADD2.F32 Rd, -RZ, Ra.H0_H0; fixed latency */
+    BW_IR_F32_TO_F16,        /* F2F.F16.F32 Rd, Ra; upper half cleared; variable latency */
+    BW_IR_LAST = BW_IR_F32_TO_F16
 } BlackwellIROpcode;
 
 /* Barrier (reconvergence) registers: the sm_121 BSSY/BSYNC words carry a 4-bit barrier id

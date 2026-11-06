@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:02:43Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:63b840140afca7ce4b669599b012ed06f1593a87e9621991c3948daa2a443dc8",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "a8c6a22f76595ea2b875ed7ae5ee7c13e75dee22",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "3",
+  "name": "dnn-layers",
+  "purpose": "Seeded Omega DNN half conversion and integrated layer contracts",
+  "schema_version": "1.0.0"
+}

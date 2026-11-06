@@ -1,6 +1,6 @@
 # Omega Runtime API v0
 
-Omega Runtime API version: 0.14.0
+Omega Runtime API version: 0.15.0
 
 Status: first written version, 2026-10-19 (slice R1, omega-mv#594, tracking #593). Source of truth is the C headers in
 `src/`. This file describes them; `docs/runtime/omega_runtime_api.manifest` lists them; `make test-runtime-api` checks the
@@ -36,8 +36,9 @@ signature against the headers on every run.
 
 ## 2. Version and compatibility rule
 
-The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.14.0**. It is a property of the list of entries and
+The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.15.0**. It is a property of the list of entries and
 their behaviour, not of the library build. Changes so far:
+- 0.15.0: adds the experimental shared DNN scalar storage-format contract. Native scalar f16 conversion is implemented in the seeded sm_121 encoder; hardware qualification is NOT_RUN.
 - 0.14.0: adds experimental seeded-Omega arbitrary-shape f32/bf16 attention, `omega_gpu_attn_any`, with a CPU-only code-generation entry. Geometry, GQA and causal tails are decided in `om/attn-any/`; hardware qualification is NOT_RUN. Existing tuned model-shape entries are unchanged.
 - 0.13.0: adds experimental `omega_gpu_prefill_attn256_scoped` in `omega_gpu_attention_mirror.h`. Mode 0 preserves ordinary attention; mode 1 copies the complete original 27B K/V into one GPU-private reusable buffer before attention; mode 2 uses the provisional Omega-selected 1024-row threshold. Omega checks geometry, bounds, allocation capacity and completed PREP/copy/ATTEND ordering. Other modes and unsupported mirrored shapes are refused. `copy_ns` reports copy chip time separately from the unchanged attention info layout; total call time includes allocation and copying. Existing host/device/recorded entries and defaults are unchanged. See `om/attention-mirror/README.md` for qualification status.
 - 0.12.0: adds experimental `omega_gpu_pf_qgemm_reading_option` with `(rows, index)`. The checked Omega policy returns the scoped rt, warps, wait and group values at indices 0..3, or UINT32_MAX for invalid input. This proposed adaptive profile uses 64 rows for requests at most 64 rows and 128 above that threshold. Callers obtain the checked height and use `omega_gpu_pf_qgemm_workspace_fits` to check existing row, padded-row and tile capacities before switching profiles. The query returns 1 only when all capacities cover the request; otherwise callers allocate a compatible workspace.
@@ -744,3 +745,13 @@ See `om/attn-any/README.md` for the tested numerical envelope and
 `om/attn-any/CHIP.md` for the operator-gated chip procedure. No performance or
 chip-qualification claim is made.
 
+
+## 13. DNN layers (EXPERIMENTAL)
+
+### 13.1 Scalar formats (`src/omega_gpu_dnn_types.h`)
+
+`OMEGA_GPU_DNN_F32` (0), `OMEGA_GPU_DNN_BF16` (1) and
+`OMEGA_GPU_DNN_F16` (2) identify distinct contiguous scalar input storage
+formats. DNN kernels use f32 accumulation and f32 output. Neither 16-bit
+format is an alias for the other. These constants are EXPERIMENTAL;
+native conversion encoding is host/oracle exercised, not chip qualified.

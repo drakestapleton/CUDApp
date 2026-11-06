@@ -1,0 +1,37 @@
+-1	Unknown Error
+0	Success
+1	Uninitialized
+2	Invalid Argument
+3	Not Supported
+4	Insufficient Permissions
+5	Already Initialized
+6	Not Found
+7	Insufficient Size
+8	Insufficient External Power
+9	Driver Not Loaded
+10	Timeout
+11	Interrupt Request Issue
+12	NVML Shared Library Not Found
+13	Function Not Found
+14	Corrupted infoROM
+15	GPU is lost
+16	GPU requires reset
+17	GPU access blocked by the operating system
+18	Driver/library version mismatch
+19	In use by another client
+20	Insufficient Memory
+21	No data
+22	vGPU ECC not supported
+23	Insufficient Resources
+24	Invalid Frequency
+25	Argument version mismatch
+26	Requested functionality has been deprecated
+27	System is not in ready state
+28	No supported GPUs were found
+29	Resource not in correct state to perform requested operation
+30	Reset type is not supported for given device
+31	Unknown Error
+32	Unknown Error
+999	Unknown Error
+1000	Unknown Error
+4294967295	Unknown Error

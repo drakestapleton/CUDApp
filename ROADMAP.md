@@ -83,3 +83,5 @@ is not complete: realization, hazard analysis and remaining wrapper/packing/spec
 policy are still C. Native aggregate adoption and freestanding OM2 array support
 are pending integration; chip qualification is NOT_RUN. No roadmap row status is
 upgraded by this note.
+
+2026-11-06: elementwise API kernel generation, scheduling, reconvergence and loop-liveness metadata now default to seeded `om/kgen/ew_*.om` through the existing single `omega_gpu_om_ir_replay` entry. `CUDAPP_MIGRATION_PENDING_C_API_KGEN` retains the default-OFF C oracle. Complete generator-spec IR, allocation, text and cubin differential checks, source-derived runtime-shape boundaries, the red control and five seeded semantic mutants are recorded in `evidence/api-kgen/README.md`. This is host evidence, not chip qualification; chip NOT_RUN and the status rows above are unchanged.

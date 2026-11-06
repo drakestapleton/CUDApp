@@ -32,16 +32,19 @@ choice between two allocation calls. Signed immediates are truncated to their
 
 ## Verification
 
-Use the pinned compiler and bridge already checked by `om/units.sh`:
+Use the pinned compiler and bridge already checked by `om/units.sh`. Run host,
+simulator, differential and mutant gates in the device-free namespace below.
+A missing device node is a host-path defect to fix, not permission to rerun
+without the wrapper.
 
 ```sh
 export OMEGA_OMC=/path/to/omega-mv/seed/out/omc
 export OMEGA_BRIDGE=/path/to/omega-bridge
 export OMEGA_MV=/path/to/omega-mv
-taskset -c 10-14 nice -n 10 sh om/units.sh --check
-taskset -c 10-14 nice -n 10 make -j3 test-codegen-tern-diff
-taskset -c 10-14 nice -n 10 python3 om/codegen/tern_mutants.py
-taskset -c 10-14 nice -n 10 make -j3 test-codegen-tern-sim
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh --check
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-codegen-tern-diff
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 python3 om/codegen/tern_mutants.py
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-codegen-tern-sim
 ```
 
 The differential includes the independent C oracle in the test translation
@@ -80,3 +83,5 @@ hash, run its correctness and shipped mutant controls before bandwidth, and save
 its final verdict/receipt. Never run the pinned Omega checkout's old C builder
 and call that qualification of this migration. Do not change live services,
 chip locks, driver state or boot configuration as part of this host-only work.
+Device access for an eventual chip battery requires its own explicit
+authorization; this lane does not disable or bypass the host-test namespace.

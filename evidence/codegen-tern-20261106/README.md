@@ -132,6 +132,36 @@ the green result quoted here is the subsequent device-free run. No old result
 is relabeled as having used the wrapper. Future tests use the wrapper above.
 This host-only source-contract gate does not qualify or launch hardware.
 
+## Final device-free ternary acceptance
+
+After documenting the namespace requirement, all focused ternary examples were
+exercised again, serially inside one device-free namespace:
+
+```
+bwrap --dev-bind / / --dev /dev --proc /proc -- \
+  taskset -c 10-14 nice -n 10 env \
+  OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc \
+  OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge \
+  OMEGA_MV=/home/drakestapleton/work/cudastack/omega-mv \
+  OMEGA_BRIDGE_DIR=/home/drakestapleton/work/cudastack/omega-bridge \
+  sh -c 'sh om/units.sh --check && make -j3 test-codegen-tern-diff && python3 om/codegen/tern_mutants.py && make -j3 test-codegen-tern-sim'
+```
+
+Observed command **rc 0**. `device-free-focused.log` retains the full output:
+
+```
+PASS portable Omega units regenerate byte for byte
+CODEGEN TERN RECORD NEGATIVE CONTROL CAUGHT
+CODEGEN TERN DIFF PASS (213120 programs, 14258 refusals)
+CODEGEN TERN OMEGA MUTANTS PASS (68 source-mutant/config controls)
+CODEGEN TERN SIM: 34 checks, 0 failed: PASS
+```
+
+These are new device-free runs, not a relabeling of earlier evidence. The full
+integrated suite remains the integration owner's gate; no second private full
+suite was launched. The disposable latency verification worktree and temporary
+generation environment have been removed. No owned acceptance process remains.
+
 ## Numeric encoding checks
 WolframLanguageEvaluator:
 `{BitAnd[2^32-1,BitNot[BitShiftLeft[15,9]]],BitShiftLeft[2^32-1,32]}`

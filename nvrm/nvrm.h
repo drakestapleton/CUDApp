@@ -63,6 +63,7 @@ typedef struct {
     uint8_t rm_live;
     uint8_t cpu_live;
     uint8_t quarantined;
+    uint64_t omega_mapping; /* owned native-bridge token; never a raw address */
 } NvrmLiveAlloc;
 
 /* An extra command queue (GPFIFO channel) in the same channel group (TSG) and
@@ -116,6 +117,11 @@ typedef struct {
     uint8_t       gpu_registered;
     uint8_t       vas_registered;
     uint8_t       faulted;
+    /* One checked mapping table per client, not the bridge's default128 table.
+     * Callers serialize complete reserve/bind/free transactions on this Nvrm. */
+    struct omega_native_context *omega_context;
+    uint64_t omega_pending_mapping, omega_pending_address, omega_pending_size;
+    uint64_t omega_usermode_mapping;
     /* Fault injection applies once at the driver wrapper boundary. */
     uint8_t       inject_uvm_free_failure;
     uint8_t       inject_rm_free_failure;

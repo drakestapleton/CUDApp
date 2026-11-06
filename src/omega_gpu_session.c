@@ -26,6 +26,11 @@
 #include <pthread.h>
 #endif
 
+
+/* Differential oracle only. Production uses the checked Omega C5 decisions. */
+#ifndef CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT
+#define CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT 0
+#endif
 #define PAGE 0x1000ull
 
 /* Push-buffer method header (the nvrm_mthd encoding, physics nvrm.h): increasing, count words, subchannel. */
@@ -475,13 +480,29 @@ int omega_gpu_session_recover(void) {
     const OmegaGpuPlatform *p = LOAD(g_p);
     int rc = -1;
     const int latched = LOAD(g_blocked) || LOAD(g_module_latched);
-    if (!latched || !g_open || !p) {
+#if CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT
+    const int eligible = latched && g_open && p;
+#else
+    uint64_t eligible = 0;
+    if (omega_native_c5(&eligible, 3, latched != 0, g_open, p != NULL, 0, 0) != OMEGA_OK)
+        eligible = 0;
+#endif
+    if (!eligible) {
         omega_gpu_session_set_error(latched ? "recover: latched but no device is open" : "recover: not latched (nothing to recover)");
         goto out;
     }
     for (unsigned i = 0; i < g_nhooks; i++) g_hooks[i]();
     const int prc = p->device_close(p->ctx, g_s.dev);
     if (prc != OMEGA_GPU_PLAT_OK) { fail_plat("recover: the device close reported a teardown fault (still latched: the old grid may live on, exit the process)", prc); goto out; }
+#if !CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT
+    /* device_close acknowledges the platform's bundled queue/channel/context
+     * destruction. Never release resources or lift admission on a failed ack. */
+    uint64_t phase = 0;
+    if (omega_native_c5(&phase, 4, 1, 0, 0, 0, 0) != OMEGA_OK || phase != 7) {
+        omega_gpu_session_set_error("recover: Omega teardown decision refused (still latched)");
+        goto out;
+    }
+#endif
     memset(g_xq, 0, sizeof g_xq);
     memset(g_xpb, 0, sizeof g_xpb);
     const uint32_t opens = g_s.opens;
@@ -523,7 +544,10 @@ static inline void cpu_relax(void) {
  * ARM yield hint) so a launch that finishes inside the window is seen within about one read. Then the platform's
  * poll_word in slices of OMEGA_GPU_SESSION_POLL_SLICE_MS (Linux reference: the m16 50 us sleep-poll) until
  * timeout_ms, checking for a cancel request between slices. */
-static int session_wait(const OmegaGpuPlatform *p, uint64_t off, uint32_t want, uint64_t timeout_ms, uint32_t spin_us) {
+static int session_wait(const OmegaGpuPlatform *p, uint64_t off, uint32_t want, uint64_t timeout_ms, uint32_t spin_us,
+                        uint64_t start_ns, uint64_t deadline_ns) {
+#if CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT
+    (void)start_ns; (void)deadline_ns;
     volatile uint32_t *m = (volatile uint32_t *)((uint8_t *)g_s.marker.cpu + off);
     if (spin_us) {
         const uint64_t end = p->time_now_ns(p->ctx) + (uint64_t)spin_us * 1000u;
@@ -545,6 +569,30 @@ static int session_wait(const OmegaGpuPlatform *p, uint64_t off, uint32_t want, 
         waited += slice;
         if (waited >= timeout_ms) return WAIT_TIMED_OUT;
     }
+#else
+    (void)timeout_ms;
+    volatile uint32_t *m = (volatile uint32_t *)((uint8_t *)g_s.marker.cpu + off);
+    for (;;) {
+        if (LOAD(g_cancel)) return WAIT_CANCELLED;
+        const uint64_t now = p->time_now_ns(p->ctx);
+        uint64_t decision = 0;
+        const int done = (int32_t)(*m - want) >= 0;
+        if (omega_native_c5(&decision, 1, now, start_ns, deadline_ns, done, 0) != OMEGA_OK)
+            return WAIT_REFUSED;
+        if (decision == 3) return WAIT_TIMED_OUT;
+        if (decision == 1) return 0;
+        if (now - start_ns < (uint64_t)spin_us * 1000u) { cpu_relax(); continue; }
+        uint64_t slice = 0;
+        if (omega_native_c5(&slice, 2, now, deadline_ns, OMEGA_GPU_SESSION_POLL_SLICE_MS, 0, 0) != OMEGA_OK)
+            return WAIT_REFUSED;
+        uint32_t seen = 0;
+        int rc = p->poll_word(p->ctx, g_s.marker.handle, off, want, slice, &seen);
+        if (rc != OMEGA_GPU_PLAT_OK && rc != OMEGA_GPU_POLL_TIMED_OUT) return WAIT_REFUSED;
+        /* Re-observe the clock even on success: late completion is not timely
+         * completion. Floor slices and zero-ms polls cover the sub-ms tail. */
+        if (!slice) cpu_relax();
+    }
+#endif
 }
 
 int omega_gpu_session_launch(const OmegaGpuLaunch *L, uint64_t *elapsed_ns, uint32_t *marker_out) {
@@ -674,6 +722,13 @@ int omega_gpu_session_launch(const OmegaGpuLaunch *L, uint64_t *elapsed_ns, uint
 
     const uint32_t spin_us = L->spin_us ? L->spin_us : omega_gpu_session_spin_us();
     uint64_t t0 = p->time_now_ns(p->ctx);
+    uint64_t deadline_ns = 0;
+#if !CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT
+    if (omega_native_c5(&deadline_ns, 0, t0, L->timeout_ms, 0, 0, 0) != OMEGA_OK || !deadline_ns) {
+        omega_gpu_session_set_error("launch watchdog deadline overflow");
+        return -1; /* refused before ringing the doorbell */
+    }
+#endif
     rc = p->queue_submit(p->ctx, g_s.queue, pb, (uint32_t)n);
     if (rc == OMEGA_GPU_PLAT_REFUSED_BUSY) {
         /* an earlier submission is unretired, so its completion is uncertain (a command list that timed out queues
@@ -685,8 +740,8 @@ int omega_gpu_session_launch(const OmegaGpuLaunch *L, uint64_t *elapsed_ns, uint
         fail_plat("submit_methods", rc); /* contract: a refused submit rang no doorbell, nothing is in flight */
         return -1;
     }
-    int w = session_wait(p, 0, OMEGA_BW_MARKER_COMPLETION_PAYLOAD, L->timeout_ms, spin_us);
-    if (w == 0) w = session_wait(p, 0x10, OMEGA_BW_MARKER2_PAYLOAD, L->timeout_ms, spin_us);
+    int w = session_wait(p, 0, OMEGA_BW_MARKER_COMPLETION_PAYLOAD, L->timeout_ms, spin_us, t0, deadline_ns);
+    if (w == 0) w = session_wait(p, 0x10, OMEGA_BW_MARKER2_PAYLOAD, L->timeout_ms, spin_us, t0, deadline_ns);
     if (w != 0) {
         /* uncertain completion: keep everything (parked), refuse every later call */
         if (w == WAIT_CANCELLED) {

@@ -52,6 +52,7 @@ static struct {
     int mode;
     int cancel_on_poll;       /* poll_word calls omega_gpu_session_cancel() on its first call */
     uint64_t ns;
+    uint64_t submitted_ns, marker_delay_ns[2];
     unsigned allocs, frees, free_refusals, submits, polls, retires, syncs, irq_calls, dev_opens, dev_closes;
     unsigned locks_held;
     void (*before_lock)(void); /* one contender completes before the fake lock is granted */
@@ -156,6 +157,17 @@ static int f_poll(void *c, OmegaGpuBufferHandle h, uint64_t off, uint32_t want, 
     if (fk.cancel_on_poll) { fk.cancel_on_poll = 0; omega_gpu_session_cancel(); }
     volatile uint32_t *w = (volatile uint32_t *)((uint8_t *)fk.mem[h.index] + off);
     *seen = *w;
+    if (fk.marker_delay_ns[0] && fk.submits && off <= 0x10 && (off == 0 || off == 0x10)) {
+        const uint64_t due = fk.submitted_ns + fk.marker_delay_ns[off == 0x10];
+        const uint64_t available = ms * 1000000u;
+        if (fk.ns < due && due - fk.ns > available) {
+            fk.ns += available;
+            return OMEGA_GPU_POLL_TIMED_OUT;
+        }
+        if (fk.ns < due) fk.ns = due;
+        *w = want; *seen = want;
+        return OMEGA_GPU_PLAT_OK;
+    }
     if ((int32_t)(*w - want) >= 0) return 0;
     fk.ns += ms * 1000000u;
     return OMEGA_GPU_POLL_TIMED_OUT;
@@ -194,12 +206,13 @@ static int f_submit(void *c, OmegaGpuQueueHandle q, const uint32_t *w, uint32_t 
     if (!buf_live(ring) || (uint64_t)n * 4u > fk.desc[ring.index].bytes) return OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH;
     memcpy(fk.mem[ring.index], w, (size_t)n * 4u);
     fk.submits++;
+    fk.submitted_ns = fk.ns;
     if (fk.mode != MODE_COMPLETE) return 0;
     for (uint32_t i = 0; i + 5 < n; i++) {
         if (w[i] == ((2u << 28) | (5u << 16) | (0u << 13) | (0x005cu >> 2))) { /* release: va lo, va hi, payload */
             uint64_t va = (uint64_t)w[i + 1] | ((uint64_t)w[i + 2] << 32);
             uint32_t *m = va_to_cpu(va);
-            if (m) *m = w[i + 3];
+            if (m && !fk.marker_delay_ns[0]) *m = w[i + 3];
         }
         if (w[i] == ((2u << 28) | (2u << 16) | (1u << 13) | (0x0188u >> 2)) && w[i + 3] == ((2u << 28) | (2u << 16) | (1u << 13) | (0x0180u >> 2)) &&
             w[i + 4] == 4u) { /* the semaphore init upload: the kernel ran, the semaphore says DONE */
@@ -412,6 +425,45 @@ static void c_timeout_parks(void) {
     EXPECT(omega_gpu_session_is_blocked());
     omega_gpu_session_close();
     EXPECT(fk.dev_closes == 0 && fk.frees == 0);
+}
+
+/* Two releases at 3 ms and 6 ms are individually inside 5 ms, but the
+ * submission is not. The legacy per-marker oracle incorrectly succeeds. */
+static void c_submission_deadline(void) {
+    fk_reset();
+    EXPECT(install() == 0);
+    omega_gpu_session_lock();
+    EXPECT(omega_gpu_session_open() != NULL);
+    fk.marker_delay_ns[0] = 3000000u;
+    fk.marker_delay_ns[1] = 6000000u;
+    OmegaGpuLaunch L = launch_desc(5);
+    EXPECT(omega_gpu_session_launch(&L, NULL, NULL) == -1);
+    EXPECT(omega_gpu_session_is_blocked() && fk.retires == 0);
+    EXPECT(strstr(omega_gpu_session_last_error(), "timed out") != NULL);
+    EXPECT(fk.ns - fk.submitted_ns >= 5000000u);
+    EXPECT(fk.ns - fk.submitted_ns < 6000000u);
+    omega_gpu_session_unlock();
+    EXPECT(omega_gpu_session_recover() == 0 && fk.dev_closes == 1);
+    fk.marker_delay_ns[0] = fk.marker_delay_ns[1] = 0;
+    omega_gpu_session_lock();
+    EXPECT(omega_gpu_session_open() != NULL);
+    EXPECT(omega_gpu_session_launch(&L, NULL, NULL) == 0);
+    EXPECT(fk.dev_opens == 2);
+    omega_gpu_session_unlock();
+    omega_gpu_session_close();
+}
+
+static void c_deadline_overflow_before_submit(void) {
+    fk_reset();
+    EXPECT(install() == 0);
+    omega_gpu_session_lock();
+    EXPECT(omega_gpu_session_open() != NULL);
+    OmegaGpuLaunch L = launch_desc(UINT64_MAX);
+    EXPECT(omega_gpu_session_launch(&L, NULL, NULL) == -1);
+    EXPECT(fk.submits == 0 && !omega_gpu_session_is_blocked());
+    EXPECT(strstr(omega_gpu_session_last_error(), "deadline overflow") != NULL);
+    omega_gpu_session_unlock();
+    omega_gpu_session_close();
 }
 
 static void c_cancel_after_submit(void) {
@@ -748,6 +800,8 @@ static const Case CASES[] = {
     {"TIMEOUT_PARKS_NEVER_RELEASES", c_timeout_parks},
     {"TIMEOUT_LATCH_REFUSES_CLOSE_REOPEN_INSTALL", c_timeout_latch_rules},
     {"TIMEOUT_RECOVER_SAME_PROCESS", c_timeout_recover},
+    {"SUBMISSION_DEADLINE_SHARED_BY_BOTH_MARKERS", c_submission_deadline},
+    {"DEADLINE_OVERFLOW_REFUSED_BEFORE_SUBMIT", c_deadline_overflow_before_submit},
     {"RECOVER_TEARDOWN_FAULT_STAYS_LATCHED", c_recover_teardown_fault},
     {"RECOVER_MODULE_LATCH", c_recover_module_latch},
     {"STALE_HANDLE_REFUSED_AFTER_CLOSE_REOPEN", c_stale_after_reopen},

@@ -406,7 +406,7 @@ R2 (`examples/hello_gpu`, README "Run your first kernel").
 | `grid_x`, `grid_y` | grid size |
 | `num_elements` | QMD config num_elements (kept per API for identical words) |
 | `args`, `n_args` | `n_args` words written at constant bank + 0x380; `n_args` at most `OMEGA_GPU_SESSION_MAX_ARGS` (32) |
-| `timeout_ms` | completion poll limit, applied to each of the launch's two markers in turn (so a launch can wait up to twice this); past it the completion is uncertain and **the process latches**. 0 is refused with "launch arguments" before anything is written or submitted |
+| `timeout_ms` | one absolute submission-wide deadline covering queue submission, spin and both markers; completion at or after it is uncertain and **the process latches**. 0 is refused with "launch arguments"; an unrepresentable nanosecond deadline is refused with "launch watchdog deadline overflow" before submission |
 | `shared_bytes` | shared memory per block, rounded up to 128 bytes; 0 = the default (1024). At most `OMEGA_BW_QMD_MAX_SHARED_BYTES` (32768: the SM-config target the QMD declares); one byte more is refused before any device work |
 | `spin_us` | spin-poll window before the platform's sleep-poll; 0 = the process-wide setting |
 
@@ -419,6 +419,14 @@ Caller holds the lock, device open, not latched. Submits one launch and polls fo
 the chip is done. 0 on success; -1 with the stage named on failure; `OMEGA_GPU_SESSION_CANCELLED` (-3) when a cancel request
 was seen. A marker timeout latches the process. `elapsed_ns` (submit to second marker) is added to when the pointer is given;
 `marker_out` receives the first marker word observed.
+
+The deadline and acknowledged recovery decisions are implemented in
+`tools/c5/policy.om` and `tools/c5/runtime.om`, with import-free generated
+bindings. `CUDAPP_MIGRATION_PENDING_C_SESSION_TIMEOUT=1` selects the old
+per-marker timing only as a differential oracle; the default is OFF. Host
+fake-RM and deterministic channel-model coverage is described in
+[`tools/c5/README.md`](../../tools/c5/README.md). This does not replace the
+hardware receipt required to qualify the changed timeout path.
 
 ## 7. Session: errors, the latch, parked buffers
 

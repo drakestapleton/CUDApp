@@ -100,7 +100,7 @@ typedef struct {
     size_t num_elements;         /* QMD config num_elements (kept per API for identical words) */
     const uint32_t *args;        /* n_args words written at cbank + 0x380 */
     uint32_t n_args;             /* <= OMEGA_GPU_SESSION_MAX_ARGS */
-    uint64_t timeout_ms;         /* marker poll; past it the completion is uncertain and the process latches */
+    uint64_t timeout_ms;         /* one submission deadline (spin + both markers); uncertain completion latches */
     uint32_t shared_bytes;       /* shared memory per CTA; 0 = the QMD default (1024) */
     uint32_t spin_us;            /* poll the marker without sleeping for up to this long, then the platform's
                                     poll_word (Linux reference: 50 us sleep-poll) until timeout_ms; 0 = the process-wide setting

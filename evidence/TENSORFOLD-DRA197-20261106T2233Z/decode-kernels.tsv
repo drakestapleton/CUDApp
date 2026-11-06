@@ -1,0 +1,115 @@
+window_wall_ns	9801192128
+window_busy_ns	9226827818
+kernels	416848
+total_ns	calls	avg_ns	grid	block	name
+2413322078	34272	70416	192,1,1	128	tf_lane_gemv_many
+2021275637	68736	29406	32,1,1	128	void tf_lane_gemv::gemv_kernel<(int)64, (int)64, (int)8>(const __nv_bfloat16 *, const float *, tf_lane_gemv::Part, int, int, int)
+1907328192	1436	1328222	3880,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)16, (int)64, (int)1, (int)4, (int)8, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+1375876572	25776	53378	130,1,1	128	tf_lane_gemv_many
+312725951	8592	36397	80,1,1	128	tf_lane_gemv_many
+258388831	25920	9968	1,16,16	32	tf_q35_gdn_slots_1
+215188919	68992	3119	1,1,1	256	tf_q35_norm
+102695386	25344	4052	1,48,1	32	tf_q35_gdn_pre
+70806192	33792	2095	6,1,1	256	tf_q35_mlp_act
+64990687	8448	7693	1,64,2	128	tf_q35_attn_partial_whole
+56150673	25344	2215	1,16,1	32	tf_q35_gdn_post
+54746236	25488	2147	24,1,1	256	tf_q35_conv_commit
+36093695	8448	4272	1,10,1	256	tf_q35_rope
+24767546	8448	2931	8,1,1	32	tf_q35_attn_merge
+23853184	8568	2783	1,64,2	256	tf_q35_attn_rows_whole
+20125856	192	104822	256,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+19747456	192	102851	384,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+19459072	264	73708	16,1,1	256	void tf_qmm_prefill::prefill_kernel<(int)64, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)
+17433047	8448	2063	8,1,1	256	tf_q35_attn_gate
+16047263	8448	1899	8,1,1	64	tf_q35_head_norm
+15750624	8	1968828	3880,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+14558430	8448	1723	2,1,1	64	tf_q35_head_norm
+12809952	264	48522	48,1,1	256	void tf_qmm_prefill::prefill_kernel<(int)64, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)
+12071456	144	83829	328,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+11096192	28	396292	1,32,288	32	tf_q35k_apply
+10108224	192	52647	96,1,1	128	void tf_lane_gemv::gemv_kernel<(int)64, (int)64, (int)8>(const __nv_bfloat16 *, const float *, tf_lane_gemv::Part, int, int, int)
+8336576	96	86839	384,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+8284352	1408	5883	61,1,1	256	tf_q35_argmax_slices
+7529952	1408	5347	1,1,1	256	tf_q35_embed
+7475328	48	155736	64,64,2	128	tf_q35_attn_partial_whole
+7267392	192	37851	128,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+6832768	96	71174	256,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+6623040	4	1655760	3880,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+5992000	144	41611	1,1,1	256	void tf_qmm_prefill::prefill_kernel<(int)64, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)
+4967776	72	68996	328,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+3666528	980	3741	16,1,1	256	tf_q35_norm
+3288288	48	68506	320,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+3148928	1408	2236	1,1,1	32	tf_q35_argmax_merge
+3108640	120	25905	16,64,2	128	tf_q35_attn_partial_whole
+2817600	96	29350	128,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+2581951	144	17930	1,48,64	32	tf_q35_gdn_pre
+2546912	144	17686	16,2,1	128	void tf_gdn_prefill::chain_kernel<__nv_bfloat16, __nv_bfloat16, (int)64, (int)32>(const T1 *, const T1 *, const __nv_bfloat16 *, const float *, const T2 *, const float *, float *, __nv_bfloat16 *, int, int, int)
+2502624	392	6384	64,1,1	256	tf_q35_norm
+2025824	48	42204	4,1,1	256	void tf_qmm_prefill::prefill_kernel<(int)64, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)
+1944113	1416	1372	1,1,1	64	tf_q35_sums
+1921824	360	5338	1,48,16	32	tf_q35_gdn_pre
+1534560	48	31970	64,10,1	256	tf_q35_rope
+1433472	24	59728	32,64,2	128	tf_q35_attn_partial_whole
+1360352	24	56681	320,1,1	128	void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)
+1311680	480	2732	96,1,1	256	tf_q35_mlp_act
+1273279	192	6631	384,1,1	256	tf_q35_mlp_act
+1212191	196	6184	14,1,1	256	tf_q35_norm
+1203968	8	150496	61,64,1	256	tf_q35_argmax_slices
+1168608	196	5962	32,1,1	256	tf_q35_norm
+1143936	120	9532	16,10,1	256	tf_q35_rope
+1113376	24	46390	32,1,1	256	void tf_qmm_prefill::prefill_kernel<(int)64, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)
+1017341	360	2825	1,16,16	32	tf_q35_gdn_post
+855200	144	5938	1,16,64	32	tf_q35_gdn_post
+630688	72	8759	1,48,32	32	tf_q35_gdn_pre
+618176	196	3153	31,1,1	256	tf_q35_norm
+613184	48	12774	8,64,1	32	tf_q35_attn_merge
+554688	120	4622	8,16,1	32	tf_q35_attn_merge
+552416	48	11508	1,4,1	256	void tf_prefill_attention::hpattn_whole_kernel<(int)256, (int)8, (int)2, (int)2>(const __nv_bfloat16 *, const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int, int, int, float, int)
+532064	24	22169	32,10,1	256	tf_q35_rope
+520512	72	7229	1,48,14	32	tf_q35_gdn_pre
+504638	96	5256	84,1,1	256	tf_q35_mlp_act
+482496	24	20104	14,10,1	256	tf_q35_rope
+463424	96	4827	192,1,1	256	tf_q35_mlp_act
+450272	168	2680	128,1,1	64	tf_q35_head_norm
+426368	48	8882	4,64,2	256	tf_q35_attn_rows_whole
+389184	72	5405	1,48,31	32	tf_q35_gdn_pre
+377152	72	5238	1,16,14	32	tf_q35_gdn_post
+344160	28	12291	18,72,1	256	tf_q35k_conv
+338048	72	4695	1,16,32	32	tf_q35_gdn_post
+322941	120	2691	128,1,1	256	tf_q35_attn_gate
+294080	8	36760	61,15,1	256	tf_q35_argmax_slices
+285248	48	5942	512,1,1	256	tf_q35_attn_gate
+264192	24	11008	8,32,1	32	tf_q35_attn_merge
+242464	48	5051	512,1,1	64	tf_q35_head_norm
+241760	120	2014	32,1,1	64	tf_q35_head_norm
+202080	4	50520	61,19,1	256	tf_q35_argmax_slices
+180576	96	1881	186,1,1	256	tf_q35_mlp_act
+170304	20	8515	16,1,1	256	tf_q35_embed
+165376	4	41344	61,16,1	256	tf_q35_argmax_slices
+157216	72	2183	1,16,31	32	tf_q35_gdn_post
+151552	24	6314	31,10,1	256	tf_q35_rope
+137791	24	5741	112,1,1	256	tf_q35_attn_gate
+131840	24	5493	2,64,2	256	tf_q35_attn_rows_whole
+120480	4	30120	61,14,1	256	tf_q35_argmax_slices
+118367	24	4931	256,1,1	256	tf_q35_attn_gate
+117248	24	4885	112,1,1	64	tf_q35_head_norm
+107680	24	4486	256,1,1	64	tf_q35_head_norm
+89792	24	3741	28,1,1	64	tf_q35_head_norm
+86496	8	10812	64,1,1	256	tf_q35_embed
+81504	24	3396	64,1,1	64	tf_q35_head_norm
+63136	4	15784	61,7,1	256	tf_q35_argmax_slices
+45280	24	1886	248,1,1	256	tf_q35_attn_gate
+42176	4	10544	14,1,1	256	tf_q35_embed
+38464	4	9616	32,1,1	256	tf_q35_embed
+38368	24	1598	248,1,1	64	tf_q35_head_norm
+38240	24	1593	62,1,1	64	tf_q35_head_norm
+33312	20	1665	16,1,1	64	tf_q35_sums
+32384	4	8096	31,1,1	256	tf_q35_embed
+26144	8	3268	64,1,1	32	tf_q35_argmax_merge
+23488	8	2936	15,1,1	32	tf_q35_argmax_merge
+22719	8	2839	64,1,1	64	tf_q35_sums
+17888	4	4472	19,1,1	32	tf_q35_argmax_merge
+15328	4	3832	16,1,1	32	tf_q35_argmax_merge
+5856	4	1464	14,1,1	32	tf_q35_argmax_merge
+5856	4	1464	7,1,1	32	tf_q35_argmax_merge
+4992	4	1248	32,1,1	64	tf_q35_sums

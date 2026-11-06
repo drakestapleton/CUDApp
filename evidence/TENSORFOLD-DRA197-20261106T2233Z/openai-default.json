@@ -1,0 +1,142 @@
+[
+ {
+  "label": "default",
+  "prompt": "fibonacci-raw",
+  "temperature": 0.0,
+  "tokens": 256,
+  "decode_tps_median": 393.2689820555052,
+  "decode_tps_all": [
+   396.13,
+   394.41,
+   391.84,
+   393.27,
+   392.21
+  ],
+  "ttft_s_median": 0.008357214042916894,
+  "prefill_tps_median": 1675.199,
+  "itl_mean_ms_median": 2.543,
+  "itl_p50_ms_median": 0.0,
+  "itl_p95_ms_median": 6.356,
+  "round_gap_p50_ms_median": 5.854,
+  "round_gap_p95_ms_median": 6.574,
+  "tokens_per_chunk_median": 2.37,
+  "evidence": [
+   {
+    "prompt_tokens": 14,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "bc1513a7f13c",
+    "output_sha256": "b90b7b87117acf66fdbf2291c0d239d61b6df5a288a91ed61a2e108cfcad4c42"
+   },
+   {
+    "prompt_tokens": 14,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "bc1513a7f13c",
+    "output_sha256": "b90b7b87117acf66fdbf2291c0d239d61b6df5a288a91ed61a2e108cfcad4c42"
+   },
+   {
+    "prompt_tokens": 14,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "bc1513a7f13c",
+    "output_sha256": "b90b7b87117acf66fdbf2291c0d239d61b6df5a288a91ed61a2e108cfcad4c42"
+   },
+   {
+    "prompt_tokens": 14,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "bc1513a7f13c",
+    "output_sha256": "b90b7b87117acf66fdbf2291c0d239d61b6df5a288a91ed61a2e108cfcad4c42"
+   },
+   {
+    "prompt_tokens": 14,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "bc1513a7f13c",
+    "output_sha256": "b90b7b87117acf66fdbf2291c0d239d61b6df5a288a91ed61a2e108cfcad4c42"
+   }
+  ],
+  "sample": "\n\n```python\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [1]\n    elif n == 2:\n        return [1, 1]\n    else:\n        fib_"
+ },
+ {
+  "label": "default",
+  "prompt": "gpu-chat-no-think",
+  "temperature": 0.0,
+  "tokens": 256,
+  "decode_tps_median": 169.71844964789923,
+  "decode_tps_all": [
+   169.72,
+   169.21,
+   170.01,
+   168.66,
+   169.99
+  ],
+  "ttft_s_median": 0.015119598945602775,
+  "prefill_tps_median": 2050.319,
+  "itl_mean_ms_median": 5.892,
+  "itl_p50_ms_median": 5.837,
+  "itl_p95_ms_median": 6.434,
+  "round_gap_p50_ms_median": 5.837,
+  "round_gap_p95_ms_median": 6.434,
+  "tokens_per_chunk_median": 1.008,
+  "evidence": [
+   {
+    "prompt_tokens": 31,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "b453f81251cc",
+    "output_sha256": "548eebde48e7b541bc6c048d0ad017a25de77fb96a8dc9527ba33d2ecadaa73f"
+   },
+   {
+    "prompt_tokens": 31,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "b453f81251cc",
+    "output_sha256": "548eebde48e7b541bc6c048d0ad017a25de77fb96a8dc9527ba33d2ecadaa73f"
+   },
+   {
+    "prompt_tokens": 31,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "b453f81251cc",
+    "output_sha256": "548eebde48e7b541bc6c048d0ad017a25de77fb96a8dc9527ba33d2ecadaa73f"
+   },
+   {
+    "prompt_tokens": 31,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "b453f81251cc",
+    "output_sha256": "548eebde48e7b541bc6c048d0ad017a25de77fb96a8dc9527ba33d2ecadaa73f"
+   },
+   {
+    "prompt_tokens": 31,
+    "cached_tokens": 0,
+    "tokens": 256,
+    "cache_state": "cold",
+    "complete": true,
+    "token_sha": "b453f81251cc",
+    "output_sha256": "548eebde48e7b541bc6c048d0ad017a25de77fb96a8dc9527ba33d2ecadaa73f"
+   }
+  ],
+  "sample": "### How a GPU Uses Matrix Multiplication\n\nImagine you are trying to calculate a massive multiplication table for a large grid of numbers. If you were doing this"
+ }
+]

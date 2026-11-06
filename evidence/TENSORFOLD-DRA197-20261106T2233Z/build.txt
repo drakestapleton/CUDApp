@@ -1,0 +1,6 @@
+# zig build -j3 -Dgpu=spark -Dnvcc=/usr/local/cuda/bin/nvcc at TensorFold 5a45539a, taskset -c 0-2 nice 10
+nvcc_warning_lines 37
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 9:19.82
+	Maximum resident set size (kbytes): 4216692
+	Exit status: 0
+tensorfold-native sha256 9c90827c70879c8300fff4bdf2c38d607262c5e6e69c181e14b4d926e03bd850

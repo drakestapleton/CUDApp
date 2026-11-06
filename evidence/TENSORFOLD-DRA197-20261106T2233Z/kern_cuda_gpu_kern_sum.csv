@@ -1,0 +1,33 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+44.2,4132185304,69168,59741.3,63648.0,27456,308000,13194.5,tf_lane_gemv_many
+22.1,2070489941,70032,29564.9,36224.0,13696,269280,13578.6,"void tf_lane_gemv::gemv_kernel<(int)64, (int)64, (int)8>(const __nv_bfloat16 *, const float *, tf_lane_gemv::Part, int, int, int)"
+20.6,1928167616,1452,1327939.1,1294368.0,1225824,1945920,96893.2,"void tf_qmm_group::group_kernel<(int)64, (int)16, (int)64, (int)1, (int)4, (int)8, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)"
+2.8,260546815,26028,10010.3,8032.0,6880,113504,6537.8,tf_q35_gdn_slots_1
+2.4,226612045,71736,3159.0,2304.0,1824,127008,1857.9,tf_q35_norm
+1.2,109916024,26352,4171.1,3392.0,2752,48864,2239.2,tf_q35_gdn_pre
+0.8,78251072,776,100839.0,85664.0,28160,2378976,195695.0,"void tf_qmm_group::group_kernel<(int)64, (int)64, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)"
+0.8,77438527,8682,8919.4,7328.0,3104,208096,12029.4,tf_q35_attn_partial_whole
+0.8,75209635,35136,2140.5,1568.0,1312,130592,1638.6,tf_q35_mlp_act
+0.6,59461356,26352,2256.4,1824.0,1568,69152,1331.3,tf_q35_gdn_post
+0.6,55235996,25758,2144.4,1600.0,1248,36096,1629.9,tf_q35_conv_commit
+0.6,51662688,930,55551.3,46464.0,40768,129344,25967.8,"void tf_qmm_prefill::prefill_kernel<(int)64, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)"
+0.4,40307359,8784,4588.7,2336.0,2112,70272,4765.7,tf_q35_rope
+0.3,32316093,17568,1839.5,1344.0,1248,34944,1251.1,tf_q35_head_norm
+0.3,30938112,388,79737.4,67104.0,20416,1782784,163752.3,"void tf_qmm_group::group_kernel<(int)64, (int)32, (int)64, (int)1, (int)4, (int)5, (bool)0, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, tf_qmm_group::Parts, int, int, int, int, int)"
+0.3,26292378,8682,3028.4,2240.0,2016,72352,2528.5,tf_q35_attn_merge
+0.3,24521824,8682,2824.4,2656.0,2528,54592,862.9,tf_q35_attn_rows_whole
+0.2,18543665,8784,2111.1,1632.0,1536,20448,1287.6,tf_q35_attn_gate
+0.1,11227744,29,387163.6,142688.0,128320,1331616,433718.3,tf_q35k_apply
+0.1,10382112,1446,7179.9,4608.0,3840,187168,11903.2,tf_q35_argmax_slices
+0.1,8405280,187,44948.0,31648.0,2144,2613536,190185.3,tf_pack_dense
+0.1,7996736,1464,5462.3,4128.0,1568,31904,2932.5,tf_q35_embed
+0.0,4159136,306,13591.9,13328.0,6944,93856,7920.1,"void tf_gdn_prefill::chain_kernel<__nv_bfloat16, __nv_bfloat16, (int)64, (int)32>(const T1 *, const T1 *, const __nv_bfloat16 *, const float *, const T2 *, const float *, float *, __nv_bfloat16 *, int, int, int)"
+0.0,3252896,1446,2249.6,1664.0,1216,10368,1495.0,tf_q35_argmax_merge
+0.0,2451168,374,6553.9,5760.0,896,303936,20898.7,tf_transpose_pad16
+0.0,2023440,1464,1382.1,1120.0,1056,9184,880.9,tf_q35_sums
+0.0,1016544,102,9966.1,8768.0,8096,18816,2774.9,"void tf_prefill_attention::hpattn_whole_kernel<(int)256, (int)8, (int)2, (int)2>(const __nv_bfloat16 *, const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int, int, int, float, int)"
+0.0,354848,29,12236.1,11648.0,9568,20320,2285.0,tf_q35k_conv
+0.0,148256,18,8236.4,7808.0,7264,12672,1350.0,tf_q35_gdn_slots_2
+0.0,23392,1,23392.0,23392.0,23392,23392,0.0,tf_draw_slice_top
+0.0,17056,1,17056.0,17056.0,17056,17056,0.0,tf_draw_rows_finish
+0.0,2048,1,2048.0,2048.0,2048,2048,0.0,tf_q35k_compact

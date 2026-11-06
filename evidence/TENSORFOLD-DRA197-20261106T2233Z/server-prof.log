@@ -1,0 +1,38 @@
+[tensorfold] chat template: the checkpoint's
+[tensorfold] CUDA sm_121 device 0 (NVIDIA GB10, memory shared with the host): model 1.57 GiB; 8 streams at once, 0.19 GiB each at a 8192-token window, of 73.6 GiB left after a 12.2 GiB reserve; prompts in passes of up to 4096 rows, a 8.0 GiB prompt cache in device memory, budgeted as host memory; own glue kernels
+[tensorfold] profile: stable; registered overrides: none
+[tensorfold] serving tf2b at http://127.0.0.1:18197/v1 (sampling: greedy; drafts: copies only; context: 8192; loaded in 2.3s)
+warning: libtfgrammar.so is required for structured output and required tool calls (HTTP 400 when missing); restore the matching release archive's lib/ directory or run zig build grammar -Dxgrammar=DIR; prepare DIR with git clone --branch v0.2.8 --recurse-submodules https://github.com/mlc-ai/xgrammar
+[tensorfold] 127.0.0.1 "GET /v1/models HTTP/1.1" 200 -
+[tensorfold] 127.0.0.1 "POST /v1/completions HTTP/1.1" 200 -
+info: prompt cache: 14 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 1, evicted 0, refused 0, failed 0)
+[tensorfold] done cmpl-6366f7c0282d8e2cfcb3f896fcb0d7de prompt=14 cached=0 thinking=False effort=none tokens=256 sha=bc1513a7f13c finish=length rounds=107 accepted=148/187 ttft=0.008 decode=0.778 elapsed=0.786 queued=0.000 tok/s=327.6
+[tensorfold] 127.0.0.1 "POST /v1/completions HTTP/1.1" 200 -
+info: prompt cache: 14 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 2, evicted 0, refused 0, failed 0)
+[tensorfold] done cmpl-188c823b8549ff7d9b93969771deabc1 prompt=14 cached=0 thinking=False effort=none tokens=256 sha=bc1513a7f13c finish=length rounds=107 accepted=148/187 ttft=0.010 decode=0.874 elapsed=0.884 queued=0.000 tok/s=291.8
+[tensorfold] 127.0.0.1 "POST /v1/completions HTTP/1.1" 200 -
+info: prompt cache: 14 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 3, evicted 0, refused 0, failed 0)
+[tensorfold] done cmpl-dcd2f7e9bc1477b6a6bed556097c2ef5 prompt=14 cached=0 thinking=False effort=none tokens=256 sha=bc1513a7f13c finish=length rounds=107 accepted=148/187 ttft=0.009 decode=0.865 elapsed=0.875 queued=0.000 tok/s=294.7
+[tensorfold] 127.0.0.1 "POST /v1/completions HTTP/1.1" 200 -
+info: prompt cache: 14 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 4, evicted 0, refused 0, failed 0)
+[tensorfold] done cmpl-26114dcd9fdc1c93d8d1cb7bd386d4d9 prompt=14 cached=0 thinking=False effort=none tokens=256 sha=bc1513a7f13c finish=length rounds=107 accepted=148/187 ttft=0.010 decode=0.707 elapsed=0.717 queued=0.000 tok/s=360.6
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+info: prompt cache: 31 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 5, evicted 0, refused 0, failed 0)
+[tensorfold] done chatcmpl-db550336895df0cf8feeb63942e0eb70 prompt=31 cached=0 thinking=False effort=none tokens=256 sha=b453f81251cc finish=length rounds=253 accepted=2/19 ttft=0.014 decode=1.615 elapsed=1.630 queued=0.000 tok/s=157.9
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+info: prompt cache: 31 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 6, evicted 0, refused 0, failed 0)
+[tensorfold] done chatcmpl-7941e586a11181810de90ef9a1fd8973 prompt=31 cached=0 thinking=False effort=none tokens=256 sha=b453f81251cc finish=length rounds=253 accepted=2/19 ttft=0.015 decode=1.628 elapsed=1.643 queued=0.000 tok/s=156.6
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+info: prompt cache: 31 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 7, evicted 0, refused 0, failed 0)
+[tensorfold] done chatcmpl-9f031f4f749607973fba4e70c4516010 prompt=31 cached=0 thinking=False effort=none tokens=256 sha=b453f81251cc finish=length rounds=253 accepted=2/19 ttft=0.015 decode=1.623 elapsed=1.637 queued=0.000 tok/s=157.2
+[tensorfold] 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+info: prompt cache: 31 tokens, resumed at 0, kept 0; 0 states, 0 MiB and 0 MiB spare of 8192 MiB (hits 0, misses 8, evicted 0, refused 0, failed 0)
+[tensorfold] done chatcmpl-0e28c229b28d97f7d1895cf61d887275 prompt=31 cached=0 thinking=False effort=none tokens=256 sha=b453f81251cc finish=length rounds=253 accepted=2/19 ttft=0.015 decode=1.608 elapsed=1.623 queued=0.000 tok/s=158.6
+[tensorfold] shutting down (SIGINT): draining: new requests get 503; 0 request(s) in progress may finish within 20.0 s
+[tensorfold] shutting down: drained
+[tensorfold] shutting down: stopped
+Collecting data...
+Generating '/tmp/nsys-report-aa77.qdstrm'
+[1/1] [0%                          ] prof.nsys-rep[1/1] [0%                          ] prof.nsys-rep[1/1] [14%                         ] prof.nsys-rep[1/1] [11%                         ] prof.nsys-rep[1/1] [13%                         ] prof.nsys-rep[1/1] [14%                         ] prof.nsys-rep[1/1] [12%                         ] prof.nsys-rep[1/1] [11%                         ] prof.nsys-rep[1/1] [10%                         ] prof.nsys-rep[1/1] [11%                         ] prof.nsys-rep[1/1] [10%                         ] prof.nsys-rep[1/1] [9%                          ] prof.nsys-rep[1/1] [14%                         ] prof.nsys-rep[1/1] [12%                         ] prof.nsys-rep[1/1] [11%                         ] prof.nsys-rep[1/1] [10%                         ] prof.nsys-rep[1/1] [9%                          ] prof.nsys-rep[1/1] [8%                          ] prof.nsys-rep[1/1] [7%                          ] prof.nsys-rep[1/1] [6%                          ] prof.nsys-rep[1/1] [5%                          ] prof.nsys-rep[1/1] [7%                          ] prof.nsys-rep[1/1] [9%                          ] prof.nsys-rep[1/1] [11%                         ] prof.nsys-rep[1/1] [13%                         ] prof.nsys-rep[1/1] [14%                         ] prof.nsys-rep[1/1] [=16%                        ] prof.nsys-rep[1/1] [==18%                       ] prof.nsys-rep[1/1] [==20%                       ] prof.nsys-rep[1/1] [===22%                      ] prof.nsys-rep[1/1] [===24%                      ] prof.nsys-rep[1/1] [====26%                     ] prof.nsys-rep[1/1] [====28%                     ] prof.nsys-rep[1/1] [=====30%                    ] prof.nsys-rep[1/1] [=====32%                    ] prof.nsys-rep[1/1] [======33%                   ] prof.nsys-rep[1/1] [======35%                   ] prof.nsys-rep[1/1] [=======37%                  ] prof.nsys-rep[1/1] [=======39%                  ] prof.nsys-rep[1/1] [========41%                 ] prof.nsys-rep[1/1] [=========43%                ] prof.nsys-rep[1/1] [=========45%                ] prof.nsys-rep[1/1] [==========47%               ] prof.nsys-rep[1/1] [==========49%               ] prof.nsys-rep[1/1] [===========51%              ] prof.nsys-rep[1/1] [===========53%              ] prof.nsys-rep[1/1] [========================100%] prof.nsys-rep[1/1] [========================100%] prof.nsys-rep
+Generated:
+	/dev/shm/hive/TensorFold/runs/baseline-20261106T2233Z/prof.nsys-rep

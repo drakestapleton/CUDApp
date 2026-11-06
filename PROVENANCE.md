@@ -94,6 +94,11 @@ prints is committed.
 
 No listing of nvcc-generated code and no NVIDIA binary is stored.
 
+`evidence/TENSORFOLD-DRA197-20261106T2233Z/` (2026-11-06) stores a timing table derived from
+`nsys 2025.3.2` (`--trace=cuda --cuda-graph-trace=node`): per-kernel durations, call counts and launch
+grids of TensorFold's own Apache-2.0 kernels, which nvcc 13.0 compiled from TensorFold's source. It holds
+kernel names and times only: no code listing and nothing from an NVIDIA library or driver.
+
 ## 7. Open questions for a lawyer
 
 1. Is compiling our own probe kernels with nvcc and reading the result with cuobjdump, to learn the

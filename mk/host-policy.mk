@@ -19,8 +19,8 @@ $(OUT_DIR)/cm_oracle_diff.o: tests/runtime/cm_oracle.c src/runtime/rx_costmodel.
 	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ $<
 $(OUT_DIR)/cm_oracle_contracted.o: tests/runtime/cm_oracle.c src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_math.h src/runtime/rx_cm_sort.h src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffp-contract=fast -c -o $@ $<
-$(OUT_DIR)/cm_blob_unit: tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o src/cudapp_native.h $(OUT_DIR)/rx_costmodel.o $(wildcard src/cudapp_om_cm_*.c) src/sha256.c | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) src/sha256.c -lm
+$(OUT_DIR)/cm_blob_unit: tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o src/cudapp_native.h $(OUT_DIR)/rx_costmodel.o $(wildcard src/cudapp_om_cm_*.c) $(DS_SHA_SRC) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -o $@ tests/runtime/cm_blob_unit.c $(OUT_DIR)/cm_oracle_diff.o $(RX_CM_OBJ) $(RX_CM_BINDING) $(DS_SHA_SRC) -lm
 
 test-host-policy: $(OUT_DIR)/host_policy_unit $(OUT_DIR)/cm_sort_unit $(OUT_DIR)/artifact_text_unit $(OUT_DIR)/cm_math_unit $(OUT_DIR)/cm_blob_unit
 	./$(OUT_DIR)/host_policy_unit

@@ -672,7 +672,8 @@ test-bw-hazard-nvdisasm: $(BW_HAZARD_TEST)
 DS_OBJ = $(OUT_DIR)/dagsim.o
 DS_UNIT = $(OUT_DIR)/dagsim_unit
 DS_CLI = $(OUT_DIR)/dagsim
-DS_SHA_SRC = src/sha256.c
+# sha256.c binds the seeded om/core/sha256.om unit (CoreUtil #308), so its generated C links beside it.
+DS_SHA_SRC = src/sha256.c src/cudapp_om_core_sha.c
 RX_CM_OBJ = $(OUT_DIR)/rx_costmodel.o
 RX_CM_BINDING = src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # The sm_121 cubin packer in seeded Omega (om/cubin/cubin_elf.om), linked through the omega-bridge native binding
 # portable generated C units $(CUDAPP_BINDING_SRCS) that om/units.sh generates. The C writer in src/omega_cubin.c is migration-pending: the
-# freestanding build and the oracle builds only (CUDAPP_MIGRATION_PENDING_C_CUBIN, CUDAPP_MIGRATION_PENDING_CUBIN_DIFF).
+# explicit default-OFF oracle builds only (CUDAPP_MIGRATION_PENDING_C_CUBIN, CUDAPP_MIGRATION_PENDING_CUBIN_DIFF).
 #   make test-om-cubin           (in `make test`, no Omega tools needed)
 #       1. the cubin tests (gpu_artifact_export_test, native_artifact_manifest_test) through the .om packer;
 #       2. the same two tests and the sweep tests/om_cubin_sweep_test.c built with CUDAPP_MIGRATION_PENDING_CUBIN_DIFF:

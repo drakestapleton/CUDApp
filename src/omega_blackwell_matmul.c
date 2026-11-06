@@ -7,6 +7,7 @@
 #include <string.h>
 #ifdef OMEGA_GPU_NO_POSIX
 #include "cudapp_native.h"
+#include "omega_native.h"
 #endif
 
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
@@ -118,11 +119,16 @@ uint16_t omega_fp32_to_bf16(float f) {
     memcpy(&u, &b, 2);
     return u;
 #else
-    /* Freestanding (cut A.2): the __bf16 cast calls libgcc __truncsfbf2. Same rounding in integer form
-     * (omega_fp32_to_bf16_rne); the hosted cast and it agree on every one of the 2^32 inputs
-     * (make test-codegen-freestanding, bf16 sweep). */
+#ifdef CUDAPP_MIGRATION_PENDING_C_NO_POSIX
     return omega_fp32_to_bf16_rne(f);
+#else
+    uint32_t bits;
+    uint64_t out;
+    memcpy(&bits, &f, sizeof(bits));
+    if (omega2_no_bf16(&out, bits) != OMEGA_OK) __builtin_trap();
+    return (uint16_t)out;
 #endif
+#endif /* hosted versus freestanding */
 }
 
 int omega_matmul_cpu_oracle_f16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {

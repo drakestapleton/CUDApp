@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # CUDApp#79: the sm_121 instruction encoder in seeded Omega (om/encoder/bw_enc_sm121.om), linked through the
 # portable generated C units $(CUDAPP_BINDING_SRCS) that om/units.sh generates. The C encoder in
-# src/omega_blackwell_codegen.c is migration-pending: the freestanding build and the oracle builds only.
+# src/omega_blackwell_codegen.c is migration-pending: explicit default-OFF oracle builds only.
 #   make test-om-encoder          (in `make test`, no Omega tools needed)
 #       1. the golden-word fixture verifiers (nvcc/nvdisasm oracles) through the .om encoder;
 #       2. a build with CUDAPP_MIGRATION_PENDING_ENCODER_DIFF encodes every codegen fixture both ways and must log

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Regenerate checked portable Omega C and declarations for all canonical roots.
 # Seeded e5b32567 validates exactly the composed bytes lowered by bridge36.
-# No native x86 compiler or executable-code trampoline participates.
+# The default portable mode uses no native compiler or executable-code trampoline.
 set -eu
 OMC_PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
 CONVERTER_PIN=69d629df170a24ba0c2cb6d41dbfaed520e248e0d723236dd32abf0581524d84
@@ -10,6 +10,10 @@ FRONTEND_PIN=23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37
 FREEST_CONVERTER_PIN=836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661
 FREEST_FRONTEND_PIN=51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# Native NO_POSIX roots have separate bridge pins and import-free object custody.
+if [ "${1:-}" = --native-no-posix ]; then
+    exec sh "$ROOT/om/no-posix.sh"
+fi
 QUANT=om/quant/quant.om
 REAL="$QUANT,om/components/realize.om"
 CACHE="$REAL,om/cache/digest.om,om/cache/residency.om,om/cache/artifact.om"
@@ -23,7 +27,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/streams/streams.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS cmdlist_record=om/cmdlist/record.om cmdlist_plan=om/cmdlist/plan.om cmdlist_layout=om/cmdlist/layout.om cmdlist_access=om/cmdlist/plan.om,om/cmdlist/access.om"; fi
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS session_admit=om/session/admit.om session_words=om/session/words.om session_park=om/session/park.om cmdlist_book=om/cmdlist/book.om"; fi
-PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
+PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om leftovers=om/components/leftovers.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -69,7 +73,7 @@ for u in $UNITS $PURE_UNITS; do
   frontend_pin=$FRONTEND_PIN
   file=cudapp_om_$name.c
   case "$name" in
-    revision|epoch|f16)
+    revision|epoch|f16|leftovers)
       frontend=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN

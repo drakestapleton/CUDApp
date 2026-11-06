@@ -2,11 +2,12 @@
 #ifndef OMEGA_CORE_BINDING_H
 #define OMEGA_CORE_BINDING_H
 #include <stdint.h>
-#ifdef OMEGA_GPU_NO_POSIX
+#if defined(OMEGA_GPU_NO_POSIX) && !__STDC_HOSTED__
 /* MIGRATION-PENDING: the pinned bridge-freest refuses om/core/sha256.om and fmtnum.om with error 24
- * (unsupported freest scalar capability), so freestanding objects keep the C core (sha256.c and
- * omega_gpu_fmt.c select it under OMEGA_GPU_NO_POSIX) and must not reach this binding. */
-#error "omega_core_binding.h has no freestanding binding yet; the C core is used under OMEGA_GPU_NO_POSIX"
+ * (unsupported freest scalar capability), so -ffreestanding objects (build/gpu_fs) keep the C core
+ * (sha256.c and omega_gpu_fmt.c select it under OMEGA_GPU_NO_POSIX) and must not reach this binding.
+ * Hosted links that only set OMEGA_GPU_NO_POSIX (test-gpu-native-runtime) link the hosted binding. */
+#error "omega_core_binding.h has no freestanding binding yet; the C core is used in -ffreestanding objects"
 #else
 #include "cudapp_native.h"
 #include <stdlib.h>

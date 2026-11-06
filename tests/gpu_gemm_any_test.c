@@ -5,7 +5,7 @@
 #undef main
 
 typedef struct { uint32_t m, n, k; } AnyShape;
-static AnyShape shapes[256];
+static AnyShape shapes[300];
 static unsigned shape_count;
 static void add_shape(uint32_t m, uint32_t n, uint32_t k) {
     for (unsigned i = 0; i < shape_count; i++)
@@ -18,7 +18,11 @@ static void init_shapes(void) {
     static const uint32_t edges[] = {127,128,129,255,256,257,511,512,513,1023,1024,1025,2047,2048,2049,4095,4096,4097,8191,8192};
     for (uint32_t d = 1; d <= 64; d++) add_axis(d);
     for (unsigned i = 0; i < sizeof edges / sizeof edges[0]; i++) add_axis(edges[i]);
-    check(shape_count == 250, "Wolfram-verified distinct shape count");
+    for (uint32_t i = 1; i <= 30; i++) add_shape(i,2*i+1,3*i+7);
+    static const AnyShape coupled[] = {{17,19,33},{31,33,65},{63,65,17},{65,67,33},{127,129,3},{129,127,5}};
+    for (unsigned i = 0; i < sizeof coupled / sizeof coupled[0]; i++)
+        add_shape(coupled[i].m,coupled[i].n,coupled[i].k);
+    check(shape_count == 286, "Wolfram-verified distinct shape count");
 }
 /* The mathematical check supplements the stricter bitwise tensor-model comparison.
  * WolframLanguageEvaluator: (33*4/2^26+1/2^23)<1/2^18 -> True;

@@ -59,3 +59,13 @@ test-platform-linux-fake-device: $(OUT_DIR)/platform_linux_fake_devctl
 	@chmod +x $(OUT_DIR)/fake_devctl_mutant
 	@$(OUT_DIR)/fake_devctl_mutant; test $$? -eq 4
 	@echo "PASS platform linux fake-device fixture (mutant exit 4)"
+
+CARRIED_HOST_TESTS += test-platform-linux-rest
+.PHONY: test-platform-linux-rest
+$(OUT_DIR)/platform_linux_rest: tests/platform_linux_rest.c src/cudapp_om_plat_rest.c src/omega_gpu_platform_linux_rest_oracle.h
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -Isrc -o $@ $<
+test-platform-linux-rest: $(OUT_DIR)/platform_linux_rest
+	$(OUT_DIR)/platform_linux_rest
+	@if $(OUT_DIR)/platform_linux_rest --red; then echo "FAIL platform rest red control survived"; exit 1; fi
+	python3 tests/platform_linux_rest_mutants.py

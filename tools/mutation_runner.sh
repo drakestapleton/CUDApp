@@ -65,9 +65,10 @@
 #   stderr: one line per mutant "<id> <STATUS>  <guards> (<note>)", STATUS is
 #           KILLED, SURVIVED, SURVIVED_REDUNDANT, SURVIVED_GAP or ERROR.
 #   stdout: one summary line.
-#   JSON (-o), exactly the c4 receipt layout, same whitespace, key order and
-#   escaping (note has double quotes and backslashes removed with tr -d):
+#   JSON (-o), the c4 receipt layout, same whitespace and key order:
 #     {"mutants":[{"id","file","checks","status","note"}, ...]}
+#   Every string value is JSON-escaped losslessly (\" \\ \n \r \t, other
+#   control bytes as \u00XX); text is never dropped to make it parse.
 #   Exit 0 only if at least one mutant ran and every mutant is KILLED or
 #   justified-survived; 2 on bad usage.
 set -u
@@ -141,6 +142,20 @@ apply_edit() { # dir files ekind edit id
     [ "$a_before" != "$a_after" ] || { note="edit did not apply"; return 1; }
 }
 
+# JSON string body of $1: quote, backslash and every control byte escaped.
+json_str() {
+    printf '%s' "$1" | LC_ALL=C awk '
+        BEGIN { for (i = 1; i < 32; i++) c[sprintf("%c", i)] = sprintf("\\u%04x", i)
+                c["\t"] = "\\t"; c["\r"] = "\\r"; c["\b"] = "\\b"; c["\f"] = "\\f" }
+        { o = ""
+          for (i = 1; i <= length($0); i++) {
+              ch = substr($0, i, 1)
+              if (ch == "\\") o = o "\\\\"; else if (ch == "\"") o = o "\\\""
+              else if (ch in c) o = o c[ch]; else o = o ch
+          }
+          printf "%s%s", (NR > 1 ? "\\n" : ""), o }'
+}
+
 n=0 k=0 r=0 g=0
 first=1
 printf '{\n  "mutants": [\n' > "$out"
@@ -180,7 +195,8 @@ run_one() {
     echo "$id $status  $what ($note)" >&2
     [ $first -eq 1 ] || printf ',\n' >> "$out"
     first=0
-    printf '    {"id": "%s", "file": "%s", "checks": "%s", "status": "%s", "note": "%s"}' "$id" "$files" "$what" "$status" "$(printf '%s\n' "$note" | tr -d '"\\')" >> "$out"
+    printf '    {"id": "%s", "file": "%s", "checks": "%s", "status": "%s", "note": "%s"}' \
+        "$(json_str "$id")" "$(json_str "$files")" "$(json_str "$what")" "$(json_str "$status")" "$(json_str "$note")" >> "$out"
     n=$((n + 1))
     case $status in KILLED) k=$((k + 1));; SURVIVED_REDUNDANT) r=$((r + 1));; SURVIVED_GAP) g=$((g + 1));; esac
     rm -rf "$dir"

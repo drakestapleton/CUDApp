@@ -31,6 +31,9 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 # C3 scan and sort (CUB/Thrust row): the kernel IR and the launch plans
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan_plan.om"; fi
+if [ -z "${OMEGA_UNITS:-}" ]; then
+    UNITS="$UNITS ew_ir=om/kgen/ew_emit.om,om/kgen/ew_scalar.om,om/kgen/ew_reconv.om,om/kgen/ew_prime.om,om/kgen/ew_ir.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 GXNUM=om/gemmex/num.om
 GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.om gemm_ex_x3=$GXNUM,om/gemmex/x3.om gemm_ex_acc=$GXNUM,om/gemmex/acc.om gemm_ex_dot=$GXNUM,om/gemmex/dot.om gemm_ex_epi=$GXNUM,om/gemmex/epi.om gemm_ex_fp8=$GXNUM,om/gemmex/fp8.om"

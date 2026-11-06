@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# Mutants of native/share/share_native.om for tests/share/run-share-native.sh.
+# Each line: search|replace. The search text must occur exactly once; every mutant must build
+# and must make tests/share/native-share-test.c fail.
+# Share policy: access mask without DUP_OBJECT, wrong share type.
+zcp32 p 12 1|zcp32 p 12 0
+zcp32 p 16 2|zcp32 p 16 0
+# Export record magic.
+put rec magic 1129991503|put rec magic 1129991504
+# Re-export of an import allowed.
+if ne and get s live 16 0|if ne and get s live 0 0
+# Size check against the wanted size skipped before RM.
+if ne size get s size|if eq size 0
+# Address bound check reduced to the low bound.
+if or lt va 65536 gt va sub 1099511627776 size|if lt va 65536
+# RM's returned duplicate handle ignored.
+d = zcg32 p 8|d = get s newh
+# Size proof: the past-end probe's refusal not required.
+if eq st 32|if eq st 99
+# Failed CPU map leaves the duplicate held.
+if zcfree s p|if eq size 0
+# RM_FREE confirmed without clearing live bit 1.
+put s live and get s live 4294967294|put s live get s live
+# Read-only flags: CPU mapping protection, RM_MAP_MEMORY, DMA, UVM mapping type.
+r = mapbind m int fd 0 1|r = mapbind m int fd 0 3
+zcp32 p 44 1|zcp32 p 44 0
+fl = 33041|fl = 33040
+kind = 3|kind = 1
+# Read/write CPU mapping made read-only; read/write DMA flags wrong.
+r = mapbind m int fd 0 3|r = mapbind m int fd 0 1
+fl = uint 33040|fl = uint 33024
+# DMA address echo not checked.
+if ne zcg64 p 48 va|if eq va 0
+# GPU UUID copied one byte off.
+put p add i 24 get s uuid i|put p add i 25 get s uuid i
+# Release: UVM free skipped, CPU unmap skipped.
+if ne and get s live 4 0|if ne and get s live 0 0
+r = mapdrop get s map|r = long 0

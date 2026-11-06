@@ -139,6 +139,76 @@ OMEGA_OMC=<pinned omc> make test-zero-copy-share
 4. Chip gate: `tests/share/chip-share.om` is compiled from the unrewritten
    sources and never executed.
 
+## Hosted native library unit
+
+`native/share/share_native.om` is the same export and import in OM-2
+function mode, for the one combined hosted native library (omega-bridge ABI v2,
+`tools/native --host`; Integration generates and links that library). Function
+mode has no globals, so it does not compose with `context.om`. All state lives
+in caller buffers, and the CPU mapping token lives in the explicit native
+context the caller passes.
+
+| Export (C, `omega_native.h`) | Arguments after `ctx, uint64_t *result` |
+|---|---|
+| `omega2_ctx_nvshare_export` | `uint8_t *s` (`zcshare`), `uint8_t *rec` (`zcrec`), `uint8_t *p, uint64_t p_len` |
+| `omega2_ctx_nvshare_import` | `uint8_t *s`, `const uint8_t *rec`, `uint8_t *p, uint64_t p_len`, `const uint8_t *path, uint64_t path_len` |
+| `omega2_ctx_nvshare_release` | `uint8_t *s`, `uint8_t *p, uint64_t p_len` |
+
+`*result` is a signed 64-bit value, also stored in `zcshare.err`: 0, a negative
+errno (the table above, plus -16 for a block that already holds an import and
+-1 for re-exporting an import), or the positive RM status of a refused request.
+`p` is a 9264-byte scratch (the size of `UVM_MAP_EXTERNAL_ALLOCATION_PARAMS`);
+any other `p_len` is `OMEGA_BAD_ARG` before any request. `path` names the
+control device (`/dev/nvidiactl` on the chip) without a trailing NUL; import
+opens it for the descriptor `RM_MAP_MEMORY` binds and closes it afterwards.
+
+`zcshare` (96 bytes): inputs `ctlfd`@0, `uvmfd`@4, `client`@8, `device`@12,
+`vaspace`@16 and `uuid`@72 (16 bytes) from the NVRM client; export reads
+`obj`@20 and `size`@32; import reads `newh`@24 (handle for the duplicate),
+`mode`@28 (0 read/write, 1 read-only), `size` and `addr`@40 (CPU and GPU
+address, 4 KiB aligned, inside [65536, 2^40 - size]). Outputs: `obj` (the live
+duplicate), `map`@48 (CPU mapping token), `live`@56 (bits: 1 duplicate, 2 CPU
+mapping, 4 UVM range, 8 DMA mapping, 16 completed import), `stage`@60
+(51..57), `err`@64 and `fault`@88. `zcrec` is the 24-byte record above.
+
+Rules the callers keep:
+
+- Import and release use the same native context. A release through another
+  context runs the UVM, DMA and RM frees, then traps in `mapdrop` (bridge
+  status 3, result unwritten); the block still shows `live` 18, and the right
+  context finishes the release.
+- Each live import holds one slot of that context; a full context refuses the
+  import with -24 before the duplicate survives (it is freed).
+  `omega_native_context_destroy` returns `OMEGA_CONTEXT_BUSY` while an import
+  is live.
+- Release frees in order UVM range, DMA mapping, RM duplicate, CPU mapping.
+  Each `live` bit clears only when its request succeeded, so a refused step is
+  retried by calling release again.
+- `fault` is sticky. A faulted block refuses export and import with -5; release
+  it and discard it.
+
+`tests/share/run-share-native.sh` (`make test-zero-copy-share-native`) builds
+a single-unit test library from this file into the build directory, never
+linked into the product, and runs `tests/share/native-share-test.c`. That test
+traps `ioctl` on two unopened descriptors with seccomp and answers as RM and
+UVM, decoding each request with the pinned NVIDIA headers. Memory objects are
+memfds, so imports alias the owner's bytes in both directions. It checks
+export, read/write and read-only imports (a child's write to a read-only import
+gets `SIGSEGV`), every refusal, size lies in both directions, the faults of a
+zero duplicate handle, a refused DMA or UVM mapping and a moved DMA address, a
+refused RM free, context slots, and the wrong-context trap. Then it rebuilds
+the library from each of the 20 mutants in `tests/share/native-mutants.txt`;
+each must build and the test must fail. Pins (checked by sha256):
+`OMEGA_NATIVE_OMC2` b8f8f137… (omega-mv dbedb2ca), `OMEGA_NATIVE_OMC`
+734f0a39…, and `ZERO_COPY_NATIVE_BRIDGE` an omega-bridge checkout with the
+explicit native context (omega-bridge#69 at 248a1984). Without them the target
+reports NOT_RUN and exits 2.
+
+The chip tier of this unit is NOT_RUN. It needs the combined library with an
+NVRM client bring-up export (client, device, VA space, UVM registration, GPU
+UUID) to fill `zcshare`; the program-mode chip runbook below sends the same
+requests.
+
 ## Chip runbook (NOT_RUN)
 
 Only in a Drake-authorized exclusive GPU window, following the current

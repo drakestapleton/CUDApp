@@ -7,6 +7,10 @@
 #include "omega_blackwell_codegen_router.h"
 #include <string.h>
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_ROUTER
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_ROUTER 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_ROUTER
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -443,6 +447,26 @@ int omega_blackwell_codegen_router_prog(const OmegaRouterSpec *spec, BlackwellIR
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+
+#else /* default: first-party seeded Omega; C above is differential-only */
+#include "omega_codegen_rest_wire.h"
+int omega_router_smem(const OmegaRouterSpec *spec, OmegaRouterSmem *m) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_router_wire, 0, spec, m, meta) != 0) return -1;
+    if (meta[48] == 0 && m) {
+        m->logit = (uint32_t)meta[32];
+        m->red = (uint32_t)meta[33];
+        m->bc = (uint32_t)meta[34];
+        m->sel = (uint32_t)meta[35];
+        m->selv = (uint32_t)meta[36];
+        m->total = (uint32_t)meta[37];
+    }
+    return (int)(int64_t)meta[48];
+}
+int omega_blackwell_codegen_router_prog(const OmegaRouterSpec *spec, BlackwellIRProgram *prog) {
+    return omega_gpu_om_ir_replay(omega_rest_router_wire, 1, (uintptr_t)spec, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+#endif /* CUDAPP_MIGRATION_PENDING_C_CODEGEN_ROUTER */
 
 int omega_router_prog_stats(const OmegaRouterSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog;

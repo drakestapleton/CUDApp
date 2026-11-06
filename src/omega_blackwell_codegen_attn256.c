@@ -8,6 +8,10 @@
 #include "omega_blackwell_codegen_attn.h"
 #include <string.h>
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_ATTN256
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_ATTN256 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_ATTN256
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -212,8 +216,9 @@ int omega_blackwell_codegen_decode_attn256_prog(const OmegaDecodeAttn256Spec *sp
         ldc32(e, xs, OMEGA_DATTN256_ARG_XSTRIDE);
         if (spec->prep) mov(e, R(tok), R(cx));       /* prep: CTA (token, row) */
         else {                                       /* attend: CTA (split, token * vy + row) */
+            /* Refuse non-powers before the logarithm can shift by 32. */
+            if (SH.vy & (SH.vy - 1u)) return -1;
             uint32_t lg = 0; while ((1u << lg) < SH.vy) lg++;
-            if ((1u << lg) != SH.vy) return -1;
             shr(e, tok, cy, lg); andi(e, R(cy), R(cy), SH.vy - 1u);
         }
         iadd(e, pos, pos, tok);
@@ -637,6 +642,27 @@ int omega_blackwell_codegen_decode_attn256_prog(const OmegaDecodeAttn256Spec *sp
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+
+#else /* default: first-party seeded Omega; C above is differential-only */
+#include "omega_codegen_rest_wire.h"
+int omega_dattn256_shape(const OmegaDecodeAttn256Spec *spec, OmegaDattn256Shape *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_attn256_wire, 0, spec, s, meta) != 0) return -1;
+    if (meta[48] == 0 && s) {
+        s->qh = (uint32_t)meta[32];
+        s->kvh = (uint32_t)meta[33];
+        s->h = (uint32_t)meta[34];
+        s->vy = (uint32_t)meta[35];
+        s->g = (uint32_t)meta[36];
+        s->qkv_words = (uint32_t)meta[37];
+        s->out_words = (uint32_t)meta[38];
+    }
+    return (int)(int64_t)meta[48];
+}
+int omega_blackwell_codegen_decode_attn256_prog(const OmegaDecodeAttn256Spec *spec, BlackwellIRProgram *prog) {
+    return omega_gpu_om_ir_replay(omega_rest_attn256_wire, 1, (uintptr_t)spec, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+#endif /* CUDAPP_MIGRATION_PENDING_C_CODEGEN_ATTN256 */
 
 int omega_decode_attn256_prog_stats(const OmegaDecodeAttn256Spec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog;

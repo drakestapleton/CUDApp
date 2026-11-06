@@ -9,6 +9,10 @@
 #include "omega_blackwell_codegen_tc.h"
 #include <string.h>
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_PATTN256
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_PATTN256 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_PATTN256
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -378,6 +382,30 @@ int omega_blackwell_codegen_prefill_attn256_prog(const OmegaPrefillAttn256Spec *
     if (omega_bw_regalloc_solve(prog) != 0) return -1;
     return 0;
 }
+
+#else /* default: first-party seeded Omega; C above is differential-only */
+#include "omega_codegen_rest_wire.h"
+int omega_pattn256_shape(const OmegaPrefillAttn256Spec *spec, OmegaPattn256Shape *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_pattn256_wire, 0, spec, s, meta) != 0) return -1;
+    if (meta[48] == 0 && s) {
+        s->qh = (uint32_t)meta[32];
+        s->kvh = (uint32_t)meta[33];
+        s->group = (uint32_t)meta[34];
+        s->out_words = (uint32_t)meta[35];
+        s->qf_pair_bytes = (uint32_t)meta[36];
+    }
+    return (int)(int64_t)meta[48];
+}
+int omega_pattn256_spec_ok(const OmegaPrefillAttn256Spec *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_pattn256_wire, 1, s, NULL, meta) != 0) return 0;
+    return (int)(int64_t)meta[48];
+}
+int omega_blackwell_codegen_prefill_attn256_prog(const OmegaPrefillAttn256Spec *spec, BlackwellIRProgram *prog) {
+    return omega_gpu_om_ir_replay(omega_rest_pattn256_wire, 2, (uintptr_t)spec, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+#endif /* CUDAPP_MIGRATION_PENDING_C_CODEGEN_PATTN256 */
 
 int omega_prefill_attn256_prog_stats(const OmegaPrefillAttn256Spec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram p;

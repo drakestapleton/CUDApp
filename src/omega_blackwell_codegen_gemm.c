@@ -9,6 +9,10 @@
 #endif
 #include <string.h>
 
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_GEMM
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_GEMM 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_GEMM
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -133,7 +137,9 @@ static int log2u(uint32_t v) { int l = 0; while ((1u << l) < v) l++; return (1u 
 static int spec_ok(const OmegaFp8GemmSpec *s) {
     if (!s) return 0;
     if (s->lane_bytes != 8 && s->lane_bytes != 16) return 0;
-    if (s->mt == 0 || (s->mt & (s->mt - 1)) || s->mt * 128u * s->lane_bytes > OMEGA_GEMM_MAX_SHARED) return 0;
+    /* Check the bound before multiplying: a full-width mt could wrap the old
+     * product to zero and then overrun the fixed accumulator arrays. */
+    if (s->mt == 0 || (s->mt & (s->mt - 1)) || s->mt > OMEGA_GEMM_MAX_SHARED / (128u * s->lane_bytes)) return 0;
     if (s->warps < 1 || s->warps > 32 || (s->warps & (s->warps - 1)) || (s->mt * s->lane_bytes) % s->warps) return 0; /* power-of-two warps: the staging words per thread are whole */
     if (s->k == 0 || s->k > 16384u || s->k % 128u || s->k % (32u * s->lane_bytes)) return 0;
     uint32_t ks = s->k / (32u * s->lane_bytes);
@@ -365,6 +371,23 @@ int omega_blackwell_codegen_fp8gemm_prog(const OmegaFp8GemmSpec *spec, Blackwell
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+
+#else /* default: first-party seeded Omega; C above is differential-only */
+#include "omega_codegen_rest_wire.h"
+uint32_t omega_fp8gemm_steps(const OmegaFp8GemmSpec *spec) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_gemm_wire, 0, spec, NULL, meta) != 0) return 0;
+    return (uint32_t)(int64_t)meta[48];
+}
+uint32_t omega_fp8gemm_shared_bytes(const OmegaFp8GemmSpec *spec) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_gemm_wire, 1, spec, NULL, meta) != 0) return 0;
+    return (uint32_t)(int64_t)meta[48];
+}
+int omega_blackwell_codegen_fp8gemm_prog(const OmegaFp8GemmSpec *spec, BlackwellIRProgram *prog) {
+    return omega_gpu_om_ir_replay(omega_rest_gemm_wire, 2, (uintptr_t)spec, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+#endif /* CUDAPP_MIGRATION_PENDING_C_CODEGEN_GEMM */
 
 int omega_fp8gemm_prog_stats(const OmegaFp8GemmSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog;

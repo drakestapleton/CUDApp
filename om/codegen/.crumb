@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T05:03:31Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:9f659c0c18cd132fdd5d61226d314ee4dcbea50240492962cdbec6d90d023dc5",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "56042697fba0e0bc8218a01fd79853b08576cbdd",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "name": "codegen",
+  "purpose": "Seeded Omega kernel IR construction and replay units",
+  "schema_version": "1.0.0"
+}

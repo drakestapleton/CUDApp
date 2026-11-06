@@ -4,6 +4,16 @@ The goal is a DGX Spark where CUDA++ does the jobs of NVIDIA's user-space softwa
 
 Sources: Omega `docs/OMEGA.md` sections 2 to 5 (branch `docs/what-omega-is`, 2026-10-21). Driver policy changed on 2026-10-30: my own driver replaces `nvidia.ko` and `nvidia-uvm.ko`, as aien-dev/omega `docs/OMEGA.md` on main (f56a372a) already says; the earlier line here, that the L332 work was a research harness and GB10 support belonged only upstream, is withdrawn. The route analysis (user-space Omega over `vfio-pci`, nouveau and nova, or a kernel module) is `docs/nvidia-out/DESIGN.md`, layer L4.
 
+2026-11-06 codegen-rest migration note: the attn256, pattn256, router, FP8
+GEMM, BF16 GEMV, pq, and qg builders now have seeded Omega implementations
+under `om/codegen/`, replayed through the shared CUDApp IR path. The original C
+builders remain default-off differential oracles. The replay wire adds opt-in
+metadata word 6 for the existing extended GPR limit; zero preserves the old
+wire. The FP8 GEMM admission check now rejects overflowing `mt` before
+multiplication. CPU differential, simulator, and mutation receipts belong in
+`evidence/codegen-rest/2026-11-06/`; the hardware tiers remain NOT_RUN and no
+roadmap bar is upgraded by this migration. See `om/codegen/CHIP.md`.
+
 ## 1. NVIDIA software on the Spark today
 
 | NVIDIA piece | What it does | CUDA++ replacement | Status | Receipt or where the work is |

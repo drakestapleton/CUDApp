@@ -4,6 +4,7 @@
 import os
 import subprocess
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MUTANTS = [
@@ -56,13 +57,16 @@ def main() -> int:
         with open(full, "w") as fh:
             fh.write(src.replace(old, new, 1))
         try:
-            r = subprocess.run(
-                ["bash", script, "regen"],
-                cwd=ROOT,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-            )
+            with tempfile.TemporaryDirectory(prefix="api-shells-mutant-") as out:
+                env = dict(os.environ, OUT_DIR=out)
+                r = subprocess.run(
+                    ["bash", script, "regen"],
+                    cwd=ROOT,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                )
         finally:
             with open(full, "w") as fh:
                 fh.write(src)

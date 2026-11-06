@@ -1,0 +1,4 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh tests/api_rest_run.sh
+PASS api-rest checks=1204450 red=low-half-corruption
+
+rc=0

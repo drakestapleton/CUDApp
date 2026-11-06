@@ -12,6 +12,7 @@
 #include "omega_blackwell_matmul.h"
 #include "omega_gpu_hostmath.h"
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include <math.h>
 #include <string.h>
 #include "omega_gpu_apiviews.h"
@@ -29,19 +30,32 @@ uint32_t omega_fp8_e4m3_kernel_bits(uint8_t b) { return omega_api_kbits(b); }
 int omega_fp8_e4m3_is_nan(uint8_t b) { return omega_api_isnanb(b); }
 
 size_t omega_fp8_pack_scan_nan(const uint8_t *w, size_t count, size_t *first) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     size_t n = 0;
     for (size_t i = 0; i < count; i++)
         if (omega_fp8_e4m3_is_nan(w[i])) { if (n == 0 && first) *first = i; n++; }
     return n;
+#else
+    uint64_t r = 0, scan[2] = {0, 0};
+    ar_check(omega_arnan(&r, w, count, scan, 2));
+    if (scan[1] && first) *first = (size_t)scan[0];
+    return (size_t)scan[1];
+#endif
 }
 
 int omega_fp8_pack_scales(const uint16_t *bf16, size_t count, float *out, int mutant_no_fold) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (size_t i = 0; i < count; i++) {
         uint32_t bits = 0;
         if (omega_api_scalef(bf16[i], mutant_no_fold, &bits) != 0) return -1;
         memcpy(&out[i], &bits, 4);
     }
     return 0;
+#else
+    uint64_t r = 0;
+    ar_check(omega_arscale(&r, (uint32_t)mutant_no_fold, bf16, count, out, count));
+    return r ? -1 : 0;
+#endif
 }
 
 void omega_fp8_pack_x_f32(const float *x, uint32_t k, float *out) {
@@ -54,6 +68,7 @@ void omega_fp8_pack_x_bf16(const uint16_t *x, uint32_t k, float *out) {
 
 void omega_fp8_gemv_oracle(const uint8_t *w, const uint16_t *scale_bf16, uint32_t n, uint32_t k,
                            const float *x, double *y, double *yscale) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t kb = k / OMEGA_FP8_BLOCK;
     for (uint32_t r = 0; r < n; r++) {
         double acc = 0.0, mag = 0.0;
@@ -69,4 +84,20 @@ void omega_fp8_gemv_oracle(const uint8_t *w, const uint16_t *scale_bf16, uint32_
         y[r] = acc;
         if (yscale) yscale[r] = mag;
     }
+#else
+    /* The reference has three runtime input views (six native slots). Returning one f64
+     * per call keeps that ABI; magnitude is a second pass only when requested. */
+    const size_t kb = k / OMEGA_FP8_BLOCK;
+    for (uint32_t r = 0; r < n; r++) {
+        uint64_t bits = 0;
+        const uint8_t *row = w + (size_t)r * k;
+        const uint16_t *sc = scale_bf16 + (size_t)(r / OMEGA_FP8_BLOCK) * kb;
+        ar_check(omega_aracc(&bits, row, k, sc, kb, x, k));
+        memcpy(&y[r], &bits, sizeof bits);
+        if (yscale) {
+            ar_check(omega_armag(&bits, row, k, sc, kb, x, k));
+            memcpy(&yscale[r], &bits, sizeof bits);
+        }
+    }
+#endif
 }

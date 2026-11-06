@@ -1,0 +1,5 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/gpu_moe_window_test --host-only
+host-only: alignment refusals that need a tensor (col0 % 8, window past n) run in the chip gate
+PASS: 23 checks, 0 failed
+
+rc=0

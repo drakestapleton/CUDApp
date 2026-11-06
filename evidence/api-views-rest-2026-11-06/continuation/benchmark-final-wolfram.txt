@@ -1,0 +1,11 @@
+MEASURED host CPU samples: benchmark-samples.csv (final eight-group benchmark). Elapsed nanoseconds for 1000 iterations, three samples per implementation. This supersedes the earlier four-group benchmark-wolfram.txt receipt.
+
+WolframLanguageEvaluator query:
+d={{1080518,1073063,1073351},{147638419,147719300,147642147},{17777,17920,18000},{2616368,2617584,2620304},{3728,3984,3632},{178369,179121,184721},{327170,327522,327474},{17999502,18165791,18127103},{948261,947302,946982},{54833566,56150134,57608463},{205922,206145,206081},{12188411,12181146,12183818},{4304,4416,4592},{238097,239298,246018},{1112231,1059303,1073111},{905483982,906106033,905787055}}; {Median /@ d, N[Table[Median[d[[2 i]]]/Median[d[[2 i-1]]],{i,8}],8]}
+
+Observed result:
+{{1073351,147642147,17920,2617584,3728,179121,327474,18127103,947302,56150134,206081,12183818,4416,239298,1073111,905787055},{137.5525312782118803634,146.0705357142857142857,48.0474785407725321888,55.354327366447412619,59.2737416367747560968,59.121500769115056701,54.1888586956521739131,844.0758271977456199778}}
+
+Group order: pack-a, compact, descriptor, fp8-row, perm-gather, tern-pack, slot-pin, prefill-copy-ratios. Each pair is C then checked Omega portable binding.
+
+All Omega medians are slower. No speedup or chip performance is claimed. FP8 row deliberately performs separate f64 sum and magnitude Omega passes to obey the six-native-slot ABI. This is a host migration/correctness benchmark, not GPU qualification.

@@ -15,6 +15,7 @@
  */
 #include "omega_gpu_moe_api.h"
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_codegen.h"
@@ -40,6 +41,8 @@ typedef struct {
     OmegaBlackwellKernel kernel;
     OmegaGpuMem code;
 } MoeCacheSlot;
+_Static_assert(sizeof(int) == sizeof(uint32_t), "cache mutant is one key word");
+_Static_assert(offsetof(MoeCacheSlot, mutant) == offsetof(MoeCacheSlot, kp) + 5 * sizeof(uint32_t), "cache key is six contiguous words");
 
 static struct {
     OmegaGpuScratch a_buf, c_buf;
@@ -56,7 +59,6 @@ static struct {
 
 #define FAILAT(s) (omega_gpu_session_set_error(s), 1)
 static uint64_t now_ns(void) { return omega_gpu_session_now_ns(); }
-static uint32_t round_up(uint32_t v, uint32_t q) { return (v + q - 1) / q * q; }
 
 uint64_t omega_gpu_moe_window_byte_offset(uint32_t kp, uint32_t col0) {
     return omega_api_woff(kp, col0);
@@ -120,7 +122,8 @@ uint64_t omega_gpu_moe_test_a_row0_hits(void) { return g.a_row0_hits; }
 
 /* ---- launch shape and kernel cache (the matmul API's rules, restated) ---- */
 
-static void launch_shape(uint32_t mp, uint32_t np, uint32_t *rows_per_launch, uint32_t *grid_x, uint32_t *rt, uint32_t *ct) {
+static void launch_shape(uint32_t mp, uint32_t np, uint32_t *rows_per_launch, uint32_t *grid_x, uint32_t *rt, uint32_t *ct, uint32_t *grid_y) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t budget = g.cta_budget ? g.cta_budget : OMEGA_GPU_MATMUL_MAX_CTAS, mt = mp / 16u, nt = np / 8u;
     omega_matmul_frag_block_shape(mt, nt, rt, ct);
     const uint32_t rb = mt / *rt, nb = nt / *ct;
@@ -129,9 +132,19 @@ static void launch_shape(uint32_t mp, uint32_t np, uint32_t *rows_per_launch, ui
     if (gx == 0) gx = 1;
     if (gx > nb) gx = nb;
     *grid_x = gx;
+    *grid_y = *rows_per_launch / 16u / *rt;
+#else
+    uint64_t q[32] = {9, mp, np, g.cta_budget ? g.cta_budget : OMEGA_GPU_MATMUL_MAX_CTAS};
+    ar_check((uint32_t)ar_plan(q));
+    omega_matmul_frag_block_shape((uint32_t)q[16], (uint32_t)q[17], rt, ct);
+    q[4] = *rt; q[5] = *ct;
+    ar_check((uint32_t)ar_plan(q));
+    *rows_per_launch = (uint32_t)q[18]; *grid_x = (uint32_t)q[19]; *grid_y = (uint32_t)q[20];
+#endif
 }
 
 static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, uint32_t ct, MoeCacheSlot **out, bool *hit) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (unsigned i = 0; i < g.slots; i++) {
         MoeCacheSlot *s = &g.cache[i];
         if (s->valid && s->kp == kp && s->np == np && s->grid_x == grid_x && s->rt == rt && s->ct == ct && s->mutant == g.mutant) {
@@ -139,6 +152,15 @@ static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, ui
             return OMEGA_GPU_MATMUL_OK;
         }
     }
+#else
+    const uint32_t key[6] = {kp, np, grid_x, rt, ct, (uint32_t)g.mutant};
+    size_t found = ar_cache(g.cache, sizeof g.cache, g.slots, sizeof g.cache[0],
+                            offsetof(MoeCacheSlot, valid), offsetof(MoeCacheSlot, kp), key, sizeof key);
+    if (found != SIZE_MAX) {
+        *out = &g.cache[found]; *hit = true;
+        return OMEGA_GPU_MATMUL_OK;
+    }
+#endif
     if (g.sealed) {
         char e[160];
         omega_gpu_fmt(e, sizeof e, "serving reservation exceeded: moe window kernel kp=%u np=%u grid_x=%u rt=%u ct=%u was not prepared", kp, np, grid_x, rt, ct);
@@ -146,10 +168,18 @@ static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, ui
         return OMEGA_GPU_MATMUL_TOO_LARGE;
     }
     MoeCacheSlot *s = NULL;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (unsigned i = 0; i < g.slots && !s; i++) {
         MoeCacheSlot *c = &g.cache[(g.cache_next + i) % g.slots];
         if (!c->valid || !c->pinned) { s = c; g.cache_next = (unsigned)((c - g.cache) + 1) % g.slots; }
     }
+#else
+    uint64_t vq[8] = {g.slots, sizeof g.cache[0], offsetof(MoeCacheSlot, valid),
+                       offsetof(MoeCacheSlot, pinned), g.cache_next};
+    uint64_t vi = UINT64_MAX;
+    ar_check(omega_arvictim(&vi, vq, 8, g.cache, sizeof g.cache));
+    if (vi != UINT64_MAX) { s = &g.cache[vi]; g.cache_next = (unsigned)vq[4]; }
+#endif
     if (!s) {
         omega_gpu_session_set_error("moe window kernel cache: every slot holds a prepared kernel (raise kernel_slots)");
         return OMEGA_GPU_MATMUL_TOO_LARGE;
@@ -160,7 +190,13 @@ static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, ui
     memset(&kernel, 0, sizeof kernel);
     const bool blocked = rt > 1 || ct > 1;
     uint32_t unroll = blocked ? omega_matmul_frag_block_unroll(kp, rt, ct) : omega_matmul_frag_unroll(kp);
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     if (g.mutant) while (unroll > 1 && kp / 16u / unroll < 2) unroll /= 2;
+#else
+    uint64_t uq[32] = {11, kp, unroll, (uint64_t)g.mutant};
+    ar_check((uint32_t)ar_plan(uq));
+    unroll = (uint32_t)uq[16];
+#endif
     BlackwellIRProgram *prog = omega_gpu_host_calloc(1, sizeof *prog);
     if (!prog) { omega_gpu_session_set_error("moe window codegen: host memory"); return OMEGA_GPU_MATMUL_CODEGEN_FAIL; }
     int cg = blocked ? omega_blackwell_codegen_matmul_frag_block_prog(&spec, grid_x, unroll, rt, ct, g.mutant, prog)
@@ -183,13 +219,14 @@ static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, ui
 static int launch(const MoeCacheSlot *ks, uint64_t a_va, uint64_t b_va, uint64_t c_va,
                   uint32_t grid_x, uint32_t grid_y, uint64_t *elapsed_ns, uint32_t *marker_out) {
     uint32_t cbank_args[OMEGA_BW_CBANK_MATMUL_ARGS_WORDS];
-    omega_blackwell_build_cbank_args_matmul(cbank_args, a_va, b_va, c_va, grid_y * 16u * ks->rt, ks->kp, ks->np);
-    OmegaGpuLaunch L = {
-        .code_va = ks->code.va, .gpr_count = omega_bw_gpr_declared(ks->kernel.gpr_count), /* peak + 2 rounded up to 8 (the session passed the raw peak before) */
-        .threads_x = 32, .threads_y = 1, .grid_x = grid_x, .grid_y = grid_y,
-        .num_elements = (size_t)grid_x * grid_y * 128u,
-        .args = cbank_args, .n_args = OMEGA_BW_CBANK_MATMUL_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
-    };
+    uint64_t p[32] = {10, grid_x, grid_y, ks->rt};
+    ar_check((uint32_t)ar_plan(p));
+    omega_blackwell_build_cbank_args_matmul(cbank_args, a_va, b_va, c_va, (uint32_t)p[16], ks->kp, ks->np);
+    OmegaGpuLaunch L;
+    const uint64_t lq[16] = {ks->code.va, omega_bw_gpr_declared(ks->kernel.gpr_count),
+        32, 1, grid_x, grid_y, p[17], (uintptr_t)cbank_args,
+        OMEGA_BW_CBANK_MATMUL_ARGS_WORDS, MARKER_TIMEOUT_MS};
+    ar_launch(&L, lq);
     if (!omega_bw_gpr_declared_ok(L.gpr_count, ks->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); return OMEGA_GPU_MATMUL_CHIP_FAIL; }
     return omega_gpu_session_launch(&L, elapsed_ns, marker_out) == 0 ? OMEGA_GPU_MATMUL_OK : OMEGA_GPU_MATMUL_CHIP_FAIL;
 }
@@ -202,12 +239,13 @@ int omega_gpu_moe_reserve(uint32_t max_rows, uint32_t max_k, uint32_t max_cols, 
         omega_gpu_session_set_error("moe reserve: bound past the matmul envelope");
         return OMEGA_GPU_MATMUL_TOO_LARGE;
     }
-    const size_t mp = round_up(max_rows, OMEGA_GPU_MATMUL_TILE_M), kp = round_up(max_k, OMEGA_GPU_MATMUL_TILE_K);
-    const size_t c_bytes = mp * round_up(max_cols, OMEGA_GPU_MATMUL_TILE_N) * 4u;
+    uint64_t dims[32] = {12, max_rows, max_k, max_cols};
+    ar_check((uint32_t)ar_plan(dims));
+    const size_t c_bytes = dims[20];
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_MATMUL_OK;
     if (!dev_open_locked()) rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
-    else if (omega_gpu_session_scratch_reserve(&g.a_buf, mp * kp * 2u) != 0 || omega_gpu_session_scratch_reserve(&g.c_buf, c_bytes) != 0) {
+    else if (omega_gpu_session_scratch_reserve(&g.a_buf, dims[19]) != 0 || omega_gpu_session_scratch_reserve(&g.c_buf, c_bytes) != 0) {
         omega_gpu_session_scratch_unreserve(&g.a_buf); omega_gpu_session_scratch_unreserve(&g.c_buf);
         rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
     } else if (kernel_slots > g.slots) {
@@ -232,13 +270,15 @@ int omega_gpu_moe_prepare(uint32_t m, uint32_t k, uint32_t cols) {
         omega_gpu_session_set_error("moe prepare: shape past the matmul envelope");
         return OMEGA_GPU_MATMUL_TOO_LARGE;
     }
-    const uint32_t mp = round_up(m, OMEGA_GPU_MATMUL_TILE_M), kp = round_up(k, OMEGA_GPU_MATMUL_TILE_K), np = round_up(cols, OMEGA_GPU_MATMUL_TILE_N);
-    uint32_t rows_per_launch, grid_x, rt, ct;
+    uint64_t dims[32] = {12, m, k, cols};
+    ar_check((uint32_t)ar_plan(dims));
+    const uint32_t mp = (uint32_t)dims[16], kp = (uint32_t)dims[17], np = (uint32_t)dims[18];
+    uint32_t rows_per_launch, grid_x, rt, ct, grid_y;
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_MATMUL_OK;
     if (!dev_open_locked()) rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
     else {
-        launch_shape(mp, np, &rows_per_launch, &grid_x, &rt, &ct);
+        launch_shape(mp, np, &rows_per_launch, &grid_x, &rt, &ct, &grid_y);
         MoeCacheSlot *s = NULL; bool hit = false;
         rc = kernel_for(kp, np, grid_x, rt, ct, &s, &hit);
         if (rc == OMEGA_GPU_MATMUL_OK) s->pinned = true;
@@ -266,21 +306,38 @@ int omega_gpu_moe_tensor_upload_bf16(uint32_t k, uint32_t n, const uint16_t *b, 
     if (k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return OMEGA_GPU_MATMUL_TOO_LARGE;
     OmegaGpuMoeTensor *t = omega_gpu_host_calloc(1, sizeof *t);
     if (!t) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    t->k = k; t->n = n; t->kp = round_up(k, OMEGA_GPU_MATMUL_TILE_K); t->np = round_up(n, OMEGA_GPU_MATMUL_TILE_N);
-    const uint32_t nt = t->np / 8u;
-    uint16_t *h = omega_gpu_host_alloc((size_t)FRAG_PACK_TILES * t->kp * 8u * sizeof *h);
+    uint64_t dims[32] = {12, 1, k, n};
+    ar_check((uint32_t)ar_plan(dims));
+    t->k = k; t->n = n; t->kp = (uint32_t)dims[17]; t->np = (uint32_t)dims[18];
+    const uint32_t nt = (uint32_t)dims[24];
+    uint16_t *h = omega_gpu_host_alloc(dims[25]);
     if (!h) { omega_gpu_host_free(t); return OMEGA_GPU_MATMUL_BAD_ARGS; }
     int rc = OMEGA_GPU_MATMUL_OK;
     omega_gpu_session_lock();
-    if (!dev_open_locked() || omega_gpu_session_alloc((size_t)t->kp * t->np * 2u, &t->mem) != 0) rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
+    if (!dev_open_locked() || omega_gpu_session_alloc(dims[21], &t->mem) != 0) rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
     omega_gpu_session_unlock();
     if (rc != OMEGA_GPU_MATMUL_OK) { omega_gpu_host_free(h); omega_gpu_host_free(t); return rc; }
     uint16_t *d = t->mem.cpu;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (uint32_t nt0 = 0; nt0 < nt; nt0 += FRAG_PACK_TILES) {
         const uint32_t nt1 = nt - nt0 < FRAG_PACK_TILES ? nt : nt0 + FRAG_PACK_TILES;
         omega_matmul_frag_pack_b(b, k, n, t->kp, nt0, nt1, h);
         memcpy(&d[(size_t)nt0 * t->kp * 8u], h, (size_t)(nt1 - nt0) * t->kp * 8u * sizeof *h);
     }
+#else
+    uint64_t step[16] = {0, nt, t->kp, FRAG_PACK_TILES};
+    uint64_t more = 0, packed = 0;
+    for (;;) {
+        ar_check(omega_armstep(&more, step, 16, NULL, 0));
+        if (!more) break;
+        uint64_t p[12] = {2, 0, k, 0, t->kp, n, step[8], step[9]};
+        ar_check(omega_cg_pklen(&packed, p, 12));
+        if (packed) abort();
+        ar_check(omega_cg_pkh(&packed, p, 12, b, p[8], h, p[9]));
+        if (packed) abort();
+        ar_copy(&d[step[10]], h, step[12]);
+    }
+#endif
     omega_gpu_host_free(h);
     if (omega_gpu_session_sync_to_gpu(&t->mem) != 0) { omega_gpu_moe_tensor_free(t); return OMEGA_GPU_MATMUL_CHIP_FAIL; }
     *out = t;
@@ -291,10 +348,17 @@ int omega_gpu_moe_tensor_upload_f32(uint32_t k, uint32_t n, const float *b, Omeg
     if (out) *out = NULL;
     if (!b || !out || k == 0 || n == 0) return OMEGA_GPU_MATMUL_BAD_ARGS;
     if (k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return OMEGA_GPU_MATMUL_TOO_LARGE;
-    size_t cnt = (size_t)k * n;
-    uint16_t *h = omega_gpu_host_alloc(cnt * sizeof *h);
+    uint64_t dims[32] = {12, 1, k, n};
+    ar_check((uint32_t)ar_plan(dims));
+    size_t cnt = dims[22];
+    uint16_t *h = omega_gpu_host_alloc(dims[23]);
     if (!h) return OMEGA_GPU_MATMUL_BAD_ARGS;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (size_t i = 0; i < cnt; i++) h[i] = omega_fp32_to_bf16(b[i]);
+#else
+    uint64_t converted = 0;
+    ar_check(omega_ar_bf16(&converted, b, cnt, h, cnt));
+#endif
     int rc = omega_gpu_moe_tensor_upload_bf16(k, n, h, out);
     omega_gpu_host_free(h);
     return rc;
@@ -329,16 +393,24 @@ static int window_args_ok(const OmegaGpuMoeTensor *t, uint32_t col0, uint32_t co
 static int windows_core(uint32_t m, const uint16_t *a16, const float *a32, const OmegaGpuMoeTensor *t,
                         uint32_t nwin, const uint32_t *col0, uint32_t cols, float *c, OmegaGpuMatmulInfo *info) {
     const uint32_t k = t->k, kp = t->kp;
-    const uint32_t mp = round_up(m, OMEGA_GPU_MATMUL_TILE_M), np = round_up(cols, OMEGA_GPU_MATMUL_TILE_N);
-    for (uint32_t w = 0; w < nwin; w++) if (!window_args_ok(t, col0[w], cols)) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    uint64_t dims[32] = {12, m, k, cols};
+    ar_check((uint32_t)ar_plan(dims));
+    const uint32_t mp = (uint32_t)dims[16], np = (uint32_t)dims[18];
+    uint64_t valid[16] = {0, nwin, cols, t->n}, bad = 0;
+    valid[15] = 3;
+    ar_check(omega_armstep(&bad, valid, 16, col0, nwin));
+    if (bad != nwin) {
+        (void)window_args_ok(t, col0[bad], cols);
+        return OMEGA_GPU_MATMUL_BAD_ARGS;
+    }
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_MATMUL_OK;
     if (!dev_open_locked()) { omega_gpu_session_unlock(); return OMEGA_GPU_MATMUL_CHIP_FAIL; }
-    uint32_t rows_per_launch, grid_x, rt, ct;
-    launch_shape(mp, np, &rows_per_launch, &grid_x, &rt, &ct);
+    uint32_t rows_per_launch, grid_x, rt, ct, grid_y;
+    launch_shape(mp, np, &rows_per_launch, &grid_x, &rt, &ct, &grid_y);
     if (info) {
         info->m = m; info->k = k; info->n = cols; info->padded_m = mp; info->padded_n = np; info->padded_k = kp;
-        info->k_slices = 1; info->rows_per_call = rows_per_launch; info->grid_x = grid_x; info->grid_y = rows_per_launch / 16u / rt;
+        info->k_slices = 1; info->rows_per_call = rows_per_launch; info->grid_x = grid_x; info->grid_y = grid_y;
         info->resident = true; info->kernel_cache_hit = true;
         (void)omega_gpu_fmt(info->target_chip, sizeof info->target_chip, "%s", "NVIDIA DGX Spark (Grace Blackwell GB10)");
         info->sm_architecture = 121;
@@ -348,39 +420,56 @@ static int windows_core(uint32_t m, const uint16_t *a16, const float *a32, const
         omega_gpu_session_unlock();
         return OMEGA_GPU_MATMUL_TOO_LARGE;
     }
-    int src = omega_gpu_session_scratch(&g.a_buf, (size_t)mp * kp * 2u);
-    if (src == 0) src = omega_gpu_session_scratch(&g.c_buf, (size_t)mp * np * 4u);
+    int src = omega_gpu_session_scratch(&g.a_buf, dims[19]);
+    if (src == 0) src = omega_gpu_session_scratch(&g.c_buf, dims[20]);
     if (src != 0) {
         omega_gpu_session_unlock();
         return src == OMEGA_GPU_SESSION_SCRATCH_RESERVED ? OMEGA_GPU_MATMUL_TOO_LARGE : OMEGA_GPU_MATMUL_CHIP_FAIL;
     }
     uint16_t *ad = g.a_buf.mem.cpu;
     const bool one_row = m == 1 && mp == 16u;
-    if (one_row && g.a_row0_ready && g.a_row0_kp == kp && g.a_row0_cpu == ad) {
+    const bool reuse = one_row && g.a_row0_ready && g.a_row0_kp == kp && g.a_row0_cpu == ad;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
+    if (reuse) {
         if (a32) omega_matmul_frag_pack_a_row0_f32(a32, k, kp, ad);
         else omega_matmul_frag_pack_a_row0(a16, k, kp, ad);
-        g.a_row0_hits++;
     } else {
         if (a32) omega_matmul_frag_pack_a_f32(a32, m, k, mp, kp, ad);
         else omega_matmul_frag_pack_a(a16, m, k, mp, kp, ad);
-        g.a_row0_ready = one_row; g.a_row0_kp = kp; g.a_row0_cpu = ad;
     }
+#else
+    uint64_t ap[12] = {a32 ? (reuse ? 4 : 3) : (reuse ? 1 : 0), m, k, mp, kp};
+    uint64_t packed = 0;
+    ar_check(omega_cg_pklen(&packed, ap, 12));
+    if (packed) abort();
+    ar_check(omega_cg_pkh(&packed, ap, 12, a32 ? (const void *)a32 : (const void *)a16, ap[8], ad, ap[9]));
+    if (packed) abort();
+#endif
+    if (reuse) g.a_row0_hits++;
+    else { g.a_row0_ready = one_row; g.a_row0_kp = kp; g.a_row0_cpu = ad; }
     if (omega_gpu_session_sync_to_gpu(&g.a_buf.mem) != 0) rc = OMEGA_GPU_MATMUL_CHIP_FAIL;
     float *cd = g.c_buf.mem.cpu;
-    for (uint32_t w = 0; w < nwin && rc == OMEGA_GPU_MATMUL_OK; w++) {
-        /* the window's B base: column tile col0 / 8 (plus the test skew, which must be caught) */
-        const int64_t tile0 = (int64_t)(col0[w] / OMEGA_GPU_MATMUL_TILE_N) + g.skew;
-        const uint64_t b_va = t->mem.va + (uint64_t)tile0 * kp * OMEGA_GPU_MATMUL_TILE_N * 2u;
+    uint64_t ws[16] = {0, nwin, kp, m, cols, t->mem.va, (uint64_t)(int64_t)g.skew};
+    ws[15] = 1;
+    while (rc == OMEGA_GPU_MATMUL_OK) {
+        uint64_t more = 0;
+        ar_check(omega_armstep(&more, ws, 16, col0, nwin));
+        if (!more) break;
+        const uint64_t b_va = ws[9];
         omega_matmul_result_sentinels(cd, m, cols, np, POISON_F32, 1);
         if (omega_gpu_session_sync_to_gpu(&g.c_buf.mem) != 0) { rc = OMEGA_GPU_MATMUL_CHIP_FAIL; break; }
-        for (uint32_t r0 = 0; r0 < mp && rc == OMEGA_GPU_MATMUL_OK; r0 += rows_per_launch) {
-            uint32_t rows = mp - r0 < rows_per_launch ? mp - r0 : rows_per_launch;
-            uint32_t grid_y = rows / 16u / rt;
+        uint64_t rs[16] = {0, mp, rows_per_launch, rt, kp, np, g.a_buf.mem.va, g.c_buf.mem.va};
+        rs[15] = 2;
+        while (rc == OMEGA_GPU_MATMUL_OK) {
+            uint64_t more = 0;
+            ar_check(omega_armstep(&more, rs, 16, NULL, 0));
+            if (!more) break;
+            uint32_t grid_y = (uint32_t)rs[9];
             MoeCacheSlot *ks = NULL; bool hit = false;
             rc = kernel_for(kp, np, grid_x, rt, ct, &ks, &hit);
             if (rc != OMEGA_GPU_MATMUL_OK) break;
             if (info && !hit) info->kernel_cache_hit = false;
-            rc = launch(ks, g.a_buf.mem.va + (uint64_t)r0 * kp * 2u, b_va, g.c_buf.mem.va + (uint64_t)r0 * np * 4u,
+            rc = launch(ks, rs[10], b_va, rs[11],
                         grid_x, grid_y, info ? &info->elapsed_ns : NULL, info ? &info->completion_marker : NULL);
             if (info) info->chip_calls++;
         }
@@ -388,8 +477,15 @@ static int windows_core(uint32_t m, const uint16_t *a16, const float *a32, const
         if (omega_gpu_session_sync_to_cpu(&g.c_buf.mem) != 0) { rc = OMEGA_GPU_MATMUL_CHIP_FAIL; break; }
         size_t unchanged = omega_matmul_result_sentinels(cd, m, cols, np, POISON_F32, 0);
         if (unchanged && FAILAT("output poison survived")) { rc = OMEGA_GPU_MATMUL_CHIP_FAIL; break; }
-        float *cw = c + (size_t)w * m * cols;
+        float *cw = c + ws[10];
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         for (uint32_t r = 0; r < m; r++) memcpy(&cw[(size_t)r * cols], &cd[(size_t)r * np], (size_t)cols * sizeof *c);
+#endif
+#if !CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
+        uint64_t rq[3] = {m, cols, np}, compacted = 0;
+        ar_check(omega_mrow(&compacted, rq, 3, cd, (uint64_t)m * np, cw, (uint64_t)m * cols));
+        if (compacted) abort();
+#endif
     }
     omega_gpu_session_unlock();
     return rc;

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 
 struct OmegaGpuFp8Slots {
     uint32_t slots, n, k;
@@ -33,7 +34,8 @@ int omega_gpu_fp8_slots_alloc(uint32_t slots, uint32_t n, uint32_t k, OmegaGpuFp
     if (!out || slots == 0) return OMEGA_GPU_FP8_BAD_ARGS;
     OmegaGpuFp8Slots *p = calloc(1, sizeof *p);
     if (!p) return OMEGA_GPU_FP8_BAD_ARGS;
-    p->slots = slots; p->n = n; p->k = k;
+    const uint32_t shape[3] = {slots, n, k};
+    ar_words(p, 3, shape, 3);
     int rc = omega_gpu_fp8_tensor_alloc_uncached(slots, n, k, &p->t);
     if (rc != OMEGA_GPU_FP8_OK) { free(p); return rc; }
     if (omega_fp8_slot_table_init(&p->tab, slots) != 0 || pthread_mutex_init(&p->mu, NULL) != 0) {
@@ -64,7 +66,13 @@ int omega_gpu_fp8_slots_load(OmegaGpuFp8Slots *p, uint32_t slot, uint64_t key, c
     int rc = omega_fp8_slot_begin_load(&p->tab, slot);
     if (rc != OMEGA_FP8_SLOT_OK) return rc;
     /* From here the slot is LOADING: invisible to pin, so the bytes below are never read half-written. */
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const size_t wbytes = (size_t)p->n * p->k, scount = (size_t)(p->n / OMEGA_FP8_BLOCK) * (p->k / OMEGA_FP8_BLOCK);
+#else
+    uint64_t plan[32] = {3, p->slots, p->n, p->k};
+    (void)ar_plan(plan);
+    const size_t wbytes = plan[17], scount = plan[16];
+#endif
     uint8_t *wd = NULL; float *sd = NULL;
     size_t first = 0;
     if (omega_gpu_fp8_tensor_cpu_view(p->t, slot, &wd, &sd) != 0) rc = OMEGA_GPU_FP8_BAD_ARGS;
@@ -76,7 +84,11 @@ int omega_gpu_fp8_slots_load(OmegaGpuFp8Slots *p, uint32_t slot, uint64_t key, c
         omega_gpu_session_set_error("fp8 slot load: NaN, inf or overflowing scale");
         rc = OMEGA_GPU_FP8_BAD_ARGS;
     } else {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         memcpy(wd, w, wbytes);
+#else
+        ar_copy(wd, w, wbytes);
+#endif
         if (omega_gpu_fp8_tensor_sync_to_gpu(p->t) != 0) rc = OMEGA_GPU_FP8_CHIP_FAIL;
     }
     int frc = omega_fp8_slot_finish_load(&p->tab, slot, key, rc == OMEGA_GPU_FP8_OK, version);
@@ -105,8 +117,14 @@ int omega_gpu_fp8_slots_entry(OmegaGpuFp8Slots *p, uint32_t slot, uint64_t versi
     OmegaFp8SlotRec r;
     int rc = omega_fp8_slot_query(&p->tab, slot, &r);
     if (rc != OMEGA_FP8_SLOT_OK) return rc;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     uint64_t gate[16] = { r.state, r.pins, r.key, r.version };
     int gate_rc = omega_api_slot(7, version, gate);
+#else
+    uint64_t result = 0;
+    ar_check(omega_arsgate(&result, version, &r, 3));
+    int gate_rc = (int)(int64_t)result;
+#endif
     if (gate_rc == OMEGA_GPU_FP8_SLOTS_STALE) return gate_rc;
     if (gate_rc != 0) { omega_gpu_session_set_error("fp8 slot entry: slot not pinned (pin before taking its address)"); return gate_rc; }
     return omega_gpu_fp8_tensor_entry(p->t, slot, w_va, s_va);
@@ -117,23 +135,37 @@ int omega_gpu_fp8_slots_query(OmegaGpuFp8Slots *p, uint32_t slot, OmegaGpuFp8Slo
     OmegaFp8SlotRec r;
     int rc = omega_fp8_slot_query(&p->tab, slot, &r);
     if (rc != OMEGA_FP8_SLOT_OK) return rc;
-    out->state = r.state; out->pins = r.pins; out->key = r.key; out->version = r.version;
+    _Static_assert(sizeof *out == sizeof r, "slot query view");
+    _Static_assert(offsetof(OmegaGpuFp8SlotInfo, key) == offsetof(OmegaFp8SlotRec, key), "slot query key view");
+    _Static_assert(offsetof(OmegaGpuFp8SlotInfo, version) == offsetof(OmegaFp8SlotRec, version), "slot query version view");
+    ar_copy(out, &r, sizeof r);
     return OMEGA_GPU_FP8_OK;
 }
 
 void omega_gpu_fp8_slots_stats(OmegaGpuFp8Slots *p, OmegaGpuFp8SlotsStats *out) {
     if (!out) return;
-    memset(out, 0, sizeof *out);
+    ar_words(out, sizeof *out / sizeof(uint32_t), NULL, 0);
     if (!p) return;
     OmegaFp8SlotStats s;
     omega_fp8_slot_table_stats(&p->tab, &s);
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     out->slots = p->slots; out->n = p->n; out->k = p->k;
     out->device_bytes = (uint64_t)p->slots * ((uint64_t)p->n * p->k + (uint64_t)(p->n / OMEGA_FP8_BLOCK) * (p->k / OMEGA_FP8_BLOCK) * 4u);
     out->loads = s.loads; out->load_failures = s.load_failures; out->busy_refusals = s.busy_refusals;
     out->stale_refusals = s.stale_refusals; out->evictions = s.evictions; out->pins = s.pins;
     out->pinned_now = s.pinned_now; out->pinned_high = s.pinned_high;
+#else
+    _Static_assert(sizeof *out == 12 * sizeof(uint64_t), "slot statistics descriptor extent");
+    _Static_assert(offsetof(OmegaGpuFp8SlotsStats, device_bytes) == 16, "slot statistics device bytes");
+    _Static_assert(offsetof(OmegaGpuFp8SlotsStats, loads) == 24, "slot statistics counters");
+    _Static_assert(offsetof(OmegaGpuFp8SlotsStats, pinned_now) == 72, "slot statistics pin counts");
+    _Static_assert(offsetof(OmegaGpuFp8SlotsStats, bytes_loaded) == 80, "slot statistics load counters");
+    const uint64_t cfg[8] = {p->slots, p->n, p->k};
+    uint64_t result = 0;
+    ar_check(omega_arsstats(&result, cfg, 8, &s, 7, out, 12));
+#endif
     pthread_mutex_lock(&p->mu);
-    out->bytes_loaded = p->bytes_loaded; out->load_ns = p->load_ns;
+    ar_copy(&out->bytes_loaded, &p->bytes_loaded, sizeof out->bytes_loaded + sizeof out->load_ns);
     pthread_mutex_unlock(&p->mu);
 }
 

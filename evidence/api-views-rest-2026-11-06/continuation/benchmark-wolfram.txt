@@ -1,0 +1,15 @@
+MEASURED host CPU samples: benchmark-samples.csv. Each sample is elapsed ns for 1000 iterations. Three samples per implementation; no chip execution.
+
+WolframLanguageEvaluator query:
+d={{1542234,1082647,1032695},{170902642,154487220,154657589},{19152,17920,17872},{2448688,2553201,2446288},{3664,3616,3648},{171441,191777,172017},{332354,326275,325042},{17542101,17704342,17685622}}; {Median /@ d, N[Table[Median[d[[2 i]]]/Median[d[[2 i-1]]],{i,4}],8]}
+
+Observed result:
+{{1082647,154657589,17920,2448688,3648,172017,326275,17685622}, {142.8513532111574686856,136.6455357142857142857,47.1537828947368421052,54.2046494521492605931}}
+
+Group          C median ns  Omega median ns  Omega/C
+pack-a         1082647      154657589        142.85135321
+compact        17920        2448688          136.64553571
+descriptor     3648         172017           47.15378289
+fp8-row        326275       17685622         54.20464945
+
+Omega is slower on these host-only checked portable bindings. This is a migration/correctness receipt, not a speedup claim. The FP8 row computes f64 accumulation and magnitude through two Omega calls (two product passes) versus the retained original C loop's single combined pass. No native GPU timing or hardware qualification is inferred.

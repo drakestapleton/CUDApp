@@ -1,0 +1,4 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/api_rest_diff
+PASS api-rest checks=6161 red=low-half-corruption
+
+rc=0

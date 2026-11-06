@@ -1,0 +1,24 @@
+File 'tests/api_rest_diff.c'
+Lines executed:100.00% of 104
+Branches executed:100.00% of 300
+Taken at least once:66.33% of 300
+Calls executed:15.83% of 240
+Creating 'api_rest_diff.c.gcov'
+
+File 'tests/api_rest_partitions.h'
+Lines executed:100.00% of 40
+Branches executed:100.00% of 278
+Taken at least once:66.55% of 278
+Calls executed:20.09% of 219
+Creating 'api_rest_partitions.h.gcov'
+
+File 'src/omega_api_shells.h'
+Lines executed:100.00% of 35
+Branches executed:100.00% of 36
+Taken at least once:52.78% of 36
+Calls executed:100.00% of 2
+Creating 'omega_api_shells.h.gcov'
+
+Lines executed:100.00% of 179
+
+rc=0

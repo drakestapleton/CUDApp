@@ -1,0 +1,19 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 gcov -b -c -n build/api-rest-coverage-complete/api_rest_diff.gcno
+File 'tests/api_rest_diff.c'
+Lines executed:100.00% of 104
+Branches executed:100.00% of 300
+Taken at least once:66.33% of 300
+Calls executed:17.21% of 244
+File 'tests/api_rest_partitions.h'
+Lines executed:100.00% of 121
+Branches executed:100.00% of 619
+Taken at least once:67.21% of 619
+Calls executed:17.81% of 466
+File 'src/omega_api_shells.h'
+Lines executed:96.84% of 95
+Branches executed:93.24% of 148
+Taken at least once:66.89% of 148
+Calls executed:100.00% of 2
+Lines executed:99.06% of 320
+
+rc=0

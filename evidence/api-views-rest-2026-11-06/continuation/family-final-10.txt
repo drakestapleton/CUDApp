@@ -1,0 +1,28 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/gpu_fp8_slots_test --host-only
+ok   init 4 slots
+ok   pin of a never-loaded slot is STALE
+ok   begin load slot 0
+ok   double load refused BUSY
+ok   a LOADING slot cannot be pinned (not visible before publish)
+ok   publish -> version 1
+ok   finish without begin refused
+ok   pin v1
+ok   reload while pinned refused BUSY
+ok   evict while pinned refused BUSY
+ok   unpin with a wrong version refused
+ok   unpin v1
+ok   unpin without a pin refused
+ok   reload -> newer version
+ok   stale handle (old version) refused after reload
+ok   same key reloaded gets a fresh version (no ABA): v1=1 v3=3
+ok   failed load publishes nothing
+ok   failed load leaves the slot EMPTY
+ok   evicted slot cannot be pinned
+ok   out-of-range slot refused
+ok   1000 evict/reinsert cycles: versions strictly increase
+ok   idle when nothing is pinned or loading
+ok   race: 10000 reloads, 103763 busy refusals, 5314 reader pins, rewrites seen under a pin = 0
+ok   mutant (ignores pins): 10000 reloads, 2267 reader pins, rewrites seen under a pin = 2276 (the race check has teeth)
+GPU_FP8_SLOTS: PASS (24 checks, 0 failed)
+
+rc=0

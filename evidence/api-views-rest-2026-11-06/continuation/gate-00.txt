@@ -1,0 +1,4 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 bash tests/api_shells_run.sh
+PASS api-shells checks=753157
+
+rc=0

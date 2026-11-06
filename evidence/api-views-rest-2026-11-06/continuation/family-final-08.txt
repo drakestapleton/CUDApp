@@ -1,0 +1,10 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/gpu_pfhost_test --host-only
+host pack R4: 0 wrong
+host -0.0 start: -0 + (-0) = -0 (ok)
+host router mutant 1 reference differs in 89 of 160
+host router mutant 2 reference differs in 128 of 160
+host combine mutant 1 reference differs in 176 of 384
+host combine mutant 2 reference differs in 381 of 384
+GPU_PFHOST: PASS
+
+rc=0

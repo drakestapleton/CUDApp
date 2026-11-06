@@ -171,6 +171,35 @@ UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/a
 UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
 UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
 fi
+REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
+for entry in fill count args argsx pad idle route perm widen next key; do
+  REST="$REST ar_$entry=om/apirest/data.om,om/apirest/$entry.om"
+done
+for entry in nan scale fold foldh acc mag; do
+  REST="$REST ar_$entry=om/apirest/pack.om,om/api/apish_pack.om,om/apirest/$entry.om"
+done
+for entry in tiles tg tile groups run; do
+  REST="$REST ar_$entry=om/apirest/tiledata.om,om/apirest/$entry.om"
+done
+for entry in tern trits rev; do
+  REST="$REST ar_$entry=om/apirest/terndata.om,om/apirest/$entry.om"
+done
+for entry in pfcopy pfratio segok segb tspec; do
+  REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_shp.om,om/apirest/$entry.om"
+done
+REST="$REST ar_calc=om/apirest/calc.om ar_launch=om/apirest/launch.om ar_cache=om/apirest/cache.om"
+REST="$REST ar_tcspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/tcspec.om ar_tcperm=om/apiviews/bf16.om,om/apirest/tcperm.om ar_tcinfo=om/apirest/tcinfo.om ar_gtile=om/apirest/tiledata.om,om/apirest/gtile.om"
+REST="$REST ar_gspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/gspec.om"
+for entry in gargs gseg ginfo xnext gath32 gath16; do
+  REST="$REST ar_$entry=om/apirest/$entry.om"
+done
+for entry in slot sgate; do
+  REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_slot.om,om/apirest/$entry.om"
+done
+REST="$REST ar_copy=om/apirest/copy.om ar_sstats=om/apirest/sstats.om"
+REST="$REST ar_victim=om/apirest/victim.om ar_mstep=om/apirest/data.om,om/api/apish_shp.om,om/apirest/mstep.om"
+REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -231,6 +260,9 @@ for u in $UNITS $PURE_UNITS; do
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
     attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
+      flags=--runtime-views
+      abi_name=bridge-seeded-runtime ;;
+    ar_*|cg_pack_h|cg_mrow)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

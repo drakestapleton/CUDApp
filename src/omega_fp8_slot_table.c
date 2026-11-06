@@ -2,6 +2,7 @@
 #include "omega_fp8_slot_table.h"
 #include <stdlib.h>
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include <string.h>
 
 int omega_fp8_slot_table_init(OmegaFp8SlotTable *t, uint32_t slots) {
@@ -25,6 +26,7 @@ void omega_fp8_slot_table_fini(OmegaFp8SlotTable *t) {
 
 #define LOCKED(t, body) do { pthread_mutex_lock(&(t)->mu); body; pthread_mutex_unlock(&(t)->mu); } while (0)
 
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
 static void pack_rec(const OmegaFp8SlotTable *t, const OmegaFp8SlotRec *r, int ok, uint64_t rec[16]) {
     memset(rec, 0, sizeof(*rec) * 16);
     rec[0] = r->state; rec[1] = r->pins; rec[2] = r->key; rec[3] = r->version;
@@ -47,6 +49,20 @@ static int step_slot(OmegaFp8SlotTable *t, uint32_t slot, int op, uint64_t aux, 
     unpack_rec(t, &t->rec[slot], rec);
     return rc;
 }
+#else
+_Static_assert(sizeof(OmegaFp8SlotRec) == 3 * sizeof(uint64_t), "slot record view");
+_Static_assert(offsetof(OmegaFp8SlotRec, key) == 8, "slot key view");
+_Static_assert(offsetof(OmegaFp8SlotRec, version) == 16, "slot version view");
+_Static_assert(sizeof(OmegaFp8SlotStats) == 7 * sizeof(uint64_t), "slot statistics view");
+_Static_assert(offsetof(OmegaFp8SlotStats, pinned_now) == 48, "slot pin statistics view");
+static int step_slot(OmegaFp8SlotTable *t, uint32_t slot, int op, uint64_t aux, int ok) {
+    uint64_t cfg[8] = {t->next_version, (uint64_t)t->mutant, (uint64_t)ok, (uint64_t)op, aux};
+    uint64_t rc = 0;
+    ar_check(omega_arslot(&rc, cfg, 8, &t->rec[slot], 3, &t->stats, 7));
+    t->next_version = cfg[0];
+    return (int)(int64_t)rc;
+}
+#endif
 
 int omega_fp8_slot_begin_load(OmegaFp8SlotTable *t, uint32_t slot) {
     if (!t || !t->rec || slot >= t->slots) return OMEGA_FP8_SLOT_BAD_ARGS;
@@ -86,7 +102,7 @@ int omega_fp8_slot_evict(OmegaFp8SlotTable *t, uint32_t slot) {
 
 int omega_fp8_slot_query(OmegaFp8SlotTable *t, uint32_t slot, OmegaFp8SlotRec *out) {
     if (!t || !t->rec || slot >= t->slots || !out) return OMEGA_FP8_SLOT_BAD_ARGS;
-    LOCKED(t, { *out = t->rec[slot]; });
+    LOCKED(t, { ar_words(out, sizeof *out / sizeof(uint32_t), (const uint32_t *)&t->rec[slot], sizeof *out / sizeof(uint32_t)); });
     return OMEGA_FP8_SLOT_OK;
 }
 
@@ -94,8 +110,14 @@ int omega_fp8_slot_table_idle(OmegaFp8SlotTable *t) {
     if (!t || !t->rec) return 1;
     int idle = 1;
     LOCKED(t, {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         for (uint32_t i = 0; i < t->slots; i++)
             if (step_slot(t, i, 6, 0, 0) == 0) { idle = 0; break; }
+#else
+        uint64_t result = 0;
+        ar_check(omega_aridle(&result, t->rec, (uint64_t)t->slots * 6));
+        idle = result != 0;
+#endif
     });
     return idle;
 }
@@ -103,9 +125,9 @@ int omega_fp8_slot_table_idle(OmegaFp8SlotTable *t) {
 
 void omega_fp8_slot_table_stats(OmegaFp8SlotTable *t, OmegaFp8SlotStats *out) {
     if (!out) return;
-    memset(out, 0, sizeof *out);
+    ar_words(out, sizeof *out / sizeof(uint32_t), NULL, 0);
     if (!t || !t->rec) return;
-    LOCKED(t, { *out = t->stats; });
+    LOCKED(t, { ar_words(out, sizeof *out / sizeof(uint32_t), (const uint32_t *)&t->stats, sizeof *out / sizeof(uint32_t)); });
 }
 
 void omega_fp8_slot_table_set_mutant(OmegaFp8SlotTable *t, int mutant) {

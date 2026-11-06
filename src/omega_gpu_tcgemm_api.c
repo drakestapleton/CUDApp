@@ -8,6 +8,7 @@
 #include "omega_gpu_code_alloc.h"
 #include <string.h>
 #include "omega_api_shells.h"
+#include "omega_api_views_rest.h"
 #include <stdlib.h>
 
 #define CACHE_SLOTS 8
@@ -17,6 +18,7 @@
 typedef struct { bool valid, pinned; OmegaTcGemmSpec spec; OmegaBlackwellKernel kernel; OmegaGpuMem code; } Slot;
 typedef struct { uint64_t w_va, s_va; uint32_t row0, cnt, pad[2]; } TileEntry;
 _Static_assert(sizeof(TileEntry) == OMEGA_TCGEMM_TILE_BYTES, "tile entry layout");
+_Static_assert(offsetof(TileEntry, row0) == 16 && offsetof(TileEntry, cnt) == 20, "tile view fields");
 
 static struct {
     OmegaGpuScratch x_buf, y_buf, tile_buf, ridx_buf;
@@ -67,18 +69,30 @@ void omega_gpu_tcgemm_set_shape(uint32_t rt, uint32_t ct, uint32_t w) { omega_gp
 void omega_gpu_tcgemm_test_set_mutant(int m) { omega_gpu_session_lock(); g.mutant = m; cache_clear_locked(); omega_gpu_session_unlock(); }
 
 void omega_gpu_tcgemm_spec_for(uint32_t k, uint32_t n, OmegaTcGemmSpec *spec) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     memset(spec, 0, sizeof *spec);
     spec->k = k;
     omega_api_tcsp(g.rt, g.ct, n, &spec->rt, &spec->ct);
     spec->warps = omega_api_tcw(g.warps);
     spec->mutant = g.mutant;
+#else
+    _Static_assert(sizeof *spec == 5 * sizeof(uint32_t), "tensor-core specification view");
+    const uint32_t cfg[8] = {k, n, g.rt, g.ct, g.warps, (uint32_t)g.mutant};
+    uint64_t result = 0;
+    ar_check(omega_artcsp(&result, cfg, 8, spec, 5));
+#endif
 }
 
 static int kernel_for(const OmegaTcGemmSpec *spec, Slot **out, bool *hit) {
     int fresh = omega_native_cache_refresh(&g.native, CACHE_SLOTS);
     if (fresh < 0) return OMEGA_GPU_TCGEMM_CODEGEN_FAIL;
     if (fresh) memset(g.cache, 0, sizeof g.cache);
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (unsigned i = 0; i < CACHE_SLOTS; i++) { Slot *s = &g.cache[i]; if (s->valid && memcmp(&s->spec, spec, sizeof *spec) == 0) { *out = s; *hit = true; return OMEGA_GPU_TCGEMM_OK; } }
+#else
+    size_t found = ar_cache(g.cache, sizeof g.cache, CACHE_SLOTS, sizeof(Slot), offsetof(Slot, valid), offsetof(Slot, spec), spec, sizeof *spec);
+    if (found != SIZE_MAX) { *out = &g.cache[found]; *hit = true; return OMEGA_GPU_TCGEMM_OK; }
+#endif
     BlackwellIRProgram *prog = omega_gpu_host_calloc(1, sizeof *prog);
     if (!prog) { omega_gpu_session_set_error("tc gemm codegen: host memory"); return OMEGA_GPU_TCGEMM_CODEGEN_FAIL; }
     int cg = omega_blackwell_codegen_tcgemm_prog(spec, prog);
@@ -128,45 +142,69 @@ int omega_gpu_tcgemm_prepare(uint32_t k) {
 
 int omega_gpu_tcgemm_f32(const OmegaGpuFp8Tensor *t, uint32_t M, const uint32_t *ids, const uint32_t *trow, const float *x, uint32_t x_rows, float *y, OmegaGpuTcGemmInfo *info) {
     uint64_t t0 = omega_gpu_session_now_ns();
-    if (info) memset(info, 0, sizeof *info);
+    if (info) ar_words(info, sizeof *info / sizeof(uint32_t), NULL, 0);
     uint32_t experts = 0, n = 0, k = 0;
     if (!t) return OMEGA_GPU_TCGEMM_BAD_ARGS;
     omega_gpu_fp8_tensor_shape(t, &experts, &n, &k);
     if (!experts || !ids || !trow || !x || !y || M == 0 || x_rows == 0) return OMEGA_GPU_TCGEMM_BAD_ARGS;
     OmegaTcGemmSpec spec; omega_gpu_tcgemm_spec_for(k, n, &spec);
     if (!omega_tcgemm_spec_ok(&spec)) return OMEGA_GPU_TCGEMM_BAD_ARGS;
-    const uint32_t BM = 16u * spec.rt, span = omega_tcgemm_span(&spec);
+    uint64_t plan[32] = {7, M, n, k, 0, spec.rt, spec.ct, spec.warps, x_rows};
+    (void)ar_plan(plan);
+    const uint32_t BM = (uint32_t)plan[16], span = (uint32_t)plan[17];
     if (n % span || n % 128u) return OMEGA_GPU_TCGEMM_BAD_ARGS;
     uint32_t segs = 0, ntiles = 0;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (uint32_t i = 0; i < M;) {
         if (ids[i] >= experts) return OMEGA_GPU_TCGEMM_BAD_ARGS;
         uint32_t j = i; while (j < M && ids[j] == ids[i]) { if (trow[j] >= x_rows) return OMEGA_GPU_TCGEMM_BAD_ARGS; j++; }
         if (j < M && ids[j] < ids[i]) return OMEGA_GPU_TCGEMM_BAD_ARGS;
         segs++; ntiles += (j - i + BM - 1) / BM; i = j;
     }
+#else
+    const uint64_t group_cfg[4] = {experts, x_rows, BM};
+    uint64_t grouped = 0;
+    ar_check(omega_argroups(&grouped, group_cfg, 4, ids, M, trow, M));
+    if (grouped == UINT64_MAX) return OMEGA_GPU_TCGEMM_BAD_ARGS;
+    segs = (uint32_t)grouped; ntiles = (uint32_t)(grouped >> 32);
+#endif
     if (ntiles > 65535u) return OMEGA_GPU_TCGEMM_TOO_LARGE;
-    const uint32_t grid_x = n / span;
+    const uint32_t grid_x = (uint32_t)plan[25];
+    plan[4] = ntiles;
+    (void)ar_plan(plan);
 
     omega_gpu_session_lock();
     int rc = OMEGA_GPU_TCGEMM_OK;
     if (!dev_open_locked()) { omega_gpu_session_unlock(); return OMEGA_GPU_TCGEMM_CHIP_FAIL; }
-    int src = omega_gpu_session_scratch(&g.x_buf, (size_t)x_rows * k * 2u);
-    if (src == 0) src = omega_gpu_session_scratch(&g.y_buf, (size_t)M * n * 4u);
-    if (src == 0) src = omega_gpu_session_scratch(&g.tile_buf, (size_t)ntiles * OMEGA_TCGEMM_TILE_BYTES);
-    if (src == 0) src = omega_gpu_session_scratch(&g.ridx_buf, ((size_t)M + BM) * 4u);
+    int src = omega_gpu_session_scratch(&g.x_buf, plan[19]);
+    if (src == 0) src = omega_gpu_session_scratch(&g.y_buf, plan[20]);
+    if (src == 0) src = omega_gpu_session_scratch(&g.tile_buf, plan[21]);
+    if (src == 0) src = omega_gpu_session_scratch(&g.ridx_buf, plan[22]);
     if (src != 0) { omega_gpu_session_unlock(); return src == OMEGA_GPU_SESSION_SCRATCH_RESERVED ? OMEGA_GPU_TCGEMM_TOO_LARGE : OMEGA_GPU_TCGEMM_CHIP_FAIL; }
     Slot *ks = NULL; bool hit = false;
     rc = kernel_for(&spec, &ks, &hit);
     if (rc != OMEGA_GPU_TCGEMM_OK) { omega_gpu_session_unlock(); return rc; }
 
     TileEntry *tab = g.tile_buf.mem.cpu; uint32_t *ridx = g.ridx_buf.mem.cpu; uint32_t nt = 0;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     uint64_t distinct = 0;
+#endif
     for (uint32_t i = 0; i < M;) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         uint32_t j = i; while (j < M && ids[j] == ids[i]) j++;
         uint64_t w_va = 0, s_va = 0; (void)omega_gpu_fp8_tensor_entry(t, ids[i], &w_va, &s_va);
         for (uint32_t r = i; r < j; r += BM) { memset(&tab[nt], 0, sizeof tab[nt]); tab[nt].w_va = w_va; tab[nt].s_va = s_va; tab[nt].row0 = r; tab[nt].cnt = j - r < BM ? j - r : BM; nt++; }
         distinct += (uint64_t)n * k; i = j;
+#else
+        uint64_t end = 0, next = 0;
+        ar_check(omega_arrun(&end, i, ids, M));
+        uint64_t cfg[8] = {nt, i, end, BM};
+        (void)omega_gpu_fp8_tensor_entry(t, ids[i], &cfg[4], &cfg[5]);
+        ar_check(omega_argtile(&next, cfg, 8, tab, plan[27]));
+        nt = (uint32_t)next; i = (uint32_t)end;
+#endif
     }
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     { uint32_t *tmp = malloc(((size_t)M + BM) * 4u); if (!tmp) { omega_gpu_session_unlock(); return OMEGA_GPU_TCGEMM_CHIP_FAIL; }
       for (uint32_t i = 0; i < M + BM; i++) tmp[i] = i < M ? trow[i] : 0u;
       memcpy(ridx, tmp, ((size_t)M + BM) * 4u); free(tmp); }
@@ -176,23 +214,49 @@ int omega_gpu_tcgemm_f32(const OmegaGpuFp8Tensor *t, uint32_t M, const uint32_t 
         for (uint32_t r = 0; r < x_rows; r++) { omega_tcgemm_permute_x(x + (size_t)r * k, k, row); memcpy(xd + (size_t)r * k, row, (size_t)k * 2u); }
         free(row);
     }
+#else
+    uint64_t packed = 0;
+    ar_check(omega_arpad(&packed, trow, M, ridx, plan[28]));
+    if (packed) abort();
+    ar_check(omega_artcperm(&packed, x, plan[24], g.x_buf.mem.cpu, plan[24]));
+    if (packed) abort();
+#endif
     float *yd = g.y_buf.mem.cpu;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (size_t i = 0; i < (size_t)M * n; i++) yd[i] = POISON_F32;
+#else
+    uint32_t poison; memcpy(&poison, &(float){POISON_F32}, sizeof poison);
+    ar_fill((uint32_t *)yd, plan[23], poison);
+#endif
     if (omega_gpu_session_sync_to_gpu(&g.tile_buf.mem) != 0 || omega_gpu_session_sync_to_gpu(&g.ridx_buf.mem) != 0 ||
         omega_gpu_session_sync_to_gpu(&g.x_buf.mem) != 0 || omega_gpu_session_sync_to_gpu(&g.y_buf.mem) != 0) rc = OMEGA_GPU_TCGEMM_CHIP_FAIL;
 
     uint32_t args[OMEGA_TCGEMM_ARGS_WORDS];
     const uint64_t va[4] = { g.tile_buf.mem.va, g.ridx_buf.mem.va, g.x_buf.mem.va, g.y_buf.mem.va };
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     for (int i = 0; i < 4; i++) { args[2 * i] = (uint32_t)va[i]; args[2 * i + 1] = (uint32_t)(va[i] >> 32); }
     args[8] = n;
+#else
+    ar_args_extra(args, OMEGA_TCGEMM_ARGS_WORDS, va, 4, &n, 1);
+#endif
     const uint32_t decl = omega_bw_gpr_declared(ks->kernel.gpr_count);
     if (info) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         info->rows = M; info->segments = segs; info->tiles = nt; info->n = n; info->k = k; info->rt = spec.rt; info->ct = spec.ct; info->warps = spec.warps;
         info->grid_x = grid_x; info->grid_y = nt; info->gpr_declared = decl;
         info->weight_bytes = distinct; info->streamed_bytes = (uint64_t)nt * n * k;
         info->act_bytes = (uint64_t)nt * grid_x * BM * k * 2u; info->kernel_cache_hit = hit;
+#else
+        _Static_assert(sizeof *info == 24 * sizeof(uint32_t), "tensor-core information extent");
+        _Static_assert(offsetof(OmegaGpuTcGemmInfo, weight_bytes) == 48, "tensor-core information byte counters");
+        _Static_assert(offsetof(OmegaGpuTcGemmInfo, kernel_cache_hit) == 92, "tensor-core information cache hit");
+        const uint64_t cfg[16] = {M, segs, nt, n, k, spec.rt, spec.ct, spec.warps, grid_x, decl, hit};
+        uint64_t result = 0;
+        ar_check(omega_artcinfo(&result, cfg, 16, info, 24));
+#endif
     }
     if (rc == OMEGA_GPU_TCGEMM_OK) {
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         OmegaGpuLaunch L = {
             .code_va = ks->code.va, .gpr_count = decl,
             .threads_x = 32u * spec.warps, .threads_y = 1, .grid_x = grid_x, .grid_y = nt,
@@ -200,15 +264,25 @@ int omega_gpu_tcgemm_f32(const OmegaGpuFp8Tensor *t, uint32_t M, const uint32_t 
             .args = args, .n_args = OMEGA_TCGEMM_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
             .shared_bytes = omega_tcgemm_shared_bytes(&spec),
         };
+#else
+        OmegaGpuLaunch L;
+        const uint64_t launch[16] = {ks->code.va, decl, plan[18], 1, grid_x, nt, plan[23],
+            (uintptr_t)args, OMEGA_TCGEMM_ARGS_WORDS, MARKER_TIMEOUT_MS, plan[26]};
+        ar_launch(&L, launch);
+#endif
         if (!omega_bw_gpr_declared_ok(L.gpr_count, ks->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); rc = OMEGA_GPU_TCGEMM_CHIP_FAIL; }
         else if (omega_gpu_session_launch(&L, info ? &info->elapsed_ns : NULL, info ? &info->completion_marker : NULL) != 0) rc = OMEGA_GPU_TCGEMM_CHIP_FAIL;
     }
     if (rc == OMEGA_GPU_TCGEMM_OK && omega_gpu_session_sync_to_cpu(&g.y_buf.mem) != 0) rc = OMEGA_GPU_TCGEMM_CHIP_FAIL;
     if (rc == OMEGA_GPU_TCGEMM_OK) {
         size_t unchanged = 0;
+#if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
         for (size_t i = 0; i < (size_t)M * n; i++) if (yd[i] == POISON_F32) unchanged++;
+#else
+        unchanged = ar_count((const uint32_t *)yd, plan[23], poison);
+#endif
         if (unchanged) { omega_gpu_session_set_error("output poison survived"); rc = OMEGA_GPU_TCGEMM_CHIP_FAIL; }
-        else memcpy(y, yd, (size_t)M * n * sizeof *y);
+        else ar_copy(y, yd, plan[20]);
     }
     omega_gpu_session_unlock();
     if (info) info->call_ns = omega_gpu_session_now_ns() - t0;

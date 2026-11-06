@@ -269,11 +269,15 @@ GPU_AIEN_EFFECTS_SRCS = $(if $(filter aarch64,$(CUDAPP_HOST_ARCH)),src/cudapp_ai
 GPU_AIEN_OTHER_SRCS = src/omega_gpu_platform.c src/omega_gpu_mem_reserve.c src/omega_gpu_session.c \
 	src/omega_gpu_platform_linux.c om/platform-linux/gen/link/plat_fx_effects.c om/platform-linux/gen/link/plat_fx_wait.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c src/omega_gpu_chip.c \
 	$(PHYSICS_DIR)/m16/m16_native.c $(PHYSICS_DIR)/nvrm/nvrm.c $(GPU_AIEN_EFFECTS_SRCS)
-GPU_AIEN_SRCS = src/omega_gpu_platform_aien.c $(GPU_AIEN_OTHER_SRCS) $(CUDAPP_BINDING_SRCS)
+# The platform uses nvrm.c only for its pure encoders (nvrm_mthd, nvrm_gp_entry) and never opens the RM, so nvrm.c takes
+# the C test transport and the NVRM native unit (src/cudapp_om_nvrm_transport.c, NVRM #281) stays out: each native unit
+# carries its own omega_native_context_create/destroy, and on AArch64 cudapp_aiengpu_effects.c is already linked.
+GPU_AIEN_BINDING = $(filter-out src/cudapp_om_nvrm_transport.c,$(CUDAPP_BINDING_SRCS))
+GPU_AIEN_SRCS = src/omega_gpu_platform_aien.c $(GPU_AIEN_OTHER_SRCS) $(GPU_AIEN_BINDING)
 # MIGRATION-PENDING C: the platform's code exists only with CUDAPP_MIGRATION_PENDING_AIEN_GPU=1, set here for the test and
 # its mutants and OFF in libomega_gpu.a and every other build (the effects wait on devctl/maphold for AGPU requests).
 GPU_AIEN_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -DCUDAPP_MIGRATION_PENDING_AIEN_GPU=1 \
-	-Isrc $(GPU_ENGINE_PHYS_INC) $(GPU_AIEN_INC)
+	-DCUDAPP_NVRM_TEST_TRANSPORT=1 -Isrc $(GPU_ENGINE_PHYS_INC) $(GPU_AIEN_INC)
 GPU_AIEN_DEPS = tests/test_omega_gpu_platform_aien.c $(GPU_AIEN_SRCS) src/omega_gpu_platform_aien.h \
 	src/omega_gpu_mem_reserve.h src/cudapp_native.h third_party/aien-gpu-abi1/aien_gpu_uapi.h \
 	$(if $(GPU_AIEN_EFFECTS_SRCS),src/cudapp_aiengpu_native.h)
@@ -302,7 +306,7 @@ test-gpu-platform-aien-mutants: build/test_omega_gpu_platform_aien_c
 	  sed -e "$$script" src/omega_gpu_platform_aien.c > $(GPU_AIEN_MUT_DIR)/$$name.c; \
 	  if cmp -s src/omega_gpu_platform_aien.c $(GPU_AIEN_MUT_DIR)/$$name.c; then echo "mutant $$name: pattern not found"; exit 1; fi; \
 	  gcc $(GPU_AIEN_CFLAGS) -o $(GPU_AIEN_MUT_DIR)/$$name tests/test_omega_gpu_platform_aien.c $(GPU_AIEN_MUT_DIR)/$$name.c \
-	    $(GPU_AIEN_OTHER_SRCS) $(CUDAPP_BINDING_SRCS); \
+	    $(GPU_AIEN_OTHER_SRCS) $(GPU_AIEN_BINDING); \
 	  rm -f $(GPU_AIEN_MUT_DIR)/$$name.trace; \
 	  if AIEN_TRACE=$(GPU_AIEN_MUT_DIR)/$$name.trace ./$(GPU_AIEN_MUT_DIR)/$$name > $(GPU_AIEN_MUT_DIR)/$$name.log 2>&1; then \
 	    echo "mutant $$name SURVIVED"; exit 1; fi; \
@@ -334,7 +338,7 @@ test-gpu-platform-aien-om-mutants: build/test_omega_gpu_platform_aien_c
 	OMEGA_UNITS="aiengpu=$$(pwd)/$$d/context.om" OMEGA_UNITS_DEST=$$d OMEGA_OMC="$(OMEGA_OMC)" \
 		OMEGA_BRIDGE="$(OMEGA_BRIDGE)" sh om/units.sh > $$d/units.log 2>&1 || { echo "MUTANT $$name: omc refused it"; cat $$d/units.log; exit 1; }; \
 	gcc $(GPU_AIEN_CFLAGS) -o $$d/test tests/test_omega_gpu_platform_aien.c src/omega_gpu_platform_aien.c $(GPU_AIEN_OTHER_SRCS) \
-		$$(echo $(CUDAPP_BINDING_SRCS) | tr ' ' '\n' | grep -v '^src/cudapp_om_aiengpu.c$$') $$d/cudapp_om_aiengpu.c || exit 1; \
+		$(filter-out src/cudapp_om_aiengpu.c,$(GPU_AIEN_BINDING)) $$d/cudapp_om_aiengpu.c || exit 1; \
 	t=0; AIEN_TRACE=$$d/trace $$d/test > $$d/test.log 2>&1 || t=1; \
 	r=0; cmp -s $$d/trace $(GPU_AIEN_MUT_DIR)/oracle.trace || r=1; \
 	if [ $$t = 0 ] && [ $$r = 0 ]; then echo "MUTANT $$name SURVIVED"; exit 1; fi; \

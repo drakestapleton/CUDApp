@@ -393,6 +393,7 @@ Chip qualification is separate and needs a current exclusive GPU window.
 Only after obtaining that authorization, build `build/gpu_pfhost_test` and
 run its `--chip` mode using the current machine's window procedure. Never
 interpret the host differential or simulator as a hardware receipt.
+
 ## FP8 MoE builder migration
 
 `make test-codegen-moe-diff test-codegen-moe-sim` is host-only and carried by

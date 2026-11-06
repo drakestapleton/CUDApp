@@ -40,7 +40,7 @@ done
 for entry in tern trits rev; do
   REST="$REST ar_$entry=om/apirest/terndata.om,om/apirest/$entry.om"
 done
-for entry in pfcopy pfratio; do
+for entry in pfcopy pfratio segok segb; do
   REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_shp.om,om/apirest/$entry.om"
 done
 REST="$REST ar_calc=om/apirest/calc.om ar_launch=om/apirest/launch.om"

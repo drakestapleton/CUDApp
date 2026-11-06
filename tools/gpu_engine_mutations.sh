@@ -22,7 +22,7 @@ unset ONLY
 FILE=src/omega_gpu_engine.c
 BUILD_OM='gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o .gpu_engine_t tests/test_omega_gpu_engine.c src/omega_gpu_engine.c src/cudapp_om_eng.c'
 BUILD_C="$BUILD_OM -DCUDAPP_MIGRATION_PENDING_C_ENGINE"
-COPY="src/omega_gpu_engine.c src/omega_gpu_engine.h src/omega_eng_dec.h src/cudapp_om_eng.c tests/test_omega_gpu_engine.c"
+COPY="src/omega_gpu_engine.c src/omega_gpu_engine.h src/omega_eng_dec.h src/cudapp_om_eng.c src/omega_fixture_rest.h tests/test_omega_gpu_engine.c"
 # name|file|sed expression (applied only to the line carrying MUT:<name>).
 # In an expression, & in the replacement is written \& .
 ROWS="VALIDATE_SKIPPED|$FILE|s/if (!job || !job_valid(job))/if (0 \\&\\& (!job || !job_valid(job)))/

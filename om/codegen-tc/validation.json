@@ -1,0 +1,49 @@
+{
+  "implementation_revision": "3bdfcfa",
+  "unit_path_correction": "om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om; content-only move with registration updates",
+  "focused_started_utc": "2026-11-06T03:20:20.787157+00:00",
+  "focused_command": [
+    "taskset",
+    "-c",
+    "10-14",
+    "nice",
+    "-n",
+    "10",
+    "sh",
+    "-c",
+    "sh om/units.sh && sh om/units.sh --check && make -j3 test-codegen-tc test-codegen-tc-mutants test-codegen-tc-sim && crumb compile om/codegen-tc && crumb verify om/codegen-tc"
+  ],
+  "focused_rc": 0,
+  "focused_log": "focused-host.log",
+  "unit_source_sha256": "997c8e0fcb61b669b08366e07e2dc31dc3c2134cf3c87506e9c9d5ff98e05962",
+  "generated_c_sha256": "401e38aee16740ce7d56d0ef0079b876ea9ab64f6740e09b2aafda21ba24c72a",
+  "post_relocation_differential": {
+    "verdict": "PASS",
+    "encoded_programs": 180517,
+    "matching_refusals": 52380,
+    "encoding_failures_count_as_pass": false,
+    "negative_record_flip": "CAUGHT"
+  },
+  "portable_regeneration": "PASS portable Omega units regenerate byte for byte",
+  "source_mutants": "CODEGEN TC OMEGA MUTANTS PASS (6 mutants)",
+  "simulator": "PASS: probe, bandwidth, peak, grouped GEMM, tc2 F32/SwiGLU/direct; existing arithmetic mutants caught",
+  "log_redaction": "The single absolute home path was replaced with ~ before committing.",
+  "pre_relocation_differential": {
+    "verdict": "PASS",
+    "encoded_programs": 180466,
+    "matching_refusals": 52240,
+    "negative_record_flip": "CAUGHT"
+  },
+  "full_host": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "3600-second deadline in shared-core full make test; no retry per Main",
+    "evidence": "full-timeout.log"
+  },
+  "chip": {
+    "verdict": "NOT_RUN",
+    "reason": "no GPU window authorized"
+  },
+  "merged": false,
+  "deployed": false,
+  "shared_codegen_crumb_owner": "Main/Integrator"
+}

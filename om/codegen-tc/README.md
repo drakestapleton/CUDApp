@@ -1,9 +1,9 @@
 # Seeded Omega tensor-core builders
 
-`cg_tc.om` owns the instruction selection, HMMA spacing, held-scoreboard
+`../codegen/cg_tc.om` owns the instruction selection, HMMA spacing, held-scoreboard
 transitions, staging, branch fixups and epilogues for the builders formerly
 implemented in `omega_blackwell_codegen_tc.c` and `omega_blackwell_codegen_tc2.c`.
-`cg_tc_emit.om` emits the shared eight-word record format defined by
+`../codegen/cg_tc_emit.om` emits the shared eight-word record format defined by
 `omega_gpu_om_ir.h`. The C entry points marshal scalar arguments and replay those
 records through `omega_gpu_om_ir_replay`. The existing public headers, CPU data
 conversions and shape-query functions are unchanged. `omega_bw_em.h` remains
@@ -109,3 +109,51 @@ revision, with the existing session/lock and hardware gates intact. Record devic
 compiler/unit identities, launch shapes, expected/observed values, timing policy
 and built-in mutant outcomes in a new receipt. Host or simulator PASS does not
 qualify the hardware path. No merge or deployment is authorized by this lane.
+
+Chip runbook (instructions only; **not executed** by this lane):
+
+1. Obtain Drake's current exclusive-window authorization and satisfy the current
+   GPU ownership, memory, watchdog and service-preservation procedure. The lock
+   file alone is not authorization. Do not weaken any gate.
+2. Build the four existing chip-test binaries on the same revision using the
+   pinned compiler/generated units. Do not substitute a host-only flag for chip
+   evidence.
+3. Inside that authorized window, execute the binaries below without `--sim` or
+   `--host-only`. They use the existing session lock and launch path. Preserve
+   each exit status and complete output.
+
+   ```sh
+   ./build/gpu_tc_probe_test
+   ./build/gpu_tc_peak_test
+   ./build/gpu_tcgemm_test
+   ./build/gpu_pfgemm_test
+   ```
+
+4. Require the existing arithmetic comparison and mutant gates. Preserve device
+   and source identities with the new chip receipt; do not reinterpret host
+   differential results as chip timing evidence. Follow the authorized window's
+   restoration procedure and report service/device state.
+
+## Lane receipt
+
+The pre-relocation exhaustive/factored differential at `3bdfcfa` passed 180466
+encoded programs with 52240 matching allocator refusals and killed the record
+flip negative control. The six Omega source mutants and all simulator targets
+passed as well. The full host suite reached the 3600-second shared-core deadline;
+its tier is **INCONCLUSIVE**, not PASS. `full-timeout.log` preserves the command,
+deadline result and the absence of a final suite marker. Per Main's explicit
+full-suite policy, this lane does not retry the full run; Integrator owns the
+unbounded integrated host gate.
+
+The successor sources were then relocated without content changes into
+`om/codegen/` at CodegenA's request. Documentation and receipts remain here;
+Main/Integrator owns the shared `om/codegen/.crumb` and merged registration.
+The post-relocation regeneration and focused receipts are in `validation.json`.
+
+Post-relocation focused command chain exited 0. The strict differential printed
+`CODEGEN TC DIFF PASS (180517 cases, 52380 matching refusals)` and caught the
+record negative. Every successful program encoded successfully on both sides;
+matching encoding failures are not accepted. All six source mutants were killed,
+all simulator targets passed, regeneration was byte-identical, and crumb verify
+reported current. The one absolute home path in `focused-host.log` was replaced
+with `~`; numerical/test output is unchanged.

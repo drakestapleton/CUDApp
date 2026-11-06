@@ -16,8 +16,8 @@ OUT = Path(os.environ.get("OUT_DIR", "build"))
 OMC = os.environ["OMEGA_OMC"]
 BRIDGE = Path(os.environ["OMEGA_BRIDGE"])
 ENV = dict(os.environ, OMEGA_SEEDED_OMC=OMC)
-EMIT = (ROOT / "om/codegen-tc/cg_tc_emit.om").read_text()
-SOURCE = (ROOT / "om/codegen-tc/cg_tc.om").read_text()
+EMIT = (ROOT / "om/codegen/cg_tc_emit.om").read_text()
+SOURCE = (ROOT / "om/codegen/cg_tc.om").read_text()
 
 
 def run(args, **kw):

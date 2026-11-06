@@ -34,6 +34,7 @@ PY
  echo "conv2d mutant KILLED after compile: $mutant"
 done
 echo 'conv2d source mutants: PASS (5 compiled, 5 behaviorally killed)'
+ulimit -c 0
 "$CC" -std=gnu11 -O2 -ffp-contract=off -Isrc -Itests -DCONV2D_GUARD_MUTANT -Wl,--wrap=omega_gpu_session_open,--wrap=omega_gpu_session_lock,--wrap=omega_gpu_session_unlock,--wrap=omega_gpu_session_free,--wrap=omega_gpu_session_alloc tests/gpu_conv2d_test.c "$OUT_DIR/libomega_gpu.a" -lpthread -lm -o "$T/guard-test"
 set +e
 "$T/guard-test" --sim > "$T/guard.log" 2>&1

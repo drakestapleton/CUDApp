@@ -16,3 +16,7 @@ test-gpu-conv2d-gemm-f32: $(OUT_DIR)/gpu_conv2d_test $(OUT_DIR)/gpu_conv2d_oracl
 	cmp $(OUT_DIR)/conv2d-dense-seeded.log $(OUT_DIR)/conv2d-dense-oracle.log
 	cat $(OUT_DIR)/conv2d-dense-seeded.log
 CARRIED_HOST_TESTS += test-gpu-conv2d test-gpu-conv2d-mutants test-gpu-conv2d-gemm-f32
+
+# Build-only operator executable. Never part of carried/headless targets.
+$(OUT_DIR)/gpu_conv2d_chip_test: tests/gpu_conv2d_test.c tests/gpu_conv2d_ref.h $(OUT_DIR)/libomega_gpu.a
+	$(CC) $(CFLAGS) -ffp-contract=off -Itests -DCONV2D_OPERATOR_CHIP=1 -o $@ $< $(OUT_DIR)/libomega_gpu.a -lpthread -lm

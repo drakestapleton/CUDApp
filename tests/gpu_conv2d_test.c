@@ -5,7 +5,7 @@
 #include "bw_warp_sim_k.h"
 #include "gpu_conv2d_ref.h"
 #include <stdio.h>
-static int failed,checks,opened,allocations,open_success,shell_contract;
+static int failed,checks,opened,allocations,open_success,shell_contract,chip;
 #define CHECK(x) do {checks++;if(!(x)){failed++;fprintf(stderr,"conv2d FAIL line %d: %s\n",__LINE__,#x);}}while(0)
 OmegaGpuSession *__wrap_omega_gpu_session_open(void) {static OmegaGpuSession dummy;if(!shell_contract)abort();opened++;return open_success?&dummy:NULL;}
 int __wrap_omega_gpu_session_alloc(size_t n,OmegaGpuMem *m) {(void)n;(void)m;if(!shell_contract)abort();allocations++;return -1;}
@@ -30,7 +30,8 @@ static int run_conv(OmegaGpuConv2dShape s,int wrong) {
  BlackwellIRProgram *p=malloc(sizeof *p);uint8_t *code=malloc(OMEGA_BW_CODE_CAP_MAX);OmegaBlackwellKernel kernel;
  memset(out,0xa5,plan[4]);rc=omega_gpu_conv2d_codegen(&s,p,code,OMEGA_BW_CODE_CAP_MAX,&kernel);
  CHECK(!rc);if(rc)fprintf(stderr,"conv codegen rc %d\n",rc);
- for(uint64_t i=0;!rc&&i<plan[5];i++) {
+ if(!rc && chip)rc=omega_gpu_conv2d(&s,a,b,out);
+ for(uint64_t i=0;!chip&&!rc&&i<plan[5];i++) {
   CHECK(!omega_gpu_conv2d_plan(&s,i,plan));
   WsSim sim={0};sim.p=p;sim.threads=(unsigned)plan[7];sim.order=i&1;sim.warp_sched=i&1;
   uint32_t *args=sim.cbank+0x380/4;ptr(args,(uintptr_t)a+plan[8]);ptr(args+2,(uintptr_t)b+plan[9]);ptr(args+4,(uintptr_t)out+plan[10]);args[6]=plan[11];
@@ -78,6 +79,10 @@ static void refusals(void) {
 }
 int main(int argc,char **argv) {
  if(argc!=2)return 2;
+#ifdef CONV2D_OPERATOR_CHIP
+ if(strcmp(argv[1],"--chip"))return 2;
+ chip=1;argv[1]="--sim";
+#endif
 #ifdef CONV2D_GUARD_MUTANT
  if(!strcmp(argv[1],"--sim"))(void)omega_gpu_session_open();
 #endif
@@ -95,5 +100,5 @@ int main(int argc,char **argv) {
   for(unsigned l=0;l<2;l++)for(unsigned t=0;t<3;t++)for(unsigned i=0;i<5;i++){OmegaGpuConv2dShape s=cases[i];s.layout=l;s.dtype=t;run_conv(s,0);}
   OmegaGpuConv2dShape s=cases[2];CHECK(!run_conv(s,1));
  }else return 2;
- printf("conv2d host+warp-sim: %s (%d checks, %d failures)\n",failed?"FAIL":"PASS",checks,failed);return failed?1:0;
+ printf("conv2d %s: %s (%d checks, %d failures)\n",chip?"chip":"host+warp-sim",failed?"FAIL":"PASS",checks,failed);return failed?1:0;
 }

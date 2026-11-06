@@ -4,7 +4,7 @@ Public API: `src/omega_gpu_conv2d_api.h`. `omega_gpu_conv2d_plan(shape,launch,pl
 
 Inputs and outputs are contiguous NCHW (layout 0) or NHWC (layout 1). Filters are always contiguous OIHW `[CO, CI/groups, KH, KW]`. This is cross-correlation with explicit independent top/bottom/left/right zero padding. Strides and dilations are positive. No bias, fused activation, scaling or SAME-padding convention. Dtypes follow `omega_gpu_dnn_types.h`: 0 f32, 1 bf16, 2 IEEE f16. Both operands use the selected storage; arithmetic and output are f32.
 
-All positive dimensions/strides/dilations/groups are at most 65535; padding is 0..65535. Input and output channels must divide groups. Empty output geometry is refused. Each input/filter/output element count and launch count must be below 2^30. The planner checks these before any device session access. Caller buffers must cover the returned byte counts; plan does not validate memory provenance.
+All positive dimensions/strides/dilations/groups are at most 65535; padding is 0..65535. Input and output channels must be divisible by groups. Empty output geometry is refused. Each input/filter/output element count and launch count must be below 2^30. The planner checks these before any device session access. Caller buffers must cover the returned byte counts; plan does not validate memory provenance.
 
 ## Composition
 
@@ -32,8 +32,61 @@ Result: admitted integer geometry requires `s>=1` and `h>=1-d-pb-pt+d*r`; output
 After source generation with the pinned compiler and bridge:
 
 ```
-taskset -c 10-14 nice -n 10 make -j3 test-gpu-conv2d test-gpu-conv2d-gemm-f32
-taskset -c 10-14 nice -n 10 make -j3 test-gpu-conv2d-mutants
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-conv2d test-gpu-conv2d-gemm-f32
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge make -j3 test-gpu-conv2d-mutants
 ```
 
-The first target runs the complete generated IR in warpSIM, both layouts and all storage types, batch/group/depthwise, stride/pad/dilation, 1x1/3x3 and odd width/channel/spatial tails. Independent wrong-group reference must disagree. Host session link wrappers block device access, including admission mutants; positive controls cover failed-open and successful-open/failed-allocation semantics. Dense F32 runs emitted seeded and migration-C oracle kernels separately against double reference and compares output digests. Source mutants must compile then fail numeric behavior. Existing C3 focused regression gates remain required by integration. No full suite, GPU or performance qualification is implied.
+The first target runs the complete generated IR in warpSIM, both layouts and all storage types, batch/group/depthwise, stride/pad/dilation, 1x1/3x3 and odd width/channel/spatial tails. Independent wrong-group reference must disagree. In addition to the empty-device namespace, host session link wrappers abort on any device access under `--sim`, including admission mutants. Only the explicit memory-only `--shell-contract` mode permits fake sessions: positive controls cover NULL-open/zero-allocation and nonNULL-open/one-failed-allocation semantics. Dense F32 runs emitted seeded and migration-C oracle kernels separately against double reference and compares output digests. Five source mutants must compile then fail numeric behavior; a separately compiled direct-open mutant must die with SIGABRT. Existing C3 focused regression gates remain required by integration and use the same namespace isolation plus `gpu_conv2d_guard.c` abort wrappers. No full suite, GPU or performance qualification is implied. See `CHIP.md` for the separately authorized operator-only hardware runbook.
+
+## Exercised private host evidence
+
+Implementation commit before final documentation: `9a2efca`; compiler source
+`omega-mv@e5b32567`, omc SHA256
+`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
+No chip qualification is asserted.
+
+Final device-isolated focused command (exit 0):
+
+```
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge make -j3 test-gpu-conv2d test-gpu-conv2d-gemm-f32 test-gpu-conv2d-mutants build/gpu_conv2d_chip_test
+```
+
+Observed final lines:
+
+```
+conv2d host+warp-sim: PASS (1454 checks, 0 failures)
+conv2d host+warp-sim: PASS (27 checks, 0 failures)
+dense F32 digest 93efbbc6b4debf83
+conv2d host+warp-sim: PASS (1290 checks, 0 failures)
+conv2d source mutants: PASS (5 compiled, 5 behaviorally killed)
+conv2d direct-open mutant: PASS (SIGABRT before device access)
+```
+
+The chip executable was compiled only, never executed. The five numerical
+mutations were product/FMA operation, image stride, dilation, padding mask and
+filter spatial flattening. Each compiled before its numeric mismatch.
+
+Retained C3 focused command (exit 0), with abort guards on both default and
+migration-oracle binaries:
+
+```
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 CC='cc tests/gpu_conv2d_guard.c -Wl,--wrap=omega_gpu_session_open,--wrap=omega_gpu_session_lock,--wrap=omega_gpu_session_unlock,--wrap=omega_gpu_session_free,--wrap=omega_gpu_session_alloc' test-gpu-gemm-any test-gpu-gemm-any-differential
+```
+
+Observed:
+
+```
+GEMM ANY SIM SWEEP PASS (286 distinct shapes, 2288 multiplies, 2552824 output words, bitwise model + per-K bound)
+GEMM ANY HOST/SIM/MUTANTS PASS
+GEMM ANY C/OMEGA SIM-EQUAL PASS (not byte-identical kernels)
+```
+
+Generated unit check (exit 0; generation only, not a device/test command):
+
+```
+taskset -c 10-14 nice -n 10 env OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge sh om/units.sh --check
+PASS portable Omega units regenerate byte for byte
+```
+
+The full suite is NOT_RUN by this lane; the integrator owns its single attempt.
+Hardware, performance, merge and deployment remain NOT_RUN/not performed.

@@ -515,8 +515,8 @@ uint32_t omega_gpu_fp8_grouped_ctas_auto(uint32_t groups) {
 
 /* General fallback (GemmGeneral, 2026-10-27): a host-staged call (x and the expert ids on the host, y returned) whose shape
  * the tuned kernels refuse runs through omega_gpu_gemm_ex_fp8_block_rows instead (dequantize, fp32-input GEMM via bf16x3).
- * `refused` is what the call returned before the fallback existed; it comes back unchanged when the build switch
- * CUDAPP_MIGRATION_PENDING_GEMM_EX is off. */
+ * `refused` is what the call returned before the fallback existed; it comes back unchanged if the fallback answers
+ * UNSUPPORTED. */
 int omega_gpu_fp8_general_rows(const OmegaGpuFp8Tensor *t, uint32_t expert, const float *x32, const uint16_t *x16, uint32_t m,
                                float *y, int refused) {
     if (!t || !t->w.cpu || !t->s.cpu || expert >= t->experts) return OMEGA_GPU_FP8_BAD_ARGS;

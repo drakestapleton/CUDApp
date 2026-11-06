@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T05:51:54Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:7c84bf037047a632d7a81bde06190d1d154b462660f3265a4068a5acd133df89",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 9,
+      "generated_at_commit": "81f4ca1d2d9f6748a670212bc07d121866f319e3",
+      "source_tree": "sha256:4da2d35a3a8333c95991294bb079e6fa85c172c27a0c889fb5de9baa344f930e"
+    }
+  },
+  "layer": "numeric",
+  "name": "gemmex",
+  "purpose": "General GEMM (gemm_ex) host plan, row conversions, bf16x3 planes, k-part sum, recompute, epilogue and fp8 dequantization in seeded Omega",
+  "schema_version": "1.0.0"
+}

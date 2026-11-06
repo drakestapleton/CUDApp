@@ -1,18 +1,22 @@
 /* omega_gpu_gemm_ex.c -- the general matrix multiply over the C3 kernels (contract: omega_gpu_gemm_ex.h).
- * Migration-pending C: switch CUDAPP_MIGRATION_PENDING_GEMM_EX (mk/gemm-ex.mk), successor src/omega_gpu_gemm_ex.om. */
+ * The plan, the routes, the k parts, the operand conversion, the k-part sums, the host recompute, the epilogue and the fp8
+ * dequantization are seeded Omega (the om/gemmex units, generated src/cudapp_om_gemm_ex_<unit>.c, CUDApp#144); this file is the
+ * memory shell: gathers into the units' byte windows, copies, allocation and the C3 calls.
+ * Migration-pending C, kept as the differential oracle (mk/gemm-ex.mk): CUDAPP_MIGRATION_PENDING_GEMM_EX=1 builds the
+ * old C path instead; CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF=1 runs both on every call and aborts on any difference. */
 #include "omega_gpu_gemm_ex.h"
 #include "omega_gpu_session.h"
 
 #include <string.h>
 
 #ifndef CUDAPP_MIGRATION_PENDING_GEMM_EX
-#define CUDAPP_MIGRATION_PENDING_GEMM_EX 1
+#define CUDAPP_MIGRATION_PENDING_GEMM_EX 0
 #endif
-#if CUDAPP_MIGRATION_PENDING_GEMM_EX
-
-#define TILE 4096u        /* rows / columns of C per host tile */
-#define KMAX 16384u       /* k per C3 call (OMEGA_GPU_GEMM_MAX_DIM) */
-#define KMAX3 1808u       /* k per bf16x3 call: 9 planes of roundup(k, 16) <= 16384 */
+#ifndef CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF
+#define CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF 0
+#endif
+#define GX_C (CUDAPP_MIGRATION_PENDING_GEMM_EX || CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF)
+#define GX_OM (!CUDAPP_MIGRATION_PENDING_GEMM_EX || CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF)
 
 static int chip_core(void *ctx, OmegaGpuGemmType t, unsigned layout, uint32_t M, uint32_t N, uint32_t K, const void *A, uint64_t lda,
                      const void *B, uint64_t ldb, float *C) {
@@ -25,6 +29,12 @@ static int g_mutant;
 
 void omega_gpu_gemm_ex_set_backend(OmegaGemmExCoreFn fn, void *ctx) { g_core = fn ? fn : chip_core; g_core_ctx = fn ? ctx : NULL; }
 void omega_gpu_gemm_ex_test_set_mutant(int mutant) { g_mutant = mutant; }
+
+#if GX_C /* ------------------------------------------------------------------ the migration-pending C (the oracle) */
+
+#define TILE 4096u        /* rows / columns of C per host tile */
+#define KMAX 16384u       /* k per C3 call (OMEGA_GPU_GEMM_MAX_DIM) */
+#define KMAX3 1808u       /* k per bf16x3 call: 9 planes of roundup(k, 16) <= 16384 */
 
 /* ------------------------------------------------------------------ number formats */
 
@@ -339,7 +349,7 @@ static void store_c(unsigned t, void *p, uint64_t i, double v) {
     else ((uint16_t *)p)[i] = f2h_rne(d2f_odd(v));
 }
 
-int omega_gpu_gemm_ex(const OmegaGemmExArgs *args) {
+static int c_gemm_ex(const OmegaGemmExArgs *args) {
     if (!args) return OMEGA_GPU_GEMM_BAD_ARGS;
     Call c;
     memset(&c, 0, sizeof c);
@@ -450,8 +460,8 @@ out:
 
 #define FP8_SLAB_BYTES (32ull << 20) /* dequantized weight rows per gemm_ex call */
 
-int omega_gpu_gemm_ex_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
-                                     const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info) {
+static int c_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
+                            const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info) {
     if (info) memset(info, 0, sizeof *info);
     if (!w || !scale || !y || (!x32) == (!x16) || n == 0 || k == 0 || m == 0 || block == 0 || (ldy && ldy < n)) return OMEGA_GPU_GEMM_BAD_ARGS;
     if (!ldy) ldy = n;
@@ -481,21 +491,584 @@ int omega_gpu_gemm_ex_fp8_block_rows(const uint8_t *w, const float *scale, doubl
             .a = x32 ? (const void *)x32 : (const void *)x16, .lda = k, .b = slab, .ldb = k, .c = y + j0, .ldc = ldy,
             .alpha = 1.0f, .beta = 0.0f, .info = &pi,
         };
-        rc = omega_gpu_gemm_ex(&a);
+        rc = c_gemm_ex(&a);
         if (info) { info->route = pi.route; info->core_type = pi.core_type; info->core_calls += pi.core_calls; info->host_fixed += pi.host_fixed; }
     }
     omega_gpu_host_free(slab);
     return rc;
 }
 
-#else /* the switch off: the entry refuses every call */
-void omega_gpu_gemm_ex_set_backend(OmegaGemmExCoreFn fn, void *ctx) { (void)fn; (void)ctx; }
-void omega_gpu_gemm_ex_test_set_mutant(int mutant) { (void)mutant; }
-int omega_gpu_gemm_ex(const OmegaGemmExArgs *args) { (void)args; return OMEGA_GPU_GEMM_UNSUPPORTED; }
+#endif /* GX_C */
+
+#if GX_OM /* ------------------------------------------------------------------ the Omega path: the memory shell */
+#include "cudapp_native.h"
+
+#define GX_WIN 65536u /* bytes of a unit's byte window (view uchar 65536 in om/gemmex) */
+#define GX_ROW 4096u  /* words of a unit's tile-row window (acc, fix: one row of a 4096-wide C tile) */
+
+/* The units' windows: x the call, p the plan, q one unit call's arguments, res a unit's result; ga gb gathered runs,
+ * gc the copied C row or the acc scales, fl the recompute flags of a row (fix read only where fl is set); tab the row
+ * unit's fp8 decode table, keyed by tab[256] (0: none). gx_new zeroes x..res and the key only: every other window is
+ * written before a unit reads it, and zeroing the whole struct cost more than a small call's arithmetic. owner is the
+ * platform whose host_alloc made the block. */
+typedef struct {
+    const OmegaGpuPlatform *owner;
+    uint64_t x[48], p[64], q[8], res, fix[GX_ROW], tab[257];
+    uint8_t ga[GX_WIN], gb[GX_WIN], gc[GX_WIN], fl[GX_WIN];
+} Gx;
+
+/* a zero P row and a zero sum row: never written, so it stays in .bss */
+static uint64_t gx_zero[GX_WIN / 8u];
+
+/* One spare Gx kept between calls. A fresh block of this size is a fresh mapping each call (glibc maps blocks this
+ * large, and the first touch of each page faults): 9x9x9 cost 11.8 us that way against 1.8 us on a kept block
+ * (2026-11-06, core 13). The slot is swapped atomically, so concurrent calls never share a block: a call that finds it
+ * empty allocates, and a call that finds it full on return frees the block it displaces. A block made under another
+ * platform than the current one is freed through its owner, never reused. The kept block is still reachable, never
+ * leaked; it lives until the process ends. */
+static Gx *gx_spare;
+
+static void gx_release(Gx *g) {
+    if (g) g->owner->host_free(g->owner->ctx, g);
+}
+
+static Gx *gx_new(void) {
+    const OmegaGpuPlatform *p = omega_gpu_session_platform();
+    Gx *g = __atomic_exchange_n(&gx_spare, (Gx *)0, __ATOMIC_ACQ_REL);
+    if (g && g->owner != p) {
+        gx_release(g);
+        g = 0;
+    }
+    if (!g) {
+        g = p ? p->host_alloc(p->ctx, sizeof *g) : 0;
+        if (!g) return 0;
+        g->owner = p;
+    }
+    memset(g->x, 0, offsetof(Gx, fix) - offsetof(Gx, x));
+    g->tab[256] = 0;
+    return g;
+}
+
+static void gx_drop(Gx *g) {
+    gx_release(__atomic_exchange_n(&gx_spare, g, __ATOMIC_ACQ_REL));
+}
+
+/* a buffer of n zeroed bytes and a GX_WIN tail that only lets a unit's window start near its end (never read as data) */
+static void *gx_buf(uint64_t n) {
+    uint8_t *b = omega_gpu_host_alloc(n + GX_WIN);
+    if (b) memset(b, 0, n);
+    return b;
+}
+
+/* the heap buffers of one call: the converted operands, the bad-row and bad-column flags, P and the k-part sums. They
+ * are carved from one block with one GX_WIN tail (bf.slab, gx_run): a window that starts near the end of one buffer
+ * runs into the next one or the tail, and no unit reads or writes past its own elements. Six blocks with six tails
+ * cost 6 x 64 KiB that the allocator handed back to the system at every free (glibc trims a free top above 128 KiB),
+ * so every small call faulted its pages in again. ab and pa: a b, and P acc, zeroed on their first use (as gx_buf did
+ * when it made them then), so a call that never converts or never sums never touches them. */
+typedef struct {
+    uint8_t *slab, *a, *b, *rowbad, *colbad;
+    float *P;
+    uint64_t *acc;
+    uint64_t na, nb, np, nacc;
+    int ab, pa;
+} GxBufs;
+
+/* A unit that refuses its views (32), re-enters (33) or traps (1..14) is a defect of this shell, not of the call. */
+#define GX_FAULT OMEGA_GPU_GEMM_CODEGEN_FAIL
+
+static uint64_t gx_fbits(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
+static uint64_t gx_dbits(double d) { uint64_t u; memcpy(&u, &d, 8); return u; }
+static uint64_t gx_min(uint64_t a, uint64_t b) { return a < b ? a : b; }
+
+static void gx_load(Gx *g, const OmegaGemmExArgs *a) {
+    uint64_t *x = g->x;
+    x[0] = (uint64_t)a->op_a; x[1] = (uint64_t)a->op_b; x[2] = a->m; x[3] = a->n; x[4] = a->k; x[5] = a->batch;
+    x[6] = (uint64_t)a->a_type; x[7] = (uint64_t)a->b_type; x[8] = (uint64_t)a->c_type;
+    x[9] = a->lda; x[10] = a->stride_a; x[11] = a->ldb; x[12] = a->stride_b; x[13] = a->ldc; x[14] = a->stride_c;
+    x[15] = gx_fbits(a->alpha); x[16] = gx_fbits(a->beta); x[17] = (uint64_t)a->compute; x[18] = (uint64_t)a->scale;
+    x[19] = (uint64_t)(uintptr_t)a->scale_a; x[20] = (uint64_t)(uintptr_t)a->scale_b;
+    x[21] = a->scale_stride_a; x[22] = a->scale_stride_b; x[23] = a->block_m; x[24] = a->block_n; x[25] = a->block_k;
+    x[26] = (uint64_t)(uintptr_t)a->a; x[27] = (uint64_t)(uintptr_t)a->b; x[28] = (uint64_t)(uintptr_t)a->c;
+    x[29] = (uint64_t)(int64_t)g_mutant;
+}
+
+static int gx_plan(Gx *g, uint64_t op) {
+    static const int code[4] = {OMEGA_GPU_GEMM_OK, OMEGA_GPU_GEMM_BAD_ARGS, OMEGA_GPU_GEMM_TOO_LARGE, OMEGA_GPU_GEMM_UNSUPPORTED};
+    if (omega_gemm_ex_plan(&g->res, op, g->x, 48, g->p, 64) != OMEGA_OK || g->res > 3u) return GX_FAULT;
+    return code[g->res];
+}
+
+/* the row unit: ops 0 to 7 also read src as words, so src is a word-aligned window there (ga, gb, or in place; see
+ * gx_bad7); ops 8 and 9 read only bytes and get ga as the unused word view. Ops 5 and 6 (the bf16x3 planes) are the x3
+ * unit, which stores whole words: straight into dst when it is word aligned, else through gc */
+static int gx_row(Gx *g, uint64_t op, uint64_t t, uint64_t n, const uint8_t *src, uint8_t *dst) {
+    const uint8_t *w = op < 8u ? src : g->ga;
+    uint32_t s;
+    if (op == 5u || op == 6u) {
+        uint8_t *d = ((uintptr_t)dst & 7u) ? g->gc : dst;
+        s = omega_gemm_ex_x3(&g->res, op, t, n, w, GX_WIN / 8u, d, GX_WIN / 8u);
+        if (s == OMEGA_OK && d != dst) memcpy(dst, d, g->res * 2u);
+    } else {
+        s = omega_gemm_ex_row(&g->res, op | t << 4, n, src, GX_WIN, w, GX_WIN / 8u, g->tab, 257, dst, GX_WIN);
+    }
+    return s == OMEGA_OK ? OMEGA_GPU_GEMM_OK : GX_FAULT;
+}
+
+/* n elements of es bytes from element i0 of src at element stride st, packed into dst */
+static void gx_gather(uint8_t *dst, const uint8_t *src, uint64_t i0, uint64_t st, uint64_t n, uint64_t es) {
+    if (st == 1u) { memcpy(dst, src + i0 * es, n * es); return; }
+    for (uint64_t i = 0; i < n; i++) memcpy(dst + i * es, src + (i0 + i * st) * es, es);
+}
+
+/* the start element and stride of: row i of op(A) from k0; column j of op(B) from k0; row kk of op(B) from column n0 */
+static uint64_t gx_arow(const Gx *g, uint64_t i, uint64_t k0, uint64_t *st) {
+    *st = g->x[0] ? g->p[2] : 1u;
+    return g->x[0] ? k0 * g->p[2] + i : i * g->p[2] + k0;
+}
+static uint64_t gx_bcol(const Gx *g, uint64_t j, uint64_t k0, uint64_t *st) {
+    *st = g->p[5] ? 1u : g->p[3];
+    return g->p[5] ? j * g->p[3] + k0 : k0 * g->p[3] + j;
+}
+static uint64_t gx_brow(const Gx *g, uint64_t kk, uint64_t n0, uint64_t *st) {
+    *st = g->p[5] ? g->p[3] : 1u;
+    return g->p[5] ? n0 * g->p[3] + kk : kk * g->p[3] + n0;
+}
+
+/* the scale arrays: count floats in each of batches copies stride apart; a non-finite scale refuses the call */
+static int gx_scales(Gx *g, const float *s, uint64_t count, uint64_t batches, uint64_t stride) {
+    for (uint64_t b = 0; b < batches; b++)
+        for (uint64_t i0 = 0; i0 < count; i0 += GX_WIN / 4u) {
+            const uint64_t cn = gx_min(GX_WIN / 4u, count - i0);
+            memcpy(g->ga, s + b * stride + i0, cn * 4u);
+            if (gx_row(g, 7, OMEGA_GEMM_DT_F32, cn, g->ga, g->gb)) return GX_FAULT;
+            if (g->res) return OMEGA_GPU_GEMM_BAD_ARGS;
+        }
+    return OMEGA_GPU_GEMM_OK;
+}
+
+/* rows of n elements per packed unit run: as many as fit the byte windows of src (es bytes each) and dst (ce bytes each);
+ * 1 when the op is not element-wise (5 6, the bf16x3 planes) */
+static uint64_t gx_pack(uint64_t op, uint64_t n, uint64_t es, uint64_t ce) {
+    const uint64_t w = n * (es > ce ? es : ce);
+    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u;
+}
+
+/* convert rn packed rows of n elements in src into dst rows ld bytes apart (ce bytes per converted element): straight
+ * into dst when the rows are adjacent there, else through gc */
+static int gx_conv(Gx *g, uint64_t op, uint64_t t, uint64_t n, uint64_t rn, const uint8_t *src, uint8_t *dst, uint64_t ld,
+                   uint64_t ce) {
+    if (rn == 1u || ld == n * ce) return gx_row(g, op, t, rn * n, src, dst);
+    if (gx_row(g, op, t, rn * n, src, g->gc)) return GX_FAULT;
+    for (uint64_t r = 0; r < rn; r++) memcpy(dst + r * ld, g->gc + r * n * ce, n * ce);
+    return OMEGA_GPU_GEMM_OK;
+}
+
+/* op 7 over the n elements (es bytes) at *s: read in place when *s is word aligned and a whole window from it lies before
+ * end, else copied to ga (and *s set to ga), so op 8 can read the same run */
+static int gx_bad7(Gx *g, uint64_t t, uint64_t n, uint64_t es, const uint8_t **s, const uint8_t *end) {
+    if (((uintptr_t)*s & 7u) || (uint64_t)(end - *s) < GX_WIN) {
+        memcpy(g->ga, *s, n * es);
+        *s = g->ga;
+    }
+    const uint32_t r = omega_gemm_ex_row(&g->res, 7u | t << 4, n, *s, GX_WIN, *s, GX_WIN / 8u, g->tab, 257, g->gb, GX_WIN);
+    return r == OMEGA_OK ? OMEGA_GPU_GEMM_OK : GX_FAULT;
+}
+
+/* one stored operand of rows x cols elements (type t, es bytes, leading dimension ld): per_row sets flag[r] for a row
+ * holding a non-finite element, else flag[c] for each non-finite column c; *any is set when one exists. Short rows go
+ * through op 7 packed, as many as fill a window (in place when the rows are adjacent, else gathered into ga); only a
+ * packed run holding a non-finite element is scanned again row by row. */
+static int gx_scan(Gx *g, uint64_t t, uint64_t es, const uint8_t *src, uint64_t rows, uint64_t cols, uint64_t ld, int per_row,
+                   uint8_t *flag, uint64_t *any) {
+    const uint64_t cw = GX_WIN / es, pr = gx_pack(7, cols, es, es);
+    const uint8_t *end = rows ? src + ((rows - 1u) * ld + cols) * es : src, *s;
+    for (uint64_t r0 = 0; r0 < rows; r0 += pr) {
+        const uint64_t rn = gx_min(pr, rows - r0);
+        if (rn > 1u) {
+            s = src + r0 * ld * es;
+            if (ld != cols) {
+                for (uint64_t r = 0; r < rn; r++) memcpy(g->ga + r * cols * es, s + r * ld * es, cols * es);
+                s = g->ga;
+            }
+            if (gx_bad7(g, t, rn * cols, es, &s, s == g->ga ? g->ga + GX_WIN : end)) return GX_FAULT;
+            if (!g->res) continue;
+        }
+        for (uint64_t r = r0; r < r0 + rn; r++)
+            for (uint64_t c0 = 0; c0 < cols; c0 += cw) {
+                const uint64_t cn = gx_min(cw, cols - c0);
+                s = src + (r * ld + c0) * es;
+                if (gx_bad7(g, t, cn, es, &s, end)) return GX_FAULT;
+                if (!g->res) continue;
+                *any = 1;
+                if (per_row) { flag[r] = 1; break; }
+                if (gx_row(g, 8, t, cn, s, flag + c0)) return GX_FAULT;
+            }
+    }
+    return OMEGA_GPU_GEMM_OK;
+}
+
+/* one C3 call for the tile part the plan's op 1 described: P (mc x nc, f32) = A'(mc x K) . B'; A and B are this batch's */
+static int gx_part(Gx *g, GxBufs *bf, const uint8_t *A, const uint8_t *B, uint64_t m0, uint64_t mc, uint64_t n0, uint64_t nc,
+                   uint64_t k0, float *P, uint64_t *calls) {
+    const uint64_t *p = g->p, ku = p[37], K = p[47], ce = p[25], ea = p[26], eb = p[27];
+    const OmegaGpuGemmType t = (OmegaGpuGemmType)p[7];
+    uint64_t st;
+    (*calls)++;
+    if (p[39])
+        return g_core(g_core_ctx, t, (unsigned)p[24], (uint32_t)mc, (uint32_t)nc, (uint32_t)ku, A + p[40], p[2], B + p[41], p[3], P);
+    if (!bf->ab) {
+        memset(bf->a, 0, bf->na);
+        memset(bf->b, 0, bf->nb);
+        bf->ab = 1;
+    }
+    const uint64_t ra = gx_pack(p[30], ku, ea, ce);
+    for (uint64_t i = 0, rn; i < mc; i += rn) {
+        rn = gx_min(ra, mc - i);
+        for (uint64_t r = 0; r < rn; r++) {
+            const uint64_t i0 = gx_arow(g, m0 + i + r, k0, &st);
+            gx_gather(g->ga + r * ku * ea, A, i0, st, ku, ea);
+        }
+        if (gx_conv(g, p[30], g->x[6], ku, rn, g->ga, bf->a + i * K * ce, K * ce, ce)) return GX_FAULT;
+    }
+    if (p[32]) {
+        const uint64_t rb = gx_pack(p[31], nc, eb, ce);
+        for (uint64_t kk = 0, rn; kk < ku; kk += rn) {
+            rn = gx_min(rb, ku - kk);
+            for (uint64_t r = 0; r < rn; r++) {
+                const uint64_t i0 = gx_brow(g, k0 + kk + r, n0, &st);
+                gx_gather(g->gb + r * nc * eb, B, i0, st, nc, eb);
+            }
+            if (gx_conv(g, p[31], g->x[7], nc, rn, g->gb, bf->b + kk * nc * ce, nc * ce, ce)) return GX_FAULT;
+        }
+    } else {
+        const uint64_t rb = gx_pack(p[31], ku, eb, ce);
+        for (uint64_t j = 0, rn; j < nc; j += rn) {
+            rn = gx_min(rb, nc - j);
+            for (uint64_t r = 0; r < rn; r++) {
+                const uint64_t i0 = gx_bcol(g, n0 + j + r, k0, &st);
+                gx_gather(g->gb + r * ku * eb, B, i0, st, ku, eb);
+            }
+            if (gx_conv(g, p[31], g->x[7], ku, rn, g->gb, bf->b + j * K * ce, K * ce, ce)) return GX_FAULT;
+        }
+    }
+    return g_core(g_core_ctx, t, (unsigned)p[33], (uint32_t)mc, (uint32_t)nc, (uint32_t)K, bf->a, 0, bf->b, 0, P);
+}
+
+/* the host recompute of row i (global) of the tile at column n0: fix[j] for every flagged j, in block_k runs */
+static int gx_fixrow(Gx *g, const uint8_t *A, const uint8_t *B, const float *sa, const float *sb, uint64_t i, uint64_t n0, uint64_t nc) {
+    const uint64_t *x = g->x, *p = g->p, k = x[4], blk = x[18] == OMEGA_GEMM_SCALE_BLOCK;
+    uint64_t st;
+    for (uint64_t j = 0; j < nc; j++) {
+        if (!g->fl[j]) continue;
+        uint64_t s = 0;
+        for (uint64_t k0 = 0, cn; k0 < k; k0 += cn) {
+            cn = gx_min(GX_WIN / 4u, k - k0);
+            if (blk) cn = gx_min(cn, x[25] - k0 % x[25]);
+            uint64_t i0 = gx_arow(g, i, k0, &st);
+            gx_gather(g->ga, A, i0, st, cn, p[26]);
+            i0 = gx_bcol(g, n0 + j, k0, &st);
+            gx_gather(g->gb, B, i0, st, cn, p[27]);
+            const uint64_t q[8] = {x[6], x[7], cn, s, blk, blk ? gx_fbits(sa[(i / x[23]) * p[13] + k0 / x[25]]) : 0u,
+                                   blk ? gx_fbits(sb[(k0 / x[25]) * p[14] + (n0 + j) / x[24]]) : 0u, 0u};
+            memcpy(g->q, q, sizeof q);
+            if (omega_gemm_ex_dot(&g->res, g->q, 8, g->ga, GX_WIN / 8u, g->gb, GX_WIN / 8u) != OMEGA_OK) return GX_FAULT;
+            s = g->res;
+        }
+        g->fix[j] = s;
+    }
+    return OMEGA_GPU_GEMM_OK;
+}
+
+/* the k-part sum of the tile rows: acc row i += P row i (times the block scales of k block p[38]). Without block scales
+ * the factor is 1.0 for every element, so the rows go packed, as many as fill one acc window. */
+static int gx_accrows(Gx *g, const float *sa, const float *sb, uint64_t m0, uint64_t mc, uint64_t n0, uint64_t nc, const float *P,
+                      uint64_t *acc) {
+    const uint64_t *x = g->x, *p = g->p, blk = x[18] == OMEGA_GEMM_SCALE_BLOCK, kb = p[38], pr = blk ? 1u : GX_ROW / nc;
+    uint64_t q[8] = {nc, blk, n0, blk ? x[24] : 1u, 0u, 0u, 0u, 0u};
+    if (blk) memcpy(g->gc + 4, sb + kb * p[14] + n0 / x[24], ((n0 + nc - 1u) / x[24] - n0 / x[24] + 1u) * 4u);
+    for (uint64_t i = 0, rn; i < mc; i += rn) {
+        rn = gx_min(pr, mc - i);
+        if (blk) memcpy(g->gc, sa + ((m0 + i) / x[23]) * p[13] + kb, 4);
+        q[0] = rn * nc;
+        memcpy(g->q, q, sizeof q);
+        if (omega_gemm_ex_acc(&g->res, g->q, 8, P + i * nc, GX_WIN, g->gc, GX_WIN, acc + i * nc, GX_ROW) != OMEGA_OK) return GX_FAULT;
+    }
+    return OMEGA_GPU_GEMM_OK;
+}
+
+/* the epilogue of the tile rows into C (this batch's), with the recompute of the flagged elements. With no non-finite
+ * input (or nothing computed) no element is recomputed, so the rows go packed, as many as fill one window: their C
+ * elements gathered into gc and back. */
+static int gx_epirows(Gx *g, GxBufs *bf, const uint8_t *A, const uint8_t *B, const float *sa, const float *sb, uint8_t *C,
+                      uint64_t any, uint64_t m0, uint64_t mc, uint64_t n0, uint64_t nc, uint64_t *fixed) {
+    const uint64_t *x = g->x, *p = g->p, ec = p[28], compute = p[10], one = p[9], pr = compute && any ? 1u : GX_ROW / nc;
+    uint64_t q[8] = {nc, x[8], compute, one, p[42], p[11], 0u, 0u};
+    for (uint64_t i = 0, rn; i < mc; i += rn) {
+        rn = gx_min(pr, mc - i);
+        if (compute) {
+            if (gx_row(g, 9, any | (uint64_t)bf->rowbad[m0 + i] << 1, rn * nc, bf->colbad + n0, g->fl)) return GX_FAULT;
+            if (any && gx_fixrow(g, A, B, sa, sb, m0 + i, n0, nc)) return GX_FAULT;
+        }
+        const uint8_t *pv = compute ? (const uint8_t *)(bf->P + i * nc) : (const uint8_t *)gx_zero;
+        const uint64_t *av = compute && !one ? bf->acc + i * nc : gx_zero;
+        for (uint64_t r = 0; r < rn; r++) memcpy(g->gc + r * nc * ec, C + ((m0 + i + r) * p[4] + n0) * ec, nc * ec);
+        q[0] = rn * nc;
+        memcpy(g->q, q, sizeof q);
+        if (omega_gemm_ex_epi(&g->res, g->q, 8, pv, GX_WIN, av, GX_ROW, g->fix, GX_ROW, g->fl, GX_ROW, g->gc, GX_WIN) != OMEGA_OK)
+            return GX_FAULT;
+        for (uint64_t r = 0; r < rn; r++) memcpy(C + ((m0 + i + r) * p[4] + n0) * ec, g->gc + r * nc * ec, nc * ec);
+        *fixed += g->res;
+    }
+    return OMEGA_GPU_GEMM_OK;
+}
+
+/* one batch: the bad-element scan, the per-batch plan (op 2), then the direct rows or the tiles */
+static int gx_batch(Gx *g, GxBufs *bf, const OmegaGemmExArgs *args, uint64_t b, uint64_t *calls, uint64_t *fixed) {
+    uint64_t *x = g->x;
+    const uint64_t *p = g->p, m = x[2], n = x[3], k = x[4];
+    const uint8_t *A = (const uint8_t *)args->a + b * x[10] * p[26], *B = (const uint8_t *)args->b + b * x[12] * p[27];
+    uint8_t *C = (uint8_t *)args->c + b * x[14] * p[28];
+    const float *sa = args->scale_a ? args->scale_a + b * args->scale_stride_a : NULL;
+    const float *sb = args->scale_b ? args->scale_b + b * args->scale_stride_b : NULL;
+    uint64_t any = 0;
+    int rc;
+    if (p[10]) {
+        memset(bf->rowbad, 0, m);
+        memset(bf->colbad, 0, n);
+        if ((rc = gx_scan(g, x[6], p[26], A, x[0] ? k : m, x[0] ? m : k, p[2], !x[0], bf->rowbad, &any))) return rc;
+        if ((rc = gx_scan(g, x[7], p[27], B, p[5] ? n : k, p[5] ? k : n, p[3], (int)p[5], bf->colbad, &any))) return rc;
+        x[30] = x[18] != OMEGA_GEMM_SCALE_NONE ? gx_fbits(sa[0]) : 0u;
+        x[31] = x[18] != OMEGA_GEMM_SCALE_NONE ? gx_fbits(sb[0]) : 0u;
+        x[32] = any;
+        if ((rc = gx_plan(g, 2))) return rc;
+        if (p[43]) {
+            for (uint64_t m0 = 0; m0 < m; m0 += p[20]) {
+                const uint64_t mc = gx_min(p[20], m - m0);
+                x[30] = 0; x[31] = mc; x[32] = n; x[33] = 0; x[34] = m0; x[35] = 0;
+                if ((rc = gx_plan(g, 1))) return rc;
+                float *out = (float *)C + m0 * p[4];
+                if (!p[37]) memset(out, 0, mc * n * 4u);
+                else if ((rc = gx_part(g, bf, A, B, m0, mc, 0, n, 0, out, calls))) return rc;
+            }
+            return OMEGA_GPU_GEMM_OK;
+        }
+        if (!bf->pa) {
+            memset(bf->P, 0, bf->np);
+            memset(bf->acc, 0, bf->nacc);
+            bf->pa = 1;
+        }
+    }
+    for (uint64_t m0 = 0; m0 < m; m0 += p[21])
+        for (uint64_t n0 = 0; n0 < n; n0 += p[22]) {
+            const uint64_t mc = gx_min(p[21], m - m0), nc = gx_min(p[22], n - n0);
+            if (p[10]) {
+                if (p[9]) {
+                    x[30] = 0; x[31] = mc; x[32] = nc; x[33] = any; x[34] = m0; x[35] = n0;
+                    if ((rc = gx_plan(g, 1))) return rc;
+                    if (!p[37]) memset(bf->P, 0, mc * nc * 4u);
+                    else if ((rc = gx_part(g, bf, A, B, m0, mc, n0, nc, 0, bf->P, calls))) return rc;
+                } else {
+                    memset(bf->acc, 0, mc * nc * 8u);
+                    for (uint64_t k0 = 0; k0 < k; k0 += p[36]) {
+                        x[30] = k0; x[31] = mc; x[32] = nc; x[33] = any; x[34] = m0; x[35] = n0;
+                        if ((rc = gx_plan(g, 1))) return rc;
+                        if (!p[37]) continue;
+                        if ((rc = gx_part(g, bf, A, B, m0, mc, n0, nc, k0, bf->P, calls))) return rc;
+                        if ((rc = gx_accrows(g, sa, sb, m0, mc, n0, nc, bf->P, bf->acc))) return rc;
+                    }
+                }
+            }
+            if ((rc = gx_epirows(g, bf, A, B, sa, sb, C, any, m0, mc, n0, nc, fixed))) return rc;
+        }
+    return OMEGA_GPU_GEMM_OK;
+}
+
+static int gx_run(Gx *g, const OmegaGemmExArgs *args) {
+    const uint64_t *p = g->p;
+    GxBufs bf = {0};
+    uint64_t calls = 0, fixed = 0;
+    int rc = OMEGA_GPU_GEMM_OK;
+    if (p[10]) {
+        /* acc rowbad colbad P a b, each from a 64-byte boundary. The acc unit edits a GX_ROW-word window of acc while it
+         * reads a GX_WIN window of P, and a unit refuses an edited view that overlaps another one (32), so acc comes
+         * first and keeps GX_ROW words of its own after its end. acc only when the k parts are summed (not p[9]). */
+        const uint64_t tile = p[21] * p[22];
+        uint64_t o[7] = {0}, n[6] = {p[9] ? 0u : tile * 8u, g->x[2], g->x[3], tile * 4u, p[34] * p[25], p[35] * p[25]};
+        int over = 0;
+        for (int i = 0; i < 6; i++)
+            over |= (n[i] > ~(uint64_t)63u) | __builtin_add_overflow(o[i], (n[i] + 63u) & ~(uint64_t)63u, &o[i + 1]);
+        if (n[0]) {
+            for (int i = 1; i < 7; i++) over |= __builtin_add_overflow(o[i], GX_ROW * 8u, &o[i]);
+        }
+        bf.slab = over || o[6] > UINT64_MAX - GX_WIN ? NULL : omega_gpu_host_alloc(o[6] + GX_WIN);
+        if (!bf.slab) rc = OMEGA_GPU_GEMM_CHIP_FAIL;
+        else {
+            bf.acc = (uint64_t *)bf.slab; bf.rowbad = bf.slab + o[1]; bf.colbad = bf.slab + o[2];
+            bf.P = (float *)(bf.slab + o[3]); bf.a = bf.slab + o[4]; bf.b = bf.slab + o[5];
+            bf.nacc = n[0]; bf.np = n[3]; bf.na = n[4]; bf.nb = n[5];
+            memset(bf.rowbad, 0, o[3] - o[1]);
+        }
+    }
+    for (uint64_t b = 0; b < p[1] && rc == OMEGA_GPU_GEMM_OK; b++) rc = gx_batch(g, &bf, args, b, &calls, &fixed);
+    if (args->info) {
+        args->info->route = p[10] ? (uint32_t)p[6] : OMEGA_GEMM_ROUTE_NONE;
+        args->info->core_type = p[10] ? (uint32_t)p[7] : 0u;
+        args->info->core_calls = calls;
+        args->info->host_fixed = fixed;
+    }
+    omega_gpu_host_free(bf.slab);
+    return rc;
+}
+
+static int om_gemm_ex(const OmegaGemmExArgs *args) {
+    if (!args) return OMEGA_GPU_GEMM_BAD_ARGS;
+    Gx *g = gx_new();
+    if (!g) return OMEGA_GPU_GEMM_CHIP_FAIL;
+    gx_load(g, args);
+    int rc = gx_plan(g, 0);
+    if (rc == OMEGA_GPU_GEMM_OK) rc = gx_scales(g, args->scale_a, g->p[15], g->p[17], args->scale_stride_a);
+    if (rc == OMEGA_GPU_GEMM_OK) rc = gx_scales(g, args->scale_b, g->p[16], g->p[18], args->scale_stride_b);
+    if (rc == OMEGA_GPU_GEMM_OK) rc = gx_run(g, args);
+    gx_drop(g);
+    return rc;
+}
+
+static void gx_fp8_load(Gx *g, const uint8_t *w, const float *scale, uint32_t n, uint32_t k, uint32_t block, const float *x32,
+                        const uint16_t *x16, uint32_t m, const float *y, uint64_t ldy) {
+    uint64_t *x = g->x;
+    x[29] = (uint64_t)(int64_t)g_mutant;
+    x[30] = (uint64_t)(uintptr_t)w; x[31] = (uint64_t)(uintptr_t)scale; x[32] = (uint64_t)(uintptr_t)y;
+    x[33] = (uint64_t)(uintptr_t)x32; x[34] = (uint64_t)(uintptr_t)x16;
+    x[35] = n; x[36] = k; x[37] = m; x[38] = block; x[39] = ldy;
+}
+
+static int om_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
+                             const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info) {
+    if (info) memset(info, 0, sizeof *info);
+    Gx *g = gx_new();
+    if (!g) return OMEGA_GPU_GEMM_CHIP_FAIL;
+    gx_fp8_load(g, w, scale, n, k, block, x32, x16, m, y, ldy);
+    int rc = gx_plan(g, 3);
+    const uint64_t ly = g->p[1], kb = g->p[2], rows = g->p[3], at = g->p[4];
+    uint8_t *slab = rc == OMEGA_GPU_GEMM_OK ? gx_buf(rows * k * 4u) : NULL;
+    if (rc == OMEGA_GPU_GEMM_OK && !slab) rc = OMEGA_GPU_GEMM_CHIP_FAIL;
+    const uint64_t cw = GX_WIN / 4u - 1u; /* 16383 weights per run: a run's scales, shifted one block, stay in one window */
+    for (uint64_t j0 = 0; j0 < n && rc == OMEGA_GPU_GEMM_OK; j0 += rows) {
+        const uint64_t nr = gx_min(rows, n - j0);
+        for (uint64_t j = 0; j < nr && rc == OMEGA_GPU_GEMM_OK; j++) {
+            const uint8_t *wr = w + (j0 + j) * k;
+            const float *sr = scale + (j0 + j) / block * kb;
+            for (uint64_t c0 = 0; c0 < k; c0 += cw) {
+                const uint64_t cn = gx_min(cw, k - c0), sbase = c0 / block;
+                memcpy(g->ga, wr + c0, cn);
+                memcpy(g->gb, sr + sbase, gx_min(GX_WIN / 4u, kb - sbase) * 4u);
+                const uint64_t q[8] = {cn, c0, block, kb, gx_dbits(scale_mul), (uint64_t)(int64_t)g_mutant, sbase, gx_fbits(sr[0])};
+                memcpy(g->q, q, sizeof q);
+                if (omega_gemm_ex_fp8(&g->res, g->q, 8, g->ga, GX_WIN, g->gb, GX_WIN / 8u, slab + (j * k + c0) * 4u, GX_WIN) != OMEGA_OK ||
+                    g->res) {
+                    rc = GX_FAULT;
+                    break;
+                }
+            }
+        }
+        if (rc != OMEGA_GPU_GEMM_OK) break;
+        OmegaGemmExInfo pi = {0};
+        OmegaGemmExArgs a = {
+            .op_a = OMEGA_GEMM_OP_N, .op_b = OMEGA_GEMM_OP_T, .m = m, .n = nr, .k = k, .batch = 1,
+            .a_type = (OmegaGemmDtype)at, .b_type = OMEGA_GEMM_DT_F32, .c_type = OMEGA_GEMM_DT_F32,
+            .a = x32 ? (const void *)x32 : (const void *)x16, .lda = k, .b = slab, .ldb = k, .c = y + j0, .ldc = ly,
+            .alpha = 1.0f, .beta = 0.0f, .info = &pi,
+        };
+        rc = om_gemm_ex(&a);
+        if (info) { info->route = pi.route; info->core_type = pi.core_type; info->core_calls += pi.core_calls; info->host_fixed += pi.host_fixed; }
+    }
+    omega_gpu_host_free(slab);
+    gx_drop(g);
+    return rc;
+}
+#endif /* GX_OM */
+
+/* ------------------------------------------------------------------ the entries */
+#if CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF
+#ifndef OMEGA_GPU_NO_POSIX /* the differential is a hosted test build only */
+#include <stdio.h>
+#include <stdlib.h>
+#else
+#error "CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF is a hosted test build"
+#endif
+
+/* Both paths on every call: the C runs on a copy of C (or y), the Omega path on the caller's; return code, info and
+ * output bytes must agree bit for bit. CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF_SELFTEST flips one bit of the C copy
+ * (the red check). */
+static void gx_diff(int crc, int orc, const OmegaGemmExInfo *ci, const OmegaGemmExInfo *oi, uint8_t *ref, const void *out, uint64_t bytes) {
+    const char *what = NULL;
+#ifdef CUDAPP_MIGRATION_PENDING_GEMM_EX_DIFF_SELFTEST
+    if (bytes) ref[bytes / 2u] ^= 1u;
+#endif
+    if (crc != orc) what = "return codes differ";
+    else if (memcmp(ci, oi, sizeof *ci)) what = "info differs";
+    else if (bytes && memcmp(ref, out, bytes)) what = "output bytes differ";
+    if (!what) return;
+    fprintf(stderr, "FAIL gemm_ex C-vs-Omega differential: %s (C rc %d, Omega rc %d)\n", what, crc, orc);
+    abort();
+}
+
+int omega_gpu_gemm_ex(const OmegaGemmExArgs *args) {
+    OmegaGemmExInfo ci, oi;
+    memset(&ci, 0xff, sizeof ci);
+    memset(&oi, 0xff, sizeof oi);
+    if (!args) {
+        const int crc = c_gemm_ex(NULL), orc = om_gemm_ex(NULL);
+        gx_diff(crc, orc, &ci, &oi, NULL, NULL, 0);
+        return orc;
+    }
+    Gx *g = gx_new();
+    if (!g) return OMEGA_GPU_GEMM_CHIP_FAIL;
+    gx_load(g, args);
+    const uint64_t bytes = gx_plan(g, 0) == OMEGA_GPU_GEMM_OK ? g->p[46] * g->p[28] : 0u;
+    gx_drop(g);
+    uint8_t *ref = bytes ? omega_gpu_host_calloc(bytes, 1) : NULL;
+    if (bytes && !ref) return OMEGA_GPU_GEMM_CHIP_FAIL;
+    OmegaGemmExArgs ca = *args, oa = *args;
+    if (ref) { memcpy(ref, args->c, bytes); ca.c = ref; }
+    ca.info = &ci;
+    oa.info = &oi;
+    const int crc = c_gemm_ex(&ca), orc = om_gemm_ex(&oa);
+    gx_diff(crc, orc, &ci, &oi, ref, args->c, bytes);
+    omega_gpu_host_free(ref);
+    if (args->info && oi.route != 0xffffffffu) *args->info = oi;
+    return orc;
+}
+
 int omega_gpu_gemm_ex_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
                                      const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info) {
-    (void)w; (void)scale; (void)scale_mul; (void)n; (void)k; (void)block; (void)x32; (void)x16; (void)m; (void)y; (void)ldy;
-    if (info) memset(info, 0, sizeof *info);
-    return OMEGA_GPU_GEMM_UNSUPPORTED;
+    OmegaGemmExInfo ci, oi;
+    Gx *g = gx_new();
+    if (!g) return OMEGA_GPU_GEMM_CHIP_FAIL;
+    gx_fp8_load(g, w, scale, n, k, block, x32, x16, m, y, ldy);
+    const uint64_t bytes = gx_plan(g, 3) == OMEGA_GPU_GEMM_OK ? ((uint64_t)(m - 1u) * g->p[1] + n) * 4u : 0u;
+    gx_drop(g);
+    uint8_t *ref = bytes ? omega_gpu_host_calloc(bytes, 1) : NULL;
+    if (bytes && !ref) return OMEGA_GPU_GEMM_CHIP_FAIL;
+    if (ref) memcpy(ref, y, bytes);
+    const int crc = c_fp8_block_rows(w, scale, scale_mul, n, k, block, x32, x16, m, ref ? (float *)(void *)ref : y, ldy, &ci);
+    const int orc = om_fp8_block_rows(w, scale, scale_mul, n, k, block, x32, x16, m, y, ldy, &oi);
+    gx_diff(crc, orc, &ci, &oi, ref, y, bytes);
+    omega_gpu_host_free(ref);
+    if (info) *info = oi;
+    return orc;
+}
+#elif CUDAPP_MIGRATION_PENDING_GEMM_EX
+int omega_gpu_gemm_ex(const OmegaGemmExArgs *args) { return c_gemm_ex(args); }
+int omega_gpu_gemm_ex_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
+                                     const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info) {
+    return c_fp8_block_rows(w, scale, scale_mul, n, k, block, x32, x16, m, y, ldy, info);
+}
+#else
+int omega_gpu_gemm_ex(const OmegaGemmExArgs *args) { return om_gemm_ex(args); }
+int omega_gpu_gemm_ex_fp8_block_rows(const uint8_t *w, const float *scale, double scale_mul, uint32_t n, uint32_t k, uint32_t block,
+                                     const float *x32, const uint16_t *x16, uint32_t m, float *y, uint64_t ldy, OmegaGemmExInfo *info) {
+    return om_fp8_block_rows(w, scale, scale_mul, n, k, block, x32, x16, m, y, ldy, info);
 }
 #endif

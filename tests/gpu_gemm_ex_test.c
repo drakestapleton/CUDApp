@@ -32,6 +32,7 @@
 
 #include <inttypes.h>
 #include <math.h>
+#include <time.h>
 
 static int g_checks, g_failed;
 static void check(int ok, const char *what) {
@@ -248,8 +249,9 @@ static int run_make(Run *r, const Case *cs) {
         x->scale_stride_a = cs->batch > 1 && !cs->bcast_a ? r->nsa : 0; x->scale_stride_b = cs->batch > 1 && !cs->bcast_b ? r->nsb : 0;
         uint64_t na = r->nsa * (x->scale_stride_a ? cs->batch : 1u), nb = r->nsb * (x->scale_stride_b ? cs->batch : 1u);
         r->sa = malloc(na * 4); r->sb = malloc(nb * 4);
-        for (uint64_t i = 0; i < na; i++) r->sa[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4);
-        for (uint64_t i = 0; i < nb; i++) r->sb[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4);
+        /* scales of both signs under inf/NaN: a recomputed non-finite output keeps the scale product's sign */
+        for (uint64_t i = 0; i < na; i++) r->sa[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4) * (cs->edge == 2 && (rnd() & 1u) ? -1.0f : 1.0f);
+        for (uint64_t i = 0; i < nb; i++) r->sb[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4) * (cs->edge == 2 && (rnd() & 1u) ? -1.0f : 1.0f);
         x->scale_a = r->sa; x->scale_b = r->sb;
     }
     x->a = r->A; x->b = r->B; x->c = r->C;
@@ -488,6 +490,7 @@ static void edge_cases(Case *e, int *ne) {
     c = mk(1, 1, 1, 9, 9, 9); c.beta = 0.0f; e[n++] = c;                          /* beta 0 with NaN in C: never read */
     c = mk(1, 1, 0, 7, 5, 3); c.batch = 3; c.bcast_a = 1; c.pc = 2; e[n++] = c;   /* broadcast A over a batch */
     c = mk(3, 3, 0, 40, 30, 100); c.scale = 2; c.bm = 7; c.bn = 16; c.bk = 32; e[n++] = c;
+    c = mk(1, 1, 0, 20, 19, 40); c.edge = 2; c.scale = 2; c.bm = 7; c.bn = 8; c.bk = 16; e[n++] = c; /* inf/NaN, signed block scales */
     c = mk(3, 4, 1, 40, 30, 100); c.scale = 1; c.batch = 2; e[n++] = c;
     c = mk(1, 1, 0, 3, 5, 16385); e[n++] = c;                                     /* k past one core call */
     c = mk(0, 0, 0, 3, 5, 1809); e[n++] = c;                                      /* bf16x3 k past one part */
@@ -726,6 +729,8 @@ static void refusals(void) {
     y = x; y.c_type = 5; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "c_type 5");
     y = x; y.compute = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "compute 3");
     y = x; y.scale = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "scale 3");
+    y = x; y.scale = 3; y.scale_a = b; y.scale_b = b; y.block_m = y.block_n = y.block_k = 1;
+    refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "scale 3 with finite scales and blocks");
     y = x; y.lda = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "lda 3 < k 4");
     y = x; y.op_b = 1; y.ldb = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "op_b T, ldb 3 < k 4");
     y = x; y.ldc = 2; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "ldc 2 < n 4");
@@ -787,6 +792,74 @@ static void host_tier(void) {
     ex_mutants("host");
     fp8_rows_tier("host");
     adv_k1808("host");
+}
+
+/* --bench: the host-path cost of omega_gpu_gemm_ex (validation, plan, conversions, k-part sums, recompute, epilogue)
+ * without the core. A null core writes zeros, so the time is the library's own host work, the same core cost on both
+ * paths removed. Every edge case and every sweep case, then the fp8 block-rows shapes; each call timed BENCH_REPS
+ * times on prepared operands (C restored from C0 between repetitions, outside the timed region). One line per case:
+ * "bench <id> <rc> <median ns> <min ns> <max ns> <name>"; `--bench ID` times only that case. Compare two builds with
+ * tools/gemm_ex_bench.sh. */
+#define BENCH_REPS 5
+static int null_core(void *ctx, OmegaGpuGemmType t, unsigned lay, uint32_t M, uint32_t N, uint32_t K, const void *A, uint64_t lda,
+                     const void *B, uint64_t ldb, float *C) {
+    (void)ctx; (void)t; (void)lay; (void)K; (void)A; (void)lda; (void)B; (void)ldb;
+    memset(C, 0, (size_t)M * N * sizeof *C);
+    return OMEGA_GPU_GEMM_OK;
+}
+static uint64_t now_ns(void) { struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); return (uint64_t)ts.tv_sec * 1000000000u + (uint64_t)ts.tv_nsec; }
+static int cmp_u64(const void *a, const void *b) { uint64_t x = *(const uint64_t *)a, y = *(const uint64_t *)b; return x < y ? -1 : x > y; }
+static void bench_line(const char *id, int rc, uint64_t *t, const char *nm) {
+    qsort(t, BENCH_REPS, sizeof *t, cmp_u64);
+    printf("bench %s %d %" PRIu64 " %" PRIu64 " %" PRIu64 " %s\n", id, rc, t[BENCH_REPS / 2], t[0], t[BENCH_REPS - 1], nm);
+}
+static const char *g_bench_only;
+static void bench_case(const char *id, const Case *cs) {
+    char nm[400];
+    uint64_t t[BENCH_REPS];
+    Run r;
+    int rc = 0;
+    if (g_bench_only && strcmp(g_bench_only, id)) return;
+    case_name(cs, nm, sizeof nm);
+    if (run_make(&r, cs) != 0) { run_free(&r); printf("bench %s alloc %s\n", id, nm); return; }
+    for (int k = 0; k < BENCH_REPS; k++) {
+        memcpy(r.C, r.C0, r.ec * dsz(cs->ct));
+        const uint64_t t0 = now_ns();
+        rc = omega_gpu_gemm_ex(&r.x);
+        t[k] = now_ns() - t0;
+    }
+    bench_line(id, rc, t, nm);
+    run_free(&r);
+}
+static void bench_tier(const char *only) {
+    char id[32], nm[200];
+    g_bench_only = only;
+    omega_gpu_gemm_ex_set_backend(null_core, NULL);
+    Case e[32]; int ne = 0;
+    edge_cases(e, &ne);
+    for (int i = 0; i < ne; i++) { snprintf(id, sizeof id, "e%d", i); bench_case(id, &e[i]); }
+    for (uint32_t i = 0; i < SWEEP_N; i++) { Case c = sweep_case(i); snprintf(id, sizeof id, "s%u", i); bench_case(id, &c); }
+    static const Fp8Shape sh[] = { { 130, 200, 128, 3 }, { 64, 384, 128, 2 }, { 17, 1280, 128, 2 }, { 2, 16512, 128, 1 }, { 20, 50, 7, 3 } };
+    for (size_t i = 0; i < sizeof sh / sizeof sh[0]; i++) {
+        const Fp8Shape c = sh[i];
+        snprintf(id, sizeof id, "f%zu", i);
+        if (only && strcmp(only, id)) continue;
+        g_rng = 0x5eed0000u + i;
+        const size_t nb = (c.n + c.block - 1u) / c.block, kb = (c.k + c.block - 1u) / c.block;
+        uint8_t *wt = malloc((size_t)c.n * c.k); float *s = malloc(nb * kb * 4u);
+        float *x32 = malloc((size_t)c.m * c.k * 4u), *y = malloc((size_t)c.m * c.n * 4u);
+        fp8_fill(wt, s, NULL, (size_t)c.n * c.k, nb * kb, x32, NULL, (size_t)c.m * c.k);
+        uint64_t t[BENCH_REPS];
+        int rc = 0;
+        for (int k = 0; k < BENCH_REPS; k++) {
+            const uint64_t t0 = now_ns();
+            rc = omega_gpu_gemm_ex_fp8_block_rows(wt, s, 0x1p-3, c.n, c.k, c.block, x32, NULL, c.m, y, 0, NULL);
+            t[k] = now_ns() - t0;
+        }
+        snprintf(nm, sizeof nm, "fp8 block rows n=%u k=%u block=%u m=%u x f32", c.n, c.k, c.block, c.m);
+        bench_line(id, rc, t, nm);
+        free(wt); free(s); free(x32); free(y);
+    }
 }
 
 static void sim_tier(void) {
@@ -899,9 +972,10 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[i], "--host-only")) tier = "host";
         else if (!strcmp(argv[i], "--sim")) tier = "sim";
         else if (!strcmp(argv[i], "--list")) { list_sweep(); return 0; }
+        else if (!strcmp(argv[i], "--bench")) { bench_tier(i + 1 < argc ? argv[i + 1] : NULL); return 0; }
         else if (!strcmp(argv[i], "--quick")) quick = 1;
         else if (!strcmp(argv[i], "--part") && i + 1 < argc && sscanf(argv[i + 1], "%u/%u", &part, &parts) == 2 && parts && part < parts) i++;
-        else { fprintf(stderr, "usage: %s [--host-only | --sim | --list | --quick | --part I/N]\n", argv[0]); return 2; }
+        else { fprintf(stderr, "usage: %s [--host-only | --sim | --list | --bench [ID] | --quick | --part I/N]\n", argv[0]); return 2; }
     }
     if (!strcmp(tier, "host")) host_tier();
     else if (!strcmp(tier, "sim")) { host_tier(); sim_tier(); }

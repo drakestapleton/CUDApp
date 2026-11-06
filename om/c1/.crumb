@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T02:51:08Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:a18f72d86502fa1109843d32927d5fd98199f5ce6cf670b057becef7e91c2b69",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "test",
+  "name": "c1",
+  "purpose": "Pinned Omega kernel language to sm121 cubin and simulator acceptance",
+  "schema_version": "1.0.0"
+}

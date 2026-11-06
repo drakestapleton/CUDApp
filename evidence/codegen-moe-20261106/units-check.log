@@ -1,0 +1,3 @@
+Command: taskset -c 10-14 nice -n 10 env OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=$HOME/work/cudastack/omega-bridge sh om/units.sh --check
+Exit: 0
+Final line: PASS portable Omega units regenerate byte for byte

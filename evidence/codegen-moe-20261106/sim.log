@@ -1,0 +1,9 @@
+Commands:
+ taskset -c 10-14 nice -n 10 make -j3 build/codegen_moe_diff_test build/codegen_moe_sim_test
+ taskset -c 10-14 nice -n 10 build/codegen_moe_sim_test
+ taskset -c 10-14 nice -n 10 build/codegen_moe_diff_test 1 512 8 1 3 2 0 1 1 1
+ taskset -c 10-14 nice -n 10 build/codegen_moe_diff_test 2 512 8 1 3 2147483648 0 0 0 0
+Combined exit: 0
+Simulator final line:
+CODEGEN MOE WARP SIM PASS (both builders, fragment/warp orders, scale-drop negative controls)
+The two final-unit differential invocations emitted no output and exited zero.

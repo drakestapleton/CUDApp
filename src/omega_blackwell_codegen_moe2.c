@@ -14,6 +14,13 @@
 #include "omega_blackwell_codegen_moe2.h"
 #include <string.h>
 
+#include "cudapp_native.h"
+#include "omega_gpu_om_ir.h"
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE2
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE2 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE2
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -317,6 +324,34 @@ int omega_blackwell_codegen_fp8_gemv2_prog(const OmegaFp8GemvSpec *spec, Blackwe
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else
+/* API/null handling and plain memory serialization only. All construction and
+ * validation decisions live in the seeded Omega unit. The callback carries the
+ * original spec pointer synchronously through the existing replay interface. */
+static uint32_t moe2_unit(uint64_t *result, uint64_t ptr, uint64_t mode,
+                           uint64_t unused_a, uint64_t unused_b,
+                           void *records, uint64_t record_n, void *meta, uint64_t meta_n) {
+    const OmegaFp8GemvSpec *s = (const OmegaFp8GemvSpec *)(uintptr_t)ptr;
+    const uint64_t fields[16] = {s->k, s->lane_bytes, s->rows, s->warps,
+        s->depth, s->sched, s->coal, s->wfirst, (uint32_t)s->mutant, mode};
+    (void)unused_a; (void)unused_b;
+    return omega_cg_moe2(result, fields, 16, records, record_n, meta, meta_n);
+}
+static uint32_t moe2_policy(const OmegaFp8GemvSpec *s, uint64_t mode) {
+    uint64_t records[8192], meta[512], result = 0;
+    if (!s || moe2_unit(&result, (uintptr_t)s, mode, 0, 0,
+                         records, 8192, meta, 512) != OMEGA_OK) return 0;
+    return (uint32_t)result;
+}
+int omega_fp8_gemv2_spec_ok(const OmegaFp8GemvSpec *s) { return (int)moe2_policy(s, 1); }
+uint32_t omega_fp8_gemv2_shared_bytes(const OmegaFp8GemvSpec *s) { return moe2_policy(s, 3); }
+
+int omega_blackwell_codegen_fp8_gemv2_prog(const OmegaFp8GemvSpec *s, BlackwellIRProgram *p) {
+    if (!s || !p) return -1;
+    if (omega_gpu_om_ir_replay(moe2_unit, (uintptr_t)s, 0, 0, 0, p, NULL)) return -1;
+    return 0;
+}
+#endif
 
 int omega_fp8_gemv2_prog_stats(const OmegaFp8GemvSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog; /* 1024 insns: too big for a stack frame in a test loop */

@@ -1,0 +1,7 @@
+Command: taskset -c 10-14 nice -n 10 make -j3 build/codegen_moe_diff_test && taskset -c 10-14 nice -n 10 build/codegen_moe_sim_test && taskset -c 10-14 nice -n 10 build/codegen_moe_diff_test
+Combined exit: 0
+CODEGEN MOE WARP SIM PASS (both builders, fragment/warp orders, scale-drop negative controls)
+CODEGEN MOE RECORD NEGATIVE CONTROL CAUGHT
+CODEGEN MOE DIFF PASS (1732053 programs, 10681 refusals)
+
+This exhaustive process was launched before Main's device-free-wrapper policy and before the final nonfunctional query/scheduler-state cleanup (moving metadata clearing after policy returns and removing unused scheduler latency state). Its running executable retained that earlier build. The final generated units were subsequently rebuilt and passed device-free representative byte differentials, warp simulation, all seven source mutants and regeneration. The integrated full gate must exercise the current complete tree using the wrapper documented in REPORT.md; this receipt does not claim that gate ran.

@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE 1
+#define omega_fp8_gemv_steps omega_fp8_gemv_steps_oracle
+#define omega_fp8_gemv_shared_bytes omega_fp8_gemv_shared_bytes_oracle
+#define omega_blackwell_codegen_fp8_gemv_prog omega_blackwell_codegen_fp8_gemv_prog_oracle
+#define omega_fp8_gemv_prog_stats omega_fp8_gemv_prog_stats_oracle
+#define omega_blackwell_codegen_fp8_gemv omega_blackwell_codegen_fp8_gemv_oracle
+#include "../src/omega_blackwell_codegen_moe.c"

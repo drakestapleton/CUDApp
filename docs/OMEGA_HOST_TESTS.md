@@ -393,3 +393,32 @@ Chip qualification is separate and needs a current exclusive GPU window.
 Only after obtaining that authorization, build `build/gpu_pfhost_test` and
 run its `--chip` mode using the current machine's window procedure. Never
 interpret the host differential or simulator as a hardware receipt.
+## FP8 MoE builder migration
+
+`make test-codegen-moe-diff test-codegen-moe-sim` is host-only and carried by
+`make test`. The default MoE step/deep and row-pipelined builders execute
+`om/codegen/cg_moe*.om` using the existing checked Omega IR replay.
+`cg_moe_sched.om` owns the optional physical-register stall pass. The public
+headers are unchanged. `CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE=1` and
+`CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE2=1` select independent handwritten C
+oracles; both default to zero.
+
+The differential exhausts the structural domain accepted by the C guards,
+including every supported mutation selector, and compares exact return codes,
+IR/allocation state, SASS and packed cubin bytes in memory. Variant 2 ignores
+the four free uint32 depth/scheduling/coalescing/weight-first fields: every bit
+and all-ones are checked independently for every accepted structural tuple,
+not the entire uint32 Cartesian product. Boundary and bit-basis invalid
+inputs must retain the C rejection code. A corrupted record must be caught.
+
+`python3 om/codegen/moe_mutants.py` (with `OMEGA_OMC` and `OMEGA_BRIDGE` set)
+requires each altered Omega source to compile and then fail the ordinary
+differential. `tests/codegen_moe_sim_test.c` uses `bw_warp_sim_k.h` against an
+independent all-one e4m3 reference, both builders and fragment/warp orders,
+with a scale-drop negative control. Neither host path opens a device or
+models scoreboard timing. The exact structural domain, compiler pin,
+arithmetic provenance and separately authorized chip runbook are in
+`evidence/codegen-moe-20261106/REPORT.md`. Chip qualification is **NOT_RUN**.
+Launch these host checks inside the device-free namespace:
+`bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 <command>`.
+This also isolates the mutation runner's child builds and test processes.

@@ -14,6 +14,13 @@
 #endif
 #include <string.h>
 
+#include "cudapp_native.h"
+#include "omega_gpu_om_ir.h"
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_MOE
 #define CW(stall, wbar, rbar, wait) \
     (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
 #define CW_YIELD 0x2000u
@@ -478,6 +485,53 @@ int omega_blackwell_codegen_fp8_gemv_prog(const OmegaFp8GemvSpec *spec, Blackwel
     if (omega_bw_regalloc_solve(prog) != 0) return -1;
     return spec->sched ? fp8_schedule_stalls(prog) : 0;
 }
+#else
+/* API/null handling and plain memory serialization only. All construction and
+ * validation decisions live in the seeded Omega unit. The callback carries the
+ * original spec pointer synchronously through the existing replay interface. */
+static uint32_t moe_unit(uint64_t *result, uint64_t ptr, uint64_t mode,
+                           uint64_t unused_a, uint64_t unused_b,
+                           void *records, uint64_t record_n, void *meta, uint64_t meta_n) {
+    const OmegaFp8GemvSpec *s = (const OmegaFp8GemvSpec *)(uintptr_t)ptr;
+    const uint64_t fields[16] = {s->k, s->lane_bytes, s->rows, s->warps,
+        s->depth, s->sched, s->coal, s->wfirst, (uint32_t)s->mutant, mode};
+    (void)unused_a; (void)unused_b;
+    return omega_cg_moe(result, fields, 16, records, record_n, meta, meta_n);
+}
+static uint32_t moe_policy(const OmegaFp8GemvSpec *s, uint64_t mode) {
+    uint64_t records[8192], meta[512], result = 0;
+    if (!s || moe_unit(&result, (uintptr_t)s, mode, 0, 0,
+                         records, 8192, meta, 512) != OMEGA_OK) return 0;
+    return (uint32_t)result;
+}
+uint32_t omega_fp8_gemv_steps(const OmegaFp8GemvSpec *s) { return moe_policy(s, 2); }
+uint32_t omega_fp8_gemv_shared_bytes(const OmegaFp8GemvSpec *s) { return moe_policy(s, 3); }
+static int moe_schedule(BlackwellIRProgram *p) {
+    uint64_t records[8192] = {0}, meta[512] = {0}, result = 0;
+    for (unsigned v = 0; v < BW_MAX_VREGS; ++v) meta[v] = UINT64_MAX;
+    for (int v = 0; v < p->regalloc.num_vregs; ++v) {
+        meta[v] = (uint64_t)(int64_t)p->regalloc.vreg_to_phys[v];
+        meta[BW_MAX_VREGS + v] = p->regalloc.intervals[v].bundle_size;
+    }
+    for (size_t i = 0; i < p->count; ++i) {
+        const BlackwellIRInsn *in = &p->insns[i];
+        records[8*i] = in->op; records[8*i+1] = in->control; records[8*i+2] = in->imm;
+        records[8*i+3] = (uint64_t)(int64_t)in->dst_vreg;
+        records[8*i+4] = (uint64_t)(int64_t)in->src1_vreg;
+        records[8*i+5] = (uint64_t)(int64_t)in->src2_vreg;
+        records[8*i+6] = (uint64_t)(int64_t)in->src3_vreg;
+    }
+    if (omega_cg_moe_sched(&result, p->count, records, 8192, meta, 512) != OMEGA_OK || result) return -1;
+    for (size_t i = 0; i < p->count; ++i) p->insns[i].control = (uint32_t)records[8*i+1];
+    return 0;
+}
+
+int omega_blackwell_codegen_fp8_gemv_prog(const OmegaFp8GemvSpec *s, BlackwellIRProgram *p) {
+    if (!s || !p) return -1;
+    if (omega_gpu_om_ir_replay(moe_unit, (uintptr_t)s, 0, 0, 0, p, NULL)) return -1;
+    return s->sched ? moe_schedule(p) : 0;
+}
+#endif
 
 int omega_fp8_gemv_prog_stats(const OmegaFp8GemvSpec *spec, uint32_t *insns, uint32_t *gprs) {
     static BlackwellIRProgram prog; /* 1024 insns: too big for a stack frame in a test loop */

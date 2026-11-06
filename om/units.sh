@@ -66,12 +66,15 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_gdn=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_common.om,om/codegen/cg_gdn.om cg_gdn_policy=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_policy.om"
   UNITS="$UNITS cg_dec=om/codegen/cg_dec_emit.om,om/codegen/cg_dec.om gdn_admit=om/gdn/admit.om"
   UNITS="$UNITS om/tools/dag_eval.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
-  UNITS="$UNITS bw_qmd=om/qmd/bw_qmd.om eng=om/engine/eng.om"
+  UNITS="$UNITS bw_qmd=om/qmd/bw_qmd.om eng=om/engine/fixture_rest.om,om/engine/eng.om fixture_text=om/engine/fixture_rest.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"
     UNITS="$UNITS gemm_any=om/gemm-any/gemm_ir.om"
     UNITS="$UNITS dnn_rows=om/attn-any/emit.om,om/dnn-rows/kernel.om dnn_rows_plan=om/dnn-rows/plan.om"
+    UNITS="$UNITS gemm_host=om/gemm-any/host.om"
+    UNITS="$UNITS gemm_value=om/gemm-any/host.om,om/gemm-any/value.om gemm_cfg=om/gemm-any/host.om,om/gemm-any/config.om"
+    UNITS="$UNITS gemm_plan=om/gemm-any/host.om,om/gemm-any/plan.om gemm_span=om/gemm-any/host.om,om/gemm-any/span.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS dnn_activations=om/attn-any/emit.om,om/dnn-activations/kernel.om dnn_activations_plan=om/dnn-activations/plan.om"
@@ -88,6 +91,10 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/codegen/cg_fields.om om/codegen/cg_replay.om om/codegen/cg_life.om om/codegen/cg_invar.om om/codegen/cg_budget.om"
     UNITS="$UNITS cm_route=om/components/cm_route.om"
 fi
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_rest=om/numeric/numeric.om,om/numeric/rest.om numeric_patch=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/patch.om numeric_check=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/patch.om,om/numeric/check.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_trace=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/trace.om numeric_reduce=om/numeric/numeric.om,om/numeric/tile.om,om/numeric/rest.om,om/numeric/reduce.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS mathlibs_host=om/mathlibs/host.om,om/mathlibs/host_scalar.om mathlibs_walk=om/mathlibs/host.om,om/mathlibs/host_walk.om mathlibs_step=om/mathlibs/host.om,om/mathlibs/host_step.om mathlibs_many=om/mathlibs/host.om,om/mathlibs/host_many.om mathlibs_index=om/mathlibs/host.om,om/mathlibs/host_index.om mathlibs_fft=om/mathlibs/host.om,om/mathlibs/host_fft.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS standalone_oracles=om/standalone-oracles/oracles.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
@@ -200,6 +207,7 @@ REST="$REST ar_copy=om/apirest/copy.om ar_sstats=om/apirest/sstats.om"
 REST="$REST ar_victim=om/apirest/victim.om ar_mstep=om/apirest/data.om,om/api/apish_shp.om,om/apirest/mstep.om"
 REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS gemm_ex_policy=om/gemmex/policy.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/codegen/cg_em.om om/codegen/cg_reconv.om om/codegen/cg_sentin.om"
 OUTS="cudapp_native.h cudapp_om_units.ident"

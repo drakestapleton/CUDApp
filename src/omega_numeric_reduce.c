@@ -26,6 +26,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cudapp_native.h"
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF)
+#define omega_reduce_identity numeric_rest_c_reduce_identity
+#define omega_reduce_reference numeric_rest_c_reduce_reference
+#define omega_reduce_cpu numeric_rest_c_reduce_cpu
+#define omega_reduce_rows_reference numeric_rest_c_reduce_rows_reference
+#define omega_reduce_rows_cpu numeric_rest_c_reduce_rows_cpu
+#define omega_reduce_sequential_sum_not_contract numeric_rest_c_reduce_sequential_sum_not_contract
+#endif
 
 #if defined(__x86_64__)
 #include <xmmintrin.h>
@@ -39,10 +49,12 @@ const char *omega_reduce_op_name(OmegaReduceOp op) {
     return ((unsigned)op < OMEGA_RED_COUNT) ? RED_NAMES[op] : NULL;
 }
 
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST) || defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF)
 float omega_reduce_identity(OmegaReduceOp op) {
     if (op == OMEGA_RED_MAX || op == OMEGA_RED_MIN) return omega_bits_to_float(OMEGA_REDUCE_MINMAX_PAD_BITS);
     return omega_bits_to_float(OMEGA_REDUCE_SUM_PAD_BITS);
 }
+#endif
 
 unsigned omega_reduce_levels(size_t n) {
 #if defined(OMEGA_NUMERIC_C_BODIES)
@@ -64,6 +76,7 @@ unsigned omega_reduce_levels(size_t n) {
 #endif
 }
 
+#if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST) || defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF)
 static float empty_result(OmegaReduceOp op) {
     return omega_bits_to_float(op == OMEGA_RED_SUM ? OMEGA_REDUCE_EMPTY_SUM_BITS : OMEGA_REDUCE_EMPTY_OTHER_BITS);
 }
@@ -264,3 +277,6 @@ float omega_reduce_sequential_sum_not_contract(const float *x, size_t n) {
     for (size_t i = 0; i < n; i++) s = s + x[i];
     return n ? s : 0.0f;
 }
+#endif
+
+#include "omega_numeric_reduce_rest.inc"

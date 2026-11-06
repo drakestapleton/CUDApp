@@ -15,6 +15,7 @@
  * 64 tail sentinels 0xA5A5A5A5 after c[N-1] must be unchanged, checksum = sum c[i] as u64. */
 #include <cuda.h>
 #include <stdio.h>
+#include "../../../om/standalone-oracles/oracle.h"
 
 #define VADD_N 4099u
 #define VADD_BLOCK 256u
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
 	CUfunction fn;
 	CUdeviceptr da, db, dc;
 	unsigned int n = VADD_N;
-	unsigned int grid = (VADD_N + VADD_BLOCK - 1u) / VADD_BLOCK;
+	unsigned int grid = (unsigned)so_call(7,VADD_N,0,0,0);
 	unsigned long long sum = 0;
 	unsigned int bad = 0;
 	size_t len;
@@ -68,8 +69,8 @@ int main(int argc, char **argv)
 	}
 	ptx[len] = '\0';
 	for (unsigned int i = 0; i < VADD_N; i++) {
-		ha[i] = i * 2654435761u;
-		hb[i] = 0xFFFFFFFFu - 7u * i;
+		ha[i] = (unsigned)so_call(0,i,0,0,0);
+		hb[i] = (unsigned)so_call(1,i,0,0,0);
 	}
 	for (unsigned int i = 0; i < VADD_N + VADD_TAIL; i++)
 		hc[i] = VADD_SENTINEL;
@@ -93,13 +94,11 @@ int main(int argc, char **argv)
 	CALL(cuCtxSynchronize());
 	CALL(cuMemcpyDtoH(hc, dc, sizeof(hc)));
 	for (unsigned int i = 0; i < VADD_N; i++) {
-		if (hc[i] != ha[i] + hb[i])
-			bad++;
-		sum += hc[i];
+		bad = so_bad(bad,so_eq(hc[i],so_call(2,ha[i],hb[i],0,0)));
+		sum = so_call(5,sum,hc[i],0,0);
 	}
 	for (unsigned int i = VADD_N; i < VADD_N + VADD_TAIL; i++)
-		if (hc[i] != VADD_SENTINEL)
-			bad++;
+		bad = so_bad(bad,so_eq(hc[i],VADD_SENTINEL));
 	CALL(cuMemFree(da));
 	CALL(cuMemFree(db));
 	CALL(cuMemFree(dc));

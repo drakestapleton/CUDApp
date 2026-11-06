@@ -1,0 +1,3 @@
+/usr/bin/ld: /tmp/cchQ2kMl.o: in function `omega_numeric_check_patch':
+omega_numeric.c:(.text.omega_numeric_check_patch+0x1d0): undefined reference to `omega_numeric_check'
+collect2: error: ld returned 1 exit status

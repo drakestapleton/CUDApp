@@ -16,6 +16,7 @@
 #define ENG_C_PART 1
 #endif
 #include "omega_eng_dec.h"
+#include "omega_fixture_rest.h"
 
 int m16_native_open(M16NativeContext *ctx) {
     if (!ctx) return -1;
@@ -105,7 +106,7 @@ int m16_native_submit_methods(M16NativeContext *ctx, const uint32_t *methods, si
 static uint64_t now_ns(void) {
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
-    return (uint64_t)t.tv_sec * 1000000000ull + (uint64_t)t.tv_nsec;
+    return omega_fixture_calc(FR_NS, (uint64_t)t.tv_sec, (uint64_t)t.tv_nsec, 0);
 }
 
 int m16_native_wait_marker(volatile uint32_t *marker, uint32_t expected, uint64_t timeout_ms) {

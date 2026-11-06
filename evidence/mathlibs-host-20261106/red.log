@@ -1,0 +1,4 @@
+$ ~/work/cudastack/lanes/MathlibsHostOm/build/mathlibs-host-om/differential --red
+FAIL line 232 case 2477: omega_mh_index(l,e,1,1)==2
+
+rc=1

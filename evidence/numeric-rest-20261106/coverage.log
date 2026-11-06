@@ -1,0 +1,368 @@
+NUMERIC REST OM DIFF PASS; host only; chip NOT_RUN
+checks=8418438
+Function 'omega_numeric_launch_shape'
+Lines executed:100.00% of 5
+
+Function 'omega_numeric_compare_equal'
+Lines executed:80.00% of 5
+
+Function 'omega_warp_reduce_sum'
+Lines executed:100.00% of 3
+
+Function 'omega_math_log'
+Lines executed:100.00% of 2
+
+Function 'omega_math_exp'
+Lines executed:100.00% of 2
+
+Function 'omega_math_sqrt'
+Lines executed:100.00% of 2
+
+Function 'omega_math_div'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_host_rcp_seed'
+Lines executed:0.00% of 2
+
+Function 'omega_ieee_sqrt'
+Lines executed:100.00% of 2
+
+Function 'omega_ieee_div'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fsetp_pred'
+Lines executed:100.00% of 4
+
+Function 'omega_ref_ffma_int'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_bf16_to_f32'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f16_to_f32'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f32_to_bf16'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f32_to_f16'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_u2f'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f2u'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f2i_rni'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f2i_ceil'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f2i_floor'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_f2i'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_i2f'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fsetp_ge'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fmax'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fmin'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_ffma'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fmul'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fsub'
+Lines executed:100.00% of 2
+
+Function 'omega_ref_fadd'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_bits_equal'
+Lines executed:0.00% of 2
+
+Function 'omega_numeric_om_tile'
+Lines executed:100.00% of 5
+
+Function 'omega_numeric_om'
+Lines executed:100.00% of 4
+
+Function 'omega_numeric_seed_bound'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_parity'
+Lines executed:100.00% of 2
+
+Function 'numeric_trace_adapter'
+Lines executed:100.00% of 15
+
+Function 'numeric_trace_copy'
+Lines executed:100.00% of 5
+
+Function 'omega_numeric_reference_ftz'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_cpu_realize'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_reference'
+Lines executed:100.00% of 2
+
+Function 'numeric_bulk_adapter'
+Lines executed:100.00% of 24
+
+Function 'omega_numeric_element_checked'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_submit_check'
+Lines executed:100.00% of 22
+
+Function 'omega_numeric_check_patch'
+Lines executed:100.00% of 11
+
+Function 'omega_numeric_patch_words'
+Lines executed:100.00% of 10
+
+Function 'omega_numeric_rest'
+Lines executed:100.00% of 3
+
+Function 'numeric_rest_c_reference_ftz'
+Lines executed:100.00% of 19
+
+Function 'ftz'
+Lines executed:100.00% of 2
+
+Function 'numeric_rest_c_seed_bound'
+Lines executed:100.00% of 29
+
+Function 'is_finite_normal'
+Lines executed:100.00% of 3
+
+Function 'numeric_rest_c_parity'
+Lines executed:100.00% of 20
+
+Function 'numeric_rest_c_cpu_realize'
+Lines executed:99.07% of 108
+
+Function 'cpu_tree_sum32'
+Lines executed:100.00% of 6
+
+Function 'numeric_rest_c_reference'
+Lines executed:98.08% of 52
+
+Function 'needs_b'
+Lines executed:100.00% of 2
+
+Function 'numeric_rest_c_element_checked'
+Lines executed:100.00% of 3
+
+Function 'ref_shfl_down'
+Lines executed:100.00% of 2
+
+Function 'ref_fsel'
+Lines executed:100.00% of 1
+
+Function 'ref_fsetp_sel'
+Lines executed:100.00% of 1
+
+Function 'numeric_rest_c_check_patch'
+Lines executed:100.00% of 82
+
+Function 'e1_cvt'
+Lines executed:100.00% of 4
+
+Function 'e1_fsetp_code'
+Lines executed:100.00% of 16
+
+Function 'fixed_latency_producer'
+Lines executed:100.00% of 6
+
+Function 'bad'
+Lines executed:50.00% of 6
+
+Function 'omega_numeric_build_kernel'
+Lines executed:0.00% of 10
+
+Function 'numeric_rest_c_patch_words'
+Lines executed:97.92% of 144
+
+Function 'numeric_rest_c_submit_check'
+Lines executed:80.00% of 40
+
+Function 'refuse'
+Lines executed:100.00% of 3
+
+Function 'omega_numeric_refused_variant_at'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_refused_variant_count'
+Lines executed:100.00% of 1
+
+Function 'omega_numeric_compare_name'
+Lines executed:0.00% of 8
+
+Function 'omega_numeric_op_find'
+Lines executed:100.00% of 7
+
+Function 'omega_numeric_op_at'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_op_whole_kernel'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_op_count'
+Lines executed:0.00% of 1
+
+Function 'fsetp_mask'
+Lines executed:88.24% of 17
+
+Function 'omega_numeric_cpu_has_bf16'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_fpenv_ok'
+Lines executed:100.00% of 2
+
+Function 'omega_numeric_read_fpcr'
+Lines executed:100.00% of 3
+
+Function 'omega_issubnormal'
+Lines executed:100.00% of 3
+
+Function 'omega_signbit'
+Lines executed:100.00% of 2
+
+Function 'omega_isnan'
+Lines executed:100.00% of 3
+
+Function 'omega_bits_to_float'
+Lines executed:100.00% of 3
+
+Function 'omega_float_to_bits'
+Lines executed:100.00% of 3
+
+Function 'omega_reduce_sequential_sum_not_contract'
+Lines executed:100.00% of 8
+
+Function 'omega_reduce_rows_cpu'
+Lines executed:100.00% of 2
+
+Function 'omega_reduce_rows_reference'
+Lines executed:100.00% of 2
+
+Function 'numeric_reduce_rows_adapter'
+Lines executed:100.00% of 6
+
+Function 'omega_reduce_cpu'
+Lines executed:100.00% of 2
+
+Function 'omega_reduce_reference'
+Lines executed:100.00% of 2
+
+Function 'numeric_reduce_adapter'
+Lines executed:100.00% of 23
+
+Function 'omega_reduce_identity'
+Lines executed:100.00% of 2
+
+Function 'numeric_rest_c_reduce_sequential_sum_not_contract'
+Lines executed:100.00% of 4
+
+Function 'numeric_rest_c_reduce_rows_cpu'
+Lines executed:100.00% of 5
+
+Function 'numeric_rest_c_reduce_rows_reference'
+Lines executed:100.00% of 5
+
+Function 'rows_common'
+Lines executed:88.89% of 9
+
+Function 'numeric_rest_c_reduce_cpu'
+Lines executed:100.00% of 12
+
+Function 'cpu_sum_like'
+Lines executed:100.00% of 23
+
+Function 'cpu_combine'
+Lines executed:100.00% of 9
+
+Function 'numeric_rest_c_reduce_reference'
+Lines executed:100.00% of 9
+
+Function 'ref_sum_like'
+Lines executed:100.00% of 23
+
+Function 'ref_tile'
+Lines executed:100.00% of 5
+
+Function 'common_checks'
+Lines executed:100.00% of 6
+
+Function 'empty_result'
+Lines executed:100.00% of 2
+
+Function 'omega_reduce_levels'
+Lines executed:0.00% of 3
+
+Function 'numeric_rest_c_reduce_identity'
+Lines executed:100.00% of 3
+
+Function 'omega_reduce_op_name'
+Lines executed:0.00% of 2
+
+Function 'omega_isnan'
+Lines executed:100.00% of 3
+
+Function 'omega_bits_to_float'
+Lines executed:100.00% of 3
+
+Function 'omega_float_to_bits'
+Lines executed:100.00% of 3
+
+File '~/work/cudastack/lanes/NumericRestOm/src/omega_numeric.c'
+Lines executed:93.88% of 686
+Branches executed:96.22% of 741
+Taken at least once:85.16% of 741
+Calls executed:94.10% of 305
+Creating 'omega_numeric.c.gcov'
+
+File '~/work/cudastack/lanes/NumericRestOm/src/omega_numeric_rest.inc'
+Lines executed:100.00% of 102
+Branches executed:98.46% of 130
+Taken at least once:81.54% of 130
+Calls executed:86.36% of 66
+Creating 'omega_numeric_rest.inc.gcov'
+
+File '~/work/cudastack/lanes/NumericRestOm/src/omega_numeric.h'
+Lines executed:100.00% of 32
+Branches executed:100.00% of 12
+Taken at least once:100.00% of 12
+Calls executed:100.00% of 4
+Creating 'omega_numeric.h.gcov'
+
+File '~/work/cudastack/lanes/NumericRestOm/src/omega_numeric_reduce_rest.inc'
+Lines executed:100.00% of 47
+Branches executed:100.00% of 30
+Taken at least once:86.67% of 30
+Calls executed:92.31% of 26
+Creating 'omega_numeric_reduce_rest.inc.gcov'
+
+File '~/work/cudastack/lanes/NumericRestOm/src/omega_numeric_reduce.c'
+Lines executed:95.00% of 120
+Branches executed:98.41% of 126
+Taken at least once:76.98% of 126
+Calls executed:97.50% of 40
+Creating 'omega_numeric_reduce.c.gcov'
+
+Lines executed:95.14% of 987

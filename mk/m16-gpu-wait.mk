@@ -8,7 +8,7 @@ BUILD := build/m16_gpu_wait
 host-tests-m16: test-m16-gpu-wait mutants-m16-gpu-wait
 
 # m16_gpu_wait.c takes its failure class and wait verdicts from om/engine/eng.om (src/cudapp_om_eng.c).
-$(BUILD)/test_real: tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c m16/m16_gpu_wait.h src/cudapp_om_eng.c src/omega_eng_dec.h
+$(BUILD)/test_real: tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c m16/m16_gpu_wait.h src/cudapp_om_eng.c src/omega_eng_dec.h src/omega_fixture_rest.h
 	@mkdir -p $(BUILD)
 	$(CC) $(M16_CFLAGS) -I m16 -I src tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c src/cudapp_om_eng.c -o $@
 

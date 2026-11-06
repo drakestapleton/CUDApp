@@ -1,0 +1,115 @@
+PASS missing Omega unit: link refused with undefined omega_so_oracles
+BASELINE original@b774723f537cec16a359fe082b8100317a5b5490
+vadd before rc=0
+VADD_U32 PASS n=4099 grid=17 block=256 checksum=8806203976955
+
+vadd after rc=0
+VADD_U32 PASS n=4099 grid=17 block=256 checksum=8806203976955
+
+vadd RED rc=1 (corrupted transport result)
+vadd c-oracle rc=0
+VADD_U32 PASS n=4099 grid=17 block=256 checksum=8806203976955
+
+PASS vadd original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+probe before rc=0
+LOAD cuModuleLoadDataEx -> 0 host CPU transport
+LOAD error_log=""
+LOAD info_log=""
+LOAD cuModuleGetFunction(host_gemm) -> 0 host CPU transport
+cubin=/tmp/standalone-family-9n4cuuj7/module.txt fn=host_gemm M=17 K=7 N=19 worst_abs=0 bad=0 untouched=0 window=HOST-STUB-NOT-A-GPU-WINDOW
+
+probe after rc=0
+LOAD cuModuleLoadDataEx -> 0 host CPU transport
+LOAD error_log=""
+LOAD info_log=""
+LOAD cuModuleGetFunction(host_gemm) -> 0 host CPU transport
+cubin=/tmp/standalone-family-9n4cuuj7/module.txt fn=host_gemm M=17 K=7 N=19 worst_abs=0 bad=0 untouched=0 window=HOST-STUB-NOT-A-GPU-WINDOW
+
+probe RED rc=5 (corrupted transport result)
+probe c-oracle rc=0
+LOAD cuModuleLoadDataEx -> 0 host CPU transport
+LOAD error_log=""
+LOAD info_log=""
+LOAD cuModuleGetFunction(host_gemm) -> 0 host CPU transport
+cubin=/tmp/standalone-family-9n4cuuj7/module.txt fn=host_gemm M=17 K=7 N=19 worst_abs=0 bad=0 untouched=0 window=HOST-STUB-NOT-A-GPU-WINDOW
+
+PASS probe original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+dispatch before rc=0
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+
+dispatch after rc=0
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+
+dispatch RED rc=-6 (corrupted Omega verdict op 3)
+dispatch c-oracle rc=0
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+
+PASS dispatch original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+cache before rc=0
+prefill cache admission: PASS
+
+cache after rc=0
+prefill cache admission: PASS
+
+cache RED rc=1 (corrupted Omega verdict op 14)
+cache c-oracle rc=0
+prefill cache admission: PASS
+
+PASS cache original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+scoped before rc=0
+scoped qgemm isolation: PASS
+
+scoped after rc=0
+scoped qgemm isolation: PASS
+
+scoped RED rc=1 (corrupted Omega verdict op 3)
+scoped c-oracle rc=0
+scoped qgemm isolation: PASS
+
+PASS scoped original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+budget before rc=0
+PASS: exact-head extra admission reserve and null-handle refusals
+
+budget after rc=0
+PASS: exact-head extra admission reserve and null-handle refusals
+
+budget RED rc=-6 (corrupted Omega verdict op 3)
+budget c-oracle rc=0
+PASS: exact-head extra admission reserve and null-handle refusals
+
+PASS budget original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+bounds before rc=0
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf
+bad row2 s0 c0 hn123.25 lo-inf hiinf
+
+bounds after rc=0
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf
+bad row2 s0 c0 hn123.25 lo-inf hiinf
+
+bounds RED rc=1 (corrupted Omega verdict op 4)
+bounds c-oracle rc=0
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf
+bad row2 s0 c0 hn123.25 lo-inf hiinf
+
+PASS bounds original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+norm before rc=0
+RMSNorm envelope: 90 cases, 0 failures, largest norm 71.5541835982, bound 100: PASS
+
+norm after rc=0
+RMSNorm envelope: 90 cases, 0 failures, largest norm 71.5541835982, bound 100: PASS
+
+norm RED rc=1 (corrupted transport result)
+norm c-oracle rc=0
+RMSNorm envelope: 90 cases, 0 failures, largest norm 71.5541835982, bound 100: PASS
+
+PASS norm original@b774723f537cec16a359fe082b8100317a5b5490/default/C-oracle outputs byte-identical; red rejected
+PASS standalone family: eight host checks, identical before/after verdicts, eight red controls

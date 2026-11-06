@@ -25,22 +25,23 @@ test-ampere-cubin-disasm: test-ampere-cubin
 	@grep -q 'EXIT' $(AMPERE_CUBIN_DIR)/sm86.sass || { echo 'FAIL: sm86 EXIT not decoded'; exit 1; }
 	@echo 'AMPERE CUBIN NVDISASM PASS; device NOT_RUN'
 
-# Numeric reference (src/omega_numeric.c, src/omega_numeric_reduce.c): om (default) = om/numeric/numeric.om and
-# om/numeric/tile.om through the generated units; c = the migration-pending C bodies, the differential oracle;
-# diff = both on every call, abort on any bit difference (test-numeric-om-diff in mk/numeric.mk).
+# Numeric defaults to the scalar, tile and remainder units in om/numeric/.
+# c selects both default-OFF C oracle flags; diff checks the preserved scalar
+# wrappers. test-numeric-rest-om-diff separately compares remainder algorithms.
 CUDAPP_NUMERIC ?= om
 CUDAPP_NUMERIC_DEFS_om :=
-CUDAPP_NUMERIC_DEFS_c := -DCUDAPP_MIGRATION_PENDING_C_NUMERIC
+CUDAPP_NUMERIC_DEFS_c := -DCUDAPP_MIGRATION_PENDING_C_NUMERIC -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_REST
 CUDAPP_NUMERIC_DEFS_diff := -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF
 CUDAPP_NUMERIC_DEFS = $(CUDAPP_NUMERIC_DEFS_$(CUDAPP_NUMERIC))
 ifeq ($(filter om c diff,$(CUDAPP_NUMERIC)),)
 $(error CUDAPP_NUMERIC must be om, c or diff)
 endif
-NUMERIC_SRCS := src/omega_numeric.c src/omega_numeric_reduce.c src/cudapp_om_numeric.c src/cudapp_om_numeric_tile.c
+NUMERIC_SRCS := src/omega_numeric.c src/omega_numeric_reduce.c src/cudapp_om_numeric.c src/cudapp_om_numeric_tile.c src/cudapp_om_numeric_rest.c src/cudapp_om_numeric_patch.c src/cudapp_om_numeric_check.c src/cudapp_om_numeric_trace.c src/cudapp_om_numeric_reduce.c
+NUMERIC_DEPS := src/omega_numeric.h src/omega_numeric_reduce.h src/omega_numeric_om.h src/cudapp_native.h src/omega_numeric_rest.inc src/omega_numeric_reduce_rest.inc
 
 # Independently runnable on a native x86 host before the bridge prerequisite.
 .PHONY: test-ampere-numeric-host
-$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) src/omega_numeric.h src/omega_numeric_reduce.h src/omega_numeric_om.h src/cudapp_freest_leftovers.c
+$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) $(NUMERIC_DEPS) src/cudapp_freest_leftovers.c
 	@mkdir -p $(AMPERE_CUBIN_DIR)
 	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections $(CUDAPP_NUMERIC_DEFS) -o $@ tests/ampere_numeric_host_test.c $(NUMERIC_SRCS) src/cudapp_freest_leftovers.c -lm
 

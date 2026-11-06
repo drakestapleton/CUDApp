@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../standalone-oracles/oracle.h"
 
 #define H 5120u
 static void demand(int rc) {
@@ -19,16 +20,16 @@ static void pointer(uint32_t *a, unsigned off, uint64_t p) {
 static void scalar(uint32_t *a, unsigned off, float x) { memcpy(a+(off-0x380)/4,&x,4); }
 static uint32_t rng=710;
 static float random_value(void) {
-    rng=rng*1664525u+1013904223u;
-    return ((float)(rng>>8)/8388608.0f)-1.0f;
+    rng=(uint32_t)so_call(22,rng,0,0,0);
+    return so_float(so_call(23,rng,0,0,0));
 }
 int main(int argc,char **argv) {
     if(argc!=4 || strcmp(argv[1],"--chip")) return 65;
     char *end=NULL; float envelope=strtof(argv[3],&end);
-    if(!end || *end || !isfinite(envelope) || envelope<=0) return 65;
+    if(!end || *end || !so_all(so_call(24,so_bits(envelope),0,0,0),so_call(37,so_bits(envelope),so_bits(0.0f),0,0),1)) return 65;
     float weights[H]; FILE *f=fopen(argv[2],"rb"); assert(f);
     assert(fread(weights,4,H,f)==H && fgetc(f)==EOF); fclose(f);
-    float wm=0; for(unsigned j=0;j<H;j++) {assert(isfinite(weights[j]));wm=fmaxf(wm,fabsf(weights[j]));}
+    float wm=0; for(unsigned j=0;j<H;j++) {assert(so_call(24,so_bits(weights[j]),0,0,0));wm=so_float(so_call(25,so_bits(wm),so_bits(weights[j]),0,0));}
     OmegaDecSpec spec={0};spec.kind=OMEGA_DEC_RES;spec.mode=OMEGA_DEC_RES_NORM;spec.width=H;
     static BlackwellIRProgram program;
     assert(!omega_blackwell_codegen_dec_prog(&spec,&program));
@@ -38,11 +39,11 @@ int main(int argc,char **argv) {
     demand(omega_gpu_session_alloc_code(size,&code));
     assert(!omega_blackwell_kernel_encode_into(&program,code.cpu,size,&kernel));
     demand(omega_gpu_session_sync_to_gpu(&code));
-    demand(omega_gpu_session_alloc(H*12,&data));
+    demand(omega_gpu_session_alloc(so_bytes(H,12,0),&data));
     float *x=data.cpu,*w=x+H,*y=w+H;
     uint32_t args[OMEGA_DEC_RES_WORDS]={0};
-    pointer(args,OMEGA_DEC_RES_X,data.va);pointer(args,OMEGA_DEC_RES_NW,data.va+H*4);
-    pointer(args,OMEGA_DEC_RES_Y,data.va+H*8);
+    pointer(args,OMEGA_DEC_RES_X,data.va);pointer(args,OMEGA_DEC_RES_NW,so_call(5,data.va,so_bytes(H,4,0),0,0));
+    pointer(args,OMEGA_DEC_RES_Y,so_call(5,data.va,so_bytes(H,8,0),0,0));
     scalar(args,OMEGA_DEC_RES_EPS,1e-6f);scalar(args,OMEGA_DEC_RES_SCALE,1.0f);
     OmegaGpuLaunch launch={0};launch.code_va=code.va;
     launch.gpr_count=omega_bw_gpr_declared(kernel.gpr_count);
@@ -54,18 +55,22 @@ int main(int argc,char **argv) {
     for(unsigned wi=0;wi<2;wi++) for(unsigned e=0;e<sizeof exponents/sizeof *exponents;e++)
     for(unsigned pattern=0;pattern<5;pattern++) {
         for(unsigned j=0;j<H;j++) {
-            float z=pattern==0?1.0f:pattern==1?(j==H-1?1.0f:0.0f):
-                pattern==2?(j%2?1.0f:-1.0f):pattern==3?random_value():ldexpf(random_value(),-(int)(j%64));
-            x[j]=ldexpf(z,exponents[e]);w[j]=wi?(j%2?-wm:wm):weights[j];y[j]=NAN;
+            float z=so_call(34,pattern,3,0,0)?so_float(so_call(27,j,pattern,0,0)):
+                so_eq(pattern,3)?random_value():ldexpf(random_value(),(int)(int64_t)so_call(40,j,0,0,0));
+            x[j]=ldexpf(z,exponents[e]);w[j]=wi?so_float(so_call(39,j,so_bits(wm),0,0)):weights[j];y[j]=NAN;
         }
         demand(omega_gpu_session_sync_to_gpu(&data));
         demand(omega_gpu_session_launch(&launch,NULL,NULL));
         demand(omega_gpu_session_sync_to_cpu(&data));
+        /* Independent binary128 oracle: seeded Omega has no f128 type.
+         * Keep square, sqrtl and reference comparison at their original precision. */
         long double square=0;
-        for(unsigned j=0;j<H;j++) {if(!isfinite(y[j]))failed++;square+=(long double)y[j]*y[j];}
+        for(unsigned j=0;j<H;j++) {failed=so_bad(failed,(int)so_call(24,so_bits(y[j]),0,0,0));square+=(long double)y[j]*y[j];}
         long double norm=sqrtl(square);if(norm>largest)largest=norm;
-        if(!(norm<=envelope)) {failed++;printf("FAIL weight=%u exponent=%d pattern=%u norm=%.12Lg bound=%.12g\n",wi,exponents[e],pattern,norm,envelope);}
-        checks++;
+        int oracle_ok=norm<=envelope;
+        failed=so_bad(failed,oracle_ok);
+        if(!oracle_ok) printf("FAIL weight=%u exponent=%d pattern=%u norm=%.12Lg bound=%.12g\n",wi,exponents[e],pattern,norm,envelope);
+        checks=(unsigned)so_call(5,checks,1,0,0);
     }
     omega_gpu_session_free(&data);omega_gpu_session_free(&code);omega_gpu_session_unlock();
     printf("RMSNorm envelope: %u cases, %u failures, largest norm %.12Lg, bound %.12g: %s\n",checks,failed,largest,envelope,failed?"FAIL":"PASS");

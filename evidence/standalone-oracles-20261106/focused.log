@@ -1,0 +1,146 @@
+PASS standalone scalar C/Omega differential: 1270080 cases; source boundaries and float classes
+KILLED vadd_multiplier: scalar mismatch op=0 a=1 b=0 c=0 d=0 got=9e3779b0 want=9e3779b1
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+KILLED grid_round_down: scalar mismatch op=7 a=1 b=0 c=0 d=0 got=0 want=1
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+KILLED mirror_threshold: scalar mismatch op=10 a=2 b=400 c=0 d=0 got=0 want=11
+KILLED cache_admit_extra: scalar mismatch op=13 a=2 b=0 c=0 d=0 got=1 want=0
+copy_failure_ignored: caught
+KILLED reading_boundary: scalar mismatch op=15 a=40 b=0 c=0 d=0 got=8 want=4
+wrong_k_pointer: caught
+KILLED budget_short: scalar mismatch op=17 a=0 b=0 c=0 d=0 got=7fffffff want=80000000
+KILLED accept_infinity: scalar mismatch op=24 a=7f800000 b=0 c=0 d=0 got=1 want=0
+scoped_option_ignored: caught
+KILLED rng_multiplier: scalar mismatch op=22 a=1 b=0 c=0 d=0 got=3c88596d want=3c88596c
+KILLED norm_sparse_tail: scalar mismatch op=27 a=13ff b=1 c=0 d=0 got=0 want=3f800000
+PASS standalone Omega mutants: all nine compiled source mutants killed
+scoped qgemm isolation: PASS
+failed_hook_ignored: caught
+ignore_scoped_options: caught
+leak_options_to_global: caught
+wrong_tile_height: caught
+PASS: 1309 envelope cases, exact rational upward rounding, tail invalid-input refusal
+omit_tail: caught by numerical oracle
+round_down: caught by numerical oracle
+accept_nonfinite: caught by numerical oracle
+omit_margin: caught by numerical oracle
+keep_sign_bit: caught by numerical oracle
+PASS: layout, six complete descriptors, admission refusals, unchanged output on refusal, emitted kernel byte identity
+PASS: exact-head extra admission reserve and null-handle refusals
+PASS missing Omega unit: link refused with undefined omega_so_oracles
+BASELINE C-snapshot
+vadd before rc=0
+VADD_U32 PASS n=4099 grid=17 block=256 checksum=8806203976955
+
+vadd after rc=0
+VADD_U32 PASS n=4099 grid=17 block=256 checksum=8806203976955
+
+vadd RED rc=1 (corrupted transport result)
+vadd c-oracle rc=0
+VADD_U32 PASS n=4099 grid=17 block=256 checksum=8806203976955
+
+PASS vadd C-snapshot/default/C-oracle outputs byte-identical; red rejected
+probe before rc=0
+LOAD cuModuleLoadDataEx -> 0 host CPU transport
+LOAD error_log=""
+LOAD info_log=""
+LOAD cuModuleGetFunction(host_gemm) -> 0 host CPU transport
+cubin=/tmp/standalone-family-its6e9av/module.txt fn=host_gemm M=17 K=7 N=19 worst_abs=0 bad=0 untouched=0 window=HOST-STUB-NOT-A-GPU-WINDOW
+
+probe after rc=0
+LOAD cuModuleLoadDataEx -> 0 host CPU transport
+LOAD error_log=""
+LOAD info_log=""
+LOAD cuModuleGetFunction(host_gemm) -> 0 host CPU transport
+cubin=/tmp/standalone-family-its6e9av/module.txt fn=host_gemm M=17 K=7 N=19 worst_abs=0 bad=0 untouched=0 window=HOST-STUB-NOT-A-GPU-WINDOW
+
+probe RED rc=5 (corrupted transport result)
+probe c-oracle rc=0
+LOAD cuModuleLoadDataEx -> 0 host CPU transport
+LOAD error_log=""
+LOAD info_log=""
+LOAD cuModuleGetFunction(host_gemm) -> 0 host CPU transport
+cubin=/tmp/standalone-family-its6e9av/module.txt fn=host_gemm M=17 K=7 N=19 worst_abs=0 bad=0 untouched=0 window=HOST-STUB-NOT-A-GPU-WINDOW
+
+PASS probe C-snapshot/default/C-oracle outputs byte-identical; red rejected
+dispatch before rc=0
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+
+dispatch after rc=0
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+
+dispatch RED rc=-6 (corrupted Omega verdict op 3)
+dispatch c-oracle rc=0
+PASS actual attention adapter: scoped order, reuse, bypass, isolation, geometry and operation failures
+
+PASS dispatch C-snapshot/default/C-oracle outputs byte-identical; red rejected
+cache before rc=0
+prefill cache admission: PASS
+
+cache after rc=0
+prefill cache admission: PASS
+
+cache RED rc=1 (corrupted Omega verdict op 14)
+cache c-oracle rc=0
+prefill cache admission: PASS
+
+PASS cache C-snapshot/default/C-oracle outputs byte-identical; red rejected
+scoped before rc=0
+scoped qgemm isolation: PASS
+
+scoped after rc=0
+scoped qgemm isolation: PASS
+
+scoped RED rc=1 (corrupted Omega verdict op 3)
+scoped c-oracle rc=0
+scoped qgemm isolation: PASS
+
+PASS scoped C-snapshot/default/C-oracle outputs byte-identical; red rejected
+budget before rc=0
+PASS: exact-head extra admission reserve and null-handle refusals
+
+budget after rc=0
+PASS: exact-head extra admission reserve and null-handle refusals
+
+budget RED rc=-6 (corrupted Omega verdict op 3)
+budget c-oracle rc=0
+PASS: exact-head extra admission reserve and null-handle refusals
+
+PASS budget C-snapshot/default/C-oracle outputs byte-identical; red rejected
+bounds before rc=0
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf
+bad row2 s0 c0 hn123.25 lo-inf hiinf
+
+bounds after rc=0
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf
+bad row2 s0 c0 hn123.25 lo-inf hiinf
+
+bounds RED rc=1 (corrupted Omega verdict op 4)
+bounds c-oracle rc=0
+PASS: bounds enclose long-double reference with bounded slack; tails untouched; both orders/repetitions
+PASS: arithmetic mutant caught
+PASS: all-infinite radius mutant caught by bounded slack
+bad row0 s3.40282e+38 c3.40282e+38 hn123.25 lo0 hiinf
+bad row2 s0 c0 hn123.25 lo-inf hiinf
+
+PASS bounds C-snapshot/default/C-oracle outputs byte-identical; red rejected
+norm before rc=0
+RMSNorm envelope: 90 cases, 0 failures, largest norm 71.5541835982, bound 100: PASS
+
+norm after rc=0
+RMSNorm envelope: 90 cases, 0 failures, largest norm 71.5541835982, bound 100: PASS
+
+norm RED rc=1 (corrupted transport result)
+norm c-oracle rc=0
+RMSNorm envelope: 90 cases, 0 failures, largest norm 71.5541835982, bound 100: PASS
+
+PASS norm C-snapshot/default/C-oracle outputs byte-identical; red rejected
+PASS standalone family: eight host checks, identical before/after verdicts, eight red controls

@@ -1,0 +1,55 @@
+$ cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -Im16 -Invrm -ffp-contract=off -O2 -o /tmp/mathlibs-host-om-28ntdu1o/missing tests/mathlibs_host_om_test.c /tmp/mathlibs-host-om-28ntdu1o/without-host.a -lpthread -lm
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `omega_mh_poison':
+mathlibs_host_om_test.c:(.text+0xbc0): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `omega_mh_overlap':
+mathlibs_host_om_test.c:(.text+0xc40): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `omega_mh_fft.constprop.0':
+mathlibs_host_om_test.c:(.text+0x153c): undefined reference to `omega_native_mhfft'
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `omega_mh_fill.constprop.0':
+mathlibs_host_om_test.c:(.text+0x15c0): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `admission':
+mathlibs_host_om_test.c:(.text+0x5d14): undefined reference to `omega_native_mhval'
+/usr/bin/ld: mathlibs_host_om_test.c:(.text+0x5d3c): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `main':
+mathlibs_host_om_test.c:(.text.startup+0x174): undefined reference to `omega_native_mhval'
+/usr/bin/ld: mathlibs_host_om_test.c:(.text.startup+0x1a8): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/ccVrGi7P.o:mathlibs_host_om_test.c:(.text.startup+0x1e0): more undefined references to `omega_native_mhval' follow
+/usr/bin/ld: /tmp/ccVrGi7P.o: in function `main':
+mathlibs_host_om_test.c:(.text.startup+0x7e8): undefined reference to `omega_native_mhidx'
+/usr/bin/ld: mathlibs_host_om_test.c:(.text.startup+0x151c): undefined reference to `omega_native_mhidx'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `now_ns':
+omega_gpu_mathlibs_api.c:(.text+0x528): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `walk_locked':
+omega_gpu_mathlibs_api.c:(.text+0x730): undefined reference to `omega_native_mhwalk'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x814): undefined reference to `omega_native_mhstep'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `many_each':
+omega_gpu_mathlibs_api.c:(.text+0xa84): undefined reference to `omega_native_mhidx'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0xad8): undefined reference to `omega_native_mhidx'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `many_mark':
+omega_gpu_mathlibs_api.c:(.text+0x1024): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1050): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `many_copy_back':
+omega_gpu_mathlibs_api.c:(.text+0x1328): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1364): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `many_scan':
+omega_gpu_mathlibs_api.c:(.text+0x13fc): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o):omega_gpu_mathlibs_api.c:(.text+0x1454): more undefined references to `omega_native_mhval' follow
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `many_build':
+omega_gpu_mathlibs_api.c:(.text+0x1a50): undefined reference to `omega_native_mhmany'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1be4): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1c0c): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1cec): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1d14): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x1d40): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o):omega_gpu_mathlibs_api.c:(.text+0x1d8c): more undefined references to `omega_native_mhval' follow
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o): in function `omega_gpu_fft_c2c':
+omega_gpu_mathlibs_api.c:(.text+0x350c): undefined reference to `omega_native_mhfft'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x35b0): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x3748): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x3778): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x37a0): undefined reference to `omega_native_mhval'
+/usr/bin/ld: omega_gpu_mathlibs_api.c:(.text+0x37d0): undefined reference to `omega_native_mhval'
+/usr/bin/ld: /tmp/mathlibs-host-om-28ntdu1o/without-host.a(omega_gpu_mathlibs_api.o):omega_gpu_mathlibs_api.c:(.text+0x380c): more undefined references to `omega_native_mhval' follow
+collect2: error: ld returned 1 exit status
+
+rc=1

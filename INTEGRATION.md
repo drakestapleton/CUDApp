@@ -94,3 +94,50 @@ pending #339's escaping repair and must not be described as parsed valid JSON.
 Stage 5, the NO_POSIX BF16 cutover and `full-2` remain **NOT_RUN** at this checkpoint.
 The inherited C BF16 boundary above remains explicit. Chip/live-RM/VFIO/hardware
 and merge-to-main are **NOT_RUN**. Integration is only on draft #280.
+
+### Stage-6 Half C focused integration (Integrator6C)
+
+Half C starts at `0d38145a697290f2cd00578fbaa168b824a38015` on
+`integ/stage6c`. The single converter remains omega-bridge #73 at
+`79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538`, with seeded compiler
+`e5b32567`. All gates run in the device-hiding bwrap namespace, restricted to
+cores 10–14 at nice 10, with builds at most `-j3`. Logs and numeric rc files
+are `/tmp/integ/6c-<gate>.log` and `.rc`.
+
+| PR | Refreshed lane head | Focused host gate | rc | Observed result |
+| --- | --- | --- | --- | --- |
+| #353 | `ba465bf3a22aab5700a0eee1a78fbe0b6e6a19ef` | `353-final` | 0 | GEMM HOST PLAN ACCEPTANCE PASS (8 mutants, red comparator, missing-unit link); host 209 and sim 239 checks |
+| #354 | `4a17208309100b3774b564c09940f79c9f2d164f` | `354` | 0 | GEMM EX HOST POLICY ACCEPTANCE PASS; host 227 and sim 255 checks |
+| #361 | `30a7270502f2803760edfec0a15df9d54b1df2d7` | `361`, then `361-fixtures-final` | engines 0; initial aggregate 1; repaired fixtures 0 | 44584 identical records; 16/16 engine mutants killed; engine 346 + bounds 6 checks; fixtures BUILD_ONLY, 7/7 mutants KILLED |
+| #357 | `d7b54d683668d94d2100682b31f847960d69fd21` | `357-final` | 0 | NUMERIC REST OM MUTANTS PASS 6/6; differential 8418438 and scalar 152415164 checks; scan sim 263 checks |
+| #363 | `fca2c7a9ee88ca51196e4c16c164adbf83c508a0` | `363` | 0 | MATHLIBS-HOST-OM GATE PASS (differential, red, strong-link negative, gcov, 8 mutants); mathlibs sim 6265 checks |
+| #358 | `14914950c616274a8c91366645d10c1c29fb3770` | `358-final` | standalone targets 0; compat 1 (expected under #73) | scalar 1270080; 9/9 compiled mutants killed; eight family comparisons and eight red controls PASS; compat requires final #77 v3 identity |
+
+Every completed merge regenerates the combined declarations/identity and
+passes `sh om/units.sh --check` byte for byte; every green commit passes
+`crumb compile . && crumb verify .` and is pushed before the next merge.
+The engine fixture's BUILD_ONLY link needed the integrated NVRM serializers,
+native transport and chip-admission providers. Numeric remainder differential,
+mutant and coverage links needed `cudapp_om_bw_qmd.c` after the QMD cutover.
+These dependency repairs retain the strong-link and negative controls.
+Standalone integration retains the default-only unit registration so explicit
+mutant subsets remain selective. Two external transport mutant anchors were
+retargeted after the integrated adapter cutovers: wrong K-pointer before argument
+packing and wrong tile height in the active planning request; both are caught.
+The #73 converter changes the fixture executable hashes relative to frozen v2:
+aarch64 `d7649f223e766b9dd007f723206b3c794c61bbda19a0d83b985fa4834c28d8b8`,
+x86_64 `0601563603f26bac683f1ecfb5bbd9a9690f0edba581f5e7638075df807f4492`.
+`compat/cuda/test.sh` built each identity twice identically, found both CUDA
+import diffs empty, and refused all 14 negative controls; the two positive
+admissions fail their frozen executable hashes. Main explicitly deferred the
+additive v3 profiles to final converter #77 (`d90433a9`), rather than pinning
+transient #73 artifacts or changing v1/v2 history. Final C0 acceptance is NOT_RUN
+here under #77; `358-final` retains the expected #73 FAIL receipt.
+The original failing receipts remain: `353` requested a nonexistent extra
+target (the corrected policy gate already runs GEMM host/sim), `361` exposed
+the fixture providers, and `357` exposed the QMD provider.
+
+The full repository `make test` is NOT_RUN by Half C and remains Main's
+`full-2` gate. Chip/live-RM/VFIO/hardware qualification, merge-to-main and
+deployment remain NOT_RUN. Focused host/simulator receipts do not upgrade a
+hardware status row.

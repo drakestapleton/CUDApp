@@ -1,0 +1,4 @@
+/usr/bin/ld: /tmp/ccfHvlrr.o: in function `numeric_trace_adapter':
+omega_numeric.c:(.text.numeric_trace_adapter+0xf0): undefined reference to `omega_numeric_trace'
+/usr/bin/ld: omega_numeric.c:(.text.numeric_trace_adapter+0x1dc): undefined reference to `omega_numeric_trace'
+collect2: error: ld returned 1 exit status

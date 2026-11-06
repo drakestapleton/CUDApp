@@ -15,6 +15,10 @@
 
 #include <stdint.h>
 
+/* Internal bit-carrier remainder ABI (not part of the installed API). */
+uint64_t omega_numeric_rest(unsigned mode, uint64_t a, uint64_t b,
+                            uint64_t c, uint64_t d, uint64_t e);
+
 #if defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC) && defined(CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF)
 #error "CUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF compares C with Omega: not with CUDAPP_MIGRATION_PENDING_C_NUMERIC"
 #endif

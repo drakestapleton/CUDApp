@@ -1,0 +1,4 @@
+/usr/bin/ld: /tmp/ccOXksSj.o: in function `omega_numeric_patch_words':
+omega_numeric.c:(.text.omega_numeric_patch_words+0x40): undefined reference to `omega_numeric_patch'
+/usr/bin/ld: omega_numeric.c:(.text.omega_numeric_patch_words+0x90): undefined reference to `omega_numeric_patch'
+collect2: error: ld returned 1 exit status

@@ -13,6 +13,7 @@
 #define ENG_C_PART 1
 #endif
 #include "omega_eng_gates.h"
+#include "omega_fixture_rest.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -32,7 +33,7 @@ static int run_sequence(int reuse) {
     volatile uint32_t *marker = completion.cpu;
     *marker = 0;
     nvrm_cpu_barrier();
-    uint32_t count = reuse ? ctx.rm.entries * 2 + 3 : 2;
+    uint32_t count = (uint32_t)omega_fixture_calc(FR_COUNT, (uint64_t)reuse, ctx.rm.entries, 0);
     for (uint32_t payload = 1; payload <= count; ++payload) {
         uint32_t methods[32];
         int words = m16_native_build_release(methods, completion.va,
@@ -44,9 +45,9 @@ static int run_sequence(int reuse) {
                 m16_native_enqueue_methods(&ctx, methods, (size_t)words) != 0)
                 goto finish;
         } else {
-            uint32_t offset = (payload - 1) * 128;
+            uint32_t offset = (uint32_t)omega_fixture_calc(FR_OFFSET, payload, 0, 0);
             memcpy((unsigned char *)ctx.pb_mem.cpu + offset, methods,
-                   (size_t)words * sizeof(uint32_t));
+                   (size_t)omega_fixture_calc(FR_BYTES, (uint64_t)words, 0, 0));
             nvrm_cpu_barrier();
             if (nvrm_enqueue(&ctx.rm, &ctx.pb_mem, offset, (uint32_t)words) != 0)
                 goto finish;
@@ -84,5 +85,5 @@ int main(void) {
     printf("[%s] SUBMISSION_VISIBILITY_DISTINCT_COMMANDS\n", distinct ? "PASS" : "FAIL");
     int reuse = run_sequence(1);
     printf("[%s] SUBMISSION_VISIBILITY_REUSE_AND_RING_WRAP\n", reuse ? "PASS" : "FAIL");
-    return distinct && reuse ? 0 : 1;
+    return !omega_fixture_calc(FR_BOTH, (uint64_t)distinct, (uint64_t)reuse, 0);
 }

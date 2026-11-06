@@ -21,11 +21,19 @@ C="$w/c0_check"
 "$here/build.sh" "$w/b" > "$w/build-b.log"
 cmp "$w/build-a.log" "$w/build-b.log" || { echo "FAIL rebuild not deterministic"; exit 1; }
 cat "$w/build-a.log"
-PA="$here/profile-c0-aarch64-v1.tsv"
-PX="$here/profile-c0-x86_64-v1.tsv"
+PA="$here/profile-c0-aarch64-v2.tsv"
+PX="$here/profile-c0-x86_64-v2.tsv"
 EA="$w/a/aarch64/vadd_drv"
 EX="$w/a/x86_64/vadd_drv"
 PTX="$w/a/vadd_u32.ptx"
+# v1 is immutable historical identity. The v2 computation migration changes the
+# executable hash, never the CUDA entry-point surface.
+for isa in aarch64 x86_64; do
+    awk -F '\t' '$1=="import" && $3=="cuda" {print $2}' "$here/profile-c0-$isa-v1.tsv" | sort > "$w/import-$isa-v1"
+    awk -F '\t' '$1=="import" && $3=="cuda" {print $2}' "$here/profile-c0-$isa-v2.tsv" | sort > "$w/import-$isa-v2"
+    diff -u "$w/import-$isa-v1" "$w/import-$isa-v2"
+    echo "PASS $isa v1/v2 CUDA imports: empty diff"
+done
 fail=0
 pass() { # name profile exe ptx runisa
 	n=$1
@@ -78,7 +86,7 @@ refuse lookup-prefix dynamic-lookup "$w/p-lookup.tsv" "$EA" "$PTX" aarch64
 grep -v "^needed${tab}libc.so.6${tab}" "$PA" > "$w/p-noneed.tsv"
 refuse profile-missing-needed "unlisted needed libc.so.6" "$w/p-noneed.tsv" "$EA" "$PTX" aarch64
 mkdir -p "$w/nolib"
-gcc -o "$w/nolib/vadd_drv" "$w/a/aarch64/vadd_drv.o" -Wl,--unresolved-symbols=ignore-all
+gcc -o "$w/nolib/vadd_drv" "$w/a/aarch64/vadd_drv.o" "$w/a/aarch64/standalone_oracles.o" -Wl,--unresolved-symbols=ignore-all
 sed "s/$(sha "$EA")/$(sha "$w/nolib/vadd_drv")/" "$PA" > "$w/p-nolib.tsv"
 refuse exe-missing-libcuda "missing needed libcuda.so.1" "$w/p-nolib.tsv" "$w/nolib/vadd_drv" "$PTX" aarch64
 # 5 unsupported PTX: a barrier and a two-statement line, each with the PTX hash re-pinned so only the op refuses.

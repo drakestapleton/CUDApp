@@ -1,0 +1,176 @@
+function	source	uncovered_branches	disposition
+cache_clear_locked	70:for (size_t i = 0; i < sizeof g_cache / sizeof g_cache[0]; i++)	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+cache_clear_locked	71:if (g_cache[i].used) slot_clear(&g_cache[i]);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_set_mutant	95:g_mutant_level = level < 0 ? 0 : level > 6 ? 6 : level;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	106:bool target = (g_mutant_which == 1 && kind == 0) || (g_mutant_which == 2 && kind == 1) ||	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed; branch  4 never executed (fallthrough); branch  5 never executed; branch  6 never executed (fallthrough); branch  7 never executed	EFFECT_NOT_RUN
+kernel_for	107:(g_mutant_which >= 3 && (uint64_t)g_mutant_which == kind);	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+kernel_for	108:uint64_t mutant = target ? (uint64_t)g_mutant_level : 0;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	111:for (size_t i = 0; i < sizeof g_cache / sizeof g_cache[0]; i++)	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+kernel_for	112:if (g_cache[i].used && g_cache[i].kind == kind && g_cache[i].a == a && g_cache[i].b == b &&	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed; branch  4 never executed (fallthrough); branch  5 never executed; branch  6 never executed (fallthrough); branch  7 never executed	EFFECT_NOT_RUN
+kernel_for	113:g_cache[i].mutant == mutant) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	118:if (!s) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	123:int rc = (prog && buf) ? omega_gpu_om_ir_build(kind, a, b, mutant, threads, prog, buf, OMEGA_BW_CODE_CAP_MAX,	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	125:: OMEGA_OM_IR_REPLAY;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	127:if (rc != OMEGA_OM_IR_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	133:for (size_t i = 0; i < sizeof g_cache / sizeof g_cache[0]; i++)	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+kernel_for	134:if (!g_cache[i].used) { slot = i; break; }	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	136:if (s->used) slot_clear(s); /* full: evict slot 0 */	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+kernel_for	143:if (upload && !s->code.cpu) {	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+kernel_for	144:if (omega_gpu_session_alloc_code(s->kernel.code_size, &s->code) != 0) return OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+kernel_for	146:if (omega_gpu_session_sync_to_gpu(&s->code) != 0) { omega_gpu_session_free(&s->code); return OMEGA_GPU_ML_CHIP_FAIL; }	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+info_kernel	153:if (!info) return;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+info_begin	163:if (!info) return;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+codegen_only	173:if (rc == OMEGA_GPU_ML_OK) info_begin(info, s, hit);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+begin	180:if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+begin	181:if (!omega_gpu_session_open()) return OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+begin	184:if (rc == OMEGA_GPU_ML_OK) info_begin(info, *s, hit);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+launch	197:if (omega_gpu_session_launch(&L, &elapsed, &marker) != 0) return OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+launch	198:if (info) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_codegen	220:if ((unsigned)kind > OMEGA_GPU_RNG_NORMAL) return OMEGA_GPU_ML_BAD_ARGS;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	228:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  1 taken 0	EFFECT_NOT_RUN
+oracle_rng_generate	231:size_t esize = kind == OMEGA_GPU_RNG_U64 ? 8u : 4u;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	236:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_scratch(&g_out, bytes) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	237:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	239:for (size_t i = 0; i < bytes / 4; i++) dev[i] = ML_POISON32;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_rng_generate	240:if (omega_gpu_session_sync_to_gpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	245:for (int i = 0; i < 4; i++) { x += ML_GOLDEN; put64(&args[2 + 2 * i], x); }	branch  1 never executed; branch  2 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_rng_generate	250:if (rc == OMEGA_GPU_ML_OK) rc = launch(s, args, 13, grid, count, 0, info);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	251:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	252:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	255:if (esize == 8) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	256:for (size_t i = 0; i < count; i++) unwritten += ((const uint64_t *)out)[i] == ML_POISON64;	branch  0 never executed; branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	258:for (size_t i = 0; i < count; i++) unwritten += ((const uint32_t *)out)[i] == ML_POISON32;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_rng_generate	260:if (info) info->unwritten_words = unwritten;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	261:if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_rng_generate	265:if (info) info->call_ns = now_ns() - t0;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+twiddles_locked	291:if (omega_gpu_om_ir_data(2, lg, inverse, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0 (fallthrough)	TABLE_INTERNAL
+oracle_fft_codegen	302:if (lg < 0 || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed; branch  4 never executed (fallthrough); branch  5 never executed	EFFECT_NOT_RUN
+oracle_fft_twiddles	308:if (lg < 0 || !tw || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed; branch  4 never executed (fallthrough); branch  5 never executed; branch  6 never executed (fallthrough); branch  7 never executed	EFFECT_NOT_RUN
+oracle_fft_twiddles	311:if (rc == OMEGA_GPU_ML_OK) memcpy(tw, g_twf, (size_t)8 * n);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	324:if (lg < 0 || !in || !out || batch == 0 || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;	branch  3 taken 0; branch  5 taken 0; branch  7 taken 0; branch  8 taken 0 (fallthrough); branch 10 never executed (fallthrough); branch 11 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	326:if (floats > ((size_t)1 << 28)) return OMEGA_GPU_ML_TOO_LARGE;	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+oracle_fft_c2c	327:if ((out < in + floats) && (in < out + floats)) return OMEGA_GPU_ML_BAD_ARGS;	branch  1 taken 0; branch  3 taken 0	EFFECT_NOT_RUN
+oracle_fft_c2c	329:if (!tw) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	331:if (rc != OMEGA_GPU_ML_OK) { free(tw); return rc; }	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	337:if (rc == OMEGA_GPU_ML_OK && (omega_gpu_session_scratch(&g_in, bytes) != 0 ||	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed; branch  5 never executed (fallthrough); branch  6 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	338:omega_gpu_session_scratch(&g_out, bytes) != 0 ||	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	341:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	345:for (size_t i = 0; i < floats; i++) dev[i] = ML_POISON32;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_fft_c2c	346:if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0 ||	branch  1 never executed (fallthrough); branch  2 never executed; branch  4 never executed (fallthrough); branch  5 never executed; branch  6 never executed (fallthrough); branch  7 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	349:for (uint32_t b0 = 0; b0 < batch && rc == OMEGA_GPU_ML_OK; b0 += OMEGA_GPU_FFT_MAX_CTAS) {	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed; branch  3 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_fft_c2c	358:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	359:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	362:for (size_t i = 0; i < floats; i++) {	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_fft_c2c	367:if (info) info->unwritten_words = unwritten;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	368:if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_fft_c2c	373:if (info) info->call_ns = now_ns() - t0;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+philox_pass	386:for (size_t i = 0; i < count; i++) dev[i] = poison;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+philox_pass	387:if (omega_gpu_session_sync_to_gpu(&g_out.mem) != 0) return OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+philox_pass	389:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+philox_pass	390:if (rc == OMEGA_GPU_ML_OK) memcpy(out, dev, count * 4u);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	399:if (nstreams > OMEGA_GPU_PHILOX_MAX_STREAMS || (uint64_t)nstreams * per_stream > OMEGA_GPU_RNG_MAX_OUTPUTS)	branch  0 taken 0 (fallthrough); branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	403:uint32_t g = dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2u : 4u;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	404:uint32_t esz = dist == OMEGA_GPU_PHILOX_UNIFORM_DOUBLE || dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2u : 1u;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	410:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_scratch(&g_out, count * 4u) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	411:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	422:args[10] = r ? r - g : 0u;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	426:if (dist == OMEGA_GPU_PHILOX_RAW) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	430:for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) hits += words[i] == ML_POISON32;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed; branch  3 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_philox_dist	431:if (rc == OMEGA_GPU_ML_OK && hits) {	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	433:if (!first) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	434:if (first) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	437:for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++)	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed; branch  3 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_philox_dist	438:unwritten += first[i] == ML_POISON32 && words[i] == ML_POISON32_ALT;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	442:} else if (esz == 1) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	444:for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) unwritten += words[i] == ML_POISON32;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed; branch  3 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	448:for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count / 2; i++) unwritten += d[i] == ML_POISON64;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed; branch  3 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_philox_dist	450:if (info) info->unwritten_words = unwritten;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	451:if (rc == OMEGA_GPU_ML_OK && unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+oracle_philox_dist	454:if (info) info->call_ns = now_ns() - t0;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+walk_locked	499:if (rc == OMEGA_OM_IR_REFUSED) return OMEGA_GPU_ML_BAD_ARGS;	branch  0 taken 0 (fallthrough)	WALK_INTERNAL
+walk_locked	500:if (rc != OMEGA_OM_IR_OK || g_words[0] == 0 || g_words[0] > 6) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0; branch  3 taken 0; branch  4 taken 0 (fallthrough)	WALK_INTERNAL
+walk_locked	513:if (L.src > 2 || L.dst > 2) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0; branch  2 taken 0 (fallthrough)	WALK_INTERNAL
+walk_locked	516:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 taken 0 (fallthrough)	WALK_INTERNAL
+walk_locked	530:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 taken 0 (fallthrough)	WALK_INTERNAL
+walk_locked	532:} else if (L.kind == 5) {	branch  1 taken 0	WALK_INTERNAL
+walk_locked	543:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 taken 0 (fallthrough)	WALK_INTERNAL
+collect	566:if (!l) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 taken 0 (fallthrough)	ALLOC
+collect	575:if (p && p->tw_n == L->tw_n && p->tw_inverse == L->tw_inverse) {	branch  5 taken 0	ALLOC
+collect	579:size_t cap = c->twcap ? 2u * c->twcap : 8u;	branch  0 taken 0 (fallthrough)	ALLOC
+collect	581:if (!t) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 taken 0 (fallthrough)	ALLOC
+collect	586:if (!copy) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 taken 0 (fallthrough)	ALLOC
+chip_launch	622:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+chip_launch	624:if (l->tw_n && (l->tw_n != r->tw_n || l->tw_inverse != r->tw_inverse)) {	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed (fallthrough); branch  3 never executed; branch  4 never executed (fallthrough); branch  5 never executed	EFFECT_NOT_RUN
+chip_launch	626:if (omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0) return OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+chip_launch	633:if (l->kind == 5) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+run_plan	644:if (!in || !out) return OMEGA_GPU_ML_BAD_ARGS;	branch  1 taken 0; branch  2 taken 0 (fallthrough)	EFFECT_NOT_RUN
+run_plan	645:if (info) memset(info, 0, sizeof *info);	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+run_plan	651:if (rc == OMEGA_GPU_ML_OK && ml_overlap(pi, bytes[0], po, bytes[1])) rc = OMEGA_GPU_ML_BAD_ARGS;	branch  3 taken 0; branch  5 taken 0	EFFECT_NOT_RUN
+run_plan	652:if (rc == OMEGA_GPU_ML_OK) {	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+run_plan	653:if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+run_plan	654:if (!omega_gpu_session_open()) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+run_plan	656:if (rc == OMEGA_GPU_ML_OK && (omega_gpu_session_scratch(&g_in, bytes[0]) != 0 ||	branch  0 taken 0 (fallthrough); branch  3 never executed (fallthrough); branch  4 never executed; branch  5 never executed (fallthrough); branch  6 never executed	EFFECT_NOT_RUN
+run_plan	657:omega_gpu_session_scratch(&g_out, bytes[1]) != 0 ||	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+run_plan	658:omega_gpu_session_scratch(&g_scr, bytes[2]) != 0 ||	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+run_plan	661:if (rc == OMEGA_GPU_ML_OK) {	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+run_plan	664:for (size_t i = 0; i < bytes[1] / 4u; i++) dev[i] = ML_POISON32;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+run_plan	665:for (size_t i = 0; i < bytes[2] / 4u; i++) scr[i] = ML_POISON32;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+run_plan	666:if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_out.mem) != 0 ||	branch  1 never executed (fallthrough); branch  2 never executed; branch  4 never executed (fallthrough); branch  5 never executed; branch  6 never executed (fallthrough); branch  7 never executed	EFFECT_NOT_RUN
+run_plan	670:if (rc == OMEGA_GPU_ML_OK) rc = walk_locked(mode, ndim, dims, batch, inverse, bytes, chip_launch, &r);	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+run_plan	671:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+run_plan	672:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+run_plan	675:for (size_t i = 0; i < bytes[1] / 4u; i++) unwritten = ml_scan(unwritten, dev[i]);	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+run_plan	676:if (info) info->unwritten_words = unwritten;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+run_plan	677:if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+run_plan	681:if (info) info->call_ns = ml_sub(now_ns(), t0);	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+oracle_nd	699:if (dims && ndim >= 1 && ndim <= 3) {	branch  1 taken 0; branch  3 taken 0; branch  5 taken 0	EFFECT_NOT_RUN
+oracle_nd	703:any &= dims[i] >= 2 && dims[i] <= OMEGA_GPU_FFT_MANY_MAX_N;	branch  1 taken 0; branch  3 taken 0	EFFECT_NOT_RUN
+oracle_nd	705:if (!legacy && any) return many_basic(OMEGA_GPU_FFT_TYPE_C2C, ndim, dims, batch, inverse, in, out, info);	branch  0 taken 0 (fallthrough); branch  2 never executed (fallthrough); branch  3 never executed	EFFECT_NOT_RUN
+many_table	749:if (m->ntk == sizeof m->tk / sizeof m->tk[0]) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  0 taken 0 (fallthrough)	TABLE_INTERNAL
+many_table	750:if (omega_gpu_om_ir_data(kind, a, b, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0 (fallthrough)	TABLE_INTERNAL
+many_table	754:if (!t) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 taken 0 (fallthrough)	TABLE_INTERNAL
+many_magic	768:if (omega_gpu_om_ir_data(13, d, 0, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0 (fallthrough)	FACTOR_INTERNAL
+many_step	795:if (!l) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 taken 0 (fallthrough)	ALLOC
+many_stockham	813:if (rc == OMEGA_GPU_ML_OK) rc = many_magic(ns, &w[5]);	branch  1 taken 0	FACTOR_INTERNAL
+many_stockham	816:if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 7, R, dir, 3, buf, off, 8, w, rows * nr, 2u * R);	branch  1 taken 0	FACTOR_INTERNAL
+many_stockham	817:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 taken 0 (fallthrough)	FACTOR_INTERNAL
+many_axis	828:if (omega_gpu_om_ir_data(12, n, 0, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0 (fallthrough)	FACTOR_INTERNAL
+many_axis	830:if (np == 0 || np > 16) return OMEGA_GPU_ML_CODEGEN_FAIL;	branch  1 taken 0; branch  2 taken 0 (fallthrough)	FACTOR_INTERNAL
+many_axis	836:if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, n, rows, dir, np, rad, *cur, other, -1, tw, cur);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	845:if (rc == OMEGA_GPU_ML_OK) rc = many_table(m, 10, M, 0, &tw);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	846:if (rc == OMEGA_GPU_ML_OK) rc = many_table(m, 10, M, 1, &twi);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	847:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 taken 0 (fallthrough)	FACTOR_INTERNAL
+many_axis	854:if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, M, 1, 0, np, rad, W, W2, (int)B, tw, &x);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	858:if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 8, 0, lgm, 3, pb, po, 3, w, rows * M, 2);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	859:if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, M, rows, 0, np, rad, W, W2, -1, tw, &x);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	862:if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 8, 1, lgm, 3, mb, mo, 3, w, rows * M, 2);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	863:if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, M, rows, 1, np, rad, x, x == W ? W2 : W, -1, twi, &y);	branch  1 taken 0	FACTOR_INTERNAL
+many_axis	865:if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 8, 2, lgm, 3, qb, po, 3, w, rows * M, 2);	branch  1 taken 0	FACTOR_INTERNAL
+many_copy	877:if (e == 0) return OMEGA_GPU_ML_OK;	branch  0 taken 0 (fallthrough)	COPY_INTERNAL
+many_copy	881:if (rc != OMEGA_GPU_ML_OK) return rc;	branch  0 taken 0 (fallthrough)	COPY_INTERNAL
+many_side	927:if (prod >= ((uint64_t)1 << 32)) return OMEGA_GPU_ML_TOO_LARGE;	branch  0 taken 0 (fallthrough)	BASIC_BOUND
+many_build	1009:if (!bits) return OMEGA_GPU_ML_CHIP_FAIL;	branch  0 taken 0 (fallthrough)	PLAN_FAILURE
+many_build	1026:for (uint32_t t = 0; t < nax && rc == OMEGA_GPU_ML_OK; t++) {	branch  3 taken 0 (fallthrough)	PLAN_FAILURE
+many_build	1050:if (rc == OMEGA_GPU_ML_OK && L > h) {	branch  1 taken 0	PLAN_FAILURE
+many_build	1061:if (rc == OMEGA_GPU_ML_OK) rc = many_axis(m, L, many_rows(r, e, last, p->batch), dir, &cur, cur == S0 ? S1 : S0);	branch  1 taken 0	PLAN_FAILURE
+oracle_many	1128:if (!plan || !in || !out) return OMEGA_GPU_ML_BAD_ARGS;	branch  1 taken 0; branch  3 taken 0; branch  4 taken 0 (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1129:if (info) memset(info, 0, sizeof *info);	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1138:if (rc == OMEGA_GPU_ML_OK && !in_place &&	branch  1 taken 0; branch  3 taken 0	EFFECT_NOT_RUN
+oracle_many	1139:ml_overlap(pi, bytes[OMEGA_GPU_FFT_BUF_IN], po, bytes[OMEGA_GPU_FFT_BUF_OUT]))	branch  1 taken 0; branch  3 taken 0	EFFECT_NOT_RUN
+oracle_many	1141:if (rc == OMEGA_GPU_ML_OK) {	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1142:if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_many	1143:if (!omega_gpu_session_open()) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  1 never executed (fallthrough); branch  2 never executed	EFFECT_NOT_RUN
+oracle_many	1146:for (int i = 0; rc == OMEGA_GPU_ML_OK && i < OMEGA_GPU_FFT_MANY_BUFS; i++)	branch  0 taken 0 (fallthrough); branch  2 never executed; branch  3 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1147:if (omega_gpu_session_scratch(buf[i], bytes[i] ? bytes[i] : 8u) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+oracle_many	1148:if (rc == OMEGA_GPU_ML_OK) {	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1152:for (size_t i = 0; i < bytes[OMEGA_GPU_FFT_BUF_OUT] / 4u; i++) dev[i] = ML_POISON32;	branch  0 never executed; branch  1 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1153:if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0 ||	branch  1 never executed (fallthrough); branch  2 never executed; branch  4 never executed (fallthrough); branch  5 never executed; branch  6 never executed (fallthrough); branch  7 never executed	EFFECT_NOT_RUN
+oracle_many	1156:for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < m.n; i++) {	branch  0 never executed (fallthrough); branch  1 never executed; branch  2 never executed; branch  3 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1161:if (rc != OMEGA_GPU_ML_OK) break;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_many	1164:for (uint32_t k = 0; k < l->nptr; k++) put64(&args[2 * k], buf[l->buf[k]]->mem.va + l->off[k]);	branch  1 never executed; branch  2 never executed (fallthrough)	EFFECT_NOT_RUN
+oracle_many	1168:if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;	branch  0 never executed (fallthrough); branch  1 never executed; branch  3 never executed (fallthrough); branch  4 never executed	EFFECT_NOT_RUN
+oracle_many	1169:if (rc == OMEGA_GPU_ML_OK) {	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_many	1173:if (info) info->unwritten_words = c.unwritten;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_many	1174:if (c.unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;	branch  0 never executed (fallthrough); branch  1 never executed	EFFECT_NOT_RUN
+oracle_many	1180:if (info) info->call_ns = ml_sub(now_ns(), t0);	branch  0 taken 0 (fallthrough)	EFFECT_NOT_RUN
+many_basic	1188:if (!in || !out || in == out || !n || rank < 1 || rank > 3) return OMEGA_GPU_ML_BAD_ARGS;	branch  1 taken 0; branch  3 taken 0; branch  5 taken 0; branch  7 taken 0; branch 10 taken 0 (fallthrough)	EFFECT_NOT_RUN

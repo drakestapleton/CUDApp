@@ -20,6 +20,21 @@ compiled semantic mutants are EXERCISED; see
 `evidence/graph-residue-20261106/README.md`. Hardware remains NOT_RUN for this
 change; `examples/hello_gpu/README.md` is its chip runbook. No existing hardware
 status is upgraded by these host receipts.
+2026-11-06: GEMM config/resource, shape/grid, leading-span, launch-word and packed-scratch policy now default to seeded Omega (`om/gemm-any/host.om`). The default-OFF C policy oracle and focused host/simulator evidence are in `evidence/gemm-host-plan-20261106/`; chip qualification remains NOT_RUN. No status row is upgraded.
+2026-11-06: GEMM EX gather indices/strides, packing quotas and conversion-copy layout policy now default to seeded Omega (`om/gemmex/policy.om`). The separate default-OFF C policy oracle does not enable GX_C; focused evidence is in `evidence/gemm-ex-host-policy-20261106/`. Chip qualification remains NOT_RUN; no status row is upgraded.
+2026-11-06: the remaining numeric bulk, IEEE predicate, FTZ/parity/seed,
+patch admission/encoding/checking and frozen reduction-hierarchy computation
+now defaults to seeded `om/numeric` units, stacked on the scalar migration.
+Host differential, mutation and simulator evidence is recorded in
+[`numeric-rest-20261106`](evidence/numeric-rest-20261106/README.md).
+Chip qualification is NOT_RUN; no roadmap status row is upgraded.
+2026-11-06 migration note: the eight standalone CUDA-fixture, interop, mirror,
+prefill and exact-head checkers use the seeded `standalone_oracles` unit for
+reference arithmetic and verdict aggregation. The binary128 reference oracles
+remain independent C oracles because seeded Omega has no binary128 type. The
+CUDA fixture has new v2 identities; v1 remains frozen and CUDA imports are
+unchanged. Host/simulator evidence and the NOT_RUN chip runbook are in
+`evidence/standalone-oracles-20261106/README.md`; no hardware status row changes.
 
 ## 1. NVIDIA software on the Spark today
 
@@ -61,6 +76,14 @@ simulation and compiled source mutants exercise the host path; see
 Chip qualification and performance are NOT_RUN. This is a dated implementation
 note, not a status upgrade or complete cuDNN feature-coverage claim.
 
+2026-11-06 host migration note: `om/mathlibs/host.om` now owns FFT walk,
+mixed-radix/Bluestein and PlanMany layout/overlap policy, RNG admission/seed
+arithmetic and time conversion. Its six strongly linked entry units use the
+existing seeded compiler/bridge pins; the default-OFF
+`CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST` branch is the C differential oracle.
+Focused host/simulator evidence and the unrun chip procedure are in
+`evidence/mathlibs-host-20261106/README.md`. Chip qualification remains
+**NOT_RUN** for this migration; no status row is upgraded.
 
 ## 2. Bars before I say "replaces CUDA"
 
@@ -146,3 +169,13 @@ and freestanding fallback are default-off in hosted builds; C still marshals
 records, pointers and external effects. The runtime-view converter remains
 pending omega-bridge #71 and #73. Chip qualification is NOT_RUN, and no roadmap
 row status is upgraded.
+## 2026-11-06: engine fixture and clock scalars (pending integration)
+
+Qualification scalars, bounded fixture text checks, submission sizing, flush
+words and the six engine/m16/wait/submit clock conversions now call seeded
+Omega in `om/engine/fixture_rest.om`. C retains device, mapping, clock and proc
+effects. The four hardware fixtures are BUILD_ONLY; their extracted logic is
+host-differentially EXERCISED with overflow partitions and seven killed Omega
+mutants. Receipts and the unexecuted chip runbook are in
+`evidence/engine-fixture-rest-20261106/README.md`. Hardware qualification remains
+NOT_RUN, and no roadmap status row is upgraded.

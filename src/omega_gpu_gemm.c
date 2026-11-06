@@ -10,6 +10,9 @@
 #ifndef CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
 #define CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER 0
 #endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
+#define CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN 0
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -18,11 +21,29 @@
 #define TIMEOUT_MS 60000ull
 #define FRAG 512u          /* bytes of one warp fragment: 32 lanes x 16 */
 
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
 static uint32_t esz(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 1u : t == OMEGA_GPU_GEMM_F32_FFMA ? 4u : 2u; }
 static uint32_t kstep(OmegaGpuGemmType t) { return t == OMEGA_GPU_GEMM_E4M3 ? 32u : 16u; }
 static int pow124(uint32_t v) { return v == 1u || v == 2u || v == 4u; }
 static int type_ok(unsigned t) { return t <= OMEGA_GPU_GEMM_F32_FFMA; }
 static int band_ok(uint32_t b) { return b <= 32u && (b & (b - 1u)) == 0u; }
+#else
+static uint64_t host_value(uint64_t op, uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
+    uint64_t result;
+    if (omega_gemm_value(&result, op, a, b, c, d) != OMEGA_OK) abort();
+    return result;
+}
+static void host_cfg(uint64_t x[32], const OmegaGemmCfg *c) {
+    memset(x, 0, 32 * sizeof *x);
+    x[0] = (unsigned)c->type; x[1] = c->rt; x[2] = c->ct; x[3] = c->wm;
+    x[4] = c->wn; x[5] = c->stall; x[6] = (unsigned)c->mutant; x[7] = c->band;
+}
+static uint32_t esz(OmegaGpuGemmType t) { return (uint32_t)host_value(0, (unsigned)t, 0, 0, 0); }
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER
+static uint32_t kstep(OmegaGpuGemmType t) { return (uint32_t)host_value(1, (unsigned)t, 0, 0, 0); }
+#endif
+static int type_ok(unsigned t) { return (int)host_value(2, t, 0, 0, 0); }
+#endif
 #define FFMA_THREADS 128u
 
 void omega_gpu_gemm_default_cfg(OmegaGpuGemmType type, OmegaGemmCfg *cfg) {
@@ -36,13 +57,26 @@ void omega_gpu_gemm_default_cfg(OmegaGpuGemmType type, OmegaGemmCfg *cfg) {
 /* registers of MAIN for operands and accumulators: two operand sets (4 rt + 2 ct quads) and rt ct accumulator quads; at most
  * 160 (rt 4 ct 4). Up to MAIN_REGS_DEFAULT they fit R2..R127 (BW_PHYS_GPR_MAX) beside the ~25 address and loop registers;
  * above it MAIN opts into BW_PHYS_GPR_HW_LIMIT (R2..R245). */
-static uint32_t main_regs(const OmegaGemmCfg *c) { return 4u * (4u * c->rt + 2u * c->ct + c->rt * c->ct); }
+static uint32_t main_regs(const OmegaGemmCfg *c) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
+    return 4u * (4u * c->rt + 2u * c->ct + c->rt * c->ct);
+#else
+    return (uint32_t)host_value(3, c->rt, c->ct, 0, 0);
+#endif
+}
 #define MAIN_REGS_DEFAULT 100u
 
 int omega_gpu_gemm_cfg_ok(const OmegaGemmCfg *c) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
     return c && type_ok(c->type) && pow124(c->rt) && pow124(c->ct) &&
            pow124(c->wm) && pow124(c->wn) && c->stall >= 1u && c->stall <= 15u && c->mutant >= 0 && c->mutant <= 3 &&
            band_ok(c->band);
+#else
+    uint64_t x[32], result;
+    if (!c) return 0;
+    host_cfg(x, c);
+    return omega_gemm_cfg(&result, x, 32) == OMEGA_OK && result != 0;
+#endif
 }
 
 /* ------------------------------------------------------------------ IR helpers */
@@ -336,6 +370,7 @@ int omega_gpu_gemm_codegen(const OmegaGemmCfg *cfg, OmegaGemmKind kind, Blackwel
 
 /* ------------------------------------------------------------------ plan and driver */
 
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
 static uint32_t roundup(uint32_t v, uint32_t m) { return (v + m - 1u) / m * m; }
 
 int omega_gpu_gemm_plan(const OmegaGemmCfg *c, uint32_t M, uint32_t N, uint32_t K, OmegaGemmPlan *p) {
@@ -416,6 +451,49 @@ int omega_gpu_gemm_drive_ld(const OmegaGemmCfg *c, unsigned layout, uint32_t M, 
     if (launch(ctx, OMEGA_GEMM_K_MAIN, a, p.grid[2][0], p.grid[2][1], p.threads[2]) != 0) return OMEGA_GPU_GEMM_CHIP_FAIL;
     return OMEGA_GPU_GEMM_OK;
 }
+#else
+int omega_gpu_gemm_plan(const OmegaGemmCfg *c, uint32_t M, uint32_t N, uint32_t K, OmegaGemmPlan *p) {
+    uint64_t x[32], y[64], result;
+    if (!c || !p) return OMEGA_GPU_GEMM_BAD_ARGS;
+    host_cfg(x, c); x[8] = M; x[9] = N; x[10] = K;
+    if (omega_gemm_plan(&result, x, 32, y, 64) != OMEGA_OK) return OMEGA_GPU_GEMM_BAD_ARGS;
+    if (result) return -(int)result;
+    memset(p, 0, sizeof *p);
+    p->Mp = (uint32_t)y[0]; p->Np = (uint32_t)y[1]; p->Kp = (uint32_t)y[2]; p->KS2 = (uint32_t)y[3];
+    p->a_bytes = y[4]; p->b_bytes = y[5]; p->ap_bytes = y[6]; p->bp_bytes = y[7];
+    for (unsigned k = 0; k < 3; k++) {
+        p->grid[k][0] = (uint32_t)y[8 + 2*k]; p->grid[k][1] = (uint32_t)y[9 + 2*k];
+        p->threads[k] = (uint32_t)y[14 + k];
+    }
+    return OMEGA_GPU_GEMM_OK;
+}
+int omega_gpu_gemm_span(unsigned layout, uint32_t M, uint32_t N, uint32_t K, uint64_t lda, uint64_t ldb,
+                        uint64_t *a_elems, uint64_t *b_elems) {
+    uint64_t x[32] = {0}, y[64], result;
+    x[8] = M; x[9] = N; x[10] = K; x[11] = layout; x[12] = lda; x[13] = ldb;
+    if (omega_gemm_span(&result, x, 32, y, 64) != OMEGA_OK) return OMEGA_GPU_GEMM_BAD_ARGS;
+    if (result) return -(int)result;
+    if (a_elems) *a_elems = y[17];
+    if (b_elems) *b_elems = y[18];
+    return OMEGA_GPU_GEMM_OK;
+}
+int omega_gpu_gemm_drive_ld(const OmegaGemmCfg *c, unsigned layout, uint32_t M, uint32_t N, uint32_t K, uint64_t a_va, uint64_t lda,
+                            uint64_t b_va, uint64_t ldb, uint64_t ap_va, uint64_t bp_va, uint64_t c_va, OmegaGemmLaunchFn launch, void *ctx) {
+    uint64_t x[32], y[64], result;
+    if (!c || !launch) return OMEGA_GPU_GEMM_BAD_ARGS;
+    host_cfg(x, c); x[8] = M; x[9] = N; x[10] = K; x[11] = layout; x[12] = lda; x[13] = ldb;
+    x[14] = a_va; x[15] = b_va; x[16] = ap_va; x[17] = bp_va; x[18] = c_va;
+    if (omega_gemm_host_drive(&result, x, 32, y, 64) != OMEGA_OK) return OMEGA_GPU_GEMM_BAD_ARGS;
+    if (result) return -(int)result;
+    for (unsigned k = (unsigned)y[54]; k < 3; k++) {
+        uint32_t args[OMEGA_GPU_GEMM_ARGS_WORDS];
+        for (unsigned w = 0; w < OMEGA_GPU_GEMM_ARGS_WORDS; w++) args[w] = (uint32_t)y[24 + 10*k + w];
+        if (launch(ctx, (OmegaGemmKind)k, args, (uint32_t)y[8+2*k], (uint32_t)y[9+2*k], (uint32_t)y[14+k]))
+            return OMEGA_GPU_GEMM_CHIP_FAIL;
+    }
+    return OMEGA_GPU_GEMM_OK;
+}
+#endif
 
 int omega_gpu_gemm_drive(const OmegaGemmCfg *c, unsigned layout, uint32_t M, uint32_t N, uint32_t K, uint64_t a_va,
                          uint64_t b_va, uint64_t ap_va, uint64_t bp_va, uint64_t c_va, OmegaGemmLaunchFn launch, void *ctx) {
@@ -463,14 +541,23 @@ static int hook_locked(void) {
  * (omega #457) on the next submission, so no clean line of the freed pages survives into whatever reuses them. */
 static int packed_locked(uint64_t bytes, OmegaGpuMem *out) {
     if (hook_locked() != 0) return -1;
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
     if (g.pk.cpu && g.pk.size >= bytes) { *out = g.pk; return 0; }
+#else
+    if (host_value(5, (uintptr_t)g.pk.cpu, g.pk.size, bytes, 0)) { *out = g.pk; return 0; }
+#endif
     if (g.pk.cpu) {
         if (g.pk_cached) (void)omega_gpu_session_sync_to_gpu(&g.pk);
         omega_gpu_session_free(&g.pk);
         memset(&g.pk, 0, sizeof g.pk);
     }
     const char *v = getenv("AIEN_OMEGA_GEMM_PACK_CACHED");
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
     g.pk_cached = !(v && v[0] == '0' && v[1] == 0);
+#else
+    g.pk_cached = (int)host_value(6, v != NULL, v ? (unsigned char)v[0] : 0,
+                                v && v[0] ? (unsigned char)v[1] : 0, 0);
+#endif
     if ((g.pk_cached ? omega_gpu_session_alloc_cached(bytes, &g.pk) : omega_gpu_session_alloc(bytes, &g.pk)) != 0) { memset(&g.pk, 0, sizeof g.pk); return -1; }
     *out = g.pk;
     return 0;
@@ -545,7 +632,13 @@ static int chip_launch(void *ctx, OmegaGemmKind k, const uint32_t args[OMEGA_GPU
     return 0;
 }
 
-static uint64_t up16(uint64_t v) { return (v + 255u) & ~(uint64_t)255u; }
+static uint64_t up16(uint64_t v) {
+#if CUDAPP_MIGRATION_PENDING_C_GEMM_HOST_PLAN
+    return (v + 255u) & ~(uint64_t)255u;
+#else
+    return host_value(4, v, 0, 0, 0);
+#endif
+}
 
 int omega_gpu_gemm_ld(OmegaGpuGemmType type, unsigned layout, uint32_t M, uint32_t N, uint32_t K, const void *A, uint64_t lda,
                       const void *B, uint64_t ldb, float *C, OmegaGpuGemmInfo *info) {

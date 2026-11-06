@@ -4,15 +4,24 @@
 #include "omega_bw_em.h"
 #include "omega_bw_em_q.h"
 #include "omega_gpu_fmt.h"
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA 0
+#endif
 
 static uint32_t rd32q(const uint8_t *p) { return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24; }
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
 static void wr32q(uint8_t *p, uint32_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24); }
+#endif
 
 int omega_qmma_is_mark(const BlackwellIRInsn *in) { return in && in->op == BW_IR_HMMA_BF16 && in->imm == OMEGA_QMMA_MARK; }
 
 int omega_qmma_patch_code(const BlackwellIRProgram *prog, uint8_t *code, size_t len) {
     if (!prog || !code || len < prog->count * 16u) return -1;
     int n = 0;
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
     for (size_t i = 0; i < prog->count; i++) {
         if (prog->insns[i].op == BW_IR_FMNMX_MAX && prog->insns[i].imm == OMEGA_QMMA_MARK_F2E4) {
             uint8_t *w = code + i * 16u; uint32_t w0 = rd32q(w), w1 = rd32q(w + 4), w2 = rd32q(w + 8);
@@ -27,6 +36,13 @@ int omega_qmma_patch_code(const BlackwellIRProgram *prog, uint8_t *code, size_t 
         wr32q(w + 8, (w2 & 0xffu) | 0x00002c00u);
         n++;
     }
+#else
+    for (size_t i = 0; i < prog->count; i++) {
+        uint64_t result = 0;
+        if (omega_cg_qmma_patch(&result, prog->insns[i].op, prog->insns[i].imm, code + i * 16u, 16) != OMEGA_OK || result > 1) return -1;
+        n += (int)result;
+    }
+#endif
     if (n > 0) { size_t b = omega_bw_program_code_bytes(prog); omega_kernel_dump(code, b && b <= len ? b : prog->count * 16u); } /* the patched body is a different kernel */
     return n;
 }
@@ -67,6 +83,7 @@ int omega_qmma_patch_selftest(char *msg, size_t msgn) {
     return 0;
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA
 int omega_blackwell_codegen_qmma_probe_prog(int mutant, uint32_t wait_nops, BlackwellIRProgram *prog) {
     if (!prog || mutant < 0 || mutant > 1 || wait_nops > 16) return -1;
     omega_bw_ir_init(prog);
@@ -137,3 +154,19 @@ int omega_blackwell_codegen_f2e4_probe_prog(BlackwellIRProgram *prog) {
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else
+int omega_blackwell_codegen_qmma_probe_prog(int mutant, uint32_t wait_nops, BlackwellIRProgram *prog) {
+    if (!prog || mutant < 0) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_qmma, 0, (uint64_t)mutant, wait_nops, 0, prog, NULL) == OMEGA_OM_IR_OK ? 0 : -1;
+}
+
+int omega_blackwell_codegen_qmma_peak_prog(uint32_t iters, uint32_t chains, uint32_t stall, uint32_t threads, BlackwellIRProgram *prog) {
+    if (!prog) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_qmma, 1, iters, chains, (uint64_t)stall | (uint64_t)threads << 32, prog, NULL) == OMEGA_OM_IR_OK ? 0 : -1;
+}
+
+int omega_blackwell_codegen_f2e4_probe_prog(BlackwellIRProgram *prog) {
+    if (!prog) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_qmma, 2, 0, 0, 0, prog, NULL) == OMEGA_OM_IR_OK ? 0 : -1;
+}
+#endif

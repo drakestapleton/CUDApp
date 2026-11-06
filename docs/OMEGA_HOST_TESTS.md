@@ -188,3 +188,36 @@ is the separate GEMM host and simulator target and is also outside `make test`.
 An AArch64 host build of this tree keeps `dsb sy` in `nvrm_cpu_barrier`. A
 GB10 run of the device path is a separate receipt. A host or simulator pass
 does not qualify it.
+
+## QMMA builder migration
+
+`make test-codegen-qmma-diff` is host-only and part of `make test`. The default
+QMMA probe, peak and F2E4 probe builders execute `om/codegen/cg_qmma.om`
+through checked portable Omega IR replay. `cg_qmma_patch.om` owns placeholder
+validation and rewriting. `CUDAPP_MIGRATION_PENDING_C_CODEGEN_QMMA=1` selects
+the old C oracle; it defaults to zero.
+
+The differential checks both probe variants at every supported wait count,
+and every supported peak chain count, issue stall and thread count at an
+iteration count of seven, plus the F2E4 probe. It compares encoded bytes,
+then patched bytes, patch counts and packed cubins. It also checks each
+single-bit iteration immediate and the maximum iteration immediate.
+Its deliberately corrupted control word must be detected.
+The iteration immediate is not exhaustively enumerated; this receipt is not
+a claim that all possible iteration immediates were run.
+The focused command exited zero and printed
+`CODEGEN QMMA DIFF PASS (7748 cases)` on 2026-11-05, after printing
+`CODEGEN QMMA MUTANT CAUGHT`. This is host parity, not chip qualification.
+
+Constants were transcribed from the existing C oracle and checked with
+`WolframLanguageEvaluator: AssociationMap[FromDigits[#,16]&,{"51303832","46453433","38383838","fc000","358","380","388","ffff","7209","723e","07800000","048070ff","723c","727a","41800","2c00","ffffff00","ffff0000"}]`
+→ respectively
+`1362114610,1178940467,943208504,1032192,856,896,904,65535,29193,29246,125829120,75526399,29244,29306,268288,11264,4294967040,4294901760`.
+
+Chip tier is **NOT_RUN**. In a separately authorized exclusive GB10 window,
+build `taskset -c 10-14 nice -n 10 make -j3 build/gpu_qmma_probe_test`,
+then run `./build/gpu_qmma_probe_test --host-only` and
+`./build/gpu_qmma_probe_test` using that window's required device authorization
+and receipt capture procedure. The default command exercises arithmetic,
+the dropped-C negative control, and the peak sweep. Do not run it outside
+that window.

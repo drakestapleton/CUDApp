@@ -2675,7 +2675,7 @@ void omega_matmul_frag_pack_a_f32(const float *a, uint32_t m, uint32_t k, uint32
         const uint16_t *tab = g_frag_a_tab;                                                             \
         for (uint32_t ks = 0; ks < KS; ks++) {                                                          \
             uint16_t *blk = dst + (size_t)ks * 256u;                                                    \
-            const uint32_t c0 = ks * 16u, c1 = k - c0 < 16u ? k - c0 : 16u;                             \
+            const uint32_t c0 = ks * 16u, c1 = c0 >= k ? 0u : (k - c0 < 16u ? k - c0 : 16u);              \
             for (uint32_t cc = 0; cc < c1; cc++) blk[tab[cc]] = LOAD(a[c0 + cc]);                       \
             for (uint32_t cc = c1; cc < 16u; cc++) blk[tab[cc]] = 0;                                    \
         }                                                                                               \

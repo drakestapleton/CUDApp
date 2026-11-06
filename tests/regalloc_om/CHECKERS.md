@@ -24,3 +24,7 @@ The source-partition run exercises every C branch outcome in all three headers. 
 `hazard_diff.c` forces a size-4 LDG with a live destination in every generated program and in a direct decoder witness. Comparison includes read/write counts and every register-range length. The size-class `< 4` mutation is killed, rather than relying on incidental random coverage.
 
 `mutants.py` requires twenty recompiled non-equivalent semantic mutations to be killed. It also lists `hazard-branch-sign` as **EQUIVALENT**, never killed: `hazard-branch-sign-proof.txt` records the mounted Wolfram query and `{False, True, {0, 0, 32}}` result proving that the two sign-extension constants give identical low uint32 bits after the six-bit shift for the complete input domain.
+
+## Padded row-zero packing
+
+The original row-zero loop underflowed `k - c0` for complete padding blocks and read beyond the source. The `k=1,kp=48` source-sized regression in `packers.c` reproduced an AddressSanitizer heap-buffer-overflow before the repair (exit 1); the repaired C path exits 0 under the same sanitizer and preserves non-row-zero destination words.

@@ -26,7 +26,7 @@ fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
-    UNITS="$UNITS conv2d=om/gemm-any/gemm_ir.om,om/conv2d/conv.om"
+    UNITS="$UNITS gemm_scalar=om/gemm-any/gemm_ir.om,om/conv2d/dense.om conv2d=om/gemm-any/gemm_ir.om,om/conv2d/conv.om conv_plan=om/gemm-any/gemm_ir.om,om/conv2d/conv.om,om/conv2d/plan.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

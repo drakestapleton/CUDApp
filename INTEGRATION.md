@@ -463,4 +463,17 @@ chip enumeration and PCI masks in seeded Omega) through `6a7e77ea`. The m16 and
 NVRM lifecycle links keep both `cudapp_om_chip_enum.c` and
 `cudapp_om_fixture_text.c`; the unit idents were regenerated with
 `om/units.sh` (`--check` byte-identical) and `crumb verify` is current.
-Chip, QMMA hardware and NVRM lifecycle gates: NOT_RUN.
+
+On the GB10, `hello_gpu` then failed at `cd2b976a` and `8e83fc2c` and passed on
+main `b774723f`. The chip bisect named `196e84ee` ("route client decisions
+through the Omega policy unit"). `nvrm_channel_n` called
+`nvrm_policy_retry(arc == 0, nomem, tries, budget)`, but the signature is
+`(failed, tries, budget, nomem)`. A successful compute-object allocation
+therefore returned "budget spent", and the channel failed after one attempt.
+The C oracle and the Omega unit received the same wrong arguments, so the
+policy differential could not see it. The call now lives in
+`channel_retry_decision()` with the correct order, and
+`tests/test_ampere_runtime.c` checks its decisions, including the success
+path, in both the Omega and C-oracle builds of `test-nvrm-differential`.
+QMMA hardware gates: NOT_RUN. The chip rows for the fixed head are measured by
+the GPU window owner.

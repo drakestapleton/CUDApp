@@ -1291,6 +1291,15 @@ static int chan_extra_destroy(Nvrm *rm, NvrmChan *c) {
     return 0;
 }
 
+/* One decision per compute-object RM_ALLOC attempt: 0 = allocated, 1 = retry
+ * after NV_ERR_NO_MEMORY, 2 = NO_MEMORY budget spent, 3 = any other failure.
+ * The policy signature is (failed, tries, budget, nomem). Keep the call here,
+ * where tests/test_ampere_runtime.c checks it on the success path too. */
+static uint64_t channel_retry_decision(const Nvrm *rm, int arc, uint32_t budget) {
+    return nvrm_policy_retry(arc != 0, rm->channel_no_memory_retries, budget,
+                             rm->last_rm_status == NV_ERR_NO_MEMORY);
+}
+
 int nvrm_channel(Nvrm *rm) { return nvrm_channel_n(rm, 0); }
 
 int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
@@ -1350,8 +1359,7 @@ int nvrm_channel_n(Nvrm *rm, uint32_t extra) {
     rm->channel_no_memory_retries = 0;
     for (;;) {
         int arc = rm_alloc(rm, rm->gpfifo, rm->compute_class, NULL, 0, &rm->compute_obj);
-        uint64_t rd = nvrm_policy_retry(arc == 0, rm->last_rm_status == NV_ERR_NO_MEMORY,
-                                        rm->channel_no_memory_retries, budget);
+        uint64_t rd = channel_retry_decision(rm, arc, budget);
         if (rd == 0) break;
         if (rd == 3) return -1;
         if (rd == 2) return fail_channel_no_memory(rm, rm->channel_no_memory_retries + 1, delay_ms);

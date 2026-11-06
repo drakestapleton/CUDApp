@@ -196,8 +196,30 @@ static void qmd_and_submission_admission(void) {
     assert(validate_ampere_push(&rm, &pb, 0, sizeof good / sizeof good[0]) != 0);
     assert(allocs == 0 && frees == 0); /* admission itself makes no ioctl */
 }
+/* The compute-object retry loop's own call into the policy unit. The C/Omega
+ * policy differential cannot see a call site that hands both units the same
+ * misordered arguments; this checks the decisions nvrm_channel_n acts on. */
+static void channel_retry_call_site(void) {
+    static Nvrm rm; fresh(&rm);
+    rm.channel_no_memory_retries = 0; rm.last_rm_status = NV_OK;
+    assert(channel_retry_decision(&rm, 0, NVRM_CHANNEL_NO_MEMORY_RETRIES) == 0);
+    assert(channel_retry_decision(&rm, 0, 0) == 0);
+    rm.last_rm_status = NV_ERR_NO_MEMORY; /* a stale status never overrides success */
+    assert(channel_retry_decision(&rm, 0, 3) == 0);
+    assert(channel_retry_decision(&rm, -1, 3) == 1);
+    rm.channel_no_memory_retries = 2;
+    assert(channel_retry_decision(&rm, -1, 3) == 1);
+    rm.channel_no_memory_retries = 3;
+    assert(channel_retry_decision(&rm, -1, 3) == 2);
+    rm.channel_no_memory_retries = 0;
+    assert(channel_retry_decision(&rm, -1, 0) == 2);
+    rm.last_rm_status = NV_ERR_INVALID_ARGUMENT;
+    assert(channel_retry_decision(&rm, -1, 3) == 3);
+    assert(allocs == 0 && frees == 0); /* the decision itself makes no ioctl */
+}
 int main(void) {
     class_and_bdf(); allocation_lifetime(); failed_allocation_cleanup(); qmd_and_submission_admission();
+    channel_retry_call_site();
     puts("Ampere simulated RM allocation/class/QMD tests passed (HOST_ONLY; device NOT_RUN)");
     return 0;
 }

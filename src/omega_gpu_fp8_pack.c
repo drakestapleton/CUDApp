@@ -11,6 +11,8 @@
 #include "omega_gpu_hostmath.h"
 #include <math.h>
 #include <string.h>
+#include "omega_gpu_apiviews.h"
+#include <stdlib.h>
 
 float omega_fp8_e4m3_ref(uint8_t b) {
     int exponent = (b >> 3) & 0x0f;
@@ -47,13 +49,11 @@ int omega_fp8_pack_scales(const uint16_t *bf16, size_t count, float *out, int mu
 }
 
 void omega_fp8_pack_x_f32(const float *x, uint32_t k, float *out) {
-    const float fold = omega_hostmath_pow2f(OMEGA_FP8_X_EXP);
-    for (uint32_t i = 0; i < k; i++) out[i] = x[i] * fold;
+    if (av_fp8_pack_x(k, x, out) != 0) abort();
 }
 
 void omega_fp8_pack_x_bf16(const uint16_t *x, uint32_t k, float *out) {
-    const float fold = omega_hostmath_pow2f(OMEGA_FP8_X_EXP);
-    for (uint32_t i = 0; i < k; i++) out[i] = omega_bf16_to_fp32(x[i]) * fold;
+    if (av_fp8_pack_x_bf16(k, x, out) != 0) abort();
 }
 
 void omega_fp8_gemv_oracle(const uint8_t *w, const uint16_t *scale_bf16, uint32_t n, uint32_t k,

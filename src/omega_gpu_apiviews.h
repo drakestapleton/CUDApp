@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "omega_gpu_hostmath.h"
 
 #if defined(CUDAPP_MIGRATION_PENDING_APIVIEWS_DIFF)
 #define AV_DIFF 1
@@ -505,6 +506,183 @@ static inline int av_fp8_quantize(uint32_t n, uint32_t k, const uint16_t *w, uin
         }
     }
     return 0;
+}
+
+/* GDN tail pack/unpack and negated exponential, plus the fp8 x fold.
+ * 384 is OMEGA_GDN_SLOTS. A production include of the GDN header uses the
+ * macro, so a drift against the Omega unit fails this differential.
+ * WolframLanguageEvaluator: bits32[2^64] -> 1602224128; neg(float(exp(0)))
+ * is the f32 -1 bit pattern 3212836864.
+ */
+#ifdef OMEGA_GDN_SLOTS
+#define AV_GDN_SLOTS OMEGA_GDN_SLOTS
+#else
+#define AV_GDN_SLOTS 384u
+#endif
+#define AV_FP8_FOLD 64
+
+static inline int av_gdn_pack_tail(uint32_t vh, uint32_t conv, const float *tail, float *dev) {
+    if (!tail || !dev || vh == 0 || (vh & 15u) != 0 || conv == 0) return -1;
+#if AV_C
+    float *c = malloc((size_t)vh * AV_GDN_SLOTS * 4u * sizeof *c);
+    if (!c) return -1;
+    for (uint32_t h = 0; h < vh; h++) {
+        for (uint32_t s = 0; s < AV_GDN_SLOTS; s++) {
+            float *d = c + ((size_t)h * AV_GDN_SLOTS + s) * 4u;
+            const uint32_t ch = av_gdn_channel_c(h, s, vh);
+            d[0] = tail[(size_t)0 * conv + ch];
+            d[1] = tail[(size_t)1 * conv + ch];
+            d[2] = tail[(size_t)2 * conv + ch];
+            d[3] = 0.0f;
+        }
+    }
+#endif
+#if AV_OM
+    const uint64_t dn = (uint64_t)vh * AV_GDN_SLOTS * 4u;
+    const uint64_t tn = (uint64_t)3u * conv;
+    uint64_t res = 1;
+    const uint32_t st = omega_av_gdnpt(&res, tail, tn, dev, dn, vh, conv);
+#endif
+#if AV_DIFF
+    av_flip(dev, dn * 4u);
+    int bad = (st != OMEGA_OK || res != 0 || memcmp(dev, c, dn * 4u) != 0);
+    free(c);
+    if (bad) av_die("gdn pack tail");
+    return 0;
+#elif AV_C
+    memcpy(dev, c, (size_t)vh * AV_GDN_SLOTS * 4u * sizeof *c);
+    free(c);
+    return 0;
+#else
+    return (st == OMEGA_OK && res == 0) ? 0 : -1;
+#endif
+}
+
+static inline int av_gdn_unpack_tail(uint32_t vh, uint32_t conv, float *tail, const float *dev) {
+    if (!tail || !dev || vh == 0 || (vh & 15u) != 0 || conv == 0) return -1;
+#if AV_C
+    float *tmp = malloc((size_t)3u * conv * sizeof *tmp);
+    if (!tmp) return -1;
+    memcpy(tmp, tail, (size_t)3u * conv * sizeof *tmp);
+    int crc = 0;
+    for (uint32_t h = 0; h < vh; h++) {
+        for (uint32_t s = 0; s < AV_GDN_SLOTS; s++) {
+            const float *d = dev + ((size_t)h * AV_GDN_SLOTS + s) * 4u;
+            const uint32_t ch = av_gdn_channel_c(h, s, vh);
+            const int first = s >= 256u || (h % (vh / 16u)) == 0;
+            for (uint32_t j = 0; j < 3u; j++) {
+                float *t = &tmp[(size_t)j * conv + ch];
+                if (first) *t = d[j];
+                else if (memcmp(t, &d[j], 4) != 0) crc = -1;
+            }
+        }
+    }
+#endif
+#if AV_OM
+    const uint64_t dn = (uint64_t)vh * AV_GDN_SLOTS * 4u;
+    const uint64_t tn = (uint64_t)3u * conv;
+    uint64_t res = 1;
+    const uint32_t st = omega_av_gdnut(&res, dev, dn, tail, tn, vh, conv);
+#endif
+#if AV_DIFF
+    av_flip(tail, tn * 4u);
+    int bad = (st != OMEGA_OK || (res == 0) != (crc == 0) || memcmp(tail, tmp, tn * 4u) != 0);
+    free(tmp);
+    if (bad) av_die("gdn unpack tail");
+    return crc;
+#elif AV_C
+    memcpy(tail, tmp, (size_t)3u * conv * sizeof *tmp);
+    free(tmp);
+    return crc;
+#else
+    return (st == OMEGA_OK) ? (res == 0 ? 0 : -1) : -1;
+#endif
+}
+
+static inline int av_gdn_negexp(uint32_t n, const float *src, float *dst) {
+    if (n == 0) return 0;
+    if (!src || !dst) return -1;
+#if AV_C
+    float *c = malloc((size_t)n * sizeof *c);
+    if (!c) return -1;
+    for (uint32_t i = 0; i < n; i++) c[i] = -(float)omega_hostmath_exp((double)src[i]);
+#endif
+#if AV_OM
+    uint64_t res = 1;
+    const uint32_t st = omega_av_gdnex(&res, src, n, dst, n);
+#endif
+#if AV_DIFF
+    av_flip(dst, (size_t)n * 4u);
+    int bad = (st != OMEGA_OK || res != 0 || memcmp(dst, c, (size_t)n * 4u) != 0);
+    free(c);
+    if (bad) av_die("gdn negexp");
+    return 0;
+#elif AV_C
+    memcpy(dst, c, (size_t)n * sizeof *c);
+    free(c);
+    return 0;
+#else
+    return (st == OMEGA_OK && res == 0) ? 0 : -1;
+#endif
+}
+
+static inline int av_fp8_pack_x(uint32_t k, const float *src, float *dst) {
+    if (k == 0) return 0;
+    if (!src || !dst) return -1;
+#if AV_C
+    float *c = malloc((size_t)k * sizeof *c);
+    if (!c) return -1;
+    for (uint32_t i = 0; i < k; i++) c[i] = src[i] * omega_hostmath_pow2f(AV_FP8_FOLD);
+#endif
+#if AV_OM
+    uint64_t res = 1;
+    const uint32_t st = omega_av_fp8x(&res, src, k, dst, k);
+#endif
+#if AV_DIFF
+    av_flip(dst, (size_t)k * 4u);
+    int bad = (st != OMEGA_OK || res != 0 || memcmp(dst, c, (size_t)k * 4u) != 0);
+    free(c);
+    if (bad) av_die("fp8 pack x");
+    return 0;
+#elif AV_C
+    memcpy(dst, c, (size_t)k * sizeof *c);
+    free(c);
+    return 0;
+#else
+    return (st == OMEGA_OK && res == 0) ? 0 : -1;
+#endif
+}
+
+static inline int av_fp8_pack_x_bf16(uint32_t k, const uint16_t *src, float *dst) {
+    if (k == 0) return 0;
+    if (!src || !dst) return -1;
+#if AV_C
+    float *c = malloc((size_t)k * sizeof *c);
+    if (!c) return -1;
+    for (uint32_t i = 0; i < k; i++) {
+        uint32_t u = (uint32_t)src[i] << 16;
+        float f;
+        memcpy(&f, &u, 4);
+        c[i] = f * omega_hostmath_pow2f(AV_FP8_FOLD);
+    }
+#endif
+#if AV_OM
+    uint64_t res = 1;
+    const uint32_t st = omega_av_fp8xb(&res, src, k, dst, k);
+#endif
+#if AV_DIFF
+    av_flip(dst, (size_t)k * 4u);
+    int bad = (st != OMEGA_OK || res != 0 || memcmp(dst, c, (size_t)k * 4u) != 0);
+    free(c);
+    if (bad) av_die("fp8 pack x bf16");
+    return 0;
+#elif AV_C
+    memcpy(dst, c, (size_t)k * sizeof *c);
+    free(c);
+    return 0;
+#else
+    return (st == OMEGA_OK && res == 0) ? 0 : -1;
+#endif
 }
 
 #endif

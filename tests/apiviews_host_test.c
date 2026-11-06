@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 static int checks;
 static int fails;
@@ -83,6 +84,16 @@ static void bf16_cases(void) {
     u32eq("widen", (uint32_t)av_widen_n(4, out, wide), 0);
     u32eq("widenone", bits(wide[0]), 1065353216u);
     u32eq("bf16empty", (uint32_t)av_bf16_n(0, 0, in, out), 0);
+    /* md != 0: finite takes the round arm, NaN takes the class arm. */
+    {
+        uint32_t nanb = 0x7fc00000u;
+        memcpy(&in[0], &nanb, 4);
+    }
+    u32eq("bf16nan", (uint32_t)av_bf16_n(1, 1, in, out), 0);
+    u32eq("bf16nanbits", out[0], 0x7fc0u);
+    in[0] = 1.0f;
+    u32eq("bf16md", (uint32_t)av_bf16_n(1, 1, in, out), 0);
+    u32eq("bf16mdone", out[0], 0x3f80);
 }
 
 static void fp8_cases(void) {
@@ -122,6 +133,28 @@ static void ew_cases(void) {
     u32eq("rope", (uint32_t)av_rope_head(4, cs, sn, tab), 0);
     u32eq("rope0", bits(tab[0]), 1065353216u);
     u32eq("ropeempty", (uint32_t)av_rope_head(0, cs, sn, tab), 0);
+    /* kind 2 is the rmsnorm launch record. p1 = 0 and 16385 refuse; 1 and 16384 are the edges. */
+    u32eq("ewrms", (uint32_t)av_ew_rec(2, 4, 7, 128, rec), 0);
+    u64eq("ewrmsn", rec[0], 4);
+    u64eq("ewrmsg", rec[1], 1);
+    u64eq("ewrmsinv", rec[2], 1006632960ull);
+    u64eq("ewrmsp0", rec[3], 7);
+    u32eq("ewrmscap", (uint32_t)av_ew_rec(2, 2000, 0, 1, rec), 0);
+    u64eq("ewrmscapn", rec[0], 1024);
+    u64eq("ewrms1", rec[2], 1065353216ull);
+    u32eq("ewrmsedge", (uint32_t)av_ew_rec(2, 1, 0, 16384, rec), 0);
+    u64eq("ewrmsedgeinv", rec[2], 947912704ull);
+    u32eq("ewrmsover", (uint32_t)av_ew_rec(2, 1, 0, 16385, rec), 1);
+    u32eq("ewkind", (uint32_t)av_ew_rec(3, 1, 0, 1, rec), 1);
+    /* Different NaN payloads: class match, not bit match. */
+    {
+        float na, nb;
+        uint32_t ua = 0x7fc00000u, ub = 0x7fc00001u;
+        memcpy(&na, &ua, 4);
+        memcpy(&nb, &ub, 4);
+        u32eq("nanclass", (uint32_t)av_f32_eq(na, nb), 1);
+        u32eq("nanreal", (uint32_t)av_f32_eq(na, 1.0f), 0);
+    }
 }
 
 static void scan_cases(void) {
@@ -142,6 +175,59 @@ static void scan_cases(void) {
     in[1] = -0.0f;
     u32eq("scanmax0", (uint32_t)av_scan_tile(1, 2, in, out), 0);
     u32eq("scanmin", (uint32_t)av_scan_tile(2, 1, in, out), 0);
+}
+
+static void f32_of(uint32_t u, float *f) { memcpy(f, &u, 4); }
+
+static void tail_cases(void) {
+    float scratch[4] = {0, 0, 0, 0};
+    u32eq("pack refuse", (uint32_t)(av_gdn_pack_tail(8, 1, scratch, scratch) == -1), 1);
+    const uint32_t vh = 16u, conv = 4096u + vh * 128u;
+    float *tail = calloc((size_t)3u * conv, sizeof *tail);
+    float *dev = calloc((size_t)vh * 384u * 4u, sizeof *dev);
+    float *back = calloc((size_t)3u * conv, sizeof *back);
+    f32_of(1065353216u, &tail[0]);
+    f32_of(1073741824u, &tail[conv]);
+    f32_of(1056964608u, &tail[2u * conv]);
+    u32eq("pack16", (uint32_t)av_gdn_pack_tail(vh, conv, tail, dev), 0);
+    u32eq("slot0", bits(dev[0]), 1065353216u);
+    u32eq("slot1", bits(dev[1]), 1073741824u);
+    u32eq("slot2", bits(dev[2]), 1056964608u);
+    u32eq("slot3", bits(dev[3]), 0);
+    u32eq("unpack16", (uint32_t)av_gdn_unpack_tail(vh, conv, back, dev), 0);
+    u32eq("back0", bits(back[0]), 1065353216u);
+    const uint32_t vh2 = 32u, conv2 = 4096u + vh2 * 128u;
+    float *tail2 = calloc((size_t)3u * conv2, sizeof *tail2);
+    float *dev2 = calloc((size_t)vh2 * 384u * 4u, sizeof *dev2);
+    f32_of(1065353216u, &tail2[0]);
+    u32eq("pack32", (uint32_t)av_gdn_pack_tail(vh2, conv2, tail2, dev2), 0);
+    dev2[(1u * 384u) * 4u] = 99.0f;
+    u32eq("disagree", (uint32_t)(av_gdn_unpack_tail(vh2, conv2, tail2, dev2) == -1), 1);
+    free(tail);
+    free(dev);
+    free(back);
+    free(tail2);
+    free(dev2);
+}
+
+static void fold_cases(void) {
+    float src[4] = {1.0f, -2.0f, 0.5f, 0.0f}, dst[4], ng, y;
+    uint16_t b = 0x3f80;
+    float a0 = 0.0f, a1 = 1.0f;
+    u32eq("fp8x", (uint32_t)av_fp8_pack_x(4, src, dst), 0);
+    u32eq("fold1", bits(dst[0]), 1602224128u);
+    u32eq("fold0", bits(dst[3]), 0);
+    u32eq("fp8xb", (uint32_t)av_fp8_pack_x_bf16(1, &b, &y), 0);
+    {
+        float nanv;
+        f32_of(0x7fc00000u, &nanv);
+        u32eq("negnan", (uint32_t)av_gdn_negexp(1, &nanv, &ng), 0);
+        u32eq("negnanclass", (uint32_t)(((bits(ng) & 0x7fffffffu) > 0x7f800000u)), 1);
+    }
+    u32eq("foldb", bits(y), 1602224128u);
+    u32eq("negexp0", (uint32_t)av_gdn_negexp(1, &a0, &ng), 0);
+    u32eq("neg0", bits(ng), 3212836864u);
+    u32eq("negexp1", (uint32_t)av_gdn_negexp(1, &a1, &ng), 0);
 }
 
 static void bench(void) {
@@ -165,6 +251,11 @@ static void bench(void) {
     clock_gettime(CLOCK_MONOTONIC, &c);
     ns = (uint64_t)(c.tv_sec - a.tv_sec) * 1000000000ull + (uint64_t)(c.tv_nsec - a.tv_nsec);
     printf("bench fp8_quantize 200 x 128x128: %llu ns\n", (unsigned long long)ns);
+    clock_gettime(CLOCK_MONOTONIC, &a);
+    for (i = 0; i < 200; i++) av_fp8_pack_x(4, in, out);
+    clock_gettime(CLOCK_MONOTONIC, &c);
+    ns = (uint64_t)(c.tv_sec - a.tv_sec) * 1000000000ull + (uint64_t)(c.tv_nsec - a.tv_nsec);
+    printf("bench fp8_pack_x 200 x 4: %llu ns\n", (unsigned long long)ns);
 }
 
 int main(int argc, char **argv) {
@@ -174,6 +265,8 @@ int main(int argc, char **argv) {
     fp8_cases();
     ew_cases();
     scan_cases();
+    tail_cases();
+    fold_cases();
     if (argc > 1 && strcmp(argv[1], "--bench") == 0) bench();
     if (fails) {
         fprintf(stderr, "FAIL apiviews host %d/%d\n", fails, checks);

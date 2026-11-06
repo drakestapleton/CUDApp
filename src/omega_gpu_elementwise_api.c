@@ -1026,7 +1026,7 @@ static void info_begin(OmegaGpuEwInfo *info, const OmegaBlackwellKernel *k, bool
     snprintf(info->target_chip, sizeof info->target_chip, "NVIDIA DGX Spark (Grace Blackwell GB10)");
     info->sm_architecture = 121;
 }
-static uint32_t f2u(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
+
 static void info_end(OmegaGpuEwInfo *info, uint64_t t0) { if (info) info->call_ns = now_ns() - t0; }
 
 /* Common prologue of every chip entry: lock, open, kernel (resident), info. */

@@ -83,10 +83,7 @@ const char *omega_gpu_gdn_rc_name(int rc) {
 }
 
 /* ---- host layout ---- */
-/* the qkv channel slot s of value head h reads */
-static uint32_t slot_channel(const OmegaGdnShape *shp, uint32_t h, uint32_t s) {
-    return av_gdn_channel(h, s, shp->vh);
-}
+/* channel indexing lives in av_gdn_channel and the pack units */
 
 static int shape_of(uint32_t ratio, OmegaGdnShape *s) { OmegaGdnSpec sp; memset(&sp, 0, sizeof sp); sp.ratio = ratio; return omega_gdn_shape(&sp, s); }
 
@@ -101,7 +98,7 @@ int omega_gdn_pack_params_r(uint32_t ratio, const float *conv_w, const float *a_
     float *sc = (float *)(block + shp->par_scal);
     float *ng = malloc((size_t)shp->vh * sizeof *ng);
     if (!ng) return -1;
-    for (uint32_t h = 0; h < shp->vh; h++) ng[h] = -(float)omega_hostmath_exp((double)a_log[h]);
+    if (av_gdn_negexp(shp->vh, a_log, ng) != 0) { free(ng); return -1; }
     av_gdn_scales(shp->vh, ng, dt_bias, sc);
     free(ng);
     memcpy(block + shp->par_norm, norm_w, OMEGA_GDN_HEAD_DIM * 4u);
@@ -111,37 +108,17 @@ int omega_gdn_pack_params_r(uint32_t ratio, const float *conv_w, const float *a_
 void omega_gdn_pack_tail(const float *tail, float *dev) { (void)omega_gdn_pack_tail_r(0, tail, dev); }
 
 int omega_gdn_pack_tail_r(uint32_t ratio, const float *tail, float *dev) {
-    OmegaGdnShape S; const OmegaGdnShape *shp = &S;
+    OmegaGdnShape S;
     if (shape_of(ratio, &S)) return -1;
-    for (uint32_t h = 0; h < shp->vh; h++)
-        for (uint32_t s = 0; s < OMEGA_GDN_SLOTS; s++) {
-            float *d = dev + ((size_t)h * OMEGA_GDN_SLOTS + s) * 4u;
-            const uint32_t ch = slot_channel(shp, h, s);
-            float src[3];
-            for (uint32_t j = 0; j < 3; j++) src[j] = tail[(size_t)j * shp->conv + ch];
-            av_gdn_slot(d, src);
-        }
-    return 0;
+    return av_gdn_pack_tail(S.vh, S.conv, tail, dev);
 }
 
 int omega_gdn_unpack_tail(const float *dev, float *tail) { return omega_gdn_unpack_tail_r(0, dev, tail); }
 
 int omega_gdn_unpack_tail_r(uint32_t ratio, const float *dev, float *tail) {
-    OmegaGdnShape S; const OmegaGdnShape *shp = &S;
+    OmegaGdnShape S;
     if (shape_of(ratio, &S)) return -1;
-    int rc = 0;
-    for (uint32_t h = 0; h < shp->vh; h++)
-        for (uint32_t s = 0; s < OMEGA_GDN_SLOTS; s++) {
-            const float *d = dev + ((size_t)h * OMEGA_GDN_SLOTS + s) * 4u;
-            const uint32_t ch = slot_channel(shp, h, s);
-            const bool first = s >= 2u * OMEGA_GDN_HEAD_DIM || h % (shp->vh / OMEGA_GDN_KEY_HEADS) == 0;
-            for (uint32_t j = 0; j < 3; j++) {
-                float *t = &tail[(size_t)j * shp->conv + ch];
-                if (first) *t = d[j];
-                else if (memcmp(t, &d[j], 4) != 0) rc = -1;
-            }
-        }
-    return rc;
+    return av_gdn_unpack_tail(S.vh, S.conv, tail, dev);
 }
 
 /* ---- buffers ---- */

@@ -8,20 +8,8 @@
 #include <string.h>
 #include "omega_gpu_apiviews.h"
 
-#define PAD_SUM 0x80000000u    /* -0.0 */
-#define PAD_MINMAX 0x7fc00000u /* quiet NaN */
-
-
-static float u2f(uint32_t u) { float f; memcpy(&f, &u, 4); return f; }
-
-static float combine(OmegaGpuRedOp op, float a, float b) {
-    if (op == OMEGA_GPU_RED_SUM) return a + b;
-    return op == OMEGA_GPU_RED_MAX ? __builtin_fmaxf(a, b) : __builtin_fminf(a, b); /* AArch64 FMAXNM / FMINNM: NaN ignored */
-}
-
 int omega_gpu_reduce_reference(OmegaGpuRedOp op, const float *x, size_t n, float *out) {
     if ((unsigned)op > OMEGA_GPU_RED_MIN || !x || !out || n == 0) return -1;
-    const float pad = u2f(op == OMEGA_GPU_RED_SUM ? PAD_SUM : PAD_MINMAX);
     float *cur = NULL;
     size_t len = n;
     const float *in = x;

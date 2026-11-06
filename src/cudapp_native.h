@@ -79,6 +79,8 @@ uint32_t omega_omnum(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, vo
 uint32_t omega_omclip(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2);
 uint32_t omega_omhost(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
 uint32_t omega_cubmsg(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_cubadmit(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
+uint32_t omega_ampack(uint64_t *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

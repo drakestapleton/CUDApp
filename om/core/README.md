@@ -12,8 +12,8 @@ writer remains in CUDApp. Nothing is imported from another repository at build t
 | `omega_vector.c` | `vector.om`, `vecspec.om`, `vpay.om` |
 | `omega_gpu_fmt.c` | `fmt.om`, `fmtnum.om`, `fmtclip.om` |
 | `omega_gpu_hostmath.c` | `hostmath.om` |
-| `omega_cubin.c` | Existing `../cubin/cubin_elf.om`; `cubinmsg.om` supplies refusal decisions and rendering |
-| `omega_ampere_codegen.c` | Existing `../encoder/ampere_enc_sm86.om` |
+| `omega_cubin.c` | Existing `../cubin/cubin_elf.om`; `cubinmsg.om` renders layout refusals; `cubadmit.om` decides target and null-parameter admission |
+| `omega_ampere_codegen.c` | Existing `../encoder/ampere_enc_sm86.om`; `ampack.om` sign-extends and packs instruction fields |
 | `cudapp_freest_f16.c`, `cudapp_freest_revision.c`, `cudapp_freest_epoch.c` | Existing generated bindings, already sourced from Omega |
 
 The SHA implementation is a local, attributed copy of
@@ -28,7 +28,9 @@ byte-oriented CAVP short/long vectors and their provenance are in
 C retains allocation, release, bounded staging, pointer/span adaptation and C
 variadic argument extraction. Sorting, validation, serialization, hashing, checked
 arithmetic, vector operations, format parsing/rendering and floating-point
-polynomials are in Omega. The cubin error-message decision tree is also Omega;
+polynomials are in Omega. Cubin target admission, the null-parameter check and the
+error-message decision tree are also Omega; Ampere field sign-extension and flag
+packing are in `ampack.om`.
 `tests/core_cubin_refusal_ref.inc` is an independent frozen C oracle, not a
 production implementation. No new runtime public API or version is introduced.
 
@@ -39,7 +41,7 @@ retain the C sequential aliasing behavior. The formatter keeps truncation and
 unsupported-token behavior. Host arithmetic is compared bit-for-bit against the C
 oracle compiled with `-ffp-contract=off`; each Omega operation is non-contracting.
 
-`native.sh` composes the same local sources into OM-2 native units, with 21 core
+`native.sh` composes the same local sources into OM-2 native units, with 23 core
 exports plus separate existing cubin/Ampere units. Native aggregate registration
 and no-libc qualification belong to the integration lane. Composition is not
 native execution evidence. There is no `NO_POSIX` C fallback.

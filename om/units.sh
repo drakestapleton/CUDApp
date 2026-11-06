@@ -34,6 +34,8 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS core_$unit=$CORE/$unit.om"
   done
   UNITS="$UNITS core_cubinmsg=$CORE/fmtnum.om,$CORE/cubinmsg.om"
+  UNITS="$UNITS core_cubadmit=$CORE/fmtnum.om,$CORE/cubadmit.om"
+  UNITS="$UNITS core_ampack=$CORE/ampack.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

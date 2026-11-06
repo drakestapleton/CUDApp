@@ -26,6 +26,8 @@
  * 768; hd 128: 0, 512, 1024, 1536; the partials of warp w are read at 12hd + 128w).
  */
 #include "omega_gpu_attention_api.h"
+#include "omega_host_policy.h"
+#include "omega_api_plan.h"
 #include "omega_blackwell_codegen.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
@@ -277,8 +279,8 @@ typedef struct { bool f32; uint32_t log2bs, log2gqa; int mutant; int divergent; 
  * Grid x is the head group (num_q_heads / GC CTAs per sequence and split). Shared memory: q, scores and
  * warp partials per head, token offsets once. GC = 1 (every hd 64 kernel, hd 128 with gqa 1) emits exactly
  * the program before this cut (digest fixtures). */
-static uint32_t heads_per_cta(uint32_t hd, uint32_t log2gqa) { return hd == 128u ? (1u << (log2gqa < 2u ? log2gqa : 2u)) : 1u; }
-static uint32_t shared_bytes_for(uint32_t hd, uint32_t log2gqa) { return (3u * heads_per_cta(hd, log2gqa) + 1u) * hd * 4u; }
+static uint32_t heads_per_cta(uint32_t hd, uint32_t log2gqa) { uint64_t p[16]={hd,log2gqa};(void)ap_plan(AP_AT,21,p);return p[8]; }
+static uint32_t shared_bytes_for(uint32_t hd, uint32_t log2gqa) { uint64_t p[16]={hd,log2gqa};(void)ap_plan(AP_AT,21,p);return p[9]; }
 uint32_t omega_gpu_attention_heads_per_cta(uint32_t head_dim, uint32_t log2_gqa) { return heads_per_cta(head_dim, log2_gqa); }
 
 static void gen_attention(Em *e, const KSpec *k) {
@@ -976,7 +978,10 @@ void omega_gpu_attention_test_set_simulator(OmegaGpuAttnSim sim) { LOCK(); g_sim
 static uint32_t g_sim_shared_bytes; /* shared bytes the launcher would declare for the kernel the simulator is running */
 uint32_t omega_gpu_attention_test_shared_bytes(void) { return g_sim_shared_bytes; }
 void omega_gpu_attention_test_set_dedupe(bool on) { LOCK(); g_dedupe = on; UNLOCK(); }
-void omega_gpu_attention_test_set_split(int log2split) { LOCK(); g_split = (log2split >= 0 && log2split <= (int)OMEGA_GPU_ATTN_MAX_LOG2SPLIT) ? log2split : -1; UNLOCK(); }
+void omega_gpu_attention_test_set_split(int log2split) {
+    uint64_t p[16]={(uint64_t)(int64_t)log2split};(void)ap_plan(AP_AT,27,p);
+    LOCK();g_split=(int32_t)(uint32_t)p[8];UNLOCK();
+}
 /* AttnGeneral (0.6.0) test hooks. g_gmutant: planted defects of the general path (kernel ones are KSpec.mutant of the
  * general kernels; GQA_MAP and SCALE are host-side). g_force_general: route shapes the tuned kernel takes through the
  * general kernel too (sweep coverage at head_dim 64 / 128). g_sim_threads: threads per CTA of the simulated launch. */
@@ -997,15 +1002,16 @@ static int dev_open_locked(void);
  * widening onto the 64-bit layer base: one layer slice (both planes, every token and head of the
  * block) past the block's start must stay inside 32 bits. */
 static bool resident_fits(const OmegaGpuKvLayout *ly, uint32_t block_id) {
-    return ly->block_stride_bytes <= 0xffffffffull &&
-           (uint64_t)block_id * ly->block_stride_bytes + ly->layer_stride_bytes <= 0xffffffffull;
+    uint64_t p[16]={ly->block_stride_bytes,block_id,ly->layer_stride_bytes};
+    (void)ap_plan(AP_AT,24,p);return p[8];
 }
 bool omega_gpu_attention_test_resident_fits(const OmegaGpuKvLayout *layout, uint32_t block_id) {
     return layout && resident_fits(layout, block_id);
 }
 
 int omega_gpu_attention_pool_alloc(size_t bytes, void **cpu) {
-    if (!cpu || bytes == 0) return OMEGA_GPU_ATTN_BAD_ARGS;
+    if (!cpu) return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t p[16]={bytes,1};int pr=ap_plan(AP_AT,19,p);if(pr)return pr;
     *cpu = NULL;
     LOCK();
     if (g_resident.cpu) { omega_gpu_session_set_error("attention pool: already allocated"); UNLOCK(); return OMEGA_GPU_ATTN_BAD_ARGS; }
@@ -1087,8 +1093,9 @@ static int kernel_for(bool f32, uint32_t log2bs, uint32_t log2gqa, uint32_t hd, 
 }
 
 int omega_gpu_attention_codegen_hd(bool kv_f32, uint32_t log2_block_size, uint32_t log2_gqa, uint32_t head_dim, OmegaBlackwellKernel *kernel) {
-    if (!kernel || log2_block_size > 16 || log2_gqa > 6) return OMEGA_GPU_ATTN_BAD_ARGS;
-    if (head_dim != 64u && head_dim != 128u) return OMEGA_GPU_ATTN_TOO_LARGE;
+    if (!kernel) return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t p[16]={0,log2_block_size,log2_gqa,head_dim};
+    int pr=ap_plan(AP_AT,26,p);if(pr)return pr;
     LOCK();
     KSpec k = { .f32 = kv_f32, .log2bs = log2_block_size, .log2gqa = log2_gqa, .mutant = g_mutant, .divergent = g_divergent, .hd = head_dim, .split = -1 };
     UNLOCK();
@@ -1100,8 +1107,9 @@ int omega_gpu_attention_codegen(bool kv_f32, uint32_t log2_block_size, uint32_t 
 }
 
 int omega_gpu_attention_codegen_general(bool kv_f32, uint32_t log2_block_size, uint32_t head_dim, OmegaBlackwellKernel *kernel) {
-    if (!kernel || log2_block_size > 31 || head_dim == 0) return OMEGA_GPU_ATTN_BAD_ARGS;
-    if (head_dim > OMEGA_GPU_ATTN_GENERAL_MAX_HEAD_DIM) return OMEGA_GPU_ATTN_TOO_LARGE;
+    if (!kernel) return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t p[16]={1,log2_block_size,0,head_dim};
+    int pr=ap_plan(AP_AT,26,p);if(pr)return pr;
     LOCK();
     KSpec k = { .f32 = kv_f32, .log2bs = log2_block_size, .log2gqa = 0, .mutant = gmutant_kernel(), .divergent = 0, .hd = head_dim, .split = -1, .general = true };
     UNLOCK();
@@ -1210,36 +1218,21 @@ static int log2_exact(uint32_t v, uint32_t *out);
 
 int omega_gpu_attention_reserve(uint32_t max_context, uint32_t max_seqs, uint32_t num_q_heads, uint32_t num_kv_heads, uint32_t head_dim, uint32_t kv_block_size) {
     uint32_t log2gqa, log2bs; bool legacy;
-    if (max_context == 0 || max_seqs == 0) { omega_gpu_session_set_error("attention reserve: zero bound"); return OMEGA_GPU_ATTN_BAD_ARGS; }
+    uint64_t p[16]={max_context,max_seqs,num_kv_heads,head_dim,kv_block_size,num_q_heads,0};
+    if (ap_plan(AP_AT,19,p)) { omega_gpu_session_set_error("attention reserve: zero bound"); return OMEGA_GPU_ATTN_BAD_ARGS; }
     if (kv_block_size && log2_exact(kv_block_size, &log2bs) != 0) { omega_gpu_session_set_error("attention reserve: block size not a power of two"); return OMEGA_GPU_ATTN_BAD_ARGS; }
     int rc = check_heads(num_q_heads, num_kv_heads, head_dim, &log2gqa, &legacy);
     if (rc != OMEGA_GPU_ATTN_OK) { omega_gpu_session_set_error("attention reserve: bad head shape"); return rc; }
     /* KV staging, worst case over the two paths, per sequence: contiguous f32 holds both planes for max_context tokens
      * (2 * ctx * kvh * hd * 4); paged bf16 stages whole blocks of both planes (round_up(ctx, block) * kvh * hd * 4), which
      * is the larger one when max_context is under half a block. */
-    size_t per_seq = 2u * max_context * (size_t)num_kv_heads * head_dim * 4u;
-    if (kv_block_size) {
-        size_t paged = ((size_t)max_context + kv_block_size - 1) / kv_block_size * kv_block_size * num_kv_heads * head_dim * 4u;
-        if (paged > per_seq) per_seq = paged;
-    }
-    const size_t pool = per_seq * max_seqs;
-    /* q rows for every sequence, and the output buffer sized for the paged path's partials of one launch
-     * (cut J: up to 2^MAX_LOG2SPLIT partials of head_dim + 2 words per (sequence, head), at most
-     * MAX_CTAS / num_q_heads sequences per launch; the rows reserve usually asks for more). */
-    const size_t q_bytes = (size_t)max_seqs * num_q_heads * head_dim * 4u;
-    size_t launch_seqs = OMEGA_GPU_ATTN_MAX_CTAS / num_q_heads;
-    if (launch_seqs == 0) launch_seqs = 1;
-    if (launch_seqs > max_seqs) launch_seqs = max_seqs;
-    const size_t partials = launch_seqs * num_q_heads * ((size_t)1u << OMEGA_GPU_ATTN_MAX_LOG2SPLIT) * ((size_t)head_dim + 2u) * 4u;
-    const size_t qo = q_bytes > partials ? q_bytes : partials;
-    /* the tuned paged table ({ids}, {ctx}), plus the general path's row records and head map */
-    const size_t tab = ((size_t)max_seqs * max_context + max_seqs) * 4u + (legacy ? 0u : ((size_t)max_seqs * 16u + (size_t)num_q_heads * 4u));
+    p[6]=legacy;rc=ap_plan(AP_AT,5,p);if(rc)return rc;
     LOCK();
     rc = OMEGA_GPU_ATTN_OK;
     if (g_sim) rc = OMEGA_GPU_ATTN_OK; /* the simulator stages in host memory: nothing to reserve */
     else if (dev_open_locked() != OMEGA_GPU_ATTN_OK) rc = OMEGA_GPU_ATTN_CHIP_FAIL;
-    else if (omega_gpu_session_scratch_reserve(&g_pool, pool) || omega_gpu_session_scratch_reserve(&g_q, q_bytes) ||
-             omega_gpu_session_scratch_reserve(&g_out, qo) || omega_gpu_session_scratch_reserve(&g_tab, tab < 8 ? 8 : tab)) {
+    else if (omega_gpu_session_scratch_reserve(&g_pool, p[8]) || omega_gpu_session_scratch_reserve(&g_q, p[9]) ||
+             omega_gpu_session_scratch_reserve(&g_out, p[10]) || omega_gpu_session_scratch_reserve(&g_tab, p[11])) {
         /* roll back this API's own buffers: a failed reserve leaves nothing flagged (growth allowed as before) */
         omega_gpu_session_scratch_unreserve(&g_pool); omega_gpu_session_scratch_unreserve(&g_q);
         omega_gpu_session_scratch_unreserve(&g_out); omega_gpu_session_scratch_unreserve(&g_tab);
@@ -1250,16 +1243,14 @@ int omega_gpu_attention_reserve(uint32_t max_context, uint32_t max_seqs, uint32_
 }
 
 int omega_gpu_attention_reserve_rows(uint32_t max_rows, uint32_t num_q_heads, uint32_t head_dim) {
-    if (max_rows == 0 || num_q_heads == 0 || num_q_heads > OMEGA_GPU_ATTN_GENERAL_MAX_Q_HEADS || head_dim == 0 || head_dim > OMEGA_GPU_ATTN_GENERAL_MAX_HEAD_DIM) {
+    uint64_t valid[16]={max_rows,num_q_heads,head_dim};
+    if (ap_plan(AP_AT,6,valid)) {
         omega_gpu_session_set_error("attention reserve rows: bad bound");
         return OMEGA_GPU_ATTN_BAD_ARGS;
     }
-    uint32_t per = OMEGA_GPU_ATTN_ROWS_MAX_CTAS / num_q_heads;
-    if (per == 0) per = 1;
-    if (per > max_rows) per = max_rows;
-    /* q / out rows of one launch; the table is the larger of the tuned rows table (2 words per row) and the general
-     * one (a 4-word record per row, the head map, one block id) */
-    const size_t qo = (size_t)per * num_q_heads * head_dim * 4u, tab = (size_t)per * 16u + (size_t)num_q_heads * 4u + 4u;
+    uint64_t p[16]={max_rows,num_q_heads,0,0,0,head_dim};
+    (void)ap_plan(AP_AT,2,p);
+    const size_t qo=p[9],tab=p[10];
     LOCK();
     int rc = OMEGA_GPU_ATTN_OK;
     if (g_sim) rc = OMEGA_GPU_ATTN_OK;
@@ -1291,38 +1282,30 @@ static void info_begin(OmegaGpuAttnInfo *info, const OmegaBlackwellKernel *k, bo
 }
 static uint32_t f2u(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
 static int log2_exact(uint32_t v, uint32_t *out) {
-    if (v == 0 || (v & (v - 1))) return -1;
-    uint32_t l = 0; while ((1u << l) != v) l++;
-    *out = l; return 0;
+    uint64_t p[16]={v};int rc=ap_plan(AP_AT,1,p);
+    if (!rc) *out=p[8];
+    return rc;
 }
 /* log2(e) / sqrt(head_dim) with the square roots as literals (8 and 11.313708498984761 = sqrt(128), both exactly what sqrt() returns):
  * the library must not need libm (omegatool links without -lm; a constant head_dim folded sqrt away, a runtime one does not). */
-static float score_scale(uint32_t hd) { return (float)(1.4426950408889634 / (hd == 128u ? 11.313708498984761 : 8.0)); }
-
-/* sqrt without libm: Newton from above (x >= 1 starts at x, which is >= sqrt(x)), stopping when it no longer decreases. */
-static double host_sqrt(double x) {
-    double r = x < 1.0 ? 1.0 : x;
-    for (int i = 0; i < 64; i++) { double n = 0.5 * (r + x / r); if (!(n < r)) break; r = n; }
-    return r;
+static float score_scale(uint32_t hd) {
+    uint64_t p[16]={hd};(void)ap_plan(AP_AT,23,p);
+    uint32_t bits=p[8];float out;memcpy(&out,&bits,4);return out;
 }
 /* The general path's score scale in the log2 domain: log2(e) * (user scale, or 1 / sqrt(head_dim) when 0). The SCALE
  * mutant restores the pre-0.6 defect of the tuned path's helper: 1 / 8 for every head_dim. */
 static float general_scale(uint32_t hd, float user) {
-    if (g_gmutant == OMEGA_GPU_ATTN_GMUT_SCALE) return (float)(1.4426950408889634 / 8.0);
-    return (float)(1.4426950408889634 * (user > 0.0f ? (double)user : 1.0 / host_sqrt((double)hd)));
+    uint32_t bits;memcpy(&bits,&user,4);uint64_t p[16]={hd,bits,g_gmutant==OMEGA_GPU_ATTN_GMUT_SCALE};
+    (void)ap_plan(AP_AT,22,p);bits=p[8];float out;memcpy(&out,&bits,4);return out;
 }
 
-#include "omega_host_policy.h"
 /* Common head-shape checks. OK for every shape some kernel takes; *legacy says whether the tuned kernel does
  * (head_dim 64 / 128, at most MAX_Q_HEADS query heads, a power-of-two GQA ratio; *log2gqa is then its log2).
  * Everything else valid runs on the general kernel. */
 static int check_heads(uint32_t num_q_heads, uint32_t num_kv_heads, uint32_t head_dim, uint32_t *log2gqa, bool *legacy) {
-    int shape_rc = omega_host_shape(3, num_q_heads, num_kv_heads, head_dim);
-    if (shape_rc) return shape_rc;
-    *log2gqa = 0;
-    *legacy = !g_force_general && (head_dim == 64u || head_dim == 128u) && num_q_heads <= OMEGA_GPU_ATTN_MAX_Q_HEADS &&
-              log2_exact(num_q_heads / num_kv_heads, log2gqa) == 0;
-    if (!*legacy) *log2gqa = 0;
+    uint64_t p[16]={num_q_heads,num_kv_heads,head_dim,g_force_general};
+    int rc=ap_plan(AP_AT,0,p);if(rc)return rc;
+    *log2gqa=p[8];*legacy=p[9]!=0;
     return OMEGA_GPU_ATTN_OK;
 }
 
@@ -1340,8 +1323,8 @@ static int begin(bool f32, uint32_t log2bs, uint32_t log2gqa, uint32_t hd, int s
 /* kv byte offset of each query head's kv head (the general kernel's head map). GQA_MAP plants the classic
  * interleaving bug: h % num_kv_heads instead of h / (num_q_heads / num_kv_heads). */
 static void head_map(uint32_t *hmap, uint32_t nqh, uint32_t nkv, uint32_t head_bytes) {
-    const uint32_t ratio = nqh / nkv;
-    for (uint32_t h = 0; h < nqh; h++) hmap[h] = (g_gmutant == OMEGA_GPU_ATTN_GMUT_GQA_MAP ? h % nkv : h / ratio) * head_bytes;
+    uint64_t p[16]={0,nqh,nkv,head_bytes,g_gmutant==OMEGA_GPU_ATTN_GMUT_GQA_MAP};
+    for(uint32_t h=0;h<nqh;h++){p[0]=h;(void)ap_plan(AP_AT,25,p);hmap[h]=p[8];}
 }
 
 /* One general-kernel call: rows r of [0, nrows) attend to keys [lo[r], hi[r]) of their table (ids + r * maxb, or
@@ -1358,9 +1341,9 @@ static int general_run(const Slot *ks, const GenCall *g, uint32_t per, OmegaGpuA
     uint32_t *tab = omega_gpu_host_calloc((size_t)per * 4u + g->nqh + idw, sizeof *tab);
     if (!tab) return OMEGA_GPU_ATTN_CHIP_FAIL;
     int rc = OMEGA_GPU_ATTN_OK;
-    for (uint32_t r0 = 0; r0 < g->nrows && rc == OMEGA_GPU_ATTN_OK; r0 += per) {
-        const uint32_t nr = g->nrows - r0 < per ? g->nrows - r0 : per;
-        const uint32_t hoff = nr * 4u, ioff = hoff + g->nqh;
+    for (uint64_t r0 = 0; r0 < g->nrows && rc == OMEGA_GPU_ATTN_OK; r0 += per) {
+        uint64_t p[16]={g->nrows-r0,per,g->nqh};(void)ap_plan(AP_AT,12,p);
+        const uint32_t nr=p[8],hoff=p[9],ioff=p[10];
         for (uint32_t i = 0; i < nr; i++) {
             tab[4u * i] = g->lo[r0 + i]; tab[4u * i + 1u] = g->hi[r0 + i];
             tab[4u * i + 2u] = ioff + (g->ids ? i * g->maxb : 0u); tab[4u * i + 3u] = 0;
@@ -1386,30 +1369,27 @@ static uint32_t rows_per_launch(uint32_t num_rows, uint32_t num_q_heads, size_t 
 int omega_gpu_attention_general(const OmegaGpuAttnGeneralDesc *d, const float *q, const void *k, const void *v,
                                 float *out, OmegaGpuAttnInfo *info) {
     uint64_t t0 = now_ns();
-    if (!d || !q || !out || d->num_rows == 0 || (d->kv_len && (!k || !v))) return OMEGA_GPU_ATTN_BAD_ARGS; /* k / v may be NULL only with kv_len 0 */
+    if (!d || !q || !out || (d->kv_len && (!k || !v))) return OMEGA_GPU_ATTN_BAD_ARGS; /* k / v may be NULL only with kv_len 0 */
+    uint64_t valid[16]={d->num_rows,1};
+    if(ap_plan(AP_AT,19,valid))return OMEGA_GPU_ATTN_BAD_ARGS;
     const uint32_t nqh = d->num_q_heads, nkv = d->num_kv_heads, HD = d->head_dim, R = d->num_rows;
     uint32_t log2gqa; bool legacy;
     int rc = check_heads(nqh, nkv, HD, &log2gqa, &legacy);
     if (rc != OMEGA_GPU_ATTN_OK) return rc;
-    if (d->window_left < -1 || d->window_right < -1 || !(d->scale >= 0.0f) || d->scale > 3.0e38f) return OMEGA_GPU_ATTN_BAD_ARGS;
+    valid[1]=(uint64_t)(int64_t)d->window_left;valid[2]=(uint64_t)(int64_t)d->window_right;valid[3]=f2u(d->scale);
+    if(ap_plan(AP_AT,7,valid))return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t shape[16]={d->kv_len,nkv,HD,d->kv_bf16?2:4,d->kv_token_stride,d->kv_head_stride};
+    rc=ap_plan(AP_AT,11,shape);if(rc)return rc;
     const size_t row = (size_t)nqh * HD;
     if (d->kv_len == 0) { memset(out, 0, (size_t)R * row * 4); if (info) { memset(info, 0, sizeof *info); info->call_ns = now_ns() - t0; } return OMEGA_GPU_ATTN_OK; }
     const uint32_t elem = d->kv_bf16 ? 2u : 4u;
-    const uint64_t ts = d->kv_token_stride ? d->kv_token_stride : (uint64_t)nkv * HD, hs = d->kv_head_stride ? d->kv_head_stride : HD;
-    const uint64_t plane = (uint64_t)d->kv_len * nkv * HD * elem;
-    if (2u * plane > 0xffffffffull) return OMEGA_GPU_ATTN_TOO_LARGE; /* the kernel's offsets are 32-bit */
+    const uint64_t ts=shape[9],hs=shape[10],plane=shape[8];
     uint32_t *lo = omega_gpu_host_calloc(2u * (size_t)R + nqh, sizeof *lo);
     if (!lo) return OMEGA_GPU_ATTN_CHIP_FAIL;
     uint32_t *hi = lo + R, *hmap = hi + R;
     for (uint32_t i = 0; i < R; i++) { /* key range of the query at position q_pos0 + i */
-        const uint64_t p = (uint64_t)d->q_pos0 + i;
-        uint64_t h_ = d->kv_len;
-        if (d->causal) h_ = p + 1u;
-        else if (d->window_right >= 0) h_ = p + (uint64_t)d->window_right + 1u;
-        if (h_ > d->kv_len) h_ = d->kv_len;
-        uint64_t l_ = (d->window_left >= 0 && p > (uint64_t)d->window_left) ? p - (uint64_t)d->window_left : 0u;
-        if (l_ > h_) l_ = h_;
-        lo[i] = (uint32_t)l_; hi[i] = (uint32_t)h_;
+        uint64_t range[16]={(uint64_t)d->q_pos0+i,d->kv_len,d->causal,(uint64_t)(int64_t)d->window_left,(uint64_t)(int64_t)d->window_right};
+        (void)ap_plan(AP_AT,10,range);lo[i]=range[8];hi[i]=range[9];
     }
     head_map(hmap, nqh, nkv, HD * elem);
     Slot *ks = NULL;
@@ -1449,7 +1429,8 @@ int omega_gpu_gqa_attention_f32(const float *q, const float *k_cache, const floa
     uint32_t log2gqa; bool legacy;
     int rc = check_heads(num_q_heads, num_kv_heads, head_dim, &log2gqa, &legacy);
     if (rc != OMEGA_GPU_ATTN_OK) return rc;
-    if (seq_len != 0 && (!legacy || seq_len > OMEGA_GPU_ATTN_MAX_GQA_CTX)) { /* outside the tuned kernel: the general one */
+    uint64_t select[16]={seq_len,legacy};(void)ap_plan(AP_AT,9,select);
+    if (select[8]) { /* outside the tuned kernel: the general one */
         const OmegaGpuAttnGeneralDesc d = { .num_rows = 1, .num_q_heads = num_q_heads, .num_kv_heads = num_kv_heads, .head_dim = head_dim,
                                             .kv_len = seq_len, .q_pos0 = seq_len - 1u, .causal = 1, .window_left = -1, .window_right = -1 };
         return omega_gpu_attention_general(&d, q, k_cache, v_cache, out, info);
@@ -1484,31 +1465,27 @@ int omega_gpu_gqa_attention_f32(const float *q, const float *k_cache, const floa
 
 /* Rows per launch of the rows path: the CTA bound, then (under a reservation) what the q buffer holds. Caller holds the lock. */
 static uint32_t rows_per_launch(uint32_t num_rows, uint32_t num_q_heads, size_t row_bytes) {
-    uint32_t per = OMEGA_GPU_ATTN_ROWS_MAX_CTAS / num_q_heads;
-    if (per == 0) per = 1;
-    if (per > num_rows) per = num_rows;
-    if (!g_sim && g_q.reserved && g_q.cap >= row_bytes) {
-        size_t fit = g_q.cap / row_bytes;
-        if (fit < per) per = (uint32_t)fit;
-    }
-    return per;
+    uint64_t p[16]={num_rows,num_q_heads,row_bytes,g_q.cap,!g_sim&&g_q.reserved,0};
+    (void)ap_plan(AP_AT,2,p);return p[8];
 }
 
 int omega_gpu_gqa_attention_rows_f32(const float *q, const float *k_cache, const float *v_cache,
                                      uint32_t base_len, uint32_t num_rows, uint32_t num_q_heads,
                                      uint32_t num_kv_heads, uint32_t head_dim, float *out, OmegaGpuAttnInfo *info) {
     uint64_t t0 = now_ns();
-    if (!q || !k_cache || !v_cache || !out || num_rows == 0) return OMEGA_GPU_ATTN_BAD_ARGS;
+    if (!q || !k_cache || !v_cache || !out) return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t shape[16]={num_rows,1};
+    int shape_rc=ap_plan(AP_AT,19,shape);if(shape_rc)return shape_rc;
     uint32_t log2gqa; bool legacy;
     int rc = check_heads(num_q_heads, num_kv_heads, head_dim, &log2gqa, &legacy);
     if (rc != OMEGA_GPU_ATTN_OK) return rc;
-    if ((uint64_t)base_len + num_rows > 0x7fffffffu) return OMEGA_GPU_ATTN_TOO_LARGE;
-    if (!legacy || (uint64_t)base_len + num_rows > OMEGA_GPU_ATTN_MAX_GQA_CTX) { /* outside the tuned kernel: the general one */
+    shape[0]=base_len;shape[1]=num_rows;shape[2]=legacy;shape_rc=ap_plan(AP_AT,8,shape);if(shape_rc)return shape_rc;
+    if (shape[9]) { /* outside the tuned kernel: the general one */
         const OmegaGpuAttnGeneralDesc d = { .num_rows = num_rows, .num_q_heads = num_q_heads, .num_kv_heads = num_kv_heads, .head_dim = head_dim,
                                             .kv_len = base_len + num_rows, .q_pos0 = base_len, .causal = 1, .window_left = -1, .window_right = -1 };
         return omega_gpu_attention_general(&d, q, k_cache, v_cache, out, info);
     }
-    const uint32_t HD = head_dim, total = base_len + num_rows;
+    const uint32_t HD=head_dim,total=shape[8];
     const size_t row = (size_t)num_q_heads * HD;
     Slot *ks = NULL;
     const uint32_t log2bs = 12; /* one block of 4096 slots, as the single-row call */
@@ -1527,8 +1504,9 @@ int omega_gpu_gqa_attention_rows_f32(const float *q, const float *k_cache, const
     /* table of one launch: per block ids (all 0: the one staged block), then per context lengths */
     uint32_t *tab = omega_gpu_host_calloc(2 * (size_t)per, sizeof *tab);
     if (!tab) { omega_gpu_host_free(host_tmp); UNLOCK(); return OMEGA_GPU_ATTN_CHIP_FAIL; }
-    for (uint32_t r0 = 0; r0 < num_rows && rc == OMEGA_GPU_ATTN_OK; r0 += per) {
-        const uint32_t nr = num_rows - r0 < per ? num_rows - r0 : per;
+    for (uint64_t r0 = 0; r0 < num_rows && rc == OMEGA_GPU_ATTN_OK; r0 += per) {
+        uint64_t chunk[16]={num_rows-r0,per,0};(void)ap_plan(AP_AT,12,chunk);
+        const uint32_t nr=chunk[8];
         for (uint32_t i = 0; i < nr; i++) { tab[i] = 0; tab[nr + i] = base_len + r0 + i + 1; }
         Launch L = {
             .q = q + (size_t)r0 * row, .q_bytes = (size_t)nr * row * 4, .pool = pool, .pool_bytes = 2 * plane,
@@ -1550,9 +1528,7 @@ int omega_gpu_gqa_attention_rows_f32(const float *q, const float *k_cache, const
 /* cut F: a sequence's own split count from its context alone (the kernel computes the same): log2 of the largest
  * power of two <= min(2^MAX_LOG2SPLIT, chunks), chunks = ceil(ctx / HD) (cut J: one whole chunk per split; cut F took two). */
 static uint32_t own_log2split(uint32_t ctx, uint32_t HD) {
-    uint32_t x = (ctx + HD - 1) / HD, l = 0;
-    while (l < OMEGA_GPU_ATTN_MAX_LOG2SPLIT && (2u << l) <= x) l++;
-    return l;
+    uint64_t p[16]={ctx,HD};(void)ap_plan(AP_AT,3,p);return p[8];
 }
 
 /* 2^x in float without the math library (the engine archive also links where there is none): round x to the
@@ -1607,45 +1583,45 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
     int rc = check_heads(num_q_heads, num_kv_heads, head_dim, &log2gqa, &legacy);
     if (rc != OMEGA_GPU_ATTN_OK) return rc;
     const uint32_t HD = head_dim;
-    if (!ly || layer_idx >= ly->num_layers || log2_exact(ly->block_size, &log2bs) != 0) return OMEGA_GPU_ATTN_BAD_ARGS;
-    /* the oracle addresses heads as kv_head * head_dim * 2 inside a token: the layout must agree */
-    if (ly->head_stride_bytes != HD * 2 || ly->token_stride_bytes != (uint64_t)num_kv_heads * HD * 2 ||
-        ly->kv_plane_stride_bytes != (uint64_t)ly->block_size * ly->token_stride_bytes ||
-        ly->layer_stride_bytes != 2 * ly->kv_plane_stride_bytes || ly->block_stride_bytes < (uint64_t)ly->num_layers * ly->layer_stride_bytes)
-        return OMEGA_GPU_ATTN_BAD_ARGS;
+    if (!ly || log2_exact(ly->block_size, &log2bs) != 0) return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t layout[16]={HD,num_kv_heads,ly->block_size,ly->head_stride_bytes,ly->token_stride_bytes,ly->kv_plane_stride_bytes,ly->layer_stride_bytes};
+    rc=ap_plan(AP_AT,13,layout);if(rc)return rc;
+    uint64_t span[16]={layer_idx,ly->num_layers,ly->block_stride_bytes,ly->layer_stride_bytes};
+    rc=ap_plan(AP_AT,14,span);if(rc)return rc;
     size_t row = (size_t)num_q_heads * HD;
     /* effective context per sequence and block id range check */
     uint32_t *eff = omega_gpu_host_calloc(num_seqs ? num_seqs : 1, sizeof *eff);
     if (!eff) return OMEGA_GPU_ATTN_CHIP_FAIL;
     for (uint32_t s = 0; s < num_seqs; s++) {
-        uint64_t cap = (uint64_t)n_blocks[s] * ly->block_size;
-        eff[s] = (uint32_t)(ctx[s] < cap ? ctx[s] : cap);
+        uint64_t context[16]={ctx[s],n_blocks[s],ly->block_size};(void)ap_plan(AP_AT,15,context);
+        eff[s]=context[8];
         for (uint32_t b = 0; b < n_blocks[s]; b++) {
-            uint64_t id = tables[s][b];
-            if (id >= ly->num_blocks || id * ly->block_stride_bytes + (uint64_t)(layer_idx + 1) * ly->layer_stride_bytes > ly->pool_bytes) { omega_gpu_host_free(eff); return OMEGA_GPU_ATTN_BAD_ARGS; }
+            uint64_t block[16]={tables[s][b],ly->num_blocks,ly->block_stride_bytes,layer_idx,ly->layer_stride_bytes,ly->pool_bytes};
+            if(ap_plan(AP_AT,16,block)){omega_gpu_host_free(eff);return OMEGA_GPU_ATTN_BAD_ARGS;}
         }
     }
-    uint32_t seqs_per_launch = OMEGA_GPU_ATTN_MAX_CTAS / num_q_heads;
-    if (seqs_per_launch == 0) seqs_per_launch = 1;
+    uint64_t plan[16]={0,num_q_heads};(void)ap_plan(AP_AT,4,plan);
+    uint32_t seqs_per_launch=plan[9];
     /* cut F: split each (sequence, head) over 2^log2split CTAs along the context: at least one whole chunk per
      * split, from the longest context in the call, within the split launch bound (the test hook forces it). */
     /* general kernel (shapes the tuned one does not take): one CTA per (sequence, head), no split, direct output */
     uint32_t log2split = 0;
     if (legacy) {
         if (g_split >= 0) log2split = (uint32_t)g_split;
-        else for (uint32_t s = 0; s < num_seqs; s++) { uint32_t l = own_log2split(eff[s], HD); if (l > log2split) log2split = l; }
-        while (log2split && ((uint64_t)num_q_heads * seqs_per_launch << log2split) > OMEGA_GPU_ATTN_SPLIT_MAX_CTAS) log2split--;
+        else for(uint32_t s=0;s<num_seqs;s++){uint64_t best[16]={log2split,own_log2split(eff[s],HD)};(void)ap_plan(AP_AT,20,best);log2split=best[8];}
+        plan[0]=log2split;(void)ap_plan(AP_AT,4,plan);log2split=plan[8];
     }
-    const uint32_t S = 1u << log2split;
-    float *part = omega_gpu_host_alloc(legacy ? (size_t)seqs_per_launch * num_q_heads * S * (HD + 2) * 4 : 4u); /* the partials of one launch */
-    uint32_t *gz = legacy ? NULL : omega_gpu_host_calloc((size_t)seqs_per_launch + num_q_heads, sizeof *gz); /* general: lo = 0 per sequence, head map */
+    const uint32_t S=plan[10];
+    uint64_t allocation[16]={seqs_per_launch,num_q_heads,S,HD,legacy};(void)ap_plan(AP_AT,17,allocation);
+    float *part=omega_gpu_host_alloc(allocation[8]);
+    uint32_t *gz=legacy?NULL:omega_gpu_host_calloc(allocation[9],sizeof *gz);
     if (!part || (!legacy && !gz)) { omega_gpu_host_free(eff); omega_gpu_host_free(part); omega_gpu_host_free(gz); return OMEGA_GPU_ATTN_CHIP_FAIL; }
     if (gz) head_map(gz + seqs_per_launch, num_q_heads, num_kv_heads, (uint32_t)ly->head_stride_bytes);
     Slot *ks = NULL;
     rc = begin(false, log2bs, log2gqa, HD, legacy ? (int)log2split : -1, !legacy, &ks, info);
     if (rc != OMEGA_GPU_ATTN_OK) { omega_gpu_host_free(eff); omega_gpu_host_free(part); omega_gpu_host_free(gz); return rc; }
     uint32_t maxb = 1;
-    for (uint32_t s = 0; s < num_seqs; s++) if (n_blocks[s] > maxb) maxb = n_blocks[s];
+    for(uint32_t s=0;s<num_seqs;s++){uint64_t best[16]={maxb,n_blocks[s]};(void)ap_plan(AP_AT,20,best);maxb=best[8];}
     const GenCall gbase = {
         .nqh = num_q_heads, .hd = HD, .lo = gz, .maxb = maxb, .hmap = gz ? gz + seqs_per_launch : NULL,
         .tstride = (uint32_t)ly->token_stride_bytes, .kvp = (uint32_t)ly->kv_plane_stride_bytes, .scale = general_scale(HD, 0.0f),
@@ -1654,7 +1630,7 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
      * layout fits the allocation and every referenced block passes the 32-bit fit rule; else stage. */
     bool resident = g_resident.cpu && (const void *)pool == g_resident.cpu && ly->pool_bytes <= g_resident.size;
     for (uint32_t s = 0; resident && s < num_seqs; s++) {
-        uint32_t need = eff[s] ? (eff[s] + ly->block_size - 1) / ly->block_size : 0;
+        uint64_t ctxplan[16]={eff[s],n_blocks[s],ly->block_size};(void)ap_plan(AP_AT,15,ctxplan);uint32_t need=ctxplan[9];
         for (uint32_t b = 0; b < need; b++) if (!resident_fits(ly, tables[s][b])) { resident = false; break; }
     }
     /* Dedupe map: physical block id -> staged slot of the current launch (-1 = not staged yet),
@@ -1667,8 +1643,9 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
         if (!slot_of || !touched) { omega_gpu_host_free(slot_of); omega_gpu_host_free(touched); omega_gpu_host_free(eff); omega_gpu_host_free(part); omega_gpu_host_free(gz); UNLOCK(); return OMEGA_GPU_ATTN_CHIP_FAIL; }
         memset(slot_of, 0xff, nb * sizeof *slot_of); /* every entry -1 */
     }
-    for (uint32_t s0 = 0; s0 < num_seqs && rc == OMEGA_GPU_ATTN_OK; s0 += seqs_per_launch) {
-        uint32_t ns = num_seqs - s0 < seqs_per_launch ? num_seqs - s0 : seqs_per_launch;
+    for (uint64_t s0 = 0; s0 < num_seqs && rc == OMEGA_GPU_ATTN_OK; s0 += seqs_per_launch) {
+        uint64_t chunk[16]={num_seqs-s0,seqs_per_launch,0};(void)ap_plan(AP_AT,12,chunk);
+        uint32_t ns=chunk[8];
         /* logical references: every sequence's blocks up to its (truncated) context */
         uint32_t total = 0;
         for (uint32_t s = 0; s < ns; s++) total += eff[s0 + s] ? (eff[s0 + s] + ly->block_size - 1) / ly->block_size : 0;
@@ -1678,7 +1655,7 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
             /* the table carries the physical ids; the kernel's block stride is the pool's; the layer
              * base is the chip address of this layer's slice of block 0 */
             for (uint32_t s = 0; s < ns; s++) {
-                uint32_t need = eff[s0 + s] ? (eff[s0 + s] + ly->block_size - 1) / ly->block_size : 0;
+                uint64_t ctxplan[16]={eff[s0+s],n_blocks[s0+s],ly->block_size};(void)ap_plan(AP_AT,15,ctxplan);uint32_t need=ctxplan[9];
                 for (uint32_t b = 0; b < need; b++) tab[(size_t)s * maxb + b] = tables[s0 + s][b];
                 tab[(size_t)ns * maxb + s] = eff[s0 + s];
             }
@@ -1712,7 +1689,7 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
          * sequence's compact table keeps its own block order and truncated context. */
         uint32_t g = 0;
         for (uint32_t s = 0; s < ns; s++) {
-            uint32_t need = eff[s0 + s] ? (eff[s0 + s] + ly->block_size - 1) / ly->block_size : 0;
+            uint64_t ctxplan[16]={eff[s0+s],n_blocks[s0+s],ly->block_size};(void)ap_plan(AP_AT,15,ctxplan);uint32_t need=ctxplan[9];
             for (uint32_t b = 0; b < need; b++) {
                 uint32_t id = tables[s0 + s][b];
                 if (g_dedupe) {
@@ -1724,8 +1701,9 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
             }
             tab[(size_t)ns * maxb + s] = eff[s0 + s];
         }
-        uint64_t staged_bytes = (uint64_t)(g ? g : 1) * ly->layer_stride_bytes;
-        if (staged_bytes > 0xffffffffull) { omega_gpu_host_free(tab); rc = OMEGA_GPU_ATTN_TOO_LARGE; break; }
+        uint64_t staging[16]={g,ly->layer_stride_bytes};rc=ap_plan(AP_AT,18,staging);
+        if(rc){omega_gpu_host_free(tab);break;}
+        uint64_t staged_bytes=staging[8];
         void *host_tmp = NULL;
         int stage_rc;
         uint8_t *staged = stage_target((size_t)staged_bytes, &host_tmp, &stage_rc);
@@ -1740,7 +1718,7 @@ static int paged_core(const float *q, const uint8_t *pool, const OmegaGpuKvLayou
         } else {
             uint32_t w = 0;
             for (uint32_t s = 0; s < ns; s++) {
-                uint32_t need = eff[s0 + s] ? (eff[s0 + s] + ly->block_size - 1) / ly->block_size : 0;
+                uint64_t ctxplan[16]={eff[s0+s],n_blocks[s0+s],ly->block_size};(void)ap_plan(AP_AT,15,ctxplan);uint32_t need=ctxplan[9];
                 for (uint32_t b = 0; b < need; b++, w++) {
                     const uint8_t *src = pool + (size_t)tables[s0 + s][b] * ly->block_stride_bytes + (size_t)layer_idx * ly->layer_stride_bytes;
                     memcpy(staged + (size_t)w * ly->layer_stride_bytes, src, (size_t)ly->layer_stride_bytes);
@@ -1793,7 +1771,8 @@ int omega_gpu_paged_attention_batch_bf16(const float *q, const void *pool, const
                                          uint32_t max_blocks_per_seq, uint32_t num_seqs, uint32_t layer_idx,
                                          uint32_t num_q_heads, uint32_t num_kv_heads, uint32_t head_dim,
                                          float *out, OmegaGpuAttnInfo *info) {
-    if (!q || !pool || !layout || !out || !block_tables || !context_lens || num_seqs == 0) return OMEGA_GPU_ATTN_BAD_ARGS;
+    if (!q || !pool || !layout || !out || !block_tables || !context_lens) return OMEGA_GPU_ATTN_BAD_ARGS;
+    uint64_t p[16]={num_seqs,1};int pr=ap_plan(AP_AT,19,p);if(pr)return pr;
     /* the oracle's rules: ctx <= 0 -> 0; a table row past the array -> empty; negatives removed */
     uint32_t **tables = omega_gpu_host_calloc(num_seqs, sizeof *tables);
     uint32_t *nb = omega_gpu_host_calloc(num_seqs, sizeof *nb), *cx = omega_gpu_host_calloc(num_seqs, sizeof *cx);

@@ -20,6 +20,7 @@
  */
 #include "omega_gpu_elementwise_api.h"
 #include "omega_host_policy.h"
+#include "omega_api_plan.h"
 #include "omega_blackwell_codegen.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
@@ -906,7 +907,8 @@ void omega_gpu_elementwise_test_set_mutant(int op) {
 }
 void omega_gpu_elementwise_test_set_mutant_level(int op, int level) {
     LOCK();
-    g_mutant_op = op; g_mutant_level = level < 1 ? 1 : level > 3 ? 3 : level;
+    uint64_t p[16]={(uint64_t)(int64_t)level};(void)ap_plan(AP_EW,6,p);
+    g_mutant_op = op; g_mutant_level = p[8];
     cache_clear_locked();
     UNLOCK();
 }
@@ -950,7 +952,7 @@ int omega_gpu_elementwise_codegen(OmegaGpuEwOp op, const uint32_t *dims, float e
 
 int omega_gpu_elementwise_codegen_ir(OmegaGpuEwOp op, int mutant, void *prog, OmegaBlackwellKernel *kernel) {
     if (!kernel) return OMEGA_GPU_EW_BAD_ARGS;
-    if (mutant < 0 || mutant > 3) return OMEGA_GPU_EW_BAD_ARGS;
+    uint64_t p[16]={(uint64_t)(int64_t)mutant};int pr=ap_plan(AP_EW,5,p);if(pr)return pr;
     return build_kernel(op, mutant, kernel, (BlackwellIRProgram *)prog, 1);
 }
 
@@ -1044,15 +1046,16 @@ int omega_gpu_rmsnorm_f32(uint32_t rows, uint32_t dim, const float *x, const flo
                           float eps, float *out, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
     if (!x || !weight || !out) return OMEGA_GPU_EW_BAD_ARGS;
-    int shape_rc = omega_host_shape(1, rows, dim, 0);
+    uint64_t p[16]={rows,dim};
+    int shape_rc = ap_plan(AP_EW,0,p);
     if (shape_rc) return shape_rc;
     Slot *k = NULL;
     int rc = begin(OMEGA_GPU_EW_RMSNORM, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
-    uint32_t params[4] = { dim / OMEGA_GPU_EW_THREADS, f2u(1.0f / (float)dim), f2u(eps), dim };
-    for (uint32_t r0 = 0; r0 < rows && rc == OMEGA_GPU_EW_OK; r0 += OMEGA_GPU_EW_MAX_CTAS) {
-        uint32_t nr = rows - r0 < OMEGA_GPU_EW_MAX_CTAS ? rows - r0 : OMEGA_GPU_EW_MAX_CTAS;
-        size_t bytes = (size_t)nr * dim * 4;
+    uint32_t params[4] = { p[10], p[11], f2u(eps), dim };
+    for (uint64_t r0 = 0; r0 < rows && rc == OMEGA_GPU_EW_OK; r0 += p[8]) {
+        p[0]=rows-r0;(void)ap_plan(AP_EW,0,p);
+        uint32_t nr=p[8];size_t bytes=p[9];
         rc = run_abc(k, x + (size_t)r0 * dim, bytes, weight, (size_t)dim * 4, out + (size_t)r0 * dim, bytes,
                      OMEGA_GPU_EW_THREADS, nr, params, info);
     }
@@ -1065,16 +1068,17 @@ int omega_gpu_rope_f32(uint32_t heads, uint32_t head_dim, const float *v,
                        const float *cos_half, const float *sin_half, float *out, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
     if (!v || !cos_half || !sin_half || !out) return OMEGA_GPU_EW_BAD_ARGS;
-    int shape_rc = omega_host_shape(2, heads, head_dim, 0);
+    uint64_t p[16]={heads,head_dim};
+    int shape_rc = ap_plan(AP_EW,1,p);
     if (shape_rc) return shape_rc;
     Slot *k = NULL;
     int rc = begin(OMEGA_GPU_EW_ROPE, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
-    uint32_t half = head_dim / 2;
+    uint32_t half=p[10];
     uint32_t params[4] = { head_dim, half, 0, 0 };
-    for (uint32_t h0 = 0; h0 < heads && rc == OMEGA_GPU_EW_OK; h0 += OMEGA_GPU_EW_MAX_CTAS) {
-        uint32_t nh = heads - h0 < OMEGA_GPU_EW_MAX_CTAS ? heads - h0 : OMEGA_GPU_EW_MAX_CTAS;
-        size_t bytes = (size_t)nh * head_dim * 4;
+    for (uint64_t h0 = 0; h0 < heads && rc == OMEGA_GPU_EW_OK; h0 += p[8]) {
+        p[0]=heads-h0;(void)ap_plan(AP_EW,1,p);
+        uint32_t nh=p[8];size_t bytes=p[9];
         /* table: cos in the first half of each head, sin in the second, written straight into
          * the staging buffer (one copy per head of this launch) */
         if (omega_gpu_session_scratch(&g_b, bytes) != 0) { rc = OMEGA_GPU_EW_CHIP_FAIL; break; }
@@ -1093,15 +1097,16 @@ int omega_gpu_rope_f32(uint32_t heads, uint32_t head_dim, const float *v,
 
 static int run_1d(OmegaGpuEwOp op, uint32_t n, const void *a, const void *b, void *c, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
+    uint64_t p[16]={n};int plan_rc=ap_plan(AP_EW,2,p);
+    if(plan_rc)return plan_rc;
     Slot *k = NULL;
     int rc = begin(op, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
-    const uint32_t chunk = OMEGA_GPU_EW_MAX_CTAS * OMEGA_GPU_EW_THREADS;
-    for (uint32_t i0 = 0; i0 < n && rc == OMEGA_GPU_EW_OK; i0 += chunk) {
-        uint32_t ni = n - i0 < chunk ? n - i0 : chunk;
-        uint32_t grid = (ni + OMEGA_GPU_EW_THREADS - 1) / OMEGA_GPU_EW_THREADS;
+    for (uint64_t i0 = 0; i0 < n && rc == OMEGA_GPU_EW_OK; i0 += p[8]) {
+        p[0]=n-i0;(void)ap_plan(AP_EW,2,p);
+        uint32_t ni=p[8],grid=p[9];
         uint32_t params[4] = { ni, 0, 0, 0 };
-        size_t bytes = (size_t)ni * 4;
+        size_t bytes=p[10];
         rc = run_abc(k, (const uint8_t *)a + (size_t)i0 * 4, bytes, b ? (const uint8_t *)b + (size_t)i0 * 4 : a, bytes,
                      (uint8_t *)c + (size_t)i0 * 4, bytes, OMEGA_GPU_EW_THREADS, grid, params, info);
     }
@@ -1111,24 +1116,22 @@ static int run_1d(OmegaGpuEwOp op, uint32_t n, const void *a, const void *b, voi
 }
 
 int omega_gpu_swiglu_f32(uint32_t n, const float *gate, const float *up, float *out, OmegaGpuEwInfo *info) {
-    if (!gate || !up || !out || n == 0) return OMEGA_GPU_EW_BAD_ARGS;
+    if (!gate || !up || !out) return OMEGA_GPU_EW_BAD_ARGS;
     return run_1d(OMEGA_GPU_EW_SWIGLU, n, gate, up, out, info);
 }
 int omega_gpu_ex2_f32(uint32_t n, const float *x, float *out, OmegaGpuEwInfo *info) {
-    if (!x || !out || n == 0) return OMEGA_GPU_EW_BAD_ARGS;
+    if (!x || !out) return OMEGA_GPU_EW_BAD_ARGS;
     return run_1d(OMEGA_GPU_EW_EX2, n, x, NULL, out, info);
 }
 int omega_gpu_shared_xchg_u32(uint32_t n, const uint32_t *x, uint32_t *out, OmegaGpuEwInfo *info) {
-    if (!x || !out || n == 0 || n % OMEGA_GPU_EW_THREADS != 0) return OMEGA_GPU_EW_BAD_ARGS;
+    if (!x || !out) return OMEGA_GPU_EW_BAD_ARGS;
+    uint64_t p[16]={n};int rc=ap_plan(AP_EW,3,p);if(rc)return rc;
     return run_1d(OMEGA_GPU_EW_XCHG, n, x, NULL, out, info);
 }
 int omega_gpu_reconv_probe_u32(OmegaGpuEwOp op, uint32_t n, const uint32_t *a, const uint32_t *b, uint32_t *out, OmegaGpuEwInfo *info) {
-    if (!a || !b || !out || n == 0) return OMEGA_GPU_EW_BAD_ARGS;
-    switch (op) {
-    case OMEGA_GPU_EW_RC_DIAMOND: case OMEGA_GPU_EW_RC_LOOPBREAK: case OMEGA_GPU_EW_RC_NESTED:
-    case OMEGA_GPU_EW_RC_EXIT_BAR: case OMEGA_GPU_EW_RC_DEPTH16: break;
-    default: return OMEGA_GPU_EW_BAD_ARGS;
-    }
+    if (!a || !b || !out) return OMEGA_GPU_EW_BAD_ARGS;
+    uint64_t p[16]={n,0,(unsigned)op-OMEGA_GPU_EW_RC_DIAMOND,OMEGA_GPU_EW_RC_DEPTH16-OMEGA_GPU_EW_RC_DIAMOND};
+    int rc=ap_plan(AP_EW,4,p);if(rc)return rc;
     return run_1d(op, n, a, b, out, info);
 }
 

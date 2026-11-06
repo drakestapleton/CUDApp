@@ -1,0 +1,14 @@
+WolframLanguageEvaluator (MCP), 2026-11-06. f32bits[x] = sign*2^31 + (Floor[Log2|x|]+127)*2^23 + Round[(|x|/2^e - 1)*2^23]
+(round to nearest; every value below is normal).
+f32bits[1/2048]          -> 973078528  = 0x3A000000
+f32bits[N[-1/Log[2],30]] -> 3216550459 = 0xBFB8AA3B  (-log2 e)
+f32bits[1]               -> 1065353216 = 0x3F800000
+f32bits[2^23]            -> 1258291200 = 0x4B000000
+f32bits[2^64]            -> 1602224128 = 0x5F800000
+f32bits[2^-100]          -> 226492416  = 0x0D800000
+f32bits[1+2^-10]         -> 1065361408 = 0x3F802000
+f32bits[2^-20]           -> 897581056  = 0x35800000
+1/H for H = 1024 k, k = 1..8 (RES widths):
+1024 981467136, 2048 973078528, 3072 967486123, 4096 964689920, 5120 961334477, 6144 959097515, 7168 957499685, 8192 956301312
+All literals in om/codegen/cg_dec.om match; the unit computes 1/H for H != 2048 with the f32 division 1.0f32 / f32 h,
+which the differential compares bit for bit against the C 1.0f / (float)h on every accepted width.

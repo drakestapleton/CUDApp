@@ -34,7 +34,7 @@ int main(void) {
     static const uint32_t widths[] = {0, 1, 255, 256, 257, 767, 768, 769, 1023, 1024, 1025, 2048, 3072, 4096,
                                       5120, 6144, 7168, 8192, 8193, 9216, UINT32_MAX};
     static const uint32_t groups[] = {0, 1, 7, 8, 9, 10, 15, 16, 17, UINT32_MAX};
-    static const uint32_t strides[] = {0, 1, 15, 16, 17, 255, 256, 257, 512, UINT32_MAX};
+    static const uint32_t strides[] = {0, 1, 15, 16, 17, 128, 255, 256, 257, 512, UINT32_MAX};
     static const int mutants[] = {INT_MIN, -1, 0, 1, 2, 3, 4, INT_MAX};
 #define N(a) (sizeof a / sizeof a[0])
     unsigned long cases = 0, accepted = 0, changed = 0;
@@ -59,5 +59,6 @@ int main(void) {
     if (omega_blackwell_codegen_dec_prog(&ds, NULL) != -1) return 3;
     printf("PASS dec differential cases=%lu accepted=%lu record-negative-controls=%lu IR+allocation+encoded-bytes\n",
            cases, accepted, changed);
-    return changed == accepted && accepted > 0 ? 0 : 6;
+    /* frozen: the accepted partition of the product above; a builder that widens or narrows admission changes it */
+    return changed == accepted && accepted == 1220470ul ? 0 : 6;
 }

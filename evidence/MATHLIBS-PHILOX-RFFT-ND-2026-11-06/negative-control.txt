@@ -1,0 +1,47 @@
+$ ./build/gpu_mathlibs_test --host-only --philox-fixture ph_bad.txt   (source 8258f94c92b4552960c3edaab6495cca137bb978)
+# ph_bad.txt = tests/fixtures/philox_curand_oracle.txt with one word changed: 6627e8d5 -> 6627e8d0
+mathlibs tier=host fixture=tests/fixtures/mathlibs_rng_aienmath.txt philox_fixture=/tmp/mlphx/ph_bad.txt
+host rng_reference_vs_aienmath rows=792 mismatches=0
+host philox_reference_vs_random123_kat vectors=3 mismatches=0 nine_round_control_mismatches=3
+FAIL: philox reference: 1 of 1024 cuRAND fixture rows differ
+host philox_reference_vs_curand rows=1024 mismatches=1
+host rng_codegen kind=0 insns=168 gpr_peak=24 gpr_declared=64
+host rng_codegen kind=1 insns=168 gpr_peak=23 gpr_declared=64
+host rng_codegen kind=2 insns=232 gpr_peak=24 gpr_declared=64
+host fft_codegen n=4 inverse=0 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=4 inverse=1 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=8 inverse=0 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=8 inverse=1 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=16 inverse=0 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=16 inverse=1 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=32 inverse=0 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=32 inverse=1 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=64 inverse=0 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=64 inverse=1 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=0 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=1 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=0 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=1 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=0 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=1 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=0 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=1 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=0 insns=376 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=1 insns=376 gpr_peak=44 gpr_declared=64
+host philox_codegen insns=88 gpr_peak=44 gpr_declared=64
+host unit_codegen kind=4 a=3 b=0 threads=2 code_bytes=896
+host unit_codegen kind=4 a=3 b=1 threads=2 code_bytes=768
+host unit_codegen kind=4 a=6 b=0 threads=16 code_bytes=896
+host unit_codegen kind=4 a=6 b=1 threads=16 code_bytes=768
+host unit_codegen kind=4 a=12 b=0 threads=1024 code_bytes=896
+host unit_codegen kind=4 a=12 b=1 threads=1024 code_bytes=768
+host unit_codegen kind=5 a=2 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=4 b=3 threads=256 code_bytes=512
+host unit_codegen kind=5 a=25 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=16 b=11 threads=256 code_bytes=512
+host fft_twiddles entries=16376 off_by_more_than_half_ulp=0
+host fft_plan_words plans=5 mismatches=0
+host fft_plan_launches r2c_4096x2500=6 nd_4x2048x4=11 nd_16x2048x16_transposes=4
+host normal_model_sweep inputs=8388608 over_tol=0 worst_rel=3.256238e-07 at_A=20783 tol=2.87e-06 central~8360300
+mathlibs host: FAIL (1 of 337)
+rc=1

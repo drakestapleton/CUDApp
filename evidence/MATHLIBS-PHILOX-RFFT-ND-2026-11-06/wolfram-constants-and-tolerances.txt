@@ -1,0 +1,50 @@
+Wolfram Language evaluations (Wolfram MCP WolframLanguageEvaluator), MathLibs lane, 2026-11-06.
+
+Philox4x32-10 constants
+  FromDigits["D2511F53",16] -> 3528531795   (M0)
+  FromDigits["CD9E8D57",16] -> 3449720151   (M1)
+  FromDigits["9E3779B9",16] -> 2654435769   (W0)
+  FromDigits["BB67AE85",16] -> 3144134277   (W1)
+  Table[Mod[r*2654435769, 2^32], {r,0,9}] -> {0,2654435769,1013904242,3668340011,2027808484,387276957,3041712726,1401181199,4055616968,2415085441}
+  Table[Mod[r*3144134277, 2^32], {r,0,9}] -> {0,3144134277,1993301258,842468239,3986602516,2835769497,1684936478,534103459,3678237736,2527404717}
+  2^32 - 2^27 -> 4160749568
+
+FFT error bounds (normwise relative error against an f64 DFT; u = 2^-24, f32 round to nearest)
+  u=2^-24; mu=2u+10^-15; g2=2u/(1-2u); eta=Sqrt[2] g2 (1+mu)+mu; n4=Floor[lg/2]; n2=Mod[lg,2];
+  bb[n] = (1+u)^(2 n4+n2) (1+eta)^(n4+n2-1) - 1          (Stockham radix-4/radix-2 complex FFT of n = 2^lg points)
+  rr[n] = Sqrt[n] (n+10) 2^-53 / (1 - (n+10) 2^-53)       (error of the f64 reference DFT)
+  c = u + eta (1+u); kk = Sqrt[u^2+c^2] + Sqrt[2] u (1+c)  -> 4.367712960e-7   (one split/merge butterfly, twiddle rounded)
+  er[m] = 2 bb[m/2] + Sqrt[2] kk (1 + bb[m/2])           (R2C of m reals: m/2-point complex FFT then split)
+  ec[m] = bb[m/2] (1 + Sqrt[2] kk) + Sqrt[2] kk          (C2R: merge then m/2-point complex FFT)
+  tol[e, r] = (e + r) / (1 - r)
+  nd[dims] = tol[Product[1+bb[d]] - 1, Product[1+rr[d]] - 1]   (one 1-D pass per axis; transposes are exact copies)
+
+  Derivation of er/ec: with S the split map, ||S D|| <= 2 ||D|| for an error D in the half-length transform Z;
+  ||Z|| <= ||X_half|| <= Sqrt[2] ||Z||; the rounding of the split itself is at most Sqrt[2] kk ||Z||. C2R inverts the
+  roles (merge first, its rounding Sqrt[2] kk, then the complex FFT).
+
+  n     R2C tol[er[n],rr[n]]   C2R tol[ec[n],rr[n]]
+  8     8.561065560e-7         7.368972629e-7
+  16    1.550909633e-6         1.084298912e-6
+  32    1.670119030e-6         1.143903636e-6
+  64    2.364922423e-6         1.491305459e-6
+  128   2.484131961e-6         1.550910301e-6
+  256   3.178935896e-6         1.898312525e-6
+  512   3.298146214e-6         1.957918122e-6
+  1024  3.992952496e-6         2.305322551e-6
+  2048  4.112168690e-6         2.364934000e-6
+  4096  4.806991727e-6         2.712355043e-6
+
+  dims         nd tolerance
+  {4,4}        2.384186066e-7
+  {8,16}       9.928263778e-7
+  {32,64}      1.806839531e-6
+  {16,2048}    2.620863531e-6
+  {2048,4}     2.213856570e-6
+  {4,4,4}      3.576279313e-7
+  {4,8,16}     1.112035792e-6
+  {16,16,16}   1.578647047e-6
+  {8,4,32}     1.459437580e-6
+
+These are the constants FFT_TOL / R2C_TOL / C2R_TOL / ND_SHAPES in tests/gpu_mathlibs_test.c; the 1-D complex table
+(bb with rr) is the one of evidence/MATHLIBS-RNG-FFT-2026-10-27/wolfram-constants.txt, recomputed and unchanged.

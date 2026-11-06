@@ -1,0 +1,5 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 /tmp/plat-rest-cov-final-sye9nkri/unit
+PASS platform rest live memfd: original marker parser rejected real /memfd: link
+PASS platform rest source-partition differential and ABI refusals
+
+rc=0

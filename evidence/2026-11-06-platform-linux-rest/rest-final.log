@@ -1,0 +1,18 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-platform-linux-rest
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -o build/platform_linux_rest tests/platform_linux_rest.c
+build/platform_linux_rest
+PASS platform rest live memfd: original marker parser rejected real /memfd: link
+PASS platform rest source-partition differential and ABI refusals
+FAIL platform rest mode=0 m0=0 m1=268435456
+python3 tests/platform_linux_rest_mutants.py
+KILLED page-round
+KILLED cursor-floor
+KILLED marker-slash
+KILLED marker-letter
+KILLED stale-generation
+KILLED time-scale
+KILLED queue-bound
+KILLED sleep-remainder
+PASS platform rest mutants (8 killed)
+
+rc=0

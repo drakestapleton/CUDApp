@@ -1,0 +1,3 @@
+$ cc --coverage -O0 -std=gnu11 -D_GNU_SOURCE -Isrc -o /tmp/plat-rest-cov-final-sye9nkri/unit tests/platform_linux_rest.c
+
+rc=0

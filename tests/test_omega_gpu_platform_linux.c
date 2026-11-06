@@ -17,6 +17,7 @@
 #include "omega_gpu_mem_cached.h"
 #include "omega_gpu_platform_linux.h"
 #include "omega_gpu_session.h"
+#include "cudapp_plat_effects.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,16 @@ int nvrm_open(Nvrm *rm) {
 int nvrm_close(Nvrm *rm) { (void)rm; return 0; }
 static int g_retires;
 void nvrm_retire(Nvrm *rm, uint32_t upto) { (void)rm; (void)upto; g_retires++; }
+
+static unsigned g_map_calls, g_map_bad_args;
+uint32_t __real_omega2_ctx_plat_wait_ge(omega_native_context *, uint64_t *,
+                                      uint64_t, uint64_t, uint64_t, uint64_t);
+uint32_t __wrap_omega2_ctx_plat_wait_ge(omega_native_context *context, uint64_t *result,
+                                      uint64_t handle, uint64_t off, uint64_t want, uint64_t polls) {
+    ++g_map_calls;
+    if (!context || !handle || polls != 1) ++g_map_bad_args;
+    return __real_omega2_ctx_plat_wait_ge(context, result, handle, off, want, polls);
+}
 
 static int case_ok;
 #define EXPECT(c) do { if (!(c)) { case_ok = 0; printf("  expect failed at line %d: %s\n", __LINE__, #c); } } while (0)
@@ -161,7 +172,8 @@ static void c_marker_never_latches(void) {
     OmegaGpuLaunch L = launch_desc(5);
     EXPECT(omega_gpu_session_launch(&L, NULL, NULL) == -1);
     EXPECT(omega_gpu_session_is_blocked());
-    EXPECT(fk.wait_calls > 0 && fk.wait_ms[0] <= OMEGA_GPU_SESSION_POLL_SLICE_MS); /* absolute real-clock deadline; fake RM polls return without sleeping */
+    EXPECT(g_map_calls > 0 && g_map_bad_args == 0);
+    EXPECT(fk.wait_calls == 0); /* Real memfd capture must use Omega mapget, not the C fallback. */
     EXPECT(g_retires == 0);
     omega_gpu_session_unlock();
     omega_gpu_session_close();

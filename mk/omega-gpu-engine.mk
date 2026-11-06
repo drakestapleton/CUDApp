@@ -236,7 +236,7 @@ build/test_omega_gpu_platform_linux: tests/test_omega_gpu_platform_linux.c tests
 		src/omega_gpu_cmdlist.h src/omega_gpu_mem_cached.h $(GPU_LINUX_REF_CMDLIST_SRCS)
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests $(GPU_ENGINE_PHYS_INC) \
-		-o $@ tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c tests/omega_gpu_live_marker_fixture.c $(GPU_LINUX_REF_SRCS) $(GPU_LINUX_REF_CMDLIST_SRCS) -lm
+		-Wl,--wrap=omega2_ctx_plat_wait_ge -o $@ tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c tests/omega_gpu_live_marker_fixture.c $(GPU_LINUX_REF_SRCS) $(GPU_LINUX_REF_CMDLIST_SRCS) -lm
 # The driver client's VA slots and close path on the host (no device opened, nvrm_open never called).
 build/test_nvrm_va_slots: tests/test_nvrm_va_slots.c $(PHYSICS_DIR)/nvrm/nvrm.c $(PHYSICS_DIR)/nvrm/nvrm.h src/omega_ampere_qmd.c $(CUDAPP_BINDING_SRCS)
 	@mkdir -p build

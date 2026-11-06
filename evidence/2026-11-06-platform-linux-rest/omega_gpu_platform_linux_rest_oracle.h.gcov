@@ -1,0 +1,122 @@
+        -:    0:Source:src/omega_gpu_platform_linux_rest_oracle.h
+        -:    0:Graph:/tmp/plat-rest-cov-final-sye9nkri/unit-platform_linux_rest.gcno
+        -:    0:Data:/tmp/plat-rest-cov-final-sye9nkri/unit-platform_linux_rest.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* Migration oracle only; production must not include this header. */
+        -:    3:#ifndef OMEGA_GPU_PLATFORM_LINUX_REST_ORACLE_H
+        -:    4:#define OMEGA_GPU_PLATFORM_LINUX_REST_ORACLE_H
+        -:    5:#include <stdint.h>
+function plat_rest_c called 11874 returned 100% blocks executed 100%
+    11874:    6:static uint64_t plat_rest_c(uint64_t mode, const uint64_t m[16], uint64_t q[16]) {
+    11874:    7:    switch (mode) {
+branch  0 taken 848
+branch  1 taken 848
+branch  2 taken 848
+branch  3 taken 848
+branch  4 taken 848
+branch  5 taken 848
+branch  6 taken 849
+branch  7 taken 848
+branch  8 taken 848
+branch  9 taken 848
+branch 10 taken 848
+branch 11 taken 848
+branch 12 taken 848
+branch 13 taken 848
+branch 14 taken 1
+      848:    8:    case 0: {
+      848:    9:        uint64_t pages=(m[0]+4095ull)&~4095ull, cursor=m[1];
+      848:   10:        if(pages<4096ull || pages>(1ull<<40)) return 0;
+branch  0 taken 845 (fallthrough)
+branch  1 taken 3
+branch  2 taken 1 (fallthrough)
+branch  3 taken 844
+      844:   11:        if(cursor<65536ull || cursor>(1ull<<40)-pages) cursor=268435456ull;
+branch  0 taken 807 (fallthrough)
+branch  1 taken 37
+branch  2 taken 11 (fallthrough)
+branch  3 taken 796
+      844:   12:        if(cursor>(1ull<<40)-pages) return 0;
+branch  0 taken 5 (fallthrough)
+branch  1 taken 839
+      839:   13:        q[0]=pages; q[1]=cursor; q[2]=cursor+pages; return 1;
+        -:   14:    }
+      848:   15:    case 1: {
+      848:   16:        const unsigned first = m[1]=='/' ? 2 : 1;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 847
+      848:   17:        const unsigned need = first==2 ? 7 : 6;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 847
+      848:   18:        const char *prefix="memfd:";
+      848:   19:        if(m[0]<need) return 0;
+branch  0 taken 7 (fallthrough)
+branch  1 taken 841
+     4801:   20:        for(unsigned i=0;i<6;++i) if(m[first+i]!=(unsigned char)prefix[i]) return 0;
+branch  0 taken 311 (fallthrough)
+branch  1 taken 3960
+branch  2 taken 4271
+branch  3 taken 530 (fallthrough)
+      530:   21:        return 1;
+        -:   22:    }
+      848:   23:    case 2:
+      848:   24:        if(m[0]>=m[5] || m[1]==0) return 5;
+branch  0 taken 823 (fallthrough)
+branch  1 taken 25
+branch  2 taken 1 (fallthrough)
+branch  3 taken 822
+      822:   25:        if(!m[2] || m[3]!=m[1]) return 6;
+branch  0 taken 821 (fallthrough)
+branch  1 taken 1
+branch  2 taken 103 (fallthrough)
+branch  3 taken 718
+      718:   26:        if(m[4]!=2 && m[4]!=3 && m[4]!=4) return 5;
+branch  0 taken 52 (fallthrough)
+branch  1 taken 666
+branch  2 taken 51 (fallthrough)
+branch  3 taken 1
+branch  4 taken 50 (fallthrough)
+branch  5 taken 1
+      668:   27:        return 0;
+      848:   28:    case 3: return m[0]*1000000000ull+m[1];
+      848:   29:    case 4: q[0]=m[0]/1000u; q[1]=(m[0]%1000u)*1000000ull; return 0;
+      848:   30:    case 5: return m[0]>=m[1] ? 1 : 0;
+      849:   31:    case 6:
+     1749:   32:        for(unsigned i=0;i<3 && i+1<m[0];++i) if(!m[i+1]) return i+1;
+branch  0 taken 845 (fallthrough)
+branch  1 taken 900
+branch  2 taken 1748 (fallthrough)
+branch  3 taken 1
+branch  4 taken 1745
+branch  5 taken 3 (fallthrough)
+        4:   33:        return 0;
+      848:   34:    case 7: return m[0]!=0 ? 1 : m[1]!=0 ? 11 : 0;
+branch  0 taken 796 (fallthrough)
+branch  1 taken 52
+branch  2 taken 52 (fallthrough)
+branch  3 taken 744
+      848:   35:    case 8: return m[0] ? 5 : 0;
+branch  0 taken 847 (fallthrough)
+branch  1 taken 1
+      848:   36:    case 9: return m[0]/1000000ull;
+      848:   37:    case 10: q[0]=m[0]*4; q[1]=(m[0]+m[1])*4; q[2]=m[0]+m[1]; return 0;
+      848:   38:    case 11: return (uint32_t)(m[0]+1);
+      848:   39:    case 12: return m[0] && m[1] && (int64_t)m[2]>=0 && (m[3]&m[4]) && !(m[3]&m[5]);
+branch  0 taken 847 (fallthrough)
+branch  1 taken 1
+branch  2 taken 846 (fallthrough)
+branch  3 taken 1
+branch  4 taken 844 (fallthrough)
+branch  5 taken 2
+branch  6 taken 796 (fallthrough)
+branch  7 taken 48
+branch  8 taken 750 (fallthrough)
+branch  9 taken 46
+      848:   40:    case 13: return m[0] ? m[0] : 1;
+branch  0 taken 52 (fallthrough)
+branch  1 taken 796
+        1:   41:    default: return 0;
+        -:   42:    }
+        -:   43:}
+        -:   44:#endif

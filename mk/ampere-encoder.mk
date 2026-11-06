@@ -9,6 +9,12 @@ CFLAGS += -DCUDAPP_AMPERE_CORPUS
 AMPERE_CORPUS_SRCS = tools/ampere_corpus.c
 vpath ampere_corpus.c tools
 endif
+# The capture's decisions are seeded Omega (om/tools/ampcorp.om, src/cudapp_om_ampcorp.c in the library).
+# CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP=1 builds the former C instead: the oracle of tests/tools-om/ampcorp.sh.
+CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP ?= 0
+ifeq ($(CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP),1)
+CFLAGS += -DCUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP
+endif
 
 $(AMPERE_ENCODER_TEST): tests/test_omega_ampere_encoder.c src/omega_ampere_codegen.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/test_omega_ampere_encoder.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm

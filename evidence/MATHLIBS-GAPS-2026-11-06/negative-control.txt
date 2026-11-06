@@ -1,0 +1,74 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 ./build/gpu_mathlibs_test --host-only --dist-fixture pd_bad.txt   (source f2ef5ff)
+# pd_bad.txt = tests/fixtures/philox_curand_dist_oracle.txt with one curand_uniform row changed: 1 0 0 0 1 000000003f6169c6 -> ...c7
+# rc=1
+mathlibs tier=host fixture=tests/fixtures/mathlibs_rng_aienmath.txt philox_fixture=tests/fixtures/philox_curand_oracle.txt dist_fixture=/tmp/mlgap/neg/pd_bad.txt
+host rng_reference_vs_aienmath rows=792 mismatches=0
+host philox_reference_vs_random123_kat vectors=3 mismatches=0 nine_round_control_mismatches=3
+host philox_reference_vs_curand rows=1024 mismatches=0
+FAIL: philox dist 1 reference: 1 of 896 cuRAND rows disagree
+host philox_dist_reference_vs_curand uniform=895/896 uniform_double=896/896 uniform2_double=896/896 normal_within_2^-21s=896/896 normal_bit_exact=743 worst_err_over_s=1.848*2^-24 normal_double_rows=896 (not compared: no f64 IR)
+host philox_dist_negative_controls uniform_next_word=896/896 normal_sin_cos_swapped=896/896 uniform2_no_half_step=655/896 (must be caught)
+host rng_codegen kind=0 insns=168 gpr_peak=24 gpr_declared=64
+host rng_codegen kind=1 insns=168 gpr_peak=23 gpr_declared=64
+host rng_codegen kind=2 insns=232 gpr_peak=24 gpr_declared=64
+host fft_codegen n=4 inverse=0 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=4 inverse=1 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=8 inverse=0 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=8 inverse=1 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=16 inverse=0 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=16 inverse=1 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=32 inverse=0 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=32 inverse=1 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=64 inverse=0 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=64 inverse=1 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=0 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=1 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=0 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=1 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=0 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=1 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=0 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=1 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=0 insns=376 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=1 insns=376 gpr_peak=44 gpr_declared=64
+host philox_codegen insns=104 gpr_peak=51 gpr_declared=64
+host philox_dist_codegen dist=0 b=0 code_bytes=1664
+host philox_dist_codegen dist=0 b=1 code_bytes=2432
+host philox_dist_codegen dist=0 b=2 code_bytes=2432
+host philox_dist_codegen dist=0 b=3 code_bytes=2432
+host philox_dist_codegen dist=1 b=0 code_bytes=2176
+host philox_dist_codegen dist=1 b=1 code_bytes=2944
+host philox_dist_codegen dist=1 b=2 code_bytes=2944
+host philox_dist_codegen dist=1 b=3 code_bytes=2944
+host philox_dist_codegen dist=2 b=0 code_bytes=3840
+host philox_dist_codegen dist=2 b=1 code_bytes=4608
+host philox_dist_codegen dist=2 b=2 code_bytes=4608
+host philox_dist_codegen dist=2 b=3 code_bytes=4608
+host philox_dist_codegen dist=3 b=0 code_bytes=3200
+host philox_dist_codegen dist=3 b=1 code_bytes=3968
+host philox_dist_codegen dist=3 b=2 code_bytes=3968
+host philox_dist_codegen dist=3 b=3 code_bytes=3968
+host philox_dist_codegen dist=4 b=0 code_bytes=4480
+host philox_dist_codegen dist=4 b=1 code_bytes=5376
+host philox_dist_codegen dist=4 b=2 code_bytes=5376
+host philox_dist_codegen dist=4 b=3 code_bytes=5376
+host philox_dist_mutant_targeting kernels=20 errors=0
+host unit_codegen kind=4 a=3 b=0 threads=2 code_bytes=896
+host unit_codegen kind=4 a=3 b=1 threads=2 code_bytes=768
+host unit_codegen kind=4 a=6 b=0 threads=16 code_bytes=896
+host unit_codegen kind=4 a=6 b=1 threads=16 code_bytes=768
+host unit_codegen kind=4 a=12 b=0 threads=1024 code_bytes=896
+host unit_codegen kind=4 a=12 b=1 threads=1024 code_bytes=768
+host unit_codegen kind=5 a=2 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=4 b=3 threads=256 code_bytes=512
+host unit_codegen kind=5 a=25 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=16 b=11 threads=256 code_bytes=512
+host fft_twiddles entries=16376 off_by_more_than_half_ulp=0
+host fft_plan_words plans=5 mismatches=0
+host fft_plan_launches r2c_4096x2500=6 nd_4x2048x4=11 nd_16x2048x16_transposes=4
+host normal_model_sweep inputs=8388608 over_tol=0 worst_rel=3.256238e-07 at_A=20783 tol=2.87e-06 central~8360300
+host many_plans lengths=4095 bluestein=3848 wrong=0
+host many_magic divisors=8199 divisions=285971042 wrong=0
+host many_tables twiddles=67117054 chirps=16781310 off_by_more_than_half_ulp=0
+host many_walk refusals=18 shapes=10 launches=130 malformed=0
+mathlibs host: FAIL (1 of 477)

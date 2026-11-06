@@ -1240,6 +1240,31 @@ field OmegaGpuFftLaunch tw_n 60 4 u32 1
 field OmegaGpuFftLaunch tw_inverse 64 4 u32 1
 field OmegaGpuFftLaunch tw 72 8 ptr 1
 field OmegaGpuFftLaunch elements 80 8 usize 1
+struct OmegaGpuFftMany 68 4 # EXPERIMENTAL
+field OmegaGpuFftMany rank 0 4 u32 1
+field OmegaGpuFftMany n 4 12 u32 3
+field OmegaGpuFftMany inembed 16 12 u32 3
+field OmegaGpuFftMany istride 28 4 u32 1
+field OmegaGpuFftMany idist 32 4 u32 1
+field OmegaGpuFftMany onembed 36 12 u32 3
+field OmegaGpuFftMany ostride 48 4 u32 1
+field OmegaGpuFftMany odist 52 4 u32 1
+field OmegaGpuFftMany batch 56 4 u32 1
+field OmegaGpuFftMany type 60 4 enum 1
+field OmegaGpuFftMany inverse 64 4 i32 1
+struct OmegaGpuFftManyLaunch 160 8 # EXPERIMENTAL
+field OmegaGpuFftManyLaunch kind 0 4 u32 1
+field OmegaGpuFftManyLaunch a 4 4 u32 1
+field OmegaGpuFftManyLaunch b 8 4 u32 1
+field OmegaGpuFftManyLaunch nptr 12 4 u32 1
+field OmegaGpuFftManyLaunch buf 16 12 u32 3
+field OmegaGpuFftManyLaunch off 32 24 u64 3
+field OmegaGpuFftManyLaunch nwords 56 4 u32 1
+field OmegaGpuFftManyLaunch words 60 72 u32 18
+field OmegaGpuFftManyLaunch threads 132 4 u32 1
+field OmegaGpuFftManyLaunch grid 136 4 u32 1
+field OmegaGpuFftManyLaunch elements 144 8 usize 1
+field OmegaGpuFftManyLaunch table 152 8 ptr 1
 const OMEGA_GPU_ML_OK 0 # EXPERIMENTAL
 const OMEGA_GPU_ML_BAD_ARGS -1 # EXPERIMENTAL
 const OMEGA_GPU_ML_TOO_LARGE -2 # EXPERIMENTAL
@@ -1263,6 +1288,25 @@ const OMEGA_GPU_FFT_REAL_MAX_N 4096 # EXPERIMENTAL
 const OMEGA_GPU_FFT_MAX_ELEMENTS 134217728 # EXPERIMENTAL
 const OMEGA_GPU_PHILOX_THREADS 128 # EXPERIMENTAL
 const OMEGA_GPU_PHILOX_MAX_STREAMS 131072 # EXPERIMENTAL
+const OMEGA_GPU_PHILOX_RAW 0 # EXPERIMENTAL
+const OMEGA_GPU_PHILOX_UNIFORM 1 # EXPERIMENTAL
+const OMEGA_GPU_PHILOX_UNIFORM_DOUBLE 2 # EXPERIMENTAL
+const OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE 3 # EXPERIMENTAL
+const OMEGA_GPU_PHILOX_NORMAL 4 # EXPERIMENTAL
+const OMEGA_GPU_FFT_TYPE_C2C 0 # EXPERIMENTAL
+const OMEGA_GPU_FFT_TYPE_R2C 1 # EXPERIMENTAL
+const OMEGA_GPU_FFT_TYPE_C2R 2 # EXPERIMENTAL
+const OMEGA_GPU_FFT_MANY_MAX_N 4096 # EXPERIMENTAL
+const OMEGA_GPU_FFT_MANY_THREADS 128 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_IN 0 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_OUT 1 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_S0 2 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_S1 3 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_W 4 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_W2 5 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_B 6 # EXPERIMENTAL
+const OMEGA_GPU_FFT_BUF_TABLE 7 # EXPERIMENTAL
+const OMEGA_GPU_FFT_MANY_BUFS 8 # EXPERIMENTAL
 fn omega_gpu_rng_codegen fn(OmegaGpuRngKind, *mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
 fn omega_gpu_fft_codegen fn(u32, i32, *mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
 fn omega_gpu_philox_codegen fn(*mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
@@ -1274,5 +1318,8 @@ fn omega_gpu_fft_r2c fn(*const f32, *mut f32, u32, u32, *mut OmegaGpuMathInfo) -
 fn omega_gpu_fft_c2r fn(*const f32, *mut f32, u32, u32, *mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
 fn omega_gpu_fft_c2c_nd fn(*const f32, *mut f32, u32, *const u32, u32, i32, *mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
 fn omega_gpu_fft_plan_walk fn(OmegaGpuFftPlanMode, u32, *const u32, u32, i32, *mut usize, fn(*mut c_void, *const OmegaGpuFftLaunch) -> i32, *mut c_void) -> i32 # EXPERIMENTAL
+fn omega_gpu_philox_generate_dist fn(OmegaGpuPhiloxDist, u64, u64, u32, u64, u32, *mut c_void, *mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
+fn omega_gpu_fft_many fn(*const OmegaGpuFftMany, *const f32, *mut f32, *mut OmegaGpuMathInfo) -> i32 # EXPERIMENTAL
+fn omega_gpu_fft_many_walk fn(*const OmegaGpuFftMany, i32, *mut usize, fn(*mut c_void, *const OmegaGpuFftManyLaunch) -> i32, *mut c_void) -> i32 # EXPERIMENTAL
 fn omega_gpu_mathlibs_cache_clear fn() -> () # EXPERIMENTAL
 fn omega_gpu_mathlibs_last_error fn() -> *const c_char # EXPERIMENTAL

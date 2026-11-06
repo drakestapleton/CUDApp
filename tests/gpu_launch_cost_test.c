@@ -19,18 +19,18 @@
 #include <string.h>
 #include "test_out_file.h"
 
-static int g_checks, g_failed;
+static int g_checks, g_failed, g_program;
 #define CHECK(c, ...) do { g_checks++; if (!(c)) { g_failed++; printf("FAIL: "); printf(__VA_ARGS__); printf("\n"); } else { printf("ok: "); printf(__VA_ARGS__); printf("\n"); } } while (0)
 static uint32_t lcg(uint32_t *s) { *s = *s * 1664525u + 1013904223u; return *s; }
 static int cmp_u64(const void *a, const void *b) { uint64_t x = *(const uint64_t *)a, y = *(const uint64_t *)b; return x < y ? -1 : x > y; }
 static uint64_t median(uint64_t *v, uint32_t n) { qsort(v, n, sizeof *v, cmp_u64); return v[n / 2]; }
 
 #define MAX_M 16
-typedef struct { OmegaGpuFp8Tensor *t[MAX_M]; float *ref; uint32_t m, rows; } Split;
+typedef struct { OmegaGpuFp8Tensor *t[MAX_M]; float *ref; uint32_t m, rows, k; } Split;
 
 static int make_split(Split *s, uint32_t m, uint32_t n, uint32_t k, const uint8_t *w, const uint16_t *sc, const float *x) {
     memset(s, 0, sizeof *s);
-    s->m = m; s->rows = n / m; s->ref = malloc((size_t)n * 4);
+    s->m = m; s->rows = n / m; s->k = k; s->ref = malloc((size_t)n * 4);
     for (uint32_t i = 0; i < m; i++) {
         int rc = omega_gpu_fp8_tensor_upload(1, s->rows, k, w + (size_t)i * s->rows * k, sc + (size_t)i * (s->rows / 128) * (k / 128), &s->t[i]);
         if (rc != OMEGA_GPU_FP8_OK) { printf("upload m=%u i=%u: %s (%s)\n", m, i, omega_gpu_fp8_rc_name(rc), omega_gpu_fp8_last_error()); return -1; }
@@ -56,13 +56,26 @@ static int time_split(Split *s, OmegaGpuCmdList *cl, OmegaGpuMem *tab, OmegaGpuM
         if (omega_gpu_session_sync_to_gpu(yd) != 0) { rc = -1; break; }
         omega_gpu_session_lock();
         omega_gpu_cmdlist_reset(cl);
-        for (uint32_t i = 0; i < m && rc == 0; i++)
+        for (uint32_t i = 0; i < m && rc == 0; i++) {
+            const uint32_t begin = omega_gpu_cmdlist_count(cl);
             if (omega_gpu_fp8_gemv_grouped_record(cl, s->t[i], 1, tab->va + 16u * i, xd->va, 1, yd->va + (uint64_t)i * s->rows * 4u) != 0) { printf("record m=%u i=%u: %s\n", m, i, omega_gpu_fp8_last_error()); rc = -1; }
+            if (g_program && rc == 0) {
+                OmegaGpuCmdListAccess effects[] = {
+                    {tab->va + 16u*i, 16, OMEGA_GPU_CMDLIST_ACCESS_READ},
+                    {xd->va, (uint64_t)s->k*4, OMEGA_GPU_CMDLIST_ACCESS_READ},
+                    {tabw[2*i], (uint64_t)s->rows*s->k, OMEGA_GPU_CMDLIST_ACCESS_READ},
+                    {tabw[2*i+1], (uint64_t)(s->rows/128)*(s->k/128)*4, OMEGA_GPU_CMDLIST_ACCESS_READ},
+                    {yd->va + (uint64_t)i*s->rows*4, (uint64_t)s->rows*4, OMEGA_GPU_CMDLIST_ACCESS_WRITE}
+                };
+                for (uint32_t j=begin; j<omega_gpu_cmdlist_count(cl); j++)
+                    if (omega_gpu_cmdlist_set_accesses(cl,j,effects,5) != 0) rc=-1;
+            }
+        }
         OmegaGpuCmdListOpts o; memset(&o, 0, sizeof o);
         o.mode = OMEGA_GPU_CMDLIST_PCAS; o.barrier = bar; o.stamps = 1;
         OmegaGpuCmdListStats st; memset(&st, 0, sizeof st);
-        if (rc == 0 && omega_gpu_cmdlist_submit(cl, &o, &st) != 0) { printf("submit m=%u barrier=%s: %s\n", m, omega_gpu_cmdlist_barrier_name(bar), omega_gpu_session_last_error()); rc = -1; }
-        uint64_t stamps[MAX_M + 1]; const int none = bar == OMEGA_GPU_CMDLIST_BARRIER_NONE; int cnt = rc == 0 && !none ? omega_gpu_cmdlist_stamps(cl, stamps, MAX_M + 1) : -1; /* barrier none: only the first and last stamp exist, so the GPU span is not readable; elapsed (host wall, ~5 us above span) is the comparable figure */
+        if (rc == 0 && (g_program ? omega_gpu_cmdlist_submit_program(cl,&o,&st) : omega_gpu_cmdlist_submit(cl,&o,&st)) != 0) { printf("submit m=%u barrier=%s: %s\n", m, omega_gpu_cmdlist_barrier_name(bar), omega_gpu_session_last_error()); rc = -1; }
+        uint64_t stamps[MAX_M + 1]; const int none = !g_program && bar == OMEGA_GPU_CMDLIST_BARRIER_NONE; int cnt = rc == 0 && !none ? omega_gpu_cmdlist_stamps(cl, stamps, MAX_M + 1) : -1; /* NONE has only endpoints; program intermediate slots are front-end timestamps. */
         omega_gpu_session_unlock();
         if (rc == 0 && !none && cnt != (int)m + 1) { printf("stamps m=%u: %d\n", m, cnt); rc = -1; }
         if (rc != 0) break;
@@ -82,7 +95,8 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--n") == 0 && i + 1 < argc) n = (uint32_t)atoi(argv[++i]);
         else if (strcmp(argv[i], "--k") == 0 && i + 1 < argc) k = (uint32_t)atoi(argv[++i]);
         else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) out_path = argv[++i];
-        else { printf("usage: %s [--reps N] [--n ROWS] [--k K] [--out receipt.json]\n", argv[0]); return 2; }
+        else if (strcmp(argv[i], "--program") == 0) g_program=1;
+        else { printf("usage: %s [--reps N] [--n ROWS] [--k K] [--out receipt.json] [--program]\n", argv[0]); return 2; }
     }
     if (n % (128u * MAX_M) || k % 512u) { printf("n must be a multiple of %u and k of 512\n", 128u * MAX_M); return 2; }
     omega_gpu_fp8_set_depth(1, 0); /* one kernel (the step-by-step production kernel) for every split: the row count must not change the kernel */
@@ -106,11 +120,11 @@ int main(int argc, char **argv) {
     if (omega_gpu_session_sync_to_gpu(&xd) != 0) return 1;
 
     FILE *out = out_path ? test_out_open(out_path) : NULL;
-    if (out) fprintf(out, "{\"test\":\"OMEGA_GPU_LAUNCH_COST\",\"n\":%u,\"k\":%u,\"bytes\":%" PRIu64 ",\"reps\":%u,\"points\":[", n, k, bytes, reps);
+    if (out) fprintf(out, "{\"test\":\"OMEGA_GPU_LAUNCH_COST\",\"planner\":\"%s\",\"intermediate_stamps\":\"%s\",\"n\":%u,\"k\":%u,\"bytes\":%" PRIu64 ",\"reps\":%u,\"points\":[", g_program ? "whole-program" : "legacy", g_program ? "front-end-or-drain" : "drain", n, k, bytes, reps);
     static const uint32_t ms[] = { 1, 2, 4, 8, 16 };
     double t1[8] = { 0 }; int first_pt = 1;
     static const OmegaGpuCmdListBarrier bars[] = { OMEGA_GPU_CMDLIST_BARRIER_WFI, OMEGA_GPU_CMDLIST_BARRIER_WFI_ONLY, OMEGA_GPU_CMDLIST_BARRIER_WFI_DATA, OMEGA_GPU_CMDLIST_BARRIER_FLUSH_DATA, OMEGA_GPU_CMDLIST_BARRIER_NONE, OMEGA_GPU_CMDLIST_BARRIER_WFI };
-    for (unsigned bi = 0; bi < sizeof bars / sizeof bars[0]; bi++) { const OmegaGpuCmdListBarrier bar = bars[bi]; const char *bn = omega_gpu_cmdlist_barrier_name(bar); /* WFI first and last: drift control */
+    for (unsigned bi = 0; bi < (g_program ? 1u : sizeof bars / sizeof bars[0]); bi++) { const OmegaGpuCmdListBarrier bar = bars[bi]; const char *bn = g_program ? "program" : omega_gpu_cmdlist_barrier_name(bar); /* WFI first and last: drift control */
         for (size_t mi = 0; mi < sizeof ms / sizeof ms[0]; mi++) {
             Split s;
             if (make_split(&s, ms[mi], n, k, w, sc, x) != 0) { printf("split m=%u failed\n", ms[mi]); g_failed++; free_split(&s); break; }

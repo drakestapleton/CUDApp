@@ -1,6 +1,6 @@
 # Omega Runtime API v0
 
-Omega Runtime API version: 0.13.0
+Omega Runtime API version: 0.14.0
 
 Status: first written version, 2026-10-19 (slice R1, omega-mv#594, tracking #593). Source of truth is the C headers in
 `src/`. This file describes them; `docs/runtime/omega_runtime_api.manifest` lists them; `make test-runtime-api` checks the
@@ -36,8 +36,9 @@ signature against the headers on every run.
 
 ## 2. Version and compatibility rule
 
-The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.13.0**. It is a property of the list of entries and
+The version is MAJOR.MINOR.PATCH (semantic versioning), currently **0.14.0**. It is a property of the list of entries and
 their behaviour, not of the library build. Changes so far:
+- 0.14.0: adds experimental complete-access-set command-list recording and whole-program planning/submission. The seeded planner compares all outstanding dispatches, drains RAW/WAR/WAW hazards (including overlapping VA aliases), retains admission and completion ordering, and refuses programs that cannot fit one submission. Legacy recording/submission remains conservative.
 - 0.13.0: adds experimental `omega_gpu_prefill_attn256_scoped` in `omega_gpu_attention_mirror.h`. Mode 0 preserves ordinary attention; mode 1 copies the complete original 27B K/V into one GPU-private reusable buffer before attention; mode 2 uses the provisional Omega-selected 1024-row threshold. Omega checks geometry, bounds, allocation capacity and completed PREP/copy/ATTEND ordering. Other modes and unsupported mirrored shapes are refused. `copy_ns` reports copy chip time separately from the unchanged attention info layout; total call time includes allocation and copying. Existing host/device/recorded entries and defaults are unchanged. See `om/attention-mirror/README.md` for qualification status.
 - 0.12.0: adds experimental `omega_gpu_pf_qgemm_reading_option` with `(rows, index)`. The checked Omega policy returns the scoped rt, warps, wait and group values at indices 0..3, or UINT32_MAX for invalid input. This proposed adaptive profile uses 64 rows for requests at most 64 rows and 128 above that threshold. Callers obtain the checked height and use `omega_gpu_pf_qgemm_workspace_fits` to check existing row, padded-row and tile capacities before switching profiles. The query returns 1 only when all capacities cover the request; otherwise callers allocate a compatible workspace.
 - 0.11.0: adds experimental `omega_gpu_pf_qgemm_scoped` per-call options and the checked `omega_gpu_pf_qgemm_scoped_bm` tile-height query. Explicit calls neither read nor modify process-global tuning knobs. Tile storage must use the queried height; actual projection dimensions are validated on every call.
@@ -501,6 +502,26 @@ Types: `OmegaGpuCmdListOpts`, `OmegaGpuCmdListStats`, the opaque `OmegaGpuCmdLis
 `omega_gpu_cmdlist_add`, `omega_gpu_cmdlist_mark_independent`, `omega_gpu_cmdlist_submit`, `omega_gpu_cmdlist_submit_pair`,
 `omega_gpu_cmdlist_wait_for`, `omega_gpu_cmdlist_is_latched`, `omega_gpu_cmdlist_stamps`, `omega_gpu_cmdlist_barrier_name`.
 Up to `OMEGA_GPU_CMDLIST_MAX_LAUNCHES` (4096) launches per list.
+
+`OmegaGpuCmdListAccess` supplies a complete set of half-open GPU VA/byte ranges and
+`OMEGA_GPU_CMDLIST_ACCESS_READ` / `_WRITE` bits (combine both for in-place updates).
+`omega_gpu_cmdlist_add_accesses` copies up to `OMEGA_GPU_CMDLIST_MAX_ACCESSES` ranges;
+zero ranges means known empty. `omega_gpu_cmdlist_set_accesses` attaches or replaces
+the complete set on an existing launch recorded by a kernel helper, without
+changing its launch bytes; a rejected replacement leaves the previous set intact.
+Legacy `add` records unknown effects.
+`omega_gpu_cmdlist_plan_program` returns `OmegaGpuCmdListProgramPlan` counts without
+submitting; `omega_gpu_cmdlist_submit_program` emits exactly one submission, or
+refuses before queue commit when the ring plus platform prefix cannot hold it.
+Empty lists produce no submission. Callers hold the session lock.
+`waits` counts explicit WFI methods: admission, hazardous inter-launch drains,
+and the optional final timestamp WFI; the completion release is separate.
+The whole-program path rejects manual barrier/skip/first-barrier suppression and
+cross-list waits. A caller must describe every buffer the kernel reads or writes;
+an incomplete effect set is not safe. Unknown legacy effects force drains.
+The planner compares every launch since the previous drain, not just its immediate
+predecessor. The serialized legacy API remains available for controlled comparison.
+See `om/cmdlist/README.md` for method-source pins, tests and the chip runbook.
 
 Reason: omega-mv#580 is building pipelined and dependency-ordered execution on this module, so the options, statistics
 and barrier modes will grow. The measured extra cost of each launch in a list is about 30 us with a wait-for-idle barrier

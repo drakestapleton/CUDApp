@@ -18,17 +18,17 @@
  *
  * Ordering between launches (the race this module must not create): Mesa NVK, the working open driver for this class,
  * serialises dependent dispatches with WAIT_FOR_IDLE (NVCEC0 0x0110) or INVALIDATE_SHADER_CACHES ("This is also
- * implicitly a WFI", nvk_cmd_buffer.c:633); without one, consecutive grids of one channel may overlap. Every launch
- * here is preceded by WAIT_FOR_IDLE and the session's INVALIDATE_SHADER_CACHES_ALL (instruction, data, constant).
- * OMEGA_GPU_CMDLIST_BARRIER_NONE exists only as the negative control of the chip test.
+ * implicitly a WFI", nvk_cmd_buffer.c:633); without one, consecutive grids of one channel may overlap.
+ * Legacy submit precedes each launch by that barrier unless explicitly marked independent.
+ * submit_program derives the necessary drains from complete memory-effect sets instead;
+ * BARRIER_NONE remains only a legacy negative-control option.
  *
  * Launch methods (opts.mode):
  *   PCAS   QMD in memory, SEND_PCAS_A (qmd >> 8) + SEND_SIGNALING_PCAS2_B INVALIDATE_COPY_SCHEDULE (clcec0.h 0x02b4 /
- *          0x02c0; the NVK dispatch sequence, nvk_cmd_dispatch.c), no dependent QMD: 8 words per launch, a whole
- *          decode token fits one 64 KB ring.
- *   INLINE the session's own chip-proven words per launch (QMD0 null grid + QMD1 inline), bank from memory: ~200 words
- *          per launch, so the list is cut into several submissions, each waited before the next (the ring is copied to
- *          offset 0 on every submit).
+ *          0x02c0; the NVK dispatch sequence, nvk_cmd_dispatch.c), no dependent QMD: 4 launch words plus
+ *          4 words at each required barrier. The program API refuses overflow rather than splitting.
+ *   INLINE the session's own words per launch (QMD0 null grid + QMD1 inline), bank from memory: 198 launch words.
+ *          Legacy submit splits a long list; submit_program requires the whole stream to fit.
  *
  * Threading: the caller holds omega_gpu_session_lock() around add / submit (one channel, as for every API).
  * Uncertain completion: a marker timeout latches this module and then forces the session latch (the platform refuses
@@ -82,6 +82,21 @@ typedef struct {
     int32_t first_missing; /* index of the first launch whose semaphore was not DONE, -1 if none */
 } OmegaGpuCmdListStats;
 
+/* Complete launch memory effects, expressed as half-open GPU VA intervals.
+ * Overlapping intervals alias even when their base addresses differ. READ|WRITE
+ * describes an in-place buffer. Code, immutable launch banks and QMD slots are
+ * admitted by the leading barrier, not user-data dependencies. */
+#define OMEGA_GPU_CMDLIST_MAX_ACCESSES 16u
+#define OMEGA_GPU_CMDLIST_ACCESS_READ 1u
+#define OMEGA_GPU_CMDLIST_ACCESS_WRITE 2u
+typedef struct {
+    uint64_t va, bytes;
+    uint32_t flags;
+} OmegaGpuCmdListAccess;
+typedef struct {
+    uint32_t launches, submissions, words, waits;
+} OmegaGpuCmdListProgramPlan;
+
 typedef struct OmegaGpuCmdList OmegaGpuCmdList;
 
 /* Takes the session lock itself. Allocates the slots for up to cap launches. 0 ok, -1 (session error names it). A list
@@ -100,6 +115,30 @@ int omega_gpu_cmdlist_mark_independent(OmegaGpuCmdList *cl);
  * until submit returns. Returns the launch index, or -1 (full, bad arguments, QMD refused). L->timeout_ms and
  * L->spin_us are ignored (the list has one completion). */
 int omega_gpu_cmdlist_add(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L);
+/* Same record bytes as add(), with a COMPLETE memory-effect set. n_accesses=0
+ * means no user-data accesses, not unknown. Zero sizes, wrapping intervals and
+ * invalid flags are refused. Legacy add() means unknown and stays conservative.
+ * Caller holds the session lock; accesses are copied, not retained. */
+int omega_gpu_cmdlist_add_accesses(OmegaGpuCmdList *cl, const OmegaGpuLaunch *L,
+                                  const OmegaGpuCmdListAccess *accesses, uint32_t n_accesses);
+/* Attach/replace the COMPLETE effects of an already recorded launch, including
+ * one recorded by a kernel helper. Rejection leaves its previous effects intact.
+ * Record bytes are unchanged. Same range validation and caller lock as above. */
+int omega_gpu_cmdlist_set_accesses(OmegaGpuCmdList *cl, uint32_t index,
+                                  const OmegaGpuCmdListAccess *accesses, uint32_t n_accesses);
+/* Plan/submit a whole generated program. The seeded planner compares every
+ * outstanding launch since the last drain and inserts a full WFI+invalidate on
+ * RAW, WAR or WAW. No inter-launch wait is emitted for independent accesses.
+ * The leading admission barrier and completion release remain. ONE submission
+ * or refusal before queue commit; no implicit splitting. Empty programs plan
+ * and submit as zero submissions. PCAS/INLINE and stamps are supported;
+ * barrier/skip/first_barrier_none experimental controls and cross-list waits
+ * are refused on this path. Ring capacity includes the platform prefix.
+ * plan_program does not open a device; caller holds the lock for both calls. */
+int omega_gpu_cmdlist_plan_program(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
+                                  OmegaGpuCmdListProgramPlan *plan);
+int omega_gpu_cmdlist_submit_program(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts,
+                                    OmegaGpuCmdListStats *stats);
 /* Caller holds the lock, device open, not latched. Submits every recorded launch in order, waits for the completion,
  * checks every launch semaphore. 0 ok; -1 with the stage named (omega_gpu_session_last_error). */
 int omega_gpu_cmdlist_submit(OmegaGpuCmdList *cl, const OmegaGpuCmdListOpts *opts, OmegaGpuCmdListStats *st);

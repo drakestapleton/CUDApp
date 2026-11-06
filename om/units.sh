@@ -24,6 +24,7 @@ PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/n
 GXNUM=om/gemmex/num.om
 GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.om gemm_ex_x3=$GXNUM,om/gemmex/x3.om gemm_ex_acc=$GXNUM,om/gemmex/acc.om gemm_ex_dot=$GXNUM,om/gemmex/dot.om gemm_ex_epi=$GXNUM,om/gemmex/epi.om gemm_ex_fp8=$GXNUM,om/gemmex/fp8.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $GEMMEX"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS gemm_ex_policy=om/gemmex/policy.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }

@@ -15,12 +15,13 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 CC=${CC:-cc}
 cflags="-std=gnu11 -Wall -Wextra -D_GNU_SOURCE -O2 -ffp-contract=off -Isrc -Itools/dagsim"
+units="src/cudapp_om_core_sha.c src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c"
 $CC $cflags -c -o "$tmp/dagsim.o" tools/dagsim/dagsim.c
 $CC $cflags -c -o "$tmp/rx.o" src/runtime/rx_costmodel.c
 if [ -z "$ORACLE" ]; then
   OMEGA_SEEDED_OMC="$OMC" sh "$BRIDGE/tools/bridge-seeded" c om/tools/dag_eval.om > "$tmp/base.c"
   $CC $cflags -c -o "$tmp/base.o" "$tmp/base.c"
-  $CC $cflags -o "$tmp/oracle" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/base.o" src/sha256.c -lm
+  $CC $cflags -o "$tmp/oracle" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/base.o" src/sha256.c $units -lm
   ORACLE=$tmp/oracle
 fi
 
@@ -57,7 +58,7 @@ kill_one() {
   cmp -s om/tools/dag_eval.om "$tmp/$name.om" && { echo "mutant $name: sed changed nothing"; exit 1; }
   OMEGA_SEEDED_OMC="$OMC" sh "$BRIDGE/tools/bridge-seeded" c "$tmp/$name.om" > "$tmp/$name.c"
   $CC $cflags -c -o "$tmp/$name.o" "$tmp/$name.c"
-  $CC $cflags -o "$tmp/$name.bin" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/$name.o" src/sha256.c -lm
+  $CC $cflags -o "$tmp/$name.bin" tools/dagsim/dagsim_cli.c "$tmp/dagsim.o" "$tmp/rx.o" "$tmp/$name.o" src/sha256.c $units -lm
   "$ORACLE" eval "$fixture" --asof 2026-10-20 > "$tmp/$name.good" || true
   grep -q "$expect" "$tmp/$name.good" || { echo "mutant $name: oracle missing $expect"; cat "$tmp/$name.good"; exit 1; }
   "$tmp/$name.bin" eval "$fixture" --asof 2026-10-20 > "$tmp/$name.bad" || true

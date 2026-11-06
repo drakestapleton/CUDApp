@@ -67,7 +67,7 @@ with exit 31.
 
 | nvidia-smi field | Why | Gate |
 | --- | --- | --- |
-| `utilization.gpu` | `NV2080_CTRL_CMD_PERF_GET_GPUMON_PERFMON_UTIL_SAMPLES_V2` 0x20802096 (ctrl2080perf.h:550) has 55888-byte params (16 + 72 × 776); omc `devcall` traps above 16383 bytes (omc.om L5586 at e5b32567) | omc devcall size extension (aien-dev/omega-mv issue) |
+| `utilization.gpu` | `NV2080_CTRL_CMD_PERF_GET_GPUMON_PERFMON_UTIL_SAMPLES_V2` 0x20802096 (ctrl2080perf.h:550) has 55888-byte params (16 + 72 × 776); omc `devcall` traps 3 above 16383 bytes (omc.om L5585-5588 at e5b32567) | devcall bound extension, aien-dev/omega-mv#1042 (PROPOSED) |
 | `clocks.*` | ctrl2080clk.h in the 580.173.02 SDK defines no `NV2080_CTRL_CMD_` control | no public control |
 | `power.draw` | ctrl2080pmgr.h defines only `PMGR_GET_MODULE_INFO` 0x20802609; no power reading control | no public control |
 | `memory.total/used` | GB10 has no dedicated framebuffer; nvidia-smi itself prints `N/A` | none |

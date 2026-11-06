@@ -149,3 +149,41 @@ calls 100% of 120. No branch needs a justification.
 Mutants (9, all killed): the line of a message, the ternary-GEMV skip bound, the refusal `rc`, the append
 check, the residual mode field, the SM86 byte initialisation, the queries-per-CTA field, the SM121 length
 check and the GDN BF16 flag.
+
+## artexp (`tools/artifact_export.c`, switch `..._TOOLS_ARTEXP`)
+
+`om/tools/artexp.om` holds the command line (last flag wins, a flag without a value is unknown), the number
+parser (a port of `strtoul(…, 0)`: leading space, sign, `0x`/`0` prefixes, wrap-around overflow to the
+`ULONG_MAX` clamp, rejection above `0xffffffff`), the v1 contract checks (64-byte frozen ids, 40-byte
+lowercase commit), the bounds and tiling refusals, the choice of single-CTA or tensor-loop kernel with its
+launch grid and CTA budget, the attention ratio and heads-per-CTA, the parameter table, the configuration,
+every manifest text and message, and the exit status. The C shell runs each library call the unit names
+(spec, codegen, SHA-256, register and QMD checks, the export) and writes the unit's texts. The header
+constants (`OMEGA_GPU_MATMUL_MAX_CTAS`, `OMEGA_ARTIFACT_OK`) go in as facts. Deviation: an argument of
+262144 bytes or more aborts; Linux refuses any argument over `MAX_ARG_STRLEN` (131072).
+
+`artexp.sh` links both builds against the real library and runs each case in a fresh folder; the report holds
+stdout, stderr, exit and every file the export wrote (name, size, sha256). Partition, from the source: no
+arguments, a mode alone, an unknown mode, each flag dangling, an unknown flag; a missing out, contract or
+commit; contract 63/65 bytes; commit 39/41 bytes, uppercase, and the bytes either side of `0`–`9` and
+`a`–`f`; the other mode's contract; a mode that only shares a prefix; m, k and n at the bound, +1 and
++16, zero and missing; the tiling remainders; the number forms (space, tab, `+`, `-`, `0x`, `0X`, octal, `08`,
+`0x`, `0xg`, trailing text, empty, `1e3`, `-0`, the 32-bit and 64-bit edges, wrap-around values,
+2^64 + 16, `-(2^64 − 8)`, 32 leading zeros); shapes on both kernels and at the budget clamp; attention at each
+power-of-two ratio up to 64, a non-power ratio, zero heads, 65 heads; an existing `out.cubin`, a dangling
+link at `out.manifest`, a missing folder, an empty and a 5000-byte prefix.
+
+116 cases. Coverage of the oracle under the differential: lines 99.27% of 137, branches executed 100% and
+taken 93.48% of 138. The 9 untaken branches (and the one unrun line, the QMD message) are library
+refusals that the checks before them make unreachable with the current library, and `strtoul` returning a
+NULL end pointer:
+- `omega_matmul_spec_init` refused after the bound and tiling checks passed;
+- `omega_blackwell_codegen_matmul`, the tensor-loop codegen and the attention codegen refused for an
+  accepted shape;
+- `budget == 0`: m ≤ 8192 gives m/16 ≤ 512, so the budget 1024/(m/16) is at least 2
+  (Wolfram: `{8192/16, 1024/(8192/16)} -> {512, 2}`);
+- `omega_bw_gpr_declared_ok` and the QMD builders refused for a kernel the library produced.
+
+Mutants (10, all killed): the k tile, the single-CTA test, the column grid, the hex base, the overflow flag,
+the 32-bit bound, the attention shared bytes (`(3h+1)·512`, Wolfram `Expand[(3h+1)*128*4] -> 512+1536h`),
+the lowercase hex range, the power-of-two loop and the heads bound.

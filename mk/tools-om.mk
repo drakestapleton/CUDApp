@@ -4,7 +4,7 @@
 # a flipped-record negative control and recompiled .om mutants through the pinned omc and bridge
 # (OMEGA_OMC, OMEGA_BRIDGE). Host only; run under bwrap/taskset (tests/tools-om/README.md).
 .PHONY: test-tools-om test-tools-om-own30b test-tools-om-doctor test-tools-om-fmt test-tools-om-ampcorp \
-	test-tools-om-ampfam
+	test-tools-om-ampfam test-tools-om-artexp
 test-tools-om-own30b: tools/own30b_decode_profile.c src/cudapp_om_own30b_prof.c tests/tools-om/own30b_diff.c
 	@mkdir -p $(OUT_DIR)
 	$(CC) $(CFLAGS) -DCUDAPP_MIGRATION_PENDING_C_TOOLS_OWN30B -c -o $(OUT_DIR)/own30b_decode_profile_c.o tools/own30b_decode_profile.c
@@ -17,4 +17,7 @@ test-tools-om-ampcorp: tools/ampere_corpus.c src/cudapp_om_ampcorp.c om/tools/am
 	sh tests/tools-om/ampcorp.sh
 test-tools-om-ampfam: tools/ampere_families.c src/cudapp_om_ampfam.c om/tools/ampfam.om tests/tools-om/ampfam_stub.c tests/tools-om/ampfam.sh
 	sh tests/tools-om/ampfam.sh
-test-tools-om: test-tools-om-own30b test-tools-om-fmt test-tools-om-doctor test-tools-om-ampcorp test-tools-om-ampfam
+test-tools-om-artexp: tools/artifact_export.c src/cudapp_om_artexp.c om/tools/artexp.om tests/tools-om/artexp.sh
+	sh tests/tools-om/artexp.sh
+test-tools-om: test-tools-om-own30b test-tools-om-fmt test-tools-om-doctor test-tools-om-ampcorp test-tools-om-ampfam \
+	test-tools-om-artexp

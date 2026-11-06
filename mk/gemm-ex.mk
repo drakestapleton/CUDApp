@@ -100,14 +100,14 @@ GEMM_EX_MUTANTS = \
 	'acc|s/^f = f64 bitcast f32 gx_get view s add ix 1 4$$/f = f64 bitcast f32 gx_get view s add ix 2 4/' \
 	'dot|s/^s = add s mul x f$$/s = add s x/' \
 	'epi|s/^if ne bt bitcast f64 ulong 0$$/if eq bt bitcast f64 ulong 0/' \
-	'fp8|s/^x = mul x f64 bitcast f32 uint sv$$/x = mul x f64 bitcast f32 uint get q 7/'
+	'fp8|s/^sv = ulong gx_get view s sub cb sb 4$$/sv = ulong gx_get view s 0 4/'
 test-gemm-ex-om-mutants: $(OUT_DIR)/libomega_gpu.a
 	@$(GEMM_EX_TOOLS)
 	@n=0; for mu in $(GEMM_EX_MUTANTS); do n=$$((n+1)); u=$${mu%%|*}; m=$${mu#*|}; d=$$(pwd)/$(GEMM_EX_DIR)/mutant$$n; \
 	rm -rf $$d; mkdir -p $$d; sed "$$m" om/gemmex/$$u.om > $$d/$$u.om; \
 	if cmp -s $$d/$$u.om om/gemmex/$$u.om; then echo "MUTANT $$n BROKEN: $$u '$$m' changed nothing"; exit 1; fi; \
 	OMEGA_UNITS=gemm_ex_$$u=$$(pwd)/om/gemmex/num.om,$$d/$$u.om OMEGA_UNITS_DEST=$$d OMEGA_OMC=$(GEMM_EX_OMC) \
-		OMEGA_BRIDGE=$(OMEGA_BRIDGE_DIR) sh om/units.sh > /dev/null 2>&1 || { echo "MUTANT $$n BROKEN: $$u does not compile"; exit 1; }; \
+		OMEGA_BRIDGE=$(OMEGA_BRIDGE_DIR) sh om/units.sh > $$d/units.log 2>&1 || { echo "MUTANT $$n BROKEN: $$u does not compile: $$(tail -1 $$d/units.log)"; exit 1; }; \
 	$(call GEMM_EX_LINK,$$d/test,,$$d/cudapp_om_gemm_ex_$$u.c) || exit 1; \
 	if $$d/test --host-only > $$d/test.log 2>&1; then echo "MUTANT $$n SURVIVED: $$u '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ($$u '$$m'): $$(grep -m1 -e FAIL -e 'trap\|abort' $$d/test.log)"; \

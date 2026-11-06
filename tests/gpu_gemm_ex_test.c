@@ -248,8 +248,9 @@ static int run_make(Run *r, const Case *cs) {
         x->scale_stride_a = cs->batch > 1 && !cs->bcast_a ? r->nsa : 0; x->scale_stride_b = cs->batch > 1 && !cs->bcast_b ? r->nsb : 0;
         uint64_t na = r->nsa * (x->scale_stride_a ? cs->batch : 1u), nb = r->nsb * (x->scale_stride_b ? cs->batch : 1u);
         r->sa = malloc(na * 4); r->sb = malloc(nb * 4);
-        for (uint64_t i = 0; i < na; i++) r->sa[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4);
-        for (uint64_t i = 0; i < nb; i++) r->sb[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4);
+        /* scales of both signs under inf/NaN: a recomputed non-finite output keeps the scale product's sign */
+        for (uint64_t i = 0; i < na; i++) r->sa[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4) * (cs->edge == 2 && (rnd() & 1u) ? -1.0f : 1.0f);
+        for (uint64_t i = 0; i < nb; i++) r->sb[i] = ldexpf(1.0f + (float)(rnd() % 8u) / 8.0f, (int)(rnd() % 9u) - 4) * (cs->edge == 2 && (rnd() & 1u) ? -1.0f : 1.0f);
         x->scale_a = r->sa; x->scale_b = r->sb;
     }
     x->a = r->A; x->b = r->B; x->c = r->C;
@@ -488,6 +489,7 @@ static void edge_cases(Case *e, int *ne) {
     c = mk(1, 1, 1, 9, 9, 9); c.beta = 0.0f; e[n++] = c;                          /* beta 0 with NaN in C: never read */
     c = mk(1, 1, 0, 7, 5, 3); c.batch = 3; c.bcast_a = 1; c.pc = 2; e[n++] = c;   /* broadcast A over a batch */
     c = mk(3, 3, 0, 40, 30, 100); c.scale = 2; c.bm = 7; c.bn = 16; c.bk = 32; e[n++] = c;
+    c = mk(1, 1, 0, 20, 19, 40); c.edge = 2; c.scale = 2; c.bm = 7; c.bn = 8; c.bk = 16; e[n++] = c; /* inf/NaN, signed block scales */
     c = mk(3, 4, 1, 40, 30, 100); c.scale = 1; c.batch = 2; e[n++] = c;
     c = mk(1, 1, 0, 3, 5, 16385); e[n++] = c;                                     /* k past one core call */
     c = mk(0, 0, 0, 3, 5, 1809); e[n++] = c;                                      /* bf16x3 k past one part */
@@ -726,6 +728,8 @@ static void refusals(void) {
     y = x; y.c_type = 5; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "c_type 5");
     y = x; y.compute = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "compute 3");
     y = x; y.scale = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "scale 3");
+    y = x; y.scale = 3; y.scale_a = b; y.scale_b = b; y.block_m = y.block_n = y.block_k = 1;
+    refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "scale 3 with finite scales and blocks");
     y = x; y.lda = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "lda 3 < k 4");
     y = x; y.op_b = 1; y.ldb = 3; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "op_b T, ldb 3 < k 4");
     y = x; y.ldc = 2; refuses(y, OMEGA_GPU_GEMM_BAD_ARGS, "ldc 2 < n 4");

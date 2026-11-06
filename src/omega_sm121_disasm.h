@@ -8,6 +8,11 @@
  * with nvdisasm fails on any form this file does not know. The control bits (stall, barriers, yield, reuse:
  * bits 105..127) are not part of the text, as in nvdisasm's default listing.
  *
+ * The decoder is the seeded Omega unit om/disasm/sm121_dis.om (generated src/cudapp_om_sm121_dis.c, om/units.sh).
+ * The C decoder it replaces stays in src/omega_sm121_disasm.c as the differential oracle: make CUDAPP_DISASM=om
+ * (the default) calls the Omega unit, CUDAPP_DISASM=c the C (CUDAPP_MIGRATION_PENDING_C_DISASM), CUDAPP_DISASM=diff
+ * both, failing on any difference; make test-om-disasm checks that they agree.
+ *
  * tools/sm121dis/sm121dis.c is the command line (a listing in nvdisasm's layout); tools/sm121dis/check.sh compares
  * it with nvdisasm, the oracle, on every kernel the library builds (captured with OMEGA_KERNEL_DUMP_DIR). */
 #ifndef OMEGA_SM121_DISASM_H

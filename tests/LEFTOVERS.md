@@ -36,29 +36,25 @@ calls both implementations, not two Omega wrappers.
 | `src/omega_native_artifact_snapshot.h` | Types, constants and function declarations only; no executable computation to port. |
 | `src/omega_gpu_attention_mirror.h` | Function declaration and contract only; no executable computation to port. |
 | `src/omega_gpu_fp8_internal.h` | Function declarations and contract only; no executable computation to port. |
-| `src/omega_path_check.h` | Retains caller-pointer/null custody, NUL-terminated byte loads and checked stores; every alphabet, component and capacity decision is the scalar Omega transducer. Reads are streaming, not an artificial fixed-size view. |
+| `src/omega_path_check.h` | Public ABI adapter only. The default path asks `omega2_pathlen` for the index of the first 0 inside the destination capacity, then `omega2_pathcopy` classifies, checks components and stores that exact view. Neither call walks a pointer in C. `omega2_pathlen` stops at the first 0 and never reads past the bound, so a NUL-terminated source is not read past its allocation. Empty output, empty input and a missing 0 inside `cap` are refused here; a nonempty NULL source is refused by the binding. The old classifying pointer walk remains only under `CUDAPP_MIGRATION_PENDING_LEFTOVERS`. |
 | `src/omega_numeric_lifecycle.h` | Retains C11 atomic loads/stores/CAS with their original sequential consistency. Omega maps acquisition outcome and queries the poison state. The compare-exchange itself must stay atomic, not split into Omega read/compute/write. |
 | `src/omega_gpu_q36_native.h` | Retains native object/pointer projection and host lease effects. Existing context/graph/residency policy already calls Omega. Added scalar policy handles status, context disposition and bounded release extent. Prepared-lease iteration invokes host releases, not a plain-data kernel. |
 
-The path transducer works without a new runtime: C walks external NUL-terminated
-storage while Omega controls state and every acceptance choice. The remaining
-pointer traversal is not represented as a plain-data Omega loop. The lane
-constraint requires either typed views or a concrete bridge extension for that
-residue. Proposal (NOT_IMPLEMENTED): extend `tools/native --freestanding` with
-borrowed read-only/writable byte views, carrying `(pointer, count)` without an
-owned OM2 array or arena. A `pathcopy(input, output)` unit would scan at most the
-output count, stop at the first NUL, validate components, and write the result
-inside Omega. Refuse null nonempty views, non-unit byte stride, overlap other
-than exact in-place use, and an out-of-range access before a store. Preserve the
-current public `omega_path_copy(char *, size_t, const char *)` ABI and refusal
-postcondition `out[0] = 0` whenever output exists. Add no heap, libc, signal,
-thread or syscall dependency. Gate the extension with existing path differential,
-red control and mutants, freestanding unresolved-symbol allowlist and buffer
-canaries. The current native frontend explicitly admits only integer-scalar
-OM-1 under `--freestanding` (`tools/native:34`); OM2 arrays refuse rc110.
-Until that extension is available, byte loading/storing remains C pointer glue,
-not a claim that the traversal itself was ported. Atomic execution and host
-lease calls are also deliberately not modeled as ordinary Omega memory.
+`om/components/pathcopy.om` is the freestanding borrowed-byte path copy. It is not a
+`PURE_UNITS` scalar: the pinned scalar frontend has no views. `om/native-freest.sh`
+regenerates `src/cudapp_freest_pathcopy.c` from omega-bridge draft #72
+(`tools/native --freestanding`, both AArch64 and x86-64 halves). The committed C is
+the artifact. `omega2_pathlen` stops at the first 0 inside the caller-supplied bound and refuses
+a nonempty NULL view. `omega2_pathcopy` then receives exactly the bytes through that 0, copies an
+accepted path and writes the trailing 0. Neither call inspects past its bound. Classification,
+component checks and stores are Omega. The public header no longer walks the pointer.
+
+Five source mutants (alphabet, punctuation, slash-state, invalid-byte, dot-dot) are
+regenerated and must die with assertion exit 1. The scalar leftover mutants no longer
+include dot-dot or capacity: those sites moved into `pathcopy.om`, and the scalar
+unit's mode-1 path is not what the differential calls for them.
+
+Atomic execution and host lease calls remain deliberately not modeled as ordinary Omega memory.
 
 ## Replay and acceptance
 
@@ -83,8 +79,9 @@ exercises ordinal, numeric latch and context/release policy and requires the
 red executable (deliberately unequal differential result) to fail.
 `test-leftovers-mutants` edits the `.om` source, regenerates each scalar unit
 with the pinned bridge, and requires assertion exit 1 for every mutant. Compiler
-failure or a signal is not a killed mutant. The mutated sites cover alphabet,
-punctuation, dot-dot, capacity, ordinal, acquisition, poison, context and extent.
+failure or a signal is not a killed mutant. The scalar sites cover alphabet,
+punctuation, ordinal, acquisition, poison, context and extent. Dot-dot and capacity
+moved to `tests/pathcopy_mutants.py`.
 
 ## Partitions and coverage
 

@@ -1,5 +1,19 @@
 {
-  "schema_version": "1.0.0",
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T07:46:06Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:2530415727e5d9a3310bcce623811ea414a5f51cbb79e2d6d429d47d4b9226ca",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 2,
+      "generated_at_commit": "f4a8a6985c65e302c066be7fcc49cf5da5892895",
+      "source_tree": "sha256:1ddc1d6982789da3b8b75e930246af2ed521c05d620e0836058d9ff4c36834b6"
+    }
+  },
   "name": "engine",
-  "purpose": "GPU engine, wait, reserve, cache, serving, lifecycle and requalify decisions"
+  "purpose": "GPU engine, wait, reserve, cache, serving, lifecycle and requalify decisions",
+  "schema_version": "1.0.0"
 }

@@ -1,6 +1,20 @@
 {
-  "schema_version": "1.0.0",
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T07:46:06Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:d093bc6ac88acc6c4def6a9cc92180630a213fa20c895c0c99d1eaf6c39394c3",
+      "evidence_files": 2,
+      "evidence_root": "sha256:c7f4b4b05603ad32208bf317280bf39e3b4e9957a8789f42316af9736fe3766f",
+      "files": 2,
+      "generated_at_commit": "f4a8a6985c65e302c066be7fcc49cf5da5892895",
+      "source_tree": "sha256:8f56f37cf6bc51ff7f10d6a7e9661f7dc2d5aa27c4f5139bd6c1871eeeed89f4"
+    }
+  },
+  "layer": "evidence",
   "name": "2026-11-06",
   "purpose": "Host differential, mutant and family-test receipt for the API shell port. Chip tier is not run.",
-  "layer": "evidence"
+  "schema_version": "1.0.0"
 }

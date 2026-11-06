@@ -12,7 +12,7 @@ if [ -n "${OMEGA_OMC:-}" ]; then sh om/units.sh --check; fi
 UNITS="src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_cg_matmul.c
   src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_tensor.c
   src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_block.c
-  src/cudapp_om_cg_vecadd.c src/cudapp_om_bw_enc_sm121.c src/cudapp_freest_f16.c src/cudapp_om_core_sha.c src/cudapp_om_cg_bind.c"
+  src/cudapp_om_cg_vecadd.c src/cudapp_om_bw_enc_sm121.c src/cudapp_freest_f16.c src/cudapp_om_core_sha.c src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c"
 HAZARD="src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c"
 python3 - "$REGALLOC_OUT/oracle_names.h" <<'PY'
 import pathlib,re,sys

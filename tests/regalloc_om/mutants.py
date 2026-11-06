@@ -19,7 +19,8 @@ CC = ENV.get('CC', 'cc')
 UNITS = ['regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_params', 'cg_matmul_i32',
          'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block', 'cg_vecadd', 'cg_bind',
          'bw_hazard', 'bw_hazard_dec']
-FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c']
+FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c',
+         'src/cudapp_om_core_sha.c', 'src/cudapp_freest_leftovers.c']
 FLAGS = ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections', '-Isrc']
 LINK = {
     'liveness': ['tests/regalloc_om/liveness.c', str(OUT / 'successor.o'), 'src/omega_gpu_om_ir.c'],

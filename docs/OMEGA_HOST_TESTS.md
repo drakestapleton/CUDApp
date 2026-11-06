@@ -7,6 +7,22 @@ set their environment as described in [the f64 host runbook](CODEGEN_F64.md).
 Builds and simulations run in the required device-free `bwrap` namespace;
 they must not open `/dev/nvidia*` or `/dev/aien-gpu`.
 
+## Integration long-run receipts (2026-11-06)
+
+These are host differentials, not chip qualification. All three ran inside
+`bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10`.
+
+| Path | Source | Observed result | Local receipt |
+| --- | --- | --- | --- |
+| QMMA | `62640e93b39ca6a6a33a1795d5463db1297eb81f` | rc 0; structure exhaustive NITER bit-basis PASS (94 values, zero refused); NITER-dependence and output mutants caught; `CODEGEN QMMA DIFF PASS (714275 cases)` | `/tmp/integ/codegen-a-qmma-bwrap.log` |
+| TGEMM exhaustive | `62640e93b39ca6a6a33a1795d5463db1297eb81f` | rc 0; mutant caught; `CODEGEN TGEMM EXHAUSTIVE DIFF PASS (17276981 accepted cases)` | `/tmp/integ/codegen-a-tgemm-exhaustive-bwrap.log` |
+| MoE | #284 `262275e` | record negative control caught; `CODEGEN MOE DIFF PASS (1732053 programs, 10681 refusals)` | `/tmp/integ/moe-final-diff-262275e-b.log` |
+
+QMMA and TGEMM commands were `OUT_DIR=build/integ-long-62640` followed by the
+wrapper above and respectively `make -j3 test-codegen-qmma-diff` and
+`make -j3 test-codegen-tgemm-exhaustive`. MoE is Main's recorded differential
+receipt. These results do not substitute for the integrated full host suite.
+
 On x86-64, when you did not set `CC`, `make` uses gcc. GNU make's built-in
 `CC=cc` is left alone on AArch64, so a GB10 `make` still invokes `cc`.
 `make CC=clang test` still uses the compiler you named. Engine simulator

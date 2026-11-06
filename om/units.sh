@@ -28,7 +28,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 UNITS="$UNITS apish_shp=om/api/apish_shp.om apish_pack=om/api/apish_pack.om apish_slot=om/api/apish_slot.om apish_blk=om/api/apish_blk.om apish_trit=om/api/apish_trit.om"
 fi
 REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
-for entry in fill count args pad idle route perm widen; do
+for entry in fill count args argsx pad idle route perm widen next; do
   REST="$REST ar_$entry=om/apirest/data.om,om/apirest/$entry.om"
 done
 for entry in nan scale fold foldh acc mag; do
@@ -40,6 +40,10 @@ done
 for entry in tern trits rev; do
   REST="$REST ar_$entry=om/apirest/terndata.om,om/apirest/$entry.om"
 done
+for entry in pfcopy pfratio; do
+  REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_shp.om,om/apirest/$entry.om"
+done
+REST="$REST ar_calc=om/apirest/calc.om ar_launch=om/apirest/launch.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

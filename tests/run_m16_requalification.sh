@@ -42,7 +42,7 @@ GATE_RECEIPT=false
 
 # nvrm.c calls the seeded Omega class policy (src/omega_ampere_qmd.c) and the library admission
 # (src/omega_gpu_chip.c, om/admission/chip_admit.om) through their generated bindings.
-NVRM_DEPS="-I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_chip_admit.c"
+NVRM_DEPS="-I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c"
 
 # 1. Build M16 binaries
 echo -e "\n[*] Step 1: Compiling M16 binaries..."

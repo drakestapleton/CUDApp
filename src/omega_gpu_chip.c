@@ -4,6 +4,7 @@
 #include "omega_gpu_chip.h"
 
 #include "cudapp_native.h"
+#include "omega_chip_enum.h"
 
 #include <dirent.h>
 #include <stdio.h>
@@ -20,7 +21,7 @@ static const OmegaGpuChipRow k_rows[] = {
 
 const OmegaGpuChipRow *omega_gpu_chip_find(uint16_t vendor, uint16_t device) {
     for (size_t i = 0; i < sizeof k_rows / sizeof k_rows[0]; i++)
-        if (k_rows[i].vendor == vendor && k_rows[i].device == device) return &k_rows[i];
+        if (omega_chip_enum_decide(0, vendor, device, k_rows[i].vendor, k_rows[i].device)) return &k_rows[i];
     return NULL;
 }
 
@@ -44,16 +45,16 @@ int omega_gpu_chip_scan(const char *root, OmegaGpuPciDev *out, int max) {
     int found = 0;
     struct dirent *e;
     while ((e = readdir(d)) != NULL) {
-        if (e->d_name[0] == '.') continue;
+        if (omega_chip_enum_decide(5, (unsigned char)e->d_name[0], 0, 0, 0)) continue;
         char p[4400];
         unsigned long vendor, device, cls;
         snprintf(p, sizeof p, "%s/%s/vendor", dir, e->d_name);
-        if (read_hex(p, &vendor) != 0 || vendor != OMEGA_GPU_PCI_VENDOR_NVIDIA) continue;
+        if (read_hex(p, &vendor) != 0 || !omega_chip_enum_decide(1, vendor, 0, 0, 0)) continue;
         snprintf(p, sizeof p, "%s/%s/class", dir, e->d_name);
-        if (read_hex(p, &cls) != 0 || (cls >> 16) != 0x03u) continue; /* display/3D only: skips the audio function */
+        if (read_hex(p, &cls) != 0 || !omega_chip_enum_decide(2, cls, 0, 0, 0)) continue; /* display/3D only */
         snprintf(p, sizeof p, "%s/%s/device", dir, e->d_name);
         if (read_hex(p, &device) != 0) continue;
-        if (found < max && out) {
+        if (omega_chip_enum_decide(4, found, max, out != NULL, 0)) {
             OmegaGpuPciDev *g = &out[found];
             memset(g, 0, sizeof *g);
             snprintf(g->bdf, sizeof g->bdf, "%.63s", e->d_name);
@@ -146,7 +147,11 @@ int omega_gpu_chip_admit_card(uint32_t domain, uint32_t bus, uint32_t slot, uint
                               uint16_t device, uint32_t *target_sm, char *why, size_t n) {
     /* NV_ESC_CARD_INFO lists GPUs only, so the card is given the display class 0x030000. */
     OmegaGpuPciDev card = { .vendor = vendor, .device = device, .class_code = 0x030000u };
-    snprintf(card.bdf, sizeof card.bdf, "%04x:%02x:%02x.%x", domain & 0xffffu, bus & 0xffu, slot & 0x1fu, function & 7u);
+    snprintf(card.bdf, sizeof card.bdf, "%04x:%02x:%02x.%x",
+             (unsigned)omega_chip_enum_decide(3, domain, 0xffffu, 0, 0),
+             (unsigned)omega_chip_enum_decide(3, bus, 0xffu, 0, 0),
+             (unsigned)omega_chip_enum_decide(3, slot, 0x1fu, 0, 0),
+             (unsigned)omega_chip_enum_decide(3, function, 7u, 0, 0));
     OmegaGpuChipAdmission a = { 0 };
     *target_sm = 0;
     if (omega_gpu_chip_admit(&card, 1, card.bdf, &a) == OMEGA_GPU_ADMIT_OK) {

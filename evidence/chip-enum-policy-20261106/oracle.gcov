@@ -1,0 +1,60 @@
+        -:    0:Source:~/work/cudastack/lanes/ToolsChip/tests/chip_enum_oracle.c
+        -:    0:Graph:~/work/cudastack/lanes/ToolsChip/build/chip-enum/om-chip_enum_oracle.gcno
+        -:    0:Data:~/work/cudastack/lanes/ToolsChip/build/chip-enum/om-chip_enum_oracle.gcda
+        -:    0:Runs:4
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#define CUDAPP_MIGRATION_PENDING_C_CHIP_ENUM_POLICY 1
+        -:    3:#include "omega_chip_enum.h"
+function oracle_enum called 460713 returned 100% blocks executed 100%
+   460713:    4:uint64_t oracle_enum(uint64_t m, uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
+   460713:    5:    return omega_chip_enum_decide(m, a, b, c, d);
+call    0 returned 460713
+        -:    6:}
+        -:    0:Source:src/omega_chip_enum.h
+        -:    0:Graph:~/work/cudastack/lanes/ToolsChip/build/chip-enum/om-chip_enum_oracle.gcno
+        -:    0:Data:~/work/cudastack/lanes/ToolsChip/build/chip-enum/om-chip_enum_oracle.gcda
+        -:    0:Runs:4
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#ifndef OMEGA_CHIP_ENUM_H
+        -:    3:#define OMEGA_CHIP_ENUM_H
+        -:    4:#include "cudapp_native.h"
+        -:    5:#include "omega_gpu_chip.h"
+        -:    6:#include <stdlib.h>
+        -:    7:#ifndef CUDAPP_MIGRATION_PENDING_C_CHIP_ENUM_POLICY
+        -:    8:#define CUDAPP_MIGRATION_PENDING_C_CHIP_ENUM_POLICY 0
+        -:    9:#endif
+        -:   10:/* Modes: row identity, raw vendor, display class, field mask, output slot, dot entry. */
+function omega_chip_enum_decide called 460713 returned 100% blocks executed 100%
+   460713:   11:static inline uint64_t omega_chip_enum_decide(uint64_t mode, uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
+        -:   12:#if CUDAPP_MIGRATION_PENDING_C_CHIP_ENUM_POLICY
+   460713:   13:    if (mode == 0) return a == c && b == d;
+branch  0 taken 131073 (fallthrough)
+branch  1 taken 329640
+branch  2 taken 65537 (fallthrough)
+branch  3 taken 65536
+branch  4 taken 2 (fallthrough)
+branch  5 taken 65535
+   329640:   14:    if (mode == 1) return a == OMEGA_GPU_PCI_VENDOR_NVIDIA;
+branch  0 taken 65553 (fallthrough)
+branch  1 taken 264087
+   264087:   15:    if (mode == 2) return (a >> 16) == 0x03u;
+branch  0 taken 1041 (fallthrough)
+branch  1 taken 263046
+   263046:   16:    if (mode == 4) return (int64_t)a < (int64_t)b && c;
+branch  0 taken 578 (fallthrough)
+branch  1 taken 262468
+branch  2 taken 272 (fallthrough)
+branch  3 taken 306
+branch  4 taken 136 (fallthrough)
+branch  5 taken 136
+   262468:   17:    if (mode == 5) return a == '.';
+branch  0 taken 256 (fallthrough)
+branch  1 taken 262212
+   262212:   18:    return a & b;
+        -:   19:#else
+        -:   20:    uint64_t result;
+        -:   21:    if (omega_chip_enum(&result, mode, a, b, c, d) != OMEGA_OK) abort();
+        -:   22:    return result;
+        -:   23:#endif
+        -:   24:}
+        -:   25:#endif

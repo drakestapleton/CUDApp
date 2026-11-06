@@ -69,6 +69,23 @@ return o_leave(({uint64_t p0=v1;uint64_t p1=4318ULL;f0(p0, p1);}));
 if(({uint64_t _a=v0;uint64_t _b=2ULL;o_op(6, 5, _a,_b);})){
 return o_leave(({uint64_t p0=({uint64_t _a=v1;uint64_t _b=16ULL;o_op(16, 5, _a,_b);});uint64_t p1=3ULL;f0(p0, p1);}));
 }
+if(({uint64_t _a=v0;uint64_t _b=4ULL;o_op(6, 5, _a,_b);})){
+if(({uint64_t _a=v3;uint64_t _b=0ULL;o_op(6, 5, _a,_b);})){
+return o_leave(0ULL);
+}
+uint64_t __attribute__((unused)) v5=({uint64_t _a=v1;uint64_t _b=63ULL;o_op(16, 5, _a,_b);});
+uint64_t __attribute__((unused)) v6=({uint64_t _a=v2;uint64_t _b=63ULL;o_op(16, 5, _a,_b);});
+if(({uint64_t _a=v5;uint64_t _b=v6;o_op(7, 5, _a,_b);})){
+return o_leave(v5);
+}
+if(({uint64_t _a=v1;uint64_t _b=v2;o_op(8, 5, _a,_b);})){
+return o_leave(1ULL);
+}
+return o_leave(0ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=5ULL;o_op(6, 5, _a,_b);})){
+return o_leave(({uint64_t p0=v1;uint64_t p1=46ULL;f0(p0, p1);}));
+}
 return o_leave(({uint64_t _a=v1;uint64_t _b=v2;o_op(12, 5, _a,_b);}));
 }
 uint32_t omega_chip_enum(uint64_t *result, volatile uint64_t p0, volatile uint64_t p1, volatile uint64_t p2, volatile uint64_t p3, volatile uint64_t p4){

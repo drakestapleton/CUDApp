@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Independent writer for the built-in profiler fixture. The Omega `fix` mode
  * must produce these same 176 bytes. It does not open a device. */
+#define _POSIX_C_SOURCE 200809L
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

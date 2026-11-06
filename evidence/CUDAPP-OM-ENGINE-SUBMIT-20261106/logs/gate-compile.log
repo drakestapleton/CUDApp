@@ -1,0 +1,8 @@
++ gcc -O2 -Wall -Wextra -Werror <includes> nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c -o /tmp/es2/m16_requalify
+m16_requalify rc=0
++ gcc -O2 -Wall -Wextra -Werror <includes> nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c -o /tmp/es2/m16_concurrent
+m16_concurrent rc=0
++ gcc -O2 -Wall -Wextra -Werror <includes> nvrm/nvrm.c m16/m16_native.c nvrm/lifecycle_gates.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c -o /tmp/es2/lifecycle_gates
+lifecycle_gates rc=0
++ gcc -O2 -Wall -Wextra -Werror <includes> nvrm/nvrm.c m16/m16_native.c nvrm/submission_visibility_gates.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c -o /tmp/es2/submission_visibility_gates
+submission_visibility_gates rc=0

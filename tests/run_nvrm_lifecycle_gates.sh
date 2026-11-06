@@ -16,12 +16,12 @@ echo "Host: $(uname -n) ($(uname -m))"
 mkdir -p build
 echo -e "\n[*] Building lifecycle_gates..."
 gcc -O2 -Wall -Wextra -Werror \
-  -I./nvrm -I./m16 \
+  -I./nvrm -I./m16 -I./src \
   -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc \
   -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc \
   -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
   -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
-  nvrm/nvrm.c m16/m16_native.c nvrm/lifecycle_gates.c -o build/lifecycle_gates
+  nvrm/nvrm.c m16/m16_native.c nvrm/lifecycle_gates.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c -o build/lifecycle_gates
 
 echo "    lifecycle_gates built cleanly."
 

@@ -5,6 +5,14 @@
  */
 #include "m16_native.h"
 #include "cpu_barrier.h"
+/* The pass/fail predicates (word count, pre-notification control, positive
+ * wait, slot retired before reuse) come from om/engine/eng.om (ops VIS and
+ * REQF, src/omega_eng_gates.h); the C oracle is behind
+ * CUDAPP_MIGRATION_PENDING_C_VISIBILITY. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_VISIBILITY)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_gates.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -29,10 +37,10 @@ static int run_sequence(int reuse) {
         uint32_t methods[32];
         int words = m16_native_build_release(methods, completion.va,
                                              payload, ctx.rm.compute_class);
-        if (words <= 0) goto finish;
+        if (!omega_gate_reqf(OMEGA_REQF_WORDS, words)) goto finish;
         if (reuse) {
             /* Previous use is retired before the next call overwrites slot 0. */
-            if (ctx.rm.put != ctx.rm.retired ||
+            if (!omega_gate_vis(OMEGA_VIS_RETIRED, ctx.rm.put, ctx.rm.retired, 0u) ||
                 m16_native_enqueue_methods(&ctx, methods, (size_t)words) != 0)
                 goto finish;
         } else {
@@ -45,14 +53,15 @@ static int run_sequence(int reuse) {
         }
         if (payload == 1) {
             /* Negative control: no notification, no completed work. */
-            if (m16_native_wait_marker_ge(marker, payload, 5) == 0 || *marker != 0) {
+            int wrc = m16_native_wait_marker_ge(marker, payload, 5);
+            if (!omega_gate_vis(OMEGA_VIS_NEGATIVE, (uint64_t)(int64_t)wrc, *marker, 0u)) {
                 fprintf(stderr, "visibility: pre-notification control failed\n");
                 goto finish;
             }
         }
         m16_native_ring_doorbell(&ctx);
-        if (m16_native_wait_marker_ge(marker, payload, 5000) != 0 ||
-            *marker != payload) {
+        int prc = m16_native_wait_marker_ge(marker, payload, 5000);
+        if (!omega_gate_vis(OMEGA_VIS_POSITIVE, (uint64_t)(int64_t)prc, *marker, payload)) {
             fprintf(stderr, "VISIBILITY_FAIL reuse=%d expected=%" PRIu32
                     " observed=%" PRIu32 " put=%" PRIu32 " retired=%" PRIu32 "\n",
                     reuse, payload, *marker, ctx.rm.put, ctx.rm.retired);

@@ -3,6 +3,9 @@
 #include "omega_gpu_serving.h"
 #include "omega_gpu_attention_api.h"
 #include "omega_gpu_matmul_api.h"
+#if defined(CUDAPP_MIGRATION_PENDING_C_SERVING)
+#define ENG_C_PART 1
+#endif
 #include "omega_eng_dec.h"
 
 int omega_gpu_reserve_serving(const OmegaGpuServingBounds *b) {

@@ -1,0 +1,9 @@
+cd build/om-qmd/cov && gcc -std=gnu11 -O0 --coverage -Wall -Wextra -Werror -I~/work/cudastack/lanes/EngineSubmit/src -DCUDAPP_MIGRATION_PENDING_QMD_DIFF -o sweep_cov \
+	~/work/cudastack/lanes/EngineSubmit/tests/om_qmd_sweep_test.c ~/work/cudastack/lanes/EngineSubmit/src/omega_blackwell_qmd.c ~/work/cudastack/lanes/EngineSubmit/src/cudapp_om_bw_qmd.c
+cd build/om-qmd/cov && ./sweep_cov && gcov -b -o . $(ls *omega_blackwell_qmd.gcno) | tee gcov.txt | grep -A4 "omega_blackwell_qmd.c'"
+om qmd sweep: 68003 checks PASS (partition 732 configs)
+File '~/work/cudastack/lanes/EngineSubmit/src/omega_blackwell_qmd.c'
+Lines executed:96.79% of 218
+Branches executed:100.00% of 108
+Taken at least once:78.70% of 108
+Calls executed:86.49% of 37

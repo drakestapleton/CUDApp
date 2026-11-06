@@ -7,9 +7,10 @@ BUILD := build/m16_gpu_wait
 
 host-tests-m16: test-m16-gpu-wait mutants-m16-gpu-wait
 
-$(BUILD)/test_real: tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c m16/m16_gpu_wait.h
+# m16_gpu_wait.c takes its failure class and wait verdicts from om/engine/eng.om (src/cudapp_om_eng.c).
+$(BUILD)/test_real: tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c m16/m16_gpu_wait.h src/cudapp_om_eng.c src/omega_eng_dec.h
 	@mkdir -p $(BUILD)
-	$(CC) $(M16_CFLAGS) -I m16 tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c -o $@
+	$(CC) $(M16_CFLAGS) -I m16 -I src tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c src/cudapp_om_eng.c -o $@
 
 test-m16-gpu-wait: $(BUILD)/test_real
 	$(BUILD)/test_real
@@ -28,7 +29,7 @@ mutants-m16-gpu-wait:
 	@mkdir -p $(BUILD)
 	@set -e; for m in $(MUTANTS); do \
 	  flag=$${m%%:*}; scen=$${m##*:}; \
-	  $(CC) $(M16_CFLAGS) -DM16_GPU_WAIT_MUT_$$flag -I m16 tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c -o $(BUILD)/mut_$$flag; \
+	  $(CC) $(M16_CFLAGS) -DM16_GPU_WAIT_MUT_$$flag -I m16 -I src tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c src/cudapp_om_eng.c -o $(BUILD)/mut_$$flag; \
 	  if $(BUILD)/mut_$$flag > $(BUILD)/mut_$$flag.log 2>&1; then echo "MUTANT $$flag SURVIVED (test passed)"; exit 1; fi; \
 	  if ! grep -Eq "^real +$$scen +FAIL" $(BUILD)/mut_$$flag.log; then echo "MUTANT $$flag died but not in $$scen"; cat $(BUILD)/mut_$$flag.log; exit 1; fi; \
 	  echo "MUTANT $$flag killed by $$scen"; \

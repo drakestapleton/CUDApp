@@ -3,6 +3,10 @@
 
 #include <string.h>
 #include <time.h>
+#if defined(CUDAPP_MIGRATION_PENDING_C_M16WAIT)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_dec.h"
 
 static uint64_t real_now_ns(void *ctx) {
     (void)ctx;
@@ -52,6 +56,143 @@ const char *m16_gpu_wait_kind_name(m16_gpu_wait_kind_t k) {
     return k == M16_GPU_WAIT_FIXED ? "fixed" : k == M16_GPU_WAIT_SEQUENCE ? "sequence" : "unknown";
 }
 
+/* Decisions come from om/engine/eng.om (WINIT, WENTER, WPOLL), the same ops as
+ * src/omega_gpu_wait.c. This function only calls the clock, the barrier, the
+ * hooks and the watched words. */
+static bool wait_om(m16_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_t expected,
+                    m16_gpu_wait_report_t *rpt, const m16_gpu_wait_cfg_t *cfg) {
+    uint64_t (*now_ns)(void *) = cfg->now_ns ? cfg->now_ns : real_now_ns;
+    void (*barrier)(void *) = cfg->barrier ? cfg->barrier : real_barrier;
+    void (*relax)(void *) = cfg->relax ? cfg->relax : real_relax;
+    uint64_t in[23];
+    uint64_t w[16];
+    uint64_t start, now, hard, stall, total_ns, stall_ns, flags;
+    int first;
+
+    memset(in, 0, sizeof in);
+    in[0] = cfg->total_timeout_ms;
+    in[1] = cfg->progress_timeout_ms;
+    in[3] = word ? 1u : 0u;
+    in[4] = 1u;
+    start = now_ns(cfg->hook_ctx);
+    in[2] = start;
+    if (eng_ask(ENG_OP_WINIT, in, 5, w) != 0) {
+        rpt->result = M16_GPU_WAIT_INVALID_STATE;
+        return false;
+    }
+    rpt->start_ns = start;
+    rpt->last_progress_ns = start;
+    if (w[4]) {
+        rpt->result = M16_GPU_WAIT_INVALID_STATE;
+        return false;
+    }
+    total_ns = w[0];
+    stall_ns = w[1];
+    hard = w[2];
+    stall = w[3];
+    now = start;
+    first = 1;
+    flags = 0;
+#ifdef M16_GPU_WAIT_MUT_STALL_NEVER_RESETS
+    flags |= 2u;
+#endif
+#ifdef M16_GPU_WAIT_MUT_PROGRESS_EXTENDS_HARD
+    flags |= 1u;
+#endif
+    for (;;) {
+        uint32_t m, m2 = 0, snap[2] = {0, 0};
+        int ask;
+
+        memset(in, 0, sizeof in);
+        in[0] = now;
+        in[1] = hard;
+        in[2] = start;
+        if (eng_ask(ENG_OP_WENTER, in, 3, w) != 0) {
+            rpt->result = M16_GPU_WAIT_INVALID_STATE;
+            return false;
+        }
+        if (w[0] == 0) {
+            rpt->elapsed_ns = w[6];
+            rpt->result = M16_GPU_WAIT_TIMEOUT;
+            return false;
+        }
+        if (cfg->abort && cfg->abort(cfg->hook_ctx)) {
+            memset(in, 0, sizeof in);
+            in[8] = 1u;
+            in[9] = now;
+            in[10] = start;
+            if (eng_ask(ENG_OP_WPOLL, in, 11, w) != 0) {
+                rpt->result = M16_GPU_WAIT_INVALID_STATE;
+                return false;
+            }
+            rpt->result = M16_GPU_WAIT_ABORTED;
+            rpt->elapsed_ns = w[6];
+            return false;
+        }
+        WAIT_BARRIER(barrier, cfg->hook_ctx);
+        m = *word;
+        if (cfg->marker2) m2 = *cfg->marker2;
+        if (cfg->snapshot) cfg->snapshot(cfg->snapshot_ctx, snap);
+        rpt->polls++;
+        now = now_ns(cfg->hook_ctx);
+        memset(in, 0, sizeof in);
+        in[0] = (uint64_t)kind;
+        in[1] = expected;
+        in[2] = m;
+        in[3] = m2;
+        in[4] = cfg->marker2 ? 1u : 0u;
+        in[5] = cfg->marker2_want;
+        in[9] = now;
+        in[10] = start;
+        in[11] = stall;
+        in[12] = stall_ns;
+        in[13] = hard;
+        in[14] = total_ns;
+        in[15] = first ? 1u : 0u;
+        in[16] = rpt->last_observed;
+        in[17] = rpt->last_marker2;
+        in[18] = rpt->snap[0];
+        in[19] = rpt->snap[1];
+        in[20] = snap[0];
+        in[21] = snap[1];
+        in[22] = flags;
+        /* The valid hook runs only when the poll did not pass, as in the C oracle. */
+        ask = eng_ask(ENG_OP_WPOLL, in, 23, w);
+        if (ask == 0 && w[1] != 1 && cfg->valid) {
+            in[6] = 1u;
+            in[7] = cfg->valid(cfg->hook_ctx, m) ? 1u : 0u;
+            ask = eng_ask(ENG_OP_WPOLL, in, 23, w);
+        }
+        if (ask != 0) {
+            rpt->result = M16_GPU_WAIT_INVALID_STATE;
+            return false;
+        }
+        rpt->last_observed = m;
+        rpt->last_marker2 = m2;
+        rpt->snap[0] = snap[0];
+        rpt->snap[1] = snap[1];
+        rpt->elapsed_ns = now - start;
+        if (w[4]) {
+            rpt->progress_count++;
+            rpt->last_progress_ns = w[5];
+        }
+        stall = w[2];
+        hard = w[3];
+        if (w[1] == 1) {
+            WAIT_BARRIER(barrier, cfg->hook_ctx);
+            rpt->result = M16_GPU_WAIT_PASS;
+            return true;
+        }
+        if (w[1] == 2) {
+            rpt->result = (m16_gpu_wait_result_t)w[0];
+            return false;
+        }
+        first = 0;
+        relax(cfg->hook_ctx);
+        now = now_ns(cfg->hook_ctx);
+    }
+}
+
 static bool wait_core(m16_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_t expected,
                       m16_gpu_wait_report_t *rpt, const m16_gpu_wait_cfg_t *cfg) {
     m16_gpu_wait_report_t local;
@@ -64,7 +205,7 @@ static bool wait_core(m16_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
         memset(&zero, 0, sizeof(zero));
         cfg = &zero;
     }
-
+    if (eng_on()) return wait_om(kind, word, expected, rpt, cfg);
     uint64_t (*now_ns)(void *) = cfg->now_ns ? cfg->now_ns : real_now_ns;
     void (*barrier)(void *) = cfg->barrier ? cfg->barrier : real_barrier;
     void (*relax)(void *) = cfg->relax ? cfg->relax : real_relax;
@@ -151,6 +292,20 @@ bool m16_gpu_wait_sequence(volatile uint32_t *word, uint32_t target,
 }
 
 const char *m16_gpu_wait_failure_class(const m16_gpu_wait_report_t *r, uint32_t m2_want) {
+    static const char *const NAMES[3] = {"wrong_marker", "late_progress", "no_progress"};
+    if (eng_on()) {
+        uint64_t in[7], w[16];
+        in[0] = (uint64_t)r->result;
+        in[1] = (uint64_t)r->wait_kind;
+        in[2] = r->last_observed;
+        in[3] = r->expected;
+        in[4] = r->last_marker2;
+        in[5] = m2_want;
+        in[6] = r->progress_count;
+        /* A binding failure names no class it did not decide. */
+        if (eng_ask(ENG_OP_FCLS, in, 7, w) != 0 || w[0] > 2u) return "unknown";
+        return NAMES[w[0]];
+    }
     if (r->result == M16_GPU_WAIT_INVALID_STATE) return "wrong_marker";
     if (r->wait_kind == M16_GPU_WAIT_FIXED && r->last_observed != 0 && r->last_observed != r->expected)
         return "wrong_marker";

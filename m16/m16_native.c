@@ -12,6 +12,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#if defined(CUDAPP_MIGRATION_PENDING_C_M16NATIVE)
+#define ENG_C_PART 1
+#endif
 #include "omega_eng_dec.h"
 
 int m16_native_open(M16NativeContext *ctx) {

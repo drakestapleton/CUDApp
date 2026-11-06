@@ -2,6 +2,9 @@
 /* omega_gpu_mem_reserve.c -- developer bar D1: refuse an allocation that would leave less than the reserve free
  * (src/omega_gpu_mem_reserve.h). Hosted only: reads /proc/meminfo, or a regular file a test names by code with
  * omega_gpu_platform_linux_test_set_meminfo. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_MEMRESV)
+#define ENG_C_PART 1
+#endif
 #include "omega_eng_dec.h"
 #include "omega_gpu_mem_reserve.h"
 

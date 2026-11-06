@@ -18,15 +18,15 @@
 #   test-gpu-engine-freestanding     the engine contract test and the platform contract test linked against
 #                                    those freestanding objects (host runner, opens no device)
 .PHONY: test-gpu-engine-compile test-gpu-engine test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim test-gpu-engine-backend-mutants test-gpu-engine-gb10-compile gpu-engine-freestanding test-gpu-engine-freestanding
-build/test_omega_gpu_engine_compile: tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c src/omega_gpu_engine.h
+build/test_omega_gpu_engine_compile: tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c src/omega_gpu_engine.h src/cudapp_om_eng.c src/omega_eng_dec.h
 	@mkdir -p build
-	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o $@ tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o $@ tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c src/cudapp_om_eng.c
 test-gpu-engine-compile: build/test_omega_gpu_engine_compile
 	./build/test_omega_gpu_engine_compile
 
-build/test_omega_gpu_engine: tests/test_omega_gpu_engine.c src/omega_gpu_engine.c src/omega_gpu_engine.h
+build/test_omega_gpu_engine: tests/test_omega_gpu_engine.c src/omega_gpu_engine.c src/omega_gpu_engine.h src/cudapp_om_eng.c src/omega_eng_dec.h
 	@mkdir -p build
-	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o $@ tests/test_omega_gpu_engine.c src/omega_gpu_engine.c
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o $@ tests/test_omega_gpu_engine.c src/omega_gpu_engine.c src/cudapp_om_eng.c
 test-gpu-engine: build/test_omega_gpu_engine
 	./build/test_omega_gpu_engine
 
@@ -156,9 +156,16 @@ build/test_omega_gpu_engine_freestanding: tests/test_omega_gpu_engine.c $(GPU_FS
 build/test_omega_gpu_platform: tests/test_omega_gpu_platform.c $(GPU_FS_DIR)/omega_gpu_platform.o src/omega_gpu_platform.h
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -o $@ tests/test_omega_gpu_platform.c $(GPU_FS_DIR)/omega_gpu_platform.o
-test-gpu-engine-freestanding: $(GPU_FS_LINK) build/test_omega_gpu_engine_freestanding build/test_omega_gpu_platform
+# The same platform test on the hosted build, where the refusal decisions come from om/engine/eng.om.
+build/test_omega_gpu_platform_om: tests/test_omega_gpu_platform.c src/omega_gpu_platform.c src/omega_gpu_platform.h \
+		src/cudapp_om_eng.c src/omega_eng_dec.h
+	@mkdir -p build
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -o $@ tests/test_omega_gpu_platform.c src/omega_gpu_platform.c src/cudapp_om_eng.c
+test-gpu-engine-freestanding: $(GPU_FS_LINK) build/test_omega_gpu_engine_freestanding build/test_omega_gpu_platform \
+		build/test_omega_gpu_platform_om
 	./build/test_omega_gpu_engine_freestanding
 	./build/test_omega_gpu_platform
+	./build/test_omega_gpu_platform_om
 
 # native v1 P07 cut A.2 (aienos#286): code generation joins the freestanding link above with a caller-owned
 # code buffer (omega_blackwell_kernel_encode_into, no allocator). The same test source is built hosted (the

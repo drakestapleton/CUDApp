@@ -39,6 +39,14 @@
 #include "omega_blackwell_submit.h"
 #include "m16_native.h"
 #include "cpu_barrier.h"
+/* Page rounding, the VECTOR_1D shape, the QMD1 release check and the device
+ * persistence decision come from om/engine/eng.om (op BWE, src/omega_eng_gates.h);
+ * the C oracle is kept behind CUDAPP_MIGRATION_PENDING_C_BWENGINE. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_BWENGINE)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_gates.h"
+_Static_assert(OMEGA_BW_SEMAPHORE_INTERMEDIATE_DONE == 6u, "eng.om bwe k2 expects SEMAPHORE_INTERMEDIATE_DONE 6");
 
 #include <errno.h>
 #include <stdatomic.h>
@@ -96,10 +104,14 @@ extern void nvrm_retire(Nvrm *rm, uint32_t upto) __attribute__((weak));
 static int g_dev_open;      /* m16_native_open succeeded and was not closed */
 static int g_chan_open;     /* m16_native_create_channel succeeded on that device */
 
-static int persist_enabled(void)
+/* Reuse the open device: it is open, persistence is on (OMEGA_GPU_ENGINE_NO_PERSIST
+ * is not "1...") and the driver has not faulted. The decision is eng.om BWE k3. */
+static int be_reuse(int faulted)
 {
     const char *e = getenv("OMEGA_GPU_ENGINE_NO_PERSIST");
-    return !(e && e[0] == '1');
+    int reuse = 0;
+    (void)omega_gate_persist(e != NULL, e ? (unsigned char)e[0] : 0u, g_dev_open, faulted, &reuse);
+    return reuse;
 }
 
 static uint64_t now_ns(void)
@@ -163,12 +175,7 @@ static int alloc_checked(BeCtx *c, uint64_t bytes, NvrmMem *m)
 /* Page rounding with a 0x1000 minimum, SUB@676f16f lines 55-56. Non-zero if bytes is 0 or overflows. */
 static int round_pages(size_t bytes, uint64_t *out)
 {
-    uint64_t v;
-    if (bytes == 0 || (uint64_t)bytes > UINT64_MAX - (BE_PAGE - 1u)) return -1;
-    v = ((uint64_t)bytes + (BE_PAGE - 1u)) & ~(uint64_t)(BE_PAGE - 1u);
-    if (v < BE_PAGE) v = BE_PAGE;
-    *out = v;
-    return 0;
+    return omega_gate_round_pages((uint64_t)bytes, out);
 }
 
 static NvrmMem *role_mem(BeCtx *c, int role)
@@ -245,7 +252,7 @@ static int be_open_device(void *ctx)
     return -1;
 #endif
     if (atomic_flag_test_and_set(&g_busy)) return -1; /* another run is active; touch nothing */
-    reuse = g_dev_open && persist_enabled() && !c->m.rm.faulted;
+    reuse = be_reuse(c->m.rm.faulted);
     if (g_dev_open && !reuse) {
         /* persistence off, or the driver faulted: close the old device first */
         (void)m16_native_close(&c->m);
@@ -361,7 +368,7 @@ static int be_build(void *ctx, const OmegaGpuJob *job)
     uint32_t qmd1_words[OMEGA_BW_QMD_WORDS];
     OmegaBlackwellQmdConfig cfg;
     uint64_t qmd0_va, qmd1_va, sem_va, marker_va, marker2_va, need;
-    uint32_t n;
+    uint32_t n, cfg_grid = 0, cfg_tpb = 0;
     int rc;
 
     begin(c);
@@ -371,11 +378,15 @@ static int be_build(void *ctx, const OmegaGpuJob *job)
     }
     n = job->element_count;
     /* (n + 63) / 64 must not overflow; ASTRA refused n above UINT32_MAX - 63 as well. */
-    if (n == 0 || n > UINT32_MAX - 63u) {
-        note(c, "build: element count is zero or too large");
-        return -1;
+    {
+        uint32_t gw, tpb;
+        if (omega_gate_vec_shape(n, &gw, &tpb, &need) != 0) {
+            note(c, "build: element count is zero or too large");
+            return -1;
+        }
+        cfg_grid = gw;
+        cfg_tpb = tpb;
     }
-    need = (uint64_t)n * 4u;
     if (!code->cpu || !a->cpu || !b->cpu || !out->cpu || !c->pb.cpu || !c->cbank.cpu ||
         !c->marker.cpu || !c->qmd.cpu || a->size < need || b->size < need || out->size < need) {
         note(c, "build: a buffer is missing or too small");
@@ -397,8 +408,8 @@ static int be_build(void *ctx, const OmegaGpuJob *job)
     cfg.qmd0_va = qmd0_va;
     cfg.qmd1_va = qmd1_va;
     cfg.num_elements = n;
-    cfg.threads_per_block = 64;
-    cfg.grid_width = (n + 63u) / 64u;
+    cfg.threads_per_block = cfg_tpb;
+    cfg.grid_width = cfg_grid;
 
     /* The builders return 0 on success (src/omega_blackwell_qmd.c); SUB@676f16f
      * ignored their codes, ASTRA checked them. Checked here. */
@@ -416,10 +427,8 @@ static int be_build(void *ctx, const OmegaGpuJob *job)
      * semaphore address and the DONE value (words 15-17), and the memory
      * barrier flags (word 19). The words come from src/omega_blackwell_qmd.c
      * lines 81, 93-98. */
-    if (qmd1_words[9] != 3u || qmd1_words[15] != (uint32_t)sem_va ||
-        qmd1_words[16] != (uint32_t)(sem_va >> 32) ||
-        qmd1_words[17] != OMEGA_BW_SEMAPHORE_INTERMEDIATE_DONE ||
-        qmd1_words[19] != 0x81810000u) {
+    if (!omega_gate_qmd1_release(qmd1_words[9], qmd1_words[15], qmd1_words[16], qmd1_words[17], qmd1_words[19],
+                                 sem_va)) {
         note(c, "build: QMD1 release words do not match the expected layout");
         return -1;
     }
@@ -687,7 +696,7 @@ static int be_close(void *ctx)
     c->hmarker = NULL;
     c->hmarker2 = NULL;
     c->hsem = NULL;
-    if (g_dev_open && persist_enabled() && !c->m.rm.faulted) {
+    if (be_reuse(c->m.rm.faulted)) {
         /* Keep the device and channel. The job's GPFIFO entries are complete (the
          * engine only reaches close after the completion waits or on a failure before
          * submit), so retire them; the ring never fills across jobs. */

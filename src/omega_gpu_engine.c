@@ -19,6 +19,9 @@
  * tools/gpu_engine_mutations.sh breaks one at a time.
  */
 #include "omega_gpu_engine.h"
+#if defined(CUDAPP_MIGRATION_PENDING_C_ENGINE)
+#define ENG_C_PART 1
+#endif
 #include "omega_eng_dec.h"
 
 #include <stdatomic.h>
@@ -339,22 +342,22 @@ static void cleanup_om(const OmegaGpuBackend *b, OmegaGpuResult *result, int ste
     uint64_t w[16];
     in[0] = (uint64_t)result->failure;
     if (eng_ask(ENG_OP_CLEAN, in, 1, w) != 0) return;
-    if (w[0]) (void)fail(b, result, OMEGA_GPU_ENGINE_CLEANUP, step, err);
-    if (w[1]) result->cleanup_failed = 1;
+    if (w[0]) (void)fail(b, result, OMEGA_GPU_ENGINE_CLEANUP, step, err); /* MUT:OM_CLEANUP_FAIL_SKIPPED */
+    if (w[1]) result->cleanup_failed = 1; /* MUT:OM_CLEANUP_FLAG_NOT_SET */
 }
 
 static int leave_om(const OmegaGpuBackend *b, const Run *run, OmegaGpuResult *result) {
     int role, rc, e;
     for (role = (int)OMEGA_GPU_BUF_ROLE_COUNT - 1; role >= 0; role--) {
-        if (!run->allocated[role]) continue;
+        if (!run->allocated[role]) continue; /* MUT:OM_FREE_UNALLOCATED */
         ERRNO_CLEAR();
-        rc = b->free_buf(b->ctx, role);
+        rc = b->free_buf(b->ctx, role); /* MUT:OM_FREE_SKIPPED */
         e = ERRNO_READ();
         if (rc != 0) cleanup_om(b, result, OMEGA_GPU_ENGINE_STEP_FREE, e);
     }
     if (run->opened) {
         ERRNO_CLEAR();
-        rc = b->close(b->ctx);
+        rc = b->close(b->ctx); /* MUT:OM_CLOSE_SKIPPED */
         e = ERRNO_READ();
         if (rc != 0) cleanup_om(b, result, OMEGA_GPU_ENGINE_STEP_CLOSE, e);
     }
@@ -364,8 +367,8 @@ static int leave_om(const OmegaGpuBackend *b, const Run *run, OmegaGpuResult *re
 static int apply_act(const OmegaGpuBackend *b, Run *run, OmegaGpuResult *result, const uint64_t w[16],
                      int err, uint64_t limit, uint64_t waited) {
     int act = (int)w[0];
-    int state = (int)w[3];
-    if (state != 255) result->last_state = state;
+    /* every action the unit returns carries state 255 (eng.om phfail, phunc), so an
+     * action never changes last_state */
     if (act == 0 || act == 4) return 0;
     if (act == 1) return stop(result, (int)w[1], (int)w[2]);
     if (act == 3) {
@@ -376,12 +379,12 @@ static int apply_act(const OmegaGpuBackend *b, Run *run, OmegaGpuResult *result,
         result->wait = (int)w[4];
         result->wait_timeout_ms = limit;
         result->waited_ms = waited;
-        if (w[5]) result->retained = 1;
-        if (w[6]) atomic_store(&g_blocked, 1);
+        if (w[5]) result->retained = 1; /* MUT:OM_RETAINED_NOT_SET */
+        if (w[6]) atomic_store(&g_blocked, 1); /* MUT:OM_NO_BLOCK */
         return (int)w[1];
     }
     (void)fail(b, result, (int)w[1], (int)w[2], err);
-    return leave_om(b, run, result);
+    return leave_om(b, run, result); /* MUT:OM_UNWIND_SKIPPED */
 }
 
 static size_t role_bytes(const OmegaGpuJob *job, int role) {
@@ -406,7 +409,7 @@ static uint64_t scan_poison(const OmegaGpuJob *job) {
         uint64_t w[16];
         memcpy(&word, (const unsigned char *)job->output + i * 4u, sizeof word);
         in[0] = word;
-        in[1] = job->poison[i];
+        in[1] = job->poison[i]; /* MUT:OM_POISON_INDEX_FIXED */
         if (eng_ask(ENG_OP_POIS, in, 2, w) == 0 && w[0]) n++;
     }
     return n;
@@ -421,7 +424,7 @@ static int timed_om(int (*fn)(void *, uint64_t), void *ctx, uint64_t ms, uint64_
     rc = fn(ctx, ms);
     *err = ERRNO_READ();
     in[0] = now_ms();
-    in[1] = t0;
+    in[1] = t0; /* MUT:OM_WAITED_NOT_A_DIFFERENCE */
     *waited_ms = eng_ask(ENG_OP_WAITED, in, 2, w) == 0 ? w[0] : 0u;
     return rc;
 }
@@ -484,7 +487,7 @@ static int execute_om(const OmegaGpuJob *job, OmegaGpuResult *result) {
     e = ERRNO_READ();
     if (eng_phase(5, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (w[0] != 0) return apply_act(b, &run, result, w, e, 0, 0);
-    run.opened = 1;
+    run.opened = 1; /* MUT:OM_OPEN_NOT_TRACKED */
     ERRNO_CLEAR();
     rc = b->create_channel(b->ctx);
     e = ERRNO_READ();
@@ -496,15 +499,15 @@ static int execute_om(const OmegaGpuJob *job, OmegaGpuResult *result) {
         e = ERRNO_READ();
         if (eng_phase(7, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
         if (w[0] != 0) return apply_act(b, &run, result, w, e, 0, 0);
-        run.allocated[role] = 1;
+        run.allocated[role] = 1; /* MUT:OM_ALLOC_NOT_TRACKED */
     }
     rc = copy_in_role(b, OMEGA_GPU_BUF_PROGRAM, job->program, job->program_len, &e);
-    if (rc == 0) rc = copy_in_role(b, OMEGA_GPU_BUF_INPUT_A, job->input_a, job->input_a_len, &e);
+    if (rc == 0) rc = copy_in_role(b, OMEGA_GPU_BUF_INPUT_A, job->input_a, job->input_a_len, &e); /* MUT:OM_COPY_IN_CHAIN */
     if (rc == 0) rc = copy_in_role(b, OMEGA_GPU_BUF_INPUT_B, job->input_b, job->input_b_len, &e);
     if (eng_phase(8, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (w[0] != 0) return apply_act(b, &run, result, w, e, 0, 0);
     ERRNO_CLEAR();
-    rc = b->fill_poison(b->ctx, job->poison, job->poison_count);
+    rc = b->fill_poison(b->ctx, job->poison, job->poison_count); /* MUT:OM_POISON_FILL_SKIPPED */
     e = ERRNO_READ();
     if (eng_phase(9, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (w[0] != 0) return apply_act(b, &run, result, w, e, 0, 0);
@@ -520,20 +523,20 @@ static int execute_om(const OmegaGpuJob *job, OmegaGpuResult *result) {
     if (eng_phase(11, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (w[0] != 0) return apply_act(b, &run, result, w, e, 0, 0);
     if (w[3] != 255) result->last_state = (int)w[3];
-    rc = timed_om(b->wait_marker, b->ctx, job->timeouts.marker_ms, &waited, &e);
+    rc = timed_om(b->wait_marker, b->ctx, job->timeouts.marker_ms, &waited, &e); /* MUT:OM_MARKER1_WAIT_SKIPPED */
     if (eng_phase(12, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
-    if (w[0] != 0) return apply_act(b, &run, result, w, e, job->timeouts.marker_ms, waited);
-    if (eng_phase(13, 0, job->flags, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
-    if (w[0] != 4) {
+    if (w[0] != 0) return apply_act(b, &run, result, w, e, job->timeouts.marker_ms, waited); /* MUT:OM_MARKER1_LIMIT_WRONG */
+    if (eng_phase(13, 0, job->flags, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT; /* MUT:OM_C3_FLAG_IGNORED */
+    if (w[0] != 4) { /* MUT:OM_MARKER2_WAIT_SKIPPED */
         rc = timed_om(b->wait_marker2, b->ctx, job->timeouts.marker2_ms, &waited, &e);
         if (eng_phase(13, (uint64_t)rc, job->flags, 0, 1, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
         if (w[0] != 0) return apply_act(b, &run, result, w, e, job->timeouts.marker2_ms, waited);
     }
-    rc = timed_om(b->wait_release_semaphore, b->ctx, job->timeouts.release_semaphore_ms, &waited, &e);
+    rc = timed_om(b->wait_release_semaphore, b->ctx, job->timeouts.release_semaphore_ms, &waited, &e); /* MUT:OM_RELEASE_WAIT_SKIPPED */
     if (eng_phase(14, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (w[0] != 0) return apply_act(b, &run, result, w, e, job->timeouts.release_semaphore_ms, waited);
     if (w[3] != 255) result->last_state = (int)w[3];
-    rc = timed_om(b->barrier, b->ctx, job->timeouts.visibility_ms, &waited, &e);
+    rc = timed_om(b->barrier, b->ctx, job->timeouts.visibility_ms, &waited, &e); /* MUT:OM_BARRIER_SKIPPED */
     if (eng_phase(15, (uint64_t)rc, 0, 0, 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (w[0] != 0) return apply_act(b, &run, result, w, e, 0, 0);
     ERRNO_CLEAR();
@@ -544,7 +547,7 @@ static int execute_om(const OmegaGpuJob *job, OmegaGpuResult *result) {
     if (w[3] != 255) result->last_state = (int)w[3];
     waited = scan_poison(job);
     result->n_outputs = 1u;
-    result->output_unchanged_words[0] = waited;
+    result->output_unchanged_words[0] = waited; /* MUT:OM_UNCHANGED_NOT_REPORTED */
     in[0] = waited;
     if (eng_ask(ENG_OP_SCAN, in, 1, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;
     if (eng_phase(17, 0, 0, w[0], 0, w) != 0) return OMEGA_GPU_ENGINE_INTERNAL_INVARIANT;

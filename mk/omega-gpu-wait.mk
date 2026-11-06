@@ -4,9 +4,9 @@
 # caught. Picked up by `-include mk/*.mk`. Host only: opens no device, needs no
 # physics headers, takes no chip lock.
 .PHONY: test-gpu-wait
-build/test_omega_gpu_wait: tests/test_omega_gpu_wait.c src/omega_gpu_wait.c src/omega_gpu_wait.h
+build/test_omega_gpu_wait: tests/test_omega_gpu_wait.c src/omega_gpu_wait.c src/omega_gpu_wait.h src/cudapp_om_eng.c src/omega_eng_dec.h
 	@mkdir -p build
-	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -o $@ tests/test_omega_gpu_wait.c src/omega_gpu_wait.c
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -o $@ tests/test_omega_gpu_wait.c src/omega_gpu_wait.c src/cudapp_om_eng.c
 test-gpu-wait: build/test_omega_gpu_wait
 	./build/test_omega_gpu_wait
 
@@ -19,7 +19,7 @@ test-gpu-wait-mutants: build/test_omega_gpu_wait
 	@./build/test_omega_gpu_wait >/dev/null || { echo "unflagged build FAILED"; exit 1; }
 	@echo "unflagged: PASS"
 	@set -e; for m in $(GPU_WAIT_MUTANTS); do \
-	  gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -D$$m -Isrc -o build/test_omega_gpu_wait_$$m tests/test_omega_gpu_wait.c src/omega_gpu_wait.c; \
+	  gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -D$$m -Isrc -o build/test_omega_gpu_wait_$$m tests/test_omega_gpu_wait.c src/omega_gpu_wait.c src/cudapp_om_eng.c; \
 	  if ./build/test_omega_gpu_wait_$$m >build/test_omega_gpu_wait_$$m.log 2>&1; then echo "MUTANT SURVIVED: $$m"; exit 1; fi; \
 	  echo "$$m: killed ($$(grep -c 'FAIL' build/test_omega_gpu_wait_$$m.log) failing checks)"; \
 	done

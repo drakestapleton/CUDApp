@@ -1,0 +1,8 @@
+sh tests/om_qmd_mutants.sh
+KILLED m_qmd0_w4 rc=1
+KILLED m_qmd1_w4 rc=1
+KILLED m_qmd1_w14 rc=1
+KILLED m_cbank_w0 rc=1
+KILLED m_cbank_w223 rc=1
+KILLED m_shared_cap rc=1
+PASS 6 mutants killed

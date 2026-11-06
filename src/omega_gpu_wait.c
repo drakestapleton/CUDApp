@@ -2,6 +2,9 @@
 #include "omega_gpu_wait.h"
 
 #include <string.h>
+#if defined(CUDAPP_MIGRATION_PENDING_C_WAIT)
+#define ENG_C_PART 1
+#endif
 #include "omega_eng_dec.h"
 
 #ifndef OMEGA_GPU_NO_POSIX
@@ -83,6 +86,9 @@ static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
         rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
         return false;
     }
+    /* The C oracle records the start before it refuses a null word. */
+    rpt->start_ns = start;
+    rpt->last_progress_ns = start;
     if (w[4]) {
         rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
         return false;
@@ -91,8 +97,6 @@ static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
     stall_ns = w[1];
     hard = w[2];
     stall = w[3];
-    rpt->start_ns = start;
-    rpt->last_progress_ns = start;
     now = start;
     first = 1;
     flags = 0;
@@ -104,7 +108,7 @@ static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
 #endif
     for (;;) {
         uint32_t m, m2, snap[2];
-        int valid_ok;
+        int ask;
 
         memset(in, 0, sizeof in);
         in[0] = now;
@@ -143,8 +147,6 @@ static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
         if (cfg->snapshot) cfg->snapshot(cfg->snapshot_ctx, snap);
         rpt->polls++;
         now = now_ns(cfg->hook_ctx);
-        valid_ok = 1;
-        if (cfg->valid) valid_ok = cfg->valid(cfg->hook_ctx, m) ? 1 : 0;
         memset(in, 0, sizeof in);
         in[0] = (uint64_t)kind;
         in[1] = expected;
@@ -152,8 +154,6 @@ static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
         in[3] = m2;
         in[4] = cfg->marker2 ? 1u : 0u;
         in[5] = cfg->marker2_want;
-        in[6] = cfg->valid ? 1u : 0u;
-        in[7] = (uint64_t)valid_ok;
         in[9] = now;
         in[10] = start;
         in[11] = stall;
@@ -168,7 +168,15 @@ static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_
         in[20] = snap[0];
         in[21] = snap[1];
         in[22] = flags;
-        if (eng_ask(ENG_OP_WPOLL, in, 23, w) != 0) {
+        /* First ask without the valid hook. As in the C oracle, the hook runs
+         * only when the poll did not pass, and then the unit decides again. */
+        ask = eng_ask(ENG_OP_WPOLL, in, 23, w);
+        if (ask == 0 && w[1] != 1 && cfg->valid) {
+            in[6] = 1u;
+            in[7] = cfg->valid(cfg->hook_ctx, m) ? 1u : 0u;
+            ask = eng_ask(ENG_OP_WPOLL, in, 23, w);
+        }
+        if (ask != 0) {
             rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
             return false;
         }

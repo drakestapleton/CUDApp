@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Recompile six semantic mutants of om/qmd/bw_qmd.om. Each must fail the sweep.
 # Host only. Needs OMEGA_OMC (pinned e5b32567) and OMEGA_BRIDGE.
 set -eu
@@ -31,8 +32,9 @@ PY
   gcc -std=gnu11 -O2 -Wall -Wextra -Werror -I"$ROOT/src" -o "$OUT/$name" \
     "$ROOT/tests/om_qmd_sweep_test.c" "$ROOT/src/omega_blackwell_qmd.c" "$OUT/$name.c"
   set +e
-  bwrap --dev-bind / / --dev /dev --proc /proc --tmpfs /tmp --unshare-net --die-with-parent \
-    "$OUT/$name" >"$OUT/$name.out" 2>"$OUT/$name.err"
+  # The caller runs this script under the bwrap/taskset wrapper; a nested bwrap
+  # can fail to create namespaces, and that failure would read as a kill.
+  "$OUT/$name" >"$OUT/$name.out" 2>"$OUT/$name.err"
   rc=$?
   set -e
   if [ "$rc" = 0 ]; then

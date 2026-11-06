@@ -3,6 +3,9 @@
 #include <string.h>
 #include "omega_gpu_platform.h"
 #include "omega_gpu_fmt.h"
+#if defined(CUDAPP_MIGRATION_PENDING_C_MEMCACHE)
+#define ENG_C_PART 1
+#endif
 #include "omega_eng_dec.h"
 
 int omega_gpu_session_alloc_cached(size_t bytes, OmegaGpuMem *out) {

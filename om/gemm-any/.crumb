@@ -1,0 +1,19 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T01:49:15Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:d5ee45fecc85778051fe8e15a8c0467e6341cf70750e3f79c7cb7d3739f44218",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "b774723f537cec16a359fe082b8100317a5b5490",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "name": "gemm-any",
+  "purpose": "Any-shape BF16 and E4M3 tensor-core GEMM builders and sweep contract",
+  "schema_version": "1.0.0"
+}

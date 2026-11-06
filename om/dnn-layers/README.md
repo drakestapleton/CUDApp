@@ -156,3 +156,9 @@ Listings and raw instruction binaries stay under ignored build directories.
 
 Chip execution and qualification are **NOT_RUN**. A passing simulator or offline
 disassembler check is not a chip receipt. The ROADMAP status is not upgraded.
+
+Integrated implementation and host receipts are in
+[`evidence/DNN-LAYERS-2026-11-06/REPORT.md`](../../evidence/DNN-LAYERS-2026-11-06/REPORT.md).
+Draft [#307](https://github.com/aien-dev/CUDApp/pull/307) is stacked on attention
+draft #282. The final full-suite gate belongs to Integrator2, not to these private
+operator slices.

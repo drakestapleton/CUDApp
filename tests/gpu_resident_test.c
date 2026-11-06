@@ -47,5 +47,15 @@ int main(int argc,char **argv) {
     if(!omega_gpu_resident_build(bad,5,64,2,&p,&err)) return 1;
     memcpy(bad,resident_model,sizeof bad);bad[0]=99;
     if(!omega_gpu_resident_build(bad,5,64,2,&p,&err)) return 1;
+    const unsigned fields[]={0,1,2,3,4,4,5,5,6,7,13,28};
+    const uint32_t values[]={0,64,64,0,0,33,0,33,1,1,2,2};
+    for(unsigned i=0;i<sizeof fields/sizeof fields[0];i++) {
+        memcpy(bad,resident_model,sizeof bad);bad[fields[i]]=values[i];
+        if(!omega_gpu_resident_build(bad,5,64,2,&p,&err)) return 1;
+    }
+    if(!omega_gpu_resident_build(resident_model,0,64,2,&p,&err) ||
+       !omega_gpu_resident_build(resident_model,5,0,2,&p,&err) ||
+       !omega_gpu_resident_build(resident_model,5,64,0,&p,&err) ||
+       !omega_gpu_resident_build(resident_model,5,64,3,&p,&err)) return 1;
     puts("GPU RESIDENT PASS (reference, interleaved CTAs, barrier and descriptor controls); chip NOT_RUN");return 0;
 }

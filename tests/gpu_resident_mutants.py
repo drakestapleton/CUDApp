@@ -11,6 +11,7 @@ MUTANTS={
     'drop-grid-barrier': ('gridbar ins m\n', 'note mutant drops grid barrier\n'),
     'wrong-matvec': ('ef ins m FMUL r4 19 19 20 NONE 0', 'ef ins m FADD r4 19 19 20 NONE 0'),
     'descriptor-output-bound': ('if or not spanok a na size not spanok out rows size', 'if not spanok a na size'),
+    'contracted-matvec': ('ef ins m FMUL r4 19 19 20 NONE 0', 'ef ins m 33 r4 19 19 20 18 0\nmov ins m 18 0'),
     'stale-generation': ('atomic ins m 27 27 3 26', 'atomic ins m 27 27 3 22'),
     'wrong-queue-stride': ('ef ins m IMADW r4 4 9 NONE 0 32', 'ef ins m IMADW r4 4 9 NONE 0 16'),
 }

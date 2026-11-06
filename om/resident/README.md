@@ -57,8 +57,10 @@ The exact-f32 witness includes a cancellation that distinguishes an FMA from
 separate multiply/add. WolframLanguageEvaluator query:
 `{Expand[(1+2^-23)(1-2^-23)-1], N[1+2^-23,25], N[1-2^-23,25]}`
 returned `{-1/70368744177664, 1.00000011920928955078125,
-0.99999988079071044921875}`. Separately rounded f32 multiplication is 1,
-so adding -1 is zero; an FMA retains the nonzero product residual.
+0.99999988079071044921875}`. The rounding check
+`Round[(1+2^-23)(1-2^-23),2^-24]-1` returned `0` through
+WolframLanguageEvaluator: separately rounded f32 multiplication is 1, so adding
+-1 is zero; an FMA retains the nonzero product residual.
 
 `bw_warp_sim_k.h` previously completed each CTA before starting the next. It now
 has a default-off instruction quantum and the existing integer atomic-exchange

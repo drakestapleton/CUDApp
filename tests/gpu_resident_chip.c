@@ -11,7 +11,8 @@ int main(int argc,char **argv) {
         fprintf(stderr,"NOT_RUN: --chip and an authorized SPARK_WINDOW are required\n");return 2;
     }
     static BlackwellIRProgram p;
-    OmegaGpuMem code[2]={{0}},dm={0},xm={0},sm={0};
+    OmegaGpuMem code[2]; OmegaGpuMem dm={0},xm={0},sm={0};
+    memset(code,0,sizeof code);
     uint32_t gpr[2]={0};
     OmegaGpuCmdList *cl=NULL;
     int rc=1;

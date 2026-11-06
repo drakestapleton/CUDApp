@@ -19,6 +19,7 @@ UNITS="$UNITS src/cudapp_om_bw_identity.c src/cudapp_freest_bw_scalar.c src/cuda
   src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_shape.c src/cudapp_om_bw_name.c
   src/cudapp_om_cg_pack_len.c src/cudapp_om_cg_pack_h.c src/cudapp_om_cg_sentin.c
   src/cudapp_om_cg_em.c src/cudapp_om_cg_reconv.c"
+UNITS="$UNITS src/cudapp_freest_pathcopy.c"
 HAZARD="src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c"
 python3 - "$REGALLOC_OUT/oracle_names.h" <<'PY'
 import pathlib,re,sys

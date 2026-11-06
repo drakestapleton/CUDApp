@@ -141,8 +141,8 @@ convention. Both qualification scripts forward the allocator oracle flag;
 their programs are compiled only and must not be executed without fresh
 hardware authorization.
 
-The single converter is now draft omega-bridge #77
-(`bb3a8ae10d940d82f14c41cd8f0f1c32021545f0`, containing #76). Its checked
+The single converter is now omega-bridge #77
+(`d90433a90f26159d878a277d232f0269946ca669`, containing #76). Its checked
 borrowed-view freestanding profile makes the #332 attention/view compositions,
 the #356 matmul-oracle compositions, `cg_fields` and the cubin message/admission
 compositions import-free. They are
@@ -156,8 +156,9 @@ The NO_POSIX partial-link import allowlist is unchanged. A new required
 negative control removes each of `omega_av_set`, `omega_av_copy` and
 `omega_av_fold`'s providers and requires the strong-provider link to fail.
 Direct codegen/regalloc and attention/API mutant harnesses select the same
-single generated implementation and emitter used in production. Codegen's
-explicit freestanding/oracle links retain `cg_fields` and BW scalar providers.
+single generated implementation and emitter used in production. Explicit
+codegen links retain `cg_fields`, BW scalar, pathcopy and the emitter/replay/
+liveness/invariant providers; both regalloc oracle links retain pathcopy.
 
 The cubin allocating shell calls the checked import-free Omega message and
 admission providers even when it selects the caller-stack native packer. The
@@ -168,17 +169,29 @@ providers. No C computation fallback or additional import allowance is added.
 
 The conversion replaces exactly 40 hosted generated C files with 40
 freestanding generated C files. All 357 unit identities change to record the
-converter pin; other generated C bodies are unchanged, and the generated
-header changes only profile comments. The production archive is recreated
+converter pin. The fixed-extent repair then updates 317 identities, the profile
+comments in the generated header and six freestanding bodies: `attn_args`,
+`attn_lay`, `attn_mm_next`, `cg_fields`, `core_cubadmit` and `core_cubinmsg`.
+These reject wrong fixed extents rather than treating them as capacities;
+OM2 runtime views retain their checked capacity/alias contract. The production archive is recreated
 before adding its current objects: incrementally updating it with `ar rcs`
 otherwise retains the removed hosted provider members. A membership control
 rejects the stale archive and requires all 40 replacement members and no
 obsolete member after the rebuild.
 
-At this checkpoint the native/session/BF16 differential, freestanding engine,
-codegen, native runtime, cubin message/admission and missing-provider gates
-pass (`/tmp/integ/6b-pin77-boundary-green.log`, rc0). The full attention
-typed-view gate is FAIL: `omega_av_pack` accepts a 31-element view where its
-declared fixed extent is 32 (differential exit5). That converter defect is
-being repaired in the bridge's owned #77 lane; no gate is waived and this
-checkpoint is not a completed converter qualification.
+The initial #77 checkpoint exposed `omega_av_pack` accepting a 31-element
+view where its declared extent is 32 (differential exit5). The pinned repair
+passes the full attention typed-view differential, nine compiled mutants and
+all seven attention-family API host/sim gates; residual API differentials,
+nine mutants and three missing-unit controls also pass. These results are
+recorded in `/tmp/integ/6b-pin77-callers-repaired.log`. That compound command
+stopped at missing explicit codegen/regalloc link providers, repaired without
+changing the acceptance paths. The original failing receipts are retained.
+
+The repaired-pin archive membership, artifact-format positive/red controls,
+NO_POSIX native/session/BF16 differential and mutant gates, freestanding
+engine/codegen, native runtime and byte-identical regeneration all pass in
+`/tmp/integ/6b-pin77-final.log` (rc0; `crumb verify: OK: 88 crumbs current`).
+The hosted formatting includes use equivalent nested NO_POSIX/core-oracle
+guards so the existing portability scanner recognizes the freestanding
+boundary; the implementation-selection predicate and scanner are unchanged.

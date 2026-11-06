@@ -75,9 +75,6 @@ __asm__("sqrtsd %1, %0":"=x"(r):"x"(a));
 return r;}
 static uint64_t o_fp(unsigned op,unsigned t,uint64_t a,uint64_t b){if(t==11){uint32_t ua=(uint32_t)a,ub=(uint32_t)b,ur;float x,y;volatile float z;__builtin_memcpy(&x,&ua,4);__builtin_memcpy(&y,&ub,4);switch(op){case 1:z=x+y;break;case 2:z=x-y;break;case 3:z=x*y;break;case 4:z=x/y;break;case 6:return x==y;case 7:return x!=y;case 8:return x<y;case 9:return x<=y;case 10:return x>y;case 11:return x>=y;case 17:return ua^UINT32_C(0x80000000);case 19:return ua&UINT32_C(0x7fffffff);case 20:z=o_sqrt32(x);break;default:__builtin_trap();}__builtin_memcpy(&ur,(const void*)&z,4);return o_fpn(11,ua,ub,ur);}uint64_t ur;double x,y;volatile double z;__builtin_memcpy(&x,&a,8);__builtin_memcpy(&y,&b,8);switch(op){case 1:z=x+y;break;case 2:z=x-y;break;case 3:z=x*y;break;case 4:z=x/y;break;case 6:return x==y;case 7:return x!=y;case 8:return x<y;case 9:return x<=y;case 10:return x>y;case 11:return x>=y;case 17:return a^UINT64_C(0x8000000000000000);case 19:return a&UINT64_C(0x7fffffffffffffff);case 20:z=o_sqrt64(x);break;default:__builtin_trap();}__builtin_memcpy(&ur,(const void*)&z,8);return o_fpn(12,a,b,ur);}
 static uint64_t o_fcv(unsigned t,unsigned s,uint64_t a){uint32_t u=(uint32_t)a;float f;double x;if(s==t)return a;if(s<11){if(t==11){volatile float z=s>=6?(float)(int64_t)a:(float)a;__builtin_memcpy(&u,(const void*)&z,4);return u;}volatile double z=s>=6?(double)(int64_t)a:(double)a;__builtin_memcpy(&a,(const void*)&z,8);return a;}if(t==12){if(o_fnan(11,a))return (uint64_t)(u>>31)<<63|UINT64_C(0x7ff8000000000000)|(uint64_t)(u&UINT32_C(0x7fffff))<<29;__builtin_memcpy(&f,&u,4);volatile double z=f;__builtin_memcpy(&a,(const void*)&z,8);return a;}if(t==11){if(o_fnan(12,a))return (a>>63)<<31|UINT64_C(0x7fc00000)|(a>>29&UINT64_C(0x3fffff));__builtin_memcpy(&x,&a,8);volatile float z=(float)x;__builtin_memcpy(&u,(const void*)&z,4);return u;}if(s==11){__builtin_memcpy(&f,&u,4);x=f;}else __builtin_memcpy(&x,&a,8);if(x!=x)return 0;unsigned w=o_width(t);if(t>=6){double m=(double)((uint64_t)1<<(w-1));if(x>=m)return ((uint64_t)1<<(w-1))-1;if(x<-m)return (uint64_t)0-((uint64_t)1<<(w-1));return (uint64_t)(int64_t)x;}if(x<1.0)return 0;if(x>=(w==64?18446744073709551616.0:(double)((uint64_t)1<<w)))return w==64?UINT64_MAX:((uint64_t)1<<w)-1;return (uint64_t)x;}
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
-static int o_rbuf(const void *p,uint64_t n,uint64_t want,unsigned t){uintptr_t a=(uintptr_t)p;uint64_t z=t==11?4:o_width(t)/8;if(n>UINTPTR_MAX/z)return 0;if(want&&n>want)return 0;if(!n)return 1;if(!p)return 0;return a%z==0&&a<=UINTPTR_MAX-n*z;}
-static int o_rover(const void *a,uint64_t an,const void *b,uint64_t bn){return an&&bn&&o_overlap(a,an,b,bn);}
 static uint64_t f0(struct ombr_fs_ctx *fs, uint64_t v0, void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
 static uint64_t f0(struct ombr_fs_ctx *fs, uint64_t v0, void *v1, uint64_t v1_n, void *v2, uint64_t v2_n){
 o_enter();
@@ -144,14 +141,14 @@ return o_leave(0ULL);
 return o_leave(4ULL);
 fs_fail: __attribute__((unused));--fs->depth;return 0;
 }
-uint32_t omega_cg_fields(uint64_t  *result, volatile uint64_t p0, void *p1, volatile uint64_t p1_n, void *p2, volatile uint64_t p2_n){
+uint32_t omega_cg_fields(uint64_t  *result, volatile uint64_t p0, void *p1, uint64_t p1_n, void *p2, uint64_t p2_n){
   if(!o_buf(result,1,1,5))return 32;
 if(!o_valid(5, p0))return 32;
-if(!o_rbuf(p1, p1_n,16, 5))return 32;
-  if(o_rover(result,8,p1, p1_n*8))return 32;
-if(!o_rbuf(p2, p2_n,8, 5))return 32;
-  if(o_rover(result,8,p2, p2_n*8))return 32;
-if(o_rover(p2, p2_n*8, p1, p1_n*8))return 32;
+if(!o_buf(p1, p1_n,16, 5))return 32;
+  if(o_overlap(result,8,p1, p1_n*8))return 32;
+if(!o_buf(p2, p2_n,8, 5))return 32;
+  if(o_overlap(result,8,p2, p2_n*8))return 32;
+if(o_overlap(p2, p2_n*8, p1, p1_n*8))return 32;
   struct ombr_fs_ctx fs_state={0,0};struct ombr_fs_ctx *fs=&fs_state;uint64_t _result=f0(fs, p0, p1, p1_n, p2, p2_n);if(!fs->code)fs_put(fs,result,1,0,_result,5);return fs->code;
 }
 #if defined(__GNUC__)

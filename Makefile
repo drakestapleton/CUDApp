@@ -52,7 +52,8 @@ CUDAPP_BINDING_SRCS = $(CUDAPP_HOST_BINDING) $(CUDAPP_FS_BINDING)
 # With -Wl,--gc-sections only the referenced ones stay. Links that also take src/omega_cubin.c add
 # src/cudapp_freest_core_cubinmsg.c and src/cudapp_freest_core_cubadmit.c.
 BW_CODEGEN_BINDING = src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c \
-	src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c src/cudapp_freest_cg_fields.c
+	src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c src/cudapp_freest_cg_fields.c \
+	src/cudapp_freest_pathcopy.c src/cudapp_om_cg_em.c src/cudapp_om_cg_replay.c src/cudapp_om_cg_life.c src/cudapp_om_cg_invar.c
 OUT_DIR ?= build
 GPU_PROD_TARGET ?= $(OUT_DIR)/libomega_gpu.a
 NVIDIA_OPEN := $(PHYSICS_DIR)/third_party/nvidia-open-580.173.02

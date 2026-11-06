@@ -158,7 +158,6 @@ uint32_t omega_decide(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p
 uint32_t omega_emit(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_scan(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3);
 uint32_t omega_book(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_cg_fields(uint64_t  *result, uint64_t p0, void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_cg_replay(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, uint64_t p2);
 uint32_t omega_cg_life(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
@@ -203,7 +202,6 @@ uint32_t omega_omfmt(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1,
 uint32_t omega_omnum(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
 uint32_t omega_omclip(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2);
 uint32_t omega_omhost(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_cubmsg(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_mg_wire(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
 uint32_t omega_mg_node(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n, uint64_t p3);
@@ -226,7 +224,6 @@ uint32_t omega_grmeta(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p
 uint32_t omega_grtable(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
 uint32_t omega_hello(uint64_t  *result, uint64_t p0, void *p1, uint64_t p1_n, void *p2, uint64_t p2_n, void *p3, uint64_t p3_n, void *p4, uint64_t p4_n);
 uint32_t omega_hplan(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_cubadmit(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
 uint32_t omega_ampack(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_gemm_ex_plan(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
@@ -282,9 +279,7 @@ uint32_t omega_bw_cpubf16(uint64_t  *result, const void *p0, uint64_t p0_n, cons
 uint32_t omega_bw_shape(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_bw_name(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_av_pack(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2, uint64_t p3);
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_av_lay(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_av_copy(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n, uint64_t p2);
@@ -372,7 +367,6 @@ uint32_t omega_mm_dot(uint64_t  *result, const void *p0, uint64_t p0_n, const vo
 uint32_t omega_mm_err(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1, void *p2, uint64_t p2_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_mm_init(uint64_t  *result, void *p0, uint64_t p0_n);
-/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_mm_next(uint64_t  *result, void *p0, uint64_t p0_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_ar_bf16(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);

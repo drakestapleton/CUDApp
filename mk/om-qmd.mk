@@ -41,7 +41,7 @@ OM_ENG_SRCS = tests/om_eng_diff_test.c src/omega_gpu_engine.c src/omega_gpu_wait
 	src/omega_gpu_fmt.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c m16/m16_gpu_wait.c m16/m16_native.c nvrm/nvrm.c
 OM_ENG_UNIT ?= src/cudapp_om_eng.c
 OM_ENG_BINDING = $(filter-out src/cudapp_om_nvrm_transport.c $(OM_ENG_UNIT) src/cudapp_om_eng.c src/cudapp_om_amp_runtime.c,$(GPU_AIEN_BINDING))
-OM_ENG_PLATFORM = om/platform-linux/gen/link/plat_fx_effects.c om/platform-linux/gen/link/plat_fx_wait.c
+OM_ENG_PLATFORM = src/omega_gpu_chip.c om/platform-linux/gen/link/plat_fx_effects.c om/platform-linux/gen/link/plat_fx_wait.c
 OM_ENG_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DCUDAPP_NVRM_TEST_TRANSPORT=1 -Isrc $(GPU_ENGINE_PHYS_INC) -Wl,--wrap=omega_eng
 OM_ENG_DEPS = $(OM_ENG_SRCS) $(OM_ENG_UNIT) $(OM_ENG_BINDING) $(OM_ENG_PLATFORM) src/omega_eng_dec.h src/omega_eng_gates.h
 

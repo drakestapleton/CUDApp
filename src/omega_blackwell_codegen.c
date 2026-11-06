@@ -2618,6 +2618,39 @@ uint32_t omega_matmul_frag_unroll(uint32_t kp) {
 }
 #endif
 
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_PACK)
+#define BW_PACK_C_PRIMARY 1
+#endif
+#ifndef BW_PACK_C_PRIMARY
+/* Five native slots: fixed metadata plus two runtime views; no staging copy.
+ * All shape/extent arithmetic, conversion and lane placement is seeded Omega. */
+static void frag_pack(uint64_t p[12], const void *src, uint16_t *dst) {
+    uint64_t result = UINT64_MAX;
+    if (omega_cg_pklen(&result, p, 12) || result != 0) return;
+    (void)omega_cg_pkh(&result, p, 12, src, p[8], dst, p[9]);
+}
+void omega_matmul_frag_pack_a(const uint16_t *a, uint32_t m, uint32_t k, uint32_t mp, uint32_t kp, uint16_t *dst) {
+    uint64_t p[12] = {0, m, k, mp, kp};
+    frag_pack(p, a, dst);
+}
+void omega_matmul_frag_pack_a_f32(const float *a, uint32_t m, uint32_t k, uint32_t mp, uint32_t kp, uint16_t *dst) {
+    uint64_t p[12] = {3, m, k, mp, kp};
+    frag_pack(p, a, dst);
+}
+void omega_matmul_frag_pack_a_row0(const uint16_t *a, uint32_t k, uint32_t kp, uint16_t *dst) {
+    uint64_t p[12] = {1, 1, k, 16, kp};
+    frag_pack(p, a, dst);
+}
+void omega_matmul_frag_pack_a_row0_f32(const float *a, uint32_t k, uint32_t kp, uint16_t *dst) {
+    uint64_t p[12] = {4, 1, k, 16, kp};
+    frag_pack(p, a, dst);
+}
+void omega_matmul_frag_pack_b(const uint16_t *b, uint32_t k, uint32_t n, uint32_t kp,
+                            uint32_t nt0, uint32_t nt1, uint16_t *dst) {
+    uint64_t p[12] = {2, 0, k, 0, kp, n, nt0, nt1};
+    frag_pack(p, b, dst);
+}
+#else
 /* A block (mt, ks) holds rows 16mt..16mt+15 and columns 16ks..16ks+15 as 256 bf16 at element
  * (mt*KS + ks)*256; inside the block, element (rr, cc) sits at lane*8 + e with lane = (rr%8)*4 + (cc%8)/2
  * and e = (cc/8)*4 + (rr/8)*2 + cc%2 (the HMMA.16816 A fragment order, header comment). The 256-entry
@@ -2683,6 +2716,7 @@ void omega_matmul_frag_pack_a_f32(const float *a, uint32_t m, uint32_t k, uint32
 void omega_matmul_frag_pack_a_row0(const uint16_t *a, uint32_t k, uint32_t kp, uint16_t *dst) {
     FRAG_PACK_A_ROW0_BODY(FRAG_ID);
 }
+#endif /* BW_PACK_C_PRIMARY */
 size_t omega_matmul_result_sentinels(float *cd, uint32_t m, uint32_t n, uint32_t np, float poison, int set) {
     /* one word per 16 x 8 fragment tile that holds a real output word: the tile's last real row and column */
     size_t count = 0;
@@ -2700,6 +2734,7 @@ size_t omega_matmul_result_sentinels(float *cd, uint32_t m, uint32_t n, uint32_t
     return count;
 }
 
+#ifdef BW_PACK_C_PRIMARY
 void omega_matmul_frag_pack_a_row0_f32(const float *a, uint32_t k, uint32_t kp, uint16_t *dst) {
     FRAG_PACK_A_ROW0_BODY(frag_f32_to_bf16);
 }
@@ -2720,6 +2755,7 @@ void omega_matmul_frag_pack_b(const uint16_t *b, uint32_t k, uint32_t n, uint32_
         }
     }
 }
+#endif /* BW_PACK_C_PRIMARY */
 
 int omega_blackwell_verify_codegen_fixtures(void) {
     OmegaRegAlloc ra;

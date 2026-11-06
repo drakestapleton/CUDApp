@@ -22,7 +22,7 @@ UNITS = ['regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_par
 FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c',
          'src/cudapp_om_bw_identity.c', 'src/cudapp_freest_bw_scalar.c', 'src/cudapp_om_bw_cpui.c',
          'src/cudapp_om_bw_cpuf16.c', 'src/cudapp_om_bw_cpubf16.c', 'src/cudapp_om_bw_shape.c',
-         'src/cudapp_om_bw_name.c']
+         'src/cudapp_om_bw_name.c', 'src/cudapp_om_cg_pack_len.c', 'src/cudapp_om_cg_pack_h.c']
 FLAGS = ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections', '-Isrc']
 LINK = {
     'liveness': ['tests/regalloc_om/liveness.c', str(OUT / 'successor.o'), 'src/omega_gpu_om_ir.c'],

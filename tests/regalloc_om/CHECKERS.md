@@ -28,3 +28,13 @@ The source-partition run exercises every C branch outcome in all three headers. 
 ## Padded row-zero packing
 
 The original row-zero loop underflowed `k - c0` for complete padding blocks and read beyond the source. The `k=1,kp=48` source-sized regression in `packers.c` reproduced an AddressSanitizer heap-buffer-overflow before the repair (exit 1); the repaired C path exits 0 under the same sanitizer and preserves non-row-zero destination words.
+
+## Fragment providers
+
+Host packing defaults to `cg_pack_len.om` and `cg_pack_h.om`. `CUDAPP_MIGRATION_PENDING_C_PACK` is the default-off C verification oracle; the freestanding build retains it until its ABI can call the portable runtime-view units. The public five packing signatures are unchanged. C only marshals metadata and pointers: all lengths, shape admission, zero padding, lane placement and f32-to-bf16 conversion are Omega. No staging allocation or copy is introduced.
+
+The metadata is `ulong[12]={kind,m,k,mp,kp,n,nt0,nt1,source_bytes,destination_ushort_count,0,0}`. Kinds 0/1 are ushort A/row0, 2 is ushort B, and 3/4 are f32 A/row0. `cg_pklen` fills fields 8/9 and refuses invalid/overflowing shapes. `cg_pkh` takes that fixed view plus unsized byte-source and ushort-destination views: five native slots, independent of matrix size. Source bytes use the supported little-endian host wire. f32 conversion is fused into packing and preserves ties, subnormals, infinities and NaN payloads.
+
+`cg_mrow.om` provides the shared `mrow(q[3]={m,n,np}, source f32*, destination f32*)` compaction policy. It checks dimensions and view extents and copies forward without changing floating-point bits. The portable ABI refuses overlapping input/output views.
+
+With the bwrap prefix above, run `sh tests/regalloc_om/packers.sh`, then `env OMEGA_OMC=... OMEGA_BRIDGE=... python3 tests/regalloc_om/packers_mutants.py`. The differential compares every destination and guard word across all five packers, including partial A/B tiles, empty inputs, extra padding blocks, B subranges and f32 edge bit patterns. Six recompiled semantic mutants must execute successfully and produce different complete outputs; a compile failure or trap is not credited.

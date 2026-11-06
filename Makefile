@@ -46,6 +46,12 @@ CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-p
 CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
 CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c
 CUDAPP_BINDING_SRCS = $(CUDAPP_HOST_BINDING) $(CUDAPP_FS_BINDING)
+# Units every explicit host link of src/omega_blackwell_codegen.c needs since RegAlloc #309, RegAllocRest and
+# FreestLeftovers #320: the allocator, the bind step, the kernel-dump leftovers and the SHA core under sha256.c.
+# With -Wl,--gc-sections only the referenced ones stay. Links that also take src/omega_cubin.c add
+# src/cudapp_om_core_cubinmsg.c.
+BW_CODEGEN_BINDING = src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c \
+	src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c
 OUT_DIR ?= build
 GPU_PROD_TARGET ?= $(OUT_DIR)/libomega_gpu.a
 NVIDIA_OPEN := $(PHYSICS_DIR)/third_party/nvidia-open-580.173.02

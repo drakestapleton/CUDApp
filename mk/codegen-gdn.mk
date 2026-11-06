@@ -4,7 +4,7 @@ CARRIED_HOST_TESTS += test-codegen-gdn-diff
 .PHONY: test-codegen-gdn-diff test-codegen-gdn-mutants test-codegen-gdn-sim
 CG_GDN_SRC ?= src/cudapp_om_cg_gdn.c
 CG_GDN_POLICY_SRC ?= src/cudapp_om_cg_gdn_policy.c
-CG_GDN_HOST_SRCS = src/omega_blackwell_codegen_gdn.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CG_GDN_SRC) $(CG_GDN_POLICY_SRC) src/cudapp_om_bw_enc_sm121.c src/omega_gpu_fmt.c src/sha256.c
+CG_GDN_HOST_SRCS = src/omega_blackwell_codegen_gdn.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c $(CG_GDN_SRC) $(CG_GDN_POLICY_SRC) src/cudapp_om_bw_enc_sm121.c src/omega_gpu_fmt.c src/sha256.c $(BW_CODEGEN_BINDING)
 $(OUT_DIR)/codegen_gdn_diff_test: tests/codegen_gdn_diff_test.c $(CG_GDN_HOST_SRCS) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ $^ -lm
 test-codegen-gdn-diff: $(OUT_DIR)/codegen_gdn_diff_test

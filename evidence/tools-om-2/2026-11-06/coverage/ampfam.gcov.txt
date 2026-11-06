@@ -1,0 +1,8 @@
+File 'ampere_families.c'
+Lines executed:100.00% of 94
+Branches executed:100.00% of 218
+Taken at least once:100.00% of 218
+Calls executed:100.00% of 120
+Creating 'ampere_families.c.gcov'
+
+Lines executed:100.00% of 94

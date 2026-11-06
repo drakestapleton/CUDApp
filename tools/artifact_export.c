@@ -20,7 +20,7 @@
 #include "omega_gpu_matmul_api.h"
 #include "omega_native_artifact.h"
 #include "sha256.h"
-
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_ARTEXP
 static void usage(void) {
     fprintf(stderr,
             "usage: artifact-export matmul --m M --k K --n N --contract-id HEX --out PREFIX --commit HEX\n"
@@ -220,3 +220,117 @@ int main(int argc, char **argv) {
     omega_blackwell_kernel_free(&kern);
     return 0;
 }
+#else
+/* Reading the command line, every check against the frozen v1 contracts, the kernel choice and its
+ * grid, the launch configuration and parameter table, the attention semantic-spec text, the manifest
+ * texts, every message and the exit status are om/tools/artexp.om. This shell calls the library when
+ * the unit asks and writes the unit's text. The former C above keeps its line numbers. */
+#include "cudapp_native.h"
+
+static uint8_t tok[262144], txt[262144];
+
+int main(int argc, char **argv) {
+    const uint64_t f[8] = { OMEGA_GPU_MATMUL_MAX_CTAS, OMEGA_ARTIFACT_OK };
+    uint64_t s[128];
+    OmegaMatMulSpec spec;
+    OmegaBlackwellKernel kern;
+    OmegaBlackwellQmdConfig cfg;
+    OmegaNativeArtifact a;
+    uint32_t q0[OMEGA_ARTIFACT_QMD_WORDS], q1[OMEGA_ARTIFACT_QMD_WORDS], cbank[32];
+    OmegaCubinParam params[16];
+    memset(s, 0, sizeof s); memset(&spec, 0, sizeof spec); memset(&kern, 0, sizeof kern);
+    memset(&cfg, 0, sizeof cfg); memset(&a, 0, sizeof a);
+    memset(q0, 0, sizeof q0); memset(q1, 0, sizeof q1); memset(cbank, 0, sizeof cbank);
+    memset(params, 0, sizeof params);
+    s[3] = (uint64_t)argc;
+    for (;;) {
+        uint64_t act = 0;
+        if (omega_artexp(&act, f, 8, s, 128, tok, sizeof tok, txt, sizeof txt) != 0) abort();
+        switch (act & 255) {
+        case 1: {
+            /* Linux caps one argument at MAX_ARG_STRLEN (131072 bytes with its NUL), well inside tok. */
+            const char *arg = argv[s[1]];
+            size_t n = strnlen(arg, sizeof tok);
+            if (n == sizeof tok) abort();
+            memcpy(tok, arg, n + 1);
+            s[2] = n;
+            break;
+        }
+        case 2:
+            fwrite(txt, 1, (size_t)(act >> 8), stderr);
+            omega_blackwell_kernel_free(&kern);
+            return (int)s[25];
+        case 3:
+            s[18] = (uint64_t)(int64_t)omega_matmul_spec_init(&spec, (uint32_t)s[13], (uint32_t)s[14], (uint32_t)s[15],
+                                                              OMEGA_MATMUL_PRECISION_BF16);
+            break;
+        case 4: s[18] = (uint64_t)(int64_t)omega_blackwell_codegen_matmul(&spec, &kern); break;
+        case 5:
+            s[18] = (uint64_t)(int64_t)omega_blackwell_codegen_matmul_tensor_loop(&spec, (uint32_t)s[19], 0, &kern);
+            break;
+        case 6: memcpy(tok, spec.spec_id, 32); break;
+        case 7:
+            omega_blackwell_build_cbank_args_matmul(cbank, 0, 0, 0, (uint32_t)s[13], (uint32_t)s[14], (uint32_t)s[15]);
+            break;
+        case 8: s[18] = (uint64_t)(int64_t)omega_gpu_attention_codegen_hd(true, 12, (uint32_t)s[20], 128, &kern); break;
+        case 9: sha256_hash(txt, (size_t)(act >> 8), tok); break;
+        case 10: s[21] = omega_gpu_attention_heads_per_cta(128, (uint32_t)s[20]); break;
+        case 11: cbank[14] = (uint32_t)s[16]; break;
+        case 12:
+            s[22] = kern.gpr_count;
+            s[23] = omega_bw_gpr_declared(kern.gpr_count);
+            s[24] = omega_bw_gpr_declared_ok((uint32_t)s[23], kern.gpr_count) != 0;
+            break;
+        case 13:
+            cfg.threads_per_block = (uint32_t)s[32]; cfg.threads_x = (uint32_t)s[33];
+            cfg.grid_x = (uint32_t)s[34]; cfg.grid_y = (uint32_t)s[35];
+            cfg.num_elements = (uint32_t)s[36]; cfg.shared_bytes = (uint32_t)s[37];
+            cfg.gpr_count = (uint32_t)s[38];
+            s[18] = omega_blackwell_build_qmd0(q0, 0, 0) != 0 || omega_blackwell_build_qmd1(q1, &cfg) != 0;
+            break;
+        case 14: {
+            const char *v[13], *c = (const char *)txt;
+            for (int i = 0; i < 13; i++) { v[i] = c; c += strlen(c) + 1; }
+            a.op = v[0]; a.contract_name = v[1]; a.precision = v[2]; a.accumulation = v[3]; a.tolerance = v[4];
+            a.shape = v[5]; a.bounds = v[6]; a.semantic_spec_id_hex = v[7]; a.kernel_function = v[8];
+            a.min_driver = v[9]; a.requires = v[10]; a.tool_version = v[11]; a.qualification = v[12];
+            a.contract_id_hex = argv[s[7]];
+            a.source_commit = argv[s[10]];
+            for (uint64_t i = 0; i < s[47]; i++) {
+                uint64_t w = s[64 + i];
+                params[i] = (OmegaCubinParam){ (uint32_t)(w & 0xffff), (uint32_t)((w >> 16) & 0xffff), (uint8_t)(w >> 32) };
+            }
+            a.params = params; a.nparams = (size_t)s[47];
+            a.text = kern.code; a.text_len = kern.code_size;
+            a.gpr_count = cfg.gpr_count;
+            a.grid_x = (uint32_t)s[40]; a.grid_y = (uint32_t)s[41];
+            a.block_x = (uint32_t)s[42]; a.block_y = (uint32_t)s[43]; a.block_z = (uint32_t)s[44];
+            a.shared_bytes = (uint32_t)s[45];
+            a.cbank_offset = 0x380;
+            a.cbank_args = cbank; a.cbank_words = (size_t)s[46];
+            a.qmd0 = q0; a.qmd1 = q1;
+            char id[OMEGA_ARTIFACT_ID_MAX], err[256];
+            id[0] = 0; err[0] = 0;
+            int rc = omega_native_artifact_export(&a, argv[s[6]], id, err, sizeof err);
+            s[18] = (uint64_t)(int64_t)rc;
+            const char *part[3] = { id, argv[s[7]], argv[s[6]] };
+            if (rc != OMEGA_ARTIFACT_OK) { part[0] = omega_native_artifact_rc_name(rc); part[1] = err; }
+            size_t at = 0;
+            for (int i = 0; i < 3; i++) {
+                size_t n = strlen(part[i]);
+                if (at + n + 1 > sizeof tok) abort();
+                memcpy(tok + at, part[i], n + 1);
+                at += n + 1;
+            }
+            break;
+        }
+        case 15:
+            fwrite(txt, 1, (size_t)(act >> 8), stdout);
+            omega_blackwell_kernel_free(&kern);
+            return 0;
+        default:
+            abort();
+        }
+    }
+}
+#endif

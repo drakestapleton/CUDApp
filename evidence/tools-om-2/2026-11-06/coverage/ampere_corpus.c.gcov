@@ -1,0 +1,246 @@
+        -:    0:Source:ampere_corpus.c
+        -:    0:Graph:ac_cov-ampere_corpus.gcno
+        -:    0:Data:ac_cov-ampere_corpus.gcda
+        -:    0:Runs:63
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* Test-only IR capture. Linked into the existing host-only corpus producers;
+        -:    3: * no driver API is called here. A refusal is legal for an explicit FP8 marker,
+        -:    4: * or for a training R5 opcode SM86 does not implement (op > BW_IR_MUFU_LG2).
+        -:    5: *
+        -:    6: * The decisions are seeded Omega (om/tools/ampcorp.om through src/cudapp_om_ampcorp.c): the folder
+        -:    7: * check, the IR metadata, the refusal classification, the check of the encoder outcome and the text of
+        -:    8: * the paths and of the message. This file keeps the I/O: getenv, the SM86 encoder call, open/fdopen/
+        -:    9: * fwrite, the serial counter and abort. The former C is the oracle behind the default-OFF switch
+        -:   10: * CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP (tests/tools-om/ampcorp.sh). */
+        -:   11:#include "omega_ampere_codegen.h"
+        -:   12:#include "omega_blackwell_codegen_tc.h"
+        -:   13:#include "omega_blackwell_codegen_qmma.h"
+        -:   14:#include <stdio.h>
+        -:   15:#include <stdlib.h>
+        -:   16:#include <string.h>
+        -:   17:#include <unistd.h>
+        -:   18:#include <fcntl.h>
+        -:   19:#include <sys/stat.h>
+        -:   20:
+        -:   21:#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP
+function is_safe_corpus_dir called 77 returned 100% blocks executed 100%
+       77:   22:static int is_safe_corpus_dir(const char *dir)
+        -:   23:{
+       77:   24:    if (!dir || !*dir) return 0;
+branch  0 taken 76 (fallthrough)
+branch  1 taken 1
+branch  2 taken 1 (fallthrough)
+branch  3 taken 75
+       75:   25:    if (strchr(dir, '\\')) return 0;
+branch  0 taken 3 (fallthrough)
+branch  1 taken 72
+      250:   26:    for (const char *component = dir; *component;) {
+branch  0 taken 185
+branch  1 taken 65 (fallthrough)
+      301:   27:        while (*component == '/') ++component;
+branch  0 taken 116
+branch  1 taken 185 (fallthrough)
+      185:   28:        const char *start = component;
+    20568:   29:        while (*component && *component != '/') ++component;
+branch  0 taken 20501 (fallthrough)
+branch  1 taken 67
+branch  2 taken 20383
+branch  3 taken 118 (fallthrough)
+      185:   30:        if ((size_t)(component - start) == 2 &&
+branch  0 taken 9 (fallthrough)
+branch  1 taken 176
+        9:   31:            start[0] == '.' && start[1] == '.') return 0;
+branch  0 taken 8 (fallthrough)
+branch  1 taken 1
+branch  2 taken 7 (fallthrough)
+branch  3 taken 1
+        -:   32:    }
+       65:   33:    return 1;
+        -:   34:}
+        -:   35:
+function save called 112 returned 88% blocks executed 84%
+      112:   36:static void save(const char *dir, unsigned serial, const char *suffix, const void *data, size_t size)
+        -:   37:{
+        -:   38:    char path[4096];
+      112:   39:    int n = snprintf(path, sizeof(path), "%s/%ld-%u.%s", dir, (long)getpid(), serial, suffix);
+call    0 returned 112
+      112:   40:    if (n < 0 || (size_t)n >= sizeof(path)) abort();
+branch  0 taken 112 (fallthrough)
+branch  1 taken 0
+branch  2 taken 3 (fallthrough)
+branch  3 taken 109
+call    4 returned 0
+      109:   41:    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+call    0 returned 109
+      109:   42:    if (fd < 0) { perror(path); abort(); }
+branch  0 taken 8 (fallthrough)
+branch  1 taken 101
+call    2 returned 8
+call    3 returned 0
+      101:   43:    FILE *f = fdopen(fd, "wb");
+call    0 returned 101
+     101*:   44:    if (!f) { perror(path); close(fd); abort(); }
+branch  0 taken 0 (fallthrough)
+branch  1 taken 101
+call    2 never executed
+call    3 never executed
+call    4 never executed
+      101:   45:    if (fwrite(data, 1, size, f) != size || fclose(f) != 0) abort();
+call    0 returned 101
+branch  1 taken 100 (fallthrough)
+branch  2 taken 1
+call    3 returned 100
+branch  4 taken 2 (fallthrough)
+branch  5 taken 98
+call    6 returned 0
+       98:   46:}
+        -:   47:
+function omega_ampere_corpus_capture called 77 returned 62% blocks executed 100%
+       77:   48:void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *sm121, size_t len)
+        -:   49:{
+       77:   50:    const char *dir = getenv("OMEGA_AMPERE_CORPUS_DIR");
+call    0 returned 77
+       83:   51:    if (!is_safe_corpus_dir(dir)) return;
+call    0 returned 77
+branch  1 taken 12 (fallthrough)
+branch  2 taken 65
+        -:   52:    static unsigned serial;
+       65:   53:    const unsigned id = serial++;
+        -:   54:    uint8_t code[16384];
+        -:   55:    uint32_t metadata[BW_MAX_IR_INSNS][2];
+       65:   56:    int fp8 = 0, blackwell_only = 0;
+     4527:   57:    for (size_t i = 0; i < prog->count; ++i) {
+branch  0 taken 4462
+branch  1 taken 65 (fallthrough)
+     4462:   58:        const BlackwellIRInsn *in = &prog->insns[i];
+     4462:   59:        metadata[i][0] = (uint32_t)in->op;
+     4462:   60:        metadata[i][1] = in->imm;
+     4462:   61:        if (in->op > BW_IR_MUFU_LG2) blackwell_only = 1;
+branch  0 taken 5 (fallthrough)
+branch  1 taken 4457
+     4462:   62:        if ((in->op == BW_IR_HMMA_BF16 && in->imm == OMEGA_QMMA_MARK) ||
+branch  0 taken 80 (fallthrough)
+branch  1 taken 4382
+branch  2 taken 70 (fallthrough)
+branch  3 taken 10
+     4462:   63:            (in->op == BW_IR_FMNMX_MAX && in->imm == OMEGA_QMMA_MARK_F2E4)) fp8 = 1;
+branch  0 taken 71 (fallthrough)
+branch  1 taken 4381
+branch  2 taken 1 (fallthrough)
+branch  3 taken 70
+        -:   64:    }
+       65:   65:    memset(code, 0xa5, sizeof(code));
+       65:   66:    size_t bytes = 0;
+       65:   67:    int rc = omega_gpu_encode_program_target(prog, 86, code, sizeof(code), &bytes);
+call    0 returned 65
+        -:   68:    /* SM121 already holds the published bytes. SM86 refuses the new opcodes in
+        -:   69:     * its preflight and writes nothing. There is no post-encode patch. */
+       65:   70:    if (fp8 || blackwell_only) {
+branch  0 taken 54 (fallthrough)
+branch  1 taken 11
+branch  2 taken 5 (fallthrough)
+branch  3 taken 49
+       16:   71:        if (rc != OMEGA_GPU_ENCODE_UNSUPPORTED || bytes != 0) abort();
+branch  0 taken 13 (fallthrough)
+branch  1 taken 3
+branch  2 taken 1 (fallthrough)
+branch  3 taken 12
+call    4 returned 0
+   172042:   72:        for (size_t i = 0; i < sizeof(code); ++i) if (code[i] != 0xa5) abort();
+branch  0 taken 3 (fallthrough)
+branch  1 taken 172030
+call    2 returned 0
+branch  3 taken 172033
+branch  4 taken 9 (fallthrough)
+        9:   73:        save(dir, id, "refused", metadata, prog->count * sizeof(metadata[0]));
+call    0 returned 6
+        6:   74:        return;
+        -:   75:    }
+       49:   76:    if (rc != 0 || bytes != len) {
+branch  0 taken 44 (fallthrough)
+branch  1 taken 5
+branch  2 taken 3 (fallthrough)
+branch  3 taken 41
+        8:   77:        fprintf(stderr, "SM86 unexpectedly refused an existing kernel (%zu instructions, rc %d)\n", prog->count, rc);
+call    0 returned 8
+        8:   78:        abort();
+call    0 returned 0
+        -:   79:    }
+       41:   80:    save(dir, id, "sm121.bin", sm121, len);
+call    0 returned 31
+       31:   81:    save(dir, id, "sm86.bin", code, bytes);
+call    0 returned 31
+       31:   82:    save(dir, id, "ir", metadata, prog->count * sizeof(metadata[0]));
+call    0 returned 30
+        -:   83:}
+        -:   84:#else
+        -:   85:#include "cudapp_native.h"
+        -:   86:
+        -:   87:/* The unit's arrays (sizes fixed by om/tools/ampcorp.om). The folder buffer holds any environment
+        -:   88: * string: Linux caps one at MAX_ARG_STRLEN (131072 bytes) with its name and zero. Not reentrant, as
+        -:   89: * the former C's serial counter already was not. */
+        -:   90:static uint64_t g_facts[16];
+        -:   91:static uint8_t g_dir[131072];
+        -:   92:static uint64_t g_ins[2048];
+        -:   93:static uint8_t g_code[16384];
+        -:   94:static uint8_t g_out[20480];
+        -:   95:
+        -:   96:static uint64_t decide(void)
+        -:   97:{
+        -:   98:    uint64_t r = 0;
+        -:   99:    if (omega_ampcorp(&r, g_facts, 16, g_dir, sizeof(g_dir), g_ins, 2048, g_code, sizeof(g_code),
+        -:  100:                      g_out, sizeof(g_out)) != OMEGA_OK) abort();
+        -:  101:    return r;
+        -:  102:}
+        -:  103:
+        -:  104:static void save(const char *path, const void *data, size_t size)
+        -:  105:{
+        -:  106:    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        -:  107:    if (fd < 0) { perror(path); abort(); }
+        -:  108:    FILE *f = fdopen(fd, "wb");
+        -:  109:    if (!f) { perror(path); close(fd); abort(); }
+        -:  110:    if (fwrite(data, 1, size, f) != size || fclose(f) != 0) abort();
+        -:  111:}
+        -:  112:
+        -:  113:void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *sm121, size_t len)
+        -:  114:{
+        -:  115:    const char *dir = getenv("OMEGA_AMPERE_CORPUS_DIR");
+        -:  116:    if (!dir) return;
+        -:  117:    size_t dn = strlen(dir);
+        -:  118:    if (dn >= sizeof(g_dir) || prog->count > BW_MAX_IR_INSNS) abort();
+        -:  119:    memcpy(g_dir, dir, dn);
+        -:  120:    memset(g_facts, 0, sizeof(g_facts));
+        -:  121:    g_facts[1] = dn;
+        -:  122:    if (!decide()) return;
+        -:  123:    static unsigned serial;
+        -:  124:    const unsigned id = serial++;
+        -:  125:    for (size_t i = 0; i < prog->count; ++i) {
+        -:  126:        g_ins[2 * i] = (uint32_t)prog->insns[i].op;
+        -:  127:        g_ins[2 * i + 1] = prog->insns[i].imm;
+        -:  128:    }
+        -:  129:    memset(g_code, 0xa5, sizeof(g_code));
+        -:  130:    size_t bytes = 0;
+        -:  131:    int rc = omega_gpu_encode_program_target(prog, 86, g_code, sizeof(g_code), &bytes);
+        -:  132:    const uint64_t facts[16] = { 1, dn, prog->count, (uint64_t)(int64_t)rc, bytes, len, (uint64_t)(long)getpid(), id,
+        -:  133:                                 BW_IR_MUFU_LG2, BW_IR_HMMA_BF16, OMEGA_QMMA_MARK, BW_IR_FMNMX_MAX,
+        -:  134:                                 OMEGA_QMMA_MARK_F2E4, (uint64_t)(int64_t)OMEGA_GPU_ENCODE_UNSUPPORTED };
+        -:  135:    memcpy(g_facts, facts, sizeof(facts));
+        -:  136:    uint64_t r = decide();
+        -:  137:    const char *path = (const char *)g_out + 8192;
+        -:  138:    switch (r & 255) {
+        -:  139:    case 1:
+        -:  140:        save(path, g_out, prog->count * 8);
+        -:  141:        return;
+        -:  142:    case 2:
+        -:  143:        save(path, sm121, len);
+        -:  144:        save((const char *)g_out + 12288, g_code, bytes);
+        -:  145:        save((const char *)g_out + 16384, g_out, prog->count * 8);
+        -:  146:        return;
+        -:  147:    case 4:
+        -:  148:        fwrite(path, 1, (size_t)(r >> 8), stderr);
+        -:  149:        abort();
+        -:  150:    default: /* 3: the refusal wrote bytes or did not refuse; 5: the path does not fit 4096 bytes */
+        -:  151:        abort();
+        -:  152:    }
+        -:  153:}
+        -:  154:#endif

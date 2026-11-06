@@ -1,0 +1,8 @@
+File 'artifact_export.c'
+Lines executed:99.27% of 137
+Branches executed:100.00% of 138
+Taken at least once:93.48% of 138
+Calls executed:86.96% of 46
+Creating 'artifact_export.c.gcov'
+
+Lines executed:99.27% of 137

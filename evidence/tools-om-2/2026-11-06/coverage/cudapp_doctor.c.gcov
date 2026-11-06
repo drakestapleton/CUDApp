@@ -1,0 +1,474 @@
+        -:    0:Source:cudapp_doctor.c
+        -:    0:Graph:doc_cov-cudapp_doctor.gcno
+        -:    0:Data:doc_cov-cudapp_doctor.gcda
+        -:    0:Runs:40
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* cudapp-doctor: is this machine ready for CUDA++, and if not, what exactly to do.
+        -:    3: *
+        -:    4: * Developer bar D2 and D6 (docs/PAIN_POINTS.md). CUDA's install needs a driver, a toolkit, a
+        -:    5: * framework build and an extension build whose versions all agree, and a mismatch shows up later
+        -:    6: * as an undefined symbol or "no kernel image". CUDA++ has one thing to match: the NVIDIA kernel
+        -:    7: * module its driver client speaks to. This program checks that and everything else a first run
+        -:    8: * needs, and prints one line per check. Every failing line says what is wrong, why it matters and
+        -:    9: * the command to run next.
+        -:   10: *
+        -:   11: * It reads files only (/proc, /sys, /dev): no device is opened and no GPU window is needed.
+        -:   12: * CUDAPP_DOCTOR_ROOT=<dir> makes it read <dir>/proc, <dir>/sys and <dir>/dev instead (tests).
+        -:   13: * Exit 0: READY. Exit 1: at least one FAIL line.
+        -:   14: *
+        -:   15: * Which lines to print, the module version parse, the memory figures and the FAIL count are the seeded
+        -:   16: * Omega unit om/tools/doctor.om (omega_doctor). This file keeps the probes: fopen/fgets of the version
+        -:   17: * file, access(2) of the device files and nvcc paths, the PCI scan and chip table, the meminfo sscanf
+        -:   18: * and uname. -DCUDAPP_MIGRATION_PENDING_C_TOOLS_DOCTOR builds the former C body, kept as the oracle.
+        -:   19: * Exit 2: the Omega unit refused (a build text holding % or a newline, a malformed chip refusal). */
+        -:   20:#include "omega_gpu_chip.h"
+        -:   21:
+        -:   22:#include <stdio.h>
+        -:   23:#include <stdlib.h>
+        -:   24:#include <string.h>
+        -:   25:#include <sys/utsname.h>
+        -:   26:#include <unistd.h>
+        -:   27:
+        -:   28:#ifndef CUDAPP_NVIDIA_OPEN_ABI
+        -:   29:#error "build with make doctor: CUDAPP_NVIDIA_OPEN_ABI comes from the third_party/nvidia-open-<version> folder"
+        -:   30:#endif
+        -:   31:
+        -:   32:#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_DOCTOR
+        -:   33:static const char *g_root = "";
+        -:   34:static int g_fail, g_warn;
+        -:   35:
+function path called 278 returned 100% blocks executed 100%
+      278:   36:static void path(char *out, size_t n, const char *p) { snprintf(out, n, "%s%s", g_root, p); }
+        -:   37:
+        -:   38:static void line(const char *tag, const char *what, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+        -:   39:#include <stdarg.h>
+function line called 308 returned 100% blocks executed 100%
+      308:   40:static void line(const char *tag, const char *what, const char *fmt, ...) {
+      308:   41:    printf("  %-5s %s: ", tag, what);
+call    0 returned 308
+      308:   42:    va_list ap; va_start(ap, fmt); vprintf(fmt, ap); va_end(ap);
+call    0 returned 308
+      308:   43:    printf("\n");
+call    0 returned 308
+      308:   44:    if (!strcmp(tag, "FAIL")) g_fail++;
+branch  0 taken 50 (fallthrough)
+branch  1 taken 258
+      308:   45:    if (!strcmp(tag, "warn")) g_warn++;
+branch  0 taken 5 (fallthrough)
+branch  1 taken 303
+      308:   46:}
+function more called 90 returned 100% blocks executed 100%
+       90:   47:static void more(const char *text) { /* indented follow-on lines, one per \n */
+       90:   48:    const char *s = text;
+      214:   49:    while (*s) {
+branch  0 taken 214
+branch  1 taken 0 (fallthrough)
+      214:   50:        const char *e = strchr(s, '\n');
+      214:   51:        size_t len = e ? (size_t)(e - s) : strlen(s);
+branch  0 taken 124 (fallthrough)
+branch  1 taken 90
+      214:   52:        printf("        %.*s\n", (int)len, s);
+call    0 returned 214
+      214:   53:        if (!e) break;
+branch  0 taken 90 (fallthrough)
+branch  1 taken 124
+      124:   54:        s = e + 1;
+        -:   55:    }
+       90:   56:}
+        -:   57:
+        -:   58:/* ---- the kernel module: present, open or closed, and the one version CUDA++ must match ---- */
+function check_module called 40 returned 100% blocks executed 98%
+       40:   59:static void check_module(void) {
+       40:   60:    char p[4200], buf[1024] = { 0 };
+       40:   61:    path(p, sizeof p, "/proc/driver/nvidia/version");
+call    0 returned 40
+       40:   62:    FILE *f = fopen(p, "r");
+call    0 returned 40
+       40:   63:    if (!f || !fgets(buf, sizeof buf, f)) {
+branch  0 taken 38 (fallthrough)
+branch  1 taken 2
+call    2 returned 38
+branch  3 taken 1 (fallthrough)
+branch  4 taken 37
+        3:   64:        if (f) fclose(f);
+branch  0 taken 1 (fallthrough)
+branch  1 taken 2
+call    2 returned 1
+        3:   65:        line("FAIL", "NVIDIA kernel module", "not loaded (%s/proc/driver/nvidia/version does not exist)", g_root);
+call    0 returned 3
+        3:   66:        more("CUDA++ uses no NVIDIA user-space software, but it talks to NVIDIA's kernel module.\n"
+call    0 returned 3
+        -:   67:             "Do this: sudo modprobe nvidia && sudo modprobe nvidia-uvm\n"
+        -:   68:             "If modprobe finds no module, install NVIDIA's open kernel module " CUDAPP_NVIDIA_OPEN_ABI
+        -:   69:             " (the open-gpu-kernel-modules release of that number), then run make doctor again.");
+       15:   70:        return;
+        -:   71:    }
+       37:   72:    fclose(f);
+call    0 returned 37
+       37:   73:    int open_module = strstr(buf, "Open Kernel Module") != NULL;
+        -:   74:    /* the version is the first word that looks like N.N or N.N.N after "Module" */
+       37:   75:    char ver[64] = { 0 };
+       37:   76:    const char *m = strstr(buf, "Module");
+     1800:   77:    for (const char *s = m ? m : buf; *s; s++) {
+branch  0 taken 4 (fallthrough)
+branch  1 taken 33
+branch  2 taken 1797
+branch  3 taken 3 (fallthrough)
+     1797:   78:        if (*s >= '0' && *s <= '9') {
+branch  0 taken 1663 (fallthrough)
+branch  1 taken 134
+branch  2 taken 64 (fallthrough)
+branch  3 taken 1599
+       64:   79:            size_t k = 0;
+      567:   80:            while ((s[k] >= '0' && s[k] <= '9') || s[k] == '.') k++;
+branch  0 taken 376 (fallthrough)
+branch  1 taken 191
+branch  2 taken 374
+branch  3 taken 2 (fallthrough)
+branch  4 taken 129
+branch  5 taken 64 (fallthrough)
+       64:   81:            if (k > 2 && memchr(s, '.', k) && k < sizeof ver) { memcpy(ver, s, k); break; }
+branch  0 taken 36 (fallthrough)
+branch  1 taken 28
+branch  2 taken 35 (fallthrough)
+branch  3 taken 1
+branch  4 taken 34 (fallthrough)
+branch  5 taken 1
+      30*:   82:            s += k ? k - 1 : 0;
+branch  0 taken 30 (fallthrough)
+branch  1 taken 0
+        -:   83:        }
+        -:   84:    }
+       37:   85:    if (!ver[0]) {
+branch  0 taken 3 (fallthrough)
+branch  1 taken 34
+        3:   86:        line("FAIL", "NVIDIA kernel module", "loaded, but its version could not be read from: %.120s", buf);
+call    0 returned 3
+        3:   87:        more("Do this: report it with the output of `cat /proc/driver/nvidia/version` attached.");
+call    0 returned 3
+        3:   88:        return;
+        -:   89:    }
+       34:   90:    if (strcmp(ver, CUDAPP_NVIDIA_OPEN_ABI) != 0) {
+branch  0 taken 4 (fallthrough)
+branch  1 taken 30
+        4:   91:        line("FAIL", "NVIDIA kernel module", "version %s is loaded; CUDA++ speaks the " CUDAPP_NVIDIA_OPEN_ABI " interface", ver);
+call    0 returned 4
+        4:   92:        more("Why: CUDA++ builds its driver calls from the " CUDAPP_NVIDIA_OPEN_ABI " open-module headers\n"
+call    0 returned 4
+        -:   93:             "(third_party/nvidia-open-" CUDAPP_NVIDIA_OPEN_ABI "). The layout of those calls can change between module versions,\n"
+        -:   94:             "and a wrong layout fails in strange ways, so the doctor refuses instead of guessing.\n"
+        -:   95:             "This is the only version CUDA++ asks you to match: no toolkit, no framework build, no extension build.\n"
+        -:   96:             "Do this: install the " CUDAPP_NVIDIA_OPEN_ABI " open kernel module, or port the client to your version\n"
+        -:   97:             "(CONTRIBUTING.md, \"Port a driver version\": copy the new headers, rebuild, run make test and make hello-gpu).");
+        4:   98:        return;
+        -:   99:    }
+       30:  100:    if (!open_module) {
+branch  0 taken 5 (fallthrough)
+branch  1 taken 25
+        5:  101:        line("warn", "NVIDIA kernel module", "the closed module %s is loaded; CUDA++ was qualified on the open module of that version", ver);
+call    0 returned 5
+        5:  102:        more("It uses the same calls and should work. If anything fails, switch to the open module and say so in your report.");
+call    0 returned 5
+        5:  103:        return;
+        -:  104:    }
+       25:  105:    line("ok", "NVIDIA kernel module", "open module %s (CUDA++ speaks " CUDAPP_NVIDIA_OPEN_ABI ")", ver);
+call    0 returned 25
+        -:  106:}
+        -:  107:
+        -:  108:/* ---- device files ---- */
+function check_nodes called 40 returned 100% blocks executed 100%
+       40:  109:static void check_nodes(void) {
+        -:  110:    static const char *const nodes[] = { "/dev/nvidiactl", "/dev/nvidia0", "/dev/nvidia-uvm" };
+       40:  111:    int bad = 0;
+      160:  112:    for (size_t i = 0; i < sizeof nodes / sizeof nodes[0]; i++) {
+branch  0 taken 120
+branch  1 taken 40 (fallthrough)
+        -:  113:        char p[4200];
+      120:  114:        path(p, sizeof p, nodes[i]);
+call    0 returned 120
+      120:  115:        if (access(p, F_OK) != 0) {
+call    0 returned 120
+branch  1 taken 14 (fallthrough)
+branch  2 taken 106
+       14:  116:            line("FAIL", "device files", "%s is missing", nodes[i]);
+call    0 returned 14
+       14:  117:            if (!strcmp(nodes[i], "/dev/nvidia-uvm"))
+branch  0 taken 5 (fallthrough)
+branch  1 taken 9
+        5:  118:                more("Do this: sudo modprobe nvidia-uvm   (creates /dev/nvidia-uvm; CUDA++ maps GPU memory through it)");
+call    0 returned 5
+        -:  119:            else
+        9:  120:                more("Do this: sudo modprobe nvidia   (or run nvidia-modprobe once, which creates the device files)");
+call    0 returned 9
+       14:  121:            bad++;
+      106:  122:        } else if (access(p, R_OK | W_OK) != 0) {
+call    0 returned 106
+branch  1 taken 2 (fallthrough)
+branch  2 taken 104
+        2:  123:            line("FAIL", "device files", "%s exists but this user cannot open it for reading and writing", nodes[i]);
+call    0 returned 2
+        2:  124:            more("Do this: ask the machine's owner to add you to the group that owns it (ls -l on the file shows it),\n"
+call    0 returned 2
+        -:  125:                 "or set the module option NVreg_DeviceFileMode=0666.");
+        2:  126:            bad++;
+        -:  127:        }
+        -:  128:    }
+       40:  129:    if (!bad) line("ok", "device files", "/dev/nvidiactl /dev/nvidia0 /dev/nvidia-uvm can be opened by this user");
+branch  0 taken 33 (fallthrough)
+branch  1 taken 7
+call    2 returned 33
+       40:  130:}
+        -:  131:
+        -:  132:/* ---- the GPU itself: qualified, or refused with what is missing (D6) ---- */
+function check_gpu called 40 returned 100% blocks executed 100%
+       40:  133:static void check_gpu(int *unified) {
+        -:  134:    OmegaGpuPciDev devs[16];
+       40:  135:    int n = omega_gpu_chip_scan(g_root, devs, 16);
+call    0 returned 40
+       42:  136:    if (n < 0) { line("FAIL", "GPU", "cannot read %s/sys/bus/pci/devices", g_root); more("Do this: run make doctor on the machine itself, not in a container without /sys."); return; }
+branch  0 taken 3 (fallthrough)
+branch  1 taken 37
+call    2 returned 3
+call    3 returned 3
+       37:  137:    if (n == 0) {
+branch  0 taken 2 (fallthrough)
+branch  1 taken 35
+        2:  138:        line("FAIL", "GPU", "no NVIDIA GPU found in /sys/bus/pci/devices");
+call    0 returned 2
+        2:  139:        more("Do this: check the GPU is seated and powered (lspci | grep -i nvidia).");
+call    0 returned 2
+        2:  140:        return;
+        -:  141:    }
+       35:  142:    if (n > 16) n = 16;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 34
+       89:  143:    for (int i = 0; i < n; i++) {
+branch  0 taken 54
+branch  1 taken 35 (fallthrough)
+       54:  144:        const OmegaGpuChipRow *r = omega_gpu_chip_find(devs[i].vendor, devs[i].device);
+call    0 returned 54
+        -:  145:        char what[96];
+       54:  146:        snprintf(what, sizeof what, "GPU %.63s", devs[i].bdf);
+       54:  147:        if (r) {
+branch  0 taken 35 (fallthrough)
+branch  1 taken 19
+       35:  148:            line("ok", what, "%s (%s), supported target (historical summary: %s)", r->name, r->sm, r->receipt);
+call    0 returned 35
+       35:  149:            more("raw M16 evidence unavailable; not current-commit qualification");
+call    0 returned 35
+       35:  150:            if (r->device == 0x2e12u) *unified = 1; /* GB10: one memory for CPU and GPU */
+branch  0 taken 35 (fallthrough)
+branch  1 taken 0
+        -:  151:        } else {
+        -:  152:            char text[2048];
+       19:  153:            omega_gpu_chip_refusal(&devs[i], text, sizeof text);
+call    0 returned 19
+       19:  154:            const char *nl = strchr(text, '\n');
+       19:  155:            const char *first = text + 4 + strlen(devs[i].bdf) + 2; /* after "GPU <bdf>: " (a PCI address has colons in it) */
+       19:  156:            line("FAIL", what, "%.*s", (int)(nl - first), first);
+call    0 returned 19
+       19:  157:            more(nl + 1);
+call    0 returned 19
+        -:  158:        }
+        -:  159:    }
+        -:  160:}
+        -:  161:
+        -:  162:/* ---- memory: on a unified-memory chip the GPU's memory is the machine's memory ---- */
+function check_memory called 40 returned 100% blocks executed 100%
+       40:  163:static void check_memory(int unified) {
+        -:  164:    char p[4200], l[256];
+       40:  165:    path(p, sizeof p, "/proc/meminfo");
+call    0 returned 40
+       40:  166:    FILE *f = fopen(p, "r");
+call    0 returned 40
+       40:  167:    if (!f) { line("info", "memory", "cannot read /proc/meminfo"); return; }
+branch  0 taken 3 (fallthrough)
+branch  1 taken 37
+call    2 returned 3
+       37:  168:    unsigned long long total = 0, avail = 0;
+      198:  169:    while (fgets(l, sizeof l, f)) {
+call    0 returned 198
+branch  1 taken 161
+branch  2 taken 37 (fallthrough)
+      161:  170:        sscanf(l, "MemTotal: %llu kB", &total);
+      161:  171:        sscanf(l, "MemAvailable: %llu kB", &avail);
+        -:  172:    }
+       37:  173:    fclose(f);
+call    0 returned 37
+       37:  174:    double gt = (double)total / 1048576.0, ga = (double)avail / 1048576.0;
+       37:  175:    if (unified) line("ok", "memory", "%.1f GiB shared by the CPU and the GPU, %.1f GiB available now", gt, ga);
+branch  0 taken 32 (fallthrough)
+branch  1 taken 5
+call    2 returned 32
+        5:  176:    else line("info", "memory", "%.1f GiB system memory, %.1f GiB available now", gt, ga);
+call    0 returned 5
+        -:  177:}
+        -:  178:
+        -:  179:/* ---- the CUDA toolkit: not needed. Say so, so nobody installs it for us. ---- */
+function note_toolkit called 40 returned 100% blocks executed 100%
+       40:  180:static void note_toolkit(void) {
+       40:  181:    const char *paths[] = { "/usr/local/cuda/bin/nvcc", "/usr/bin/nvcc" };
+      115:  182:    for (size_t i = 0; i < 2; i++) {
+branch  0 taken 78
+branch  1 taken 37 (fallthrough)
+        -:  183:        char p[4200];
+       78:  184:        path(p, sizeof p, paths[i]);
+call    0 returned 78
+       78:  185:        if (access(p, X_OK) == 0) { line("info", "CUDA toolkit", "not needed and not used by CUDA++ (one is installed at %s; that is fine)", paths[i]); return; }
+call    0 returned 78
+branch  1 taken 3 (fallthrough)
+branch  2 taken 75
+call    3 returned 3
+        -:  186:    }
+       37:  187:    line("info", "CUDA toolkit", "not needed and not used by CUDA++ (none installed)");
+call    0 returned 37
+        -:  188:}
+        -:  189:
+function main called 40 returned 100% blocks executed 100%
+       40:  190:int main(int argc, char **argv) {
+        -:  191:    (void)argc; (void)argv;
+       40:  192:    const char *r = getenv("CUDAPP_DOCTOR_ROOT");
+call    0 returned 40
+       40:  193:    if (r) g_root = r;
+branch  0 taken 39 (fallthrough)
+branch  1 taken 1
+        -:  194:    struct utsname u;
+       40:  195:    printf("cudapp doctor: is this machine ready for CUDA++?\n");
+call    0 returned 40
+       40:  196:    printf("Diagnostic only: direct library use has no driver-version or PCI-ID admission guard.\n");
+call    0 returned 40
+       40:  197:    if (uname(&u) == 0) line("info", "system", "%s %s %s", u.sysname, u.release, u.machine);
+call    0 returned 40
+branch  1 taken 40 (fallthrough)
+branch  2 taken 0
+call    3 returned 40
+       40:  198:    check_module();
+call    0 returned 40
+       40:  199:    check_nodes();
+call    0 returned 40
+       40:  200:    int unified = 0;
+       40:  201:    check_gpu(&unified);
+call    0 returned 40
+       40:  202:    check_memory(unified);
+call    0 returned 40
+       40:  203:    note_toolkit();
+call    0 returned 40
+       40:  204:    line("info", "compiler", "this doctor was built by " __VERSION__ "; CUDA++ needs only make and a C compiler");
+call    0 returned 40
+       40:  205:    if (g_fail) {
+branch  0 taken 23 (fallthrough)
+branch  1 taken 17
+       23:  206:        printf("NOT READY: %d problem%s above. Fix the first FAIL line and run make doctor again.\n", g_fail, g_fail == 1 ? "" : "s");
+branch  0 taken 17 (fallthrough)
+branch  1 taken 6
+call    2 returned 23
+       23:  207:        return 1;
+        -:  208:    }
+       17:  209:    printf("READY. Next: make hello-gpu\n");
+call    0 returned 17
+       17:  210:    return 0;
+        -:  211:}
+        -:  212:#else
+        -:  213:#include "cudapp_native.h"
+        -:  214:
+        -:  215:#include <stdint.h>
+        -:  216:
+        -:  217:/* Facts layout: om/tools/doctor.om. Texts go to the blob as offset and length pairs. */
+        -:  218:static uint64_t g_facts[256];
+        -:  219:static unsigned char g_blob[262144], g_out[786432];
+        -:  220:static size_t g_used;
+        -:  221:static const char *g_root = "";
+        -:  222:
+        -:  223:static void path(char *out, size_t n, const char *p) { snprintf(out, n, "%s%s", g_root, p); }
+        -:  224:static void text(int at, const char *s, size_t n) {
+        -:  225:    if (n > sizeof g_blob - g_used) { fprintf(stderr, "cudapp doctor: probe texts exceed %zu bytes\n", sizeof g_blob); exit(2); }
+        -:  226:    memcpy(g_blob + g_used, s, n);
+        -:  227:    g_facts[at] = g_used; g_facts[at + 1] = n;
+        -:  228:    g_used += n;
+        -:  229:}
+        -:  230:static void text0(int at, const char *s) { text(at, s, strlen(s)); }
+        -:  231:
+        -:  232:static void probe_module(void) {
+        -:  233:    char p[4200], buf[1024] = { 0 };
+        -:  234:    path(p, sizeof p, "/proc/driver/nvidia/version");
+        -:  235:    FILE *f = fopen(p, "r");
+        -:  236:    if (!f || !fgets(buf, sizeof buf, f)) { if (f) fclose(f); return; }
+        -:  237:    fclose(f);
+        -:  238:    g_facts[13] = 1;
+        -:  239:    text0(14, buf);
+        -:  240:}
+        -:  241:static void probe_nodes(void) {
+        -:  242:    static const char *const nodes[] = { "/dev/nvidiactl", "/dev/nvidia0", "/dev/nvidia-uvm" };
+        -:  243:    for (size_t i = 0; i < 3; i++) {
+        -:  244:        char p[4200];
+        -:  245:        path(p, sizeof p, nodes[i]);
+        -:  246:        if (access(p, F_OK) != 0) g_facts[16 + i] = 1;
+        -:  247:        else if (access(p, R_OK | W_OK) != 0) g_facts[16 + i] = 2;
+        -:  248:    }
+        -:  249:}
+        -:  250:static void probe_gpu(void) {
+        -:  251:    OmegaGpuPciDev devs[16];
+        -:  252:    int n = omega_gpu_chip_scan(g_root, devs, 16);
+        -:  253:    if (n < 0) { g_facts[20] = 1; return; }
+        -:  254:    g_facts[19] = (uint64_t)n; /* as scanned: the unit reports the first 16 */
+        -:  255:    for (int i = 0; i < n && i < 16; i++) {
+        -:  256:        int g = 32 + 12 * i;
+        -:  257:        const OmegaGpuChipRow *r = omega_gpu_chip_find(devs[i].vendor, devs[i].device);
+        -:  258:        text(g, devs[i].bdf, strnlen(devs[i].bdf, 63));
+        -:  259:        if (r) {
+        -:  260:            g_facts[g + 2] = 1;
+        -:  261:            g_facts[g + 3] = r->device == 0x2e12u; /* GB10: one memory for CPU and GPU */
+        -:  262:            text0(g + 4, r->name); text0(g + 6, r->sm); text0(g + 8, r->receipt);
+        -:  263:        } else {
+        -:  264:            char t[2048];
+        -:  265:            omega_gpu_chip_refusal(&devs[i], t, sizeof t);
+        -:  266:            text0(g + 4, t);
+        -:  267:        }
+        -:  268:    }
+        -:  269:}
+        -:  270:static void probe_memory(void) {
+        -:  271:    char p[4200], l[256];
+        -:  272:    path(p, sizeof p, "/proc/meminfo");
+        -:  273:    FILE *f = fopen(p, "r");
+        -:  274:    if (!f) return;
+        -:  275:    unsigned long long total = 0, avail = 0;
+        -:  276:    while (fgets(l, sizeof l, f)) {
+        -:  277:        sscanf(l, "MemTotal: %llu kB", &total);
+        -:  278:        sscanf(l, "MemAvailable: %llu kB", &avail);
+        -:  279:    }
+        -:  280:    fclose(f);
+        -:  281:    g_facts[21] = 1; g_facts[22] = total; g_facts[23] = avail;
+        -:  282:}
+        -:  283:static void probe_toolkit(void) {
+        -:  284:    const char *paths[] = { "/usr/local/cuda/bin/nvcc", "/usr/bin/nvcc" };
+        -:  285:    for (size_t i = 0; i < 2; i++) {
+        -:  286:        char p[4200];
+        -:  287:        path(p, sizeof p, paths[i]);
+        -:  288:        if (access(p, X_OK) == 0) { g_facts[24] = i + 1; return; }
+        -:  289:    }
+        -:  290:}
+        -:  291:
+        -:  292:int main(int argc, char **argv) {
+        -:  293:    (void)argc; (void)argv;
+        -:  294:    const char *r = getenv("CUDAPP_DOCTOR_ROOT");
+        -:  295:    if (r) g_root = r;
+        -:  296:    text0(0, g_root);
+        -:  297:    text0(2, CUDAPP_NVIDIA_OPEN_ABI);
+        -:  298:    text0(4, __VERSION__);
+        -:  299:    struct utsname u;
+        -:  300:    if (uname(&u) == 0) { g_facts[6] = 1; text0(7, u.sysname); text0(9, u.release); text0(11, u.machine); }
+        -:  301:    probe_module();
+        -:  302:    probe_nodes();
+        -:  303:    probe_gpu();
+        -:  304:    probe_memory();
+        -:  305:    probe_toolkit();
+        -:  306:    uint64_t res = 0;
+        -:  307:    uint32_t st = omega_doctor(&res, g_facts, 256, g_blob, sizeof g_blob, g_out, sizeof g_out);
+        -:  308:    if (st != OMEGA_OK || res >> 63) {
+        -:  309:        fprintf(stderr, "cudapp doctor: omega_doctor refused (status %u, code %llu)\n", st, (unsigned long long)(res & 0xffu));
+        -:  310:        return 2;
+        -:  311:    }
+        -:  312:    fwrite(g_out, 1, (size_t)(res & 0xffffffffu), stdout);
+        -:  313:    return (res >> 32) ? 1 : 0;
+        -:  314:}
+        -:  315:#endif

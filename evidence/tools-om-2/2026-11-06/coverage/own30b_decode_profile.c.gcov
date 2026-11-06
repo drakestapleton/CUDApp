@@ -1,0 +1,280 @@
+        -:    0:Source:own30b_decode_profile.c
+        -:    0:Graph:own30b_diff.gcno
+        -:    0:Data:own30b_diff.gcda
+        -:    0:Runs:6
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* Link-only recorder for OWN-30B decode. No production launcher changes.
+        -:    3: * Link with -Wl,--wrap=omega_gpu_session_launch, this object and src/cudapp_om_own30b_prof.c.
+        -:    4: * Measures HOST times: elapsed_ns is submit-to-second-marker, NOT GPU cycles.
+        -:    5: * Only complete sequences of 48 x (qkv, attention, o, router, gu, down) + head
+        -:    6: * following a head are retained. Prefill, controls and partial steps are rejected.
+        -:    7: * No allocation or I/O in the measured path. Dump raw integer totals at exit.
+        -:    8: *
+        -:    9: * The classifier, the sequence check, the token table and the dump text are the seeded Omega unit
+        -:   10: * om/tools/own30b_prof.om (omega_own30b_prof). This file keeps the wrap: the clock, the real launch and the
+        -:   11: * stderr writes. -DCUDAPP_MIGRATION_PENDING_C_TOOLS_OWN30B builds the former C body, kept as the oracle.
+        -:   12: */
+        -:   13:#include "omega_gpu_session.h"
+        -:   14:#include "omega_blackwell_codegen_moe.h"
+        -:   15:#include "omega_blackwell_codegen_attn.h"
+        -:   16:#include "omega_blackwell_codegen_router.h"
+        -:   17:#include "omega_blackwell_codegen_bf16.h"
+        -:   18:#include <inttypes.h>
+        -:   19:#include <stdio.h>
+        -:   20:#include <string.h>
+        -:   21:
+        -:   22:enum { QKV, ATTN, O, ROUTER, GU, DOWN, HEAD, OTHER, STAGES = OTHER };
+        -:   23:__attribute__((unused)) static const char *names[STAGES] = { "qkv", "attention", "o", "router", "gate_up", "down", "lm_head" };
+        -:   24:
+        -:   25:#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS_OWN30B
+        -:   26:typedef struct { uint64_t calls, bytes, session_ns, submit_wait_ns, gap_before_ns; } Row;
+        -:   27:typedef struct { Row stage[STAGES]; uint64_t end_ns, start_ns; uint32_t pos; } Token;
+        -:   28:static Token pending, tokens[4096];
+        -:   29:static size_t used, dropped;
+        -:   30:static int armed, invalid;
+        -:   31:static uint64_t last_end;
+        -:   32:
+function classify called 2728850 returned 100% blocks executed 100%
+  2728850:   33:static int classify(const OmegaGpuLaunch *l, uint64_t *bytes) {
+  2728850:   34:    *bytes = 0;
+  2728850:   35:    if (!l || !l->args) return OTHER;
+branch  0 taken 2727361 (fallthrough)
+branch  1 taken 1489
+branch  2 taken 114 (fallthrough)
+branch  3 taken 2727247
+  2727247:   36:    if (l->n_args == OMEGA_FP8_ARGS_WORDS) {
+branch  0 taken 1809704 (fallthrough)
+branch  1 taken 917543
+  1809704:   37:        uint32_t n = l->args[8] / 4u, g = l->grid_y, k;
+        -:   38:        int s;
+  1809704:   39:        if (g == 1 && n == 5120) { s = QKV; k = 2048; }
+branch  0 taken 904820 (fallthrough)
+branch  1 taken 904884
+branch  2 taken 452410 (fallthrough)
+branch  3 taken 452410
+  1357294:   40:        else if (g == 1 && n == 2048) { s = O; k = 4096; }
+branch  0 taken 452410 (fallthrough)
+branch  1 taken 904884
+branch  2 taken 452402 (fallthrough)
+branch  3 taken 8
+   904892:   41:        else if (g == 8 && n == 1536) { s = GU; k = 2048; }
+branch  0 taken 904770 (fallthrough)
+branch  1 taken 122
+branch  2 taken 452400 (fallthrough)
+branch  3 taken 452370
+   452492:   42:        else if (g == 8 && n == 2048) { s = DOWN; k = 768; }
+branch  0 taken 452370 (fallthrough)
+branch  1 taken 122
+branch  2 taken 452360 (fallthrough)
+branch  3 taken 10
+      132:   43:        else return OTHER;
+  1809572:   44:        *bytes = (uint64_t)g * n * k;
+  1809572:   45:        return s;
+        -:   46:    }
+   917543:   47:    if (l->n_args == OMEGA_DATTN_ARGS_WORDS && l->num_elements == 4096) {
+branch  0 taken 452563 (fallthrough)
+branch  1 taken 464980
+branch  2 taken 452430 (fallthrough)
+branch  3 taken 133
+   452430:   48:        *bytes = 2ull * 4 * ((uint64_t)l->args[18] + 1) * 256;
+   452430:   49:        return ATTN;
+        -:   50:    }
+   465113:   51:    if (l->n_args == OMEGA_ROUTER_ARGS_WORDS && l->num_elements == 2048) {
+branch  0 taken 452558 (fallthrough)
+branch  1 taken 12555
+branch  2 taken 452417 (fallthrough)
+branch  3 taken 141
+   452417:   52:        *bytes = 128ull * 2048 * 2;
+   452417:   53:        return ROUTER;
+        -:   54:    }
+    12696:   55:    if (l->n_args == OMEGA_BF16_ARGS_WORDS && l->num_elements == 151936) {
+branch  0 taken 9737 (fallthrough)
+branch  1 taken 2959
+branch  2 taken 9624 (fallthrough)
+branch  3 taken 113
+     9624:   56:        *bytes = 151936ull * 2048 * 2;
+     9624:   57:        return HEAD;
+        -:   58:    }
+     3072:   59:    return OTHER;
+        -:   60:}
+        -:   61:
+function record called 2728850 returned 100% blocks executed 100%
+  2728850:   62:static void record(int s, uint64_t bytes, uint64_t begin, uint64_t end, uint64_t elapsed, int rc) {
+  2728850:   63:    if (armed) {
+branch  0 taken 2728164 (fallthrough)
+branch  1 taken 686
+  2728164:   64:        int expected = pending.pos < 288 ? (int)(pending.pos % 6) : HEAD;
+branch  0 taken 2719395 (fallthrough)
+branch  1 taken 8769
+  2728164:   65:        if (rc || s != expected || pending.pos > 288) invalid = 1;
+branch  0 taken 2726754 (fallthrough)
+branch  1 taken 1410
+branch  2 taken 2476240 (fallthrough)
+branch  3 taken 250514
+branch  4 taken 0 (fallthrough)
+branch  5 taken 2476240
+  2728164:   66:        if (!invalid) {
+branch  0 taken 2428378 (fallthrough)
+branch  1 taken 299786
+  2428378:   67:            Row *r = &pending.stage[s];
+  2428378:   68:            r->calls++;
+  2428378:   69:            r->bytes += bytes;
+  2428378:   70:            r->session_ns += end - begin;
+  2428378:   71:            r->submit_wait_ns += elapsed;
+  2428378:   72:            r->gap_before_ns += begin - last_end;
+  2428378:   73:            pending.pos++;
+        -:   74:        }
+        -:   75:    }
+  2728850:   76:    if (s == HEAD) {
+branch  0 taken 9624 (fallthrough)
+branch  1 taken 2719226
+     9624:   77:        if (armed && !invalid && pending.pos == 289) {
+branch  0 taken 9615 (fallthrough)
+branch  1 taken 9
+branch  2 taken 7899 (fallthrough)
+branch  3 taken 1716
+branch  4 taken 7899 (fallthrough)
+branch  5 taken 0
+     7899:   78:            pending.end_ns = end;
+     7899:   79:            if (used < sizeof tokens / sizeof tokens[0]) tokens[used++] = pending;
+branch  0 taken 7795 (fallthrough)
+branch  1 taken 104
+      104:   80:            else dropped++;
+        -:   81:        }
+     9624:   82:        memset(&pending, 0, sizeof pending);
+     9624:   83:        pending.start_ns = end;
+     9624:   84:        armed = !rc;
+     9624:   85:        invalid = 0;
+        -:   86:    }
+  2728850:   87:    last_end = end;
+  2728850:   88:}
+        -:   89:
+        -:   90:#ifndef OWN30B_PROFILE_TEST
+function dump called 6 returned 100% blocks executed 100%
+        6:   91:__attribute__((destructor)) static void dump(void) {
+        6:   92:    fprintf(stderr, "DECODE_PROFILE semantics=host_session_and_submit_wait weight_bytes_exclude_scales pure_gpu_time=UNKNOWN tokens=%zu dropped=%zu\n", used, dropped);
+call    0 returned 6
+     7801:   93:    for (size_t t = 0; t < used; ++t) {
+branch  0 taken 7795
+branch  1 taken 6 (fallthrough)
+     7795:   94:        fprintf(stderr, "DECODE_TOKEN token=%zu wall_ns=%" PRIu64 " launches=%u\n", t, tokens[t].end_ns - tokens[t].start_ns, tokens[t].pos);
+call    0 returned 7795
+    62360:   95:        for (int s = 0; s < STAGES; ++s) {
+branch  0 taken 54565
+branch  1 taken 7795 (fallthrough)
+    54565:   96:            Row *r = &tokens[t].stage[s];
+    54565:   97:            fprintf(stderr, "DECODE_STAGE token=%zu stage=%s calls=%" PRIu64 " bytes=%" PRIu64 " session_ns=%" PRIu64 " submit_wait_ns=%" PRIu64 " gap_before_ns=%" PRIu64 "\n",
+call    0 returned 54565
+        -:   98:                    t, names[s], r->calls, r->bytes, r->session_ns, r->submit_wait_ns, r->gap_before_ns);
+        -:   99:        }
+        -:  100:    }
+        6:  101:}
+        -:  102:#endif
+        -:  103:
+        -:  104:/* Test accessors: retained tokens, and word w of token t in the Omega layout (5 s + f, 35 end, 36 start, 37 pos). */
+function prof_used called 6 returned 100% blocks executed 100%
+        6:  105:__attribute__((unused)) static uint64_t prof_used(void) { return used; }
+function prof_tok called 0 returned 0% blocks executed 0%
+    #####:  106:__attribute__((unused)) static uint64_t prof_tok(size_t t, unsigned w) {
+    #####:  107:    const Token *k = &tokens[t];
+    #####:  108:    if (w < 35) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  109:        const Row *r = &k->stage[w / 5];
+    #####:  110:        const uint64_t f[5] = { r->calls, r->bytes, r->session_ns, r->submit_wait_ns, r->gap_before_ns };
+    #####:  111:        return f[w % 5];
+        -:  112:    }
+    #####:  113:    return w == 35 ? k->end_ns : w == 36 ? k->start_ns : k->pos;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  114:}
+        -:  115:#else
+        -:  116:#include "cudapp_native.h"
+        -:  117:#include <stdlib.h>
+        -:  118:
+        -:  119:/* Omega state: see om/tools/own30b_prof.om. 64 header words plus 4096 tokens of 38 words. */
+        -:  120:enum { OW_STATE = 155712, OW_TOK0 = 64, OW_TOKW = 38, OW_OUT = 2048 };
+        -:  121:static uint64_t ow_state[OW_STATE];
+        -:  122:static uint8_t ow_out[OW_OUT];
+        -:  123:
+        -:  124:static uint64_t ow_call(uint64_t op, const uint64_t a[16]) {
+        -:  125:    uint64_t r = 0;
+        -:  126:    if (omega_own30b_prof(&r, op, ow_state, OW_STATE, a, 16, ow_out, OW_OUT)) {
+        -:  127:        fputs("own30b_decode_profile: omega_own30b_prof trapped\n", stderr);
+        -:  128:        abort();
+        -:  129:    }
+        -:  130:    return r;
+        -:  131:}
+        -:  132:
+        -:  133:static int classify(const OmegaGpuLaunch *l, uint64_t *bytes) {
+        -:  134:    int has = l && l->args;
+        -:  135:    uint64_t a[16] = { (uint64_t)has, has ? l->n_args : 0, has && l->n_args > 8 ? l->args[8] : 0, has ? l->grid_y : 0,
+        -:  136:                       has ? l->num_elements : 0, has && l->n_args > 18 ? l->args[18] : 0, OMEGA_FP8_ARGS_WORDS,
+        -:  137:                       OMEGA_DATTN_ARGS_WORDS, OMEGA_ROUTER_ARGS_WORDS, OMEGA_BF16_ARGS_WORDS };
+        -:  138:    int s = (int)ow_call(0, a);
+        -:  139:    *bytes = ow_state[5];
+        -:  140:    return s;
+        -:  141:}
+        -:  142:
+        -:  143:static void record(int s, uint64_t bytes, uint64_t begin, uint64_t end, uint64_t elapsed, int rc) {
+        -:  144:    const uint64_t a[16] = { (uint64_t)s, bytes, begin, end, elapsed, rc != 0 };
+        -:  145:    ow_call(1, a);
+        -:  146:}
+        -:  147:
+        -:  148:#ifndef OWN30B_PROFILE_TEST
+        -:  149:__attribute__((destructor)) static void dump(void) {
+        -:  150:    uint64_t a[16] = { 0 };
+        -:  151:    fwrite(ow_out, 1, ow_call(2, a), stderr);
+        -:  152:    for (uint64_t t = 0; t < ow_state[0]; ++t) {
+        -:  153:        a[0] = t;
+        -:  154:        fwrite(ow_out, 1, ow_call(3, a), stderr);
+        -:  155:    }
+        -:  156:}
+        -:  157:#endif
+        -:  158:
+        -:  159:__attribute__((unused)) static uint64_t prof_used(void) { return ow_state[0]; }
+        -:  160:__attribute__((unused)) static uint64_t prof_tok(size_t t, unsigned w) { return ow_state[OW_TOK0 + t * OW_TOKW + w]; }
+        -:  161:#endif
+        -:  162:
+        -:  163:#if !defined(OWN30B_PROFILE_TEST) && !defined(OWN30B_PROFILE_DIFF)
+        -:  164:int __real_omega_gpu_session_launch(const OmegaGpuLaunch *, uint64_t *, uint32_t *);
+        -:  165:int __wrap_omega_gpu_session_launch(const OmegaGpuLaunch *l, uint64_t *elapsed, uint32_t *marker) {
+        -:  166:    uint64_t bytes, local_elapsed = 0;
+        -:  167:    int s = classify(l, &bytes);
+        -:  168:    uint64_t begin = omega_gpu_session_now_ns();
+        -:  169:    int rc = __real_omega_gpu_session_launch(l, &local_elapsed, marker);
+        -:  170:    uint64_t end = omega_gpu_session_now_ns();
+        -:  171:    if (elapsed) *elapsed = local_elapsed;
+        -:  172:    record(s, bytes, begin, end, local_elapsed, rc);
+        -:  173:    return rc;
+        -:  174:}
+        -:  175:#endif
+        -:  176:
+        -:  177:#ifdef OWN30B_PROFILE_TEST
+        -:  178:#include <assert.h>
+        -:  179:int main(void) {
+        -:  180:    uint32_t args[32] = {0};
+        -:  181:    OmegaGpuLaunch l = { .args = args, .n_args = OMEGA_FP8_ARGS_WORDS, .grid_y = 8 };
+        -:  182:    uint64_t bytes;
+        -:  183:    args[8] = 2048 * 4;
+        -:  184:    assert(classify(&l, &bytes) == DOWN && bytes == 8ull * 2048 * 768);
+        -:  185:    l.grid_y = 7;
+        -:  186:    assert(classify(&l, &bytes) == OTHER);
+        -:  187:    record(HEAD, 0, 0, 1, 1, 0);
+        -:  188:    for (unsigned i = 0; i < 289; i++) record(i < 288 ? i % 6 : HEAD, 10, 2 + i * 3, 4 + i * 3, 1, 0);
+        -:  189:    assert(prof_used() == 1 && prof_tok(0, 37) == 289);
+        -:  190:    uint64_t sum = 0;
+        -:  191:    for (unsigned s = 0; s < STAGES; s++) sum += prof_tok(0, 5 * s + 2) + prof_tok(0, 5 * s + 4);
+        -:  192:    assert(sum == prof_tok(0, 35) - prof_tok(0, 36));
+        -:  193:    /* Swapped/missing/failed stages must never become a decode timing. */
+        -:  194:    record(O, 0, 1000, 1001, 1, 0);
+        -:  195:    record(HEAD, 0, 1002, 1003, 1, 0);
+        -:  196:    assert(prof_used() == 1);
+        -:  197:    record(QKV, 0, 1004, 1005, 1, -1);
+        -:  198:    record(HEAD, 0, 1006, 1007, 1, 0);
+        -:  199:    assert(prof_used() == 1);
+        -:  200:    printf("PROFILE_HOST_PASS sequence, accounting, malformed shape, missing stage, failed launch; %s\n", names[HEAD]);
+        -:  201:}
+        -:  202:#endif

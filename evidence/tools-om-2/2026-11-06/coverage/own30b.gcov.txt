@@ -1,0 +1,15 @@
+File 'own30b_diff.c'
+Lines executed:100.00% of 64
+Branches executed:100.00% of 58
+Taken at least once:98.28% of 58
+Calls executed:98.15% of 54
+Creating 'own30b_diff.c.gcov'
+
+File 'own30b_decode_profile.c'
+Lines executed:88.52% of 61
+Branches executed:90.91% of 66
+Taken at least once:87.88% of 66
+Calls executed:100.00% of 3
+Creating 'own30b_decode_profile.c.gcov'
+
+Lines executed:94.40% of 125

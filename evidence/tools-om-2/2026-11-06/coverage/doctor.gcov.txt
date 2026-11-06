@@ -1,0 +1,8 @@
+File 'cudapp_doctor.c'
+Lines executed:100.00% of 121
+Branches executed:100.00% of 84
+Taken at least once:95.24% of 84
+Calls executed:100.00% of 62
+Creating 'cudapp_doctor.c.gcov'
+
+Lines executed:100.00% of 121

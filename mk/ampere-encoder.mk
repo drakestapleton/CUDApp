@@ -15,6 +15,12 @@ CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP ?= 0
 ifeq ($(CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP),1)
 CFLAGS += -DCUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP
 endif
+# tools/ampere_families.c: steps, specifications and verdicts are om/tools/ampfam.om (src/cudapp_om_ampfam.c in
+# the library). CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM=1 builds the former C: the oracle of tests/tools-om/ampfam.sh.
+CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM ?= 0
+ifeq ($(CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM),1)
+CFLAGS += -DCUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM
+endif
 
 $(AMPERE_ENCODER_TEST): tests/test_omega_ampere_encoder.c src/omega_ampere_codegen.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/test_omega_ampere_encoder.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm

@@ -3,21 +3,21 @@
     "generated": {
       "children": [
         {
-          "digest": "29a38d19a26de765466e6455081a8391e28d222e2a5d257cab75ae3d593b81be",
-          "last_commit": "ca8ba23",
+          "digest": "41d284800fad146ea07f34718072fb235049eac3c793ef841065185952f63c1c",
+          "last_commit": "ca8ba23d",
           "name": "link",
           "purpose": "Platform Omega bindings with runtime symbols renamed so fence and wait can link together."
         }
       ],
-      "children_root": "sha256:525687b5453c920bf9b3207b396a0aa10cba4b151c28c3db8511694f1ccda663",
-      "compiled_at": "2026-11-06T07:14:34Z",
+      "children_root": "sha256:bc65b6f2f43b351b417a602f366b35db76f3e4ba60c9e523fcb06e9718473728",
+      "compiled_at": "2026-11-06T13:15:55Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:c62760ef9d4c6643a2b916dc7b9f864498e51e3250f783c7e92c3d2dd902af16",
+      "digest": "sha256:e32c21d69cbefa547a9c83daaa809f923b08cc8e1ff0d6e988038d88a09ead7b",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "files": 8,
-      "generated_at_commit": "5cd0327fdb2603837fe9e2dcadf094d4ddb94788",
-      "source_tree": "sha256:638ed82392d8afe38a4abe2505f89cc7d3c0d8e7012177cf9546b5ca65b07c50"
+      "generated_at_commit": "0d38145a697290f2cd00578fbaa168b824a38015",
+      "source_tree": "sha256:b5722dca95bf1e50ad76880db3150ee2a143e82e01101a506d5b0f11fa702f60"
     }
   },
   "layer": "platform",

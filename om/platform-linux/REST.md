@@ -43,6 +43,7 @@ This inventory accounts for every definition in `src/omega_gpu_platform_linux.c`
 * Real Linux memfd symlink targets begin `/memfd:`. The old bare `memfd:` parser rejected them, silently losing alias capture. The seeded parser accepts the existing bare spelling and the real Linux spelling. A live anonymous memfd test proves the old predicate rejects the actual readlink target while the new unit accepts it; no GPU is accessed.
 * The old alias arithmetic allowed a rounded allocation larger than the alias address space, underflowing its upper-bound subtraction. The new unit rejects impossible page spans and checks the reset cursor too. Ordinary admissible plans remain byte-exact to the source-derived oracle; these invalid plans are explicit corrected partitions.
 * #297's merge `748953c` retained the #281 unit registrations but dropped their files. This branch restores the exact source and generated blobs from ancestor `e2086965ba8ec60d7e385b98abd7565caa13293d`; it does not alter NVRM policy. It also removes the inherited trailing comma that made the platform .crumb invalid JSON.
+* The link-unit generator now namespaces x86 assembly labels as well as declarations and `.size` expressions. Labels following an escaped newline have no regex word boundary; leaving them unrenamed made x86 assemblers reject the `.size` operands. The unmodified generated binding is retained as the failing assembly control in the CI-280 evidence.
 
 ## Host acceptance
 

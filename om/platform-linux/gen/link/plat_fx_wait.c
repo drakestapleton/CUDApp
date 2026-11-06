@@ -589,7 +589,7 @@ extern const unsigned char plat_wt_ombr_no_entry[] __attribute__((visibility("hi
  * stack, R14 the runtime table, R15 the owned-stack floor. Hosted device helpers and legacy read/write preserve these reserved registers;
  * the selected hosted compiler also restores its R13 argument-stack scratch.
  * CET shadow-stack enforcement is not supported by the nonlocal trap return. */
-__asm__(".text\n.balign 16\n.local plat_wt_ombr_enter\n.hidden plat_wt_ombr_enter\n.type plat_wt_ombr_enter,@function\nombr_enter:\n"
+__asm__(".text\n.balign 16\n.local plat_wt_ombr_enter\n.hidden plat_wt_ombr_enter\n.type plat_wt_ombr_enter,@function\nplat_wt_ombr_enter:\n"
         "endbr64\npush %rbx\npush %rbp\npush %r12\npush %r13\npush %r14\npush %r15\npush %rcx\n"
         "mov %rsp,%r12\nmov %rdx,%r14\nmov %r9,%r15\nmov %rdi,%r10\n"
         "mov %r8,%rbp\nmov %r8,%rsp\nsub $256,%rsp\n"
@@ -598,9 +598,9 @@ __asm__(".text\n.balign 16\n.local plat_wt_ombr_enter\n.hidden plat_wt_ombr_ente
         "mov 32(%rsi),%rax\nmov %rax,-40(%rbp)\nmov 40(%rsi),%rax\nmov %rax,-48(%rbp)\n"
         "call *%r10\nmov %r12,%rsp\nmov (%rsp),%rcx\nmov %rax,(%rcx)\nxor %eax,%eax\n"
         "ombr_leave:\nadd $8,%rsp\npop %r15\npop %r14\npop %r13\npop %r12\npop %rbp\npop %rbx\nret\n"
-        ".size plat_wt_ombr_enter,.-plat_wt_ombr_enter\n.local plat_wt_ombr_trap\n.hidden plat_wt_ombr_trap\n.type plat_wt_ombr_trap,@function\nombr_trap:\n"
+        ".size plat_wt_ombr_enter,.-plat_wt_ombr_enter\n.local plat_wt_ombr_trap\n.hidden plat_wt_ombr_trap\n.type plat_wt_ombr_trap,@function\nplat_wt_ombr_trap:\n"
         "endbr64\nmov %r12,%rsp\nlea -1(%rsi),%eax\ncmp $13,%eax\nmov $34,%eax\ncmovbe %esi,%eax\njmp ombr_leave\n"
-        ".size plat_wt_ombr_trap,.-plat_wt_ombr_trap\n.local plat_wt_ombr_no_entry\n.hidden plat_wt_ombr_no_entry\n.type plat_wt_ombr_no_entry,@function\nombr_no_entry:\n"
+        ".size plat_wt_ombr_trap,.-plat_wt_ombr_trap\n.local plat_wt_ombr_no_entry\n.hidden plat_wt_ombr_no_entry\n.type plat_wt_ombr_no_entry,@function\nplat_wt_ombr_no_entry:\n"
         "endbr64\nmov %r12,%rsp\nmov $34,%eax\njmp ombr_leave\n.size plat_wt_ombr_no_entry,.-plat_wt_ombr_no_entry\n");
 uint32_t ombr_xenter(const void *code, const uint64_t *args, const ombr_rt *rt, uint64_t *out, void *top, void *floor) __asm__("plat_wt_ombr_enter") __attribute__((visibility("hidden")));
 /* The true mapping floor must not move when ABI-v2 out buffers lower top. */

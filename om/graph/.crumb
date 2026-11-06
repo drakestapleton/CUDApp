@@ -3,14 +3,14 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-06T06:58:26Z",
+      "compiled_at": "2026-11-06T07:08:37Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:5d2e59e588cd89136f5cce87dce0ee13c1651f17030d026e784f7688ef2394b1",
+      "digest": "sha256:77f19b4758ea95c76d50802128f3eb730d3eeaac3164e9cf2d9e227fd1dd9863",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 26,
-      "generated_at_commit": "446f5dc955e55fa210cbcf9d88c703337b62092c",
-      "source_tree": "sha256:e683f3c64f9d315a8b52796954e41f11be0ac89bd6f5e481dbbfae98c80d3b53"
+      "files": 28,
+      "generated_at_commit": "756452c5903b7c6344ef93a85af50d400ab269d2",
+      "source_tree": "sha256:e1228817e590281e85380973b4de39191494b91fa3482a33d8d1ff1246baf1f0"
     }
   },
   "name": "graph",

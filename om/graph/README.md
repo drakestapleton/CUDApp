@@ -64,3 +64,24 @@ Q36 formerly silently truncated a full timeline; Q38 could copy past its fixed
 stamp array. Both now reject a batch that cannot fit before copying any stamps.
 The shared capacity regression checks the last fitting batch and the first
 overflow, including UINT32_MAX count. Failure leaves the output index unchanged.
+
+### Runtime table view pin (pending upstream)
+
+The converter/frontend pins in `om/units.sh` select omega-bridge #73
+`79e8c3613a6f`, stacked on unmerged #71. This CUDApp change is pending both PRs.
+Only `model_graph_table` selects `bridge-seeded --runtime-views`. Its numeric
+`edit uint 24576` is a capacity: the actual allocation length is passed to the
+checked entry, so Omega writes packed uint32 values directly. The old fixed-512
+scratch buffer, widening/narrowing copy and C chunk loop are removed. All legal
+Q/KV layouts are compared up to the maximum extent, including q=kv=24; admission
+controls cover empty/null, over-capacity, nonempty-null and result/view overlap.
+WolframLanguageEvaluator: `(24+24)*512` -> `24576`.
+
+This is the hosted checked converter profile, not native/freestanding. The
+existing freestanding units and pins retain their original path. Build the
+bridge generator with its existing pinned bootstrap seed using `tools/build.sh`;
+set `OMEGA_SEED` to that baseline executable when a separate bridge worktree
+does not contain `build/bootstrap/omc`. The seeded source validator remains
+e5b32567 through `OMEGA_OMC`. Re-run `om/units.sh --check` with the same bridge,
+seed and validator. Every hosted generated file/identity is refreshed because
+the converter pin changes; integration must regenerate the union of lane units.

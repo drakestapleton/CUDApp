@@ -50,7 +50,8 @@ T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 cat > "$T/cudapp_native.h" <<'HEADER'
 /* Generated checked portable Omega declarations. Regenerate with om/units.sh.
  * Status: 0 done, 1..14 trap, 32 argument refused, 33 reentry.
- * Only a successful call writes result. Views use exact declared lengths.
+ * Only a successful call writes result. Runtime-profile views use live lengths;
+ * other views require their exact declared lengths.
  * Implementation is Omega lowered by omega-bridge, not the native AArch64 ABI. */
 #ifndef CUDAPP_PORTABLE_OMEGA_H
 #define CUDAPP_PORTABLE_OMEGA_H
@@ -80,6 +81,7 @@ for u in $UNITS $PURE_UNITS; do
   frontend=bridge-seeded
   converter_pin=$CONVERTER_PIN
   frontend_pin=$FRONTEND_PIN
+  profile=
   file=cudapp_om_$name.c
   case "$name" in
     revision|epoch|f16)
@@ -87,11 +89,12 @@ for u in $UNITS $PURE_UNITS; do
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
+    model_graph_table) profile=--runtime-views ;;
   esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" c "$src" > "$T/$file"
-  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" h "$src" >> "$T/cudapp_native.h"
-  identity="omega-ident 2 unit=$name abi=$frontend src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile c "$src" > "$T/$file"
+  OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile h "$src" >> "$T/cudapp_native.h"
+  identity="omega-ident 2 unit=$name abi=$frontend${profile:+-runtime-views} src=$(sha256sum < "$src" | cut -c1-64) c=$(sha256sum < "$T/$file" | cut -c1-64) omc=$OMC_PIN converter=$converter_pin frontend=$frontend_pin path=$u"
   printf '%s\n' "$identity" > "$T/cudapp_om_$name.ident"
   printf '%s\n' "$identity" >> "$T/cudapp_om_units.ident"
   OUTS="$OUTS $file cudapp_om_$name.ident"

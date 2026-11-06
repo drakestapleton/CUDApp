@@ -9,14 +9,14 @@ static uint64_t digest = 1469598103934665603ULL;
 static void word(uint64_t x) { digest = (digest ^ x) * 1099511628211ULL; }
 static uint32_t pslot(uint32_t i) { uint32_t p=32,j=i-128; return i<128 ? (i<p?i:64+i-p) : (j<p?p+j:64+128+j-p); }
 static void tables(void) {
-    uint32_t dst[16384];
-    omega_graph_table(0,0,0,dst,16384);
-    for (uint32_t n=0;n<16384;n++) {
+    uint32_t dst[24576];
+    omega_graph_table(0,0,0,dst,24576);
+    for (uint32_t n=0;n<24576;n++) {
         uint32_t j=n%512, ref=n/512*512+(j/4%32)*16+(j/128)*4+j%4;
         assert(dst[n]==ref); word(dst[n]);
     }
     for (uint32_t q=1;q<=24;q++) for (uint32_t kv=1;kv<=q;kv++) if(q%kv==0) {
-        uint32_t count=(q+kv)*512; if(count>16384) continue;
+        uint32_t count=(q+kv)*512;
         omega_graph_table(1,q,kv,dst,count);
         for(uint32_t n=0;n<count;n++) {
             uint32_t qn=q*256,kn=kv*256,ref;
@@ -27,6 +27,12 @@ static void tables(void) {
             assert(dst[n]==ref); word(dst[n]);
         }
     }
+    uint64_t r=7;
+    assert(omega_grtable(&r,0,0,0,NULL,0)==OMEGA_OK&&r==1);
+    r=7;assert(omega_grtable(&r,0,0,0,dst,24577)==OMEGA_BAD_ARG&&r==7);
+    assert(omega_grtable(&r,0,0,0,NULL,1)==OMEGA_BAD_ARG&&r==7);
+    uint64_t alias[2]={7,0};
+    assert(omega_grtable(alias,0,0,0,alias,1)==OMEGA_BAD_ARG&&alias[0]==7);
 }
 int main(void) {
     for(uint32_t l=0;l<=65;l++) for(uint32_t h=0;h<=9;h++) for(uint32_t v=0;v<=4097;v+=257) {

@@ -1,0 +1,179 @@
+        -:    0:Source:src/omega_gpu_graph_residue.h
+        -:    0:Graph:build/graph-residue-oracle-test_graph_residue.gcno
+        -:    0:Data:build/graph-residue-oracle-test_graph_residue.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#ifndef OMEGA_GPU_GRAPH_RESIDUE_H
+        -:    3:#define OMEGA_GPU_GRAPH_RESIDUE_H
+        -:    4:#include "cudapp_native.h"
+        -:    5:#include <stdint.h>
+        -:    6:#include <stdlib.h>
+        -:    7:#include <string.h>
+        -:    8:/* The C oracle is present only in migration builds, OFF in the library. */
+        -:    9:#ifndef CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+        -:   10:#define CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE 0
+        -:   11:#endif
+function omega_graph_meta called 8 returned 100% blocks executed 80%
+        8:   12:static inline uint64_t omega_graph_meta(unsigned mode, const uint64_t c[16], uint64_t d[16]) {
+        8:   13:    uint64_t result = 0;
+       8*:   14:    if (omega_grmeta(&result, mode, c, 16, d, 16) != OMEGA_OK) abort();
+call    0 returned 8
+branch  1 taken 0 (fallthrough)
+branch  2 taken 8
+call    3 never executed
+        8:   15:    return result;
+        -:   16:}
+function omega_graph_budget called 136242 returned 100% blocks executed 100%
+   136242:   17:static inline int omega_graph_budget(uint32_t peak, uint32_t limit, uint32_t max, uint32_t hw, int declared_ok) {
+        -:   18:#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+   136242:   19:    if (!limit) limit = max - 2u;
+branch  0 taken 522 (fallthrough)
+branch  1 taken 135720
+   136242:   20:    return limit <= hw && peak <= limit && declared_ok;
+branch  0 taken 128934 (fallthrough)
+branch  1 taken 7308
+branch  2 taken 61508 (fallthrough)
+branch  3 taken 67426
+branch  4 taken 30754 (fallthrough)
+branch  5 taken 30754
+        -:   21:#else
+        -:   22:    const uint64_t c[16] = {peak, limit, max, hw, (uint64_t)declared_ok}; uint64_t d[16];
+        -:   23:    return (int)omega_graph_meta(7, c, d);
+        -:   24:#endif
+        -:   25:}
+function omega_graph_timeline called 53 returned 100% blocks executed 100%
+       53:   26:static inline int omega_graph_timeline(uint32_t used, uint32_t count, uint32_t cap, int *from) {
+        -:   27:#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+       53:   28:    const uint32_t skip = used ? 1 : 0;
+       53:   29:    if (used > cap || (count > skip && count - skip > cap - used)) return 0;
+branch  0 taken 45 (fallthrough)
+branch  1 taken 8
+branch  2 taken 39 (fallthrough)
+branch  3 taken 6
+branch  4 taken 18 (fallthrough)
+branch  5 taken 21
+       27:   30:    *from = (int)skip; return 1;
+        -:   31:#else
+        -:   32:    const uint64_t c[16] = {used, count, cap}; uint64_t d[16];
+        -:   33:    if (!omega_graph_meta(6, c, d)) return 0;
+        -:   34:    *from = (int)d[0]; return 1;
+        -:   35:#endif
+        -:   36:}
+function omega_graph_q38 called 305850 returned 100% blocks executed 100%
+   305850:   37:static inline int omega_graph_q38(const uint64_t c[16], uint64_t d[16]) {
+        -:   38:#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+   305850:   39:    uint64_t hd=c[0]?c[0]:5120, in=c[1]?c[1]:17408, qh=c[2]?c[2]:24, kv=c[3]?c[3]:4, gh=c[4]?c[4]:48;
+branch  0 taken 262097 (fallthrough)
+branch  1 taken 43753
+branch  2 taken 301409 (fallthrough)
+branch  3 taken 4441
+branch  4 taken 294017 (fallthrough)
+branch  5 taken 11833
+branch  6 taken 254817 (fallthrough)
+branch  7 taken 51033
+branch  8 taken 229337 (fallthrough)
+branch  9 taken 76513
+   305850:   40:    if (hd%1024 || hd>5120 || !in || in%256 || in>17408 || qh>24 || qh%kv || qh/kv>8 ||
+branch  0 taken 305837 (fallthrough)
+branch  1 taken 13
+branch  2 taken 262156 (fallthrough)
+branch  3 taken 43681
+branch  4 taken 262156 (fallthrough)
+branch  5 taken 0
+branch  6 taken 262144 (fallthrough)
+branch  7 taken 12
+branch  8 taken 258400 (fallthrough)
+branch  9 taken 3744
+branch 10 taken 248448 (fallthrough)
+branch 11 taken 9952
+branch 12 taken 107671 (fallthrough)
+branch 13 taken 140777
+branch 14 taken 71238 (fallthrough)
+branch 15 taken 36433
+branch 16 taken 53436 (fallthrough)
+branch 17 taken 17802
+   305850:   41:        (gh!=32 && gh!=48) || qh*256!=gh*128) return 0;
+branch  0 taken 35617 (fallthrough)
+branch  1 taken 17819
+branch  2 taken 47196 (fallthrough)
+branch  3 taken 6223
+     6223:   42:    d[0]=hd; d[1]=in; d[2]=qh; d[3]=kv; d[4]=gh;
+     6223:   43:    d[5]=(32+gh)*128; d[6]=d[5]+gh*128; d[7]=2*gh;
+     6223:   44:    d[8]=(qh+kv)*512; d[9]=qh*256+kv*512; d[10]=qh*256;
+     6223:   45:    return 1;
+        -:   46:#else
+        -:   47:    return (int)omega_graph_meta(0, c, d);
+        -:   48:#endif
+        -:   49:}
+function omega_graph_config called 31700 returned 100% blocks executed 100%
+    31700:   50:static inline uint32_t omega_graph_config(uint32_t layers, uint32_t maxlayers,
+        -:   51:    uint32_t vocab, uint32_t span, uint32_t heads, uint32_t maxheads, uint64_t mask, int usemask) {
+        -:   52:#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+    31700:   53:    if (!layers || layers > maxlayers || !vocab || vocab > span * span || !heads || heads > maxheads) return 0;
+branch  0 taken 31220 (fallthrough)
+branch  1 taken 480
+branch  2 taken 30739 (fallthrough)
+branch  3 taken 481
+branch  4 taken 28818 (fallthrough)
+branch  5 taken 1921
+branch  6 taken 28810 (fallthrough)
+branch  7 taken 8
+branch  8 taken 25930 (fallthrough)
+branch  9 taken 2880
+branch 10 taken 2881 (fallthrough)
+branch 11 taken 23049
+    23049:   54:    if (usemask && layers < 64 && mask >> layers) return 0;
+branch  0 taken 15369 (fallthrough)
+branch  1 taken 7680
+branch  2 taken 15129 (fallthrough)
+branch  3 taken 240
+branch  4 taken 7560 (fallthrough)
+branch  5 taken 7569
+    15489:   55:    return (vocab + span - 1) / span;
+        -:   56:#else
+        -:   57:    const uint64_t c[16] = {layers, maxlayers, vocab, span, heads, maxheads, mask, (uint64_t)usemask};
+        -:   58:    uint64_t d[16];
+        -:   59:    return omega_graph_meta(1, c, d) ? (uint32_t)d[0] : 0;
+        -:   60:#endif
+        -:   61:}
+function omega_graph_layer called 64 returned 100% blocks executed 100%
+       64:   62:static inline void omega_graph_layer(uint64_t mask, uint32_t layer, uint64_t counts[2], int *attn, uint32_t *index) {
+        -:   63:#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+       64:   64:    *attn = (int)((mask >> layer) & 1u);
+       64:   65:    *index = (uint32_t)counts[*attn ? 0 : 1]++;
+        -:   66:#else
+        -:   67:    const uint64_t c[16] = {mask, layer, counts[0], counts[1]}; uint64_t d[16];
+        -:   68:    if (!omega_graph_meta(2, c, d)) abort();
+        -:   69:    *attn = (int)d[0]; *index = (uint32_t)d[1]; counts[0] = d[2]; counts[1] = d[3];
+        -:   70:#endif
+       64:   71:}
+        -:   72:/* Runtime-extent uint view writes directly into the real allocation. */
+function omega_graph_table called 85 returned 100% blocks executed 80%
+       85:   73:static inline void omega_graph_table(unsigned mode, unsigned qh, unsigned kv,
+        -:   74:                                     uint32_t *dst, uint32_t n) {
+       85:   75:    uint64_t result = 0;
+      85*:   76:    if (omega_grtable(&result, mode, qh, kv, dst, n) != OMEGA_OK || result != 1) abort();
+call    0 returned 85
+branch  1 taken 85 (fallthrough)
+branch  2 taken 0
+branch  3 taken 0 (fallthrough)
+branch  4 taken 85
+call    5 never executed
+       85:   77:}
+function omega_graph_shape called 17 returned 100% blocks executed 100%
+       17:   78:static inline int omega_graph_shape(uint32_t ae, uint32_t an, uint32_t ak,
+        -:   79:                                    uint32_t e, uint32_t n, uint32_t k) {
+        -:   80:#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+       17:   81:    return ae == e && an == n && ak == k;
+branch  0 taken 5 (fallthrough)
+branch  1 taken 12
+branch  2 taken 2 (fallthrough)
+branch  3 taken 3
+branch  4 taken 1 (fallthrough)
+branch  5 taken 1
+        -:   82:#else
+        -:   83:    const uint64_t c[16] = {ae, an, ak, e, n, k}; uint64_t d[16];
+        -:   84:    return (int)omega_graph_meta(5, c, d);
+        -:   85:#endif
+        -:   86:}
+        -:   87:#endif

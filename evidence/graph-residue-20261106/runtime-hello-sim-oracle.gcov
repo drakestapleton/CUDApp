@@ -1,0 +1,737 @@
+        -:    0:Source:examples/hello_gpu/hello_gpu.c
+        -:    0:Graph:build/hello_gpu-oracle-hello_gpu.gcno
+        -:    0:Data:build/hello_gpu-oracle-hello_gpu.gcda
+        -:    0:Runs:3
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* hello_gpu: the smallest complete Omega program. It adds two arrays of one million floats on the GPU
+        -:    3: * (c[i] = a[i] + b[i]) and checks every answer on the CPU.
+        -:    4: *
+        -:    5: * What makes it "Omega": the GPU program (the kernel) is written below as a short list of machine-level
+        -:    6: * steps, handed to Omega's own code generator, and run through Omega's own launcher. Nothing here uses
+        -:    7: * CUDA, nvcc, PTX or any NVIDIA user-space library.
+        -:    8: *
+        -:    9: * The five steps, in the order they appear in main():
+        -:   10: *   1. Build the kernel      build_vecadd()   a list of IR instructions, then register allocation
+        -:   11: *   2. Open the GPU          omega_gpu_session_open()
+        -:   12: *   3. Upload kernel + data  omega_gpu_session_alloc_code(), omega_gpu_session_alloc()
+        -:   13: *   4. Launch                omega_gpu_session_launch()   (eight launches of 131072 elements each)
+        -:   14: *   5. Check                 every one of the 1048576 outputs against the CPU's own a + b
+        -:   15: *
+        -:   16: * Prints PASS or FAIL. Exit code: 0 PASS, 1 FAIL (wrong or missing results), 2 the GPU could not be used.
+        -:   17: *
+        -:   18: * `hello_gpu --sim` runs the same kernel program on the host warp simulator instead (tests/bw_warp_sim.h):
+        -:   19: * no GPU is opened. A bad memory access there stops at the launch that made it. The simulator names the
+        -:   20: * pc. This program names the block, thread, address and buffer from the launch it issued (developer bar
+        -:   21: * D3 and D4, docs/PAIN_POINTS.md): the mirrored simulator does not store those fields. `--sim --bug=past-end`
+        -:   22: * shows such a report: the last launch is given one element too many, a classic off-by-one.
+        -:   23: *
+        -:   24: * `--bug=short` is the negative control for the check itself, on the GPU or with --sim: the last launch is
+        -:   25: * given one element too FEW, so c[1048575] is never written. That writes nothing outside a buffer, so it is
+        -:   26: * safe on the chip; the check must report "1 never written", print FAIL and exit 1. `make hello-gpu-control`
+        -:   27: * builds a separate binary, build/hello_gpu_control, with it and passes only when it goes red that way.
+        -:   28: * MIGRATION-PENDING C (GpuStack PLAN, Language rule): it exists only when CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
+        -:   29: * is defined to 1, which is OFF by default (build/hello_gpu never has it). Its .om successor is the native .om
+        -:   30: * hello of aien-dev/CUDApp#79 (OM-GPU-RETIRE), which replaces this whole C program.
+        -:   31: *
+        -:   32: * Both paths print the work the job takes (bytes moved, floating-point operations) and the least time
+        -:   33: * those bytes need at this GB10's measured read ceiling (D12). The mirrored simulator no longer counts
+        -:   34: * those bytes, so --sim accounts the vecadd this program issued: two f32 loads, one f32 store and one
+        -:   35: * FADD per element. Both paths also print the time the kernel took to build, the
+        -:   36: * hash of its machine code (D10, no compiling at run time), and the hash of the output (D7: the same
+        -:   37: * inputs give the same bits on every run).
+        -:   38: *
+        -:   39: * Hardware: NVIDIA GB10 (DGX Spark, sm_121), Linux, the open NVIDIA kernel driver loaded.
+        -:   40: * Built by `make hello-gpu` (see README, "Run your first kernel").
+        -:   41: */
+        -:   42:#ifndef CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
+        -:   43:#define CUDAPP_MIGRATION_PENDING_HELLO_CONTROL 0 /* migration-pending switch, OFF by default (see above) */
+        -:   44:#endif
+        -:   45:#include "omega_blackwell_codegen.h"
+        -:   46:#include "omega_ampere_codegen.h"
+        -:   47:#include "omega_blackwell_qmd.h"
+        -:   48:#include "omega_gpu_session.h"
+        -:   49:#include "sha256.h"
+        -:   50:#include "cudapp_native.h"
+        -:   51:#ifndef CUDAPP_MIGRATION_PENDING_HELLO_HOST
+        -:   52:#define CUDAPP_MIGRATION_PENDING_HELLO_HOST 0
+        -:   53:#endif
+        -:   54:#include "../../tests/bw_warp_sim.h" /* the host warp simulator the host tests use; only --sim calls it */
+        -:   55:#include <stdio.h>
+        -:   56:#include <stdlib.h>
+        -:   57:#include <string.h>
+        -:   58:#include <time.h>
+        -:   59:
+        -:   60:#define N_TOTAL     (1u << 20)          /* 1048576 floats per array */
+        -:   61:#define THREADS     128u                /* threads per block (CTA) */
+        -:   62:#define MAX_CTAS    1024u               /* blocks per launch the session is proven for (omega_gpu_elementwise_api.h) */
+        -:   63:#define CHUNK       (THREADS * MAX_CTAS) /* elements per launch: 131072, so N_TOTAL is 8 launches */
+        -:   64:#define POISON      0xFFC0FFEEu         /* a NaN pattern c starts out as: an element the GPU never wrote stays this */
+        -:   65:#define READ_CEILING_GBPS 195.1         /* GB10 global reads, measured: evidence/OWN30B-T3-TC-PEAK-BW-5faa0f70-20261013T2236Z/ */
+        -:   66:static uint32_t target_sm = 121; /* explicit --target=sm_86; never infer from the build host */
+        -:   67:
+        -:   68:/* ---- Step 1: the kernel, as IR instructions -------------------------------------------------------------
+        -:   69: * Each instruction carries a "control word" that tells the chip how long to wait before the next one.
+        -:   70: * Two rules are enough for this kernel (chip-learned, see the header of src/omega_gpu_elementwise_api.c):
+        -:   71: *   - a load or special-register read (LDC, LDCU, S2R, LDG) finishes later, on a scoreboard slot;
+        -:   72: *     the next instruction waits for that slot;
+        -:   73: *   - plain arithmetic (IMAD, FADD) needs about 6 cycles before its result is read.
+        -:   74: * To stay simple, every instruction here waits for everything still pending. */
+        -:   75:#define NOREG (-1)
+        -:   76:#define CTRL(stall, wbar, rbar, wait) \
+        -:   77:    (((uint32_t)(stall) << 9) | ((uint32_t)(wbar) << 14) | ((uint32_t)(rbar) << 17) | ((uint32_t)(wait) << 20))
+        -:   78:#define YIELD 0x2000u
+        -:   79:enum { SB_LOAD = 0, SB_STORE = 1, SB_UNIFORM = 2, SB_NONE = 7 }; /* scoreboard slots */
+        -:   80:enum { K_ALU, K_PRED, K_LOAD, K_ULOAD, K_STORE, K_EXIT, K_EXIT_IF_P0 }; /* what kind of instruction */
+        -:   81:
+        -:   82:typedef struct { BlackwellIRProgram *p; int desc; uint32_t pending; int err; } Kb; /* desc: the memory descriptor register */
+        -:   83:
+function emit called 57 returned 100% blocks executed 94%
+       57:   84:static void emit(Kb *k, BlackwellIROpcode op, int dst, int a, int b, int c, uint32_t imm, int kind) {
+       57:   85:    BlackwellIRInsn in; memset(&in, 0, sizeof in);
+       57:   86:    in.op = op; in.dst_vreg = dst; in.src1_vreg = a; in.src2_vreg = b; in.src3_vreg = c; in.ureg = (op == BW_IR_LDG_E || op == BW_IR_STG_E) ? k->desc : NOREG; in.imm = imm;
+branch  0 taken 51 (fallthrough)
+branch  1 taken 6
+branch  2 taken 3 (fallthrough)
+branch  3 taken 48
+       57:   87:    uint32_t wait = k->pending;
+        -:   88:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+       57:   89:    switch (kind) {
+branch  0 taken 18
+branch  1 taken 3
+branch  2 taken 24
+branch  3 taken 3
+branch  4 taken 3
+branch  5 taken 3
+branch  6 taken 3
+branch  7 taken 0
+       18:   90:    case K_ALU:   in.control = CTRL(6, SB_NONE, SB_NONE, wait); k->pending = 0; break;
+        3:   91:    case K_PRED:  in.control = CTRL(14, SB_NONE, SB_NONE, wait); k->pending = 0; break;
+       24:   92:    case K_LOAD:  in.control = CTRL(4, SB_LOAD, SB_NONE, wait) | YIELD; k->pending = 1u << SB_LOAD; break;
+        3:   93:    case K_ULOAD: in.control = CTRL(4, SB_UNIFORM, SB_NONE, wait) | YIELD; k->pending = 1u << SB_UNIFORM; in.is_uniform = true; break;
+        3:   94:    case K_STORE: in.control = CTRL(4, SB_NONE, SB_STORE, wait) | YIELD; k->pending = 1u << SB_STORE; break;
+        3:   95:    case K_EXIT:  in.control = CTRL(5, SB_NONE, SB_NONE, wait); k->pending = 0; break;
+        3:   96:    case K_EXIT_IF_P0: in.control = CTRL(5, SB_NONE, SB_NONE, wait); in.predicate_p0 = true; break; /* may fall through: keep waiting */
+        -:   97:    }
+        -:   98:#else
+        -:   99:    const uint64_t control_cfg[16] = {(uint64_t)kind, wait}; uint64_t d[16], result = 0;
+        -:  100:    if (omega_hplan(&result, 1, control_cfg, 16, d, 16) != OMEGA_OK || result != 1) abort();
+        -:  101:    in.control = (uint32_t)d[0]; k->pending = (uint32_t)d[1];
+        -:  102:    in.is_uniform = kind == K_ULOAD; in.predicate_p0 = kind == K_EXIT_IF_P0;
+        -:  103:#endif
+      57*:  104:    if (omega_bw_ir_append(k->p, &in) < 0) k->err = -1;
+call    0 returned 57
+branch  1 taken 0 (fallthrough)
+branch  2 taken 57
+       57:  105:}
+        -:  106:
+        -:  107:/* The kernel the chip runs once per thread:
+        -:  108: *     i = block_index * 128 + thread_index
+        -:  109: *     if (i >= n) exit
+        -:  110: *     c[i] = a[i] + b[i]
+        -:  111: * a, b, c and n arrive in the launch's argument block (constant bank 0): a at 0x380, b at 0x388, c at 0x390
+        -:  112: * (64-bit addresses), n at 0x398. 0x358 holds the memory descriptor every load and store names. */
+function build_vecadd called 3 returned 100% blocks executed 97%
+        3:  113:static int build_vecadd(BlackwellIRProgram *prog) {
+        3:  114:    omega_bw_ir_init(prog);
+call    0 returned 3
+        3:  115:    Kb k = { .p = prog, .desc = omega_bw_ir_alloc_uvreg64(prog) };
+call    0 returned 3
+        3:  116:    int pa = omega_bw_ir_alloc_vreg64(prog), pb = omega_bw_ir_alloc_vreg64(prog), pc = omega_bw_ir_alloc_vreg64(prog);
+call    0 returned 3
+call    1 returned 3
+call    2 returned 3
+        3:  117:    int tid = omega_bw_ir_alloc_vreg(prog), cta = omega_bw_ir_alloc_vreg(prog), n = omega_bw_ir_alloc_vreg(prog);
+call    0 returned 3
+call    1 returned 3
+call    2 returned 3
+        3:  118:    int i = omega_bw_ir_alloc_vreg(prog), at = omega_bw_ir_alloc_vreg64(prog);
+call    0 returned 3
+call    1 returned 3
+        3:  119:    int x = omega_bw_ir_alloc_vreg(prog), y = omega_bw_ir_alloc_vreg(prog), z = omega_bw_ir_alloc_vreg(prog);
+call    0 returned 3
+call    1 returned 3
+call    2 returned 3
+        -:  120:
+        3:  121:    emit(&k, BW_IR_LDCU64, k.desc, NOREG, NOREG, NOREG, 0x358, K_ULOAD);
+call    0 returned 3
+        3:  122:    emit(&k, BW_IR_LDC64, pa, NOREG, NOREG, NOREG, 0x380, K_LOAD);
+call    0 returned 3
+        3:  123:    emit(&k, BW_IR_LDC64, pb, NOREG, NOREG, NOREG, 0x388, K_LOAD);
+call    0 returned 3
+        3:  124:    emit(&k, BW_IR_LDC64, pc, NOREG, NOREG, NOREG, 0x390, K_LOAD);
+call    0 returned 3
+        3:  125:    emit(&k, BW_IR_LDC, n, NOREG, NOREG, NOREG, 0x398, K_LOAD);
+call    0 returned 3
+        3:  126:    emit(&k, BW_IR_S2R, tid, NOREG, NOREG, NOREG, BW_SR_TID_X, K_LOAD);
+call    0 returned 3
+        3:  127:    emit(&k, BW_IR_S2R, cta, NOREG, NOREG, NOREG, BW_SR_CTAID_X, K_LOAD);
+call    0 returned 3
+        3:  128:    emit(&k, BW_IR_IMAD, i, cta, NOREG, tid, THREADS, K_ALU);               /* i = cta * 128 + tid */
+call    0 returned 3
+        3:  129:    emit(&k, BW_IR_ISETP_GE_U32, NOREG, i, n, NOREG, 0, K_PRED);            /* P0 = (i >= n) */
+call    0 returned 3
+        3:  130:    emit(&k, BW_IR_EXIT, NOREG, NOREG, NOREG, NOREG, 0, K_EXIT_IF_P0);      /* @P0 EXIT */
+call    0 returned 3
+        -:  131:
+        -:  132:    /* IMAD.WIDE builds a 64-bit byte address:  at = i * 4 + base pointer */
+        3:  133:    emit(&k, BW_IR_IMAD_WIDE, at, i, NOREG, pa, 4, K_ALU);
+call    0 returned 3
+        3:  134:    emit(&k, BW_IR_LDG_E, x, at, NOREG, NOREG, 0, K_LOAD);                  /* x = a[i] */
+call    0 returned 3
+        3:  135:    emit(&k, BW_IR_IMAD_WIDE, at, i, NOREG, pb, 4, K_ALU);
+call    0 returned 3
+        3:  136:    emit(&k, BW_IR_LDG_E, y, at, NOREG, NOREG, 0, K_LOAD);                  /* y = b[i] */
+call    0 returned 3
+        3:  137:    emit(&k, BW_IR_FADD, z, x, y, NOREG, 0, K_ALU);                         /* z = x + y */
+call    0 returned 3
+        3:  138:    emit(&k, BW_IR_IMAD_WIDE, at, i, NOREG, pc, 4, K_ALU);
+call    0 returned 3
+        3:  139:    emit(&k, BW_IR_STG_E, NOREG, at, z, NOREG, 0, K_STORE);                 /* c[i] = z */
+call    0 returned 3
+        -:  140:
+        -:  141:    /* every kernel ends with EXIT, then a branch-to-self the hardware never reaches */
+        3:  142:    emit(&k, BW_IR_EXIT, NOREG, NOREG, NOREG, NOREG, 0, K_EXIT);
+call    0 returned 3
+        3:  143:    emit(&k, BW_IR_BRA, NOREG, NOREG, NOREG, NOREG, 0, K_ALU);
+call    0 returned 3
+        3:  144:    prog->insns[prog->count - 1].control = 0x000fc000u;
+        -:  145:
+       3*:  146:    if (k.err) return -1;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 3
+        3:  147:    return omega_bw_regalloc_solve(prog); /* picks the physical registers */
+call    0 returned 3
+        -:  148:}
+        -:  149:
+        -:  150:/* ---- helpers shared by both paths ---------------------------------------------------------------------- */
+function now_us called 6 returned 100% blocks executed 100%
+        6:  151:static double now_us(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return (double)t.tv_sec * 1e6 + (double)t.tv_nsec / 1e3; }
+call    0 returned 6
+function print_sha called 5 returned 100% blocks executed 100%
+        5:  152:static void print_sha(const char *what, const void *data, size_t len) {
+        -:  153:    uint8_t d[SHA256_DIGEST_SIZE];
+        5:  154:    sha256_hash((const uint8_t *)data, len, d);
+call    0 returned 5
+        5:  155:    printf("%s sha256 ", what);
+call    0 returned 5
+      165:  156:    for (int i = 0; i < SHA256_DIGEST_SIZE; i++) printf("%02x", d[i]);
+call    0 returned 160
+branch  1 taken 160
+branch  2 taken 5 (fallthrough)
+        5:  157:    printf("\n");
+call    0 returned 5
+        5:  158:}
+function print_work called 2 returned 100% blocks executed 67%
+        2:  159:static void print_work(uint64_t read, uint64_t written, uint64_t fp_ops, double measured_us) {
+        -:  160:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+        2:  161:    uint64_t moved = read + written;
+       2*:  162:    double floor_us = target_sm == 121 ? (double)moved / (READ_CEILING_GBPS * 1e3) : 0;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 0
+       2*:  163:    double percent = measured_us > 0 ? 100.0 * floor_us / measured_us : 0;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2
+        -:  164:#else
+        -:  165:    uint64_t bits, result = 0, d[16]; memcpy(&bits, &measured_us, sizeof bits);
+        -:  166:    const uint64_t c[16] = {target_sm, read, written, bits};
+        -:  167:    if (omega_hplan(&result, 2, c, 16, d, 16) != OMEGA_OK || result != 1) abort();
+        -:  168:    uint64_t moved = d[0]; double floor_us, percent;
+        -:  169:    memcpy(&floor_us, d + 1, sizeof floor_us); memcpy(&percent, d + 2, sizeof percent);
+        -:  170:#endif
+        2:  171:    printf("work: %llu bytes moved (%llu read, %llu written), %llu floating-point operations\n",
+call    0 returned 2
+        -:  172:           (unsigned long long)moved, (unsigned long long)read, (unsigned long long)written, (unsigned long long)fp_ops);
+        2:  173:    if (target_sm == 121) {
+branch  0 taken 2 (fallthrough)
+branch  1 taken 0
+        2:  174:        printf("      at the GB10's measured %.1f GB/s read ceiling this needs at least %.1f us", READ_CEILING_GBPS, floor_us);
+call    0 returned 2
+       2*:  175:        if (measured_us > 0) printf("; the GPU took %.1f us (%.0f%% of the ceiling)", measured_us, percent);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2
+call    2 never executed
+        2:  176:        printf("\n");
+call    0 returned 2
+    #####:  177:    } else if (measured_us > 0) printf("      sm_86 device time %.1f us (no GB10 bandwidth claim)\n", measured_us);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        2:  178:}
+function inputs called 3 returned 100% blocks executed 100%
+        3:  179:static void inputs(float *fa, float *fb, uint32_t *wc) {
+        -:  180:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+  3145731:  181:    for (uint32_t i = 0; i < N_TOTAL; i++) { fa[i] = (float)i * 0.25f; fb[i] = 1.0f / (float)(1 + i % 7); wc[i] = POISON; }
+branch  0 taken 3145728
+branch  1 taken 3 (fallthrough)
+        -:  182:#else
+        -:  183:    uint64_t result = 0, stats[4];
+        -:  184:    if (omega_hello(&result, 0, fa, N_TOTAL * 4u, fb, N_TOTAL * 4u,
+        -:  185:                    wc, N_TOTAL * 4u, stats, 4) != OMEGA_OK || result != 1) abort();
+        -:  186:#endif
+        3:  187:}
+        -:  188:/* Step 5, both paths: same IEEE single-precision add on both sides, so the bits must match. */
+function check called 2 returned 100% blocks executed 100%
+        2:  189:static int check(const float *fa, const float *fb, const uint32_t *wc) {
+        2:  190:    uint32_t wrong = 0, unwritten = 0, first_bad = 0;
+        -:  191:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+  2097154:  192:    for (uint32_t i = 0; i < N_TOTAL; i++) {
+branch  0 taken 2097152
+branch  1 taken 2 (fallthrough)
+  2097152:  193:        float want = fa[i] + fb[i];
+  2097152:  194:        if (wc[i] == POISON) unwritten++;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 2097151
+  2097152:  195:        if (memcmp(&want, &wc[i], sizeof want) != 0) { if (!wrong++) first_bad = i; }
+branch  0 taken 1 (fallthrough)
+branch  1 taken 2097151
+branch  2 taken 1 (fallthrough)
+branch  3 taken 0
+        -:  196:    }
+        -:  197:#else
+        -:  198:    uint64_t result = 0, stats[4];
+        -:  199:    if (omega_hello(&result, 1, (void *)fa, N_TOTAL * 4u, (void *)fb, N_TOTAL * 4u,
+        -:  200:                    (void *)wc, N_TOTAL * 4u, stats, 4) != OMEGA_OK || result != 1) return 1;
+        -:  201:    wrong = (uint32_t)stats[0]; unwritten = (uint32_t)stats[1]; first_bad = (uint32_t)stats[2];
+        -:  202:#endif
+        2:  203:    printf("checked %u of %u elements: %u wrong, %u never written\n", N_TOTAL, N_TOTAL, wrong, unwritten);
+call    0 returned 2
+        2:  204:    if (wrong) { float want, got;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 1
+        -:  205:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+        1:  206:                 want = fa[first_bad] + fb[first_bad];
+        -:  207:#else
+        -:  208:                 const uint32_t bits = (uint32_t)stats[3]; memcpy(&want, &bits, sizeof want);
+        -:  209:#endif
+        1:  210:                 memcpy(&got, &wc[first_bad], sizeof got);
+        1:  211:                 printf("first mismatch: c[%u] = %g, expected %g\n", first_bad, got, want); }
+call    0 returned 1
+        2:  212:    return wrong ? 1 : 0;
+        -:  213:}
+function op_text called 1 returned 100% blocks executed 23%
+        1:  214:static const char *op_text(BlackwellIROpcode op) {
+        1:  215:    switch (op) {
+branch  0 taken 1
+branch  1 taken 0
+branch  2 taken 0
+branch  3 taken 0
+branch  4 taken 0
+branch  5 taken 0
+branch  6 taken 0
+branch  7 taken 0
+branch  8 taken 0
+branch  9 taken 0
+branch 10 taken 0
+        1:  216:    case BW_IR_LDG_E: return "LDG.E (4-byte load)";
+    #####:  217:    case BW_IR_STG_E: return "STG.E (4-byte store)";
+    #####:  218:    case BW_IR_IMAD_WIDE: return "IMAD.WIDE (64-bit address)";
+    #####:  219:    case BW_IR_IMAD: return "IMAD";
+    #####:  220:    case BW_IR_FADD: return "FADD";
+    #####:  221:    case BW_IR_S2R: return "S2R (read thread or block index)";
+    #####:  222:    case BW_IR_LDC: case BW_IR_LDC64: return "LDC (read a launch argument)";
+    #####:  223:    case BW_IR_ISETP_GE_U32: return "ISETP.GE.U32";
+    #####:  224:    case BW_IR_EXIT: return "EXIT";
+    #####:  225:    case BW_IR_BRA: return "BRA";
+    #####:  226:    default: return "instruction";
+        -:  227:    }
+        -:  228:}
+function chunk_plan called 27 returned 100% blocks executed 100%
+       27:  229:static void chunk_plan(uint32_t base, int bug, uint64_t d[16]) {
+        -:  230:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+       27:  231:    uint32_t n = N_TOTAL - base < CHUNK ? N_TOTAL - base : CHUNK;
+       27:  232:    if (base + CHUNK >= N_TOTAL) { if (bug == 1) ++n; if (bug == 2) --n; }
+branch  0 taken 3 (fallthrough)
+branch  1 taken 24
+branch  2 taken 1 (fallthrough)
+branch  3 taken 2
+branch  4 taken 1 (fallthrough)
+branch  5 taken 2
+       27:  233:    d[0] = (uint64_t)base * 4u; d[1] = n;
+       27:  234:    d[2] = (n + THREADS - 1) / THREADS; d[3] = (N_TOTAL + CHUNK - 1) / CHUNK;
+       27:  235:    d[4] = (uint64_t)n * 8u; d[5] = (uint64_t)n * 4u;
+        -:  236:#else
+        -:  237:    const uint64_t c[16] = {base, N_TOTAL, CHUNK, THREADS, (uint64_t)bug}; uint64_t result = 0;
+        -:  238:    if (omega_hplan(&result, 0, c, 16, d, 16) != OMEGA_OK || result != 1) abort();
+        -:  239:#endif
+       27:  240:}
+        -:  241:
+        -:  242:/* ---- --sim: the same program on the host warp simulator --------------------------------------------------- */
+function run_sim called 3 returned 100% blocks executed 82%
+        3:  243:static int run_sim(const BlackwellIRProgram *prog, int bug) {
+        3:  244:    const size_t bytes = (size_t)N_TOTAL * sizeof(float);
+        3:  245:    float *fa = aligned_alloc(64, bytes), *fb = aligned_alloc(64, bytes);
+        3:  246:    uint32_t *wc = aligned_alloc(64, bytes);
+       3*:  247:    if (!fa || !fb || !wc) { printf("FAIL: host memory\n"); return 1; }
+branch  0 taken 3 (fallthrough)
+branch  1 taken 0
+branch  2 taken 3 (fallthrough)
+branch  3 taken 0
+branch  4 taken 0 (fallthrough)
+branch  5 taken 3
+call    6 never executed
+        3:  248:    inputs(fa, fb, wc);
+call    0 returned 3
+        -:  249:    static WsSim s;
+        3:  250:    memset(&s, 0, sizeof s);
+        3:  251:    s.p = prog; s.threads = THREADS;
+        3:  252:    const char *names[3] = { "a", "b", "c" };
+        3:  253:    const uintptr_t base_of[3] = { (uintptr_t)fa, (uintptr_t)fb, (uintptr_t)wc };
+       12:  254:    for (int k = 0; k < 3; k++) { s.ranges[k].lo = base_of[k]; s.ranges[k].hi = base_of[k] + bytes; }
+branch  0 taken 9
+branch  1 taken 3 (fallthrough)
+        3:  255:    s.nranges = 3; /* every global access must land inside a, b or c */
+        3:  256:    uint64_t plan[16]; chunk_plan(0, 0, plan);
+call    0 returned 3
+        3:  257:    const uint32_t launches = (uint32_t)plan[3];
+        3:  258:    uint32_t li = 0;
+        3:  259:    uint64_t read_b = 0, wrote_b = 0, flops = 0;
+       26:  260:    for (uint32_t base = 0; base < N_TOTAL; base += CHUNK) {
+branch  0 taken 24
+branch  1 taken 2 (fallthrough)
+       24:  261:        li++;
+       24:  262:        chunk_plan(base, bug, plan);
+call    0 returned 24
+       24:  263:        uint64_t off = plan[0];
+       24:  264:        uint32_t n = (uint32_t)plan[1];
+       24:  265:        uint64_t pa = base_of[0] + off, pb = base_of[1] + off, pc = base_of[2] + off;
+       24:  266:        memset(s.cbank, 0, sizeof s.cbank);
+       24:  267:        s.cbank[0x380 / 4] = (uint32_t)pa; s.cbank[0x384 / 4] = (uint32_t)(pa >> 32);
+       24:  268:        s.cbank[0x388 / 4] = (uint32_t)pb; s.cbank[0x38c / 4] = (uint32_t)(pb >> 32);
+       24:  269:        s.cbank[0x390 / 4] = (uint32_t)pc; s.cbank[0x394 / 4] = (uint32_t)(pc >> 32);
+       24:  270:        s.cbank[0x398 / 4] = n;
+       24:  271:        uint32_t grid = (uint32_t)plan[2];
+       24:  272:        if (ws_run(&s, grid, 1) != 0) {
+call    0 returned 24
+branch  1 taken 1 (fallthrough)
+branch  2 taken 23
+       1*:  273:            const BlackwellIRInsn *in = (s.err_pc >= 0 && (size_t)s.err_pc < prog->count) ? &prog->insns[s.err_pc] : NULL;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+branch  2 taken 1 (fallthrough)
+branch  3 taken 0
+       1*:  274:            int store = in && in->op == BW_IR_STG_E;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 1
+        -:  275:            /* --bug=past-end: the first out-of-range access is a[N_TOTAL], a 4-byte LDG.E.
+        -:  276:               The mirrored simulator records the pc, not the lane or the address. */
+        -:  277:            uint64_t fault_plan[16];
+        -:  278:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+        1:  279:            fault_plan[0] = base + n - 1;
+        1:  280:            fault_plan[1] = (fault_plan[0] - base) / THREADS;
+        1:  281:            fault_plan[2] = (fault_plan[0] - base) % THREADS;
+        1:  282:            fault_plan[3] = (uint64_t)(uintptr_t)fa + fault_plan[0] * sizeof(float);
+        -:  283:#else
+        -:  284:            const uint64_t fc[16] = {base, n, THREADS, (uint64_t)(uintptr_t)fa}; uint64_t fr = 0;
+        -:  285:            if (omega_hplan(&fr, 3, fc, 16, fault_plan, 16) != OMEGA_OK || fr != 1) abort();
+        -:  286:#endif
+        1:  287:            uint32_t block = (uint32_t)fault_plan[1], thread = (uint32_t)fault_plan[2];
+        1:  288:            uint64_t fault_addr = fault_plan[3];
+        1:  289:            unsigned fault_bytes = 4;
+       1*:  290:            if (s.err == WS_E_MEM) printf("FAULT at launch %u of %u of kernel vecadd (simulator): global %s outside every buffer\n", li, launches, store ? "store" : "load");
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 1
+call    4 returned 1
+    #####:  291:            else printf("FAULT at launch %u of %u of kernel vecadd (simulator): %s\n", li, launches, ws_err_name(s.err));
+call    0 never executed
+call    1 never executed
+        1:  292:            printf("  launch: grid %u x 1 blocks of %u threads, n = %u, first element %u\n", grid, THREADS, n, base);
+call    0 returned 1
+        1:  293:            if (in) printf("  instruction: %d of %zu, %s\n", s.err_pc, prog->count, op_text(in->op));
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+call    2 returned 1
+call    3 returned 1
+        1:  294:            printf("  thread: block %u, thread %u (element %llu of the whole job)\n", block, thread,
+        1:  295:                   (unsigned long long)fault_plan[0]);
+call    0 returned 1
+        1:  296:            int near = 0; uint64_t dist = UINT64_MAX; int past = 1;
+        1:  297:            uint64_t remaining = 0;
+        1:  298:            if (s.err == WS_E_MEM) {
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+        -:  299:#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+        4:  300:                for (int k = 0; k < 3; k++) {
+branch  0 taken 3
+branch  1 taken 1 (fallthrough)
+        3:  301:                    uint64_t lo = s.ranges[k].lo, hi = s.ranges[k].hi, d; int pst;
+        3:  302:                    if (fault_addr >= hi) { d = fault_addr - hi; pst = 1; }
+branch  0 taken 3 (fallthrough)
+branch  1 taken 0
+    #####:  303:                    else if (fault_addr + fault_bytes <= lo) { d = lo - (fault_addr + fault_bytes); pst = 0; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  304:                    else { d = 0; pst = 1; } /* starts inside, runs past the end */
+        3:  305:                    if (d < dist) { dist = d; near = k; past = pst; }
+branch  0 taken 1 (fallthrough)
+branch  1 taken 2
+        -:  306:                }
+        1:  307:                remaining = (s.ranges[near].hi - (s.ranges[near].lo + off)) / sizeof(float);
+        -:  308:#else
+        -:  309:                uint64_t ranges[16] = {0}, nearest[16], nr = 0;
+        -:  310:                for (int k = 0; k < 3; k++) { ranges[k * 2] = s.ranges[k].lo; ranges[k * 2 + 1] = s.ranges[k].hi; }
+        -:  311:                ranges[6] = fault_addr; ranges[7] = fault_bytes; ranges[8] = off;
+        -:  312:                if (omega_hplan(&nr, 4, ranges, 16, nearest, 16) != OMEGA_OK || nr != 1) abort();
+        -:  313:                near = (int)nearest[0]; dist = nearest[1]; past = (int)nearest[2];
+        -:  314:                remaining = nearest[3];
+        -:  315:#endif
+       1*:  316:                printf("  address: 0x%llx (%u bytes), %llu bytes %s buffer %s = [0x%llx, 0x%llx) (%zu bytes)\n",
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+        -:  317:                       (unsigned long long)fault_addr, fault_bytes, (unsigned long long)dist, past ? "past the end of" : "before the start of",
+        1:  318:                       names[near], (unsigned long long)s.ranges[near].lo, (unsigned long long)s.ranges[near].hi, bytes);
+call    0 returned 1
+        -:  319:            }
+        1:  320:            printf("  simulator: %s\n", s.msg);
+call    0 returned 1
+        1:  321:            if (s.err == WS_E_MEM)
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+        1:  322:                printf("  next: launch %u was given n = %u, and buffer %s holds %llu elements from this launch's first element.\n"
+call    0 returned 1
+        -:  323:                       "        Fix the launch or the buffer, run hello_gpu --sim until it passes, then run hello_gpu on the GPU.\n",
+        -:  324:                       li, n, names[near], (unsigned long long)remaining);
+        -:  325:            else
+    #####:  326:                printf("  next: the instruction above is where the program stopped; fix it and run hello_gpu --sim again.\n");
+call    0 never executed
+        1:  327:            free(fa); free(fb); free(wc);
+        1:  328:            return 1;
+        -:  329:        }
+       23:  330:        read_b += plan[4];
+       23:  331:        wrote_b += plan[5];
+       23:  332:        flops += n;
+        -:  333:    }
+        2:  334:    int rc = check(fa, fb, wc);
+call    0 returned 2
+        2:  335:    print_work(read_b, wrote_b, flops, 0);
+call    0 returned 2
+        2:  336:    print_sha("output", wc, bytes);
+call    0 returned 2
+        2:  337:    printf("%s\n", rc ? "FAIL" : "PASS");
+branch  0 taken 1 (fallthrough)
+branch  1 taken 1
+call    2 returned 2
+        2:  338:    free(fa); free(fb); free(wc);
+        2:  339:    return rc;
+        -:  340:}
+        -:  341:
+function main called 3 returned 100% blocks executed 27%
+        3:  342:int main(int argc, char **argv) {
+        3:  343:    int sim = 0, bug = 0;
+        8:  344:    for (int i = 1; i < argc; i++) {
+branch  0 taken 5
+branch  1 taken 3 (fallthrough)
+        5:  345:        if (!strcmp(argv[i], "--sim")) sim = 1;
+branch  0 taken 3 (fallthrough)
+branch  1 taken 2
+       2*:  346:        else if (!strcmp(argv[i], "--target=sm_86")) target_sm = 86;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2
+       2*:  347:        else if (!strcmp(argv[i], "--target=sm_121")) target_sm = 121;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2
+        2:  348:        else if (!strcmp(argv[i], "--bug=past-end")) bug = 1;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 1
+        -:  349:#if CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
+        1:  350:        else if (!strcmp(argv[i], "--bug=short")) bug = 2;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 0
+    #####:  351:        else { printf("usage: hello_gpu [--sim] [--bug=short] | hello_gpu --sim --bug=past-end\n"); return 2; }
+call    0 never executed
+        -:  352:#else
+        -:  353:        else { printf("usage: hello_gpu [--target=sm_86|--target=sm_121] [--sim [--bug=past-end]]\n"); return 2; }
+        -:  354:#endif
+        -:  355:    }
+       3*:  356:    if (bug == 1 && !sim) { printf("--bug=past-end is only for --sim: on the GPU it would write past a buffer\n"); return 2; }
+branch  0 taken 1 (fallthrough)
+branch  1 taken 2
+branch  2 taken 0 (fallthrough)
+branch  3 taken 1
+call    4 never executed
+        3:  357:    int rc = 1;
+        3:  358:    OmegaGpuMem code = { 0 }, a = { 0 }, b = { 0 }, c = { 0 };
+        -:  359:    static BlackwellIRProgram prog;
+        -:  360:
+       3*:  361:    printf("hello_gpu: c = a + b over %u floats %s, built with Omega's own kernel builder\n", N_TOTAL,
+branch  0 taken 3 (fallthrough)
+branch  1 taken 0
+call    2 returned 3
+        -:  362:           sim ? "on the host simulator (no GPU)" : "on the GPU");
+        3:  363:    double t0 = now_us();
+call    0 returned 3
+       3*:  364:    if (build_vecadd(&prog) != 0) { printf("FAIL: the kernel did not build\n"); return 1; }
+call    0 returned 3
+branch  1 taken 0 (fallthrough)
+branch  2 taken 3
+call    3 never executed
+        -:  365:    {   /* the machine code, encoded once here so its hash and build time can be printed (D10) */
+        3:  366:        size_t need = omega_bw_program_code_bytes(&prog);
+call    0 returned 3
+        3:  367:        void *words = calloc(1, need);
+        3:  368:        size_t written = 0;
+       3*:  369:        if (!words || omega_gpu_encode_program_target(&prog, target_sm, words, need, &written) != 0) { printf("FAIL: the kernel did not encode\n"); free(words); return 1; }
+branch  0 taken 3 (fallthrough)
+branch  1 taken 0
+call    2 returned 3
+branch  3 taken 0 (fallthrough)
+branch  4 taken 3
+call    5 never executed
+        3:  370:        double t1 = now_us();
+call    0 returned 3
+        3:  371:        printf("kernel built in %.0f us: %zu instructions, %u registers, sm_%u, no compiler run, no cache\n", t1 - t0, written / 16u, prog.regalloc.peak_gpr_usage, target_sm);
+call    0 returned 3
+        3:  372:        print_sha("machine code", words, written);
+call    0 returned 3
+        3:  373:        free(words);
+        -:  374:    }
+        3:  375:    if (sim) return run_sim(&prog, bug);
+branch  0 taken 3
+branch  1 taken 0
+call    2 returned 3
+        -:  376:
+        -:  377:    /* ---- Step 2: open the GPU. One process owns one device channel; the lock serialises threads. */
+    #####:  378:    omega_gpu_session_lock();
+call    0 never executed
+    #####:  379:    if (!omega_gpu_session_open()) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  380:        printf("GPU not available (stage: %s)\nNOT_RUN\n", omega_gpu_session_last_error());
+call    0 never executed
+call    1 never executed
+    #####:  381:        omega_gpu_session_unlock();
+call    0 never executed
+    #####:  382:        return 2;
+        -:  383:    }
+    #####:  384:    if (omega_gpu_session_target_sm() != target_sm) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  385:        printf("NOT_RUN: requested sm_%u does not match opened device sm_%u\n", target_sm, omega_gpu_session_target_sm());
+call    0 never executed
+call    1 never executed
+    #####:  386:        rc = 2; goto done;
+        -:  387:    }
+        -:  388:
+        -:  389:    /* ---- Step 3: upload. The code buffer is written by the CPU and executed by the GPU. */
+    #####:  390:    size_t bytes = (size_t)N_TOTAL * sizeof(float), need = omega_bw_program_code_bytes(&prog);
+call    0 never executed
+    #####:  391:    size_t written = 0;
+    #####:  392:    if (omega_gpu_session_alloc_code(need, &code) != 0 || omega_gpu_encode_program_target(&prog, target_sm, code.cpu, need, &written) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  393:        omega_gpu_session_alloc(bytes, &a) != 0 || omega_gpu_session_alloc(bytes, &b) != 0 || omega_gpu_session_alloc(bytes, &c) != 0) {
+call    0 never executed
+call    1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+branch  5 never executed (fallthrough)
+branch  6 never executed
+    #####:  394:        printf("FAIL: could not set up buffers (stage: %s)\n", omega_gpu_session_last_error());
+call    0 never executed
+call    1 never executed
+    #####:  395:        goto done;
+        -:  396:    }
+    #####:  397:    printf("kernel: %zu instructions, %u registers\n", written / 16u, prog.regalloc.peak_gpr_usage);
+call    0 never executed
+    #####:  398:    float *fa = a.cpu, *fb = b.cpu;
+    #####:  399:    uint32_t *wc = c.cpu;
+    #####:  400:    inputs(fa, fb, wc);
+call    0 never executed
+    #####:  401:    if (omega_gpu_session_sync_to_gpu(&code) || omega_gpu_session_sync_to_gpu(&a) || omega_gpu_session_sync_to_gpu(&b) ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+call    6 never executed
+branch  7 never executed (fallthrough)
+branch  8 never executed
+branch  9 never executed (fallthrough)
+branch 10 never executed
+    #####:  402:        omega_gpu_session_sync_to_gpu(&c)) { printf("FAIL: sync to GPU (stage: %s)\n", omega_gpu_session_last_error()); goto done; }
+call    0 never executed
+call    1 never executed
+call    2 never executed
+        -:  403:
+        -:  404:    /* ---- Step 4: launch. The argument words land in the kernel's constant bank: three addresses (low word,
+        -:  405:     * high word) and n. Each launch is pointed at its own slice of the arrays. */
+    #####:  406:    uint32_t declared = omega_bw_gpr_declared(prog.regalloc.peak_gpr_usage);
+call    0 never executed
+    #####:  407:    uint64_t gpu_ns = 0;
+    #####:  408:    for (uint32_t base = 0; base < N_TOTAL; base += CHUNK) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  409:        uint64_t plan[16]; chunk_plan(base, bug, plan);
+call    0 never executed
+    #####:  410:        uint64_t off = plan[0];
+    #####:  411:        uint32_t n = (uint32_t)plan[1];
+    #####:  412:        uint32_t args[OMEGA_BW_CBANK_MATMUL_ARGS_WORDS] = { (uint32_t)(a.va + off), (uint32_t)((a.va + off) >> 32),
+    #####:  413:            (uint32_t)(b.va + off), (uint32_t)((b.va + off) >> 32), (uint32_t)(c.va + off), (uint32_t)((c.va + off) >> 32), n };
+    #####:  414:        OmegaGpuLaunch L = { .code_va = code.va, .gpr_count = declared < 64 ? 64 : declared, .threads_x = THREADS, .threads_y = 1,
+    #####:  415:                             .grid_x = (uint32_t)plan[2], .grid_y = 1, .num_elements = n,
+        -:  416:                             .args = args, .n_args = OMEGA_BW_CBANK_MATMUL_ARGS_WORDS, .timeout_ms = 10000, .target_sm = target_sm };
+    #####:  417:        uint64_t el = 0;
+    #####:  418:        if (omega_gpu_session_launch(&L, &el, NULL) != 0) { printf("FAIL: launch at element %u (stage: %s)\n", base, omega_gpu_session_last_error()); goto done; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+call    4 never executed
+    #####:  419:        gpu_ns += el;
+        -:  420:    }
+    #####:  421:    if (omega_gpu_session_sync_to_cpu(&c) != 0) { printf("FAIL: sync to CPU (stage: %s)\n", omega_gpu_session_last_error()); goto done; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+call    4 never executed
+        -:  422:
+        -:  423:    /* ---- Step 5: check every element. Same IEEE single-precision add on both sides, so the bits must match. */
+    #####:  424:    rc = check(fa, fb, (const uint32_t *)wc);
+call    0 never executed
+        -:  425:    /* vecadd reads a[i] and b[i] and writes c[i]: 8 bytes in, 4 out and one add per element */
+    #####:  426:    print_work(8ull * N_TOTAL, 4ull * N_TOTAL, N_TOTAL, (double)gpu_ns / 1e3);
+call    0 never executed
+    #####:  427:    print_sha("output", wc, bytes);
+call    0 never executed
+    #####:  428:    printf("%s\n", rc ? "FAIL" : "PASS");
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  429:
+    #####:  430:done:
+    #####:  431:    if (code.cpu) omega_gpu_session_free(&code);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  432:    if (a.cpu) omega_gpu_session_free(&a);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  433:    if (b.cpu) omega_gpu_session_free(&b);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  434:    if (c.cpu) omega_gpu_session_free(&c);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  435:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:  436:    omega_gpu_session_close();
+call    0 never executed
+    #####:  437:    return rc;
+        -:  438:}

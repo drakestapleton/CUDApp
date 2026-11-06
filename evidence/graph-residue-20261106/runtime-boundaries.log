@@ -1,0 +1,153 @@
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit streams (bridge-seeded)
+generating portable unit cmdlist_record (bridge-seeded)
+generating portable unit cmdlist_plan (bridge-seeded)
+generating portable unit cmdlist_layout (bridge-seeded)
+generating portable unit cmdlist_access (bridge-seeded)
+generating portable unit model_graph_wire (bridge-seeded)
+generating portable unit model_graph_node (bridge-seeded)
+generating portable unit model_graph_batch (bridge-seeded)
+generating portable unit model_graph_launch (bridge-seeded)
+generating portable unit model_graph_copy (bridge-seeded)
+generating portable unit model_graph_xfer (bridge-seeded)
+generating portable unit model_graph (bridge-seeded)
+generating portable unit model_graph_expert (bridge-seeded)
+generating portable unit model_graph_group (bridge-seeded)
+generating portable unit model_graph_address (bridge-seeded)
+generating portable unit model_graph_final_batch (bridge-seeded)
+generating portable unit model_graph_window (bridge-seeded)
+generating portable unit model_graph_layout (bridge-seeded)
+generating portable unit model_graph_aux (bridge-seeded)
+generating portable unit model_graph_residue (bridge-seeded)
+generating portable unit model_graph_table (bridge-seeded)
+generating portable unit hello_host (bridge-seeded)
+generating portable unit hello_plan (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+PASS portable Omega units regenerate byte for byte
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -O0 --coverage -DCUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE=1 -DCUDAPP_MIGRATION_PENDING_HELLO_HOST=1 tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue-oracle
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -DCUDAPP_GRAPH_DIFF_RED=1 tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue-red
+OMEGA_OMC="~/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="~/work/cudastack/lanes/GraphsHello-bridge73" CC="cc" GRAPH_RESIDUE_FLAGS="-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc" OUT_DIR="build" python3 om/graph/residue-mutants.py
+build/graph-residue > build/graph-residue.log
+build/graph-residue-oracle > build/graph-residue-oracle.log
+libgcov profiling error:~/work/cudastack/lanes/GraphsHello/build/graph-residue-oracle-test_graph_residue.gcda:overwriting an existing profile data with a different checksum
+cmp build/graph-residue.log build/graph-residue-oracle.log
+build/graph-residue-red > build/graph-residue-red.log
+PASS graph residue differential and red check
+build/hello_gpu-oracle --sim > build/hello-oracle-sim.log
+mutant poison killed rc=0
+gcov -b -c -o build/graph-residue-oracle-test_graph_residue.gcno tests/test_graph_residue.c
+File 'tests/test_graph_residue.c'
+Lines executed:100.00% of 71
+Branches executed:100.00% of 136
+Taken at least once:80.88% of 136
+Calls executed:79.76% of 84
+Creating 'test_graph_residue.c.gcov'
+
+File 'src/omega_gpu_graph_residue.h'
+Lines executed:100.00% of 33
+Branches executed:100.00% of 76
+Taken at least once:94.74% of 76
+Calls executed:50.00% of 4
+Creating 'omega_gpu_graph_residue.h.gcov'
+
+File 'examples/hello_gpu/hello_gpu.c'
+Lines executed:32.20% of 236
+Branches executed:27.33% of 161
+Taken at least once:23.60% of 161
+Calls executed:33.88% of 121
+Creating 'hello_gpu.c.gcov'
+
+File 'tests/bw_warp_sim.h'
+Lines executed:0.00% of 192
+Branches executed:0.00% of 305
+Taken at least once:0.00% of 305
+Calls executed:0.00% of 112
+Creating 'bw_warp_sim.h.gcov'
+
+File 'tests/bw_mufu_ftz.h'
+Lines executed:0.00% of 8
+Branches executed:0.00% of 2
+Taken at least once:0.00% of 2
+Calls executed:0.00% of 6
+Creating 'bw_mufu_ftz.h.gcov'
+
+Lines executed:33.33% of 540
+gcov -b -c -o build/hello_gpu-oracle-hello_gpu.gcno examples/hello_gpu/hello_gpu.c
+File 'examples/hello_gpu/hello_gpu.c'
+Lines executed:73.84% of 237
+Branches executed:74.23% of 163
+Taken at least once:49.08% of 163
+Calls executed:57.02% of 121
+Creating 'hello_gpu.c.gcov'
+
+File 'tests/bw_warp_sim.h'
+Lines executed:50.00% of 192
+Branches executed:56.07% of 305
+Taken at least once:33.11% of 305
+Calls executed:22.32% of 112
+Creating 'bw_warp_sim.h.gcov'
+
+File 'tests/bw_mufu_ftz.h'
+Lines executed:0.00% of 8
+Branches executed:0.00% of 2
+Taken at least once:0.00% of 2
+Calls executed:0.00% of 6
+Creating 'bw_mufu_ftz.h.gcov'
+
+Lines executed:62.01% of 437
+mutant input-period killed rc=0
+mutant checker-sub killed rc=-6
+mutant shape-cap killed rc=0
+mutant timeline-room killed rc=-6
+mutant perm-stride killed rc=-6
+mutant load-scoreboard killed rc=0
+PASS graph residue: 7 compiled semantic mutants killed

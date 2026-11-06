@@ -69,17 +69,11 @@ static inline void omega_graph_layer(uint64_t mask, uint32_t layer, uint64_t cou
     *attn = (int)d[0]; *index = (uint32_t)d[1]; counts[0] = d[2]; counts[1] = d[3];
 #endif
 }
-/* Only convert the checked scalar representation to the public uint32_t buffer.
- * Fixed blocks keep the bridge view's advertised extent within real storage. */
+/* Runtime-extent uint view writes directly into the real allocation. */
 static inline void omega_graph_table(unsigned mode, unsigned qh, unsigned kv,
                                      uint32_t *dst, uint32_t n) {
-    for (uint32_t base = 0; base < n;) {
-        uint64_t words[512], result = 0;
-        uint32_t count = n - base < 512 ? n - base : 512;
-        if (omega_grtable(&result, mode, qh, kv, base, count, words, 512) != OMEGA_OK || result != 1) abort();
-        for (uint32_t i = 0; i < count; ++i) dst[base + i] = (uint32_t)words[i];
-        base += count;
-    }
+    uint64_t result = 0;
+    if (omega_grtable(&result, mode, qh, kv, dst, n) != OMEGA_OK || result != 1) abort();
 }
 static inline int omega_graph_shape(uint32_t ae, uint32_t an, uint32_t ak,
                                     uint32_t e, uint32_t n, uint32_t k) {

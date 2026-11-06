@@ -14,6 +14,8 @@
 #include "omega_api_shells.h"
 #include <math.h>
 #include <string.h>
+#include "omega_gpu_apiviews.h"
+#include <stdlib.h>
 
 float omega_fp8_e4m3_ref(uint8_t b) {
     uint32_t bits = omega_api_refb(b);
@@ -43,19 +45,11 @@ int omega_fp8_pack_scales(const uint16_t *bf16, size_t count, float *out, int mu
 }
 
 void omega_fp8_pack_x_f32(const float *x, uint32_t k, float *out) {
-    for (uint32_t i = 0; i < k; i++) {
-        uint32_t bits;
-        memcpy(&bits, &x[i], 4);
-        bits = omega_api_xfold(bits);
-        memcpy(&out[i], &bits, 4);
-    }
+    if (av_fp8_pack_x(k, x, out) != 0) abort();
 }
 
 void omega_fp8_pack_x_bf16(const uint16_t *x, uint32_t k, float *out) {
-    for (uint32_t i = 0; i < k; i++) {
-        uint32_t bits = omega_api_xfold16(x[i]);
-        memcpy(&out[i], &bits, 4);
-    }
+    if (av_fp8_pack_x_bf16(k, x, out) != 0) abort();
 }
 
 void omega_fp8_gemv_oracle(const uint8_t *w, const uint16_t *scale_bf16, uint32_t n, uint32_t k,

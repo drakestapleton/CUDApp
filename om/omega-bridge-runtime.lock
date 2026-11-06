@@ -1,0 +1,8 @@
+79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538
+# pending omega-bridge#71 (758d74aa, fixed views) and omega-bridge#73
+# (feat/typed-views-runtime-extent). Used only by om/units.sh for
+# av_bf16, av_widen, av_rope and av_gdnsc, via
+# tools/bridge-seeded --runtime-views. toc.om
+# d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538
+# tools/bridge-seeded
+# a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629

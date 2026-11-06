@@ -53,6 +53,8 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 # C3 scan and sort (CUB/Thrust row): the kernel IR and the launch plans
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS om/scan/scan_ir.om om/scan/scan_plan.om"; fi
 [ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS aiengpu=native/aiengpu/context.om"
+# C6 (CUDApp#10): the sm_121 disassembler; appended only to the default list, so OMEGA_UNITS subsets still work.
+[ -z "${OMEGA_UNITS:-}" ] && UNITS="$UNITS om/disasm/sm121_dis.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

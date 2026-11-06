@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* sm121dis -- Omega's sm_121 disassembler on the command line (C6 of docs/OMEGA.md; the decoder is
- * src/omega_sm121_disasm.c).
+/* sm121dis -- Omega's sm_121 disassembler on the command line (C6 of docs/OMEGA.md). The decoder is
+ * om/disasm/sm121_dis.om through src/cudapp_om_sm121_dis.c; CUDAPP_DISASM=c|diff selects the C oracle in
+ * src/omega_sm121_disasm.c or both (Makefile).
  *
  *   sm121dis <code.bin>            a listing in nvdisasm's layout: the address in a comment, then TEXT ;
  *   sm121dis -b SM121 <code.bin>   the same, called the way the checks used to call nvdisasm
@@ -20,7 +21,7 @@ static int usage(void) {
 
 int main(int argc, char **argv) {
     if (argc == 2 && strcmp(argv[1], "--version") == 0) {
-        printf("sm121dis: Omega's own sm_121 disassembler (src/omega_sm121_disasm.c)\n");
+        printf("sm121dis: Omega's own sm_121 disassembler (om/disasm/sm121_dis.om; C oracle src/omega_sm121_disasm.c)\n");
         return 0;
     }
     int pairs = argc == 3 && strcmp(argv[1], "--pairs") == 0;

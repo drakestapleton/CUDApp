@@ -173,7 +173,10 @@ make test-omega-slices          # needs the pinned OSC compiler above
 make test-om-encoder            # AArch64; seeded encoder binding
 make test-om-cubin              # AArch64; seeded cubin packer
 make test-gpu-native-runtime    # AArch64; seeded native units
-make test-om-spec-encoder       # pinned omc and nvdisasm
+make test-om-spec-encoder       # pinned omc; samples read by Omega's own sm121dis
+make test-om-spec-encoder-nvdisasm-oracle  # same, read by NVIDIA nvdisasm (oracle)
+make test-om-disasm-fimm test-om-disasm-mutants  # pinned omc; .om disassembler float sweep and mutants
+make test-sm121dis              # pinned omc and nvdisasm; oracle agreement and .om vs C corpus
 make test-portable-receipts     # pinned omc
 make test-model-capacity        # pinned omc
 make test-prof                  # pinned omc; profiler host and simulator tiers, chip stays NOT_RUN

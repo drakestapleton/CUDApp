@@ -454,7 +454,7 @@ def fig_reverse():
     box(48, y2, 258, 150, "05", "Field hypothesis", ["bits 16..23 are the", "destination register,", "and so on"], GREEN)
     box(334, y2, 258, 150, "06", "My encoder writes it", ["src/omega_blackwell_", "encoder.c, codegen*.c"], GREEN)
     box(620, y2, 258, 150, "07", "The GB10 runs it", ["a real launch on the chip,", "answers checked on the CPU"], GREEN)
-    box(906, y2, 258, 150, "08", "Golden words", ["kept in the tests; nvdisasm", "cross-check when installed"], GREEN)
+    box(906, y2, 258, 150, "08", "Golden words", ["kept in the tests; read by", "our own decoder"], GREEN)
     s.path(f"M{xs[3] + W / 2} {y1 + H + 4} C {xs[3] + W / 2} 392, 177 380, 177 {y2 - 8}", stroke=INK2, sw=1.6,
            arrow=True)
     s.line(306 + 4, y2 + 75, 334 - 6, y2 + 75, stroke=INK2, sw=1.6, arrow=True)
@@ -670,7 +670,7 @@ def fig_status():
         ("cuBLAS", "matrix multiply", "matmul, tensor-core GEMM, FP8, BF16", "PARTIAL", "model shapes; any-shape GEMM is C3"),
         ("cuDNN · FlashAttention", "attention, layers", "decode and prefill attention", "PARTIAL", "model-shaped"),
         ("CUB · Thrust", "reductions, scans, sorts", "frozen-order reductions", "PARTIAL", "E1-CLOSURE; scans and sorts are C3"),
-        ("cuobjdump · nvdisasm", "read machine code back", "my own sm_121 disassembler", "BUILDING", "Omega branch c6/disasm: 331 kernels agree"),
+        ("cuobjdump · nvdisasm", "read machine code back", "my own sm_121 disassembler", "BUILDING", "Omega decoder: 3,191 kernels agree"),
         ("Nsight", "measure", "ceiling probes", "PARTIAL", "115.14 TFLOPS, 195.1 GB/s"),
         ("cuFFT · cuRAND", "FFT, random numbers", "xoshiro256** RNG, batched FFT", "PARTIAL", "one GB10 run; power-of-two complex FFT"),
         ("nvidia.ko", "kernel driver", "my own GB10 driver (L332)", "BUILDING", "aien-gpu, omega-gpu-driver, aienux#441; not run on GB10"),

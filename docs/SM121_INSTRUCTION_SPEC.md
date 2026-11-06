@@ -129,7 +129,7 @@ The encoder refuses invalid input with explicit error codes instead of truncatin
    - Canonicalizations are explicit: absent source operands for LOP3/SHF/IMAD.HI mean RZ; zero control selects the form default; zero FSETP immediate selects its default encoding.
    - IMAD RRU has a GPR destination and a uniform second source. Corpus generation verifies that each intended form actually dispatches.
    - Boundary fixtures select representable aligned immediates; separate audit regressions require refusal of raw lossy values.
-   - `sh tools/test_bw_spec_encoder.sh` checks reference bytes, active operands, cold decode, malformed streams and independent offline nvdisasm operands. Producer failure, truncated records and read errors fail closed.
+   - `sh tools/test_bw_spec_encoder.sh` checks reference bytes, active operands, cold decode, malformed streams and the operands printed by an independent decoder: Omega's own sm_121 disassembler (`SM121DIS`, `make test-om-spec-encoder`) by default, or NVIDIA's offline nvdisasm with `SPEC_ENCODER_ORACLE=nvdisasm` (`make test-om-spec-encoder-nvdisasm-oracle`). Producer failure, truncated records and read errors fail closed.
    - All checks are host-only. Physical qualification of the changed encoder remains NOT_RUN until an authorized chip run. Frozen historical receipts are unchanged.
 
 ## Function-mode host regression

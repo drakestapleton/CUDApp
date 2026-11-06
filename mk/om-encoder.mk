@@ -61,15 +61,19 @@ test-om-encoder-corpus:
 	@if grep -v ' SAME$$' $(OM_ENC_DIR)/corpus-diff.log; then echo "FAIL corpus encoder diff"; exit 1; fi
 	@echo "encoder corpus: $$(ls $(OM_ENC_DIR)/k-om/*.bin | wc -l) distinct kernels identical .om vs C; diff build $$(grep -c '^program ' $(OM_ENC_DIR)/corpus-diff.log) program encodes and $$(grep -c '^insn ' $(OM_ENC_DIR)/corpus-diff.log) single-instruction encodes, all SAME"
 
-.PHONY: test-om-spec-encoder
+# The samples are read back by Omega's own decoder ($(OUT_DIR)/sm121dis, mk/sm121dis.mk, read after this file). The
+# -nvdisasm-oracle variant reads them with NVIDIA's offline nvdisasm instead; it is not in `make test`.
+.PHONY: test-om-spec-encoder test-om-spec-encoder-nvdisasm-oracle
 ifeq ($(CUDAPP_OMC_HOST),1)
 # On a non-AArch64 host the native AArch64 function-byte probe cannot execute; the script exits 3 (NOT_RUN) for
 # it unless told the row is accepted as NOT_RUN, which this target does there and the log says so.
-test-om-spec-encoder:
-	OMEGA_BRIDGE="$(OMEGA_BRIDGE)" $(if $(CUDAPP_HOST_IS_AARCH64),,BW_SPEC_NATIVE_PROBE_NOT_RUN_OK=1) sh tools/test_bw_spec_encoder.sh
+test-om-spec-encoder: $(OUT_DIR)/sm121dis
+	OMEGA_BRIDGE="$(OMEGA_BRIDGE)" SM121DIS="$(OUT_DIR)/sm121dis" $(if $(CUDAPP_HOST_IS_AARCH64),,BW_SPEC_NATIVE_PROBE_NOT_RUN_OK=1) sh tools/test_bw_spec_encoder.sh
+test-om-spec-encoder-nvdisasm-oracle:
+	OMEGA_BRIDGE="$(OMEGA_BRIDGE)" SPEC_ENCODER_ORACLE=nvdisasm NVDISASM="$(NVDISASM)" $(if $(CUDAPP_HOST_IS_AARCH64),,BW_SPEC_NATIVE_PROBE_NOT_RUN_OK=1) sh tools/test_bw_spec_encoder.sh
 else
-test-om-spec-encoder:
-	@echo "test-om-spec-encoder: NOT_RUN (requires the pinned AArch64 omc and nvdisasm; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
+test-om-spec-encoder test-om-spec-encoder-nvdisasm-oracle:
+	@echo "$@: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
 	@exit 2
 endif
 

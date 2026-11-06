@@ -133,7 +133,7 @@ GPU_FS_SRCS = src/omega_gpu_engine.c src/omega_gpu_platform.c src/omega_blackwel
 	src/omega_gpu_serving.c src/omega_gpu_wait.c $(CUDAPP_FS_BINDING)
 GPU_FS_HDRS = src/omega_gpu_engine.h src/omega_gpu_platform.h src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h \
 	src/omega_gpu_session.h src/omega_gpu_fmt.h src/omega_gpu_matmul_api.h src/omega_gpu_attention_api.h \
-	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h
+	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h src/omega_api_plan.h src/omega_host_policy.h
 GPU_FS_OBJS = $(patsubst src/%.c,$(GPU_FS_DIR)/%.o,$(GPU_FS_SRCS))
 GPU_FS_LINK = $(GPU_FS_DIR)/omega_gpu_freestanding.o
 GPU_FS_ALLOWED = memcpy|memmove|memset|memcmp|strlen|strcmp

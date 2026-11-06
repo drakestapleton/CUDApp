@@ -12,7 +12,12 @@
  * Refusal numbers match the API's negative return codes. Pointer admission is
  * deliberately performed before unpacking a pointed-to object in the shell. */
 enum { AP_MM, AP_AT, AP_EW, AP_BF, AP_DA, AP_RT };
-#if CUDAPP_MIGRATION_PENDING_C_API_PLAN || defined(OMEGA_API_PLAN_ORACLE)
+/* MIGRATION-PENDING C (freestanding only): the hosted bridge output of om/components/api_*_plan.om needs the
+ * hosted trap runtime (_exit, setjmp/longjmp, 128-bit division), which the freestanding link forbids, and the
+ * pinned bridge-freest converter refuses their view arguments (toc error 24, "unsupported freest scalar
+ * capability"). OMEGA_GPU_NO_POSIX builds therefore keep the C plans below, exactly as before the migration;
+ * every hosted build runs the Omega units. Removing this needs view support in omega-bridge freest.om. */
+#if CUDAPP_MIGRATION_PENDING_C_API_PLAN || defined(OMEGA_API_PLAN_ORACLE) || defined(OMEGA_GPU_NO_POSIX)
 static inline uint64_t ap_log(uint64_t v) {
     if (!v || (v & (v - 1))) return 32;
     uint64_t l = 0; while ((v >> l) != 1) l++; return l;
@@ -135,6 +140,7 @@ static inline uint64_t ap_c(unsigned family, uint64_t mode, uint64_t a[16]) {
     return 1;
 }
 #endif
+#ifndef OMEGA_GPU_NO_POSIX
 static inline int ap_om(unsigned f, uint64_t mode, uint64_t a[16]) {
     uint64_t rc=1;uint32_t st=OMEGA_BAD_ARG;
     switch(f){
@@ -147,8 +153,9 @@ static inline int ap_om(unsigned f, uint64_t mode, uint64_t a[16]) {
     }
     return st==OMEGA_OK&&rc<=3?-(int)rc:-1;
 }
+#endif
 static inline int ap_plan(unsigned f, uint64_t mode, uint64_t a[16]) {
-#if CUDAPP_MIGRATION_PENDING_C_API_PLAN
+#if CUDAPP_MIGRATION_PENDING_C_API_PLAN || defined(OMEGA_GPU_NO_POSIX)
     return -(int)ap_c(f,mode,a);
 #else
     return ap_om(f,mode,a);

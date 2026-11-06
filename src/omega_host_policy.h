@@ -7,7 +7,11 @@
 #endif
 /* Internal, not a public runtime API. All dimensions arrive as uint32_t. */
 static inline int omega_host_shape(unsigned mode, uint32_t a, uint32_t b, uint32_t c) {
-#if CUDAPP_MIGRATION_PENDING_C_API_POLICY
+/* MIGRATION-PENDING C (freestanding only): the pinned bridge-freest converter refuses om/components/api_policy.om
+ * (toc line 16, error 24, "unsupported freest scalar capability") and the hosted bridge output needs the hosted
+ * trap runtime, which the freestanding link forbids. OMEGA_GPU_NO_POSIX builds keep the C rules below, as before
+ * the migration; every hosted build runs the Omega unit. */
+#if CUDAPP_MIGRATION_PENDING_C_API_POLICY || defined(OMEGA_GPU_NO_POSIX)
     switch (mode) {
     case 0: return (!a || !b || !c) ? -1 : (a > 8192u || b > 16384u || c > 262144u) ? -2 : 0;
     case 1: return (!a || !b || b % 128u) ? -1 : b > 16384u ? -2 : 0;

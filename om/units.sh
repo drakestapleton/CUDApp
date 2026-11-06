@@ -23,6 +23,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS gemm_any=om/gemm-any/gemm_ir.om"
     UNITS="$UNITS dnn_rows=om/attn-any/emit.om,om/dnn-rows/kernel.om dnn_rows_plan=om/dnn-rows/plan.om"
+    UNITS="$UNITS gemm_host=om/gemm-any/host.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS dnn_activations=om/attn-any/emit.om,om/dnn-activations/kernel.om dnn_activations_plan=om/dnn-activations/plan.om"

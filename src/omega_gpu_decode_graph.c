@@ -10,6 +10,7 @@
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_graph_om.h"
+#include "omega_gpu_graph_residue.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -98,15 +99,17 @@ void omega_gpu_decode_graph_free(OmegaGpuDecodeGraph *g) {
 
 int omega_gpu_decode_graph_create(const OmegaGpuDecodeGraphConfig *cfg, OmegaGpuDecodeGraph **out) {
     if (out) *out = NULL;
-    if (!cfg || !out || cfg->layers == 0 || cfg->layers > OMEGA_GPU_DGRAPH_MAX_LAYERS || !cfg->router || !cfg->attn || !cfg->lm_head ||
-        cfg->vocab == 0 || cfg->vocab > OMEGA_DEC_ARGMAX_SPAN * OMEGA_DEC_ARGMAX_SPAN) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (!cfg || !out || !cfg->router || !cfg->attn || !cfg->lm_head) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    const uint32_t ctas = omega_graph_config(cfg->layers, OMEGA_GPU_DGRAPH_MAX_LAYERS, cfg->vocab,
+        OMEGA_DEC_ARGMAX_SPAN, 1, 1, 0, 0);
+    if (!ctas) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     uint32_t n = 0, k = 0;
     omega_gpu_bf16_tensor_shape(cfg->lm_head, &n, &k);
-    if (n != cfg->vocab || k != OMEGA_GPU_DGRAPH_HIDDEN) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (!omega_graph_shape(1, n, k, 1, cfg->vocab, OMEGA_GPU_DGRAPH_HIDDEN)) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     OmegaGpuDecodeGraph *g = omega_gpu_host_calloc(1, sizeof *g);
     if (!g) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     g->cfg = *cfg;
-    g->am_ctas = (cfg->vocab + OMEGA_DEC_ARGMAX_SPAN - 1) / OMEGA_DEC_ARGMAX_SPAN;
+    g->am_ctas = ctas;
     g->xq_layer = -1;
     const size_t H = OMEGA_GPU_DGRAPH_HIDDEN, TK = OMEGA_GPU_DGRAPH_TOPK, I = OMEGA_GPU_DGRAPH_INTER;
     Layout *L = &g->lo;
@@ -159,7 +162,7 @@ int omega_gpu_decode_graph_create(const OmegaGpuDecodeGraphConfig *cfg, OmegaGpu
 
 static int shape_is(const OmegaGpuFp8Tensor *t, uint32_t e, uint32_t n, uint32_t k) {
     uint32_t te = 0, tn = 0, tk = 0; omega_gpu_fp8_tensor_shape(t, &te, &tn, &tk);
-    return t && te == e && tn == n && tk == k;
+    return t && omega_graph_shape(te, tn, tk, e, n, k);
 }
 
 int omega_gpu_decode_graph_set_layer(OmegaGpuDecodeGraph *g, uint32_t layer, const OmegaGpuFp8Tensor *qkv, const OmegaGpuFp8Tensor *o,
@@ -208,7 +211,14 @@ void omega_gpu_decode_graph_vas(const OmegaGpuDecodeGraph *g, OmegaGpuDecodeGrap
  * AIEN_OMEGA_DGRAPH_BARRIER (0 wfi+inval_all = default, 2 wfi_only, 3 wfi+inval_data, 4 flush_data; 1 none is refused: the
  * token is a dependency chain). Read once. */
 static int g_barrier = -1;
-void omega_gpu_decode_graph_set_barrier(int b) { g_barrier = (b >= 0 && b <= 4 && b != 1) ? b : 0; }
+void omega_gpu_decode_graph_set_barrier(int b) {
+#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
+    g_barrier = (b >= 0 && b <= 4 && b != 1) ? b : 0;
+#else
+    const uint64_t c[16] = {(uint64_t)(int64_t)b}; uint64_t d[16];
+    g_barrier = (int)omega_graph_meta(3, c, d);
+#endif
+}
 int omega_gpu_decode_graph_barrier(void) {
     if (g_barrier < 0) { const char *e = getenv("AIEN_OMEGA_DGRAPH_BARRIER"); omega_gpu_decode_graph_set_barrier(e ? atoi(e) : 0); }
     return g_barrier;
@@ -244,9 +254,8 @@ static int submit_now(OmegaGpuDecodeGraph *g) {
         int cnt = omega_gpu_cmdlist_stamps(g->cl, tmp, OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1);
         if (cnt < 0) rc = -1;
         else {
-            const int from = g->n_stamp == 0 ? 0 : 1;
-            const uint32_t room = (uint32_t)(sizeof g->stamp / sizeof g->stamp[0]) - g->n_stamp;
-            if (cnt > from && (uint32_t)(cnt - from) > room) { /* more launches this token than the timeline holds */
+            int from = 0;
+            if (!omega_graph_timeline(g->n_stamp, (uint32_t)cnt, OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1u, &from)) {
                 omega_gpu_session_set_error("decode graph: timeline full (more launches per token than OMEGA_GPU_CMDLIST_MAX_LAUNCHES)");
                 rc = -1;
             } else {

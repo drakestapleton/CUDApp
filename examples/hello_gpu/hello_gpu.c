@@ -47,6 +47,10 @@
 #include "omega_blackwell_qmd.h"
 #include "omega_gpu_session.h"
 #include "sha256.h"
+#include "cudapp_native.h"
+#ifndef CUDAPP_MIGRATION_PENDING_HELLO_HOST
+#define CUDAPP_MIGRATION_PENDING_HELLO_HOST 0
+#endif
 #include "../../tests/bw_warp_sim.h" /* the host warp simulator the host tests use; only --sim calls it */
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,6 +85,7 @@ static void emit(Kb *k, BlackwellIROpcode op, int dst, int a, int b, int c, uint
     BlackwellIRInsn in; memset(&in, 0, sizeof in);
     in.op = op; in.dst_vreg = dst; in.src1_vreg = a; in.src2_vreg = b; in.src3_vreg = c; in.ureg = (op == BW_IR_LDG_E || op == BW_IR_STG_E) ? k->desc : NOREG; in.imm = imm;
     uint32_t wait = k->pending;
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
     switch (kind) {
     case K_ALU:   in.control = CTRL(6, SB_NONE, SB_NONE, wait); k->pending = 0; break;
     case K_PRED:  in.control = CTRL(14, SB_NONE, SB_NONE, wait); k->pending = 0; break;
@@ -90,6 +95,12 @@ static void emit(Kb *k, BlackwellIROpcode op, int dst, int a, int b, int c, uint
     case K_EXIT:  in.control = CTRL(5, SB_NONE, SB_NONE, wait); k->pending = 0; break;
     case K_EXIT_IF_P0: in.control = CTRL(5, SB_NONE, SB_NONE, wait); in.predicate_p0 = true; break; /* may fall through: keep waiting */
     }
+#else
+    const uint64_t control_cfg[16] = {(uint64_t)kind, wait}; uint64_t d[16], result = 0;
+    if (omega_hplan(&result, 1, control_cfg, 16, d, 16) != OMEGA_OK || result != 1) abort();
+    in.control = (uint32_t)d[0]; k->pending = (uint32_t)d[1];
+    in.is_uniform = kind == K_ULOAD; in.predicate_p0 = kind == K_EXIT_IF_P0;
+#endif
     if (omega_bw_ir_append(k->p, &in) < 0) k->err = -1;
 }
 
@@ -146,28 +157,57 @@ static void print_sha(const char *what, const void *data, size_t len) {
     printf("\n");
 }
 static void print_work(uint64_t read, uint64_t written, uint64_t fp_ops, double measured_us) {
-    double floor_us = target_sm == 121 ? (double)(read + written) / (READ_CEILING_GBPS * 1e3) : 0;
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+    uint64_t moved = read + written;
+    double floor_us = target_sm == 121 ? (double)moved / (READ_CEILING_GBPS * 1e3) : 0;
+    double percent = measured_us > 0 ? 100.0 * floor_us / measured_us : 0;
+#else
+    uint64_t bits, result = 0, d[16]; memcpy(&bits, &measured_us, sizeof bits);
+    const uint64_t c[16] = {target_sm, read, written, bits};
+    if (omega_hplan(&result, 2, c, 16, d, 16) != OMEGA_OK || result != 1) abort();
+    uint64_t moved = d[0]; double floor_us, percent;
+    memcpy(&floor_us, d + 1, sizeof floor_us); memcpy(&percent, d + 2, sizeof percent);
+#endif
     printf("work: %llu bytes moved (%llu read, %llu written), %llu floating-point operations\n",
-           (unsigned long long)(read + written), (unsigned long long)read, (unsigned long long)written, (unsigned long long)fp_ops);
+           (unsigned long long)moved, (unsigned long long)read, (unsigned long long)written, (unsigned long long)fp_ops);
     if (target_sm == 121) {
         printf("      at the GB10's measured %.1f GB/s read ceiling this needs at least %.1f us", READ_CEILING_GBPS, floor_us);
-        if (measured_us > 0) printf("; the GPU took %.1f us (%.0f%% of the ceiling)", measured_us, 100.0 * floor_us / measured_us);
+        if (measured_us > 0) printf("; the GPU took %.1f us (%.0f%% of the ceiling)", measured_us, percent);
         printf("\n");
     } else if (measured_us > 0) printf("      sm_86 device time %.1f us (no GB10 bandwidth claim)\n", measured_us);
 }
 static void inputs(float *fa, float *fb, uint32_t *wc) {
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
     for (uint32_t i = 0; i < N_TOTAL; i++) { fa[i] = (float)i * 0.25f; fb[i] = 1.0f / (float)(1 + i % 7); wc[i] = POISON; }
+#else
+    uint64_t result = 0, stats[4];
+    if (omega_hello(&result, 0, fa, N_TOTAL * 4u, fb, N_TOTAL * 4u,
+                    wc, N_TOTAL * 4u, stats, 4) != OMEGA_OK || result != 1) abort();
+#endif
 }
 /* Step 5, both paths: same IEEE single-precision add on both sides, so the bits must match. */
 static int check(const float *fa, const float *fb, const uint32_t *wc) {
     uint32_t wrong = 0, unwritten = 0, first_bad = 0;
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
     for (uint32_t i = 0; i < N_TOTAL; i++) {
         float want = fa[i] + fb[i];
         if (wc[i] == POISON) unwritten++;
         if (memcmp(&want, &wc[i], sizeof want) != 0) { if (!wrong++) first_bad = i; }
     }
+#else
+    uint64_t result = 0, stats[4];
+    if (omega_hello(&result, 1, (void *)fa, N_TOTAL * 4u, (void *)fb, N_TOTAL * 4u,
+                    (void *)wc, N_TOTAL * 4u, stats, 4) != OMEGA_OK || result != 1) return 1;
+    wrong = (uint32_t)stats[0]; unwritten = (uint32_t)stats[1]; first_bad = (uint32_t)stats[2];
+#endif
     printf("checked %u of %u elements: %u wrong, %u never written\n", N_TOTAL, N_TOTAL, wrong, unwritten);
-    if (wrong) { float want = fa[first_bad] + fb[first_bad], got; memcpy(&got, &wc[first_bad], sizeof got);
+    if (wrong) { float want, got;
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+                 want = fa[first_bad] + fb[first_bad];
+#else
+                 const uint32_t bits = (uint32_t)stats[3]; memcpy(&want, &bits, sizeof want);
+#endif
+                 memcpy(&got, &wc[first_bad], sizeof got);
                  printf("first mismatch: c[%u] = %g, expected %g\n", first_bad, got, want); }
     return wrong ? 1 : 0;
 }
@@ -186,6 +226,18 @@ static const char *op_text(BlackwellIROpcode op) {
     default: return "instruction";
     }
 }
+static void chunk_plan(uint32_t base, int bug, uint64_t d[16]) {
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+    uint32_t n = N_TOTAL - base < CHUNK ? N_TOTAL - base : CHUNK;
+    if (base + CHUNK >= N_TOTAL) { if (bug == 1) ++n; if (bug == 2) --n; }
+    d[0] = (uint64_t)base * 4u; d[1] = n;
+    d[2] = (n + THREADS - 1) / THREADS; d[3] = (N_TOTAL + CHUNK - 1) / CHUNK;
+    d[4] = (uint64_t)n * 8u; d[5] = (uint64_t)n * 4u;
+#else
+    const uint64_t c[16] = {base, N_TOTAL, CHUNK, THREADS, (uint64_t)bug}; uint64_t result = 0;
+    if (omega_hplan(&result, 0, c, 16, d, 16) != OMEGA_OK || result != 1) abort();
+#endif
+}
 
 /* ---- --sim: the same program on the host warp simulator --------------------------------------------------- */
 static int run_sim(const BlackwellIRProgram *prog, int bug) {
@@ -201,42 +253,50 @@ static int run_sim(const BlackwellIRProgram *prog, int bug) {
     const uintptr_t base_of[3] = { (uintptr_t)fa, (uintptr_t)fb, (uintptr_t)wc };
     for (int k = 0; k < 3; k++) { s.ranges[k].lo = base_of[k]; s.ranges[k].hi = base_of[k] + bytes; }
     s.nranges = 3; /* every global access must land inside a, b or c */
-    const uint32_t launches = (N_TOTAL + CHUNK - 1) / CHUNK;
+    uint64_t plan[16]; chunk_plan(0, 0, plan);
+    const uint32_t launches = (uint32_t)plan[3];
     uint32_t li = 0;
     uint64_t read_b = 0, wrote_b = 0, flops = 0;
     for (uint32_t base = 0; base < N_TOTAL; base += CHUNK) {
         li++;
-        uint64_t off = (uint64_t)base * sizeof(float);
-        uint32_t n = N_TOTAL - base < CHUNK ? N_TOTAL - base : CHUNK;
-        if (bug == 1 && base + CHUNK >= N_TOTAL) n += 1; /* --bug=past-end: the last launch is told one element too many */
-#if CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
-        if (bug == 2 && base + CHUNK >= N_TOTAL) n -= 1; /* --bug=short: the last launch is told one element too few */
-#endif
+        chunk_plan(base, bug, plan);
+        uint64_t off = plan[0];
+        uint32_t n = (uint32_t)plan[1];
         uint64_t pa = base_of[0] + off, pb = base_of[1] + off, pc = base_of[2] + off;
         memset(s.cbank, 0, sizeof s.cbank);
         s.cbank[0x380 / 4] = (uint32_t)pa; s.cbank[0x384 / 4] = (uint32_t)(pa >> 32);
         s.cbank[0x388 / 4] = (uint32_t)pb; s.cbank[0x38c / 4] = (uint32_t)(pb >> 32);
         s.cbank[0x390 / 4] = (uint32_t)pc; s.cbank[0x394 / 4] = (uint32_t)(pc >> 32);
         s.cbank[0x398 / 4] = n;
-        uint32_t grid = (n + THREADS - 1) / THREADS;
+        uint32_t grid = (uint32_t)plan[2];
         if (ws_run(&s, grid, 1) != 0) {
             const BlackwellIRInsn *in = (s.err_pc >= 0 && (size_t)s.err_pc < prog->count) ? &prog->insns[s.err_pc] : NULL;
             int store = in && in->op == BW_IR_STG_E;
             /* --bug=past-end: the first out-of-range access is a[N_TOTAL], a 4-byte LDG.E.
                The mirrored simulator records the pc, not the lane or the address. */
-            uint32_t fault_elem = base + n - 1;
-            uint32_t rel = fault_elem - base;
-            uint32_t block = rel / THREADS, thread = rel % THREADS;
-            uint64_t fault_addr = (uint64_t)(uintptr_t)fa + (uint64_t)fault_elem * sizeof(float);
+            uint64_t fault_plan[16];
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
+            fault_plan[0] = base + n - 1;
+            fault_plan[1] = (fault_plan[0] - base) / THREADS;
+            fault_plan[2] = (fault_plan[0] - base) % THREADS;
+            fault_plan[3] = (uint64_t)(uintptr_t)fa + fault_plan[0] * sizeof(float);
+#else
+            const uint64_t fc[16] = {base, n, THREADS, (uint64_t)(uintptr_t)fa}; uint64_t fr = 0;
+            if (omega_hplan(&fr, 3, fc, 16, fault_plan, 16) != OMEGA_OK || fr != 1) abort();
+#endif
+            uint32_t block = (uint32_t)fault_plan[1], thread = (uint32_t)fault_plan[2];
+            uint64_t fault_addr = fault_plan[3];
             unsigned fault_bytes = 4;
             if (s.err == WS_E_MEM) printf("FAULT at launch %u of %u of kernel vecadd (simulator): global %s outside every buffer\n", li, launches, store ? "store" : "load");
             else printf("FAULT at launch %u of %u of kernel vecadd (simulator): %s\n", li, launches, ws_err_name(s.err));
             printf("  launch: grid %u x 1 blocks of %u threads, n = %u, first element %u\n", grid, THREADS, n, base);
             if (in) printf("  instruction: %d of %zu, %s\n", s.err_pc, prog->count, op_text(in->op));
             printf("  thread: block %u, thread %u (element %llu of the whole job)\n", block, thread,
-                   (unsigned long long)base + (unsigned long long)block * THREADS + thread);
+                   (unsigned long long)fault_plan[0]);
             int near = 0; uint64_t dist = UINT64_MAX; int past = 1;
+            uint64_t remaining = 0;
             if (s.err == WS_E_MEM) {
+#if CUDAPP_MIGRATION_PENDING_HELLO_HOST
                 for (int k = 0; k < 3; k++) {
                     uint64_t lo = s.ranges[k].lo, hi = s.ranges[k].hi, d; int pst;
                     if (fault_addr >= hi) { d = fault_addr - hi; pst = 1; }
@@ -244,6 +304,15 @@ static int run_sim(const BlackwellIRProgram *prog, int bug) {
                     else { d = 0; pst = 1; } /* starts inside, runs past the end */
                     if (d < dist) { dist = d; near = k; past = pst; }
                 }
+                remaining = (s.ranges[near].hi - (s.ranges[near].lo + off)) / sizeof(float);
+#else
+                uint64_t ranges[16] = {0}, nearest[16], nr = 0;
+                for (int k = 0; k < 3; k++) { ranges[k * 2] = s.ranges[k].lo; ranges[k * 2 + 1] = s.ranges[k].hi; }
+                ranges[6] = fault_addr; ranges[7] = fault_bytes; ranges[8] = off;
+                if (omega_hplan(&nr, 4, ranges, 16, nearest, 16) != OMEGA_OK || nr != 1) abort();
+                near = (int)nearest[0]; dist = nearest[1]; past = (int)nearest[2];
+                remaining = nearest[3];
+#endif
                 printf("  address: 0x%llx (%u bytes), %llu bytes %s buffer %s = [0x%llx, 0x%llx) (%zu bytes)\n",
                        (unsigned long long)fault_addr, fault_bytes, (unsigned long long)dist, past ? "past the end of" : "before the start of",
                        names[near], (unsigned long long)s.ranges[near].lo, (unsigned long long)s.ranges[near].hi, bytes);
@@ -252,14 +321,14 @@ static int run_sim(const BlackwellIRProgram *prog, int bug) {
             if (s.err == WS_E_MEM)
                 printf("  next: launch %u was given n = %u, and buffer %s holds %llu elements from this launch's first element.\n"
                        "        Fix the launch or the buffer, run hello_gpu --sim until it passes, then run hello_gpu on the GPU.\n",
-                       li, n, names[near], (unsigned long long)((s.ranges[near].hi - (s.ranges[near].lo + off)) / sizeof(float)));
+                       li, n, names[near], (unsigned long long)remaining);
             else
                 printf("  next: the instruction above is where the program stopped; fix it and run hello_gpu --sim again.\n");
             free(fa); free(fb); free(wc);
             return 1;
         }
-        read_b += (uint64_t)n * 2u * sizeof(float);
-        wrote_b += (uint64_t)n * sizeof(float);
+        read_b += plan[4];
+        wrote_b += plan[5];
         flops += n;
     }
     int rc = check(fa, fb, wc);
@@ -337,15 +406,13 @@ int main(int argc, char **argv) {
     uint32_t declared = omega_bw_gpr_declared(prog.regalloc.peak_gpr_usage);
     uint64_t gpu_ns = 0;
     for (uint32_t base = 0; base < N_TOTAL; base += CHUNK) {
-        uint64_t off = (uint64_t)base * sizeof(float);
-        uint32_t n = N_TOTAL - base < CHUNK ? N_TOTAL - base : CHUNK;
-#if CUDAPP_MIGRATION_PENDING_HELLO_CONTROL
-        if (bug == 2 && base + CHUNK >= N_TOTAL) n -= 1; /* --bug=short: c[N_TOTAL - 1] is never written */
-#endif
+        uint64_t plan[16]; chunk_plan(base, bug, plan);
+        uint64_t off = plan[0];
+        uint32_t n = (uint32_t)plan[1];
         uint32_t args[OMEGA_BW_CBANK_MATMUL_ARGS_WORDS] = { (uint32_t)(a.va + off), (uint32_t)((a.va + off) >> 32),
             (uint32_t)(b.va + off), (uint32_t)((b.va + off) >> 32), (uint32_t)(c.va + off), (uint32_t)((c.va + off) >> 32), n };
         OmegaGpuLaunch L = { .code_va = code.va, .gpr_count = declared < 64 ? 64 : declared, .threads_x = THREADS, .threads_y = 1,
-                             .grid_x = (n + THREADS - 1) / THREADS, .grid_y = 1, .num_elements = n,
+                             .grid_x = (uint32_t)plan[2], .grid_y = 1, .num_elements = n,
                              .args = args, .n_args = OMEGA_BW_CBANK_MATMUL_ARGS_WORDS, .timeout_ms = 10000, .target_sm = target_sm };
         uint64_t el = 0;
         if (omega_gpu_session_launch(&L, &el, NULL) != 0) { printf("FAIL: launch at element %u (stage: %s)\n", base, omega_gpu_session_last_error()); goto done; }

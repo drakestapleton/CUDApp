@@ -8,6 +8,7 @@
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_cmdlist.h"
 #include "omega_gpu_graph_om.h"
+#include "omega_gpu_graph_residue.h"
 #include <string.h>
 
 #define PF_SLOTS 64
@@ -53,7 +54,12 @@ int omega_gpu_pf_alloc_dev_locked(size_t bytes, OmegaGpuMem *out) {
     if (rc == OMEGA_GPU_PF_OK) {
         OmegaGpuSession *s = omega_gpu_session_open();
         const OmegaGpuPlatform *p = omega_gpu_session_platform();
+#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
         const size_t want = (bytes + 0xfffu) & ~(size_t)0xfffu;
+#else
+        const uint64_t rcfg[16] = {bytes}; uint64_t rout[16];
+        const size_t want = omega_graph_meta(4, rcfg, rout);
+#endif
         OmegaGpuBufferDesc d = { .kind = OMEGA_GPU_HANDLE_BUF_DATA, .rights = OMEGA_GPU_RIGHT_GPU_READ | OMEGA_GPU_RIGHT_GPU_WRITE,
                                  .gpu_cache = OMEGA_GPU_CACHE_GPU_CACHED, .align = 0x1000u, .bytes = want };
         OmegaCpuView cpu; OmegaGpuVa va; OmegaGpuBusAddr bus;
@@ -97,8 +103,8 @@ int omega_gpu_pf_kernel_locked(const OmegaPfKey *key, OmegaPfGen gen, OmegaPfKer
      * into more. The allocator's hardware limit leaves declaration headroom;
      * launch/record below independently enforce registers times threads.
      * Blackwell Tuning Guide, physical page 13: 255/thread, 64K per SM. */
-    const uint32_t limit = prog->regalloc.gpr_limit ? prog->regalloc.gpr_limit : BW_PHYS_GPR_MAX - 2u;
-    if (limit > BW_PHYS_GPR_HW_LIMIT || peak > limit || !omega_bw_gpr_declared_ok(decl, peak)) {
+    if (!omega_graph_budget(peak, prog->regalloc.gpr_limit, BW_PHYS_GPR_MAX, BW_PHYS_GPR_HW_LIMIT,
+                            omega_bw_gpr_declared_ok(decl, peak))) {
         omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill kernel: register budget exceeded"); return OMEGA_GPU_PF_TOO_LARGE;
     }
     OmegaGpuMem code;

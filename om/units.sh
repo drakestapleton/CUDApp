@@ -34,7 +34,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_window=$GRAPH_NODE,om/graph/window.om"
   UNITS="$UNITS model_graph_layout=$GRAPH_REC,om/graph/layout.om"
   UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
-  UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om"
+  UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om hello_plan=om/graph/hello-plan.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

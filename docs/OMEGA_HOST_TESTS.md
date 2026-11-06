@@ -211,6 +211,8 @@ control. Separate router-address and combine-address Omega source mutants
 are regenerated with the pinned compiler and converter, linked in isolation,
 and must fail the same differential. Generation requires `OMEGA_OMC` and
 `OMEGA_BRIDGE` as documented above; it does not install a fallback compiler.
+Without an executable pinned compiler on non-AArch64 hosts, source mutation
+checks are `NOT_RUN`; the exhaustive checked-C differential still runs.
 The existing simulator checks both warp scheduling orders and the numerical
 mutants against the host references.
 

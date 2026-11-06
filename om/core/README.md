@@ -12,8 +12,8 @@ writer remains in CUDApp. Nothing is imported from another repository at build t
 | `omega_vector.c` | `vector.om`, `vecspec.om`, `vpay.om` |
 | `omega_gpu_fmt.c` | `fmt.om`, `fmtnum.om`, `fmtclip.om` |
 | `omega_gpu_hostmath.c` | `hostmath.om` |
-| `omega_cubin.c` | Existing `../cubin/cubin_elf.om`; `cubinmsg.om` supplies refusal decisions and rendering |
-| `omega_ampere_codegen.c` | Existing `../encoder/ampere_enc_sm86.om` |
+| `omega_cubin.c` | Existing `../cubin/cubin_elf.om`; `cubinmsg.om` renders layout refusals; `cubadmit.om` decides target and null-parameter admission |
+| `omega_ampere_codegen.c` | Existing `../encoder/ampere_enc_sm86.om`; `ampack.om` sign-extends and packs instruction fields |
 | `cudapp_freest_f16.c`, `cudapp_freest_revision.c`, `cudapp_freest_epoch.c` | Existing generated bindings, already sourced from Omega |
 
 The SHA implementation is a local, attributed copy of
@@ -28,7 +28,9 @@ byte-oriented CAVP short/long vectors and their provenance are in
 C retains allocation, release, bounded staging, pointer/span adaptation and C
 variadic argument extraction. Sorting, validation, serialization, hashing, checked
 arithmetic, vector operations, format parsing/rendering and floating-point
-polynomials are in Omega. The cubin error-message decision tree is also Omega;
+polynomials are in Omega. Cubin target admission, the null-parameter check and the
+error-message decision tree are also Omega; Ampere field sign-extension and flag
+packing are in `ampack.om`.
 `tests/core_cubin_refusal_ref.inc` is an independent frozen C oracle, not a
 production implementation. No new runtime public API or version is introduced.
 
@@ -39,7 +41,7 @@ retain the C sequential aliasing behavior. The formatter keeps truncation and
 unsupported-token behavior. Host arithmetic is compared bit-for-bit against the C
 oracle compiled with `-ffp-contract=off`; each Omega operation is non-contracting.
 
-`native.sh` composes the same local sources into OM-2 native units, with 21 core
+`native.sh` composes the same local sources into OM-2 native units, with 23 core
 exports plus separate existing cubin/Ampere units. Native aggregate registration
 and no-libc qualification belong to the integration lane. Composition is not
 native execution evidence. There is no `NO_POSIX` C fallback.
@@ -73,9 +75,14 @@ independent semantic SHA mutants, requires the baseline to pass and treats a
 compiler failure as a broken mutant rather than a kill.
 
 The existing cubin gate compares image bytes, status and diagnostics against the
-legacy writer and includes an image-bit negative control. Ampere's plan target
-uses the warp simulator, not hardware. Missing-device failures are never grounds
-to rerun outside the namespace. Hardware authorization and qualification are
-separate; see the lane receipt and `CHIP.md`.
+legacy writer and includes an image-bit negative control. `test-core-residue`
+checks target and null-parameter admission against the C `snprintf` format, packs
+one cubin per accepted target under `/tmp` and unlinks it, and compares Ampere
+field packing with the inline sign-extend formula. Its red check flips one image
+bit. `test-core-residue-mutants` recompiles eight semantic mutants. Ampere's plan
+target uses the warp simulator, not hardware. Missing-device failures are never
+grounds to rerun outside the namespace. Hardware authorization and qualification
+are separate; see the lane receipt and `CHIP.md`.
 
-Receipt: [2026-11-06](../../evidence/core-util/2026-11-06/README.md).
+Receipts: [core utilities](../../evidence/core-util/2026-11-06/README.md),
+[core residue](../../evidence/core-residue/2026-11-06/README.md).

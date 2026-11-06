@@ -12,7 +12,7 @@ compose() {
   for source in "$@"; do
     while IFS= read -r line || [ -n "$line" ]; do
       case "$line" in
-        'fn omsha '*|'fn omcanon '*|'fn omcidcmp '*|'fn omcidhex '*|'fn omparse '*|'fn omcver '*|'fn omcheck '*|'fn omobject '*|'fn omgraph '*|'fn ompay '*|'fn omparam '*|'fn omeffect '*|'fn omeval '*|'fn omvec '*|'fn omvspec '*|'fn omvpay '*|'fn omfmt '*|'fn omnum '*|'fn omclip '*|'fn omhost '*|'fn cubmsg '*|'fn cubin_elf '*|'fn ampere_enc_sm86 '*) printf 'export %s\n' "$line" ;;
+        'fn omsha '*|'fn omcanon '*|'fn omcidcmp '*|'fn omcidhex '*|'fn omparse '*|'fn omcver '*|'fn omcheck '*|'fn omobject '*|'fn omgraph '*|'fn ompay '*|'fn omparam '*|'fn omeffect '*|'fn omeval '*|'fn omvec '*|'fn omvspec '*|'fn omvpay '*|'fn omfmt '*|'fn omnum '*|'fn omclip '*|'fn omhost '*|'fn cubmsg '*|'fn cubadmit '*|'fn ampack '*|'fn cubin_elf '*|'fn ampere_enc_sm86 '*) printf 'export %s\n' "$line" ;;
         *) printf '%s\n' "$line" ;;
       esac
     done < "$ROOT/$source"
@@ -21,7 +21,7 @@ compose() {
 }
 compose om/core/sha256.om om/core/canonical.om om/core/idparse.om \
   om/core/object.om om/core/graph.om om/core/payload.om om/core/param.om om/core/effect.om om/core/eval.om \
-  om/core/vector.om om/core/vecspec.om om/core/vpay.om om/core/fmt.om om/core/fmtnum.om om/core/fmtclip.om om/core/hostmath.om om/core/cubinmsg.om \
+  om/core/vector.om om/core/vecspec.om om/core/vpay.om om/core/fmt.om om/core/fmtnum.om om/core/fmtclip.om om/core/hostmath.om om/core/cubinmsg.om om/core/cubadmit.om om/core/ampack.om \
   om/core/omcanon.om om/core/omcidcmp.om om/core/omcidhex.om om/core/omparse.om om/core/omcver.om om/core/omcheck.om > "$TMP/native.om"
 compose om/cubin/cubin_elf.om > "$TMP/cubin.om"
 compose om/encoder/ampere_enc_sm86.om > "$TMP/ampere.om"

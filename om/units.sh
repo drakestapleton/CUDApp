@@ -112,6 +112,8 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
   UNITS="$UNITS om/resident/resident.om resident_check=om/resident/resident.om,om/resident/check.om"
   UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om hello_plan=om/graph/hello-plan.om"
+  UNITS="$UNITS core_cubadmit=$CORE/fmtnum.om,$CORE/cubadmit.om"
+  UNITS="$UNITS core_ampack=$CORE/ampack.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || PURE_UNITS="$PURE_UNITS c5=tools/c5/policy.om,tools/c5/runtime.om"
 GXNUM=om/gemmex/num.om

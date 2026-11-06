@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* Foreign ABI packing only. The complete SM86 encoding implementation is
+/* Field packing is om/core/ampack.om. The C oracle is selected only by
+ * CUDAPP_MIGRATION_PENDING_C_CORE. The complete SM86 encoding implementation is
  * om/encoder/ampere_enc_sm86.om, translated by the pinned omega-bridge. */
 #include "omega_ampere_codegen.h"
 #include "omega_core_binding.h"
@@ -22,6 +23,7 @@ int omega_gpu_encode_program_target(const BlackwellIRProgram *prog, uint32_t tar
     for (size_t i = 0; i < prog->count; ++i) {
         const BlackwellIRInsn *in = &prog->insns[i];
         uint64_t *p = ins + i * 8;
+#ifdef CUDAPP_MIGRATION_PENDING_C_CORE
         p[0] = (uint64_t)in->op;
         p[1] = (uint64_t)(int64_t)in->dst_vreg;
         p[2] = (uint64_t)(int64_t)in->src1_vreg;
@@ -33,11 +35,46 @@ int omega_gpu_encode_program_target(const BlackwellIRProgram *prog, uint32_t tar
              | ((uint64_t)in->predicate_not << 2) | ((uint64_t)in->bar_reg << 8)
              | ((uint64_t)in->dst_subreg << 16) | ((uint64_t)in->src1_subreg << 24)
              | ((uint64_t)in->src2_subreg << 32) | ((uint64_t)in->src3_subreg << 40);
+#else
+        uint64_t raw[16], packed[16];
+        raw[0] = (uint32_t)in->op;
+        raw[1] = (uint32_t)in->dst_vreg;
+        raw[2] = (uint32_t)in->src1_vreg;
+        raw[3] = (uint32_t)in->src2_vreg;
+        raw[4] = (uint32_t)in->src3_vreg;
+        raw[5] = (uint32_t)in->ureg;
+        raw[6] = in->imm;
+        raw[7] = in->control;
+        raw[8] = (uint64_t)in->is_uniform;
+        raw[9] = (uint64_t)in->predicate_p0;
+        raw[10] = (uint64_t)in->predicate_not;
+        raw[11] = in->dst_subreg;
+        raw[12] = in->src1_subreg;
+        raw[13] = in->src2_subreg;
+        raw[14] = in->src3_subreg;
+        raw[15] = in->bar_reg;
+        if (CORE_VOID(ampack, 0, raw, 16, packed, 16) != OMEGA_OK) return OMEGA_GPU_ENCODE_UNSUPPORTED;
+        for (int k = 0; k < 8; ++k) p[k] = packed[k];
+#endif
     }
+#ifdef CUDAPP_MIGRATION_PENDING_C_CORE
     for (size_t i = 0; i < BW_MAX_VREGS; ++i)
         phys[i] = (uint64_t)(int64_t)prog->regalloc.vreg_to_phys[i];
     for (size_t i = 0; i < BW_MAX_UVREGS; ++i)
         phys[256 + i] = (uint64_t)(int64_t)prog->regalloc.uvreg_to_phys[i];
+#else
+    for (size_t base = 0; base < (size_t)BW_MAX_VREGS + BW_MAX_UVREGS; base += 16) {
+        uint64_t raw[16], packed[16];
+        for (int k = 0; k < 16; ++k) {
+            size_t ix = base + (size_t)k;
+            int v = ix < BW_MAX_VREGS ? prog->regalloc.vreg_to_phys[ix]
+                                      : prog->regalloc.uvreg_to_phys[ix - BW_MAX_VREGS];
+            raw[k] = (uint32_t)v;
+        }
+        if (CORE_VOID(ampack, 1, raw, 16, packed, 16) != OMEGA_OK) return OMEGA_GPU_ENCODE_UNSUPPORTED;
+        for (int k = 0; k < 16; ++k) phys[base + (size_t)k] = packed[k];
+    }
+#endif
     uint64_t bytes = 0;
     uint32_t status = CORE_CALL(ampere_enc_sm86, &bytes, ins, 8192, phys, 288,
                                           prog->count, 1, code, 16384);

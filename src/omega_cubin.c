@@ -572,6 +572,23 @@ static int cubin_pack_impl(uint32_t target_sm, const char *fn_name,
 #endif
 #endif
 
+#ifndef CUBIN_C_PRIMARY
+#include "omega_core_binding.h"
+/* Target and null-parameter admission. Pointer presence is a flag; the message is Omega. */
+static int cubin_admit(uint32_t target_sm, size_t nparams, int present, char *err, size_t err_cap) {
+    uint64_t rc = 0;
+    char msg[64];
+    if (CORE_CALL(cubadmit, &rc, target_sm, (uint64_t)nparams, present ? 1u : 0u, msg, sizeof msg) != OMEGA_OK)
+        CORE_STOP();
+    if (rc && err && err_cap) {
+        size_t n = 0;
+        while (n + 1 < err_cap && msg[n]) { err[n] = msg[n]; n++; }
+        err[n] = 0;
+    }
+    return (int)rc;
+}
+#endif
+
 int omega_cubin_pack_target(uint32_t target_sm, const char *fn_name,
                             const uint8_t *text, size_t text_len,
                             const OmegaCubinParam *params, size_t nparams,
@@ -580,6 +597,12 @@ int omega_cubin_pack_target(uint32_t target_sm, const char *fn_name,
     if (err && err_cap) err[0] = 0;
     if (out) *out = NULL;
     if (out_len) *out_len = 0;
+#ifndef CUBIN_C_PRIMARY
+    {
+        int admit = cubin_admit(target_sm, nparams, params != NULL, err, err_cap);
+        if (admit) return admit;
+    }
+#else
     if (target_sm != OMEGA_CUBIN_SM_86 && target_sm != OMEGA_CUBIN_SM_121) {
         if (err && err_cap) snprintf(err, err_cap, "unsupported cubin target sm_%u", target_sm);
         return OMEGA_CUBIN_E_TARGET;
@@ -588,6 +611,7 @@ int omega_cubin_pack_target(uint32_t target_sm, const char *fn_name,
         if (err && err_cap) snprintf(err, err_cap, "null parameter array");
         return OMEGA_CUBIN_E_ARG;
     }
+#endif
     return cubin_pack_impl(target_sm, fn_name, text, text_len, params, nparams,
                            cbank_size, gpr_count, shared_reserved, out, out_len, err, err_cap);
 }

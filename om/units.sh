@@ -27,6 +27,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS cm_prediction=$CM_HOST_MATH,om/components/cm_prediction.om cm_calibration=$CM_HOST_MATH,om/components/cm_quantile.om,om/components/cm_calibration.om"
     UNITS="$UNITS cm_blob=om/components/cm_blob.om cm_digest=om/cache/digest.om,om/components/cm_digest.om"
     UNITS="$UNITS api_mm_plan=om/components/api_mm_plan.om api_at_plan=om/components/api_at_plan.om api_ew_plan=om/components/api_ew_plan.om api_bf_plan=om/components/api_bf_plan.om api_da_plan=om/components/api_da_plan.om api_rt_plan=om/components/api_rt_plan.om"
+    UNITS="$UNITS om/codegen/regalloc.om om/codegen/regalloc_ir.om om/codegen/regalloc_live.om om/codegen/cg_matmul.om om/codegen/cg_matmul_params.om om/codegen/cg_matmul_i32.om om/codegen/cg_matmul_tensor.om om/codegen/cg_matmul_loop.om om/codegen/cg_matmul_frag.om om/codegen/cg_matmul_block.om om/codegen/cg_vecadd.om om/codegen/bw_hazard.om bw_hazard_dec=om/codegen/bw_hazard.om,om/codegen/bw_hazard_dec.om om/codegen/cg_bind.om"
 fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 GXNUM=om/gemmex/num.om

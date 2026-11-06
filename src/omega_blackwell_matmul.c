@@ -5,10 +5,22 @@
 #include <stdlib.h>
 #endif
 #include <string.h>
-#ifdef OMEGA_GPU_NO_POSIX
 #include "cudapp_native.h"
-#endif
-
+#include "omega_bw_bind.h"
+#ifndef BW_BIND_C_PRIMARY
+int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
+    uint8_t w[256] = {0};
+    if (!spec) return -1;
+    if (omega_bw_bind(0, (uint64_t)m | (uint64_t)k << 32, (uint64_t)n | (uint64_t)(uint32_t)precision << 32, w) != 16)
+        return -1;
+    spec->m = m;
+    spec->k = k;
+    spec->n = n;
+    spec->precision = precision;
+    sha256_hash(w, 16, spec->spec_id);
+    return 0;
+}
+#else
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
     if (!spec || m == 0 || k == 0 || n == 0) return -1;
     if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return -1;
@@ -43,6 +55,7 @@ int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32
     sha256_hash(spec_buf, sizeof(spec_buf), spec->spec_id);
     return 0;
 }
+#endif /* BW_BIND_C_PRIMARY */
 
 int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
     if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
@@ -164,6 +177,25 @@ void omega_blackwell_kernel_free(OmegaBlackwellKernel *kernel) {
 }
 #endif
 
+#ifndef BW_BIND_C_PRIMARY
+int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const OmegaBlackwellKernel *kernel, OmegaBlackwellRealizationIdentity *id) {
+    uint8_t w[256] = {0};
+    if (!spec || !kernel || !id) return -1;
+    if (omega_bw_bind(2, 0, 0, w) != 27) return -1;
+    int64_t arch = omega_bw_bind(9, 0, 0, w);
+    if (arch < 0) return -1;
+    memcpy(id->spec_id, spec->spec_id, 32);
+    sha256_hash(w, 27, id->machine_id);
+    memcpy(id->code_digest, kernel->code_digest, 32);
+    id->sm_arch = (uint32_t)arch;
+    memcpy(w + 128, id->spec_id, 32);
+    memcpy(w + 160, id->machine_id, 32);
+    memcpy(w + 192, id->code_digest, 32);
+    if (omega_bw_bind(1, id->sm_arch, 0, w) != 100) return -1;
+    sha256_hash(w, 100, id->realization_id);
+    return 0;
+}
+#else
 int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const OmegaBlackwellKernel *kernel, OmegaBlackwellRealizationIdentity *id) {
     if (!spec || !kernel || !id) return -1;
 
@@ -187,17 +219,26 @@ int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const O
     sha256_hash(bound, sizeof(bound), id->realization_id);
     return 0;
 }
+#endif /* BW_BIND_C_PRIMARY */
 
 #include "omega_blackwell_codegen.h"
 
 #ifndef OMEGA_GPU_NO_POSIX
 int omega_blackwell_codegen_matmul(const OmegaMatMulSpec *spec, OmegaBlackwellKernel *kernel) {
     if (!spec || !kernel) return -1;
+#ifndef BW_BIND_C_PRIMARY
+    uint8_t w[256] = {0};
+    int64_t g = omega_bw_bind(3, (uint32_t)spec->precision, 0, w);
+    if (g == 0) return omega_blackwell_codegen_matmul_i32(spec, kernel);
+    if (g == 1) return omega_blackwell_codegen_matmul_tensor(spec, kernel);
+    return -1;
+#else
     if (spec->precision == OMEGA_MATMUL_PRECISION_INT32) {
         return omega_blackwell_codegen_matmul_i32(spec, kernel);
     } else if (spec->precision == OMEGA_MATMUL_PRECISION_FP16 || spec->precision == OMEGA_MATMUL_PRECISION_BF16) {
         return omega_blackwell_codegen_matmul_tensor(spec, kernel);
     }
     return -1;
+#endif
 }
 #endif

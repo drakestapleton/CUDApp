@@ -1,0 +1,10 @@
+pair-alignment	compile=0	exercise=1	FAIL program/map/partial-state case=1
+reserved-gpr	compile=0	exercise=1	FAIL program/map/partial-state case=1
+equal-endpoint-release	compile=0	exercise=1	FAIL program/map/partial-state case=7
+sort-order	compile=0	exercise=1	FAIL program/map/partial-state case=1
+reserved-ugpr	compile=0	exercise=1	FAIL program/map/partial-state case=9
+quad-alignment	compile=0	exercise=1	FAIL program/map/partial-state case=1
+shortened-override-check	compile=0	exercise=1	FAIL liveness case=3 rc=0 expected=10
+v159-boundary	compile=0	exercise=1	FAIL liveness case=1 rc=10 expected=0
+override-ignored	compile=0	exercise=1	FAIL program/map/partial-state case=53004
+override-shortened	compile=0	exercise=1	FAIL refusal case=53004

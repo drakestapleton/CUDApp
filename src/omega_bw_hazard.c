@@ -1,4 +1,10 @@
+/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* omega_bw_hazard.c: static scoreboard hazard checker over encoded sm_121 kernel bytes (omega-mv#554). See the header.
+ *
+ * The decoder, the walk and the fixed point are first-party Omega: om/codegen/bw_hazard.om, lowered by om/units.sh
+ * into src/cudapp_om_bw_hazard.c (export omega_hz_chk) and src/cudapp_om_bw_hazard_dec.c (omega_hz_dec). This file
+ * owns the allocation, the report layout and the name strings. The C below the CUDAPP_MIGRATION_PENDING_C_HAZARD
+ * switch (default OFF; always on freestanding) is the differential oracle tests/regalloc_om/run.sh builds.
  *
  * Every form decoded below is a form src/omega_blackwell_codegen.c (encode_single_insn) or the post-encode patch
  * omega_qmma_patch_code writes. The operand positions are the encoder's: Rd = word 0 bits 16..23,
@@ -8,6 +14,109 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+const char *omega_bw_hazard_kind(uint8_t kind) {
+    return kind == OMEGA_BW_HZ_RAW ? "RAW" : kind == OMEGA_BW_HZ_WAR ? "WAR" : kind == OMEGA_BW_HZ_WAW ? "WAW" : "?";
+}
+
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_HAZARD)
+#define BW_HZ_C_PRIMARY 1
+#endif
+
+#ifndef BW_HZ_C_PRIMARY
+#include "cudapp_native.h"
+
+/* om/codegen/bw_hazard.om name ids 1..37; 0 = no name (an unknown opcode) */
+static const char *const g_bw_hz_names[38] = {
+    NULL, "NOP", "BAR", "MEMBAR", "CCTL", "EXIT", "BRA", "BSSY", "BSYNC", "MOV", "S2R", "LDC", "LDCU", "IMAD",
+    "IMAD.WIDE", "IMAD.HI", "ISETP", "IADD3", "HMMA", "QMMA", "SHF", "LOP3", "FADD", "FMUL", "FFMA", "FSETP", "FSEL",
+    "FMNMX", "F2FP", "I2FP", "F2I", "MUFU", "SHFL", "LDG", "STG", "ATOMG", "LDS", "STS"};
+
+static uint8_t hz_operand(OmegaBwOperand *o, uint64_t packed) {
+    o->reg = (uint8_t)packed;
+    o->n = (uint8_t)(packed >> 8);
+    o->uniform = (uint8_t)(packed >> 16 & 1u);
+    return 0;
+}
+
+/* The Omega record is written even on a refusal, with the fields the C decoder had set when it refused. */
+static void hz_unpack(const uint64_t *rec, OmegaBwInsn *d) {
+    memset(d, 0, sizeof *d);
+    d->op = (uint16_t)rec[0];
+    d->guard = (uint8_t)rec[1];
+    d->stall = (uint8_t)rec[2];
+    d->yield = (uint8_t)rec[3];
+    d->wbar = (uint8_t)rec[4];
+    d->rbar = (uint8_t)rec[5];
+    d->wait = (uint8_t)rec[6];
+    d->var = (uint8_t)rec[7];
+    d->late = (uint8_t)rec[8];
+    d->nr = (uint8_t)rec[9];
+    d->nw = (uint8_t)rec[10];
+    for (unsigned j = 0; j < d->nr && j < 5; ++j) hz_operand(&d->rd[j], rec[11 + j]);
+    if (d->nw) hz_operand(&d->wr[0], rec[16]);
+    d->flow = (uint8_t)rec[17];
+    d->target = (int32_t)(int64_t)rec[18];
+    d->name = rec[19] < 38 ? g_bw_hz_names[rec[19]] : NULL;
+}
+
+int omega_bw_decode(const uint8_t b[16], OmegaBwInsn *d) {
+    if (!b || !d) return -1;
+    uint64_t rec[24] = {0}, result = UINT64_MAX;
+    if (omega_hz_dec(&result, b, 16, rec, 24) != 0) {
+        memset(d, 0, sizeof *d);
+        return -1;
+    }
+    hz_unpack(rec, d);
+    return result == 0 ? 0 : -1;
+}
+
+/* The portable unit takes fixed shapes: code in a zero-padded 32768-byte view (2048 instructions, twice the encoder's
+ * 1024-instruction buffer) and the wire m as 2560 + 1563 * 2048 = 3203584 words (om/codegen/bw_hazard.om header).
+ * Longer code is refused (-1), a documented divergence from the C oracle, which has no length cap. A walk longer
+ * than the unit's bound (999999 pops) traps; the report is then the refusal state (insns, bad_pc -1) and -1. */
+#define BW_HZ_CODE 32768u
+#define BW_HZ_WORDS 3203584u
+int omega_bw_hazard_check(const uint8_t *code, size_t len, OmegaBwHazardReport *r) {
+    if (!r) return -1;
+    memset(r, 0, sizeof *r);
+    r->bad_pc = -1;
+    if (!code || len == 0 || len % 16u) return -1;
+    r->insns = len / 16u;
+    if (len > BW_HZ_CODE) return -1;
+    uint8_t *c = calloc(BW_HZ_CODE, 1);
+    uint64_t *m = malloc(BW_HZ_WORDS * sizeof *m);
+    if (!c || !m) {
+        free(c);
+        free(m);
+        return -1;
+    }
+    memcpy(c, code, len);
+    uint64_t result = UINT64_MAX;
+    uint32_t st = omega_hz_chk(&result, c, BW_HZ_CODE, len, m, BW_HZ_WORDS);
+    free(c);
+    if (st != 0) {
+        free(m);
+        return -1;
+    }
+    r->insns = (size_t)m[0];
+    r->reachable = (size_t)m[1];
+    r->count = (size_t)m[2];
+    r->bad_pc = (int64_t)m[3];
+    for (size_t i = 0; i < r->count && i < OMEGA_BW_HAZARD_MAX; ++i) {
+        const uint64_t *f = &m[8 + 3 * i];
+        r->f[i].pc = (uint32_t)f[0];
+        r->f[i].src_pc = (uint32_t)f[1];
+        r->f[i].kind = (uint8_t)f[2];
+        r->f[i].reg = (uint8_t)(f[2] >> 8);
+        r->f[i].uniform = (uint8_t)(f[2] >> 16 & 1u);
+        r->f[i].release = (uint8_t)(f[2] >> 24);
+    }
+    free(m);
+    return result == 0 ? 0 : -1;
+}
+
+#else /* BW_HZ_C_PRIMARY: the C oracle */
 
 static uint32_t rd32(const uint8_t *p) { return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24; }
 
@@ -112,10 +221,6 @@ int omega_bw_decode(const uint8_t b[16], OmegaBwInsn *d) {
         return -1;
     }
     return 0;
-}
-
-const char *omega_bw_hazard_kind(uint8_t kind) {
-    return kind == OMEGA_BW_HZ_RAW ? "RAW" : kind == OMEGA_BW_HZ_WAR ? "WAR" : kind == OMEGA_BW_HZ_WAW ? "WAW" : "?";
 }
 
 /* ---- the walk ---------------------------------------------------------------------------------------------------
@@ -265,3 +370,4 @@ out:
     free(ins); free(in); free(seen); free(queued); free(work); free(cur);
     return rc;
 }
+#endif /* BW_HZ_C_PRIMARY */

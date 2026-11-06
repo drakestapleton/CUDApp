@@ -19,7 +19,7 @@ OMEGA_OMC ?= $(OMEGA_MV)/seed/out/omc
 OMEGA_BRIDGE ?= $(OMEGA_BRIDGE_DIR)
 OM_ENC_DIR = $(OUT_DIR)/om-encoder
 OM_ENC_TEST_DEPS = tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h
-OM_ENC_SRCS = src/omega_blackwell_codegen.c src/omega_blackwell_matmul.c src/sha256.c
+OM_ENC_SRCS = src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/omega_blackwell_matmul.c src/sha256.c
 OM_ENC_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc
 
 .PHONY: test-om-encoder test-om-encoder-corpus test-om-units test-om-encoder-mutants
@@ -90,7 +90,8 @@ test-om-encoder-mutants: build/test_codegen_freestanding
 	if cmp -s $$d/bw_enc_sm121.om om/encoder/bw_enc_sm121.om; then echo "MUTANT $$n BROKEN: '$$m' changed nothing"; exit 1; fi; \
 	OMEGA_UNITS=$$(pwd)/$$d/bw_enc_sm121.om OMEGA_UNITS_DEST=$$d OMEGA_OMC="$(OMEGA_OMC)" \
 		OMEGA_BRIDGE="$(OMEGA_BRIDGE)" sh om/units.sh > /dev/null || exit 1; \
-	$(OM_ENC_BUILD) -o $$d/codegen tests/test_omega_codegen_freestanding.c $(OM_ENC_SRCS) $$d/cudapp_om_bw_enc_sm121.c || exit 1; \
+	$(OM_ENC_BUILD) -o $$d/codegen tests/test_omega_codegen_freestanding.c $(OM_ENC_SRCS) $$d/cudapp_om_bw_enc_sm121.c \
+		$(filter-out src/cudapp_om_bw_enc_sm121.c,$(CUDAPP_BINDING_SRCS)) || exit 1; \
 	g=0; $$d/codegen --golden > $$d/golden.log 2>&1 || g=1; \
 	c=0; $$d/codegen --dump > $$d/dump.txt 2>&1; cmp -s $$d/dump.txt $(OM_ENC_DIR)/c-dump.txt || c=1; \
 	if [ $$g = 0 ] && [ $$c = 0 ]; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \

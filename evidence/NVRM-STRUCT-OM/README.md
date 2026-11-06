@@ -95,8 +95,10 @@ The older fixed-size exports keep their ABI; the struct entry passes exact-size
 runtime views. No parallel UVM encoder is retained. Existing envelope and heap
 encoders remain the implementation for their existing requests. Generated C
 is converter output, not a handwritten substitute for the Omega computation.
-The C compiler/runtime remain host build/call dependencies; their replacement
-belongs to the compiler/native-linker work, not a claimed completion here.
+Host build dependency: GCC `13.3.0` (Ubuntu `13.3.0-6ubuntu2~24.04.1`).
+Host call/runtime dependency: glibc `2.39`. These existing dependencies compile
+and call the bridge-generated C. Their Omega replacement belongs to the seeded
+compiler/native-linker work; no host-runtime replacement is claimed here.
 
 ## Reproduction and observed results
 

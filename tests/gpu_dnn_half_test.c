@@ -41,7 +41,7 @@ static int golden(BlackwellIRProgram *p, const char *dump) {
     }
     if(f&&fclose(f))return 0;
     /* Unknown op is rejected, not silently encoded as a neighbouring conversion. */
-    return words(p,68,9,2,0,code,&bytes)!=0;
+    return words(p,BW_IR_LAST+1,9,2,0,code,&bytes)!=0;
 }
 static int simulation(BlackwellIRProgram *p) {
     WsSim s={0};WsLane lane={0};s.p=p;

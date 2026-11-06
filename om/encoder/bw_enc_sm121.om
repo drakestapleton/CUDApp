@@ -514,6 +514,84 @@ end
 ret 1
 end
 
+note IEEE binary64 register forms, independently derived using nvcc 13.0.88 sm_121 and nvdisasm.
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note WolframLanguageEvaluator: FromDigits[#,16]& /@ {"7229","7228","722b","722a","7308","1800","1c00","7310","301000","201800","7312","201c00","7311","30d100","03f06000","000e2400"}
+note -> {29225,29224,29227,29226,29448,6144,7168,29456,3149824,2103296,29458,2104320,29457,3199232,66084864,926720}.
+note R255 is RZ, not the upper half of a writable double pair.
+fn dpair o view ulong 16 k ulong to ulong
+r = get o k
+if or ne and r 1 0 ge r 254
+ret 0
+end
+ret 1
+end
+
+fn pick c bool a ulong b ulong to ulong
+if c
+ret a
+end
+ret b
+end
+
+fn enc_f o view ulong 16 w edit ulong 4 to ulong
+op = get o 0
+if gt op 78
+ret 1
+end
+if le op 71
+if eq and dpair o 2 dpair o 3 0
+ret 1
+end
+if eq op 71
+if ne get o 15 0
+ret 1
+end
+put4 w wa o 29226 rb o 3 pick ne get o 6 0 get o 6 66084864 ctl o 926720
+ret 0
+end
+if eq dpair o 1 0
+ret 1
+end
+if eq op 68
+put4 w wda o 29225 0 rb o 3 ctl o 926720
+ret 0
+end
+if eq op 69
+put4 w wda o 29224 rb o 3 0 ctl o 926720
+ret 0
+end
+if and ne get o 4 255 eq dpair o 4 0
+ret 1
+end
+put4 w wda o 29227 rb o 3 rb o 4 ctl o 926720
+ret 0
+end
+if le op 73
+put4 w wd o 29448 rb o 2 pick eq op 72 6144 7168 ctl o 926720
+ret 0
+end
+if or eq op 75 eq op 78
+if eq dpair o 2 0
+ret 1
+end
+else
+if eq dpair o 1 0
+ret 1
+end
+end
+if le op 75
+put4 w wd o 29456 rb o 2 pick eq op 74 2103296 3149824 ctl o 926720
+ret 0
+end
+if le op 77
+put4 w wd o 29458 rb o 2 pick eq op 76 2104320 2103296 ctl o 926720
+ret 0
+end
+put4 w wd o 29457 rb o 2 3199232 ctl o 926720
+ret 0
+end
+
 fn encraw o view ulong 16 w edit ulong 4 to ulong
 op = get o 0
 if lt op 15
@@ -528,7 +606,10 @@ end
 if lt op 60
 ret enc_d o w
 end
+if lt op 68
 ret enc_e o w
+end
+ret enc_f o w
 end
 
 note Guard ordinary instructions only when their encoded field is the documented always predicate.

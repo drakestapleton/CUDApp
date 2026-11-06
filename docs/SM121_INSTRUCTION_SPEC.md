@@ -8,6 +8,11 @@ In Blackwell (SM121 / GB10), instructions are represented as 128-bit words (four
 
 Instead of writing imperative bit-shifting procedures for encoding and separate pattern-matching tables for decoding, both operations are derived from **one authoritative specification table** in native `.om`.
 
+The binary64 register forms (IR 68..78) are implemented in the seeded
+`bw_enc_sm121.om` codegen encoder, not this older table's 0..62 catalog.
+See [Binary64 BlackwellIR register forms](CODEGEN_F64.md) for their independently
+derived encoding facts, simulator precision contract and chip runbook.
+
 The specification defines:
 1. **Instruction Form Identification**:
    - `op`: Blackwell IR opcode (0..62).

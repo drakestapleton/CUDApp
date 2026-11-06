@@ -152,7 +152,23 @@ typedef enum {
     /* Scalar half conversions: low f16 lane, f32 register; round-nearest-even. */
     BW_IR_F16_TO_F32,        /* HADD2.F32 Rd, -RZ, Ra.H0_H0; fixed latency */
     BW_IR_F32_TO_F16,        /* F2F.F16.F32 Rd, Ra; upper half cleared; variable latency */
-    BW_IR_LAST = BW_IR_F32_TO_F16
+    /* IEEE binary64 register forms, append-only (68..78). Use alloc_vreg64.
+     * MUFU.*64H alone reads/writes one high word: select subreg 1 explicitly;
+     * it neither reads nor clears the low word. DSETP uses FSETP's imm modes/P0.
+     * F64 arithmetic and F2F narrowing round nearest even; F2I truncates and
+     * saturates (f64 NaN -> INT32_MIN), matching PTX cvt.rzi.s32.f64. */
+    BW_IR_DADD,
+    BW_IR_DMUL,
+    BW_IR_DFMA,
+    BW_IR_DSETP,
+    BW_IR_MUFU_RCP64H,
+    BW_IR_MUFU_RSQ64H,
+    BW_IR_F64_F32,
+    BW_IR_F32_F64,
+    BW_IR_F64_S32,
+    BW_IR_F64_U32,
+    BW_IR_S32_F64,
+    BW_IR_LAST = BW_IR_S32_F64
 } BlackwellIROpcode;
 
 /* Barrier (reconvergence) registers: the sm_121 BSSY/BSYNC words carry a 4-bit barrier id

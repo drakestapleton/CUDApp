@@ -155,3 +155,10 @@ src/omega_gpu_scan.h	CHIP_SPECIFIC	Reduction and prefix-sum API; includes omega_
 src/omega_gpu_scan_ref.c	PORTABLE	Host references of the frozen reduction and prefix-sum order, which depends only on n and the element index (docs/numeric/E1_REDUCTION_CONTRACT.md); plain C additions, no chip or OS call. Its own header omega_gpu_scan.h still pulls in omega_blackwell_codegen.h, so reusing it off this tree needs the declarations split out.	HOSTED_LIBC
 src/omega_gpu_attn_any_api.c	CHIP_SPECIFIC	Memory and session-launch shell for the seeded Omega sm_121 arbitrary-shape attention emitter.	HOSTED_LIBC
 src/omega_gpu_attn_any_api.h	CHIP_SPECIFIC	Experimental attention interface and CPU-only Blackwell IR generation hook.	NO_HOSTED_INCLUDE
+src/omega_gpu_dnn_types.h	PORTABLE	Scalar storage-format constants only; no chip or driver definitions and no includes.	NO_HOSTED_INCLUDE
+src/omega_gpu_dnn_rows_api.c	CHIP_SPECIFIC	Memory and session-launch shell for seeded Omega sm_121 row softmax and normalization kernels.	HOSTED_LIBC
+src/omega_gpu_dnn_rows_api.h	CHIP_SPECIFIC	Row normalization interface exposes the Blackwell kernel type through omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
+src/omega_gpu_dnn_activations_api.c	CHIP_SPECIFIC	Memory and session-launch shell for seeded Omega sm_121 activation kernels.	HOSTED_LIBC
+src/omega_gpu_dnn_activations_api.h	CHIP_SPECIFIC	Activation interface exposes the Blackwell kernel type through omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
+src/omega_gpu_conv2d_api.c	CHIP_SPECIFIC	Memory and session-launch shell for the seeded Omega sm_121 implicit-GEMM convolution emitter.	HOSTED_LIBC
+src/omega_gpu_conv2d_api.h	CHIP_SPECIFIC	Convolution interface exposes the Blackwell kernel type through omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE

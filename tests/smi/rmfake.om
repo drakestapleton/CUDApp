@@ -8,6 +8,9 @@ note   o open of the control node fails     s subdevice reports a different SM v
 note   c name control fails (0x56)         n name has no terminating zero
 note   t a thermal instruction is not executed
 note   p GET_PIDS count above its table    f the device free fails
+note   u pstate control not supported      m pstate reply has two bits set
+note   q pstate control refused with NV_ERR_INSUFFICIENT_PERMISSIONS (0x1b)
+note Without a fault the pstate is P8 (0x100), the value nvidia-smi showed on the live GB10.
 note Every control command outside the allowlist fails with 0x56 and logs "FAKE UNKNOWN".
 note Each effect writes one stderr line "FAKE <what>" for the runner to count.
 
@@ -146,6 +149,20 @@ npput 8 951
 else
 npput 8 1
 npput 12 4242
+end
+ret 0
+end
+if eq cmd 545267816
+if eq sfmode 113
+ret 27
+end
+if eq sfmode 117
+ret 86
+end
+if eq sfmode 109
+npput 0 384
+else
+npput 0 256
 end
 ret 0
 end

@@ -156,8 +156,15 @@ check_rm() { # fake-built bin -> 0 when the --rm expectations hold
      || [ "$(cnt open "$out/rm.err")" != 2 ] || grep -q 'UNKNOWN\|UNEXPECTED' "$out/rm.err"; then
     echo "  rm: rc=$rc" >&2; ok=1
   fi
+  # Unsupported pstate is not an error: the report differs from the default one only in that line.
+  SMIFAULT=u "$b" --root "$out/r" --rm > "$out/u.out" 2> "$out/u.err"; rc=$?
+  sed 's/^gpu\.0\.pstate=P8$/gpu.0.pstate=[N\/A]/' "$t/expected-gb10-rm.txt" > "$out/u.want"
+  if [ "$rc" -ne 0 ] || ! cmp -s "$out/u.out" "$out/u.want" || cmp -s "$out/u.want" "$t/expected-gb10-rm.txt" \
+     || [ "$(cnt free "$out/u.err")" != 3 ] || grep -q 'UNKNOWN\|UNEXPECTED' "$out/u.err"; then
+    echo "  rm pstate unsupported: rc=$rc" >&2; ok=1
+  fi
   # letter|rc|frees|closes|opens
-  for f in 'o|30|0|0|1' 's|30|3|2|2' 'c|31|3|2|2' 'n|32|3|2|2' 't|32|3|2|2' 'p|32|3|2|2' 'f|33|3|2|2'; do
+  for f in 'o|30|0|0|1' 's|30|3|2|2' 'c|31|3|2|2' 'q|31|3|2|2' 'n|32|3|2|2' 't|32|3|2|2' 'm|32|3|2|2' 'p|32|3|2|2' 'f|33|3|2|2'; do
     IFS='|' read -r l want fr cl op <<EOF
 $f
 EOF
@@ -191,7 +198,7 @@ else
 fi
 
 if check_fixture "$out/cudapp-smi"; then echo 'PASS fixture tier (gb10, optional-absent, no-gpus, 16 refusals, usage)'; else fail 'fixture tier'; fi
-if check_rm "$out/smi-fake"; then echo 'PASS rm fake tier (report, 7 faults, teardown counts, one-GPU rule)'; else fail 'rm fake tier'; fi
+if check_rm "$out/smi-fake"; then echo 'PASS rm fake tier (report, pstate unsupported, 9 faults, teardown counts, one-GPU rule)'; else fail 'rm fake tier'; fi
 
 # Checker negative control: one altered expected byte must be rejected.
 mkroot "$out/r"
@@ -218,6 +225,8 @@ rm|if or ne npget add o 4 1 ne npget o 0|if false
 rm|if gt n 200|if false
 rm|odec shr m 20|odec m
 rm|refuse code msg|exit 0
+rm|if ne nhget 28 86|if false
+rm|if eq v shl uint 1 k|if ne v 0
 '
 mk=0; caught=0
 printf '%s\n' "$mutants" | { while IFS='|' read -r unit from to; do

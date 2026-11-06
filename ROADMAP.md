@@ -29,6 +29,10 @@ NOT_RUN. This branch merges the #335 native mechanism into #334; neither
 dependency is implicitly merged or deployed by this receipt.
 2026-11-06: `av_bf16_n` now uses the integer-public freestanding Omega variant `om/apiviews/no_avbf.om` under `OMEGA_GPU_NO_POSIX`; its canonical hosted view remains `om/apiviews/bf16.om`. The explicit default-OFF `CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION` flag selects the temporary C oracle. Hosted/freestanding differential, production-object OFF/ON symbol controls and six behavioral mutants PASS; chip NOT_RUN. Receipt: `evidence/no-posix-bf16-20261106/README.md`.
 2026-11-06: FP8 shape, depth, environment-number parsing and grouped/grid policy, GDN cache/move/prefill admission, and scan cross-tile carry now use seeded `om/apiviews/hostrest.om` and `scancarry.om`. The previous C policy is a default-OFF migration oracle. Host differential, negative-control and focused simulation evidence is in `evidence/api-fp8-gdn-host-20261106/`; chip qualification remains NOT_RUN. No status row is upgraded.
+2026-11-06: prefill register-file admission and output poison counting now
+default to seeded Omega; `CUDAPP_MIGRATION_PENDING_C_PREFILL_HOST_REST`
+retains the default-OFF C oracle. See
+`evidence/prefill-host-rest-20261106/README.md`. Hardware remains NOT_RUN.
 
 ## 1. NVIDIA software on the Spark today
 

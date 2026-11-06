@@ -16,6 +16,7 @@ static uint64_t f3(uint64_t v0);
 static uint64_t f4(uint64_t v0);
 static uint64_t f5(uint64_t v0, uint64_t v1);
 static uint64_t f6(uint64_t v0, uint64_t v1);
+static uint64_t f7(uint64_t v0, uint64_t v1, uint64_t v2, uint64_t v3, uint64_t v4);
 static uint64_t f0(uint64_t v0){
 if(ombr_fs_op(13, 1, ombr_fs_op(12, 1, ombr_fs_op(11, 5, v0, 97ULL), ombr_fs_op(9, 5, v0, 122ULL)), ombr_fs_op(12, 1, ombr_fs_op(11, 5, v0, 65ULL), ombr_fs_op(9, 5, v0, 90ULL)))){
 return v0;
@@ -96,11 +97,38 @@ return 1ULL;
 }
 return 0ULL;
 }
-uint32_t omega_leftover_release(uint64_t *result, uint64_t p0, uint64_t p1){
+static uint64_t f7(uint64_t v0, uint64_t v1, uint64_t v2, uint64_t v3, uint64_t v4){
+if(ombr_fs_op(6, 5, v0, 0ULL)){
+return f0(v1);
+}
+if(ombr_fs_op(6, 5, v0, 1ULL)){
+return f1(v1, v2, v3, v4);
+}
+if(ombr_fs_op(6, 5, v0, 2ULL)){
+return f2(v1);
+}
+if(ombr_fs_op(6, 5, v0, 3ULL)){
+return f3(v1);
+}
+if(ombr_fs_op(6, 5, v0, 4ULL)){
+return f4(v1);
+}
+if(ombr_fs_op(6, 5, v0, 5ULL)){
+return f5(v1, v2);
+}
+if(ombr_fs_op(6, 5, v0, 6ULL)){
+return f6(v1, v2);
+}
+return 18446744073709551615ULL;
+}
+uint32_t omega_leftovers(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4){
 if(!result || (uintptr_t)result%_Alignof(uint64_t) || (uintptr_t)result>UINTPTR_MAX-sizeof(uint64_t))return 32;
 if(!ombr_fs_valid(5, p0))return 32;
 if(!ombr_fs_valid(5, p1))return 32;
-*result=f6(p0, p1);
+if(!ombr_fs_valid(5, p2))return 32;
+if(!ombr_fs_valid(5, p3))return 32;
+if(!ombr_fs_valid(5, p4))return 32;
+*result=f7(p0, p1, p2, p3, p4);
 return 0;
 }
 #if defined(__GNUC__)

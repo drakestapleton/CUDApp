@@ -27,9 +27,9 @@ test-ampere-cubin-disasm: test-ampere-cubin
 
 # Independently runnable on a native x86 host before the bridge prerequisite.
 .PHONY: test-ampere-numeric-host
-$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c src/omega_numeric.c src/omega_numeric.h src/omega_numeric_reduce.c src/omega_numeric_reduce.h
+$(AMPERE_CUBIN_DIR)/numeric-host: tests/ampere_numeric_host_test.c src/omega_numeric.c src/omega_numeric.h src/omega_numeric_reduce.c src/omega_numeric_reduce.h src/cudapp_freest_leftovers.c
 	@mkdir -p $(AMPERE_CUBIN_DIR)
-	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ tests/ampere_numeric_host_test.c src/omega_numeric.c src/omega_numeric_reduce.c -lm
+	$(CC) $(CFLAGS) -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ tests/ampere_numeric_host_test.c src/omega_numeric.c src/omega_numeric_reduce.c src/cudapp_freest_leftovers.c -lm
 
 test-ampere-numeric-host: $(AMPERE_CUBIN_DIR)/numeric-host
 	$(AMPERE_CUBIN_DIR)/numeric-host

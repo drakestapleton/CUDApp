@@ -1,0 +1,588 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make test-leftovers-coverage
+rm -f build/leftovers/coverage/*.gcda
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -O0 --coverage -DLEFTOVERS_ORACLE -Isrc -o build/leftovers/coverage/diff tests/leftovers_test.c src/cudapp_freest_leftovers.c
+build/leftovers/coverage/diff
+LEFTOVERS PASS checks=3230
+gcov -b -c -t build/leftovers/coverage/diff-leftovers_test.gcno
+        -:    0:Source:tests/leftovers_test.c
+        -:    0:Graph:build/leftovers/coverage/diff-leftovers_test.gcno
+        -:    0:Data:build/leftovers/coverage/diff-leftovers_test.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#include <stdint.h>
+        -:    3:#include <stdio.h>
+        -:    4:#include <string.h>
+        -:    5:#include <limits.h>
+        -:    6:#define CUDAPP_MIGRATION_PENDING_LEFTOVERS 1
+        -:    7:#define omega_path_byte oracle_path_byte
+        -:    8:#define omega_path_copy oracle_path_copy
+        -:    9:#include "omega_path_check.h"
+        -:   10:#undef omega_path_byte
+        -:   11:#undef omega_path_copy
+        -:   12:#undef CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        -:   13:#undef OMEGA_PATH_CHECK_H
+        -:   14:#include "omega_path_check.h"
+        -:   15:#ifdef LEFTOVERS_ORACLE
+        -:   16:#define CUDAPP_MIGRATION_PENDING_LEFTOVERS 1
+        -:   17:#endif
+        -:   18:#include "omega_numeric_lifecycle.h"
+        -:   19:#include "omega_gpu_q36_native.h"
+        -:   20:#ifdef LEFTOVERS_ORACLE
+        -:   21:#undef CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        -:   22:#endif
+        -:   23:atomic_int omega_numeric_native_state;
+        -:   24:static unsigned checks;
+        -:   25:#define CHECK(x) do { ++checks; if (!(x)) { fprintf(stderr,"FAIL line %d\n",__LINE__); return 1; } } while (0)
+function path called 882 returned 100% blocks executed 67%
+      882:   26:static int path(const char *s, size_t cap) {
+      882:   27:    char a[64], b[64]; memset(a, 85, sizeof a); memset(b, 85, sizeof b);
+      882:   28:    int ar = oracle_path_copy(a, cap, s), br = omega_path_copy(b, cap, s);
+call    0 returned 882
+call    1 returned 882
+        -:   29:#ifdef LEFTOVERS_RED
+        -:   30:    br ^= 1;
+        -:   31:#endif
+     882*:   32:    CHECK(ar == br);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 882
+call    2 never executed
+        -:   33:    /* Refusals promise an empty string, not equality of scratch bytes. */
+     882*:   34:    CHECK(cap == 0 || strcmp(a, b) == 0);
+branch  0 taken 863 (fallthrough)
+branch  1 taken 19
+branch  2 taken 0 (fallthrough)
+branch  3 taken 863
+call    4 never executed
+      882:   35:    return 0;
+        -:   36:}
+function main called 1 returned 100% blocks executed 70%
+        1:   37:int main(void) {
+        1:   38:    const char *cases[] = {NULL,"","/",".","..","...","a/../b","../","a/..","a/./b","a//b/","/..","/a/b","a b","a\nb","AZaz09._-/+,=@:~","..a","a..","a/.../b"};
+       20:   39:    for (size_t i=0;i<sizeof cases/sizeof *cases;++i)
+branch  0 taken 19
+branch  1 taken 1 (fallthrough)
+     646*:   40:        for (size_t cap=0;cap<=32;++cap) CHECK(path(cases[i],cap)==0);
+call    0 returned 627
+branch  1 taken 0 (fallthrough)
+branch  2 taken 627
+call    3 never executed
+branch  4 taken 627
+branch  5 taken 19 (fallthrough)
+       1*:   41:    CHECK(omega_path_copy(NULL, 1, "a") == -1);
+call    0 returned 1
+branch  1 taken 0 (fallthrough)
+branch  2 taken 1
+call    3 never executed
+       1*:   42:    CHECK(oracle_path_copy(NULL, 1, "a") == -1);
+call    0 returned 1
+branch  1 taken 0 (fallthrough)
+branch  2 taken 1
+call    3 never executed
+     259*:   43:    for (int c=-1;c<=256;++c) CHECK(oracle_path_byte(c)==omega_path_byte(c));
+call    0 returned 258
+call    1 returned 258
+branch  2 taken 0 (fallthrough)
+branch  3 taken 258
+call    4 never executed
+branch  5 taken 258
+branch  6 taken 1 (fallthrough)
+        1:   44:    char s[3]={0,'x',0};
+     256*:   45:    for (unsigned c=1;c<=255;++c) { s[0]=(char)c; CHECK(path(s,3)==0); }
+call    0 returned 255
+branch  1 taken 0 (fallthrough)
+branch  2 taken 255
+call    3 never executed
+branch  4 taken 255
+branch  5 taken 1 (fallthrough)
+        1:   46:    uint64_t r=99;
+       1*:   47:    CHECK(omega_leftovers(NULL, 0, 0, 0, 0, 0)==OMEGA_BAD_ARG);
+call    0 returned 1
+branch  1 taken 0 (fallthrough)
+branch  2 taken 1
+call    3 never executed
+       1*:   48:    CHECK(omega_leftovers(&r,1,0,'a',UINT64_MAX,UINT64_MAX)==0 && r==4);
+call    0 returned 1
+branch  1 taken 1 (fallthrough)
+branch  2 taken 0
+branch  3 taken 0 (fallthrough)
+branch  4 taken 1
+call    5 never executed
+       1*:   49:    CHECK(omega_leftovers(&r,1,0,'a',UINT32_MAX,UINT32_MAX)==0 && r==4);
+call    0 returned 1
+branch  1 taken 1 (fallthrough)
+branch  2 taken 0
+branch  3 taken 0 (fallthrough)
+branch  4 taken 1
+call    5 never executed
+        1:   50:    const int ord[]={INT_MIN,-1,0,1,INT_MAX};
+        6:   51:    for (unsigned i=0;i<sizeof ord/sizeof *ord;++i) {
+branch  0 taken 5
+branch  1 taken 1 (fallthrough)
+       5*:   52:        CHECK(omega_leftovers(&r,2,(uint64_t)(int64_t)ord[i],0,0,0)==0);
+call    0 returned 5
+branch  1 taken 0 (fallthrough)
+branch  2 taken 5
+call    3 never executed
+       5*:   53:        CHECK(r==(ord[i]<0?(uint64_t)(int64_t)ord[i]:0));
+branch  0 taken 0 (fallthrough)
+branch  1 taken 5
+call    2 never executed
+       5*:   54:        CHECK(omega_q36_native_record_status(ord[i])==(ord[i]<0?ord[i]:0));
+call    0 returned 5
+branch  1 taken 0 (fallthrough)
+branch  2 taken 5
+call    3 never executed
+        -:   55:    }
+        5:   56:    for (unsigned st=0;st<4;++st) {
+branch  0 taken 4
+branch  1 taken 1 (fallthrough)
+        4:   57:        atomic_store(&omega_numeric_native_state,st);
+       4*:   58:        CHECK(omega_numeric_native_uncertain()==(st==2));
+call    0 returned 4
+branch  1 taken 0 (fallthrough)
+branch  2 taken 4
+call    3 never executed
+       4*:   59:        CHECK(omega_numeric_native_acquire()==(st==0?0:-1));
+call    0 returned 4
+branch  1 taken 1 (fallthrough)
+branch  2 taken 3
+branch  3 taken 0 (fallthrough)
+branch  4 taken 4
+call    5 never executed
+       4*:   60:        CHECK(atomic_load(&omega_numeric_native_state)==(st==0?1:(int)st));
+branch  0 taken 3 (fallthrough)
+branch  1 taken 1
+branch  2 taken 0 (fallthrough)
+branch  3 taken 4
+call    4 never executed
+        4:   61:        omega_numeric_native_release();
+call    0 returned 4
+       4*:   62:        CHECK(atomic_load(&omega_numeric_native_state)==(st<=1?0:(int)st));
+branch  0 taken 2 (fallthrough)
+branch  1 taken 2
+branch  2 taken 0 (fallthrough)
+branch  3 taken 4
+call    4 never executed
+        4:   63:        omega_numeric_native_poison(); omega_numeric_native_release();
+call    0 returned 4
+call    1 returned 4
+       4*:   64:        CHECK(omega_numeric_native_uncertain());
+call    0 returned 4
+branch  1 taken 0 (fallthrough)
+branch  2 taken 4
+call    3 never executed
+        -:   65:    }
+        1:   66:    const uint64_t values[]={0,1,31,32,33,UINT32_MAX-1ULL,UINT32_MAX,UINT32_MAX+1ULL,INT64_MAX,1ULL<<63,UINT64_MAX};
+       12:   67:    for (unsigned i=0;i<sizeof values/sizeof *values;++i) {
+branch  0 taken 11
+branch  1 taken 1 (fallthrough)
+       33:   68:        for (unsigned p=0;p<2;++p) {
+branch  0 taken 22
+branch  1 taken 11 (fallthrough)
+      22*:   69:            CHECK(omega_leftovers(&r,5,values[i],p,0,0)==0);
+call    0 returned 22
+branch  1 taken 0 (fallthrough)
+branch  2 taken 22
+call    3 never executed
+      22*:   70:            CHECK(r==(values[i]==0?1:(values[i]>>63||!p?UINT64_MAX:0)));
+branch  0 taken 20 (fallthrough)
+branch  1 taken 2
+branch  2 taken 16 (fallthrough)
+branch  3 taken 4
+branch  4 taken 8 (fallthrough)
+branch  5 taken 8
+branch  6 taken 0 (fallthrough)
+branch  7 taken 22
+call    8 never executed
+        -:   71:        }
+      132:   72:        for (unsigned j=0;j<sizeof values/sizeof *values;++j) {
+branch  0 taken 121
+branch  1 taken 11 (fallthrough)
+     121*:   73:            CHECK(omega_leftovers(&r,6,values[i],values[j],0,0)==0);
+call    0 returned 121
+branch  1 taken 0 (fallthrough)
+branch  2 taken 121
+call    3 never executed
+     121*:   74:            CHECK(r==(values[j]<values[i] && values[j]<32));
+branch  0 taken 55 (fallthrough)
+branch  1 taken 66
+branch  2 taken 27 (fallthrough)
+branch  3 taken 28
+branch  4 taken 0 (fallthrough)
+branch  5 taken 121
+call    6 never executed
+        -:   75:        }
+        -:   76:    }
+        1:   77:    printf("LEFTOVERS PASS checks=%u\n",checks);
+call    0 returned 1
+        1:   78:    return 0;
+        -:   79:}
+        -:    0:Source:src/omega_gpu_q36_native.h
+        -:    0:Graph:build/leftovers/coverage/diff-leftovers_test.gcno
+        -:    0:Data:build/leftovers/coverage/diff-leftovers_test.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#ifndef OMEGA_GPU_Q36_NATIVE_H
+        -:    3:#define OMEGA_GPU_Q36_NATIVE_H
+        -:    4:#include "omega_gpu_native_runtime.h"
+        -:    5:#include "omega_gpu_cmdlist_native.h"
+        -:    6:/* Native append returns the successful command-list ordinal, not status zero. */
+function omega_q36_native_record_status called 5 returned 100% blocks executed 100%
+        5:    7:static inline int omega_q36_native_record_status(int ordinal) {
+        -:    8:#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        5:    9:    return ordinal < 0 ? ordinal : 0;
+        -:   10:#else
+        -:   11:    uint64_t result = UINT64_MAX;
+        -:   12:    (void)omega_leftovers(&result, 2, (uint64_t)(int64_t)ordinal, 0, 0, 0);
+        -:   13:    return (int)(int64_t)result;
+        -:   14:#endif
+        -:   15:}
+        -:   16:/* Borrowed router-owner facts. The caller holds the session lock and consumes
+        -:   17: * them before recording can replace either cached kernel. Exact encoded bytes
+        -:   18: * exclude the code allocation's prefetch tail. This conveys no admission. */
+        -:   19:struct OmegaGpuRouter;
+        -:   20:typedef struct {
+        -:   21:    OmegaGpuMem code, gate, norm, directory, launch_buffer;
+        -:   22:    uint64_t code_bytes;
+        -:   23:    uint64_t owner_generation, code_generation;
+        -:   24:    const uint64_t *gu_directory, *dn_directory;
+        -:   25:    uint32_t entries;
+        -:   26:} OmegaGpuQ36RouterObservation;
+        -:   27:int omega_gpu_q36_router_observe(const struct OmegaGpuRouter *, uint32_t layer,
+        -:   28:    uint64_t recorded_code_va, OmegaGpuQ36RouterObservation *);
+        -:   29:/* Same mode-final callback in production and the existing typed HOST_ONLY
+        -:   30: * platform oracle. Borrowed exact owner descriptors only, not an admission
+        -:   31: * constructor. ordinal=UINT64_MAX matches every occurrence of that owner;
+        -:   32: * GU/DN use their independently retained successful-add ordinal instead. */
+        -:   33:typedef struct {
+        -:   34:    OmegaGpuMem code;
+        -:   35:    uint64_t code_bytes, role, ordinal;
+        -:   36:} OmegaGpuQ36MoeCode;
+        -:   37:typedef struct {
+        -:   38:    uint64_t context[16];
+        -:   39:    OmegaGpuQ36MoeCode code[272]; /* six-role variants plus selected pair windows */
+        -:   40:    uint32_t code_count;
+        -:   41:    uint8_t nested[2048]; /* only actual groups10..21; cleared before projection */
+        -:   42:} OmegaGpuQ36MoeProjection;
+        -:   43:int omega_gpu_q36_moe_project(const OmegaGpuCmdList *,
+        -:   44:    const OmegaGpuCmdListConsumed *, void *projection);
+        -:   45:/* Independently retained source-owner identities, not an expected-wire view.
+        -:   46: * Admission owns this immutable snapshot. No production constructor exists.
+        -:   47: * Live code, launches, directories and allocations replace their groups. */
+        -:   48:typedef struct {
+        -:   49:    uint8_t hashes[2048];
+        -:   50:} OmegaGpuQ36NativeProvenance;
+        -:   51:/* Private graph-owned, immutable accepted-record snapshot. No public setter,
+        -:   52: * q-flag constructor, manifest-string activation, or new qualification store.
+        -:   53: * Production construction stays absent until the independent evaluator/judge
+        -:   54: * can supply an exact accepted receipt through the existing admission chain.
+        -:   55: * A NULL state means no qualified native candidate, not a failed incumbent. */
+        -:   56:typedef struct {
+        -:   57:    uint64_t query[64], rows[1024];
+        -:   58:    uint8_t wanted[4096], records[65536];
+        -:   59:    OmegaGpuNativeArtifact artifact[16];
+        -:   60:    OmegaGpuNativeLease prepared[16];
+        -:   61:    const uint8_t *expected_closure; /* same retained full MC wire for paired GU/DN */
+        -:   62:    const OmegaGpuQ36NativeProvenance *provenance;
+        -:   63:} OmegaGpuQ36NativeState;
+        -:   64:/* Private lookup keys identify actual graph operations, never qualification.
+        -:   65: * Each operation/window owns its original immutable selector query and bytes.
+        -:   66: * Paired MoE roles retain the same independently frozen expected closure. */
+        -:   67:typedef struct {
+        -:   68:    uint64_t keys[128], count;
+        -:   69:    OmegaGpuQ36NativeState *context; /* points inside the graph-owned immutable arena */
+        -:   70:} OmegaGpuQ36NativeGraph;
+        -:   71:static inline int omega_q36_native_context(OmegaGpuQ36NativeGraph *g,
+        -:   72:    const uint64_t actual[4], OmegaGpuQ36NativeState **context) {
+        -:   73:    uint64_t bits = 0;
+        -:   74:    int64_t result;
+        -:   75:    *context = NULL;
+        -:   76:    if (!g) return 1;
+        -:   77:    if (omega_native_context_lookup(&bits, g->keys, 128, g->count, actual, 4) != OMEGA_OK)
+        -:   78:        return -1;
+        -:   79:    memcpy(&result, &bits, sizeof result);
+        -:   80:#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        -:   81:    if (result == 0) return 1;
+        -:   82:    if (result < 0 || !g->context) return -1;
+        -:   83:#else
+        -:   84:    uint64_t disposition = UINT64_MAX;
+        -:   85:    (void)omega_leftovers(&disposition, 5, bits, g->context != NULL, 0, 0);
+        -:   86:    if (disposition != 0) return (int)(int64_t)disposition;
+        -:   87:#endif
+        -:   88:    /* The generated unique-match resolver bounds result to 1..count<=32. */
+        -:   89:    *context = &g->context[(uint64_t)result - 1];
+        -:   90:    return 0;
+        -:   91:}
+        -:   92:static inline int omega_q36_native_begin_selected(OmegaGpuQ36NativeState *s, OmegaGpuNativeCache *cache,
+        -:   93:    const OmegaGpuNativeArtifact **artifact, OmegaGpuNativeLease *lease, const uint64_t **row) {
+        -:   94:    uint64_t out[32] = {0}, result = 0;
+        -:   95:    if (row) *row = NULL;
+        -:   96:    if (!s) return 1;
+        -:   97:    if (omega_native_graph(&result, s->query, 64, s->rows, 1024, cache->pool, 528,
+        -:   98:        s->wanted, 4096, s->records, 65536, out, 32) != OMEGA_OK || result != 0) return -1;
+        -:   99:    /* The generated resolver already bounds the immutable ordinal to <16. */
+        -:  100:    *artifact = &s->artifact[out[1]];
+        -:  101:    *lease = (OmegaGpuNativeLease){cache, out[17], out[18], out[19]};
+        -:  102:    /* The returned lease pins the selected exact resident realization. Recording
+        -:  103:     * takes its own reference; the temporary selection pin is always released. */
+        -:  104:    if (omega_native_bound(*artifact, lease) != 0) {
+        -:  105:        (void)omega_native_lease_op(lease, 9, 0);
+        -:  106:        *lease = (OmegaGpuNativeLease){0};
+        -:  107:        return -1;
+        -:  108:    }
+        -:  109:    if (row) *row = s->rows + out[1] * 64;
+        -:  110:    return 0;
+        -:  111:}
+        -:  112:static inline int omega_q36_native_begin(OmegaGpuQ36NativeState *s, OmegaGpuNativeCache *cache,
+        -:  113:    const OmegaGpuNativeArtifact **artifact, OmegaGpuNativeLease *lease) {
+        -:  114:    return omega_q36_native_begin_selected(s, cache, artifact, lease, NULL);
+        -:  115:}
+        -:  116:static inline void omega_q36_native_end(const OmegaGpuNativeLease *lease) {
+        -:  117:    (void)omega_native_lease_op(lease, 9, 0);
+        -:  118:}
+        -:  119:static inline void omega_q36_native_release(OmegaGpuQ36NativeState *s) {
+        -:  120:    if (!s) return;
+        -:  121:    for (unsigned i = 0; i < 16; ++i)
+        -:  122:        if (s->prepared[i].cache) (void)omega_native_lease_op(&s->prepared[i], 5, 0);
+        -:  123:}
+        -:  124:static inline void omega_q36_native_graph_release(OmegaGpuQ36NativeGraph *g) {
+        -:  125:    if (!g || !g->context) return;
+        -:  126:#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        -:  127:    for (uint64_t i = 0; i < g->count && i < 32; ++i)
+        -:  128:#else
+        -:  129:    /* Iteration invokes host lease effects; Omega decides the bounded extent. */
+        -:  130:    for (uint64_t i = 0, more = 0;
+        -:  131:         omega_leftovers(&more, 6, g->count, i, 0, 0) == OMEGA_OK && more; ++i)
+        -:  132:#endif
+        -:  133:        omega_q36_native_release(&g->context[i]);
+        -:  134:}
+        -:  135:#endif
+        -:    0:Source:src/omega_numeric_lifecycle.h
+        -:    0:Graph:build/leftovers/coverage/diff-leftovers_test.gcno
+        -:    0:Data:build/leftovers/coverage/diff-leftovers_test.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        -:    2: * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
+        -:    3: *
+        -:    4: * Licensed under the Apache License, Version 2.0 (the "License");
+        -:    5: * you may not use this file except in compliance with the License.
+        -:    6: * You may obtain a copy of the License at
+        -:    7: *
+        -:    8: *     http://www.apache.org/licenses/LICENSE-2.0
+        -:    9: *
+        -:   10: * Unless required by applicable law or agreed to in writing, software
+        -:   11: * distributed under the License is distributed on an "AS IS" BASIS,
+        -:   12: * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   13: * See the License for the specific language governing permissions and
+        -:   14: * limitations under the License.
+        -:   15: */
+        -:   16:
+        -:   17:#ifndef OMEGA_NUMERIC_LIFECYCLE_H
+        -:   18:#define OMEGA_NUMERIC_LIFECYCLE_H
+        -:   19:
+        -:   20:#include <stdatomic.h>
+        -:   21:#include "cudapp_native.h"
+        -:   22:
+        -:   23:/* One owner across the SIMT, reduction and DIV/SQRT launchers. Defined in
+        -:   24: * omega_numeric.c, which all three already link. No reset API: an uncertain
+        -:   25: * completion requires ending the process and investigating the device. This
+        -:   26: * does not assert that process exit itself resets or recovers the GPU. */
+        -:   27:enum { OMEGA_NUMERIC_NATIVE_IDLE, OMEGA_NUMERIC_NATIVE_BUSY,
+        -:   28:       OMEGA_NUMERIC_NATIVE_UNCERTAIN };
+        -:   29:extern atomic_int omega_numeric_native_state;
+        -:   30:
+function omega_numeric_native_acquire called 4 returned 100% blocks executed 100%
+        4:   31:static inline int omega_numeric_native_acquire(void) {
+        4:   32:    int expected = OMEGA_NUMERIC_NATIVE_IDLE;
+        -:   33:#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        4:   34:    return atomic_compare_exchange_strong(&omega_numeric_native_state, &expected,
+        4:   35:                                          OMEGA_NUMERIC_NATIVE_BUSY) ? 0 : -1;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 3
+        -:   36:#else
+        -:   37:    uint64_t result = UINT64_MAX;
+        -:   38:    unsigned okay = atomic_compare_exchange_strong(&omega_numeric_native_state,
+        -:   39:        &expected, OMEGA_NUMERIC_NATIVE_BUSY);
+        -:   40:    (void)omega_leftovers(&result, 3, okay, 0, 0, 0);
+        -:   41:    return (int)(int64_t)result;
+        -:   42:#endif
+        -:   43:}
+function omega_numeric_native_uncertain called 8 returned 100% blocks executed 100%
+        8:   44:static inline int omega_numeric_native_uncertain(void) {
+        -:   45:#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        8:   46:    return atomic_load(&omega_numeric_native_state) == OMEGA_NUMERIC_NATIVE_UNCERTAIN;
+        -:   47:#else
+        -:   48:    uint64_t result = 1;
+        -:   49:    (void)omega_leftovers(&result, 4,
+        -:   50:        (uint64_t)(int64_t)atomic_load(&omega_numeric_native_state), 0, 0, 0);
+        -:   51:    return (int)result;
+        -:   52:#endif
+        -:   53:}
+function omega_numeric_native_poison called 4 returned 100% blocks executed 100%
+        4:   54:static inline void omega_numeric_native_poison(void) {
+        4:   55:    atomic_store(&omega_numeric_native_state, OMEGA_NUMERIC_NATIVE_UNCERTAIN);
+        4:   56:}
+function omega_numeric_native_release called 8 returned 100% blocks executed 100%
+        8:   57:static inline void omega_numeric_native_release(void) {
+        8:   58:    int expected = OMEGA_NUMERIC_NATIVE_BUSY;
+        -:   59:    /* Never clear a poison latch, even if a cleanup caller arrives late. */
+        8:   60:    (void)atomic_compare_exchange_strong(&omega_numeric_native_state, &expected,
+        -:   61:                                         OMEGA_NUMERIC_NATIVE_IDLE);
+        8:   62:}
+        -:   63:#endif
+        -:    0:Source:src/omega_path_check.h
+        -:    0:Graph:build/leftovers/coverage/diff-leftovers_test.gcno
+        -:    0:Data:build/leftovers/coverage/diff-leftovers_test.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        -:    2: * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
+        -:    3: *
+        -:    4: * omega_path_check.h: a checked copy of a file system path that came from outside the program (an
+        -:    5: * environment variable, a command's output, a caller's argument) before anything opens it.
+        -:    6: *
+        -:    7: * A path is accepted only when it is 1..cap-1 bytes long, every byte is in the POSIX portable file name set
+        -:    8: * [A-Za-z0-9._-] or one of / + , = @ : ~ (no space, quote, control, shell or non-ASCII byte), and no
+        -:    9: * component is "..". Absolute and relative paths are both accepted. The accepted path is copied byte by byte
+        -:   10: * through omega_path_byte, so the bytes the caller later opens are exactly the bytes that were checked.
+        -:   11: * A refused path leaves out as the empty string.
+        -:   12: */
+        -:   13:#ifndef OMEGA_PATH_CHECK_H
+        -:   14:#define OMEGA_PATH_CHECK_H
+        -:   15:
+        -:   16:#include <stddef.h>
+        -:   17:#include "cudapp_native.h"
+        -:   18:
+        -:   19:#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
+        -:   20:
+        -:   21:/* c when it may appear in a checked path, -1 otherwise */
+function oracle_path_byte called 2619 returned 100% blocks executed 100%
+     2619:   22:static inline int omega_path_byte(int c) {
+     2619:   23:    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) return c;
+branch  0 taken 923 (fallthrough)
+branch  1 taken 1696
+branch  2 taken 284 (fallthrough)
+branch  3 taken 639
+branch  4 taken 436 (fallthrough)
+branch  5 taken 1544
+branch  6 taken 321 (fallthrough)
+branch  7 taken 115
+branch  8 taken 467 (fallthrough)
+branch  9 taken 1398
+branch 10 taken 75 (fallthrough)
+branch 11 taken 392
+     1790:   24:    switch (c) {
+branch  0 taken 1359
+branch  1 taken 431
+     1359:   25:    case '.': case '_': case '-': case '/': case '+': case ',': case '=': case '@': case ':': case '~':
+     1359:   26:        return c;
+      431:   27:    default:
+      431:   28:        return -1;
+        -:   29:    }
+        -:   30:}
+        -:   31:
+        -:   32:/* 0 with out = in when in is an acceptable path shorter than cap; -1 with out = "" otherwise */
+function oracle_path_copy called 883 returned 100% blocks executed 100%
+      883:   33:static inline int omega_path_copy(char *out, size_t cap, const char *in) {
+      883:   34:    if (!out || cap == 0) return -1;
+branch  0 taken 882 (fallthrough)
+branch  1 taken 1
+branch  2 taken 19 (fallthrough)
+branch  3 taken 863
+      863:   35:    out[0] = '\0';
+      863:   36:    if (!in || !in[0]) return -1;
+branch  0 taken 831 (fallthrough)
+branch  1 taken 32
+branch  2 taken 32 (fallthrough)
+branch  3 taken 799
+      799:   37:    size_t k = 0;
+     2847:   38:    for (; in[k]; k++) {
+branch  0 taken 2361
+branch  1 taken 486 (fallthrough)
+     2361:   39:        int b = omega_path_byte((unsigned char)in[k]);
+call    0 returned 2361
+     2361:   40:        if (b < 0 || k + 1 >= cap) {
+branch  0 taken 2116 (fallthrough)
+branch  1 taken 245
+branch  2 taken 68 (fallthrough)
+branch  3 taken 2048
+      313:   41:            out[0] = '\0';
+      313:   42:            return -1;
+        -:   43:        }
+     2048:   44:        out[k] = (char)b;
+        -:   45:    }
+      486:   46:    out[k] = '\0';
+     1144:   47:    for (size_t i = 0; i < k;) {
+branch  0 taken 800
+branch  1 taken 344 (fallthrough)
+      800:   48:        size_t j = i;
+     2129:   49:        while (j < k && out[j] != '/') j++;
+branch  0 taken 1756 (fallthrough)
+branch  1 taken 373
+branch  2 taken 1329
+branch  3 taken 427 (fallthrough)
+      800:   50:        if (j - i == 2 && out[i] == '.' && out[i + 1] == '.') {
+branch  0 taken 213 (fallthrough)
+branch  1 taken 587
+branch  2 taken 143 (fallthrough)
+branch  3 taken 70
+branch  4 taken 142 (fallthrough)
+branch  5 taken 1
+      142:   51:            out[0] = '\0';
+      142:   52:            return -1;
+        -:   53:        }
+      658:   54:        i = j + 1;
+        -:   55:    }
+      344:   56:    return 0;
+        -:   57:}
+        -:   58:#else
+        -:   59:/* Pointer custody and stores stay here; the scalar Omega transducer owns
+        -:   60: * alphabet, component and length decisions. No fixed-size path truncation. */
+function omega_path_byte called 258 returned 100% blocks executed 89%
+      258:   61:static inline int omega_path_byte(int c) {
+      258:   62:    uint64_t value = 256;
+      258:   63:    if (omega_leftovers(&value, 0, (uint64_t)(int64_t)c, 0, 0, 0) != OMEGA_OK)
+call    0 returned 258
+branch  1 taken 0 (fallthrough)
+branch  2 taken 258
+    #####:   64:        return -1;
+      258:   65:    return value == 256 ? -1 : (int)value;
+branch  0 taken 72 (fallthrough)
+branch  1 taken 186
+        -:   66:}
+function omega_path_copy called 883 returned 100% blocks executed 100%
+      883:   67:static inline int omega_path_copy(char *out, size_t cap, const char *in) {
+      883:   68:    if (!out || cap == 0) return -1;
+branch  0 taken 882 (fallthrough)
+branch  1 taken 1
+branch  2 taken 19 (fallthrough)
+branch  3 taken 863
+      863:   69:    out[0] = '\0';
+      863:   70:    if (!in) return -1;
+branch  0 taken 32 (fallthrough)
+branch  1 taken 831
+      831:   71:    uint64_t state = 0;
+      831:   72:    for (size_t k = 0;; ++k) {
+     2797:   73:        unsigned char value = (unsigned char)in[k];
+     2797:   74:        uint64_t next = 4;
+     2797:   75:        if (omega_leftovers(&next, 1, state, value, k, cap) != OMEGA_OK ||
+call    0 returned 2797
+branch  1 taken 2797 (fallthrough)
+branch  2 taken 0
+     2797:   76:            next == 4) {
+branch  0 taken 487 (fallthrough)
+branch  1 taken 2310
+      487:   77:            out[0] = '\0';
+      831:   78:            return -1;
+        -:   79:        }
+     2310:   80:        out[k] = (char)value;
+     2310:   81:        if (next == 5) return 0;
+branch  0 taken 344 (fallthrough)
+branch  1 taken 1966
+     1966:   82:        state = next;
+        -:   83:    }
+        -:   84:}
+        -:   85:#endif
+        -:   86:
+        -:   87:#endif /* OMEGA_PATH_CHECK_H */
+
+rc=0

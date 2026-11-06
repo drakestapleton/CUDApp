@@ -5,7 +5,13 @@
 #include "omega_gpu_cmdlist_native.h"
 /* Native append returns the successful command-list ordinal, not status zero. */
 static inline int omega_q36_native_record_status(int ordinal) {
+#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
     return ordinal < 0 ? ordinal : 0;
+#else
+    uint64_t result = UINT64_MAX;
+    (void)omega_leftovers(&result, 2, (uint64_t)(int64_t)ordinal, 0, 0, 0);
+    return (int)(int64_t)result;
+#endif
 }
 /* Borrowed router-owner facts. The caller holds the session lock and consumes
  * them before recording can replace either cached kernel. Exact encoded bytes
@@ -71,8 +77,14 @@ static inline int omega_q36_native_context(OmegaGpuQ36NativeGraph *g,
     if (omega_native_context_lookup(&bits, g->keys, 128, g->count, actual, 4) != OMEGA_OK)
         return -1;
     memcpy(&result, &bits, sizeof result);
+#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
     if (result == 0) return 1;
     if (result < 0 || !g->context) return -1;
+#else
+    uint64_t disposition = UINT64_MAX;
+    (void)omega_leftovers(&disposition, 5, bits, g->context != NULL, 0, 0);
+    if (disposition != 0) return (int)(int64_t)disposition;
+#endif
     /* The generated unique-match resolver bounds result to 1..count<=32. */
     *context = &g->context[(uint64_t)result - 1];
     return 0;
@@ -111,7 +123,13 @@ static inline void omega_q36_native_release(OmegaGpuQ36NativeState *s) {
 }
 static inline void omega_q36_native_graph_release(OmegaGpuQ36NativeGraph *g) {
     if (!g || !g->context) return;
+#if defined(CUDAPP_MIGRATION_PENDING_LEFTOVERS) && CUDAPP_MIGRATION_PENDING_LEFTOVERS
     for (uint64_t i = 0; i < g->count && i < 32; ++i)
+#else
+    /* Iteration invokes host lease effects; Omega decides the bounded extent. */
+    for (uint64_t i = 0, more = 0;
+         omega_leftovers(&more, 6, g->count, i, 0, 0) == OMEGA_OK && more; ++i)
+#endif
         omega_q36_native_release(&g->context[i]);
 }
 #endif

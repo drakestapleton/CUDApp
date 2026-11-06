@@ -1,0 +1,14 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-leftovers-mutants
+python3 tests/leftovers_mutants.py build/leftovers/mutants
+KILLED alphabet
+KILLED punctuation
+KILLED dotdot
+KILLED capacity
+KILLED ordinal
+KILLED acquire
+KILLED poison
+KILLED context
+KILLED release
+LEFTOVERS MUTANTS PASS killed=9
+
+rc=0

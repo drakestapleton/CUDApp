@@ -42,6 +42,26 @@ with suffix `SORT`, `MATH`, `FIT`, `STATS`, `FEATURES`, `QUANTILE`, `PREDICTION`
 No public API or manifest changed. Generate with `sh om/units.sh` using the
 existing pinned compiler and bridge; explicit `OMEGA_UNITS` overrides are honored.
 
+### Binary64 contract — semantic change for review
+
+The canonical successor uses non-contracting IEEE binary64, round-to-nearest,
+with each arithmetic operation rounded separately. Legacy C translation-unit
+builds, including the PENDING oracle and mutation copies, use
+`-ffp-contract=off`; this is a per-object rule, not a global compiler-flag change.
+The algorithm differential binds C's math calls to the canonical Omega routines.
+Its exact-equality exemption list is empty: every captured floating bit pattern,
+including signed zero, is compared without a tolerance. Independent glibc
+comparisons remain in the math sweep and in the C oracle's actual-input report.
+
+This changes legacy AArch64 `-O2` results that previously benefited from implicit
+FMA contraction. The historical measured maximum below describes one exercised
+corpus, not a bound on all inputs. No software FMA or approximate threshold
+comparison is introduced. A contraction-on oracle must be rejected by the same
+floating gate, after which its captured state is replayed with an EI threshold
+at the computed boundary using the canonical, contraction-off oracle.
+The pinned Bridge emits volatile binary64 intermediates in `o_fp`, preserving
+these operation boundaries even when its generated C is optimized.
+
 ## Exercised evidence
 
 `make test-host-policy` covers shape Cartesian boundaries and deterministic
@@ -66,19 +86,22 @@ orders, SHA block/padding boundaries, lengths 0 through 255 and larger inputs.
 `test-cm-decision-differential` links the unchanged direct model unit through
 decision/prediction interceptors and the retained C implementation. It compares
 actions, selected arms, measurement pairs, reasons, refusal/known/borrowed flags
-and sample counts exactly, and records floating-output ULP distances separately.
+and sample counts exactly, and requires zero ULP for every floating output.
 Additional deterministic inputs cover unsupported operations, saturated
 core/pressure classes, empty/partial eligibility, budgets and fallback indices.
 Poisoned-output invalid-argument probes check the cleared prediction contract.
 Assertion-disabled verifier builds are refused, not reported as passing.
 
-The exercised run reported 21,058 decisions and 8,617 predictions, with all
-discrete comparisons equal. This is parity over those exercised inputs, not a
-universal decision-threshold proof and not independently trained-state parity.
-The largest measured floating distance was 5,611,147 ULP in `mean_log2_ps`:
-candidate `0x1.c1fea4ee44ep-6`, C `0x1.c1fea4e8eaf75p-6`. The harness records
-the exact model/features/policy in ignored `build/cm_decision_max.case` so this
-near-zero value can be replayed without regenerating its training fixture.
+Before the canonical contract was fixed, the exercised corpus reported 21,058
+decisions and 8,617 predictions with ordinary policy thresholds agreeing, but
+different floating values under the legacy contraction-on compiler behavior.
+An explicit EI-threshold edge then reproduced a discrete disagreement:
+Omega EI `0x1.8e1b4f17b2c3cp+4`, legacy C `0x1.8e1b4f17b2c2cp+4`.
+The largest historical floating distance was 5,611,147 ULP in `mean_log2_ps`:
+candidate `0x1.c1fea4ee44ep-6`, C `0x1.c1fea4e8eaf75p-6`.
+These are measured differences, not acceptable tolerances. The harness records
+the exact model/features/policy in ignored `build/cm_decision_max.case`; its
+contraction-on negative control regenerates that native-ABI replay fixture.
 
 WolframLanguageEvaluator:
 `a=FromDigits["1c1fea4ee44e",16]2^(-6-4 StringLength["c1fea4ee44e"]);`
@@ -86,11 +109,53 @@ WolframLanguageEvaluator:
 `N[{a,b,a-b,Abs[(a-b)/b]},30]`
 returned absolute difference `1.9467576856113666 * 10^-11` and relative
 difference `7.0880118476913915 * 10^-10`. These describe that measured case;
-they are not a global model-error bound. The C oracle retains normal compiler
-flags; a separately compiled `-ffp-contract=off` oracle is diagnostic only.
-Replaying the captured case with **only** `cm_oracle.c` rebuilt using that flag
-reported zero ULP difference across the complete decision output. This isolates
-contraction as the cause for this case, not for every possible model state.
+they are not a global model-error bound. Replaying the original captured case
+with **only** `cm_oracle.c` rebuilt using `-ffp-contract=off` reported zero ULP
+difference across the complete decision output, isolating contraction in that
+case. The permanent exact gate uses the canonical contract and first-party math,
+not the legacy contracting/glibc combination. This is same-state algorithm
+parity, not independently trained-state parity or an all-input rounding proof.
+
+The canonical gate passed: `checks 127 failures 0`,
+`decisions=21058 predictions=8617 max_numeric_ulp=0`. Its contraction-on
+negative control was rejected at `p_runner_up_better`: Omega
+`0x1.599f4787b55bep-2`, C `0x1.599f4787b52bap-2`, a measured 772 ULP.
+Replaying that state at the EI threshold passed with both EIs exactly
+`0x1.e347c758fe6aap+4` and every captured output at zero ULP.
+
+The C oracle also compared glibc on its actual model math inputs:
+
+| Function | Calls | Maximum glibc distance (ULP) | Worst input bits | Omega bits | glibc bits |
+| --- | ---: | ---: | --- | --- | --- |
+| log2 | 318974 | 1 | 3ff0fbf55f8bbeaf | 3fb60c1ef82f0909 | 3fb60c1ef82f0908 |
+| exp | 14025 | 1 | bfa53cdaf881f386 | 3feeb325c9a99db2 | 3feeb325c9a99db3 |
+| exp2 | 20931 | 1 | 4042815aaf6527ba | 42401e25fcdb3a52 | 42401e25fcdb3a51 |
+| sqrt | 408670 | 0 | — | — | — |
+| erfc | 28050 | 2 | 3fea66d1c80fe481 | 3fcf242eccf286be | 3fcf242eccf286c0 |
+
+These differences are not algorithm-gate exemptions: that gate uses the
+canonical Omega math on both sides. The following separate high-precision
+WolframLanguageEvaluator query selected the Omega bit pattern in all four
+nonzero-distance rows (not a universal rounding proof):
+
+```wl
+fromBits[h_]:=Module[{u=FromDigits[h,16],e,t},
+ e=BitAnd[BitShiftRight[u,52],2047];t=BitAnd[u,2^52-1];
+ (-1)^BitGet[u,63] If[e==0,t 2^-1074,(2^52+t)2^(e-1023-52)]];
+roundedBits[v_]:=Module[{k=Floor[Log[2,v]],s},
+ s=Round[v 2^(52-k)];If[s==2^53,s=s/2;k++];
+ IntegerString[(k+1023)2^52+s-2^52,16,16]];
+rows={{"log2","3ff0fbf55f8bbeaf","3fb60c1ef82f0909","3fb60c1ef82f0908",Log[2,#]&},
+ {"exp","bfa53cdaf881f386","3feeb325c9a99db2","3feeb325c9a99db3",Exp},
+ {"exp2","4042815aaf6527ba","42401e25fcdb3a52","42401e25fcdb3a51",2^#&},
+ {"erfc","3fea66d1c80fe481","3fcf242eccf286be","3fcf242eccf286c0",Erfc}};
+Table[With[{v=N[r[[5]][fromBits[r[[2]]]],200]},
+ {r[[1]],r[[2]],roundedBits[v],N[v,40],r[[3]],r[[4]]}],{r,rows}]
+```
+
+The rounded reference bit patterns returned were respectively
+`3fb60c1ef82f0909`, `3feeb325c9a99db2`, `42401e25fcdb3a52`,
+and `3fcf242eccf286be`.
 
 `test-cm-source-mutants` passed ten attributed source controls: unsupported-op
 aliasing, doubled sample counts, incorrect variance division, reversed quantile,
@@ -103,11 +168,11 @@ assertion-disabled build was refused.
 The binary64 sweep uses 65,536 deterministic random bit patterns per tested
 function, signed special values, subnormal/binary-exponent boundaries and
 neighboring values; exp/exp2/erfc also have targeted dyadic grids. Measured maximum
-ULP distance from this host's glibc was respectively `0,0,0,1,0,0,2` for
-`log,log2,ceil,exp,exp2,sqrt,erfc`. This finite sweep is not a proof of correct
-rounding for all binary64 inputs. `fabs` is implemented but not included in that
-reported seven-function sweep. Floating exception flags and errno compatibility
-are not claimed.
+ULP distance from this host's glibc was respectively `0,0,0,1,0,0,2,0` for
+`log,log2,ceil,exp,exp2,sqrt,erfc,fabs`. `fabs` additionally requires exact
+sign-bit clearing, including NaN payloads. This finite sweep is not a proof of
+correct rounding for all binary64 inputs. Floating exception flags and errno
+compatibility are not claimed.
 
 Wolfram's high-precision checks disagree with glibc at the measured worst exp and
 erfc samples and select the Omega result in both cases:

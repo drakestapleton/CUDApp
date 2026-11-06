@@ -673,7 +673,7 @@ RX_CM_OBJ = $(OUT_DIR)/rx_costmodel.o
 RX_CM_BINDING = src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c
 
 $(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_sort.h src/runtime/rx_cm_math.h src/cudapp_native.h | $(OUT_DIR)
-	$(CC) $(CFLAGS) -c -o $@ src/runtime/rx_costmodel.c
+	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ src/runtime/rx_costmodel.c
 	@if nm -u $@ | grep -E 'rx_gen_|aienos_cap_|rx_caproot_|rx_capadmin_|rx_world_|mmap|mprotect|fork|exec|dlopen|system' ; then \
 		echo "rx_costmodel.o references an operation a cost model must not have"; \
 		rm -f $@; exit 1; fi
@@ -692,7 +692,7 @@ test-costmodel: $(RX_CM_UNIT)
 	    src/runtime/rx_costmodel.c > $$dir/rx_costmodel.c; \
 	  if cmp -s src/runtime/rx_costmodel.c $$dir/rx_costmodel.c; then \
 	    echo "mutant restore-op-clamp: sed changed nothing"; exit 1; fi; \
-	  $(CC) $(CFLAGS) -DCUDAPP_MIGRATION_PENDING_C_CM_FEATURES=1 -c -o $$dir/rx_costmodel.o $$dir/rx_costmodel.c; \
+	  $(CC) $(CFLAGS) -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_CM_FEATURES=1 -c -o $$dir/rx_costmodel.o $$dir/rx_costmodel.c; \
 	  $(CC) $(CFLAGS) -o $$dir/unit tests/runtime/rx_costmodel_unit.c $$dir/rx_costmodel.o $(DS_SHA_SRC) $(RX_CM_BINDING) -lm; \
 	  rc=0; $$dir/unit refuse > $$dir/out.txt 2> $$dir/err.txt || rc=$$?; \
 	  if [ $$rc -eq 0 ] || ! grep -q unsupported-op-not-aliased-to-matvec $$dir/err.txt; then \

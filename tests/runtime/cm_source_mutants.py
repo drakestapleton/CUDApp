@@ -40,9 +40,9 @@ with tempfile.TemporaryDirectory(prefix='cudapp-cm-mutants-') as temporary:
         subprocess.run(cc + flags + list(extra) + ['-c', str(source), '-o', str(obj)], check=True)
         return str(obj)
     originals = {name: compile_object(root / 'src' / ('cudapp_om_' + name + '.c'), name) for name in units}
-    common = [compile_object(root / path, name) for path, name in (
-        ('src/runtime/rx_costmodel.c', 'model'), ('src/sha256.c', 'sha'),
-        ('tests/runtime/cm_oracle.c', 'oracle'))]
+    common = [compile_object(root / 'src/runtime/rx_costmodel.c', 'model', ['-ffp-contract=off']),
+              compile_object(root / 'src/sha256.c', 'sha'),
+              compile_object(root / 'tests/runtime/cm_oracle.c', 'oracle', ['-ffp-contract=off'])]
     tests = {name: compile_object(root / 'tests/runtime' / (name + '.c'), name) for name in (
         'rx_costmodel_unit', 'cm_blob_unit', 'cm_math_unit')}
     verifier = compile_object(root / 'tests/runtime/cm_decision_diff.c', 'decision-verifier', ['-DCM_DIFF_REPLAY_MAIN'])

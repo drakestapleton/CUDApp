@@ -17,7 +17,7 @@ CC=${CC:-cc}
 # The mutant has to run. The kill is the named assertion, not a compile error.
 cflags="-std=gnu11 -Wall -Wextra -Werror -Wno-unused-function -D_GNU_SOURCE -O2 -Isrc -Itools/dagsim"
 $CC $cflags -c -o "$tmp/dagsim.o" "$tmp/dagsim.c"
-$CC $cflags -c -o "$tmp/rx_costmodel.o" src/runtime/rx_costmodel.c
+$CC $cflags -ffp-contract=off -c -o "$tmp/rx_costmodel.o" src/runtime/rx_costmodel.c
 # CUDA++ has no src/omega_om_units.c; src/sha256.c is sha256_hash on every host (Makefile DS_SHA_SRC).
 sha=src/sha256.c
 $CC $cflags -o "$tmp/unit" tests/dagsim/dagsim_unit.c "$tmp/dagsim.o" "$tmp/rx_costmodel.o" "$sha" src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c -Wl,--wrap=rx_cm_predict -lm

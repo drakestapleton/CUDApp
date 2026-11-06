@@ -34,8 +34,6 @@ int oracle_cm_predict(const RxCostModel *, const RxCmFeatures *, uint32_t, RxCmP
 static unsigned decisions, predictions;
 static uint64_t max_ulp;
 static void numeric(const char *field, double a, double b) {
-    if (isnan(a) || isnan(b)) { assert(isnan(a) && isnan(b)); return; }
-    if (!isfinite(a) || !isfinite(b)) { assert(a == b); return; }
     uint64_t x, y;
     memcpy(&x, &a, 8); memcpy(&y, &b, 8);
     x = x >> 63 ? ~x : x | UINT64_C(0x8000000000000000);
@@ -49,6 +47,14 @@ static void numeric(const char *field, double a, double b) {
         if (active_features) worst.features = *active_features;
         if (active_policy) worst.policy = *active_policy;
         worst.kind = active_kind; worst.arm = active_arm; worst.allow = active_allow;
+    }
+    if (distance != 0) {
+        FILE *output=fopen("build/cm_decision_max.case","wb");
+        assert(output && fwrite(&worst,sizeof worst,1,output)==1);
+        assert(fclose(output)==0);
+        fprintf(stderr,"CM DECISION floating differential FAIL field=%s candidate=%a oracle=%a ulp=%llu\n",
+                field,a,b,(unsigned long long)distance);
+        abort();
     }
 }
 static void prediction(const RxCmPrediction *a, const RxCmPrediction *b) {
@@ -149,11 +155,6 @@ __attribute__((constructor)) static void random_cases(void) {
 __attribute__((destructor)) static void report(void) {
     printf("CM DECISION differential PASS decisions=%u predictions=%u max_numeric_ulp=%llu field=%s candidate=%a oracle=%a\n",
            decisions,predictions,(unsigned long long)max_ulp,worst_field,worst_a,worst_b);
-    if (max_ulp && !getenv("CM_DIFF_REPLAY")) {
-        FILE *output=fopen("build/cm_decision_max.case","wb");
-        assert(output && fwrite(&worst,sizeof worst,1,output)==1);
-        assert(fclose(output)==0);
-    }
 }
 #ifdef CM_DIFF_REPLAY_MAIN
 int main(void) { return 0; }

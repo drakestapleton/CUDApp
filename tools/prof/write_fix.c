@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Independent writer for the built-in profiler fixture. The Omega `fix` mode
  * must produce these same 176 bytes. It does not open a device. */
+#define _POSIX_C_SOURCE 200809L
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static void put_u32(uint8_t *p, uint32_t v) {
     p[0] = (uint8_t)v;
@@ -50,7 +53,9 @@ int main(int argc, char **argv) {
     put_u64(b + 128, 1001000000000ull);
     put_u64(b + 144, 1002000000000ull);
     put_u64(b + 160, 1003000000000ull);
-    f = fopen(argv[1], "wb");
+    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    f = fd < 0 ? NULL : fdopen(fd, "wb");
+    if (f == NULL && fd >= 0) close(fd);
     if (f == NULL) {
         return 5;
     }

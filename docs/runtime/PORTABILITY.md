@@ -40,6 +40,14 @@ r2 #972) adds 5 `CHIP_SPECIFIC` rows (`src/omega_bw_hazard.{c,h}`, omega-mv#554;
 `omega_gpu_moe_api.h`, `omega_gpu_platform.h`, `omega_gpu_serving.{c,h}` and `omega_gpu_session.h` become `CHIP_SPECIFIC`,
 `omega_gpu_scan_ref.c` becomes `PORTABLE` (section 3). At that sync, the totals were 120 `CHIP_SPECIFIC`, 11 `PORTABLE`; 13
 `FREESTANDING_PROVEN`, 98 `NO_HOSTED_INCLUDE`, 17 `HOSTED_LIBC`, 3 `LINUX_DRIVER`. Command to recount: section 7.
+The four bf16 training GEMM rows added by omega-mv#596 after train r5 #996
+are carried here as `omega_blackwell_codegen_tgemm.{c,h}` and
+`omega_gpu_tgemm_api.{c,h}`. Omega's corresponding inventory at f0cc9d6a53b7
+has 132 rows; that total is not CUDApp's separate Ampere-inclusive inventory.
+The Omega migration inventory also includes API-view, graph-record, GDN
+admission, Blackwell field/policy and platform-oracle headers. Host-math's
+hosted Omega ABI shell is `HOSTED_LIBC`; its numeric operations being
+OS-independent does not make its failure-handling includes freestanding.
 
 `make test-runtime-portability` (host only, no compiler, no GPU) checks the table against the tree: every file has a row,
 every row names a real file, a `PORTABLE` row's file includes no Linux or NVRM header and no Blackwell header, and the

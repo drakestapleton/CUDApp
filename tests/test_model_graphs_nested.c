@@ -6,6 +6,8 @@
 #include "model_graphs_nested_objects.h"
 #include "omega_gpu_cmdlist_native.h"
 #include "cudapp_native.h"
+#include <fcntl.h>
+#include <unistd.h>
 static OmegaGpuCmdList *list;
 static FILE *wire;
 void *mg_fixture_list(void){return list;}
@@ -32,7 +34,9 @@ int main(int argc,char **argv){
     if(argc!=9)return 2;
     unsigned family=(unsigned)strtoul(argv[1],NULL,0);
     MgCase c={.seed=UINT64_C(0x900000000),.mode=(uint32_t)strtoul(argv[2],NULL,0),.attn=(uint32_t)strtoul(argv[3],NULL,0),.heads=(uint32_t)strtoul(argv[4],NULL,0),.flags=(uint32_t)strtoul(argv[5],NULL,0),.pos=(uint32_t)strtoul(argv[6],NULL,0),.layers=(uint32_t)strtoul(argv[7],NULL,0)};
-    if(!(wire=fopen(argv[8],"wb")))return 2;
+    int fd=open(argv[8],O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC,0600);
+    if(fd<0)return 2;
+    if(!(wire=fdopen(fd,"wb"))){close(fd);return 2;}
     memset(&fk,0,sizeof(fk));g_plat.queue_submit=capture_submit;
     if(install() || omega_gpu_cmdlist_create(4096,&list))return 3;
     int rc=family==36?mg_q36_run(&c):family==38?mg_q38_run(&c):mg_decode_run(&c);

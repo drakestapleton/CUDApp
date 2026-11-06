@@ -51,9 +51,10 @@ rename() {
   src=$1
   dst=$2
   p=$3
-  sed -e "s/\\bombr_enter\\b/${p}_ombr_enter/g" \
-      -e "s/\\bombr_trap\\b/${p}_ombr_trap/g" \
-      -e "s/\\bombr_no_entry\\b/${p}_ombr_no_entry/g" \
+  # Symbols immediately following an escaped newline have no regex word boundary.
+  sed -e "s/ombr_enter/${p}_ombr_enter/g" \
+      -e "s/ombr_trap/${p}_ombr_trap/g" \
+      -e "s/ombr_no_entry/${p}_ombr_no_entry/g" \
       -e "s/\\bomega_native_context_create\\b/${p}_context_create/g" \
       -e "s/\\bomega_native_context_destroy\\b/${p}_context_destroy/g" \
       "$src" > "$dst"

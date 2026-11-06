@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 #ifdef NDEBUG
 #error "cm_decision_diff requires enabled assertions"
 #endif
@@ -59,7 +61,9 @@ static void numeric(const char *field, double a, double b) {
         worst.kind = active_kind; worst.arm = active_arm; worst.allow = active_allow;
     }
     if (distance != 0) {
-        FILE *output=fopen("build/cm_decision_max.case","wb");
+        int fd=open("build/cm_decision_max.case",O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC,0600);
+        FILE *output=fd<0?NULL:fdopen(fd,"wb");
+        if(!output&&fd>=0)close(fd);
         assert(output && fwrite(&worst,sizeof worst,1,output)==1);
         assert(fclose(output)==0);
         fprintf(stderr,"CM DECISION floating differential FAIL field=%s candidate=%a oracle=%a ulp=%llu\n",
@@ -147,10 +151,13 @@ static uint32_t random_word(void) {
 }
 __attribute__((constructor)) static void random_cases(void) {
     numeric("NaN class",nan("1"),nan("2"));
-    const char *replay = getenv("CM_DIFF_REPLAY");
+    const char *replay = getenv("CM_DIFF_REPLAY_FD");
     if (replay) {
         struct DiffCase c;
-        FILE *input=fopen(replay,"rb");
+        assert(strcmp(replay,"3")==0);
+        int fd=dup(3);
+        FILE *input=fd<0?NULL:fdopen(fd,"rb");
+        if(!input&&fd>=0)close(fd);
         assert(input && fread(&c,sizeof c,1,input)==1);
         assert(fclose(input)==0);
         if (c.kind==1) {

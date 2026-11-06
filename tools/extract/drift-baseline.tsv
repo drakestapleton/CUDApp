@@ -30,11 +30,15 @@
 # The nine rows below that CUDApp#266 synced byte-equal from omega d3d1b1bc7e3b are that commit's blobs (src/omega_blackwell_codegen.h, src/omega_path_check.h, src/runtime/rx_costmodel.{c,h}, tests/bw_warp_sim{,_k,_pa}.h, tests/runtime/rx_costmodel_unit.c, tests/test_omega_gpu_decode_attn_maxpos.c).
 # CUDA++ differs only in the SPDX line (Apache-2.0 WITH LLVM-exception, #263); any later omega edit to them must still fail.
 # mk/omega-gpu-engine.mk is omega 37fa50340345's blob (omega-mv #966). #966 swaps omega's freestanding C SHA-256 (src/omega_sha256_fs.c, test-sha256-fs-parity) for the bridge's freestanding Omega binding (src/omega_om_units_fs.c, test-sha256-freestanding-parity). CUDA++ never carried that C path: its GPU_FS_SRCS link src/sha256.c beside CUDAPP_FS_BINDING from its own om/units.sh at bridge 3dc4a00e, so the delta is not ported here; adopting the Omega SHA-256 binding needs that bridge pin moved. Any later omega edit to the file must still fail.
+# 2026-11-06: differ on purpose after the Omega migration (CUDApp #280): docs/runtime/PORTABILITY.md, docs/runtime/portability_table.tsv, src/omega_bw_hazard.c, src/omega_fp8_slot_table.c, src/omega_gpu_fp8_slots.c, tools/dagsim/dagsim.c; Omega blobs are f0cc9d6a53b7's, so any later Omega edit to them is still red. The docs keep the separate CUDApp Ampere-inclusive inventory and carry Omega's applicable training-GEMM rows.
 Makefile	7e1426b3be2281979d00ac550a9397f913a38c30
 docs/runtime/API.md	9f5f34321bfb3f8623623ca9a174b68e3ff3c3ed
-docs/runtime/PORTABILITY.md	7b923a91e12f7f2e5c5954d80293517e19e8c959
+docs/runtime/PORTABILITY.md	fb0d5f0ff5278a662934f79027aa5f398d9a4abe
 docs/runtime/omega_runtime_api.manifest	d02c0ebe0b6df7d4d8f52b51942dccd76cc8ec2d
-docs/runtime/portability_table.tsv	7d927220d172fafa6135fbb9069683c5a3030119
+docs/runtime/portability_table.tsv	798227e5bcf362a92cd303bc817b15a89738935d
+src/omega_bw_hazard.c	d26ff2bae87f3c0837a4343d318dabf865339039
+src/omega_fp8_slot_table.c	ca4acd47b8d51a8ff8ebd9d0358799497594ba31
+src/omega_gpu_fp8_slots.c	839f466a09f20db060d6badab70776cfdf9cbc93
 evidence/C3-GEMM/01-host-only.log	c581c5126718bc24ef10ed1b1637528018a260e5
 evidence/C3-GEMM/02-sim.log	fd97da9f29871abfc16fb2ed938c38a4d3c2314f
 evidence/C3-GEMM/README.md	0e730a9bf2072f34d59d9cdc1961f4112a7ff90e
@@ -408,7 +412,7 @@ tests/test_omega_gpu_platform.c	38ff95b817b165611a4fadf036f37d7144d9bc2a
 tests/test_omega_gpu_platform_linux.c	eb9b9be4cecb87d5f17cb8b79c283f26a5a805dd
 tests/test_omega_gpu_session_platform.c	b02defe6fbfbe51494d25450809bffa65e8fda7b
 tests/test_omega_gpu_wait.c	0d4cc10d93af3dd9c7cd5590e934d133fe5a27b7
-tools/dagsim/dagsim.c	b7187d4450ea026881516638e65e21db3f4e6a78
+tools/dagsim/dagsim.c	359a0243779794b1b18059e2e8e6abc68533ed5f
 tools/dagsim/dagsim.h	a409b588ba3688ecf0318e10d25f3b1f3a911dbd
 tools/dagsim/dagsim_cli.c	fb279f9040cb33d051bebf8f9d1288b9be325230
 tools/gpu_engine_backend_mutations.sh	443b3585a8748715ea63b9e2a3ed848aae8ecc89

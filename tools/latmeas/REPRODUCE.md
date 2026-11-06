@@ -61,6 +61,8 @@ initialization and emission, and the preceding tensor instruction's stall.
 The host self-test rejects a catalog pointed at a neighboring line and source
 mutants that change a NOP stall to zero or append a digit to its value. These
 controls use temporary source copies; they do not edit the builders.
+The C-emitter citations track the integration header additions as well; moving
+a source line requires refreshing its catalog line, not relaxing the match.
 
 ## What this does not measure
 

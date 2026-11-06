@@ -24,7 +24,7 @@ $CC $TOM_CFLAGS -o "$tmp/af_om" $SRC $STUB src/cudapp_om_ampfam.c
 one() { # BIN CASE: the report of one run
   rm -f "$tmp/tr"
   rc=0
-  AMPFAM_CASE=$2 AMPFAM_TRACE="$tmp/tr" "$1" > "$tmp/o" 2> "$tmp/e" || rc=$?
+  AMPFAM_CASE=$2 AMPFAM_TRACE_FD=3 "$1" 3>> "$tmp/tr" > "$tmp/o" 2> "$tmp/e" || rc=$?
   echo "case $2"
   sed 's/^/  out /' "$tmp/o"
   sed 's/^/  err /' "$tmp/e"

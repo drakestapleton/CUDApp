@@ -10,7 +10,7 @@
  *
  * Built twice (mk/omega-gpu-engine.mk test-gpu-platform-aien-effects): against native/aiengpu/effects.om through the
  * generated bridge library (CUDAPP_MIGRATION_PENDING_C_PLATFORM_AIEN_EFFECTS=0) and against the C system calls
- * (=1). The trace written to AIEN_FX_TRACE (every ioctl's bytes in and out, then every nonzero 32-byte line of the
+ * (=1). The trace written to descriptor 3 when AIEN_FX_TRACE_FD=3 (every ioctl's bytes in and out, then every nonzero 32-byte line of the
  * fake device: pushbuffer, ring, USERD GPPut, doorbell word) must be byte-identical between the two builds.
  * It also checks: every object freed, the channel destroyed, and no mapping of the device left in /proc/self/maps
  * after device_close; in the Omega build, an operator request (AGPU_BOOT) is refused by the unit with -22 and never
@@ -260,11 +260,9 @@ static int run(void) {
     }
 #endif
     t_str("--- closed\n"); trace_device();
-    const char *tp = getenv("AIEN_FX_TRACE");
+    const char *tp = getenv("AIEN_FX_TRACE_FD");
     if (tp) {
-        const int t = open(tp, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
-        if (t < 0 || write(t, tbuf, tlen) != (ssize_t)tlen) { perror("trace"); return 2; }
-        close(t);
+        if (strcmp(tp, "3") != 0 || write(3, tbuf, tlen) != (ssize_t)tlen) { perror("trace"); return 2; }
     }
     return ok ? 0 : 1;
 }

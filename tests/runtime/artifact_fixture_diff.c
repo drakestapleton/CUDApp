@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 int artifact_c_export(const OmegaNativeArtifact *, const char *, char *, char *, size_t);
 int artifact_c_admit(const char *, const char *, char *, char *, size_t);
 int artifact_c_snapshot(const char *, const char *, char *, OmegaNativeArtifactSnapshot *, char *, size_t);
@@ -27,7 +28,7 @@ int artifact_diff_export(const OmegaNativeArtifact *a,const char *p,char *id,cha
  const char *cp=p;
  if(p && strlen(p)<sizeof alt) { strcpy(alt,p); size_t z=strlen(alt); if(z)alt[z-1]='~'; cp=alt;
   for(unsigned i=0;i<8;++i) {snprintf(x,sizeof x,"%s%s",p,suffix[i]);snprintf(y,sizeof y,"%s%s",cp,suffix[i]);unlink(y);
-   struct stat st; if(lstat(x,&st)==0) {FILE *f=fopen(y,"wb");if(!f)exit(91);fclose(f);}
+   struct stat st; if(lstat(x,&st)==0) {int fd=open(y,O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC,0600);if(fd<0)exit(91);close(fd);}
   }
  }
  int c=artifact_c_export(a,cp,id?cid:NULL,ce,sizeof ce);

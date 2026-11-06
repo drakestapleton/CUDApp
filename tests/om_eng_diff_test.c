@@ -14,6 +14,7 @@
  * none. ENG_TRACE_FLIP flips the answer of one unit call (negative control): the comparison must then fail.
  * Host only: no device is opened; the session, attention and matmul entry points are recording stubs below. */
 #include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -497,7 +498,9 @@ static void trace_reserve(void) {
     if (below(3) == 0) { snprintf(envb, sizeof envb, "%" PRIu64, pick()); e = envb; }
     uint64_t avail = below(3) ? below(1ull << 27) : pick() & 0xffffffffffffull;
     int has_line = below(8) != 0;
-    FILE *f = fopen(g_meminfo, "w");
+    int fd = open(g_meminfo, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    FILE *f = fd < 0 ? NULL : fdopen(fd, "w");
+    if (!f && fd >= 0) close(fd);
     if (!f) { fprintf(stderr, "cannot write %s\n", g_meminfo); exit(2); }
     fprintf(f, "MemTotal: 131072000 kB\n");
     if (has_line) fprintf(f, "MemAvailable: %" PRIu64 " kB\n", avail);
@@ -687,7 +690,9 @@ static int compare(const char *pa, const char *pb) {
 int main(int argc, char **argv) {
     if (argc == 4 && strcmp(argv[1], "--compare") == 0) return compare(argv[2], argv[3]);
     if (argc != 2) { fprintf(stderr, "usage: %s transcript | --compare om C\n", argv[0]); return 2; }
-    g_out = fopen(argv[1], "w");
+    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    g_out = fd < 0 ? NULL : fdopen(fd, "w");
+    if (!g_out && fd >= 0) close(fd);
     if (!g_out) return 2;
     snprintf(g_meminfo, sizeof g_meminfo, "/tmp/om_eng_diff_meminfo.%ld", (long)getpid());
     if (omega_gpu_platform_linux_test_set_meminfo(g_meminfo) != 0) return 2;

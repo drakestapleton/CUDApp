@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static int words(BlackwellIRProgram *p, unsigned op, unsigned d, unsigned a,
                  int guard, uint8_t *code, size_t *bytes) {
@@ -27,7 +29,9 @@ static int words(BlackwellIRProgram *p, unsigned op, unsigned d, unsigned a,
 static int golden(BlackwellIRProgram *p, const char *dump) {
     uint8_t code[16384];size_t bytes=0;
     unsigned regs[][2]={{9,2},{0,0},{13,27},{254,253}};
-    FILE *f=dump?fopen(dump,"wb"):NULL;
+    int fd=dump?open(dump,O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC,0600):-1;
+    FILE *f=fd<0?NULL:fdopen(fd,"wb");
+    if(!f&&fd>=0)close(fd);
     if(dump&&!f)return 0;
     for(unsigned op=66;op<=67;op++)for(unsigned j=0;j<4;j++)for(int g=0;g<3;g++) {
         unsigned d=regs[j][0],a=regs[j][1];uint32_t w[4];

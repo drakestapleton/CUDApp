@@ -21,6 +21,10 @@ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make
 ```
 
 A script prints `NOT_RUN` and exits 3 when `OMEGA_OMC` is not the pinned build.
+Fixture outputs are created with mode `0600`. The ampfam driver supplies its trace
+on descriptor 3 (`AMPFAM_TRACE_FD=3`), rather than allowing the test stub to open
+an environment-supplied path. The corpus walker classifies an opened `O_PATH`
+descriptor with `fstat`, not a path checked before a later access.
 
 ## own30b_prof (`tools/own30b_decode_profile.c`, switch `..._TOOLS_OWN30B`)
 

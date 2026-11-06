@@ -311,7 +311,7 @@ static size_t diff_u32(const uint32_t *a, const uint32_t *b, size_t n, size_t *f
 
 static double now_s(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return (double)t.tv_sec + t.tv_nsec / 1e9; }
 
-#define SIM_MAX 270000u /* the largest length the simulator tiers run: a 270000-key pair sort takes seconds, not minutes */
+#define SIM_MAX 270000u /* the largest length the simulator tiers run: u32 prefix plus both sorts at this length take about 140 s */
 
 /* u32 prefix sum and the two sorts of length n through the simulator; the number of wrong calls (each reported) */
 static size_t sim_u32_one(SimCtx *c, size_t n, int kind, uint32_t *k, uint32_t *y, uint32_t *ref, uint32_t *kv) {

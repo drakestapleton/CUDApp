@@ -20,7 +20,7 @@ UNITS = ['regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_par
          'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block', 'cg_vecadd', 'cg_bind',
          'bw_hazard', 'bw_hazard_dec']
 FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c',
-         'src/cudapp_om_bw_identity.c', 'src/cudapp_freest_bw_scalar.c', 'src/cudapp_om_bw_cpui.c',
+         'src/cudapp_om_bw_identity.c', 'src/cudapp_freest_bw_scalar.c', 'src/cudapp_freest_fixture_verify.c', 'src/cudapp_om_bw_cpui.c',
          'src/cudapp_om_bw_cpuf16.c', 'src/cudapp_om_bw_cpubf16.c', 'src/cudapp_om_bw_shape.c',
          'src/cudapp_om_bw_name.c', 'src/cudapp_om_cg_pack_len.c', 'src/cudapp_om_cg_pack_h.c',
          'src/cudapp_om_cg_sentin.c']

@@ -92,3 +92,14 @@ and freestanding fallback are default-off in hosted builds; C still marshals
 records, pointers and external effects. The runtime-view converter remains
 pending omega-bridge #71 and #73. Chip qualification is NOT_RUN, and no roadmap
 row status is upgraded.
+
+## 2026-11-06: codegen fixture verification (pending integration)
+
+The seven exported codegen fixture verifiers now call the seeded scalar unit
+`om/codegen/fixture_verify.om`, including freestanding builds. Golden-word
+comparisons, refusal/error arithmetic, BF16 relations and control-word assembly
+are Omega-owned; C only invokes encoders and marshals their words. Host
+differentials, seven killed Omega mutants, a corrupted-golden red control and
+the focused hosted/freestanding gates are EXERCISED in
+`evidence/codegen-fixture-verify-20261106/README.md`. Chip qualification is
+NOT_RUN. No roadmap status row is upgraded.

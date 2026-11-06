@@ -74,7 +74,7 @@ for u in $UNITS $PURE_UNITS; do
   file=cudapp_om_$name.c
   profile=
   case "$name" in
-    revision|epoch|f16|bw_scalar)
+    revision|epoch|f16|bw_scalar|fixture_verify)
       frontend=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN

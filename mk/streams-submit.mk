@@ -5,8 +5,8 @@ CUDAPP_MIGRATION_PENDING_C_SUBMIT ?= 0
 CFLAGS += -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=$(CUDAPP_MIGRATION_PENDING_C_SUBMIT)
 CARRIED_HOST_TESTS += test-streams-submit
 .PHONY: test-streams-submit test-streams-submit-mutants
-STREAMS_SUBMIT_DEPS = nvrm/submit_test.c nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS)
-STREAMS_SUBMIT_LINK = src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS)
+STREAMS_SUBMIT_DEPS = nvrm/submit_test.c nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
+STREAMS_SUBMIT_LINK = src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
 $(OUT_DIR)/streams-submit-omega: $(STREAMS_SUBMIT_DEPS)
 	@mkdir -p $(OUT_DIR)
 	$(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -UCUDAPP_MIGRATION_PENDING_C_SUBMIT -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -o $@ nvrm/submit_test.c src/cudapp_om_nvrm_transport.c $(STREAMS_SUBMIT_LINK)

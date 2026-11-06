@@ -1,0 +1,50 @@
+[
+  {
+    "name": "resolve",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-resolve-om",
+    "rc": 0,
+    "final": "dagsim resolve Omega differential: PASS"
+  },
+  {
+    "name": "dagsim",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim",
+    "rc": 0,
+    "final": "omega mutants: 5 killed"
+  },
+  {
+    "name": "parse",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-parse-om",
+    "rc": 0,
+    "final": "gcov: oracle and unpacker branch receipts written"
+  },
+  {
+    "name": "corpus",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-corpus-om",
+    "rc": 0,
+    "final": "dagsim corpus: PASS (1200 cases, driver and flipped-record red controls)"
+  },
+  {
+    "name": "tools",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j1 test-tools-om",
+    "rc": 0,
+    "final": "tools-om artexp: PASS (differential 116 cases, 266 files, negative control, 10 mutants killed)"
+  },
+  {
+    "name": "costmodel",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-costmodel",
+    "rc": 0,
+    "final": "mutant restore-op-clamp: killed by unsupported-op-not-aliased-to-matvec (exit 1)"
+  },
+  {
+    "name": "regenerate",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh om/units.sh --check",
+    "rc": 0,
+    "final": "PASS portable Omega units regenerate byte for byte"
+  },
+  {
+    "name": "crumb",
+    "command": "bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh -c crumb compile . && crumb verify .",
+    "rc": 0,
+    "final": "crumb verify: OK: 44 crumbs current"
+  }
+]

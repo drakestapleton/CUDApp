@@ -143,3 +143,10 @@ retain integrated cost-model/SHA providers alongside dag_parse/dag_fmt.
 CLI25/0, six parser mutants killed, unit203/0, five scheduler mutants killed,
 corpus1200/0 with driver/record-flip negatives, and the full focused tools family
 including artexp116 cases/266 files/10 mutants. Final: `crumb verify: OK: 89 crumbs current`.
+
+#341 `56baf91039954a14fdf47ce4fe91b5e61cb67e02`: `/tmp/integ/6a-341.log/.rc`
+returned0. Full units regeneration byte-identical; resolver4498/0, nine mutants,
+red and missing-scheduler controls passed. Parser/scheduler/corpus/tools and
+cost-model families passed. Final `crumb verify: OK: 90 crumbs current`.
+Merge retained integrated runtime/SHA providers in all standalone oracle links
+and combined dag_res/dag_diff roots rather than dropping earlier registrations.

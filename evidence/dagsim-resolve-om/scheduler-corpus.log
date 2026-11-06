@@ -1,0 +1,16 @@
+sh tests/dagsim/corpus_gate.sh
+PASS n=1200 bad=0 dir=/tmp/dagsim-corpus-ztz3dy1i kinds={'case_chain': 200, 'case_bw': 200, 'case_buf': 200, 'case_cycle': 200, 'case_launch': 200, 'case_barrier': 200}
+DIFF case 0 case_chain rc 0 vs 0
+{
+  "schema": "oev1", "tool": "dagsim", "file": "/tmp/dagsim-corpus-2gf3k8qu/c0.oev",
+  "machine": "t", "build_sha": "0000000000000000000000000000000000000000",
+  "calibration": {"id": "c", "taken_day": 20745, "valid_days": 3650, "load1": 0, "src": "synthetic"},
+  "asof_day": 20746,
+  "status": "OK", "reason": "",
+  "provenance": ["synthetic", "specified"], "synthetic": 1, "offline": true, "gpu_ex
+---
+
+FAIL n=50 bad=5 dir=/tmp/dagsim-corpus-2gf3k8qu kinds={'case_chain': 1, 'case_bw': 1, 'case_buf': 1, 'case_cycle': 1, 'case_launch': 1, 'case_barrier': 0}
+corpus driver negative control: caught (rc=1)
+negative control: flipped record caught (omega.out)
+dagsim corpus: PASS (1200 cases, driver and flipped-record red controls)

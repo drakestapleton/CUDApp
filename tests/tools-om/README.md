@@ -192,8 +192,8 @@ the lowercase hex range, the power-of-two loop and the heads bound.
 
 `CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE` is default OFF. Enabling it selects the former parser and
 formatting decisions as the differential oracle; it is not a runtime fallback. The normal C shell reads
-files, copies typed fields/spans, handles argv and prints. The existing post-parse `ds_find_op/res` scans
-and evaluator integration remain unchanged.
+files, copies typed fields/spans, handles argv and prints. Post-parse lookup, resolution and diff
+decisions use the separate resolver units described below; the scheduler remains `dag_eval.om`.
 
 The parser ABI is `uchar[1048576]`, input length, `ulong[16384]`, and `uchar[256]` error text. Header
 words 0–39 and the record map are documented at the top of `om/tools/dag_parse.om`; scratch starts at
@@ -233,3 +233,51 @@ The runner checks the compiler pin and writes oracle/unpacker annotated branch d
 full C parser/evaluator/formatting oracle. It requires the driver to reject `/bin/true` and uses the
 shared `tom_flip` control to change one digit of the last matching CLI output record and require `cmp`
 to reject it.
+
+## dagsim resolve and diff (`dag_res.om`, `dag_diff.om`)
+
+`CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE` defaults to OFF. Setting it to 1 selects the
+former C resolution, lookup, counterfactual and diff code only as a migration oracle.
+The default resolver computes provenance refusals, mode-specific capacity/time,
+prediction features and intervals, calibration expiry, energy header decisions and
+resource doubling in `dag_res.om`. `dag_diff.om` owns conservation counts, removal
+evidence checks, shared-work double counting and removed-time accounting.
+
+The host shell in `tools/dagsim/dagsim_resolve.h` copies typed fields, dispatches the
+existing costmodel/libm calls, and formats refusal text from the returned code/index.
+No costmodel Omega unit exists at this stack's base. `rx_cm_predict`,
+`rx_cm_t_quantile` and `pow` remain explicit host dependencies; prediction acceptance,
+feature arithmetic, confidence-quantile defaulting and time conversion are Omega.
+The scheduler's dependency/buffer packing remains a pure fixed-offset layout copy;
+header decisions, resolved op values and resource selection do not remain in C.
+
+`dag_res` takes a mode and four fixed views: model `ulong[16384]`, scheduler/scratch
+`ulong[8192]`, text `uchar[131072]`, and controls `ulong[64]`. Each model half has
+8192 numeric words and 65536 name bytes. The source headers describe record offsets.
+Modes 0/1/2/3 resolve, double a resource, find an ID, and stream a changed-ID list.
+Resolve returns 1/2/3 when it requests prediction/quantile/pow, 4 for a refusal,
+and 0 when packed results are ready. The diff unit composes the resolver's shared
+lookup/capacity helpers and takes model, text and controls. Changed lists stream
+in 256-byte chunks; no new whole-list limit or C tokenization is introduced.
+
+```
+export OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=~/work/cudastack/omega-bridge
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-resolve-om
+```
+
+`resolve_diff.c` derives its partition from the guarded C branches: provenance,
+every resolver refusal, modes -1/0/+1, calibration expiry before/at/after the
+boundary, prediction refusal flags, valid/invalid quantiles, resource kinds,
+all seven removal reasons crossed with ref/proof/consumer/changed evidence,
+missing/duplicate/fabricated records, streamed token boundaries, absent/matching
+lookups, and zero/maximum record counts. It compares status, refusal strings,
+packed words, feature bytes, counterfactual results and the full diff result.
+The runner compiles the C oracle at `-O0 --coverage`, records annotated branch
+data, requires a corrupt-result red control, and compiles nine behavioral mutants.
+It also requires a default build without `cudapp_om_dag_eval.c` to fail linkage,
+and checks that the default object has a strong Omega scheduler reference and
+no `ds_eval_c` symbol. The C scheduler and its computational helpers are compiled
+only with the existing `CUDAPP_MIGRATION_PENDING_C_TOOLS` oracle flag; there is
+no weak-symbol fallback.
+Evidence and the external dependency inventory are in `evidence/dagsim-resolve-om/`.
+These are host checks, not chip qualification.

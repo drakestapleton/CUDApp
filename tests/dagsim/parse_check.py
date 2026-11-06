@@ -14,7 +14,7 @@ flags=['-std=gnu11','-O2','-ffp-contract=off','-D_GNU_SOURCE','-Isrc','-Itools/d
 exports=['ds_status_name','ds_prov_name','ds_day_from_date','ds_find_op','ds_find_res','ds_parse_text','ds_parse_file','ds_resolved_pack','ds_eval_c','ds_eval','ds_eval_interval','ds_counterfactual','ds_diff_models']
 run([cc,*flags,'--coverage','-DCUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE=1',*[f'-D{x}=oracle_{x}' for x in exports],'-c','tools/dagsim/dagsim.c','-o',out/'oracle.o'])
 run([cc,*flags,'--coverage','-c','tools/dagsim/dagsim.c','-o',out/'parser.o'])
-sources=['tests/dagsim/parse_diff.c',out/'oracle.o',out/'parser.o','src/runtime/rx_costmodel.c','src/sha256.c','src/cudapp_om_dag_eval.c','src/cudapp_om_dag_parse.c','src/cudapp_om_dag_fmt.c']
+sources=['tests/dagsim/parse_diff.c',out/'oracle.o',out/'parser.o','src/runtime/rx_costmodel.c','src/sha256.c','src/cudapp_om_dag_eval.c','src/cudapp_om_dag_parse.c','src/cudapp_om_dag_fmt.c','src/cudapp_om_dag_res.c','src/cudapp_om_dag_diff.c']
 # Match the integrated RX_CM_BINDING and DS_SHA_SRC providers, including route.
 bindings=['src/cudapp_om_core_sha.c',*sorted(Path('src').glob('cudapp_om_cm_*.c'))]
 sources.extend(bindings)
@@ -27,7 +27,7 @@ if red.returncode != 1: raise SystemExit('red control did not fail with rc=1')
 print('parser red control: caught (rc=1)',flush=True)
 run([cc,*flags,'tests/dagsim/format_diff.c',*sources[1:],'-lm','-lgcov','-o',out/'format-diff'])
 run([out/'format-diff'])
-cli_sources=['tools/dagsim/dagsim_cli.c','tools/dagsim/dagsim.c','src/runtime/rx_costmodel.c','src/sha256.c','src/cudapp_om_dag_eval.c','src/cudapp_om_dag_parse.c','src/cudapp_om_dag_fmt.c']
+cli_sources=['tools/dagsim/dagsim_cli.c','tools/dagsim/dagsim.c','src/runtime/rx_costmodel.c','src/sha256.c','src/cudapp_om_dag_eval.c','src/cudapp_om_dag_parse.c','src/cudapp_om_dag_fmt.c','src/cudapp_om_dag_res.c','src/cudapp_om_dag_diff.c']
 cli_sources.extend(bindings)
 for name,defs in [('cli',[]),('cli-oracle',['-DCUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE=1'])]:
     run([cc,*flags,*defs,*cli_sources,'-lm','-o',out/name])

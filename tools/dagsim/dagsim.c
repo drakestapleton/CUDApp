@@ -97,13 +97,24 @@ int ds_day_from_date(const char *s) {
 }
 #endif
 
+#if !CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
+static int dr_lookup(const ds_model *, const char *, int);
+#endif
 int ds_find_op(const ds_model *m, const char *id) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     for (int i = 0; i < m->n_ops; i++) if (!strcmp(m->ops[i].id, id)) return i;
     return -1;
+#else
+    return dr_lookup(m,id,0);
+#endif
 }
 int ds_find_res(const ds_model *m, const char *id) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     for (int i = 0; i < m->n_res; i++) if (!strcmp(m->res[i].id, id)) return i;
     return -1;
+#else
+    return dr_lookup(m,id,1);
+#endif
 }
 
 /* ---------------------------------------------------------------- parse */
@@ -483,11 +494,13 @@ int ds_parse_file(const char *path, ds_model *m, char *err, size_t errcap) {
 /* resolved per-op numbers for one evaluation mode */
 typedef struct { double t, launch, bytes, cap; int prov; } ds_num;   /* cap in B/ns */
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
 static double res_cap(const ds_resource *r, int mode) {
     if (mode < 0) return r->lo;
     if (mode > 0) return r->hi;
     return r->cap;
 }
+#endif
 
 static int refuse(ds_result *r, int status, const char *fmt, const char *a, const char *b) {
     memset(r, 0, sizeof *r);
@@ -503,6 +516,7 @@ static int refuse_msg(ds_result *r, int status, const char *msg) {
     return status;
 }
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
 /* An unsupported operation and a refused prediction are the same as an
  * unknown cell: no certificate. known alone is not enough. */
 static int predict_unusable(int st, const RxCmPrediction *p) {
@@ -558,6 +572,9 @@ static int resolve(const ds_model *m, const ds_opts *o, ds_num *num, ds_result *
     }
     return DS_OK;
 }
+#else
+#include "dagsim_resolve.h"
+#endif
 
 static void pk_d(uint64_t *dst, double x) {
     uint64_t b;
@@ -567,6 +584,7 @@ static void pk_d(uint64_t *dst, double x) {
 
 /* Pack post-resolve numbers for omega_dag_eval. Refusal strings stay in C. */
 int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_result *r) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     if (m->n_ops == 0) return refuse(r, DS_REFUSED_UNSUPPORTED, "empty DAG%s%s", "", "");
     ds_num num[DS_MAX_OPS];
     int rc = resolve(m, o, num, r);
@@ -601,6 +619,10 @@ int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_re
         pk_d(&p[2], m->res[i].cap);
         p[3] = (uint64_t)m->res[i].prov;
     }
+#else
+    int rc=dr_resolved(m,o,model,r);
+    if(rc)return rc;
+#endif
     for (int i = 0; i < m->n_deps; i++) {
         uint64_t *p = &model[2720 + i * 2];
         p[0] = (uint64_t)m->deps[i].from;
@@ -615,7 +637,11 @@ int ds_resolved_pack(const ds_model *m, const ds_opts *o, uint64_t *model, ds_re
     }
     return DS_OK;
 }
+static const char *endpoint_name(const ds_model *m, int op) {
+    return op >= 0 ? m->ops[op].id : "omitted";
+}
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_TOOLS
 /* Kahn topological order; returns 0 on a cycle */
 static int topo(const ds_model *m, int *order) {
     int indeg[DS_MAX_OPS] = {0};
@@ -636,10 +662,6 @@ enum { BLK_NONE = 0, BLK_SLOT, BLK_LAUNCHER };
 static void buffer_window(const ds_model *m, const ds_result *r, int b, double *s, double *e) {
     *s = m->buf[b].first >= 0 ? r->start_ns[m->buf[b].first] : 0.0;
     *e = m->buf[b].last >= 0 ? r->end_ns[m->buf[b].last] : r->makespan_ns;
-}
-
-static const char *endpoint_name(const ds_model *m, int op) {
-    return op >= 0 ? m->ops[op].id : "omitted";
 }
 
 /* Resolved end earlier than start is not an interval. Refuse before the ledger. */
@@ -883,9 +905,10 @@ int ds_eval_c(const ds_model *m, const ds_opts *o, ds_result *r) {
     r->status = DS_OK;
     return DS_OK;
 }
+#endif
 
 #ifndef CUDAPP_MIGRATION_PENDING_C_TOOLS
-extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n) __attribute__((weak));
+extern uint32_t omega_dag_eval(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 
 static double om_f(const uint64_t *s, int i) {
     double x;
@@ -970,7 +993,6 @@ int ds_eval(const ds_model *m, const ds_opts *o, ds_result *r) {
 #if defined(CUDAPP_MIGRATION_PENDING_C_TOOLS)
     return ds_eval_c(m, o, r);
 #else
-    if (!omega_dag_eval) return ds_eval_c(m, o, r);
     memset(r, 0, sizeof *r);
     uint64_t model[8192], scratch[8192], result = 0;
     int rc = ds_resolved_pack(m, o, model, r);
@@ -994,6 +1016,7 @@ int ds_eval_interval(const ds_model *m, const ds_opts *o, ds_result *nominal, do
 }
 
 double ds_counterfactual(const ds_model *m, const ds_opts *o, int res_index) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     if (res_index < 0 || res_index >= m->n_res) return -DS_REFUSED_UNSUPPORTED;
     ds_model *c = malloc(sizeof *c);
     if (!c) return -DS_REFUSED_UNSUPPORTED;
@@ -1009,10 +1032,14 @@ double ds_counterfactual(const ds_model *m, const ds_opts *o, int res_index) {
     int rc = ds_eval(c, &x, &res);
     free(c);
     return rc == DS_OK ? res.makespan_ns : -(double)rc;
+#else
+    return dr_counter(m,o,res_index);
+#endif
 }
 
 /* ---------------------------------------------------------------- diff */
 
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
 static int in_changed(const char *list, const char *id) {
     if (!list) return 0;
     const char *p = list; size_t L = strlen(id);
@@ -1024,8 +1051,10 @@ static int in_changed(const char *list, const char *id) {
     }
     return 0;
 }
+#endif
 
 int ds_diff_models(const ds_model *b, const ds_model *t, const ds_opts *o, ds_diff *d) {
+#if CUDAPP_MIGRATION_PENDING_C_DAGSIM_RESOLVE
     memset(d, 0, sizeof *d);
     for (int i = 0; i < t->n_ops; i++) if (ds_find_op(b, t->ops[i].id) < 0) d->n_added++;
     for (int i = 0; i < b->n_ops; i++) {
@@ -1073,4 +1102,7 @@ int ds_diff_models(const ds_model *b, const ds_model *t, const ds_opts *o, ds_di
         return DS_REFUSED_REMOVED_REQUIRED;
     }
     return DS_OK;
+#else
+    return dr_diff(b,t,o,d);
+#endif
 }

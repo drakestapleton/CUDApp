@@ -1,0 +1,90 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_MIGRATION_PENDING_C_TOOLS_OWN30B -c -o build/own30b_decode_profile_c.o tools/own30b_decode_profile.c
+sh tests/tools-om/own30b.sh
+oracle: PROFILE_HOST_PASS sequence, accounting, malformed shape, missing stage, failed launch; lm_head
+omega: PROFILE_HOST_PASS sequence, accounting, malformed shape, missing stage, failed launch; lm_head
+differential seed 1: identical (RETAINED 0, tokens=0 dropped=0, 11567 classifications)
+differential seed 2: identical (RETAINED 171, tokens=171 dropped=0, 86713 classifications)
+differential seed 3: identical (RETAINED 4096, tokens=4096 dropped=104, 1213802 classifications)
+differential seed 4: identical (RETAINED 3523, tokens=3523 dropped=0, 1242777 classifications)
+differential seed 5: identical (RETAINED 5, tokens=5 dropped=0, 173417 classifications)
+differential seed 6: identical (RETAINED 0, tokens=0 dropped=0, 580 classifications)
+negative control: flipped record caught (om.3.err)
+mutant expect: killed (seed 2)
+mutant complete: killed (seed 2)
+mutant dropped: killed (seed 3)
+mutant gu_shape: killed (seed 1)
+mutant gap: killed (seed 2)
+mutant attn: killed (seed 1)
+mutant digits: killed (seed 2)
+mutant rearm: killed (seed 2)
+own30b_prof mutants: 8 killed
+tools-om own30b_prof: PASS (differential 6 seeds, negative control, 8 mutants killed)
+sh tests/tools-om/fmt.sh
+differential: 360351 conversions identical to glibc snprintf
+negative control: flipped record caught (om.out)
+mutant ties_even: killed (line 37)
+mutant round_down: killed (line 92)
+mutant pow5: killed (line 23)
+mutant exp_digits: killed (line 411)
+mutant g_small: killed (line 153)
+mutant g_large: killed (line 114)
+fmt mutants: 6 killed
+tools-om fmt: PASS (differential 360351 conversions, negative control, 6 mutants killed)
+sh tests/tools-om/doctor.sh
+differential: 40 fake machines identical (stdout, stderr, exit; exit histogram: 17 0 23 1 )
+negative control: flipped record caught (om.mem_odd.out)
+build-text refusal: ABI holding % exits 2 with no stdout
+mutant trunc120: killed (long_line)
+mutant runmin: killed (short_runs)
+mutant runmax: killed (run63)
+mutant unified: killed (ready)
+mutant clamp16: killed (many)
+mutant prefix: killed (unknown)
+mutant gib_prec: killed (ready)
+mutant plural: killed (node_perm)
+mutant closed: killed (ready)
+mutant moreskip: killed (unknown)
+doctor mutants: 10 killed
+tools-om doctor: PASS (differential 40 machines, negative control, build-text refusal, 10 mutants killed)
+sh tests/tools-om/ampcorp.sh
+differential: 62 cases identical (98 files; outcomes: 33 exit 0 29 signal 6 )
+negative control: flipped record caught (om.out)
+mutant dotdot: killed (<   encoder calls 0)
+mutant backslash: killed (<   encoder calls 0)
+mutant lg2: killed (<   encoder calls 1)
+mutant f2e4: killed (<   encoder calls 1)
+mutant stray: killed (<   signal 6)
+mutant pathmax: killed (>   stderr xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+mutant rcsign: killed (<   stderr SM86 unexpectedly refused an existing kernel (0 i)
+mutant lenchk: killed (<   signal 6)
+ampcorp mutants: 8 killed
+tools-om ampcorp: PASS (differential 62 cases, negative control, 8 mutants killed)
+sh tests/tools-om/ampfam.sh
+differential: 1331 cases identical (133 steps in the baseline; outcomes: 245 exit 0 1086 exit 1 )
+negative control: flipped record caught (om.out)
+mutant line: killed (<   err Ampere family producer failed at line 112)
+mutant ternskip: killed (<   gen 120 omega_blackwell_codegen_tern_gemv_prog 00 20 00 )
+mutant refuserc: killed (<   out Ampere extended existing generator families encoded )
+mutant append: killed (<   out Ampere extended existing generator families encoded )
+mutant resmode: killed (<   gen 30 omega_blackwell_codegen_dec_prog 02 00 00 00 05 0)
+mutant binit: killed (<   tgt 5 sm 86 max 16384 in 1)
+mutant qpc: killed (<   gen 60 omega_blackwell_codegen_decode_attn256_prog 01 00)
+mutant lencheck: killed (<   err Ampere family producer failed at line 44)
+mutant gdnbf16: killed (<   out Ampere extended existing generator families encoded )
+ampfam mutants: 9 killed
+tools-om ampfam: PASS (differential 1331 cases, negative control, 9 mutants killed)
+sh tests/tools-om/artexp.sh
+differential: 116 cases identical, 266 files written (exits: 32 exit 0 54 exit 2 30 exit 3 )
+negative control: flipped record caught (om.out)
+mutant ktile: killed (<   err matmul-bf16-v1 export needs m%16 == 0, n%8 == 0, k%1)
+mutant single: killed (<   out artifact_id=b97a1fa6086ebd0a490e18576fe0675b8fa0d750)
+mutant colgrid: killed (<   out artifact_id=b97a1fa6086ebd0a490e18576fe0675b8fa0d750)
+mutant hexbase: killed (<   out artifact_id=b97a1fa6086ebd0a490e18576fe0675b8fa0d750)
+mutant overflow: killed (<   err usage: artifact-export matmul --m M --k K --n N --co)
+mutant u32max: killed (<   err usage: artifact-export matmul --m M --k K --n N --co)
+mutant shared: killed (<   out artifact_id=35e4efffd36d539d527debc812c6c0b4d7b576eb)
+mutant lowhex: killed (<   err contract id is not matmul-bf16-v1)
+mutant pow2: killed (<   out artifact_id=35e4efffd36d539d527debc812c6c0b4d7b576eb)
+mutant hbound: killed (<   out artifact_id=5e6d7ed3baa555ffb302390d93c7af3f3de3696a)
+artexp mutants: 10 killed
+tools-om artexp: PASS (differential 116 cases, 266 files, negative control, 10 mutants killed)

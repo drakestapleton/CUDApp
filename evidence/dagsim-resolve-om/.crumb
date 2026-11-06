@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T09:41:32Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:694f9381cf19bbfafcfbaf11963512fc655a2747ee20ef65a41a53c5f0b57795",
+      "evidence_files": 49,
+      "evidence_root": "sha256:52cff8d9b4a8b66f6f1dbb18d24d84765560be0e3113144fda8c9dc605f55ee0",
+      "files": 49,
+      "generated_at_commit": "2cf2c484300db4014c65c03945f52f7fd5889f0f",
+      "source_tree": "sha256:4a21a876ae14cd0e7d668db1c1a2808c7928e6d29bab6e36fc79dda50f64862f"
+    }
+  },
+  "layer": "evidence",
+  "name": "dagsim-resolve-om",
+  "purpose": "Host differential and mutant evidence for seeded Omega dagsim resolution and diff",
+  "schema_version": "1.0.0"
+}

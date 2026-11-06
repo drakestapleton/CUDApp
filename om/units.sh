@@ -65,7 +65,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_moe=om/codegen/cg_moe_emit.om,om/codegen/cg_moe_core.om,om/codegen/cg_moe.om cg_moe2=om/codegen/cg_moe_emit.om,om/codegen/cg_moe_core.om,om/codegen/cg_moe2.om cg_moe_sched=om/codegen/cg_moe_sched.om"
   UNITS="$UNITS cg_gdn=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_common.om,om/codegen/cg_gdn.om cg_gdn_policy=om/codegen/cg_gdn_shape.om,om/codegen/cg_gdn_policy.om"
   UNITS="$UNITS cg_dec=om/codegen/cg_dec_emit.om,om/codegen/cg_dec.om gdn_admit=om/gdn/admit.om"
-  UNITS="$UNITS om/tools/dag_eval.om om/tools/dag_parse.om om/tools/dag_fmt.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
+  UNITS="$UNITS om/tools/dag_eval.om om/tools/dag_parse.om om/tools/dag_fmt.om om/tools/dag_res.om dag_diff=om/tools/dag_res.om,om/tools/dag_diff.om om/tools/own30b_prof.om doctor=om/tools/fmt.om,om/tools/doctor.om om/tools/ampcorp.om om/tools/ampfam.om om/tools/artexp.om"
   UNITS="$UNITS bw_qmd=om/qmd/bw_qmd.om eng=om/engine/eng.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then

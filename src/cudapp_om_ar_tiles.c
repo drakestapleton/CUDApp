@@ -83,6 +83,7 @@ static uint64_t f3(const void *v0, uint64_t v0_n, void *v1, uint64_t v1_n);
 static uint64_t f4(uint64_t v0, uint64_t v1);
 static uint64_t f5(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, const void *v2, uint64_t v2_n);
 static uint64_t f6(uint64_t v0, const void *v1, uint64_t v1_n);
+static uint64_t f7(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
 static uint64_t f0(const void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2, void *v3, uint64_t v3_n){
 o_enter();
 uint64_t __attribute__((unused)) v4=({uint64_t _a=v2;uint64_t _b=4ULL;o_op(3, 5, _a,_b);});
@@ -248,13 +249,22 @@ v2=({uint64_t _a=v2;uint64_t _b=1ULL;o_op(1, 5, _a,_b);});
 }
 return o_leave(v2);
 }
-uint32_t omega_ar_run(uint64_t  *result, volatile uint64_t p0, const void *p1, volatile uint64_t p1_n){
+static uint64_t f7(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n){
+o_enter();
+return o_leave(({f1(v0, v0_n, v1, v1_n, v2, v2_n);}));
+}
+uint32_t omega_artiles(uint64_t  *result, const void *p0, volatile uint64_t p0_n, const void *p1, volatile uint64_t p1_n, void *p2, volatile uint64_t p2_n){
   if(!o_buf(result,1,1,5))return 32;
-if(!o_valid(5, p0))return 32;
+if(!o_rbuf(p0, p0_n,8, 5))return 32;
+  if(o_rover(result,8,p0, p0_n*8))return 32;
 if(!o_rbuf(p1, p1_n,0, 4))return 32;
   if(o_rover(result,8,p1, p1_n*4))return 32;
+if(!o_rbuf(p2, p2_n,0, 5))return 32;
+  if(o_rover(result,8,p2, p2_n*8))return 32;
+if(o_rover(p2, p2_n*8, p0, p0_n*8))return 32;
+if(o_rover(p2, p2_n*8, p1, p1_n*4))return 32;
   if(o_busy)return 33;
-  o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f6(p0, p1, p1_n);o_put(result,1,0,_result,5);}
+  o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f7(p0, p0_n, p1, p1_n, p2, p2_n);o_put(result,1,0,_result,5);}
   o_busy=0;return (uint32_t)code;
 }
 #if defined(__GNUC__)

@@ -27,7 +27,19 @@ GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.o
 if [ -z "${OMEGA_UNITS:-}" ]; then
 UNITS="$UNITS apish_shp=om/api/apish_shp.om apish_pack=om/api/apish_pack.om apish_slot=om/api/apish_slot.om apish_blk=om/api/apish_blk.om apish_trit=om/api/apish_trit.om"
 fi
-REST="ar_data=om/apirest/data.om ar_pack=om/apirest/pack.om,om/api/apish_pack.om ar_tiles=om/apirest/tiles.om ar_tern=om/apirest/tern.om ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
+REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
+for entry in fill count args pad idle route perm widen; do
+  REST="$REST ar_$entry=om/apirest/data.om,om/apirest/$entry.om"
+done
+for entry in nan scale fold foldh; do
+  REST="$REST ar_$entry=om/apirest/pack.om,om/api/apish_pack.om,om/apirest/$entry.om"
+done
+for entry in tiles tg tile groups run; do
+  REST="$REST ar_$entry=om/apirest/tiledata.om,om/apirest/$entry.om"
+done
+for entry in tern trits rev; do
+  REST="$REST ar_$entry=om/apirest/terndata.om,om/apirest/$entry.om"
+done
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

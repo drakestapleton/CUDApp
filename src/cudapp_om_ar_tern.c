@@ -80,6 +80,7 @@ static uint64_t f0(const void *v0, uint64_t v0_n);
 static uint64_t f1(const void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2, const void *v3, uint64_t v3_n);
 static uint64_t f2(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
 static uint64_t f3(const void *v0, uint64_t v0_n, void *v1, uint64_t v1_n);
+static uint64_t f4(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
 static uint64_t f0(const void *v0, uint64_t v0_n){
 o_enter();
 uint64_t __attribute__((unused)) v1=0ULL;
@@ -200,15 +201,22 @@ if(c1++>=1000000)o_trap(4);
 }
 return o_leave(0ULL);
 }
-uint32_t omega_ar_rev(uint64_t  *result, const void *p0, volatile uint64_t p0_n, void *p1, volatile uint64_t p1_n){
+static uint64_t f4(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n){
+o_enter();
+return o_leave(({f2(v0, v0_n, v1, v1_n, v2, v2_n);}));
+}
+uint32_t omega_artern(uint64_t  *result, const void *p0, volatile uint64_t p0_n, const void *p1, volatile uint64_t p1_n, void *p2, volatile uint64_t p2_n){
   if(!o_buf(result,1,1,5))return 32;
-if(!o_rbuf(p0, p0_n,0, 11))return 32;
-  if(o_rover(result,8,p0, p0_n*4))return 32;
-if(!o_rbuf(p1, p1_n,4, 11))return 32;
-  if(o_rover(result,8,p1, p1_n*4))return 32;
-if(o_rover(p1, p1_n*4, p0, p0_n*4))return 32;
+if(!o_rbuf(p0, p0_n,4, 5))return 32;
+  if(o_rover(result,8,p0, p0_n*8))return 32;
+if(!o_rbuf(p1, p1_n,0, 2))return 32;
+  if(o_rover(result,8,p1, p1_n*1))return 32;
+if(!o_rbuf(p2, p2_n,0, 4))return 32;
+  if(o_rover(result,8,p2, p2_n*4))return 32;
+if(o_rover(p2, p2_n*4, p0, p0_n*8))return 32;
+if(o_rover(p2, p2_n*4, p1, p1_n*1))return 32;
   if(o_busy)return 33;
-  o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f3(p0, p0_n, p1, p1_n);o_put(result,1,0,_result,5);}
+  o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f4(p0, p0_n, p1, p1_n, p2, p2_n);o_put(result,1,0,_result,5);}
   o_busy=0;return (uint32_t)code;
 }
 #if defined(__GNUC__)

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Stand-ins for the 30 generators and the two encoders tools/ampere_families.c calls, linked into both
  * builds (the seeded Omega shell and the CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPFAM oracle) by
- * tests/tools-om/ampfam.sh. Each call is appended to $AMPFAM_TRACE: the generator name and its
+ * tests/tools-om/ampfam.sh. Each call is appended to descriptor 3 when AMPFAM_TRACE_FD=3: the generator name and its
  * specification byte for byte (or its scalar arguments), the SM121 buffer size, and the SM86 target, size
  * and incoming length. $AMPFAM_CASE "K:KIND" changes the outcome at generator call K:
  *   g, g7    the generator returns 1, or -7
@@ -49,12 +49,10 @@ static void trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 #include <stdarg.h>
 static void trace(const char *fmt, ...)
 {
-    const char *path = getenv("AMPFAM_TRACE");
-    if (!path) return;
-    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (fd < 0) abort();
-    va_list ap; va_start(ap, fmt); vdprintf(fd, fmt, ap); va_end(ap);
-    close(fd);
+    const char *fd = getenv("AMPFAM_TRACE_FD");
+    if (!fd) return;
+    if (strcmp(fd, "3") != 0) abort();
+    va_list ap; va_start(ap, fmt); if (vdprintf(3, fmt, ap) < 0) abort(); va_end(ap);
 }
 
 static int case_is(const char *kind)

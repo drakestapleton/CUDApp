@@ -45,7 +45,7 @@ test-cm-decision-differential: $(OUT_DIR)/cm_decision_diff $(OUT_DIR)/cm_decisio
 	  if ! grep -q "CM DECISION floating differential FAIL" $(OUT_DIR)/cm_contraction_control.log; then \
 	  cat $(OUT_DIR)/cm_contraction_control.log; echo "CM contraction control failed for an unrelated reason"; exit 1; fi; \
 	  echo "CM contraction control PASS (contraction-on oracle rejected)"
-	CM_DIFF_REPLAY=$(OUT_DIR)/cm_decision_max.case CM_DIFF_THRESHOLD_PROBE=1 ./$(OUT_DIR)/cm_decision_replay
+	CM_DIFF_REPLAY_FD=3 CM_DIFF_THRESHOLD_PROBE=1 ./$(OUT_DIR)/cm_decision_replay 3<$(OUT_DIR)/cm_decision_max.case
 
 .PHONY: test-cm-source-mutants
 test-cm-source-mutants:

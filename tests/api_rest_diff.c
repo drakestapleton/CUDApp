@@ -114,7 +114,7 @@ static void prefill(void) {
   memset(r,0,sizeof r);memset(e,0,sizeof e);
   uint64_t q[4]={n,k,layout},out=0;
   EQ(omega_arpfcopy(&out,q,4,s,(uint64_t)n*k,a,(uint64_t)n*k),0);
-  EQ(omega_arpfrat(&out,q,4,sf,(n/128)*kb,r,(n/8)*(kb+1)),0);
+  EQ(omega_arpfrat(&out,q,4,sf,(size_t)(n/128)*kb,r,(size_t)(n/8)*(kb+1)),0);
   for(unsigned p=0;p<n;p++) {
    unsigned src=layout?omega_api_swsrc(p,n):p;
    memcpy(b+(size_t)p*k,s+(size_t)src*k,k);
@@ -123,7 +123,7 @@ static void prefill(void) {
     rt[0]=1;for(unsigned j=1;j<kb;j++)rt[j*2]=sc[j-1]/sc[j];rt[2*kb]=sc[kb-1];
    }
   }
-  EQ(memcmp(a,b,(size_t)n*k),0);EQ(memcmp(r,e,(n/8)*(kb+1)*sizeof(float)),0);
+  EQ(memcmp(a,b,(size_t)n*k),0);EQ(memcmp(r,e,(size_t)(n/8)*(kb+1)*sizeof(float)),0);
   free(s);free(a);free(b);
  }
  const unsigned kvals[]={0,1,127,128,129,255,256,257,UINT32_MAX};

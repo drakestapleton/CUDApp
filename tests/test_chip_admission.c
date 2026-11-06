@@ -115,7 +115,9 @@ static void put(const char *root, const char *bdf, const char *file, const char 
     snprintf(cmd, sizeof cmd, "mkdir -p '%s'", p);
     CHECK(system(cmd) == 0);
     snprintf(p, sizeof p, "%s/sys/bus/pci/devices/%s/%s", root, bdf, file);
-    FILE *f = fopen(p, "w");
+    int fd = open(p, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    FILE *f = fd < 0 ? NULL : fdopen(fd, "w");
+    if (!f && fd >= 0) close(fd);
     CHECK(f != NULL);
     fprintf(f, "%s\n", value);
     fclose(f);

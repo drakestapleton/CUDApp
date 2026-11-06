@@ -103,6 +103,9 @@ candidate `0x1.c1fea4ee44ep-6`, C `0x1.c1fea4e8eaf75p-6`.
 These are measured differences, not acceptable tolerances. The harness records
 the exact model/features/policy in ignored `build/cm_decision_max.case`; its
 contraction-on negative control regenerates that native-ABI replay fixture.
+The fixture is created with mode `0600`. Replay receives the already-open input
+on descriptor 3 (`CM_DIFF_REPLAY_FD=3`); the verifier never opens an
+environment-supplied path.
 
 WolframLanguageEvaluator:
 `a=FromDigits["1c1fea4ee44e",16]2^(-6-4 StringLength["c1fea4ee44e"]);`

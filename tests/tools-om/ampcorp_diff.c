@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 void omega_ampere_corpus_capture(const BlackwellIRProgram *prog, const uint8_t *sm121, size_t len);
 
@@ -155,7 +156,10 @@ static void listdir(const char *path, pid_t pid)
         char full[4096];
         snprintf(full, sizeof full, "%s/%s", path, names[i]);
         struct stat lst;
-        if (!lstat(full, &lst) && S_ISLNK(lst.st_mode)) {
+        int entry = open(full, O_PATH | O_NOFOLLOW | O_CLOEXEC);
+        int is_link = entry >= 0 && fstat(entry, &lst) == 0 && S_ISLNK(lst.st_mode);
+        if (entry >= 0) close(entry);
+        if (is_link) {
             printf("  link ");
             norm(stdout, names[i], pid);
             printf("\n");

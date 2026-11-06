@@ -100,7 +100,9 @@ int main(int argc, char **argv) {
     assert(!memcmp(before, after, PAGE));
 #endif
 
-    FILE *out = fopen(argv[1], "wb");
+    int out_fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    FILE *out = out_fd < 0 ? NULL : fdopen(out_fd, "wb");
+    if (!out && out_fd >= 0) close(out_fd);
     assert(out);
     assert(fwrite(rm.fifo.cpu, 1, PAGE, out) == PAGE);
     assert(fwrite(c->fifo.cpu, 1, PAGE, out) == PAGE);

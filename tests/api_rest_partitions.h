@@ -83,11 +83,11 @@ static void calc_parts(void){
   case 1:e[0]=(uint32_t)((uint32_t)a+(uint32_t)b-1)/(uint32_t)b;e[1]=c/4;break;
   case 2:e[0]=a/d;e[1]=b/f;e[2]=32*g;e[3]=e[2]*e[1]*e[0];e[4]=(e[0]*32+4095)&~UINT64_C(4095);e[5]=c/128;break;
   case 3:{uint64_t kb=c/128,sc=b/128*kb,wb=b*c,rb=b/8*(kb+1)*4;e[0]=sc;e[1]=wb;e[2]=rb;e[3]=a*wb;e[4]=a*rb;e[5]=(a*rb+15)&~UINT64_C(15);e[6]=d*sc;e[7]=d*wb;e[8]=d*rb;e[9]=sc*4;e[10]=d*rb/4;e[11]=rb/4;e[12]=a*rb+16;e[13]=a*wb&~UINT64_C(15);break;}
-  case 4:{uint32_t rr=(uint32_t)b*2;if((uint32_t)a%rr){rc=1;break;}uint32_t u=(uint32_t)a/rr,gx=(u+(uint32_t)c-1)/(uint32_t)c;if(gx>d)gx=d;if(!gx)gx=1;e[0]=u;e[1]=gx;e[2]=gx*(uint32_t)c;e[3]=(uint32_t)(0-(uint32_t)f);e[4]=(uint32_t)(0-(uint32_t)g);e[5]=(uint32_t)(0-(uint32_t)h);e[6]=(uint32_t)(0-(uint32_t)i);e[7]=32*c;break;}
+  case 4:{uint32_t rr=(uint32_t)b*2;if((uint32_t)a%rr){rc=1;break;}uint32_t u=(uint32_t)a/rr,gx=(u+(uint32_t)c-1)/(uint32_t)c;if(gx>d)gx=d;if(!gx)gx=1;e[0]=u;e[1]=gx;e[2]=(uint32_t)((size_t)gx*(uint32_t)c);e[3]=(uint32_t)(0-(uint32_t)f);e[4]=(uint32_t)(0-(uint32_t)g);e[5]=(uint32_t)(0-(uint32_t)h);e[6]=(uint32_t)(0-(uint32_t)i);e[7]=32*c;break;}
   case 5:e[0]=32*a;e[1]=b*c*d;e[2]=a*b*32;break;
   case 6:e[0]=a*(b*c+b/128*(c/128)*4);break;
   case 7:e[0]=16*f;e[1]=h*8*g;e[2]=32*h;e[3]=i*c*2;e[4]=a*b*4;e[5]=d*32;e[6]=(a+e[0])*4;e[7]=a*b;e[8]=i*c;e[9]=b/e[1];e[10]=e[0]*256;e[11]=d*4;e[12]=a+e[0];break;
-  case 8:{uint32_t gx=((uint32_t)b+(uint32_t)f-1)/(uint32_t)f;if(gx>g)gx=g;if(!gx)gx=1;e[0]=gx;e[1]=gx*(uint32_t)f;e[2]=32*(uint32_t)f;e[3]=a*b;e[4]=(a+d)*c;e[5]=(a+d)*c*4;e[6]=a*b*4;e[7]=h*c;e[8]=h*c*4;e[9]=c*4;e[10]=a*c;e[11]=d*c;e[12]=j-i;e[13]=(j-i)*c;e[14]=i*b;e[15]=a*c*4;break;}
+  case 8:{uint32_t gx=((uint32_t)b+(uint32_t)f-1)/(uint32_t)f;if(gx>g)gx=g;if(!gx)gx=1;e[0]=gx;e[1]=(uint32_t)((size_t)gx*(uint32_t)f);e[2]=32*(uint32_t)f;e[3]=a*b;e[4]=(a+d)*c;e[5]=(a+d)*c*4;e[6]=a*b*4;e[7]=h*c;e[8]=h*c*4;e[9]=c*4;e[10]=a*c;e[11]=d*c;e[12]=j-i;e[13]=(j-i)*c;e[14]=i*b;e[15]=a*c*4;break;}
   case 9:{q[4]=a<16?0:1;q[5]=1;e[0]=a/16;e[1]=b/8;if(a<16)break;uint64_t rows=a;if(a/16>c)rows=c*16;uint64_t gx=c/(rows/16);if(!gx)gx=1;if(gx>b/8)gx=b/8;e[2]=rows;e[3]=gx;e[4]=rows/16;break;}
   case 10:e[0]=(uint32_t)((uint32_t)b*16*(uint32_t)c);e[1]=a*b*128;break;
   case 11:{uint64_t u=b;while(u>1&&a/16/u<2)u/=2;e[0]=u;break;}

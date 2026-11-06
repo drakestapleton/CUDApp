@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 uint64_t omega_gpu_cmdlist_streams_diff_sweep(void);
 void cudapp_streams_diff_note(int same, const char *line);
@@ -17,7 +19,7 @@ void cudapp_streams_diff_note(int same, const char *line) {
     if (!same) { fprintf(stderr, "%s\n", line); abort(); }
     static FILE *f;
     const char *log = getenv("CUDAPP_STREAMS_DIFF_LOG");
-    if (!f && log) f = fopen(log, "a");
+    if (!f && log) { int fd = open(log, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0600); if (fd >= 0) { f = fdopen(fd, "a"); if (!f) close(fd); } }
     if (f) fprintf(f, "%s\n", line);
 }
 

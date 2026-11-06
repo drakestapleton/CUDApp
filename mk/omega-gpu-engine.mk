@@ -356,7 +356,7 @@ test-gpu-platform-aien-om-mutants: build/test_omega_gpu_platform_aien_c
 #   make test-gpu-platform-aien-effects  (AArch64: part of test-gpu-platform-aien, so in `make test`; no Omega tools)
 #       tests/test_omega_gpu_platform_aien_fx.c runs the platform's real effects against a memfd fake device whose
 #       'A' ioctls a seccomp trap answers, once through effects.om (the committed src/cudapp_aiengpu_effects.c) and once
-#       through the C system calls (CUDAPP_MIGRATION_PENDING_C_PLATFORM_AIEN_EFFECTS=1); AIEN_FX_TRACE of both (every
+#       through the C system calls (CUDAPP_MIGRATION_PENDING_C_PLATFORM_AIEN_EFFECTS=1); descriptor-3 traces of both (every
 #       ioctl's bytes in and out, every nonzero line of the fake device) must be byte-identical. One C-glue mutant
 #       (the unmap that never drops the unit's mapping) must fail the test or change the trace.
 #   make test-gpu-platform-aien-effects-mutants  needs OMEGA_AIENGPU_BRIDGE (the bridge checkout named in
@@ -380,7 +380,7 @@ build/test_omega_gpu_platform_aien_fx_c: $(GPU_AIEN_FX_DEPS)
 	gcc $(GPU_AIEN_CFLAGS) -DCUDAPP_MIGRATION_PENDING_C_PLATFORM_AIEN_EFFECTS=1 -o $@ tests/test_omega_gpu_platform_aien_fx.c \
 		$(GPU_AIEN_FX_OM_SRCS)
 # judge NAME DIR: DIR/test must fail, or its trace must differ from the C system calls' ($(GPU_AIEN_FX_DIR)/c.trace).
-GPU_AIEN_FX_JUDGE = judge() { name=$$1; t=0; AIEN_FX_TRACE=$$2/trace $$2/test > $$2/test.log 2>&1 || t=1; \
+GPU_AIEN_FX_JUDGE = judge() { name=$$1; t=0; AIEN_FX_TRACE_FD=3 $$2/test 3>$$2/trace > $$2/test.log 2>&1 || t=1; \
 	  r=0; cmp -s $$2/trace $(GPU_AIEN_FX_DIR)/c.trace || r=1; \
 	  if [ $$t = 0 ] && [ $$r = 0 ]; then echo "MUTANT $$name SURVIVED"; exit 1; fi; \
 	  k=$$((k+1)); echo "mutant $$name killed: test $$( [ $$t = 1 ] && echo failed || echo passed ), trace $$( [ $$r = 1 ] && echo differs || echo equal )"; }
@@ -388,8 +388,8 @@ GPU_AIEN_FX_JUDGE = judge() { name=$$1; t=0; AIEN_FX_TRACE=$$2/trace $$2/test > 
 test-gpu-platform-aien-effects: $(if $(GPU_AIEN_EFFECTS_SRCS),build/test_omega_gpu_platform_aien_fx build/test_omega_gpu_platform_aien_fx_c)
 	@[ -n "$(GPU_AIEN_EFFECTS_SRCS)" ] || { echo "NOT_RUN: the aien-gpu effects unit is AArch64 only"; exit 3; }
 	@set -e; d=$(GPU_AIEN_FX_DIR); mkdir -p $$d; rm -f $$d/c.trace $$d/om.trace; \
-	AIEN_FX_TRACE=$$d/c.trace ./build/test_omega_gpu_platform_aien_fx_c; \
-	AIEN_FX_TRACE=$$d/om.trace ./build/test_omega_gpu_platform_aien_fx; \
+	AIEN_FX_TRACE_FD=3 ./build/test_omega_gpu_platform_aien_fx_c 3>$$d/c.trace; \
+	AIEN_FX_TRACE_FD=3 ./build/test_omega_gpu_platform_aien_fx 3>$$d/om.trace; \
 	cmp $$d/om.trace $$d/c.trace || { echo "AIEN EFFECTS DIFF FAIL: effects.om and C system-call traces differ"; exit 1; }; \
 	echo "AIEN EFFECTS DIFF PASS: effects.om and C system-call traces identical ($$(grep -c '^ioctl ' $$d/om.trace) ioctls, $$(grep -c '^dev ' $$d/om.trace) device lines, $$(wc -c < $$d/om.trace) bytes)"; \
 	k=0; $(GPU_AIEN_FX_JUDGE); md=$$d/c-glue-drop; rm -rf $$md; mkdir -p $$md; \

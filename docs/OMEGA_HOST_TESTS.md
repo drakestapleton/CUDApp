@@ -209,8 +209,11 @@ to compare C/Omega patch rejection, including short buffers.
 The iteration immediate is not exhaustively enumerated; this receipt is not
 a claim that all possible iteration immediates were run.
 The focused command exited zero and printed
-`CODEGEN QMMA DIFF PASS (7748 cases)` on 2026-11-05, after printing
+`CODEGEN QMMA DIFF PASS (7748 cases)` on 2026-11-06, after printing
 `CODEGEN QMMA MUTANT CAUGHT`. This is host parity, not chip qualification.
+`make test-codegen-qmma-host` also exited zero on 2026-11-06 UTC:
+the patch oracle-bit self-test and model checks passed, ending
+`GPU_QMMA_PROBE: PASS`.
 
 Constants were transcribed from the existing C oracle and checked with
 `WolframLanguageEvaluator: AssociationMap[FromDigits[#,16]&,{"51303832","46453433","38383838","fc000","358","380","388","ffff","7209","723e","07800000","048070ff","723c","727a","41800","2c00","ffffff00","ffff0000"}]`
@@ -247,13 +250,17 @@ Both modes require detection of an independently corrupted Omega control word.
 `make test-codegen-tgemm-sim` runs the carried budget checks and warp simulator
 with its arithmetic reference and mutant controls; it opens no GPU.
 
-Host receipt (2026-11-05, pinned `omc` e5b32567 and Bridge bc11b30b):
+Host receipt (2026-11-06 UTC, pinned `omc` e5b32567 and Bridge bc11b30b):
 `taskset -c 10-14 nice -n 10 make -j3 test-codegen-tgemm-diff`
 returned zero with `CODEGEN TGEMM MUTANT CAUGHT` and
 `CODEGEN TGEMM AXES DIFF PASS (55295 accepted cases)`.
 The printed first-instruction control-word mismatch belongs to the deliberate
-mutant, not a positive-case failure. Full-product, carried simulator and chip
-verdicts are separate from this receipt.
+mutant, not a positive-case failure. The carried reference command
+`taskset -c 10-14 nice -n 10 make -j3 test-codegen-qmma-host test-codegen-tgemm-sim`
+also exited zero on 2026-11-06 UTC. QMMA ended `GPU_QMMA_PROBE: PASS`;
+TGEMM budget checks ended `GPU_TGEMM: PASS`; TGEMM simulation ended
+`GPU_TGEMM: PASS`, with both fragment orders matching the arithmetic reference
+and mutants 1–4 caught. Full-product and chip verdicts remain separate.
 
 Constant transcription query:
 `WolframLanguageEvaluator: {AssociationMap[FromDigits[#,16]&,{"21","25","26","d8","100","10000","ffff0000","fffffffe"}],2^32,2^17,2^23}`

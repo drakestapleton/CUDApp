@@ -67,6 +67,16 @@ UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/at
 UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
 UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
 UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
+for unit in ds_round ds_slot ds_vecf ds_vecb; do
+UNITS="$UNITS attn_$unit=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/$unit.om"
+done
+for unit in na_read na_cubin na_layout na_ver na_json; do
+UNITS="$UNITS attn_$unit=om/api/attn_art.om,om/api/$unit.om"
+done
+for unit in mm_dot mm_err; do
+UNITS="$UNITS attn_$unit=om/api/attn_oracle.om,om/api/$unit.om"
+done
+UNITS="$UNITS attn_mm_next=om/api/mm_next.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

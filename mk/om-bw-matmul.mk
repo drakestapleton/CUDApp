@@ -15,6 +15,7 @@ test-om-bw-matmul-mutants: $(OUT_DIR)/libomega_gpu.a
 	python3 tests/om_bw_mutants.py
 test-om-bw-matmul-coverage: $(OUT_DIR)/libomega_gpu.a
 	@mkdir -p $(OUT_DIR)/om-bw-coverage
+	rm -f $(OUT_DIR)/om-bw-coverage/diff-*.gcda
 	$(CC) $(BW_DIFF_FLAGS) --coverage -o $(OUT_DIR)/om-bw-coverage/diff $(foreach s,$(BW_DIFF_SRCS),$(abspath $(s))) $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 	./$(OUT_DIR)/om-bw-coverage/diff
 	cd $(OUT_DIR)/om-bw-coverage && gcov -b -c diff-om_bw_matmul_oracle.gcno diff-om_bw_realize_oracle.gcno

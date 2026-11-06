@@ -1,0 +1,353 @@
+Script started on 2026-11-05 20:52:30-06:00 [COMMAND="taskset -c 10-14 nice -n 10 env OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge OMEGA_MV=/home/drakestapleton/work/cudastack/omega-mv make -j3 test" <not executed on terminal>]
+bash tools/extract/test-drift.sh
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_matmul_api_test tests/gpu_matmul_api_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_matmul_r4_receipt tests/gpu_matmul_r4_receipt.c build/libomega_gpu.a -lpthread -lm
+=== code classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 05e2ff5eeb1d, none moved away from CUDA++ since the baseline)
+PASS: code classification at baseline
+=== code blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	af31bb5a4f0ffbf774b821f31926a4db3b038383
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 05e2ff5eeb1d and not in CUDA++)
+PASS: code blob gate
+=== header classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (1 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega f98bdcbc9a1f, none moved away from CUDA++ since the baseline)
+PASS: header classification at baseline
+=== header blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	2f88238630d9fd6a4c438013745aedc1550f5081
+DIVERGENCE: 1 shared, 0 same, 1 differ (1 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega f98bdcbc9a1f and not in CUDA++)
+PASS: header blob gate
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_elementwise_test tests/gpu_elementwise_test.c build/libomega_gpu.a -lpthread -lm
+=== mixed classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 30a959860cdb, none moved away from CUDA++ since the baseline)
+PASS: mixed classification at baseline
+=== mixed blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	2f88238630d9fd6a4c438013745aedc1550f5081
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 30a959860cdb and not in CUDA++)
+PASS: mixed blob gate
+=== identical classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 1 same, 0 differ (0 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega fc598124c1d2, none moved away from CUDA++ since the baseline)
+PASS: identical classification at baseline
+=== identical blob gate (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 1 same, 0 differ (0 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega fc598124c1d2, none moved away from CUDA++ since the baseline)
+PASS: identical blob gate
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_latmeas_test tests/gpu_latmeas_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_mathlibs_test tests/gpu_mathlibs_test.c build/libomega_gpu.a -lpthread -lm
+=== large classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 84b038e716e6, none moved away from CUDA++ since the baseline)
+PASS: large classification at baseline
+=== large blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	57f675cc176344229de1fd23ce49c67b50b4a2ef
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 84b038e716e6 and not in CUDA++)
+PASS: large blob gate
+=== binary classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 45a3a60fb3ee, none moved away from CUDA++ since the baseline)
+PASS: binary classification at baseline
+=== binary blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	1d5e8a9f97214c0a726e2762d65c08ce9339ab1a
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 45a3a60fb3ee and not in CUDA++)
+PASS: binary blob gate
+=== built-in negative controls (exit 0, expected 0) ===
+control 1: red as required (src/omega_gpu_case.c)
+control 2: red as required (src/omega_gpu_same.c edited in a scratch Omega commit)
+control 3: src/omega_numeric.c is not in HEAD (fixture Omega); this row is not exercised
+control 3: src/omega_numeric.h is not in HEAD (fixture Omega); this row is not exercised
+control 3: src/omega_numeric_reduce.c is not in HEAD (fixture Omega); this row is not exercised
+control 3: src/omega_numeric_reduce.h is not in HEAD (fixture Omega); this row is not exercised
+real check:
+DIVERGENCE: 2 shared, 1 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (2 GPU paths, omega b1461d014fc9, none moved away from CUDA++ since the baseline)
+SELF-TEST: PASS (all controls red, real check green)
+PASS: built-in negative controls
+=== invalid ref in direct mode (exit 2, expected 2) ===
+fatal: Needed a single revision
+DRIFT-GATE: NOT_RUN (map failed)
+PASS: invalid ref in direct mode
+=== invalid ref in self-test mode (exit 2, expected 2) ===
+fatal: Needed a single revision
+DRIFT-GATE: NOT_RUN (map failed)
+PASS: invalid ref in self-test mode
+=== baseline is a directory (exit 2, expected 2) ===
+DRIFT-GATE: NOT_RUN (baseline /tmp/tmp.IqTqF23Bjw/baseline-directory is not a readable nonempty file)
+PASS: baseline is a directory
+=== baseline is unreadable (exit 2, expected 2) ===
+DRIFT-GATE: NOT_RUN (baseline /tmp/tmp.IqTqF23Bjw/baseline is not a readable nonempty file)
+PASS: baseline is unreadable
+=== baseline comparison read error (exit 2, expected 2) ===
+injected awk read error
+DRIFT-GATE: NOT_RUN (baseline comparison failed)
+PASS: baseline comparison read error
+=== missing blob (exit 2, expected 2) ===
+fatal: git cat-file af31bb5a4f0ffbf774b821f31926a4db3b038383: bad file
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: missing blob
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itests -o build/gpu_reconv_test tests/gpu_reconv_test.c build/libomega_gpu.a -lpthread -lm
+=== missing blob (exit 2, expected 2) ===
+fatal: git cat-file 2721fea320e0429c40f26e27b873ef11f778eda5: bad file
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: missing blob
+=== diff error (exit 2, expected 2) ===
+injected diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: diff error
+=== diff error in self-test mode (exit 2, expected 2) ===
+injected diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT	src/omega_gpu_case.c	differs	af31bb5a4f0ffbf774b821f31926a4db3b038383
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: diff error in self-test mode
+=== diff reports identical for distinct blobs (exit 2, expected 2) ===
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 0
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: diff reports identical for distinct blobs
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_attention_test tests/gpu_attention_test.c build/libomega_gpu.a -lpthread -lm
+=== one-time diff error in control 1 (exit 2, expected 2) ===
+injected one-time diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT	src/omega_gpu_case.c	differs	af31bb5a4f0ffbf774b821f31926a4db3b038383
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: one-time diff error in control 1
+=== one-time diff error in control 2 (exit 2, expected 2) ===
+control 1: red as required (src/omega_gpu_case.c)
+injected one-time diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT	src/omega_gpu_same.c	differs	4d2b7f7850fa3bfa95740f2668a893b707e59eb4
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: one-time diff error in control 2
+DRIFT REGRESSION TESTS PASS
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_moe_window_test tests/gpu_moe_window_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_fp8_api_test tests/gpu_fp8_api_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_decode_attn_test tests/gpu_decode_attn_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -o build/test_omega_gpu_decode_attn_maxpos tests/test_omega_gpu_decode_attn_maxpos.c \
+  src/omega_gpu_decode_attn_api.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_router_test tests/gpu_router_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_bf16_gemv_test tests/gpu_bf16_gemv_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -DWS_MAX_THREADS=512 -Itests -o build/gpu_fp8gemm_test tests/gpu_fp8gemm_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_tern_sched_test tests/gpu_tern_sched_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_gpr_boundary_test tests/gpu_gpr_boundary_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_cmdlist_test tests/gpu_cmdlist_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_decode_graph_test tests/gpu_decode_graph_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test_omega_gpu_decode_graph_abort tests/test_omega_gpu_decode_graph_abort.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test_omega_gpu_decode_graph_timeline tests/test_omega_gpu_decode_graph_timeline.c build/libomega_gpu.a -lpthread -lm
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -o build/test_omega_gpu_code_alloc tests/test_omega_gpu_code_alloc.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o build/test_omega_gpu_engine_compile tests/test_omega_gpu_engine_compile.c src/omega_gpu_engine.c
+mutant begin-fail-keeps-lock killed: 3 case(s) failed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -o build/test_omega_gpu_engine tests/test_omega_gpu_engine.c src/omega_gpu_engine.c
+sh tools/gpu_engine_mutations.sh
+mutant begin-fail-stays-in-token killed: 3 case(s) failed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -c -o build/omega_blackwell_engine_syntax.o src/omega_blackwell_engine.c
+make build/libomega_gpu.a
+make[1]: Entering directory '/home/drakestapleton/work/cudastack/lanes/Resident'
+make[1]: 'build/libomega_gpu.a' is up to date.
+make[1]: Leaving directory '/home/drakestapleton/work/cudastack/lanes/Resident'
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections \
+	-Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/test_omega_blackwell_engine tests/test_omega_blackwell_engine.c tests/fake_m16_native.c \
+	src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_resident.c src/cudapp_om_resident_check.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c -Wl,--gc-sections -lm
+mutant oneshot-old-bad-args-only killed: 3 case(s) failed
+VALIDATE_SKIPPED KILLED  MUT:VALIDATE_SKIPPED (harness exit 139 (crash or abort))
+mutant abort-keeps-lock killed: 1 case(s) failed
+VALID_PROGRAM KILLED  MUT:VALID_PROGRAM (harness exit 139 (crash or abort))
+mutant abort-submits killed: 1 case(s) failed
+test-gpu-decode-graph-abort-mutants: 5 of 5 mutants killed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections \
+	-Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/test_omega_blackwell_matmul_bounds tests/test_omega_blackwell_matmul_bounds.c tests/fake_m16_native.c \
+	src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_resident.c src/cudapp_om_resident_check.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c src/omega_gpu_wait.c -Wl,--gc-sections -lm
+VALID_LAYOUT KILLED  MUT:VALID_LAYOUT (1 failing case(s), first: VALID_ARGS_LAYOUT)
+VALID_COUNT_ZERO KILLED  MUT:VALID_COUNT_ZERO (1 failing case(s), first: VALID_ARGS_ZERO_ELEMENTS)
+VALID_ALIGN KILLED  MUT:VALID_ALIGN (1 failing case(s), first: VALID_ARGS_OUTPUT_ALIGNMENT)
+VALID_POISON_COUNT KILLED  MUT:VALID_POISON_COUNT (harness exit 139 (crash or abort))
+VALID_FLAGS KILLED  MUT:VALID_FLAGS (1 failing case(s), first: VALID_ARGS_UNKNOWN_FLAG)
+VALID_TIMEOUT_MARKER1 KILLED  MUT:VALID_TIMEOUT_MARKER1 (1 failing case(s), first: VALID_ARGS_ZERO_MARKER_TIMEOUT)
+VALID_TIMEOUT_MARKER2 KILLED  MUT:VALID_TIMEOUT_MARKER2 (1 failing case(s), first: VALID_ARGS_ZERO_MARKER2_TIMEOUT_WITH_C3)
+BLOCK_CHECK_SKIPPED KILLED  MUT:BLOCK_CHECK_SKIPPED (2 failing case(s), first: CERTAIN_BLOCKS_NEXT_JOB_NO_BACKEND_CALL)
+BACKEND_CHECK_SKIPPED KILLED  MUT:BACKEND_CHECK_SKIPPED (harness exit 139 (crash or abort))
+OPEN_NOT_TRACKED KILLED  MUT:OPEN_NOT_TRACKED (20 failing case(s), first: CCESS_FULL_RUN)
+ALLOC_NOT_TRACKED KILLED  MUT:ALLOC_NOT_TRACKED (20 failing case(s), first: CCESS_FULL_RUN)
+CLEANUP_SKIPPED_CHANNEL KILLED  MUT:CLEANUP_SKIPPED_CHANNEL (1 failing case(s), first: IL_CHANNEL_CREATE)
+CLEANUP_SKIPPED_ALLOC KILLED  MUT:CLEANUP_SKIPPED_ALLOC (1 failing case(s), first: IL_ALLOC)
+CLEANUP_SKIPPED_COPY_IN KILLED  MUT:CLEANUP_SKIPPED_COPY_IN (1 failing case(s), first: IL_PREPARE_COPY_IN)
+CLEANUP_SKIPPED_SUBMIT KILLED  MUT:CLEANUP_SKIPPED_SUBMIT (2 failing case(s), first: IL_SUBMIT_IS_NOT_UNCERTAIN)
+FREE_UNALLOCATED KILLED  MUT:FREE_UNALLOCATED (3 failing case(s), first: IL_DEVICE_OPEN)
+FREE_SKIPPED KILLED  MUT:FREE_SKIPPED (20 failing case(s), first: CCESS_FULL_RUN)
+CLOSE_SKIPPED KILLED  MUT:CLOSE_SKIPPED (20 failing case(s), first: CCESS_FULL_RUN)
+CLEANUP_OVERWRITES_FIRST KILLED  MUT:CLEANUP_OVERWRITES_FIRST (3 failing case(s), first: EANUP_FIRST_CLEANUP_FAULT_KEPT)
+CLEANUP_FLAG_NOT_SET KILLED  MUT:CLEANUP_FLAG_NOT_SET (5 failing case(s), first: EANUP_FREE_FAILS_AFTER_GOOD_RUN)
+POISON_FILL_SKIPPED KILLED  MUT:POISON_FILL_SKIPPED (18 failing case(s), first: LL_ORDER_FULL_RUN)
+STATE_PREPARED_SKIPPED KILLED  MUT:STATE_PREPARED_SKIPPED (3 failing case(s), first: ATE_ADVANCES_STEP_BY_STEP)
+STATE_SUBMITTED_SKIPPED KILLED  MUT:STATE_SUBMITTED_SKIPPED (4 failing case(s), first: ATE_ADVANCES_STEP_BY_STEP)
+STATE_GPU_COMPLETE_SKIPPED KILLED  MUT:STATE_GPU_COMPLETE_SKIPPED (3 failing case(s), first: ATE_ADVANCES_STEP_BY_STEP)
+STATE_OUTPUT_VISIBLE_SKIPPED KILLED  MUT:STATE_OUTPUT_VISIBLE_SKIPPED (5 failing case(s), first: CHANGED_NOTHING_WRITTEN)
+STATE_OUTPUT_PRODUCED_SKIPPED KILLED  MUT:STATE_OUTPUT_PRODUCED_SKIPPED (4 failing case(s), first: ATE_ADVANCES_STEP_BY_STEP)
+STATE_SUCCESS_SKIPPED KILLED  MUT:STATE_SUCCESS_SKIPPED (4 failing case(s), first: CCESS_FULL_RUN)
+SUCCESS_AFTER_CLEANUP_FAIL KILLED  MUT:SUCCESS_AFTER_CLEANUP_FAIL (3 failing case(s), first: EANUP_FREE_FAILS_AFTER_GOOD_RUN)
+MARKER1_WAIT_SKIPPED KILLED  MUT:MARKER1_WAIT_SKIPPED (10 failing case(s), first: LL_ORDER_FULL_RUN)
+MARKER1_TIMEOUT_WRONG KILLED  MUT:MARKER1_TIMEOUT_WRONG (1 failing case(s), first: R_STEP_TIMEOUTS_FROM_JOB)
+PHYSICS_DIR="." sh tools/gpu_engine_backend_mutations.sh
+MARKER1_RESULT_IGNORED KILLED  MUT:MARKER1_RESULT_IGNORED (2 failing case(s), first: CERTAIN_MARKER_TIMEOUT)
+UNCERTAIN_FREES_MARKER1 KILLED  MUT:UNCERTAIN_FREES_MARKER1 (1 failing case(s), first: CERTAIN_MARKER_TIMEOUT)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffp-contract=off -fno-fast-math -pthread -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -c -o build/test_omega_gpu_engine_gb10.o tests/test_omega_gpu_engine_gb10.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -ffp-contract=off -Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+	-o build/gpu_serving_alloc_count_test tests/gpu_serving_alloc_count_test.c tests/fake_m16_native.c src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_gpu_matmul_api.c src/omega_gpu_attention_api.c src/omega_gpu_serving.c src/omega_gpu_wait.c src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_resident.c src/cudapp_om_resident_check.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_matmul.c src/omega_ampere_qmd.c src/sha256.c -lm
+MARKER2_WAIT_SKIPPED KILLED  MUT:MARKER2_WAIT_SKIPPED (7 failing case(s), first: LL_ORDER_FULL_RUN)
+C3_FLAG_IGNORED KILLED  MUT:C3_FLAG_IGNORED (1 failing case(s), first: _C3_SKIPS_MARKER2_ONLY)
+MARKER2_RESULT_IGNORED KILLED  MUT:MARKER2_RESULT_IGNORED (1 failing case(s), first: CERTAIN_MARKER2_UNKNOWN_STATE)
+UNCERTAIN_FREES_MARKER2 KILLED  MUT:UNCERTAIN_FREES_MARKER2 (1 failing case(s), first: CERTAIN_MARKER2_UNKNOWN_STATE)
+RELEASE_WAIT_SKIPPED KILLED  MUT:RELEASE_WAIT_SKIPPED (7 failing case(s), first: LL_ORDER_FULL_RUN)
+RELEASE_RESULT_IGNORED KILLED  MUT:RELEASE_RESULT_IGNORED (1 failing case(s), first: CERTAIN_RELEASE_DRIVER_FAULT)
+UNCERTAIN_FREES_RELEASE KILLED  MUT:UNCERTAIN_FREES_RELEASE (1 failing case(s), first: CERTAIN_RELEASE_DRIVER_FAULT)
+BARRIER_SKIPPED KILLED  MUT:BARRIER_SKIPPED (6 failing case(s), first: LL_ORDER_FULL_RUN)
+BARRIER_RESULT_IGNORED KILLED  MUT:BARRIER_RESULT_IGNORED (1 failing case(s), first: IL_VISIBILITY_BARRIER)
+RETAINED_FLAG_NOT_SET KILLED  MUT:RETAINED_FLAG_NOT_SET (3 failing case(s), first: CERTAIN_MARKER_TIMEOUT)
+NO_BLOCK KILLED  MUT:NO_BLOCK (4 failing case(s), first: CERTAIN_MARKER_TIMEOUT)
+WAITED_NOT_A_DIFFERENCE KILLED  MUT:WAITED_NOT_A_DIFFERENCE (3 failing case(s), first: CERTAIN_MARKER_TIMEOUT)
+POISON_INDEX_FIXED KILLED  MUT:POISON_INDEX_FIXED (4 failing case(s), first: CHANGED_NOTHING_WRITTEN)
+BE_ALLOC_CHECK_CPU KILLED  a buffer without a CPU mapping is refused (ALLOC) (8 failing case(s), first: m_nocpu_marker_refused_as_alloc)
+UNCHANGED_COUNT_SATURATES KILLED  MUT:UNCHANGED_COUNT_SATURATES (3 failing case(s), first: CHANGED_NOTHING_WRITTEN)
+UNCHANGED_CHECK_SKIPPED KILLED  MUT:UNCHANGED_CHECK_SKIPPED (6 failing case(s), first: CHANGED_NOTHING_WRITTEN)
+mutants: 49 total, 49 killed, 0 survived as redundant, 0 survived as test gaps (receipt /tmp/mutrun.6xr8q1/out.json)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_engine.o src/omega_gpu_engine.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_platform.o src/omega_gpu_platform.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_encoder.o src/omega_blackwell_encoder.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_codegen.o src/omega_blackwell_codegen.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_matmul.o src/omega_blackwell_matmul.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_qmd.o src/omega_blackwell_qmd.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_realize.o src/omega_blackwell_realize.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/sha256.o src/sha256.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_session.o src/omega_gpu_session.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_fmt.o src/omega_gpu_fmt.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_matmul_api.o src/omega_gpu_matmul_api.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_attention_api.o src/omega_gpu_attention_api.c
+BE_ALLOC_CHECK_SIZE KILLED  a buffer smaller than asked is refused (ALLOC) (6 failing case(s), first: m_short_pb_refused_as_alloc)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_serving.o src/omega_gpu_serving.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_wait.o src/omega_gpu_wait.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_revision.o src/cudapp_freest_revision.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_epoch.o src/cudapp_freest_epoch.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_f16.o src/cudapp_freest_f16.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_NUMERIC_CPU_ONLY -DOMEGA_GPU_NO_POSIX \
+	-o build/test_omega_gpu_engine_freestanding tests/test_omega_gpu_engine.c build/gpu_fs/omega_gpu_engine.o
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -o build/test_omega_gpu_platform tests/test_omega_gpu_platform.c build/gpu_fs/omega_gpu_platform.o
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc -o build/test_codegen_hosted tests/test_omega_codegen_freestanding.c \
+	src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_resident.c src/cudapp_om_resident_check.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_blackwell_matmul.c src/sha256.c
+BE_ALLOC_CHECK_ALIGN KILLED  a GPU address that is not 256-byte aligned is refused (ALLOC) (29 failing case(s), first: m_misaligned_qmd_refused_as_alloc)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
+	-o build/test_omega_gpu_platform_linux tests/test_omega_gpu_platform_linux.c tests/fake_m16_native.c src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/omega_gpu_mem_cached.c src/omega_gpu_cmdlist.c src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_resident.c src/cudapp_om_resident_check.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/omega_blackwell_encoder.c src/omega_blackwell_matmul.c src/omega_blackwell_realize.c src/sha256.c -lm
+BE_ALLOC_OWN_CHECK_NOTE KILLED  the backend's own refusal text reaches the result (7 failing case(s), first: m_short_pb_own_check_text)
+BE_ALLOC_OWN_CHECK_FREE KILLED  a buffer that fails its own checks is freed, not leaked (7 failing case(s), first: m_short_pb_balanced)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/test_nvrm_va_slots tests/test_nvrm_va_slots.c src/omega_ampere_qmd.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_resident.c src/cudapp_om_resident_check.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c
+BE_ROLE_FREE_SKIPPED KILLED  free_buf really frees a program, input or output buffer (29 failing case(s), first: m_success_balanced)
+BE_SCRATCH_FREE_SKIPPED KILLED  release_scratch really frees all four SCRATCH parts (33 failing case(s), first: m_success_balanced)
+BE_SCRATCH_FREE_ERROR_DROPPED KILLED  a failed SCRATCH part free is reported (2 failing case(s), first: m_cleanup_free_scratch_name_step_state)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -o build/test_omega_gpu_wait tests/test_omega_gpu_wait.c src/omega_gpu_wait.c
+cc -O2 -Wall -Wextra -Werror -I m16 tests/test_m16_gpu_wait.c m16/m16_gpu_wait.c -o build/m16_gpu_wait/test_real
+MUTANT STALL_NEVER_RESETS killed by progress_resets_idle
+MUTANT PROGRESS_EXTENDS_HARD killed by hard_deadline_with_progress
+MUTANT NO_BARRIER killed by barrier_before_read
+M16_GPU_WAIT_MUTANTS PASS (3/3 killed)
+CC="cc" tools/runtime_api_check.sh docs/runtime/omega_runtime_api.manifest . build/runtime-api/real docs/runtime/API.md
+RESULT: PASS (runtime API 0.13.0: 305 functions, 47 structs, 457 fields, 232 constants match the headers; surface 734 names, 197 INTERNAL)
+CC="cc" tools/runtime_api_negative.sh docs/runtime/omega_runtime_api.manifest . build/runtime-api docs/runtime/API.md
+BE_SCRATCH_FREE_STOPS_AT_ERROR KILLED  one failed SCRATCH part free does not leave the other parts allocated (1 failing case(s), first: m_cleanup_free_scratch_all_four_parts_attempted)
+sh tools/runtime_portability_check.sh . docs/runtime/portability_table.tsv mk/omega-gpu-engine.mk
+BE_SCRATCH_ALLOC_FAIL_NO_RELEASE KILLED  a failed SCRATCH allocation frees the parts that did succeed (the core does not) (5 failing case(s), first: m_alloc2_balanced)
+FAIL: no row in the table for src/omega_gpu_resident.c
+FAIL: no row in the table for src/omega_gpu_resident.h
+FAIL: portability table does not match the tree
+make: *** [mk/runtime-r3.mk:12: test-runtime-portability-check] Error 1
+make: *** Waiting for unfinished jobs....
+BE_ERRNO_NOT_RESTORED KILLED  the frees after a failed SCRATCH allocation do not clobber the errno the core reads (3 failing case(s), first: m_alloc2_errno_code_text)
+BE_ALLOC_FAIL_TEXT_RESTORE SURVIVED_REDUNDANT  the failure text survives the cleanup frees (redundant: release_scratch writes neither c->text nor the driver text on a successful free, in the simulated driver and in nvrm_free (physics nvrm.h: free only zeroes the NvrmMem); the restore is a safety net for a driver that writes text on success, which no model here does)
+BE_SCRATCH_PB_NOT_INSTALLED KILLED  the large pushbuffer ring replaces the channel's 4 KiB buffer (3 failing case(s), first: m_success_large_pushbuffer_ring)
+NEGATIVE CONTROL removed-function: FAILED as it must (header disagrees with manifest: fn omega_gpu_session_alloc_code)
+NEGATIVE CONTROL missing-version: FAILED as it must (version macro missing: OMEGA_RUNTIME_API_VERSION_MAJOR)
+BE_PB_REPLACED_RESET SURVIVED_REDUNDANT  the flag that records the replaced ring is cleared after SCRATCH is freed (redundant: the zeroing of m.pb_mem stays (it is a separate line); a stale flag only repeats that harmless zeroing, and open memsets the whole context each run. physics m16_native_close is only nvrm_close(&ctx->rm) and never reads pb_mem)
+BE_BUSY_CHECK_DROPPED KILLED  a second open while a run is retained is refused (21 failing case(s), first: m_unc_marker_hang_second_open_refused_by_backend)
+BE_OPEN_FAIL_KEEPS_BUSY KILLED  a failed open releases the busy flag (72 failing case(s), first: m_open_fail_then_next_run_ok)
+BE_CLOSE_BUSY_CLEAR_DROPPED KILLED  close releases the busy flag so the next run can open (171 failing case(s), first: m_noc3_returns_ok)
+BE_OPEN_MEMSET_DROPPED KILLED  open resets the whole context, including the previous run's snapshot (4 failing case(s), first: m_noc3_run_info_marker2_not_reported)
+NEGATIVE CONTROL changed-signature: FAILED as it must (header disagrees with manifest: fn omega_gpu_session_free)
+BE_OPEN_NATIVE_FLAG_DROPPED KILLED  a failed open still reports the driver's own text (14 failing case(s), first: m_open_fail_driver_text_reported)
+NEGATIVE CONTROL changed-struct: FAILED as it must (manifest says `struct OmegaGpuLaunch )
+NEGATIVE CONTROL changed-constant: FAILED as it must (manifest says `const OMEGA_GPU_SESSION_MAX_ARGS )
+NEGATIVE CONTROL version-doc-mismatch: FAILED as it must (must contain the line "Omega Runtime API version:)
+BE_OPEN_ERROR_IGNORED KILLED  a failed driver open is reported (DEVICE_OPEN) (5 failing case(s), first: m_open_fail_name_step_state)
+NEGATIVE CONTROL stable-without-doc: FAILED as it must (STABLE entry omega_gpu_session_launch has no)
+NEGATIVE CONTROL wrong-quoted-signature: FAILED as it must (signature quoted in)
+NEGATIVE CONTROL signature-inside-another: FAILED as it must (signature quoted in)
+NEGATIVE CONTROL missing-patch-version: FAILED as it must (version macro missing: OMEGA_RUNTIME_API_VERSION_PATCH)
+NEGATIVE CONTROL added-undeclared-function: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_session_sneaky)
+BE_OPEN_LAST_RC_DROPPED KILLED  the failed open's driver code reaches the result (1 failing case(s), first: m_open_fail_errno_and_driver_code)
+NEGATIVE CONTROL added-undeclared-constant: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): const OMEGA_GPU_SESSION_SNEAKY)
+NEGATIVE CONTROL added-undeclared-enumerator: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): const OMEGA_GPU_CMDLIST_BARRIER_SNEAKY)
+NEGATIVE CONTROL stale-internal-entry: FAILED as it must (stale INTERNAL entry (no manifest header declares it): fn omega_gpu_session_set_error)
+BE_CHANNEL_ERROR_IGNORED KILLED  a failed channel create is reported (CHANNEL_CREATE) (2 failing case(s), first: m_channel_fail_name_step_state)
+BE_CHANNEL_LAST_RC_DROPPED KILLED  the failed channel create's driver code reaches the result (1 failing case(s), first: m_channel_fail_errno_text_code)
+BE_ALLOC_LAST_RC_DROPPED KILLED  the failed allocation's driver code reaches the result (4 failing case(s), first: m_alloc5_errno_code_text)
+BE_ALLOC_UNKNOWN_ROLE_ACCEPTED KILLED  alloc refuses an unknown role (harness exit 139 (crash or abort))
+BE_ROLE_MEM_UPPER_BOUND KILLED  a role above the last one has no buffer slot (4 failing case(s), first: m_guard_alloc_unknown_role_refused)
+NEGATIVE CONTROL removed-recover: FAILED as it must (header disagrees with manifest: fn omega_gpu_session_recover)
+BE_ROLE_MEM_LOWER_BOUND KILLED  a negative role has no buffer slot (2 failing case(s), first: m_guard_copy_in_negative_role_refused)
+BE_ROUND_PAGES_ZERO_ACCEPTED KILLED  a zero-byte allocation is refused (3 failing case(s), first: m_guard_alloc_zero_bytes_refused)
+BE_ROUND_PAGES_NO_ROUNDING KILLED  allocation sizes round up to whole pages (1 failing case(s), first: m_guard_alloc_rounds_up_to_whole_pages)
+BE_ROUND_PAGES_MINIMUM SURVIVED_REDUNDANT  one-page minimum (redundant: after the zero check, rounding any nonzero byte count up to a page multiple already gives at least one page, so the minimum can never apply)
+BE_COPY_IN_NO_MEMCPY KILLED  copy_in really copies the program and the inputs (38 failing case(s), first: m_success_returns_ok)
+NEGATIVE CONTROL removed-padding-field: FAILED as it must (header disagrees with manifest: field OmegaGpuCmdListOpts first_barrier_none)
+BE_COPY_IN_BOUNDS KILLED  copy_in refuses a length beyond the buffer (1 failing case(s), first: m_guard_copy_in_too_long_refused)
+NEGATIVE CONTROL new-fnptr-function: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_session_zzz_fp)
+NEGATIVE CONTROL manifest-fn-dropped: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_serving_seal)
+NEGATIVE CONTROL internal-unlisted: FAILED as it must (undeclared public entry (in a manifest header, not in the manifest or the INTERNAL list): fn omega_gpu_session_set_error)
+NEGATIVE CONTROL internal-also-manifest: FAILED as it must (entry is both in the manifest and INTERNAL: fn omega_gpu_session_launch)
+BE_COPY_IN_NULL_SOURCE KILLED  copy_in refuses a NULL source (harness exit 139 (crash or abort))
+NEGATIVE CONTROL internal-without-reason: FAILED as it must (INTERNAL entry fn omega_gpu_session_set_error gives no reason)
+NEGATIVE CONTROL stale-doc-section: FAILED as it must (stale API.md section (no manifest fn or struct): omega_gpu_session_retired)
+POSITIVE CONTROL semver-removed-stable-minor-under-zero: PASSED as it must (the entry changes need MINOR (MAJOR-class under major version zero))
+NEGATIVE CONTROL semver-removed-stable-unbumped-under-zero: FAILED as it must (needs at least a MINOR bump)
+NEGATIVE CONTROL semver-removed-stable-minor-only-at-one: FAILED as it must (needs a MAJOR bump)
+NEGATIVE CONTROL semver-changed-stable-unbumped: FAILED as it must (needs at least a MINOR bump)
+NEGATIVE CONTROL semver-added-unbumped: FAILED as it must (needs at least a MINOR bump)
+NEGATIVE CONTROL semver-version-down: FAILED as it must (version goes down)
+POSITIVE CONTROL semver-added-with-minor: PASSED as it must (the entry changes need MINOR)
+RESULT: PASS (every negative control was caught)
+BE_FILL_POISON_DROPPED KILLED  the device output is pre-filled with the poison words (7 failing case(s), first: m_success_poison_reached_device_output)
+BE_FILL_POISON_SHORT KILLED  every output word is pre-filled, including the last (6 failing case(s), first: m_success_poison_reached_device_output)
+BE_FILL_POISON_BOUNDS KILLED  fill_poison refuses a length beyond the output buffer (1 failing case(s), first: m_guard_fill_poison_too_long_refused)
+BE_COPY_OUT_NO_MEMCPY KILLED  copy_out really reads the device output back (24 failing case(s), first: m_success_output_values)
+BE_COPY_OUT_BOUNDS KILLED  copy_out refuses a length beyond the output buffer (1 failing case(s), first: m_guard_copy_out_too_long_refused)
+BE_BUILD_LAYOUT_CHECK KILLED  build refuses a missing job and an unsupported layout (harness exit 139 (crash or abort))
+BE_BUILD_COUNT_OVERFLOW SURVIVED_REDUNDANT  grid arithmetic overflow guard (redundant: an element count above UINT32_MAX - 63 needs at least 16 GiB of input, output and input buffers, so the buffer-size check in the same condition chain refuses it first; only the grid rounding (n + 63) could overflow, and it is never reached)
+BE_BUILD_BUFFERS_SIZE KILLED  build refuses buffers smaller than the element count needs (1 failing case(s), first: m_guard_build_count_beyond_the_buffers_refused)
+BE_C3_FLAG_IGNORED KILLED  the NO_C3 flag removes the L2 flush and the second marker (4 failing case(s), first: m_noc3_no_flush_in_pushbuffer)
+BE_C3_NEVER KILLED  with flags 0 the L2 flush and the second marker are in the pushbuffer (229 failing case(s), first: m_success_returns_ok)
+BE_THREADS_WRONG KILLED  the launch covers every element (37 failing case(s), first: m_success_returns_ok)
+BE_GRID_ROUNDS_DOWN KILLED  the grid rounds up so a partial last block still runs (37 failing case(s), first: m_success_returns_ok)
+BE_ARGS_C_SWAPPED KILLED  the kernel writes the OUTPUT buffer (39 failing case(s), first: m_success_returns_ok)
+BE_ARGS_A_B_SWAPPED KILLED  the kernel gets input A and input B in the right argument slots (1 failing case(s), first: m_success_kernel_arguments_are_a_b_output)
+BE_PROGRAM_VA KILLED  the QMD points at the program buffer (39 failing case(s), first: m_success_returns_ok)
+BE_CBANK_VA KILLED  the QMD points at the constant bank buffer (harness exit 139 (crash or abort))
+BE_SEM_VA KILLED  the QMD release semaphore address is the word the host waits on (216 failing case(s), first: m_success_returns_ok)
+BE_MARKER_VA KILLED  the first release lands on the word the host waits on (224 failing case(s), first: m_success_returns_ok)
+BE_SEM_ZERO_DROPPED KILLED  the semaphore word is zeroed before the doorbell (no stale DONE) (1 failing case(s), first: m_success_semaphore_zeroed_before_doorbell)
+BE_MARKER_ZERO_DROPPED KILLED  the first marker word is zeroed before the doorbell (no stale payload) (5 failing case(s), first: m_success_marker1_zeroed_before_doorbell)
+BE_MARKER2_ZERO_DROPPED KILLED  the second marker word is zeroed before the doorbell (5 failing case(s), first: m_success_marker2_zeroed_before_doorbell)
+BE_NOC3_MARKER2_REPORTED KILLED  with NO_C3 the second marker is neither waited for nor reported (1 failing case(s), first: m_unc_noc3_semaphore_hang_sync_valid_mask)
+BE_MARKER2_OFFSET_CHANGED KILLED  the second marker is 0x10 bytes after the first (1 failing case(s), first: m_success_release2_is_marker_page_plus_0x10)
+BE_MARKER2_PAYLOAD_CHANGED KILLED  the second marker payload is 0x46464646 (11 failing case(s), first: m_success_release2_payload_and_flags)
+BE_RELEASE1_PAYLOAD_ZERO KILLED  the first release writes the completion payload (222 failing case(s), first: m_success_returns_ok)
+BE_RELEASE2_PAYLOAD_ZERO KILLED  the second release writes its payload (212 failing case(s), first: m_success_returns_ok)
+BE_FLUSH_OP_DROPPED KILLED  the L2 flush operation word is L2_FLUSH_DIRTY (212 failing case(s), first: m_success_returns_ok)
+BE_FLUSH_METHOD_CHANGED KILLED  the flush uses the memory-operation method (222 failing case(s), first: m_success_returns_ok)
+BE_WFI_FLAG_RELEASE1 KILLED  the first release waits for idle (WFI) (1 failing case(s), first: m_success_release1_address_payload_flags)
+BE_WFI_FLAG_RELEASE2 KILLED  the second release waits for idle (WFI) (1 failing case(s), first: m_success_release2_payload_and_flags)
+BE_BARRIER_IN_BUILD SURVIVED_REDUNDANT  CPU barrier after zeroing the sync words (redundant: a CPU barrier instruction has no effect a host test can observe (the fake driver runs on the same core); it is verified on the chip only (Phase B))
+BE_QMD_RELEASE_CHECK SURVIVED_REDUNDANT  extra QMD1 release-word checks (redundant: the real descriptor builder always produces these words (src/omega_black

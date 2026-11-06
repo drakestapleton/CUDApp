@@ -1,0 +1,96 @@
+Script started on 2026-11-05 21:53:12-06:00 [COMMAND="taskset -c 10-14 nice -n 10 make -j3 test-runtime-portability-check test-gpu-cmdlist test-gpu-imadhi-rc" <not executed on terminal>]
+sh tools/runtime_portability_check.sh . docs/runtime/portability_table.tsv mk/omega-gpu-engine.mk
+./build/gpu_cmdlist_test --host-only
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itests -DSIM_HEADER='"bw_warp_sim.h"' -o build/gpu_imadhi_rc_test_bw_warp_sim tests/gpu_imadhi_rc_test.c build/libomega_gpu.a -lpthread -lm
+codegen axpy: 23 insns, peak 12 gprs, declared 16
+codegen res add|norm: 128 insns, peak 40 gprs, declared 48
+codegen res combine|norm: 264 insns, peak 49 gprs, declared 56
+codegen res add: 45 insns, peak 28 gprs, declared 32
+codegen swiglu: 29 insns, peak 16 gprs, declared 24
+codegen argmax: 165 insns, peak 32 gprs, declared 40
+codegen argmax indexed: 160 insns, peak 40 gprs, declared 48
+host-only: 27 checks, 0 failed: PASS
+./build/gpu_cmdlist_test --sim
+sim res mode 5 scale 1 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 5 scale 1 mutant 1: x identical, y 2047/2048 outside tolerance
+sim res mode 6 scale 1 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 6 scale 1 mutant 1: x DIFFERS, y 2047/2048 outside tolerance
+sim res mode 5 scale 2^64 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 5 scale 2^64 mutant 1: x identical, y 2047/2048 outside tolerance
+sim res mode 6 scale 2^64 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 6 scale 2^64 mutant 1: x DIFFERS, y 2048/2048 outside tolerance
+sim swiglu mutant 0: 0/6144 outside tolerance
+sim swiglu mutant 1: 6144/6144 outside tolerance
+sim argmax tie 0 mutant 0: index 151625 value 49.9996 (ref 151625)
+sim argmax tie 0 mutant 1: index 151625 value 49.9996 (ref 151625)
+sim argmax tie 1 mutant 0: index 1007 value 60 (ref 1007)
+sim argmax tie 1 mutant 1: index 28784 value 49.9999 (ref 1007)
+sim res width 5120 mode 5 mutant 0: x identical, y 0/5120 outside tolerance
+sim res width 5120 mode 5 mutant 1: x identical, y 5120/5120 outside tolerance
+sim res width 5120 mode 4 mutant 0: x identical, y 0/5120 outside tolerance
+sim res width 5120 mode 4 mutant 1: x identical, y 5120/5120 outside tolerance
+sim res width 5120 mode 1 mutant 0: x identical, y 0/5120 outside tolerance
+sim swiglu width 17408 mutant 0: 0/17408 outside tolerance
+sim swiglu width 17408 mutant 1: 17407/17408 outside tolerance
+sim res rows 3 x 5120 mutant 0: x identical, y 0/15360 outside tolerance
+sim res rows 3 x 5120 mutant 1: x identical, y 15360/15360 outside tolerance
+sim gather 3 x 14336 mutant 0: 0/43008 wrong
+sim gather 3 x 14336 mutant 1: 43008/43008 wrong
+sim gate 6244 mutant 0: 0/6244 outside tolerance
+sim gate 6244 mutant 1: 6244/6244 outside tolerance
+sim swiglu rows 3 x 17408: 0 outside tolerance
+sim: 74 checks, 0 failed: PASS
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itests -DSIM_HEADER='"bw_warp_sim_tc.h"' -o build/gpu_imadhi_rc_test_bw_warp_sim_tc tests/gpu_imadhi_rc_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itests -DSIM_HEADER='"bw_warp_sim_k.h"' -o build/gpu_imadhi_rc_test_bw_warp_sim_k tests/gpu_imadhi_rc_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itests -DSIM_HEADER='"bw_warp_sim_pa.h"' -o build/gpu_imadhi_rc_test_bw_warp_sim_pa tests/gpu_imadhi_rc_test.c build/libomega_gpu.a -lpthread -lm
+sim bw_warp_sim.h: hi32(a*b) 0x0000dead, nvcc pair model 0x00013525 (chip probe pending), old 32-bit model 0x0000f0e1
+PASS rc=RZ: Rd = hi32(a*b) = 0x0000dead
+PASS encode: IMAD.HI.U32 R8, R4, R5, R6 carries Rc = R6 (the chip reads R7:R6)
+PASS rc=R6: Rd = hi32(a*b + R7:R6) = 0x00013525
+PASS rc=R7: refused: IMADHI_RC at pc 5: IMAD.HI.U32 with an odd register Rc (the chip reads a 64-bit pair; nvcc emits only even bases, odd not chip-probed): use RZ or an even pair
+PASS pack 0 IMAD.HI.U32: odd column 0x3f807f00 != emulation 0x40003f80 (stale R7 0x3f803f80), as on the chip in #487
+PASS pack 0 SHF.R+IADD3: odd column 0x40003f80 = emulation
+PASS pack 1 IMAD.HI.U32: odd column 0x0000deae != emulation 0x5678dead (stale R7 0x00000000), as on the chip in #487
+PASS pack 1 SHF.R+IADD3: odd column 0x5678dead = emulation
+PASS pack 2 IMAD.HI.U32: odd column 0x00001234 != emulation 0xabcd1234 (stale R7 0x00000000), as on the chip in #487
+PASS pack 2 SHF.R+IADD3: odd column 0xabcd1234 = emulation
+PASS bw_warp_sim.h
+sim bw_warp_sim_tc.h: hi32(a*b) 0x0000dead, nvcc pair model 0x00013525 (chip probe pending), old 32-bit model 0x0000f0e1
+PASS rc=RZ: Rd = hi32(a*b) = 0x0000dead
+PASS encode: IMAD.HI.U32 R8, R4, R5, R6 carries Rc = R6 (the chip reads R7:R6)
+PASS rc=R6: Rd = hi32(a*b + R7:R6) = 0x00013525
+PASS rc=R7: refused: IMADHI_RC at pc 5: IMAD.HI.U32 with an odd register Rc (the chip reads a 64-bit pair; nvcc emits only even bases, odd not chip-probed): use RZ or an even pair
+PASS pack 0 IMAD.HI.U32: odd column 0x3f807f00 != emulation 0x40003f80 (stale R7 0x3f803f80), as on the chip in #487
+PASS pack 0 SHF.R+IADD3: odd column 0x40003f80 = emulation
+PASS pack 1 IMAD.HI.U32: odd column 0x0000deae != emulation 0x5678dead (stale R7 0x00000000), as on the chip in #487
+PASS pack 1 SHF.R+IADD3: odd column 0x5678dead = emulation
+PASS pack 2 IMAD.HI.U32: odd column 0x00001234 != emulation 0xabcd1234 (stale R7 0x00000000), as on the chip in #487
+PASS pack 2 SHF.R+IADD3: odd column 0xabcd1234 = emulation
+PASS bw_warp_sim_tc.h
+sim bw_warp_sim_k.h: hi32(a*b) 0x0000dead, nvcc pair model 0x00013525 (chip probe pending), old 32-bit model 0x0000f0e1
+PASS rc=RZ: Rd = hi32(a*b) = 0x0000dead
+PASS encode: IMAD.HI.U32 R8, R4, R5, R6 carries Rc = R6 (the chip reads R7:R6)
+PASS rc=R6: Rd = hi32(a*b + R7:R6) = 0x00013525
+PASS rc=R7: refused: IMADHI_RC at pc 5: IMAD.HI.U32 with an odd register Rc (the chip reads a 64-bit pair; nvcc emits only even bases, odd not chip-probed): use RZ or an even pair
+PASS pack 0 IMAD.HI.U32: odd column 0x3f807f00 != emulation 0x40003f80 (stale R7 0x3f803f80), as on the chip in #487
+PASS pack 0 SHF.R+IADD3: odd column 0x40003f80 = emulation
+PASS pack 1 IMAD.HI.U32: odd column 0x0000deae != emulation 0x5678dead (stale R7 0x00000000), as on the chip in #487
+PASS pack 1 SHF.R+IADD3: odd column 0x5678dead = emulation
+PASS pack 2 IMAD.HI.U32: odd column 0x00001234 != emulation 0xabcd1234 (stale R7 0x00000000), as on the chip in #487
+PASS pack 2 SHF.R+IADD3: odd column 0xabcd1234 = emulation
+PASS bw_warp_sim_k.h
+sim bw_warp_sim_pa.h: hi32(a*b) 0x0000dead, nvcc pair model 0x00013525 (chip probe pending), old 32-bit model 0x0000f0e1
+PASS rc=RZ: Rd = hi32(a*b) = 0x0000dead
+PASS encode: IMAD.HI.U32 R8, R4, R5, R6 carries Rc = R6 (the chip reads R7:R6)
+PASS rc=R6: Rd = hi32(a*b + R7:R6) = 0x00013525
+PASS rc=R7: refused: IMADHI_RC at pc 5: IMAD.HI.U32 with an odd register Rc (the chip reads a 64-bit pair; nvcc emits only even bases, odd not chip-probed): use RZ or an even pair
+PASS pack 0 IMAD.HI.U32: odd column 0x3f807f00 != emulation 0x40003f80 (stale R7 0x3f803f80), as on the chip in #487
+PASS pack 0 SHF.R+IADD3: odd column 0x40003f80 = emulation
+PASS pack 1 IMAD.HI.U32: odd column 0x0000deae != emulation 0x5678dead (stale R7 0x00000000), as on the chip in #487
+PASS pack 1 SHF.R+IADD3: odd column 0x5678dead = emulation
+PASS pack 2 IMAD.HI.U32: odd column 0x00001234 != emulation 0xabcd1234 (stale R7 0x00000000), as on the chip in #487
+PASS pack 2 SHF.R+IADD3: odd column 0xabcd1234 = emulation
+PASS bw_warp_sim_pa.h
+PASS: 152 rows, every omega_gpu_* / omega_blackwell_* / omega_bw_* / omega_ampere_* file in src/ has one and the rows agree with the includes
+
+Script done on 2026-11-05 21:53:27-06:00 [COMMAND_EXIT_CODE="0"]

@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:17:26Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:bd785f77f6caff004cfe85f099bda29bd39016d64b6a4fca2650ff74dab449c0",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "ea760f7a705dfbe56b08141610148302d238c362",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "--purpose",
+  "name": "--name",
+  "purpose": "regalloc_om",
+  "schema_version": "1.0.0"
+}

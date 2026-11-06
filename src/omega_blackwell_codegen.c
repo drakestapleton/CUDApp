@@ -4,6 +4,11 @@
 #include "sha256.h"
 #include "omega_path_check.h"
 #include <string.h>
+#ifdef OMEGA_GPU_NO_POSIX
+#include "cudapp_freest_native.h"
+#else
+#include "cudapp_hosted_native.h"
+#endif
 /* native v1 P07 cut A.2 (aienos#286, docs/numeric/OMEGA_GPU_NATIVE_BOUNDARY.md): with OMEGA_GPU_NO_POSIX this file
  * builds -ffreestanding. Code generation then runs only through the allocation-free entry points
  * (omega_blackwell_kernel_encode_into: the caller supplies the code buffer and its capacity); the allocating
@@ -23,6 +28,7 @@ void omega_bw_ir_init(BlackwellIRProgram *prog) {
     memset(prog, 0, sizeof(*prog));
 }
 
+#ifdef CUDAPP_MIGRATION_PENDING_C_REGALLOC
 int omega_bw_ir_alloc_vreg(BlackwellIRProgram *prog) {
     if (!prog || prog->regalloc.num_vregs >= BW_MAX_VREGS) return -1;
     int v = prog->regalloc.num_vregs++;
@@ -140,8 +146,61 @@ int omega_bw_ir_append(BlackwellIRProgram *prog, const BlackwellIRInsn *insn) {
 
     return idx;
 }
+#else
+/* ABI shell only: Omega decides capacity, operand membership and interval updates. */
+static int bw_ra_decide(uint64_t kind, int64_t a, int64_t b) {
+    uint64_t result = UINT64_MAX;
+    if (omega2_ra_ir(&result, kind, (uint64_t)a, (uint64_t)b) != 0) return -1;
+    return (int)result;
+}
 
-int omega_bw_regalloc_solve(BlackwellIRProgram *prog) {
+static int bw_ra_alloc(BlackwellIRProgram *prog, unsigned width, bool uniform) {
+    if (!prog) return -1;
+    OmegaRegAlloc *ra = &prog->regalloc;
+    int *count = uniform ? &ra->num_uvregs : &ra->num_vregs;
+    int v = bw_ra_decide(0, *count, uniform ? BW_MAX_UVREGS : BW_MAX_VREGS);
+    if (v < 0) return -1;
+    OmegaLiveInterval *iv = uniform ? &ra->uintervals[v] : &ra->intervals[v];
+    iv->vreg = v; iv->first_def = -1; iv->last_use = -1; iv->phys_reg = -1;
+    iv->is_pair = width == 2; iv->active = false;
+    if (!uniform) { iv->bundle_size = width; iv->is_quad = width == 4; }
+    if (uniform) ra->uvreg_to_phys[v] = -1;
+    else ra->vreg_to_phys[v] = -1;
+    *count = v + 1;
+    return v;
+}
+int omega_bw_ir_alloc_vreg(BlackwellIRProgram *p) { return bw_ra_alloc(p, 1, false); }
+int omega_bw_ir_alloc_vreg64(BlackwellIRProgram *p) { return bw_ra_alloc(p, 2, false); }
+int omega_bw_ir_alloc_vreg128(BlackwellIRProgram *p) { return bw_ra_alloc(p, 4, false); }
+int omega_bw_ir_alloc_uvreg(BlackwellIRProgram *p) { return bw_ra_alloc(p, 1, true); }
+int omega_bw_ir_alloc_uvreg64(BlackwellIRProgram *p) { return bw_ra_alloc(p, 2, true); }
+
+static void bw_ra_touch(OmegaLiveInterval *iv, int at) {
+    iv->first_def = bw_ra_decide(1, iv->first_def, at);
+    iv->last_use = bw_ra_decide(2, iv->last_use, at);
+}
+int omega_bw_ir_append(BlackwellIRProgram *prog, const BlackwellIRInsn *insn) {
+    if (!prog || !insn || bw_ra_decide(5, (int64_t)prog->count, 0) != 1) return -1;
+    int idx = (int)prog->count++;
+    prog->insns[idx] = *insn;
+    OmegaRegAlloc *ra = &prog->regalloc;
+    int udst = bw_ra_decide(4, insn->op, 0);
+    if (!udst && bw_ra_decide(3, insn->dst_vreg, ra->num_vregs) == 1)
+        bw_ra_touch(&ra->intervals[insn->dst_vreg], idx);
+    const int src[] = {insn->src1_vreg, insn->src2_vreg, insn->src3_vreg};
+    for (unsigned i = 0; i < 3; ++i)
+        if (bw_ra_decide(3, src[i], ra->num_vregs) == 1)
+            bw_ra_touch(&ra->intervals[src[i]], idx);
+    if (udst && bw_ra_decide(3, insn->dst_vreg, ra->num_uvregs) == 1)
+        bw_ra_touch(&ra->uintervals[insn->dst_vreg], idx);
+    if (bw_ra_decide(3, insn->ureg, ra->num_uvregs) == 1)
+        bw_ra_touch(&ra->uintervals[insn->ureg], idx);
+    return idx;
+}
+#endif
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC) || defined(CUDAPP_REGALLOC_DIFFERENTIAL)
+int omega_bw_regalloc_c_oracle(BlackwellIRProgram *prog) {
     if (!prog) return -1;
     OmegaRegAlloc *ra = &prog->regalloc;
 
@@ -265,6 +324,45 @@ int omega_bw_regalloc_solve(BlackwellIRProgram *prog) {
     ra->peak_ugpr_usage = (uint32_t)cur_u;
 
     return 0;
+}
+#endif
+
+int omega_bw_regalloc_solve(BlackwellIRProgram *prog) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_REGALLOC
+    return omega_bw_regalloc_c_oracle(prog);
+#else
+    if (!prog) return -1;
+    OmegaRegAlloc *ra = &prog->regalloc;
+    uint64_t wire[4096] = {0};
+    wire[0] = ra->num_vregs;
+    wire[1] = ra->num_uvregs;
+    wire[2] = ra->gpr_limit;
+    wire[3] = ra->peak_gpr_usage;
+    wire[4] = ra->peak_ugpr_usage;
+    for (unsigned v = 0; v < BW_MAX_VREGS + BW_MAX_UVREGS; ++v) {
+        const OmegaLiveInterval *iv = v < BW_MAX_VREGS
+            ? &ra->intervals[v] : &ra->uintervals[v - BW_MAX_VREGS];
+        uint64_t *p = &wire[16 + 10 * v];
+        p[0] = iv->vreg; p[1] = iv->first_def; p[2] = iv->last_use;
+        p[3] = iv->phys_reg; p[4] = iv->bundle_size; p[5] = iv->is_pair;
+        p[6] = iv->is_quad; p[7] = iv->active;
+        p[8] = v < BW_MAX_VREGS ? ra->vreg_to_phys[v] : ra->uvreg_to_phys[v - BW_MAX_VREGS];
+    }
+    uint64_t result = UINT64_MAX;
+    if (omega2_ra_run(&result, wire, 4096) != 0) return -1;
+    /* The oracle exposes partial assignments on exhaustion; preserve that contract. */
+    for (unsigned v = 0; v < BW_MAX_VREGS + BW_MAX_UVREGS; ++v) {
+        OmegaLiveInterval *iv = v < BW_MAX_VREGS
+            ? &ra->intervals[v] : &ra->uintervals[v - BW_MAX_VREGS];
+        const uint64_t *p = &wire[16 + 10 * v];
+        iv->phys_reg = (int)p[3]; iv->active = p[7] != 0;
+        if (v < BW_MAX_VREGS) ra->vreg_to_phys[v] = (int)p[8];
+        else ra->uvreg_to_phys[v - BW_MAX_VREGS] = (int)p[8];
+    }
+    ra->peak_gpr_usage = (uint32_t)wire[3];
+    ra->peak_ugpr_usage = (uint32_t)wire[4];
+    return (int)result;
+#endif
 }
 
 /* ---- sm_121 instruction encoder (aien-dev/CUDApp#79) ---------------------------------------------------

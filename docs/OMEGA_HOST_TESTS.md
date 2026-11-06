@@ -203,6 +203,9 @@ iteration count of seven, plus the F2E4 probe. It compares encoded bytes,
 then patched bytes, patch counts and packed cubins. It also checks each
 single-bit iteration immediate and the maximum iteration immediate.
 Its deliberately corrupted control word must be detected.
+The same target rejects unsupported builder configurations and null outputs,
+and corrupts each placeholder kind's opcode, reserved field and control word
+to compare C/Omega patch rejection, including short buffers.
 The iteration immediate is not exhaustively enumerated; this receipt is not
 a claim that all possible iteration immediates were run.
 The focused command exited zero and printed
@@ -221,3 +224,46 @@ then run `./build/gpu_qmma_probe_test --host-only` and
 and receipt capture procedure. The default command exercises arithmetic,
 the dropped-C negative control, and the peak sweep. Do not run it outside
 that window.
+
+## Tiled BF16 training GEMM builder migration
+
+The default `omega_blackwell_codegen_tgemm_prog` executes the first-party
+`cg_tgemm.om` builder and `cg_tgemm_spec.om` admission/query unit through
+checked portable IR replay. `cg_tgemm_emit.om` shares the QMMA allocator,
+record packer and scoreboard-control primitives. The old C oracle remains
+behind `CUDAPP_MIGRATION_PENDING_C_CODEGEN_TGEMM=1`, default zero.
+Native portable view lengths count elements, not bytes.
+
+`make test-codegen-tgemm-diff` checks every structural shape and supported
+mutant along the full independent K and N axes, compares all public query
+results and refusals, and compares complete IR plus allocator state.
+Each structural baseline also compares encoded bytes and packed cubins.
+Equal complete IR and allocator state feed the same deterministic encoder;
+this is stronger than comparing only encoded bytes.
+The independent-axes command is not an exhaustive Cartesian-product receipt.
+`make test-codegen-tgemm-exhaustive` visits the complete supported bounded
+K/N/RT/warps/AQN/mutant product, including C refusals.
+Both modes require detection of an independently corrupted Omega control word.
+`make test-codegen-tgemm-sim` runs the carried budget checks and warp simulator
+with its arithmetic reference and mutant controls; it opens no GPU.
+
+Host receipt (2026-11-05, pinned `omc` e5b32567 and Bridge bc11b30b):
+`taskset -c 10-14 nice -n 10 make -j3 test-codegen-tgemm-diff`
+returned zero with `CODEGEN TGEMM MUTANT CAUGHT` and
+`CODEGEN TGEMM AXES DIFF PASS (55295 accepted cases)`.
+The printed first-instruction control-word mismatch belongs to the deliberate
+mutant, not a positive-case failure. Full-product, carried simulator and chip
+verdicts are separate from this receipt.
+
+Constant transcription query:
+`WolframLanguageEvaluator: {AssociationMap[FromDigits[#,16]&,{"21","25","26","d8","100","10000","ffff0000","fffffffe"}],2^32,2^17,2^23}`
+→ `{<|"21"->33,"25"->37,"26"->38,"d8"->216,"100"->256,"10000"->65536,"ffff0000"->4294901760,"fffffffe"->4294967294|>,4294967296,131072,8388608}`.
+
+Chip tier is **NOT_RUN**. In a separately authorized exclusive GB10 window,
+build `taskset -c 10-14 nice -n 10 make -j3 build/gpu_tgemm_test`,
+run `./build/gpu_tgemm_test --host-only` and
+`./build/gpu_tgemm_test --sim`, then capture
+`./build/gpu_tgemm_test --chip` under the current device authorization and
+receipt procedure. Only the last command opens the device. Its carried chip
+path checks both uncached and cached buffers, output poisoning, repeat
+identity, arithmetic reference and mutant 4. Host parity is not chip qualification.

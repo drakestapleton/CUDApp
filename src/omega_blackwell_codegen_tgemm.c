@@ -2,6 +2,12 @@
 /* omega_blackwell_codegen_tgemm.c: device-resident bf16 training GEMM (trainer lane E1, cut 1: NN, F32 overwrite). See the
  * header. The K loop, staging and scheduling follow omega_blackwell_codegen_tc2.c (chip gate OWN30B-L1G-GEMM-1e76e728). */
 #include "omega_blackwell_codegen_tgemm.h"
+#include "cudapp_native.h"
+#include "omega_gpu_om_ir.h"
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_TGEMM
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_TGEMM 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TGEMM
 #include "omega_bw_em.h"
 
 int omega_tgemm_spec_ok(const OmegaTgemmSpec *s) {
@@ -216,3 +222,23 @@ int omega_blackwell_codegen_tgemm_prog(const OmegaTgemmSpec *spec, BlackwellIRPr
     if (!omega_bw_gpr_declared_ok(omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage), prog->regalloc.peak_gpr_usage) || omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage) > 128u) return -1;
     return 0;
 }
+#else
+static uint32_t tgemm_query(const OmegaTgemmSpec *s, uint64_t kind) {
+    if (!s) return 0;
+    const uint64_t fields[10] = {s->k,s->n,s->rt,s->ct,s->warps,s->kc,s->aqn,s->layout,s->epi,(uint64_t)s->mutant};
+    uint64_t result = 0;
+    if (omega_cg_tgemm_spec(&result,fields,sizeof fields/sizeof fields[0],kind) != OMEGA_OK || result > UINT32_MAX) return 0;
+    return (uint32_t)result;
+}
+int omega_tgemm_spec_ok(const OmegaTgemmSpec *s) { return (int)tgemm_query(s,0); }
+uint32_t omega_tgemm_shared_bytes(const OmegaTgemmSpec *s) { return tgemm_query(s,1); }
+uint32_t omega_tgemm_span(const OmegaTgemmSpec *s) { return tgemm_query(s,2); }
+uint32_t omega_tgemm_bm(const OmegaTgemmSpec *s) { return tgemm_query(s,3); }
+int omega_blackwell_codegen_tgemm_prog(const OmegaTgemmSpec *s, BlackwellIRProgram *prog) {
+    if (!prog || !omega_tgemm_spec_ok(s)) return -1;
+    uint64_t shape = (uint64_t)s->rt | (uint64_t)s->warps << 8 | (uint64_t)s->aqn << 16 | (uint64_t)s->mutant << 24;
+    if (omega_gpu_om_ir_replay(omega_cg_tgemm,s->k,s->n,shape,0,prog,NULL) != OMEGA_OM_IR_OK) return -1;
+    uint32_t declared = omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage);
+    return omega_bw_gpr_declared_ok(declared,prog->regalloc.peak_gpr_usage) && declared <= 128u ? 0 : -1;
+}
+#endif

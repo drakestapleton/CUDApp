@@ -46,7 +46,51 @@ static int same(int ca,int cb,const char *label) {
     if(!equal){fprintf(stderr,"%s cubin differs (%d/%d)\n",label,ex,ey);return 0;}
     cases++; return 1;
 }
+static int refusals(void) {
+    static const uint32_t invalid[][4] = {
+        {0,1,1,32}, {1,0,1,32}, {1,17,1,32},
+        {1,1,0,32}, {1,1,16,32}, {1,1,1,0},
+        {1,1,1,31}, {1,1,1,33}, {1,1,1,1056},
+        {1,UINT32_MAX,1,32}, {1,1,UINT32_MAX,32},
+        {1,1,1,UINT32_MAX}
+    };
+    for (size_t i=0;i<sizeof invalid/sizeof invalid[0];i++) {
+        const uint32_t *v=invalid[i];
+        if (!oracle_qmma_peak(v[0],v[1],v[2],v[3],&a) ||
+            !omega_blackwell_codegen_qmma_peak_prog(v[0],v[1],v[2],v[3],&b)) return 0;
+    }
+    if (!oracle_qmma_probe(-1,0,&a) || !omega_blackwell_codegen_qmma_probe_prog(-1,0,&b) ||
+        !oracle_qmma_probe(2,0,&a) || !omega_blackwell_codegen_qmma_probe_prog(2,0,&b) ||
+        !oracle_qmma_probe(0,17,&a) || !omega_blackwell_codegen_qmma_probe_prog(0,17,&b) ||
+        !oracle_qmma_probe(0,0,NULL) || !omega_blackwell_codegen_qmma_probe_prog(0,0,NULL) ||
+        !oracle_qmma_peak(1,1,1,32,NULL) || !omega_blackwell_codegen_qmma_peak_prog(1,1,1,32,NULL) ||
+        !oracle_f2e4_probe(NULL) || !omega_blackwell_codegen_f2e4_probe_prog(NULL)) return 0;
+    return 1;
+}
+static int patch_refusals(void) {
+    static uint8_t x[BW_MAX_IR_INSNS*16],y[BW_MAX_IR_INSNS*16];
+    const unsigned corrupt[]={0,5,11};
+    for (int kind=0;kind<2;kind++) {
+        if (kind ? oracle_f2e4_probe(&a) : oracle_qmma_probe(0,0,&a)) return 0;
+        size_t len=0,mark=a.count;
+        if (omega_bw_encode_program(&a,x,sizeof x,&len)) return 0;
+        for(size_t i=0;i<a.count;i++)
+            if (a.insns[i].imm==(kind ? OMEGA_QMMA_MARK_F2E4 : OMEGA_QMMA_MARK)) {mark=i;break;}
+        if(mark==a.count) return 0;
+        for(size_t q=0;q<sizeof corrupt/sizeof corrupt[0];q++) {
+            memcpy(y,x,len);
+            y[mark*16+corrupt[q]]^=1;
+            memcpy(x,y,len);
+            if (oracle_qmma_patch_code(&a,x,len)!=-1 || omega_qmma_patch_code(&a,y,len)!=-1) return 0;
+            if (omega_bw_encode_program(&a,x,sizeof x,&len)) return 0;
+        }
+        if (oracle_qmma_patch_code(&a,x,a.count*16-1)!=-1 || omega_qmma_patch_code(&a,x,a.count*16-1)!=-1) return 0;
+    }
+    return oracle_qmma_patch_code(NULL,x,0)==-1 && omega_qmma_patch_code(NULL,x,0)==-1 &&
+           oracle_qmma_patch_code(&a,NULL,0)==-1 && omega_qmma_patch_code(&a,NULL,0)==-1;
+}
 int main(void) {
+    if(!refusals() || !patch_refusals()){fprintf(stderr,"QMMA refusal differential failed\n");return 1;}
     for(int mut=0;mut<2;mut++) for(unsigned wait=0;wait<=16;wait++) {
         int ca=oracle_qmma_probe(mut,wait,&a),cb=omega_blackwell_codegen_qmma_probe_prog(mut,wait,&b);
         if(!same(ca,cb,"probe"))return 1;

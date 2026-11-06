@@ -194,6 +194,9 @@ predicates and the general reduction hierarchy against the retained C oracle.
 Non-NaN floats compare by bits; NaNs compare by class. The reducer preserves
 the declared warp tree at every level, including padding and final MEAN
 division. Sequential summation is deliberately not that contract.
+The production numeric archive objects also force `-ffp-contract=off`, including
+when a caller supplies `CFLAGS`; see the
+[archive build/control receipt](../evidence/numeric-rest-20261106/archive-fp-contract.md).
 
 `make test-numeric-rest-om-mutants` regenerates disposable copies, requires a
 passing control, kills six changed Omega algorithms and rejects omission of

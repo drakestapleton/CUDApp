@@ -2,6 +2,10 @@
 # Numeric reference migration to Omega (om/numeric/numeric.om, om/numeric/tile.om); knob CUDAPP_NUMERIC in mk/ampere-cubin.mk.
 # C-vs-Omega differential of the numeric reference (om/numeric/numeric.om, tile.om): every public function runs
 # both and aborts on a bit difference; tools/numeric_om_mutants.sh shows a broken Omega unit is caught.
+
+# The archive objects need the same rounding contract as the direct test links.
+# Append even when callers supply CFLAGS, so a prior contraction flag cannot win.
+$(addprefix $(OUT_DIR)/,$(notdir $(NUMERIC_SRCS:.c=.o))): override CFLAGS += -ffp-contract=off
 .PHONY: test-numeric-om-diff
 $(AMPERE_CUBIN_DIR)/numeric-om-diff: tests/numeric_om_diff_test.c $(NUMERIC_SRCS) $(NUMERIC_DEPS)
 	@mkdir -p $(AMPERE_CUBIN_DIR)

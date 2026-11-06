@@ -1,0 +1,8 @@
+mkdir -p build
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric.c -o build/cudapp_om_numeric.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric_tile.c -o build/cudapp_om_numeric_tile.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric_rest.c -o build/cudapp_om_numeric_rest.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric_patch.c -o build/cudapp_om_numeric_patch.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric_check.c -o build/cudapp_om_numeric_check.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric_trace.c -o build/cudapp_om_numeric_trace.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=fast -Isrc -ffp-contract=off  -c src/cudapp_om_numeric_reduce.c -o build/cudapp_om_numeric_reduce.o

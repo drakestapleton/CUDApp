@@ -106,9 +106,9 @@ artifact-export: $(ARTIFACT_EXPORT)
 ARTIFACT_TEST = $(OUT_DIR)/gpu_artifact_export_test
 # These two recipes compile omega_cubin.c on the command line, which overrides the
 # archive member with the same .om packer the library links.
-$(ARTIFACT_EXPORT): tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
+$(ARTIFACT_EXPORT): tools/artifact_export.c src/omega_native_artifact.c src/omega_native_artifact_om.inc src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tools/artifact_export.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
-$(ARTIFACT_TEST): tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
+$(ARTIFACT_TEST): tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_native_artifact_om.inc src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -o $@ tests/gpu_artifact_export_test.c src/omega_native_artifact.c src/omega_cubin.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
 # cubin-probe is the only target that links NVIDIA's libcuda: an interop check that NVIDIA's own loader accepts
 # CUDA++'s cubin. It is not in `make test`; zero-cuda-gate (in HOST_TESTS) checks hello_gpu and the API test link no CUDA.
@@ -125,8 +125,8 @@ test-native-artifact: $(ARTIFACT_EXPORT) $(ARTIFACT_TEST)
 	./$(ARTIFACT_TEST) $(OUT_DIR)/artifact-test
 # Pure artifact-format boundary: portable host test, no driver or device objects.
 .PHONY: test-native-artifact-manifest
-$(OUT_DIR)/native_artifact_manifest_test: tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_BINDING_SRCS) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o $@ $^ -lpthread
+$(OUT_DIR)/native_artifact_manifest_test: tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_native_artifact_om.inc src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c $(CUDAPP_BINDING_SRCS) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o $@ $(filter %.c,$^) -lpthread
 test-native-artifact-manifest: $(OUT_DIR)/native_artifact_manifest_test
 	./$(OUT_DIR)/native_artifact_manifest_test
 .PHONY: libomega_gpu test-gpu-matmul-api
@@ -670,9 +670,10 @@ DS_UNIT = $(OUT_DIR)/dagsim_unit
 DS_CLI = $(OUT_DIR)/dagsim
 DS_SHA_SRC = src/sha256.c
 RX_CM_OBJ = $(OUT_DIR)/rx_costmodel.o
+RX_CM_BINDING = src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c
 
-$(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h | $(OUT_DIR)
-	$(CC) $(CFLAGS) -c -o $@ src/runtime/rx_costmodel.c
+$(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h src/runtime/rx_cm_sort.h src/runtime/rx_cm_math.h src/cudapp_native.h | $(OUT_DIR)
+	$(CC) $(CFLAGS) -ffp-contract=off -c -o $@ src/runtime/rx_costmodel.c
 	@if nm -u $@ | grep -E 'rx_gen_|aienos_cap_|rx_caproot_|rx_capadmin_|rx_world_|mmap|mprotect|fork|exec|dlopen|system' ; then \
 		echo "rx_costmodel.o references an operation a cost model must not have"; \
 		rm -f $@; exit 1; fi
@@ -681,8 +682,8 @@ $(RX_CM_OBJ): src/runtime/rx_costmodel.c src/runtime/rx_costmodel.h | $(OUT_DIR)
 # The restore-op-clamp mutant (omega #934) must be killed by unsupported-op-not-aliased-to-matvec.
 .PHONY: test-costmodel
 RX_CM_UNIT = $(OUT_DIR)/rx_costmodel_unit
-$(RX_CM_UNIT): tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) -lm
+$(RX_CM_UNIT): tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -o $@ tests/runtime/rx_costmodel_unit.c $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
 
 test-costmodel: $(RX_CM_UNIT)
 	./$(RX_CM_UNIT)
@@ -691,8 +692,8 @@ test-costmodel: $(RX_CM_UNIT)
 	    src/runtime/rx_costmodel.c > $$dir/rx_costmodel.c; \
 	  if cmp -s src/runtime/rx_costmodel.c $$dir/rx_costmodel.c; then \
 	    echo "mutant restore-op-clamp: sed changed nothing"; exit 1; fi; \
-	  $(CC) $(CFLAGS) -c -o $$dir/rx_costmodel.o $$dir/rx_costmodel.c; \
-	  $(CC) $(CFLAGS) -o $$dir/unit tests/runtime/rx_costmodel_unit.c $$dir/rx_costmodel.o $(DS_SHA_SRC) -lm; \
+	  $(CC) $(CFLAGS) -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_CM_FEATURES=1 -c -o $$dir/rx_costmodel.o $$dir/rx_costmodel.c; \
+	  $(CC) $(CFLAGS) -o $$dir/unit tests/runtime/rx_costmodel_unit.c $$dir/rx_costmodel.o $(DS_SHA_SRC) $(RX_CM_BINDING) -lm; \
 	  rc=0; $$dir/unit refuse > $$dir/out.txt 2> $$dir/err.txt || rc=$$?; \
 	  if [ $$rc -eq 0 ] || ! grep -q unsupported-op-not-aliased-to-matvec $$dir/err.txt; then \
 	    echo "mutant restore-op-clamp was not killed by unsupported-op-not-aliased-to-matvec (exit $$rc)"; \
@@ -705,11 +706,11 @@ $(DS_OBJ): tools/dagsim/dagsim.c tools/dagsim/dagsim.h src/runtime/rx_costmodel.
 		echo "dagsim.o references an operation an offline evaluator must not have"; \
 		rm -f $@; exit 1; fi
 
-$(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) -Wl,--wrap=rx_cm_predict -lm
+$(DS_UNIT): tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tests/dagsim/dagsim_unit.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -Wl,--wrap=rx_cm_predict -lm
 
-$(DS_CLI): tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) | $(OUT_DIR)
-	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) -lm
+$(DS_CLI): tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -Itools/dagsim -o $@ tools/dagsim/dagsim_cli.c $(DS_OBJ) $(RX_CM_OBJ) $(DS_SHA_SRC) $(RX_CM_BINDING) -lm
 
 test-dagsim: $(DS_UNIT) $(DS_CLI)
 	./$(DS_UNIT)

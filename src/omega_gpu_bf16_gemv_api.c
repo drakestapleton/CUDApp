@@ -4,6 +4,7 @@
  * GPU-uncached (nvos.h NVOS32_ATTR2_GPU_CACHEABLE: "For system memory this will not be coherent with direct CPU
  * mappings"); one launch = omega_gpu_session_launch. */
 #include "omega_gpu_bf16_gemv_api.h"
+#include "omega_host_policy.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_cmdlist.h"
@@ -174,8 +175,9 @@ void omega_gpu_bf16_tensor_shape(const OmegaGpuBf16Tensor *t, uint32_t *n, uint3
 
 int omega_gpu_bf16_tensor_upload(uint32_t n, uint32_t k, const uint16_t *w, OmegaGpuBf16Tensor **out) {
     if (out) *out = NULL;
-    if (!w || !out || n == 0 || k == 0 || k % 256u) return OMEGA_GPU_BF16_BAD_ARGS;
-    if (k > OMEGA_BF16_MAX_K) return OMEGA_GPU_BF16_TOO_LARGE;
+    if (!w || !out) return OMEGA_GPU_BF16_BAD_ARGS;
+    int shape_rc = omega_host_shape(5, n, k, OMEGA_BF16_MAX_K);
+    if (shape_rc) return shape_rc;
     const size_t count = (size_t)n * k;
     for (size_t i = 0; i < count; i++) if ((w[i] & 0x7f80u) == 0x7f80u) {
         char e[120]; omega_gpu_fmt(e, sizeof e, "bf16 upload: NaN or infinity at element %zu", i);

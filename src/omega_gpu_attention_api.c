@@ -1312,13 +1312,13 @@ static float general_scale(uint32_t hd, float user) {
     return (float)(1.4426950408889634 * (user > 0.0f ? (double)user : 1.0 / host_sqrt((double)hd)));
 }
 
+#include "omega_host_policy.h"
 /* Common head-shape checks. OK for every shape some kernel takes; *legacy says whether the tuned kernel does
  * (head_dim 64 / 128, at most MAX_Q_HEADS query heads, a power-of-two GQA ratio; *log2gqa is then its log2).
  * Everything else valid runs on the general kernel. */
 static int check_heads(uint32_t num_q_heads, uint32_t num_kv_heads, uint32_t head_dim, uint32_t *log2gqa, bool *legacy) {
-    if (num_q_heads == 0 || num_kv_heads == 0 || head_dim == 0) return OMEGA_GPU_ATTN_BAD_ARGS;
-    if (head_dim > OMEGA_GPU_ATTN_GENERAL_MAX_HEAD_DIM || num_q_heads > OMEGA_GPU_ATTN_GENERAL_MAX_Q_HEADS) return OMEGA_GPU_ATTN_TOO_LARGE;
-    if (num_q_heads % num_kv_heads != 0) return OMEGA_GPU_ATTN_BAD_ARGS;
+    int shape_rc = omega_host_shape(3, num_q_heads, num_kv_heads, head_dim);
+    if (shape_rc) return shape_rc;
     *log2gqa = 0;
     *legacy = !g_force_general && (head_dim == 64u || head_dim == 128u) && num_q_heads <= OMEGA_GPU_ATTN_MAX_Q_HEADS &&
               log2_exact(num_q_heads / num_kv_heads, log2gqa) == 0;

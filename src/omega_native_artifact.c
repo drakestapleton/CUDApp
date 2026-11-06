@@ -13,8 +13,14 @@
 
 #include "sha256.h"
 #include "omega_blackwell_realize.h"
+#include "cudapp_native.h"
+
+#ifndef CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+#define CUDAPP_MIGRATION_PENDING_C_ARTIFACT 0
+#endif
 
 #define MANIFEST_CAP 8192u
+#if CUDAPP_MIGRATION_PENDING_C_ARTIFACT
 
 const char *omega_native_artifact_rc_name(int rc) {
     switch (rc) {
@@ -33,22 +39,54 @@ const char *omega_native_artifact_rc_name(int rc) {
     }
 }
 
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+/* Memory shell: only byte loads, pointer stepping and emitted-component stores.
+ * All byte classification, accumulation and termination decisions are Omega. */
+static int artifact_text(unsigned mode, const char *text, uint32_t *out, unsigned count) {
+    if (!text) return 0;
+    uint64_t state[8] = {0}, status;
+    state[3] = count;
+    for (const unsigned char *p = (const unsigned char *)text;; ++p) {
+        if (omega_artifact_parse(&status, mode, *p, state, 8) != OMEGA_OK || status == 2) return 0;
+        if (mode >= 2 && (status == 1 || status == 3))
+            out[state[2] - (status == 3)] = (uint32_t)state[4];
+        if (status == 1) return 1;
+    }
+}
+#endif
+
 static void hex64(const uint8_t d[32], char out[65]) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    uint64_t state[8] = {0}, pair;
+    for (int i = 0; i < 32; ++i) {
+        if (omega_artifact_parse(&pair, 4, d[i], state, 8) != OMEGA_OK) {
+            out[0] = 0; return;
+        }
+        out[2 * i] = (char)pair;
+        out[2 * i + 1] = (char)(pair >> 8);
+    }
+    out[64] = 0;
+#else
     static const char h[] = "0123456789abcdef";
     for (int i = 0; i < 32; i++) {
         out[2 * i] = h[d[i] >> 4];
         out[2 * i + 1] = h[d[i] & 15];
     }
     out[64] = 0;
+#endif
 }
 
 static int is_hex64(const char *s) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    return artifact_text(1, s, NULL, 0);
+#else
     if (!s || strlen(s) != 64) return 0;
     for (int i = 0; i < 64; i++) {
         char c = s[i];
         if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return 0;
     }
     return 1;
+#endif
 }
 
 static int append(char **p, size_t *rem, const char *fmt, ...) {
@@ -112,6 +150,11 @@ static uint8_t *read_file(const char *path, size_t *n) {
 /* The QMD is a template: every device address field must be zero. */
 static int qmd_template_ok(const uint32_t q0[OMEGA_ARTIFACT_QMD_WORDS],
                            const uint32_t q1[OMEGA_ARTIFACT_QMD_WORDS]) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    uint64_t result = 0;
+    const uint64_t shape[7] = {0};
+    return omega_artifact_policy(&result, 0, q0, 256, q1, 256, shape, 7) == OMEGA_OK && result == 1;
+#else
     if (q0[12] != 0) return 0;
     if (q1[12] != 0 || q1[15] != 0 || q1[16] != 0) return 0;
     if (q1[32] != 0 || (q1[33] & ~(0xa << 21)) != 0) return 0;
@@ -121,6 +164,7 @@ static int qmd_template_ok(const uint32_t q0[OMEGA_ARTIFACT_QMD_WORDS],
     /* CB7 scratch VA and the code-prefetch VA must also be templates. */
     if (q1[56] != 0 || (q1[57] & 0x7ffffu) != 0 || q1[59] != 0) return 0;
     return 1;
+#endif
 }
 
 /* The launch fields of QMD 1 must say what the manifest says (audit F3): a QMD
@@ -131,6 +175,11 @@ static int qmd_template_ok(const uint32_t q0[OMEGA_ARTIFACT_QMD_WORDS],
  * words 39-41 grid x, y, z (z is always 1 in format 1). */
 static int qmd_launch_ok(const uint32_t q1[OMEGA_ARTIFACT_QMD_WORDS], uint32_t gx, uint32_t gy,
                          uint32_t bx, uint32_t by, uint32_t bz, uint32_t shared, uint32_t gpr) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    uint64_t result = 0;
+    const uint64_t shape[7] = {gx, gy, bx, by, bz, shared, gpr};
+    return omega_artifact_policy(&result, 1, q1, 256, q1, 256, shape, 7) == OMEGA_OK && result == 1;
+#else
     uint32_t want_gpr = gpr < 16u ? 16u : gpr;
     uint32_t want_smem7 = shared ? (shared + 127u) / 128u : 8u;
     if (gx == 0 || gy == 0 || bx == 0 || by == 0 || bz == 0) return 0;
@@ -139,11 +188,15 @@ static int qmd_launch_ok(const uint32_t q1[OMEGA_ARTIFACT_QMD_WORDS], uint32_t g
     if ((q1[35] & 0xffu) != bz || ((q1[35] >> 8) & 0x1ffu) != want_gpr) return 0;
     if ((q1[36] & 0x7ffu) != want_smem7) return 0;
     return q1[39] == gx && q1[40] == gy && q1[41] == 1u;
+#endif
 }
 
 /* Strict "A.B.C", decimal components of 1-9 digits, nothing else (audit F5:
  * sscanf with an unchecked count admitted "garbage" and "x999.0.0"). */
 static int parse_semver(const char *s, unsigned v[3]) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    return artifact_text(3, s, v, 3) ? 0 : -1;
+#else
     if (!s) return -1;
     for (int i = 0; i < 3; i++) {
         unsigned x = 0;
@@ -157,10 +210,14 @@ static int parse_semver(const char *s, unsigned v[3]) {
         if (i < 2 && *s++ != '.') return -1;
     }
     return *s == 0 ? 0 : -1;
+#endif
 }
 
 /* Strict unsigned decimal, 1-9 digits, no sign, space or suffix (audit F5b). */
 static int parse_u32(const char *s, uint32_t *out) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    return artifact_text(2, s, out, 1) ? 0 : -1;
+#else
     uint32_t x = 0;
     int d = 0;
     if (!s) return -1;
@@ -171,10 +228,14 @@ static int parse_u32(const char *s, uint32_t *out) {
     if (d == 0 || *s != 0) return -1;
     *out = x;
     return 0;
+#endif
 }
 
 /* "a,b,c" of strict decimals, exactly n of them. */
 static int parse_u32_list(const char *s, uint32_t *out, int n) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    return artifact_text(2, s, out, (unsigned)n) ? 0 : -1;
+#else
     char tmp[64];
     size_t len = strlen(s);
     if (len >= sizeof tmp) return -1;
@@ -188,16 +249,21 @@ static int parse_u32_list(const char *s, uint32_t *out, int n) {
         if (c) p = c + 1;
     }
     return 0;
+#endif
 }
 
 /* A manifest value is one line of printable text: a newline would forge a new
  * record and a quote or control byte would forge JSON (audit F7). */
 static int field_text_ok(const char *s) {
+#if !CUDAPP_MIGRATION_PENDING_C_ARTIFACT
+    return artifact_text(0, s, NULL, 0);
+#else
     for (; *s; s++) {
         unsigned char c = (unsigned char)*s;
         if (c < 0x20 || c == 0x7f) return 0;
     }
     return 1;
+#endif
 }
 
 static void json_str(FILE *f, const char *s) {
@@ -735,3 +801,6 @@ void omega_native_artifact_snapshot_free(OmegaNativeArtifactSnapshot *snapshot) 
     for (unsigned i = 0; i < OMEGA_SNAPSHOT_FILES; ++i) free(snapshot->bytes[i]);
     memset(snapshot, 0, sizeof *snapshot);
 }
+#else
+#include "omega_native_artifact_om.inc"
+#endif

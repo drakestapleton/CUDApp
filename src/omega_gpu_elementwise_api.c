@@ -19,6 +19,7 @@
  * pending. A final local pass tightens supported adjacent ALU pairs to 5 cycles.
  */
 #include "omega_gpu_elementwise_api.h"
+#include "omega_host_policy.h"
 #include "omega_blackwell_codegen.h"
 #include "omega_bw_reconv.h"
 #include "omega_blackwell_qmd.h"
@@ -1042,8 +1043,9 @@ static int begin(OmegaGpuEwOp op, Slot **ks, OmegaGpuEwInfo *info) {
 int omega_gpu_rmsnorm_f32(uint32_t rows, uint32_t dim, const float *x, const float *weight,
                           float eps, float *out, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
-    if (!x || !weight || !out || rows == 0 || dim == 0 || dim % OMEGA_GPU_EW_THREADS != 0) return OMEGA_GPU_EW_BAD_ARGS;
-    if (dim > OMEGA_GPU_EW_MAX_DIM) return OMEGA_GPU_EW_TOO_LARGE;
+    if (!x || !weight || !out) return OMEGA_GPU_EW_BAD_ARGS;
+    int shape_rc = omega_host_shape(1, rows, dim, 0);
+    if (shape_rc) return shape_rc;
     Slot *k = NULL;
     int rc = begin(OMEGA_GPU_EW_RMSNORM, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;
@@ -1062,8 +1064,9 @@ int omega_gpu_rmsnorm_f32(uint32_t rows, uint32_t dim, const float *x, const flo
 int omega_gpu_rope_f32(uint32_t heads, uint32_t head_dim, const float *v,
                        const float *cos_half, const float *sin_half, float *out, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
-    if (!v || !cos_half || !sin_half || !out || heads == 0 || head_dim < 2 || (head_dim & 1)) return OMEGA_GPU_EW_BAD_ARGS;
-    if (head_dim > 2048) return OMEGA_GPU_EW_TOO_LARGE;
+    if (!v || !cos_half || !sin_half || !out) return OMEGA_GPU_EW_BAD_ARGS;
+    int shape_rc = omega_host_shape(2, heads, head_dim, 0);
+    if (shape_rc) return shape_rc;
     Slot *k = NULL;
     int rc = begin(OMEGA_GPU_EW_ROPE, &k, info);
     if (rc != OMEGA_GPU_EW_OK) return rc;

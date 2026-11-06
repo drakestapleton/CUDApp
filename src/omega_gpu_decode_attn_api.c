@@ -7,6 +7,7 @@
  * omega_gpu_session_launch per call.
  */
 #include "omega_gpu_decode_attn_api.h"
+#include "omega_host_policy.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_hostmath.h"
@@ -132,7 +133,8 @@ static uint16_t *row_ptr(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint32_t kv
     return (uint16_t *)((uint8_t *)c->kv[layer].cpu + (plane ? c->plane_bytes : 0) + ((size_t)kv_head * c->max_pos + pos) * OMEGA_DATTN_ROW_BYTES);
 }
 int omega_gpu_decode_attn_cache_write(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint32_t kv_head, uint32_t pos, uint32_t count, const uint16_t *k, const uint16_t *v) {
-    if (!c || layer >= c->layers || kv_head >= 4 || pos >= c->max_pos || count == 0 || count > c->max_pos - pos || !k || !v) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (!c || layer >= c->layers || kv_head >= 4 || !count || !k || !v) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (omega_host_shape(4, pos, count, c->max_pos)) return OMEGA_GPU_DATTN_BAD_ARGS;
     omega_gpu_session_lock();
     memcpy(row_ptr(c, layer, kv_head, pos, 0), k, (size_t)count * 256); memcpy(row_ptr(c, layer, kv_head, pos, 1), v, (size_t)count * 256);
     int rc = omega_gpu_session_sync_to_gpu(&c->kv[layer]) == 0 ? OMEGA_GPU_DATTN_OK : OMEGA_GPU_DATTN_CHIP_FAIL;
@@ -140,7 +142,8 @@ int omega_gpu_decode_attn_cache_write(OmegaGpuDecodeAttnCache *c, uint32_t layer
     return rc;
 }
 int omega_gpu_decode_attn_cache_read(OmegaGpuDecodeAttnCache *c, uint32_t layer, uint32_t kv_head, uint32_t pos, uint16_t *k, uint16_t *v) {
-    if (!c || layer >= c->layers || kv_head >= 4 || pos >= c->max_pos || !k || !v) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (!c || layer >= c->layers || kv_head >= 4 || !k || !v) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (omega_host_shape(4, pos, 1, c->max_pos)) return OMEGA_GPU_DATTN_BAD_ARGS;
     omega_gpu_session_lock();
     int rc = omega_gpu_session_sync_to_cpu(&c->kv[layer]) == 0 ? OMEGA_GPU_DATTN_OK : OMEGA_GPU_DATTN_CHIP_FAIL;
     if (rc == OMEGA_GPU_DATTN_OK) { memcpy(k, row_ptr(c, layer, kv_head, pos, 0), 256); memcpy(v, row_ptr(c, layer, kv_head, pos, 1), 256); }

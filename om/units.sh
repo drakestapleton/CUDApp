@@ -30,6 +30,15 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/streams/streams.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric=om/numeric/numeric.om numeric_tile=om/numeric/numeric.om,om/numeric/tile.om"
+if [ -z "${OMEGA_UNITS:-}" ]; then
+    CM_HOST_MATH=om/components/cm_math.om,om/components/cm_math_extra.om,om/components/cm_math_erfc.om
+    UNITS="$UNITS artifact_policy=om/components/artifact_policy.om artifact_parse=om/components/artifact_parse.om api_policy=om/components/api_policy.om cm_sort=om/components/cm_sort.om cm_math=$CM_HOST_MATH cm_fit=$CM_HOST_MATH,om/components/cm_fit.om cm_stats=$CM_HOST_MATH,om/components/cm_stats.om cm_features=$CM_HOST_MATH,om/components/cm_features.om"
+    UNITS="$UNITS cm_quantile=$CM_HOST_MATH,om/components/cm_quantile.om cm_decision=$CM_HOST_MATH,om/components/cm_decision.om"
+    UNITS="$UNITS cm_prediction=$CM_HOST_MATH,om/components/cm_prediction.om cm_calibration=$CM_HOST_MATH,om/components/cm_quantile.om,om/components/cm_calibration.om"
+    UNITS="$UNITS cm_blob=om/components/cm_blob.om cm_digest=om/cache/digest.om,om/components/cm_digest.om"
+    UNITS="$UNITS artifact_format=om/components/artifact_format.om artifact_admit=om/components/artifact_parse.om,om/components/artifact_policy.om,om/components/artifact_format.om,om/components/artifact_admit.om"
+    UNITS="$UNITS artifact_elf=om/components/artifact_elf.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

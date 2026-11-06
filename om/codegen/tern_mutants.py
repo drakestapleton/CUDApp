@@ -8,12 +8,17 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 OMC = os.environ["OMEGA_OMC"]
 BRIDGE = Path(os.environ["OMEGA_BRIDGE"])
-# Layout, output gathering, epilogue, staging depth and chunk axes are all represented.
-POINTS = (
-    (256, 0, 1, 1, 1, 0, 0), (256, 1, 2, 1, 1, 0, 0),
-    (256, 0, 1, 32, 1, 0, 0), (256, 1, 2, 32, 1, 0, 0),
-    (256, 0, 1, 1, 1, 1, 0), (256, 1, 2, 1, 1, 1, 0),
-    (256, 0, 1, 32, 1, 1, 0), (256, 1, 2, 32, 1, 1, 0),
+# Every supported (layout, rows) shape crosses both output paths and epilogues.
+# Depth two also exercises the multi-step unrolled activation path; the explicit
+# deep/chunk points exercise its streaming alternative and the chunk loop.
+SHAPES = ((0, 1), (0, 2), (0, 4), (1, 2), (1, 4))
+POINTS = tuple(
+    (256, layout, rows, warps, 1, epi, 0)
+    for layout, rows in SHAPES for warps in (1, 32) for epi in (0, 1)
+) + tuple(
+    (512, layout, rows, 1, 2, epi, 0)
+    for layout, rows in SHAPES for epi in (0, 1)
+) + (
     (4096, 0, 1, 1, 16, 0, 0), (4096, 1, 2, 1, 8, 1, 0),
     (16384, 0, 1, 1, 16, 0, 0), (16384, 1, 2, 1, 8, 0, 0),
 )

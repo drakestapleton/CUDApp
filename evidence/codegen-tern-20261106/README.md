@@ -27,7 +27,7 @@ of this receipt. Chip tier is **NOT_RUN**.
 | Gate | Command after the stated affinity/nice prefix | rc | Observed final line |
 |---|---|---|---|
 | Reproducible units | `sh om/units.sh --check` | 0 | `PASS portable Omega units regenerate byte for byte` |
-| Omega source mutants | `make -j3 test-codegen-tern-mutants` | 0 | `CODEGEN TERN OMEGA MUTANTS PASS (24 source-mutant/config controls)` |
+| Omega source mutants | `make -j3 test-codegen-tern-mutants` | 0 | `CODEGEN TERN OMEGA MUTANTS PASS (68 source-mutant/config controls)` |
 | Current warp simulator | `make -j3 test-codegen-tern-sim` | 0 | `CODEGEN TERN SIM: 34 checks, 0 failed: PASS` |
 
 The simulator uses CUDApp's existing `tests/bw_warp_sim_k.h` and the pinned
@@ -38,9 +38,12 @@ correct immediate-aware load semantics. The adapter pre-includes that current
 simulator, without editing either simulator or weakening the battery. The
 simulator's shipped mutants 1, 3 and 2 were detected.
 
-`mutants.log`, `units-check.log`, and `simulator.log` retain the focused output.
-The source-mutation log substitutes environment-variable names for workspace
-prefixes; the other logs retain commands as executed.
+`mutants-all-shapes.log`, `units-check.log`, and `simulator.log` retain the current
+focused output. The earlier `mutants.log` preserves the initial smaller point
+set and substitutes environment-variable names for workspace prefixes; other
+logs retain commands as executed. The expanded source-mutation gate crosses
+every supported (layout, rows) shape with both output paths and epilogues,
+then exercises multi-step unrolling, deep streaming, and chunked input.
 `simulator-pinned-omega-failed.log` preserves the initial failed run against the
 superseded simulator rather than presenting it as a passing gate.
 

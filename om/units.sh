@@ -74,6 +74,9 @@ UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/at
 UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
 UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
 UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
+UNITS="$UNITS attn_host=om/api/attn_host.om"
+UNITS="$UNITS attn_scanchk=om/scan/scan_check.om"
+UNITS="$UNITS attn_clock=om/api/clock_ns.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

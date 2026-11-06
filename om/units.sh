@@ -45,10 +45,15 @@ for entry in pfcopy pfratio segok segb tspec; do
 done
 REST="$REST ar_calc=om/apirest/calc.om ar_launch=om/apirest/launch.om ar_cache=om/apirest/cache.om"
 REST="$REST ar_tcspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/tcspec.om ar_tcperm=om/apiviews/bf16.om,om/apirest/tcperm.om ar_tcinfo=om/apirest/tcinfo.om ar_gtile=om/apirest/tiledata.om,om/apirest/gtile.om"
+REST="$REST ar_gspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/gspec.om"
+for entry in gargs gseg ginfo xnext gath32 gath16; do
+  REST="$REST ar_$entry=om/apirest/$entry.om"
+done
 for entry in slot sgate; do
   REST="$REST ar_$entry=om/apirest/data.om,om/api/apish_slot.om,om/apirest/$entry.om"
 done
 REST="$REST ar_copy=om/apirest/copy.om ar_sstats=om/apirest/sstats.om"
+REST="$REST ar_victim=om/apirest/victim.om ar_mstep=om/apirest/data.om,om/api/apish_shp.om,om/apirest/mstep.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

@@ -27,6 +27,7 @@ seeded Omega by default. The C oracle requires
 receipts are in `evidence/no-posix-session-20261106/`. Chip qualification is
 NOT_RUN. This branch merges the #335 native mechanism into #334; neither
 dependency is implicitly merged or deployed by this receipt.
+2026-11-06: `av_bf16_n` now uses the integer-public freestanding Omega variant `om/apiviews/no_avbf.om` under `OMEGA_GPU_NO_POSIX`; its canonical hosted view remains `om/apiviews/bf16.om`. The explicit default-OFF `CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION` flag selects the temporary C oracle. Hosted/freestanding differential, production-object OFF/ON symbol controls and six behavioral mutants PASS; chip NOT_RUN. Receipt: `evidence/no-posix-bf16-20261106/README.md`.
 
 ## 1. NVIDIA software on the Spark today
 

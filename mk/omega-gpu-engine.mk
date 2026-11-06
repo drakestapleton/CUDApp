@@ -123,7 +123,7 @@ test-gpu-serving-alloc: build/gpu_serving_alloc_count_test
 GPU_FS_DIR = build/gpu_fs
 GPU_NO_POSIX_DIR = build/no_posix/native
 GPU_NO_POSIX_OBJS = $(GPU_NO_POSIX_DIR)/omega_native.o $(GPU_NO_POSIX_DIR)/omega_api_defs.o
-$(GPU_NO_POSIX_OBJS) &: om/units.sh om/no-posix.sh om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om om/session/admit.om om/session/words.om om/session/park.om om/cmdlist/book.om om/streams/streams.om
+$(GPU_NO_POSIX_OBJS) &: om/units.sh om/no-posix.sh om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om om/session/admit.om om/session/words.om om/session/park.om om/cmdlist/book.om om/streams/streams.om om/apiviews/no_avbf.om
 	sh om/units.sh --native-no-posix
 CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION ?= 0
 GPU_FS_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector \
@@ -161,6 +161,9 @@ test-no-posix-native: $(GPU_NO_POSIX_OBJS) build/test_codegen_freestanding
 .PHONY: test-no-posix-session
 test-no-posix-session: $(GPU_NO_POSIX_OBJS)
 	python3 tests/no_posix_session.py
+.PHONY: test-no-posix-bf16
+test-no-posix-bf16: $(GPU_NO_POSIX_OBJS)
+	python3 tests/no_posix_bf16.py
 
 build/test_omega_gpu_engine_freestanding: tests/test_omega_gpu_engine.c $(GPU_FS_DIR)/omega_gpu_engine.o src/omega_gpu_engine.h
 	@mkdir -p build

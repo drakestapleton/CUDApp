@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Regenerate checked portable Omega C and declarations for all canonical roots.
 # Seeded e5b32567 validates exactly the composed bytes lowered by bridge36.
-# No native x86 compiler or executable-code trampoline participates.
+# The default portable mode uses no native compiler or executable-code trampoline.
 set -eu
 OMC_PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
 CONVERTER_PIN=b8f41bf19e8cf3f60842198e1f771dcbec03ce9d61272b95ab781690d481ad95
@@ -13,6 +13,10 @@ RUNTIME_REV=79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538
 RUNTIME_CONVERTER_PIN=d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538
 RUNTIME_FRONTEND_PIN=a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# Native NO_POSIX roots have separate bridge pins and import-free object custody.
+if [ "${1:-}" = --native-no-posix ]; then
+    exec sh "$ROOT/om/no-posix.sh"
+fi
 QUANT=om/quant/quant.om
 REAL="$QUANT,om/components/realize.om"
 CACHE="$REAL,om/cache/digest.om,om/cache/residency.om,om/cache/artifact.om"
@@ -23,7 +27,7 @@ MOE="om/moe/moe_plan.om om/moe/moe_group.om om/moe/moe_ids32.om om/moe/moe_maps3
 CLOSURE="$REAL,om/cache/digest.om,om/moe/moe_windows.om,om/moe/moe_group.om,native/learn53/moe-closure.om"
 OBSERVE="closure_code=$CLOSURE,om/moe/closure_code.om closure_launch=$CLOSURE,om/moe/closure_launch.om closure_dir=$CLOSURE,om/moe/closure_dir.om closure_alloc=$CLOSURE,om/moe/closure_alloc.om closure_series=$CLOSURE,om/moe/closure_series.om"
 UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathlibs/mathlibs_ir.om om/encoder/ampere_enc_sm86.om om/encoder/amp_runtime.om repack=$QUANT,om/quant/repack.om quant_wire=$QUANT,om/quant/runtime.om compose=$COMP encode=$ENC cache_runtime=om/cache/residency.om,om/cache/runtime.om lease=om/cache/residency.om,om/cache/runtime.om,om/cache/lease.om slotrev=om/cache/residency.om,om/cache/slotrev.om command=om/cache/residency.om,om/cache/command.om validate=$CACHE,$COMP,$ENC,om/components/admit.om,om/cache/validate.om digest=$REAL,om/cache/digest.om,om/cache/key.om code_digest=$REAL,om/cache/digest.om,om/cache/codekey.om templates=$REAL,om/cache/digest.om,om/cache/templates.om graph=$PIPE,om/pipeline/runtime.om context_lookup=om/pipeline/context.om,om/pipeline/context_abi.om binding=$REAL,om/pipeline/binding.om $MOE closure_pack=$CLOSURE,om/moe/closure_pack.om closure_bind=$CLOSURE,om/moe/closure_bind.om closure_blob=$CLOSURE,om/moe/closure_blob.om closure_cover=$CLOSURE,om/pipeline/mccover.om,om/pipeline/coverage_entry.om closure_intent=$CLOSURE,om/pipeline/mccover.om closure_seal=$CLOSURE,om/pipeline/mccover.om,om/pipeline/seal_entry.om closure_reseal=$CLOSURE,om/pipeline/mccover.om,om/pipeline/seal_reuse.om $OBSERVE prefill_shape=om/prefill-shape/admit.om prefill_reading=om/prefill-shape/reading.om prefill_workspace=om/prefill-shape/workspace.om prefill_order=om/prefill-shape/order.om attn_mirror_plan=om/attention-mirror/plan.om attn_mirror_step=om/attention-mirror/step.om q38_runtime=om/q38-head/envelope.om,om/q38-head/plan.om q38_emit=om/components/bw_alloc.om,om/components/bw_effect.om,om/components/bw_check.om,om/components/bw_project.om,$ENC,om/q38-head/bounds.om,om/q38-head/emit.om}"
-PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
+PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om leftovers=om/components/leftovers.om"
 GXNUM=om/gemmex/num.om
 GEMMEX="gemm_ex_plan=$GXNUM,om/gemmex/plan.om gemm_ex_row=$GXNUM,om/gemmex/row.om gemm_ex_x3=$GXNUM,om/gemmex/x3.om gemm_ex_acc=$GXNUM,om/gemmex/acc.om gemm_ex_dot=$GXNUM,om/gemmex/dot.om gemm_ex_epi=$GXNUM,om/gemmex/epi.om gemm_ex_fp8=$GXNUM,om/gemmex/fp8.om"
 AV=om/apiviews
@@ -79,7 +83,7 @@ for u in $UNITS $PURE_UNITS; do
   flags=
   file=cudapp_om_$name.c
   case "$name" in
-    revision|epoch|f16)
+    revision|epoch|f16|leftovers)
       frontend=bridge-freest
       abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN

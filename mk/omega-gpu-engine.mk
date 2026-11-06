@@ -121,8 +121,12 @@ test-gpu-serving-alloc: build/gpu_serving_alloc_count_test
 # m16_*) fails the target. This proves the first-compute PATH links without Linux headers or
 # runtime symbols; it proves nothing about device ownership (NOT_RUN until cut B runs on the Spark).
 GPU_FS_DIR = build/gpu_fs
+GPU_NO_POSIX_DIR = build/no_posix/native
+GPU_NO_POSIX_OBJS = $(GPU_NO_POSIX_DIR)/omega_native.o $(GPU_NO_POSIX_DIR)/omega_api_defs.o
+$(GPU_NO_POSIX_OBJS) &: om/units.sh om/no-posix.sh om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om
+	sh om/units.sh --native-no-posix
 GPU_FS_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector \
-	-U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc
+	-U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -I$(GPU_NO_POSIX_DIR)
 # P07 cut C (session part): the persistent session, the matmul and attention APIs, the serving reservation and the
 # bounded wait join the link. Their machine comes from an installed OmegaGpuPlatform; the Linux reference
 # (src/omega_gpu_platform_linux.c) is deliberately NOT in this list. Still outside it: the elementwise API, the
@@ -138,16 +142,20 @@ GPU_FS_OBJS = $(patsubst src/%.c,$(GPU_FS_DIR)/%.o,$(GPU_FS_SRCS))
 GPU_FS_LINK = $(GPU_FS_DIR)/omega_gpu_freestanding.o
 GPU_FS_ALLOWED = memcpy|memmove|memset|memcmp|strlen|strcmp
 
-$(GPU_FS_DIR)/%.o: src/%.c $(GPU_FS_HDRS)
+$(GPU_FS_DIR)/%.o: src/%.c $(GPU_FS_HDRS) $(GPU_NO_POSIX_OBJS)
 	@mkdir -p $(GPU_FS_DIR)
 	gcc $(GPU_FS_CFLAGS) -c -o $@ $<
 
-$(GPU_FS_LINK): $(GPU_FS_OBJS)
-	gcc -r -nostdlib -o $@ $(GPU_FS_OBJS)
+$(GPU_FS_LINK): $(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)
+	gcc -r -nostdlib -o $@ $(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)
 	@bad=$$(nm -u $@ | awk '{print $$NF}' | grep -Ev '^(_GLOBAL_OFFSET_TABLE_|($(GPU_FS_ALLOWED)))$$' || true); \
 	if [ -n "$$bad" ]; then echo "freestanding GPU link still needs: $$bad"; rm -f $@; exit 1; fi
 	@echo "freestanding GPU link ($(words $(GPU_FS_SRCS)) files): only $$(nm -u $@ | awk '{print $$NF}' | grep -Ev '^_GLOBAL_OFFSET_TABLE_$$' | sort -u | tr '\n' ' ')undefined"
 gpu-engine-freestanding: $(GPU_FS_LINK)
+
+.PHONY: test-no-posix-native
+test-no-posix-native: $(GPU_NO_POSIX_OBJS) build/test_codegen_freestanding
+	python3 tests/no_posix_native.py
 
 build/test_omega_gpu_engine_freestanding: tests/test_omega_gpu_engine.c $(GPU_FS_DIR)/omega_gpu_engine.o src/omega_gpu_engine.h
 	@mkdir -p build
@@ -169,8 +177,8 @@ test-gpu-engine-freestanding: $(GPU_FS_LINK) build/test_omega_gpu_engine_freesta
 # nm -u check to refuse it (a check that can never fail proves nothing).
 .PHONY: test-codegen-freestanding test-gpu-fs-allowlist-control
 CODEGEN_FS_TEST_DEPS = tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h
-# The hosted side encodes through the .om encoder (om/encoder/bw_enc_sm121.om via portable generated C), the
-# freestanding side through the migration-pending C encoder, so the cmp below is also an .om-vs-C differential.
+# Hosted uses checked portable Omega; freestanding calls the same root's seeded
+# machine code on the caller's stack.
 build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/cudapp_native.h \
 		src/omega_blackwell_matmul.c src/sha256.c
 	@mkdir -p build
@@ -178,8 +186,8 @@ build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c
 		src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/omega_blackwell_matmul.c src/sha256.c
 build/test_codegen_freestanding: $(CODEGEN_FS_TEST_DEPS) $(GPU_FS_LINK)
 	@mkdir -p build
-	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -o $@ tests/test_omega_codegen_freestanding.c \
-		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -I$(GPU_NO_POSIX_DIR) -DOMEGA_GPU_NO_POSIX -o $@ tests/test_omega_codegen_freestanding.c \
+		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_NO_POSIX_OBJS)
 test-codegen-freestanding: build/test_codegen_hosted build/test_codegen_freestanding test-gpu-fs-allowlist-control
 	./build/test_codegen_hosted --dump > build/codegen_dump_hosted.txt
 	./build/test_codegen_freestanding --dump > build/codegen_dump_freestanding.txt
@@ -191,7 +199,7 @@ test-gpu-fs-allowlist-control: $(GPU_FS_LINK)
 	@mkdir -p $(GPU_FS_DIR)/control
 	printf 'void *malloc(unsigned long);\nvoid *omega_gpu_fs_control(void) { return malloc(16); }\n' > $(GPU_FS_DIR)/control/canary.c
 	gcc $(GPU_FS_CFLAGS) -c -o $(GPU_FS_DIR)/control/canary.o $(GPU_FS_DIR)/control/canary.c
-	gcc -r -nostdlib -o $(GPU_FS_DIR)/control/with_canary.o $(GPU_FS_OBJS) $(GPU_FS_DIR)/control/canary.o
+	gcc -r -nostdlib -o $(GPU_FS_DIR)/control/with_canary.o $(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS) $(GPU_FS_DIR)/control/canary.o
 	@bad=$$(nm -u $(GPU_FS_DIR)/control/with_canary.o | awk '{print $$NF}' | grep -Ev '^(_GLOBAL_OFFSET_TABLE_|($(GPU_FS_ALLOWED)))$$' || true); \
 	if [ "$$bad" != "malloc" ]; then echo "allowlist control: expected exactly malloc refused, got '$$bad'"; exit 1; fi; \
 	echo "allowlist control: a malloc caller is refused by the nm -u check (as required)"
@@ -222,7 +230,7 @@ build/test_omega_gpu_native_runtime: tests/test_omega_gpu_session_platform.c tes
 		$(GPU_FS_LINK) $(GPU_NATIVE_RUNTIME_SRCS) src/omega_gpu_native_runtime.h src/omega_gpu_q36_native.h \
 		src/omega_gpu_cmdlist_native.h src/omega_native_artifact_snapshot.h
 	@mkdir -p build
-	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -DOMEGA_NATIVE_RUNTIME_TEST \
+	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -I$(GPU_NO_POSIX_DIR) -DOMEGA_GPU_NO_POSIX -DOMEGA_NATIVE_RUNTIME_TEST \
 		-DCUDAPP_NATIVE_RUNTIME_TEST -ffunction-sections -fdata-sections -Wl,--gc-sections \
 		-o $@ tests/test_omega_gpu_session_platform.c $(GPU_FS_LINK) $(GPU_NATIVE_RUNTIME_SRCS) -lpthread -lm
 test-gpu-native-runtime: build/test_omega_gpu_native_runtime
@@ -295,7 +303,7 @@ test-gpu-session-mutants: $(GPU_FS_LINK)
 	  gcc $(GPU_FS_CFLAGS) -c -o $(GPU_SESSION_MUT_DIR)/$$name.o $(GPU_SESSION_MUT_DIR)/$$name.c; \
 	  objs=$$(echo $(GPU_FS_OBJS) | tr ' ' '\n' | grep -v '/omega_gpu_session.o$$' | tr '\n' ' '); \
 	  gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -o $(GPU_SESSION_MUT_DIR)/$$name \
-	    tests/test_omega_gpu_session_platform.c $$objs $(GPU_SESSION_MUT_DIR)/$$name.o; \
+	    tests/test_omega_gpu_session_platform.c $$objs $(GPU_NO_POSIX_OBJS) $(GPU_SESSION_MUT_DIR)/$$name.o; \
 	  if ./$(GPU_SESSION_MUT_DIR)/$$name > $(GPU_SESSION_MUT_DIR)/$$name.log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
 	  echo "mutant $$name killed: $$(grep -c '^FAIL' $(GPU_SESSION_MUT_DIR)/$$name.log) case(s) failed"; killed=$$((killed+1)); }; \
 	smut release-when-latched 's|if (LOAD(g_blocked)) {$$|if (0) {|'; \

@@ -1,0 +1,5 @@
+Removed only build/no_posix/native/omega_api_defs.o
+COMMAND: bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 build/no_posix/native/omega_api_defs.o
+RC: 0
+sh om/no-posix.sh
+tools/native: 3 unit(s) -> ~/work/cudastack/lanes/NoPosixOm/build/no_posix/native/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)

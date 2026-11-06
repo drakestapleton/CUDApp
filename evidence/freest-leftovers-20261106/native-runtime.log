@@ -1,0 +1,37 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-native-runtime
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -DOMEGA_NATIVE_RUNTIME_TEST \
+	-DCUDAPP_NATIVE_RUNTIME_TEST -ffunction-sections -fdata-sections -Wl,--gc-sections \
+	-o build/test_omega_gpu_native_runtime tests/test_omega_gpu_session_platform.c build/gpu_fs/omega_gpu_freestanding.o src/omega_gpu_cmdlist.c src/omega_gpu_fp8_api.c src/omega_gpu_fp8gemm_api.c src/omega_blackwell_codegen_moe.c src/omega_blackwell_codegen_moe2.c src/omega_blackwell_codegen_gemm.c src/omega_gpu_fp8_pack.c src/omega_gpu_mem_cached.c src/omega_gpu_hostmath.c src/omega_native_artifact.c src/omega_cubin.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cache_runtime.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/omega_gpu_q36_graph.c src/omega_gpu_decode_graph.c src/omega_gpu_router_api.c src/omega_gpu_gemm_ex.c src/omega_gpu_gemm.c src/omega_blackwell_codegen_qmma.c -lpthread -lm
+./build/test_omega_gpu_native_runtime
+PASS CMDLIST_CREATE_AFTER_LOCK_PRECEDING_CLOSE_IS_USABLE
+PASS CMDLIST_CREATE_AFTER_LOCK_PRECEDING_RECOVERY_IS_USABLE
+PASS CMDLIST_CLOSE_AFTER_CREATE_STILL_REFUSES_STALE_LIST
+HOST_ONLY synthetic encoded_code_bytes=1792 encoded_code_sha256=c96f7d079502c124b49eabffa8905043a360d457574b168f2ee0ed2013e7a673 qualification=NOT_RUN
+PASS NATIVE_SYNTHETIC_QUANT_COMPOSE_ENCODE_CACHE_SELECT_RECORD
+PASS NATIVE_REAL_COMPOSE_CAPACITY_REFUSES_WITHOUT_TRAP
+PASS NATIVE_TIMEOUT_RETAINS_CODE_UNTIL_CONFIRMED_TEARDOWN
+PASS NATIVE_NORMAL_CLOSE_INVALIDATES_EXACT_LEASE
+HOST_ONLY actual typed-owner mode-final wires; role0=SYNTHETIC_LABEL; kernel/GPU/qualification=NOT_RUN
+PASS NATIVE_ACTUAL_OWNER_MODEFINAL_OBSERVER_BINDING
+PASS NATIVE_PAIR_REQUIRES_BOTH_QMD_PUBLICATIONS
+PASS NATIVE_PAIR_REFUSES_MISSING_FIRST_QMD_PUBLICATION
+PASS NATIVE_PAIR_REFUSES_MISSING_SECOND_QMD_PUBLICATION
+PASS INSTALL_REFUSALS_ABI_1_1
+PASS FREESTANDING_NO_DEFAULT_PLATFORM
+PASS OPEN_LAUNCH_CLOSE_TYPED_UNCACHED_POLLING
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS CANCEL_BEFORE_SUBMIT_NOT_LATCHED
+PASS CANCEL_AFTER_SUBMIT_LATCHES_AND_PARKS
+PASS TIMEOUT_PARKS_NEVER_RELEASES
+PASS TIMEOUT_LATCH_REFUSES_CLOSE_REOPEN_INSTALL
+PASS TIMEOUT_RECOVER_SAME_PROCESS
+PASS RECOVER_TEARDOWN_FAULT_STAYS_LATCHED
+PASS RECOVER_MODULE_LATCH
+PASS STALE_HANDLE_REFUSED_AFTER_CLOSE_REOPEN
+PASS SERVING_RESERVATION_REFUSES_WITHOUT_ALLOC
+PASS MATMUL_CODE_BUFFER_ENCODED_IN_PLACE
+PASS WAIT_REFUSES_WITHOUT_CLOCK
+PASS FMT_BOUNDED_MATCHES_SNPRINTF
+test_omega_gpu_session_platform: 27 passed, 0 failed
+
+rc=0

@@ -96,6 +96,7 @@ uint32_t omega_av_fp8xb(uint64_t  *result, const void *p0, uint64_t p0_n, void *
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);
+uint32_t omega_leftovers(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4);
 #ifdef __cplusplus
 }
 #endif

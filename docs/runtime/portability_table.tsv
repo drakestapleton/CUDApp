@@ -43,8 +43,8 @@ src/omega_blackwell_codegen_tc2.c	CHIP_SPECIFIC	Generates the tensor-core groupe
 src/omega_blackwell_codegen_tc2.h	CHIP_SPECIFIC	Interface of the tensor-core GEMM v2 generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tc.c	CHIP_SPECIFIC	Generates tensor-core kernels (HMMA.16816 fragment layout) as sm_121 machine code.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tc.h	CHIP_SPECIFIC	Interface of the tensor-core kernel generators; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
-src/omega_blackwell_codegen_tgemm.c	CHIP_SPECIFIC	Generates the device-resident bf16 training GEMM (trainer lane E1) as sm_121 machine code.	NO_HOSTED_INCLUDE
-src/omega_blackwell_codegen_tgemm.h	CHIP_SPECIFIC	Interface of the training GEMM generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
+src/omega_blackwell_codegen_tgemm.c	CHIP_SPECIFIC	Generates the device-resident bf16 training GEMM (HMMA.16816, NN layout, f32 out) as sm_121 machine code through the omega_bw_em.h emitters.	NO_HOSTED_INCLUDE
+src/omega_blackwell_codegen_tgemm.h	CHIP_SPECIFIC	Interface of the bf16 training GEMM generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tern.c	CHIP_SPECIFIC	Generates the ternary W2A8 GEMV as sm_121 machine code.	NO_HOSTED_INCLUDE
 src/omega_blackwell_codegen_tern.h	CHIP_SPECIFIC	Interface of the ternary GEMV generator; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_blackwell_encoder.c	CHIP_SPECIFIC	The sm_121 machine-code encoder: packs instructions into 16-byte words. OS-free (in the freestanding closure) but the words it writes are Blackwell's.	FREESTANDING_PROVEN
@@ -92,7 +92,7 @@ src/omega_gpu_fp8_slots.h	CHIP_SPECIFIC	FP8 expert slot pool API (load, pin, ent
 src/omega_gpu_fp8gemm_api.c	CHIP_SPECIFIC	Launches the FP8 prefill GEMM through the session.	HOSTED_LIBC
 src/omega_gpu_fp8gemm_api.h	CHIP_SPECIFIC	FP8 GEMM API; includes omega_blackwell_codegen_gemm.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_fp8_pack.c	CHIP_SPECIFIC	Packs FP8 weights into the layout the sm_121 GEMV kernels read; host side.	HOSTED_LIBC
-src/omega_gpu_hostmath.c	PORTABLE	libm-free double-precision log, exp and pow for host-side tables; plain arithmetic, no chip or OS call.	NO_HOSTED_INCLUDE
+src/omega_gpu_hostmath.c	PORTABLE	Seeded Omega host-math ABI shell with a migration-only C oracle; plain numeric inputs, but the hosted binding uses stdlib for failure handling.	HOSTED_LIBC
 src/omega_gpu_hostmath.h	PORTABLE	Interface of the libm-free host math; no includes.	NO_HOSTED_INCLUDE
 src/omega_gpu_mathlibs_api.c	CHIP_SPECIFIC	Builds the GB10 RNG (xoshiro256**, Philox4x32-10 and its cuRAND distributions) and FFT kernels (complex, real R2C/C2R, 2-D/3-D via transposes, cufftPlanMany plans of mixed radix 2/3/4/5/7 and Bluestein passes with strided copies) from om/mathlibs/mathlibs_ir.om, walks the unit's pass plans, fills their constant banks and launches them through the session; still hosted (stdlib, time), outside the freestanding closure; migration-pending C.	HOSTED_LIBC
 src/omega_gpu_mathlibs_api.h	PORTABLE	Public RNG (xoshiro256**, Philox, Philox distributions) and FFT (C2C, R2C, C2R, 2-D/3-D, plan walk, cufftPlanMany layouts and walk) entry points: plain integer, float and pointer types; includes only stddef.h and stdint.h.	NO_HOSTED_INCLUDE
@@ -127,8 +127,8 @@ src/omega_gpu_session.c	CHIP_SPECIFIC	The persistent session over OmegaGpuPlatfo
 src/omega_gpu_session.h	CHIP_SPECIFIC	Session exposes QMD scratch, register-count rules and QMD shared-memory default 1024, plus the GB10 two-marker/L2 flush launch protocol; platform handles remove OS types, not chip assumptions.	NO_HOSTED_INCLUDE
 src/omega_gpu_tcgemm_api.c	CHIP_SPECIFIC	Launches the tensor-core GEMM through the session.	HOSTED_LIBC
 src/omega_gpu_tcgemm_api.h	CHIP_SPECIFIC	Tensor-core GEMM API; includes omega_blackwell_codegen_tc.h.	NO_HOSTED_INCLUDE
-src/omega_gpu_tgemm_api.c	CHIP_SPECIFIC	Launches the device-resident bf16 training GEMM through the prefill kernel cache.	NO_HOSTED_INCLUDE
-src/omega_gpu_tgemm_api.h	CHIP_SPECIFIC	Training GEMM API; includes omega_blackwell_codegen_tgemm.h.	NO_HOSTED_INCLUDE
+src/omega_gpu_tgemm_api.c	CHIP_SPECIFIC	Launches the bf16 training GEMM through the session and the prefill module's resident-kernel cache (omega_gpu_prefill.h).	NO_HOSTED_INCLUDE
+src/omega_gpu_tgemm_api.h	CHIP_SPECIFIC	bf16 training GEMM API; includes omega_blackwell_codegen_tgemm.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_tern_api.c	CHIP_SPECIFIC	Launches the ternary GEMV with GPU-cached weights through a command list.	HOSTED_LIBC
 src/omega_gpu_tern_api.h	CHIP_SPECIFIC	Ternary GEMV API; includes omega_blackwell_codegen_tern.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_wait.c	PORTABLE	Bounded wait with a caller-supplied clock and hooks; no default clock in the freestanding build. Builds in make gpu-engine-freestanding.	FREESTANDING_PROVEN
@@ -166,3 +166,11 @@ src/omega_gpu_dnn_activations_api.c	CHIP_SPECIFIC	Memory and session-launch shel
 src/omega_gpu_dnn_activations_api.h	CHIP_SPECIFIC	Activation interface exposes the Blackwell kernel type through omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_conv2d_api.c	CHIP_SPECIFIC	Memory and session-launch shell for the seeded Omega sm_121 implicit-GEMM convolution emitter.	HOSTED_LIBC
 src/omega_gpu_conv2d_api.h	CHIP_SPECIFIC	Convolution interface exposes the Blackwell kernel type through omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
+src/omega_gpu_apiviews.h	PORTABLE	Host data-loop ABI projections for seeded Omega API residue, with stdio/stdlib differential-failure handling; no device or chip headers.	HOSTED_LIBC
+src/omega_gpu_gdn_admit.c	CHIP_SPECIFIC	Gated DeltaNet admission/layout shell and migration-only C oracle; includes math.h for finite-value checks and the GDN chip API.	HOSTED_LIBC
+src/omega_gpu_gdn_admit.h	CHIP_SPECIFIC	Gated DeltaNet admission/layout interface exposes Blackwell GDN shape types.	NO_HOSTED_INCLUDE
+src/omega_gpu_graph_om.h	PORTABLE	Graph-node and address ABI projections to seeded Omega over raw integer/float-bit records; no chip or driver includes.	NO_HOSTED_INCLUDE
+src/omega_gpu_graph_residue.h	PORTABLE	Graph metadata ABI projections to seeded Omega with stdlib failure handling and a migration-only C oracle.	HOSTED_LIBC
+src/omega_gpu_platform_linux_rest_oracle.h	PORTABLE	Migration-only scalar oracle for platform decisions; uint64_t records, no Linux or device includes.	NO_HOSTED_INCLUDE
+src/omega_bw_fields.h	CHIP_SPECIFIC	Blackwell IR record projections for seeded Omega cg_fields; includes the Blackwell instruction definitions.	NO_HOSTED_INCLUDE
+src/omega_bw_policy.h	CHIP_SPECIFIC	Blackwell scalar policy and identity ABI projections to seeded Omega; no hosted includes.	NO_HOSTED_INCLUDE

@@ -1,0 +1,9 @@
+sh tools/numeric_om_mutants.sh
+control: rc=0 NUMERIC OM DIFF PASS 2010044
+mutant tie_to_odd: caught rc=134 FAIL numeric diff f32_to_bf16(0x8000, 0x0, 0x0): C 0x0, Omega 0x1
+mutant f16_nan_quiet_bit: caught rc=134 FAIL numeric diff f16_to_f32(0x7c01, 0x0, 0x0): C 0x7fc02000, Omega 0x7f802000
+mutant narrow_nan_quiet_bit: caught rc=134 FAIL numeric diff f32_to_f16(0x7f800001, 0x0, 0x0): C 0x7e00, Omega 0x7d00
+mutant exp_ln2_hi: caught rc=134 FAIL numeric diff math_exp(0xbf800000, 0x0, 0x0): C 0x3ebc5a9f, Omega 0x3ebc5aa0
+mutant tile_stride: caught rc=134 FAIL numeric diff warp_reduce_sum(0x9db12b6f, 0x91922c2a, 0xd0ae0216): C 0x7de11357, Omega 0xcd7990bc
+mutant canon_dropped: caught rc=134 FAIL numeric diff fmul(0x7f800000, 0x0, 0x0): C 0x7fffffff, Omega 0x7fc00000
+NUMERIC OM MUTANTS PASS 6/6

@@ -1,0 +1,4 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Isrc -ffp-contract=off -ffunction-sections -fdata-sections -Wl,--gc-sections -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF -o build/ampere-cubin/numeric-om-diff tests/numeric_om_diff_test.c src/omega_numeric.c src/omega_numeric_reduce.c src/cudapp_om_numeric.c src/cudapp_om_numeric_tile.c src/cudapp_om_numeric_rest.c src/cudapp_om_numeric_patch.c src/cudapp_om_numeric_check.c src/cudapp_om_numeric_trace.c src/cudapp_om_numeric_reduce.c -lm
+build/ampere-cubin/numeric-om-diff
+numeric documented NaN: 16 cases 0x7fffffff
+NUMERIC OM DIFF PASS 152415164

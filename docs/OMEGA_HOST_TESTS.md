@@ -180,10 +180,39 @@ make hello-gpu                  # GB10, opens the NVIDIA device nodes
 ```
 
 `make test-gpu-engine-gb10-compile` only compiles the Phase B chip source. It
-does not run it. `make test-gpu-scan` compiles `src/omega_numeric.c`, whose
-host reference uses AArch64 FP instructions (`mrs fpcr`, `fmadd`). On x86-64
-that compile fails in the assembler. It is not in `make test`. `make test-gpu-gemm`
-is the separate GEMM host and simulator target and is also outside `make test`.
+does not run it. `make test-gpu-scan` runs the existing frozen-order reduction
+host checks and both warp-simulator scheduling orders. Its numeric substrate
+defaults to the seeded units in `om/numeric/`; retained native C/assembly is
+an opt-in differential oracle. `make test-gpu-gemm` is the separate GEMM host
+and simulator target. Neither simulator target opens a GPU.
+
+### Numeric remainder migration
+
+`make test-numeric-rest-om-diff` compares bulk reference/CPU realization, FTZ,
+parity and seed traces, patch encoding/checking, launch admission, IEEE
+predicates and the general reduction hierarchy against the retained C oracle.
+Non-NaN floats compare by bits; NaNs compare by class. The reducer preserves
+the declared warp tree at every level, including padding and final MEAN
+division. Sequential summation is deliberately not that contract.
+
+`make test-numeric-rest-om-mutants` regenerates disposable copies, requires a
+passing control, kills six changed Omega algorithms and rejects omission of
+each of the five strong remainder units at link time. The earlier scalar
+`test-numeric-om-diff` and `test-numeric-om-mutants` remain unchanged contracts.
+Set `OMEGA_OMC` and `OMEGA_BRIDGE` to the pins checked by `om/units.sh`.
+
+The independent native implementations compile only with
+`CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST` (oracle-only) or
+`CUDAPP_MIGRATION_PENDING_C_NUMERIC_REST_DIFF` (both implementations, distinct
+symbols). The default has no weak-symbol fallback. C adapters transport
+bits/addresses, allocate reduction buffers and render diagnostics; the `.om`
+units decide the computation and admission.
+
+On the shared Spark, run every command above under:
+`bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10`.
+Build with at most `-j3`. These checks are host/simulator evidence only; the
+chip runbook and limitations are in
+[`numeric-rest-20261106`](../evidence/numeric-rest-20261106/README.md).
 
 An AArch64 host build of this tree keeps `dsb sy` in `nvrm_cpu_barrier`. A
 GB10 run of the device path is a separate receipt. A host or simulator pass

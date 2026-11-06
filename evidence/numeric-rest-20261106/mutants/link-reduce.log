@@ -1,0 +1,5 @@
+/usr/bin/ld: /tmp/ccAMQ6LE.o: in function `numeric_reduce_adapter':
+omega_numeric_reduce.c:(.text.numeric_reduce_adapter+0x1fc): undefined reference to `omega_numeric_reduce'
+/usr/bin/ld: /tmp/ccAMQ6LE.o: in function `omega_reduce_sequential_sum_not_contract':
+omega_numeric_reduce.c:(.text.omega_reduce_sequential_sum_not_contract+0xf8): undefined reference to `omega_numeric_reduce'
+collect2: error: ld returned 1 exit status

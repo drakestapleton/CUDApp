@@ -13,7 +13,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 CC=${CC:-cc}
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-CFLAGS="-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF -DNUMERIC_DIFF_RANDOM=4096"
+CFLAGS="-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -ffp-contract=off -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_DIFF -DCUDAPP_MIGRATION_PENDING_C_NUMERIC_REST -DNUMERIC_DIFF_RANDOM=4096"
 
 # name|file|search|replacement (the search text must occur exactly once)
 MUTANTS='tie_to_odd|numeric.om|if and eq g 1 or ne r 0 eq and mant 1 1|if and eq g 1 or ne r 0 eq and mant 1 0

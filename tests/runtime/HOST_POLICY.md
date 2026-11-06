@@ -338,12 +338,18 @@ under cores 10–14 and nice 10, with these observed results:
 | Independent JSON codec/parser | 0 | `ARTIFACT-FORMAT codec PASS byte-domain=256 valid-utf8 strict-escapes duplicate-keys invalid-utf8-classified` |
 | Flipped expected manifest byte | 0 | `ARTIFACT-FORMAT negative-control PASS expected-byte-flip rc=1` |
 | PENDING C existing fixtures | 0 | 70 manifest checks and 47 export checks, zero failed; CLI shapes PASS |
-| Compiled Omega source mutants | 0 | `ARTIFACT-FORMAT mutants PASS killed=3 compiled=3` |
+| Compiled Omega source mutants | 0 | `ARTIFACT-FORMAT mutants PASS killed=5 compiled=5` |
 
-The three compiled mutants remove backslash escaping, invert identity-digest
-acceptance, and change the ELF machine constant. Each is rejected by a runtime
-differential assertion, not a compile failure. Logs remain in
-`build/artifact-format/mutant-artifact_{format,admit,elf}.log` and
+The five compiled mutants remove backslash escaping, invert identity-digest
+acceptance, change the ELF machine constant, reject equality at the current-driver
+admission boundary, and swap the cubin/text hashes in the checksum list.
+Each is rejected by a runtime differential assertion, not a compile failure.
+The expanded focused mutant command above completed rc 0. The driver-boundary
+mutant is caught at admission case 48 (Omega rc 8 versus C rc 0); the checksum
+ordering mutant is caught at export case 0's `.sha256` byte comparison.
+Logs remain in `build/artifact-format/mutant-artifact_{format,admit,elf}.log`,
+`build/artifact-format/mutant-artifact_admit-driver-boundary.log`,
+`build/artifact-format/mutant-artifact_format-checksum-order.log`, and
 `build/artifact-format/negative-control.log`.
 
 The differential target clears only its generated export/shape fixture

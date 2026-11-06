@@ -135,3 +135,11 @@ newly integrated API/IR providers rather than relying on an incomplete old list.
 providers. Main authorized deferral because Half B `638975ca` owns the bridge#77
 root repair; final integration must regenerate under bridge `29d9cff7` and pass
 this gate. Half A retains its assigned bridge#73 pin.
+
+#331 `79dac21d2fccae9a86239c2ab13cb2bcd8ffffb5`: generation/check byte-identical
+(`6a-331.log`); repaired standalone parser/corpus and existing mutant links to
+retain integrated cost-model/SHA providers alongside dag_parse/dag_fmt.
+`/tmp/integ/6a-331-focused.log/.rc` returned0: parser492/0, formatter3631/0,
+CLI25/0, six parser mutants killed, unit203/0, five scheduler mutants killed,
+corpus1200/0 with driver/record-flip negatives, and the full focused tools family
+including artexp116 cases/266 files/10 mutants. Final: `crumb verify: OK: 89 crumbs current`.

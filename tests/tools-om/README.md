@@ -187,3 +187,49 @@ NULL end pointer:
 Mutants (10, all killed): the k tile, the single-CTA test, the column grid, the hex base, the overflow flag,
 the 32-bit bound, the attention shared bytes (`(3h+1)·512`, Wolfram `Expand[(3h+1)*128*4] -> 512+1536h`),
 the lowercase hex range, the power-of-two loop and the heads bound.
+
+## dagsim parse and format (`dag_parse.om`, `dag_fmt.om`)
+
+`CUDAPP_MIGRATION_PENDING_C_DAGSIM_PARSE` is default OFF. Enabling it selects the former parser and
+formatting decisions as the differential oracle; it is not a runtime fallback. The normal C shell reads
+files, copies typed fields/spans, handles argv and prints. The existing post-parse `ds_find_op/res` scans
+and evaluator integration remain unchanged.
+
+The parser ABI is `uchar[1048576]`, input length, `ulong[16384]`, and `uchar[256]` error text. Header
+words 0–39 and the record map are documented at the top of `om/tools/dag_parse.om`; scratch starts at
+14000. Inputs longer than 1048575 bytes are refused before the Omega call, including a file of exactly
+1048576 bytes. There is no oversized-input C fallback. The formatter takes a mode, `ulong[16]`, and
+`uchar[256]`: 64 bytes cannot hold the existing CLI's next-experiment strings. Its mode table is at the
+top of `dag_fmt.om`; modes 17–20 also own subtraction, seconds conversion, maximum and stable sorting.
+Mode 21 streams date text across 256-byte chunks, preserving C `sscanf` behavior for long leading
+zero/space runs, split signs and ignored trailing text without adding a date-length refusal. Its
+private state is in words 4–12, word 13 marks the final chunk, and the return is 0 for more input,
+1 for a completed day in word 12, or 2 for malformed input. C only copies chunks and dispatches status.
+
+The numeric parser converts decimal and hexadecimal finite values through bounded integer ratios and
+rounds ties to even. It also matches the oracle's infinity, signed-zero, saturation and malformed-token
+decisions on the partition. This is exercised parity on the filed corpus, not an exhaustive `strtod`
+equivalence claim. The C source, rather than earlier design notes, decides such details as rejected
+sync self-references and the requirement that a removed op is absent.
+
+```
+export OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=~/work/cudastack/omega-bridge
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-parse-om
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-dagsim-corpus-om
+```
+
+`tests/dagsim/parse_partition.py` derives cases from the C tokenizer, record handlers, reference checks
+and capacities: all record/token classes, missing/empty/unknown/duplicate fields, numeric/date forms,
+malformed/refused records, and adjacent boundaries for text, line, keyword, key/value, positional/KV and
+record capacities. `parse_diff.c` compares status, error bytes and every successful model byte against
+the C oracle. A deliberately altered oracle model must fail. `format_diff.c` compares name/date and
+numeric decisions, including NaN and signed zero; CLI eval/diff/Pareto output is compared byte for byte.
+Six unique-site, recompiled parser mutants must each compile successfully and then fail the comparator.
+The runner checks the compiler pin and writes oracle/unpacker annotated branch data under
+`build/dagsim-parse/*.gcov`; this is C branch evidence, not Omega or chip coverage.
+
+`test-dagsim-corpus-om` also runs the existing deterministic `corpus_diff.py` on 1200 DAGs against the
+full C parser/evaluator/formatting oracle. It requires the driver to reject `/bin/true` and uses the
+shared `tom_flip` control to change one digit of the last matching CLI output record and require `cmp`
+to reject it.

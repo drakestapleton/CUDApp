@@ -1,0 +1,63 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itools/dagsim -c -o build/dagsim.o tools/dagsim/dagsim.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itools/dagsim -o build/dagsim_unit tests/dagsim/dagsim_unit.c build/dagsim.o build/rx_costmodel.o src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c -Wl,--wrap=rx_cm_predict -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itools/dagsim -o build/dagsim tools/dagsim/dagsim_cli.c build/dagsim.o build/rx_costmodel.o src/sha256.c src/cudapp_om_dag_eval.c src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c -lm
+./build/dagsim_unit
+dagsim_unit: 203 checks, 0 failed
+sh tests/dagsim/run_cli.sh build/dagsim build/dagsim-cli-out
+run_cli: ok   eval exits 0 on the pinned M1 subset
+run_cli: ok   status OK
+run_cli: ok   serial makespan 20000 + 40736700 + 111000000 ns
+run_cli: ok   makespan is above its bounds
+run_cli: ok   energy UNMEASURED without an instrument
+run_cli: ok   offline: no GPU execution
+run_cli: ok   provenance list names measured and specified only
+run_cli: ok   second run byte-identical
+run_cli: ok   unknown-trace fixture exits 1
+run_cli: ok   unknown stays unknown (REFUSED_UNKNOWN)
+run_cli: ok   no makespan printed on refusal
+run_cli: ok   30-day calibration refused at 43 days
+run_cli: ok   synthetic power is labelled, not ranked
+run_cli: ok   energy ranking invalid on synthetic power
+run_cli: ok   overlap fixture evaluates
+run_cli: ok   split copy: busy time binds, 40756700 + 55500000 ns
+run_cli: ok   pareto exits 0
+run_cli: ok   refused candidate shown as refused in the table
+run_cli: ok   faster candidate is on the front
+run_cli: ok   dominated candidate is off the front
+run_cli: ok   pareto says energy is not ranked
+run_cli: ok   reuse diff OK
+run_cli: ok   200 ns of search moved to the reused ledger
+run_cli: ok   unproven elimination exits 1
+run_cli: ok   unproven elimination refused
+run_cli: ok   no-change fixture adds no nodes
+run_cli: ok   inverted lifetime exits 1
+run_cli: ok   inverted lifetime status
+run_cli: ok   inverted reason names first=C
+run_cli: ok   inverted reason names last=A
+run_cli: ok   no makespan on inverted refusal
+run_cli: ok   lone inverted lifetime exits 1
+run_cli: ok   lone inverted is not peak 0
+run_cli: ok   two overlapping 80 B buffers exit 1
+run_cli: ok   overlap is REFUSED_CAPACITY
+run_cli: ok   disjoint 80 B pair exits 0
+run_cli: ok   disjoint pair OK
+run_cli: ok   disjoint peak 80
+run_cli: ok   completion/allocation tie exits 0
+run_cli: ok   tie OK
+run_cli: ok   tie peak 80
+run_cli: ok   pareto with a refused lifetime exits 0
+run_cli: ok   inverted row is refused, not ranked OK
+run_cli: ok   valid row still ranked
+run_cli: outputs in build/dagsim-cli-out
+sh tests/dagsim/mutant_lifetime.sh
+mutant killed: inverted_lifetime_masks_overflow
+sh tests/dagsim/mutant_predict.sh
+mutant killed: predict_unsupported_despite_known predict_refused_despite_known
+sh tests/dagsim/mutant_omega.sh build/dagsim
+mutant cycle: killed
+mutant cap: killed
+mutant life: killed
+mutant ledg: killed
+mutant span: killed
+negative control: record flip caught
+omega mutants: 5 killed

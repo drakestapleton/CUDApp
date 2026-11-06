@@ -1,0 +1,3 @@
+parse differential: 492 cases, 2 failures
+build/dagsim-parse/corpus/0450-ops-256.oev: production 9 'line 259: too many ops (max 256)'; oracle 0 ''
+build/dagsim-parse/corpus/0453-ops-257.oev: production 9 'line 259: too many ops (max 256)'; oracle 9 'line 260: too many ops (max 256)'

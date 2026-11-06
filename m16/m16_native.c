@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include "omega_eng_dec.h"
 
 int m16_native_open(M16NativeContext *ctx) {
     if (!ctx) return -1;
@@ -53,6 +54,17 @@ int m16_native_create_channel(M16NativeContext *ctx) {
 }
 
 int m16_native_build_release(uint32_t *words, uint64_t marker_va, uint32_t payload, uint32_t compute_class) {
+    if (eng_on()) {
+        uint64_t in[4], w[16];
+        int i;
+        in[0] = words ? 1u : 0u;
+        in[1] = marker_va;
+        in[2] = payload;
+        in[3] = compute_class;
+        if (eng_ask(ENG_OP_M16REL, in, 4, w) != 0 || w[0] == 0) return -1;
+        for (i = 0; i < 8; i++) words[i] = (uint32_t)w[1 + i];
+        return (int)w[0];
+    }
     if (!words) return -1;
     uint32_t n = 0;
     /* Bind compute class to subchannel 1 */

@@ -1,6 +1,35 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+/* Blackwell QMD and constant-bank packing.
+ * Hosted default: om/qmd/bw_qmd.om through omega_bw_qmd. This file keeps the
+ * caller's buffers and the null checks. The C packer below is the differential
+ * oracle. It is compiled only in the freestanding build (OMEGA_GPU_NO_POSIX, the
+ * portable binding uses POSIX trap handling), with CUDAPP_MIGRATION_PENDING_QMD,
+ * or with CUDAPP_MIGRATION_PENDING_QMD_DIFF, which packs every call both ways and
+ * aborts on any difference. Field citations stay in bw_qmd.om and omega_blackwell_qmd.h.
+ *
+ * bw_qmd opcodes and the 16-word input (the C struct has no threads_z, grid_z or version):
+ *   0 qmd0   m[1] = qmd1_va                         writes 96 words
+ *   1 qmd1   m[1]=threads_x m[2]=threads_y m[3]=threads_per_block m[4]=grid_x
+ *            m[5]=grid_y m[6]=grid_width m[7]=num_elements m[8]=shared_bytes
+ *            m[9]=gpr_count m[10]=code_va m[11]=cbank_va m[12]=scratch_va
+ *            m[13]=sem_va m[14]=qmd0_va             writes 96 words, including a refusal
+ *   2 verify the 96 words are preloaded in the output buffer; no write-back
+ *   3 cbank  m[1] = cbank_va                        writes 224 words
+ *   4 cb2d   m[1] = cbank_va, m[2..5] = tx,ty,gx,gy writes 224 words
+ *   5 args   m[1..4] = a,b,c,n                      writes 7 words
+ *   6 matmul m[1..6] = a,b,c,m,k,n                  writes 10 words
+ */
 #include "omega_blackwell_qmd.h"
 #include <string.h>
+
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_QMD)
+#define QMD_C_PRIMARY 1
+#endif
+#if defined(QMD_C_PRIMARY) && defined(CUDAPP_MIGRATION_PENDING_QMD_DIFF)
+#error "CUDAPP_MIGRATION_PENDING_QMD_DIFF needs the .om packer: not with OMEGA_GPU_NO_POSIX or the C packer"
+#endif
+
+#if defined(QMD_C_PRIMARY) || defined(CUDAPP_MIGRATION_PENDING_QMD_DIFF)
 
 /*
  * Driver constant buffer 0 base template (224 words, 896 bytes).
@@ -37,7 +66,7 @@ static const uint32_t CBANK0_DRIVER_TEMPLATE[OMEGA_BW_CBANK_DRIVER_WORDS] = {
     0x00000040, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00fffdc0,
 };
 
-int omega_blackwell_build_qmd0(uint32_t *qmd0_words, uint64_t qmd0_va, uint64_t qmd1_va) {
+static int c_bw_qmd0(uint32_t *qmd0_words, uint64_t qmd0_va, uint64_t qmd1_va) {
     if (!qmd0_words) return -1;
     (void)qmd0_va;
     memset(qmd0_words, 0, OMEGA_BW_QMD_BYTES);
@@ -63,7 +92,7 @@ int omega_blackwell_build_qmd0(uint32_t *qmd0_words, uint64_t qmd0_va, uint64_t 
     return 0;
 }
 
-int omega_blackwell_build_qmd1(uint32_t *qmd1_words, const OmegaBlackwellQmdConfig *cfg) {
+static int c_bw_qmd1(uint32_t *qmd1_words, const OmegaBlackwellQmdConfig *cfg) {
     if (!qmd1_words || !cfg) return -1;
     memset(qmd1_words, 0, OMEGA_BW_QMD_BYTES);
 
@@ -151,7 +180,7 @@ int omega_blackwell_build_qmd1(uint32_t *qmd1_words, const OmegaBlackwellQmdConf
     return 0;
 }
 
-int omega_blackwell_build_cbank_driver(uint32_t *cbank_words, uint64_t cbank_va) {
+static int c_bw_cbank(uint32_t *cbank_words, uint64_t cbank_va) {
     if (!cbank_words) return -1;
     memcpy(cbank_words, CBANK0_DRIVER_TEMPLATE, sizeof(CBANK0_DRIVER_TEMPLATE));
 
@@ -167,7 +196,7 @@ int omega_blackwell_build_cbank_driver(uint32_t *cbank_words, uint64_t cbank_va)
     return 0;
 }
 
-int omega_blackwell_build_cbank_args(uint32_t *args_words, uint64_t a_va, uint64_t b_va,
+static int c_bw_args(uint32_t *args_words, uint64_t a_va, uint64_t b_va,
                                     uint64_t c_va, uint32_t n) {
     if (!args_words) return -1;
 
@@ -182,11 +211,11 @@ int omega_blackwell_build_cbank_args(uint32_t *args_words, uint64_t a_va, uint64
     return 0;
 }
 
-int omega_blackwell_build_cbank_driver_2d(uint32_t *cbank_words, uint64_t cbank_va,
+static int c_bw_cb2d(uint32_t *cbank_words, uint64_t cbank_va,
                                          uint32_t threads_x, uint32_t threads_y,
                                          uint32_t grid_x, uint32_t grid_y) {
     if (!cbank_words) return -1;
-    if (omega_blackwell_build_cbank_driver(cbank_words, cbank_va) != 0) return -1;
+    if (c_bw_cbank(cbank_words, cbank_va) != 0) return -1;
     if (threads_x > 0) cbank_words[216] = threads_x;
     if (threads_y > 0) cbank_words[217] = threads_y;
     if (grid_x > 0) cbank_words[220] = grid_x;
@@ -194,7 +223,7 @@ int omega_blackwell_build_cbank_driver_2d(uint32_t *cbank_words, uint64_t cbank_
     return 0;
 }
 
-int omega_blackwell_build_cbank_args_matmul(uint32_t *args_words, uint64_t a_va, uint64_t b_va,
+static int c_bw_mat(uint32_t *args_words, uint64_t a_va, uint64_t b_va,
                                            uint64_t c_va, uint32_t m, uint32_t k, uint32_t n) {
     if (!args_words) return -1;
     args_words[0] = (uint32_t)a_va;
@@ -210,7 +239,7 @@ int omega_blackwell_build_cbank_args_matmul(uint32_t *args_words, uint64_t a_va,
     return 0;
 }
 
-int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
+static int c_bw_verify(const uint32_t *qmd1_words) {
     if (!qmd1_words) return -1;
 
     /* 1. QMD Major Version must be 5 (bits 471:468 in Word 14) */
@@ -236,3 +265,215 @@ int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
 
     return 0;
 }
+
+#endif /* C packer, migration-pending */
+
+#ifdef QMD_C_PRIMARY
+
+int omega_blackwell_build_qmd0(uint32_t *qmd0_words, uint64_t qmd0_va, uint64_t qmd1_va) {
+    return c_bw_qmd0(qmd0_words, qmd0_va, qmd1_va);
+}
+int omega_blackwell_build_qmd1(uint32_t *qmd1_words, const OmegaBlackwellQmdConfig *cfg) {
+    return c_bw_qmd1(qmd1_words, cfg);
+}
+int omega_blackwell_build_cbank_driver(uint32_t *cbank_words, uint64_t cbank_va) {
+    return c_bw_cbank(cbank_words, cbank_va);
+}
+int omega_blackwell_build_cbank_args(uint32_t *args_words, uint64_t a_va, uint64_t b_va, uint64_t c_va, uint32_t n) {
+    return c_bw_args(args_words, a_va, b_va, c_va, n);
+}
+int omega_blackwell_build_cbank_driver_2d(uint32_t *cbank_words, uint64_t cbank_va, uint32_t threads_x, uint32_t threads_y, uint32_t grid_x, uint32_t grid_y) {
+    return c_bw_cb2d(cbank_words, cbank_va, threads_x, threads_y, grid_x, grid_y);
+}
+int omega_blackwell_build_cbank_args_matmul(uint32_t *args_words, uint64_t a_va, uint64_t b_va, uint64_t c_va, uint32_t m, uint32_t k, uint32_t n) {
+    return c_bw_mat(args_words, a_va, b_va, c_va, m, k, n);
+}
+int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
+    return c_bw_verify(qmd1_words);
+}
+
+#else
+#ifndef OMEGA_GPU_NO_POSIX
+#include "cudapp_native.h"
+
+#define QMD_OM_M 16
+#define QMD_OM_W 224
+
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+#include <stdio.h>
+#include <stdlib.h>
+static void qmd_diff_die(const char *what, int a, int b) {
+    fprintf(stderr, "QMD DIFF %s %d %d\n", what, a, b);
+    abort();
+}
+static void qmd_diff_words(const char *what, const uint32_t *c, const uint32_t *o, int n) {
+    for (int i = 0; i < n; i++) if (c[i] != o[i]) {
+        fprintf(stderr, "QMD DIFF %s word %d c=%u om=%u\n", what, i, c[i], o[i]);
+        abort();
+    }
+}
+#ifdef QMD_DIFF_FLIP
+static void qmd_flip(uint32_t *w) { if (w) w[4] ^= 1u; }
+#else
+static void qmd_flip(uint32_t *w) { (void)w; }
+#endif
+#endif
+
+static void m_clear(uint64_t m[QMD_OM_M]) {
+    for (int i = 0; i < QMD_OM_M; i++) m[i] = 0;
+}
+
+/* ncopy is the number of words this op is specified to write. verify (op 2) reads
+ * the caller's 96 words from out and writes nothing back. A non-zero unit result is
+ * a refusal; qmd1 still wrote the words it had packed before the shared-size check. */
+static int om_pack(uint64_t op, const uint64_t m[QMD_OM_M], uint32_t *out, int ncopy) {
+    uint64_t w[QMD_OM_W];
+    uint64_t r = 1;
+    for (int i = 0; i < QMD_OM_W; i++) w[i] = 0;
+    if (op == 2 && out) {
+        for (int i = 0; i < OMEGA_BW_QMD_WORDS; i++) w[i] = out[i];
+    }
+    uint32_t st = omega_bw_qmd(&r, op, m, QMD_OM_M, w, QMD_OM_W);
+    if (st != OMEGA_OK) {
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+        qmd_diff_die("binding", 0, (int)st);
+#endif
+        return -1;
+    }
+    if (op != 2 && out) {
+        for (int i = 0; i < ncopy; i++) out[i] = (uint32_t)w[i];
+    }
+    return r == 0 ? 0 : -1;
+}
+
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+static void qmd_check(const char *what, int crc, int orc, const uint32_t *c, uint32_t *o, int n, int flip) {
+    if (crc != orc) qmd_diff_die(what, crc, orc);
+    if (flip) qmd_flip(o);
+    if (n > 0) qmd_diff_words(what, c, o, n);
+}
+#endif
+
+int omega_blackwell_build_qmd0(uint32_t *qmd0_words, uint64_t qmd0_va, uint64_t qmd1_va) {
+    if (!qmd0_words) return -1;
+    uint64_t m[QMD_OM_M];
+    m_clear(m);
+    m[0] = qmd0_va;
+    m[1] = qmd1_va;
+    int orc = om_pack(0, m, qmd0_words, OMEGA_BW_QMD_WORDS);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    uint32_t cw[OMEGA_BW_QMD_WORDS];
+    int crc = c_bw_qmd0(cw, qmd0_va, qmd1_va);
+    qmd_check("qmd0", crc, orc, cw, qmd0_words, crc == 0 ? OMEGA_BW_QMD_WORDS : 0, 1);
+#endif
+    return orc;
+}
+
+int omega_blackwell_build_qmd1(uint32_t *qmd1_words, const OmegaBlackwellQmdConfig *cfg) {
+    if (!qmd1_words || !cfg) return -1;
+    uint64_t m[QMD_OM_M];
+    m_clear(m);
+    m[1] = cfg->threads_x;
+    m[2] = cfg->threads_y;
+    m[3] = cfg->threads_per_block;
+    m[4] = cfg->grid_x;
+    m[5] = cfg->grid_y;
+    m[6] = cfg->grid_width;
+    m[7] = cfg->num_elements;
+    m[8] = cfg->shared_bytes;
+    m[9] = cfg->gpr_count;
+    m[10] = cfg->code_va;
+    m[11] = cfg->cbank_va;
+    m[12] = cfg->scratch_va;
+    m[13] = cfg->sem_va;
+    m[14] = cfg->qmd0_va;
+    int orc = om_pack(1, m, qmd1_words, OMEGA_BW_QMD_WORDS);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    uint32_t cw[OMEGA_BW_QMD_WORDS];
+    int crc = c_bw_qmd1(cw, cfg);
+    qmd_check("qmd1", crc, orc, cw, qmd1_words, OMEGA_BW_QMD_WORDS, 1);
+#endif
+    return orc;
+}
+
+int omega_blackwell_build_cbank_driver(uint32_t *cbank_words, uint64_t cbank_va) {
+    if (!cbank_words) return -1;
+    uint64_t m[QMD_OM_M];
+    m_clear(m);
+    m[1] = cbank_va;
+    int orc = om_pack(3, m, cbank_words, OMEGA_BW_CBANK_DRIVER_WORDS);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    uint32_t cw[OMEGA_BW_CBANK_DRIVER_WORDS];
+    int crc = c_bw_cbank(cw, cbank_va);
+    qmd_check("cbank", crc, orc, cw, cbank_words, OMEGA_BW_CBANK_DRIVER_WORDS, 1);
+#endif
+    return orc;
+}
+
+int omega_blackwell_build_cbank_args(uint32_t *args_words, uint64_t a_va, uint64_t b_va, uint64_t c_va, uint32_t n) {
+    if (!args_words) return -1;
+    uint64_t m[QMD_OM_M];
+    m_clear(m);
+    m[1] = a_va;
+    m[2] = b_va;
+    m[3] = c_va;
+    m[4] = n;
+    int orc = om_pack(5, m, args_words, OMEGA_BW_CBANK_ARGS_WORDS);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    uint32_t cw[OMEGA_BW_CBANK_ARGS_WORDS];
+    int crc = c_bw_args(cw, a_va, b_va, c_va, n);
+    qmd_check("args", crc, orc, cw, args_words, OMEGA_BW_CBANK_ARGS_WORDS, 1);
+#endif
+    return orc;
+}
+
+int omega_blackwell_build_cbank_driver_2d(uint32_t *cbank_words, uint64_t cbank_va, uint32_t threads_x, uint32_t threads_y, uint32_t grid_x, uint32_t grid_y) {
+    if (!cbank_words) return -1;
+    uint64_t m[QMD_OM_M];
+    m_clear(m);
+    m[1] = cbank_va;
+    m[2] = threads_x;
+    m[3] = threads_y;
+    m[4] = grid_x;
+    m[5] = grid_y;
+    int orc = om_pack(4, m, cbank_words, OMEGA_BW_CBANK_DRIVER_WORDS);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    uint32_t cw[OMEGA_BW_CBANK_DRIVER_WORDS];
+    int crc = c_bw_cb2d(cw, cbank_va, threads_x, threads_y, grid_x, grid_y);
+    qmd_check("cb2d", crc, orc, cw, cbank_words, OMEGA_BW_CBANK_DRIVER_WORDS, 1);
+#endif
+    return orc;
+}
+
+int omega_blackwell_build_cbank_args_matmul(uint32_t *args_words, uint64_t a_va, uint64_t b_va, uint64_t c_va, uint32_t m, uint32_t k, uint32_t n) {
+    if (!args_words) return -1;
+    uint64_t in[QMD_OM_M];
+    m_clear(in);
+    in[1] = a_va;
+    in[2] = b_va;
+    in[3] = c_va;
+    in[4] = m;
+    in[5] = k;
+    in[6] = n;
+    int orc = om_pack(6, in, args_words, OMEGA_BW_CBANK_MATMUL_ARGS_WORDS);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    uint32_t cw[OMEGA_BW_CBANK_MATMUL_ARGS_WORDS];
+    int crc = c_bw_mat(cw, a_va, b_va, c_va, m, k, n);
+    qmd_check("mat", crc, orc, cw, args_words, OMEGA_BW_CBANK_MATMUL_ARGS_WORDS, 1);
+#endif
+    return orc;
+}
+
+int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
+    if (!qmd1_words) return -1;
+    uint64_t m[QMD_OM_M];
+    m_clear(m);
+    int orc = om_pack(2, m, (uint32_t *)qmd1_words, 0);
+#ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+    int crc = c_bw_verify(qmd1_words);
+    qmd_check("verify", crc, orc, NULL, NULL, 0, 0);
+#endif
+    return orc;
+}
+#endif /* !OMEGA_GPU_NO_POSIX */
+#endif

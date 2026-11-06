@@ -2,6 +2,7 @@
 #include "omega_gpu_wait.h"
 
 #include <string.h>
+#include "omega_eng_dec.h"
 
 #ifndef OMEGA_GPU_NO_POSIX
 #include <time.h>
@@ -51,6 +52,152 @@ const char *omega_gpu_wait_kind_name(omega_gpu_wait_kind_t k) {
     return k == OMEGA_GPU_WAIT_FIXED ? "fixed" : k == OMEGA_GPU_WAIT_SEQUENCE ? "sequence" : "unknown";
 }
 
+/* Decisions come from om/engine/eng.om. This function only calls the clock,
+ * the barrier, the hooks and the watched words. */
+static bool wait_om(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_t expected,
+                    omega_gpu_wait_report_t *rpt, const omega_gpu_wait_cfg_t *cfg) {
+    uint64_t (*now_ns)(void *) = cfg->now_ns ? cfg->now_ns : DEFAULT_NOW_NS;
+    void (*barrier)(void *) = cfg->barrier ? cfg->barrier : real_barrier;
+    void (*relax)(void *) = cfg->relax ? cfg->relax : real_relax;
+    uint64_t in[23];
+    uint64_t w[16];
+    uint64_t start, now, hard, stall, total_ns, stall_ns, flags;
+    int first;
+
+    memset(in, 0, sizeof in);
+    in[0] = cfg->total_timeout_ms;
+    in[1] = cfg->progress_timeout_ms;
+    in[3] = word ? 1u : 0u;
+    in[4] = now_ns ? 1u : 0u;
+    if (eng_ask(ENG_OP_WINIT, in, 5, w) != 0) {
+        rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+        return false;
+    }
+    if (w[5]) {
+        rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+        return false;
+    }
+    start = now_ns(cfg->hook_ctx);
+    in[2] = start;
+    if (eng_ask(ENG_OP_WINIT, in, 5, w) != 0) {
+        rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+        return false;
+    }
+    if (w[4]) {
+        rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+        return false;
+    }
+    total_ns = w[0];
+    stall_ns = w[1];
+    hard = w[2];
+    stall = w[3];
+    rpt->start_ns = start;
+    rpt->last_progress_ns = start;
+    now = start;
+    first = 1;
+    flags = 0;
+#ifdef OMEGA_GPU_WAIT_MUTANT_STALL_NO_RESET
+    flags |= 2u;
+#endif
+#ifdef OMEGA_GPU_WAIT_MUTANT_PROGRESS_EXTENDS_HARD
+    flags |= 1u;
+#endif
+    for (;;) {
+        uint32_t m, m2, snap[2];
+        int valid_ok;
+
+        memset(in, 0, sizeof in);
+        in[0] = now;
+        in[1] = hard;
+        in[2] = start;
+        if (eng_ask(ENG_OP_WENTER, in, 3, w) != 0) {
+            rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+            return false;
+        }
+        if (w[0] == 0) {
+            rpt->elapsed_ns = w[6];
+            rpt->result = OMEGA_GPU_WAIT_TIMEOUT;
+            return false;
+        }
+        if (cfg->abort && cfg->abort(cfg->hook_ctx)) {
+            memset(in, 0, sizeof in);
+            in[8] = 1u;
+            in[9] = now;
+            in[10] = start;
+            if (eng_ask(ENG_OP_WPOLL, in, 11, w) != 0) {
+                rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+                return false;
+            }
+            rpt->result = OMEGA_GPU_WAIT_ABORTED;
+            rpt->elapsed_ns = w[6];
+            return false;
+        }
+#ifndef OMEGA_GPU_WAIT_MUTANT_NO_READ_BARRIER
+        barrier(cfg->hook_ctx);
+#endif
+        m = *word;
+        m2 = 0;
+        snap[0] = 0;
+        snap[1] = 0;
+        if (cfg->marker2) m2 = *cfg->marker2;
+        if (cfg->snapshot) cfg->snapshot(cfg->snapshot_ctx, snap);
+        rpt->polls++;
+        now = now_ns(cfg->hook_ctx);
+        valid_ok = 1;
+        if (cfg->valid) valid_ok = cfg->valid(cfg->hook_ctx, m) ? 1 : 0;
+        memset(in, 0, sizeof in);
+        in[0] = (uint64_t)kind;
+        in[1] = expected;
+        in[2] = m;
+        in[3] = m2;
+        in[4] = cfg->marker2 ? 1u : 0u;
+        in[5] = cfg->marker2_want;
+        in[6] = cfg->valid ? 1u : 0u;
+        in[7] = (uint64_t)valid_ok;
+        in[9] = now;
+        in[10] = start;
+        in[11] = stall;
+        in[12] = stall_ns;
+        in[13] = hard;
+        in[14] = total_ns;
+        in[15] = first ? 1u : 0u;
+        in[16] = rpt->last_observed;
+        in[17] = rpt->last_marker2;
+        in[18] = rpt->snap[0];
+        in[19] = rpt->snap[1];
+        in[20] = snap[0];
+        in[21] = snap[1];
+        in[22] = flags;
+        if (eng_ask(ENG_OP_WPOLL, in, 23, w) != 0) {
+            rpt->result = OMEGA_GPU_WAIT_INVALID_STATE;
+            return false;
+        }
+        rpt->last_observed = m;
+        rpt->last_marker2 = m2;
+        rpt->snap[0] = snap[0];
+        rpt->snap[1] = snap[1];
+        rpt->elapsed_ns = now - start;
+        if (w[4]) {
+            rpt->progress_count++;
+            rpt->last_progress_ns = w[5];
+        }
+        stall = w[2];
+        hard = w[3];
+        if (w[1] == 1) {
+            barrier(cfg->hook_ctx);
+            rpt->result = OMEGA_GPU_WAIT_PASS;
+            return true;
+        }
+        if (w[1] == 2) {
+            rpt->result = (omega_gpu_wait_result_t)w[0];
+            return false;
+        }
+        first = 0;
+        relax(cfg->hook_ctx);
+        now = now_ns(cfg->hook_ctx);
+    }
+}
+
 static bool wait_core(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint32_t expected,
                       omega_gpu_wait_report_t *rpt, const omega_gpu_wait_cfg_t *cfg) {
     omega_gpu_wait_report_t local;
@@ -63,6 +210,8 @@ static bool wait_core(omega_gpu_wait_kind_t kind, volatile uint32_t *word, uint3
         memset(&zero, 0, sizeof(zero));
         cfg = &zero;
     }
+    if (eng_on()) return wait_om(kind, word, expected, rpt, cfg);
+
 
     uint64_t (*now_ns)(void *) = cfg->now_ns ? cfg->now_ns : DEFAULT_NOW_NS;
     if (!now_ns) {

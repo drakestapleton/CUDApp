@@ -2,6 +2,7 @@
 /* omega_gpu_mem_reserve.c -- developer bar D1: refuse an allocation that would leave less than the reserve free
  * (src/omega_gpu_mem_reserve.h). Hosted only: reads /proc/meminfo, or a regular file a test names by code with
  * omega_gpu_platform_linux_test_set_meminfo. */
+#include "omega_eng_dec.h"
 #include "omega_gpu_mem_reserve.h"
 
 #include "omega_gpu_platform.h"
@@ -70,6 +71,35 @@ uint64_t omega_gpu_mem_reserve_bytes(void) { return mib_bytes(reserve_mib_env())
 
 int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
     const unsigned long long reserve_mib = reserve_mib_env();
+    if (eng_on()) {
+        unsigned long long avail_kb = 0;
+        int have = 0;
+        uint64_t in[4], w[16];
+        if (reserve_mib != 0) {
+            FILE *f = meminfo_open();
+            if (f) {
+                char line[256];
+                while (!have && fgets(line, sizeof line, f))
+                    have = sscanf(line, "MemAvailable: %llu kB", &avail_kb) == 1;
+                fclose(f);
+            }
+        }
+        in[0] = bytes;
+        in[1] = avail_kb;
+        in[2] = reserve_mib;
+        in[3] = (reserve_mib != 0 && have) ? 1u : 0u;
+        if (eng_ask(ENG_OP_RESV, in, 4, w) != 0) return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+        if (w[0] == 0) return OMEGA_GPU_PLAT_OK;
+        char want[32], free_[32], keep[32];
+        human_bytes(want, sizeof want, bytes);
+        human_bytes(free_, sizeof free_, w[1]);
+        human_bytes(keep, sizeof keep, w[2]);
+        snprintf(diag, diag_len,
+                 "dma_alloc: refused %s: %s of memory is free and CUDA++ keeps %s free (CUDAPP_MEM_RESERVE_MIB=%llu), because the CPU and "
+                 "GPU share it and running it out freezes the machine. Free buffers or use a smaller batch.",
+                 want, free_, keep, reserve_mib);
+        return (int)w[0];
+    }
     if (reserve_mib == 0) return OMEGA_GPU_PLAT_OK;
     FILE *f = meminfo_open();
     if (!f) return OMEGA_GPU_PLAT_OK;

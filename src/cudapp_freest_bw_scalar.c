@@ -138,6 +138,15 @@ return 1ULL;
 }
 return 0ULL;
 }
+if(ombr_fs_op(6, 5, v0, 16ULL)){
+if(ombr_fs_op(13, 1, ombr_fs_op(6, 5, v1, 0ULL), ombr_fs_op(13, 1, ombr_fs_op(6, 5, v2, 0ULL), ombr_fs_op(6, 5, v3, 0ULL)))){
+return 0ULL;
+}
+return 1ULL;
+}
+if(ombr_fs_op(6, 5, v0, 17ULL)){
+return ombr_fs_op(3, 5, v1, v2);
+}
 return 18446744073709551615ULL;
 }
 uint32_t omega_bw_scalar(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5){

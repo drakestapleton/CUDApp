@@ -67,6 +67,7 @@ In a separately authorized exclusive GB10 window, first build `taskset -c 10-14 
 ## Receipt state
 
 - IMPLEMENTED: both default seeded builders, unchanged public APIs, C oracles and all host tiers.
+- EXERCISED/PASS: exhaustive C-oracle differential, exit 0; final line `CODEGEN MOE DIFF PASS (1732053 programs, 10681 refusals)`, with `CODEGEN MOE RECORD NEGATIVE CONTROL CAUGHT` (`differential.log`). This long-lived process used the pre-cleanup executable: final edits only moved metadata clearing after policy returns and removed unused scheduler latency state. The final generated units have the separate focused, mutation and regeneration receipts below; the integrated full gate remains pending on the current tree.
 - EXERCISED/PASS: device-free final generated-unit `om/units.sh --check`, exit 0; final stdout line `PASS portable Omega units regenerate byte for byte` (`units-check-device-free.log`).
 - EXERCISED/PASS: device-free final-unit warp simulation and two representative byte differentials, combined exit 0 (`device-free.log`; original pre-policy run in `sim.log`).
 - EXERCISED/PASS: device-free seven seeded-source mutants compiled and were killed by ordinary differential mismatches, runner exit 0; final line `CODEGEN MOE OMEGA MUTANTS PASS (7 source-mutant controls)` (`mutants-device-free.log`; original pre-policy run in `mutants.log`).

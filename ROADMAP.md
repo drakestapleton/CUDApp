@@ -80,3 +80,15 @@ is not complete: realization, hazard analysis and remaining wrapper/packing/spec
 policy are still C. Native aggregate adoption and freestanding OM2 array support
 are pending integration; chip qualification is NOT_RUN. No roadmap row status is
 upgraded by this note.
+
+## 2026-11-06: emitter, reconvergence and fragment decisions (pending integration)
+
+The `feat/checkers-rest-om` lane moves hosted emitter/scoreboard decisions,
+reconvergence admission and patch policy, all five fragment packers, result
+sentinels and shared row compaction to seeded Omega. Source-partition
+differentials, red controls, recompiled mutants and the focused host gates are
+EXERCISED in `evidence/checkers-rest-2026-11-06/README.md`. The retained C oracle
+and freestanding fallback are default-off in hosted builds; C still marshals
+records, pointers and external effects. The runtime-view converter remains
+pending omega-bridge #71 and #73. Chip qualification is NOT_RUN, and no roadmap
+row status is upgraded.

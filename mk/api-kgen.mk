@@ -6,6 +6,8 @@ API_KGEN_OBJS = $(addprefix $(API_KGEN_DIR)/,$(addsuffix .o,$(API_KGEN_CORE))) \
  $(patsubst src/%.c,$(API_KGEN_DIR)/%.o,$(CUDAPP_BINDING_SRCS))
 API_KGEN_CC = $(CC) $(CFLAGS) -ffunction-sections -fdata-sections
 
+include tests/attention_kgen.mk
+
 $(API_KGEN_DIR)/%.o: src/%.c src/cudapp_native.h
 	@mkdir -p $(API_KGEN_DIR)
 	$(API_KGEN_CC) -c $< -o $@

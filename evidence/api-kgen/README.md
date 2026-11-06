@@ -3,11 +3,12 @@
 ## Scope and pins
 
 The elementwise API's complete generator and scheduler are seeded Omega in
-`om/kgen/ew_{emit,scalar,reconv,prime,ir}.om`. C dispatches to the existing single
-`omega_gpu_om_ir_replay` entry. No IR opcode or replay entry was added. The replay
-ABI already solves register allocation; the API does not solve it twice.
-The old C generator is retained only under
-`CUDAPP_MIGRATION_PENDING_C_API_KGEN=1` (default **0**) as the independent oracle.
+`om/kgen/ew_{emit,scalar,reconv,prime,ir}.om`; the tuned and general attention
+generators and scheduler are in `om/kgen/attention_{emit,tuned,general,ir}.om`.
+C dispatches to the existing single `omega_gpu_om_ir_replay` entry. No IR opcode
+or replay entry was added. The replay ABI already solves register allocation;
+neither API solves it twice. Both old C generators are retained only under
+`CUDAPP_MIGRATION_PENDING_C_API_KGEN=1` (default **0**) as independent oracles.
 This macro is not enabled in production builds.
 
 Base: `feat/api-views-attn-om` at `c1fec738fb3dfe4fd48bf9115a19ca9d4d3d6367`.
@@ -17,6 +18,8 @@ Prerequisites merged: #309 `63d18a2cc92cb05f800d17e46b35f0cd6237b3b0`
 (merge `7113117`), then #294 `220fe47dfdecb715e0d49be223808c211b889169`
 (merge `bac386c`). No #327 merge was needed.
 Elementwise registration-before-cutover commit: `73b11c5`.
+Attention registration-before-cutover commits: `f965e67a`, `a61802d5`,
+`20b33b52` and aggregate identity completion `aff2669c`; cutover `913f5bec`.
 
 Compiler: `omega-mv/seed/out/omc`, SHA-256
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.

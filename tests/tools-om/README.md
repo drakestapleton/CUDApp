@@ -91,3 +91,38 @@ of 84. The four untaken branches cannot be reached:
 
 Mutants (10, all killed): the 120-byte cut, the run minimum and maximum, the unified flag, the 16-GPU cap,
 the refusal prefix length, the GiB precision, the plural, the closed-module test and the `more()` segment step.
+
+## ampcorp (`tools/ampere_corpus.c`, switch `..._TOOLS_AMPCORP`)
+
+`om/tools/ampcorp.om` holds every decision of the SM86 IR capture: the folder check (no `\`, no `..` path
+component), the IR metadata (little-endian u32 `op`, `imm` pairs), the classification of a legal refusal (an
+opcode past `BW_IR_MUFU_LG2`, `BW_IR_HMMA_BF16` with `OMEGA_QMMA_MARK`, `BW_IR_FMNMX_MAX` with
+`OMEGA_QMMA_MARK_F2E4`), the check that a refusal returned `OMEGA_GPU_ENCODE_UNSUPPORTED` with 0 bytes and left
+the 0xa5 fill untouched, the check that an existing kernel encoded to its SM121 length, and the text of the paths
+(`<dir>/<pid>-<serial>.<suffix>`, refused at 4096 bytes and over) and of the abort message (signed `rc`). The C
+keeps `getenv`, the encoder call, `open`/`fdopen`/`fwrite`, the serial counter and `abort`; the header constants
+go in as facts. Deviations: the metadata is written little-endian (the C wrote host order: the same bytes on the
+aarch64 and x86-64 hosts); a folder text of 131072 bytes or more aborts (an environment string is shorter; only
+`setenv` in the producer could make one).
+
+`ampcorp_diff.c` defines `omega_gpu_encode_program_target`, so each case picks the encoder outcome, and runs
+every case in a child in a fresh folder; the report holds exit or signal, stderr and each written file (name,
+size, FNV-1a 64), with the pid replaced. 62 cases. Partition, from the source: folder unset, empty, plain, `./`,
+trailing `/` and `//`, `..` first, middle, last and alone, `...`, `.x`, `x.`, `.`, `a..`, `..a`, `\` alone and
+inside, a missing folder (`perror`, abort), paths of 4095/4096/4097 bytes for `sm121.bin` and 4095/4096 for
+`refused`; the serial over 3 and 12 captures and across an unsafe folder (no increment); 0 and 1024 instructions;
+`MUFU_LG2` (not a refusal) and the opcodes after it, each marker on its own and on the other opcode, a marker ±1,
+the refusal first and last; a refusal with a stray byte at 0, 8191 and 16383, with 1 byte, with `rc` −1 or 0,
+a refusal opcode that encodes; an existing kernel refused, one byte short or long, `rc` 7, `INT_MIN`, `INT_MAX`,
+−1 at 1024 instructions, 0 bytes of 0; a write that fails in `fclose` and in `fwrite` (a link to `/dev/full`).
+With `TOOLS_OM_AMPCORP_REAL=1` the script also builds the corpus producers of `test-ampere-encoder-oracle`
+both ways (`CUDAPP_AMPERE_CORPUS=1`, `make CUDAPP_MIGRATION_PENDING_C_TOOLS_AMPCORP=1` for the oracle) and
+compares every corpus file by name and sha256 with the real SM86 encoder.
+
+Coverage of the oracle under the differential: lines 100% of 45, branches executed 100% and taken 96.77% of 62.
+The two untaken branches cannot be reached without fault injection:
+- `n < 0` after `snprintf`: the format holds only `%s`, `%ld` and `%u`, which have no encoding error;
+- `fdopen` failing after `open` succeeded: only an allocation failure makes it fail.
+
+Mutants (8, all killed): the `..` length, the `\` byte, the `MUFU_LG2` bound, the F2E4 marker, the 0xa5 fill
+check, the 4096-byte path bound, the sign of `rc` in the message, and the SM121 length check.

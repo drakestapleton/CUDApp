@@ -1,0 +1,20 @@
+COMMAND: bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 python3 tests/api_hostrest_check.py
+RC: 0
+API_HOSTREST differential PASS
+host red killed rc=134
+host strong-link negative PASS
+host mutant 1 killed rc=134: eq c 48 -> eq c 49
+host mutant 2 killed rc=134: eq c 50 -> eq c 51
+host mutant 3 killed rc=134: rem k 512 -> rem k 511
+host mutant 4 killed rc=134: decl 65536 -> decl 65535
+host mutant 5 killed rc=134: div uint 48 groups -> div uint 47 groups
+host mutant 6 killed rc=134: ge n 1000 -> ge n 999
+SCAN_REFERENCE_REST differential PASS
+scan strong-link negative PASS
+scan mutant 1 killed rc=134: ulong 32 -> ulong 33
+scan mutant 2 killed rc=134: lt e n -> lt e sub n 1
+scan mutant 3 killed rc=134: div e 32 1 -> div e 32 0
+scan mutant 4 killed rc=134: add get src -> sub get src
+scan mutant 5 killed rc=134: add e 1 -> add e 2
+scan mutant 6 killed rc=134: lt len src -> le len src
+API_HOSTREST_SCAN acceptance PASS

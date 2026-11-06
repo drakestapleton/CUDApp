@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include "omega_gpu_mem_cached.h"
 #include "omega_gpu_apiviews.h"
+#include "omega_gpu_api_hostrest.h"
 
 #define MARKER_TIMEOUT_MS 20000ull
 #define POISON_F32 (-999.0f)
@@ -277,8 +278,9 @@ static int kernel_build(unsigned kind, const OmegaGdnSpec *spec, BlackwellIRProg
 }
 static int kernel_for(unsigned kind, const OmegaGdnSpec *spec, Slot **out, bool *hit) {
     Slot *s = &g_k.slot[kind];
-    if (s->valid && memcmp(&s->spec, spec, sizeof *spec) == 0) { *out = s; *hit = true; return OMEGA_GPU_GDN_OK; }
-    if (g_rec && s->valid) { omega_gpu_session_set_error("gdn record: kernel cache miss would evict the resident kernel (warm up before recording)"); return OMEGA_GPU_GDN_TOO_LARGE; }
+    const uint64_t policy = OMEGA_AH(11, s->valid, memcmp(&s->spec, spec, sizeof *spec) == 0, g_rec);
+    if (policy == 1) { *out = s; *hit = true; return OMEGA_GPU_GDN_OK; }
+    if (policy == 2) { omega_gpu_session_set_error("gdn record: kernel cache miss would evict the resident kernel (warm up before recording)"); return OMEGA_GPU_GDN_TOO_LARGE; }
     if (s->valid) omega_gpu_session_free(&s->code);
     memset(s, 0, sizeof *s);
     BlackwellIRProgram *prog = omega_gpu_host_calloc(1, sizeof *prog);
@@ -286,7 +288,7 @@ static int kernel_for(unsigned kind, const OmegaGdnSpec *spec, Slot **out, bool 
     int cg = kernel_build(kind, spec, prog);
     size_t need = cg == 0 ? omega_bw_program_code_bytes(prog) : 0;
     if (cg != 0 || need == 0) { omega_gpu_host_free(prog); omega_gpu_session_set_error("gdn codegen refused the spec"); return OMEGA_GPU_GDN_CODEGEN_FAIL; }
-    if ((uint64_t)kk_threads[kind] * omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage) > 65536u) { omega_gpu_host_free(prog); omega_gpu_session_set_error("gdn: register file"); return OMEGA_GPU_GDN_TOO_LARGE; }
+    if (!OMEGA_AH(3, kk_threads[kind], omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage))) { omega_gpu_host_free(prog); omega_gpu_session_set_error("gdn: register file"); return OMEGA_GPU_GDN_TOO_LARGE; }
     const uint32_t insns = (uint32_t)prog->count;
     OmegaGpuMem code;
     if (omega_gpu_session_alloc_code(need, &code) != 0) { omega_gpu_host_free(prog); return OMEGA_GPU_GDN_CHIP_FAIL; }
@@ -306,7 +308,8 @@ static int kernel_for(unsigned kind, const OmegaGdnSpec *spec, Slot **out, bool 
  * and waited for. Caller holds the session lock with the device open. */
 static int move_locked(unsigned kind, uint64_t src, uint64_t dst, size_t bytes) {
     const size_t per = (size_t)OMEGA_GDN_COPY_WORDS_PER_CTA * 4u;
-    if ((kind != KK_COPY && kind != KK_ZERO) || !dst || bytes == 0 || bytes % per || bytes / per > 0x7fffffffu) return OMEGA_GPU_GDN_BAD_ARGS;
+    const uint64_t ctas = OMEGA_AH(12, kind, dst, bytes, per);
+    if (!ctas) return OMEGA_GPU_GDN_BAD_ARGS;
     OmegaGdnSpec spec; memset(&spec, 0, sizeof spec);
     spec.copy = kind == KK_COPY ? OMEGA_GDN_COPY : OMEGA_GDN_ZERO;
     Slot *ks = NULL; bool hit = false;
@@ -315,7 +318,7 @@ static int move_locked(unsigned kind, uint64_t src, uint64_t dst, size_t bytes) 
     uint32_t args[OMEGA_GDN_COPY_ARGS_WORDS] = { (uint32_t)src, (uint32_t)(src >> 32), (uint32_t)dst, (uint32_t)(dst >> 32) };
     OmegaGpuLaunch L = {
         .code_va = ks->code.va, .gpr_count = omega_bw_gpr_declared(ks->kernel.gpr_count),
-        .threads_x = OMEGA_GDN_COPY_THREADS, .threads_y = 1, .grid_x = (uint32_t)(bytes / per), .grid_y = 1,
+        .threads_x = OMEGA_GDN_COPY_THREADS, .threads_y = 1, .grid_x = (uint32_t)ctas, .grid_y = 1,
         .num_elements = bytes / 4u, .args = args, .n_args = OMEGA_GDN_COPY_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
     };
     if (!omega_bw_gpr_declared_ok(L.gpr_count, ks->kernel.gpr_count)) { omega_gpu_session_set_error("declared registers below peak + 2: refusing to launch"); return OMEGA_GPU_GDN_CHIP_FAIL; }
@@ -508,8 +511,8 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
                    OmegaGpuCmdList *rec, uint64_t dev_qkv, uint64_t dev_z, uint64_t dev_ab, uint64_t *out_va) {
     uint64_t c0 = omega_gpu_session_now_ns();
     if (info) memset(info, 0, sizeof *info);
-    if (!g || layer >= g->layers || T < OMEGA_GDN_PF_MIN_T || T > OMEGA_GPU_GDN_PF_MAX_T) return OMEGA_GPU_GDN_BAD_ARGS;
-    if (rec ? (!dev_qkv || !dev_z || !dev_ab) : (!qkv || !z || !ab || !out)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!g || !OMEGA_AH(13, layer, g->layers, T, OMEGA_GDN_PF_MIN_T, OMEGA_GPU_GDN_PF_MAX_T)) return OMEGA_GPU_GDN_BAD_ARGS;
+    if (!OMEGA_AH(23, 2, rec != NULL, dev_qkv, dev_z, dev_ab, qkv != NULL, z != NULL, ab != NULL, out != NULL)) return OMEGA_GPU_GDN_BAD_ARGS;
     if (!isfinite(eps_l2) || !isfinite(eps_norm) || !isfinite(in_scale) || !isfinite(out_scale)) return OMEGA_GPU_GDN_BAD_ARGS;
     OmegaGdnSpec spec; memset(&spec, 0, sizeof spec);
     spec.mutant = g_k.mutant;
@@ -521,7 +524,7 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
     if (!rec) omega_gpu_session_lock();
 #define UNLOCK() do { if (!rec) omega_gpu_session_unlock(); } while (0)
     if (!dev_open_locked()) { UNLOCK(); return OMEGA_GPU_GDN_CHIP_FAIL; }
-    if (rec && (!g->pf.mem.cpu || g->pf.cap < bytes)) {
+    if (!OMEGA_AH(14, rec != NULL, g->pf.mem.cpu != NULL, g->pf.cap, bytes)) {
         omega_gpu_session_set_error("gdn prefill record: scratch below T tokens (call omega_gpu_gdn_prefill_reserve first)");
         UNLOCK(); return OMEGA_GPU_GDN_TOO_LARGE;
     }
@@ -557,7 +560,7 @@ static int pf_core(OmegaGpuGdn *g, uint32_t layer, uint32_t T, const float *qkv,
     memcpy(&aq[8], &eps_norm, 4); memcpy(&aq[9], &in_scale, 4); memcpy(&aq[10], &out_scale, 4);
 #undef A64
     const uint32_t thr[3] = { OMEGA_GDN_PREP_THREADS, OMEGA_GDN_THREADS, OMEGA_GDN_THREADS };
-    const uint32_t gx[3] = { (T + OMEGA_GDN_PREP_TOKENS - 1u) / OMEGA_GDN_PREP_TOKENS, g->sh.r, T };
+    const uint32_t gx[3] = { (uint32_t)OMEGA_AH(15, T, OMEGA_GDN_PREP_TOKENS, g->sh.r, 0), (uint32_t)OMEGA_AH(15, T, OMEGA_GDN_PREP_TOKENS, g->sh.r, 1), (uint32_t)OMEGA_AH(15, T, OMEGA_GDN_PREP_TOKENS, g->sh.r, 2) };
     const uint32_t gy[3] = { OMEGA_GDN_KEY_HEADS, OMEGA_GDN_GRID_Y, g->sh.post_grid_y };
     const uint32_t sh[3] = { OMEGA_GDN_PREP_SHARED_BYTES, OMEGA_GDN_SCAN_SHARED_BYTES, 0 };
     const uint32_t *args[3] = { ap, as, aq };

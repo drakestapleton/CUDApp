@@ -51,6 +51,7 @@ int omega_blackwell_codegen_tc_probe_prog(int mutant, BlackwellIRProgram *prog) 
 
 /* ======================= grouped FP8 GEMM on tensor cores (see the header) ======================= */
 
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST
 int omega_tcgemm_spec_ok(const OmegaTcGemmSpec *s) {
     if (!s) return 0;
     if (s->k < 128u || s->k > OMEGA_TCGEMM_MAX_K || s->k % 128u) return 0;
@@ -77,6 +78,33 @@ void omega_tcgemm_permute_x(const float *x, uint32_t k, uint16_t *out) {
         for (unsigned i = 0; i < 4; i++) out[q + i] = bf16_rne(x[q + ord[i]] * 18446744073709551616.0f);
 }
 uint16_t omega_tcgemm_w_bf16(uint8_t c) { return (uint16_t)(((c & 0x7Fu) << 4) | ((c & 0x80u) << 8)); }
+#else
+static uint32_t tc_host_query(const OmegaTcGemmSpec *s, uint64_t op) {
+    if (!s) return 0;
+    uint64_t v[16] = {s->k,s->rt,s->ct,s->warps,(uint32_t)s->mutant}, r=0;
+    if (omega_tc_host(&r,op,v,16)) return 0;
+    return (uint32_t)r;
+}
+int omega_tcgemm_spec_ok(const OmegaTcGemmSpec *s) { return (int)tc_host_query(s,0); }
+uint32_t omega_tcgemm_shared_bytes(const OmegaTcGemmSpec *s) { return tc_host_query(s,1); }
+uint32_t omega_tcgemm_span(const OmegaTcGemmSpec *s) { return tc_host_query(s,2); }
+void omega_tcgemm_permute_x(const float *x, uint32_t k, uint16_t *out) {
+    /* Only marshal complete groups; all scaling, rounding and ordering is Omega. */
+    for (uint64_t q=0; q+4<=k; q+=4) {
+        uint32_t bits[4]; uint64_t v[16]={0},r=0;
+        memcpy(bits,x+q,sizeof bits);
+        for (unsigned j=0;j<4;j++) v[j]=bits[j];
+        if (omega_tc_host(&r,6,v,16)) return;
+        out[q]=(uint16_t)r; out[q+1]=(uint16_t)(r>>16);
+        out[q+2]=(uint16_t)(r>>32); out[q+3]=(uint16_t)(r>>48);
+    }
+}
+uint16_t omega_tcgemm_w_bf16(uint8_t c) {
+    uint64_t v[16]={c},r=0;
+    if (omega_tc_host(&r,7,v,16)) return 0;
+    return (uint16_t)r;
+}
+#endif
 
 #if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 /* one e4m3 word (bytes b0..b3) -> B register pair: lo = (bf(b0), bf(b2)), hi = (bf(b1), bf(b3)) */

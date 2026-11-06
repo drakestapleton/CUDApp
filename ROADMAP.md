@@ -63,6 +63,9 @@ and fake-RM gates are recorded in `evidence/nvrm-alloc-20261106/README.md`.
 Live RM and chip qualification remain NOT_RUN; no status row is upgraded.
 2026-11-06: dagsim JSON byte escaping defaults to seeded `om/tools/dag_jstr.om`; all-byte differential and five mutants are recorded in `evidence/dagsim-jstr-20261106/README.md`. Host only; chip NOT_RUN and no status row upgraded.
 2026-11-06: disassembly byte assembly and EXIT-padding policy now default to `om/disasm/words.om`; focused host differential and mutants are recorded in `evidence/disasm-words-20261106/README.md`. Chip NOT_RUN; no status row upgraded.
+2026-11-06: TC/TC2 host admission, sizing, span and input/weight conversion now default to seeded Omega, reusing the canonical numeric BF16 rounding unit. Host/simulator/cubin identity evidence and the NOT_RUN chip runbook are in `evidence/codegen-tc-host-20261106/README.md`; no hardware status row is upgraded.
+2026-11-06: Router-logit admission/shared sizing and MoE-combine admission now default to seeded Omega. Host differential, source mutants, simulator and cubin identity evidence is in `evidence/codegen-pfhost-admit-20261106/README.md`; chip qualification remains NOT_RUN and no status row is upgraded.
+2026-11-06: QMMA mark recognition, little-endian probe word reads and patch-selftest construction/verification now default to seeded Omega, reusing existing record emission. Host, simulator and cubin evidence is in `evidence/qmma-probe-rest-20261106/README.md`; chip remains NOT_RUN with no status-row upgrade.
 
 ## 1. NVIDIA software on the Spark today
 
@@ -213,3 +216,14 @@ NOT_RUN, and no roadmap status row is upgraded.
 2026-11-06: elementwise and attention API kernel generation, scheduling, reconvergence and loop-liveness metadata now default to seeded `om/kgen/{ew,attention}_*.om` through the existing single `omega_gpu_om_ir_replay` entry. `CUDAPP_MIGRATION_PENDING_C_API_KGEN` retains the default-OFF C oracles. Complete source-derived IR, solved allocation, text and cubin differential checks, altered-IR/final-cubin controls and ten seeded semantic mutants are recorded in `evidence/api-kgen/README.md` and `evidence/api-kernel-gen-attn/2026-11-06/README.md`. Required host/model/simulator targets and byte-for-byte unit regeneration passed. This is host evidence, not chip qualification; chip NOT_RUN and the status rows above are unchanged.
 
 2026-11-06: general-attention thread/shared/workspace/chunk policy, scan poison/prefix/sorted-neighbor verification and elementwise timestamp arithmetic now default to seeded Omega through strong hosted units. The C references remain behind default-OFF `CUDAPP_MIGRATION_PENDING_C_ATTENTION_HOST_POLICY`, `CUDAPP_MIGRATION_PENDING_C_SCAN_CHECK_REST` and `CUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS`. Public APIs and the inherited API kernel/view migration are unchanged. Differential, missing-unit/content red controls, source mutants and focused family receipts are recorded under `evidence/attn-host-policy-20261106/`. Chip is NOT_RUN; status rows above are unchanged.
+
+## 2026-11-06: codegen fixture verification (pending integration)
+
+The seven exported codegen fixture verifiers now call the seeded scalar unit
+`om/codegen/fixture_verify.om`, including freestanding builds. Golden-word
+comparisons, refusal/error arithmetic, BF16 relations and control-word assembly
+are Omega-owned; C only invokes encoders and marshals their words. Host
+differentials, seven killed Omega mutants, a corrupted-golden red control and
+the focused hosted/freestanding gates are EXERCISED in
+`evidence/codegen-fixture-verify-20261106/README.md`. Chip qualification is
+NOT_RUN. No roadmap status row is upgraded.

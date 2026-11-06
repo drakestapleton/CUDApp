@@ -44,7 +44,7 @@ endif
 CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-portable-receipts test-model-capacity test-prof)
 # Portable checked Omega-to-C output; each unit has a separate private runtime namespace.
 CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
-CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_pathcopy.c src/cudapp_freest_streams_xq.c
+CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_pathcopy.c src/cudapp_freest_streams_xq.c src/cudapp_freest_fixture_verify.c
 CUDAPP_FS_BINDING += src/cudapp_freest_regalloc.c src/cudapp_freest_cg_fields.c src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c $(wildcard src/cudapp_freest_attn_*.c) src/cudapp_freest_attention_ir.c src/cudapp_freest_cg_replay.c src/cudapp_freest_cg_life.c src/cudapp_freest_cg_invar.c
 CUDAPP_BINDING_SRCS = $(CUDAPP_HOST_BINDING) $(CUDAPP_FS_BINDING)
 # Units every explicit host link of src/omega_blackwell_codegen.c needs since RegAlloc #309, RegAllocRest and

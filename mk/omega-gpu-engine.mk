@@ -146,7 +146,8 @@ GPU_FS_SRCS = src/omega_gpu_engine.c src/omega_gpu_platform.c src/omega_blackwel
 	src/omega_gpu_serving.c src/omega_gpu_wait.c src/omega_gpu_om_ir.c $(CUDAPP_FS_BINDING)
 GPU_FS_HDRS = src/omega_gpu_engine.h src/omega_gpu_platform.h src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h \
 	src/omega_gpu_session.h src/omega_gpu_fmt.h src/omega_gpu_matmul_api.h src/omega_gpu_attention_api.h \
-	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h src/omega_api_plan.h src/omega_host_policy.h src/omega_gpu_apiviews.h src/omega_no_posix_session.h
+	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h src/omega_api_plan.h src/omega_host_policy.h src/omega_gpu_apiviews.h src/omega_no_posix_session.h \
+	src/omega_fixture_verify.h
 GPU_FS_OBJS = $(patsubst src/%.c,$(GPU_FS_DIR)/%.o,$(GPU_FS_SRCS))
 GPU_FS_LINK = $(GPU_FS_DIR)/omega_gpu_freestanding.o
 GPU_FS_ALLOWED = memcpy|memmove|memset|memcmp|strlen|strcmp
@@ -199,7 +200,7 @@ test-gpu-engine-freestanding: $(GPU_FS_LINK) build/test_omega_gpu_engine_freesta
 # all 2^32 inputs. The allowlist control links a malloc caller into the freestanding object and requires the
 # nm -u check to refuse it (a check that can never fail proves nothing).
 .PHONY: test-codegen-freestanding test-gpu-fs-allowlist-control
-CODEGEN_FS_TEST_DEPS = tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h
+CODEGEN_FS_TEST_DEPS = tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h src/omega_fixture_verify.h
 # Hosted uses checked portable Omega; freestanding calls the same root's seeded
 # machine code on the caller's stack.
 build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) src/cudapp_native.h \
@@ -210,7 +211,7 @@ build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c
 build/test_codegen_freestanding: $(CODEGEN_FS_TEST_DEPS) $(GPU_FS_LINK)
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -I$(GPU_NO_POSIX_DIR) -DOMEGA_GPU_NO_POSIX -o $@ tests/test_omega_codegen_freestanding.c \
-		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_FS_DIR)/cudapp_freest_bw_scalar.o $(GPU_FS_DIR)/cudapp_freest_cg_fields.o $(GPU_NO_POSIX_OBJS)
+		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_FS_DIR)/cudapp_freest_bw_scalar.o $(GPU_FS_DIR)/cudapp_freest_cg_fields.o $(GPU_FS_DIR)/cudapp_freest_fixture_verify.o $(GPU_NO_POSIX_OBJS)
 test-codegen-freestanding: build/test_codegen_hosted build/test_codegen_freestanding test-gpu-fs-allowlist-control
 	./build/test_codegen_hosted --dump > build/codegen_dump_hosted.txt
 	./build/test_codegen_freestanding --dump > build/codegen_dump_freestanding.txt

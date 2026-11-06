@@ -15,7 +15,7 @@ UNITS="src/cudapp_freest_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_re
   src/cudapp_om_cg_vecadd.c src/cudapp_om_bw_enc_sm121.c src/cudapp_freest_f16.c src/cudapp_om_core_sha.c src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c"
 UNITS="$UNITS src/cudapp_freest_cg_fields.c src/cudapp_freest_cg_replay.c src/cudapp_freest_cg_life.c
   src/cudapp_freest_cg_invar.c src/cudapp_om_cg_budget.c"
-UNITS="$UNITS src/cudapp_om_bw_identity.c src/cudapp_freest_bw_scalar.c src/cudapp_om_bw_cpui.c
+UNITS="$UNITS src/cudapp_om_bw_identity.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_fixture_verify.c src/cudapp_om_bw_cpui.c
   src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_shape.c src/cudapp_om_bw_name.c
   src/cudapp_om_cg_pack_len.c src/cudapp_om_cg_pack_h.c src/cudapp_om_cg_sentin.c
   src/cudapp_om_cg_em.c src/cudapp_om_cg_reconv.c"

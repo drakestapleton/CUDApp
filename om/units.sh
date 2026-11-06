@@ -27,6 +27,7 @@ OBSERVE="closure_code=$CLOSURE,om/moe/closure_code.om closure_launch=$CLOSURE,om
 UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathlibs/mathlibs_ir.om om/encoder/ampere_enc_sm86.om om/encoder/amp_runtime.om repack=$QUANT,om/quant/repack.om quant_wire=$QUANT,om/quant/runtime.om compose=$COMP encode=$ENC cache_runtime=om/cache/residency.om,om/cache/runtime.om lease=om/cache/residency.om,om/cache/runtime.om,om/cache/lease.om slotrev=om/cache/residency.om,om/cache/slotrev.om command=om/cache/residency.om,om/cache/command.om validate=$CACHE,$COMP,$ENC,om/components/admit.om,om/cache/validate.om digest=$REAL,om/cache/digest.om,om/cache/key.om code_digest=$REAL,om/cache/digest.om,om/cache/codekey.om templates=$REAL,om/cache/digest.om,om/cache/templates.om graph=$PIPE,om/pipeline/runtime.om context_lookup=om/pipeline/context.om,om/pipeline/context_abi.om binding=$REAL,om/pipeline/binding.om $MOE closure_pack=$CLOSURE,om/moe/closure_pack.om closure_bind=$CLOSURE,om/moe/closure_bind.om closure_blob=$CLOSURE,om/moe/closure_blob.om closure_cover=$CLOSURE,om/pipeline/mccover.om,om/pipeline/coverage_entry.om closure_intent=$CLOSURE,om/pipeline/mccover.om closure_seal=$CLOSURE,om/pipeline/mccover.om,om/pipeline/seal_entry.om closure_reseal=$CLOSURE,om/pipeline/mccover.om,om/pipeline/seal_reuse.om $OBSERVE prefill_shape=om/prefill-shape/admit.om prefill_reading=om/prefill-shape/reading.om prefill_workspace=om/prefill-shape/workspace.om prefill_order=om/prefill-shape/order.om attn_mirror_plan=om/attention-mirror/plan.om attn_mirror_step=om/attention-mirror/step.om q38_runtime=om/q38-head/envelope.om,om/q38-head/plan.om q38_emit=om/components/bw_alloc.om,om/components/bw_effect.om,om/components/bw_check.om,om/components/bw_project.om,$ENC,om/q38-head/bounds.om,om/q38-head/emit.om}"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_qmma=om/codegen/cg_qmma.om cg_qmma_patch=om/codegen/cg_qmma_patch.om"
+  UNITS="$UNITS qm_self=om/codegen/cg_qmma.om,om/codegen/qm_self.om qm_host=om/codegen/qm_host.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tgemm_spec=om/codegen/cg_tgemm_spec.om cg_tgemm=om/codegen/cg_qmma.om,om/codegen/cg_tgemm_emit.om,om/codegen/cg_tgemm.om"
@@ -83,6 +84,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS gemm_host=om/gemm-any/host.om"
     UNITS="$UNITS gemm_value=om/gemm-any/host.om,om/gemm-any/value.om gemm_cfg=om/gemm-any/host.om,om/gemm-any/config.om"
     UNITS="$UNITS gemm_plan=om/gemm-any/host.om,om/gemm-any/plan.om gemm_span=om/gemm-any/host.om,om/gemm-any/span.om"
+  UNITS="$UNITS tc_host=om/numeric/numeric.om,om/codegen/tc_host.om"
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS dnn_activations=om/attn-any/emit.om,om/dnn-activations/kernel.om dnn_activations_plan=om/dnn-activations/plan.om"
@@ -92,6 +94,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_pfhost=om/codegen/cg_pfhost_emit.om,om/codegen/cg_pfhost_rl.om,om/codegen/cg_pfhost_mc.om,om/codegen/cg_pfhost.om"
+  UNITS="$UNITS pf_admit=om/codegen/pf_admit.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_policy=native/nvrm/policy.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS session_admit=om/session/admit.om session_words=om/session/words.om session_park=om/session/park.om cmdlist_book=om/cmdlist/book.om"; fi
@@ -240,6 +243,7 @@ REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS gemm_ex_policy=om/gemmex/policy.om"
 PURE_UNITS="$PURE_UNITS streams_xq=om/streams/xq.om"
+UNITS="$UNITS fixture_verify=om/codegen/fixture_verify.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/codegen/cg_em.om om/codegen/cg_reconv.om om/codegen/cg_sentin.om"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -299,7 +303,7 @@ for u in $UNITS $PURE_UNITS; do
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c
       OBSOLETE="$OBSOLETE cudapp_om_$name.c" ;;
-    revision|epoch|f16|streams_xq|c5|leftovers|bw_scalar|cg_fields|core_cubinmsg|core_cubadmit|attn_host|attn_mm_dot|attn_mm_err|attn_mm_init|attn_mm_next|attn_args|attn_lay|attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
+    revision|epoch|f16|streams_xq|c5|leftovers|bw_scalar|fixture_verify|cg_fields|core_cubinmsg|core_cubadmit|attn_host|attn_mm_dot|attn_mm_err|attn_mm_init|attn_mm_next|attn_args|attn_lay|attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
       frontend=bridge-freest
       abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN

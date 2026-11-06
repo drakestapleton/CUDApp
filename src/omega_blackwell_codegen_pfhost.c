@@ -30,6 +30,7 @@ static void mul_add(Em *e, int fused, int acc, unsigned accsub, int a, unsigned 
 #endif
 
 /* ======================= router logits ======================= */
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT
 int omega_rl_spec_ok(const OmegaRlSpec *s) {
     if (!s) return 0;
     if (s->k < 128u || s->k > 16384u || s->k % 128u) return 0;
@@ -40,6 +41,16 @@ int omega_rl_spec_ok(const OmegaRlSpec *s) {
     return s->mutant >= 0 && s->mutant <= 2;
 }
 uint32_t omega_rl_shared_bytes(const OmegaRlSpec *s) { return omega_rl_spec_ok(s) ? s->t * 512u : 0u; }
+#else
+static uint32_t rl_admit_query(const OmegaRlSpec *s, uint64_t op) {
+    if (!s) return 0;
+    uint64_t r=0;
+    if (omega_pf_admit(&r,op,s->k,s->e,s->t,(uint32_t)s->mutant)) return 0;
+    return (uint32_t)r;
+}
+int omega_rl_spec_ok(const OmegaRlSpec *s) { return (int)rl_admit_query(s,0); }
+uint32_t omega_rl_shared_bytes(const OmegaRlSpec *s) { return rl_admit_query(s,1); }
+#endif
 
 int omega_blackwell_codegen_rl_prog(const OmegaRlSpec *spec, BlackwellIRProgram *prog) {
 #if !CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST
@@ -124,12 +135,21 @@ int omega_blackwell_codegen_rl_prog(const OmegaRlSpec *spec, BlackwellIRProgram 
 }
 
 /* ======================= MoE weighted combine ======================= */
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT
 int omega_mc_spec_ok(const OmegaMcSpec *s) {
     if (!s) return 0;
     if (s->h < 128u || s->h > 4096u || s->h % 128u) return 0;
     if (s->top_k < 4u || s->top_k > 16u || s->top_k % 4u) return 0;
     return s->mutant >= 0 && s->mutant <= 2;
 }
+#else
+int omega_mc_spec_ok(const OmegaMcSpec *s) {
+    if (!s) return 0;
+    uint64_t r=0;
+    if (omega_pf_admit(&r,2,s->h,s->top_k,0,(uint32_t)s->mutant)) return 0;
+    return (int)r;
+}
+#endif
 
 int omega_blackwell_codegen_mc_prog(const OmegaMcSpec *spec, BlackwellIRProgram *prog) {
 #if !CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST

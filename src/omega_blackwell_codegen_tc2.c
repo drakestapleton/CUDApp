@@ -9,6 +9,7 @@
 #include "omega_bw_em.h"
 #endif
 
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST
 int omega_tc2_spec_ok(const OmegaTc2Spec *s) {
     if (!s) return 0;
     if (s->k < 128u || s->k > 16384u || s->k % 128u) return 0;
@@ -26,6 +27,17 @@ int omega_tc2_spec_ok(const OmegaTc2Spec *s) {
 }
 uint32_t omega_tc2_shared_bytes(const OmegaTc2Spec *s) { return omega_tc2_spec_ok(s) ? 2u * 16u * s->rt * 128u : 0u; }
 uint32_t omega_tc2_span(const OmegaTc2Spec *s) { return omega_tc2_spec_ok(s) ? s->warps * 8u * s->ct : 0u; }
+#else
+static uint32_t tc2_host_query(const OmegaTc2Spec *s, uint64_t op) {
+    if (!s) return 0;
+    uint64_t v[16]={s->k,s->rt,s->ct,s->warps,(uint32_t)s->mutant,s->n,s->aqn,s->epi,s->direct},r=0;
+    if (omega_tc_host(&r,op,v,16)) return 0;
+    return (uint32_t)r;
+}
+int omega_tc2_spec_ok(const OmegaTc2Spec *s) { return (int)tc2_host_query(s,3); }
+uint32_t omega_tc2_shared_bytes(const OmegaTc2Spec *s) { return tc2_host_query(s,4); }
+uint32_t omega_tc2_span(const OmegaTc2Spec *s) { return tc2_host_query(s,5); }
+#endif
 
 #if CUDAPP_MIGRATION_PENDING_C_CODEGEN_TC
 /* one e4m3 word (bytes b0..b3) -> B register pair: lo = (bf(b0), bf(b2)), hi = (bf(b1), bf(b3)) (cut 1) */

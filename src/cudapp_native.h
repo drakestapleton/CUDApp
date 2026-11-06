@@ -61,6 +61,8 @@ uint32_t omega_q38_runtime(uint64_t  *result, const void *p0, uint64_t p0_n, con
 uint32_t omega_q38_emit(uint64_t  *result, void *p0, uint64_t p0_n);
 uint32_t omega_cg_qmma(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_cg_qmma_patch(uint64_t  *result, uint64_t p0, uint64_t p1, void *p2, uint64_t p2_n);
+uint32_t omega_qm_self(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
+uint32_t omega_qm_host(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5);
 uint32_t omega_cg_tgemm_spec(uint64_t  *result, const void *p0, uint64_t p0_n, uint64_t p1);
 uint32_t omega_cg_tgemm(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_cg_pf_copy(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
@@ -160,11 +162,13 @@ uint32_t omega_gemm_value(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t 
 uint32_t omega_gemm_cfg(uint64_t  *result, const void *p0, uint64_t p0_n);
 uint32_t omega_gemm_plan(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_gemm_span(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+uint32_t omega_tc_host(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n);
 uint32_t omega_dnn_activations(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_da_plan(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, void *p3, uint64_t p3_n);
 uint32_t omega_cg_attn(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_cg_pattn(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
 uint32_t omega_cg_pfhost(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n, void *p5, uint64_t p5_n);
+uint32_t omega_pf_admit(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4);
 uint32_t omega_nvrm_policy(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_decide(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_emit(uint64_t  *result, uint64_t p0, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
@@ -513,6 +517,7 @@ uint32_t omega_cg_pkh(uint64_t  *result, const void *p0, uint64_t p0_n, const vo
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_mrow(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 uint32_t omega_gemm_ex_policy(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4);
+uint32_t omega_fv_run(uint64_t *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4, uint64_t p5);
 uint32_t omega_cg_em(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n);
 uint32_t omega_cg_reconv(uint64_t  *result, uint64_t p0, void *p1, uint64_t p1_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */

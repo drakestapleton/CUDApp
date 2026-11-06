@@ -3,6 +3,7 @@
 #include "omega_blackwell_submit.h"
 #include "sha256.h"
 #include "omega_path_check.h"
+#include "omega_fixture_verify.h"
 #include <string.h>
 #include "cudapp_native.h"
 #include "omega_bw_bind.h"
@@ -1230,8 +1231,8 @@ int omega_blackwell_verify_codegen_fixtures_intops(void) {
         in.op = fx[i].op; in.dst_vreg = fx[i].d; in.src1_vreg = fx[i].a; in.src2_vreg = fx[i].b;
         in.src3_vreg = fx[i].c; in.ureg = -1; in.imm = fx[i].imm;
         uint32_t w[4];
-        if (encode_single_insn(&in, &ra, w) != 0) return -(2 * i + 1);
-        if (w[0] != fx[i].w0 || w[1] != fx[i].w1 || w[2] != fx[i].w2) return -(2 * i + 2);
+        if (!omega_fv_status(encode_single_insn(&in, &ra, w), 1)) return omega_fv_error(i, 1);
+        if (!omega_fv_words(w, fx[i].w0, fx[i].w1, fx[i].w2, 0, 7)) return omega_fv_error(i, 2);
     }
     return 0;
 }
@@ -1287,18 +1288,18 @@ int omega_blackwell_verify_codegen_fixtures_fragmm(void) {
         in.op = fx[i].op; in.dst_vreg = fx[i].d; in.src1_vreg = fx[i].a; in.src2_vreg = fx[i].b;
         in.src3_vreg = fx[i].c; in.ureg = fx[i].u; in.imm = fx[i].imm; in.control = fx[i].control;
         uint32_t w[4];
-        if (omega_blackwell_encode_one(&in, w) != 0) return -(2 * i + 1);
-        if (w[0] != fx[i].w0 || w[1] != fx[i].w1 || w[2] != fx[i].w2 || (fx[i].w3 && w[3] != fx[i].w3)) return -(2 * i + 2);
+        if (!omega_fv_status(omega_blackwell_encode_one(&in, w), 1)) return omega_fv_error(i, 1);
+        if (!omega_fv_optional(w, fx[i].w0, fx[i].w1, fx[i].w2, fx[i].w3)) return omega_fv_error(i, 2);
     }
     /* offsets outside the signed 24-bit field are refused, not wrapped */
     BlackwellIRInsn big;
     memset(&big, 0, sizeof big);
     big.op = BW_IR_LDG_E_64; big.dst_vreg = 2; big.src1_vreg = 30; big.src2_vreg = -1; big.src3_vreg = -1; big.ureg = 8;
-    big.imm = 1u << 23;
+    big.imm = 8388608U;
     uint32_t w[4];
-    if (omega_blackwell_encode_one(&big, w) == 0) return -100;
-    big.imm = (uint32_t)-(1 << 23);
-    if (omega_blackwell_encode_one(&big, w) != 0) return -101;
+    if (!omega_fv_status(omega_blackwell_encode_one(&big, w), 0)) return -100;
+    big.imm = 4286578688U;
+    if (!omega_fv_status(omega_blackwell_encode_one(&big, w), 1)) return -101;
     return 0;
 }
 
@@ -1324,24 +1325,25 @@ int omega_blackwell_verify_codegen_fixtures_reconv(void) {
         in.op = fx[i].op; in.dst_vreg = -1; in.src1_vreg = -1; in.src2_vreg = -1; in.src3_vreg = -1; in.ureg = -1;
         in.imm = (uint32_t)fx[i].delta; in.bar_reg = (uint8_t)fx[i].bar;
         uint32_t w[4];
-        if (omega_blackwell_encode_one(&in, w) != 0) return -(2 * i + 1);
-        if (w[0] != fx[i].w0 || w[1] != fx[i].w1 || w[2] != fx[i].w2) return -(2 * i + 2);
+        if (!omega_fv_status(omega_blackwell_encode_one(&in, w), 1)) return omega_fv_error(i, 1);
+        if (!omega_fv_words(w, fx[i].w0, fx[i].w1, fx[i].w2, 0, 7)) return omega_fv_error(i, 2);
         /* control word defaults mirror nvcc's: BSSY 0x000fe200, BSYNC 0x000fea00 */
-        if (w[3] != (fx[i].op == BW_IR_BSSY ? 0x000fe200U : 0x000fea00U)) return -(2 * i + 2);
+        if (!omega_fv_words(w, 0, 0, 0, omega_fv_choose(fx[i].op, BW_IR_BSSY, 0x000fe200U, 0x000fea00U), 8)) return omega_fv_error(i, 2);
     }
     /* refusals: a BSSY must name a later instruction (delta >= 2), barrier ids stop at B15 */
     BlackwellIRInsn bad; uint32_t w[4];
     memset(&bad, 0, sizeof bad); bad.op = BW_IR_BSSY; bad.dst_vreg = bad.src1_vreg = bad.src2_vreg = bad.src3_vreg = bad.ureg = -1;
     bad.imm = 1; bad.bar_reg = 0;
-    if (omega_blackwell_encode_one(&bad, w) == 0) return -101;
-    bad.imm = (uint32_t)-3;
-    if (omega_blackwell_encode_one(&bad, w) == 0) return -102;
+    if (!omega_fv_status(omega_blackwell_encode_one(&bad, w), 0)) return -101;
+    bad.imm = 4294967293U;
+    if (!omega_fv_status(omega_blackwell_encode_one(&bad, w), 0)) return -102;
     bad.imm = 5; bad.bar_reg = 16;
-    if (omega_blackwell_encode_one(&bad, w) == 0) return -103;
+    if (!omega_fv_status(omega_blackwell_encode_one(&bad, w), 0)) return -103;
     bad.op = BW_IR_BSYNC; bad.imm = 0; bad.bar_reg = 16;
-    if (omega_blackwell_encode_one(&bad, w) == 0) return -104;
+    if (!omega_fv_status(omega_blackwell_encode_one(&bad, w), 0)) return -104;
     bad.bar_reg = 15;
-    if (omega_blackwell_encode_one(&bad, w) != 0 || w[0] != (0x00007941U | (15U << 16))) return -105;
+    if (!omega_fv_status(omega_blackwell_encode_one(&bad, w), 1)) return -105;
+    if (!omega_fv_words(w, omega_fv_bits(0x00007941U, 15, 16, 0, 0), 0, 0, 0, 1)) return -105;
     return 0;
 }
 
@@ -1375,17 +1377,17 @@ int omega_blackwell_verify_codegen_fixtures_bfly_f2fp(void) {
         memset(&in, 0, sizeof in);
         in.op = fx[i].op; in.dst_vreg = fx[i].d; in.src1_vreg = fx[i].a; in.src2_vreg = fx[i].b;
         in.src3_vreg = -1; in.ureg = -1; in.imm = fx[i].imm;
-        if (omega_blackwell_encode_one(&in, w) != 0) return -(2 * i + 1);
-        if (w[0] != fx[i].w0 || w[1] != fx[i].w1 || w[2] != fx[i].w2) return -(2 * i + 2);
+        if (!omega_fv_status(omega_blackwell_encode_one(&in, w), 1)) return omega_fv_error(i, 1);
+        if (!omega_fv_words(w, fx[i].w0, fx[i].w1, fx[i].w2, 0, 7)) return omega_fv_error(i, 2);
     }
     for (uint32_t lane = 0; lane < 32; lane++) {
         BlackwellIRInsn in; uint32_t d[4];
         memset(&in, 0, sizeof in);
         in.op = BW_IR_SHFL_DOWN; in.dst_vreg = 9; in.src1_vreg = 2; in.src2_vreg = in.src3_vreg = in.ureg = -1; in.imm = lane;
-        if (omega_blackwell_encode_one(&in, d) != 0) return -100;
+        if (!omega_fv_status(omega_blackwell_encode_one(&in, d), 1)) return -100;
         in.op = BW_IR_SHFL_BFLY;
-        if (omega_blackwell_encode_one(&in, w) != 0) return -101;
-        if (w[0] != d[0] || w[1] != (d[1] | 0x04000000U) || w[2] != d[2] || w[3] != d[3]) return -102;
+        if (!omega_fv_status(omega_blackwell_encode_one(&in, w), 1)) return -101;
+        if (!omega_fv_bfly(w, d)) return -102;
     }
     return 0;
 }
@@ -1422,8 +1424,8 @@ int omega_blackwell_verify_codegen_fixtures_atomf32(void) {
         memset(&in, 0, sizeof in);
         in.op = fx[i].op; in.dst_vreg = fx[i].d; in.src1_vreg = fx[i].a; in.src2_vreg = fx[i].b;
         in.src3_vreg = -1; in.ureg = fx[i].u;
-        if (omega_blackwell_encode_one(&in, w) != 0) return -(2 * i + 1);
-        if (w[0] != fx[i].w0 || w[1] != fx[i].w1 || w[2] != fx[i].w2 || w[3] != 0x00321e00U) return -(2 * i + 2);
+        if (!omega_fv_status(omega_blackwell_encode_one(&in, w), 1)) return omega_fv_error(i, 1);
+        if (!omega_fv_words(w, fx[i].w0, fx[i].w1, fx[i].w2, 0x00321e00U, 15)) return omega_fv_error(i, 2);
     }
     return 0;
 }
@@ -1441,20 +1443,20 @@ int omega_blackwell_verify_codegen_fixtures_fb1cut4(void) {
 
     /* MUFU.EX2 R2, R4 */
     BlackwellIRInsn ex2 = { .op = BW_IR_MUFU_EX2, .dst_vreg = 0, .src1_vreg = 1 };
-    if (encode_single_insn(&ex2, &ra, w) != 0) return -1;
-    if (w[0] != 0x00027308U || w[1] != 4 || w[2] != 0x00000800U) return -2;
+    if (!omega_fv_status(encode_single_insn(&ex2, &ra, w), 1)) return -1;
+    if (!omega_fv_words(w, 0x00027308U, 4, 0x00000800U, 0, 7)) return -2;
     /* BAR.SYNC.DEFER_BLOCKING 0x0 */
     BlackwellIRInsn bar = { .op = BW_IR_BAR_SYNC };
-    if (encode_single_insn(&bar, &ra, w) != 0) return -3;
-    if (w[0] != 0x00007b1dU || w[1] != 0 || w[2] != 0x00010000U || w[3] != 0x000fec00U) return -4;
+    if (!omega_fv_status(encode_single_insn(&bar, &ra, w), 1)) return -3;
+    if (!omega_fv_words(w, 0x00007b1dU, 0, 0x00010000U, 0x000fec00U, 15)) return -4;
     /* LDS R9, [R10+URZ] */
     BlackwellIRInsn lds = { .op = BW_IR_LDS32, .dst_vreg = 2, .src1_vreg = 3 };
-    if (encode_single_insn(&lds, &ra, w) != 0) return -5;
-    if (w[0] != 0x0a097984U || w[1] != 0xff || w[2] != 0x08000800U) return -6;
+    if (!omega_fv_status(encode_single_insn(&lds, &ra, w), 1)) return -5;
+    if (!omega_fv_words(w, 0x0a097984U, 0xff, 0x08000800U, 0, 7)) return -6;
     /* STS [R8+URZ], R2 */
     BlackwellIRInsn sts = { .op = BW_IR_STS32, .src1_vreg = 4, .src2_vreg = 0 };
-    if (encode_single_insn(&sts, &ra, w) != 0) return -7;
-    if (w[0] != 0x08007988U || w[1] != 2 || w[2] != 0x080008ffU) return -8;
+    if (!omega_fv_status(encode_single_insn(&sts, &ra, w), 1)) return -7;
+    if (!omega_fv_words(w, 0x08007988U, 2, 0x080008ffU, 0, 7)) return -8;
     return 0;
 }
 
@@ -2886,164 +2888,164 @@ int omega_blackwell_verify_codegen_fixtures(void) {
 
     /* 1. MOV R7, RZ */
     BlackwellIRInsn insn_mov_rz = { .op = BW_IR_MOV_RZ, .dst_vreg = 3 };
-    if (encode_single_insn(&insn_mov_rz, &ra, w) != 0) return -1;
-    if (w[0] != (0x7202 | (7 << 16)) || w[1] != 0xff || w[2] != 0x00000f00) return -2;
+    if (!omega_fv_status(encode_single_insn(&insn_mov_rz, &ra, w), 1)) return -1;
+    if (!omega_fv_words(w, omega_fv_bits(0x7202, 7, 16, 0, 0), 0xff, 0x00000f00, 0, 7)) return -2;
 
     /* 2. MOV R2, 1 */
     BlackwellIRInsn insn_mov_imm = { .op = BW_IR_MOV_IMM, .dst_vreg = 0, .imm = 1 };
-    if (encode_single_insn(&insn_mov_imm, &ra, w) != 0) return -3;
-    if (w[0] != (0x7802 | (2 << 16)) || w[1] != 1 || w[2] != 0x00000f00) return -4;
+    if (!omega_fv_status(encode_single_insn(&insn_mov_imm, &ra, w), 1)) return -3;
+    if (!omega_fv_words(w, omega_fv_bits(0x7802, 2, 16, 0, 0), 1, 0x00000f00, 0, 7)) return -4;
 
     /* 3. Register-Register IMAD: IMAD R7, R2, R6, R7 */
     BlackwellIRInsn insn_imad_rr = { .op = BW_IR_IMAD, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 2, .src3_vreg = 3 };
-    if (encode_single_insn(&insn_imad_rr, &ra, w) != 0) return -5;
-    if (w[0] != (0x7224 | (7 << 16) | (2 << 24)) || w[1] != 6 || w[2] != (0x078e0200 | 7)) return -6;
+    if (!omega_fv_status(encode_single_insn(&insn_imad_rr, &ra, w), 1)) return -5;
+    if (!omega_fv_words(w, omega_fv_bits(0x7224, 7, 16, 2, 24), 6, omega_fv_bits(0x078e0200, 7, 0, 0, 0), 0, 7)) return -6;
 
     /* 4. Immediate IMAD: IMAD R6, R2, 16, RZ */
     BlackwellIRInsn insn_imad_imm = { .op = BW_IR_IMAD, .dst_vreg = 2, .src1_vreg = 0, .src2_vreg = -1, .imm = 16, .src3_vreg = -1 };
-    if (encode_single_insn(&insn_imad_imm, &ra, w) != 0) return -7;
-    if (w[0] != (0x7824 | (6 << 16) | (2 << 24)) || w[1] != 16 || w[2] != 0x078e02ff) return -8;
+    if (!omega_fv_status(encode_single_insn(&insn_imad_imm, &ra, w), 1)) return -7;
+    if (!omega_fv_words(w, omega_fv_bits(0x7824, 6, 16, 2, 24), 16, 0x078e02ff, 0, 7)) return -8;
 
     /* 5. IMAD.WIDE: IMAD.WIDE R4, R2, 4, R4 */
     BlackwellIRInsn insn_imad_wide = { .op = BW_IR_IMAD_WIDE, .dst_vreg = 1, .src1_vreg = 0, .imm = 4, .src3_vreg = 1 };
-    if (encode_single_insn(&insn_imad_wide, &ra, w) != 0) return -9;
-    if (w[0] != (0x7825 | (4 << 16) | (2 << 24)) || w[1] != 4 || w[2] != (0x078e0000 | 4)) return -10;
+    if (!omega_fv_status(encode_single_insn(&insn_imad_wide, &ra, w), 1)) return -9;
+    if (!omega_fv_words(w, omega_fv_bits(0x7825, 4, 16, 2, 24), 4, omega_fv_bits(0x078e0000, 4, 0, 0, 0), 0, 7)) return -10;
 
     /* 6. LDC.64 R4, c[0x0][0x380] */
     BlackwellIRInsn insn_ldc64 = { .op = BW_IR_LDC64, .dst_vreg = 1, .imm = 0x380 };
-    if (encode_single_insn(&insn_ldc64, &ra, w) != 0) return -11;
-    if (w[0] != (0xff007b82 | (4 << 16)) || w[1] != ((0x380 << 6) & 0x00ffff00) || w[2] != 0x00000a00) return -12;
+    if (!omega_fv_status(encode_single_insn(&insn_ldc64, &ra, w), 1)) return -11;
+    if (!omega_fv_words(w, omega_fv_bits(0xff007b82, 4, 16, 0, 0), omega_fv_bits(0, 0x380, 6, 0, 0), 0x00000a00, 0, 7)) return -12;
 
     /* 7. LDCU.64 UR4, c[0x0][0x358] */
     BlackwellIRInsn insn_ldcu64 = { .op = BW_IR_LDCU64, .dst_vreg = 0, .imm = 0x358, .is_uniform = true };
-    if (encode_single_insn(&insn_ldcu64, &ra, w) != 0) return -13;
-    if (w[0] != (0xff0077ac | (4 << 16)) || w[1] != ((0x358 << 5) & 0x00ffff00) || w[2] != 0x08000a00) return -14;
+    if (!omega_fv_status(encode_single_insn(&insn_ldcu64, &ra, w), 1)) return -13;
+    if (!omega_fv_words(w, omega_fv_bits(0xff0077ac, 4, 16, 0, 0), omega_fv_bits(0, 0x358, 5, 0, 0), 0x08000a00, 0, 7)) return -14;
 
     /* 8. LDG.E R2, desc[UR4][R4.64] */
     BlackwellIRInsn insn_ldg = { .op = BW_IR_LDG_E, .dst_vreg = 0, .src1_vreg = 1, .ureg = 0 };
-    if (encode_single_insn(&insn_ldg, &ra, w) != 0) return -15;
-    if (w[0] != (0x7981 | (2 << 16) | (4 << 24)) || w[1] != 4 || w[2] != 0x0c1e1900) return -16;
+    if (!omega_fv_status(encode_single_insn(&insn_ldg, &ra, w), 1)) return -15;
+    if (!omega_fv_words(w, omega_fv_bits(0x7981, 2, 16, 4, 24), 4, 0x0c1e1900, 0, 7)) return -16;
 
     /* 9. STG.E desc[UR4][R4.64], R7 */
     BlackwellIRInsn insn_stg = { .op = BW_IR_STG_E, .src1_vreg = 1, .src2_vreg = 3, .ureg = 0 };
-    if (encode_single_insn(&insn_stg, &ra, w) != 0) return -17;
-    if (w[0] != (0x7986 | (4 << 24)) || w[1] != 7 || w[2] != (0x0c101900 | 4)) return -18;
+    if (!omega_fv_status(encode_single_insn(&insn_stg, &ra, w), 1)) return -17;
+    if (!omega_fv_words(w, omega_fv_bits(0x7986, 4, 24, 0, 0), 7, omega_fv_bits(0x0c101900, 4, 0, 0, 0), 0, 7)) return -18;
 
     /* 10. S2R R2, SR_CTAID.X */
     BlackwellIRInsn insn_s2r = { .op = BW_IR_S2R, .dst_vreg = 0, .imm = BW_SR_CTAID_X };
-    if (encode_single_insn(&insn_s2r, &ra, w) != 0) return -19;
-    if (w[0] != (0x7919 | (2 << 16)) || w[2] != (BW_SR_CTAID_X << 8)) return -20;
+    if (!omega_fv_status(encode_single_insn(&insn_s2r, &ra, w), 1)) return -19;
+    if (!omega_fv_words(w, omega_fv_bits(0x7919, 2, 16, 0, 0), 0, omega_fv_bits(0, BW_SR_CTAID_X, 8, 0, 0), 0, 5)) return -20;
 
     /* 11. HMMA.16816.F32 R4, R4, R2, RZ */
     BlackwellIRInsn insn_hmma_f16 = { .op = BW_IR_HMMA_F16, .dst_vreg = 1, .src1_vreg = 1, .src2_vreg = 0, .src3_vreg = -1 };
-    if (encode_single_insn(&insn_hmma_f16, &ra, w) != 0) return -21;
-    if (w[0] != 0x0404723c || w[1] != 0x00000002 || w[2] != 0x000018ff || w[3] != 0x000fe200) return -22;
+    if (!omega_fv_status(encode_single_insn(&insn_hmma_f16, &ra, w), 1)) return -21;
+    if (!omega_fv_words(w, 0x0404723c, 0x00000002, 0x000018ff, 0x000fe200, 15)) return -22;
 
     /* 12. HMMA.16816.F32.BF16 R4, R4, R2, RZ */
     BlackwellIRInsn insn_hmma_bf16 = { .op = BW_IR_HMMA_BF16, .dst_vreg = 1, .src1_vreg = 1, .src2_vreg = 0, .src3_vreg = -1 };
     uint32_t w_bf16[4];
-    if (encode_single_insn(&insn_hmma_bf16, &ra, w_bf16) != 0) return -23;
-    if (w_bf16[0] != 0x0404723c || w_bf16[1] != 0x00000002 || w_bf16[2] != 0x000418ff || w_bf16[3] != 0x000fe200) return -24;
+    if (!omega_fv_status(encode_single_insn(&insn_hmma_bf16, &ra, w_bf16), 1)) return -23;
+    if (!omega_fv_words(w_bf16, 0x0404723c, 0x00000002, 0x000418ff, 0x000fe200, 15)) return -24;
 
     /* 13. Differential Invariant: w[2] bit 18 toggles strictly between FP16 and BF16 */
-    if ((w[2] ^ w_bf16[2]) != 0x00040000) return -25;
-    if (w[0] != w_bf16[0] || w[1] != w_bf16[1] || w[3] != w_bf16[3]) return -26;
+    if (!omega_fv_pair(w, w_bf16, 0)) return -25;
+    if (!omega_fv_pair(w, w_bf16, 1)) return -26;
 
     /* 14. SHF.R.U32.HI R4, RZ, 2, R2 */
     BlackwellIRInsn insn_shf = { .op = BW_IR_SHF_R, .dst_vreg = 1, .src1_vreg = 0, .imm = 2 };
-    if (encode_single_insn(&insn_shf, &ra, w) != 0) return -27;
-    if (w[0] != 0xff047819 || w[1] != 2 || w[2] != 0x00011602 || w[3] != 0x001fca00) return -28;
+    if (!omega_fv_status(encode_single_insn(&insn_shf, &ra, w), 1)) return -27;
+    if (!omega_fv_words(w, 0xff047819, 2, 0x00011602, 0x001fca00, 15)) return -28;
 
     /* 15. LOP3.LUT R4, R2, 3, RZ, 0xc0, !PT */
     BlackwellIRInsn insn_lop3 = { .op = BW_IR_LOP3_AND, .dst_vreg = 1, .src1_vreg = 0, .imm = 3 };
-    if (encode_single_insn(&insn_lop3, &ra, w) != 0) return -29;
-    if (w[0] != 0x02047812 || w[1] != 3 || w[2] != 0x078ec0ff || w[3] != 0x001fca00) return -30;
+    if (!omega_fv_status(encode_single_insn(&insn_lop3, &ra, w), 1)) return -29;
+    if (!omega_fv_words(w, 0x02047812, 3, 0x078ec0ff, 0x001fca00, 15)) return -30;
 
     /* 16. LDG.E.U16 R2, desc[UR4][R4.64] */
     BlackwellIRInsn insn_ldg16 = { .op = BW_IR_LDG_E_U16, .dst_vreg = 0, .src1_vreg = 1, .ureg = 0 };
-    if (encode_single_insn(&insn_ldg16, &ra, w) != 0) return -31;
-    if (w[0] != 0x04027981 || w[1] != 4 || w[2] != 0x0c1e1500 || w[3] != 0x000f2200) return -32;
+    if (!omega_fv_status(encode_single_insn(&insn_ldg16, &ra, w), 1)) return -31;
+    if (!omega_fv_words(w, 0x04027981, 4, 0x0c1e1500, 0x000f2200, 15)) return -32;
 
     /* A zero-delta branch stays the self-branch the matmul kernels already emit. */
     BlackwellIRInsn insn_bra0 = { .op = BW_IR_BRA };
-    if (encode_single_insn(&insn_bra0, &ra, w) != 0) return -33;
-    if (w[0] != 0x00fc7947 || w[1] != 0xfffffffc || w[2] != 0x0383ffff || w[3] != 0x000fc000) return -34;
+    if (!omega_fv_status(encode_single_insn(&insn_bra0, &ra, w), 1)) return -33;
+    if (!omega_fv_words(w, 0x00fc7947, 0xfffffffc, 0x0383ffff, 0x000fc000, 15)) return -34;
 
     BlackwellIRInsn insn_ge = { .op = BW_IR_ISETP_GE_U32, .src1_vreg = 1, .src2_vreg = 2 };
-    if (encode_single_insn(&insn_ge, &ra, w) != 0) return -35;
-    if (w[0] != (0x720c | (4 << 24)) || w[1] != 6 || w[2] != 0x03f06070) return -36;
+    if (!omega_fv_status(encode_single_insn(&insn_ge, &ra, w), 1)) return -35;
+    if (!omega_fv_words(w, omega_fv_bits(0x720c, 4, 24, 0, 0), 6, 0x03f06070, 0, 7)) return -36;
 
     BlackwellIRInsn insn_xor = { .op = BW_IR_LOP3_XOR, .dst_vreg = 1, .src1_vreg = 0, .src2_vreg = 2 };
-    if (encode_single_insn(&insn_xor, &ra, w) != 0) return -37;
-    if (w[0] != (0x7212 | (4 << 16) | (2 << 24)) || w[1] != 6 || w[2] != 0x078e3cff) return -38;
+    if (!omega_fv_status(encode_single_insn(&insn_xor, &ra, w), 1)) return -37;
+    if (!omega_fv_words(w, omega_fv_bits(0x7212, 4, 16, 2, 24), 6, 0x078e3cff, 0, 7)) return -38;
 
     BlackwellIRInsn insn_ldg_ss = { .op = BW_IR_LDG_STRONG_SYS, .dst_vreg = 0, .src1_vreg = 1, .ureg = 0 };
-    if (encode_single_insn(&insn_ldg_ss, &ra, w) != 0) return -39;
-    if (w[0] != (0x7981 | (2 << 16) | (4 << 24)) || w[1] != 4 || w[2] != 0x0c1f5900) return -40;
+    if (!omega_fv_status(encode_single_insn(&insn_ldg_ss, &ra, w), 1)) return -39;
+    if (!omega_fv_words(w, omega_fv_bits(0x7981, 2, 16, 4, 24), 4, 0x0c1f5900, 0, 7)) return -40;
     /* 17. FADD R7, R2, R4 */
     BlackwellIRInsn insn_fadd = { .op = BW_IR_FADD, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 1 };
-    if (encode_single_insn(&insn_fadd, &ra, w) != 0) return -133;
-    if (w[0] != 0x02077221 || w[1] != 4 || w[2] != 0 || w[3] != 0x004fc400) return -134;
+    if (!omega_fv_status(encode_single_insn(&insn_fadd, &ra, w), 1)) return -133;
+    if (!omega_fv_words(w, 0x02077221, 4, 0, 0x004fc400, 15)) return -134;
 
     /* 18. FSUB R7, R2, R4 (negated src2) */
     BlackwellIRInsn insn_fsub = { .op = BW_IR_FSUB, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 1 };
-    if (encode_single_insn(&insn_fsub, &ra, w) != 0) return -135;
-    if (w[0] != 0x02077221 || w[1] != 0x80000004 || w[2] != 0 || w[3] != 0x004fc400) return -136;
+    if (!omega_fv_status(encode_single_insn(&insn_fsub, &ra, w), 1)) return -135;
+    if (!omega_fv_words(w, 0x02077221, 0x80000004, 0, 0x004fc400, 15)) return -136;
 
     /* 19. FMUL R7, R2, R4 */
     BlackwellIRInsn insn_fmul = { .op = BW_IR_FMUL, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 1 };
-    if (encode_single_insn(&insn_fmul, &ra, w) != 0) return -137;
-    if (w[0] != 0x02077220 || w[1] != 4 || w[2] != 0x00400000 || w[3] != 0x004fc400) return -138;
+    if (!omega_fv_status(encode_single_insn(&insn_fmul, &ra, w), 1)) return -137;
+    if (!omega_fv_words(w, 0x02077220, 4, 0x00400000, 0x004fc400, 15)) return -138;
 
     /* 20. FFMA R7, R2, R4, R6 */
     BlackwellIRInsn insn_ffma = { .op = BW_IR_FFMA, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 1, .src3_vreg = 2 };
-    if (encode_single_insn(&insn_ffma, &ra, w) != 0) return -139;
-    if (w[0] != 0x02077223 || w[1] != 4 || w[2] != 6 || w[3] != 0x004fc400) return -140;
+    if (!omega_fv_status(encode_single_insn(&insn_ffma, &ra, w), 1)) return -139;
+    if (!omega_fv_words(w, 0x02077223, 4, 6, 0x004fc400, 15)) return -140;
 
     /* 21. FMNMX_MIN R7, R2, R4 */
     BlackwellIRInsn insn_min = { .op = BW_IR_FMNMX_MIN, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 1 };
-    if (encode_single_insn(&insn_min, &ra, w) != 0) return -141;
-    if (w[0] != 0x02077209 || w[1] != 4 || w[2] != 0x03800000 || w[3] != 0x004fc400) return -142;
+    if (!omega_fv_status(encode_single_insn(&insn_min, &ra, w), 1)) return -141;
+    if (!omega_fv_words(w, 0x02077209, 4, 0x03800000, 0x004fc400, 15)) return -142;
 
     /* 22. FMNMX_MAX R7, R2, R4 */
     BlackwellIRInsn insn_max = { .op = BW_IR_FMNMX_MAX, .dst_vreg = 3, .src1_vreg = 0, .src2_vreg = 1 };
-    if (encode_single_insn(&insn_max, &ra, w) != 0) return -143;
-    if (w[0] != 0x02077209 || w[1] != 4 || w[2] != 0x07800000 || w[3] != 0x004fc400) return -144;
+    if (!omega_fv_status(encode_single_insn(&insn_max, &ra, w), 1)) return -143;
+    if (!omega_fv_words(w, 0x02077209, 4, 0x07800000, 0x004fc400, 15)) return -144;
 
     /* 23. I2FP R7, R2 */
     BlackwellIRInsn insn_i2f = { .op = BW_IR_I2FP, .dst_vreg = 3, .src1_vreg = 0 };
-    if (encode_single_insn(&insn_i2f, &ra, w) != 0) return -145;
-    if (w[0] != 0x00077245 || w[1] != 2 || w[2] != 0x00201400 || w[3] != 0x004fe200) return -146;
+    if (!omega_fv_status(encode_single_insn(&insn_i2f, &ra, w), 1)) return -145;
+    if (!omega_fv_words(w, 0x00077245, 2, 0x00201400, 0x004fe200, 15)) return -146;
 
     /* 24. F2I R7, R2 */
     BlackwellIRInsn insn_f2i = { .op = BW_IR_F2I, .dst_vreg = 3, .src1_vreg = 0 };
-    if (encode_single_insn(&insn_f2i, &ra, w) != 0) return -147;
-    if (w[0] != 0x00077305 || w[1] != 2 || w[2] != 0x0020f100 || w[3] != 0x004e2200) return -148;
+    if (!omega_fv_status(encode_single_insn(&insn_f2i, &ra, w), 1)) return -147;
+    if (!omega_fv_words(w, 0x00077305, 2, 0x0020f100, 0x004e2200, 15)) return -148;
 
     /* 25. MUFU_RCP R7, R2 */
     BlackwellIRInsn insn_mufu_rcp = { .op = BW_IR_MUFU_RCP, .dst_vreg = 3, .src1_vreg = 0 };
-    if (encode_single_insn(&insn_mufu_rcp, &ra, w) != 0) return -149;
-    if (w[0] != 0x00077308 || w[1] != 2 || w[2] != 0x00001000 || w[3] != 0x000e2400) return -150;
+    if (!omega_fv_status(encode_single_insn(&insn_mufu_rcp, &ra, w), 1)) return -149;
+    if (!omega_fv_words(w, 0x00077308, 2, 0x00001000, 0x000e2400, 15)) return -150;
 
     /* 26. MUFU_RSQ R7, R2 */
     BlackwellIRInsn insn_mufu_rsq = { .op = BW_IR_MUFU_RSQ, .dst_vreg = 3, .src1_vreg = 0 };
-    if (encode_single_insn(&insn_mufu_rsq, &ra, w) != 0) return -151;
-    if (w[0] != 0x00077308 || w[1] != 2 || w[2] != 0x00001400 || w[3] != 0x000e2400) return -152;
+    if (!omega_fv_status(encode_single_insn(&insn_mufu_rsq, &ra, w), 1)) return -151;
+    if (!omega_fv_words(w, 0x00077308, 2, 0x00001400, 0x000e2400, 15)) return -152;
 
     /* 27. SHFL_DOWN R7, R2, 16 */
     BlackwellIRInsn insn_shfl = { .op = BW_IR_SHFL_DOWN, .dst_vreg = 3, .src1_vreg = 0, .imm = 16 };
-    if (encode_single_insn(&insn_shfl, &ra, w) != 0) return -153;
-    if (w[0] != 0x02077f89 || w[1] != 0x0a001f00 || w[2] != 0x000e0000 || w[3] != 0x000e2400) return -154;
+    if (!omega_fv_status(encode_single_insn(&insn_shfl, &ra, w), 1)) return -153;
+    if (!omega_fv_words(w, 0x02077f89, 0x0a001f00, 0x000e0000, 0x000e2400, 15)) return -154;
 
     /* 28. LDS R7, [R2] */
     BlackwellIRInsn insn_lds = { .op = BW_IR_LDS, .dst_vreg = 3, .src1_vreg = 0, .imm = 0 };
-    if (encode_single_insn(&insn_lds, &ra, w) != 0) return -155;
-    if (w[0] != 0x02077984 || w[1] != 0 || w[2] != 0 || w[3] != 0x000fe200) return -156;
+    if (!omega_fv_status(encode_single_insn(&insn_lds, &ra, w), 1)) return -155;
+    if (!omega_fv_words(w, 0x02077984, 0, 0, 0x000fe200, 15)) return -156;
 
     /* 29. STS [R2], R4 */
     BlackwellIRInsn insn_sts = { .op = BW_IR_STS, .src1_vreg = 0, .src2_vreg = 1, .imm = 0 };
-    if (encode_single_insn(&insn_sts, &ra, w) != 0) return -157;
-    if (w[0] != 0x02007388 || w[1] != 4 || w[2] != 0 || w[3] != 0x000fe200) return -158;
+    if (!omega_fv_status(encode_single_insn(&insn_sts, &ra, w), 1)) return -157;
+    if (!omega_fv_words(w, 0x02007388, 4, 0, 0x000fe200, 15)) return -158;
 
     return 0;
 }

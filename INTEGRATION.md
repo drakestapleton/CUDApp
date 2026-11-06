@@ -391,3 +391,23 @@ to the existing flags/ABI runtime-views dispatch rather than stale profile synta
 `/tmp/integ/6a-342.log/.rc` rc0; disasm words differential/red/link/five mutants,
 Omega disasm and byte-identical units PASS; final `crumb verify: OK: 91 crumbs current`.
 Additive root and dated-roadmap notes retained.
+
+#347 `ee34d8d8b2c0892ac1230147ba6acf0143908913`:
+`/tmp/integ/6a-347.log/.rc` rc0; TC host988323 cases, eight compiled mutants,
+strong-link red, cubin identity25, TC differential180517/52380 refusals,
+TC simulator PASS; byte-identical units; final `crumb verify: OK: 91 crumbs current`.
+Root union and generated crumbs refreshed without altering historical evidence.
+
+#349 `b0e5ff6df126c91689fe093a15e6550fee28fbfc`:
+`/tmp/integ/6a-349.log/.rc` rc0; admission656275, seven mutants/strong-link,
+11 identical cubins/one refusal; pfhost IR19150/384/50 refusals and two mutants;
+host and simulator PASS; byte-identical units; final `crumb verify: OK: 91 crumbs current`.
+
+#360 `467e2aca978e3b134f54deef3995a158bb93c740`:
+`/tmp/integ/6a-360.log/.rc` rc2 after byte-identical generation exposed stale
+standalone link providers. Repaired both QMMA test links and mutant source closure
+with current codegen/allocator/format/cubin/SHA providers; prerequisites defined
+before expansion. `/tmp/integ/6a-360-focused.log/.rc` rc0:
+2949 differential cases, eight compiled mutants/two missing-unit reds,
+selftest IR/encoded/cubin identity, QMMA714275/94 bit-basis, host and TGEMM sim PASS.
+Final `crumb verify: OK: 91 crumbs current`. Chip/QMMA hardware NOT_RUN.

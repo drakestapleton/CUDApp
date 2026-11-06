@@ -27,3 +27,8 @@ test-om-ir-limit:
 	  tests/gpu_om_ir_limit_test.c src/omega_gpu_om_ir.c src/omega_blackwell_codegen.c $(CUDAPP_BINDING_SRCS) \
 	  -Wl,--gc-sections -o /tmp/cudapp-om-ir-limit
 	/tmp/cudapp-om-ir-limit
+
+CARRIED_HOST_TESTS += test-codegen-fixture-rest
+.PHONY: test-codegen-fixture-rest
+test-codegen-fixture-rest:
+	python3 tests/om_fixture_verify_test.py

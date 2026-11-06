@@ -36,7 +36,7 @@ PHYS=$(cd "${PHYSICS_DIR:-../physics}" 2>/dev/null && pwd -P) || {
 }
 TP=$PHYS/third_party/nvidia-open-580.173.02
 INC="-I$PHYS/m16 -I$PHYS/nvrm -I$TP/src/common/sdk/nvidia/inc -I$TP/kernel-open/common/inc -I$TP/kernel-open/nvidia-uvm -I$TP/src/nvidia/arch/nvalloc/unix/include"
-SRCS="src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_vecadd.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cubin_elf.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c"
+SRCS="src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_vecadd.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_cubin_elf.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_bw_qmd.c src/cudapp_om_eng.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c"
 BUILD="gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections -Isrc -Itests $INC -o .gpu_engine_bt tests/test_omega_blackwell_engine.c tests/fake_m16_native.c $SRCS -Wl,--gc-sections -lm"
 
 OUT=${GPU_ENGINE_BMUT_OUT:-}
@@ -76,9 +76,11 @@ BE_ALLOC_LAST_RC_DROPPED~src/omega_blackwell_engine.c~/^static int alloc_checked
 BE_ALLOC_UNKNOWN_ROLE_ACCEPTED~src/omega_blackwell_engine.c~/^static int be_alloc/,/^}/ s/if (!m) {/if (0) {/~alloc refuses an unknown role
 BE_ROLE_MEM_UPPER_BOUND~src/omega_blackwell_engine.c~R:|| role >= (int)OMEGA_GPU_BUF_ROLE_COUNT) return NULL;@>@|| 0) return NULL;~a role above the last one has no buffer slot
 BE_ROLE_MEM_LOWER_BOUND~src/omega_blackwell_engine.c~R:if (role < (int)OMEGA_GPU_BUF_PROGRAM ||@>@if (0 ||~a negative role has no buffer slot
-BE_ROUND_PAGES_ZERO_ACCEPTED~src/omega_blackwell_engine.c~R:if (bytes == 0 ||@>@if (0 ||~a zero-byte allocation is refused
-BE_ROUND_PAGES_NO_ROUNDING~src/omega_blackwell_engine.c~s/v = ((uint64_t)bytes + (BE_PAGE - 1u)) & .(uint64_t)(BE_PAGE - 1u);/v = (uint64_t)bytes;/~allocation sizes round up to whole pages
-BE_ROUND_PAGES_MINIMUM~src/omega_blackwell_engine.c~R:if (v < BE_PAGE) v = BE_PAGE;@>@(void)0;~one-page minimum~redundant~after the zero check, rounding any nonzero byte count up to a page multiple already gives at least one page, so the minimum can never apply
+# BE_ROUND_PAGES_ZERO_ACCEPTED and BE_ROUND_PAGES_NO_ROUNDING moved with the page
+# rounding decision into om/engine/eng.om (fn bwe k0); tests/om_eng_mutants.sh
+# mutates them there. BE_ROUND_PAGES_MINIMUM stays unmutated: after the zero
+# check, rounding any nonzero byte count up to a page multiple already gives at
+# least one page, so the minimum can never apply.
 BE_COPY_IN_NO_MEMCPY~src/omega_blackwell_engine.c~R:memcpy(m->cpu, src, bytes);@>@(void)0;~copy_in really copies the program and the inputs
 BE_COPY_IN_BOUNDS~src/omega_blackwell_engine.c~R:!src || (uint64_t)bytes > m->size@>@!src~copy_in refuses a length beyond the buffer
 BE_COPY_IN_NULL_SOURCE~src/omega_blackwell_engine.c~R:!m->cpu || !src ||@>@!m->cpu ||~copy_in refuses a NULL source
@@ -89,12 +91,11 @@ BE_COPY_OUT_NO_MEMCPY~src/omega_blackwell_engine.c~R:memcpy(dst, out->cpu, bytes
 BE_COPY_OUT_BOUNDS~src/omega_blackwell_engine.c~R:!dst || (uint64_t)bytes > out->size@>@!dst~copy_out refuses a length beyond the output buffer
 # ---- build: arguments, descriptors, sync words, pushbuffer ---------------------------
 BE_BUILD_LAYOUT_CHECK~src/omega_blackwell_engine.c~R:if (!job || job->layout != (int)OMEGA_GPU_LAYOUT_VECTOR_1D) {@>@if (0) {~build refuses a missing job and an unsupported layout
-BE_BUILD_COUNT_OVERFLOW~src/omega_blackwell_engine.c~R:n == 0 || n > UINT32_MAX - 63u@>@n == 0~grid arithmetic overflow guard~redundant~an element count above UINT32_MAX - 63 needs at least 16 GiB of input, output and input buffers, so the buffer-size check in the same condition chain refuses it first; only the grid rounding (n + 63) could overflow, and it is never reached
 BE_BUILD_BUFFERS_SIZE~src/omega_blackwell_engine.c~R:|| a->size < need || b->size < need || out->size < need) {@>@|| need == 1) {~build refuses buffers smaller than the element count needs
 BE_C3_FLAG_IGNORED~src/omega_blackwell_engine.c~R:c->c3 = (job->flags & OMEGA_GPU_ENGINE_FLAG_NO_C3) == 0;@>@c->c3 = 1;~the NO_C3 flag removes the L2 flush and the second marker
 BE_C3_NEVER~src/omega_blackwell_engine.c~R:c->c3 = (job->flags & OMEGA_GPU_ENGINE_FLAG_NO_C3) == 0;@>@c->c3 = 0;~with flags 0 the L2 flush and the second marker are in the pushbuffer
-BE_THREADS_WRONG~src/omega_blackwell_engine.c~R:cfg.threads_per_block = 64;@>@cfg.threads_per_block = 32;~the launch covers every element
-BE_GRID_ROUNDS_DOWN~src/omega_blackwell_engine.c~R:cfg.grid_width = (n + 63u) / 64u;@>@cfg.grid_width = n / 64u;~the grid rounds up so a partial last block still runs
+# BE_BUILD_COUNT_OVERFLOW, BE_THREADS_WRONG and BE_GRID_ROUNDS_DOWN moved with the
+# VECTOR_1D shape decision into om/engine/eng.om (fn bwe k1); see tests/om_eng_mutants.sh.
 BE_ARGS_C_SWAPPED~src/omega_blackwell_engine.c~R:a->va, b->va, out->va, n)@>@a->va, out->va, b->va, n)~the kernel writes the OUTPUT buffer
 BE_ARGS_A_B_SWAPPED~src/omega_blackwell_engine.c~R:a->va, b->va, out->va, n)@>@b->va, a->va, out->va, n)~the kernel gets input A and input B in the right argument slots
 BE_PROGRAM_VA~src/omega_blackwell_engine.c~R:cfg.code_va = code->va;@>@cfg.code_va = c->qmd.va;~the QMD points at the program buffer
@@ -114,7 +115,8 @@ BE_FLUSH_METHOD_CHANGED~src/omega_blackwell_engine.c~R:pb_put(c, nvrm_mthd(0, 0x
 BE_WFI_FLAG_RELEASE1~src/omega_blackwell_engine.c~/pb_put(c, OMEGA_BW_MARKER_COMPLETION_PAYLOAD);/,+2 s/0x1u | (1u << 20)/0x1u/~the first release waits for idle (WFI)
 BE_WFI_FLAG_RELEASE2~src/omega_blackwell_engine.c~/pb_put(c, BE_MARKER2_PAYLOAD);/,+2 s/0x1u | (1u << 20)/0x1u/~the second release waits for idle (WFI)
 BE_BARRIER_IN_BUILD~src/omega_blackwell_engine.c~/^static int be_build/,/^}/ s/nvrm_cpu_barrier();/(void)0;/~CPU barrier after zeroing the sync words~redundant~a CPU barrier instruction has no effect a host test can observe (the fake driver runs on the same core); it is verified on the chip only (Phase B)
-BE_QMD_RELEASE_CHECK~src/omega_blackwell_engine.c~R:if (qmd1_words[9] != 3u ||@>@if (0 ||~extra QMD1 release-word checks~redundant~the real descriptor builder always produces these words (src/omega_blackwell_qmd.c), so no input makes the check fire; it guards a future change of the builder, which tests/test_omega_blackwell_qmd.c style checks cover
+# BE_QMD_RELEASE_CHECK moved with the QMD1 release-word check into om/engine/eng.om
+# (fn bwe k2); see tests/om_eng_mutants.sh.
 BE_PB_OVERFLOW~src/omega_blackwell_engine.c~R:if (c->pb_overflow) {@>@if (0) {~pushbuffer word-capacity guard~redundant~the vector pushbuffer is a fixed 492 words against a 1024-word capacity, so it cannot overflow for any job
 # ---- submit, waits, diagnostics ------------------------------------------------------
 BE_SUBMIT_NOTHING_BUILT~src/omega_blackwell_engine.c~R:if (c->pb_len == 0) {@>@if (0) {~submit before build is refused~redundant~the driver refuses an empty submission too (physics m16_native.c m16_native_enqueue_methods: count == 0 returns -1), so the result is the same refusal
@@ -163,11 +165,10 @@ WRAP_ELAPSED_NOT_REPORTED~src/omega_blackwell_submit.c~/^int omega_blackwell_exe
 WRAP_SM_ARCH_NOT_REPORTED~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/exec_info->sm_architecture = real->sm_architecture;/exec_info->sm_architecture = 0;/~the architecture is reported
 WRAP_ELEMENT_COUNT_NOT_REPORTED~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/exec_info->element_count = n;/exec_info->element_count = 0;/~the element count is reported
 WRAP_NULL_GUARD_DROPPED~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/if (!spec || !real || !h_a || !h_b || !h_c_out) return -1;/(void)0;/~a NULL argument is refused before any use
-WRAP_ZERO_COUNT_GUARD~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/if (n == 0) return -1;/(void)0;/~a zero element count is refused by the wrapper~redundant~the engine refuses element_count 0 as INVALID_ARGS (src/omega_gpu_engine.c job_valid) and the wrapper then returns -1, so the result is the same refusal
-WRAP_MARKER_TIMEOUT~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/job.timeouts.marker_ms = 5000;/job.timeouts.marker_ms = 6000;/~the first marker wait limit is 5000 ms
-WRAP_SEMAPHORE_TIMEOUT~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/job.timeouts.release_semaphore_ms = 5000;/job.timeouts.release_semaphore_ms = 6000;/~the semaphore wait limit is 5000 ms
-WRAP_MARKER2_TIMEOUT~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/job.timeouts.marker2_ms = 5000;/job.timeouts.marker2_ms = 6000;/~the second marker wait limit is 5000 ms
-WRAP_VISIBILITY_TIMEOUT~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/job.timeouts.visibility_ms = 5000;/job.timeouts.visibility_ms = 6000;/~the visibility limit is 5000 ms~redundant~the Blackwell barrier callback ignores its timeout argument (it is a CPU dsb sy that cannot wait), so no host observation depends on the value
+WRAP_ZERO_COUNT_GUARD~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/if (n == 0) return -1;/(void)0;/~a zero element count is refused by the wrapper~redundant~the engine refuses element_count 0 as INVALID_ARGS (om/engine/eng.om fn jobv; C oracle job_valid in src/omega_gpu_engine.c) and the wrapper then returns -1, so the result is the same refusal
+# WRAP_MARKER_TIMEOUT, WRAP_SEMAPHORE_TIMEOUT, WRAP_MARKER2_TIMEOUT and
+# WRAP_VISIBILITY_TIMEOUT moved with the 5000 ms limits into om/engine/eng.om
+# (fn toms); see tests/om_eng_mutants.sh.
 WRAP_FLAGS_ALL_PROTECTIONS~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/job.flags = 0;/job.flags = 1;/~the wrapper runs with every protection on (flags 0)
 WRAP_BACKEND_NOT_INSTALLED~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/omega_gpu_engine_set_backend(omega_blackwell_engine_backend());/(void)0;/~the wrapper installs the Blackwell backend itself
 WRAP_PROGRAM_LENGTH~src/omega_blackwell_submit.c~/^int omega_blackwell_execute_vector/,/^}/ s/job.program_len = encoded_len;/job.program_len = 16;/~the whole encoded program is handed to the engine

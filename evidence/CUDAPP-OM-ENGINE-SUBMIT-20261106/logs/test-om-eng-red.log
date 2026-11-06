@@ -1,0 +1,9 @@
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -Wl,--wrap=omega_eng -DENG_TRACE_FLIP=5000 -o build/om-qmd/eng_flip tests/om_eng_diff_test.c src/omega_gpu_engine.c src/omega_gpu_wait.c src/omega_gpu_platform.c src/omega_gpu_mem_reserve.c src/omega_gpu_mem_cached.c src/omega_gpu_serving.c src/omega_gpu_platform_linux.c src/omega_gpu_fmt.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c m16/m16_gpu_wait.c m16/m16_native.c nvrm/nvrm.c src/cudapp_om_eng.c
+build/om-qmd/eng_flip build/om-qmd/eng_flip.txt 2>/dev/null
+om build: 44584 records, 110743 unit calls, all 28 ops reached
+build/om-qmd/eng_c build/om-qmd/eng_c.txt 2>/dev/null
+C build: 44584 records, 0 unit calls
+FAIL om eng diff: record 139 differs
+  om: r000139 eng ret=0 f=0 st=0 step=0 w=0 wt=0 wd=0 rc=0 en=0 txt= sv=0 m=0 m2=0 s=0 ret=0 cf=0 no=0 un=0 blk=0 log=oc0,0,a
+  C:  r000139 eng ret=6 f=6 st=2 step=13 w=3 wt=2147483649 wd=127 rc=-952940210 en=28 txt=drv 2248064092 sv=4 m=2941643912 m2=1353323383 s=2248064092 ret=1 cf=0 no=0 un=0 blk=1 log=oc0,0,a1,6,a2,4c,a3,4c,a4,4c,a1,6,i2,4c,i3,4c,i13,pbs792,m80000001,n
+PASS red: flipped unit answer detected

@@ -1,0 +1,4 @@
+MUTANT STALL_NEVER_RESETS killed by progress_resets_idle
+MUTANT PROGRESS_EXTENDS_HARD killed by hard_deadline_with_progress
+MUTANT NO_BARRIER killed by barrier_before_read
+M16_GPU_WAIT_MUTANTS PASS (3/3 killed)

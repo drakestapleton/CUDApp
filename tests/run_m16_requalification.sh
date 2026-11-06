@@ -55,7 +55,7 @@ echo -e "\n[*] Step 1: Compiling M16 binaries..."
     -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
     -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
     nvrm/nvrm.c m16/m16_native.c m16/m16_requalify.c \
-    -I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_nvrm_*.c -o m16/m16_requalify
+    -I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c src/cudapp_om_chip_admit.c src/cudapp_om_nvrm_*.c -o m16/m16_requalify
 
   gcc -O2 -Wall -Wextra -Werror \
     -DCUDAPP_MIGRATION_PENDING_C_NVRM="${CUDAPP_MIGRATION_PENDING_C_NVRM:-0}" \
@@ -65,7 +65,7 @@ echo -e "\n[*] Step 1: Compiling M16 binaries..."
     -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm \
     -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include \
     nvrm/nvrm.c m16/m16_native.c m16/m16_gpu_wait.c m16/m16_concurrent.c \
-    -I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_chip_admit.c src/cudapp_om_nvrm_*.c -o m16/m16_concurrent
+    -I./src src/omega_ampere_qmd.c src/omega_gpu_chip.c src/cudapp_om_amp_runtime.c src/cudapp_om_eng.c src/cudapp_om_chip_admit.c src/cudapp_om_nvrm_*.c -o m16/m16_concurrent
 } > "$EVIDENCE_DIR/build.log" 2>&1
 
 if [ -x m16/m16_requalify ] && [ -x m16/m16_concurrent ]; then

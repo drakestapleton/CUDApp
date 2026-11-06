@@ -626,6 +626,21 @@ static void case_open_channel_alloc_prepare(void)
         case_end("FAIL_PREPARE_COPY_IN");
     }
     {
+        /* the first copy-in (program) fails: no later copy-in may run */
+        static const int want[] = { C_OPEN, C_CHANNEL, C_ALLOC, C_ALLOC, C_ALLOC, C_ALLOC, C_ALLOC,
+                                   C_COPY_IN, FREE5, C_CLOSE };
+        reset_all(); make_job(&job);
+        inject(C_COPY_IN, 1, -3, 0);
+        rc = run(&job, &r);
+        case_begin();
+        expect_failure(rc, &r, OMEGA_GPU_ENGINE_PREPARE, OMEGA_GPU_ENGINE_STATE_INITIAL,
+                       OMEGA_GPU_ENGINE_STEP_COPY_IN, OMEGA_GPU_ENGINE_WAIT_NONE);
+        expect_passthrough(&r, EXPECT_ERRNO);
+        expect_log(want, LOGLEN(want));
+        expect_released(&r);
+        case_end("FAIL_PREPARE_COPY_IN_PROGRAM");
+    }
+    {
         static const int want[] = { C_OPEN, C_CHANNEL, C_ALLOC, C_ALLOC, C_ALLOC, C_ALLOC, C_ALLOC,
                                    C_COPY_IN, C_COPY_IN, C_COPY_IN, C_POISON, FREE5, C_CLOSE };
         reset_all(); make_job(&job);

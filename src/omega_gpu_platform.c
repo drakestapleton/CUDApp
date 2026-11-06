@@ -1,9 +1,17 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* omega_gpu_platform.c -- contract checks and the handle table of
- * src/omega_gpu_platform.h. Freestanding: no libc beyond memset. */
+ * src/omega_gpu_platform.h. Freestanding: no libc beyond memset.
+ * The decisions (negotiate, service check, buffer check, handle open and check)
+ * come from om/engine/eng.om ops NEGO, PCHK, BUFCK, HOPEN and HCHK; the C bodies
+ * are the oracle, kept behind CUDAPP_MIGRATION_PENDING_C_PLATFORM and used by the
+ * freestanding build. Table stores stay here. */
 #include "omega_gpu_platform.h"
 
 #include <string.h>
+#if defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_dec.h"
 
 static const char *const REFUSAL_NAMES[OMEGA_GPU_PLAT_REFUSAL_COUNT] = {
     "OK",
@@ -30,6 +38,35 @@ const char *omega_gpu_platform_refusal_name(int refusal)
 
 int omega_gpu_platform_negotiate(const OmegaGpuPlatformCaps *provided, const OmegaGpuPlatformCaps *required)
 {
+    if (eng_on()) {
+        uint64_t in[19], w[16];
+        memset(in, 0, sizeof in);
+        in[0] = (!provided || !required) ? 1u : 0u;
+        if (provided) {
+            in[1] = provided->abi_major;
+            in[2] = provided->abi_minor;
+            in[3] = provided->services;
+            in[4] = provided->max_devices;
+            in[5] = provided->max_buffers;
+            in[6] = provided->max_queues;
+            in[7] = provided->max_inflight;
+            in[8] = provided->max_buffer_bytes;
+            in[9] = provided->max_total_bytes;
+        }
+        if (required) {
+            in[10] = required->abi_major;
+            in[11] = required->abi_minor;
+            in[12] = required->services;
+            in[13] = required->max_devices;
+            in[14] = required->max_buffers;
+            in[15] = required->max_queues;
+            in[16] = required->max_inflight;
+            in[17] = required->max_buffer_bytes;
+            in[18] = required->max_total_bytes;
+        }
+        if (eng_ask(ENG_OP_NEGO, in, 19, w) != 0) return OMEGA_GPU_PLAT_REFUSED_ARGS;
+        return (int)w[0];
+    }
     if (!provided || !required) return OMEGA_GPU_PLAT_REFUSED_ARGS;
     if (provided->abi_major != required->abi_major) return OMEGA_GPU_PLAT_REFUSED_ABI;
     if (provided->abi_minor < required->abi_minor) return OMEGA_GPU_PLAT_REFUSED_ABI;
@@ -61,6 +98,41 @@ int omega_gpu_platform_check_for(const OmegaGpuPlatform *p, const OmegaGpuPlatfo
 {
     int rc;
     uint32_t s;
+    if (eng_on()) {
+        uint64_t in[4], w[16];
+        uint64_t pr = 0;
+        in[0] = (!p || !caps) ? 1u : 0u;
+        in[1] = caps ? caps->services : 0u;
+        in[2] = required;
+        if (p) {
+            /* Presence bits in service order; see pchk/svgm in om/engine/eng.om. */
+            pr |= (uint64_t)(p->time_now_ms != 0) << 0;
+            pr |= (uint64_t)(p->wait_ms != 0) << 1;
+            pr |= (uint64_t)(p->lock != 0) << 2;
+            pr |= (uint64_t)(p->unlock != 0) << 3;
+            pr |= (uint64_t)(p->mmio_read32 != 0) << 4;
+            pr |= (uint64_t)(p->mmio_write32 != 0) << 5;
+            pr |= (uint64_t)(p->dma_alloc != 0) << 6;
+            pr |= (uint64_t)(p->dma_free != 0) << 7;
+            pr |= (uint64_t)(p->sync_cpu_to_gpu != 0) << 8;
+            pr |= (uint64_t)(p->sync_gpu_to_cpu != 0) << 9;
+            pr |= (uint64_t)(p->poll_word != 0) << 10;
+            pr |= (uint64_t)(p->irq_wait != 0) << 11;
+            pr |= (uint64_t)(p->device_open != 0) << 12;
+            pr |= (uint64_t)(p->device_close != 0) << 13;
+            pr |= (uint64_t)(p->diag_text != 0) << 14;
+            pr |= (uint64_t)(p->queue_open != 0) << 15;
+            pr |= (uint64_t)(p->queue_close != 0) << 16;
+            pr |= (uint64_t)(p->queue_submit != 0) << 17;
+            pr |= (uint64_t)(p->queue_retire != 0) << 18;
+            pr |= (uint64_t)(p->time_now_ns != 0) << 19;
+            pr |= (uint64_t)(p->host_alloc != 0) << 20;
+            pr |= (uint64_t)(p->host_free != 0) << 21;
+        }
+        in[3] = pr;
+        if (eng_ask(ENG_OP_PCHK, in, 4, w) != 0) return OMEGA_GPU_PLAT_REFUSED_ARGS;
+        return (int)w[0];
+    }
     if (!p || !caps) return OMEGA_GPU_PLAT_REFUSED_ARGS;
     s = caps->services;
     if (s & ~OMEGA_GPU_SVC_ALL) return OMEGA_GPU_PLAT_REFUSED_ARGS;
@@ -103,6 +175,21 @@ static int is_pow2(uint32_t v)
 int omega_gpu_platform_check_buffer(const OmegaGpuBufferDesc *d, const OmegaGpuPlatformCaps *caps)
 {
     uint32_t r;
+    if (eng_on()) {
+        uint64_t in[7], w[16];
+        memset(in, 0, sizeof in);
+        in[0] = (!d || !caps) ? 1u : 0u;
+        if (d && caps) {
+            in[1] = (uint64_t)d->kind;
+            in[2] = d->bytes;
+            in[3] = caps->max_buffer_bytes;
+            in[4] = d->align;
+            in[5] = (uint64_t)d->gpu_cache;
+            in[6] = d->rights;
+        }
+        if (eng_ask(ENG_OP_BUFCK, in, 7, w) != 0) return OMEGA_GPU_PLAT_REFUSED_ARGS;
+        return (int)w[0];
+    }
     if (!d || !caps) return OMEGA_GPU_PLAT_REFUSED_ARGS;
     if (d->kind != OMEGA_GPU_HANDLE_BUF_DATA && d->kind != OMEGA_GPU_HANDLE_BUF_CODE &&
         d->kind != OMEGA_GPU_HANDLE_BUF_QUEUE)
@@ -149,13 +236,29 @@ int omega_gpu_handles_open(OmegaGpuHandleTable *t, uint32_t kind, uint64_t bytes
 {
     uint32_t i;
     uint32_t same_kind = 0;
-    if (!t || !index || !generation) return OMEGA_GPU_PLAT_REFUSED_ARGS;
-    if (!kind_known(kind)) return OMEGA_GPU_PLAT_REFUSED_BAD_KIND;
-    for (i = 0; i < OMEGA_GPU_HANDLE_SLOTS; i++)
-        if (t->live[i] && t->kind[i] == kind) same_kind++;
-    if (same_kind >= limit_slots) return OMEGA_GPU_PLAT_REFUSED_LIMIT;
-    if (bytes != 0u && (bytes > limit_bytes || t->total_bytes > limit_bytes - bytes)) /* byte accounting: buffers only */
-        return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+    if (eng_on()) {
+        uint64_t in[7], w[16];
+        in[0] = (!t || !index || !generation) ? 1u : 0u;
+        in[1] = kind;
+        if (t)
+            for (i = 0; i < OMEGA_GPU_HANDLE_SLOTS; i++)
+                if (t->live[i] && t->kind[i] == kind) same_kind++;
+        in[2] = same_kind;
+        in[3] = limit_slots;
+        in[4] = bytes;
+        in[5] = limit_bytes;
+        in[6] = t ? t->total_bytes : 0u;
+        if (eng_ask(ENG_OP_HOPEN, in, 7, w) != 0) return OMEGA_GPU_PLAT_REFUSED_ARGS;
+        if (w[0] != OMEGA_GPU_PLAT_OK) return (int)w[0];
+    } else {
+        if (!t || !index || !generation) return OMEGA_GPU_PLAT_REFUSED_ARGS;
+        if (!kind_known(kind)) return OMEGA_GPU_PLAT_REFUSED_BAD_KIND;
+        for (i = 0; i < OMEGA_GPU_HANDLE_SLOTS; i++)
+            if (t->live[i] && t->kind[i] == kind) same_kind++;
+        if (same_kind >= limit_slots) return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+        if (bytes != 0u && (bytes > limit_bytes || t->total_bytes > limit_bytes - bytes)) /* byte accounting: buffers only */
+            return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+    }
     for (i = 0; i < OMEGA_GPU_HANDLE_SLOTS; i++) {
         if (t->live[i]) continue;
         if (t->generation[i] == 0u) continue; /* generation wrapped: the slot is retired, never reissued */
@@ -173,6 +276,19 @@ int omega_gpu_handles_open(OmegaGpuHandleTable *t, uint32_t kind, uint64_t bytes
 
 int omega_gpu_handles_check(const OmegaGpuHandleTable *t, uint32_t index, uint32_t generation, uint32_t kind)
 {
+    if (eng_on()) {
+        uint64_t in[7], w[16];
+        int in_range = t && index < OMEGA_GPU_HANDLE_SLOTS;
+        in[0] = t ? 0u : 1u;
+        in[1] = index;
+        in[2] = generation;
+        in[3] = in_range ? t->live[index] : 0u;
+        in[4] = in_range ? t->generation[index] : 0u;
+        in[5] = in_range ? t->kind[index] : 0u;
+        in[6] = kind;
+        if (eng_ask(ENG_OP_HCHK, in, 7, w) != 0) return OMEGA_GPU_PLAT_REFUSED_ARGS;
+        return (int)w[0];
+    }
     if (!t) return OMEGA_GPU_PLAT_REFUSED_ARGS;
     if (index >= OMEGA_GPU_HANDLE_SLOTS || generation == 0u) return OMEGA_GPU_PLAT_REFUSED_BAD_HANDLE;
     if (!t->live[index] || t->generation[index] != generation) return OMEGA_GPU_PLAT_REFUSED_STALE_HANDLE;

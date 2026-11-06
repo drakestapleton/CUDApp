@@ -1,0 +1,22 @@
+mutant no-doorbell killed: 1 case(s) failed
+mutant no-gpput killed: 1 case(s) failed
+mutant state-unchecked killed: 1 case(s) failed
+mutant always-cached killed: 2 case(s) failed
+mutant ring-never-full killed: 1 case(s) failed
+mutant no-l2-prefix killed: 1 case(s) failed
+test-gpu-platform-aien-mutants: 6 of 6 mutants killed
+./build/test_omega_gpu_platform_aien
+PASS AIEN_CAPS_EQUAL_LINUX_REF
+  diag: aien_gpu_open: open /nonexistent/aien-gpu: No such file or directory (aien-gpu.ko not loaded?)
+PASS AIEN_ABSENT_DEVICE_REFUSED
+  diag: aien_gpu_info: /fake/aien-gpu is in state GSP_UP (3), not RM_READY: AGPU_BOOT and AGPU_RM_INIT must finish first
+PASS AIEN_NOT_RM_READY_REFUSED
+PASS AIEN_GP_ENTRY_USERD_MATCH_NVRM
+PASS AIEN_ALLOC_VA_IDENTITY_CACHE_FREE
+PASS AIEN_SUBMIT_DOORBELL_POLL_RING
+  diag: aien_gpu_chan_create: AGPU_CHAN_CREATE: AGPU_RM_E_RESULT code 31 fn 103 step 0
+PASS AIEN_CHAN_CREATE_FAIL_UNWINDS
+PASS AIEN_L2_INVAL_PREFIX
+PASS AIEN_SESSION_OPEN_CLOSE
+PASS AIEN_DEVICE_CLOSE_RELEASES
+test_omega_gpu_platform_aien: 10 cases, 0 failed

@@ -1,0 +1,6 @@
+cd ~/work/cudastack/lanes/EngineSubmit
+export OMEGA_OMC=~/work/cudastack/omega-mv/seed/out/omc OMEGA_MV=~/work/cudastack/omega-mv OMEGA_BRIDGE=~/work/cudastack/omega-bridge OMEGA_BRIDGE_DIR=~/work/cudastack/omega-bridge
+for t in $TARGETS; do
+  bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 $t > /tmp/es2/h_$t.log 2>&1
+  echo "$t rc=$? :: $(grep -v '^\s*$' /tmp/es2/h_$t.log | tail -1)"
+done

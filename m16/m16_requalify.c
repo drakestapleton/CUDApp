@@ -15,6 +15,14 @@
  *  10. Output machine-parsable receipts.
  */
 #include "m16_native.h"
+/* The pass/fail decisions (word count, withheld marker, positive wait, libcuda
+ * audit) and the 0x16c0ffee payload come from om/engine/eng.om (op REQF,
+ * src/omega_eng_gates.h); the C oracle is behind CUDAPP_MIGRATION_PENDING_C_REQUALIFY.
+ * Exit codes are unchanged. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_REQUALIFY)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_gates.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,8 +78,14 @@ int main(int argc, char **argv) {
            (unsigned long)marker_va, marker_cpu, *marker);
 
     uint32_t methods[32];
-    int nwords = m16_native_build_release(methods, marker_va, 0x16c0ffee, ctx.rm.compute_class);
-    if (nwords <= 0) {
+    uint32_t payload = omega_gate_reqf_payload();
+    if (payload != 0x16c0ffeeu) {
+        fprintf(stderr, "FATAL: requalify payload unavailable (0x%08x)\n", payload);
+        m16_native_close(&ctx);
+        return 1;
+    }
+    int nwords = m16_native_build_release(methods, marker_va, payload, ctx.rm.compute_class);
+    if (!omega_gate_reqf(OMEGA_REQF_WORDS, nwords)) {
         fprintf(stderr, "FATAL: build release failed\n");
         m16_native_close(&ctx);
         return 1;
@@ -90,7 +104,7 @@ int main(int argc, char **argv) {
     /* Wait 100ms and verify marker has NOT changed */
     usleep(100000);
     printf("[OBSERVED] Marker after 100ms without doorbell: 0x%08x (expected 0x00000000)\n", *marker);
-    if (*marker != 0) {
+    if (!omega_gate_reqf(OMEGA_REQF_MARKER_ZERO, (int64_t)*marker)) {
         fprintf(stderr, "FATAL: Negative control failed: marker changed without doorbell!\n");
         m16_native_close(&ctx);
         return 2;
@@ -103,7 +117,7 @@ int main(int argc, char **argv) {
            ctx.rm.token, (void *)ctx.rm.doorbell);
     m16_native_ring_doorbell(&ctx);
 
-    if (m16_native_wait_marker(marker, 0x16c0ffee, 2000) != 0) {
+    if (!omega_gate_reqf(OMEGA_REQF_WAIT_OK, m16_native_wait_marker(marker, payload, 2000))) {
         fprintf(stderr, "FATAL: Positive control failed: timeout waiting for marker 0x16c0ffee! Actual=0x%08x\n",
                 *marker);
         m16_native_close(&ctx);
@@ -117,7 +131,7 @@ int main(int argc, char **argv) {
     printf("\n--- STEP 3: RUNTIME LIBCUDA AUDIT ---\n");
     printf("[OBSERVED] libcuda.so / libcudart.so present in /proc/self/maps: %s\n",
            cuda_mapped ? "YES (FAIL)" : "NO (PASS)");
-    if (cuda_mapped) {
+    if (!omega_gate_reqf(OMEGA_REQF_NO_LIBCUDA, cuda_mapped)) {
         fprintf(stderr, "FATAL: libcuda detected in process address space!\n");
         m16_native_close(&ctx);
         return 4;

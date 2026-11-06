@@ -17,6 +17,16 @@
 #include <time.h>
 #include <unistd.h>
 #include "omega_gpu_code_alloc.h"
+/* Argument envelope, launch shapes, page rounding, precision and the job
+ * timeouts come from om/engine/eng.om (src/omega_eng_gates.h); the C oracle is
+ * kept behind CUDAPP_MIGRATION_PENDING_C_SUBMIT. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_SUBMIT)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_gates.h"
+_Static_assert(OMEGA_BW_MATMUL_MAX_M == OMEGA_GATE_MM_MAX_M && OMEGA_BW_MATMUL_MAX_K == OMEGA_GATE_MM_MAX_K &&
+                   OMEGA_BW_MATMUL_MAX_N == OMEGA_GATE_MM_MAX_N,
+               "eng.om subm k0 limits must equal the OMEGA_BW_MATMUL_MAX_* envelope");
 
 /* Second completion marker payload for the C3 tail (marker page + 0x10), the same value as
  * src/omega_blackwell_engine.c BE_MARKER2_PAYLOAD and src/omega_numeric_divsqrt_gb10.c:1152. */
@@ -110,10 +120,17 @@ int omega_blackwell_execute_vector(const OmegaVectorSpec *spec,
      * second marker and the semaphore, which the old code did not wait for, and
      * for the barrier, which has no wait. flags 0 means every protection ON:
      * the L2 flush and second marker are now part of this launch. */
-    job.timeouts.marker_ms = 5000;
-    job.timeouts.release_semaphore_ms = 5000;
-    job.timeouts.marker2_ms = 5000;
-    job.timeouts.visibility_ms = 5000;
+    {
+        uint32_t tm[4];
+        if (omega_gate_timeouts(tm) != 0) {
+            free(poison);
+            return -1;
+        }
+        job.timeouts.marker_ms = tm[0];
+        job.timeouts.release_semaphore_ms = tm[1];
+        job.timeouts.marker2_ms = tm[2];
+        job.timeouts.visibility_ms = tm[3];
+    }
     job.flags = 0;
 
     omega_gpu_engine_set_backend(omega_blackwell_engine_backend());
@@ -183,13 +200,15 @@ int omega_blackwell_execute_matmul(const OmegaMatMulSpec *spec,
                                   uint32_t *h_c_out,
                                   OmegaBlackwellMatMulExecution *exec_info) {
     if (bw_refuse_non_aarch64() != 0) return -1;
-    if (!spec || !kernel || !h_a || !h_b || !h_c_out) return -1;
-    if (!kernel->code || kernel->code_size == 0) return -1;
-    if (spec->m == 0 || spec->k == 0 || spec->n == 0) return -1;
-    /* CudaAuditFable F3: past the envelope (omega_blackwell_matmul_spec_init's own limits) the size_t products below
-     * wrap (m = k = 2^31: m * k * 4 is 2^64), a 4 KiB buffer is allocated and then written as the whole matrix.
-     * At the limits the largest product, k * n * 4, is 2^34 bytes. */
-    if (spec->m > OMEGA_BW_MATMUL_MAX_M || spec->k > OMEGA_BW_MATMUL_MAX_K || spec->n > OMEGA_BW_MATMUL_MAX_N) return -1;
+    {
+        int ptrs = spec && kernel && h_a && h_b && h_c_out;
+        int code = kernel && kernel->code && kernel->code_size != 0;
+        /* CudaAuditFable F3: past the envelope (omega_blackwell_matmul_spec_init's own limits) the size_t products
+         * below wrap (m = k = 2^31: m * k * 4 is 2^64), a 4 KiB buffer is allocated and then written as the whole
+         * matrix. At the limits the largest product, k * n * 4, is 2^34 bytes. */
+        if (!omega_gate_matmul_args(ptrs, code, spec ? spec->m : 0u, spec ? spec->k : 0u, spec ? spec->n : 0u))
+            return -1;
+    }
     const size_t code_bytes = omega_gpu_code_alloc_bytes(kernel->code_size); /* code + 2 KB prefetch tail, page rounded */
     if (code_bytes == 0) return -1; /* refused before the device is opened, so nothing is left open */
 
@@ -217,12 +236,13 @@ int omega_blackwell_execute_matmul(const OmegaMatMulSpec *spec,
     ctx.pb_mem = large_pb;
 
     /* Sizing buffer allocations */
-    size_t a_bytes = ((size_t)spec->m * spec->k * sizeof(uint32_t) + 0xFFFULL) & ~0xFFFULL;
-    if (a_bytes < 0x1000) a_bytes = 0x1000;
-    size_t b_bytes = ((size_t)spec->k * spec->n * sizeof(uint32_t) + 0xFFFULL) & ~0xFFFULL;
-    if (b_bytes < 0x1000) b_bytes = 0x1000;
-    size_t c_bytes = ((size_t)spec->m * spec->n * sizeof(uint32_t) + 0xFFFULL) & ~0xFFFULL;
-    if (c_bytes < 0x1000) c_bytes = 0x1000;
+    uint64_t a_bytes, b_bytes, c_bytes;
+    if (omega_gate_round_pages((uint64_t)spec->m * spec->k * sizeof(uint32_t), &a_bytes) != 0 ||
+        omega_gate_round_pages((uint64_t)spec->k * spec->n * sizeof(uint32_t), &b_bytes) != 0 ||
+        omega_gate_round_pages((uint64_t)spec->m * spec->n * sizeof(uint32_t), &c_bytes) != 0) {
+        m16_native_close(&ctx);
+        return -1;
+    }
     /* code_bytes was sized and checked before the device was opened */
 
     NvrmMem code_mem, cbank_mem, a_mem, b_mem, c_mem, marker_mem, qmd_mem;
@@ -247,10 +267,12 @@ int omega_blackwell_execute_matmul(const OmegaMatMulSpec *spec,
     }
 
     /* 2D Tile Configuration: 16x16 threads per block */
-    uint32_t threads_x = 16;
-    uint32_t threads_y = 16;
-    uint32_t grid_x = (spec->n + 15) / 16;
-    uint32_t grid_y = (spec->m + 15) / 16;
+    uint32_t shape[4];
+    if (omega_gate_matmul_shape(0, spec->m, spec->n, shape) != 0) { m16_native_close(&ctx); return -1; }
+    uint32_t grid_x = shape[0];
+    uint32_t grid_y = shape[1];
+    uint32_t threads_x = shape[2];
+    uint32_t threads_y = shape[3];
 
     uint32_t cbank_data[OMEGA_BW_CBANK_DRIVER_WORDS];
     omega_blackwell_build_cbank_driver_2d(cbank_data, cbank_mem.va, threads_x, threads_y, grid_x, grid_y);
@@ -439,15 +461,19 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
                                          float *out_max_abs_err,
                                          float *out_max_rel_err) {
     if (bw_refuse_non_aarch64() != 0) return -1;
-    if (!spec || !kernel || !h_a || !h_b || !h_c_out) return -1;
-    if (!kernel->code || kernel->code_size == 0) return -1;
-    if (spec->m == 0 || spec->k == 0 || spec->n == 0) return -1;
-    /* CudaAuditFable F3: dimensions past the envelope and overflowing code sizes are refused before the open, as in
-     * omega_blackwell_execute_matmul. */
-    if (spec->m > OMEGA_BW_MATMUL_MAX_M || spec->k > OMEGA_BW_MATMUL_MAX_K || spec->n > OMEGA_BW_MATMUL_MAX_N) return -1;
+    {
+        int ptrs = spec && kernel && h_a && h_b && h_c_out;
+        int code = kernel && kernel->code && kernel->code_size != 0;
+        /* CudaAuditFable F3: dimensions past the envelope and overflowing code sizes are refused before the open,
+         * as in omega_blackwell_execute_matmul. */
+        if (!omega_gate_matmul_args(ptrs, code, spec ? spec->m : 0u, spec ? spec->k : 0u, spec ? spec->n : 0u))
+            return -1;
+    }
     const size_t code_bytes = omega_gpu_code_alloc_bytes(kernel->code_size); /* code + 2 KB prefetch tail, page rounded */
     if (code_bytes == 0) return -1;
-    if (spec->precision != OMEGA_MATMUL_PRECISION_FP16 && spec->precision != OMEGA_MATMUL_PRECISION_BF16) return -1;
+    if (!omega_gate_precision((uint64_t)spec->precision, (uint64_t)OMEGA_MATMUL_PRECISION_FP16,
+                              (uint64_t)OMEGA_MATMUL_PRECISION_BF16))
+        return -1;
 
     if (exec_info) {
         memset(exec_info, 0, sizeof(*exec_info));
@@ -474,12 +500,12 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
     size_t b_elems = (size_t)spec->k * spec->n;
     size_t c_elems = (size_t)spec->m * spec->n;
 
-    size_t a_bytes = ((a_elems * 2) + 0xFFFULL) & ~0xFFFULL;
-    if (a_bytes < 0x1000) a_bytes = 0x1000;
-    size_t b_bytes = ((b_elems * 2) + 0xFFFULL) & ~0xFFFULL;
-    if (b_bytes < 0x1000) b_bytes = 0x1000;
-    size_t c_bytes = ((c_elems * 4) + 0xFFFULL) & ~0xFFFULL;
-    if (c_bytes < 0x1000) c_bytes = 0x1000;
+    uint64_t a_bytes, b_bytes, c_bytes;
+    if (omega_gate_round_pages(a_elems * 2, &a_bytes) != 0 || omega_gate_round_pages(b_elems * 2, &b_bytes) != 0 ||
+        omega_gate_round_pages(c_elems * 4, &c_bytes) != 0) {
+        m16_native_close(&ctx);
+        return -1;
+    }
     /* code_bytes was sized and checked before the device was opened */
 
     NvrmMem code_mem, cbank_mem, a_mem, b_mem, c_mem, marker_mem, qmd_mem;
@@ -503,12 +529,12 @@ int omega_blackwell_execute_matmul_tensor(const OmegaMatMulSpec *spec,
         c_dev[i] = -999.0f;
     }
 
-    uint32_t threads_x = 32;
-    uint32_t threads_y = 1;
-    uint32_t grid_x = spec->n / 8;
-    uint32_t grid_y = spec->m / 16;
-    if (grid_x == 0) grid_x = 1;
-    if (grid_y == 0) grid_y = 1;
+    uint32_t shape[4];
+    if (omega_gate_matmul_shape(1, spec->m, spec->n, shape) != 0) { m16_native_close(&ctx); return -1; }
+    uint32_t grid_x = shape[0];
+    uint32_t grid_y = shape[1];
+    uint32_t threads_x = shape[2];
+    uint32_t threads_y = shape[3];
 
     uint32_t cbank_data[OMEGA_BW_CBANK_DRIVER_WORDS];
     omega_blackwell_build_cbank_driver_2d(cbank_data, cbank_mem.va, threads_x, threads_y, grid_x, grid_y);

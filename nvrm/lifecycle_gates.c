@@ -10,6 +10,14 @@
 #include "nvrm.h"
 #include "cpu_barrier.h"
 #include "m16_native.h"
+/* Every pass/fail predicate below comes from om/engine/eng.om (op LIFE, plus
+ * REQF for the release word count; src/omega_eng_gates.h). Allocation, free,
+ * msync, channel and wait calls, and their order, stay here. The C oracle is
+ * behind CUDAPP_MIGRATION_PENDING_C_LIFECYCLE. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_LIFECYCLE)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_gates.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -20,6 +28,8 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
+
+_Static_assert(ENOMEM == 12, "eng.om life k3 expects ENOMEM 12");
 
 static int g_total = 0, g_passed = 0, g_failed = 0;
 
@@ -115,12 +125,12 @@ static int gate_free_unmaps(Nvrm *rm) {
 
     errno = 0;
     int rc = msync(va, size, MS_ASYNC);
-    if (rc == 0) {
-        fprintf(stderr, "  unmaps: msync unexpectedly succeeded on freed range %p\n", va);
-        return -1;
-    }
-    if (errno != ENOMEM) {
-        fprintf(stderr, "  unmaps: msync failed with errno %d (%s), expected ENOMEM\n", errno, strerror(errno));
+    int en = errno;
+    if (!omega_gate_life(OMEGA_LIFE_UNMAPPED, (uint64_t)(int64_t)rc, (uint64_t)(int64_t)en, 0, 0, 0, 0)) {
+        if (rc == 0)
+            fprintf(stderr, "  unmaps: msync unexpectedly succeeded on freed range %p\n", va);
+        else
+            fprintf(stderr, "  unmaps: msync failed with errno %d (%s), expected ENOMEM\n", en, strerror(en));
         return -1;
     }
     return 0;
@@ -144,19 +154,19 @@ static int gate_idempotent_and_stale(Nvrm *rm) {
         fprintf(stderr, "  idempotent: first free failed: %s\n", rm->err);
         return -1;
     }
-    if (m.handle != 0 || m.va != 0 || m.size != 0 || m.cpu != NULL) {
+    if (!omega_gate_life(OMEGA_LIFE_ZEROED, m.handle, m.va, m.size, m.cpu != NULL, 0, 0)) {
         fprintf(stderr, "  idempotent: nvrm_free did not zero the NvrmMem on success\n");
         return -1;
     }
 
     /* Double free of the now-zeroed struct: must return 0. */
-    if (nvrm_free(rm, &m) != 0) {
+    if (!omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)nvrm_free(rm, &m), 0, 0, 0, 0, 0)) {
         fprintf(stderr, "  idempotent: double free of zeroed struct returned nonzero\n");
         return -1;
     }
 
     /* Free of the stale (already-freed-elsewhere) copy: must return -1. */
-    if (nvrm_free(rm, &stale) == 0) {
+    if (!omega_gate_life(OMEGA_LIFE_NONZERO, (uint64_t)(int64_t)nvrm_free(rm, &stale), 0, 0, 0, 0, 0)) {
         fprintf(stderr, "  idempotent: freeing stale copy unexpectedly succeeded\n");
         return -1;
     }
@@ -181,7 +191,7 @@ static int gate_alloc_after_free_reuses_va(Nvrm *rm) {
         fprintf(stderr, "  reuse: second alloc failed: %s\n", rm->err);
         return -1;
     }
-    int ok = (b.va == va);
+    int ok = omega_gate_life(OMEGA_LIFE_EQ, b.va, va, 0, 0, 0, 0);
     if (!ok) {
         fprintf(stderr, "  reuse: expected va 0x%lx, got 0x%lx\n",
                 (unsigned long)va, (unsigned long)b.va);
@@ -199,13 +209,16 @@ static int gate_injected_free_failure(int uvm_failure) {
     uint32_t free_before = rm.free_count;
     if (uvm_failure) rm.inject_uvm_free_failure = 1;
     else rm.inject_rm_free_failure = 1;
-    int refused = nvrm_free(&rm, &m) != 0 && rm.faulted &&
-                  m.handle != 0 && rm.live_count == 1 &&
-                  rm.free_count == free_before;
+    int frc = nvrm_free(&rm, &m);
+    int refused = omega_gate_life(OMEGA_LIFE_QUARANTINE, (uint64_t)(int64_t)frc, rm.faulted, m.handle,
+                                  rm.live_count, rm.free_count, free_before);
     NvrmMem other;
-    refused = refused && nvrm_alloc(&rm, 0x4000, &other) != 0;
-    int recovered_release = nvrm_free(&rm, &m) == 0 &&
-                            rm.free_count > free_before && rm.free_list[rm.free_count - 1].va <= va;
+    refused = refused && omega_gate_life(OMEGA_LIFE_NONZERO, (uint64_t)(int64_t)nvrm_alloc(&rm, 0x4000, &other),
+                                         0, 0, 0, 0, 0);
+    int rrc = nvrm_free(&rm, &m);
+    uint64_t last_va = rm.free_count ? rm.free_list[rm.free_count - 1].va : 0u;
+    int recovered_release = omega_gate_life(OMEGA_LIFE_RECOVERED, (uint64_t)(int64_t)rrc, rm.free_count,
+                                            free_before, last_va, va, 0);
     nvrm_close(&rm);
     return refused && recovered_release ? 0 : -1;
 }
@@ -217,9 +230,11 @@ static int gate_corrupt_table_refusal(void) {
     if (nvrm_alloc(&rm, 0x4000, &m) != 0) { nvrm_close(&rm); return -1; }
     void *cpu = rm.live[0].cpu;
     rm.live[0].cpu = NULL;
-    int refused = nvrm_free(&rm, &m) != 0 && rm.faulted && rm.live_count == 1 && m.handle;
+    int frc = nvrm_free(&rm, &m);
+    int refused = omega_gate_life(OMEGA_LIFE_CORRUPT, (uint64_t)(int64_t)frc, rm.faulted, rm.live_count,
+                                  m.handle, 0, 0);
     rm.live[0].cpu = cpu;
-    int released = nvrm_free(&rm, &m) == 0;
+    int released = omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)nvrm_free(&rm, &m), 0, 0, 0, 0, 0);
     nvrm_close(&rm);
     return refused && released ? 0 : -1;
 }
@@ -228,9 +243,10 @@ static int gate_allocation_overflow(Nvrm *rm) {
     NvrmMem m = {0};
     uint32_t before = rm->live_count;
     uint64_t va_before = rm->va_next;
-    return (nvrm_alloc(rm, UINT64_MAX, &m) != 0 &&
-           nvrm_alloc(rm, 0, &m) != 0 &&
-           rm->live_count == before && rm->va_next == va_before) ? 0 : -1;
+    int r1 = nvrm_alloc(rm, UINT64_MAX, &m);
+    int r2 = r1 != 0 ? nvrm_alloc(rm, 0, &m) : 0;
+    return omega_gate_life(OMEGA_LIFE_OVERFLOW, (uint64_t)(int64_t)r1, (uint64_t)(int64_t)r2, rm->live_count,
+                           before, rm->va_next, va_before) ? 0 : -1;
 }
 
 /* ---- M16_WAIT_GE_SERIAL --------------------------------------------------
@@ -242,7 +258,8 @@ static int gate_wait_ge_serial(void) {
 
     /* target 0xFFFFFFF0 satisfied by marker 0x00000005 (wrapped past). */
     marker = 0x00000005u;
-    if (m16_native_wait_marker_ge(&marker, 0xFFFFFFF0u, 50) != 0) {
+    if (!omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)m16_native_wait_marker_ge(&marker, 0xFFFFFFF0u, 50), 0,
+                         0, 0, 0, 0)) {
         fprintf(stderr, "  wait_ge: wrapped-past case unexpectedly failed/timed out\n");
         return -1;
     }
@@ -252,11 +269,11 @@ static int gate_wait_ge_serial(void) {
     uint64_t t0 = now_ms();
     int rc = m16_native_wait_marker_ge(&marker, 0xFFFFFFF0u, 100);
     uint64_t elapsed = now_ms() - t0;
-    if (rc == 0) {
+    if (!omega_gate_life(OMEGA_LIFE_NONZERO, (uint64_t)(int64_t)rc, 0, 0, 0, 0, 0)) {
         fprintf(stderr, "  wait_ge: not-yet-satisfied case unexpectedly returned success\n");
         return -1;
     }
-    if (elapsed > 150) {
+    if (!omega_gate_life(OMEGA_LIFE_LE, elapsed, 150, 0, 0, 0, 0)) {
         fprintf(stderr, "  wait_ge: timeout took %" PRIu64 "ms, expected <= 150ms\n", elapsed);
         return -1;
     }
@@ -287,7 +304,7 @@ static int gate_gpu_submit_after_churn(Nvrm *rm) {
 
     uint32_t methods[32];
     int nwords = m16_native_build_release(methods, marker_mem.va, 0x19c0ffee, rm->compute_class);
-    if (nwords <= 0) {
+    if (!omega_gate_reqf(OMEGA_REQF_WORDS, nwords)) {
         fprintf(stderr, "  submit: build_release failed\n");
         return -1;
     }
@@ -298,11 +315,12 @@ static int gate_gpu_submit_after_churn(Nvrm *rm) {
         fprintf(stderr, "  submit: nvrm_submit failed: %s\n", rm->err);
         return -1;
     }
-    if (m16_native_wait_marker_ge(marker, 0x19c0ffee, 2000) != 0) {
+    if (!omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)m16_native_wait_marker_ge(marker, 0x19c0ffee, 2000), 0,
+                         0, 0, 0, 0)) {
         fprintf(stderr, "  submit: timeout waiting for marker; actual=0x%08x\n", *marker);
         return -1;
     }
-    if (*marker != 0x19c0ffee) {
+    if (!omega_gate_life(OMEGA_LIFE_EQ, *marker, 0x19c0ffeeu, 0, 0, 0, 0)) {
         fprintf(stderr, "  submit: unexpected final marker value 0x%08x\n", *marker);
         return -1;
     }
@@ -320,8 +338,8 @@ static int gate_channel_no_memory_retried(void) {
     rm.inject_rm_alloc_no_memory = 3;
     rm.channel_no_memory_retry_ms = 1;
     int rc = nvrm_channel(&rm);
-    int ok = rc == 0 && rm.compute_obj != 0 && rm.channel_no_memory_retries == 3 &&
-             rm.inject_rm_alloc_no_memory == 0;
+    int ok = omega_gate_life(OMEGA_LIFE_RETRIED, (uint64_t)(int64_t)rc, rm.compute_obj, rm.channel_no_memory_retries,
+                             rm.inject_rm_alloc_no_memory, 0, 0);
     if (!ok) printf("  channel after 3 injected NV_ERR_NO_MEMORY: rc=%d retries=%u err=\"%s\"\n",
                     rc, rm.channel_no_memory_retries, rm.err);
     nvrm_close(&rm);
@@ -337,12 +355,12 @@ static int gate_channel_no_memory_bounded(void) {
     rm.inject_rm_alloc_no_memory = (uint8_t)(NVRM_CHANNEL_NO_MEMORY_RETRIES + 1);
     rm.channel_no_memory_retry_ms = 1;
     int rc = nvrm_channel(&rm);
-    int ok = rc != 0 && rm.compute_obj == 0 &&
-             rm.channel_no_memory_retries == NVRM_CHANNEL_NO_MEMORY_RETRIES &&
-             strstr(rm.err, "NV_ERR_NO_MEMORY") != NULL && strstr(rm.err, "attempts") != NULL &&
-             strstr(rm.err, "2 MiB blocks") != NULL;
+    int hits = (strstr(rm.err, "NV_ERR_NO_MEMORY") != NULL) + (strstr(rm.err, "attempts") != NULL) +
+               (strstr(rm.err, "2 MiB blocks") != NULL);
+    int ok = omega_gate_life(OMEGA_LIFE_BOUNDED, (uint64_t)(int64_t)rc, rm.compute_obj, rm.channel_no_memory_retries,
+                             NVRM_CHANNEL_NO_MEMORY_RETRIES, (uint64_t)hits, 0);
     if (!ok) printf("  bounded retry: rc=%d retries=%u err=\"%s\"\n", rc, rm.channel_no_memory_retries, rm.err);
-    int closed = nvrm_close(&rm) == 0;
+    int closed = omega_gate_life(OMEGA_LIFE_ZERO, (uint64_t)(int64_t)nvrm_close(&rm), 0, 0, 0, 0, 0);
     if (!closed) printf("  bounded retry: close after refused channel failed: %s\n", rm.err);
     return ok && closed ? 0 : -1;
 }
@@ -356,16 +374,17 @@ static void gate_extra_channel_contexts(void) {
         int ok = opened;
         uint32_t baseline = opened ? rm.live_count : 0;
         for (int round = 0; ok && round < 3; round++) {
-            ok = nvrm_channel_n(&rm, n) == 0 && rm.n_extra == n;
+            int crc = nvrm_channel_n(&rm, n);
+            ok = omega_gate_life(OMEGA_LIFE_TORNDOWN, (uint64_t)(int64_t)crc, 0, rm.n_extra, n, 0, 0);
             for (uint32_t i = 0; ok && i < n; i++) {
-                ok = rm.extra[i].ctxshare != 0 && rm.extra[i].ctxshare != rm.ctxshare;
+                ok = omega_gate_life(OMEGA_LIFE_DISTINCT, rm.extra[i].ctxshare, rm.ctxshare, 0, 0, 0, 0);
                 for (uint32_t j = 0; ok && j < i; j++)
-                    ok = rm.extra[i].ctxshare != rm.extra[j].ctxshare;
+                    ok = omega_gate_life(OMEGA_LIFE_DISTINCT, rm.extra[i].ctxshare, rm.extra[j].ctxshare, 0, 0, 0, 0);
             }
             if (nvrm_channel_destroy(&rm) != 0) ok = 0;
-            ok = ok && rm.n_extra == 0 && rm.ctxshare == 0 && rm.live_count == baseline;
+            ok = ok && omega_gate_life(OMEGA_LIFE_TORNDOWN, rm.n_extra, rm.ctxshare, rm.live_count, baseline, 0, 0);
             for (uint32_t i = 0; ok && i < n; i++)
-                ok = rm.extra[i].ctxshare == 0 && rm.extra[i].gpfifo == 0;
+                ok = omega_gate_life(OMEGA_LIFE_BOTHZERO, rm.extra[i].ctxshare, rm.extra[i].gpfifo, 0, 0, 0, 0);
         }
         if (opened && nvrm_close(&rm) != 0) ok = 0;
         char name[80];
@@ -400,9 +419,8 @@ int main(int argc, char **argv) {
 
     uint64_t churn_bytes = 0, high_water_delta = 0;
     int churn_rc = gate_free_churn(&rm, &churn_bytes, &high_water_delta);
-    uint64_t required_bytes = 256ull * 1024 * 1024 * 1024;      /* 256 GiB */
-    uint64_t max_high_water = 2ull * 1024 * 1024 * 1024;        /* 2 GiB   */
-    int churn_ok = (churn_rc == 0) && (churn_bytes > required_bytes) && (high_water_delta < max_high_water);
+    /* churn_ok: 256 GiB of traffic, high-water delta under 2 GiB (eng.om life k8). */
+    int churn_ok = omega_gate_life(OMEGA_LIFE_CHURN, (uint64_t)(int64_t)churn_rc, churn_bytes, high_water_delta, 0, 0, 0);
     printf("  churn: bytes=%" PRIu64 " (%.2f GiB) high_water_delta=%" PRIu64 " (%.2f MiB)\n",
            churn_bytes, (double)churn_bytes / (1024.0 * 1024.0 * 1024.0),
            high_water_delta, (double)high_water_delta / (1024.0 * 1024.0));

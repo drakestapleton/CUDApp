@@ -33,9 +33,10 @@
  * m16/m16_concurrent.c). The timer does not fix visibility.
  *
  * Same contract as omega's src/omega_gpu_wait.h (omega 6fa4d97, PR omega#232).
- * Physics cannot include omega code, so this is the canonical copy; omega's
- * becomes a thin wrapper in a later cut. m16_native_wait_marker(_ge) is not
- * converted yet (follow-up).
+ * This is the canonical C copy of the clocked loop. Its step decisions now come
+ * from the seeded Omega unit om/engine/eng.om (src/cudapp_om_eng.c, linked into
+ * m16), with the C oracle behind CUDAPP_MIGRATION_PENDING_C_M16WAIT.
+ * m16_native_wait_marker(_ge) is not converted yet (follow-up).
  *
  * If cfg->marker2 is set, PASS also requires *marker2 == marker2_want (read
  * output only after both). */

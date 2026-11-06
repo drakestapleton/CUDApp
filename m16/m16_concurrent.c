@@ -43,6 +43,13 @@
 #include "m16_native.h"
 #include "cpu_barrier.h"
 #include "m16_gpu_wait.h"
+/* The withheld, parity, cross-talk, final-page and root-collision decisions and
+ * their exit codes come from om/engine/eng.om (op CONC, src/omega_eng_gates.h);
+ * the C oracle is behind CUDAPP_MIGRATION_PENDING_C_CONCURRENT. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_CONCURRENT)
+#define ENG_C_PART 1
+#endif
+#include "omega_eng_gates.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -112,12 +119,13 @@ static int wait_marker(volatile uint32_t *marker, uint32_t want, const char *sta
     }
     fence();
     uint32_t m = *marker, m2 = *marker2;
-    if (m != want || m2 != MARKER2_PAYLOAD) {
+    int ex = 7;
+    if (!omega_gate_conc(OMEGA_CONC_PARITY, m, want, m2, 0u, &ex)) {
         char what[160];
         snprintf(what, sizeof what, "reread_marker=0x%08x want=0x%08x reread_marker2=0x%08x want2=0x%08x",
                  m, want, m2, MARKER2_PAYLOAD);
-        print_simple("output_parity", stage, 7, what);
-        return 7;
+        print_simple("output_parity", stage, ex, what);
+        return ex;
     }
     return 0;
 }
@@ -186,14 +194,15 @@ int main(void) {
     usleep(50000);
     fence();
     printf("[OBSERVED] Withheld doorbells: markerA=0x%08x markerB=0x%08x\n", *markerA, *markerB);
-    if (*markerA != 0 || *markerB != 0 || *marker2A != 0 || *marker2B != 0) {
+    int ex = 2;
+    if (!omega_gate_conc(OMEGA_CONC_WITHHELD, *markerA, *markerB, *marker2A, *marker2B, &ex)) {
         char what[160];
         snprintf(what, sizeof what, "premature markerA=0x%08x markerB=0x%08x marker2A=0x%08x marker2B=0x%08x",
                  *markerA, *markerB, *marker2A, *marker2B);
-        print_simple("wrong_marker", "withheld", 2, what);
+        print_simple("wrong_marker", "withheld", ex, what);
         m16_native_close(&ctxA);
         m16_native_close(&ctxB);
-        return 2;
+        return ex;
     }
 
     /* Ring Doorbell A only */
@@ -208,14 +217,14 @@ int main(void) {
     printf("[OBSERVED] After Doorbell A: markerA=0x%08x markerB=0x%08x (expected A=0x16000001, B=0x00000000)\n",
            *markerA, *markerB);
     fence();
-    if (*markerB != 0 || *marker2B != 0) {
+    if (!omega_gate_conc(OMEGA_CONC_CROSSTALK, *markerB, *marker2B, 0u, 0u, &ex)) {
         char what[120];
         snprintf(what, sizeof what, "cross-talk markerB=0x%08x marker2B=0x%08x with only doorbell A rung",
                  *markerB, *marker2B);
-        print_simple("wrong_marker", "crosstalk", 4, what);
+        print_simple("wrong_marker", "crosstalk", ex, what);
         m16_native_close(&ctxA);
         m16_native_close(&ctxB);
-        return 4;
+        return ex;
     }
 
     /* Ring Doorbell B */
@@ -232,14 +241,14 @@ int main(void) {
     /* output_parity, final: B's work must not have disturbed A's page. The old log
      * printed this as "expected" but never enforced it (NEW tightening). */
     fence();
-    if (*markerA != PAYLOAD_A || *marker2A != MARKER2_PAYLOAD || *markerB != PAYLOAD_B || *marker2B != MARKER2_PAYLOAD) {
+    if (!omega_gate_conc(OMEGA_CONC_FINAL, *markerA, *marker2A, *markerB, *marker2B, &ex)) {
         char what[200];
         snprintf(what, sizeof what, "final markerA=0x%08x marker2A=0x%08x markerB=0x%08x marker2B=0x%08x",
                  *markerA, *marker2A, *markerB, *marker2B);
-        print_simple("output_parity", "final", 7, what);
+        print_simple("output_parity", "final", ex, what);
         m16_native_close(&ctxA);
         m16_native_close(&ctxB);
-        return 7;
+        return ex;
     }
 
     /* Verify distinct resource handles */
@@ -247,11 +256,11 @@ int main(void) {
     printf("[OBSERVED] Handle check: Root A=0x%x B=0x%x, Channel A=0x%x B=0x%x, Token A=0x%x B=0x%x\n",
            ctxA.rm.root, ctxB.rm.root, ctxA.rm.gpfifo, ctxB.rm.gpfifo, ctxA.rm.token, ctxB.rm.token);
 
-    if (ctxA.rm.root == ctxB.rm.root) {
+    if (!omega_gate_conc(OMEGA_CONC_ROOTS, ctxA.rm.root, ctxB.rm.root, 0u, 0u, &ex)) {
         fprintf(stderr, "FATAL: Root handles collided between sessions!\n");
         m16_native_close(&ctxA);
         m16_native_close(&ctxB);
-        return 6;
+        return ex;
     }
 
     printf("CONCURRENT_CHANNEL_PASS: 2 independent channels executed without collision.\n");

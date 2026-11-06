@@ -506,8 +506,8 @@ $(GPU_L2_REUSE_TEST): tests/gpu_l2_reuse_test.c src/omega_gpu_fp8_api.h src/omeg
 # fields beside it, and the refusal one byte over OMEGA_BW_QMD_MAX_SHARED_BYTES (a host check, no GPU).
 .PHONY: test-gpu-qmd-shared test-gpu-qmd-shared-clean-build
 QMD_SHARED_TEST = $(OUT_DIR)/test_omega_bw_qmd_shared
-$(QMD_SHARED_TEST): tests/test_omega_bw_qmd_shared.c src/omega_blackwell_qmd.h src/omega_blackwell_qmd.c | $(OUT_DIR)
-	$(CC) $(CFLAGS) -o $@ tests/test_omega_bw_qmd_shared.c src/omega_blackwell_qmd.c
+$(QMD_SHARED_TEST): tests/test_omega_bw_qmd_shared.c src/omega_blackwell_qmd.h src/omega_blackwell_qmd.c src/cudapp_om_bw_qmd.c src/cudapp_native.h | $(OUT_DIR)
+	$(CC) $(CFLAGS) -o $@ tests/test_omega_bw_qmd_shared.c src/omega_blackwell_qmd.c src/cudapp_om_bw_qmd.c
 test-gpu-qmd-shared: $(QMD_SHARED_TEST)
 	$(QMD_SHARED_TEST)
 

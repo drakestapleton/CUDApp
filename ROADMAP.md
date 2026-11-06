@@ -21,6 +21,7 @@ compiled semantic mutants are EXERCISED; see
 change; `examples/hello_gpu/README.md` is its chip runbook. No existing hardware
 status is upgraded by these host receipts.
 2026-11-06: GEMM config/resource, shape/grid, leading-span, launch-word and packed-scratch policy now default to seeded Omega (`om/gemm-any/host.om`). The default-OFF C policy oracle and focused host/simulator evidence are in `evidence/gemm-host-plan-20261106/`; chip qualification remains NOT_RUN. No status row is upgraded.
+2026-11-06: GEMM EX gather indices/strides, packing quotas and conversion-copy layout policy now default to seeded Omega (`om/gemmex/policy.om`). The separate default-OFF C policy oracle does not enable GX_C; focused evidence is in `evidence/gemm-ex-host-policy-20261106/`. Chip qualification remains NOT_RUN; no status row is upgraded.
 
 ## 1. NVIDIA software on the Spark today
 

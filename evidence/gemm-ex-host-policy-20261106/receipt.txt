@@ -1,0 +1,22 @@
+python3 tests/gemm_ex_policy_check.py
+GEMM EX HOST POLICY DIFFERENTIAL PASS cases=20932
+DEFAULT SHELL: GEMM EX HOST POLICY DIFFERENTIAL PASS cases=20932
+RED COMPARATOR: PASS (nonzero mismatch)
+STRONG LINK NEGATIVE: PASS (omega_gemm_ex_policy undefined)
+MUTANT minimum: KILLED FAIL policy op=0 a=0 b=1 c=0 d=0 got=1 want=0
+MUTANT transpose-index: KILLED FAIL policy op=1 a=1 b=2 c=0 d=2 got=2 want=4
+MUTANT row-stride: KILLED FAIL policy op=2 a=1 b=0 c=0 d=0 got=1 want=0
+MUTANT plane-pack: KILLED FAIL policy op=3 a=4 b=1 c=1 d=1 got=1 want=65536
+MUTANT window-quota: KILLED FAIL policy op=3 a=0 b=1 c=1 d=1 got=65535 want=65536
+MUTANT contiguous: KILLED FAIL policy op=4 a=1 b=2 c=1 d=1 got=0 want=1
+MUTANT row-offset: KILLED FAIL policy op=6 a=0 b=1 c=1 d=0 got=1 want=0
+MUTANT column-stride: KILLED FAIL policy op=7 a=0 b=0 c=0 d=0 got=1 want=0
+function gx_min called 901 returned 100% blocks executed 100%
+function gx_arow called 1800 returned 100% blocks executed 100%
+function gx_bcol called 1800 returned 100% blocks executed 100%
+function gx_brow called 1800 returned 100% blocks executed 100%
+function gx_pack called 4480 returned 100% blocks executed 100%
+function gx_conv called 298 returned 100% blocks executed 100%
+test-gpu-gemm-ex: rc=0 gemm_ex host: PASS (227 checks)
+test-gpu-gemm-ex-sim: rc=0 gemm_ex sim: PASS (255 checks)
+GEMM EX HOST POLICY ACCEPTANCE PASS (8 mutants, red comparator, missing-unit link)

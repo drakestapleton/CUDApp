@@ -445,6 +445,7 @@ uint32_t omega_cg_pklen(uint64_t  *result, void *p0, uint64_t p0_n);
 uint32_t omega_cg_pkh(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_mrow(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
+uint32_t omega_gemm_ex_policy(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, uint64_t p4);
 uint32_t omega_cg_em(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n);
 uint32_t omega_cg_reconv(uint64_t  *result, uint64_t p0, void *p1, uint64_t p1_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */

@@ -1,0 +1,39 @@
+Source: gcov -b -c of the retained C policy oracle (-O0 --coverage).
+
+function gx_min called 901 returned 100% blocks executed 100%
+function gx_arow called 1800 returned 100% blocks executed 100%
+function gx_bcol called 1800 returned 100% blocks executed 100%
+function gx_brow called 1800 returned 100% blocks executed 100%
+function gx_pack called 4480 returned 100% blocks executed 100%
+function gx_conv called 298 returned 100% blocks executed 100%
+
+Owned-function branch counters (raw gcov output):
+gx_arow | 1800:  645:    *st = g->x[0] ? g->p[2] : 1u; | branch  0 taken 900 (fallthrough)
+gx_arow | 1800:  645:    *st = g->x[0] ? g->p[2] : 1u; | branch  1 taken 900
+gx_arow | 1800:  646:    return g->x[0] ? k0 * g->p[2] + i : i * g->p[2] + k0; | branch  0 taken 900 (fallthrough)
+gx_arow | 1800:  646:    return g->x[0] ? k0 * g->p[2] + i : i * g->p[2] + k0; | branch  1 taken 900
+gx_bcol | 1800:  654:    *st = g->p[5] ? 1u : g->p[3]; | branch  0 taken 900 (fallthrough)
+gx_bcol | 1800:  654:    *st = g->p[5] ? 1u : g->p[3]; | branch  1 taken 900
+gx_bcol | 1800:  655:    return g->p[5] ? j * g->p[3] + k0 : k0 * g->p[3] + j; | branch  0 taken 900 (fallthrough)
+gx_bcol | 1800:  655:    return g->p[5] ? j * g->p[3] + k0 : k0 * g->p[3] + j; | branch  1 taken 900
+gx_brow | 1800:  663:    *st = g->p[5] ? g->p[3] : 1u; | branch  0 taken 900 (fallthrough)
+gx_brow | 1800:  663:    *st = g->p[5] ? g->p[3] : 1u; | branch  1 taken 900
+gx_brow | 1800:  664:    return g->p[5] ? n0 * g->p[3] + kk : kk * g->p[3] + n0; | branch  0 taken 900 (fallthrough)
+gx_brow | 1800:  664:    return g->p[5] ? n0 * g->p[3] + kk : kk * g->p[3] + n0; | branch  1 taken 900
+gx_pack | 4480:  688:    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u; | branch  0 taken 4032 (fallthrough)
+gx_pack | 4480:  688:    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u; | branch  1 taken 448
+gx_pack | 4480:  688:    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u; | branch  2 taken 3584 (fallthrough)
+gx_pack | 4480:  688:    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u; | branch  3 taken 448
+gx_pack | 4480:  688:    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u; | branch  4 taken 2440 (fallthrough)
+gx_pack | 4480:  688:    return op != 5u && op != 6u && w <= GX_WIN ? GX_WIN / w : 1u; | branch  5 taken 1144
+gx_conv | 298:  699:    if (rn == 1u || ld == n * ce) return gx_row(g, op, t, rn * n, src, dst); | branch  0 taken 199 (fallthrough)
+gx_conv | 298:  699:    if (rn == 1u || ld == n * ce) return gx_row(g, op, t, rn * n, src, dst); | branch  1 taken 99
+gx_conv | 298:  699:    if (rn == 1u || ld == n * ce) return gx_row(g, op, t, rn * n, src, dst); | branch  2 taken 66 (fallthrough)
+gx_conv | 298:  699:    if (rn == 1u || ld == n * ce) return gx_row(g, op, t, rn * n, src, dst); | branch  3 taken 133
+gx_conv | 133:  700:    if (gx_row(g, op, t, rn * n, src, g->gc)) return GX_FAULT; | branch  1 taken 1 (fallthrough)
+gx_conv | 133:  700:    if (gx_row(g, op, t, rn * n, src, g->gc)) return GX_FAULT; | branch  2 taken 132
+gx_conv | 462:  701:    for (uint64_t r = 0; r < rn; r++) memcpy(dst + r * ld, g->gc + r * n * ce, n * ce); | branch  0 taken 330
+gx_conv | 462:  701:    for (uint64_t r = 0; r < rn; r++) memcpy(dst + r * ld, g->gc + r * n * ce, n * ce); | branch  1 taken 132 (fallthrough)
+
+Uncovered branches:
+NONE

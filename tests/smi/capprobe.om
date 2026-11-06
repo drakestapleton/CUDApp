@@ -1,0 +1,21 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note capprobe.om: does this omc admit a 55888-byte devcall (the utilization control's params)?
+note Issues the NV_ESC_RM_CONTROL request 3223340586 on /dev/null, which is not a GPU device:
+note the kernel answers ENOTTY (-25) when the call is made. An omc without the aien-dev/omega-mv#1042
+note bound traps 3 at the devcall instead (exit 103). Exit 0: the call was made and returned -25.
+text cpnull "/dev/null"
+global cphdr uchar 32
+global cpbuf uchar 55888
+
+fn main to int
+fd = fopen cpnull 0 len cpnull 524290 0
+if lt fd 0
+ret 1
+end
+r = devcall int fd uint 3223340586 cphdr 0 32 cpbuf 0 55888
+c = fclose int fd
+if ne r -25
+ret 2
+end
+ret 0
+end

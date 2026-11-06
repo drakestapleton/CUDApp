@@ -1,7 +1,8 @@
 note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note rmfake.om: host-only stand-in for the NVIDIA resource manager, for the cudapp-smi --rm tier.
-note tests/smi/run.sh rewrites every OS effect in a private copy of native/nvrm/context.om into the
-note words below and appends this unit between it and native/smi/rm.om. No device file is opened.
+note tests/smi/run.sh rewrites every OS effect in private copies of native/nvrm/context.om and
+note native/smi/util.om into the words below and appends this unit between them and native/smi/rm.om.
+note No device file is opened.
 note Replies imitate a GB10 with one GPU; they are synthetic, not a hardware record.
 note SMIFAULT=<c> in the environment selects one fault:
 note   o open of the control node fails     s subdevice reports a different SM version
@@ -10,7 +11,13 @@ note   t a thermal instruction is not executed
 note   p GET_PIDS count above its table    f the device free fails
 note   u pstate control not supported      m pstate reply has two bits set
 note   q pstate control refused with NV_ERR_INSUFFICIENT_PERMISSIONS (0x1b)
-note Without a fault the pstate is P8 (0x100), the value nvidia-smi showed on the live GB10.
+note   w utilization control not supported e utilization ring empty (count 0)
+note   z newest utilization sample has a zero timestamp
+note   y utilization control refused with NV_ERR_INSUFFICIENT_PERMISSIONS (0x1b)
+note   r utilization tracker 72 (outside the ring)  x newest gr.util 10001
+note Without a fault the pstate is P8 (0x100), the value nvidia-smi showed on the live GB10, and the
+note utilization ring is full with tracker 5: the newest sample (index 4) holds gr 4200 and fb 1300
+note (42 % and 13 %); every other sample k holds gr 100*k and fb 50*k, so a wrong index is visible.
 note Every control command outside the allowlist fails with 0x56 and logs "FAKE UNKNOWN".
 note Each effect writes one stderr line "FAKE <what>" for the runner to count.
 
@@ -110,6 +117,46 @@ npp64 add o 16 add mul ulong 335 1048576 12345
 end
 end
 
+note Utilization samples (NV2080_CTRL_CMD_PERF_GET_GPUMON_PERFMON_UTIL_SAMPLES_V2) into smbig.
+note A request other than type 2 with bufSize 55872 is unexpected.
+fn sfutil to uint
+if or ne get smbig 0 2 ne sbget 4 55872
+sflog sfbad
+ret 31
+end
+if eq sfmode 119
+ret 86
+end
+if eq sfmode 121
+ret 27
+end
+if eq sfmode 101
+ret 0
+end
+sbput 8 72
+if eq sfmode 114
+sbput 12 72
+else
+sbput 12 5
+end
+for k ulong 72
+o = add 16 mul k 776
+put smbig o 1
+sbput add o 136 uint mul k 100
+sbput add o 8 uint mul k 50
+end
+o = ulong 3120
+sbput add o 136 4200
+sbput add o 8 1300
+if eq sfmode 120
+sbput add o 136 10001
+end
+if eq sfmode 122
+put smbig o 0
+end
+ret 0
+end
+
 fn sfctrl to uint
 cmd = nhget 8
 sflog sfctl
@@ -169,6 +216,9 @@ end
 if eq cmd 545259918
 sfpinfo
 ret 0
+end
+if eq cmd 545267862
+ret sfutil
 end
 sflog sfunk
 ret 86

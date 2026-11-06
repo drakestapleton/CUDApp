@@ -24,6 +24,9 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS gemm_any=om/gemm-any/gemm_ir.om"
     UNITS="$UNITS dnn_rows=om/attn-any/emit.om,om/dnn-rows/kernel.om dnn_rows_plan=om/dnn-rows/plan.om"
 fi
+if [ -z "${OMEGA_UNITS:-}" ]; then
+    UNITS="$UNITS dnn_activations=om/attn-any/emit.om,om/dnn-activations/kernel.om dnn_activations_plan=om/dnn-activations/plan.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"

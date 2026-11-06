@@ -26,6 +26,7 @@ fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tgemm_spec=om/codegen/cg_tgemm_spec.om cg_tgemm=om/codegen/cg_qmma.om,om/codegen/cg_tgemm_emit.om,om/codegen/cg_tgemm.om"
   UNITS="$UNITS cg_pf=om/codegen/cg_pf.om"
+  UNITS="$UNITS cg_tern=om/codegen/cg_tern_common.om,om/codegen/cg_tern.om cg_tern_sched=om/codegen/cg_tern_sched.om cg_tern_policy=om/codegen/cg_tern_common.om,om/codegen/cg_tern_policy.om"
 fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"

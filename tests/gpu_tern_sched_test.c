@@ -13,13 +13,13 @@
  *  3. the checker on hand-built programs: I2FP -> FMUL at stall 6 fails, at 18 fails, at 19 passes, behind a
  *     scoreboard wait at stall 4 fails; an FMUL producer at stall 6 passes (other producers keep their rule).
  *
- * MIGRATION-PENDING C (GpuStack PLAN, Language rule): a host test of an existing C generator (omega_blackwell_codegen_tern.c).
- * It runs only while CUDAPP_MIGRATION_PENDING_TERN_SCHED is 1 (the default below); set it to 0 when the ternary kernel moves
- * to .om and this file retires (successor: the Omega tern generator's checker, omega tests/gpu_tern_api_test.c). */
+ * The public generator and checker now use seeded Omega by default. Selecting
+ * CUDAPP_MIGRATION_PENDING_C_CODEGEN_TERN=1 in the builder selects its retained
+ * C oracle; this same API-level test remains valid for either implementation. */
 #include "omega_blackwell_codegen_tern.h"
 #include <stdio.h>
 #ifndef CUDAPP_MIGRATION_PENDING_TERN_SCHED
-#define CUDAPP_MIGRATION_PENDING_TERN_SCHED 1 /* migration-pending switch (see above) */
+#define CUDAPP_MIGRATION_PENDING_TERN_SCHED 1 /* legacy test-admission switch, not the builder selector */
 #endif
 #include <string.h>
 

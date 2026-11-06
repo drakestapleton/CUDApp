@@ -12,9 +12,9 @@
  * .om encoder and this file is deleted.
  *
  * Record (8 x u64): op, dst, src1, src2, src3 (vreg, or all-ones for none), ureg (or all-ones), imm | control << 32,
- * uniform | p0 << 1 | not << 2 | dst_sub << 16 | src1_sub << 24 | src2_sub << 32 | src3_sub << 40.
+ * uniform | p0 << 1 | not << 2 | dst_sub << 16 | src1_sub << 24 | src2_sub << 32 | src3_sub << 40 | bar_reg << 48.
  * Meta (512 x u64): 0 records, 1 vregs, 2 uvregs, 4 emitter error, 5 closed loops, 6 open loops,
- * 16 + 2L / 17 + 2L loop L first record / closing BRA, 64 + v vreg kind (1 scalar, 2 pair), 320 + u uvreg kind.
+ * 16 + 2L / 17 + 2L loop L first record / closing BRA, 64 + v vreg kind (1 scalar, 2 pair, 4 quad), 320 + u uvreg kind.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -38,6 +38,12 @@ enum {
     OMEGA_OM_IR_BUDGET = 7,     /* declared registers x threads past 65536, or past the allocation limit */
     OMEGA_OM_IR_ENCODE = 8      /* the encoder refused an instruction or the buffer */
 };
+
+/* Checked portable unit ABI. Replay does not encode or apply a launch budget. */
+typedef uint32_t (*OmegaOmIrUnit)(uint64_t *, uint64_t, uint64_t, uint64_t, uint64_t,
+                                 void *, uint64_t, void *, uint64_t);
+int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64_t b, uint64_t c,
+                           BlackwellIRProgram *prog, uint64_t *emit_err);
 
 /* Calls the unit (kind, a, b, c), replays its records into *prog, allocates, checks and encodes into code
  * (capacity code_cap) for a launch of `threads` threads per CTA. On success *kernel points into code and

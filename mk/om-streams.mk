@@ -41,12 +41,16 @@ test-om-streams: $(GPU_STREAMS_TEST) $(GPU_ISOLATION_TEST) $(OM_STREAMS_DIR)/str
 		echo "RED CHECK BROKEN: a flipped Omega word passed the streams diff"; exit 1; \
 	else echo "red check: one flipped Omega word aborts the streams diff, as it must"; fi
 
-# Each mutant is one edit of streams.om, compiled by the pinned omc into its own binding; the diff build linked with it
-# must abort. 1 ACQUIRE method offset, 2 ACQUIRE payload, 3 completion marker payload, 4 pair marker stride.
+# Each mutant is one edit of streams.om (1-4) or xq.om (5-7), compiled by the pinned omc into its own binding; the diff
+# build linked with it must abort. 1 ACQUIRE method offset, 2 ACQUIRE payload, 3 completion marker payload, 4 pair
+# marker stride, 5 extra-queue index bound, 6 queue 2 order check, 7 queue 3 order check.
 OM_STREAMS_MUTANTS = 's/^k = pw o 0 mthd 0 92 5$$/k = pw o 0 mthd 0 96 5/' \
 	's/^const DONE ulong 6$$/const DONE ulong 7/' \
 	's/^const MARKER1 ulong 1145324612$$/const MARKER1 ulong 1145324613/' \
 	's/^ret add add get a 0 256 mul k 128$$/ret add add get a 0 256 mul k 64/'
+OM_STREAMS_XQ_MUTANTS = 's/^if or eq i 0 gt i 3$$/if or eq i 0 gt i 2/' \
+	's/^if eq q1 0$$/if ne q1 0/' \
+	's/^if or eq q1 0 eq q2 0$$/if eq q1 0/'
 test-om-streams-mutants: $(OUT_DIR)/libomega_gpu.a
 	@[ -x $(OMEGA_MV)/seed/out/omc ] && [ -f $(OMEGA_BRIDGE_DIR)/src/native.om ] || { echo "NOT_RUN: set OMEGA_MV and OMEGA_BRIDGE_DIR"; exit 3; }
 	@n=0; for m in $(OM_STREAMS_MUTANTS); do n=$$((n+1)); d=$(OM_STREAMS_DIR)/mutant$$n; rm -rf $$d; mkdir -p $$d; \
@@ -55,6 +59,15 @@ test-om-streams-mutants: $(OUT_DIR)/libomega_gpu.a
 	OMEGA_UNITS=$$(pwd)/$$d/streams.om OMEGA_UNITS_DEST=$$d OMEGA_OMC=$(OMEGA_MV)/seed/out/omc \
 		OMEGA_BRIDGE=$(OMEGA_BRIDGE_DIR) sh om/units.sh > /dev/null || exit 1; \
 	$(call om_streams_link,$$d/streams,tests/streams_diff_test.c,,$$d/cudapp_om_streams.c) || exit 1; \
+	if $$d/streams > $$d/streams.log 2>&1; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
+	echo "mutant $$n red ('$$m'): $$(grep -m1 -e 'streams diff' -e FAIL $$d/streams.log)"; \
+	done; \
+	for m in $(OM_STREAMS_XQ_MUTANTS); do n=$$((n+1)); d=$(OM_STREAMS_DIR)/mutant$$n; rm -rf $$d; mkdir -p $$d; \
+	sed "$$m" om/streams/xq.om > $$d/xq.om; \
+	if cmp -s $$d/xq.om om/streams/xq.om; then echo "MUTANT $$n BROKEN: '$$m' changed nothing"; exit 1; fi; \
+	OMEGA_SEEDED_OMC=$(OMEGA_MV)/seed/out/omc sh $(OMEGA_BRIDGE_DIR)/tools/bridge-freest c $$d/xq.om \
+		> $$d/cudapp_freest_streams_xq.c || exit 1; \
+	$(call om_streams_link,$$d/streams,tests/streams_diff_test.c,,$$d/cudapp_freest_streams_xq.c) || exit 1; \
 	if $$d/streams > $$d/streams.log 2>&1; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): $$(grep -m1 -e 'streams diff' -e FAIL $$d/streams.log)"; \
 	done

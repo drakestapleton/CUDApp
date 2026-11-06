@@ -407,9 +407,9 @@ OmegaGpuSession *omega_gpu_session_open(void) {
 }
 
 /* Extra queue i against the open set (CUDApp#115): 0 index outside 1..XQ_MAX, 1 already open, 2 an earlier one is not
- * open yet, 3 open it now. Hosted builds ask seeded Omega (om/streams/streams.om op 6); the freestanding link carries
- * no hosted binding and CUDAPP_MIGRATION_PENDING_C_STREAMS selects the C rule, which _STREAMS_DIFF keeps as oracle. */
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
+ * open yet, 3 open it now. Every build, freestanding included, asks seeded Omega (om/streams/xq.om, a bridge-freest
+ * unit); CUDAPP_MIGRATION_PENDING_C_STREAMS selects the C rule, which _STREAMS_DIFF keeps as oracle. */
+#if defined(CUDAPP_MIGRATION_PENDING_C_STREAMS) || defined(CUDAPP_MIGRATION_PENDING_STREAMS_DIFF)
 static uint32_t xq_admit_c(uint32_t i) {
     if (i == 0u || i > XQ_MAX) return 0u;
     if (g_xq[i - 1u].generation != 0u) return 1u;
@@ -418,12 +418,12 @@ static uint32_t xq_admit_c(uint32_t i) {
 }
 #endif
 static uint32_t xq_admit(uint32_t i) {
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_STREAMS)
+#ifdef CUDAPP_MIGRATION_PENDING_C_STREAMS
     return xq_admit_c(i);
 #else
-    uint64_t in[16] = { i }, out[32], r = 0;
-    for (uint32_t j = 0; j < XQ_MAX; j++) in[j + 1u] = g_xq[j].generation != 0u;
-    if (omega_streams_words(&r, 6u, in, 16u, out, 32u) != 0 || r > 3u) return 0u;
+    uint64_t open = 0, r = 0;
+    for (uint32_t j = 0; j < XQ_MAX; j++) if (g_xq[j].generation != 0u) open |= 1ull << (j + 1u);
+    if (omega_streams_xq(&r, i, open) != 0 || r > 3u) return 0u;
 #ifdef CUDAPP_MIGRATION_PENDING_STREAMS_DIFF
     if (r != xq_admit_c(i)) {
         char line[96];

@@ -541,7 +541,7 @@ static int ref_poll_word(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint32
     if (token == 0) {
         uint64_t mapping = 0, byte_off = 0;
         omega_native_context *live = NULL;
-        if (omega_gpu_live_marker((const void *)w, &mapping, &byte_off, &live) == 0 && mapping != 0 && live) {
+        if (omega_gpu_live_marker(&r->m16.rm, (const void *)w, &mapping, &byte_off, &live) == 0 && mapping != 0 && live) {
             token = mapping;
             map_off = byte_off;
             pctx = live;

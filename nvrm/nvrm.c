@@ -175,6 +175,25 @@ static int select_classes(Nvrm *rm, const uint32_t *classes, uint32_t count,
 #define NV_IOWR(nr, sz) _IOC(_IOC_READ | _IOC_WRITE, NV_IOCTL_MAGIC, (nr), (sz))
 #include "native_client.h"
 
+/* The platform marker poll's lookup (src/omega_gpu_platform_linux.c ref_poll_word). 0: cpu lies in one checked
+ * live mapping of rm; *mapping and *offset are that mapping's token and byte offset and *ctx is rm's own transport
+ * context, the only context the token is valid in. No registry, no global: the caller names the Nvrm. */
+int omega_gpu_live_marker(const Nvrm *rm, const void *cpu, uint64_t *mapping, uint64_t *offset,
+                          struct omega_native_context **ctx) {
+    if (!ctx || !mapping || !offset) { errno = EINVAL; return -1; }
+    *ctx = NULL;
+#if NVRM_C_TRANSPORT
+    (void)rm; (void)cpu;
+    errno = ENOTSUP;
+    return -1;
+#else
+    if (!rm) { errno = EINVAL; return -1; }
+    if (nvrm_live_token(rm, cpu, sizeof(uint32_t), mapping, offset) != 0) return -1;
+    *ctx = rm->omega_context;
+    return 0;
+#endif
+}
+
 static int fail(Nvrm *rm, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);

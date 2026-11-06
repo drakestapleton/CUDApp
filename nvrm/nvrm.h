@@ -138,6 +138,12 @@ typedef struct {
     char     err[256];
 } Nvrm;
 
+/* 0 when cpu lies in one checked live mapping of rm: the caller reads the 32-bit word through *ctx (rm's own
+ * transport context) at *mapping + *offset. -1 with errno EINVAL (no rm/outputs), EFAULT (no owner) or ENOTSUP
+ * (C transport build); *ctx is then NULL. Defined in nvrm.c. */
+struct omega_native_context;
+int  omega_gpu_live_marker(const Nvrm *rm, const void *cpu, uint64_t *mapping, uint64_t *offset,
+                           struct omega_native_context **ctx);
 int  nvrm_open(Nvrm *rm);
 int  nvrm_alloc(Nvrm *rm, uint64_t size, NvrmMem *out);
 /* Local framebuffer on discrete SM86, CPU BAR mapped by RM_MAP_MEMORY. The

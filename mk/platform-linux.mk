@@ -59,3 +59,46 @@ test-platform-linux-fake-device: $(OUT_DIR)/platform_linux_fake_devctl
 	@chmod +x $(OUT_DIR)/fake_devctl_mutant
 	@$(OUT_DIR)/fake_devctl_mutant; test $$? -eq 4
 	@echo "PASS platform linux fake-device fixture (mutant exit 4)"
+
+# omega_gpu_live_marker (nvrm/nvrm.c) and its sole caller ref_poll_word. Host only, no device. The NVRM test maps
+# memfd pages through the native client; the platform test replaces memfd_create so the poll must take the lookup.
+# Each mutant breaks one rule in a copy and must fail: the lookup returning no/another context or ignoring the size,
+# the caller polling plat_wait_ctx, passing NULL for rm or dropping the offset.
+CARRIED_HOST_TESTS += test-live-marker
+.PHONY: test-live-marker
+LIVE_MARKER_MUT = $(OUT_DIR)/live_marker_mut
+LIVE_MARKER_NVRM_LINK = src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) \
+	om/platform-linux/gen/link/plat_fx_wait.c
+LIVE_MARKER_NVRM_CC = $(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -Invrm -Isrc
+LIVE_MARKER_PLAT_CC = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests $(GPU_ENGINE_PHYS_INC)
+$(OUT_DIR)/nvrm_live_marker: nvrm/live_marker_test.c nvrm/nvrm.c nvrm/nvrm.h nvrm/native_client.h $(LIVE_MARKER_NVRM_LINK)
+	@mkdir -p $(OUT_DIR)
+	$(LIVE_MARKER_NVRM_CC) -o $@ nvrm/live_marker_test.c $(LIVE_MARKER_NVRM_LINK)
+$(OUT_DIR)/platform_linux_live_marker: tests/platform_linux_live_marker.c tests/fake_m16_native.c $(GPU_LINUX_REF_SRCS) $(GPU_LINUX_REF_CMDLIST_SRCS)
+	@mkdir -p $(OUT_DIR)
+	$(LIVE_MARKER_PLAT_CC) -o $@ tests/platform_linux_live_marker.c tests/fake_m16_native.c $(GPU_LINUX_REF_SRCS) $(GPU_LINUX_REF_CMDLIST_SRCS) -lm
+test-live-marker: $(OUT_DIR)/nvrm_live_marker $(OUT_DIR)/platform_linux_live_marker
+	./$(OUT_DIR)/nvrm_live_marker
+	./$(OUT_DIR)/platform_linux_live_marker
+	@mkdir -p $(LIVE_MARKER_MUT)
+	@set -e; killed=0; \
+	nmut() { name=$$1; script=$$2; d=$(LIVE_MARKER_MUT)/$$name; mkdir -p $$d; \
+	  sed -e "$$script" nvrm/nvrm.c > $$d/nvrm.c; cp nvrm/live_marker_test.c $$d/; \
+	  if cmp -s nvrm/nvrm.c $$d/nvrm.c; then echo "mutant $$name: pattern not found"; exit 1; fi; \
+	  $(LIVE_MARKER_NVRM_CC) -o $$d/t $$d/live_marker_test.c $(LIVE_MARKER_NVRM_LINK); \
+	  if ./$$d/t > $$d/log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
+	  echo "mutant $$name killed"; killed=$$((killed+1)); }; \
+	pmut() { name=$$1; script=$$2; d=$(LIVE_MARKER_MUT)/$$name; mkdir -p $$d; \
+	  sed -e "$$script" src/omega_gpu_platform_linux.c > $$d/omega_gpu_platform_linux.c; \
+	  if cmp -s src/omega_gpu_platform_linux.c $$d/omega_gpu_platform_linux.c; then echo "mutant $$name: pattern not found"; exit 1; fi; \
+	  srcs=$$(echo $(GPU_LINUX_REF_SRCS) | tr ' ' '\n' | grep -v '^src/omega_gpu_platform_linux.c$$' | tr '\n' ' '); \
+	  $(LIVE_MARKER_PLAT_CC) -o $$d/t tests/platform_linux_live_marker.c tests/fake_m16_native.c $$d/omega_gpu_platform_linux.c $$srcs $(GPU_LINUX_REF_CMDLIST_SRCS) -lm; \
+	  if ./$$d/t > $$d/log 2>&1; then echo "mutant $$name SURVIVED"; exit 1; fi; \
+	  echo "mutant $$name killed"; killed=$$((killed+1)); }; \
+	nmut ctx-null 's|\*ctx = rm->omega_context;|*ctx = NULL;|'; \
+	nmut ctx-foreign 's|\*ctx = rm->omega_context;|*ctx = (struct omega_native_context *)rm;|'; \
+	nmut size-zero 's|nvrm_live_token(rm, cpu, sizeof(uint32_t),|nvrm_live_token(rm, cpu, 0,|'; \
+	pmut plat-wait-ctx 's|            pctx = live;|            pctx = plat_wait_ctx;|'; \
+	pmut ignore-rm 's|omega_gpu_live_marker(&r->m16.rm, |omega_gpu_live_marker(NULL, |'; \
+	pmut no-offset 's|            map_off = byte_off;|            map_off = 0;|'; \
+	test $$killed -eq 6; echo "LIVE MARKER PASS (NVRM lookup + platform caller; 6 mutants killed; HOST_ONLY)"

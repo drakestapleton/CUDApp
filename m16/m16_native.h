@@ -51,9 +51,5 @@ int  m16_native_wait_marker_ge(volatile uint32_t *marker, uint32_t target, uint6
 
 /* Free all RM objects, mappings, and close file descriptors */
 int  m16_native_close(M16NativeContext *ctx);
-/* Integrator lookup. 0 means cpu lies in a checked live mapping; the caller mapgets
- * *mapping at *offset through *ctx. A negative result is not a mapping. */
-struct omega_native_context;
-int omega_gpu_live_marker(const void *cpu, uint64_t *mapping, uint64_t *offset, struct omega_native_context **ctx);
 
 #endif /* M16_NATIVE_H */

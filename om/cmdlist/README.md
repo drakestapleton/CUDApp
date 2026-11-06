@@ -23,6 +23,10 @@ since the most recent drain are compared; comparing only adjacent launches is
 incorrect. RAW, WAR and WAW require a drain; read/read overlap does not. Empty
 access sets mean **known empty**. Legacy records mean **unknown**, conservatively
 conflicting with every other record. Descriptors are copied and validated.
+For multiple virtual mappings of the same storage, the producer must normalize
+effects to one canonical interval namespace. Distinct raw VAs do not prove
+physical independence. If that normalization is unavailable, retain unknown
+effects and their conservative drains.
 
 The first launch retains an admission WFI and full shader-cache invalidation.
 Hazards retain that same pair. Independent launches omit both. Completion release

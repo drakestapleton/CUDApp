@@ -83,7 +83,9 @@ typedef struct {
 } OmegaGpuCmdListStats;
 
 /* Complete launch memory effects, expressed as half-open GPU VA intervals.
- * Overlapping intervals alias even when their base addresses differ. READ|WRITE
+ * Overlapping intervals alias even when their base addresses differ. Multiple
+ * mappings of the same storage must use one canonical interval namespace; if
+ * aliases cannot be normalized, record legacy unknown effects instead. READ|WRITE
  * describes an in-place buffer. Code, immutable launch banks and QMD slots are
  * admitted by the leading barrier, not user-data dependencies. */
 #define OMEGA_GPU_CMDLIST_MAX_ACCESSES 16u

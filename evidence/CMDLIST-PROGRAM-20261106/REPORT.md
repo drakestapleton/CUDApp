@@ -21,6 +21,8 @@ The additive runtime API is **0.14.0**. Header, manifest and API guide change to
 
 The setter supports existing `_record` helpers, changes no bank/QMD bytes and preserves the previous descriptor if a replacement is rejected. Legacy recordings without annotations are explicitly unknown and retain conservative drains; an explicitly empty access set is different. Invalid or overflowing intervals are refused. The planner considers every outstanding dispatch since the last drain, not just adjacent launches, and classifies RAW, WAR and WAW hazards. It emits zero submissions for an empty program and exactly one for a nonempty program that fits. A capacity or pushbuffer-budget failure is refused, never silently split. Admission and optional final completion waits remain. Manual barrier/skip/cross-wait options that would invalidate this contract are rejected by the whole-program API.
 
+Alias normalization is part of that completeness contract: multiple virtual mappings of the same physical storage must use common canonical intervals, or remain unknown. Distinct raw VAs alone do not prove physical independence; the planner has no hidden physical-mapping oracle. Header/API/README comments explicitly document this precondition. These comment-only clarifications were added after the final host gate; executable policy and API declarations are unchanged.
+
 The launch-cost producer has a `--program` path with complete input/table/weight/scale/output ranges. Actual model-graph producer annotation belongs to the coordinated ModelGraphsOm lane; no fabricated full-token access trace is used here. Existing legacy submit behavior remains available and uses seeded layout policy.
 
 ## Why independent waits can be dropped

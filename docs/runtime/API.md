@@ -505,6 +505,10 @@ Up to `OMEGA_GPU_CMDLIST_MAX_LAUNCHES` (4096) launches per list.
 
 `OmegaGpuCmdListAccess` supplies a complete set of half-open GPU VA/byte ranges and
 `OMEGA_GPU_CMDLIST_ACCESS_READ` / `_WRITE` bits (combine both for in-place updates).
+Different virtual mappings of the same storage must be normalized to a common
+canonical interval namespace before annotation; the planner cannot discover
+physical aliases from distinct VAs. If the producer cannot establish that
+normalization, leave the record's effects unknown rather than claim independence.
 `omega_gpu_cmdlist_add_accesses` copies up to `OMEGA_GPU_CMDLIST_MAX_ACCESSES` ranges;
 zero ranges means known empty. `omega_gpu_cmdlist_set_accesses` attaches or replaces
 the complete set on an existing launch recorded by a kernel helper, without

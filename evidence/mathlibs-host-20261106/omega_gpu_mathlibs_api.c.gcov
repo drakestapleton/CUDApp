@@ -1,0 +1,2318 @@
+        -:    0:Source:src/omega_gpu_mathlibs_api.c
+        -:    0:Graph:~/work/cudastack/lanes/MathlibsHostOm/build/mathlibs-host-om/differential-mathlibs_host_om_test.gcno
+        -:    0:Data:~/work/cudastack/lanes/MathlibsHostOm/build/mathlibs-host-om/differential-mathlibs_host_om_test.gcda
+        -:    0:Runs:2
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* Device execution and byte-moving effects for the seeded Omega mathlibs units.
+        -:    3: * Host planning/admission is in om/mathlibs/host.om. The default-OFF C branch
+        -:    4: * is retained solely as the migration differential oracle. */
+        -:    5:#include "omega_gpu_mathlibs_api.h"
+        -:    6:
+        -:    7:#include <stdbool.h>
+        -:    8:#include <stdlib.h>
+        -:    9:#include <string.h>
+        -:   10:#include <time.h>
+        -:   11:
+        -:   12:#include "omega_blackwell_codegen.h"
+        -:   13:#include "omega_gpu_om_ir.h"
+        -:   14:#include "omega_gpu_session.h"
+        -:   15:#include "omega_gpu_mathlibs_host.h"
+        -:   16:
+        -:   17:#ifndef CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+        -:   18:#define CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST 0
+        -:   19:#endif
+        -:   20:
+        -:   21:#define ML_POISON32 0xffbadbadu
+        -:   22:#define ML_POISON32_ALT 0x00badbadu
+        -:   23:#define ML_POISON64 0xffbadbadffbadbadull
+        -:   24:#define ML_WAIT_MS 600000ull
+        -:   25:#define ML_GOLDEN 11400714819323198485ull /* SplitMix64 increment, 0x9E3779B97F4A7C15 */
+        -:   26:
+        -:   27:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+        -:   28:#define ml_sub(a, b) ((a) - (b))
+        -:   29:#define ml_mul(a, b) ((a) * (b))
+        -:   30:#define ml_overlap(a, na, b, nb) ((b) < (a) + (na) && (a) < (b) + (nb))
+        -:   31:#define ml_scan(n, v) ((n) + ((v) == ML_POISON32))
+        -:   32:#else
+        -:   33:#define ml_sub omega_mh_sub
+        -:   34:#define ml_mul omega_mh_mul
+        -:   35:#define ml_overlap(a, na, b, nb) omega_mh_overlap((uintptr_t)(a), (na), (uintptr_t)(b), (nb))
+        -:   36:#define ml_scan(n, v) omega_mh_add((n), omega_mh_poison((v), 0, 0, 0))
+        -:   37:#endif
+        -:   38:
+        -:   39:/* One kernel per (kind, a, b, mutant), device copy uploaded once and resident for the process. */
+        -:   40:typedef struct {
+        -:   41:    int used;
+        -:   42:    uint64_t kind, a, b, mutant;
+        -:   43:    uint32_t threads, declared;
+        -:   44:    uint8_t *buf;
+        -:   45:    OmegaBlackwellKernel kernel;
+        -:   46:    OmegaGpuMem code;
+        -:   47:} Slot;
+        -:   48:static Slot g_cache[64];
+        -:   49:static int g_mutant_which, g_mutant_level;
+        -:   50:static OmegaGpuScratch g_in, g_out, g_tw, g_scr, g_s1, g_w, g_w2, g_b; /* g_s1..g_b: omega_gpu_fft_many */
+        -:   51:static bool g_hooked;
+        -:   52:
+function now_ns called 46 returned 100% blocks executed 100%
+       46:   53:static uint64_t now_ns(void) {
+        -:   54:    struct timespec t;
+       46:   55:    clock_gettime(CLOCK_MONOTONIC, &t);
+call    0 returned 46
+        -:   56:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+       46:   57:    return (uint64_t)t.tv_sec * 1000000000ULL + (uint64_t)t.tv_nsec;
+        -:   58:#else
+        -:   59:    return omega_mh_time((uint64_t)t.tv_sec, (uint64_t)t.tv_nsec);
+        -:   60:#endif
+        -:   61:}
+        -:   62:
+function slot_clear called 0 returned 0% blocks executed 0%
+    #####:   63:static void slot_clear(Slot *s) {
+    #####:   64:    free(s->buf);
+    #####:   65:    omega_gpu_session_free(&s->code);
+call    0 never executed
+    #####:   66:    memset(s, 0, sizeof *s);
+    #####:   67:}
+        -:   68:
+function cache_clear_locked called 0 returned 0% blocks executed 0%
+    #####:   69:static void cache_clear_locked(void) {
+    #####:   70:    for (size_t i = 0; i < sizeof g_cache / sizeof g_cache[0]; i++)
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:   71:        if (g_cache[i].used) slot_clear(&g_cache[i]);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:   72:}
+        -:   73:
+function oracle_cache_clear called 0 returned 0% blocks executed 0%
+    #####:   74:void omega_gpu_mathlibs_cache_clear(void) {
+    #####:   75:    omega_gpu_session_lock();
+call    0 never executed
+    #####:   76:    cache_clear_locked();
+call    0 never executed
+    #####:   77:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:   78:}
+        -:   79:
+function on_session_close called 0 returned 0% blocks executed 0%
+    #####:   80:static void on_session_close(void) {
+    #####:   81:    cache_clear_locked();
+call    0 never executed
+    #####:   82:    omega_gpu_session_scratch_free(&g_in);
+call    0 never executed
+    #####:   83:    omega_gpu_session_scratch_free(&g_out);
+call    0 never executed
+    #####:   84:    omega_gpu_session_scratch_free(&g_tw);
+call    0 never executed
+    #####:   85:    omega_gpu_session_scratch_free(&g_scr);
+call    0 never executed
+    #####:   86:    omega_gpu_session_scratch_free(&g_s1);
+call    0 never executed
+    #####:   87:    omega_gpu_session_scratch_free(&g_w);
+call    0 never executed
+    #####:   88:    omega_gpu_session_scratch_free(&g_w2);
+call    0 never executed
+    #####:   89:    omega_gpu_session_scratch_free(&g_b);
+call    0 never executed
+    #####:   90:}
+        -:   91:
+function oracle_set_mutant called 0 returned 0% blocks executed 0%
+    #####:   92:void omega_gpu_mathlibs_test_set_mutant(int which, int level) {
+    #####:   93:    omega_gpu_session_lock();
+call    0 never executed
+    #####:   94:    g_mutant_which = which;
+    #####:   95:    g_mutant_level = level < 0 ? 0 : level > 6 ? 6 : level;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:   96:    cache_clear_locked();
+call    0 never executed
+    #####:   97:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:   98:}
+        -:   99:
+function oracle_last_error called 0 returned 0% blocks executed 0%
+    #####:  100:const char *omega_gpu_mathlibs_last_error(void) { return omega_gpu_session_last_error(); }
+call    0 never executed
+        -:  101:
+        -:  102:/* Caller holds the lock. Builds the kernel on a miss; uploads it when upload is set. */
+        -:  103:/* Mutant targets: which 1 RNG (kind 0), 2 FFT (kind 1), 3 Philox (kind 3), 4 real split / merge (kind 4),
+        -:  104: * 5 transpose (kind 5), 7 Stockham pass (kind 7), 8 Bluestein step (kind 8), 9 strided copy (kind 9). */
+function kernel_for called 0 returned 0% blocks executed 0%
+    #####:  105:static int kernel_for(uint64_t kind, uint64_t a, uint64_t b, uint32_t threads, bool upload, Slot **out, bool *hit) {
+    #####:  106:    bool target = (g_mutant_which == 1 && kind == 0) || (g_mutant_which == 2 && kind == 1) ||
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  107:                  (g_mutant_which >= 3 && (uint64_t)g_mutant_which == kind);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  108:    uint64_t mutant = target ? (uint64_t)g_mutant_level : 0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  109:    Slot *s = NULL;
+    #####:  110:    *hit = false;
+    #####:  111:    for (size_t i = 0; i < sizeof g_cache / sizeof g_cache[0]; i++)
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  112:        if (g_cache[i].used && g_cache[i].kind == kind && g_cache[i].a == a && g_cache[i].b == b &&
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  113:            g_cache[i].mutant == mutant) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  114:            s = &g_cache[i];
+    #####:  115:            *hit = true;
+    #####:  116:            break;
+        -:  117:        }
+    #####:  118:    if (!s) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  119:        BlackwellIRProgram *prog = (BlackwellIRProgram *)malloc(sizeof *prog);
+    #####:  120:        uint8_t *buf = (uint8_t *)malloc(OMEGA_BW_CODE_CAP_MAX);
+        -:  121:        OmegaBlackwellKernel k;
+    #####:  122:        uint32_t declared = 0;
+    #####:  123:        int rc = (prog && buf) ? omega_gpu_om_ir_build(kind, a, b, mutant, threads, prog, buf, OMEGA_BW_CODE_CAP_MAX,
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+        -:  124:                                                       &k, &declared, NULL)
+    #####:  125:                               : OMEGA_OM_IR_REPLAY;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  126:        free(prog);
+    #####:  127:        if (rc != OMEGA_OM_IR_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  128:            free(buf);
+    #####:  129:            omega_gpu_session_set_error(omega_gpu_om_ir_rc_name(rc));
+call    0 never executed
+call    1 never executed
+    #####:  130:            return OMEGA_GPU_ML_CODEGEN_FAIL;
+        -:  131:        }
+    #####:  132:        size_t slot = 0;
+    #####:  133:        for (size_t i = 0; i < sizeof g_cache / sizeof g_cache[0]; i++)
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  134:            if (!g_cache[i].used) { slot = i; break; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  135:        s = &g_cache[slot];
+    #####:  136:        if (s->used) slot_clear(s); /* full: evict slot 0 */
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  137:        s->used = 1;
+    #####:  138:        s->kind = kind; s->a = a; s->b = b; s->mutant = mutant;
+    #####:  139:        s->threads = threads; s->declared = declared;
+    #####:  140:        s->buf = buf;
+    #####:  141:        s->kernel = k;
+        -:  142:    }
+    #####:  143:    if (upload && !s->code.cpu) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  144:        if (omega_gpu_session_alloc_code(s->kernel.code_size, &s->code) != 0) return OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  145:        memcpy(s->code.cpu, s->kernel.code, s->kernel.code_size);
+    #####:  146:        if (omega_gpu_session_sync_to_gpu(&s->code) != 0) { omega_gpu_session_free(&s->code); return OMEGA_GPU_ML_CHIP_FAIL; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+        -:  147:    }
+    #####:  148:    *out = s;
+    #####:  149:    return OMEGA_GPU_ML_OK;
+        -:  150:}
+        -:  151:
+function info_kernel called 0 returned 0% blocks executed 0%
+    #####:  152:static void info_kernel(OmegaGpuMathInfo *info, const Slot *s, bool hit) {
+    #####:  153:    if (!info) return;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  154:    info->kernel_cache_hit = hit;
+    #####:  155:    info->insn_count = (uint32_t)s->kernel.insn_count;
+    #####:  156:    info->gpr_peak = s->kernel.gpr_count;
+    #####:  157:    info->gpr_declared = s->declared;
+    #####:  158:    memcpy(info->code_digest, s->kernel.code_digest, 32);
+    #####:  159:    info->threads_per_cta = s->threads;
+        -:  160:}
+        -:  161:
+function info_begin called 0 returned 0% blocks executed 0%
+    #####:  162:static void info_begin(OmegaGpuMathInfo *info, const Slot *s, bool hit) {
+    #####:  163:    if (!info) return;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  164:    memset(info, 0, sizeof *info);
+    #####:  165:    info_kernel(info, s, hit);
+call    0 never executed
+        -:  166:}
+        -:  167:
+function codegen_only called 0 returned 0% blocks executed 0%
+    #####:  168:static int codegen_only(uint64_t kind, uint64_t a, uint64_t b, uint32_t threads, OmegaGpuMathInfo *info) {
+    #####:  169:    omega_gpu_session_lock();
+call    0 never executed
+        -:  170:    Slot *s;
+        -:  171:    bool hit;
+    #####:  172:    int rc = kernel_for(kind, a, b, threads, false, &s, &hit);
+call    0 never executed
+    #####:  173:    if (rc == OMEGA_GPU_ML_OK) info_begin(info, s, hit);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  174:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:  175:    return rc;
+        -:  176:}
+        -:  177:
+        -:  178:/* Caller holds the lock: open the shared device, build and upload the kernel. */
+function begin called 0 returned 0% blocks executed 0%
+    #####:  179:static int begin(uint64_t kind, uint64_t a, uint64_t b, uint32_t threads, Slot **s, OmegaGpuMathInfo *info) {
+    #####:  180:    if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  181:    if (!omega_gpu_session_open()) return OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  182:    bool hit;
+    #####:  183:    int rc = kernel_for(kind, a, b, threads, true, s, &hit);
+call    0 never executed
+    #####:  184:    if (rc == OMEGA_GPU_ML_OK) info_begin(info, *s, hit);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  185:    return rc;
+        -:  186:}
+        -:  187:
+function launch called 0 returned 0% blocks executed 0%
+    #####:  188:static int launch(const Slot *s, const uint32_t *args, uint32_t n_args, uint32_t grid, size_t elements,
+        -:  189:                  uint32_t shared_bytes, OmegaGpuMathInfo *info) {
+    #####:  190:    OmegaGpuLaunch L = {
+    #####:  191:        .code_va = s->code.va, .gpr_count = s->declared, .threads_x = s->threads, .threads_y = 1,
+        -:  192:        .grid_x = grid, .grid_y = 1, .num_elements = elements, .args = args, .n_args = n_args,
+        -:  193:        .timeout_ms = ML_WAIT_MS, .shared_bytes = shared_bytes,
+        -:  194:    };
+    #####:  195:    uint64_t elapsed = 0;
+    #####:  196:    uint32_t marker = 0;
+    #####:  197:    if (omega_gpu_session_launch(&L, &elapsed, &marker) != 0) return OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  198:    if (info) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  199:        info->chip_calls++;
+    #####:  200:        info->elapsed_ns += elapsed;
+    #####:  201:        info->completion_marker = marker;
+    #####:  202:        info->ctas_last_launch = grid;
+        -:  203:    }
+    #####:  204:    return OMEGA_GPU_ML_OK;
+        -:  205:}
+        -:  206:
+function put64 called 0 returned 0% blocks executed 0%
+    #####:  207:static void put64(uint32_t *w, uint64_t v) { w[0] = (uint32_t)v; w[1] = (uint32_t)(v >> 32); }
+        -:  208:
+        -:  209:/* ------------------------------------------------------------------ RNG */
+        -:  210:
+        -:  211:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+function rng_args_ok called 730 returned 100% blocks executed 100%
+      730:  212:static int rng_args_ok(OmegaGpuRngKind kind, uint32_t nstreams, uint32_t per) {
+      730:  213:    if ((unsigned)kind > OMEGA_GPU_RNG_NORMAL || nstreams == 0 || per == 0) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 548 (fallthrough)
+branch  1 taken 182
+branch  2 taken 486 (fallthrough)
+branch  3 taken 62
+branch  4 taken 50 (fallthrough)
+branch  5 taken 436
+      436:  214:    if (nstreams > OMEGA_GPU_RNG_MAX_STREAMS || (uint64_t)nstreams * per > OMEGA_GPU_RNG_MAX_OUTPUTS)
+branch  0 taken 324 (fallthrough)
+branch  1 taken 112
+branch  2 taken 48 (fallthrough)
+branch  3 taken 276
+      160:  215:        return OMEGA_GPU_ML_TOO_LARGE;
+      276:  216:    return OMEGA_GPU_ML_OK;
+        -:  217:}
+        -:  218:
+function oracle_rng_codegen called 0 returned 0% blocks executed 0%
+    #####:  219:int omega_gpu_rng_codegen(OmegaGpuRngKind kind, OmegaGpuMathInfo *info) {
+    #####:  220:    if ((unsigned)kind > OMEGA_GPU_RNG_NORMAL) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  221:    return codegen_only(0, (uint64_t)kind, 0, OMEGA_GPU_RNG_THREADS, info);
+call    0 never executed
+        -:  222:}
+        -:  223:
+function oracle_rng_generate called 12 returned 100% blocks executed 13%
+       12:  224:int omega_gpu_rng_generate(OmegaGpuRngKind kind, uint64_t seed, uint64_t stream0, uint32_t nstreams,
+        -:  225:                           uint32_t offset, uint32_t per_stream, void *out, OmegaGpuMathInfo *info) {
+       12:  226:    if (!out) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 10
+       10:  227:    int rc = rng_args_ok(kind, nstreams, per_stream);
+call    0 returned 10
+       10:  228:    if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 10 (fallthrough)
+branch  1 taken 0
+    #####:  229:    uint64_t t0 = now_ns();
+call    0 never executed
+    #####:  230:    size_t count = (size_t)nstreams * per_stream;
+    #####:  231:    size_t esize = kind == OMEGA_GPU_RNG_U64 ? 8u : 4u;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  232:    size_t bytes = count * esize;
+    #####:  233:    omega_gpu_session_lock();
+call    0 never executed
+        -:  234:    Slot *s;
+    #####:  235:    rc = begin(0, (uint64_t)kind, 0, OMEGA_GPU_RNG_THREADS, &s, info);
+call    0 never executed
+    #####:  236:    if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_scratch(&g_out, bytes) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  237:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  238:        uint32_t *dev = (uint32_t *)g_out.mem.cpu;
+    #####:  239:        for (size_t i = 0; i < bytes / 4; i++) dev[i] = ML_POISON32;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  240:        if (omega_gpu_session_sync_to_gpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  241:        /* 0x380 out, 0x388 + 8 i base_i, 0x3a8 skip, 0x3ac per-stream count, 0x3b0 streams */
+        -:  242:        uint32_t args[13];
+    #####:  243:        put64(&args[0], g_out.mem.va);
+call    0 never executed
+    #####:  244:        uint64_t x = seed + stream0;
+    #####:  245:        for (int i = 0; i < 4; i++) { x += ML_GOLDEN; put64(&args[2 + 2 * i], x); }
+call    0 never executed
+branch  1 never executed
+branch  2 never executed (fallthrough)
+    #####:  246:        args[10] = offset;
+    #####:  247:        args[11] = per_stream;
+    #####:  248:        args[12] = nstreams;
+    #####:  249:        uint32_t grid = (nstreams + OMEGA_GPU_RNG_THREADS - 1) / OMEGA_GPU_RNG_THREADS;
+    #####:  250:        if (rc == OMEGA_GPU_ML_OK) rc = launch(s, args, 13, grid, count, 0, info);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  251:        if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  252:        if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  253:            memcpy(out, g_out.mem.cpu, bytes);
+    #####:  254:            uint64_t unwritten = 0;
+    #####:  255:            if (esize == 8) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  256:                for (size_t i = 0; i < count; i++) unwritten += ((const uint64_t *)out)[i] == ML_POISON64;
+branch  0 never executed
+branch  1 never executed
+        -:  257:            } else {
+    #####:  258:                for (size_t i = 0; i < count; i++) unwritten += ((const uint32_t *)out)[i] == ML_POISON32;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  259:            }
+    #####:  260:            if (info) info->unwritten_words = unwritten;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  261:            if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  262:        }
+        -:  263:    }
+    #####:  264:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:  265:    if (info) info->call_ns = now_ns() - t0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  266:    return rc;
+        -:  267:}
+        -:  268:#endif
+        -:  269:
+        -:  270:/* ------------------------------------------------------------------ FFT */
+        -:  271:
+function lg_in called 924 returned 100% blocks executed 100%
+      924:  272:static int lg_in(uint32_t n, uint32_t lo, uint32_t hi) {
+        -:  273:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+      924:  274:    if (n < lo || n > hi || (n & (n - 1)) != 0) return -1;
+branch  0 taken 838 (fallthrough)
+branch  1 taken 86
+branch  2 taken 766 (fallthrough)
+branch  3 taken 72
+branch  4 taken 30 (fallthrough)
+branch  5 taken 736
+      736:  275:    int k = 0;
+     4170:  276:    while ((1u << k) < n) k++;
+branch  0 taken 3434
+branch  1 taken 736 (fallthrough)
+      736:  277:    return k;
+        -:  278:#else
+        -:  279:    uint64_t k = omega_mh_lg(n, lo, hi);
+        -:  280:    return k == UINT32_MAX ? -1 : (int)k;
+        -:  281:#endif
+        -:  282:}
+        -:  283:
+function fft_log2 called 768 returned 100% blocks executed 100%
+      768:  284:static int fft_log2(uint32_t n) { return lg_in(n, OMEGA_GPU_FFT_MIN_N, OMEGA_GPU_FFT_MAX_N); }
+call    0 returned 768
+        -:  285:
+        -:  286:static float g_twf[2u * OMEGA_GPU_FFT_REAL_MAX_N];
+        -:  287:static uint64_t g_words[OMEGA_OM_IR_WORDS];
+        -:  288:
+        -:  289:/* Caller holds the lock: g_twf = the unit's f32 table of 2^lg points (kind 2). */
+function twiddles_locked called 664 returned 100% blocks executed 88%
+      664:  290:static int twiddles_locked(uint64_t lg, uint64_t inverse) {
+     664*:  291:    if (omega_gpu_om_ir_data(2, lg, inverse, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;
+call    0 returned 664
+branch  1 taken 0 (fallthrough)
+branch  2 taken 664
+   190088:  292:    for (uint32_t m = 0; m < (1u << lg); m++) {
+branch  0 taken 189424
+branch  1 taken 664 (fallthrough)
+   189424:  293:        uint32_t re = (uint32_t)g_words[m], im = (uint32_t)(g_words[m] >> 32);
+   189424:  294:        memcpy(&g_twf[2 * m], &re, 4);
+   189424:  295:        memcpy(&g_twf[2 * m + 1], &im, 4);
+        -:  296:    }
+      664:  297:    return OMEGA_GPU_ML_OK;
+        -:  298:}
+        -:  299:
+function oracle_fft_codegen called 0 returned 0% blocks executed 0%
+    #####:  300:int omega_gpu_fft_codegen(uint32_t n, int inverse, OmegaGpuMathInfo *info) {
+    #####:  301:    int lg = fft_log2(n);
+call    0 never executed
+    #####:  302:    if (lg < 0 || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  303:    return codegen_only(1, (uint64_t)lg, (uint64_t)inverse, n / 4, info);
+call    0 never executed
+        -:  304:}
+        -:  305:
+function oracle_fft_twiddles called 0 returned 0% blocks executed 0%
+    #####:  306:int omega_gpu_fft_twiddles(uint32_t n, int inverse, float *tw) {
+    #####:  307:    int lg = fft_log2(n);
+call    0 never executed
+    #####:  308:    if (lg < 0 || !tw || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  309:    omega_gpu_session_lock();
+call    0 never executed
+    #####:  310:    int rc = twiddles_locked((uint64_t)lg, (uint64_t)inverse);
+call    0 never executed
+    #####:  311:    if (rc == OMEGA_GPU_ML_OK) memcpy(tw, g_twf, (size_t)8 * n);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  312:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:  313:    return rc;
+        -:  314:}
+        -:  315:
+        -:  316:static int many_basic(OmegaGpuFftType type, uint32_t rank, const uint32_t *n, uint32_t batch, int inverse,
+        -:  317:                      const float *in, float *out, OmegaGpuMathInfo *info);
+        -:  318:
+        -:  319:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+function oracle_fft_c2c called 18 returned 100% blocks executed 25%
+       18:  320:int omega_gpu_fft_c2c(const float *in, float *out, uint32_t n, uint32_t batch, int inverse, OmegaGpuMathInfo *info) {
+       18:  321:    int lg = fft_log2(n);
+call    0 returned 18
+       18:  322:    if (lg < 0 && n >= 2 && n <= OMEGA_GPU_FFT_MANY_MAX_N)
+branch  0 taken 14 (fallthrough)
+branch  1 taken 4
+branch  2 taken 10 (fallthrough)
+branch  3 taken 4
+branch  4 taken 6 (fallthrough)
+branch  5 taken 4
+        6:  323:        return many_basic(OMEGA_GPU_FFT_TYPE_C2C, 1, &n, batch, inverse, in, out, info);
+call    0 returned 6
+      12*:  324:    if (lg < 0 || !in || !out || batch == 0 || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 4 (fallthrough)
+branch  1 taken 8
+branch  2 taken 4 (fallthrough)
+branch  3 taken 0
+branch  4 taken 4 (fallthrough)
+branch  5 taken 0
+branch  6 taken 4 (fallthrough)
+branch  7 taken 0
+branch  8 taken 0 (fallthrough)
+branch  9 taken 4
+branch 10 never executed (fallthrough)
+branch 11 never executed
+        4:  325:    size_t floats = (size_t)2 * n * batch;
+       4*:  326:    if (floats > ((size_t)1 << 28)) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 4
+        4:  327:    if ((out < in + floats) && (in < out + floats)) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 4 (fallthrough)
+branch  1 taken 0
+branch  2 taken 4 (fallthrough)
+branch  3 taken 0
+    #####:  328:    float *tw = (float *)malloc((size_t)2 * n * sizeof *tw);
+    #####:  329:    if (!tw) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  330:    int rc = omega_gpu_fft_twiddles(n, inverse, tw);
+call    0 never executed
+    #####:  331:    if (rc != OMEGA_GPU_ML_OK) { free(tw); return rc; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  332:    uint64_t t0 = now_ns();
+call    0 never executed
+    #####:  333:    size_t bytes = floats * 4;
+    #####:  334:    omega_gpu_session_lock();
+call    0 never executed
+        -:  335:    Slot *s;
+    #####:  336:    rc = begin(1, (uint64_t)lg, (uint64_t)inverse, n / 4, &s, info);
+call    0 never executed
+    #####:  337:    if (rc == OMEGA_GPU_ML_OK && (omega_gpu_session_scratch(&g_in, bytes) != 0 ||
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+branch  5 never executed (fallthrough)
+branch  6 never executed
+    #####:  338:                                  omega_gpu_session_scratch(&g_out, bytes) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  339:                                  omega_gpu_session_scratch(&g_tw, (size_t)8 * n) != 0))
+call    0 never executed
+    #####:  340:        rc = OMEGA_GPU_ML_CHIP_FAIL;
+    #####:  341:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  342:        memcpy(g_in.mem.cpu, in, bytes);
+    #####:  343:        memcpy(g_tw.mem.cpu, tw, (size_t)8 * n);
+    #####:  344:        uint32_t *dev = (uint32_t *)g_out.mem.cpu;
+    #####:  345:        for (size_t i = 0; i < floats; i++) dev[i] = ML_POISON32;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  346:        if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  347:            omega_gpu_session_sync_to_gpu(&g_out.mem) != 0)
+call    0 never executed
+    #####:  348:            rc = OMEGA_GPU_ML_CHIP_FAIL;
+    #####:  349:        for (uint32_t b0 = 0; b0 < batch && rc == OMEGA_GPU_ML_OK; b0 += OMEGA_GPU_FFT_MAX_CTAS) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  350:            uint32_t grid = batch - b0 < OMEGA_GPU_FFT_MAX_CTAS ? batch - b0 : OMEGA_GPU_FFT_MAX_CTAS;
+    #####:  351:            uint64_t off = (uint64_t)b0 * n * 8u;
+        -:  352:            uint32_t args[6]; /* 0x380 in, 0x388 out, 0x390 twiddles */
+    #####:  353:            put64(&args[0], g_in.mem.va + off);
+call    0 never executed
+    #####:  354:            put64(&args[2], g_out.mem.va + off);
+call    0 never executed
+    #####:  355:            put64(&args[4], g_tw.mem.va);
+call    0 never executed
+    #####:  356:            rc = launch(s, args, 6, grid, (size_t)grid * n * 2u, 8u * n, info);
+call    0 never executed
+        -:  357:        }
+    #####:  358:        if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  359:        if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  360:            memcpy(out, g_out.mem.cpu, bytes);
+    #####:  361:            uint64_t unwritten = 0;
+    #####:  362:            for (size_t i = 0; i < floats; i++) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  363:                uint32_t u;
+    #####:  364:                memcpy(&u, &out[i], 4);
+    #####:  365:                unwritten += u == ML_POISON32;
+        -:  366:            }
+    #####:  367:            if (info) info->unwritten_words = unwritten;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  368:            if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  369:        }
+        -:  370:    }
+    #####:  371:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:  372:    free(tw);
+    #####:  373:    if (info) info->call_ns = now_ns() - t0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  374:    return rc;
+        -:  375:}
+        -:  376:#endif
+        -:  377:
+        -:  378:/* ------------------------------------------------------------------ Philox */
+        -:  379:
+function oracle_philox_codegen called 0 returned 0% blocks executed 0%
+    #####:  380:int omega_gpu_philox_codegen(OmegaGpuMathInfo *info) { return codegen_only(3, 0, 0, OMEGA_GPU_PHILOX_THREADS, info); }
+call    0 never executed
+        -:  381:
+        -:  382:/* Caller holds the lock: fill g_out with poison, run, read back into out. */
+function philox_pass called 0 returned 0% blocks executed 0%
+    #####:  383:static int philox_pass(const Slot *s, const uint32_t *args, uint32_t grid, size_t count, uint32_t poison, uint32_t *out,
+        -:  384:                       OmegaGpuMathInfo *info) {
+    #####:  385:    uint32_t *dev = (uint32_t *)g_out.mem.cpu;
+    #####:  386:    for (size_t i = 0; i < count; i++) dev[i] = poison;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  387:    if (omega_gpu_session_sync_to_gpu(&g_out.mem) != 0) return OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  388:    int rc = launch(s, args, 11, grid, count, 0, info);
+call    0 never executed
+    #####:  389:    if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  390:    if (rc == OMEGA_GPU_ML_OK) memcpy(out, dev, count * 4u);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  391:    return rc;
+        -:  392:}
+        -:  393:
+        -:  394:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+function oracle_philox_dist called 12 returned 100% blocks executed 12%
+       12:  395:int omega_gpu_philox_generate_dist(OmegaGpuPhiloxDist dist, uint64_t seed, uint64_t subseq0, uint32_t nstreams,
+        -:  396:                                   uint64_t offset, uint32_t per_stream, void *out, OmegaGpuMathInfo *info) {
+       12:  397:    if (!out || (unsigned)dist > OMEGA_GPU_PHILOX_NORMAL || nstreams == 0 || per_stream == 0)
+branch  0 taken 10 (fallthrough)
+branch  1 taken 2
+branch  2 taken 8 (fallthrough)
+branch  3 taken 2
+branch  4 taken 6 (fallthrough)
+branch  5 taken 2
+branch  6 taken 2 (fallthrough)
+branch  7 taken 4
+        8:  398:        return OMEGA_GPU_ML_BAD_ARGS;
+       4*:  399:    if (nstreams > OMEGA_GPU_PHILOX_MAX_STREAMS || (uint64_t)nstreams * per_stream > OMEGA_GPU_RNG_MAX_OUTPUTS)
+branch  0 taken 0 (fallthrough)
+branch  1 taken 4
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        4:  400:        return OMEGA_GPU_ML_TOO_LARGE;
+    #####:  401:    uint64_t t0 = now_ns();
+call    0 never executed
+        -:  402:    /* G outputs per group of four words; 64-bit outputs are two words each */
+    #####:  403:    uint32_t g = dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2u : 4u;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  404:    uint32_t esz = dist == OMEGA_GPU_PHILOX_UNIFORM_DOUBLE || dist == OMEGA_GPU_PHILOX_UNIFORM2_DOUBLE ? 2u : 1u;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  405:    size_t count = (size_t)nstreams * per_stream * esz;
+    #####:  406:    uint32_t *words = (uint32_t *)out;
+    #####:  407:    omega_gpu_session_lock();
+call    0 never executed
+        -:  408:    Slot *s;
+    #####:  409:    int rc = begin(3, (uint64_t)dist, offset % 4u, OMEGA_GPU_PHILOX_THREADS, &s, info);
+call    0 never executed
+    #####:  410:    if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_scratch(&g_out, count * 4u) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  411:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  412:        /* 0x380 out, 0x388 key, 0x390 subsequence of stream 0, 0x398 first counter block (offset / 4), 0x3a0 groups
+        -:  413:         * T = ceil(per / G), 0x3a4 streams, 0x3a8 tail delta (per % G - G mod 2^32, 0 without a partial group) */
+        -:  414:        uint32_t args[11];
+    #####:  415:        put64(&args[0], g_out.mem.va);
+call    0 never executed
+    #####:  416:        put64(&args[2], seed);
+call    0 never executed
+    #####:  417:        put64(&args[4], subseq0);
+call    0 never executed
+    #####:  418:        put64(&args[6], offset / 4u);
+call    0 never executed
+    #####:  419:        uint32_t r = per_stream % g;
+    #####:  420:        args[8] = per_stream / g + (r != 0);
+    #####:  421:        args[9] = nstreams;
+    #####:  422:        args[10] = r ? r - g : 0u;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  423:        uint32_t grid = (nstreams + OMEGA_GPU_PHILOX_THREADS - 1) / OMEGA_GPU_PHILOX_THREADS;
+    #####:  424:        rc = philox_pass(s, args, grid, count, ML_POISON32, words, info);
+call    0 never executed
+    #####:  425:        uint64_t unwritten = 0;
+    #####:  426:        if (dist == OMEGA_GPU_PHILOX_RAW) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  427:            /* Every 32-bit value is a possible output: a word equal to the poison is unwritten only if a second
+        -:  428:             * run with another poison leaves that poison there too. */
+    #####:  429:            uint64_t hits = 0;
+    #####:  430:            for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) hits += words[i] == ML_POISON32;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  431:            if (rc == OMEGA_GPU_ML_OK && hits) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  432:                uint32_t *first = (uint32_t *)malloc(count * 4u);
+    #####:  433:                if (!first) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  434:                if (first) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  435:                    memcpy(first, words, count * 4u);
+    #####:  436:                    rc = philox_pass(s, args, grid, count, ML_POISON32_ALT, words, info);
+call    0 never executed
+    #####:  437:                    for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++)
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####:  438:                        unwritten += first[i] == ML_POISON32 && words[i] == ML_POISON32_ALT;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  439:                    free(first);
+        -:  440:                }
+        -:  441:            }
+    #####:  442:        } else if (esz == 1) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  443:            /* the poison is a NaN: no f32 output of these distributions */
+    #####:  444:            for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count; i++) unwritten += words[i] == ML_POISON32;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+        -:  445:        } else {
+        -:  446:            /* the poison pair is a NaN: no f64 output */
+    #####:  447:            const uint64_t *d = (const uint64_t *)out;
+    #####:  448:            for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < count / 2; i++) unwritten += d[i] == ML_POISON64;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+        -:  449:        }
+    #####:  450:        if (info) info->unwritten_words = unwritten;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  451:        if (rc == OMEGA_GPU_ML_OK && unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+        -:  452:    }
+    #####:  453:    omega_gpu_session_unlock();
+call    0 never executed
+    #####:  454:    if (info) info->call_ns = now_ns() - t0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  455:    return rc;
+        -:  456:}
+        -:  457:#endif
+        -:  458:
+function oracle_philox_generate called 0 returned 0% blocks executed 0%
+    #####:  459:int omega_gpu_philox_generate(uint64_t seed, uint64_t subseq0, uint32_t nstreams, uint64_t offset, uint32_t per_stream,
+        -:  460:                              uint32_t *out, OmegaGpuMathInfo *info) {
+    #####:  461:    return omega_gpu_philox_generate_dist(OMEGA_GPU_PHILOX_RAW, seed, subseq0, nstreams, offset, per_stream, out, info);
+call    0 never executed
+        -:  462:}
+        -:  463:
+        -:  464:/* ------------------------------------------------------------------ FFT plans (R2C, C2R, 2-D, 3-D) */
+        -:  465:
+        -:  466:/* Caller holds the lock. Validates, sizes the buffers, asks the unit for the pass plan (kind 6) and, when fn is set,
+        -:  467: * turns each step into launches of at most OMEGA_GPU_FFT_MAX_CTAS CTAs. */
+        -:  468:static int walk_locked(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+        -:  469:                       size_t bytes[3], OmegaGpuFftLaunchFn fn, void *ctx);
+        -:  470:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+function walk_locked called 648 returned 100% blocks executed 90%
+      648:  471:static int walk_locked(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+        -:  472:                       size_t bytes[3], OmegaGpuFftLaunchFn fn, void *ctx) {
+      648:  473:    if (!dims || !bytes || batch == 0 || (inverse != 0 && inverse != 1)) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 646 (fallthrough)
+branch  1 taken 2
+branch  2 taken 644 (fallthrough)
+branch  3 taken 2
+branch  4 taken 564 (fallthrough)
+branch  5 taken 80
+branch  6 taken 164 (fallthrough)
+branch  7 taken 400
+branch  8 taken 2 (fallthrough)
+branch  9 taken 162
+      562:  474:    uint64_t lgs = 0;
+      562:  475:    uint32_t sum = 0;
+      562:  476:    if (mode == OMEGA_GPU_FFT_C2C_ND) {
+branch  0 taken 466 (fallthrough)
+branch  1 taken 96
+      466:  477:        if (ndim < 1 || ndim > 3) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 464 (fallthrough)
+branch  1 taken 2
+branch  2 taken 20 (fallthrough)
+branch  3 taken 444
+     1108:  478:        for (uint32_t i = 0; i < ndim; i++) {
+branch  0 taken 744
+branch  1 taken 364
+      744:  479:            int k = fft_log2(dims[i]);
+call    0 returned 744
+      744:  480:            if (k < 0) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 80 (fallthrough)
+branch  1 taken 664
+      664:  481:            lgs |= (uint64_t)k << (4 * i);
+      664:  482:            sum += (uint32_t)k;
+        -:  483:        }
+       96:  484:    } else if (mode == OMEGA_GPU_FFT_R2C || mode == OMEGA_GPU_FFT_C2R) {
+branch  0 taken 48 (fallthrough)
+branch  1 taken 48
+branch  2 taken 44 (fallthrough)
+branch  3 taken 4
+       92:  485:        if (ndim != 1 || inverse != 0) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 90 (fallthrough)
+branch  1 taken 2
+branch  2 taken 2 (fallthrough)
+branch  3 taken 88
+       88:  486:        int k = lg_in(dims[0], OMEGA_GPU_FFT_REAL_MIN_N, OMEGA_GPU_FFT_REAL_MAX_N);
+call    0 returned 88
+       88:  487:        if (k < 0) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 40 (fallthrough)
+branch  1 taken 48
+       48:  488:        lgs = (uint64_t)k;
+       48:  489:        sum = (uint32_t)k;
+        -:  490:    } else {
+        4:  491:        return OMEGA_GPU_ML_BAD_ARGS;
+        -:  492:    }
+      412:  493:    if (sum > 27 || ((uint64_t)batch << sum) > OMEGA_GPU_FFT_MAX_ELEMENTS) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 410 (fallthrough)
+branch  1 taken 2
+branch  2 taken 2 (fallthrough)
+branch  3 taken 408
+      408:  494:    size_t elems = (size_t)batch << sum, half = ((size_t)1 << sum) / 2u + 1u;
+      408:  495:    bytes[0] = bytes[1] = bytes[2] = elems * 8u;
+      408:  496:    if (mode == OMEGA_GPU_FFT_R2C) { bytes[0] = elems * 4u; bytes[1] = half * 8u * batch; bytes[2] = elems * 4u; }
+branch  0 taken 24 (fallthrough)
+branch  1 taken 384
+      408:  497:    if (mode == OMEGA_GPU_FFT_C2R) { bytes[0] = half * 8u * batch; bytes[1] = elems * 4u; bytes[2] = elems * 4u; }
+branch  0 taken 24 (fallthrough)
+branch  1 taken 384
+      408:  498:    int rc = omega_gpu_om_ir_data(6, (uint64_t)mode | (uint64_t)ndim << 4, lgs, (uint64_t)inverse, g_words);
+call    0 returned 408
+     408*:  499:    if (rc == OMEGA_OM_IR_REFUSED) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 408
+     408*:  500:    if (rc != OMEGA_OM_IR_OK || g_words[0] == 0 || g_words[0] > 6) return OMEGA_GPU_ML_CODEGEN_FAIL;
+branch  0 taken 408 (fallthrough)
+branch  1 taken 0
+branch  2 taken 408 (fallthrough)
+branch  3 taken 0
+branch  4 taken 0 (fallthrough)
+branch  5 taken 408
+        -:  501:    uint64_t steps[6];
+      408:  502:    uint32_t nsteps = (uint32_t)g_words[0];
+      408:  503:    memcpy(steps, &g_words[1], nsteps * sizeof steps[0]);
+     1492:  504:    for (uint32_t i = 0; fn && i < nsteps; i++) {
+branch  0 taken 1482 (fallthrough)
+branch  1 taken 10
+branch  2 taken 1084
+branch  3 taken 398 (fallthrough)
+        -:  505:        OmegaGpuFftLaunch L;
+     1084:  506:        memset(&L, 0, sizeof L);
+     1084:  507:        L.kind = (uint32_t)(steps[i] & 255u);
+     1084:  508:        L.a = (uint32_t)(steps[i] >> 8 & 255u);
+     1084:  509:        L.b = (uint32_t)(steps[i] >> 16 & 255u);
+     1084:  510:        L.src = (uint32_t)(steps[i] >> 24 & 255u);
+     1084:  511:        L.dst = (uint32_t)(steps[i] >> 32 & 255u);
+     1084:  512:        uint64_t rows = (uint64_t)batch << (steps[i] >> 40 & 255u);
+    1084*:  513:        if (L.src > 2 || L.dst > 2) return OMEGA_GPU_ML_CODEGEN_FAIL;
+branch  0 taken 1084 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 1084
+     1748:  514:        if (L.kind == 1 || L.kind == 4) {
+branch  0 taken 460 (fallthrough)
+branch  1 taken 624
+branch  2 taken 40 (fallthrough)
+branch  3 taken 420
+      664:  515:            rc = twiddles_locked(L.a, L.b);
+call    0 returned 664
+     664*:  516:            if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 664
+      664:  517:            uint64_t n = 1ull << L.a, si = n, so = n;
+      664:  518:            L.tw = g_twf;
+      664:  519:            L.tw_n = (uint32_t)n;
+      664:  520:            L.tw_inverse = L.b;
+      664:  521:            L.threads = (uint32_t)n / 4u;
+      664:  522:            L.shared_bytes = L.kind == 1 ? (uint32_t)(8u * n) : 0u;
+branch  0 taken 624 (fallthrough)
+branch  1 taken 40
+      664:  523:            if (L.kind == 4) { si = n / 2u + L.b; so = n / 2u + 1u - L.b; }
+branch  0 taken 40 (fallthrough)
+branch  1 taken 624
+    50932:  524:            for (uint64_t r0 = 0; r0 < rows; r0 += OMEGA_GPU_FFT_MAX_CTAS) {
+branch  0 taken 50268
+branch  1 taken 664 (fallthrough)
+    50268:  525:                L.grid = (uint32_t)(rows - r0 < OMEGA_GPU_FFT_MAX_CTAS ? rows - r0 : OMEGA_GPU_FFT_MAX_CTAS);
+branch  0 taken 500 (fallthrough)
+branch  1 taken 49768
+    50268:  526:                L.src_off = r0 * si * 8u;
+    50268:  527:                L.dst_off = r0 * so * 8u;
+    50268:  528:                L.elements = (size_t)2u * so * L.grid;
+    50268:  529:                rc = fn(ctx, &L);
+call    0 returned 50268
+   50268*:  530:                if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 50268
+        -:  531:            }
+      420:  532:        } else if (L.kind == 5) {
+branch  0 taken 420 (fallthrough)
+branch  1 taken 0
+      420:  533:            uint64_t total = rows << (L.a + L.b);
+      420:  534:            uint64_t ctas = (total + 255u) / 256u;
+      420:  535:            L.threads = 256;
+      420:  536:            L.total = (uint32_t)total;
+     2256:  537:            for (uint64_t c0 = 0; c0 < ctas; c0 += OMEGA_GPU_FFT_MAX_CTAS) {
+branch  0 taken 1836
+branch  1 taken 420
+     1836:  538:                L.grid = (uint32_t)(ctas - c0 < OMEGA_GPU_FFT_MAX_CTAS ? ctas - c0 : OMEGA_GPU_FFT_MAX_CTAS);
+branch  0 taken 372 (fallthrough)
+branch  1 taken 1464
+     1836:  539:                L.first = (uint32_t)(c0 * 256u);
+     1836:  540:                uint64_t left = total - L.first;
+     1836:  541:                L.elements = (size_t)2u * ((uint64_t)L.grid * 256u < left ? (uint64_t)L.grid * 256u : left);
+     1836:  542:                rc = fn(ctx, &L);
+call    0 returned 1836
+    1836*:  543:                if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 1836
+        -:  544:            }
+        -:  545:        } else {
+    #####:  546:            return OMEGA_GPU_ML_CODEGEN_FAIL;
+        -:  547:        }
+        -:  548:    }
+      408:  549:    return OMEGA_GPU_ML_OK;
+        -:  550:}
+        -:  551:#endif
+        -:  552:
+        -:  553:/* The launches of a walk with private copies of their twiddle tables, so the caller's fn runs unlocked. */
+        -:  554:typedef struct {
+        -:  555:    OmegaGpuFftLaunch *l;
+        -:  556:    size_t n, cap;
+        -:  557:    float **tw;
+        -:  558:    size_t ntw, twcap;
+        -:  559:} Collect;
+        -:  560:
+function collect called 52104 returned 100% blocks executed 87%
+    52104:  561:static int collect(void *ctx, const OmegaGpuFftLaunch *L) {
+    52104:  562:    Collect *c = (Collect *)ctx;
+    52104:  563:    if (c->n == c->cap) {
+branch  0 taken 736 (fallthrough)
+branch  1 taken 51368
+      736:  564:        size_t cap = c->cap ? 2u * c->cap : 32u;
+branch  0 taken 338 (fallthrough)
+branch  1 taken 398
+      736:  565:        OmegaGpuFftLaunch *l = (OmegaGpuFftLaunch *)realloc(c->l, cap * sizeof *l);
+     736*:  566:        if (!l) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 736
+      736:  567:        c->l = l;
+      736:  568:        c->cap = cap;
+        -:  569:    }
+    52104:  570:    OmegaGpuFftLaunch x = *L;
+    52104:  571:    if (L->tw_n) {
+branch  0 taken 50268 (fallthrough)
+branch  1 taken 1836
+    50268:  572:        const OmegaGpuFftLaunch *p = NULL;
+    51202:  573:        for (size_t i = c->n; i-- > 0;)
+branch  0 taken 50804
+branch  1 taken 398 (fallthrough)
+    50804:  574:            if (c->l[i].tw_n) { p = &c->l[i]; break; }
+branch  0 taken 49870 (fallthrough)
+branch  1 taken 934
+    50268:  575:        if (p && p->tw_n == L->tw_n && p->tw_inverse == L->tw_inverse) {
+branch  0 taken 49870 (fallthrough)
+branch  1 taken 398
+branch  2 taken 49662 (fallthrough)
+branch  3 taken 208
+branch  4 taken 49662 (fallthrough)
+branch  5 taken 0
+    49662:  576:            x.tw = p->tw;
+        -:  577:        } else {
+      606:  578:            if (c->ntw == c->twcap) {
+branch  0 taken 398 (fallthrough)
+branch  1 taken 208
+     398*:  579:                size_t cap = c->twcap ? 2u * c->twcap : 8u;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 398
+      398:  580:                float **t = (float **)realloc(c->tw, cap * sizeof *t);
+     398*:  581:                if (!t) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 398
+      398:  582:                c->tw = t;
+      398:  583:                c->twcap = cap;
+        -:  584:            }
+      606:  585:            float *copy = (float *)malloc((size_t)8 * L->tw_n);
+     606*:  586:            if (!copy) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 606
+      606:  587:            memcpy(copy, L->tw, (size_t)8 * L->tw_n);
+      606:  588:            c->tw[c->ntw++] = copy;
+      606:  589:            x.tw = copy;
+        -:  590:        }
+        -:  591:    }
+    52104:  592:    c->l[c->n++] = x;
+    52104:  593:    return OMEGA_GPU_ML_OK;
+        -:  594:}
+        -:  595:
+function oracle_walk called 622 returned 100% blocks executed 100%
+      622:  596:int omega_gpu_fft_plan_walk(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+        -:  597:                            size_t bytes[3], OmegaGpuFftLaunchFn fn, void *ctx) {
+        -:  598:    Collect c;
+      622:  599:    memset(&c, 0, sizeof c);
+      622:  600:    omega_gpu_session_lock();
+call    0 returned 622
+      622:  601:    int rc = walk_locked(mode, ndim, dims, batch, inverse, bytes, fn ? collect : NULL, &c);
+branch  0 taken 618 (fallthrough)
+branch  1 taken 4
+call    2 returned 622
+      622:  602:    omega_gpu_session_unlock();
+call    0 returned 622
+    52726:  603:    for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < c.n; i++) rc = fn(ctx, &c.l[i]);
+call    0 returned 52104
+branch  1 taken 52500 (fallthrough)
+branch  2 taken 226
+branch  3 taken 52104
+branch  4 taken 396 (fallthrough)
+     1228:  604:    for (size_t i = 0; i < c.ntw; i++) free(c.tw[i]);
+branch  0 taken 606
+branch  1 taken 622 (fallthrough)
+      622:  605:    free(c.tw);
+      622:  606:    free(c.l);
+      622:  607:    return rc;
+        -:  608:}
+        -:  609:
+        -:  610:typedef struct {
+        -:  611:    OmegaGpuMathInfo *info;
+        -:  612:    OmegaGpuScratch *buf[3];
+        -:  613:    uint32_t tw_n, tw_inverse;
+        -:  614:} ChipRun;
+        -:  615:
+        -:  616:/* Caller holds the lock: one launch of a plan step on the chip. */
+function chip_launch called 0 returned 0% blocks executed 0%
+    #####:  617:static int chip_launch(void *ctx, const OmegaGpuFftLaunch *l) {
+    #####:  618:    ChipRun *r = (ChipRun *)ctx;
+        -:  619:    Slot *s;
+        -:  620:    bool hit;
+    #####:  621:    int rc = kernel_for(l->kind, l->a, l->b, l->threads, true, &s, &hit);
+call    0 never executed
+    #####:  622:    if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  623:    info_kernel(r->info, s, hit);
+call    0 never executed
+    #####:  624:    if (l->tw_n && (l->tw_n != r->tw_n || l->tw_inverse != r->tw_inverse)) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  625:        memcpy(g_tw.mem.cpu, l->tw, (size_t)8 * l->tw_n);
+    #####:  626:        if (omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0) return OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  627:        r->tw_n = l->tw_n;
+    #####:  628:        r->tw_inverse = l->tw_inverse;
+        -:  629:    }
+        -:  630:    uint32_t args[6]; /* 0x380 in, 0x388 out, 0x390 twiddles (kind 5: element count, first element) */
+    #####:  631:    put64(&args[0], r->buf[l->src]->mem.va + l->src_off);
+call    0 never executed
+    #####:  632:    put64(&args[2], r->buf[l->dst]->mem.va + l->dst_off);
+call    0 never executed
+    #####:  633:    if (l->kind == 5) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  634:        args[4] = l->total;
+    #####:  635:        args[5] = l->first;
+        -:  636:    } else {
+    #####:  637:        put64(&args[4], g_tw.mem.va);
+call    0 never executed
+        -:  638:    }
+    #####:  639:    return launch(s, args, 6, l->grid, l->elements, l->shared_bytes, r->info);
+call    0 never executed
+        -:  640:}
+        -:  641:
+function run_plan called 26 returned 100% blocks executed 28%
+       26:  642:static int run_plan(OmegaGpuFftPlanMode mode, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+        -:  643:                    const float *in, float *out, OmegaGpuMathInfo *info) {
+      26*:  644:    if (!in || !out) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 26 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 26
+      26*:  645:    if (info) memset(info, 0, sizeof *info);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 26
+       26:  646:    uint64_t t0 = now_ns();
+call    0 returned 26
+        -:  647:    size_t bytes[3];
+       26:  648:    omega_gpu_session_lock();
+call    0 returned 26
+       26:  649:    int rc = walk_locked(mode, ndim, dims, batch, inverse, bytes, NULL, NULL);
+call    0 returned 26
+       26:  650:    const char *pi = (const char *)in, *po = (const char *)out;
+       26:  651:    if (rc == OMEGA_GPU_ML_OK && ml_overlap(pi, bytes[0], po, bytes[1])) rc = OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 10 (fallthrough)
+branch  1 taken 16
+branch  2 taken 10 (fallthrough)
+branch  3 taken 0
+branch  4 taken 10 (fallthrough)
+branch  5 taken 0
+       26:  652:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 taken 0 (fallthrough)
+branch  1 taken 26
+    #####:  653:        if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  654:        if (!omega_gpu_session_open()) rc = OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  655:    }
+      26*:  656:    if (rc == OMEGA_GPU_ML_OK && (omega_gpu_session_scratch(&g_in, bytes[0]) != 0 ||
+branch  0 taken 0 (fallthrough)
+branch  1 taken 26
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+branch  5 never executed (fallthrough)
+branch  6 never executed
+    #####:  657:                                  omega_gpu_session_scratch(&g_out, bytes[1]) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  658:                                  omega_gpu_session_scratch(&g_scr, bytes[2]) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  659:                                  omega_gpu_session_scratch(&g_tw, (size_t)8 * OMEGA_GPU_FFT_REAL_MAX_N) != 0))
+call    0 never executed
+    #####:  660:        rc = OMEGA_GPU_ML_CHIP_FAIL;
+       26:  661:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 taken 0 (fallthrough)
+branch  1 taken 26
+    #####:  662:        memcpy(g_in.mem.cpu, in, bytes[0]);
+    #####:  663:        uint32_t *dev = (uint32_t *)g_out.mem.cpu, *scr = (uint32_t *)g_scr.mem.cpu;
+    #####:  664:        for (size_t i = 0; i < bytes[1] / 4u; i++) dev[i] = ML_POISON32;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  665:        for (size_t i = 0; i < bytes[2] / 4u; i++) scr[i] = ML_POISON32;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  666:        if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_out.mem) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####:  667:            omega_gpu_session_sync_to_gpu(&g_scr.mem) != 0)
+call    0 never executed
+    #####:  668:            rc = OMEGA_GPU_ML_CHIP_FAIL;
+    #####:  669:        ChipRun r = {info, {&g_in, &g_out, &g_scr}, 0, 0};
+    #####:  670:        if (rc == OMEGA_GPU_ML_OK) rc = walk_locked(mode, ndim, dims, batch, inverse, bytes, chip_launch, &r);
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####:  671:        if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  672:        if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  673:            memcpy(out, dev, bytes[1]);
+    #####:  674:            uint64_t unwritten = 0;
+    #####:  675:            for (size_t i = 0; i < bytes[1] / 4u; i++) unwritten = ml_scan(unwritten, dev[i]);
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  676:            if (info) info->unwritten_words = unwritten;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  677:            if (unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  678:        }
+        -:  679:    }
+       26:  680:    omega_gpu_session_unlock();
+call    0 returned 26
+      26*:  681:    if (info) info->call_ns = ml_sub(now_ns(), t0);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 26
+call    2 never executed
+       26:  682:    return rc;
+        -:  683:}
+        -:  684:
+function oracle_r2c called 18 returned 100% blocks executed 100%
+       18:  685:int omega_gpu_fft_r2c(const float *in, float *out, uint32_t n, uint32_t batch, OmegaGpuMathInfo *info) {
+       18:  686:    if (lg_in(n, OMEGA_GPU_FFT_REAL_MIN_N, OMEGA_GPU_FFT_REAL_MAX_N) < 0 && n >= 2 && n <= OMEGA_GPU_FFT_MANY_MAX_N)
+call    0 returned 18
+branch  1 taken 14 (fallthrough)
+branch  2 taken 4
+branch  3 taken 10 (fallthrough)
+branch  4 taken 4
+branch  5 taken 6 (fallthrough)
+branch  6 taken 4
+        6:  687:        return many_basic(OMEGA_GPU_FFT_TYPE_R2C, 1, &n, batch, 0, in, out, info);
+call    0 returned 6
+       12:  688:    return run_plan(OMEGA_GPU_FFT_R2C, 1, &n, batch, 0, in, out, info);
+call    0 returned 12
+        -:  689:}
+        -:  690:
+function oracle_c2r called 18 returned 100% blocks executed 100%
+       18:  691:int omega_gpu_fft_c2r(const float *in, float *out, uint32_t n, uint32_t batch, OmegaGpuMathInfo *info) {
+       18:  692:    if (lg_in(n, OMEGA_GPU_FFT_REAL_MIN_N, OMEGA_GPU_FFT_REAL_MAX_N) < 0 && n >= 2 && n <= OMEGA_GPU_FFT_MANY_MAX_N)
+call    0 returned 18
+branch  1 taken 14 (fallthrough)
+branch  2 taken 4
+branch  3 taken 10 (fallthrough)
+branch  4 taken 4
+branch  5 taken 6 (fallthrough)
+branch  6 taken 4
+        6:  693:        return many_basic(OMEGA_GPU_FFT_TYPE_C2R, 1, &n, batch, 0, in, out, info);
+call    0 returned 6
+       12:  694:    return run_plan(OMEGA_GPU_FFT_C2R, 1, &n, batch, 0, in, out, info);
+call    0 returned 12
+        -:  695:}
+        -:  696:
+function oracle_nd called 2 returned 100% blocks executed 76%
+        2:  697:int omega_gpu_fft_c2c_nd(const float *in, float *out, uint32_t ndim, const uint32_t *dims, uint32_t batch, int inverse,
+        -:  698:                         OmegaGpuMathInfo *info) {
+        2:  699:    if (dims && ndim >= 1 && ndim <= 3) {
+branch  0 taken 2 (fallthrough)
+branch  1 taken 0
+branch  2 taken 2 (fallthrough)
+branch  3 taken 0
+branch  4 taken 2 (fallthrough)
+branch  5 taken 0
+        2:  700:        int legacy = 1, any = 1;
+        8:  701:        for (uint32_t i = 0; i < ndim; i++) {
+branch  0 taken 6
+branch  1 taken 2 (fallthrough)
+        6:  702:            legacy &= fft_log2(dims[i]) >= 0;
+call    0 returned 6
+       6*:  703:            any &= dims[i] >= 2 && dims[i] <= OMEGA_GPU_FFT_MANY_MAX_N;
+branch  0 taken 6 (fallthrough)
+branch  1 taken 0
+branch  2 taken 6 (fallthrough)
+branch  3 taken 0
+        -:  704:        }
+       2*:  705:        if (!legacy && any) return many_basic(OMEGA_GPU_FFT_TYPE_C2C, ndim, dims, batch, inverse, in, out, info);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 2
+branch  2 never executed (fallthrough)
+branch  3 never executed
+call    4 never executed
+        -:  706:    }
+        2:  707:    return run_plan(OMEGA_GPU_FFT_C2C_ND, ndim, dims, batch, inverse, in, out, info);
+call    0 returned 2
+        -:  708:}
+        -:  709:
+        -:  710:/* ------------------------------------------------------------------ FFT many (cufftPlanMany layouts) */
+        -:  711:
+        -:  712:/* A layout: element (b, x) at base + b * bs + sum x[i] * st[i] (mod 2^32), i the logical axis. */
+        -:  713:typedef struct { uint32_t base, bs, st[3]; } Lay;
+        -:  714:
+        -:  715:typedef struct {
+        -:  716:    OmegaGpuFftManyLaunch *l;
+        -:  717:    size_t n, cap;
+        -:  718:    uint64_t *tab; /* the constant table: the unit's u64 (re, im) words */
+        -:  719:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+        -:  720:    size_t ntab, tabcap;
+        -:  721:    struct { uint32_t kind, a, b; size_t at; } tk[16];
+        -:  722:    uint32_t ntk;
+        -:  723:    int alias;
+        -:  724:    uint64_t w_bytes, b_bytes;
+        -:  725:#endif
+        -:  726:} Many;
+        -:  727:typedef struct {
+        -:  728:    uint32_t rank, batch, oext[3], owords; /* output: extents, f32 words per element */
+        -:  729:    Lay olay;
+        -:  730:    uint64_t oextent;
+        -:  731:    int obasic;
+        -:  732:} ManyOut;
+        -:  733:
+function many_free called 4114 returned 100% blocks executed 100%
+     4114:  734:static void many_free(Many *m) {
+     4114:  735:    free(m->l);
+     4114:  736:    free(m->tab);
+     4114:  737:    memset(m, 0, sizeof *m);
+     4114:  738:}
+        -:  739:
+        -:  740:static int many_build(const OmegaGpuFftMany *p, int in_place, int alias, Many *m, size_t bytes[OMEGA_GPU_FFT_MANY_BUFS],
+        -:  741:                      ManyOut *o);
+        -:  742:static int many_each(uint32_t rank, const Lay *l, const uint32_t *ext, uint32_t batch,
+        -:  743:                     int (*f)(void *, uint32_t), void *ctx);
+        -:  744:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+        -:  745:/* Caller holds the lock: byte offset of the unit's table (kind 10 twiddles, 11 chirp) of a points, appended once. */
+function many_table called 8178 returned 100% blocks executed 83%
+     8178:  746:static int many_table(Many *m, uint32_t kind, uint32_t a, uint32_t b, uint64_t *off) {
+    16078:  747:    for (uint32_t i = 0; i < m->ntk; i++)
+branch  0 taken 8404
+branch  1 taken 7674 (fallthrough)
+     8404:  748:        if (m->tk[i].kind == kind && m->tk[i].a == a && m->tk[i].b == b) { *off = 8u * m->tk[i].at; return OMEGA_GPU_ML_OK; }
+branch  0 taken 5788 (fallthrough)
+branch  1 taken 2616
+branch  2 taken 1356 (fallthrough)
+branch  3 taken 4432
+branch  4 taken 504 (fallthrough)
+branch  5 taken 852
+    7674*:  749:    if (m->ntk == sizeof m->tk / sizeof m->tk[0]) return OMEGA_GPU_ML_CODEGEN_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 7674
+    7674*:  750:    if (omega_gpu_om_ir_data(kind, a, b, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;
+call    0 returned 7674
+branch  1 taken 0 (fallthrough)
+branch  2 taken 7674
+     7674:  751:    if (m->ntab + a > m->tabcap) {
+branch  0 taken 6202 (fallthrough)
+branch  1 taken 1472
+     6202:  752:        size_t cap = (m->ntab + a) * 2u;
+     6202:  753:        uint64_t *t = (uint64_t *)realloc(m->tab, cap * sizeof *t);
+    6202*:  754:        if (!t) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 6202
+     6202:  755:        m->tab = t;
+     6202:  756:        m->tabcap = cap;
+        -:  757:    }
+     7674:  758:    memcpy(&m->tab[m->ntab], g_words, (size_t)a * 8u);
+     7674:  759:    m->tk[m->ntk].kind = kind; m->tk[m->ntk].a = a; m->tk[m->ntk].b = b; m->tk[m->ntk].at = m->ntab;
+     7674:  760:    m->ntk++;
+     7674:  761:    *off = 8u * m->ntab;
+     7674:  762:    m->ntab += a;
+     7674:  763:    return OMEGA_GPU_ML_OK;
+        -:  764:}
+        -:  765:
+        -:  766:/* Caller holds the lock: the unit's magic divisor of d (kind 13). */
+function many_magic called 79520 returned 100% blocks executed 80%
+    79520:  767:static int many_magic(uint32_t d, uint32_t *mg) {
+   79520*:  768:    if (omega_gpu_om_ir_data(13, d, 0, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;
+call    0 returned 79520
+branch  1 taken 0 (fallthrough)
+branch  2 taken 79520
+    79520:  769:    *mg = (uint32_t)g_words[0];
+    79520:  770:    return OMEGA_GPU_ML_OK;
+        -:  771:}
+        -:  772:
+        -:  773:/* One step of `total` threads as launches of at most OMEGA_GPU_FFT_MAX_CTAS CTAs (word 1: first thread). */
+function many_step called 37576 returned 100% blocks executed 96%
+    37576:  774:static int many_step(Many *m, uint32_t kind, uint32_t a, uint32_t b, uint32_t nptr, const uint32_t *buf,
+        -:  775:                     const uint64_t *off, uint32_t nw, const uint32_t *w, uint64_t total, uint32_t out_words) {
+        -:  776:    OmegaGpuFftManyLaunch L;
+    37576:  777:    memset(&L, 0, sizeof L);
+    37576:  778:    L.kind = kind; L.a = a; L.b = b; L.nptr = nptr; L.nwords = nw;
+   139120:  779:    for (uint32_t i = 0; i < nptr; i++) {
+branch  0 taken 101544
+branch  1 taken 37576 (fallthrough)
+   101544:  780:        L.buf[i] = m->alias && buf[i] == OMEGA_GPU_FFT_BUF_OUT ? (uint32_t)OMEGA_GPU_FFT_BUF_IN : buf[i];
+branch  0 taken 22212 (fallthrough)
+branch  1 taken 79332
+branch  2 taken 21520 (fallthrough)
+branch  3 taken 692
+   101544:  781:        L.off[i] = off[i];
+        -:  782:    }
+    37576:  783:    memcpy(L.words, w, nw * sizeof w[0]);
+    37576:  784:    L.words[0] = (uint32_t)total;
+    37576:  785:    L.threads = OMEGA_GPU_FFT_MANY_THREADS;
+    37576:  786:    uint64_t ctas = (total + OMEGA_GPU_FFT_MANY_THREADS - 1u) / OMEGA_GPU_FFT_MANY_THREADS;
+   190192:  787:    for (uint64_t c0 = 0; c0 < ctas; c0 += OMEGA_GPU_FFT_MAX_CTAS) {
+branch  0 taken 152616
+branch  1 taken 37576 (fallthrough)
+   152616:  788:        L.grid = (uint32_t)(ctas - c0 < OMEGA_GPU_FFT_MAX_CTAS ? ctas - c0 : OMEGA_GPU_FFT_MAX_CTAS);
+branch  0 taken 37220 (fallthrough)
+branch  1 taken 115396
+   152616:  789:        L.words[1] = (uint32_t)(c0 * OMEGA_GPU_FFT_MANY_THREADS);
+   152616:  790:        uint64_t left = total - L.words[1], here = (uint64_t)L.grid * OMEGA_GPU_FFT_MANY_THREADS;
+   152616:  791:        L.elements = (size_t)out_words * (here < left ? here : left);
+   152616:  792:        if (m->n == m->cap) {
+branch  0 taken 3460 (fallthrough)
+branch  1 taken 149156
+     3460:  793:            size_t cap = m->cap ? 2u * m->cap : 64u;
+branch  0 taken 128 (fallthrough)
+branch  1 taken 3332
+     3460:  794:            OmegaGpuFftManyLaunch *l = (OmegaGpuFftManyLaunch *)realloc(m->l, cap * sizeof *l);
+    3460*:  795:            if (!l) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 3460
+     3460:  796:            m->l = l;
+     3460:  797:            m->cap = cap;
+        -:  798:        }
+   152616:  799:        m->l[m->n++] = L;
+        -:  800:    }
+    37576:  801:    return OMEGA_GPU_ML_OK;
+        -:  802:}
+        -:  803:
+        -:  804:/* Stockham passes (kind 7) over rows of n points, radices rad[0..np-1], from buffer src ping-ponging with alt; the
+        -:  805: * last pass writes fin when fin >= 0. *res: the buffer holding the result. */
+function many_stockham called 8178 returned 100% blocks executed 90%
+     8178:  806:static int many_stockham(Many *m, uint32_t n, uint64_t rows, uint32_t dir, uint32_t np, const uint32_t *rad,
+        -:  807:                         uint32_t src, uint32_t alt, int fin, uint64_t tw_off, uint32_t *res) {
+     8178:  808:    uint32_t cur = src, ns = 1;
+    31162:  809:    for (uint32_t i = 0; i < np; i++) {
+branch  0 taken 22984
+branch  1 taken 8178 (fallthrough)
+    22984:  810:        uint32_t R = rad[i], nr = n / R, dst = (i + 1 == np && fin >= 0) ? (uint32_t)fin : cur == src ? alt : src;
+branch  0 taken 8178 (fallthrough)
+branch  1 taken 14806
+branch  2 taken 7326 (fallthrough)
+branch  3 taken 852
+branch  4 taken 14086 (fallthrough)
+branch  5 taken 8046
+    22984:  811:        uint32_t w[8] = { 0, 0, nr, 0, ns, 0, n / (ns * R), n };
+    22984:  812:        int rc = many_magic(nr, &w[3]);
+call    0 returned 22984
+    22984:  813:        if (rc == OMEGA_GPU_ML_OK) rc = many_magic(ns, &w[5]);
+branch  0 taken 22984 (fallthrough)
+branch  1 taken 0
+call    2 returned 22984
+    22984:  814:        uint32_t buf[3] = { cur, dst, OMEGA_GPU_FFT_BUF_TABLE };
+    22984:  815:        uint64_t off[3] = { 0, 0, tw_off };
+    22984:  816:        if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 7, R, dir, 3, buf, off, 8, w, rows * nr, 2u * R);
+branch  0 taken 22984 (fallthrough)
+branch  1 taken 0
+call    2 returned 22984
+   22984*:  817:        if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 22984
+    22984:  818:        cur = dst;
+    22984:  819:        ns *= R;
+        -:  820:    }
+     8178:  821:    *res = cur;
+     8178:  822:    return OMEGA_GPU_ML_OK;
+        -:  823:}
+        -:  824:
+        -:  825:/* One 1-D transform along contiguous rows of n points in buffer *cur (other: the second scratch array). The result
+        -:  826: * lands in *cur (Bluestein, or an even pass count) or in other; *cur is updated. */
+function many_axis called 6476 returned 100% blocks executed 94%
+     6476:  827:static int many_axis(Many *m, uint32_t n, uint64_t rows, uint32_t dir, uint32_t *cur, uint32_t other) {
+    6476*:  828:    if (omega_gpu_om_ir_data(12, n, 0, 0, g_words) != OMEGA_OM_IR_OK) return OMEGA_GPU_ML_CODEGEN_FAIL;
+call    0 returned 6476
+branch  1 taken 0 (fallthrough)
+branch  2 taken 6476
+     6476:  829:    uint32_t M = (uint32_t)g_words[0], blue = (uint32_t)g_words[1], np = (uint32_t)g_words[2], rad[16];
+    6476*:  830:    if (np == 0 || np > 16) return OMEGA_GPU_ML_CODEGEN_FAIL;
+branch  0 taken 6476 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 6476
+    20770:  831:    for (uint32_t i = 0; i < np; i++) rad[i] = (uint32_t)g_words[3 + i];
+branch  0 taken 14294
+branch  1 taken 6476 (fallthrough)
+        -:  832:    uint64_t tw, twi, ch;
+        -:  833:    int rc;
+     6476:  834:    if (!blue) {
+branch  0 taken 5622 (fallthrough)
+branch  1 taken 854
+     5622:  835:        rc = many_table(m, 10, n, dir, &tw);
+call    0 returned 5622
+     5622:  836:        if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, n, rows, dir, np, rad, *cur, other, -1, tw, cur);
+branch  0 taken 5622 (fallthrough)
+branch  1 taken 0
+call    2 returned 5622
+     5622:  837:        return rc;
+        -:  838:    }
+      854:  839:    if (rows * M > ((uint64_t)1 << 28)) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 852
+      852:  840:    if (rows * M * 8u > m->w_bytes) m->w_bytes = rows * M * 8u;
+branch  0 taken 824 (fallthrough)
+branch  1 taken 28
+      852:  841:    if ((uint64_t)M * 8u > m->b_bytes) m->b_bytes = (uint64_t)M * 8u;
+branch  0 taken 820 (fallthrough)
+branch  1 taken 32
+      852:  842:    uint32_t lgm = 0;
+     9028:  843:    while ((1u << lgm) < M) lgm++;
+branch  0 taken 8176
+branch  1 taken 852 (fallthrough)
+      852:  844:    rc = many_table(m, 11, n, dir, &ch);
+call    0 returned 852
+      852:  845:    if (rc == OMEGA_GPU_ML_OK) rc = many_table(m, 10, M, 0, &tw);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+      852:  846:    if (rc == OMEGA_GPU_ML_OK) rc = many_table(m, 10, M, 1, &twi);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+     852*:  847:    if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 852
+      852:  848:    const uint32_t W = OMEGA_GPU_FFT_BUF_W, W2 = OMEGA_GPU_FFT_BUF_W2, B = OMEGA_GPU_FFT_BUF_B, T = OMEGA_GPU_FFT_BUF_TABLE;
+      852:  849:    uint32_t w[3] = { 0, 0, n }, x, y;
+        -:  850:    /* the filter: b[m] = conj chirp[min(m, M - m)] (0 past n), forward FFT into B */
+      852:  851:    uint32_t bb[3] = { T, W, T };
+      852:  852:    uint64_t ob[3] = { ch, 0, ch };
+      852:  853:    rc = many_step(m, 8, 3, lgm, 3, bb, ob, 3, w, M, 2);
+call    0 returned 852
+      852:  854:    if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, M, 1, 0, np, rad, W, W2, (int)B, tw, &x);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+        -:  855:    /* a = x chirp zero-padded to M, A = FFT(a), A B, inverse FFT, chirp / M on the first n points */
+      852:  856:    uint32_t pb[3] = { *cur, W, T };
+      852:  857:    uint64_t po[3] = { 0, 0, ch };
+      852:  858:    if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 8, 0, lgm, 3, pb, po, 3, w, rows * M, 2);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+      852:  859:    if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, M, rows, 0, np, rad, W, W2, -1, tw, &x);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+      852:  860:    uint32_t mb[3] = { x, x, B };
+      852:  861:    uint64_t mo[3] = { 0, 0, 0 };
+      852:  862:    if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 8, 1, lgm, 3, mb, mo, 3, w, rows * M, 2);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+      852:  863:    if (rc == OMEGA_GPU_ML_OK) rc = many_stockham(m, M, rows, 1, np, rad, x, x == W ? W2 : W, -1, twi, &y);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+branch  2 taken 288 (fallthrough)
+branch  3 taken 564
+call    4 returned 852
+      852:  864:    uint32_t qb[3] = { y, *cur, T };
+      852:  865:    if (rc == OMEGA_GPU_ML_OK) rc = many_step(m, 8, 2, lgm, 3, qb, po, 3, w, rows * M, 2);
+branch  0 taken 852 (fallthrough)
+branch  1 taken 0
+call    2 returned 852
+      852:  866:    return rc;
+        -:  867:}
+        -:  868:
+        -:  869:/* A strided copy (kind 9): slot k (i0 fastest) walks logical axis ord[k] (-1: none) over ext[k] points. */
+function many_copy called 11184 returned 100% blocks executed 91%
+    11184:  870:static int many_copy(Many *m, uint32_t mode, uint32_t sbuf, const Lay *s, uint32_t dbuf, const Lay *d, const int ord[3],
+        -:  871:                     const uint32_t ext[3], uint32_t batch) {
+        -:  872:    uint32_t w[18];
+    11184:  873:    memset(w, 0, sizeof w);
+    11184:  874:    uint64_t total = batch;
+    44736:  875:    for (int k = 0; k < 3; k++) {
+branch  0 taken 33552
+branch  1 taken 11184 (fallthrough)
+    33552:  876:        uint32_t e = ord[k] < 0 ? 1u : ext[k];
+branch  0 taken 23736 (fallthrough)
+branch  1 taken 9816
+   33552*:  877:        if (e == 0) return OMEGA_GPU_ML_OK;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 33552
+    33552:  878:        total *= e;
+    33552:  879:        w[2 + 2 * k] = e;
+    33552:  880:        int rc = many_magic(e, &w[3 + 2 * k]);
+call    0 returned 33552
+   33552*:  881:        if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 33552
+    33552:  882:        w[10 + k] = ord[k] < 0 ? 0u : s->st[ord[k]];
+branch  0 taken 23736 (fallthrough)
+branch  1 taken 9816
+    33552:  883:        w[15 + k] = ord[k] < 0 ? 0u : d->st[ord[k]];
+branch  0 taken 23736 (fallthrough)
+branch  1 taken 9816
+        -:  884:    }
+    11184:  885:    w[8] = s->base; w[9] = s->bs; w[13] = d->base; w[14] = d->bs;
+    11184:  886:    uint32_t buf[2] = { sbuf, dbuf };
+    11184:  887:    uint64_t off[2] = { 0, 0 };
+    11184:  888:    return many_step(m, 9, mode, 0, 2, buf, off, 18, w, total, mode == 2 ? 1u : 2u);
+branch  0 taken 834 (fallthrough)
+branch  1 taken 10350
+call    2 returned 11184
+        -:  889:}
+        -:  890:
+        -:  891:/* The contiguous layout of extents e with axis perm[0] slowest. */
+function many_dense called 7310 returned 100% blocks executed 100%
+     7310:  892:static Lay many_dense(uint32_t rank, const uint32_t *perm, const uint32_t *e) {
+        -:  893:    Lay l;
+     7310:  894:    memset(&l, 0, sizeof l);
+     7310:  895:    uint32_t p = 1;
+    23744:  896:    for (int k = (int)rank - 1; k >= 0; k--) { l.st[perm[k]] = p; p *= e[perm[k]]; }
+branch  0 taken 16434
+branch  1 taken 7310 (fallthrough)
+     7310:  897:    l.bs = p;
+     7310:  898:    return l;
+        -:  899:}
+        -:  900:
+        -:  901:/* Rows of a transform along axis ax: batch times the other extents. */
+function many_rows called 6476 returned 100% blocks executed 100%
+     6476:  902:static uint64_t many_rows(uint32_t rank, const uint32_t *e, uint32_t ax, uint32_t batch) {
+     6476:  903:    uint64_t rows = batch;
+    21248:  904:    for (uint32_t i = 0; i < rank; i++)
+branch  0 taken 14772
+branch  1 taken 6476 (fallthrough)
+    14772:  905:        if (i != ax) rows *= e[i];
+branch  0 taken 8296 (fallthrough)
+branch  1 taken 6476
+     6476:  906:    return rows;
+        -:  907:}
+        -:  908:
+        -:  909:/* Slots of a copy that walks the destination order perm (fastest first). */
+function many_slots called 10640 returned 100% blocks executed 100%
+    10640:  910:static void many_slots(uint32_t rank, const uint32_t *perm, const uint32_t *e, int ord[3], uint32_t ext[3]) {
+    42560:  911:    for (uint32_t k = 0; k < 3; k++) {
+branch  0 taken 31920
+branch  1 taken 10640 (fallthrough)
+    31920:  912:        ord[k] = k < rank ? (int)perm[rank - 1 - k] : -1;
+branch  0 taken 22908 (fallthrough)
+branch  1 taken 9012
+    31920:  913:        ext[k] = k < rank ? e[perm[rank - 1 - k]] : 1u;
+branch  0 taken 22908 (fallthrough)
+branch  1 taken 9012
+        -:  914:    }
+    10640:  915:}
+        -:  916:
+        -:  917:/* A user side: extents ext, embed (all zero: basic), stride, dist; real pads the basic last axis to pad points. */
+function many_side called 7994 returned 100% blocks executed 97%
+     7994:  918:static int many_side(uint32_t rank, const uint32_t *ext, const uint32_t *emb, uint32_t stride, uint32_t dist,
+        -:  919:                     uint32_t batch, int basic, uint32_t pad, Lay *l, uint64_t *extent) {
+        -:  920:    uint32_t e[3];
+     7994:  921:    uint64_t st[3], prod = 1;
+    23604:  922:    for (uint32_t i = 0; i < rank; i++) e[i] = basic ? ext[i] : emb[i];
+branch  0 taken 7272 (fallthrough)
+branch  1 taken 8338
+branch  2 taken 15610
+branch  3 taken 7994 (fallthrough)
+     7994:  923:    if (basic) {
+branch  0 taken 3816 (fallthrough)
+branch  1 taken 4178
+     3816:  924:        if (pad) e[rank - 1] = pad;
+branch  0 taken 408 (fallthrough)
+branch  1 taken 3408
+     3816:  925:        stride = 1;
+    11088:  926:        for (uint32_t i = 0; i < rank; i++) prod *= e[i];
+branch  0 taken 7272
+branch  1 taken 3816 (fallthrough)
+    3816*:  927:        if (prod >= ((uint64_t)1 << 32)) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 3816
+     3816:  928:        dist = (uint32_t)prod;
+        -:  929:    } else {
+     4178:  930:        if (stride == 0) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 310 (fallthrough)
+branch  1 taken 3868
+     7702:  931:        for (uint32_t i = 1; i < rank; i++)
+branch  0 taken 3850
+branch  1 taken 3852 (fallthrough)
+     3850:  932:            if (e[i] < ext[i]) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 16 (fallthrough)
+branch  1 taken 3834
+        -:  933:    }
+     7668:  934:    uint64_t p = stride, hi = (uint64_t)dist * (batch - 1u);
+    22622:  935:    for (int i = (int)rank - 1; i >= 0; i--) {
+branch  0 taken 14958
+branch  1 taken 7664 (fallthrough)
+    14958:  936:        if (p >= ((uint64_t)1 << 32)) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 4 (fallthrough)
+branch  1 taken 14954
+    14954:  937:        st[i] = p;
+    14954:  938:        hi += (ext[i] - 1u) * p;
+    14954:  939:        p *= e[i];
+        -:  940:    }
+     7664:  941:    if (hi >= ((uint64_t)1 << 32) || hi + 1u > ((uint64_t)1 << 28)) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 7656 (fallthrough)
+branch  1 taken 8
+branch  2 taken 2 (fallthrough)
+branch  3 taken 7654
+     7654:  942:    memset(l, 0, sizeof *l);
+     7654:  943:    l->bs = dist;
+    22586:  944:    for (uint32_t i = 0; i < rank; i++) l->st[i] = (uint32_t)st[i];
+branch  0 taken 14932
+branch  1 taken 7654 (fallthrough)
+     7654:  945:    *extent = hi + 1u;
+     7654:  946:    return OMEGA_GPU_ML_OK;
+        -:  947:}
+        -:  948:
+        -:  949:/* Visits every element index of a side (batch major, last axis fastest); stops on a nonzero return. */
+function many_each called 1758 returned 100% blocks executed 100%
+     1758:  950:static int many_each(uint32_t rank, const Lay *l, const uint32_t *ext, uint32_t batch,
+        -:  951:                     int (*f)(void *ctx, uint32_t idx), void *ctx) {
+     1758:  952:    uint32_t e[3] = { 1, 1, 1 }, s[3] = { 0, 0, 0 };
+     5266:  953:    for (uint32_t i = 0; i < rank; i++) { e[3 - rank + i] = ext[i]; s[3 - rank + i] = l->st[i]; }
+branch  0 taken 3508
+branch  1 taken 1758 (fallthrough)
+     4940:  954:    for (uint32_t b = 0; b < batch; b++)
+branch  0 taken 3516
+branch  1 taken 1424 (fallthrough)
+   850232:  955:        for (uint32_t x0 = 0; x0 < e[0]; x0++)
+branch  0 taken 847050
+branch  1 taken 3182 (fallthrough)
+  4227440:  956:            for (uint32_t x1 = 0; x1 < e[1]; x1++)
+branch  0 taken 3380724
+branch  1 taken 846716 (fallthrough)
+ 11409910:  957:                for (uint32_t x2 = 0; x2 < e[2]; x2++) {
+branch  0 taken 8029520
+branch  1 taken 3380390 (fallthrough)
+  8029520:  958:                    int rc = f(ctx, l->base + b * l->bs + x0 * s[0] + x1 * s[1] + x2 * s[2]);
+call    0 returned 8029520
+  8029520:  959:                    if (rc) return rc;
+branch  0 taken 334 (fallthrough)
+branch  1 taken 8029186
+        -:  960:                }
+     1424:  961:    return 0;
+        -:  962:}
+        -:  963:
+function many_mark called 8029520 returned 100% blocks executed 100%
+  8029520:  964:static int many_mark(void *ctx, uint32_t idx) {
+  8029520:  965:    uint8_t *bits = (uint8_t *)ctx;
+  8029520:  966:    uint8_t bit = (uint8_t)(1u << (idx & 7u));
+  8029520:  967:    if (bits[idx >> 3] & bit) return 1;
+branch  0 taken 334 (fallthrough)
+branch  1 taken 8029186
+  8029186:  968:    bits[idx >> 3] |= bit;
+  8029186:  969:    return 0;
+        -:  970:}
+        -:  971:
+        -:  972:
+        -:  973:/* Caller holds the lock. Validates p, fills bytes[] and m's launches and table; *o describes the output side. */
+function many_build called 4114 returned 100% blocks executed 99%
+     4114:  974:static int many_build(const OmegaGpuFftMany *p, int in_place, int alias, Many *m, size_t bytes[OMEGA_GPU_FFT_MANY_BUFS],
+        -:  975:                      ManyOut *o) {
+     4114:  976:    memset(m, 0, sizeof *m);
+     4114:  977:    m->alias = alias;
+     4114:  978:    if (!p || !bytes || p->rank < 1 || p->rank > 3 || p->batch == 0 || (unsigned)p->type > OMEGA_GPU_FFT_TYPE_C2R)
+branch  0 taken 4112 (fallthrough)
+branch  1 taken 2
+branch  2 taken 4110 (fallthrough)
+branch  3 taken 2
+branch  4 taken 4108 (fallthrough)
+branch  5 taken 2
+branch  6 taken 4104 (fallthrough)
+branch  7 taken 4
+branch  8 taken 4064 (fallthrough)
+branch  9 taken 40
+branch 10 taken 4 (fallthrough)
+branch 11 taken 4060
+       54:  979:        return OMEGA_GPU_ML_BAD_ARGS;
+     4060:  980:    if (p->type == OMEGA_GPU_FFT_TYPE_C2C ? (p->inverse != 0 && p->inverse != 1) : p->inverse != 0)
+branch  0 taken 1972 (fallthrough)
+branch  1 taken 2088
+branch  2 taken 254 (fallthrough)
+branch  3 taken 1718
+branch  4 taken 2 (fallthrough)
+branch  5 taken 252
+branch  6 taken 14 (fallthrough)
+branch  7 taken 4046
+       14:  981:        return OMEGA_GPU_ML_BAD_ARGS;
+     4046:  982:    const uint32_t r = p->rank, last = r - 1u, L = p->n[last], h = L / 2u + 1u;
+     4046:  983:    uint64_t P = 1;
+     4046:  984:    int ibasic = 1, obasic = 1;
+    11904:  985:    for (uint32_t i = 0; i < r; i++) {
+branch  0 taken 7890
+branch  1 taken 4014 (fallthrough)
+     7890:  986:        if (p->n[i] < 2 || p->n[i] > OMEGA_GPU_FFT_MANY_MAX_N) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 7874 (fallthrough)
+branch  1 taken 16
+branch  2 taken 16 (fallthrough)
+branch  3 taken 7858
+     7858:  987:        P *= p->n[i];
+     7858:  988:        ibasic &= p->inembed[i] == 0;
+     7858:  989:        obasic &= p->onembed[i] == 0;
+        -:  990:    }
+     4014:  991:    if (ibasic != obasic) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 4012
+     4012:  992:    if (P * p->batch > OMEGA_GPU_FFT_MAX_ELEMENTS) return OMEGA_GPU_ML_TOO_LARGE;
+branch  0 taken 6 (fallthrough)
+branch  1 taken 4006
+        -:  993:    uint32_t iext[3], oext[3];
+     4006:  994:    memcpy(iext, p->n, sizeof iext);
+     4006:  995:    memcpy(oext, p->n, sizeof oext);
+     4006:  996:    int r2c = p->type == OMEGA_GPU_FFT_TYPE_R2C, c2r = p->type == OMEGA_GPU_FFT_TYPE_C2R;
+     4006:  997:    if (c2r) iext[last] = h;
+branch  0 taken 1038 (fallthrough)
+branch  1 taken 2968
+     4006:  998:    if (r2c) oext[last] = h;
+branch  0 taken 1038 (fallthrough)
+branch  1 taken 2968
+        -:  999:    Lay il, ol;
+        -: 1000:    uint64_t iextent, oextent;
+     4006: 1001:    int rc = many_side(r, iext, p->inembed, p->istride, p->idist, p->batch, ibasic, r2c && in_place ? 2u * h : 0u, &il,
+branch  0 taken 1038 (fallthrough)
+branch  1 taken 2968
+branch  2 taken 204 (fallthrough)
+branch  3 taken 834
+call    4 returned 4006
+        -: 1002:                       &iextent);
+     4006: 1003:    if (rc == OMEGA_GPU_ML_OK)
+branch  0 taken 3988 (fallthrough)
+branch  1 taken 18
+     3988: 1004:        rc = many_side(r, oext, p->onembed, p->ostride, p->odist, p->batch, obasic, c2r && in_place ? 2u * h : 0u, &ol,
+branch  0 taken 1038 (fallthrough)
+branch  1 taken 2950
+branch  2 taken 204 (fallthrough)
+branch  3 taken 834
+call    4 returned 3988
+        -: 1005:                       &oextent);
+     4006: 1006:    if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 340 (fallthrough)
+branch  1 taken 3666
+     3666: 1007:    if (!obasic) {
+branch  0 taken 1758 (fallthrough)
+branch  1 taken 1908
+     1758: 1008:        uint8_t *bits = (uint8_t *)calloc((size_t)(oextent + 7u) / 8u, 1);
+    1758*: 1009:        if (!bits) return OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 1758
+     1758: 1010:        int dup = many_each(r, &ol, oext, p->batch, many_mark, bits);
+call    0 returned 1758
+     1758: 1011:        free(bits);
+     1758: 1012:        if (dup) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 334 (fallthrough)
+branch  1 taken 1424
+        -: 1013:    }
+     3332: 1014:    const uint32_t S0 = OMEGA_GPU_FFT_BUF_S0, S1 = OMEGA_GPU_FFT_BUF_S1;
+     3332: 1015:    const uint32_t dir = c2r ? 1u : (uint32_t)p->inverse;
+branch  0 taken 2498 (fallthrough)
+branch  1 taken 834
+     3332: 1016:    uint32_t perm[3] = { 0, 1, 2 }, e[3], cur = S0, ext[3];
+        -: 1017:    int ord[3];
+     3332: 1018:    memcpy(e, iext, sizeof e);
+     3332: 1019:    if (r2c) e[last] = L;
+branch  0 taken 834 (fallthrough)
+branch  1 taken 2498
+     3332: 1020:    if (c2r) /* the last axis slowest: the outer inverses come first */
+branch  0 taken 834 (fallthrough)
+branch  1 taken 2498
+     2496: 1021:        for (uint32_t k = 0; k < r; k++) perm[k] = k == 0 ? last : k - 1u;
+branch  0 taken 828 (fallthrough)
+branch  1 taken 834
+branch  2 taken 1662
+branch  3 taken 834 (fallthrough)
+     3332: 1022:    Lay cl = many_dense(r, perm, e);
+call    0 returned 3332
+     3332: 1023:    many_slots(r, perm, e, ord, ext);
+call    0 returned 3332
+     3332: 1024:    rc = many_copy(m, r2c ? 1u : 0u, OMEGA_GPU_FFT_BUF_IN, &il, S0, &cl, ord, ext, p->batch);
+branch  0 taken 834 (fallthrough)
+branch  1 taken 2498
+call    2 returned 3332
+     3332: 1025:    uint32_t nax = c2r ? r - 1u : r;
+branch  0 taken 834 (fallthrough)
+branch  1 taken 2498
+     6476: 1026:    for (uint32_t t = 0; t < nax && rc == OMEGA_GPU_ML_OK; t++) {
+branch  0 taken 5642 (fallthrough)
+branch  1 taken 834
+branch  2 taken 5642
+branch  3 taken 0 (fallthrough)
+     5642: 1027:        uint32_t ax = perm[r - 1u], other = cur == S0 ? S1 : S0;
+branch  0 taken 5546 (fallthrough)
+branch  1 taken 96
+     5642: 1028:        rc = many_axis(m, p->n[ax], many_rows(r, e, ax, p->batch), dir, &cur, other);
+call    0 returned 5642
+call    1 returned 5642
+     5642: 1029:        if (r2c && ax == last) e[last] = h;
+branch  0 taken 1662 (fallthrough)
+branch  1 taken 3980
+branch  2 taken 834 (fallthrough)
+branch  3 taken 828
+     5642: 1030:        if (rc != OMEGA_GPU_ML_OK || (t + 1u == nax && !c2r)) break;
+branch  0 taken 5640 (fallthrough)
+branch  1 taken 2
+branch  2 taken 3052 (fallthrough)
+branch  3 taken 2588
+branch  4 taken 556 (fallthrough)
+branch  5 taken 2496
+        -: 1031:        /* rotate: the fastest axis becomes the slowest */
+        -: 1032:        uint32_t np[3];
+    11440: 1033:        for (uint32_t k = 0; k < r; k++) np[k] = k == 0 ? perm[r - 1u] : perm[k - 1u];
+branch  0 taken 3144 (fallthrough)
+branch  1 taken 5152
+branch  2 taken 8296
+branch  3 taken 3144 (fallthrough)
+     3144: 1034:        Lay nl = many_dense(r, np, e);
+call    0 returned 3144
+     3144: 1035:        many_slots(r, np, e, ord, ext);
+call    0 returned 3144
+     3144: 1036:        other = cur == S0 ? S1 : S0;
+branch  0 taken 428 (fallthrough)
+branch  1 taken 2716
+     3144: 1037:        rc = many_copy(m, 0, cur, &cl, other, &nl, ord, ext, p->batch);
+call    0 returned 3144
+     3144: 1038:        memcpy(perm, np, sizeof perm);
+     3144: 1039:        cl = nl;
+     3144: 1040:        cur = other;
+        -: 1041:    }
+     3332: 1042:    if (rc == OMEGA_GPU_ML_OK && c2r) {
+branch  0 taken 3330 (fallthrough)
+branch  1 taken 2
+branch  2 taken 834 (fallthrough)
+branch  3 taken 2496
+        -: 1043:        /* Hermitian extension of the last axis: k < h as it is, k in [h, L) the conjugate of point L - k */
+      834: 1044:        uint32_t other = cur == S0 ? S1 : S0, fe[3];
+branch  0 taken 502 (fallthrough)
+branch  1 taken 332
+      834: 1045:        memcpy(fe, e, sizeof fe);
+      834: 1046:        fe[last] = L;
+      834: 1047:        Lay fl = many_dense(r, perm, fe);
+call    0 returned 834
+      834: 1048:        many_slots(r, perm, e, ord, ext);
+call    0 returned 834
+      834: 1049:        rc = many_copy(m, 0, cur, &cl, other, &fl, ord, ext, p->batch);
+call    0 returned 834
+      834: 1050:        if (rc == OMEGA_GPU_ML_OK && L > h) {
+branch  0 taken 834 (fallthrough)
+branch  1 taken 0
+branch  2 taken 544 (fallthrough)
+branch  3 taken 290
+      544: 1051:            Lay sl = cl, dl = fl;
+      544: 1052:            sl.base = L - h;
+      544: 1053:            sl.st[last] = 0xFFFFFFFFu;
+      544: 1054:            dl.base = h;
+      544: 1055:            ext[0] = L - h;
+      544: 1056:            rc = many_copy(m, 3, cur, &sl, other, &dl, ord, ext, p->batch);
+call    0 returned 544
+        -: 1057:        }
+      834: 1058:        cl = fl;
+      834: 1059:        cur = other;
+      834: 1060:        e[last] = L;
+      834: 1061:        if (rc == OMEGA_GPU_ML_OK) rc = many_axis(m, L, many_rows(r, e, last, p->batch), dir, &cur, cur == S0 ? S1 : S0);
+branch  0 taken 834 (fallthrough)
+branch  1 taken 0
+call    2 returned 834
+branch  3 taken 332 (fallthrough)
+branch  4 taken 502
+call    5 returned 834
+        -: 1062:    }
+     3332: 1063:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 taken 3330 (fallthrough)
+branch  1 taken 2
+     3330: 1064:        uint32_t id[3] = { 0, 1, 2 };
+     3330: 1065:        many_slots(r, id, e, ord, ext);
+call    0 returned 3330
+     3330: 1066:        rc = many_copy(m, c2r ? 2u : 0u, cur, &cl, OMEGA_GPU_FFT_BUF_OUT, &ol, ord, ext, p->batch);
+branch  0 taken 834 (fallthrough)
+branch  1 taken 2496
+call    2 returned 3330
+        -: 1067:    }
+     3332: 1068:    if (rc != OMEGA_GPU_ML_OK) return rc;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 3330
+     3330: 1069:    uint64_t ib = iextent * (r2c ? 4u : 8u), ob = oextent * (c2r ? 4u : 8u);
+branch  0 taken 834 (fallthrough)
+branch  1 taken 2496
+branch  2 taken 834 (fallthrough)
+branch  3 taken 2496
+     3330: 1070:    bytes[OMEGA_GPU_FFT_BUF_IN] = alias ? (ib > ob ? ib : ob) : ib;
+branch  0 taken 692 (fallthrough)
+branch  1 taken 2638
+     3330: 1071:    bytes[OMEGA_GPU_FFT_BUF_OUT] = alias ? 0u : ob;
+branch  0 taken 2638 (fallthrough)
+branch  1 taken 692
+     3330: 1072:    bytes[OMEGA_GPU_FFT_BUF_S0] = bytes[OMEGA_GPU_FFT_BUF_S1] = (size_t)(P * p->batch * 8u);
+     3330: 1073:    bytes[OMEGA_GPU_FFT_BUF_W] = bytes[OMEGA_GPU_FFT_BUF_W2] = (size_t)m->w_bytes;
+     3330: 1074:    bytes[OMEGA_GPU_FFT_BUF_B] = (size_t)m->b_bytes;
+     3330: 1075:    bytes[OMEGA_GPU_FFT_BUF_TABLE] = m->ntab * 8u;
+     3330: 1076:    if (o) {
+branch  0 taken 20 (fallthrough)
+branch  1 taken 3310
+       20: 1077:        o->rank = r;
+       20: 1078:        o->batch = p->batch;
+       20: 1079:        memcpy(o->oext, oext, sizeof oext);
+       20: 1080:        o->owords = c2r ? 1u : 2u;
+branch  0 taken 6 (fallthrough)
+branch  1 taken 14
+       20: 1081:        o->olay = ol;
+       20: 1082:        o->oextent = oextent;
+       20: 1083:        o->obasic = obasic;
+        -: 1084:    }
+     3330: 1085:    return OMEGA_GPU_ML_OK;
+        -: 1086:}
+        -: 1087:#endif
+        -: 1088:
+function oracle_many_walk called 4098 returned 100% blocks executed 100%
+     4098: 1089:int omega_gpu_fft_many_walk(const OmegaGpuFftMany *plan, int in_place, size_t bytes[OMEGA_GPU_FFT_MANY_BUFS],
+        -: 1090:                            OmegaGpuFftManyLaunchFn fn, void *ctx) {
+     4098: 1091:    if (in_place != 0 && in_place != 1) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 696 (fallthrough)
+branch  1 taken 3402
+branch  2 taken 4 (fallthrough)
+branch  3 taken 692
+        -: 1092:    Many m;
+     4094: 1093:    omega_gpu_session_lock();
+call    0 returned 4094
+     4094: 1094:    int rc = many_build(plan, in_place, in_place, &m, bytes, NULL);
+call    0 returned 4094
+     4094: 1095:    omega_gpu_session_unlock();
+call    0 returned 4094
+    79656: 1096:    for (size_t i = 0; fn && rc == OMEGA_GPU_ML_OK && i < m.n; i++) {
+branch  0 taken 77218 (fallthrough)
+branch  1 taken 2438
+branch  2 taken 77216 (fallthrough)
+branch  3 taken 2
+branch  4 taken 75562
+branch  5 taken 1654 (fallthrough)
+    75562: 1097:        m.l[i].table = m.tab;
+    75562: 1098:        rc = fn(ctx, &m.l[i]);
+call    0 returned 75562
+        -: 1099:    }
+     4094: 1100:    many_free(&m);
+call    0 returned 4094
+     4094: 1101:    return rc;
+        -: 1102:}
+        -: 1103:
+        -: 1104:typedef struct { const uint32_t *dev; uint32_t *out; uint32_t words; uint64_t unwritten; } ManyScan;
+        -: 1105:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+function many_scan called 18 returned 100% blocks executed 100%
+       18: 1106:static int many_scan(void *ctx, uint32_t idx) {
+       18: 1107:    ManyScan *c = (ManyScan *)ctx;
+       36: 1108:    for (uint32_t k = 0; k < c->words; k++) c->unwritten += c->dev[(size_t)idx * c->words + k] == ML_POISON32;
+branch  0 taken 18
+branch  1 taken 18 (fallthrough)
+       18: 1109:    return 0;
+        -: 1110:}
+        -: 1111:#else
+        -: 1112:static int many_scan(void *ctx, uint32_t idx) {
+        -: 1113:    ManyScan *c = (ManyScan *)ctx;
+        -: 1114:    size_t first = omega_mh_mul(idx, c->words);
+        -: 1115:    for (uint32_t k = 0; k < c->words; k++)
+        -: 1116:        c->unwritten = omega_mh_add(c->unwritten, omega_mh_poison(c->dev[first + k], 0, 0, 0));
+        -: 1117:    return 0;
+        -: 1118:}
+        -: 1119:#endif
+function many_copy_back called 0 returned 0% blocks executed 0%
+    #####: 1120:static int many_copy_back(void *ctx, uint32_t idx) {
+    #####: 1121:    ManyScan *c = (ManyScan *)ctx;
+    #####: 1122:    size_t at = ml_mul(idx, c->words);
+    #####: 1123:    memcpy(&c->out[at], &c->dev[at], ml_mul(4, c->words));
+    #####: 1124:    return 0;
+        -: 1125:}
+        -: 1126:
+function oracle_many called 20 returned 100% blocks executed 29%
+       20: 1127:int omega_gpu_fft_many(const OmegaGpuFftMany *plan, const float *in, float *out, OmegaGpuMathInfo *info) {
+      20*: 1128:    if (!plan || !in || !out) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 20 (fallthrough)
+branch  1 taken 0
+branch  2 taken 20 (fallthrough)
+branch  3 taken 0
+branch  4 taken 0 (fallthrough)
+branch  5 taken 20
+      20*: 1129:    if (info) memset(info, 0, sizeof *info);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 20
+       20: 1130:    uint64_t t0 = now_ns();
+call    0 returned 20
+       20: 1131:    int in_place = (const void *)in == (const void *)out;
+        -: 1132:    size_t bytes[OMEGA_GPU_FFT_MANY_BUFS];
+        -: 1133:    Many m;
+        -: 1134:    ManyOut o;
+       20: 1135:    omega_gpu_session_lock();
+call    0 returned 20
+       20: 1136:    int rc = many_build(plan, in_place, 0, &m, bytes, &o);
+call    0 returned 20
+       20: 1137:    const char *pi = (const char *)in, *po = (const char *)out;
+       20: 1138:    if (rc == OMEGA_GPU_ML_OK && !in_place &&
+branch  0 taken 20 (fallthrough)
+branch  1 taken 0
+branch  2 taken 20 (fallthrough)
+branch  3 taken 0
+       20: 1139:        ml_overlap(pi, bytes[OMEGA_GPU_FFT_BUF_IN], po, bytes[OMEGA_GPU_FFT_BUF_OUT]))
+branch  0 taken 20 (fallthrough)
+branch  1 taken 0
+branch  2 taken 20 (fallthrough)
+branch  3 taken 0
+       20: 1140:        rc = OMEGA_GPU_ML_BAD_ARGS;
+       20: 1141:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 taken 0 (fallthrough)
+branch  1 taken 20
+    #####: 1142:        if (!g_hooked) { (void)omega_gpu_session_on_close(on_session_close); g_hooked = true; }
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+    #####: 1143:        if (!omega_gpu_session_open()) rc = OMEGA_GPU_ML_CHIP_FAIL;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -: 1144:    }
+       20: 1145:    OmegaGpuScratch *buf[OMEGA_GPU_FFT_MANY_BUFS] = { &g_in, &g_out, &g_scr, &g_s1, &g_w, &g_w2, &g_b, &g_tw };
+      20*: 1146:    for (int i = 0; rc == OMEGA_GPU_ML_OK && i < OMEGA_GPU_FFT_MANY_BUFS; i++)
+branch  0 taken 0 (fallthrough)
+branch  1 taken 20
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####: 1147:        if (omega_gpu_session_scratch(buf[i], bytes[i] ? bytes[i] : 8u) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+       20: 1148:    if (rc == OMEGA_GPU_ML_OK) {
+branch  0 taken 0 (fallthrough)
+branch  1 taken 20
+    #####: 1149:        memcpy(g_in.mem.cpu, in, bytes[OMEGA_GPU_FFT_BUF_IN]);
+    #####: 1150:        memcpy(g_tw.mem.cpu, m.tab, bytes[OMEGA_GPU_FFT_BUF_TABLE]);
+    #####: 1151:        uint32_t *dev = (uint32_t *)g_out.mem.cpu;
+    #####: 1152:        for (size_t i = 0; i < bytes[OMEGA_GPU_FFT_BUF_OUT] / 4u; i++) dev[i] = ML_POISON32;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####: 1153:        if (omega_gpu_session_sync_to_gpu(&g_in.mem) != 0 || omega_gpu_session_sync_to_gpu(&g_tw.mem) != 0 ||
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+call    3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+    #####: 1154:            omega_gpu_session_sync_to_gpu(&g_out.mem) != 0)
+call    0 never executed
+    #####: 1155:            rc = OMEGA_GPU_ML_CHIP_FAIL;
+    #####: 1156:        for (size_t i = 0; rc == OMEGA_GPU_ML_OK && i < m.n; i++) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed (fallthrough)
+    #####: 1157:            const OmegaGpuFftManyLaunch *l = &m.l[i];
+        -: 1158:            Slot *s;
+        -: 1159:            bool hit;
+    #####: 1160:            rc = kernel_for(l->kind, l->a, l->b, l->threads, true, &s, &hit);
+call    0 never executed
+    #####: 1161:            if (rc != OMEGA_GPU_ML_OK) break;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1162:            info_kernel(info, s, hit);
+call    0 never executed
+        -: 1163:            uint32_t args[OMEGA_GPU_SESSION_MAX_ARGS];
+    #####: 1164:            for (uint32_t k = 0; k < l->nptr; k++) put64(&args[2 * k], buf[l->buf[k]]->mem.va + l->off[k]);
+call    0 never executed
+branch  1 never executed
+branch  2 never executed (fallthrough)
+    #####: 1165:            memcpy(&args[2 * l->nptr], l->words, l->nwords * sizeof l->words[0]);
+    #####: 1166:            rc = launch(s, args, 2 * l->nptr + l->nwords, l->grid, l->elements, 0, info);
+call    0 never executed
+        -: 1167:        }
+    #####: 1168:        if (rc == OMEGA_GPU_ML_OK && omega_gpu_session_sync_to_cpu(&g_out.mem) != 0) rc = OMEGA_GPU_ML_CHIP_FAIL;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+call    2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####: 1169:        if (rc == OMEGA_GPU_ML_OK) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -: 1170:            /* only the addressed output elements are checked and copied back */
+    #####: 1171:            ManyScan c = { dev, (uint32_t *)(void *)out, o.owords, 0 };
+    #####: 1172:            (void)many_each(o.rank, &o.olay, o.oext, o.batch, many_scan, &c);
+call    0 never executed
+    #####: 1173:            if (info) info->unwritten_words = c.unwritten;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1174:            if (c.unwritten) rc = OMEGA_GPU_ML_UNWRITTEN;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####: 1175:            else (void)many_each(o.rank, &o.olay, o.oext, o.batch, many_copy_back, &c);
+call    0 never executed
+        -: 1176:        }
+        -: 1177:    }
+       20: 1178:    omega_gpu_session_unlock();
+call    0 returned 20
+       20: 1179:    many_free(&m);
+call    0 returned 20
+      20*: 1180:    if (info) info->call_ns = ml_sub(now_ns(), t0);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 20
+call    2 never executed
+       20: 1181:    return rc;
+        -: 1182:}
+        -: 1183:
+        -: 1184:/* The legacy entry points' other lengths: basic layout, in and out may not overlap. */
+function many_basic called 22 returned 100% blocks executed 100%
+       22: 1185:static int many_basic(OmegaGpuFftType type, uint32_t rank, const uint32_t *n, uint32_t batch, int inverse,
+        -: 1186:                      const float *in, float *out, OmegaGpuMathInfo *info) {
+        -: 1187:#if CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+       22: 1188:    if (!in || !out || in == out || !n || rank < 1 || rank > 3) return OMEGA_GPU_ML_BAD_ARGS;
+branch  0 taken 22 (fallthrough)
+branch  1 taken 0
+branch  2 taken 22 (fallthrough)
+branch  3 taken 0
+branch  4 taken 22 (fallthrough)
+branch  5 taken 0
+branch  6 taken 22 (fallthrough)
+branch  7 taken 0
+branch  8 taken 20 (fallthrough)
+branch  9 taken 2
+branch 10 taken 0 (fallthrough)
+branch 11 taken 20
+        -: 1189:#else
+        -: 1190:    if (omega_mh_basic(rank, (uintptr_t)in, (uintptr_t)out, (uintptr_t)n)) return OMEGA_GPU_ML_BAD_ARGS;
+        -: 1191:#endif
+        -: 1192:    OmegaGpuFftMany p;
+       20: 1193:    memset(&p, 0, sizeof p);
+       20: 1194:    p.rank = rank;
+       20: 1195:    memcpy(p.n, n, rank * sizeof n[0]);
+       20: 1196:    p.batch = batch;
+       20: 1197:    p.type = type;
+       20: 1198:    p.inverse = inverse;
+       20: 1199:    return omega_gpu_fft_many(&p, in, out, info);
+call    0 returned 20
+        -: 1200:}
+        -: 1201:
+        -: 1202:#if !CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST
+        -: 1203:#include "omega_gpu_mathlibs_host.inc"
+        -: 1204:#endif

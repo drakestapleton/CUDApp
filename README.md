@@ -172,6 +172,28 @@ The CPU does five things, all of them plain memory writes except the last, which
 
 PASS means a receipt exists on a named commit. Status words come from Omega's `docs/OMEGA.md`, section 2. `ROADMAP.md` lists every NVIDIA piece on the Spark with its receipt, and the bars CUDA++ must pass before it says "replaces CUDA".
 
+The default mathlibs host path is also seeded Omega: `om/mathlibs/host.om`
+owns RNG admission and seed arithmetic, FFT admission and launch walking,
+mixed-radix/Bluestein planning, layout/overlap checks, and poison counting.
+The six typed entry units are registered in `om/units.sh`; their generated C
+bindings are checked in. The C file retains session, allocation, clock, table
+copying and callback effects. The old host computations compile only with the
+default-OFF `CUDAPP_MIGRATION_PENDING_C_MATHLIBS_HOST` oracle flag.
+
+Run the focused host differential, red and missing-unit controls, oracle gcov,
+and eight seeded-source mutants without exposing GPU devices:
+
+```sh
+export OMEGA_OMC=$HOME/work/cudastack/omega-mv/seed/out/omc
+export OMEGA_BRIDGE=$HOME/work/cudastack/omega-bridge
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make test-mathlibs-host-om
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-gpu-mathlibs
+```
+
+The host migration evidence and separate, unrun chip procedure are in
+`evidence/mathlibs-host-20261106/README.md`. These checks do not qualify GPU
+execution, change the public API, or replace the historical chip receipts.
+
 The imported `evidence/m16-blackwell-native-path-requalification-receipt.json`
 is an **unauditable historical summary**, not qualification of this checkout.
 It names implementation commit `a2c0d7fbc03f7ce91fcb6389312a0ee8630322cd`,

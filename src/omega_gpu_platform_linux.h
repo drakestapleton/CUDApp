@@ -20,6 +20,9 @@
  *
  * Tested by tests/test_omega_gpu_platform_linux.c on the simulated driver (tests/fake_m16_native.c);
  * GB10 execution through it is the same driver calls as before this cut and is NOT re-run here.
+ * Policy (prefix words, channel count, range, alloc class, page round, min-free parse, inflight,
+ * submit fit, poll checks, extra-queue slot, target SM) is om/platform-linux/plat_policy.om.
+ * CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX defaults OFF; defining it selects the C oracle.
  */
 #ifndef OMEGA_GPU_PLATFORM_LINUX_H
 #define OMEGA_GPU_PLATFORM_LINUX_H

@@ -43,6 +43,9 @@ fi
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS cmdlist_record=om/cmdlist/record.om cmdlist_plan=om/cmdlist/plan.om cmdlist_layout=om/cmdlist/layout.om cmdlist_access=om/cmdlist/plan.om,om/cmdlist/access.om"; fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_wire_pack=native/nvrm/wire.om,native/nvrm/wire_pack.om nvrm_wire_reply=native/nvrm/wire.om nvrm_heap_wire=native/nvrm/heap_wire.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_uvm_wire=native/nvrm/uvm_wire.om nvrm_uvm_map_wire=native/nvrm/uvm_map_wire.om"
+if [ -z "${OMEGA_UNITS:-}" ]; then
+  UNITS="$UNITS plat_policy=om/platform-linux/plat_policy.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_tc=om/codegen/cg_tc_emit.om,om/codegen/cg_tc.om"

@@ -161,7 +161,7 @@ static void c_marker_never_latches(void) {
     OmegaGpuLaunch L = launch_desc(5);
     EXPECT(omega_gpu_session_launch(&L, NULL, NULL) == -1);
     EXPECT(omega_gpu_session_is_blocked());
-    EXPECT(fk.wait_calls == 5 && fk.clock_ms == 5); /* five 1 ms poll slices, then uncertain */
+    EXPECT(fk.wait_calls > 0 && fk.wait_ms[0] <= OMEGA_GPU_SESSION_POLL_SLICE_MS); /* absolute real-clock deadline; fake RM polls return without sleeping */
     EXPECT(g_retires == 0);
     omega_gpu_session_unlock();
     omega_gpu_session_close();

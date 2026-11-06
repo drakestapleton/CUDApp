@@ -35,6 +35,39 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#if defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX)
+#include "omega_gpu_platform_linux_cpolicy.h"
+#else
+uint32_t omega_plat_policy(uint64_t *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
+#endif
+
+/* CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX defaults OFF. The .om unit is the path; C is the oracle. */
+static uint64_t plat_decide(const uint64_t m_in[16], uint64_t q_out[16]) {
+    uint64_t q[16];
+    memset(q, 0, sizeof q);
+#if defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX)
+    uint64_t result = plat_c(m_in, q);
+#else
+    uint64_t m[16], result = 0;
+    memcpy(m, m_in, sizeof m);
+    if (omega_plat_policy(&result, m, 16, q, 16) != 0) return 0;
+#endif
+    if (q_out) memcpy(q_out, q, sizeof q);
+    return result;
+}
+
+static void plat_l2_words(uint32_t out[5]) {
+#if defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX)
+    const uint32_t words[5] = { (2u << 28) | (4u << 16) | (0x0028u >> 2), 0, 0, 0, 0x11u << 27 };
+    memcpy(out, words, sizeof words);
+#else
+    uint64_t m[16], q[16];
+    memset(m, 0, sizeof m);
+    m[0] = 1;
+    (void)plat_decide(m, q);
+    for (int i = 0; i < 5; i++) out[i] = (uint32_t)q[i];
+#endif
+}
 
 #define LINUX_REF_BUFFERS (OMEGA_GPU_HANDLE_SLOTS - 2u) /* one slot each for the device and the queue */
 
@@ -116,8 +149,8 @@ static int buf_ok(LinuxRef *r, OmegaGpuBufferHandle b, uint32_t *kind) {
 }
 
 static int range_ok(LinuxRef *r, OmegaGpuBufferHandle b, uint64_t off, uint64_t len) {
-    const uint64_t size = r->mem[b.index].size;
-    return (len == 0u || off > size || len > size - off) ? OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH : OMEGA_GPU_PLAT_OK;
+    const uint64_t m[16] = {3, r->mem[b.index].size, off, len};
+    return (int)plat_decide(m, NULL);
 }
 
 static uint64_t ref_now_ns(void *ctx) {
@@ -171,9 +204,13 @@ uint32_t omega_gpu_platform_linux_channels_env(void) {
 
 /* Extra queue slot of q (0..nchan-2), or -1 when q is not an open extra queue. Caller holds r->mu. */
 static int xq_slot(const LinuxRef *r, OmegaGpuQueueHandle q) {
-    for (uint32_t i = 0; i + 1u < r->nchan; i++)
-        if (r->xq[i].generation != 0u && r->xq[i].index == q.index && r->xq[i].generation == q.generation) return (int)i;
-    return -1;
+    uint64_t m[16] = {12, r->nchan, q.index, q.generation};
+    for (uint32_t i = 0; i < NVRM_MAX_EXTRA_CHANNELS; i++) {
+        m[4 + i * 2] = r->xq[i].index;
+        m[5 + i * 2] = r->xq[i].generation;
+    }
+    uint64_t slot = plat_decide(m, NULL);
+    return slot ? (int)slot - 1 : -1;
 }
 
 static int ref_device_open(void *ctx, uint32_t ordinal, OmegaGpuDeviceHandle *out) {
@@ -247,23 +284,27 @@ static int mem_reserve_check(LinuxRef *r, uint64_t bytes, int local) {
     uint64_t reserve = omega_gpu_mem_reserve_bytes();
     const char *minimum = getenv("CUDAPP_GPU_MIN_FREE_BYTES");
     if (minimum && *minimum) {
-        char *end = NULL;
-        errno = 0;
-        unsigned long long value = strtoull(minimum, &end, 10);
-        if (errno || !end || end == minimum || *end || *minimum == '-') {
+        uint64_t pm[16] = {7};
+        size_t n = strlen(minimum);
+        pm[1] = n > 32 ? 33 : n;
+        if (n <= 32) memcpy(&pm[2], minimum, n);
+        uint64_t pq[16];
+        if (n > 32 || plat_decide(pm, pq) != 1) {
             snprintf(r->diag, sizeof r->diag, "dma_alloc: invalid CUDAPP_GPU_MIN_FREE_BYTES");
             return OMEGA_GPU_PLAT_REFUSED_LIMIT;
         }
-        reserve = value;
+        reserve = pq[0];
     }
     if (!reserve) return OMEGA_GPU_PLAT_OK;
     uint64_t avail = 0, total = 0;
-    if (bytes > UINT64_MAX - 0xfffull ||
+    uint64_t page_m[16] = {5, bytes};
+    uint64_t page_q[16];
+    if (plat_decide(page_m, page_q) != 1 ||
         nvrm_vram_info(&r->m16.rm, &avail, &total) != 0) {
         snprintf(r->diag, sizeof r->diag, "dma_alloc: refused: selected GPU framebuffer free-memory query failed");
         return OMEGA_GPU_PLAT_REFUSED_LIMIT;
     }
-    bytes = (bytes + 0xfffull) & ~0xfffull;
+    bytes = page_q[0];
     const uint64_t m[16] = {2, avail, bytes, reserve};
     if (omega_ampere_policy(m, NULL) == 0) return OMEGA_GPU_PLAT_OK;
     snprintf(r->diag, sizeof r->diag,
@@ -285,15 +326,14 @@ static int ref_dma_alloc(void *ctx, OmegaGpuDeviceHandle dev, const OmegaGpuBuff
      * HOST_POLLED, so the CPU never reads a line the GPU may still hold in L2 (nvos.h:1116 "For system memory this will not be
      * coherent with direct CPU mappings"). omega_gpu_mem_cached.c (OWN-30B L2) writes such a buffer from the CPU exactly once,
      * before any GPU read, then syncs; omega_gpu_devmem.h (T3b) fills them with GPU writes only. Either way no stale L2 line exists. */
-    const int cached = desc->gpu_cache == OMEGA_GPU_CACHE_GPU_CACHED;
-    const int local = r->m16.rm.discrete && desc->kind != OMEGA_GPU_HANDLE_BUF_QUEUE &&
-                      !(desc->rights & OMEGA_GPU_RIGHT_HOST_POLLED);
-    /* Cached host/BAR alias maintenance is not yet exposed for Ampere. Do not
-     * silently use the GB10-only SYSMEM_NCOH invalidation for local framebuffer. */
-    if (rc == OMEGA_GPU_PLAT_OK && local && cached) rc = OMEGA_GPU_PLAT_REFUSED_CACHE_POLICY;
-    if (rc == OMEGA_GPU_PLAT_OK && cached &&
-        (desc->kind != OMEGA_GPU_HANDLE_BUF_DATA || (desc->rights & (OMEGA_GPU_RIGHT_CPU_READ | OMEGA_GPU_RIGHT_HOST_POLLED))))
-        rc = OMEGA_GPU_PLAT_REFUSED_CACHE_POLICY;
+    uint64_t am[16] = {4, (uint64_t)r->m16.rm.discrete, desc->kind, desc->rights,
+                       desc->gpu_cache == OMEGA_GPU_CACHE_GPU_CACHED, (uint64_t)(rc < 0 ? 0 : rc)};
+    uint64_t aq[16];
+    (void)plat_decide(am, aq);
+    rc = (int)aq[0];
+    const int local = (int)aq[1];
+    const int cached = (int)aq[2];
+    const int alloc_class = (int)aq[3];
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "dma_alloc"); ref_unlock(r); return rc; }
     rc = mem_reserve_check(r, desc->bytes, local); /* D1 before handle/driver allocation; the sentence is in r->diag */
     if (rc != OMEGA_GPU_PLAT_OK) { ref_unlock(r); return rc; }
@@ -301,8 +341,8 @@ static int ref_dma_alloc(void *ctx, OmegaGpuDeviceHandle dev, const OmegaGpuBuff
     rc = omega_gpu_handles_open(&r->t, desc->kind, desc->bytes, LINUX_REF_BUFFERS, g_caps.max_total_bytes, &idx, &gen);
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "dma_alloc"); ref_unlock(r); return rc; }
     NvrmMem m;
-    if ((local ? nvrm_alloc_vram(&r->m16.rm, desc->bytes, &m) :
-         cached ? nvrm_alloc(&r->m16.rm, desc->bytes, &m) : nvrm_alloc_gpu_uncached(&r->m16.rm, desc->bytes, &m)) != 0) {
+    if ((alloc_class == 1 ? nvrm_alloc_vram(&r->m16.rm, desc->bytes, &m) :
+         alloc_class == 2 ? nvrm_alloc(&r->m16.rm, desc->bytes, &m) : nvrm_alloc_gpu_uncached(&r->m16.rm, desc->bytes, &m)) != 0) {
         (void)omega_gpu_handles_close(&r->t, idx, gen, desc->kind); /* this slot never got memory: its generation moves on */
         rc = refuse(r, OMEGA_GPU_PLAT_REFUSED_DEVICE, cached ? "nvrm_alloc" : "nvrm_alloc_gpu_uncached");
         ref_unlock(r);
@@ -355,7 +395,10 @@ static int ref_sync(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint64_t le
     /* omega #457 (chip, 2026-10-15): after the host rewrites a GPU-cached buffer the GPU already read, every later launch
      * read the old bytes from L2 (nvos.h:1117 "For system memory this will not be coherent with direct CPU mappings").
      * The next submission therefore starts with L2_SYSMEM_NCOH_INVALIDATE (ref_queue_submit). */
-    else if (to_gpu && r->gpu_cached[b.index]) { r->l2_inval_pending = 1; memset(r->x_l2_pending, 1, sizeof r->x_l2_pending); }
+    else {
+        uint64_t pm[16] = {13, (uint64_t)to_gpu, r->gpu_cached[b.index]};
+        if (plat_decide(pm, NULL)) { r->l2_inval_pending = 1; memset(r->x_l2_pending, 1, sizeof r->x_l2_pending); }
+    }
     ref_unlock(r);
     if (rc == OMEGA_GPU_PLAT_OK) barrier(); /* uncached system memory: a full barrier is the whole sync */
     return rc;
@@ -367,8 +410,10 @@ static int ref_poll_word(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint32
     LinuxRef *r = ctx;
     ref_lock(r);
     int rc = buf_ok(r, b, NULL);
-    if (rc == OMEGA_GPU_PLAT_OK && !(r->rights[b.index] & OMEGA_GPU_RIGHT_HOST_POLLED)) rc = OMEGA_GPU_PLAT_REFUSED_BAD_RIGHTS;
-    if (rc == OMEGA_GPU_PLAT_OK && (off & 3u)) rc = OMEGA_GPU_PLAT_REFUSED_ARGS;
+    if (rc == OMEGA_GPU_PLAT_OK) {
+        uint64_t pm[16] = {10, r->rights[b.index], off};
+        rc = (int)plat_decide(pm, NULL);
+    }
     if (rc == OMEGA_GPU_PLAT_OK) rc = range_ok(r, b, off, 4u);
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "poll_word"); ref_unlock(r); return rc; }
     volatile uint32_t *w = (volatile uint32_t *)((uint8_t *)r->mem[b.index].cpu + off);
@@ -432,19 +477,25 @@ static int ref_queue_submit(void *ctx, OmegaGpuQueueHandle q, const uint32_t *wo
      * caps.max_inflight is per queue; refused before any copy or doorbell. */
     const char *stage = "submit_methods";
     const int slot = rc == OMEGA_GPU_PLAT_OK ? xq_slot(r, q) : -1;
-    if (rc == OMEGA_GPU_PLAT_OK && (slot >= 0 ? r->xinflight[slot] : r->inflight) >= g_caps.max_inflight) {
-        rc = OMEGA_GPU_PLAT_REFUSED_BUSY;
-        stage = "queue_submit (the previous submission is not retired; caps.max_inflight is 1)";
+    if (rc == OMEGA_GPU_PLAT_OK) {
+        uint64_t im[16] = {8, slot >= 0 ? r->xinflight[slot] : r->inflight, g_caps.max_inflight};
+        if (plat_decide(im, NULL) != 0) {
+            rc = OMEGA_GPU_PLAT_REFUSED_BUSY;
+            stage = "queue_submit (the previous submission is not retired; caps.max_inflight is 1)";
+        }
     }
     if (rc == OMEGA_GPU_PLAT_OK && slot >= 0) {
         /* an extra channel: the same #457 prefix rule (its own pending flag), the same copy-to-ring-offset-0 + one GP
          * entry + doorbell as m16_native_submit_methods, on channel slot + 1 */
         NvrmMem *ring = &r->xring[slot];
         const uint32_t xpre = r->x_l2_pending[slot] ? L2_INVAL_PREFIX_WORDS : 0u;
-        if (((uint64_t)nwords + xpre) * 4u > ring->size) rc = OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH;
+        uint32_t prefix[5];
+        plat_l2_words(prefix);
+        uint64_t fm[16] = {9, nwords, xpre, ring->size};
+        if (plat_decide(fm, NULL) != 0) rc = OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH;
         else {
             uint32_t *dst = ring->cpu;
-            if (xpre) memcpy(dst, L2_INVAL_PREFIX, sizeof L2_INVAL_PREFIX);
+            if (xpre) memcpy(dst, prefix, sizeof prefix);
             memcpy(dst + xpre, words, (size_t)nwords * 4u);
             barrier();
             if (nvrm_chan_submit(&r->m16.rm, (uint32_t)slot + 1u, ring, 0, nwords + xpre) != 0) rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
@@ -460,13 +511,16 @@ static int ref_queue_submit(void *ctx, OmegaGpuQueueHandle q, const uint32_t *wo
      * tools/run_gpu_l2_stale_chip.sh (20/20 FRESH) is the only proof. The prefix counts against the ring like any
      * word; callers budget it from g_caps.submit_prefix_words (omega_gpu_cmdlist.c). */
     const uint32_t pre = r->l2_inval_pending ? L2_INVAL_PREFIX_WORDS : 0u;
-    if (rc == OMEGA_GPU_PLAT_OK && ((uint64_t)nwords + pre) * 4u > r->m16.pb_mem.size) rc = OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH;
+    uint64_t fm[16] = {9, nwords, pre, r->m16.pb_mem.size};
+    if (rc == OMEGA_GPU_PLAT_OK && plat_decide(fm, NULL) != 0) rc = OMEGA_GPU_PLAT_REFUSED_BAD_LENGTH;
     uint32_t *buf = NULL;
     if (rc == OMEGA_GPU_PLAT_OK && pre) {
         buf = malloc(((size_t)nwords + pre) * 4u);
         if (!buf) { rc = OMEGA_GPU_PLAT_REFUSED_LIMIT; stage = "submit_methods (host copy for the #457 L2 invalidate prefix)"; }
         else {
-            memcpy(buf, L2_INVAL_PREFIX, sizeof L2_INVAL_PREFIX);
+            uint32_t prefix[5];
+            plat_l2_words(prefix);
+            memcpy(buf, prefix, sizeof prefix);
             memcpy(buf + pre, words, (size_t)nwords * 4u);
         }
     }
@@ -535,8 +589,8 @@ const OmegaGpuPlatform *omega_gpu_platform_linux(OmegaGpuPlatformCaps *caps) {
 
 uint32_t omega_gpu_platform_linux_target_sm(void) {
     ref_lock(&g_ref);
-    const uint32_t target = g_ref.dev.generation ?
-        (g_ref.m16.rm.target_sm ? g_ref.m16.rm.target_sm : 121u) : 0;
+    uint64_t sm[16] = {14, g_ref.dev.generation, g_ref.m16.rm.target_sm};
+    const uint32_t target = (uint32_t)plat_decide(sm, NULL);
     ref_unlock(&g_ref);
     return target;
 }

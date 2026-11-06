@@ -55,3 +55,8 @@ test-prefill-workspace: $(OUT_DIR)/prefill-workspace.so
 ifeq ($(CUDAPP_OMC_HOST),1)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/prefill-shape/workspace-mutants.py
 endif
+
+CARRIED_HOST_TESTS += test-prefill-host-rest
+.PHONY: test-prefill-host-rest
+test-prefill-host-rest:
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/apirest/pfhost-mutants.py

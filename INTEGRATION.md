@@ -141,3 +141,103 @@ The full repository `make test` is NOT_RUN by Half C and remains Main's
 `full-2` gate. Chip/live-RM/VFIO/hardware qualification, merge-to-main and
 deployment remain NOT_RUN. Focused host/simulator receipts do not upgrade a
 hardware status row.
+### Stage-6 Half B converter adoption
+
+Half B starts at `0d38145a697290f2cd00578fbaa168b824a38015` on
+`integ/stage6b`. The single converter lock selects omega-bridge draft #76
+`741c1ebb2b0fbae311a77ad2118b13d5ec7a17ee`. Its portable and freestanding
+converter/frontend source digests match the preceding #73 selection.
+Regenerating every portable unit changed no generated C, header or identity
+file. The lock text is the only converter-switch change.
+
+The first representative gate exposed an inherited #332 attention-view
+freestanding provider defect: `test-gpu-native-runtime` failed with unresolved
+`omega_av_*` symbols. Repeating the gate at the starting source revision with
+#73 reproduced it (`/tmp/integ/6b-baseline73.log`, rc 2). This is not a
+converter-regeneration difference. The unchanged native import allowlist
+remains enforced. Full integrated host acceptance and hardware qualification
+remain NOT_RUN.
+
+The #335/#348/#352 union supplies nine native NO_POSIX roots. The shared
+`CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION` remains default zero, and
+`src/omega_gpu_apiviews.h` is the sole definition of `av_bf16_n`. The focused
+session and BF16 differentials, production OFF/ON symbol controls and their
+compiled mutants pass (`/tmp/integ/6b-pr352-final.log`). The BF16 C helper is
+compiled only in the explicit NO_POSIX oracle arm, not merely because other
+NO_POSIX apiview helpers still use their C snapshots.
+
+The independent #333 API-rest and #356 attention/artifact-rest differential
+harnesses originally shared a filename. Both remain: `tests/api_rest_diff.c`
+and `tests/api_attn_rest_diff.c`, respectively. The latter is selected by
+`tests/api_rest_check.py`. Its artifact fixture explicitly opens the retained
+C-artifact shell while independently selecting new Omega versus C residual
+computations; the production seeded artifact snapshot path remains unchanged.
+Focused harness links include the prior Omega BW scalar provider. #350's scan
+oracle additionally renames the later u32-prefix/radix exports to avoid
+duplicate definitions, and its mutant runner uses the single configured
+converter for both scalar and runtime-view units.
+
+#346's prefill poison counting now uses its specific Omega root, retaining
+earlier Omega copies/fills and #332 rope generation. Its six compiled mutants,
+missing-unit/red controls and eight host/simulator prefill gates pass
+(`/tmp/integ/6b-pr346.log`). #355's allocator union retains the existing chip
+admission and serializer dependencies while adding four strong allocation
+providers; its runtime-view selector is merged into the shared generator
+convention. Both qualification scripts forward the allocator oracle flag;
+their programs are compiled only and must not be executed without fresh
+hardware authorization.
+
+The single converter is now omega-bridge #77
+(`d90433a90f26159d878a277d232f0269946ca669`, containing #76). Its checked
+borrowed-view freestanding profile makes the #332 attention/view compositions,
+the #356 matmul-oracle compositions, `cg_fields` and the cubin message/admission
+compositions import-free. They are
+generated once as `src/cudapp_freest_<root>.c` for both hosted and NO_POSIX
+consumers; their obsolete `src/cudapp_om_<root>.c` copies are removed by the
+generator and refused by `--check`. The corresponding per-unit identities and
+aggregate custody identity change for the new converter/profile. Existing
+hosted computations and the native computation compiler are unchanged.
+
+The NO_POSIX partial-link import allowlist is unchanged. A new required
+negative control removes each of `omega_av_set`, `omega_av_copy` and
+`omega_av_fold`'s providers and requires the strong-provider link to fail.
+Direct codegen/regalloc and attention/API mutant harnesses select the same
+single generated implementation and emitter used in production. Explicit
+codegen links retain `cg_fields`, BW scalar, pathcopy and the emitter/replay/
+liveness/invariant providers; both regalloc oracle links retain pathcopy.
+
+The cubin allocating shell calls the checked import-free Omega message and
+admission providers even when it selects the caller-stack native packer. The
+native call is explicit rather than a global preprocessor alias that changes
+later hosted declarations. The broad unrelated core freestanding refusal gate
+is unchanged. Its native differential links the same two import-free diagnostic
+providers. No C computation fallback or additional import allowance is added.
+
+The conversion replaces exactly 40 hosted generated C files with 40
+freestanding generated C files. All 357 unit identities change to record the
+converter pin. The fixed-extent repair then updates 317 identities, the profile
+comments in the generated header and six freestanding bodies: `attn_args`,
+`attn_lay`, `attn_mm_next`, `cg_fields`, `core_cubadmit` and `core_cubinmsg`.
+These reject wrong fixed extents rather than treating them as capacities;
+OM2 runtime views retain their checked capacity/alias contract. The production archive is recreated
+before adding its current objects: incrementally updating it with `ar rcs`
+otherwise retains the removed hosted provider members. A membership control
+rejects the stale archive and requires all 40 replacement members and no
+obsolete member after the rebuild.
+
+The initial #77 checkpoint exposed `omega_av_pack` accepting a 31-element
+view where its declared extent is 32 (differential exit5). The pinned repair
+passes the full attention typed-view differential, nine compiled mutants and
+all seven attention-family API host/sim gates; residual API differentials,
+nine mutants and three missing-unit controls also pass. These results are
+recorded in `/tmp/integ/6b-pin77-callers-repaired.log`. That compound command
+stopped at missing explicit codegen/regalloc link providers, repaired without
+changing the acceptance paths. The original failing receipts are retained.
+
+The repaired-pin archive membership, artifact-format positive/red controls,
+NO_POSIX native/session/BF16 differential and mutant gates, freestanding
+engine/codegen, native runtime and byte-identical regeneration all pass in
+`/tmp/integ/6b-pin77-final.log` (rc0; `crumb verify: OK: 88 crumbs current`).
+The hosted formatting includes use equivalent nested NO_POSIX/core-oracle
+guards so the existing portability scanner recognizes the freestanding
+boundary; the implementation-selection predicate and scanner are unchanged.

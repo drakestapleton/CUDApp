@@ -50,7 +50,14 @@ static int ref_prefix(const float *in, float *out, size_t len) {
     int rc = 0;
     if (nt > 1) {
         rc = ref_prefix(tot, tot, nt);
+#ifdef CUDAPP_MIGRATION_PENDING_C_SCAN_REFERENCE_REST
         for (size_t e = 32; rc == 0 && e < len; e++) out[e] = tot[e / 32 - 1] + out[e];
+#else
+        if (rc == 0) {
+            uint64_t status = 0;
+            if (omega_ar_carry(&status, tot, nt, out, len) != OMEGA_OK || status != 0) rc = -1;
+        }
+#endif
     }
     free(tot);
     return rc;

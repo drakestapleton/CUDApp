@@ -118,18 +118,20 @@ void omega_gpu_decode_attn256_test_set_mutant(int mutant);        /* TEST ONLY: 
  * inv_freq[j] = theta^(-2j/rotary_dim), the rest are cos 1, sin 0 */
 void omega_dattn256_rope_row(uint32_t pos, double theta, uint32_t rotary_dim, float *row256);
 /* the model dim held by kernel slot i (see above); rotary_dim even, 2..256 */
+#include "cudapp_native.h"
 static inline uint32_t omega_dattn256_perm_slot(uint32_t i, uint32_t rotary_dim) {
-    const uint32_t P = rotary_dim / 2u;
-    if (i < 128u) return i < P ? i : rotary_dim + (i - P);
-    const uint32_t j = i - 128u;
-    return j < P ? P + j : i;
+    uint64_t r = 0;
+    if (omega_ds_slot(&r, i, rotary_dim) != OMEGA_OK) __builtin_trap();
+    return (uint32_t)r;
 }
 /* dst[i] = src[perm_slot(i)] for 256 f32 (q, k, norm weights); src and dst must not overlap */
 static inline void omega_dattn256_perm_vec(const float *src, float *dst, uint32_t rotary_dim) {
-    for (uint32_t i = 0; i < 256u; i++) dst[i] = src[omega_dattn256_perm_slot(i, rotary_dim)];
+    uint64_t r = 0;
+    if (omega_ds_vecf(&r, src, 256, dst, 256, rotary_dim) != OMEGA_OK || r) __builtin_trap();
 }
 static inline void omega_dattn256_perm_vec_bf16(const uint16_t *src, uint16_t *dst, uint32_t rotary_dim) {
-    for (uint32_t i = 0; i < 256u; i++) dst[i] = src[omega_dattn256_perm_slot(i, rotary_dim)];
+    uint64_t r = 0;
+    if (omega_ds_vecb(&r, src, 256, dst, 256, rotary_dim) != OMEGA_OK || r) __builtin_trap();
 }
 /* The double-precision reference of the whole layer step lives in tests/gpu_decode_attn256_test.c (libm). */
 

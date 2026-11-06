@@ -41,7 +41,10 @@ units = dict(re.findall(r'^UNITS="\$UNITS (attn_\w+)=([^"\n]+)"$', (ROOT/'om/uni
 objects = {}
 for name in units:
     obj = out/(name+'.o')
-    run([cc, *flags, '-c', 'src/cudapp_om_'+name+'.c', '-o', obj])
+    providers = sorted((ROOT/'src').glob('cudapp_*_'+name+'.c'))
+    if len(providers) != 1:
+        raise SystemExit('FAIL expected exactly one checked provider for '+name+': '+str(providers))
+    run([cc, *flags, '-c', providers[0], '-o', obj])
     objects[name] = obj
 for name in ['api_mm_plan','api_at_plan','api_ew_plan','api_bf_plan','api_da_plan','api_rt_plan','core_hostmath']:
     obj = out/(name+'.o')
@@ -85,8 +88,12 @@ if a.mutants:
         om = out/('mutant-'+str(num)+'.om')
         om.write_text(source.replace(site,replacement))
         c = out/('mutant-'+str(num)+'.c')
-        cmd = ['sh', bridge/'tools/bridge-seeded']
-        if name not in ['attn_args','attn_lay']:
+        providers = sorted((ROOT/'src').glob('cudapp_*_'+name+'.c'))
+        if len(providers) != 1:
+            raise SystemExit('FAIL expected exactly one checked provider for '+name)
+        freestanding = providers[0].name.startswith('cudapp_freest_')
+        cmd = ['sh', bridge/('tools/bridge-freest' if freestanding else 'tools/bridge-seeded')]
+        if not freestanding and name not in ['attn_args','attn_lay']:
             cmd.append('--runtime-views')
         cmd += ['c', om]
         r = subprocess.run([str(x) for x in cmd], env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

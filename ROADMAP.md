@@ -35,6 +35,23 @@ remain independent C oracles because seeded Omega has no binary128 type. The
 CUDA fixture has new v2 identities; v1 remains frozen and CUDA imports are
 unchanged. Host/simulator evidence and the NOT_RUN chip runbook are in
 `evidence/standalone-oracles-20261106/README.md`; no hardware status row changes.
+2026-11-06: NO_POSIX session admission, parked-handle lookup, packet encoding,
+extra-queue admission and command-list bookkeeping now select freestanding
+seeded Omega by default. The C oracle requires
+`CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION=1`; host differential and mutation
+receipts are in `evidence/no-posix-session-20261106/`. Chip qualification is
+NOT_RUN. This branch merges the #335 native mechanism into #334; neither
+dependency is implicitly merged or deployed by this receipt.
+2026-11-06: `av_bf16_n` now uses the integer-public freestanding Omega variant `om/apiviews/no_avbf.om` under `OMEGA_GPU_NO_POSIX`; its canonical hosted view remains `om/apiviews/bf16.om`. The explicit default-OFF `CUDAPP_MIGRATION_PENDING_C_NO_POSIX_SESSION` flag selects the temporary C oracle. Hosted/freestanding differential, production-object OFF/ON symbol controls and six behavioral mutants PASS; chip NOT_RUN. Receipt: `evidence/no-posix-bf16-20261106/README.md`.
+2026-11-06: FP8 shape, depth, environment-number parsing and grouped/grid policy, GDN cache/move/prefill admission, and scan cross-tile carry now use seeded `om/apiviews/hostrest.om` and `scancarry.om`. The previous C policy is a default-OFF migration oracle. Host differential, negative-control and focused simulation evidence is in `evidence/api-fp8-gdn-host-20261106/`; chip qualification remains NOT_RUN. No status row is upgraded.
+2026-11-06: prefill register-file admission and output poison counting now
+default to seeded Omega; `CUDAPP_MIGRATION_PENDING_C_PREFILL_HOST_REST`
+retains the default-OFF C oracle. See
+`evidence/prefill-host-rest-20261106/README.md`. Hardware remains NOT_RUN.
+2026-11-06: NVRM allocation/counter/packet computation now has a seeded Omega
+default with a default-OFF C oracle. Host state differential, source mutants
+and fake-RM gates are recorded in `evidence/nvrm-alloc-20261106/README.md`.
+Live RM and chip qualification remain NOT_RUN; no status row is upgraded.
 
 ## 1. NVIDIA software on the Spark today
 
@@ -179,3 +196,5 @@ host-differentially EXERCISED with overflow partitions and seven killed Omega
 mutants. Receipts and the unexecuted chip runbook are in
 `evidence/engine-fixture-rest-20261106/README.md`. Hardware qualification remains
 NOT_RUN, and no roadmap status row is upgraded.
+
+2026-11-06: native artifact JSON/ELF/manifest/version checks, decode BF16 rounding and head permutations, and matmul host-oracle error reduction default to seeded Omega. Decode retains the raw C rounding behavior for every nonfinite payload; no trust/admission policy or public API changes. The old artifact and matmul computations are default-OFF C oracles under `CUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST` and `CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD`. Differential, source mutants, strong-link red controls, focused family gates and the unexecuted chip runbook are recorded in `evidence/api-attn-rest-20261106/`. Status rows are unchanged; chip qualification is NOT_RUN.

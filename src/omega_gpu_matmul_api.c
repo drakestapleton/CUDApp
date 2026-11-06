@@ -86,7 +86,12 @@ static struct {
 const char *omega_gpu_matmul_last_error(void) { return omega_gpu_session_last_error(); }
 
 static uint64_t now_ns(void) { return omega_gpu_session_now_ns(); } /* the platform clock (CLOCK_NS) */
+#ifndef CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD
+#define CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD
 static inline double abs_d(double x) { return x < 0.0 ? -x : x; }
+#endif
 
 static uint32_t round_up(uint32_t v, uint32_t q) {
     uint64_t p[16]={v,q}; (void)ap_plan(AP_MM,3,p); return (uint32_t)p[8];
@@ -602,6 +607,7 @@ int omega_gpu_matmul_resident_f32(uint32_t m, const float *a, const OmegaGpuTens
 /* Host oracle: double accumulation of the bf16 inputs; an element mismatches when
  * its error exceeds ORACLE_TOL of the accumulation scale (sum of |terms|). */
 static void oracle(uint32_t m, uint32_t k, uint32_t n, const uint16_t *a, const uint16_t *b, const float *c, OmegaGpuMatmulInfo *info) {
+#if CUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD
     float max_abs = 0.0f, max_rel = 0.0f;
     size_t mism = 0;
     for (uint32_t i = 0; i < m; i++) {
@@ -620,6 +626,23 @@ static void oracle(uint32_t m, uint32_t k, uint32_t n, const uint16_t *a, const 
     }
     info->max_abs_err = max_abs; info->max_rel_err = max_rel; info->mismatch_count = mism;
     info->oracle_ran = true; info->parity_verified = (mism == 0);
+#else
+    uint64_t q[8] = {0, 0, k, n, m, 0, 0, 0}, d[2] = {0}, z[4] = {0, 0, 0, 1}, r = 0;
+    if (omega_mm_init(&r, q, 8) != OMEGA_OK) __builtin_trap();
+    while (r) {
+        if (omega_mm_dot(&r, a, q[6], b, q[7], q, 4, d, 2) != OMEGA_OK || r) __builtin_trap();
+        uint32_t bits;
+        memcpy(&bits, c + q[5], sizeof bits);
+        if (omega_mm_err(&r, d, 2, bits, z, 4) != OMEGA_OK || r) __builtin_trap();
+        if (omega_mm_next(&r, q, 8) != OMEGA_OK) __builtin_trap();
+    }
+    uint32_t ae = (uint32_t)z[0], re = (uint32_t)z[1];
+    memcpy(&info->max_abs_err, &ae, sizeof ae);
+    memcpy(&info->max_rel_err, &re, sizeof re);
+    info->mismatch_count = z[2];
+    info->oracle_ran = true;
+    info->parity_verified = z[3];
+#endif
 }
 
 int omega_gpu_matmul_bf16(uint32_t m, uint32_t k, uint32_t n,

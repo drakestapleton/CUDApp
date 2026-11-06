@@ -219,8 +219,15 @@ static unsigned long long meminfo_kb(const char *key) {
     unsigned long long kb = 0;
     size_t klen = strlen(key);
     while (fgets(line, sizeof line, f)) {
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
         if (strncmp(line, key, klen) != 0 || line[klen] != ':') continue;
         if (sscanf(line + klen + 1, " %llu kB", &kb) != 1) kb = 0;
+#else
+        uint64_t state[2] = {0, 0}, matched = 0;
+        if (omega_nvrm_counts(&matched, 0, line, strlen(line), key, klen, state, 2)) break;
+        if (!matched) continue;
+        kb = state[1];
+#endif
         break;
     }
     fclose(f);
@@ -245,6 +252,7 @@ static unsigned long long buddy_free_blocks_ge(unsigned order) {
     char line[512];
     unsigned long long total = 0;
     while (fgets(line, sizeof line, f)) {
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
         const char *p = strstr(line, "zone");
         if (!p) continue;
         p += 4;
@@ -256,6 +264,14 @@ static unsigned long long buddy_free_blocks_ge(unsigned order) {
             while (*p == ' ') p++;
             while (*p && *p != ' ') p++;
         }
+#else
+        uint64_t state[2] = {order, total}, unused;
+        if (omega_nvrm_counts(&unused, 1, line, strlen(line), "", 0, state, 2)) {
+            fclose(f);
+            return ULLONG_MAX;
+        }
+        total = state[1];
+#endif
     }
     fclose(f);
     return total;
@@ -467,14 +483,28 @@ static uint32_t g_va_recycled_count;
 
 static uint64_t acquire_va_slot(void) {
     while (atomic_flag_test_and_set_explicit(&g_va_slots_lock, memory_order_acquire)) { }
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
     uint64_t base = g_va_recycled_count ? g_va_recycled[--g_va_recycled_count] : 0;
+#else
+    uint64_t state[4] = {g_va_recycled_count, 0, 0, 0}, base = 0;
+    int status = omega_nvrm_va(&base, 2, state, 4, g_va_recycled, 1024);
+    g_va_recycled_count = (uint32_t)state[0];
+    if (status) abort();
+#endif
     atomic_flag_clear_explicit(&g_va_slots_lock, memory_order_release);
     if (!base) {
         uint64_t old = atomic_load_explicit(&g_va_counter, memory_order_relaxed);
         for (;;) {
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
             if (old > UINT64_MAX - 0x100000000ull) return 0;
             if (atomic_compare_exchange_weak_explicit(&g_va_counter, &old,
                     old + 0x100000000ull, memory_order_relaxed, memory_order_relaxed)) {
+#else
+            uint64_t next;
+            if (omega_nvrm_alloc_scalar(&next, 0, old, 0, 0) || !next) return 0;
+            if (atomic_compare_exchange_weak_explicit(&g_va_counter, &old,
+                    next, memory_order_relaxed, memory_order_relaxed)) {
+#endif
                 base = old;
                 break;
             }
@@ -485,7 +515,13 @@ static uint64_t acquire_va_slot(void) {
 
 static void recycle_va_slot(uint64_t base) {
     while (atomic_flag_test_and_set_explicit(&g_va_slots_lock, memory_order_acquire)) { }
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
     if (g_va_recycled_count < 1024) g_va_recycled[g_va_recycled_count++] = base;
+#else
+    uint64_t state[4] = {g_va_recycled_count, 0, 0, base}, unused;
+    if (omega_nvrm_va(&unused, 3, state, 4, g_va_recycled, 1024)) abort();
+    g_va_recycled_count = (uint32_t)state[0];
+#endif
     atomic_flag_clear_explicit(&g_va_slots_lock, memory_order_release);
 }
 
@@ -716,6 +752,7 @@ int nvrm_open(Nvrm *rm) {
 }
 
 /* Return a freed VA range to the sorted, coalesced free list. */
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
 static int va_release(Nvrm *rm, uint64_t va, uint64_t size) {
     uint64_t end;
     if (!size || __builtin_add_overflow(va, size, &end)) {
@@ -806,6 +843,34 @@ static uint64_t va_take(Nvrm *rm, uint64_t size, uint64_t align) {
     rm->va_next = end;
     return va;
 }
+#else
+/* The unit mutates the borrowed range table in place. Only the atomic slot
+ * reservation and the client-visible error effects remain in this shell. */
+_Static_assert(sizeof(NvrmVaRange) == 2 * sizeof(uint64_t), "VA range wire layout");
+_Static_assert(offsetof(NvrmVaRange, size) == sizeof(uint64_t), "VA size offset");
+static int va_release(Nvrm *rm, uint64_t va, uint64_t size) {
+    uint64_t state[4] = {rm->free_count, rm->va_next, size, va}, result;
+    int status = omega_nvrm_va(&result, 1, state, 4, rm->free_list, NVRM_MAX_FREE * 2);
+    if (status || result) {
+        rm->faulted = 1;
+        if (status) return fail(rm, "Omega VA release refused");
+        if (result == 1) return fail(rm, "invalid VA release extent");
+        if (result == 2) return fail(rm, "overlapping VA release extent");
+        return fail(rm, "VA free-list full; VA 0x%lx quarantined", (unsigned long)va);
+    }
+    rm->free_count = (uint32_t)state[0];
+    return 0;
+}
+static uint64_t va_take(Nvrm *rm, uint64_t size, uint64_t align) {
+    uint64_t state[4] = {rm->free_count, rm->va_next, size, align}, va;
+    if (omega_nvrm_va(&va, 0, state, 4, rm->free_list, NVRM_MAX_FREE * 2)) return 0;
+    if (!va) return 0;
+    if (state[1] != rm->va_next && !va_slot_cover(rm, state[1])) return 0;
+    rm->free_count = (uint32_t)state[0];
+    rm->va_next = state[1];
+    return va;
+}
+#endif
 
 static int uvm_map(Nvrm *rm, uint64_t va, uint64_t size, uint32_t hmem,
                    uint8_t *uvm_created, uint8_t *dma_mapped) {
@@ -1404,11 +1469,12 @@ volatile uint32_t *nvrm_userd_gpput(Nvrm *rm) {
 }
 
 /* Ampere admits only its implemented launch protocol, below both m16 and the
- * platform queue. Decode the wire envelope here; method/class policy is Omega. */
+ * platform queue. Omega decodes the envelope and applies method/class policy. */
 static int validate_ampere_push(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint32_t nwords) {
     if (!rm->discrete) return 0;
     if (!pb->cpu) return fail(rm, "Ampere pushbuffer has no CPU mapping");
     const uint32_t *w = (const uint32_t *)((const uint8_t *)pb->cpu + off);
+#if CUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC
     for (uint32_t i = 0; i < nwords;) {
         const uint32_t h = w[i++], count = (h >> 16) & 0x1fffu;
         if ((h >> 28) != 2 || !count || count > nwords - i)
@@ -1419,6 +1485,13 @@ static int validate_ampere_push(Nvrm *rm, const NvrmMem *pb, uint32_t off, uint3
         if (omega_ampere_policy(m, NULL)) return fail(rm, "Ampere method/class refused before submission");
         i += count;
     }
+#else
+    uint64_t result;
+    if (omega_nvrm_alloc_push(&result, w, nwords))
+        return fail(rm, "Omega Ampere push validation refused");
+    if (result == 1) return fail(rm, "Ampere push packet envelope refused");
+    if (result == 2) return fail(rm, "Ampere method/class refused before submission");
+#endif
     return 0;
 }
 

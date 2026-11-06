@@ -1,0 +1,1227 @@
+[
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_ds_round.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_ds_slot.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_ds_vecf.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_ds_vecb.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_na_read.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_na_cubin.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_na_layout.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_na_ver.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_na_json.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_mm_dot.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_mm_err.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_mm_init.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_mm_next.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_artifact_parse.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/cudapp_om_attn_buf.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/omega_blackwell_matmul.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "src/omega_gpu_decode_attn_api.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "objcopy",
+      "-G",
+      "omega_dattn_bf16_rne",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-DREST(x)=om_ ## x",
+      "-c",
+      "tests/api_rest_art_fixture.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "objcopy",
+      "-G",
+      "om_cubin",
+      "-G",
+      "om_layout",
+      "-G",
+      "om_version",
+      "-G",
+      "om_json",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-DREST(x)=c_ ## x",
+      "-DCUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST=1",
+      "-DCUDAPP_MIGRATION_PENDING_C_ARTIFACT=1",
+      "-DCUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD=1",
+      "-c",
+      "tests/api_rest_art_fixture.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "objcopy",
+      "-G",
+      "c_cubin",
+      "-G",
+      "c_layout",
+      "-G",
+      "c_version",
+      "-G",
+      "c_json",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-DREST(x)=om_ ## x",
+      "-c",
+      "tests/api_rest_mm_fixture.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "objcopy",
+      "-G",
+      "om_oracle",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-DREST(x)=c_ ## x",
+      "-DCUDAPP_MIGRATION_PENDING_C_NATIVE_ARTIFACT_REST=1",
+      "-DCUDAPP_MIGRATION_PENDING_C_ARTIFACT=1",
+      "-DCUDAPP_MIGRATION_PENDING_C_MATMUL_ORACLE_GUARD=1",
+      "-c",
+      "tests/api_rest_mm_fixture.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "objcopy",
+      "-G",
+      "c_oracle",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "tests/api_rest_diff.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/diff"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/diff"
+    ],
+    "rc": 0,
+    "output": "PASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\nPASS artifact differential: JSON bytes, strict versions, manifest boundaries, ELF bounds/name/text mutations; red text mismatch refused\nPASS matmul double oracle float classes and error reduction; red wrong output rejected\nAPI-REST-DIFF PASS\n"
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/missing"
+    ],
+    "rc": 1,
+    "output": "/usr/bin/ld: ~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o: in function `scalars':\napi_rest_diff.c:(.text.scalars+0xa4): undefined reference to `omega_ds_round'\n/usr/bin/ld: ~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o: in function `omega_dattn_bf16_rne':\nomega_gpu_decode_attn_api.c:(.text.omega_dattn_bf16_rne+0x5c): undefined reference to `omega_ds_round'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/missing"
+    ],
+    "rc": 1,
+    "output": "/usr/bin/ld: ~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o: in function `om_cubin':\napi_rest_art_fixture.c:(.text.om_cubin+0x68): undefined reference to `omega_na_cubin'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/missing"
+    ],
+    "rc": 1,
+    "output": "/usr/bin/ld: ~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o: in function `oracle':\napi_rest_mm_fixture.c:(.text.oracle+0xc8): undefined reference to `omega_mm_dot'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-0.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-0.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-0.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-0.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-0"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-0"
+    ],
+    "rc": 1,
+    "output": "FAIL line 25: (uint16_t)got==want\nFAIL line 71: !scalars()\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-1.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-1.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-1.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-1.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-1"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-1"
+    ],
+    "rc": 1,
+    "output": "FAIL line 31: omega_dattn256_perm_slot(i,r)==perm(i,r)\nFAIL line 71: !scalars()\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-2.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-2.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-2.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-2.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-2"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-2"
+    ],
+    "rc": 1,
+    "output": "FAIL line 31: !memcmp(d+i,s+perm(i,r),4)\nFAIL line 71: !scalars()\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-3.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-3.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-3.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-3.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-3"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-3"
+    ],
+    "rc": 1,
+    "output": "FAIL line 51: om_cubin(cub,n,\"foo\",text,4)==c_cubin(cub,n,\"foo\",text,4)\nFAIL line 71: !artifacts()\nPASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-4.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-4.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-4.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-4.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-4"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-4"
+    ],
+    "rc": 1,
+    "output": "FAIL line 44: om_layout(manifest,len)==1&&c_layout(manifest,len)==1\nFAIL line 71: !artifacts()\nPASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-5.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-5.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-5.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-5.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-5"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-5"
+    ],
+    "rc": 1,
+    "output": "FAIL line 40: om_version(vs[i],vs[j])==c_version(vs[i],vs[j])\nFAIL line 71: !artifacts()\nPASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-6.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-6.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-6.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-6.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-6"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-6"
+    ],
+    "rc": 1,
+    "output": "FAIL line 38: a==b&&!memcmp(x,y,a)\nFAIL line 71: !artifacts()\nPASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-7.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-7.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-7.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-7.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_err.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-7"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-7"
+    ],
+    "rc": 1,
+    "output": "FAIL line 64: !memcmp(&x.max_abs_err,&y.max_abs_err,sizeof(float))\nFAIL line 71: !matmul()\nPASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\nPASS artifact differential: JSON bytes, strict versions, manifest boundaries, ELF bounds/name/text mutations; red text mismatch refused\n"
+  },
+  {
+    "command": [
+      "sh",
+      "/tmp/bridge-73-apiviews/tools/bridge-seeded",
+      "--runtime-views",
+      "c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-8.om"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-std=gnu11",
+      "-O2",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Isrc",
+      "-Itests",
+      "-c",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-8.c",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-8.o"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "cc",
+      "-Wl,--gc-sections",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/main.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/art-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-om.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mm-c.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_round.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_slot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_ds_vecb.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_read.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_cubin.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_layout.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_ver.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_na_json.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_dot.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-8.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_init.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_mm_next.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/artifact_parse.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/attn_buf.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/blackwell_matmul.o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/decode_scalar.o",
+      "-lm",
+      "-o",
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-8"
+    ],
+    "rc": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "~/work/cudastack/lanes/ApiAttnRestOm/build/api-rest-check/mutant-8"
+    ],
+    "rc": 1,
+    "output": "FAIL line 65: x.mismatch_count==y.mismatch_count&&x.parity_verified==y.parity_verified&&x.oracle_ran==y.oracle_ran\nFAIL line 71: !matmul()\nPASS decode all exponent/sign/high-payload classes and rounding/NaN payload edges; permutation full valid domain\nPASS artifact differential: JSON bytes, strict versions, manifest boundaries, ELF bounds/name/text mutations; red text mismatch refused\n"
+  }
+]

@@ -174,8 +174,8 @@ static void buffer_contract(void) {
 }
 #endif
 
-/* Golden words (nvcc/nvdisasm oracles, independent of either encoder). The hosted build runs them with --golden
- * through the .om encoder (om/encoder/bw_enc_sm121.om); the freestanding build through the C encoder. */
+/* Golden words (nvcc/nvdisasm oracles, independent of either binding). Both builds run the seeded
+ * bw_enc_sm121.om unit: hosted portable binding versus freestanding native caller-stack binding. */
 static void golden_fixtures(void) {
     CHECK(omega_blackwell_verify_codegen_fixtures() == 0, "golden words (rc %d)", omega_blackwell_verify_codegen_fixtures());
     CHECK(omega_blackwell_verify_codegen_fixtures_fb1cut4() == 0, "fb1cut4 golden words");
@@ -188,7 +188,7 @@ static void golden_fixtures(void) {
 }
 
 #ifdef OMEGA_GPU_NO_POSIX
-/* The freestanding omega_fp32_to_bf16 (integer rounding) against the hosted __bf16 cast, every input. */
+/* Seeded no_bf16 integer rounding against the hosted __bf16 cast, every input. */
 static void bf16_sweep(void) {
     uint64_t bad = 0;
     uint32_t first_bad = 0;

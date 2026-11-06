@@ -16,7 +16,7 @@
 PHYSICS_DIR ?= .
 # om/units.sh emits every seeded Omega unit as checked portable C (omega-bridge,
 # om/omega-bridge.lock): src/cudapp_om_<unit>.c hosted, src/cudapp_freest_<unit>.c
-# import-free scalar. Every host compiles the same units, so x86-64 runs the .om
+# import-free checked roots, including borrowed runtime views. Every host compiles the same units, so x86-64 runs the .om
 # encoder, cubin packer and native units that AArch64 runs.
 # The pinned compiler omc is an AArch64 binary. The rows that execute it
 # (CUDAPP_TARGET_ONLY_TESTS) run on AArch64, or on another host when OMEGA_OMC
@@ -44,14 +44,16 @@ endif
 CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-portable-receipts test-model-capacity test-prof)
 # Portable checked Omega-to-C output; each unit has a separate private runtime namespace.
 CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
-CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c src/cudapp_freest_bw_scalar.c
+CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_pathcopy.c
+CUDAPP_FS_BINDING += src/cudapp_freest_cg_fields.c src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c $(wildcard src/cudapp_freest_attn_*.c)
 CUDAPP_BINDING_SRCS = $(CUDAPP_HOST_BINDING) $(CUDAPP_FS_BINDING)
 # Units every explicit host link of src/omega_blackwell_codegen.c needs since RegAlloc #309, RegAllocRest and
 # FreestLeftovers #320: the allocator, the bind step, the kernel-dump leftovers and the SHA core under sha256.c.
 # With -Wl,--gc-sections only the referenced ones stay. Links that also take src/omega_cubin.c add
-# src/cudapp_om_core_cubinmsg.c.
+# src/cudapp_freest_core_cubinmsg.c and src/cudapp_freest_core_cubadmit.c.
 BW_CODEGEN_BINDING = src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c \
-	src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c
+	src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c src/cudapp_freest_cg_fields.c \
+	src/cudapp_freest_pathcopy.c src/cudapp_om_cg_em.c src/cudapp_om_cg_replay.c src/cudapp_om_cg_life.c src/cudapp_om_cg_invar.c
 OUT_DIR ?= build
 GPU_PROD_TARGET ?= $(OUT_DIR)/libomega_gpu.a
 NVIDIA_OPEN := $(PHYSICS_DIR)/third_party/nvidia-open-580.173.02
@@ -157,6 +159,7 @@ GPU_API_OBJS = $(OBJS) $(OUT_DIR)/plat_fx_effects.o $(OUT_DIR)/plat_fx_wait.o
 GPU_API_TEST = $(OUT_DIR)/gpu_matmul_api_test
 GPU_R4_RECEIPT = $(OUT_DIR)/gpu_matmul_r4_receipt
 $(OUT_DIR)/libomega_gpu.a: $(GPU_API_OBJS)
+	rm -f $@
 	ar rcs $@ $(GPU_API_OBJS)
 libomega_gpu: $(OUT_DIR)/libomega_gpu.a
 $(GPU_API_TEST): tests/gpu_matmul_api_test.c src/omega_gpu_matmul_api.h $(OUT_DIR)/libomega_gpu.a

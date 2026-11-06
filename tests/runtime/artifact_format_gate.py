@@ -56,7 +56,7 @@ def build(out, replacements=()):
     sources=['src/omega_native_artifact.c','tests/runtime/artifact_oracle.c','src/omega_cubin.c','src/omega_blackwell_realize.c','src/omega_blackwell_encoder.c','src/sha256.c']
     repl=dict(replacements)
     sources += [str(repl.get(p.name,p)) for p in sorted((ROOT/'src').glob('cudapp_om_*.c'))]
-    sources += ['src/cudapp_freest_revision.c','src/cudapp_freest_epoch.c','src/cudapp_freest_f16.c']
+    sources += [str(p) for p in sorted((ROOT/'src').glob('cudapp_freest_*.c'))]
     flags=['-fPIC','-O0','-std=c11','-D_GNU_SOURCE','-Isrc']
     cache=ROOT/'build/artifact-format/objects';cache.mkdir(parents=True,exist_ok=True)
     deps=b''.join(p.read_bytes() for p in sorted((ROOT/'src').glob('*.h')))

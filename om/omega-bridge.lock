@@ -1,3 +1,3 @@
-# Single portable hosted/runtime-view and freestanding converter source pin.
-# Draft omega-bridge #73, stacked on #71; host evidence does not imply merge or device qualification.
-79e8c3613a6f6f9e8eaaa9c013fc25bcb39e0538
+# Single portable hosted/runtime-view, freestanding and native converter source pin.
+# Stage 6 union: merged omega-bridge #77; host evidence is not device qualification.
+29d9cff72676bcef41a067bdcf4d8b0711042bcd

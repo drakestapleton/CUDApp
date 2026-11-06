@@ -4,10 +4,14 @@
 #include <stdarg.h>
 #include <stdint.h>
 /* Freestanding (OMEGA_GPU_NO_POSIX) keeps the C oracle: MIGRATION-PENDING, see omega_core_binding.h. */
-#if !defined(CUDAPP_MIGRATION_PENDING_C_CORE) && !defined(OMEGA_GPU_NO_POSIX)
+#ifndef OMEGA_GPU_NO_POSIX
+#ifndef CUDAPP_MIGRATION_PENDING_C_CORE
 #include "omega_core_binding.h"
 #include <stdlib.h>
 #include <string.h>
+#endif
+#endif
+#if !defined(CUDAPP_MIGRATION_PENDING_C_CORE) && !defined(OMEGA_GPU_NO_POSIX)
 static void fmt_status(uint32_t r) { if(r!=OMEGA_OK)CORE_STOP(); }
 static void fmt_copy(char *out,size_t cap,size_t *used,const char *p,size_t len) {
     uint64_t n;fmt_status(CORE_CALL(omclip, &n,cap,*used,len));

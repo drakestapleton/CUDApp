@@ -43,7 +43,7 @@ regenerates byte for byte.
 | bw_hazard.om | src/cudapp_om_bw_hazard.c | omega_hz_chk |
 | bw_hazard.om + bw_hazard_dec.om | src/cudapp_om_bw_hazard_dec.c | omega_hz_dec |
 | cg_bind.om | src/cudapp_om_cg_bind.c | omega_cg_bind |
-| cg_fields.om | src/cudapp_om_cg_fields.c | omega_cg_fields |
+| cg_fields.om | src/cudapp_freest_cg_fields.c | omega_cg_fields |
 | cg_replay.om | src/cudapp_om_cg_replay.c | omega_cg_replay |
 | cg_life.om | src/cudapp_om_cg_life.c | omega_cg_life |
 | cg_invar.om | src/cudapp_om_cg_invar.c | omega_cg_invar |

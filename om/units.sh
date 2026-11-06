@@ -2,15 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Regenerate checked portable Omega C and declarations for all canonical roots.
 # Seeded e5b32567 validates exactly the composed bytes lowered by bridge36.
-# No native x86 compiler or executable-code trampoline participates.
+# The default portable mode uses no native compiler or executable-code trampoline.
 set -eu
 OMC_PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
 
-CONVERTER_PIN=d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538
+CONVERTER_PIN=f04bc8dc3a898c374016268f5414bfc5f4ee801d18017c379fda6229fd5fbab4
 FRONTEND_PIN=a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629
 FREEST_CONVERTER_PIN=836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661
-FREEST_FRONTEND_PIN=51b41794e7001c5606b715fd7de8a34ec935a6e4e4bc1da36ad08102c009537d
+FREEST_FRONTEND_PIN=17d7412a4dedfe4a2fb57c979cf02a9df21ff9499d78ea9d65d4f4bbf03702dc
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# Native NO_POSIX roots have separate bridge pins and import-free object custody.
+if [ "${1:-}" = --native-no-posix ]; then
+    exec sh "$ROOT/om/no-posix.sh"
+fi
 QUANT=om/quant/quant.om
 REAL="$QUANT,om/components/realize.om"
 CACHE="$REAL,om/cache/digest.om,om/cache/residency.om,om/cache/artifact.om"
@@ -95,6 +99,7 @@ fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS numeric_trace=om/numeric/numeric.om,om/numeric/rest.om,om/numeric/trace.om numeric_reduce=om/numeric/numeric.om,om/numeric/tile.om,om/numeric/rest.om,om/numeric/reduce.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS mathlibs_host=om/mathlibs/host.om,om/mathlibs/host_scalar.om mathlibs_walk=om/mathlibs/host.om,om/mathlibs/host_walk.om mathlibs_step=om/mathlibs/host.om,om/mathlibs/host_step.om mathlibs_many=om/mathlibs/host.om,om/mathlibs/host_many.om mathlibs_index=om/mathlibs/host.om,om/mathlibs/host_index.om mathlibs_fft=om/mathlibs/host.om,om/mathlibs/host_fft.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS standalone_oracles=om/standalone-oracles/oracles.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_va=native/nvrm/alloc_profile.om,native/nvrm/alloc.om nvrm_alloc_scalar=native/nvrm/policy.om,native/nvrm/alloc_scalar.om nvrm_counts=native/nvrm/counts.om nvrm_alloc_push=native/nvrm/alloc_profile.om,om/encoder/amp_runtime.om,native/nvrm/alloc_push.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
@@ -138,6 +143,8 @@ PURE_UNITS="$PURE_UNITS leftovers=om/components/leftovers.om"
 AV=om/apiviews
 APIVIEWS="av_ewarg=$AV/ewarg.om av_fp8am=$AV/fp8am.om av_fp8en=$AV/fp8en.om av_fp8q=$AV/fp8q.om av_e4m3=$AV/e4m3.om av_fp8sc=$AV/fp8sc.om av_gdnch=$AV/gdnch.om av_gdnsl=$AV/gdnsl.om av_scan=$AV/scan.om"
 APIVIEWS_RT="av_bf16=$AV/bf16.om av_widen=$AV/widen.om av_rope=$AV/rope.om av_gdnsc=$AV/gdnsc.om av_gdnex=$AV/gdnex.om av_gdnpt=$AV/gdnpt.om av_gdnut=$AV/gdnut.om av_fp8x=$AV/fp8x.om av_fp8xb=$AV/fp8xb.om"
+APIVIEWS="$APIVIEWS ah_rest=$AV/hostrest.om"
+APIVIEWS_RT="$APIVIEWS_RT ar_carry=$AV/scancarry.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $APIVIEWS $APIVIEWS_RT"
 UNITS="$UNITS bw_identity=om/cache/digest.om,om/blackwell/identity.om"
 UNITS="$UNITS bw_cpui=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpui.om bw_cpuf16=om/blackwell/views.om,om/blackwell/scalar.om,om/blackwell/shape.om,om/blackwell/cpuf16.om bw_cpubf16=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpubf16.om"
@@ -177,6 +184,19 @@ UNITS="$UNITS attn_eff=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/at
 UNITS="$UNITS attn_best=om/api/attn_om2.om,om/components/api_at_plan.om,om/api/attn_best.om"
 UNITS="$UNITS attn_max=om/api/attn_om2.om,om/api/attn_max.om"
 UNITS="$UNITS attn_ctx=om/api/attn_ctx.om"
+UNITS="$UNITS attn_ds_round=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_round.om"
+UNITS="$UNITS attn_ds_slot=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_slot.om"
+UNITS="$UNITS attn_ds_vecf=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_vecf.om"
+UNITS="$UNITS attn_ds_vecb=om/api/attn_om2.om,om/gemmex/num.om,om/api/attn_scalar.om,om/api/ds_vecb.om"
+UNITS="$UNITS attn_na_read=om/api/attn_art.om,om/api/na_read.om"
+UNITS="$UNITS attn_na_cubin=om/api/attn_art.om,om/api/na_cubin.om"
+UNITS="$UNITS attn_na_layout=om/api/attn_art.om,om/api/na_layout.om"
+UNITS="$UNITS attn_na_ver=om/api/attn_art.om,om/api/na_ver.om"
+UNITS="$UNITS attn_na_json=om/api/attn_art.om,om/api/na_json.om"
+UNITS="$UNITS attn_mm_dot=om/api/attn_oracle.om,om/api/mm_dot.om"
+UNITS="$UNITS attn_mm_err=om/api/attn_oracle.om,om/api/mm_err.om"
+UNITS="$UNITS attn_mm_init=om/api/mm_init.om"
+UNITS="$UNITS attn_mm_next=om/api/mm_next.om"
 fi
 REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
 for entry in fill count args argsx pad idle route perm widen next key; do
@@ -197,6 +217,7 @@ done
 REST="$REST ar_calc=om/apirest/calc.om ar_launch=om/apirest/launch.om ar_cache=om/apirest/cache.om"
 REST="$REST ar_tcspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/tcspec.om ar_tcperm=om/apiviews/bf16.om,om/apirest/tcperm.om ar_tcinfo=om/apirest/tcinfo.om ar_gtile=om/apirest/tiledata.om,om/apirest/gtile.om"
 REST="$REST ar_gspec=om/apirest/data.om,om/api/apish_shp.om,om/apirest/gspec.om"
+REST="$REST ar_pfcount=om/apirest/pfhost.om ar_pfreg=om/apirest/pfhost.om,om/apirest/pfreg.om"
 for entry in gargs gseg ginfo xnext gath32 gath16; do
   REST="$REST ar_$entry=om/apirest/$entry.om"
 done
@@ -211,6 +232,7 @@ REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS om/codegen/cg_em.om om/codegen/cg_reconv.om om/codegen/cg_sentin.om"
 OUTS="cudapp_native.h cudapp_om_units.ident"
+OBSOLETE=
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
 [ "$(sha256sum < "$OMEGA_OMC" | cut -c1-64)" = "$OMC_PIN" ] || { echo "NOT_RUN: omc is not the pinned compiler"; exit 3; }
 [ "$(sha256sum < "$OMEGA_BRIDGE/src/toc.om" | cut -c1-64)" = "$CONVERTER_PIN" ] || { echo "NOT_RUN: toc.om is not the pinned converter"; exit 3; }
@@ -259,19 +281,21 @@ for u in $UNITS $PURE_UNITS; do
   file=cudapp_om_$name.c
   profile=
   case "$name" in
-    revision|epoch|f16|c5|leftovers|bw_scalar)
+    revision|epoch|f16|c5|leftovers|bw_scalar|cg_fields|core_cubinmsg|core_cubadmit|attn_mm_dot|attn_mm_err|attn_mm_init|attn_mm_next|attn_args|attn_lay|attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
       frontend=bridge-freest
       abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
-      file=cudapp_freest_$name.c ;;
-    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
+      file=cudapp_freest_$name.c
+      # A root has one generated implementation, shared by hosted and NO_POSIX links.
+      case "$name" in attn_*|cg_fields|core_cubinmsg|core_cubadmit) OBSOLETE="$OBSOLETE cudapp_om_$name.c" ;; esac ;;
+    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|ar_carry|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
+    attn_ds_*|attn_na_*)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)
+    ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire|nvrm_va|nvrm_counts|nvrm_alloc_push)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac
@@ -292,8 +316,10 @@ HEADER
 if [ "${1:-}" = --check ]; then
   bad=0
   for f in $OUTS; do cmp -s "$T/$f" "$DEST/$f" || { echo "FAIL $DEST/$f differs from pinned tools"; bad=1; }; done
+  for f in $OBSOLETE; do [ ! -e "$DEST/$f" ] || { echo "FAIL obsolete $DEST/$f remains"; bad=1; }; done
   [ "$bad" = 0 ] || exit 1
   echo "PASS portable Omega units regenerate byte for byte"; exit 0
 fi
 for f in $OUTS; do cp "$T/$f" "$DEST/$f"; done
+for f in $OBSOLETE; do rm -f "$DEST/$f"; done
 echo "wrote checked portable Omega units to $DEST"

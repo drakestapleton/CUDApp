@@ -1,0 +1,26 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/gpu_fp8gemm_test --sim
+sim k 2048 n 40 lane 16 mt 8 warps 16 grid 2: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim k 4096 n 20 lane 16 mt 8 warps 16 grid 1: ok 0 of 220 outputs differ from the emulation (bit-identical)
+sim k 1024 n 33 lane 16 mt 8 warps 16 grid 2: ok 0 of 99 outputs differ from the emulation (bit-identical)
+sim k 768 n 130 lane 8 mt 8 warps 16 grid 2: ok 0 of 2730 outputs differ from the emulation (bit-identical)
+sim k 768 n 24 lane 8 mt 8 warps 8 grid 1: ok 0 of 264 outputs differ from the emulation (bit-identical)
+sim k 2048 n 16 lane 16 mt 4 warps 16 grid 1: ok 0 of 160 outputs differ from the emulation (bit-identical)
+sim mutant 1: caught 600 of 600 outputs differ from the emulation
+sim mutant 2: caught 600 of 600 outputs differ from the emulation
+sim mutant 3: caught 600 of 600 outputs differ from the emulation
+sim empty segment, mutant 4 (guard dropped): caught order 0: MEM at pc 68: global access outside the declared buffers (pc 68)
+sim k 2048 empty segment at index 0: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim k 2048 empty segment at index 1: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim k 2048 empty segment at index 3: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim rowmap k 2048 n 40 mt 4 warps 16: ok 0 of 600 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 4096 n 20 mt 4 warps 16 + empty segment: ok 0 of 220 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 512 n 40 mt 4 warps 16: ok 0 of 600 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 768 n 24 mt 4 warps 8: ok 0 of 264 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 2048 n 16 mt 4 warps 16: ok 0 of 160 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap mutant 1: caught 600 of 600 outputs differ from the emulation, rows moved by YMAP
+sim rowmap mutant 2: caught 600 of 600 outputs differ from the emulation, rows moved by YMAP
+sim rowmap mutant 3: caught 600 of 600 outputs differ from the emulation, rows moved by YMAP
+sim: 7687894 warp issues in total
+gpu_fp8gemm_test: 21 checks, 0 failed: PASS
+
+rc=0

@@ -54,6 +54,7 @@ for entry in slot sgate; do
 done
 REST="$REST ar_copy=om/apirest/copy.om ar_sstats=om/apirest/sstats.om"
 REST="$REST ar_victim=om/apirest/victim.om ar_mstep=om/apirest/data.om,om/api/apish_shp.om,om/apirest/mstep.om"
+REST="$REST om/codegen/cg_pack_len.om om/codegen/cg_pack_h.om om/codegen/cg_mrow.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $REST"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -107,7 +108,7 @@ for u in $UNITS $PURE_UNITS; do
       file=cudapp_freest_$name.c ;;
   esac
   opts=
-  case "$name" in ar_*) opts=--runtime-views ;; esac
+  case "$name" in ar_*|cg_pack_h|cg_mrow) opts=--runtime-views ;; esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
   OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $opts c "$src" > "$T/$file"
   OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $opts h "$src" >> "$T/cudapp_native.h"

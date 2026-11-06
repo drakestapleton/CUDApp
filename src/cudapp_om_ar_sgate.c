@@ -395,7 +395,7 @@ o_enter();
 uint64_t v2[16]={0};
 uint64_t v2_n=16;
 o_fill(v2, v2_n, 0ULL, 5);
-{uint64_t _i=0ULL;uint64_t _v=o_cast(5, 4, o_cast(4, 5, o_get(v1, v1_n, 0ULL, 5)));o_put(v2, v2_n, _i,_v,5);}
+{uint64_t _i=0ULL;uint64_t _v=({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=4294967295ULL;o_op(12, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
 {uint64_t _i=1ULL;uint64_t _v=({uint64_t _a=o_get(v1, v1_n, 0ULL, 5);uint64_t _b=32ULL;o_op(16, 5, _a,_b);});o_put(v2, v2_n, _i,_v,5);}
 {uint64_t _i=2ULL;uint64_t _v=o_get(v1, v1_n, 1ULL, 5);o_put(v2, v2_n, _i,_v,5);}
 {uint64_t _i=3ULL;uint64_t _v=o_get(v1, v1_n, 2ULL, 5);o_put(v2, v2_n, _i,_v,5);}

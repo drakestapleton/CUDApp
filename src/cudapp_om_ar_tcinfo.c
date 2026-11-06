@@ -80,7 +80,7 @@ static uint64_t f0(void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2);
 static uint64_t f1(const void *v0, uint64_t v0_n, void *v1, uint64_t v1_n);
 static uint64_t f0(void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2){
 o_enter();
-{uint64_t _i=v1;uint64_t _v=o_cast(4, 5, v2);o_put(v0, v0_n, _i,_v,4);}
+{uint64_t _i=v1;uint64_t _v=o_cast(4, 5, ({uint64_t _a=v2;uint64_t _b=4294967295ULL;o_op(12, 5, _a,_b);}));o_put(v0, v0_n, _i,_v,4);}
 {uint64_t _i=({uint64_t _a=v1;uint64_t _b=1ULL;o_op(1, 5, _a,_b);});uint64_t _v=o_cast(4, 5, ({uint64_t _a=v2;uint64_t _b=32ULL;o_op(16, 5, _a,_b);}));o_put(v0, v0_n, _i,_v,4);}
 return o_leave(0);
 return o_leave(0);

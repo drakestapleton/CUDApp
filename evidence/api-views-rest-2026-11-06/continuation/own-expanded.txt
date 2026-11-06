@@ -1,0 +1,3 @@
+PASS api-rest checks=1195269 red=low-half-corruption
+
+rc=0

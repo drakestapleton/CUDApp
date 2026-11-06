@@ -203,7 +203,7 @@ static int seg_ok(uint32_t n, const OmegaGpuTernSegments *seg) {
     return 1;
 #else
     uint64_t r = 0;
-    ar_check(omega_arsegok(&r, n, seg->count, seg->end, 3, seg->scale, 3));
+    ar_check(omega_arsegok(&r, n, seg->count, seg->end, 4, seg->scale, 4));
     return r != 0;
 #endif
 }

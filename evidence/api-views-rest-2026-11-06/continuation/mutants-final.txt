@@ -1,0 +1,12 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 python3 tests/api_rest_mutants.py
+PASS api-rest checks=1204450 red=low-half-corruption
+KILLED launch-low-half rc=1 FAIL line 23: 5 != 0
+KILLED cache-invalid rc=1 FAIL line 51: 18446744073709551615 != 0
+KILLED pinned-victim rc=1 FAIL line 54: 0 != 18446744073709551615
+KILLED upload-byte-count rc=1 FAIL line 64: 1024 != 512
+KILLED swiglu-copy-order rc=1 FAIL line 126: 1 != 0
+KILLED swiglu-ratio-order rc=1 FAIL line 126: 18446744073709551615 != 0
+KILLED slot-pin-wrap rc=1 FAIL line 133: 5 != 0
+PASS api-rest mutants killed=7
+
+rc=0

@@ -33,11 +33,14 @@ static int gen_rl(const OmegaPfKey *key, void *prog) { OmegaRlSpec s; memcpy(&s,
 static int gen_mc(const OmegaPfKey *key, void *prog) { OmegaMcSpec s; memcpy(&s, key->words, sizeof s); return omega_blackwell_codegen_mc_prog(&s, prog); }
 
 int omega_gpu_pf_router_logits(uint32_t k, uint32_t e, uint32_t rows, uint64_t x_va, uint64_t wq_va, uint64_t logits_va, uint64_t *ns) {
-    OmegaRlSpec s; memset(&s, 0, sizeof s); s.k = k; s.e = e; s.t = omega_gpu_pf_router_rows(); s.mutant = rl_mutant;
+    OmegaRlSpec s;
+    const uint32_t desc[] = {k, e, omega_gpu_pf_router_rows(), (uint32_t)rl_mutant};
+    ar_words(&s, sizeof s / sizeof(uint32_t), desc, sizeof desc / sizeof desc[0]);
     if (!omega_rl_spec_ok(&s) || !x_va || !wq_va || !logits_va || (x_va & 15u) || (wq_va & 15u) || (logits_va & 3u)) return OMEGA_GPU_PF_BAD_ARGS;
     if (rows == 0) return OMEGA_GPU_PF_OK;
     _Static_assert(sizeof(OmegaRlSpec) <= sizeof(((OmegaPfKey *)0)->words), "spec fits the key");
-    OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = KIND_RL; memcpy(key.words, &s, sizeof s);
+    OmegaPfKey key;
+    ar_key(&key, sizeof key / sizeof(uint32_t), KIND_RL, &s, sizeof s / sizeof(uint32_t));
 #if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t args[OMEGA_RL_ARGS_WORDS] = { (uint32_t)x_va, (uint32_t)(x_va >> 32), (uint32_t)wq_va, (uint32_t)(wq_va >> 32), (uint32_t)logits_va, (uint32_t)(logits_va >> 32) };
 #else
@@ -49,18 +52,23 @@ int omega_gpu_pf_router_logits(uint32_t k, uint32_t e, uint32_t rows, uint64_t x
     int rc = omega_gpu_pf_open_locked();
     OmegaPfKernel kern;
     if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_kernel_locked(&key, gen_rl, &kern);
-    if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_launch_locked(&kern, e, (rows + s.t - 1u) / s.t, 1, omega_rl_shared_bytes(&s), args, OMEGA_RL_ARGS_WORDS, ns);
+    uint64_t plan[32] = {1, rows, s.t, 0};
+    ar_check((uint32_t)ar_plan(plan));
+    if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_launch_locked(&kern, e, (uint32_t)plan[16], 1, omega_rl_shared_bytes(&s), args, OMEGA_RL_ARGS_WORDS, ns);
     omega_gpu_session_unlock();
     return rc;
 }
 
 int omega_gpu_pf_moe_combine(uint32_t h, uint32_t top_k, uint32_t rows, uint64_t down_va, uint64_t inv_va, uint64_t wt_va, uint64_t out_va, uint64_t *ns) {
-    OmegaMcSpec s; memset(&s, 0, sizeof s); s.h = h; s.top_k = top_k; s.mutant = mc_mutant;
+    OmegaMcSpec s;
+    const uint32_t desc[] = {h, top_k, (uint32_t)mc_mutant};
+    ar_words(&s, sizeof s / sizeof(uint32_t), desc, sizeof desc / sizeof desc[0]);
     if (!omega_mc_spec_ok(&s) || !down_va || !inv_va || !wt_va || !out_va) return OMEGA_GPU_PF_BAD_ARGS;
     if ((down_va | inv_va | wt_va | out_va) & 15u) return OMEGA_GPU_PF_BAD_ARGS;
     if (rows == 0) return OMEGA_GPU_PF_OK;
     _Static_assert(sizeof(OmegaMcSpec) <= sizeof(((OmegaPfKey *)0)->words), "spec fits the key");
-    OmegaPfKey key; memset(&key, 0, sizeof key); key.kind = KIND_MC; memcpy(key.words, &s, sizeof s);
+    OmegaPfKey key;
+    ar_key(&key, sizeof key / sizeof(uint32_t), KIND_MC, &s, sizeof s / sizeof(uint32_t));
 #if CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
     const uint32_t args[OMEGA_MC_ARGS_WORDS] = { (uint32_t)down_va, (uint32_t)(down_va >> 32), (uint32_t)inv_va, (uint32_t)(inv_va >> 32),
                                                  (uint32_t)wt_va, (uint32_t)(wt_va >> 32), (uint32_t)out_va, (uint32_t)(out_va >> 32) };
@@ -73,7 +81,9 @@ int omega_gpu_pf_moe_combine(uint32_t h, uint32_t top_k, uint32_t rows, uint64_t
     int rc = omega_gpu_pf_open_locked();
     OmegaPfKernel kern;
     if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_kernel_locked(&key, gen_mc, &kern);
-    if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_launch_locked(&kern, h / 4u, rows, 1, 0, args, OMEGA_MC_ARGS_WORDS, ns);
+    uint64_t plan[32] = {1, 0, 1, h};
+    ar_check((uint32_t)ar_plan(plan));
+    if (rc == OMEGA_GPU_PF_OK) rc = omega_gpu_pf_launch_locked(&kern, (uint32_t)plan[17], rows, 1, 0, args, OMEGA_MC_ARGS_WORDS, ns);
     omega_gpu_session_unlock();
     return rc;
 }

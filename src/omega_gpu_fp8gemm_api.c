@@ -34,11 +34,13 @@ static void write_info(OmegaGpuFp8GemmInfo *info, const uint64_t cfg[16]) {
     uint64_t result = 0;
     ar_check(omega_arginfo(&result, cfg, 16, info, 22));
 }
+#if !CUDAPP_MIGRATION_PENDING_API_VIEWS_REST
 static void write_args(uint32_t *args, size_t words, const uint64_t va[5], const uint32_t scalar[2]) {
     uint64_t result = 0;
     ar_check(omega_argargs(&result, va, 5, scalar, 2, args, words));
     if (result) abort();
 }
+#endif
 
 static struct {
     OmegaGpuScratch x_buf, y_buf, seg_buf;

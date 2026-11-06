@@ -1312,7 +1312,7 @@ break;
 }
 uint64_t __attribute__((unused)) v4=v3;
 if(({uint64_t _a=o_get(v0, v0_n, 2ULL, 5);uint64_t _b=1ULL;o_op(6, 5, _a,_b);})){
-v4=({uint64_t p0=o_cast(4, 5, o_get(v0, v0_n, 0ULL, 5));uint64_t p1=o_cast(4, 5, v3);f36(p0, p1);});
+v4=({uint64_t p0=o_cast(4, 5, v3);uint64_t p1=o_cast(4, 5, o_get(v0, v0_n, 0ULL, 5));f36(p0, p1);});
 }
 uint64_t __attribute__((unused)) v5=({uint64_t _a=v4;uint64_t _b=o_get(v0, v0_n, 1ULL, 5);o_op(3, 5, _a,_b);});
 uint64_t __attribute__((unused)) v6=({uint64_t _a=v3;uint64_t _b=o_get(v0, v0_n, 1ULL, 5);o_op(3, 5, _a,_b);});

@@ -1305,7 +1305,7 @@ static uint64_t f81(const void *v0, uint64_t v0_n, void *v1, uint64_t v1_n){
 o_enter();
 uint64_t __attribute__((unused)) v2=({uint64_t p0=o_get(v0, v0_n, 2ULL, 4);uint64_t p1=o_get(v0, v0_n, 3ULL, 4);uint64_t p2=o_get(v0, v0_n, 1ULL, 4);f48(p0, p1, p2);});
 {uint64_t _i=0ULL;uint64_t _v=o_get(v0, v0_n, 0ULL, 4);o_put(v1, v1_n, _i,_v,4);}
-{uint64_t _i=1ULL;uint64_t _v=o_cast(4, 5, v2);o_put(v1, v1_n, _i,_v,4);}
+{uint64_t _i=1ULL;uint64_t _v=o_cast(4, 5, ({uint64_t _a=v2;uint64_t _b=4294967295ULL;o_op(12, 5, _a,_b);}));o_put(v1, v1_n, _i,_v,4);}
 {uint64_t _i=2ULL;uint64_t _v=o_cast(4, 5, ({uint64_t _a=v2;uint64_t _b=32ULL;o_op(16, 5, _a,_b);}));o_put(v1, v1_n, _i,_v,4);}
 {uint64_t _i=3ULL;uint64_t _v=o_cast(4, 5, ({uint64_t p0=o_get(v0, v0_n, 4ULL, 4);f49(p0);}));o_put(v1, v1_n, _i,_v,4);}
 {uint64_t _i=4ULL;uint64_t _v=o_get(v0, v0_n, 5ULL, 4);o_put(v1, v1_n, _i,_v,4);}

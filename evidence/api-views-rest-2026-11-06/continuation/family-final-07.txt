@@ -1,0 +1,26 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/gpu_pfgemm_test --sim
+sim case 0 (E 3 n 256 k 256 M 70 F32 rt 8 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 0 (E 3 n 256 k 256 M 70 F32 rt 8 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 0 mutant 1: caught
+sim case 0 mutant 2: caught
+sim case 0 mutant 3: caught
+sim case 0 mutant 4: caught
+sim case 1 (E 3 n 256 k 384 M 70 SWIGLU rt 8 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 1 (E 3 n 256 k 384 M 70 SWIGLU rt 8 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 1 mutant 1: caught
+sim case 1 mutant 2: caught
+sim case 1 mutant 3: caught
+sim case 1 mutant 4: caught
+sim case 2 (E 3 n 256 k 256 M 150 F32 direct rt 8 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 2 (E 3 n 256 k 256 M 150 F32 direct rt 8 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 3 (E 2 n 256 k 256 M 40 F32 rt 4 warps 8 aqn 2) order 0: ran, 0 differ
+sim case 3 (E 2 n 256 k 256 M 40 F32 rt 4 warps 8 aqn 2) order 1: ran, 0 differ
+sim case 4 (E 2 n 512 k 128 M 300 SWIGLU rt 8 warps 16 aqn 2) order 0: ran, 0 differ
+sim case 4 (E 2 n 512 k 128 M 300 SWIGLU rt 8 warps 16 aqn 2) order 1: ran, 0 differ
+sim case 5 (E 3 n 512 k 256 M 150 SWIGLU rt 4 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 5 (E 3 n 512 k 256 M 150 SWIGLU rt 4 warps 16 aqn 1) order 1: ran, 0 differ
+sim case 6 (E 3 n 256 k 384 M 130 F32 direct rt 4 warps 16 aqn 1) order 0: ran, 0 differ
+sim case 6 (E 3 n 256 k 384 M 130 F32 direct rt 4 warps 16 aqn 1) order 1: ran, 0 differ
+GPU_PFGEMM: PASS
+
+rc=0

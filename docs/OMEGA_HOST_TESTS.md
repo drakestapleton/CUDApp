@@ -188,3 +188,41 @@ is the separate GEMM host and simulator target and is also outside `make test`.
 An AArch64 host build of this tree keeps `dsb sy` in `nvrm_cpu_barrier`. A
 GB10 run of the device path is a separate receipt. A host or simulator pass
 does not qualify it.
+
+## API-rest seeded runtime views
+
+The API-rest migration uses omega-bridge `79e8c36` runtime views and the seeded
+compiler SHA-256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
+The handwritten algorithms live in `om/apirest/`; generated checked C is a
+bridge artifact, not a second handwritten implementation. Canonical MoE
+fragment packing and row compaction come from `om/codegen/cg_pack_len.om`,
+`cg_pack_h.om` and `cg_mrow.om`. Their byte/element extents are distinct:
+packing accepts source bytes and destination ushort elements; compaction
+accepts source/destination f32 elements. Runtime views refuse read/edit overlap.
+Four tern segments require four endpoint and scale elements, even though the
+launch contains only three interior boundaries.
+
+Run each command through this isolation prefix on the shared Spark:
+
+```sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh tests/api_rest_run.sh
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 python3 tests/api_rest_mutants.py
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_ROOT=/path/to/pinned/omega-mv sh tests/api_rest_families.sh
+```
+
+The mutant runner also requires `OMEGA_OMC`, `OMEGA_SEED` and `OMEGA_BRIDGE`
+as used by `om/units.sh`. The family runner builds at most three jobs, links
+the standalone tgemm test and the external tern algebra oracle, and runs only
+host/simulator modes. It preincludes the current CUDApp simulator for the
+external tern test: allowing that test's quoted include to select its stale
+external simulator gives false row-major failures. None of these receipts
+qualifies the GPU.
+
+`tests/api_rest_diff.c` and `tests/api_rest_partitions.h` contain independent
+source-loop oracles, checked-view refusal cases and deliberately corrupted
+controls. `tests/api_rest_bench.c` records three host samples for matched
+packing, compaction, descriptors, FP8 rows, permutation/gather, tern packing,
+slot transitions and prefill copy/ratios. The FP8 Omega reference uses
+separate f64 accumulator/magnitude passes; its measured cost is reported, not
+hidden by replacing it with the original C reference. Benchmark medians and
+ratios must be evaluated by Wolfram, with the query retained in the receipt.

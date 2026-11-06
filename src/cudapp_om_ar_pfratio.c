@@ -1308,7 +1308,7 @@ static uint64_t f81(const void *v0, uint64_t v0_n, uint64_t v1){
 o_enter();
 uint64_t __attribute__((unused)) v2=({uint64_t _a=v1;uint64_t _b=8ULL;o_op(3, 5, _a,_b);});
 if(({uint64_t _a=o_get(v0, v0_n, 2ULL, 5);uint64_t _b=1ULL;o_op(6, 5, _a,_b);})){
-v2=({uint64_t p0=o_cast(4, 5, o_get(v0, v0_n, 0ULL, 5));uint64_t p1=o_cast(4, 5, v2);f36(p0, p1);});
+v2=({uint64_t p0=o_cast(4, 5, v2);uint64_t p1=o_cast(4, 5, o_get(v0, v0_n, 0ULL, 5));f36(p0, p1);});
 }
 return o_leave(({uint64_t _a=({uint64_t _a=v2;uint64_t _b=128ULL;o_op(4, 5, _a,_b);});uint64_t _b=({uint64_t _a=o_get(v0, v0_n, 1ULL, 5);uint64_t _b=128ULL;o_op(4, 5, _a,_b);});o_op(3, 5, _a,_b);}));
 }

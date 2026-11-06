@@ -1328,9 +1328,9 @@ uint32_t omega_arsegok(uint64_t  *result, volatile uint64_t p0, volatile uint64_
   if(!o_buf(result,1,1,5))return 32;
 if(!o_valid(4, p0))return 32;
 if(!o_valid(4, p1))return 32;
-if(!o_rbuf(p2, p2_n,3, 4))return 32;
+if(!o_rbuf(p2, p2_n,4, 4))return 32;
   if(o_rover(result,8,p2, p2_n*4))return 32;
-if(!o_rbuf(p3, p3_n,3, 11))return 32;
+if(!o_rbuf(p3, p3_n,4, 11))return 32;
   if(o_rover(result,8,p3, p3_n*4))return 32;
   if(o_busy)return 33;
   o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f81(p0, p1, p2, p2_n, p3, p3_n);o_put(result,1,0,_result,5);}

@@ -95,7 +95,7 @@ if(c1++>=1000000)o_trap(4);
 uint64_t v3=0;
 uint64_t k1=3ULL;
 for(;o_op(8,5, v3, k1);v3=o_op(1,5, v3,1)){
-{uint64_t _i=({uint64_t _a=v3;uint64_t _b=2ULL;o_op(3, 5, _a,_b);});uint64_t _v=o_cast(4, 5, o_get(v0, v0_n, v3, 5));o_put(v2, v2_n, _i,_v,4);}
+{uint64_t _i=({uint64_t _a=v3;uint64_t _b=2ULL;o_op(3, 5, _a,_b);});uint64_t _v=o_cast(4, 5, ({uint64_t _a=o_get(v0, v0_n, v3, 5);uint64_t _b=4294967295ULL;o_op(12, 5, _a,_b);}));o_put(v2, v2_n, _i,_v,4);}
 {uint64_t _i=({uint64_t _a=({uint64_t _a=v3;uint64_t _b=2ULL;o_op(3, 5, _a,_b);});uint64_t _b=1ULL;o_op(1, 5, _a,_b);});uint64_t _v=o_cast(4, 5, ({uint64_t _a=o_get(v0, v0_n, v3, 5);uint64_t _b=32ULL;o_op(16, 5, _a,_b);}));o_put(v2, v2_n, _i,_v,4);}
 }
 }
@@ -107,7 +107,7 @@ uint64_t v3=0;
 uint64_t k2=2ULL;
 for(;o_op(8,5, v3, k2);v3=o_op(1,5, v3,1)){
 uint64_t __attribute__((unused)) v4=o_get(v0, v0_n, ({uint64_t _a=v3;uint64_t _b=3ULL;o_op(1, 5, _a,_b);}), 5);
-{uint64_t _i=({uint64_t _a=8ULL;uint64_t _b=({uint64_t _a=v3;uint64_t _b=2ULL;o_op(3, 5, _a,_b);});o_op(1, 5, _a,_b);});uint64_t _v=o_cast(4, 5, v4);o_put(v2, v2_n, _i,_v,4);}
+{uint64_t _i=({uint64_t _a=8ULL;uint64_t _b=({uint64_t _a=v3;uint64_t _b=2ULL;o_op(3, 5, _a,_b);});o_op(1, 5, _a,_b);});uint64_t _v=o_cast(4, 5, ({uint64_t _a=v4;uint64_t _b=4294967295ULL;o_op(12, 5, _a,_b);}));o_put(v2, v2_n, _i,_v,4);}
 {uint64_t _i=({uint64_t _a=9ULL;uint64_t _b=({uint64_t _a=v3;uint64_t _b=2ULL;o_op(3, 5, _a,_b);});o_op(1, 5, _a,_b);});uint64_t _v=o_cast(4, 5, ({uint64_t _a=v4;uint64_t _b=32ULL;o_op(16, 5, _a,_b);}));o_put(v2, v2_n, _i,_v,4);}
 }
 }

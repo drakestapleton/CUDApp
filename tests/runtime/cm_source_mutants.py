@@ -20,6 +20,7 @@ units['cm_sort'] = ['om/components/cm_sort.om']
 units['cm_calibration'] = math + ['om/components/cm_quantile.om', 'om/components/cm_calibration.om']
 units['cm_blob'] = ['om/components/cm_blob.om']
 units['cm_digest'] = ['om/cache/digest.om', 'om/components/cm_digest.om']
+units['cm_route'] = ['om/components/cm_route.om']
 mutants = (
     ('cm_features', 'cm_features', 'ret 4294967295', 'ret 0', 'rx_costmodel_unit', ['refuse']),
     ('cm_stats', 'cm_stats', 'put out 45 add get out 45 1', 'put out 45 add get out 45 2', 'rx_costmodel_unit', []),
@@ -42,6 +43,7 @@ with tempfile.TemporaryDirectory(prefix='cudapp-cm-mutants-') as temporary:
     originals = {name: compile_object(root / 'src' / ('cudapp_om_' + name + '.c'), name) for name in units}
     common = [compile_object(root / 'src/runtime/rx_costmodel.c', 'model', ['-ffp-contract=off']),
               compile_object(root / 'src/sha256.c', 'sha'),
+              compile_object(root / 'src/cudapp_om_core_sha.c', 'core-sha'),
               compile_object(root / 'tests/runtime/cm_oracle.c', 'oracle', ['-ffp-contract=off'])]
     tests = {name: compile_object(root / 'tests/runtime' / (name + '.c'), name) for name in (
         'rx_costmodel_unit', 'cm_blob_unit', 'cm_math_unit')}

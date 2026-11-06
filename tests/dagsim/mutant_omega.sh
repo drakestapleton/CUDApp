@@ -16,6 +16,7 @@ trap 'rm -rf "$tmp"' EXIT
 CC=${CC:-cc}
 cflags="-std=gnu11 -Wall -Wextra -D_GNU_SOURCE -O2 -ffp-contract=off -Isrc -Itools/dagsim"
 units="src/cudapp_om_core_sha.c src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c"
+units="$units src/cudapp_om_cm_route.c"
 $CC $cflags -c -o "$tmp/dagsim.o" tools/dagsim/dagsim.c
 $CC $cflags -c -o "$tmp/rx.o" src/runtime/rx_costmodel.c
 if [ -z "$ORACLE" ]; then

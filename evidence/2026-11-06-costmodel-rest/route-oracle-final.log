@@ -1,0 +1,17 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-cm-route
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -o build/cm_route_oracle tests/runtime/cm_route_oracle.c src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c src/sha256.c -lm
+./build/cm_route_unit
+PASS cm route source-partition differential (block, tail, layout, ABI refusal)
+./build/cm_route_oracle
+PASS cm route C oracle, SHA block boundaries and blob transport
+FAIL cm route block plan
+python3 tests/runtime/cm_route_mutants.py
+KILLED block-divisor
+KILLED tail-divisor
+KILLED tail-offset
+KILLED layout-count
+KILLED layout-add
+KILLED dispatch
+PASS cm route mutants (6 killed)
+
+rc=0

@@ -1,0 +1,5 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 sh -c crumb compile . && crumb verify .
+crumb compile: 39 crumbs, 0 rewritten, HEAD 13ef517
+crumb verify: OK: 39 crumbs current
+
+rc=0

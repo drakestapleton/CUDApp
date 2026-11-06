@@ -1,0 +1,111 @@
+        -:    0:Source:tests/runtime/cm_oracle.c
+        -:    0:Graph:/tmp/cm-full-cov-v5qvhlky/oracle.gcno
+        -:    0:Data:/tmp/cm-full-cov-v5qvhlky/oracle.gcda
+        -:    0:Runs:2
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:#define omega_cm_math oracle_cm_math_trace
+        -:    3:#define CUDAPP_MIGRATION_PENDING_C_CM_SORT 1
+        -:    4:/* Omega's per-operation binary64 and first-party libm are canonical. This
+        -:    5: * retained C algorithm is compiled with -ffp-contract=off; its math calls bind
+        -:    6: * the same canonical routines. cm_math_unit independently measures glibc drift. */
+        -:    7:#define CUDAPP_MIGRATION_PENDING_C_CM_MATH 0
+        -:    8:#define CUDAPP_MIGRATION_PENDING_C_CM_FIT 1
+        -:    9:#define CUDAPP_MIGRATION_PENDING_C_CM_STATS 1
+        -:   10:#define CUDAPP_MIGRATION_PENDING_C_CM_FEATURES 1
+        -:   11:#define CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE 1
+        -:   12:#define CUDAPP_MIGRATION_PENDING_C_CM_DECISION 1
+        -:   13:#define rx_cm_t_quantile oracle_cm_t_quantile
+        -:   14:#define CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION 1
+        -:   15:#define CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION 1
+        -:   16:#define CUDAPP_MIGRATION_PENDING_C_CM_BLOB 1
+        -:   17:#define CUDAPP_MIGRATION_PENDING_C_CM_DIGEST 1
+        -:   18:#define CUDAPP_MIGRATION_PENDING_C_CM_ROUTE 1
+        -:   19:#define rx_cm_default_policy oracle_cm_default_policy
+        -:   20:#define rx_cm_init oracle_cm_init
+        -:   21:#define rx_cm_observe oracle_cm_observe
+        -:   22:#define rx_cm_predict oracle_cm_predict
+        -:   23:#define rx_cm_decide oracle_cm_decide
+        -:   24:#define rx_cm_calibrate oracle_cm_calibrate
+        -:   25:#define rx_cm_charge oracle_cm_charge
+        -:   26:#define rx_cm_blob_size oracle_cm_blob_size
+        -:   27:#define rx_cm_serialize oracle_cm_serialize
+        -:   28:#define rx_cm_deserialize oracle_cm_deserialize
+        -:   29:#define rx_cm_digest oracle_cm_digest
+        -:   30:#define rx_cm_basis oracle_cm_basis
+        -:   31:#define rx_cm_cell oracle_cm_cell
+        -:   32:#include "../../src/runtime/rx_costmodel.c"
+        -:   33:#undef omega_cm_math
+        -:   34:#undef log
+        -:   35:#undef log2
+        -:   36:#undef ceil
+        -:   37:#undef exp
+        -:   38:#undef exp2
+        -:   39:#undef sqrt
+        -:   40:#undef erfc
+        -:   41:#undef fabs
+        -:   42:#include <stdio.h>
+        -:   43:uint32_t omega_cm_math(uint64_t *, uint64_t, uint64_t);
+        -:   44:static uint64_t math_calls[8], math_ulp[8], math_input[8], math_got[8], math_reference[8];
+function oracle_cm_math_trace called 807499 returned 100% blocks executed 85%
+   807499:   45:uint32_t oracle_cm_math_trace(uint64_t *result, uint64_t mode, uint64_t input) {
+   807499:   46:    uint32_t status=omega_cm_math(result,mode,input);
+call    0 returned 807499
+  807499*:   47:    if (status!=OMEGA_OK || mode>=8) return status;
+branch  0 taken 807499 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 807499
+        -:   48:    double x, reference;
+   807499:   49:    memcpy(&x,&input,sizeof x);
+   807499:   50:    switch (mode) {
+branch  0 taken 0
+branch  1 taken 332606
+branch  2 taken 1
+branch  3 taken 14025
+branch  4 taken 20931
+branch  5 taken 411586
+branch  6 taken 28050
+branch  7 taken 300
+    #####:   51:    case 0: reference=log(x); break;
+   332606:   52:    case 1: reference=log2(x); break;
+        1:   53:    case 2: reference=ceil(x); break;
+    14025:   54:    case 3: reference=exp(x); break;
+    20931:   55:    case 4: reference=exp2(x); break;
+   411586:   56:    case 5: reference=sqrt(x); break;
+    28050:   57:    case 6: reference=erfc(x); break;
+      300:   58:    default: reference=fabs(x); break;
+        -:   59:    }
+        -:   60:    uint64_t bits;
+   807499:   61:    memcpy(&bits,&reference,sizeof bits);
+   807499:   62:    uint64_t a=*result, b=bits;
+  807499*:   63:    a=a>>63 ? ~a : a|UINT64_C(0x8000000000000000);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 807499
+  807499*:   64:    b=b>>63 ? ~b : b|UINT64_C(0x8000000000000000);
+branch  0 taken 0 (fallthrough)
+branch  1 taken 807499
+   807499:   65:    uint64_t distance=a>b ? a-b : b-a;
+branch  0 taken 1774 (fallthrough)
+branch  1 taken 805725
+   807499:   66:    ++math_calls[mode];
+   807499:   67:    if (distance>math_ulp[mode]) {
+branch  0 taken 5 (fallthrough)
+branch  1 taken 807494
+        5:   68:        math_ulp[mode]=distance; math_input[mode]=input;
+        5:   69:        math_got[mode]=*result; math_reference[mode]=bits;
+        -:   70:    }
+   807499:   71:    return status;
+        -:   72:}
+function report_math_inputs called 2 returned 100% blocks executed 100%
+        2:   73:static void __attribute__((destructor)) report_math_inputs(void) {
+       18:   74:    for (unsigned mode=0;mode<8;++mode) if (math_calls[mode])
+branch  0 taken 7 (fallthrough)
+branch  1 taken 9
+branch  2 taken 16
+branch  3 taken 2 (fallthrough)
+        7:   75:        printf("CM LIBM actual-inputs mode=%u calls=%llu max_ulp=%llu input=%016llx candidate=%016llx glibc=%016llx\n",
+        7:   76:               mode,(unsigned long long)math_calls[mode],(unsigned long long)math_ulp[mode],
+        7:   77:               (unsigned long long)math_input[mode],(unsigned long long)math_got[mode],
+        7:   78:               (unsigned long long)math_reference[mode]);
+call    0 returned 7
+        2:   79:}

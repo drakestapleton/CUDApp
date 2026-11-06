@@ -1,0 +1,136 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-costmodel test-dagsim test-cm-decision-differential test-cm-source-mutants
+mkdir -p build
+CC="cc" python3 tests/runtime/cm_source_mutants.py
+CM DECISION verifier control PASS: assertion-disabled build refused
+CM SOURCE mutant caught: cm_features rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:511 unsupported-op-not-aliased-to-matvec
+CM SOURCE mutant caught: cm_stats rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:163 80% interval covers 0.660
+CM SOURCE mutant caught: cm_fit rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:163 80% interval covers 1.000
+CM SOURCE mutant caught: cm_quantile rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:163 80% interval covers 0.000
+CM SOURCE mutant caught: cm_prediction rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:163 80% interval covers 1.000
+CM SOURCE mutant caught: cm_decision rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:180 empty model measures
+CM DECISION verifier control PASS: discrete action mutant caught
+CM SOURCE mutant caught: cm_calibration rc=1   FAIL /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/rx_costmodel_unit.c:390 drift widens the spread (1.00)
+CM SOURCE mutant caught: cm_blob rc=-6 cm_blob-unit: /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/cm_blob_unit.c:92: main: Assertion `!memcmp(words+16, expected, sizeof expected)' failed.
+CM SOURCE mutant caught: cm_digest rc=-6 cm_digest-unit: /home/drakestapleton/work/cudastack/lanes/CostPlatRest/tests/runtime/cm_blob_unit.c:66: main: Assertion `!memcmp(actual, expected, 32)' failed.
+CM SOURCE mutant caught: cm_math rc=1 CM MATH differential FAIL errors=38962
+CM SOURCE mutants PASS (10 attributed arithmetic/header/digest/decision mutants)
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -c -o build/rx_costmodel.o src/runtime/rx_costmodel.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -o build/cm_route_unit tests/runtime/cm_route_unit.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itools/dagsim -c -o build/dagsim.o tools/dagsim/dagsim.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -c -o build/cm_oracle_diff.o tests/runtime/cm_oracle.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=fast -c -o build/cm_oracle_contracted.o tests/runtime/cm_oracle.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/rx_costmodel_unit tests/runtime/rx_costmodel_unit.c build/rx_costmodel.o src/sha256.c src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c -lm
+./build/cm_route_unit
+PASS cm route source-partition differential (block, tail, layout, ABI refusal)
+FAIL cm route block plan
+python3 tests/runtime/cm_route_mutants.py
+KILLED block-divisor
+KILLED tail-divisor
+KILLED tail-offset
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/cm_decision_diff tests/runtime/rx_costmodel_unit.c tests/runtime/cm_decision_diff.c build/cm_oracle_diff.o build/rx_costmodel.o src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c src/sha256.c -Wl,--wrap=rx_cm_decide -Wl,--wrap=rx_cm_predict -Wl,--wrap=rx_cm_init -Wl,--wrap=rx_cm_observe -Wl,--wrap=rx_cm_calibrate -Wl,--wrap=rx_cm_charge -lm
+KILLED layout-count
+KILLED layout-add
+KILLED dispatch
+PASS cm route mutants (6 killed)
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCM_DIFF_REPLAY_MAIN -o build/cm_decision_replay tests/runtime/cm_decision_diff.c build/cm_oracle_diff.o build/rx_costmodel.o src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c src/sha256.c -Wl,--wrap=rx_cm_decide -Wl,--wrap=rx_cm_predict -Wl,--wrap=rx_cm_init -Wl,--wrap=rx_cm_observe -Wl,--wrap=rx_cm_calibrate -Wl,--wrap=rx_cm_charge -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCM_DIFF_REPLAY_MAIN -DCM_DIFF_OUTPUT_ONLY -o build/cm_decision_contracted tests/runtime/cm_decision_diff.c build/cm_oracle_contracted.o build/rx_costmodel.o src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c src/sha256.c -Wl,--wrap=rx_cm_decide -Wl,--wrap=rx_cm_predict -lm
+./build/rx_costmodel_unit
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itools/dagsim -o build/dagsim_unit tests/dagsim/dagsim_unit.c build/dagsim.o build/rx_costmodel.o src/sha256.c src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c -Wl,--wrap=rx_cm_predict -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itools/dagsim -o build/dagsim tools/dagsim/dagsim_cli.c build/dagsim.o build/rx_costmodel.o src/sha256.c src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c -lm
+./build/cm_decision_diff
+./build/dagsim_unit
+dagsim_unit: 203 checks, 0 failed
+sh tests/dagsim/run_cli.sh build/dagsim build/dagsim-cli-out
+run_cli: ok   eval exits 0 on the pinned M1 subset
+run_cli: ok   status OK
+run_cli: ok   serial makespan 20000 + 40736700 + 111000000 ns
+run_cli: ok   makespan is above its bounds
+run_cli: ok   energy UNMEASURED without an instrument
+run_cli: ok   offline: no GPU execution
+run_cli: ok   provenance list names measured and specified only
+run_cli: ok   second run byte-identical
+run_cli: ok   unknown-trace fixture exits 1
+run_cli: ok   unknown stays unknown (REFUSED_UNKNOWN)
+run_cli: ok   no makespan printed on refusal
+run_cli: ok   30-day calibration refused at 43 days
+run_cli: ok   synthetic power is labelled, not ranked
+run_cli: ok   energy ranking invalid on synthetic power
+run_cli: ok   overlap fixture evaluates
+run_cli: ok   split copy: busy time binds, 40756700 + 55500000 ns
+run_cli: ok   pareto exits 0
+run_cli: ok   refused candidate shown as refused in the table
+run_cli: ok   faster candidate is on the front
+run_cli: ok   dominated candidate is off the front
+run_cli: ok   pareto says energy is not ranked
+run_cli: ok   reuse diff OK
+run_cli: ok   200 ns of search moved to the reused ledger
+run_cli: ok   unproven elimination exits 1
+run_cli: ok   unproven elimination refused
+run_cli: ok   no-change fixture adds no nodes
+run_cli: ok   inverted lifetime exits 1
+run_cli: ok   inverted lifetime status
+run_cli: ok   inverted reason names first=C
+run_cli: ok   inverted reason names last=A
+run_cli: ok   no makespan on inverted refusal
+run_cli: ok   lone inverted lifetime exits 1
+run_cli: ok   lone inverted is not peak 0
+run_cli: ok   two overlapping 80 B buffers exit 1
+run_cli: ok   overlap is REFUSED_CAPACITY
+run_cli: ok   disjoint 80 B pair exits 0
+run_cli: ok   disjoint pair OK
+run_cli: ok   disjoint peak 80
+run_cli: ok   completion/allocation tie exits 0
+run_cli: ok   tie OK
+run_cli: ok   tie peak 80
+run_cli: ok   pareto with a refused lifetime exits 0
+run_cli: ok   inverted row is refused, not ranked OK
+run_cli: ok   valid row still ranked
+run_cli: outputs in build/dagsim-cli-out
+sh tests/dagsim/mutant_lifetime.sh
+    held-out synthetic (truth in basis): rmse 0.085 log2 (noise 0.08), coverage 80%: 0.825, 95%: 0.964
+    held-out synthetic (truth outside basis): rmse 0.093 log2 (noise 0.08), coverage 80%: 0.945, 95%: 0.997
+    calibration scale after drift: 3.23
+    80% coverage on later, drifted data: 0.323 before calibration, 0.820 after
+    model blob: 28112 bytes
+checks 127 failures 0
+/usr/bin/ld: /tmp/tmp.yGn1C1DbGd/rx_costmodel.o: in function `cm_sha256':
+rx_costmodel.c:(.text+0x6c0): undefined reference to `omega_cm_route'
+/usr/bin/ld: /tmp/tmp.yGn1C1DbGd/rx_costmodel.o: in function `quiet_predict':
+rx_costmodel.c:(.text+0x9ec): undefined reference to `omega_cm_route'
+/usr/bin/ld: /tmp/tmp.yGn1C1DbGd/rx_costmodel.o: in function `rx_cm_predict':
+rx_costmodel.c:(.text+0xd98): undefined reference to `omega_cm_route'
+/usr/bin/ld: rx_costmodel.c:(.text+0xe24): undefined reference to `omega_cm_route'
+/usr/bin/ld: /tmp/tmp.yGn1C1DbGd/rx_costmodel.o: in function `rx_cm_observe':
+rx_costmodel.c:(.text+0x119c): undefined reference to `omega_cm_route'
+/usr/bin/ld: /tmp/tmp.yGn1C1DbGd/rx_costmodel.o:rx_costmodel.c:(.text+0x122c): more undefined references to `omega_cm_route' follow
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:728: test-dagsim] Error 1
+make: *** Waiting for unfinished jobs....
+mutant restore-op-clamp: killed by unsupported-op-not-aliased-to-matvec (exit 1)
+    held-out synthetic (truth in basis): rmse 0.085 log2 (noise 0.08), coverage 80%: 0.825, 95%: 0.964
+    held-out synthetic (truth outside basis): rmse 0.093 log2 (noise 0.08), coverage 80%: 0.945, 95%: 0.997
+    calibration scale after drift: 3.23
+    80% coverage on later, drifted data: 0.323 before calibration, 0.820 after
+    model blob: 28112 bytes
+checks 127 failures 0
+CM LIBM actual-inputs mode=1 calls=332606 max_ulp=1 input=3ff0fbf55f8bbeaf candidate=3fb60c1ef82f0909 glibc=3fb60c1ef82f0908
+CM LIBM actual-inputs mode=2 calls=1 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=3 calls=14025 max_ulp=1 input=bfa53cdaf881f386 candidate=3feeb325c9a99db2 glibc=3feeb325c9a99db3
+CM LIBM actual-inputs mode=4 calls=20931 max_ulp=1 input=4042815aaf6527ba candidate=42401e25fcdb3a52 glibc=42401e25fcdb3a51
+CM LIBM actual-inputs mode=5 calls=411586 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=6 calls=28050 max_ulp=2 input=3fea66d1c80fe481 candidate=3fcf242eccf286be glibc=3fcf242eccf286c0
+CM LIBM actual-inputs mode=7 calls=300 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM DECISION differential PASS decisions=21058 predictions=8617 max_numeric_ulp=0 field=none candidate=0x0p+0 oracle=0x0p+0
+CM STATE differential PASS initializations=21 observations=4083 calibrations=3 charges=4
+CM contraction control PASS (contraction-on oracle rejected)
+CM_DIFF_REPLAY=build/cm_decision_max.case CM_DIFF_THRESHOLD_PROBE=1 ./build/cm_decision_replay
+CM DECISION threshold probe EI candidate=0x1.e347c758fe6aap+4 oracle=0x1.e347c758fe6aap+4
+CM LIBM actual-inputs mode=1 calls=96 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=3 calls=8 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=4 calls=10 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=5 calls=192 max_ulp=0 input=0000000000000000 candidate=0000000000000000 glibc=0000000000000000
+CM LIBM actual-inputs mode=6 calls=16 max_ulp=1 input=3ff1f487fecfa9c9 candidate=3fbccd2d29827c69 glibc=3fbccd2d29827c68
+CM DECISION differential PASS decisions=1 predictions=0 max_numeric_ulp=0 field=none candidate=0x0p+0 oracle=0x0p+0
+CM STATE differential PASS initializations=0 observations=0 calibrations=0 charges=0
+
+rc=2

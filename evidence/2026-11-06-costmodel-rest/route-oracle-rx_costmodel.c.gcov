@@ -1,0 +1,1236 @@
+        -:    0:Source:src/runtime/rx_costmodel.c
+        -:    0:Graph:/tmp/cm-route-cov-i5zxyuln/unit-cm_route_oracle.gcno
+        -:    0:Data:/tmp/cm-route-cov-i5zxyuln/unit-cm_route_oracle.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        -:    2: * Copyright 2026 Drake Stapleton (AIEN / aien-dev)
+        -:    3: *
+        -:    4: * Licensed under the Apache License, Version 2.0 (the "License");
+        -:    5: * you may not use this file except in compliance with the License.
+        -:    6: * You may obtain a copy of the License at
+        -:    7: *
+        -:    8: *     http://www.apache.org/licenses/LICENSE-2.0
+        -:    9: *
+        -:   10: * Unless required by applicable law or agreed to in writing, software
+        -:   11: * distributed under the License is distributed on an "AS IS" BASIS,
+        -:   12: * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   13: * See the License for the specific language governing permissions and
+        -:   14: * limitations under the License.
+        -:   15: */
+        -:   16:#include "runtime/rx_cm_sort.h"
+        -:   17:
+        -:   18:/*
+        -:   19: * rx_costmodel.c -- Omega's empirical cost model. See rx_costmodel.h.
+        -:   20: *
+        -:   21: * Pure arithmetic over measurements the caller reports. No execution, no
+        -:   22: * authority, no generation store.
+        -:   23: */
+        -:   24:#include "runtime/rx_costmodel.h"
+        -:   25:#include "sha256.h"
+        -:   26:
+        -:   27:#include <math.h>
+        -:   28:#include <stdlib.h>
+        -:   29:#include <string.h>
+        -:   30:#include "runtime/rx_cm_math.h"
+        -:   31:
+        -:   32:_Static_assert(RX_CM_CELL_NONE >= RX_CM_CELLS,
+        -:   33:               "unsupported-op sentinel must not be a cell index");
+        -:   34:
+        -:   35:#define PRIOR_A     1.0
+        -:   36:#define PRIOR_B     0.01     /* prior noise variance ~0.01 log2^2 (about 7%) */
+        -:   37:#define NOISE_FLOOR 0.0009   /* never claim better than ~2% sd per call */
+        -:   38:#define FAIL_PRIOR  0.05
+        -:   39:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_FIT
+        -:   40:#define CUDAPP_MIGRATION_PENDING_C_CM_FIT 0
+        -:   41:#endif
+        -:   42:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_STATS
+        -:   43:#define CUDAPP_MIGRATION_PENDING_C_CM_STATS 0
+        -:   44:#endif
+        -:   45:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+        -:   46:#define CUDAPP_MIGRATION_PENDING_C_CM_FEATURES 0
+        -:   47:#endif
+        -:   48:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE
+        -:   49:#define CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE 0
+        -:   50:#endif
+        -:   51:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_DECISION
+        -:   52:#define CUDAPP_MIGRATION_PENDING_C_CM_DECISION 0
+        -:   53:#endif
+        -:   54:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION
+        -:   55:#define CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION 0
+        -:   56:#endif
+        -:   57:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION
+        -:   58:#define CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION 0
+        -:   59:#endif
+        -:   60:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:   61:#define CUDAPP_MIGRATION_PENDING_C_CM_BLOB 0
+        -:   62:#endif
+        -:   63:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_DIGEST
+        -:   64:#define CUDAPP_MIGRATION_PENDING_C_CM_DIGEST 0
+        -:   65:#endif
+        -:   66:#ifndef CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+        -:   67:#define CUDAPP_MIGRATION_PENDING_C_CM_ROUTE 0
+        -:   68:#endif
+        -:   69:
+        -:   70:/* Host pointer validation stays here; scalar admission and wire offsets do not. */
+function cm_route2 called 314 returned 100% blocks executed 100%
+      314:   71:static uint64_t cm_route2(unsigned mode, uint64_t a, uint64_t b) {
+        -:   72:#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+      314:   73:    if (mode == 2) return a < b;
+branch  0 taken 100 (fallthrough)
+branch  1 taken 214
+      214:   74:    if (mode == 3) return a + b;
+branch  0 taken 101 (fallthrough)
+branch  1 taken 113
+      113:   75:    return a - b;
+        -:   76:#else
+        -:   77:    uint64_t data[16] = {a, b}, result;
+        -:   78:    if (omega_cm_route(&result, mode, data, 16) != OMEGA_OK) abort();
+        -:   79:    return result;
+        -:   80:#endif
+        -:   81:}
+        -:   82:
+        -:   83:
+        -:   84:#if CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+        -:   85:void rx_cm_default_policy(RxCmPolicy *p) {
+        -:   86:    p->ei_min = 0.08;
+        -:   87:    p->max_fail_p = 0.0;   /* any wrong result excludes the arm */
+        -:   88:    p->fallback_arm = 0;
+        -:   89:    p->explore_frac = 0.05;
+        -:   90:    p->explore_allow_ps = 500000000ull;     /* 0.5 ms to get started */
+        -:   91:}
+        -:   92:
+        -:   93:void rx_cm_init(RxCostModel *m, uint32_t n_arms) {
+        -:   94:    memset(m, 0, sizeof *m);
+        -:   95:    m->n_arms = n_arms > RX_CM_ARMS ? RX_CM_ARMS : n_arms;
+        -:   96:    m->lambda = 1e-3;
+        -:   97:    m->sd_scale = 1.0;
+        -:   98:    for (uint32_t c = 0; c < RX_CM_CELLS; c++)
+        -:   99:        for (uint32_t a = 0; a < RX_CM_ARMS; a++)
+        -:  100:            for (uint32_t i = 0, k = 0; i < RX_CM_D; i++)
+        -:  101:                for (uint32_t j = i; j < RX_CM_D; j++, k++)
+        -:  102:                    m->cell[c][a].tri[k] = i == j ? m->lambda : 0.0;
+        -:  103:}
+        -:  104:
+        -:  105:uint32_t rx_cm_cell(const RxCmFeatures *f) {
+        -:  106:    /* An unknown semantic operation is not the last supported family.
+        -:  107:     * The restore-op-clamp mutant rewrites the next line. */
+        -:  108:    uint32_t op = f && f->op < RX_CM_OPS ? f->op : RX_CM_CELL_NONE; /* CM704:refuse-unsupported-op */
+        -:  109:    if (op >= RX_CM_OPS) return RX_CM_CELL_NONE;
+        -:  110:    uint32_t core = f->core < RX_CM_CORES ? f->core : RX_CM_CORE_OTHER;
+        -:  111:    uint32_t pr = f->pressure < RX_CM_PRESSURE ? f->pressure : RX_CM_PRESSURE - 1u;
+        -:  112:    return (op * RX_CM_CORES + core) * RX_CM_PRESSURE + pr;
+        -:  113:}
+        -:  114:
+        -:  115:void rx_cm_basis(const RxCmFeatures *f, double phi[RX_CM_D]) {
+        -:  116:    double lm = log2((double)(f->M ? f->M : 1));
+        -:  117:    double ln = log2((double)(f->N ? f->N : 1));
+        -:  118:    double ov = 0.0;
+        -:  119:    if (f->cache_bytes && f->state_bytes > f->cache_bytes)
+        -:  120:        ov = log2((double)f->state_bytes / (double)f->cache_bytes);
+        -:  121:    phi[0] = 1.0;
+        -:  122:    phi[1] = lm;
+        -:  123:    phi[2] = ln;
+        -:  124:    phi[3] = lm * ln;
+        -:  125:    phi[4] = ln * ln;
+        -:  126:    phi[5] = f->N <= 3 ? 1.0 : 0.0;
+        -:  127:    phi[6] = (f->N % 4u) != 0 ? 1.0 : 0.0;
+        -:  128:    phi[7] = ov;
+        -:  129:}
+        -:  130:#else
+function rx_cm_default_policy called 0 returned 0% blocks executed 0%
+    #####:  131:void rx_cm_default_policy(RxCmPolicy *p) {
+        -:  132:    uint64_t words[64], result;
+    #####:  133:    if (omega_cm_features(&result, 4, words, 64) != OMEGA_OK) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  134:        memset(p, 0, sizeof *p);
+    #####:  135:        return;
+        -:  136:    }
+    #####:  137:    memcpy(&p->ei_min, words + 16, sizeof(double));
+    #####:  138:    memcpy(&p->max_fail_p, words + 17, sizeof(double));
+    #####:  139:    p->fallback_arm = (uint32_t)words[18];
+    #####:  140:    memcpy(&p->explore_frac, words + 19, sizeof(double));
+    #####:  141:    p->explore_allow_ps = words[20];
+        -:  142:}
+        -:  143:
+function rx_cm_init called 1 returned 100% blocks executed 83%
+        1:  144:void rx_cm_init(RxCostModel *m, uint32_t n_arms) {
+        -:  145:    uint64_t words[64], result;
+        1:  146:    memset(m, 0, sizeof *m);
+        1:  147:    words[0] = n_arms;
+       1*:  148:    if (omega_cm_features(&result, 3, words, 64) != OMEGA_OK) return;
+call    0 returned 1
+branch  1 taken 0 (fallthrough)
+branch  2 taken 1
+        1:  149:    m->n_arms = (uint32_t)result;
+        1:  150:    memcpy(&m->lambda, words + 16, sizeof(double));
+        1:  151:    memcpy(&m->sd_scale, words, sizeof(double));
+       10:  152:    for (uint32_t c = 0; c < RX_CM_CELLS; ++c)
+branch  0 taken 9
+branch  1 taken 1 (fallthrough)
+       81:  153:        for (uint32_t a = 0; a < RX_CM_ARMS; ++a)
+branch  0 taken 72
+branch  1 taken 9 (fallthrough)
+       72:  154:            memcpy(&m->cell[c][a], words + 16, sizeof(RxCmArmStats));
+        -:  155:}
+        -:  156:
+function rx_cm_cell called 0 returned 0% blocks executed 0%
+    #####:  157:uint32_t rx_cm_cell(const RxCmFeatures *f) {
+    #####:  158:    if (!f) return RX_CM_CELL_NONE;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  159:    uint64_t words[64], result;
+    #####:  160:    words[0] = f->op; words[5] = f->core; words[6] = f->pressure;
+    #####:  161:    if (omega_cm_features(&result, 0, words, 64) != OMEGA_OK) return RX_CM_CELL_NONE;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  162:    return (uint32_t)result;
+        -:  163:}
+        -:  164:
+function cm_host_basis called 0 returned 0% blocks executed 0%
+    #####:  165:static void cm_host_basis(const RxCmFeatures *f, double phi[RX_CM_D], uint64_t mode) {
+        -:  166:    uint64_t words[64], result;
+    #####:  167:    words[1] = f->M; words[2] = f->N;
+    #####:  168:    words[3] = f->state_bytes; words[4] = f->cache_bytes;
+    #####:  169:    if (omega_cm_features(&result, mode, words, 64) != OMEGA_OK) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  170:        for (uint32_t i = 0; i < RX_CM_D; ++i) phi[i] = NAN;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  171:        return;
+        -:  172:    }
+    #####:  173:    memcpy(phi, words + 16, RX_CM_D * sizeof(double));
+        -:  174:}
+        -:  175:
+function rx_cm_basis called 0 returned 0% blocks executed 0%
+    #####:  176:void rx_cm_basis(const RxCmFeatures *f, double phi[RX_CM_D]) { cm_host_basis(f, phi, 1); }
+call    0 never executed
+        -:  177:#endif
+        -:  178:
+        -:  179:#if CUDAPP_MIGRATION_PENDING_C_CM_FIT
+        -:  180:/* Cholesky of the D x D matrix held as an upper triangle. 0 on success. */
+        -:  181:static int cholesky(const double *tri, double L[RX_CM_D][RX_CM_D]) {
+        -:  182:    double A[RX_CM_D][RX_CM_D];
+        -:  183:    for (uint32_t i = 0, k = 0; i < RX_CM_D; i++)
+        -:  184:        for (uint32_t j = i; j < RX_CM_D; j++, k++) A[i][j] = A[j][i] = tri[k];
+        -:  185:    memset(L, 0, sizeof(double) * RX_CM_D * RX_CM_D);
+        -:  186:    for (uint32_t j = 0; j < RX_CM_D; j++) {
+        -:  187:        double s = A[j][j];
+        -:  188:        for (uint32_t k = 0; k < j; k++) s -= L[j][k] * L[j][k];
+        -:  189:        if (!(s > 0.0)) return -1;
+        -:  190:        L[j][j] = sqrt(s);
+        -:  191:        for (uint32_t i = j + 1; i < RX_CM_D; i++) {
+        -:  192:            double t = A[i][j];
+        -:  193:            for (uint32_t k = 0; k < j; k++) t -= L[i][k] * L[j][k];
+        -:  194:            L[i][j] = t / L[j][j];
+        -:  195:        }
+        -:  196:    }
+        -:  197:    return 0;
+        -:  198:}
+        -:  199:
+        -:  200:static void forward(double L[RX_CM_D][RX_CM_D], const double *b, double *v) {
+        -:  201:    for (uint32_t i = 0; i < RX_CM_D; i++) {
+        -:  202:        double s = b[i];
+        -:  203:        for (uint32_t k = 0; k < i; k++) s -= L[i][k] * v[k];
+        -:  204:        v[i] = s / L[i][i];
+        -:  205:    }
+        -:  206:}
+        -:  207:
+        -:  208:static void backward(double L[RX_CM_D][RX_CM_D], const double *v, double *x) {
+        -:  209:    for (int i = (int)RX_CM_D - 1; i >= 0; i--) {
+        -:  210:        double s = v[i];
+        -:  211:        for (uint32_t k = (uint32_t)i + 1; k < RX_CM_D; k++) s -= L[k][i] * x[k];
+        -:  212:        x[i] = s / L[i][i];
+        -:  213:    }
+        -:  214:}
+        -:  215:
+        -:  216:/* Predictive t for one (cell, arm). Returns 0 if there is no data. */
+        -:  217:static int fit_predict(const RxCmArmStats *s, const double phi[RX_CM_D], double *mean,
+        -:  218:                       double *sd, double *dof, uint64_t minimum) {
+        -:  219:    if (s->n == 0 || s->n < minimum) return 0;
+        -:  220:    double L[RX_CM_D][RX_CM_D], v[RX_CM_D], mu[RX_CM_D], w[RX_CM_D];
+        -:  221:    if (cholesky(s->tri, L) != 0) return 0;
+        -:  222:    forward(L, s->xty, v);
+        -:  223:    backward(L, v, mu);
+        -:  224:    double quad = 0.0;          /* mu' Lambda mu = |L' mu|^2 = v . v */
+        -:  225:    for (uint32_t i = 0; i < RX_CM_D; i++) quad += v[i] * v[i];
+        -:  226:    double a = PRIOR_A + 0.5 * (double)s->n;
+        -:  227:    double b = PRIOR_B + 0.5 * (s->yty - quad);
+        -:  228:    if (b < PRIOR_B) b = PRIOR_B;
+        -:  229:    double sigma2 = b / a;
+        -:  230:    if (sigma2 < NOISE_FLOOR) sigma2 = NOISE_FLOOR;
+        -:  231:    forward(L, phi, w);
+        -:  232:    double lev = 0.0;
+        -:  233:    for (uint32_t i = 0; i < RX_CM_D; i++) lev += w[i] * w[i];
+        -:  234:    double m = 0.0;
+        -:  235:    for (uint32_t i = 0; i < RX_CM_D; i++) m += mu[i] * phi[i];
+        -:  236:    *mean = m;
+        -:  237:    *sd = sqrt(sigma2 * (1.0 + lev));
+        -:  238:    *dof = 2.0 * a;
+        -:  239:    return 1;
+        -:  240:}
+        -:  241:#else
+function fit_predict called 0 returned 0% blocks executed 0%
+    #####:  242:static int fit_predict(const RxCmArmStats *s, const double phi[RX_CM_D], double *mean,
+        -:  243:                       double *sd, double *dof, uint64_t minimum) {
+        -:  244:    _Static_assert(sizeof(RxCmArmStats) == 48 * sizeof(uint64_t), "statistics transport layout");
+        -:  245:    uint64_t input[64], output[16], found;
+    #####:  246:    memcpy(input, s, 46 * sizeof(uint64_t));
+    #####:  247:    memcpy(input + 48, phi, RX_CM_D * sizeof(double));
+    #####:  248:    input[56] = minimum;
+    #####:  249:    if (omega_cm_fit(&found, input, 64, output, 16) != OMEGA_OK || found != 1) return 0;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  250:    memcpy(mean, output, sizeof *mean);
+    #####:  251:    memcpy(sd, output + 1, sizeof *sd);
+    #####:  252:    memcpy(dof, output + 2, sizeof *dof);
+    #####:  253:    return 1;
+        -:  254:}
+        -:  255:#endif
+        -:  256:
+        -:  257:#if CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+        -:  258:static uint64_t failures_of(const RxCostModel *m, uint32_t arm) {
+        -:  259:    uint64_t f = 0;
+        -:  260:    for (uint32_t c = 0; c < RX_CM_CELLS; c++) f += m->cell[c][arm].failures;
+        -:  261:    return f;
+        -:  262:}
+        -:  263:
+        -:  264:static double fail_p(const RxCostModel *m, uint32_t arm) {
+        -:  265:    uint64_t t = 0, f = 0;
+        -:  266:    for (uint32_t c = 0; c < RX_CM_CELLS; c++) {
+        -:  267:        t += m->cell[c][arm].trials;
+        -:  268:        f += m->cell[c][arm].failures;
+        -:  269:    }
+        -:  270:    return ((double)f + FAIL_PRIOR) / ((double)t + 1.0);
+        -:  271:}
+        -:  272:#else
+function failures_of called 0 returned 0% blocks executed 0%
+    #####:  273:static uint64_t failures_of(const RxCostModel *m, uint32_t arm) {
+        -:  274:    uint64_t words[64], result;
+    #####:  275:    for (uint32_t c = 0; c < RX_CM_CELLS; ++c) words[c] = m->cell[c][arm].failures;
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  276:    if (omega_cm_features(&result, 6, words, 64) != OMEGA_OK) return UINT64_MAX;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  277:    return result;
+        -:  278:}
+        -:  279:
+function fail_p called 0 returned 0% blocks executed 0%
+    #####:  280:static double fail_p(const RxCostModel *m, uint32_t arm) {
+        -:  281:    uint64_t words[64], result;
+        -:  282:    double value;
+    #####:  283:    for (uint32_t c = 0; c < RX_CM_CELLS; ++c) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  284:        words[c] = m->cell[c][arm].failures; words[9 + c] = m->cell[c][arm].trials;
+        -:  285:    }
+    #####:  286:    if (omega_cm_features(&result, 7, words, 64) != OMEGA_OK) return 1.0;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  287:    memcpy(&value, &result, sizeof value);
+    #####:  288:    return value;
+        -:  289:}
+        -:  290:#endif
+        -:  291:
+        -:  292:/* Pressure cells hold a correction over the same core class at pressure 0:
+        -:  293: * log2 cost under pressure = quiet prediction + a + b * (doublings past the
+        -:  294: * private cache). Two numbers per arm, readable as "pressure costs this much,
+        -:  295: * and this much more per doubling out of cache". */
+function residual_basis called 0 returned 0% blocks executed 0%
+    #####:  296:static void residual_basis(const RxCmFeatures *f, double phi[RX_CM_D]) {
+        -:  297:#if !CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+    #####:  298:    cm_host_basis(f, phi, 2);
+call    0 never executed
+        -:  299:#else
+        -:  300:    double full[RX_CM_D];
+        -:  301:    rx_cm_basis(f, full);
+        -:  302:    memset(phi, 0, sizeof(double) * RX_CM_D);
+        -:  303:    phi[0] = 1.0;
+        -:  304:    phi[1] = full[7];
+        -:  305:#endif
+    #####:  306:}
+        -:  307:
+function quiet_predict called 0 returned 0% blocks executed 0%
+    #####:  308:static int quiet_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm, double *mean,
+        -:  309:                         double *sd, double *dof, uint64_t *n) {
+    #####:  310:    RxCmFeatures g = *f;
+    #####:  311:    g.pressure = 0;
+    #####:  312:    uint32_t cell = rx_cm_cell(&g);
+call    0 never executed
+    #####:  313:    if (!cm_route2(2, cell, RX_CM_CELLS)) return 0;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  314:    const RxCmArmStats *b = &m->cell[cell][arm];
+        -:  315:    double phi[RX_CM_D];
+    #####:  316:    rx_cm_basis(f, phi);
+call    0 never executed
+    #####:  317:    if (!fit_predict(b, phi, mean, sd, dof, RX_CM_MIN_OBS)) return 0;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  318:    *n = b->n;
+    #####:  319:    return 1;
+        -:  320:}
+        -:  321:
+function bucket called 0 returned 0% blocks executed 0%
+    #####:  322:static uint32_t bucket(const RxCmFeatures *f) {
+        -:  323:#if !CUDAPP_MIGRATION_PENDING_C_CM_FEATURES
+        -:  324:    uint64_t words[64], result;
+    #####:  325:    words[6] = f->pressure;
+    #####:  326:    if (omega_cm_features(&result, 5, words, 64) != OMEGA_OK) return RX_CM_PRESSURE - 1;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  327:    return (uint32_t)result;
+        -:  328:#else
+        -:  329:    return f->pressure < RX_CM_PRESSURE ? f->pressure : RX_CM_PRESSURE - 1;
+        -:  330:#endif
+        -:  331:}
+        -:  332:
+function rx_cm_predict called 0 returned 0% blocks executed 0%
+    #####:  333:int rx_cm_predict(const RxCostModel *m, const RxCmFeatures *f, uint32_t arm,
+        -:  334:                  RxCmPrediction *out) {
+    #####:  335:    if (!out) return RX_CM_ERR_ARG;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  336:    memset(out, 0, sizeof *out);
+    #####:  337:    if (!m || !f) return RX_CM_ERR_ARG;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+    #####:  338:    if (!cm_route2(2, arm, m->n_arms)) return RX_CM_ERR_ARG;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  339:    uint32_t cell = rx_cm_cell(f);
+call    0 never executed
+    #####:  340:    if (!cm_route2(2, cell, RX_CM_CELLS)) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  341:        out->refused = 1;
+    #####:  342:        return RX_CM_ERR_UNSUPPORTED;
+        -:  343:    }
+    #####:  344:    double mean = 0, sd = 0, dof = 0;
+    #####:  345:    uint64_t n = 0;
+    #####:  346:    out->fail_p = fail_p(m, arm);
+call    0 never executed
+    #####:  347:    if (!quiet_predict(m, f, arm, &mean, &sd, &dof, &n)) return RX_CM_OK;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+        -:  348:#if CUDAPP_MIGRATION_PENDING_C_CM_PREDICTION
+        -:  349:    if (bucket(f) == 0) {
+        -:  350:        out->known = 1;
+        -:  351:    } else {
+        -:  352:        const RxCmArmStats *r = &m->cell[cell][arm];
+        -:  353:        double phi[RX_CM_D], rm = 0, rsd = 0, rdof = 0;
+        -:  354:        residual_basis(f, phi);
+        -:  355:        if (fit_predict(r, phi, &rm, &rsd, &rdof, RX_CM_RES_MIN_OBS)) {
+        -:  356:            mean += rm;
+        -:  357:            sd = sqrt(sd * sd + rsd * rsd);
+        -:  358:            if (rdof < dof) dof = rdof;
+        -:  359:            n = r->n;
+        -:  360:            out->known = 1;
+        -:  361:        } else {
+        -:  362:            /* Never seen under this pressure: the quiet prediction, with the
+        -:  363:             * prior on how far an unseen condition may move cost. */
+        -:  364:            sd = sqrt(sd * sd + RX_CM_UNSEEN_SHIFT * RX_CM_UNSEEN_SHIFT);
+        -:  365:            out->borrowed = 1;
+        -:  366:        }
+        -:  367:    }
+        -:  368:    out->n = (uint32_t)n;
+        -:  369:    out->mean_log2_ps = mean;
+        -:  370:    out->sd_log2 = sd * (m->sd_scale >= 1.0 ? m->sd_scale : 1.0);
+        -:  371:    out->dof = dof;
+        -:  372:    uint32_t core = f->core < RX_CM_CORES ? f->core : RX_CM_CORE_OTHER;
+        -:  373:    double mw = m->power_mw[core][arm];
+        -:  374:    if (mw > 0.0) out->energy_pj = exp2(mean) * mw * 1e-3;   /* ps * mW = 1e-3 pJ */
+        -:  375:#else
+        -:  376:    uint64_t words[32], result;
+    #####:  377:    memcpy(words, &mean, sizeof(double)); memcpy(words + 1, &sd, sizeof(double));
+    #####:  378:    memcpy(words + 2, &dof, sizeof(double)); words[3] = n;
+    #####:  379:    words[4] = bucket(f); words[5] = 0;
+call    0 never executed
+    #####:  380:    if (words[4] != 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  381:        const RxCmArmStats *r = &m->cell[cell][arm];
+    #####:  382:        double phi[RX_CM_D], rm = 0, rsd = 0, rdof = 0;
+    #####:  383:        residual_basis(f, phi);
+call    0 never executed
+    #####:  384:        words[5] = (uint64_t)fit_predict(r, phi, &rm, &rsd, &rdof, RX_CM_RES_MIN_OBS);
+call    0 never executed
+    #####:  385:        memcpy(words + 6, &rm, sizeof(double)); memcpy(words + 7, &rsd, sizeof(double));
+    #####:  386:        memcpy(words + 8, &rdof, sizeof(double)); words[9] = r->n;
+        -:  387:    }
+    #####:  388:    memcpy(words + 10, &m->sd_scale, sizeof(double)); words[11] = f->core;
+    #####:  389:    for (uint32_t c = 0; c < RX_CM_CORES; ++c)
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  390:        memcpy(words + 12 + c, &m->power_mw[c][arm], sizeof(double));
+    #####:  391:    if (omega_cm_prediction(&result, words, 32) != OMEGA_OK) return RX_CM_OK;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  392:    memcpy(&out->mean_log2_ps, words + 16, sizeof(double));
+    #####:  393:    memcpy(&out->sd_log2, words + 17, sizeof(double));
+    #####:  394:    memcpy(&out->dof, words + 18, sizeof(double));
+    #####:  395:    out->n = (uint32_t)words[19]; out->known = (int)words[20]; out->borrowed = (int)words[21];
+    #####:  396:    memcpy(&out->energy_pj, words + 22, sizeof(double));
+        -:  397:#endif
+    #####:  398:    return RX_CM_OK;
+        -:  399:}
+        -:  400:
+function rx_cm_observe called 0 returned 0% blocks executed 0%
+    #####:  401:int rx_cm_observe(RxCostModel *m, const RxCmFeatures *f, uint32_t arm, const RxCmObservation *o) {
+    #####:  402:    if (!m || !f || !o) return RX_CM_ERR_ARG;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+    #####:  403:    if (!cm_route2(2, arm, m->n_arms)) return RX_CM_ERR_ARG;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  404:    uint32_t cell = rx_cm_cell(f);
+call    0 never executed
+    #####:  405:    if (!cm_route2(2, cell, RX_CM_CELLS)) return RX_CM_ERR_UNSUPPORTED;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  406:    RxCmArmStats *s = &m->cell[cell][arm];
+        -:  407:#if !CUDAPP_MIGRATION_PENDING_C_CM_STATS
+    #####:  408:    uint64_t words[64] = {0}, stage;
+    #####:  409:    memcpy(words, s, sizeof *s);
+    #####:  410:    words[56] = (uint64_t)(uint32_t)o->failed;
+    #####:  411:    words[59] = o->ps_per_call;
+    #####:  412:    if (omega_cm_stats(&stage, 0, words, 64) != OMEGA_OK) return RX_CM_ERR_ARG;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  413:    memcpy(s, words, sizeof *s);
+    #####:  414:    if (stage == 1) return RX_CM_OK;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  415:    if (stage != 0) return RX_CM_ERR_ARG;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  416:    double phi[RX_CM_D];
+    #####:  417:    if (bucket(f) == 0) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  418:        rx_cm_basis(f, phi);
+call    0 never executed
+        -:  419:    } else {
+        -:  420:        double qm, qsd, qdof;
+        -:  421:        uint64_t qn;
+    #####:  422:        if (!quiet_predict(m, f, arm, &qm, &qsd, &qdof, &qn)) return RX_CM_SKIPPED;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  423:        residual_basis(f, phi);
+call    0 never executed
+    #####:  424:        words[57] = 1;
+    #####:  425:        memcpy(words + 58, &qm, sizeof qm);
+        -:  426:    }
+    #####:  427:    memcpy(words + 48, phi, sizeof phi);
+    #####:  428:    if (omega_cm_stats(&stage, 1, words, 64) != OMEGA_OK || stage != 0) return RX_CM_ERR_ARG;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  429:    memcpy(s, words, sizeof *s);
+    #####:  430:    return RX_CM_OK;
+        -:  431:#else
+        -:  432:    s->trials++;
+        -:  433:    if (o->failed) {
+        -:  434:        s->failures++;
+        -:  435:        return RX_CM_OK;
+        -:  436:    }
+        -:  437:    if (o->ps_per_call == 0) return RX_CM_ERR_ARG;
+        -:  438:    double phi[RX_CM_D];
+        -:  439:    double y = log2((double)o->ps_per_call);
+        -:  440:    if (bucket(f) == 0) {
+        -:  441:        rx_cm_basis(f, phi);
+        -:  442:    } else {
+        -:  443:        double qm, qsd, qdof;
+        -:  444:        uint64_t qn;
+        -:  445:        if (!quiet_predict(m, f, arm, &qm, &qsd, &qdof, &qn)) return RX_CM_SKIPPED;
+        -:  446:        residual_basis(f, phi);
+        -:  447:        y -= qm;
+        -:  448:    }
+        -:  449:    for (uint32_t i = 0, k = 0; i < RX_CM_D; i++) {
+        -:  450:        for (uint32_t j = i; j < RX_CM_D; j++, k++) s->tri[k] += phi[i] * phi[j];
+        -:  451:        s->xty[i] += phi[i] * y;
+        -:  452:    }
+        -:  453:    s->yty += y * y;
+        -:  454:    s->n++;
+        -:  455:    return RX_CM_OK;
+        -:  456:#endif
+        -:  457:}
+        -:  458:
+        -:  459:#if CUDAPP_MIGRATION_PENDING_C_CM_DECISION
+        -:  460:static double norm_cdf(double x) { return 0.5 * erfc(-x / sqrt(2.0)); }
+        -:  461:#endif
+        -:  462:
+        -:  463:/* Acklam's inverse normal. */
+        -:  464:#if CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE
+        -:  465:static double norm_inv(double p) {
+        -:  466:    static const double a[] = { -3.969683028665376e+01, 2.209460984245205e+02,
+        -:  467:                                -2.759285104469687e+02, 1.383577518672690e+02,
+        -:  468:                                -3.066479806614716e+01, 2.506628277459239e+00 };
+        -:  469:    static const double b[] = { -5.447609879822406e+01, 1.615858368580409e+02,
+        -:  470:                                -1.556989798598866e+02, 6.680131188771972e+01,
+        -:  471:                                -1.328068155288572e+01 };
+        -:  472:    static const double c[] = { -7.784894002430293e-03, -3.223964580411365e-01,
+        -:  473:                                -2.400758277161838e+00, -2.549732539343734e+00,
+        -:  474:                                4.374664141464968e+00, 2.938163982698783e+00 };
+        -:  475:    static const double d[] = { 7.784695709041462e-03, 3.224671290700398e-01,
+        -:  476:                                2.445134137142996e+00, 3.754408661907416e+00 };
+        -:  477:    if (p <= 0.0) return -INFINITY;
+        -:  478:    if (p >= 1.0) return INFINITY;
+        -:  479:    double q, r;
+        -:  480:    if (p < 0.02425) {
+        -:  481:        q = sqrt(-2 * log(p));
+        -:  482:        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+        -:  483:               ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+        -:  484:    }
+        -:  485:    if (p > 1 - 0.02425) {
+        -:  486:        q = sqrt(-2 * log(1 - p));
+        -:  487:        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+        -:  488:               ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+        -:  489:    }
+        -:  490:    q = p - 0.5;
+        -:  491:    r = q * q;
+        -:  492:    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+        -:  493:           (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+        -:  494:}
+        -:  495:#endif
+        -:  496:
+function rx_cm_t_quantile called 0 returned 0% blocks executed 0%
+    #####:  497:double rx_cm_t_quantile(double q, double dof) {
+        -:  498:#if CUDAPP_MIGRATION_PENDING_C_CM_QUANTILE
+        -:  499:    double z = norm_inv(0.5 + 0.5 * q);
+        -:  500:    if (!(dof > 0.0)) return z;
+        -:  501:    double z3 = z * z * z, z5 = z3 * z * z;
+        -:  502:    return z + (z3 + z) / (4.0 * dof) + (5.0 * z5 + 16.0 * z3 + 3.0 * z) / (96.0 * dof * dof);
+        -:  503:#else
+        -:  504:    uint64_t qb, db, result;
+        -:  505:    double value;
+    #####:  506:    memcpy(&qb, &q, sizeof qb);
+    #####:  507:    memcpy(&db, &dof, sizeof db);
+    #####:  508:    if (omega_cm_quantile(&result, qb, db) != OMEGA_OK) return NAN;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  509:    memcpy(&value, &result, sizeof value);
+    #####:  510:    return value;
+        -:  511:#endif
+        -:  512:}
+        -:  513:
+        -:  514:#if CUDAPP_MIGRATION_PENDING_C_CM_DECISION
+        -:  515:static int explore_allowed(const RxCostModel *m, const RxCmPolicy *p) {
+        -:  516:    double cap = p->explore_frac * (double)m->work_ps + (double)p->explore_allow_ps;
+        -:  517:    return (double)m->explore_ps < cap;
+        -:  518:}
+        -:  519:
+        -:  520:/* E[max(0, X)] for X ~ N(d, s^2): the expected gain, in log2 units, of
+        -:  521: * switching to a competitor whose advantage over the chosen arm is d. */
+        -:  522:static double expected_improvement(double d, double s) {
+        -:  523:    if (!(s > 0.0)) return d > 0.0 ? d : 0.0;
+        -:  524:    double u = d / s;
+        -:  525:    return s * exp(-0.5 * u * u) / sqrt(2.0 * M_PI) + d * norm_cdf(u);
+        -:  526:}
+        -:  527:
+        -:  528:void rx_cm_decide(const RxCostModel *m, const RxCmPolicy *p, const RxCmFeatures *f,
+        -:  529:                  int allow_measure, RxCmDecision *out) {
+        -:  530:    memset(out, 0, sizeof *out);
+        -:  531:    if (m && f && rx_cm_cell(f) >= RX_CM_CELLS) {
+        -:  532:        uint32_t na = m->n_arms;
+        -:  533:        out->action = RX_CM_REFUSE;
+        -:  534:        out->why = RX_CM_WHY_UNSUPPORTED_OP;
+        -:  535:        out->arm = na;
+        -:  536:        out->measure[0] = na;
+        -:  537:        out->measure[1] = na;
+        -:  538:        for (uint32_t a = 0; a < RX_CM_ARMS; a++) out->pred[a].refused = 1;
+        -:  539:        return;
+        -:  540:    }
+        -:  541:    uint32_t fb = p->fallback_arm < m->n_arms ? p->fallback_arm : 0;
+        -:  542:    uint32_t elig = (f->eligible | (1u << fb)) & ((1u << m->n_arms) - 1u);
+        -:  543:    int have[RX_CM_ARMS] = { 0 };
+        -:  544:    int n_elig = 0;
+        -:  545:    for (uint32_t a = 0; a < m->n_arms; a++) {
+        -:  546:        rx_cm_predict(m, f, a, &out->pred[a]);
+        -:  547:        if (!(elig & (1u << a))) continue;
+        -:  548:        if (a != fb && failures_of(m, a) > 0 && out->pred[a].fail_p > p->max_fail_p) {
+        -:  549:            elig &= ~(1u << a);
+        -:  550:            continue;
+        -:  551:        }
+        -:  552:        n_elig++;
+        -:  553:        have[a] = out->pred[a].known || out->pred[a].borrowed;
+        -:  554:    }
+        -:  555:    out->action = RX_CM_FALLBACK;
+        -:  556:    out->arm = fb;
+        -:  557:    if (n_elig <= 1) {
+        -:  558:        out->why = RX_CM_WHY_NO_ELIGIBLE;
+        -:  559:        return;
+        -:  560:    }
+        -:  561:
+        -:  562:    /* Best by predicted latency among arms that meet the budgets; if none
+        -:  563:     * meets them, best overall and say so. */
+        -:  564:    int best = -1, best_fit = -1;
+        -:  565:    for (uint32_t a = 0; a < m->n_arms; a++) {
+        -:  566:        if (!have[a] || !(elig & (1u << a))) continue;
+        -:  567:        const RxCmPrediction *pr = &out->pred[a];
+        -:  568:        double hi = exp2(pr->mean_log2_ps + 1.2816 * pr->sd_log2);
+        -:  569:        int fits = (!f->latency_budget_ps || hi <= (double)f->latency_budget_ps) &&
+        -:  570:                   (!f->energy_budget_pj || pr->energy_pj == 0.0 ||
+        -:  571:                    pr->energy_pj <= (double)f->energy_budget_pj);
+        -:  572:        if (best < 0 || pr->mean_log2_ps < out->pred[best].mean_log2_ps) best = (int)a;
+        -:  573:        if (fits && (best_fit < 0 || pr->mean_log2_ps < out->pred[best_fit].mean_log2_ps))
+        -:  574:            best_fit = (int)a;
+        -:  575:    }
+        -:  576:    int over = 0;
+        -:  577:    if (best_fit >= 0) best = best_fit;
+        -:  578:    else if (best >= 0) over = 1;
+        -:  579:
+        -:  580:    /* Competitor: the eligible arm with the largest expected improvement
+        -:  581:     * over `best`. An arm with no prediction at all is always worth a look. */
+        -:  582:    int comp = -1, comp_unknown = 0;
+        -:  583:    double ei = 0.0, pc = 0.0;
+        -:  584:    for (uint32_t a = 0; a < m->n_arms; a++) {
+        -:  585:        if (!(elig & (1u << a)) || (int)a == best) continue;
+        -:  586:        double e, pa;
+        -:  587:        int unknown = !have[a] || best < 0;
+        -:  588:        if (unknown) {
+        -:  589:            e = INFINITY;
+        -:  590:            pa = 0.5;
+        -:  591:        } else {
+        -:  592:            const RxCmPrediction *x = &out->pred[a], *b = &out->pred[best];
+        -:  593:            double s = sqrt(x->sd_log2 * x->sd_log2 + b->sd_log2 * b->sd_log2);
+        -:  594:            double d = b->mean_log2_ps - x->mean_log2_ps;
+        -:  595:            e = expected_improvement(d, s);
+        -:  596:            pa = norm_cdf(d / (s > 0 ? s : 1e-9));
+        -:  597:        }
+        -:  598:        if (comp < 0 || e > ei) {
+        -:  599:            comp = (int)a;
+        -:  600:            ei = e;
+        -:  601:            pc = pa;
+        -:  602:            comp_unknown = unknown;
+        -:  603:        }
+        -:  604:    }
+        -:  605:    out->p_runner_up_better = pc;
+        -:  606:    out->expected_improvement = isinf(ei) ? -1.0 : ei;
+        -:  607:
+        -:  608:    uint32_t why = RX_CM_WHY_CONFIDENT;
+        -:  609:    if (best < 0 || comp_unknown) why = RX_CM_WHY_UNKNOWN_ARM;
+        -:  610:    else if (ei > p->ei_min) why = RX_CM_WHY_WORTH_MEASURING;
+        -:  611:
+        -:  612:    if (why != RX_CM_WHY_CONFIDENT && allow_measure && explore_allowed(m, p) && comp >= 0) {
+        -:  613:        out->action = RX_CM_MEASURE;
+        -:  614:        out->measure[0] = best >= 0 ? (uint32_t)best : fb;
+        -:  615:        out->measure[1] = (uint32_t)comp;
+        -:  616:        if (out->measure[0] == out->measure[1]) out->measure[1] = fb;
+        -:  617:        out->why = why;
+        -:  618:        out->arm = out->measure[0];
+        -:  619:        return;
+        -:  620:    }
+        -:  621:    if (best < 0) {
+        -:  622:        out->why = allow_measure && !explore_allowed(m, p) ? RX_CM_WHY_BUDGET_SPENT
+        -:  623:                                                           : RX_CM_WHY_UNKNOWN_ARM;
+        -:  624:        return;   /* fallback */
+        -:  625:    }
+        -:  626:    out->action = RX_CM_SELECT;
+        -:  627:    out->arm = (uint32_t)best;
+        -:  628:    if (over) out->why = RX_CM_WHY_OVER_BUDGET;
+        -:  629:    else if (why != RX_CM_WHY_CONFIDENT && allow_measure) out->why = RX_CM_WHY_BUDGET_SPENT;
+        -:  630:    else out->why = RX_CM_WHY_CONFIDENT;
+        -:  631:}
+        -:  632:#else
+function cm_decision_output called 0 returned 0% blocks executed 0%
+    #####:  633:static void cm_decision_output(const uint64_t words[128], RxCmDecision *out) {
+    #####:  634:    out->action = (int)words[100]; out->arm = (uint32_t)words[101];
+    #####:  635:    out->measure[0] = (uint32_t)words[102]; out->measure[1] = (uint32_t)words[103];
+    #####:  636:    out->why = (uint32_t)words[104];
+    #####:  637:    memcpy(&out->p_runner_up_better, words + 105, sizeof(double));
+    #####:  638:    memcpy(&out->expected_improvement, words + 106, sizeof(double));
+    #####:  639:}
+        -:  640:
+function rx_cm_decide called 0 returned 0% blocks executed 0%
+    #####:  641:void rx_cm_decide(const RxCostModel *m, const RxCmPolicy *p, const RxCmFeatures *f,
+        -:  642:                  int allow_measure, RxCmDecision *out) {
+        -:  643:    uint64_t words[128], stage;
+    #####:  644:    memset(out, 0, sizeof *out);
+    #####:  645:    words[80] = m->n_arms; words[81] = f->op;
+    #####:  646:    if (omega_cm_decision(&stage, 0, words, 128) != OMEGA_OK) return;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  647:    if (stage == 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  648:        for (uint32_t a = 0; a < RX_CM_ARMS; ++a) out->pred[a].refused = (int)words[9 * a + 8];
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  649:        cm_decision_output(words, out);
+call    0 never executed
+    #####:  650:        return;
+        -:  651:    }
+    #####:  652:    for (uint32_t a = 0; a < m->n_arms; ++a) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+    #####:  653:        RxCmPrediction *pr = &out->pred[a];
+    #####:  654:        rx_cm_predict(m, f, a, pr);
+call    0 never executed
+    #####:  655:        uint64_t *w = words + 9 * a;
+    #####:  656:        memcpy(w, &pr->mean_log2_ps, sizeof(double));
+    #####:  657:        memcpy(w + 1, &pr->sd_log2, sizeof(double));
+    #####:  658:        memcpy(w + 2, &pr->dof, sizeof(double));
+    #####:  659:        w[3] = pr->n; w[4] = (uint64_t)(uint32_t)pr->known; w[5] = (uint64_t)(uint32_t)pr->borrowed;
+    #####:  660:        memcpy(w + 6, &pr->energy_pj, sizeof(double));
+    #####:  661:        memcpy(w + 7, &pr->fail_p, sizeof(double));
+    #####:  662:        w[8] = (uint64_t)(uint32_t)pr->refused;
+    #####:  663:        words[72 + a] = failures_of(m, a);
+call    0 never executed
+        -:  664:    }
+    #####:  665:    words[82] = f->eligible;
+    #####:  666:    words[86] = f->latency_budget_ps; words[87] = f->energy_budget_pj;
+    #####:  667:    words[88] = (uint64_t)(uint32_t)allow_measure;
+    #####:  668:    memcpy(words + 89, &p->ei_min, sizeof(double));
+    #####:  669:    memcpy(words + 90, &p->max_fail_p, sizeof(double));
+    #####:  670:    words[91] = p->fallback_arm;
+    #####:  671:    memcpy(words + 92, &p->explore_frac, sizeof(double));
+    #####:  672:    words[93] = p->explore_allow_ps; words[94] = m->explore_ps; words[95] = m->work_ps;
+    #####:  673:    if (omega_cm_decision(&stage, 1, words, 128) != OMEGA_OK) return;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  674:    cm_decision_output(words, out);
+call    0 never executed
+        -:  675:}
+        -:  676:#endif
+        -:  677:
+        -:  678:
+        -:  679:#if CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION
+        -:  680:double rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *arm,
+        -:  681:                       const uint64_t *ps, uint32_t n, double q) {
+        -:  682:    if (!m || !f || !arm || !ps || n == 0 || !(q > 0.0 && q < 1.0)) return 0.0;
+        -:  683:    double *r = malloc(sizeof(double) * n);
+        -:  684:    if (!r) return 0.0;
+        -:  685:    double saved = m->sd_scale;
+        -:  686:    m->sd_scale = 1.0;
+        -:  687:    uint32_t k = 0;
+        -:  688:    for (uint32_t i = 0; i < n; i++) {
+        -:  689:        RxCmPrediction p;
+        -:  690:        rx_cm_predict(m, &f[i], arm[i], &p);
+        -:  691:        if (!(p.known || p.borrowed) || ps[i] == 0 || !(p.sd_log2 > 0.0)) continue;
+        -:  692:        double z = fabs(log2((double)ps[i]) - p.mean_log2_ps) / p.sd_log2;
+        -:  693:        r[k++] = z / rx_cm_t_quantile(q, p.dof);
+        -:  694:    }
+        -:  695:    double scale = 0.0;
+        -:  696:    if (k >= 10) {
+        -:  697:        if (rx_cm_sort(r, k) != 0) { m->sd_scale = saved; free(r); return 0.0; }
+        -:  698:        uint32_t idx = (uint32_t)ceil(q * (double)k) - 1u;
+        -:  699:        scale = r[idx < k ? idx : k - 1];
+        -:  700:        if (scale < 1.0) scale = 1.0;
+        -:  701:        m->sd_scale = scale;
+        -:  702:    } else {
+        -:  703:        m->sd_scale = saved;
+        -:  704:    }
+        -:  705:    free(r);
+        -:  706:    return scale;
+        -:  707:}
+        -:  708:#else
+function rx_cm_calibrate called 0 returned 0% blocks executed 0%
+    #####:  709:double rx_cm_calibrate(RxCostModel *m, const RxCmFeatures *f, const uint32_t *arm,
+        -:  710:                       const uint64_t *ps, uint32_t n, double q) {
+    #####:  711:    if (!m || !f || !arm || !ps) return 0.0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+branch  2 never executed (fallthrough)
+branch  3 never executed
+branch  4 never executed (fallthrough)
+branch  5 never executed
+branch  6 never executed (fallthrough)
+branch  7 never executed
+        -:  712:    uint64_t words[32], stage;
+    #####:  713:    memcpy(words, &q, sizeof(double)); words[2] = n;
+    #####:  714:    if (omega_cm_calibration(&stage, 0, words, 32) != OMEGA_OK || stage == 0) return 0.0;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+branch  3 never executed (fallthrough)
+branch  4 never executed
+    #####:  715:    double *r = malloc(sizeof(double) * n);
+    #####:  716:    if (!r) return 0.0;
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  717:    double saved = m->sd_scale, scale = 0;
+    #####:  718:    memcpy(words + 1, &saved, sizeof(double));
+    #####:  719:    memcpy(&m->sd_scale, words + 10, sizeof(double));
+    #####:  720:    uint32_t k = 0;
+    #####:  721:    for (uint32_t i = 0; i < n; ++i) {
+branch  0 never executed
+branch  1 never executed (fallthrough)
+        -:  722:        RxCmPrediction p;
+    #####:  723:        rx_cm_predict(m, &f[i], arm[i], &p);
+call    0 never executed
+    #####:  724:        words[3] = ps[i];
+    #####:  725:        memcpy(words + 4, &p.mean_log2_ps, sizeof(double));
+    #####:  726:        memcpy(words + 5, &p.sd_log2, sizeof(double));
+    #####:  727:        memcpy(words + 6, &p.dof, sizeof(double));
+    #####:  728:        words[7] = (uint64_t)(uint32_t)p.known; words[8] = (uint64_t)(uint32_t)p.borrowed;
+    #####:  729:        if (omega_cm_calibration(&stage, 1, words, 32) != OMEGA_OK) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  730:            m->sd_scale = saved; free(r); return 0.0;
+        -:  731:        }
+    #####:  732:        if (stage != 0) memcpy(r + k++, words + 10, sizeof(double));
+branch  0 never executed (fallthrough)
+branch  1 never executed
+        -:  733:    }
+    #####:  734:    words[2] = k;
+    #####:  735:    if (omega_cm_calibration(&stage, 2, words, 32) != OMEGA_OK) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  736:        m->sd_scale = saved; free(r); return 0.0;
+        -:  737:    }
+    #####:  738:    if (stage != 0) {
+branch  0 never executed (fallthrough)
+branch  1 never executed
+    #####:  739:        uint64_t index = words[10];
+    #####:  740:        if (rx_cm_sort(r, k) != 0) { m->sd_scale = saved; free(r); return 0.0; }
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  741:        memcpy(words + 9, r + index, sizeof(double));
+    #####:  742:        if (omega_cm_calibration(&stage, 3, words, 32) != OMEGA_OK) {
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  743:            m->sd_scale = saved; free(r); return 0.0;
+        -:  744:        }
+    #####:  745:        memcpy(&scale, words + 10, sizeof(double));
+        -:  746:    }
+    #####:  747:    memcpy(&m->sd_scale, words + 10, sizeof(double));
+    #####:  748:    free(r);
+    #####:  749:    return scale;
+        -:  750:}
+        -:  751:#endif
+        -:  752:
+function rx_cm_charge called 0 returned 0% blocks executed 0%
+    #####:  753:void rx_cm_charge(RxCostModel *m, uint64_t work_ps, uint64_t explore_ps) {
+        -:  754:#if CUDAPP_MIGRATION_PENDING_C_CM_CALIBRATION
+        -:  755:    m->work_ps += work_ps;
+        -:  756:    m->explore_ps += explore_ps;
+        -:  757:#else
+        -:  758:    uint64_t words[32], result;
+    #####:  759:    words[0] = m->work_ps; words[1] = m->explore_ps;
+    #####:  760:    words[2] = work_ps; words[3] = explore_ps;
+    #####:  761:    if (omega_cm_calibration(&result, 4, words, 32) != OMEGA_OK) return;
+call    0 never executed
+branch  1 never executed (fallthrough)
+branch  2 never executed
+    #####:  762:    m->work_ps = words[0]; m->explore_ps = words[1];
+        -:  763:#endif
+        -:  764:}
+        -:  765:
+        -:  766:/* ---- canonical bytes ---- */
+        -:  767:
+        -:  768:#define MAGIC   0x4d43474fu   /* "OGCM" little-endian */
+        -:  769:/* VERSION binds the feature basis and the cell layout. RX_CM_CELLS already
+        -:  770: * includes RX_CM_OPS, so a new operation family changes the blob length and
+        -:  771: * this header's cells field. Bump VERSION in that same change. Deserialize
+        -:  772: * refuses a different version, basis size, cell count, arm cap or core count. */
+        -:  773:#define VERSION 1u
+        -:  774:
+        -:  775:typedef struct {
+        -:  776:    uint32_t magic, version, n_arms, d, cells, arms_cap, cores;
+        -:  777:    uint32_t reserved;
+        -:  778:    double lambda;
+        -:  779:} Header;
+        -:  780:_Static_assert(sizeof(Header) == 40, "cost model native blob header layout");
+        -:  781:
+        -:  782:#if !CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+function cm_blob_check called 59 returned 100% blocks executed 80%
+       59:  783:static uint64_t cm_blob_check(unsigned mode, uint64_t words[64]) {
+        -:  784:    uint64_t result;
+        -:  785:#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        -:  786:    words[63] = 1;
+        -:  787:#else
+       59:  788:    words[63] = 0;
+        -:  789:#endif
+      59*:  790:    if (omega_cm_blob(&result, mode, words, 64)) abort();
+call    0 returned 59
+branch  1 taken 0 (fallthrough)
+branch  2 taken 59
+call    3 never executed
+       59:  791:    return result;
+        -:  792:}
+        -:  793:#endif
+        -:  794:
+        -:  795:#if CUDAPP_MIGRATION_PENDING_C_CM_DIGEST
+        -:  796:#define cm_sha256 sha256_hash
+        -:  797:static int cm_digest_equal(const uint8_t a[32], const uint8_t b[32]) {
+        -:  798:    return memcmp(a, b, 32) == 0;
+        -:  799:}
+        -:  800:#else
+function cm_digest_step called 11785 returned 100% blocks executed 80%
+    11785:  801:static uint64_t cm_digest_step(unsigned mode, uint64_t state[16], uint8_t data[128]) {
+        -:  802:    uint64_t result;
+   11785*:  803:    if (omega_cm_digest(&result, mode, state, 16, data, 128)) abort();
+call    0 returned 11785
+branch  1 taken 0 (fallthrough)
+branch  2 taken 11785
+call    3 never executed
+    11785:  804:    return result;
+        -:  805:}
+function cm_sha256 called 157 returned 100% blocks executed 77%
+      157:  806:static void cm_sha256(const uint8_t *data, size_t n, uint8_t out[32]) {
+        -:  807:    uint64_t state[16];
+        -:  808:    uint8_t block[128];
+     157*:  809:    if (cm_digest_step(0, state, block)) abort();
+call    0 returned 157
+branch  1 taken 0 (fallthrough)
+branch  2 taken 157
+call    3 never executed
+        -:  810:#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+      157:  811:    size_t blocks = n / 64, tail = n % 64, offset = blocks * 64;
+        -:  812:#else
+        -:  813:    uint64_t plan[16] = {n}, result;
+        -:  814:    if (omega_cm_route(&result, 0, plan, 16) != OMEGA_OK || result != 1) abort();
+        -:  815:    size_t blocks = (size_t)plan[1], tail = (size_t)plan[2], offset = (size_t)plan[3];
+        -:  816:#endif
+      157:  817:    const uint8_t *cursor = data;
+    11615:  818:    for (size_t i = 0; i < blocks; ++i, cursor += 64) {
+branch  0 taken 11458
+branch  1 taken 157 (fallthrough)
+    11458:  819:        memcpy(block, cursor, 64);
+   11458*:  820:        if (cm_digest_step(1, state, block)) abort();
+call    0 returned 11458
+branch  1 taken 0 (fallthrough)
+branch  2 taken 11458
+call    3 never executed
+        -:  821:    }
+      157:  822:    state[9] = tail;
+      157:  823:    memcpy(block, data + offset, tail);
+     157*:  824:    if (cm_digest_step(2, state, block)) abort();
+call    0 returned 157
+branch  1 taken 0 (fallthrough)
+branch  2 taken 157
+call    3 never executed
+      157:  825:    memcpy(out, block, 32);
+      157:  826:}
+function cm_digest_equal called 13 returned 100% blocks executed 100%
+       13:  827:static int cm_digest_equal(const uint8_t a[32], const uint8_t b[32]) {
+        -:  828:    uint64_t state[16];
+        -:  829:    uint8_t data[128];
+       13:  830:    memcpy(data, a, 32);
+       13:  831:    memcpy(data + 32, b, 32);
+       13:  832:    return (int)cm_digest_step(3, state, data);
+call    0 returned 13
+        -:  833:}
+        -:  834:#endif
+        -:  835:
+function body_size called 30 returned 100% blocks executed 100%
+       30:  836:static size_t body_size(void) {
+       30:  837:    const RxCostModel *m = 0;
+        -:  838:#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+       30:  839:    return sizeof m->cell + sizeof m->power_mw + sizeof m->verify_ns + sizeof m->synth_ns +
+        -:  840:           sizeof m->code_bytes + sizeof m->sd_scale;
+        -:  841:#else
+        -:  842:    uint64_t sizes[16] = {sizeof m->cell, sizeof m->power_mw, sizeof m->verify_ns,
+        -:  843:                          sizeof m->synth_ns, sizeof m->code_bytes, sizeof m->sd_scale}, result;
+        -:  844:    if (omega_cm_route(&result, 1, sizes, 16) != OMEGA_OK) abort();
+        -:  845:    return (size_t)result;
+        -:  846:#endif
+        -:  847:}
+        -:  848:
+function rx_cm_blob_size called 30 returned 100% blocks executed 100%
+       30:  849:size_t rx_cm_blob_size(void) {
+        -:  850:#if CUDAPP_MIGRATION_PENDING_C_CM_ROUTE
+       30:  851:    return sizeof(Header) + body_size() + 32u;
+call    0 returned 30
+        -:  852:#else
+        -:  853:    uint64_t sizes[16] = {sizeof(Header), body_size(), 32}, result;
+        -:  854:    if (omega_cm_route(&result, 1, sizes, 16) != OMEGA_OK) abort();
+        -:  855:    return (size_t)result;
+        -:  856:#endif
+        -:  857:}
+        -:  858:
+function pack called 13 returned 100% blocks executed 80%
+       13:  859:static size_t pack(const RxCostModel *m, uint8_t *out) {
+        -:  860:    Header h;
+        -:  861:#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:  862:    memset(&h, 0, sizeof h);
+        -:  863:    h.magic = MAGIC;
+        -:  864:    h.version = VERSION;
+        -:  865:    h.n_arms = m->n_arms;
+        -:  866:    h.d = RX_CM_D;
+        -:  867:    h.cells = RX_CM_CELLS;
+        -:  868:    h.arms_cap = RX_CM_ARMS;
+        -:  869:    h.cores = RX_CM_CORES;
+        -:  870:    h.lambda = m->lambda;
+        -:  871:#else
+        -:  872:    uint64_t words[64];
+       13:  873:    words[0] = m->n_arms;
+       13:  874:    memcpy(words + 1, &m->lambda, sizeof m->lambda);
+      13*:  875:    if (!cm_blob_check(0, words)) abort();
+call    0 returned 13
+branch  1 taken 0 (fallthrough)
+branch  2 taken 13
+call    3 never executed
+       13:  876:    memcpy(&h, words + 16, sizeof h);
+        -:  877:#endif
+       13:  878:    uint8_t *p = out;
+       13:  879:    memcpy(p, &h, sizeof h);
+       13:  880:    p += sizeof h;
+       13:  881:    memcpy(p, m->cell, sizeof m->cell);
+       13:  882:    p += sizeof m->cell;
+       13:  883:    memcpy(p, m->power_mw, sizeof m->power_mw);
+       13:  884:    p += sizeof m->power_mw;
+       13:  885:    memcpy(p, m->verify_ns, sizeof m->verify_ns);
+       13:  886:    p += sizeof m->verify_ns;
+       13:  887:    memcpy(p, m->synth_ns, sizeof m->synth_ns);
+       13:  888:    p += sizeof m->synth_ns;
+       13:  889:    memcpy(p, m->code_bytes, sizeof m->code_bytes);
+       13:  890:    p += sizeof m->code_bytes;
+       13:  891:    memcpy(p, &m->sd_scale, sizeof m->sd_scale);
+       13:  892:    p += sizeof m->sd_scale;
+       13:  893:    return (size_t)(p - out);
+        -:  894:}
+        -:  895:
+function rx_cm_serialize called 16 returned 100% blocks executed 100%
+       16:  896:int rx_cm_serialize(const RxCostModel *m, uint8_t *out, size_t cap, size_t *out_len) {
+       16:  897:    if (!m || !out) return RX_CM_ERR_ARG;
+branch  0 taken 15 (fallthrough)
+branch  1 taken 1
+branch  2 taken 1 (fallthrough)
+branch  3 taken 14
+        -:  898:#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:  899:    if (cap < rx_cm_blob_size()) return RX_CM_ERR_ARG;
+        -:  900:#else
+        -:  901:    uint64_t words[64];
+       14:  902:    words[0] = cap;
+       14:  903:    words[1] = rx_cm_blob_size();
+call    0 returned 14
+       14:  904:    if (!cm_blob_check(3, words)) return RX_CM_ERR_ARG;
+call    0 returned 14
+branch  1 taken 1 (fallthrough)
+branch  2 taken 13
+        -:  905:#endif
+       13:  906:    size_t n = pack(m, out);
+call    0 returned 13
+       13:  907:    cm_sha256(out, n, out + n);
+call    0 returned 13
+       13:  908:    if (out_len) *out_len = (size_t)cm_route2(3, n, 32);
+branch  0 taken 1 (fallthrough)
+branch  1 taken 12
+call    2 returned 1
+       13:  909:    return RX_CM_OK;
+        -:  910:}
+        -:  911:
+function rx_cm_deserialize called 17 returned 100% blocks executed 100%
+       17:  912:int rx_cm_deserialize(RxCostModel *m, const uint8_t *in, size_t len) {
+       17:  913:    if (!m || !in) return RX_CM_ERR_FORMAT;
+branch  0 taken 16 (fallthrough)
+branch  1 taken 1
+branch  2 taken 1 (fallthrough)
+branch  3 taken 15
+        -:  914:#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:  915:    if (len != rx_cm_blob_size()) return RX_CM_ERR_FORMAT;
+        -:  916:#else
+        -:  917:    uint64_t words[64];
+       15:  918:    words[0] = len;
+       15:  919:    words[1] = rx_cm_blob_size();
+call    0 returned 15
+       15:  920:    if (!cm_blob_check(4, words)) return RX_CM_ERR_FORMAT;
+call    0 returned 15
+branch  1 taken 2 (fallthrough)
+branch  2 taken 13
+        -:  921:#endif
+        -:  922:    uint8_t d[32];
+       13:  923:    size_t payload = (size_t)cm_route2(4, len, 32);
+call    0 returned 13
+       13:  924:    cm_sha256(in, payload, d);
+call    0 returned 13
+       13:  925:    if (!cm_digest_equal(d, in + payload)) return RX_CM_ERR_DIGEST;
+call    0 returned 13
+branch  1 taken 1 (fallthrough)
+branch  2 taken 12
+        -:  926:    Header h;
+       12:  927:    memcpy(&h, in, sizeof h);
+        -:  928:#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:  929:    if (h.magic != MAGIC || h.version != VERSION || h.d != RX_CM_D || h.cells != RX_CM_CELLS ||
+        -:  930:        h.arms_cap != RX_CM_ARMS || h.cores != RX_CM_CORES || h.n_arms == 0 ||
+        -:  931:        h.n_arms > RX_CM_ARMS)
+        -:  932:        return RX_CM_ERR_FORMAT;
+        -:  933:#else
+       12:  934:    memcpy(words + 16, &h, sizeof h);
+       12:  935:    uint64_t n_arms = cm_blob_check(1, words);
+call    0 returned 12
+       12:  936:    if (!n_arms) return RX_CM_ERR_FORMAT;
+branch  0 taken 7 (fallthrough)
+branch  1 taken 5
+        -:  937:#endif
+        -:  938:    RxCostModel t;
+        5:  939:    memset(&t, 0, sizeof t);
+        -:  940:#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:  941:    t.n_arms = h.n_arms;
+        -:  942:    t.lambda = h.lambda;
+        -:  943:#else
+        5:  944:    t.n_arms = (unsigned)n_arms;
+        5:  945:    memcpy(&t.lambda, words + 20, sizeof t.lambda);
+        -:  946:#endif
+        5:  947:    const uint8_t *p = in + sizeof h;
+        5:  948:    memcpy(t.cell, p, sizeof t.cell);
+        5:  949:    p += sizeof t.cell;
+        5:  950:    memcpy(t.power_mw, p, sizeof t.power_mw);
+        5:  951:    p += sizeof t.power_mw;
+        5:  952:    memcpy(t.verify_ns, p, sizeof t.verify_ns);
+        5:  953:    p += sizeof t.verify_ns;
+        5:  954:    memcpy(t.synth_ns, p, sizeof t.synth_ns);
+        5:  955:    p += sizeof t.synth_ns;
+        5:  956:    memcpy(t.code_bytes, p, sizeof t.code_bytes);
+        5:  957:    p += sizeof t.code_bytes;
+        5:  958:    memcpy(&t.sd_scale, p, sizeof t.sd_scale);
+        -:  959:#if CUDAPP_MIGRATION_PENDING_C_CM_BLOB
+        -:  960:    if (!(t.sd_scale >= 1.0 && t.sd_scale < 1e6)) return RX_CM_ERR_FORMAT;
+        -:  961:#else
+        5:  962:    memcpy(words, &t.sd_scale, sizeof t.sd_scale);
+        5:  963:    if (!cm_blob_check(2, words)) return RX_CM_ERR_FORMAT;
+call    0 returned 5
+branch  1 taken 4 (fallthrough)
+branch  2 taken 1
+        -:  964:#endif
+        1:  965:    *m = t;
+        1:  966:    return RX_CM_OK;
+        -:  967:}
+        -:  968:
+function rx_cm_digest called 0 returned 0% blocks executed 0%
+    #####:  969:void rx_cm_digest(const RxCostModel *m, uint8_t out[32]) {
+        -:  970:    uint8_t buf[sizeof(Header) + sizeof(((RxCostModel *)0)->cell) + 4096];
+    #####:  971:    size_t n = pack(m, buf);
+call    0 never executed
+    #####:  972:    cm_sha256(buf, n, out);
+call    0 never executed
+    #####:  973:}

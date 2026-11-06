@@ -1,0 +1,33 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 test-host-policy
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/host_policy_unit tests/runtime/host_policy_unit.c src/cudapp_om_api_policy.c src/cudapp_om_artifact_policy.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/cm_sort_unit tests/runtime/cm_sort_unit.c src/cudapp_om_cm_sort.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/artifact_text_unit tests/runtime/artifact_text_unit.c src/cudapp_om_artifact_parse.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/cm_math_unit tests/runtime/cm_math_unit.c src/cudapp_om_cm_math.c -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/cm_blob_unit tests/runtime/cm_blob_unit.c build/cm_oracle_diff.o build/rx_costmodel.o src/cudapp_om_cm_sort.c src/cudapp_om_cm_math.c src/cudapp_om_cm_fit.c src/cudapp_om_cm_stats.c src/cudapp_om_cm_features.c src/cudapp_om_cm_quantile.c src/cudapp_om_cm_decision.c src/cudapp_om_cm_prediction.c src/cudapp_om_cm_calibration.c src/cudapp_om_cm_blob.c src/cudapp_om_cm_digest.c src/cudapp_om_cm_route.c src/sha256.c -lm
+./build/host_policy_unit
+HOST POLICY differential PASS
+./build/cm_sort_unit
+CM SORT differential PASS
+./build/artifact_text_unit
+ARTIFACT TEXT differential PASS
+./build/cm_math_unit
+CM MATH mode=0 max_ulp=0 input_bits=0000000000000000 got=0000000000000000 oracle=0000000000000000
+CM MATH mode=1 max_ulp=0 input_bits=0000000000000000 got=0000000000000000 oracle=0000000000000000
+CM MATH mode=2 max_ulp=0 input_bits=0000000000000000 got=0000000000000000 oracle=0000000000000000
+CM MATH mode=3 max_ulp=1 input_bits=3e50000000000000 got=3ff0000004000001 oracle=3ff0000004000000
+CM MATH mode=4 max_ulp=0 input_bits=0000000000000000 got=0000000000000000 oracle=0000000000000000
+CM MATH mode=5 max_ulp=0 input_bits=0000000000000000 got=0000000000000000 oracle=0000000000000000
+CM MATH mode=6 max_ulp=2 input_bits=402570dc08794a6a got=354eb3d792b02a8a oracle=354eb3d792b02a8c
+CM MATH mode=7 max_ulp=0 input_bits=0000000000000000 got=0000000000000000 oracle=0000000000000000
+CM MATH differential sweep complete
+./build/cm_blob_unit
+CM BLOB/DIGEST differential PASS (native/big-endian headers, bit mutants, SHA-256 block/tail boundaries)
+CC="cc" python3 tests/runtime/host_policy_mutants.py
+HOST POLICY mutant caught: api_policy
+HOST POLICY mutant caught: artifact_policy
+HOST POLICY mutant caught: artifact_parse
+HOST POLICY mutants PASS
+CM SORT mutant caught: reversed insertion order
+CM SORT mutants PASS
+
+rc=0

@@ -37,6 +37,14 @@ end
 ret get m 6
 end
 
+note 1 when the image carries .note.nv.tkinfo (sm_121 only: its strings name sm_121; sm_86 has none)
+fn tkon m view ulong MLEN to ulong
+if eq smtarget m 121
+ret 1
+end
+ret 0
+end
+
 note one byte into the word image
 fn pb o edit ulong OWN p ulong v ulong to void
 k = shr p 3
@@ -187,12 +195,13 @@ end
 ret pchk m o
 end
 
-note L: 1..10 section offsets, 11 shoff, 12 phoff, 13 total, 14 .nv.info.<fn> size
+note L: 1..10 section offsets, 11 shoff, 12 phoff, 13 total, 14 .nv.info.<fn> size,
+note 15 the offset of section 11 (.note.nv.tkinfo, sm_121 only)
 fn lay m view ulong MLEN l edit ulong 16 to void
 n = get m 0
 f = ulong 64
 put l 1 f
-f = add f add 117 mul 3 n
+f = add f add add 117 mul 16 tkon m mul 3 n
 put l 2 f
 f = add f add n 2
 f = al f 8
@@ -220,10 +229,15 @@ f = add f get m 5
 f = al f 4
 put l 10 f
 f = add f 32
+if eq tkon m 1
+f = al f 4
+put l 15 f
+f = add f 120
+end
 f = al f 8
 put l 11 f
-put l 12 add f 704
-put l 13 add f 984
+put l 12 add f add 704 mul 64 tkon m
+put l 13 add f add 984 mul 64 tkon m
 end
 
 note zero words 0 .. ceil(total / 8) - 1, in parts of 4096 (a loop stops at 1000000 passes)
@@ -293,12 +307,12 @@ p16 o 52 64
 p16 o 54 56
 p16 o 56 5
 p16 o 58 64
-p16 o 60 11
+p16 o 60 add 11 tkon m
 p16 o 62 1
 end
 
 note .shstrtab from p (its first byte is the 0 already there)
-fn wshs o edit ulong OWN p ulong nm view uchar 64 n ulong to void
+fn wshs o edit ulong OWN p ulong nm view uchar 64 n ulong tk ulong to void
 q = add p 1
 q = ps o q 7022363563455443758 8
 q = add ps o q 98 1 1
@@ -319,7 +333,13 @@ q = ps o q 8241983636974759470 8
 q = ps o q 8243121572516095077 8
 q = add ps o q 206936761718 5 1
 q = ps o q 8533809357193702958 8
+if eq tk 1
+q = add ps o q 31356346816619310 7 1
+q = ps o q 8533809357193702958 8
+q = ps o q 31356346815968302 7
+else
 q = ps o q 31356346816619310 7
+end
 end
 
 note .symtab: null, the .text section symbol, the function, the .nv.constant0 section symbol
@@ -417,6 +437,30 @@ p16 o add p 26 sm
 p32 o add p 28 130
 end
 
+note .note.nv.tkinfo, which the sm_121 driver requires (CUDApp#68): namesz 12, descsz 96, type 2000,
+note "NVIDIA Corp", then 2, 0 and the offsets 1 8 34 52 of the strings "cudapp", "CUDApp omega_cubin
+note sm_121", "Build omega_cubin" and "-arch sm_121" in the blob from p + 48 (its bytes 64.. stay 0)
+fn wtk o edit ulong OWN p ulong to void
+p32 o p 12
+p32 o add p 4 96
+p32 o add p 8 2000
+q = ps o add p 12 4836937782729987662 8
+q = ps o q 7369327 3
+p32 o add p 24 2
+p32 o add p 32 1
+p32 o add p 36 8
+p32 o add p 40 34
+p32 o add p 44 52
+q = ps o add p 48 31648760991146752 8
+q = ps o q 8007523764898387267 8
+q = ps o q 7094686049299293549 8
+q = ps o q 3616776899442798185 8
+q = ps o q 2334109707079385137 8
+q = ps o q 8458709397083090287 8
+q = ps o q 7165896803008538978 8
+q = ps o q 3544950142621917288 8
+end
+
 fn sh1 o edit ulong OWN b ulong nm ulong ty ulong fl ulong to void
 p32 o b nm
 p32 o add b 4 ty
@@ -440,7 +484,7 @@ fn wsha o edit ulong OWN l view ulong 16 m view ulong MLEN to void
 n = get m 0
 b = add get l 11 64
 sh1 o b 1 3 0
-sh2 o b get l 1 add 117 mul 3 n 0 0
+sh2 o b get l 1 add add 117 mul 16 tkon m mul 3 n 0 0
 sh3 o b 1 0
 b = add b 64
 sh1 o b 11 3 0
@@ -460,7 +504,7 @@ sh2 o b get l 5 get m 3 3 4
 sh3 o b 16 0
 end
 
-note section headers 6..10
+note section headers 6..11
 fn wshb o edit ulong OWN l view ulong 16 m view ulong MLEN to void
 n = get m 0
 b = add get l 11 384
@@ -481,8 +525,14 @@ sh2 o b get l 9 get m 5 0 0
 sh3 o b 1 0
 b = add b 64
 sh1 o b add 101 mul 3 n 7 16777280
-sh2 o b get l 10 32 0 2
+sh2 o b get l 10 32 mul 11 tkon m 2
 sh3 o b 4 0
+if eq tkon m 1
+b = add b 64
+sh1 o b add 117 mul 3 n 7 33554432
+sh2 o b get l 15 120 0 0
+sh3 o b 4 0
+end
 end
 
 fn ph1 o edit ulong OWN b ulong ty ulong fl ulong of ulong to void
@@ -524,7 +574,7 @@ note every section payload and both header tables into the zeroed image
 fn wbody o edit ulong OWN l view ulong 16 m view ulong MLEN nm view uchar 64 tx view uchar TXN to void
 whdr o l m
 n = get m 0
-wshs o get l 1 nm n
+wshs o get l 1 nm n tkon m
 q = pn o add get l 2 1 nm n
 wsym o get l 3 get m 1
 wtext o tx get l 4 get m 1
@@ -532,6 +582,9 @@ wginfo o get l 6 get m 4
 wcompat o get l 7
 winfo o l m
 wnote o get l 10 smtarget m
+if eq tkon m 1
+wtk o get l 15
+end
 wsha o l m
 wshb o l m
 wph o l m

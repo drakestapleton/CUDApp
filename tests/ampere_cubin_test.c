@@ -22,7 +22,7 @@ static int target_matches(const uint8_t *p, size_t n, uint32_t sm) {
     uint64_t sh = u64(p + 40);
     size_t count = u16(p + 60), step = u16(p + 58);
     if (step != 64 || sh > n || count > (n - (size_t)sh) / step) return 0;
-    unsigned note_seen = 0, bank_seen = 0;
+    unsigned note_seen = 0, bank_seen = 0, tk_seen = 0;
     for (size_t i = 1; i < count; ++i) {
         const uint8_t *s = p + (size_t)sh + i * step;
         uint32_t ty = u32(s + 4);
@@ -40,13 +40,18 @@ static int target_matches(const uint8_t *p, size_t n, uint32_t sm) {
                 }
             }
         }
-        if (ty == 7) {
+        if (ty == 7 && len == 120 && u32(p + off + 8) == 2000) {
+            /* .note.nv.tkinfo: sm_121 only (CUDApp#68); never in an sm_86 image. */
+            if (sm != 121 || u32(p + off) != 12 || u32(p + off + 4) != 96 ||
+                memcmp(p + off + 12, "NVIDIA Corp", 11)) return 0;
+            ++tk_seen;
+        } else if (ty == 7) {
             if (len != 32 || u32(p + off) != 12 || u32(p + off + 4) != 8 ||
                 memcmp(p + off + 12, "NVIDIA Corp", 11) || u16(p + off + 26) != sm) return 0;
             ++note_seen;
         }
     }
-    return note_seen == 1 && bank_seen == 1;
+    return note_seen == 1 && bank_seen == 1 && tk_seen == (sm == 121 ? 1u : 0u);
 }
 
 int main(int argc, char **argv) {

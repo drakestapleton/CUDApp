@@ -51,9 +51,10 @@ test-om-cubin: $(ARTIFACT_TEST) $(OUT_DIR)/native_artifact_manifest_test $(OM_CU
 
 # Each mutant is one edit of the .om source, compiled by the pinned omc into its own binding; the sweep linked
 # with it (diff mode) must abort or fail.
-OM_CUBIN_MUTANTS = 's/^f = add f add 117 mul 3 n$$/f = add f add 118 mul 3 n/' \
+OM_CUBIN_MUTANTS = 's/^f = add f add add 117 mul 16 tkon m mul 3 n$$/f = add f add add 118 mul 16 tkon m mul 3 n/' \
 	's/^const PBASE ulong 896$$/const PBASE ulong 892/' \
-	's/^if gt get m 4 255$$/if gt get m 4 254/'
+	's/^if gt get m 4 255$$/if gt get m 4 254/' \
+	's/^sh2 o b get l 10 32 mul 11 tkon m 2$$/sh2 o b get l 10 32 mul 0 tkon m 2/'
 test-om-cubin-mutants:
 	@[ -x $(OMEGA_MV)/seed/out/omc ] && [ -f $(OMEGA_BRIDGE_DIR)/src/native.om ] || { echo "NOT_RUN: set OMEGA_MV and OMEGA_BRIDGE_DIR"; exit 3; }
 	@n=0; for m in $(OM_CUBIN_MUTANTS); do n=$$((n+1)); d=$(OM_CUBIN_DIR)/mutant$$n; rm -rf $$d; mkdir -p $$d; \

@@ -31,7 +31,7 @@ REST="ar_bf16=om/apiviews/bf16.om,om/apirest/bf16.om"
 for entry in fill count args pad idle route perm widen; do
   REST="$REST ar_$entry=om/apirest/data.om,om/apirest/$entry.om"
 done
-for entry in nan scale fold foldh; do
+for entry in nan scale fold foldh acc mag; do
   REST="$REST ar_$entry=om/apirest/pack.om,om/api/apish_pack.om,om/apirest/$entry.om"
 done
 for entry in tiles tg tile groups run; do

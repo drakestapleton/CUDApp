@@ -90,6 +90,18 @@ There was no `CUDA++ HOST TESTS PASS` line. That DNN-header registration
 defect was handed to AttentionC through Main/Integrator. The full suite
 is not retried here; only the repaired portability target is to be exercised.
 This attempt preceded the isolated C1 SHFL-guard prerequisite import.
+AttentionC's isolated portability-row fix `4593b23` is carried as `b486d33`.
+At Main's direction, only the targeted wrapped command was re-run:
+`make -s -j3 test-runtime-portability` with the same four pinned environment
+paths and `bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10`.
+Result: **PASS**, rc 0, 153 rows; final
+`ALL CONTROLS BEHAVED AS REQUIRED`. This resolves the observed classification
+defect; it does not change the once-only full-suite verdict to PASS.
+The integration owner must run the final integrated full gate.
+
+The matching cross-repository encoder-guide update is handed off in
+[omega-harness #191](https://github.com/aien-dev/omega-harness/issues/191).
+No guide ownership or merge authority is inferred from this codegen lane.
 
 ## Authorized-window chip runbook
 

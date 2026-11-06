@@ -137,6 +137,34 @@ static uint32_t ws_rds(const WsLane *l, int v, unsigned sub, const BlackwellIRPr
 static void ws_wrs(WsLane *l, int v, unsigned sub, uint32_t x, const BlackwellIRProgram *p) { if (v < 0) return; int ph = p->regalloc.vreg_to_phys[v]; if (ph >= 0) l->r[(ph + sub) & 0xff] = x; }
 static float ws_u2f(uint32_t u) { float f; memcpy(&f, &u, 4); return f; }
 static uint32_t ws_f2u(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
+static double ws_drd(const WsLane *l, int v, unsigned sub, const BlackwellIRProgram *p) {
+    uint64_t u=(uint64_t)ws_rds(l,v,sub,p)|((uint64_t)ws_rds(l,v,sub+1,p)<<32);
+    double d;memcpy(&d,&u,sizeof d);return d;
+}
+static void ws_dwr(WsLane *l,int v,unsigned sub,double d,const BlackwellIRProgram *p) {
+    uint64_t u;memcpy(&u,&d,sizeof u);ws_wrs(l,v,sub,(uint32_t)u,p);ws_wrs(l,v,sub+1,(uint32_t)(u>>32),p);
+}
+/* PTX ISA rcp.approx.ftz.f64 / rsqrt.approx.ftz.f64 specifies a 1.11.20
+ * high-word input/output, ignored low input and sign-preserving flush. SASS
+ * MUFU.*64H writes ONLY that high word; the caller clears the low word.
+ * https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#floating-point-instructions-rcp-approx-ftz-f64
+ * https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#floating-point-instructions-rsqrt-approx-ftz-f64
+ * NVIDIA publishes no normal-input error bound there. This simulator models
+ * high-word truncation of a host double reciprocal/rsqrt, not the undisclosed
+ * hardware approximation table. Its special values and word effects are exact. */
+static uint32_t ws_mufu64h(uint32_t hi,int rsqrt) {
+    unsigned exp=(hi>>20)&2047u;uint32_t sign=hi&0x80000000u;
+    if(!exp)return sign|0x7ff00000u;
+    if(exp==2047u){
+        if(hi&0xfffffu)return 0x7fffffffu;
+        return rsqrt&&sign?0x7fffffffu:sign;
+    }
+    if(rsqrt&&sign)return 0x7fffffffu;
+    uint64_t u=(uint64_t)hi<<32;double d;memcpy(&d,&u,sizeof d);
+    d=rsqrt?1.0/sqrt(d):1.0/d;memcpy(&u,&d,sizeof u);
+    uint32_t out=(uint32_t)(u>>32);
+    return (out&0x7ff00000u)?out:(out&0x80000000u);
+}
 static uint32_t ws_lut3(uint32_t lut, uint32_t a, uint32_t b, uint32_t c) {
     uint32_t r = 0;
     for (int i = 0; i < 8; i++) if (lut >> i & 1) r |= ((i & 4) ? a : ~a) & ((i & 2) ? b : ~b) & ((i & 1) ? c : ~c);
@@ -195,6 +223,33 @@ static void ws_lane_exec(WsSim *s, WsLane *l, const BlackwellIRInsn *in, int pc,
     case BW_IR_FSUB: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_u2f(a) - ws_u2f(b)), p); break;
     case BW_IR_FMUL: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(ws_u2f(a) * ws_u2f(b)), p); break;
     case BW_IR_FFMA: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fmaf(ws_u2f(a), ws_u2f(b), ws_u2f(c))), p); break;
+    case BW_IR_DADD: case BW_IR_DMUL: case BW_IR_DFMA: {
+        double da=ws_drd(l,in->src1_vreg,in->src1_subreg,p),db=ws_drd(l,in->src2_vreg,in->src2_subreg,p);
+        double dc=ws_drd(l,in->src3_vreg,in->src3_subreg,p);
+        double d=in->op==BW_IR_DADD?da+db:in->op==BW_IR_DMUL?da*db:fma(da,db,dc);
+        ws_dwr(l,in->dst_vreg,in->dst_subreg,d,p);break;
+    }
+    case BW_IR_DSETP: {
+        if(in->dst_vreg>=0){ws_fail(s,WS_E_OP,pc,"DSETP into a predicate other than P0");return;}
+        double da=ws_drd(l,in->src1_vreg,in->src1_subreg,p),db=ws_drd(l,in->src2_vreg,in->src2_subreg,p);
+        unsigned mask=((in->imm?in->imm:0x03f06000u)>>12)&15u;
+        unsigned rel=(isnan(da)||isnan(db))?8u:da<db?1u:da>db?4u:2u;
+        l->p0=!!(mask&rel);break;
+    }
+    case BW_IR_MUFU_RCP64H: case BW_IR_MUFU_RSQ64H:
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,ws_mufu64h(a,in->op==BW_IR_MUFU_RSQ64H),p);break;
+    case BW_IR_F64_F32: case BW_IR_F64_S32: case BW_IR_F64_U32: {
+        double d=in->op==BW_IR_F64_F32?(double)ws_u2f(a):in->op==BW_IR_F64_S32?(double)(int32_t)a:(double)a;
+        ws_dwr(l,in->dst_vreg,in->dst_subreg,d,p);break;
+    }
+    case BW_IR_F32_F64:
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,ws_f2u((float)ws_drd(l,in->src1_vreg,in->src1_subreg,p)),p);break;
+    case BW_IR_S32_F64: {
+        double d=ws_drd(l,in->src1_vreg,in->src1_subreg,p);
+        /* PTX cvt: f64 NaN -> MININT; out-of-range results saturate. */
+        int32_t r=isnan(d)?INT32_MIN:d>=INT32_MAX?INT32_MAX:d<=INT32_MIN?INT32_MIN:(int32_t)d;
+        ws_wrs(l,in->dst_vreg,in->dst_subreg,(uint32_t)r,p);break;
+    }
     case BW_IR_I2FP: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u((float)(int32_t)a), p); break;
     case BW_IR_FMNMX_MAX: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fmaxf(ws_u2f(a), ws_u2f(b))), p); break;
     case BW_IR_FMNMX_MIN: ws_wrs(l, in->dst_vreg, in->dst_subreg, ws_f2u(fminf(ws_u2f(a), ws_u2f(b))), p); break;

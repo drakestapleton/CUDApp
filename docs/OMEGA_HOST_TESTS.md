@@ -1,9 +1,11 @@
 # Portable host checks and target-only commands
 
-`make test` is the portable host suite. It does not need a CUDA toolkit, NVIDIA
-userspace tools, a GPU device node, or a sibling Omega checkout. It builds and
-runs on x86-64 Linux and on AArch64 Linux. It does not open `/dev/nvidia*` or
-`/dev/aien-gpu`.
+`make test` is the host suite. It does not need a CUDA toolkit, NVIDIA
+userspace tools or a GPU device node. Carried seeded-Omega mutation gates,
+including `test-codegen-f64`, require the pinned compiler and bridge checkouts;
+set their environment as described in [the f64 host runbook](CODEGEN_F64.md).
+Builds and simulations run in the required device-free `bwrap` namespace;
+they must not open `/dev/nvidia*` or `/dev/aien-gpu`.
 
 On x86-64, when you did not set `CC`, `make` uses gcc. GNU make's built-in
 `CC=cc` is left alone on AArch64, so a GB10 `make` still invokes `cc`.
@@ -45,6 +47,16 @@ make test-omega-barrier-contract  # dsb sy stays on AArch64; x86-64 keeps a real
 make test-omega-binding-portable  # revision and epoch vectors
 make test-omega-target-only       # names the checks this host does not run
 ```
+
+## Binary64 codegen
+
+`test-codegen-f64` is registered in `CARRIED_HOST_TESTS` by
+`mk/codegen-f64.mk`. It runs independent C/seeded byte differentials,
+IEEE binary64 edge vectors, register-pair pressure/refusal, the append-only
+replay bound, a simulated DFMA/DSETP probe and six compiled seeded mutants.
+The `codegen_f64_probe --chip` mode is never a host-suite dependency and is
+NOT_RUN without a current exclusive window. See [the encoding facts and
+chip runbook](CODEGEN_F64.md).
 
 ## Memory ordering
 

@@ -5,6 +5,7 @@
 # No native x86 compiler or executable-code trampoline participates.
 set -eu
 OMC_PIN=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+
 CONVERTER_PIN=d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538
 FRONTEND_PIN=a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629
 FREEST_CONVERTER_PIN=836cbf9ef8a3c4ee82b0458070884405bc8296f83b10f933556bf27750bb3661
@@ -108,6 +109,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS model_graph_layout=$GRAPH_REC,om/graph/layout.om"
   UNITS="$UNITS model_graph_aux=$GRAPH_NODE,om/graph/aux.om"
   UNITS="$UNITS om/resident/resident.om resident_check=om/resident/resident.om,om/resident/check.om"
+  UNITS="$UNITS model_graph_residue=om/graph/residue.om model_graph_table=om/graph/table.om hello_host=om/graph/hello.om hello_plan=om/graph/hello-plan.om"
 fi
 [ -n "${OMEGA_UNITS:-}" ] || PURE_UNITS="$PURE_UNITS c5=tools/c5/policy.om,tools/c5/runtime.om"
 GXNUM=om/gemmex/num.om
@@ -181,7 +183,7 @@ for u in $UNITS $PURE_UNITS; do
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
-    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name)
+    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

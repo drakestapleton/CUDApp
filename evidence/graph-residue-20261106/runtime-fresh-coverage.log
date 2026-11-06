@@ -1,0 +1,66 @@
+build/graph-residue > build/graph-residue.log
+build/graph-residue-oracle > build/graph-residue-oracle.log
+cmp build/graph-residue.log build/graph-residue-oracle.log
+build/graph-residue-red > build/graph-residue-red.log
+PASS graph residue differential and red check
+build/hello_gpu-oracle --sim > build/hello-oracle-sim.log
+gcov -b -c -o build/graph-residue-oracle-test_graph_residue.gcno tests/test_graph_residue.c
+File 'tests/test_graph_residue.c'
+Lines executed:100.00% of 71
+Branches executed:100.00% of 136
+Taken at least once:80.88% of 136
+Calls executed:79.76% of 84
+Creating 'test_graph_residue.c.gcov'
+
+File 'src/omega_gpu_graph_residue.h'
+Lines executed:100.00% of 33
+Branches executed:100.00% of 76
+Taken at least once:94.74% of 76
+Calls executed:50.00% of 4
+Creating 'omega_gpu_graph_residue.h.gcov'
+
+File 'examples/hello_gpu/hello_gpu.c'
+Lines executed:32.20% of 236
+Branches executed:27.33% of 161
+Taken at least once:23.60% of 161
+Calls executed:33.88% of 121
+Creating 'hello_gpu.c.gcov'
+
+File 'tests/bw_warp_sim.h'
+Lines executed:0.00% of 192
+Branches executed:0.00% of 305
+Taken at least once:0.00% of 305
+Calls executed:0.00% of 112
+Creating 'bw_warp_sim.h.gcov'
+
+File 'tests/bw_mufu_ftz.h'
+Lines executed:0.00% of 8
+Branches executed:0.00% of 2
+Taken at least once:0.00% of 2
+Calls executed:0.00% of 6
+Creating 'bw_mufu_ftz.h.gcov'
+
+Lines executed:33.33% of 540
+gcov -b -c -o build/hello_gpu-oracle-hello_gpu.gcno examples/hello_gpu/hello_gpu.c
+File 'examples/hello_gpu/hello_gpu.c'
+Lines executed:73.84% of 237
+Branches executed:74.23% of 163
+Taken at least once:49.08% of 163
+Calls executed:57.02% of 121
+Creating 'hello_gpu.c.gcov'
+
+File 'tests/bw_warp_sim.h'
+Lines executed:50.00% of 192
+Branches executed:56.07% of 305
+Taken at least once:33.11% of 305
+Calls executed:22.32% of 112
+Creating 'bw_warp_sim.h.gcov'
+
+File 'tests/bw_mufu_ftz.h'
+Lines executed:0.00% of 8
+Branches executed:0.00% of 2
+Taken at least once:0.00% of 2
+Calls executed:0.00% of 6
+Creating 'bw_mufu_ftz.h.gcov'
+
+Lines executed:62.01% of 437

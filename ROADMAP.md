@@ -13,6 +13,13 @@ wire. The FP8 GEMM admission check now rejects overflowing `mt` before
 multiplication. CPU differential, simulator, and mutation receipts belong in
 `evidence/codegen-rest/2026-11-06/`; the hardware tiers remain NOT_RUN and no
 roadmap bar is upgraded by this migration. See `om/codegen/CHIP.md`.
+2026-11-06 — Slice 8 moves graph dimension/configuration checks, gather tables,
+timeline admission, prefill budget/rounding and hello host plans/checking into
+seeded Omega. Wrapped host differential, negative controls, simulator and seven
+compiled semantic mutants are EXERCISED; see
+`evidence/graph-residue-20261106/README.md`. Hardware remains NOT_RUN for this
+change; `examples/hello_gpu/README.md` is its chip runbook. No existing hardware
+status is upgraded by these host receipts.
 
 ## 1. NVIDIA software on the Spark today
 

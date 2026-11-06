@@ -1,0 +1,551 @@
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit streams (bridge-seeded)
+generating portable unit cmdlist_record (bridge-seeded)
+generating portable unit cmdlist_plan (bridge-seeded)
+generating portable unit cmdlist_layout (bridge-seeded)
+generating portable unit cmdlist_access (bridge-seeded)
+generating portable unit model_graph_wire (bridge-seeded)
+generating portable unit model_graph_node (bridge-seeded)
+generating portable unit model_graph_batch (bridge-seeded)
+generating portable unit model_graph_launch (bridge-seeded)
+generating portable unit model_graph_copy (bridge-seeded)
+generating portable unit model_graph_xfer (bridge-seeded)
+generating portable unit model_graph (bridge-seeded)
+generating portable unit model_graph_expert (bridge-seeded)
+generating portable unit model_graph_group (bridge-seeded)
+generating portable unit model_graph_address (bridge-seeded)
+generating portable unit model_graph_final_batch (bridge-seeded)
+generating portable unit model_graph_window (bridge-seeded)
+generating portable unit model_graph_layout (bridge-seeded)
+generating portable unit model_graph_aux (bridge-seeded)
+generating portable unit model_graph_residue (bridge-seeded)
+generating portable unit model_graph_table (bridge-seeded)
+generating portable unit hello_host (bridge-seeded)
+generating portable unit hello_plan (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to ~/work/cudastack/lanes/GraphsHello/src
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_ampere_codegen.c -o build/omega_ampere_codegen.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen.c -o build/omega_blackwell_codegen.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_qg.c -o build/omega_blackwell_codegen_qg.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_cmdlist.c -o build/omega_gpu_cmdlist.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_decode_graph.c -o build/omega_gpu_decode_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8_api.c -o build/omega_gpu_fp8_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8gemm_api.c -o build/omega_gpu_fp8gemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_om_ir.c -o build/omega_gpu_om_ir.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_pfgemm.c -o build/omega_gpu_pfgemm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_platform_linux.c -o build/omega_gpu_platform_linux.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_prefill.c -o build/omega_gpu_prefill.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_prefill_attn256_api.c -o build/omega_gpu_prefill_attn256_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_q36_graph.c -o build/omega_gpu_q36_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_q38_graph.c -o build/omega_gpu_q38_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_router_api.c -o build/omega_gpu_router_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_session.c -o build/omega_gpu_session.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_tcgemm_api.c -o build/omega_gpu_tcgemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_cubin.c -o build/omega_cubin.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_ampere_enc_sm86.c -o build/cudapp_om_ampere_enc_sm86.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_amp_runtime.c -o build/cudapp_om_amp_runtime.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_attn_mirror_plan.c -o build/cudapp_om_attn_mirror_plan.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_attn_mirror_step.c -o build/cudapp_om_attn_mirror_step.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_binding.c -o build/cudapp_om_binding.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_bw_enc_sm121.c -o build/cudapp_om_bw_enc_sm121.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_cache_runtime.c -o build/cudapp_om_cache_runtime.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_alloc.c -o build/cudapp_om_closure_alloc.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_bind.c -o build/cudapp_om_closure_bind.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_blob.c -o build/cudapp_om_closure_blob.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_code.c -o build/cudapp_om_closure_code.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_cover.c -o build/cudapp_om_closure_cover.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_dir.c -o build/cudapp_om_closure_dir.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_intent.c -o build/cudapp_om_closure_intent.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_launch.c -o build/cudapp_om_closure_launch.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_pack.c -o build/cudapp_om_closure_pack.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -O3  -c src/cudapp_om_closure_reseal.c -o build/cudapp_om_closure_reseal.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_seal.c -o build/cudapp_om_closure_seal.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_closure_series.c -o build/cudapp_om_closure_series.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_cmdlist_access.c -o build/cudapp_om_cmdlist_access.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_cmdlist_layout.c -o build/cudapp_om_cmdlist_layout.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_cmdlist_plan.c -o build/cudapp_om_cmdlist_plan.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_cmdlist_record.c -o build/cudapp_om_cmdlist_record.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_code_digest.c -o build/cudapp_om_code_digest.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_command.c -o build/cudapp_om_command.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_compose.c -o build/cudapp_om_compose.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_context_lookup.c -o build/cudapp_om_context_lookup.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_cubin_elf.c -o build/cudapp_om_cubin_elf.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_digest.c -o build/cudapp_om_digest.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_encode.c -o build/cudapp_om_encode.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_graph.c -o build/cudapp_om_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_hello_host.c -o build/cudapp_om_hello_host.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_hello_plan.c -o build/cudapp_om_hello_plan.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_lease.c -o build/cudapp_om_lease.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_mathlibs_ir.c -o build/cudapp_om_mathlibs_ir.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_address.c -o build/cudapp_om_model_graph_address.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_aux.c -o build/cudapp_om_model_graph_aux.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_batch.c -o build/cudapp_om_model_graph_batch.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph.c -o build/cudapp_om_model_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_copy.c -o build/cudapp_om_model_graph_copy.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_expert.c -o build/cudapp_om_model_graph_expert.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_final_batch.c -o build/cudapp_om_model_graph_final_batch.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_group.c -o build/cudapp_om_model_graph_group.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_launch.c -o build/cudapp_om_model_graph_launch.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_layout.c -o build/cudapp_om_model_graph_layout.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_node.c -o build/cudapp_om_model_graph_node.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_residue.c -o build/cudapp_om_model_graph_residue.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_table.c -o build/cudapp_om_model_graph_table.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_window.c -o build/cudapp_om_model_graph_window.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_wire.c -o build/cudapp_om_model_graph_wire.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_model_graph_xfer.c -o build/cudapp_om_model_graph_xfer.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_admission.c -o build/cudapp_om_moe_admission.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_group.c -o build/cudapp_om_moe_group.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_ids32.c -o build/cudapp_om_moe_ids32.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_maps32.c -o build/cudapp_om_moe_maps32.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_plan.c -o build/cudapp_om_moe_plan.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_segs32.c -o build/cudapp_om_moe_segs32.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_moe_windows.c -o build/cudapp_om_moe_windows.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_prefill_order.c -o build/cudapp_om_prefill_order.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_prefill_reading.c -o build/cudapp_om_prefill_reading.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_prefill_shape.c -o build/cudapp_om_prefill_shape.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_prefill_workspace.c -o build/cudapp_om_prefill_workspace.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_q38_emit.c -o build/cudapp_om_q38_emit.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_q38_runtime.c -o build/cudapp_om_q38_runtime.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_quant_wire.c -o build/cudapp_om_quant_wire.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_repack.c -o build/cudapp_om_repack.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_slotrev.c -o build/cudapp_om_slotrev.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_streams.c -o build/cudapp_om_streams.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_templates.c -o build/cudapp_om_templates.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_validate.c -o build/cudapp_om_validate.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_freest_revision.c -o build/cudapp_freest_revision.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_freest_epoch.c -o build/cudapp_freest_epoch.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_freest_f16.c -o build/cudapp_freest_f16.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Isrc tests/test_model_graphs_om.c src/cudapp_om_model_graph_address.c src/cudapp_om_model_graph_aux.c src/cudapp_om_model_graph_batch.c src/cudapp_om_model_graph.c src/cudapp_om_model_graph_copy.c src/cudapp_om_model_graph_expert.c src/cudapp_om_model_graph_final_batch.c src/cudapp_om_model_graph_group.c src/cudapp_om_model_graph_launch.c src/cudapp_om_model_graph_layout.c src/cudapp_om_model_graph_node.c src/cudapp_om_model_graph_residue.c src/cudapp_om_model_graph_table.c src/cudapp_om_model_graph_window.c src/cudapp_om_model_graph_wire.c src/cudapp_om_model_graph_xfer.c -o build/model-graphs-check
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Isrc tests/test_model_graphs_plans.c src/cudapp_om_model_graph_address.c src/cudapp_om_model_graph_aux.c src/cudapp_om_model_graph_batch.c src/cudapp_om_model_graph.c src/cudapp_om_model_graph_copy.c src/cudapp_om_model_graph_expert.c src/cudapp_om_model_graph_final_batch.c src/cudapp_om_model_graph_group.c src/cudapp_om_model_graph_launch.c src/cudapp_om_model_graph_layout.c src/cudapp_om_model_graph_node.c src/cudapp_om_model_graph_residue.c src/cudapp_om_model_graph_table.c src/cudapp_om_model_graph_window.c src/cudapp_om_model_graph_wire.c src/cudapp_om_model_graph_xfer.c -o build/model-graphs-plans-check
+ar rcs build/libomega_gpu.a build/omega_ampere_codegen.o build/omega_ampere_qmd.o build/omega_blackwell_codegen.o build/omega_blackwell_codegen_attn.o build/omega_blackwell_codegen_attn256.o build/omega_blackwell_codegen_bf16.o build/omega_blackwell_codegen_dec.o build/omega_blackwell_codegen_gdn.o build/omega_blackwell_codegen_gemm.o build/omega_blackwell_codegen_moe.o build/omega_blackwell_codegen_moe2.o build/omega_blackwell_codegen_pattn.o build/omega_blackwell_codegen_pattn256.o build/omega_blackwell_codegen_pf.o build/omega_blackwell_codegen_pfhost.o build/omega_blackwell_codegen_qg.o build/omega_blackwell_codegen_qmma.o build/omega_blackwell_codegen_router.o build/omega_blackwell_codegen_tc.o build/omega_blackwell_codegen_tc2.o build/omega_blackwell_codegen_tern.o build/omega_blackwell_codegen_tgemm.o build/omega_blackwell_encoder.o build/omega_blackwell_engine.o build/omega_blackwell_matmul.o build/omega_blackwell_qmd.o build/omega_blackwell_realize.o build/omega_blackwell_submit.o build/omega_gpu_attention_api.o build/omega_gpu_bf16_gemv_api.o build/omega_gpu_chip.o build/omega_gpu_cmdlist.o build/omega_gpu_decode_attn256_api.o build/omega_gpu_decode_attn_api.o build/omega_gpu_decode_graph.o build/omega_gpu_elementwise_api.o build/omega_gpu_engine.o build/omega_gpu_fmt.o build/omega_gpu_fp8_api.o build/omega_gpu_fp8_pack.o build/omega_gpu_fp8_slots.o build/omega_gpu_fp8gemm_api.o build/omega_gpu_gdn_api.o build/omega_gpu_gemm.o build/omega_gpu_gemm_ex.o build/omega_gpu_hostmath.o build/omega_gpu_mathlibs_api.o build/omega_gpu_matmul_api.o build/omega_gpu_mem_cached.o build/omega_gpu_mem_reserve.o build/omega_gpu_moe_api.o build/omega_gpu_om_ir.o build/omega_gpu_pfgemm.o build/omega_gpu_pfhost.o build/omega_gpu_platform.o build/omega_gpu_platform_aien.o build/omega_gpu_platform_linux.o build/omega_gpu_prefill.o build/omega_gpu_prefill_attn256_api.o build/omega_gpu_prefill_attn_api.o build/omega_gpu_q36_graph.o build/omega_gpu_q38_graph.o build/omega_gpu_router_api.o build/omega_gpu_scan.o build/omega_gpu_scan_ref.o build/omega_gpu_serving.o build/omega_gpu_session.o build/omega_gpu_tcgemm_api.o build/omega_gpu_tern_api.o build/omega_gpu_tgemm_api.o build/omega_gpu_wait.o build/omega_fp8_slot_table.o build/omega_cubin.o build/omega_native_artifact.o build/omega_sm121_disasm.o build/sha256.o build/omega_canonical.o build/omega_core.o build/omega_vector.o build/cudapp_om_ampere_enc_sm86.o build/cudapp_om_amp_runtime.o build/cudapp_om_attn_mirror_plan.o build/cudapp_om_attn_mirror_step.o build/cudapp_om_binding.o build/cudapp_om_bw_enc_sm121.o build/cudapp_om_cache_runtime.o build/cudapp_om_closure_alloc.o build/cudapp_om_closure_bind.o build/cudapp_om_closure_blob.o build/cudapp_om_closure_code.o build/cudapp_om_closure_cover.o build/cudapp_om_closure_dir.o build/cudapp_om_closure_intent.o build/cudapp_om_closure_launch.o build/cudapp_om_closure_pack.o build/cudapp_om_closure_reseal.o build/cudapp_om_closure_seal.o build/cudapp_om_closure_series.o build/cudapp_om_cmdlist_access.o build/cudapp_om_cmdlist_layout.o build/cudapp_om_cmdlist_plan.o build/cudapp_om_cmdlist_record.o build/cudapp_om_code_digest.o build/cudapp_om_command.o build/cudapp_om_compose.o build/cudapp_om_context_lookup.o build/cudapp_om_cubin_elf.o build/cudapp_om_digest.o build/cudapp_om_encode.o build/cudapp_om_graph.o build/cudapp_om_hello_host.o build/cudapp_om_hello_plan.o build/cudapp_om_lease.o build/cudapp_om_mathlibs_ir.o build/cudapp_om_model_graph_address.o build/cudapp_om_model_graph_aux.o build/cudapp_om_model_graph_batch.o build/cudapp_om_model_graph.o build/cudapp_om_model_graph_copy.o build/cudapp_om_model_graph_expert.o build/cudapp_om_model_graph_final_batch.o build/cudapp_om_model_graph_group.o build/cudapp_om_model_graph_launch.o build/cudapp_om_model_graph_layout.o build/cudapp_om_model_graph_node.o build/cudapp_om_model_graph_residue.o build/cudapp_om_model_graph_table.o build/cudapp_om_model_graph_window.o build/cudapp_om_model_graph_wire.o build/cudapp_om_model_graph_xfer.o build/cudapp_om_moe_admission.o build/cudapp_om_moe_group.o build/cudapp_om_moe_ids32.o build/cudapp_om_moe_maps32.o build/cudapp_om_moe_plan.o build/cudapp_om_moe_segs32.o build/cudapp_om_moe_windows.o build/cudapp_om_prefill_order.o build/cudapp_om_prefill_reading.o build/cudapp_om_prefill_shape.o build/cudapp_om_prefill_workspace.o build/cudapp_om_q38_emit.o build/cudapp_om_q38_runtime.o build/cudapp_om_quant_wire.o build/cudapp_om_repack.o build/cudapp_om_slotrev.o build/cudapp_om_streams.o build/cudapp_om_templates.o build/cudapp_om_validate.o build/cudapp_freest_revision.o build/cudapp_freest_epoch.o build/cudapp_freest_f16.o build/m16_native.o build/nvrm.o
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -O0 --coverage -DCUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE=1 -DCUDAPP_MIGRATION_PENDING_HELLO_HOST=1 tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue-oracle
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -DCUDAPP_GRAPH_DIFF_RED=1 tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue-red
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc -O0 --coverage -DCUDAPP_MIGRATION_PENDING_HELLO_HOST=1 -DCUDAPP_MIGRATION_PENDING_HELLO_CONTROL=1 examples/hello_gpu/hello_gpu.c build/libomega_gpu.a -lpthread -lm -o build/hello_gpu-oracle
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/hello_gpu examples/hello_gpu/hello_gpu.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_MIGRATION_PENDING_HELLO_CONTROL=1 -o build/hello_gpu_control examples/hello_gpu/hello_gpu.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_decode_graph_test tests/gpu_decode_graph_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test_omega_gpu_decode_graph_abort tests/test_omega_gpu_decode_graph_abort.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test_omega_gpu_decode_graph_timeline tests/test_omega_gpu_decode_graph_timeline.c build/libomega_gpu.a -lpthread -lm
+build/model-graphs-check
+MODEL-GRAPHS wire PASS cases=70224 record-flip=CAUGHT
+build/model-graphs-plans-check
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -Itests tests/test_model_graphs_warp.c build/libomega_gpu.a -o build/model-graphs-warp-check -lpthread -lm
+MODEL-GRAPHS plans PASS layouts=40128 prefill=30096 record-flip=CAUGHT
+CC="cc" python3 tests/model_graphs_lists.py
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm -DCUDAPP_MIGRATION_PENDING_C_GRAPHS=1 -c tests/model_graphs_q36_fixture.c -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q36-old.o
+mutant begin-fail-keeps-lock killed: 3 case(s) failed
+OUT_DIR="build" CC="cc" python3 tests/model_graphs_nested.py
+mutant begin-fail-stays-in-token killed: 3 case(s) failed
++ objcopy --redefine-sym mg_q36_run=old_mg_q36_run --redefine-sym omega_gpu_q36_graph_batch=old_omega_gpu_q36_graph_batch --redefine-sym omega_gpu_q36_graph_begin_stroke=old_omega_gpu_q36_graph_begin_stroke --redefine-sym omega_gpu_q36_graph_begin_token=old_omega_gpu_q36_graph_begin_token --redefine-sym omega_gpu_q36_graph_create=old_omega_gpu_q36_graph_create --redefine-sym omega_gpu_q36_graph_create_heads=old_omega_gpu_q36_graph_create_heads --redefine-sym omega_gpu_q36_graph_end_stroke=old_omega_gpu_q36_graph_end_stroke --redefine-sym omega_gpu_q36_graph_end_token=old_omega_gpu_q36_graph_end_token --redefine-sym omega_gpu_q36_graph_exact_head_active=old_omega_gpu_q36_graph_exact_head_active --redefine-sym omega_gpu_q36_graph_exact_head_active_head=old_omega_gpu_q36_graph_exact_head_active_head --redefine-sym omega_gpu_q36_graph_free=old_omega_gpu_q36_graph_free --redefine-sym omega_gpu_q36_graph_kind_name=old_omega_gpu_q36_graph_kind_name --redefine-sym omega_gpu_q36_graph_prefill=old_omega_gpu_q36_graph_prefill --redefine-sym omega_gpu_q36_graph_prefill_alloc=old_omega_gpu_q36_graph_prefill_alloc --redefine-sym omega_gpu_q36_graph_prefill_cap=old_omega_gpu_q36_graph_prefill_cap --redefine-sym omega_gpu_q36_graph_prefill_streamed=old_omega_gpu_q36_graph_prefill_streamed --redefine-sym omega_gpu_q36_graph_read=old_omega_gpu_q36_graph_read --redefine-sym omega_gpu_q36_graph_read_buf=old_omega_gpu_q36_graph_read_buf --redefine-sym omega_gpu_q36_graph_read_head=old_omega_gpu_q36_graph_read_head --redefine-sym omega_gpu_q36_graph_record_final=old_omega_gpu_q36_graph_record_final --redefine-sym omega_gpu_q36_graph_record_head_final=old_omega_gpu_q36_graph_record_head_final --redefine-sym omega_gpu_q36_graph_record_head_layer=old_omega_gpu_q36_graph_record_head_layer --redefine-sym omega_gpu_q36_graph_record_layer=old_omega_gpu_q36_graph_record_layer --redefine-sym omega_gpu_q36_graph_record_layer_heads=old_omega_gpu_q36_graph_record_layer_heads --redefine-sym omega_gpu_q36_graph_set_batch=old_omega_gpu_q36_graph_set_batch --redefine-sym omega_gpu_q36_graph_set_exact_head=old_omega_gpu_q36_graph_set_exact_head --redefine-sym omega_gpu_q36_graph_set_exact_head_on=old_omega_gpu_q36_graph_set_exact_head_on --redefine-sym omega_gpu_q36_graph_set_final_norm=old_omega_gpu_q36_graph_set_final_norm --redefine-sym omega_gpu_q36_graph_set_flush_each=old_omega_gpu_q36_graph_set_flush_each --redefine-sym omega_gpu_q36_graph_set_head_exact_head_on=old_omega_gpu_q36_graph_set_head_exact_head_on --redefine-sym omega_gpu_q36_graph_set_head_state=old_omega_gpu_q36_graph_set_head_state --redefine-sym omega_gpu_q36_graph_set_layer=old_omega_gpu_q36_graph_set_layer --redefine-sym omega_gpu_q36_graph_set_lm_head_fp8=old_omega_gpu_q36_graph_set_lm_head_fp8 --redefine-sym omega_gpu_q36_graph_set_stamps=old_omega_gpu_q36_graph_set_stamps --redefine-sym omega_gpu_q36_graph_stamps=old_omega_gpu_q36_graph_stamps --redefine-sym omega_gpu_q36_graph_stroke=old_omega_gpu_q36_graph_stroke --redefine-sym omega_gpu_q36_graph_test_set_mutant=old_omega_gpu_q36_graph_test_set_mutant --redefine-sym omega_gpu_q36_graph_token=old_omega_gpu_q36_graph_token --redefine-sym omega_gpu_q36_moe_project=old_omega_gpu_q36_moe_project --redefine-sym omega_q36_gather_table=old_omega_q36_gather_table --redefine-sym omega_q36_perm_table=old_omega_q36_perm_table ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q36-old.o
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm -c tests/model_graphs_q36_fixture.c -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q36-new.o
+mutant oneshot-old-bad-args-only killed: 3 case(s) failed
+mutant abort-keeps-lock killed: 1 case(s) failed
++ objcopy --redefine-sym mg_q36_run=new_mg_q36_run --redefine-sym omega_gpu_q36_graph_batch=new_omega_gpu_q36_graph_batch --redefine-sym omega_gpu_q36_graph_begin_stroke=new_omega_gpu_q36_graph_begin_stroke --redefine-sym omega_gpu_q36_graph_begin_token=new_omega_gpu_q36_graph_begin_token --redefine-sym omega_gpu_q36_graph_create=new_omega_gpu_q36_graph_create --redefine-sym omega_gpu_q36_graph_create_heads=new_omega_gpu_q36_graph_create_heads --redefine-sym omega_gpu_q36_graph_end_stroke=new_omega_gpu_q36_graph_end_stroke --redefine-sym omega_gpu_q36_graph_end_token=new_omega_gpu_q36_graph_end_token --redefine-sym omega_gpu_q36_graph_exact_head_active=new_omega_gpu_q36_graph_exact_head_active --redefine-sym omega_gpu_q36_graph_exact_head_active_head=new_omega_gpu_q36_graph_exact_head_active_head --redefine-sym omega_gpu_q36_graph_free=new_omega_gpu_q36_graph_free --redefine-sym omega_gpu_q36_graph_kind_name=new_omega_gpu_q36_graph_kind_name --redefine-sym omega_gpu_q36_graph_prefill=new_omega_gpu_q36_graph_prefill --redefine-sym omega_gpu_q36_graph_prefill_alloc=new_omega_gpu_q36_graph_prefill_alloc --redefine-sym omega_gpu_q36_graph_prefill_cap=new_omega_gpu_q36_graph_prefill_cap --redefine-sym omega_gpu_q36_graph_prefill_streamed=new_omega_gpu_q36_graph_prefill_streamed --redefine-sym omega_gpu_q36_graph_read=new_omega_gpu_q36_graph_read --redefine-sym omega_gpu_q36_graph_read_buf=new_omega_gpu_q36_graph_read_buf --redefine-sym omega_gpu_q36_graph_read_head=new_omega_gpu_q36_graph_read_head --redefine-sym omega_gpu_q36_graph_record_final=new_omega_gpu_q36_graph_record_final --redefine-sym omega_gpu_q36_graph_record_head_final=new_omega_gpu_q36_graph_record_head_final --redefine-sym omega_gpu_q36_graph_record_head_layer=new_omega_gpu_q36_graph_record_head_layer --redefine-sym omega_gpu_q36_graph_record_layer=new_omega_gpu_q36_graph_record_layer --redefine-sym omega_gpu_q36_graph_record_layer_heads=new_omega_gpu_q36_graph_record_layer_heads --redefine-sym omega_gpu_q36_graph_set_batch=new_omega_gpu_q36_graph_set_batch --redefine-sym omega_gpu_q36_graph_set_exact_head=new_omega_gpu_q36_graph_set_exact_head --redefine-sym omega_gpu_q36_graph_set_exact_head_on=new_omega_gpu_q36_graph_set_exact_head_on --redefine-sym omega_gpu_q36_graph_set_final_norm=new_omega_gpu_q36_graph_set_final_norm --redefine-sym omega_gpu_q36_graph_set_flush_each=new_omega_gpu_q36_graph_set_flush_each --redefine-sym omega_gpu_q36_graph_set_head_exact_head_on=new_omega_gpu_q36_graph_set_head_exact_head_on --redefine-sym omega_gpu_q36_graph_set_head_state=new_omega_gpu_q36_graph_set_head_state --redefine-sym omega_gpu_q36_graph_set_layer=new_omega_gpu_q36_graph_set_layer --redefine-sym omega_gpu_q36_graph_set_lm_head_fp8=new_omega_gpu_q36_graph_set_lm_head_fp8 --redefine-sym omega_gpu_q36_graph_set_stamps=new_omega_gpu_q36_graph_set_stamps --redefine-sym omega_gpu_q36_graph_stamps=new_omega_gpu_q36_graph_stamps --redefine-sym omega_gpu_q36_graph_stroke=new_omega_gpu_q36_graph_stroke --redefine-sym omega_gpu_q36_graph_test_set_mutant=new_omega_gpu_q36_graph_test_set_mutant --redefine-sym omega_gpu_q36_graph_token=new_omega_gpu_q36_graph_token --redefine-sym omega_gpu_q36_moe_project=new_omega_gpu_q36_moe_project --redefine-sym omega_q36_gather_table=new_omega_q36_gather_table --redefine-sym omega_q36_perm_table=new_omega_q36_perm_table ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q36-new.o
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm -DCUDAPP_MIGRATION_PENDING_C_GRAPHS=1 -c tests/model_graphs_q38_fixture.c -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q38-old.o
+mutant abort-submits killed: 1 case(s) failed
+test-gpu-decode-graph-abort-mutants: 5 of 5 mutants killed
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_moe_window_test tests/gpu_moe_window_test.c build/libomega_gpu.a -lpthread -lm
++ objcopy --redefine-sym mg_q38_run=old_mg_q38_run --redefine-sym omega_gpu_q38_exact_extra_bytes=old_omega_gpu_q38_exact_extra_bytes --redefine-sym omega_gpu_q38_graph_begin_token=old_omega_gpu_q38_graph_begin_token --redefine-sym omega_gpu_q38_graph_create=old_omega_gpu_q38_graph_create --redefine-sym omega_gpu_q38_graph_end_token=old_omega_gpu_q38_graph_end_token --redefine-sym omega_gpu_q38_graph_exact_head_active=old_omega_gpu_q38_graph_exact_head_active --redefine-sym omega_gpu_q38_graph_free=old_omega_gpu_q38_graph_free --redefine-sym omega_gpu_q38_graph_kind_name=old_omega_gpu_q38_graph_kind_name --redefine-sym omega_gpu_q38_graph_read=old_omega_gpu_q38_graph_read --redefine-sym omega_gpu_q38_graph_read_buf=old_omega_gpu_q38_graph_read_buf --redefine-sym omega_gpu_q38_graph_record_final=old_omega_gpu_q38_graph_record_final --redefine-sym omega_gpu_q38_graph_record_layer=old_omega_gpu_q38_graph_record_layer --redefine-sym omega_gpu_q38_graph_set_exact_head=old_omega_gpu_q38_graph_set_exact_head --redefine-sym omega_gpu_q38_graph_set_exact_head_on=old_omega_gpu_q38_graph_set_exact_head_on --redefine-sym omega_gpu_q38_graph_set_final_norm=old_omega_gpu_q38_graph_set_final_norm --redefine-sym omega_gpu_q38_graph_set_flush_each=old_omega_gpu_q38_graph_set_flush_each --redefine-sym omega_gpu_q38_graph_set_layer=old_omega_gpu_q38_graph_set_layer --redefine-sym omega_gpu_q38_graph_set_layer_bf16=old_omega_gpu_q38_graph_set_layer_bf16 --redefine-sym omega_gpu_q38_graph_set_lm_head_fp8=old_omega_gpu_q38_graph_set_lm_head_fp8 --redefine-sym omega_gpu_q38_graph_set_overlap_ab=old_omega_gpu_q38_graph_set_overlap_ab --redefine-sym omega_gpu_q38_graph_set_stamps=old_omega_gpu_q38_graph_set_stamps --redefine-sym omega_gpu_q38_graph_stamps=old_omega_gpu_q38_graph_stamps --redefine-sym omega_gpu_q38_graph_test_set_mutant=old_omega_gpu_q38_graph_test_set_mutant --redefine-sym omega_gpu_q38_graph_token=old_omega_gpu_q38_graph_token --redefine-sym omega_q38_gather_table=old_omega_q38_gather_table ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q38-old.o
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm -c tests/model_graphs_q38_fixture.c -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q38-new.o
+build/graph-residue > build/graph-residue.log
++ objcopy --redefine-sym mg_q38_run=new_mg_q38_run --redefine-sym omega_gpu_q38_exact_extra_bytes=new_omega_gpu_q38_exact_extra_bytes --redefine-sym omega_gpu_q38_graph_begin_token=new_omega_gpu_q38_graph_begin_token --redefine-sym omega_gpu_q38_graph_create=new_omega_gpu_q38_graph_create --redefine-sym omega_gpu_q38_graph_end_token=new_omega_gpu_q38_graph_end_token --redefine-sym omega_gpu_q38_graph_exact_head_active=new_omega_gpu_q38_graph_exact_head_active --redefine-sym omega_gpu_q38_graph_free=new_omega_gpu_q38_graph_free --redefine-sym omega_gpu_q38_graph_kind_name=new_omega_gpu_q38_graph_kind_name --redefine-sym omega_gpu_q38_graph_read=new_omega_gpu_q38_graph_read --redefine-sym omega_gpu_q38_graph_read_buf=new_omega_gpu_q38_graph_read_buf --redefine-sym omega_gpu_q38_graph_record_final=new_omega_gpu_q38_graph_record_final --redefine-sym omega_gpu_q38_graph_record_layer=new_omega_gpu_q38_graph_record_layer --redefine-sym omega_gpu_q38_graph_set_exact_head=new_omega_gpu_q38_graph_set_exact_head --redefine-sym omega_gpu_q38_graph_set_exact_head_on=new_omega_gpu_q38_graph_set_exact_head_on --redefine-sym omega_gpu_q38_graph_set_final_norm=new_omega_gpu_q38_graph_set_final_norm --redefine-sym omega_gpu_q38_graph_set_flush_each=new_omega_gpu_q38_graph_set_flush_each --redefine-sym omega_gpu_q38_graph_set_layer=new_omega_gpu_q38_graph_set_layer --redefine-sym omega_gpu_q38_graph_set_layer_bf16=new_omega_gpu_q38_graph_set_layer_bf16 --redefine-sym omega_gpu_q38_graph_set_lm_head_fp8=new_omega_gpu_q38_graph_set_lm_head_fp8 --redefine-sym omega_gpu_q38_graph_set_overlap_ab=new_omega_gpu_q38_graph_set_overlap_ab --redefine-sym omega_gpu_q38_graph_set_stamps=new_omega_gpu_q38_graph_set_stamps --redefine-sym omega_gpu_q38_graph_stamps=new_omega_gpu_q38_graph_stamps --redefine-sym omega_gpu_q38_graph_test_set_mutant=new_omega_gpu_q38_graph_test_set_mutant --redefine-sym omega_gpu_q38_graph_token=new_omega_gpu_q38_graph_token --redefine-sym omega_q38_gather_table=new_omega_q38_gather_table ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q38-new.o
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm -DCUDAPP_MIGRATION_PENDING_C_GRAPHS=1 -c tests/model_graphs_decode_fixture.c -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/decode-old.o
++ objcopy --redefine-sym mg_decode_run=old_mg_decode_run --redefine-sym omega_gpu_decode_graph_abort_token=old_omega_gpu_decode_graph_abort_token --redefine-sym omega_gpu_decode_graph_barrier=old_omega_gpu_decode_graph_barrier --redefine-sym omega_gpu_decode_graph_begin_token=old_omega_gpu_decode_graph_begin_token --redefine-sym omega_gpu_decode_graph_create=old_omega_gpu_decode_graph_create --redefine-sym omega_gpu_decode_graph_end_token=old_omega_gpu_decode_graph_end_token --redefine-sym omega_gpu_decode_graph_free=old_omega_gpu_decode_graph_free --redefine-sym omega_gpu_decode_graph_kind_name=old_omega_gpu_decode_graph_kind_name --redefine-sym omega_gpu_decode_graph_list=old_omega_gpu_decode_graph_list --redefine-sym omega_gpu_decode_graph_prefetch=old_omega_gpu_decode_graph_prefetch --redefine-sym omega_gpu_decode_graph_read=old_omega_gpu_decode_graph_read --redefine-sym omega_gpu_decode_graph_record_final=old_omega_gpu_decode_graph_record_final --redefine-sym omega_gpu_decode_graph_record_layer=old_omega_gpu_decode_graph_record_layer --redefine-sym omega_gpu_decode_graph_record_res=old_omega_gpu_decode_graph_record_res --redefine-sym omega_gpu_decode_graph_record_swiglu=old_omega_gpu_decode_graph_record_swiglu --redefine-sym omega_gpu_decode_graph_set_barrier=old_omega_gpu_decode_graph_set_barrier --redefine-sym omega_gpu_decode_graph_set_final_norm=old_omega_gpu_decode_graph_set_final_norm --redefine-sym omega_gpu_decode_graph_set_flush_each=old_omega_gpu_decode_graph_set_flush_each --redefine-sym omega_gpu_decode_graph_set_layer=old_omega_gpu_decode_graph_set_layer --redefine-sym omega_gpu_decode_graph_set_prefetch=old_omega_gpu_decode_graph_set_prefetch --redefine-sym omega_gpu_decode_graph_set_stamps=old_omega_gpu_decode_graph_set_stamps --redefine-sym omega_gpu_decode_graph_stamps=old_omega_gpu_decode_graph_stamps --redefine-sym omega_gpu_decode_graph_test_set_barrier_none=old_omega_gpu_decode_graph_test_set_barrier_none --redefine-sym omega_gpu_decode_graph_test_set_mutant=old_omega_gpu_decode_graph_test_set_mutant --redefine-sym omega_gpu_decode_graph_test_set_prefetch_red=old_omega_gpu_decode_graph_test_set_prefetch_red --redefine-sym omega_gpu_decode_graph_token=old_omega_gpu_decode_graph_token --redefine-sym omega_gpu_decode_graph_vas=old_omega_gpu_decode_graph_vas ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/decode-old.o
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm -c tests/model_graphs_decode_fixture.c -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/decode-new.o
+build/graph-residue-oracle > build/graph-residue-oracle.log
+libgcov profiling error:~/work/cudastack/lanes/GraphsHello/build/graph-residue-oracle-test_graph_residue.gcda:overwriting an existing profile data with a different checksum
+cmp build/graph-residue.log build/graph-residue-oracle.log
+build/graph-residue-red > build/graph-residue-red.log
++ objcopy --redefine-sym mg_decode_run=new_mg_decode_run --redefine-sym omega_gpu_decode_graph_abort_token=new_omega_gpu_decode_graph_abort_token --redefine-sym omega_gpu_decode_graph_barrier=new_omega_gpu_decode_graph_barrier --redefine-sym omega_gpu_decode_graph_begin_token=new_omega_gpu_decode_graph_begin_token --redefine-sym omega_gpu_decode_graph_create=new_omega_gpu_decode_graph_create --redefine-sym omega_gpu_decode_graph_end_token=new_omega_gpu_decode_graph_end_token --redefine-sym omega_gpu_decode_graph_free=new_omega_gpu_decode_graph_free --redefine-sym omega_gpu_decode_graph_kind_name=new_omega_gpu_decode_graph_kind_name --redefine-sym omega_gpu_decode_graph_list=new_omega_gpu_decode_graph_list --redefine-sym omega_gpu_decode_graph_prefetch=new_omega_gpu_decode_graph_prefetch --redefine-sym omega_gpu_decode_graph_read=new_omega_gpu_decode_graph_read --redefine-sym omega_gpu_decode_graph_record_final=new_omega_gpu_decode_graph_record_final --redefine-sym omega_gpu_decode_graph_record_layer=new_omega_gpu_decode_graph_record_layer --redefine-sym omega_gpu_decode_graph_record_res=new_omega_gpu_decode_graph_record_res --redefine-sym omega_gpu_decode_graph_record_swiglu=new_omega_gpu_decode_graph_record_swiglu --redefine-sym omega_gpu_decode_graph_set_barrier=new_omega_gpu_decode_graph_set_barrier --redefine-sym omega_gpu_decode_graph_set_final_norm=new_omega_gpu_decode_graph_set_final_norm --redefine-sym omega_gpu_decode_graph_set_flush_each=new_omega_gpu_decode_graph_set_flush_each --redefine-sym omega_gpu_decode_graph_set_layer=new_omega_gpu_decode_graph_set_layer --redefine-sym omega_gpu_decode_graph_set_prefetch=new_omega_gpu_decode_graph_set_prefetch --redefine-sym omega_gpu_decode_graph_set_stamps=new_omega_gpu_decode_graph_set_stamps --redefine-sym omega_gpu_decode_graph_stamps=new_omega_gpu_decode_graph_stamps --redefine-sym omega_gpu_decode_graph_test_set_barrier_none=new_omega_gpu_decode_graph_test_set_barrier_none --redefine-sym omega_gpu_decode_graph_test_set_mutant=new_omega_gpu_decode_graph_test_set_mutant --redefine-sym omega_gpu_decode_graph_test_set_prefetch_red=new_omega_gpu_decode_graph_test_set_prefetch_red --redefine-sym omega_gpu_decode_graph_token=new_omega_gpu_decode_graph_token --redefine-sym omega_gpu_decode_graph_vas=new_omega_gpu_decode_graph_vas ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/decode-new.o
++ cc -std=gnu11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-unused-function -ffunction-sections -fdata-sections -Isrc -Itests -Im16 -Invrm tests/test_model_graphs_lists.c ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q36-old.o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q36-new.o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q38-old.o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/q38-new.o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/decode-old.o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/decode-new.o build/libomega_gpu.a -Wl,--gc-sections -Wl,--wrap=omega_gpu_bf16_gemv_record -Wl,--wrap=omega_gpu_bf16_gemv_rows_record -Wl,--wrap=omega_gpu_bf16_gemv_xbatch_record -Wl,--wrap=omega_gpu_bf16_gemv_mask_record -Wl,--wrap=omega_gpu_fp8_gemv_grouped_record -Wl,--wrap=omega_gpu_fp8gemm_record -Wl,--wrap=omega_gpu_gdn_record -Wl,--wrap=omega_gpu_gdn_multi_record -Wl,--wrap=omega_gpu_decode_attn_record -Wl,--wrap=omega_gpu_decode_attn256_record -Wl,--wrap=omega_gpu_decode_attn256_multi_record -Wl,--wrap=omega_gpu_router_record -Wl,--wrap=omega_gpu_router_record_rows -Wl,--wrap=omega_gpu_fp8gemm_record_native -Wl,--wrap=omega_gpu_fp8_tensor_entry -lpthread -lm -o ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/check
++ ~/work/cudastack/lanes/GraphsHello/build/model-graphs-lists/check
+PASS graph residue differential and red check
+OMEGA_OMC="~/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="~/work/cudastack/lanes/GraphsHello-bridge73" CC="cc" GRAPH_RESIDUE_FLAGS="-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Isrc" OUT_DIR="build" python3 om/graph/residue-mutants.py
+mutant poison killed rc=0
+mutant input-period killed rc=0
+mutant checker-sub killed rc=-6
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=0 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=0 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=0 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=0 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=0 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=0 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=0 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=0 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=0 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=0 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=0 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=0 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=0 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=0 nodes=24 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=0 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=0 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=1 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=1 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=1 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=1 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=1 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=1 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=1 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=1 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=1 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=1 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=1 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=1 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=1 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=1 nodes=24 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=1 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=1 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=255 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=255 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=255 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=255 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=255 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=255 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=255 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=255 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=255 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=255 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=255 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=255 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=255 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=255 nodes=24 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=255 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=255 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=256 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=256 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=256 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=256 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=256 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=256 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=256 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=256 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=256 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=256 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=256 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=256 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=256 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=256 nodes=24 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=256 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=256 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=131064 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=131064 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=131064 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=131064 nodes=22 submissions=1 rc=0
+mutant shape-cap killed rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=131064 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=131064 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131064 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131064 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=131064 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=131064 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=131064 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=131064 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=131064 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=131064 nodes=24 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131064 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131064 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=131071 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=131071 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=131071 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=0 position=131071 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=131071 nodes=22 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1280 position=131071 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131071 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131071 nodes=22 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=131071 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=0 position=131071 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=131071 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=0 position=131071 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=131071 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1280 position=131071 nodes=24 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131071 nodes=22 submissions=1 rc=0
+nested family=30 mode=2 attention=0 heads=1 flags=0 position=131071 nodes=22 submissions=1 rc=0
+nested family=36 mode=2 attention=0 heads=2 flags=0 position=255 nodes=19 submissions=1 rc=0
+nested family=36 mode=2 attention=0 heads=2 flags=0 position=255 nodes=19 submissions=1 rc=0
+nested family=36 mode=3 attention=0 heads=2 flags=48 position=255 nodes=9 submissions=1 rc=0
+nested family=36 mode=3 attention=0 heads=2 flags=48 position=255 nodes=9 submissions=1 rc=0
+nested family=36 mode=4 attention=0 heads=2 flags=0 position=255 nodes=9 submissions=1 rc=0
+nested family=36 mode=4 attention=0 heads=2 flags=0 position=255 nodes=9 submissions=1 rc=0
+nested family=36 mode=6 attention=0 heads=2 flags=0 position=255 nodes=6 submissions=1 rc=0
+nested family=36 mode=6 attention=0 heads=2 flags=0 position=255 nodes=6 submissions=1 rc=0
+nested family=36 mode=7 attention=0 heads=2 flags=0 position=255 nodes=2 submissions=1 rc=0
+nested family=36 mode=7 attention=0 heads=2 flags=0 position=255 nodes=2 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=4 position=255 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=4 position=255 nodes=24 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1290 position=255 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=0 heads=1 flags=1290 position=255 nodes=26 submissions=1 rc=0
+nested family=36 mode=2 attention=1 heads=2 flags=0 position=255 nodes=20 submissions=1 rc=0
+nested family=36 mode=2 attention=1 heads=2 flags=0 position=255 nodes=20 submissions=1 rc=0
+nested family=36 mode=3 attention=1 heads=2 flags=48 position=255 nodes=11 submissions=1 rc=0
+nested family=36 mode=3 attention=1 heads=2 flags=48 position=255 nodes=11 submissions=1 rc=0
+nested family=36 mode=4 attention=1 heads=2 flags=0 position=255 nodes=9 submissions=1 rc=0
+nested family=36 mode=4 attention=1 heads=2 flags=0 position=255 nodes=9 submissions=1 rc=0
+nested family=36 mode=6 attention=1 heads=2 flags=0 position=255 nodes=6 submissions=1 rc=0
+nested family=36 mode=6 attention=1 heads=2 flags=0 position=255 nodes=6 submissions=1 rc=0
+nested family=36 mode=7 attention=1 heads=2 flags=0 position=255 nodes=2 submissions=1 rc=0
+nested family=36 mode=7 attention=1 heads=2 flags=0 position=255 nodes=2 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=4 position=255 nodes=26 submissions=1 rc=0
+nested family=36 mode=8 attention=1 heads=1 flags=4 position=255 nodes=26 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1290 position=255 nodes=28 submissions=1 rc=0
+nested family=38 mode=2 attention=1 heads=1 flags=1290 position=255 nodes=28 submissions=1 rc=0
+nested family=36 mode=5 attention=0 heads=2 flags=0 position=0 nodes=5 submissions=1 rc=0
+nested family=36 mode=5 attention=0 heads=2 flags=0 position=0 nodes=5 submissions=1 rc=0
+nested family=38 mode=1 attention=0 heads=1 flags=512 position=0 nodes=9 submissions=1 rc=0
+nested family=38 mode=1 attention=0 heads=1 flags=512 position=0 nodes=9 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=0 nodes=24 submissions=1 rc=0
+nested family=36 mode=8 attention=0 heads=1 flags=0 position=0 nodes=24 submissions=1 rc=0
+MODEL-GRAPHS-NESTED PASS cases=64 real-recorders=GDN,attention,FP8,BF16,GEMM,router old-submissions=1 new-submissions=1 plan-word-flip=KILLED
+bash tests/dx/clean_user_cleanup_test.sh
+PASS collision-exit-3
+PASS collision-never-enters-gpu
+PASS collision-only-expected-privilege
+PASS existing-account-untouched
+PASS failure-exit-3
+PASS failure-never-enters-gpu
+PASS failure-only-expected-privilege
+PASS failed-creation-untouched
+PASS created-exit-3
+PASS created-never-enters-gpu
+PASS created-only-expected-privilege
+PASS created-name-nonempty
+PASS owned-process-cleanup
+PASS owned-account-cleanup
+PASS one-owned-account-deletion
+PASS created_again-exit-3
+PASS created_again-never-enters-gpu
+PASS created_again-only-expected-privilege
+PASS distinct-candidate-names
+PASS temp_failure-exit-3
+PASS temp_failure-never-enters-gpu
+PASS temp_failure-only-expected-privilege
+PASS temp-failure-no-privilege
+clean-user cleanup tests: 23 passed, 0 failed (mocked commands only)
+sh tests/dx/hello_sim_test.sh build/hello_gpu build/hello_gpu_control
+mutant timeline-room killed rc=-6
+PASS sim-pass (exit 0)
+PASS sim-checks
+PASS work-line
+PASS hashes-printed
+PASS same-bits-twice
+PASS fault-exit (exit 1)
+PASS fault-report
+PASS fault-address-is-end-of-a
+PASS short-absent-from-default-build (exit 2)
+mutant perm-stride killed rc=-6
+PASS short-exit (exit 1)
+PASS short-report
+PASS past-end-refused-on-gpu (exit 2)
+hello --sim tests: 12 passed, 0 failed
+./build/test_omega_gpu_decode_graph_timeline
+ok   timeline exactly full: 4096 stamped launches read back
+ok   one launch past the timeline: token fails, no write past stamp[]
+test_omega_gpu_decode_graph_timeline: 2 of 2 cases passed: PASS
+MODEL-GRAPHS submissions model=q36 attention=0 generated-words=1 old=1 new=1 fake-platform=1
+MODEL-GRAPHS submissions model=q38 attention=0 generated-words=1 old=1 new=1 fake-platform=1
+MODEL-GRAPHS submissions model=decode attention=0 generated-words=1 old=1 new=1 fake-platform=1
+MODEL-GRAPHS submissions model=q36 attention=1 generated-words=1 old=1 new=1 fake-platform=1
+MODEL-GRAPHS submissions model=q38 attention=1 generated-words=1 old=1 new=1 fake-platform=1
+MODEL-GRAPHS submissions model=decode attention=1 generated-words=1 old=1 new=1 fake-platform=1
+MODEL-GRAPHS command-list PASS cases=150480 record-flip=CAUGHT exact-head=covered standalone-glue=covered nested-ABI=deterministic-host-adapters
+OMEGA_OMC="~/work/cudastack/omega-mv/seed/out/omc" OMEGA_BRIDGE="~/work/cudastack/lanes/GraphsHello-bridge73" CC="cc" python3 om/graph/mutants.py
++ sh om/units.sh
+generating portable unit model_graph_wire (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+mutant room-off-by-one killed
+wrote checked portable Omega units to /tmp/model-graph-mutant-ow2y5ghy/gen
++ cc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc tests/test_model_graphs_om.c /tmp/model-graph-mutant-ow2y5ghy/gen/cudapp_om_model_graph_wire.c -o /tmp/model-graph-mutant-ow2y5ghy/check
++ /tmp/model-graph-mutant-ow2y5ghy/check
+FAIL graph wire kind=1 case=1
+MODEL-GRAPHS mutant low-address-bit KILLED
++ sh om/units.sh
+generating portable unit model_graph_wire (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to /tmp/model-graph-mutant-99f8l5md/gen
++ cc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc tests/test_model_graphs_om.c /tmp/model-graph-mutant-99f8l5md/gen/cudapp_om_model_graph_wire.c -o /tmp/model-graph-mutant-99f8l5md/check
+mutant timeline-after-failure killed
+test-gpu-decode-graph-timeline: 2 of 2 mutants killed
+build/model-graphs-warp-check
+MODEL-GRAPHS gather warp PASS orders=2 rows=4 source-index-mutant-killed=2
+./build/gpu_moe_window_test --host-only
++ /tmp/model-graph-mutant-99f8l5md/check
+FAIL graph wire adapter kind=1 case=1 rc=5 result=0
+MODEL-GRAPHS mutant high-address-shift KILLED
++ sh om/units.sh
+generating portable unit model_graph_wire (bridge-seeded)
+host-only: alignment refusals that need a tensor (col0 % 8, window past n) run in the chip gate
+PASS: 23 checks, 0 failed
+build/hello_gpu-oracle --sim > build/hello-oracle-sim.log
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to /tmp/model-graph-mutant-rna0mrts/gen
++ cc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc tests/test_model_graphs_om.c /tmp/model-graph-mutant-rna0mrts/gen/cudapp_om_model_graph_wire.c -o /tmp/model-graph-mutant-rna0mrts/check
++ /tmp/model-graph-mutant-rna0mrts/check
+FAIL graph wire kind=1 case=32
+MODEL-GRAPHS mutant norm-epsilon-binding KILLED
++ sh om/units.sh
+generating portable unit model_graph_wire (bridge-seeded)
+mutant load-scoreboard killed rc=0
+PASS graph residue: 7 compiled semantic mutants killed
+./build/gpu_decode_graph_test --host-only
+dgraph prefetch 0 (red 0)
+fp8 knobs: variant 1 barrier 0 (wfi+inval_all) cta_budget 0 shape 0/0/0 cached 0
+ok: RES NORM builds (101 instructions, peak 40 registers)
+ok: RES ADD builds (45 instructions, peak 28 registers)
+ok: RES COMBINE|NORM builds (264 instructions, peak 49 registers)
+ok: SWIGLU builds (29 instructions, peak 16 registers)
+ok: ARGMAX identity builds (165 instructions, peak 32 registers)
+ok: ARGMAX indexed builds (160 instructions, peak 40 registers)
+ok: SWIGLU mutant 1 builds (29 instructions, peak 16 registers)
+ok: RES COMBINE|NORM mutant 2 builds (246 instructions, peak 49 registers)
+ok: RES ADD|COMBINE refused by codegen
+ok: fp8 record without a list: BAD_ARGS
+ok: bf16 record without a list: BAD_ARGS
+ok: router record without a list: BAD_ARGS
+ok: decode attn record without a list: BAD_ARGS
+ok: fp8 record with tab_va 0: BAD_ARGS
+ok: bf16 record with x_va 0: BAD_ARGS
+ok: router record with a NULL router: BAD_ARGS
+ok: decode attn record with a NULL cache: BAD_ARGS
+ok: graph create with an empty config: BAD_ARGS
+host-only: 18 checks, 0 failed: PASS
+./build/test_omega_gpu_decode_graph_abort
+ok   visibility sync refused at begin: split + one-shot recover
+generating portable unit revision (bridge-freest)
+ok   device open refused at begin: lock free, reopen recovers
+ok   abort_token: cancel a begun token, nothing submitted
+ok   end_token after a failed record: no submit, lock free
+ok   latched session: begin fails at once, no retry
+test_omega_gpu_decode_graph_abort: 5 of 5 cases passed: PASS
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to /tmp/model-graph-mutant-vu45t2m_/gen
++ cc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc tests/test_model_graphs_om.c /tmp/model-graph-mutant-vu45t2m_/gen/cudapp_om_model_graph_wire.c -o /tmp/model-graph-mutant-vu45t2m_/check
++ /tmp/model-graph-mutant-vu45t2m_/check
+FAIL graph wire kind=2 case=32
+MODEL-GRAPHS mutant swiglu-scale-binding KILLED
++ sh om/units.sh
+generating portable unit model_graph_wire (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+wrote checked portable Omega units to /tmp/model-graph-mutant-icf5m05f/gen
++ cc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc tests/test_model_graphs_om.c /tmp/model-graph-mutant-icf5m05f/gen/cudapp_om_model_graph_wire.c -o /tmp/model-graph-mutant-icf5m05f/check
+gcov -b -c -o build/graph-residue-oracle-test_graph_residue.gcno tests/test_graph_residue.c
+File 'tests/test_graph_residue.c'
+Lines executed:100.00% of 65
+Branches executed:100.00% of 122
+Taken at least once:85.25% of 122
+Calls executed:82.89% of 76
+Creating 'test_graph_residue.c.gcov'
+
+File 'src/omega_gpu_graph_residue.h'
+Lines executed:100.00% of 33
+Branches executed:100.00% of 76
+Taken at least once:94.74% of 76
+Calls executed:50.00% of 4
+Creating 'omega_gpu_graph_residue.h.gcov'
+
+File 'examples/hello_gpu/hello_gpu.c'
+Lines executed:32.20% of 236
+Branches executed:27.33% of 161
+Taken at least once:23.60% of 161
+Calls executed:33.88% of 121
+Creating 'hello_gpu.c.gcov'
+
+File 'tests/bw_warp_sim.h'
+Lines executed:0.00% of 192
+Branches executed:0.00% of 305
+Taken at least once:0.00% of 305
+Calls executed:0.00% of 112
+Creating 'bw_warp_sim.h.gcov'
+
+File 'tests/bw_mufu_ftz.h'
+Lines executed:0.00% of 8
+Branches executed:0.00% of 2
+Taken at least once:0.00% of 2
+Calls executed:0.00% of 6
+Creating 'bw_mufu_ftz.h.gcov'
+
+Lines executed:32.58% of 534
+gcov -b -c -o build/hello_gpu-oracle-hello_gpu.gcno examples/hello_gpu/hello_gpu.c
+File 'examples/hello_gpu/hello_gpu.c'
+Lines executed:73.84% of 237
+Branches executed:74.23% of 163
+Taken at least once:49.08% of 163
+Calls executed:57.02% of 121
+Creating 'hello_gpu.c.gcov'
+
+File 'tests/bw_warp_sim.h'
+Lines executed:50.00% of 192
+Branches executed:56.07% of 305
+Taken at least once:33.11% of 305
+Calls executed:22.32% of 112
+Creating 'bw_warp_sim.h.gcov'
+
+File 'tests/bw_mufu_ftz.h'
+Lines executed:0.00% of 8
+Branches executed:0.00% of 2
+Taken at least once:0.00% of 2
+Calls executed:0.00% of 6
+Creating 'bw_mufu_ftz.h.gcov'
+
+Lines executed:62.01% of 437
++ /tmp/model-graph-mutant-icf5m05f/check
+FAIL graph wire kind=5 case=32
+MODEL-GRAPHS mutant gate-length-binding KILLED
+MODEL-GRAPHS mutants PASS killed=5 compiled=5

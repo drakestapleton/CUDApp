@@ -494,7 +494,7 @@ test-gpu-decode-graph-timeline: $(GPU_DGRAPH_TL_TEST)
 	  if ! grep -q '^FAIL one launch past the timeline' $(GPU_DGRAPH_TL_MUT)/$$name.log; then \
 	    echo "mutant $$name: no FAIL case (did not run?)"; cat $(GPU_DGRAPH_TL_MUT)/$$name.log; exit 1; fi; \
 	  echo "mutant $$name killed"; }; \
-	tmut room-off-by-one 's|(uint32_t)(cnt - from) > room) {|(uint32_t)(cnt - from) > room + 1u) {|'; \
+	tmut room-off-by-one 's|OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1u, \&from)|OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 2u, \&from)|'; \
 	tmut timeline-after-failure 's#if (!g->stamps || g->failed || #if (!g->stamps || #'; \
 	echo "test-gpu-decode-graph-timeline: 2 of 2 mutants killed"
 

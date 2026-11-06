@@ -15,6 +15,7 @@
 #include "omega_gpu_mem_cached.h"
 #include "cudapp_native.h"
 #include "omega_gpu_graph_om.h"
+#include "omega_gpu_graph_residue.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -91,6 +92,7 @@ static int fail(OmegaGpuQ38Graph *g, const char *what, int rc) {
 
 int omega_q38_gather_table(uint32_t q_heads, uint32_t kv_heads, uint32_t *tab) {
     if (!tab || q_heads == 0 || q_heads > 24u || kv_heads == 0 || q_heads % kv_heads != 0) return -1;
+#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
     const uint32_t R = OMEGA_GPU_Q38_ROTARY, QP = q_heads * 512u, KP = QP + kv_heads * 256u;
     const uint32_t qn = q_heads * 256u, kn = kv_heads * 256u, qkv = qn + 2u * kn, mix = (q_heads + kv_heads) * 512u;
     for (uint32_t n = 0; n < mix; n++) {
@@ -101,6 +103,9 @@ int omega_q38_gather_table(uint32_t q_heads, uint32_t kv_heads, uint32_t *tab) {
         else s = ((n - qkv) / 256u) * 512u + 256u + (n - qkv) % 256u;                                    /* gate */
         tab[n] = s;
     }
+#else
+    omega_graph_table(1, q_heads, kv_heads, tab, (q_heads + kv_heads) * 512u);
+#endif
     return 0;
 }
 
@@ -139,32 +144,32 @@ void omega_gpu_q38_graph_free(OmegaGpuQ38Graph *g) {
 
 int omega_gpu_q38_graph_create(const OmegaGpuQ38GraphConfig *cfg, OmegaGpuQ38Graph **out) {
     if (out) *out = NULL;
-    if (!cfg || !out || cfg->layers == 0 || cfg->layers > OMEGA_GPU_Q38_MAX_LAYERS || !cfg->gdn || !cfg->attn || !cfg->lm_head ||
-        cfg->vocab == 0 || cfg->vocab > OMEGA_DEC_ARGMAX_SPAN * OMEGA_DEC_ARGMAX_SPAN) return OMEGA_GPU_DGRAPH_BAD_ARGS;
-    if (cfg->layers < 64u && (cfg->attn_mask >> cfg->layers) != 0) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (!cfg || !out || !cfg->gdn || !cfg->attn || !cfg->lm_head) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    const uint32_t ctas = omega_graph_config(cfg->layers, OMEGA_GPU_Q38_MAX_LAYERS, cfg->vocab,
+        OMEGA_DEC_ARGMAX_SPAN, 1, 1, cfg->attn_mask, 1);
+    if (!ctas) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     /* the shape: zero fields take the 27B values; the widths are capped at the 27B ones (the RES kernel's 1024-lane rows,
      * the SWIGLU / GATE 256-lane grids, the attention kernel's q / kv group) */
-    const uint32_t hd = cfg->hidden ? cfg->hidden : OMEGA_GPU_Q38_HIDDEN, in = cfg->inter ? cfg->inter : OMEGA_GPU_Q38_INTER;
-    const uint32_t qh = cfg->q_heads ? cfg->q_heads : 24u, kvh = cfg->kv_heads ? cfg->kv_heads : 4u, gh = cfg->gdn_heads ? cfg->gdn_heads : 48u;
-    if (hd % 1024u || hd > OMEGA_GPU_Q38_HIDDEN || in == 0 || in % 256u || in > OMEGA_GPU_Q38_INTER || qh > 24u || qh % kvh ||
-        qh / kvh > 8u || (gh != 32u && gh != 48u) || qh * 256u != gh * 128u) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    const uint64_t sc[16] = {cfg->hidden, cfg->inter, cfg->q_heads, cfg->kv_heads, cfg->gdn_heads};
+    uint64_t sd[16];
+    if (!omega_graph_q38(sc, sd)) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    const uint32_t hd=sd[0], in=sd[1], qh=sd[2], kvh=sd[3], gh=sd[4];
     OmegaGpuDecodeAttn256CacheView av;
     if (omega_gpu_decode_attn256_cache_view(cfg->attn, 0, &av) != 0 || av.q_heads != qh || av.kv_heads != kvh) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     uint32_t n = 0, k = 0;
     omega_gpu_bf16_tensor_shape(cfg->lm_head, &n, &k);
-    if (n != cfg->vocab || k != hd) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (!omega_graph_shape(1, n, k, 1, cfg->vocab, hd)) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     OmegaGpuQ38Graph *g = omega_gpu_host_calloc(1, sizeof *g);
     if (!g) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     g->cfg = *cfg;
     g->hd = hd; g->in = in; g->qh = qh; g->kvh = kvh; g->gh = gh;
-    g->gqkv = (32u + gh) * 128u; g->gmix = g->gqkv + gh * 128u; g->ab = 2u * gh;
-    g->amix = (qh + kvh) * 512u; g->aqkv = qh * 256u + kvh * 512u; g->mout = qh * 256u;
-    g->am_ctas = (cfg->vocab + OMEGA_DEC_ARGMAX_SPAN - 1) / OMEGA_DEC_ARGMAX_SPAN;
+    g->gqkv=sd[5]; g->gmix=sd[6]; g->ab=sd[7];
+    g->amix=sd[8]; g->aqkv=sd[9]; g->mout=sd[10];
+    g->am_ctas = ctas;
     g->xq_layer = -1;
-    for (uint32_t l = 0, na = 0, ng = 0; l < cfg->layers; l++) {
-        g->layer[l].attn = (int)((cfg->attn_mask >> l) & 1u);
-        g->layer[l].kind_index = g->layer[l].attn ? na++ : ng++;
-    }
+    uint64_t layer_counts[2] = {0};
+    for (uint32_t l = 0; l < cfg->layers; l++)
+        omega_graph_layer(cfg->attn_mask, l, layer_counts, &g->layer[l].attn, &g->layer[l].kind_index);
     Layout *L = &g->lo;
 #ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
     const uint64_t lc[32]={2,1,cfg->layers,g->am_ctas,H,I,1,g->gqkv,g->mout,g->gmix,g->ab,g->amix,g->mout,0,0,OMEGA_DEC_ARGMAX_SPAN,0,0,COPY_ROW};
@@ -229,7 +234,7 @@ int omega_gpu_q38_graph_create(const OmegaGpuQ38GraphConfig *cfg, OmegaGpuQ38Gra
 
 static int shape_is(const OmegaGpuFp8Tensor *t, uint32_t n, uint32_t k) {
     uint32_t te = 0, tn = 0, tk = 0; if (t) omega_gpu_fp8_tensor_shape(t, &te, &tn, &tk);
-    return t && te == 1 && tn == n && tk == k;
+    return t && omega_graph_shape(te, tn, tk, 1, n, k);
 }
 
 /* the norms and the layer's table row (t: the FP8 entries, or zeros for a bf16 layer) */
@@ -271,7 +276,7 @@ int omega_gpu_q38_graph_set_layer(OmegaGpuQ38Graph *g, uint32_t layer, const Ome
 
 static int bf_shape_is(const OmegaGpuBf16Tensor *t, uint32_t n, uint32_t k) {
     uint32_t tn = 0, tk = 0; if (t) omega_gpu_bf16_tensor_shape(t, &tn, &tk);
-    return t && tn == n && tk == k;
+    return t && omega_graph_shape(1, tn, tk, 1, n, k);
 }
 
 /* the bf16 GEMV stages its whole f32 x row in shared memory, which the launch descriptor caps at 32 KiB: k <= 8192 */
@@ -398,7 +403,11 @@ static int submit_now(OmegaGpuQ38Graph *g) {
         uint64_t tmp[OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1];
         int cnt = omega_gpu_cmdlist_stamps(g->cl, tmp, OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1);
         if (cnt < 0) rc = -1;
-        else { const int from = g->n_stamp == 0 ? 0 : 1; for (int i = from; i < cnt; i++) g->stamp[g->n_stamp++] = tmp[i]; }
+        else { int from = 0;
+            if (!omega_graph_timeline(g->n_stamp, (uint32_t)cnt, OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1u, &from)) {
+                omega_gpu_session_set_error("q38 graph: timeline full"); rc = -1;
+            } else for (int i = from; i < cnt; i++) g->stamp[g->n_stamp++] = tmp[i];
+        }
     }
     g->tagged_in_list = 0;
     omega_gpu_cmdlist_reset(g->cl);

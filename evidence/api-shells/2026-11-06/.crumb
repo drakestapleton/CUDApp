@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "2026-11-06",
+  "purpose": "Host differential, mutant and family-test receipt for the API shell port. Chip tier is not run.",
+  "layer": "evidence"
+}

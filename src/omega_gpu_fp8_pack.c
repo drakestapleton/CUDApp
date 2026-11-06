@@ -4,28 +4,27 @@
  * The weight bytes keep the checkpoint's row-major [n][k] order on the device (a warp reads
  * 32 * lane_bytes contiguous bytes of a row per step), so "packing" is: refuse the two e4m3 NaN
  * codes, convert the bf16 scale grid to f32 times 2^OMEGA_FP8_SCALE_EXP, and stage x as f32 times
- * 2^OMEGA_FP8_X_EXP. All three are exact (powers of two; refused on overflow). */
+ * 2^OMEGA_FP8_X_EXP. All three are exact (powers of two; refused on overflow). The conversions
+ * live in om/api/apish_pack.om; this file copies bytes.
+ */
 #include "omega_gpu_fp8_api.h"
 #include "omega_blackwell_codegen_moe.h"
 #include "omega_blackwell_matmul.h"
 #include "omega_gpu_hostmath.h"
+#include "omega_api_shells.h"
 #include <math.h>
 #include <string.h>
 
 float omega_fp8_e4m3_ref(uint8_t b) {
-    int exponent = (b >> 3) & 0x0f;
-    float mantissa = (float)(b & 0x07);
-    float sign = (b & 0x80) ? -1.0f : 1.0f;
-    if (exponent == 0x0f && (b & 0x07) == 0x07) return NAN; /* 0x7f / 0xff */
-    if (exponent == 0) return sign * mantissa * omega_hostmath_pow2f(-9);
-    return sign * (1.0f + mantissa / 8.0f) * omega_hostmath_pow2f(exponent - 7);
+    uint32_t bits = omega_api_refb(b);
+    float f;
+    memcpy(&f, &bits, 4);
+    return f;
 }
 
-uint32_t omega_fp8_e4m3_kernel_bits(uint8_t b) {
-    return ((uint32_t)(b & 0x7fu) << 20) | ((uint32_t)(b & 0x80u) << 24);
-}
+uint32_t omega_fp8_e4m3_kernel_bits(uint8_t b) { return omega_api_kbits(b); }
 
-int omega_fp8_e4m3_is_nan(uint8_t b) { return (b & 0x7fu) == 0x7fu; }
+int omega_fp8_e4m3_is_nan(uint8_t b) { return omega_api_isnanb(b); }
 
 size_t omega_fp8_pack_scan_nan(const uint8_t *w, size_t count, size_t *first) {
     size_t n = 0;
@@ -35,25 +34,28 @@ size_t omega_fp8_pack_scan_nan(const uint8_t *w, size_t count, size_t *first) {
 }
 
 int omega_fp8_pack_scales(const uint16_t *bf16, size_t count, float *out, int mutant_no_fold) {
-    const float fold = mutant_no_fold ? 1.0f : omega_hostmath_pow2f(OMEGA_FP8_SCALE_EXP);
     for (size_t i = 0; i < count; i++) {
-        float s = omega_bf16_to_fp32(bf16[i]);
-        if (!(fabsf(s) <= 3.0e38f)) return -1; /* NaN or inf scale */
-        float f = s * fold;
-        if (!(fabsf(f) <= 3.0e38f)) return -1; /* fold overflow */
-        out[i] = f;
+        uint32_t bits = 0;
+        if (omega_api_scalef(bf16[i], mutant_no_fold, &bits) != 0) return -1;
+        memcpy(&out[i], &bits, 4);
     }
     return 0;
 }
 
 void omega_fp8_pack_x_f32(const float *x, uint32_t k, float *out) {
-    const float fold = omega_hostmath_pow2f(OMEGA_FP8_X_EXP);
-    for (uint32_t i = 0; i < k; i++) out[i] = x[i] * fold;
+    for (uint32_t i = 0; i < k; i++) {
+        uint32_t bits;
+        memcpy(&bits, &x[i], 4);
+        bits = omega_api_xfold(bits);
+        memcpy(&out[i], &bits, 4);
+    }
 }
 
 void omega_fp8_pack_x_bf16(const uint16_t *x, uint32_t k, float *out) {
-    const float fold = omega_hostmath_pow2f(OMEGA_FP8_X_EXP);
-    for (uint32_t i = 0; i < k; i++) out[i] = omega_bf16_to_fp32(x[i]) * fold;
+    for (uint32_t i = 0; i < k; i++) {
+        uint32_t bits = omega_api_xfold16(x[i]);
+        memcpy(&out[i], &bits, 4);
+    }
 }
 
 void omega_fp8_gemv_oracle(const uint8_t *w, const uint16_t *scale_bf16, uint32_t n, uint32_t k,

@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "api-shells",
+  "purpose": "Host receipts for the kernel-family API shell Omega port",
+  "layer": "evidence"
+}

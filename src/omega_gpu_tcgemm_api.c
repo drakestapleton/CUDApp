@@ -7,6 +7,7 @@
 #include "omega_gpu_native_runtime.h"
 #include "omega_gpu_code_alloc.h"
 #include <string.h>
+#include "omega_api_shells.h"
 #include <stdlib.h>
 
 #define CACHE_SLOTS 8
@@ -68,8 +69,8 @@ void omega_gpu_tcgemm_test_set_mutant(int m) { omega_gpu_session_lock(); g.mutan
 void omega_gpu_tcgemm_spec_for(uint32_t k, uint32_t n, OmegaTcGemmSpec *spec) {
     memset(spec, 0, sizeof *spec);
     spec->k = k;
-    /* 64 rows x 128 columns per CTA, 8 warps (peak 124 registers, declared 128); 64 columns when n is not a multiple of 128 */
-    spec->rt = g.rt ? g.rt : 4u; spec->ct = g.ct ? g.ct : (n % 128u == 0 ? 2u : 1u); spec->warps = g.warps ? g.warps : 8u;
+    omega_api_tcsp(g.rt, g.ct, n, &spec->rt, &spec->ct);
+    spec->warps = omega_api_tcw(g.warps);
     spec->mutant = g.mutant;
 }
 
@@ -84,7 +85,7 @@ static int kernel_for(const OmegaTcGemmSpec *spec, Slot **out, bool *hit) {
     size_t need = cg == 0 ? omega_bw_program_code_bytes(prog) : 0;
     if (cg != 0 || need == 0) { omega_gpu_host_free(prog); omega_gpu_session_set_error("tc gemm codegen refused the shape"); return OMEGA_GPU_TCGEMM_CODEGEN_FAIL; }
     const uint32_t decl = omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage);
-    if (decl > 128u || (uint64_t)32u * spec->warps * decl > 65536u) {
+    if (!omega_api_le128(decl) || !omega_api_regfit(spec->warps, decl)) {
         char e[160]; omega_gpu_fmt(e, sizeof e, "tc gemm kernel: %u warps x %u declared registers do not fit", spec->warps, decl);
         omega_gpu_session_set_error(e); omega_gpu_host_free(prog); return OMEGA_GPU_TCGEMM_TOO_LARGE;
     }

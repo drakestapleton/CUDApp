@@ -10,6 +10,7 @@
 #include "omega_gpu_fmt.h"
 #include "omega_gpu_cmdlist.h"
 #include <math.h>
+#include "omega_api_shells.h"
 #include <string.h>
 
 #define CACHE_SLOTS 8
@@ -86,7 +87,7 @@ void omega_gpu_tern_test_set_mutant(int m) { omega_gpu_session_lock(); g.mutant 
 static uint32_t gpr_declared(uint32_t peak) { return omega_bw_gpr_declared(peak); }
 static bool register_file_fits(uint32_t warps, uint32_t peak) {
     uint32_t decl = gpr_declared(peak);
-    if ((uint64_t)32u * warps * decl <= 65536u) return true;
+    if (omega_api_regfit(warps, decl)) return true;
     char e[160]; omega_gpu_fmt(e, sizeof e, "tern kernel: %u warps x %u declared registers exceed the 65536-register file", warps, decl);
     omega_gpu_session_set_error(e);
     return false;
@@ -100,15 +101,13 @@ int omega_gpu_tern_kernel_fits(const OmegaTernGemvSpec *spec, uint32_t *declared
 
 /* Automatic shape. Defaults from the T0 chip sweep (evidence TERN-T0-*). */
 void omega_gpu_tern_shape_for(uint32_t k, uint32_t layout, uint32_t R, uint32_t *rows, uint32_t *warps, uint32_t *depth, uint32_t *ctas) {
-    uint32_t nch = (k + OMEGA_TERN_CHUNK_MAX - 1u) / OMEGA_TERN_CHUNK_MAX;
-    uint32_t ksc = nch ? k / nch / 256u : 0;
-    uint32_t r = layout == OMEGA_TERN_LAYOUT_BLOCK ? R : (g.rows ? g.rows : 1u);
-    uint32_t d = g.depth ? g.depth : 16u / r;
-    while (d > 1u && (ksc % d || r * d > 16u)) d--;
+    uint32_t r = 0, d = 0, w = 0, c = 0;
+    omega_api_ternd(k, layout == OMEGA_TERN_LAYOUT_BLOCK ? 1u : 0u, R, g.rows, g.depth, &r, &d);
+    omega_api_ternwc(g.warps, g.ctas, &w, &c);
     if (rows) *rows = r;
-    if (warps) *warps = g.warps ? g.warps : DEFAULT_WARPS;
+    if (warps) *warps = w;
     if (depth) *depth = d;
-    if (ctas) *ctas = g.ctas ? g.ctas : DEFAULT_CTAS;
+    if (ctas) *ctas = c;
 }
 
 static int kernel_for(const OmegaTernGemvSpec *spec, Slot **out, bool *hit) {
@@ -139,10 +138,10 @@ static int kernel_for(const OmegaTernGemvSpec *spec, Slot **out, bool *hit) {
     return OMEGA_GPU_TERN_OK;
 }
 
-uint32_t omega_gpu_tern_padded_rows(uint32_t n) { return (n + OMEGA_TERN_ROW_PAD - 1u) / OMEGA_TERN_ROW_PAD * OMEGA_TERN_ROW_PAD; }
+uint32_t omega_gpu_tern_padded_rows(uint32_t n) { return omega_api_pad8(n); }
 
 int omega_gpu_tern_pack(uint32_t n, uint32_t k, const int8_t *w, uint32_t layout, uint32_t R, uint32_t *out, uint32_t n_padded) {
-    if (!w || !out || n == 0 || k % 16u || n_padded < n || n_padded % (2u * (layout == OMEGA_TERN_LAYOUT_BLOCK ? R : 1u))) return OMEGA_GPU_TERN_BAD_ARGS;
+    if (!w || !out || omega_api_tpack(n, k, layout == OMEGA_TERN_LAYOUT_BLOCK ? 1u : 0u, R, n_padded)) return OMEGA_GPU_TERN_BAD_ARGS;
     const uint32_t kw = k / 16u;
     memset(out, 0, (size_t)n_padded * kw * 4u);
     for (uint32_t r = 0; r < n; r++) {
@@ -163,21 +162,21 @@ int omega_gpu_tern_pack(uint32_t n, uint32_t k, const int8_t *w, uint32_t layout
 
 int omega_gpu_tern_segment_bounds(uint32_t n, const OmegaGpuTernSegments *seg, int mutant, uint32_t b[3]) {
     const uint32_t cnt = seg ? seg->count : 1u;
-    if (cnt < 1u || cnt > 4u) return OMEGA_GPU_TERN_BAD_ARGS;
-    for (uint32_t i = 0; i < 3; i++) {
-        if (i + 1u >= cnt) b[i] = n;
-        else if (mutant == 2) b[i] = (i + 1u) * (n / cnt); /* TEST ONLY: ws_idx = r / (n / count) */
-        else b[i] = seg->end[i];
-    }
+    if (omega_api_segend(0, cnt, 1u, 1u, 0u)) return OMEGA_GPU_TERN_BAD_ARGS;
+    for (uint32_t i = 0; i < 3; i++)
+        b[i] = omega_api_segb(i, cnt, n, seg ? seg->end[i] : 0u, mutant == 2 ? 2u : 0u);
     return OMEGA_GPU_TERN_OK;
 }
 
 static int seg_ok(uint32_t n, const OmegaGpuTernSegments *seg) {
     if (!seg) return 1;
-    if (seg->count < 1u || seg->count > 4u || seg->end[seg->count - 1u] != n) return 0;
+    if (omega_api_segend(0, seg->count, 1u, 1u, 0u)) return 0;
+    uint32_t prev = 0;
     for (uint32_t i = 0; i < seg->count; i++) {
-        if (!isfinite(seg->scale[i])) return 0;
-        if (seg->end[i] == 0 || (i && seg->end[i] <= seg->end[i - 1u])) return 0;
+        uint32_t bits;
+        memcpy(&bits, &seg->scale[i], 4);
+        if (!omega_api_finite(bits) || omega_api_segend(i, seg->count, n, seg->end[i], prev)) return 0;
+        prev = seg->end[i];
     }
     return 1;
 }
@@ -190,14 +189,15 @@ uint64_t omega_gpu_tern_tensor_bytes(const OmegaGpuTernTensor *t) { return t ? (
 
 int omega_gpu_tern_tensor_upload(uint32_t n, uint32_t k, const int8_t *w, const OmegaGpuTernSegments *seg, OmegaGpuTernTensor **out) {
     if (out) *out = NULL;
-    if (!w || !out || n == 0 || n > 0x40000000u || k == 0 || k % 256u || !seg_ok(n, seg)) return OMEGA_GPU_TERN_BAD_ARGS;
-    if (k > OMEGA_TERN_MAX_K || (k > OMEGA_TERN_CHUNK_MAX && k % 512u)) return OMEGA_GPU_TERN_TOO_LARGE;
+    uint32_t nk = omega_api_nkbad(n, k);
+    if (!w || !out || nk == 1u || !seg_ok(n, seg)) return OMEGA_GPU_TERN_BAD_ARGS;
+    if (nk == 2u) return OMEGA_GPU_TERN_TOO_LARGE;
     omega_gpu_session_lock();
     const uint32_t layout = g.layout, R = g.block_rows ? g.block_rows : 4u; const int uncached = g.uncached;
     omega_gpu_session_unlock();
-    if (layout > OMEGA_TERN_LAYOUT_BLOCK || (layout == OMEGA_TERN_LAYOUT_BLOCK && R != 2u && R != 4u)) return OMEGA_GPU_TERN_BAD_ARGS;
+    if (omega_api_layok(layout, R)) return OMEGA_GPU_TERN_BAD_ARGS;
     const size_t count = (size_t)n * k;
-    for (size_t i = 0; i < count; i++) if (w[i] < -1 || w[i] > 1) {
+    for (size_t i = 0; i < count; i++) if (!omega_api_tritok((uint8_t)w[i])) {
         char e[120]; omega_gpu_fmt(e, sizeof e, "tern upload: value %d at element %zu is not a trit", (int)w[i], i);
         omega_gpu_session_set_error(e);
         return OMEGA_GPU_TERN_BAD_TRIT;

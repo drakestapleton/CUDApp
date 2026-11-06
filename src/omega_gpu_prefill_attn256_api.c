@@ -6,6 +6,8 @@
  * since training R5). Session use mirrors omega_gpu_prefill_attn_api.c.
  */
 #include "omega_gpu_prefill_attn256_api.h"
+#include "omega_api_shells.h"
+#include "omega_blackwell_codegen_pattn256.h"
 #include "omega_blackwell_codegen_tc.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_cmdlist.h"
@@ -103,7 +105,7 @@ static int kernel_for(unsigned kind, const uint32_t *sh, int rec, Slot **out, bo
     if (cg != 0 || need == 0) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill attn256 codegen refused the spec"); return OMEGA_GPU_DATTN_CODEGEN_FAIL; }
     /* both launches run 256 threads per CTA: the declared registers must fit the 64K register file (CUDA Programming
      * Guide, Compute Capabilities: "maximum number of 32-bit registers per thread block is 64K") */
-    if ((uint64_t)OMEGA_PATTN256_THREADS * omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage) > 65536u) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill attn256: register file"); return OMEGA_GPU_DATTN_TOO_LARGE; }
+    if (!omega_api_regfit(OMEGA_PATTN256_WARPS, omega_bw_gpr_declared(prog->regalloc.peak_gpr_usage))) { omega_gpu_host_free(prog); omega_gpu_session_set_error("prefill attn256: register file"); return OMEGA_GPU_DATTN_TOO_LARGE; }
     const uint32_t insns = (uint32_t)prog->count;
     OmegaGpuMem code;
     if (omega_gpu_session_alloc_code(need, &code) != 0) { omega_gpu_host_free(prog); return OMEGA_GPU_DATTN_CHIP_FAIL; }
@@ -119,7 +121,7 @@ static int kernel_for(unsigned kind, const uint32_t *sh, int rec, Slot **out, bo
 }
 
 /* q heads: a token pair of q' takes q_heads * 1024 bytes (OMEGA_PATTN256_QF_OFF_SHAPE) */
-static size_t qf_bytes(uint32_t rows, uint32_t q_heads) { return (size_t)((rows + 1u) / 2u) * q_heads * 1024u; }
+static size_t qf_bytes(uint32_t rows, uint32_t q_heads) { return (size_t)omega_api_qfbyt(rows, q_heads); }
 static int qf_locked(size_t need) {
     if (g.have_qf && g.qf_size >= need) return 0;
     if (g.have_qf) { omega_gpu_session_free(&g.qf); g.have_qf = false; g.qf_size = 0; }
@@ -129,7 +131,7 @@ static int qf_locked(size_t need) {
 }
 int omega_gpu_prefill_attn256_reserve(uint32_t max_m) { return omega_gpu_prefill_attn256_reserve_for(NULL, max_m); }
 int omega_gpu_prefill_attn256_reserve_for(const OmegaGpuDecodeAttn256Cache *c, uint32_t max_m) {
-    if (max_m == 0 || max_m > OMEGA_GPU_PATTN256_MAX_M) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (omega_api_pa256b(max_m, 0, OMEGA_GPU_PATTN256_MAX_M)) return OMEGA_GPU_DATTN_BAD_ARGS;
     OmegaGpuDecodeAttn256CacheView v;
     if (c && omega_gpu_decode_attn256_cache_view(c, 0, &v) != OMEGA_GPU_DATTN_OK) return OMEGA_GPU_DATTN_BAD_ARGS;
     const uint32_t shv[3] = { c ? v.q_heads : OMEGA_DATTN256_Q_HEADS, c ? v.kv_heads : OMEGA_DATTN256_KV_HEADS, c ? v.q_per_cta : OMEGA_DATTN256_Q_PER_KV };
@@ -160,8 +162,9 @@ static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, ui
     if (copy_ns) *copy_ns = 0;
     const int host = qkv != NULL;
     OmegaGpuDecodeAttn256CacheView v;
-    if (!c || m == 0 || m > OMEGA_GPU_PATTN256_MAX_M || omega_gpu_decode_attn256_cache_view(c, layer, &v) != OMEGA_GPU_DATTN_OK ||
-        pos0 > v.max_pos || m > v.max_pos - pos0 || (host ? !out : (!qkv_va || !out_va || (qkv_va & 15u) || (out_va & 15u)))) return OMEGA_GPU_DATTN_BAD_ARGS;
+    if (!c || omega_gpu_decode_attn256_cache_view(c, layer, &v) != OMEGA_GPU_DATTN_OK ||
+        omega_api_pa256b(m, pos0, v.max_pos) ||
+        (host ? !out : (!qkv_va || !out_va || !omega_api_alignok((uint32_t)qkv_va, 15u) || !omega_api_alignok((uint32_t)out_va, 15u)))) return OMEGA_GPU_DATTN_BAD_ARGS;
     const uint32_t sh[3] = { v.q_heads, v.kv_heads, v.q_per_cta }, QKVW = v.qkv_words, OUTW = v.out_words;
     if (!rec) omega_gpu_session_lock();
 #define UNLOCK() do { if (!rec) omega_gpu_session_unlock(); } while (0)
@@ -179,14 +182,14 @@ static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, ui
     if (rec) { if (!g.have_qf || g.qf_size < qf_bytes(m, v.q_heads)) { omega_gpu_session_set_error("prefill attn256 record: q' scratch not reserved for m tokens"); return OMEGA_GPU_DATTN_TOO_LARGE; } }
     else if (qf_locked(qf_bytes(m, v.q_heads)) != 0) { UNLOCK(); return OMEGA_GPU_DATTN_CHIP_FAIL; }
     if (host) {
-        if (bufs_locked((size_t)m * QKVW * 4u, (size_t)m * OUTW * 4u) != 0) { UNLOCK(); return OMEGA_GPU_DATTN_CHIP_FAIL; }
-        memcpy(g.qkv.cpu, qkv, (size_t)m * QKVW * 4u);
+        if (bufs_locked((size_t)omega_api_hostb(m, QKVW), (size_t)omega_api_hostb(m, OUTW)) != 0) { UNLOCK(); return OMEGA_GPU_DATTN_CHIP_FAIL; }
+        memcpy(g.qkv.cpu, qkv, (size_t)omega_api_hostb(m, QKVW));
         float *od = g.out.cpu;
         for (size_t i = 0; i < (size_t)m * OUTW; i++) od[i] = POISON_F32;
         if (omega_gpu_session_sync_to_gpu(&g.qkv) != 0 || omega_gpu_session_sync_to_gpu(&g.out) != 0) rc = OMEGA_GPU_DATTN_CHIP_FAIL;
         qkv_va = g.qkv.va; out_va = g.out.va;
     }
-    const uint32_t kvs = v.max_pos * OMEGA_DATTN256_ROW_BYTES, gx_att = (m + OMEGA_PATTN256_TOKENS - 1u) / OMEGA_PATTN256_TOKENS;
+    const uint32_t kvs = omega_api_kvsb(v.max_pos), gx_att = omega_api_gxatt(m);
     float fe = eps, f1 = 1.0f, fo = out_scale, fq = (float)(0.0625 * 1.4426950408889634); /* log2(e) / sqrt(256) */
     uint32_t ue, u1, uo, uq; memcpy(&ue, &fe, 4); memcpy(&u1, &f1, 4); memcpy(&uo, &fo, 4); memcpy(&uq, &fq, 4);
     uint32_t ap[OMEGA_DATTN256_ARGS_WORDS], aa[OMEGA_PATTN256_ARGS_WORDS];
@@ -197,9 +200,11 @@ static int core(OmegaGpuDecodeAttn256Cache *c, uint32_t layer, uint32_t pos0, ui
     A64(aa, 0, g.qf.va); A64(aa, 2, v.k_va); A64(aa, 4, v.v_va); A64(aa, 6, out_va);
     aa[8] = pos0; aa[9] = m; aa[10] = kvs; aa[11] = uo;
 #undef A64
+    uint32_t grid_y = 0;
+    if (omega_api_qydiv(v.q_heads, v.q_per_cta, &grid_y)) { UNLOCK(); return OMEGA_GPU_DATTN_BAD_ARGS; }
     OmegaGpuLaunch L[KK_N] = {
         { .code_va = ks[KK_PREP]->code.va, .gpr_count = omega_bw_gpr_declared(ks[KK_PREP]->kernel.gpr_count),
-          .threads_x = OMEGA_PATTN256_THREADS, .threads_y = 1, .grid_x = m, .grid_y = v.q_heads / v.q_per_cta,
+          .threads_x = OMEGA_PATTN256_THREADS, .threads_y = 1, .grid_x = m, .grid_y = grid_y,
           .num_elements = (size_t)m * QKVW, .args = ap, .n_args = OMEGA_DATTN256_ARGS_WORDS, .timeout_ms = MARKER_TIMEOUT_MS,
           .shared_bytes = OMEGA_DATTN256_SHARED_BYTES },
         { .code_va = ks[KK_ATTEND]->code.va, .gpr_count = omega_bw_gpr_declared(ks[KK_ATTEND]->kernel.gpr_count),

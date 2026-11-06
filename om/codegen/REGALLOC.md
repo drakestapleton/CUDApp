@@ -40,6 +40,21 @@ regenerates byte for byte.
 | cg_matmul_frag.om | src/cudapp_om_cg_matmul_frag.c | omega_cg_frag |
 | cg_matmul_block.om | src/cudapp_om_cg_matmul_block.c | omega_cg_block |
 | cg_vecadd.om | src/cudapp_om_cg_vecadd.c | omega_cg_vec |
+| bw_hazard.om | src/cudapp_om_bw_hazard.c | omega_hz_chk |
+| bw_hazard.om + bw_hazard_dec.om | src/cudapp_om_bw_hazard_dec.c | omega_hz_dec |
+| cg_bind.om | src/cudapp_om_cg_bind.c | omega_cg_bind |
+
+`bw_hazard.om` is the SM121 hazard decoder and checker behind
+`src/omega_bw_hazard.c` (C oracle: `CUDAPP_MIGRATION_PENDING_C_HAZARD`). The
+portable bridge needs fixed-size views, so the checker takes a 32768-byte code
+view (2048 instructions) and a 3203584-word state; longer code is refused,
+where the C accepted it. `cg_bind.om` owns the matmul spec bytes, the
+realization binding message, the machine descriptor, matmul dispatch, vector
+launch geometry, program padding, buffer fit and the code-digest admission
+used by `omega_blackwell_matmul.c`, `omega_blackwell_realize.c`,
+`omega_blackwell_codegen.c` and `omega_blackwell_encoder.c` through
+`src/omega_bw_bind.h` (C oracle: `CUDAPP_MIGRATION_PENDING_C_BIND`). The C
+keeps memory, structs and SHA-256.
 
 The portable bridge has no integer-to-integer bitcast. `regalloc.om` stores
 signed words through `ra_u2l`/`ra_l2u`, a portable two's-complement
@@ -59,6 +74,7 @@ failure is not counted as detection.
 Pinned seeded compiler: omega-mv e5b32567, omc SHA-256
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
 
-See `evidence/regalloc-om/2026-11-06/README.md` for measured results and the
+See `evidence/regalloc-om/2026-11-06/README.md` and
+`evidence/regalloc-om/2026-11-06-rest/README.md` for measured results and the
 remaining unported assigned files. This is not a claim that all CUDApp CUDA
 replacement work is complete.

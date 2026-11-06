@@ -5,6 +5,7 @@
 #include "omega_path_check.h"
 #include <string.h>
 #include "cudapp_native.h"
+#include "omega_bw_bind.h"
 /* The seeded allocator and matmul builders run through portable generated C (om/units.sh), which still uses
  * hosted trap handling; the freestanding build keeps the migration-pending C, as the encoder does below. */
 #if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC)
@@ -1536,10 +1537,15 @@ static int bw_encode_program_bytes(const BlackwellIRProgram *prog, uint8_t *code
 int omega_bw_encode_program(const BlackwellIRProgram *prog, uint8_t *code_buf, size_t max_len, size_t *out_len) {
     if (!prog || !code_buf || !out_len) return -1;
 
+#ifndef BW_BIND_C_PRIMARY
+    uint8_t bw[256] = {0};
+    size_t req_bytes = (size_t)omega_bw_bind(5, (uint64_t)prog->count, 0, bw);
+#else
     size_t padded_insns = (prog->count + 7) & ~7ULL;
     if (padded_insns < 32) padded_insns = 32;
 
     size_t req_bytes = padded_insns * 16;
+#endif
     if (max_len < req_bytes) return -1;
 
     if (bw_encode_program_bytes(prog, code_buf, req_bytes) != 0) return -1;
@@ -1739,9 +1745,14 @@ int omega_blackwell_codegen_matmul_i32_prog(const OmegaMatMulSpec *s, BlackwellI
  * compares them). */
 size_t omega_bw_program_code_bytes(const BlackwellIRProgram *prog) {
     if (!prog) return 0;
+#ifndef BW_BIND_C_PRIMARY
+    uint8_t w[256] = {0};
+    return (size_t)omega_bw_bind(5, (uint64_t)prog->count, 0, w);
+#else
     size_t padded_insns = (prog->count + 7) & ~(size_t)7;
     if (padded_insns < 32) padded_insns = 32;
     return padded_insns * 16;
+#endif
 }
 
 int omega_blackwell_kernel_encode_into(const BlackwellIRProgram *prog, uint8_t *code_buf, size_t code_cap,
@@ -1749,6 +1760,16 @@ int omega_blackwell_kernel_encode_into(const BlackwellIRProgram *prog, uint8_t *
     if (!kernel) return -1;
     memset(kernel, 0, sizeof *kernel);
     if (!prog || !code_buf) return -1;
+#ifndef BW_BIND_C_PRIMARY
+    uint8_t w[256] = {0};
+    /* refused before any byte is written */
+    if (omega_bw_bind(6, (uint64_t)prog->count, code_cap, w) == -2) return OMEGA_BW_CODE_BUFFER_TOO_SMALL;
+    size_t emitted_size = 0;
+    if (omega_bw_encode_program(prog, code_buf, code_cap, &emitted_size) != 0) return -1;
+    kernel->code = code_buf;
+    kernel->code_size = emitted_size;
+    kernel->insn_count = (size_t)omega_bw_bind(8, emitted_size, 0, w);
+#else
     size_t need = omega_bw_program_code_bytes(prog);
     if (code_cap < need) return OMEGA_BW_CODE_BUFFER_TOO_SMALL; /* refused before any byte is written */
     size_t emitted_size = 0;
@@ -1756,6 +1777,7 @@ int omega_blackwell_kernel_encode_into(const BlackwellIRProgram *prog, uint8_t *
     kernel->code = code_buf;
     kernel->code_size = emitted_size;
     kernel->insn_count = emitted_size / 16;
+#endif
     kernel->gpr_count = prog->regalloc.peak_gpr_usage;
     kernel->uniform_gpr_count = prog->regalloc.peak_ugpr_usage;
     sha256_hash(kernel->code, kernel->code_size, kernel->code_digest);

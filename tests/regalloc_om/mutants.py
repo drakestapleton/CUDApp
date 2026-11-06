@@ -17,14 +17,21 @@ OMC = Path(ENV.get('OMEGA_OMC', str(Path.home() / 'work/cudastack/omega-mv/seed/
 BRIDGE = Path(ENV.get('OMEGA_BRIDGE', str(Path.home() / 'work/cudastack/omega-bridge')))
 CC = ENV.get('CC', 'cc')
 UNITS = ['regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_params', 'cg_matmul_i32',
-         'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block', 'cg_vecadd']
+         'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block', 'cg_vecadd', 'cg_bind',
+         'bw_hazard', 'bw_hazard_dec']
 FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c']
 FLAGS = ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections', '-Isrc']
 LINK = {
     'liveness': ['tests/regalloc_om/liveness.c', str(OUT / 'successor.o'), 'src/omega_gpu_om_ir.c'],
     'differential': ['tests/regalloc_om/differential.c', str(OUT / 'oracle.o'), str(OUT / 'successor.o'),
                      'src/omega_gpu_om_ir.c', 'src/omega_blackwell_matmul.c', 'src/sha256.c'],
+    'hazard': ['tests/regalloc_om/hazard_diff.c', str(OUT / 'hz_oracle.o'), 'src/omega_bw_hazard.c'],
+    'bind': ['tests/regalloc_om/bind_diff.c', str(OUT / 'bind_oracle_matmul.o'), str(OUT / 'bind_oracle_realize.o'),
+             str(OUT / 'oracle.o'), str(OUT / 'successor.o'), 'src/omega_blackwell_matmul.c',
+             'src/omega_blackwell_realize.c', 'src/omega_blackwell_encoder.c', 'src/omega_gpu_om_ir.c', 'src/sha256.c'],
 }
+# om/units.sh concatenates these parts after the mutated file into a second generated unit.
+TAILS = {'bw_hazard.om': [('bw_hazard_dec', 'bw_hazard_dec.om')]}
 CASES = [
     ('pair-alignment', 'regalloc.om', 'step = 2\n', 'step = 1\n', 'random'),
     ('reserved-gpr', 'regalloc.om', 'start = long 2\n', 'start = long 0\n', 'random'),
@@ -36,6 +43,15 @@ CASES = [
     ('v159-boundary', 'regalloc_live.om', 'if and eq a 1 gt b 160\n', 'if and eq a 1 ge b 160\n', 'live'),
     ('override-ignored', 'cg_matmul_loop.om', 'put m ulong 7 ulong 1\n', 'put m ulong 7 ulong 0\n', 'builders'),
     ('override-shortened', 'cg_matmul_loop.om', 'put m add ulong 352 r x\n', 'put m add ulong 352 r sub x ulong 1\n', 'builders'),
+    ('spec-m-limit', 'cg_bind.om', 'gt m 8192 ', 'gt m 8193 ', 'bind'),
+    ('spec-precision-byte', 'cg_bind.om', 'cb_le32 w 12 and p 255\n', 'cb_le32 w 12 and p 65535\n', 'bind'),
+    ('dispatch-bf16', 'cg_bind.om', 'if or eq p 1 eq p 2\n', 'if eq p 1\n', 'bind'),
+    ('vector-ceil-div', 'cg_bind.om', 'g = div add c uint 63 uint 64\n', 'g = div add c uint 62 uint 64\n', 'bind'),
+    ('pad-minimum', 'cg_bind.om', 'if lt p 32\n', 'if lt p 16\n', 'bind'),
+    ('fit-boundary', 'cg_bind.om', 'if lt b need\n', 'if le b need\n', 'bind'),
+    ('hazard-size-6', 'bw_hazard.om', 'ret long 4\n', 'ret long 8\n', 'hazard'),
+    ('hazard-op-2433', 'bw_hazard.om', 'if eq op 2433\n', 'if eq op 2434\n', 'hazard'),
+    ('arch-le', 'cg_bind.om', 'cb_le32 w 96 and a 4294967295\n', 'cb_le32 w 96 and a 255\n', 'bind'),
 ]
 
 
@@ -72,8 +88,18 @@ def main():
                                 env=dict(ENV, OMEGA_SEEDED_OMC=str(OMC)), stdout=c, stderr=log).returncode
         if rc:
             raise RuntimeError(f'{name}: NOT_KILLED compiler rc={rc}, see {work}/compile.log')
-        target = 'liveness' if mode == 'live' else 'differential'
-        units = [str(generated) if u == stem else f'src/cudapp_om_{u}.c' for u in UNITS]
+        regenerated = {stem: generated}
+        for tail_stem, tail in TAILS.get(unit, []):
+            tail_om = work / f'{tail_stem}.om'
+            tail_om.write_text(mutated.read_text() + (ROOT / 'om/codegen' / tail).read_text())
+            regenerated[tail_stem] = work / f'cudapp_om_{tail_stem}.c'
+            with regenerated[tail_stem].open('w') as c, (work / 'compile.log').open('a') as log:
+                rc = subprocess.run(['sh', str(BRIDGE / 'tools/bridge-seeded'), 'c', str(tail_om)], cwd=ROOT,
+                                    env=dict(ENV, OMEGA_SEEDED_OMC=str(OMC)), stdout=c, stderr=log).returncode
+            if rc:
+                raise RuntimeError(f'{name}: NOT_KILLED compiler rc={rc}, see {work}/compile.log')
+        target = {'live': 'liveness', 'hazard': 'hazard', 'bind': 'bind'}.get(mode, 'differential')
+        units = [str(regenerated[u]) if u in regenerated else f'src/cudapp_om_{u}.c' for u in UNITS]
         binary = work / target
         rc = run([CC, *FLAGS, *LINK[target], *units, *FIXED, '-Wl,--gc-sections', '-o', str(binary)], work / 'link.log')
         if rc:

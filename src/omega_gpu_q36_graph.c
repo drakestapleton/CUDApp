@@ -16,6 +16,7 @@
 #include "omega_gpu_q36_native.h"
 #include "omega_gpu_cmdlist_native.h"
 #include "omega_gpu_graph_om.h"
+#include "omega_gpu_graph_residue.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -142,6 +143,7 @@ static int q36_unpaired_moe_refused(OmegaGpuQ36Graph *g) {
 }
 
 void omega_q36_gather_table(uint32_t *tab) {
+#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
     const uint32_t R = OMEGA_GPU_Q36_ROTARY, QP = 16u * 512u, KP = QP + 2u * 256u;
     for (uint32_t n = 0; n < OMEGA_GPU_Q36_ATT_MIX; n++) {
         uint32_t s;
@@ -151,16 +153,23 @@ void omega_q36_gather_table(uint32_t *tab) {
         else s = ((n - 5120u) / 256u) * 512u + 256u + (n - 5120u) % 256u;                            /* gate */
         tab[n] = s;
     }
+#else
+    omega_graph_table(1, 16, 2, tab, OMEGA_GPU_Q36_ATT_MIX);
+#endif
 }
 
 /* lock held */
 /* GATHER table of the FP8 GEMM's x' lane layout (omega_fp8gemm_permute_x, lane bytes 16: k a multiple of 512): permuted index
  * i = s*512 + (w*32 + L)*4 + e holds source column c = s*512 + L*16 + w*4 + e, so tab[i] = c. */
 void omega_q36_perm_table(uint32_t *tab, uint32_t k) {
+#if CUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE
     for (uint32_t s0 = 0; s0 < k; s0 += 512u)
         for (uint32_t L = 0; L < 32u; L++)
             for (uint32_t w = 0; w < 4u; w++)
                 for (uint32_t e = 0; e < 4u; e++) tab[s0 + (w * 32u + L) * 4u + e] = s0 + L * 16u + w * 4u + e;
+#else
+    omega_graph_table(0, 0, 0, tab, k);
+#endif
 }
 
 static void write_dense_segments(OmegaGpuQ36Graph *g, uint32_t heads);
@@ -203,23 +212,22 @@ int omega_gpu_q36_graph_create(const OmegaGpuQ36GraphConfig *cfg, OmegaGpuQ36Gra
 
 int omega_gpu_q36_graph_create_heads(const OmegaGpuQ36GraphConfig *cfg, uint32_t heads, OmegaGpuQ36Graph **out) {
     if (out) *out = NULL;
-    if (heads == 0 || heads > OMEGA_GPU_Q36_MAX_HEADS) return OMEGA_GPU_DGRAPH_BAD_ARGS;
-    if (!cfg || !out || cfg->layers == 0 || cfg->layers > OMEGA_GPU_Q36_MAX_LAYERS || !cfg->gdn || !cfg->attn || !cfg->router || !cfg->lm_head ||
-        cfg->vocab == 0 || cfg->vocab > OMEGA_DEC_ARGMAX_SPAN * OMEGA_DEC_ARGMAX_SPAN) return OMEGA_GPU_DGRAPH_BAD_ARGS;
-    if (cfg->layers < 64u && (cfg->attn_mask >> cfg->layers) != 0) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (!cfg || !out || !cfg->gdn || !cfg->attn || !cfg->router || !cfg->lm_head) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    const uint32_t ctas = omega_graph_config(cfg->layers, OMEGA_GPU_Q36_MAX_LAYERS, cfg->vocab,
+        OMEGA_DEC_ARGMAX_SPAN, heads, OMEGA_GPU_Q36_MAX_HEADS, cfg->attn_mask, 1);
+    if (!ctas) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     uint32_t n = 0, k = 0;
     omega_gpu_bf16_tensor_shape(cfg->lm_head, &n, &k);
-    if (n != cfg->vocab || k != H) return OMEGA_GPU_DGRAPH_BAD_ARGS;
+    if (!omega_graph_shape(1, n, k, 1, cfg->vocab, H)) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     OmegaGpuQ36Graph *g = omega_gpu_host_calloc(1, sizeof *g);
     if (!g) return OMEGA_GPU_DGRAPH_BAD_ARGS;
     g->cfg = *cfg;
-    g->am_ctas = (cfg->vocab + OMEGA_DEC_ARGMAX_SPAN - 1) / OMEGA_DEC_ARGMAX_SPAN;
+    g->am_ctas = ctas;
     g->heads = heads; g->gdn_h[0] = cfg->gdn; g->attn_h[0] = cfg->attn;
     for (uint32_t h = 0; h < OMEGA_GPU_Q36_MAX_HEADS; h++) g->xq_layer[h] = -1;
-    for (uint32_t l = 0, na = 0, ng = 0; l < cfg->layers; l++) {
-        g->layer[l].attn = (int)((cfg->attn_mask >> l) & 1u);
-        g->layer[l].kind_index = g->layer[l].attn ? na++ : ng++;
-    }
+    uint64_t layer_counts[2] = {0};
+    for (uint32_t l = 0; l < cfg->layers; l++)
+        omega_graph_layer(cfg->attn_mask, l, layer_counts, &g->layer[l].attn, &g->layer[l].kind_index);
     Layout *L = &g->lo;
 #ifndef CUDAPP_MIGRATION_PENDING_C_GRAPHS
     const uint64_t lc[32]={1,heads,cfg->layers,g->am_ctas,H,EI,NG,0,0,OMEGA_GPU_Q36_GDN_MIX,OMEGA_GPU_Q36_AB,OMEGA_GPU_Q36_ATT_MIX,OMEGA_GPU_Q36_MIXER_OUT,omega_gpu_router_layout_bytes(cfg->router),OMEGA_GEMM_SEG_BYTES,OMEGA_DEC_ARGMAX_SPAN,OMEGA_GPU_Q36_MAX_HEADS,OMEGA_DEC_GR_PAD,COPY_ROW,TOKEN_STRIDE};
@@ -317,7 +325,7 @@ int omega_gpu_q36_graph_create_heads(const OmegaGpuQ36GraphConfig *cfg, uint32_t
 
 static int shape_e(const OmegaGpuFp8Tensor *t, uint32_t e, uint32_t n, uint32_t k) {
     uint32_t te = 0, tn = 0, tk = 0; if (t) omega_gpu_fp8_tensor_shape(t, &te, &tn, &tk);
-    return t && te == e && tn == n && tk == k;
+    return t && omega_graph_shape(te, tn, tk, e, n, k);
 }
 static int shape_is(const OmegaGpuFp8Tensor *t, uint32_t n, uint32_t k) { return shape_e(t, 1, n, k); }
 #define N_EXPERTS 257u /* routed experts + the shared one (the router's directory) */
@@ -449,7 +457,11 @@ static int submit_now(OmegaGpuQ36Graph *g) {
         uint64_t tmp[OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1];
         int cnt = omega_gpu_cmdlist_stamps(g->cl, tmp, OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1);
         if (cnt < 0) rc = -1;
-        else { const int from = g->n_stamp == 0 ? 0 : 1; for (int i = from; i < cnt && g->n_stamp <= OMEGA_GPU_CMDLIST_MAX_LAUNCHES; i++) g->stamp[g->n_stamp++] = tmp[i]; }
+        else { int from = 0;
+            if (!omega_graph_timeline(g->n_stamp, (uint32_t)cnt, OMEGA_GPU_CMDLIST_MAX_LAUNCHES + 1u, &from)) {
+                omega_gpu_session_set_error("q36 graph: timeline full"); rc = -1;
+            } else for (int i = from; i < cnt; i++) g->stamp[g->n_stamp++] = tmp[i];
+        }
     }
     g->tagged_in_list = 0;
     omega_gpu_cmdlist_reset(g->cl);

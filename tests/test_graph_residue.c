@@ -60,7 +60,8 @@ int main(void) {
         int from=0;word(omega_graph_timeline(used,count,4097,&from));word(from);
     }
     {int from=0;assert(omega_graph_timeline(4096,2,4097,&from)&&from==1);
-     assert(!omega_graph_timeline(4097,2,4097,&from));}
+     assert(!omega_graph_timeline(4097,2,4097,&from)&&from==1);
+     from=7;assert(!omega_graph_timeline(4098,1,4097,&from)&&from==7);}
     printf("timeline digest %016llx\n",(unsigned long long)digest);
     for(unsigned peak=0;peak<=260;peak++) for(unsigned limit=0;limit<=260;limit++)
         for(int ok=0;ok<2;ok++) word(omega_graph_budget(peak,limit,BW_PHYS_GPR_MAX,BW_PHYS_GPR_HW_LIMIT,ok));

@@ -2,6 +2,10 @@
 /* omega_blackwell_codegen_qg.c: native FP8 prefill kernels (W-L1G). See the header. */
 #include "omega_blackwell_codegen_qg.h"
 #include "cudapp_native.h"
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_QG
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_QG 0
+#endif
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_QG
 #include "omega_bw_em.h"
 #include "omega_bw_em_q.h"
 
@@ -315,3 +319,33 @@ int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgr
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
 }
+#else /* default: first-party seeded Omega; C above is differential-only */
+#include "omega_codegen_rest_wire.h"
+int omega_pq_spec_ok(const OmegaPqSpec *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_qg_wire, 0, s, NULL, meta) != 0) return 0;
+    return (int)(int64_t)meta[48];
+}
+int omega_blackwell_codegen_pq_prog(const OmegaPqSpec *spec, BlackwellIRProgram *prog) {
+    return omega_gpu_om_ir_replay(omega_rest_qg_wire, 1, (uintptr_t)spec, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+int omega_qg_spec_ok(const OmegaQgSpec *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_qg_wire, 2, s, NULL, meta) != 0) return 0;
+    return (int)(int64_t)meta[48];
+}
+uint32_t omega_qg_shared_bytes(const OmegaQgSpec *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_qg_wire, 3, s, NULL, meta) != 0) return 0;
+    return (uint32_t)(int64_t)meta[48];
+}
+uint32_t omega_qg_span(const OmegaQgSpec *s) {
+    uint64_t meta[OMEGA_OM_IR_META] = {0};
+    if (omega_rest_query(omega_rest_qg_wire, 4, s, NULL, meta) != 0) return 0;
+    return (uint32_t)(int64_t)meta[48];
+}
+int omega_blackwell_codegen_qgemm_prog(const OmegaQgSpec *spec, BlackwellIRProgram *prog) {
+    return omega_gpu_om_ir_replay(omega_rest_qg_wire, 5, (uintptr_t)spec, 0, 0, prog, NULL) == 0 ? 0 : -1;
+}
+#endif /* CUDAPP_MIGRATION_PENDING_C_CODEGEN_QG */
+

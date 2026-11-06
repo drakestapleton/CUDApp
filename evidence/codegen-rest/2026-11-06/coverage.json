@@ -1,0 +1,1213 @@
+[
+  {
+    "file": "src/omega_blackwell_codegen_attn256.c",
+    "compiler": "13.3.0",
+    "lines_covered": 515,
+    "lines_total": 516,
+    "branches_covered": 267,
+    "branches_total": 294,
+    "uncovered": [
+      {
+        "line": 37,
+        "function": "emit",
+        "branches": [
+          11
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 45,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 49,
+        "function": "emit",
+        "branches": [],
+        "line_covered": false
+      },
+      {
+        "line": 51,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 59,
+        "function": "V",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 60,
+        "function": "V64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 61,
+        "function": "V128",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 62,
+        "function": "UV64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 113,
+        "function": "patch_bra",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 121,
+        "function": "tail",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 123,
+        "function": "loop_begin",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 125,
+        "function": "loop_end",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 130,
+        "function": "loop_end",
+        "branches": [
+          7
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 154,
+        "function": "legacy_omega_dattn256_shape",
+        "branches": [
+          1,
+          7
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 199,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 209,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 215,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 256,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 318,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 320,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 333,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 370,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 384,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 492,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 495,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 586,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 642,
+        "function": "legacy_omega_blackwell_codegen_decode_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      }
+    ]
+  },
+  {
+    "file": "src/omega_blackwell_codegen_pattn256.c",
+    "compiler": "13.3.0",
+    "lines_covered": 279,
+    "lines_total": 280,
+    "branches_covered": 161,
+    "branches_total": 192,
+    "uncovered": [
+      {
+        "line": 38,
+        "function": "emit",
+        "branches": [
+          11
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 46,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 47,
+        "function": "emit",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 50,
+        "function": "emit",
+        "branches": [],
+        "line_covered": false
+      },
+      {
+        "line": 52,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 60,
+        "function": "V",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 61,
+        "function": "V64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 62,
+        "function": "V128",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 63,
+        "function": "UV64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 112,
+        "function": "patch_bra",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 119,
+        "function": "tail",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 121,
+        "function": "loop_begin",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 123,
+        "function": "loop_end",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 128,
+        "function": "loop_end",
+        "branches": [
+          1,
+          7
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 139,
+        "function": "hmma",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 143,
+        "function": "nop",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 150,
+        "function": "lds_pf",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 162,
+        "function": "legacy_omega_pattn256_shape",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 175,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 179,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 187,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 200,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 207,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 209,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 234,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 236,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 265,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 303,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 350,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 381,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 382,
+        "function": "legacy_omega_blackwell_codegen_prefill_attn256_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      }
+    ]
+  },
+  {
+    "file": "src/omega_blackwell_codegen_router.c",
+    "compiler": "13.3.0",
+    "lines_covered": 340,
+    "lines_total": 341,
+    "branches_covered": 236,
+    "branches_total": 260,
+    "uncovered": [
+      {
+        "line": 36,
+        "function": "emit",
+        "branches": [
+          11
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 44,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 48,
+        "function": "emit",
+        "branches": [],
+        "line_covered": false
+      },
+      {
+        "line": 50,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 58,
+        "function": "V",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 59,
+        "function": "V64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 60,
+        "function": "V128",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 61,
+        "function": "UV64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 107,
+        "function": "patch_bra",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 115,
+        "function": "tail",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 117,
+        "function": "loop_begin",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 119,
+        "function": "loop_end",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 124,
+        "function": "loop_end",
+        "branches": [
+          7
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 191,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 196,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 223,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 236,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 238,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 265,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 306,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 359,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 380,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 386,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 426,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 447,
+        "function": "legacy_omega_blackwell_codegen_router_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      }
+    ]
+  },
+  {
+    "file": "src/omega_blackwell_codegen_gemm.c",
+    "compiler": "13.3.0",
+    "lines_covered": 275,
+    "lines_total": 276,
+    "branches_covered": 235,
+    "branches_total": 250,
+    "uncovered": [
+      {
+        "line": 38,
+        "function": "emit",
+        "branches": [
+          11
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 51,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 55,
+        "function": "emit",
+        "branches": [],
+        "line_covered": false
+      },
+      {
+        "line": 67,
+        "function": "V128",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 68,
+        "function": "UV64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 114,
+        "function": "loop_begin",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 116,
+        "function": "loop_end",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 131,
+        "function": "ldw_pf",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 135,
+        "function": "log2u",
+        "branches": [
+          3
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 173,
+        "function": "legacy_omega_blackwell_codegen_fp8gemm_prog",
+        "branches": [
+          1,
+          3,
+          4
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 185,
+        "function": "legacy_omega_blackwell_codegen_fp8gemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 229,
+        "function": "legacy_omega_blackwell_codegen_fp8gemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 282,
+        "function": "legacy_omega_blackwell_codegen_fp8gemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 287,
+        "function": "legacy_omega_blackwell_codegen_fp8gemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      }
+    ]
+  },
+  {
+    "file": "src/omega_blackwell_codegen_bf16.c",
+    "compiler": "13.3.0",
+    "lines_covered": 213,
+    "lines_total": 214,
+    "branches_covered": 202,
+    "branches_total": 222,
+    "uncovered": [
+      {
+        "line": 40,
+        "function": "emit",
+        "branches": [
+          11
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 53,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 57,
+        "function": "emit",
+        "branches": [],
+        "line_covered": false
+      },
+      {
+        "line": 59,
+        "function": "emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 67,
+        "function": "V",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 68,
+        "function": "V64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 69,
+        "function": "V128",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 70,
+        "function": "UV64",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 107,
+        "function": "patch_bra",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 114,
+        "function": "tail",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 119,
+        "function": "loop_begin",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 121,
+        "function": "loop_end",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 126,
+        "function": "loop_end",
+        "branches": [
+          7
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 143,
+        "function": "spec_ok",
+        "branches": [
+          5
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 148,
+        "function": "spec_ok",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 166,
+        "function": "legacy_omega_blackwell_codegen_bf16_gemv_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 173,
+        "function": "legacy_omega_blackwell_codegen_bf16_gemv_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 190,
+        "function": "legacy_omega_blackwell_codegen_bf16_gemv_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 203,
+        "function": "legacy_omega_blackwell_codegen_bf16_gemv_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 209,
+        "function": "legacy_omega_blackwell_codegen_bf16_gemv_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 296,
+        "function": "legacy_omega_blackwell_codegen_bf16_gemv_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      }
+    ]
+  },
+  {
+    "file": "src/omega_blackwell_codegen_qg.c",
+    "compiler": "13.3.0",
+    "lines_covered": 232,
+    "lines_total": 233,
+    "branches_covered": 269,
+    "branches_total": 301,
+    "uncovered": [
+      {
+        "line": 33,
+        "function": "legacy_omega_blackwell_codegen_pq_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 37,
+        "function": "legacy_omega_blackwell_codegen_pq_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 72,
+        "function": "legacy_omega_blackwell_codegen_pq_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 81,
+        "function": "legacy_omega_qg_spec_ok",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 82,
+        "function": "legacy_omega_qg_spec_ok",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 84,
+        "function": "legacy_omega_qg_spec_ok",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 88,
+        "function": "legacy_omega_qg_spec_ok",
+        "branches": [
+          1
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 102,
+        "function": "qg_order_emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 105,
+        "function": "qg_order_emit",
+        "branches": [
+          1,
+          3,
+          5,
+          6
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 108,
+        "function": "qg_order_emit",
+        "branches": [
+          6
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 114,
+        "function": "qg_order_emit",
+        "branches": [
+          1,
+          2
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 115,
+        "function": "qg_order_emit",
+        "branches": [],
+        "line_covered": false
+      },
+      {
+        "line": 118,
+        "function": "qg_order_emit",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 130,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          2
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 133,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          1,
+          2
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 134,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          1,
+          2
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 141,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 149,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          1,
+          2
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 172,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 194,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 239,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 262,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 266,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 282,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 286,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      },
+      {
+        "line": 319,
+        "function": "legacy_omega_blackwell_codegen_qgemm_prog",
+        "branches": [
+          0
+        ],
+        "line_covered": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+Observed stdout excerpt from bg_982; overall rc 0.
+PASS codegen-rest attn256 cases=54781 accepted=5604 max-insns=901 max-vregs=167 IR/regalloc/bytes/refusals/default-shell
+PASS record-flip caught attn256
+PASS codegen-rest pattn256 cases=14742 accepted=383 max-insns=632 max-vregs=111 IR/regalloc/bytes/refusals/default-shell
+PASS record-flip caught pattn256
+PASS codegen-rest router cases=40134 accepted=4635 max-insns=672 max-vregs=114 IR/regalloc/bytes/refusals/default-shell
+PASS record-flip caught router
+PASS codegen-rest gemm cases=101152 accepted=9138 max-insns=1024 max-vregs=256 IR/regalloc/bytes/refusals/default-shell
+PASS record-flip caught gemm
+PASS codegen-rest bf16 cases=332689 accepted=49846 max-insns=997 max-vregs=96 IR/regalloc/bytes/refusals/default-shell
+PASS record-flip caught bf16
+PASS codegen-rest qg cases=155749 accepted=20571 max-insns=892 max-vregs=106 IR/regalloc/bytes/refusals/default-shell
+PASS record-flip caught qg
+PASS recompiled Omega mutant killed attn256/fixed-stall: attn256 IR mismatch insn=15
+PASS recompiled Omega mutant killed pattn256/fixed-stall: pattn256 IR mismatch insn=10
+PASS recompiled Omega mutant killed router/fixed-stall: router IR mismatch insn=8
+PASS recompiled Omega mutant killed gemm/fixed-stall: gemm IR mismatch insn=9
+PASS recompiled Omega mutant killed bf16/fixed-stall: bf16 IR mismatch insn=8
+PASS recompiled Omega mutant killed qg/fixed-stall: pq IR mismatch insn=6
+PASS recompiled Omega mutant killed qg/ignore-meta6: qg refusal mismatch C=0 OM=5 emit=0 case=11
+COVERAGE attn256 lines=515/516 branches=267/294
+COVERAGE pattn256 lines=279/280 branches=161/192
+COVERAGE router lines=340/341 branches=236/260
+COVERAGE gemm lines=275/276 branches=235/250
+COVERAGE bf16 lines=213/214 branches=202/222
+COVERAGE qg lines=232/233 branches=269/301
+PASS codegen-rest CPU-only differential controls

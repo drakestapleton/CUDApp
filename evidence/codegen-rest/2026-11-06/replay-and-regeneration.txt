@@ -1,0 +1,31 @@
+CodegenRest, branch feat/omega-codegen-rest, base 22ebf8f.
+Replay extension commit: 5604269.
+Pinned seeded compiler: omega-mv e5b32567.
+omc SHA256: 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f.
+
+Command (working directory: this checkout):
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge sh om/units.sh --check
+Observed rc: 0.
+Final line: PASS portable Omega units regenerate byte for byte
+
+Command (same checkout):
+bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 OMEGA_MV=/home/drakestapleton/work/cudastack/omega-mv OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/omega-bridge test-om-ir-limit
+Observed rc: 0.
+Final line: PASS replay-limit zero/default, boundaries, pre-mutation refusals, pressure
+
+The two commands were chained with && in job bg_908. The combined job returned 0.
+No device node was made available by these commands. This is CPU-only evidence.
+
+Numeric source constants used while lowering:
+WolframLanguageEvaluator query: 2^63
+Observed result: 9223372036854775808.
+This is the signed-order comparison bias, not a hardware measurement.
+WolframLanguageEvaluator query: {FromDigits["51303832",16],FromDigits["46453433",16]}
+Observed result: {1362114610,1178940467}.
+These are copied format-tag constants, not performance figures.
+
+Generated-unit provenance is committed beside each generated C file. For cg_qg:
+converter SHA256: 69d629df170a24ba0c2cb6d41dbfaed520e248e0d723236dd32abf0581524d84
+frontend SHA256: 23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37
+The cg_qg unit composes cg_rest_emit.om, prefill-shape/admit.om,
+prefill-shape/order.om, and cg_qg.om. No new outside dependency was adopted.

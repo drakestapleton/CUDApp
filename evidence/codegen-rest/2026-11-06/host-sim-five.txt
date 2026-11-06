@@ -1,0 +1,198 @@
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 make -j3 OUT_DIR=build/codegen-rest-host OMEGA_MV=~/work/cudastack/omega-mv OMEGA_BRIDGE=~/work/cudastack/omega-bridge build/codegen-rest-host/gpu_decode_attn256_test build/codegen-rest-host/gpu_prefill_attn256_test build/codegen-rest-host/gpu_router_test build/codegen-rest-host/gpu_fp8gemm_test build/codegen-rest-host/gpu_bf16_gemv_test
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/codegen-rest-host/gpu_decode_attn256_test tests/gpu_decode_attn256_test.c build/codegen-rest-host/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -DWS_MAX_THREADS=256 -Itests -o build/codegen-rest-host/gpu_prefill_attn256_test tests/gpu_prefill_attn256_test.c build/codegen-rest-host/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/codegen-rest-host/gpu_router_test tests/gpu_router_test.c build/codegen-rest-host/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -DWS_MAX_THREADS=512 -Itests -o build/codegen-rest-host/gpu_fp8gemm_test tests/gpu_fp8gemm_test.c build/codegen-rest-host/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/codegen-rest-host/gpu_bf16_gemv_test tests/gpu_bf16_gemv_test.c build/codegen-rest-host/libomega_gpu.a -lpthread -lm
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_decode_attn256_test --host-only
+perm rotary  64: bijection, pairs, rope-by-permutation max abs diff 8.31e-08 over 50 positions
+perm rotary 256: bijection, pairs, rope-by-permutation max abs diff 1.08e-07 over 50 positions
+perm rotary   2: bijection, pairs, rope-by-permutation max abs diff 7.09e-08 over 50 positions
+perm rotary 128: bijection, pairs, rope-by-permutation max abs diff 1.05e-07 over 50 positions
+perm rotary  32: bijection, pairs, rope-by-permutation max abs diff 1.05e-07 over 50 positions
+codegen depth 1: 873 instructions, 96 registers (declared 104, 256 threads -> 26624 of 65536)
+codegen depth 2: 881 instructions, 100 registers (declared 104, 256 threads -> 26624 of 65536)
+codegen depth 3: 889 instructions, 104 registers (declared 112, 256 threads -> 28672 of 65536)
+codegen depth 4: 897 instructions, 108 registers (declared 112, 256 threads -> 28672 of 65536)
+gpu_decode_attn256_test: 61 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_decode_attn256_test --sim
+sim context 1                                          depth 1: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 7                                          depth 2: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 7, sharp q (x4)                            depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 7, full rope (rotary 256)                  depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 256 (full chunk, 1 split)                  depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 257 (2 splits, last holds one position)    depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 301 (2 splits)                             depth 3: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 701 (3 splits)                             depth 4: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim context 701 (per_split 512: 2 chunks per CTA)      depth 2: ok bad=0 worst=0.000 rows: ok (0 one-ulp k flips)
+sim mutant 1 at context 301: caught (bad=5719 worst=12.743 rows: k slot 0 (model dim 0) chip bfd3 ref 3b51)
+sim mutant 2 at context 301: caught (bad=5674 worst=36.957 rows: ok (0 one-ulp k flips))
+sim mutant 3 at context 301: caught (bad=2028 worst=10.895 rows: v[0] chip 0000 ref 3f41)
+sim mutant 4 at context 301: caught (bad=4068 worst=27.701 rows: ok (0 one-ulp k flips))
+sim mutant 5 at context 301: caught (bad=2979 worst=inf rows: ok (0 one-ulp k flips))
+sim: 10975936 warp issues in total
+gpu_decode_attn256_test: 14 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_prefill_attn256_test --host-only
+attend: 632 instructions, 172 registers (declared 176, 256 threads -> 45056 of 65536)
+prep: 330 instructions, 64 registers
+gpu_prefill_attn256_test: 19 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_prefill_attn256_test --sim
+attend: 632 instructions, 172 registers (declared 176, 256 threads -> 45056 of 65536)
+prep: 330 instructions, 64 registers
+sim one token at position 0                    ok bad=0 worst=0.000 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max) (0.3 s)
+sim 8 tokens from 0 (one CTA)                  ok bad=0 worst=0.286 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max) (1.1 s)
+sim 37 tokens from 0 (odd m, partial CTA)      ok bad=0 worst=0.254 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max) (7.2 s)
+sim 19 tokens from 37 (odd start)              ok bad=0 worst=0.136 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max) (6.7 s)
+sim 19 tokens from 100, sharp q (x4)           ok bad=0 worst=0.088 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max) (6.9 s)
+sim 40 tokens from 250 (crosses 256)           ok bad=0 worst=0.059 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max) (24.7 s)
+sim 24 tokens from 0, full rope (rotary 256)   ok bad=0 worst=0.292 rows vs decode twin: 0 differ; vs reference: ok (1 one-ulp k flips, worst token 1; 0 small-value k gaps within 8 f32 roundings of the row max) (2.8 s)
+sim prep mutant 1 at 24 tokens from 40: caught (bad=3122843 worst=31.641 rows vs decode twin: 96 differ; vs reference: token 0 k[0] slot 0 chip bf9f ref 3f5c (row max 2.02))
+sim prep mutant 3 at 24 tokens from 40: caught (bad=3135017 worst=95.649 rows vs decode twin: 192 differ; vs reference: token 0 v[0][0] chip 0000 ref 3f41)
+sim attend mutant 1 at 24 tokens from 40: caught (bad=114761 worst=76.729 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max))
+sim attend mutant 2 at 24 tokens from 40: caught (bad=110456 worst=374.128 rows vs decode twin: 0 differ; vs reference: ok (0 one-ulp k flips, worst token 0; 0 small-value k gaps within 8 f32 roundings of the row max))
+sim: 53330976 warp issues in total
+gpu_prefill_attn256_test: 30 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_router_test --host-only
+codegen warps  8 depth 1: 567 instructions, 44 registers (declared 48, register file 12288 of 65536)
+codegen warps  8 depth 2: 567 instructions, 44 registers (declared 48, register file 12288 of 65536)
+codegen warps  8 depth 4: 567 instructions, 46 registers (declared 48, register file 12288 of 65536)
+codegen warps  8 depth 8: 567 instructions, 60 registers (declared 64, register file 16384 of 65536)
+codegen warps 16 depth 1: 543 instructions, 40 registers (declared 48, register file 24576 of 65536)
+codegen warps 16 depth 2: 543 instructions, 40 registers (declared 48, register file 24576 of 65536)
+codegen warps 16 depth 4: 543 instructions, 46 registers (declared 48, register file 24576 of 65536)
+codegen warps 16 depth 8: 543 instructions, 60 registers (declared 64, register file 32768 of 65536)
+codegen warps 32 depth 1: 547 instructions, 40 registers (declared 48, register file 49152 of 65536)
+codegen warps 32 depth 2: 547 instructions, 40 registers (declared 48, register file 49152 of 65536)
+codegen warps 32 depth 4: 547 instructions, 46 registers (declared 48, register file 49152 of 65536)
+codegen warps 32 depth 8: 547 instructions, 60 registers (declared 64, register file 65536 of 65536)
+codegen ROWS warps  8 depth 1: 575 instructions, 44 registers (declared 48)
+codegen ROWS warps  8 depth 2: 575 instructions, 44 registers (declared 48)
+codegen ROWS warps  8 depth 4: 575 instructions, 46 registers (declared 48)
+codegen ROWS warps  8 depth 8: 575 instructions, 60 registers (declared 64)
+codegen ROWS warps 16 depth 1: 551 instructions, 40 registers (declared 48)
+codegen ROWS warps 16 depth 2: 551 instructions, 40 registers (declared 48)
+codegen ROWS warps 16 depth 4: 551 instructions, 46 registers (declared 48)
+codegen ROWS warps 16 depth 8: 551 instructions, 60 registers (declared 64)
+codegen ROWS warps 32 depth 1: 555 instructions, 40 registers (declared 48)
+codegen ROWS warps 32 depth 2: 555 instructions, 40 registers (declared 48)
+codegen ROWS warps 32 depth 4: 555 instructions, 46 registers (declared 48)
+codegen ROWS warps 32 depth 8: 555 instructions, 60 registers (declared 64)
+gpu_router_test: 88 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_router_test --sim
+sim depth 8 norm: ok ids equal, w max abs 4.14e-08, x' max abs 1.67e-07 (of 2.05), tables ok, margin 1.40e-01
+sim depth 8 norm seed 12: ok ids equal, w max abs 2.88e-08, x' max abs 1.67e-07 (of 2.03), tables ok, margin 7.86e-02
+sim depth 8 no-norm: ok ids equal, w max abs 2.89e-08, x' max abs 1.33e-07 (of 2.05), tables ok, margin 2.17e-02
+sim depth 4 norm: ok ids equal, w max abs 5.29e-08, x' max abs 3.03e-07 (of 2.04), tables ok, margin 5.94e-02
+sim depth 1 norm: ok ids equal, w max abs 5.22e-08, x' max abs 2.82e-07 (of 2.00), tables ok, margin 4.43e-02
+sim depth 2 norm out_scale 2^64: ok ids equal, w max abs 5.07e-08, x' max abs 1.37e-07 (of 2.08), tables ok, margin 1.20e-01
+sim mutant 1: caught (bad mask 5) ids DIFFER, w max abs 0.00e+00, x' max abs 3.45e-01 (of 2.07), tables ok, margin 1.39e-01
+sim mutant 2: caught (bad mask 1) ids DIFFER, w max abs 0.00e+00, x' max abs 1.81e-07 (of 2.07), tables ok, margin 1.39e-01
+sim mutant 3: caught (bad mask 8) ids equal, w max abs 2.02e-08, x' max abs 1.81e-07 (of 2.07), tables WRONG, margin 1.39e-01
+sim mutant 4: caught (bad mask 2) ids equal, w max abs 6.91e-01, x' max abs 1.81e-07 (of 2.07), tables ok, margin 1.39e-01
+sim rows 2 depth 8: ok 2 rows: 0 differ from the plain kernel, oracle mask 0 (last: ids equal, w max abs 4.46e-08, x' max abs 1.43e-07 (of 2.02), tables ok, margin 9.45e-02)
+sim rows 3 depth 4: ok 3 rows: 0 differ from the plain kernel, oracle mask 0 (last: ids equal, w max abs 3.97e-08, x' max abs 2.18e-07 (of 2.04), tables ok, margin 1.18e-01)
+sim rows 8 depth 8: ok 8 rows: 0 differ from the plain kernel, oracle mask 0 (last: ids equal, w max abs 4.06e-08, x' max abs 1.44e-07 (of 2.02), tables ok, margin 7.51e-02)
+sim rows 2 depth 1: ok 2 rows: 0 differ from the plain kernel, oracle mask 0 (last: ids equal, w max abs 3.77e-08, x' max abs 3.18e-07 (of 2.04), tables ok, margin 1.49e-01)
+sim rows mutant 6: caught (bad mask 21) 2 rows: 1 differ from the plain kernel, oracle mask 5 (last: ids DIFFER, w max abs 0.00e+00, x' max abs 3.69e+00 (of 2.06), tables ok, margin 1.93e-01)
+sim: 1703934 warp issues in total
+gpu_router_test: 15 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_fp8gemm_test --host-only
+host-only: emulation, permutation, budgets
+emulation vs oracle: worst relative error 2.00e-08 of the term scale
+codegen k 2048 lane 16 mt  8 warps 16: 801 instructions, 107 registers (declared 112, register file 57344 of 65536), shared 16384 B
+codegen k 4096 lane 16 mt  8 warps 16: 801 instructions, 107 registers (declared 112, register file 57344 of 65536), shared 16384 B
+codegen k 1024 lane 16 mt  8 warps 16: 792 instructions, 104 registers (declared 112, register file 57344 of 65536), shared 16384 B
+codegen k  768 lane  8 mt  8 warps 16: 687 instructions, 103 registers (declared 104, register file 53248 of 65536), shared 8192 B
+codegen k  768 lane  8 mt  8 warps  8: 735 instructions, 103 registers (declared 104, register file 26624 of 65536), shared 8192 B
+codegen k 2048 lane  8 mt  8 warps 16: 545 instructions, 103 registers (declared 104, register file 53248 of 65536), shared 8192 B
+codegen k 2048 lane 16 mt  4 warps 16: 513 instructions, 99 registers (declared 104, register file 53248 of 65536), shared 8192 B
+codegen k 2048 lane 16 mt  8 warps 32: 769 instructions, 107 registers (declared 112, register file 114688 of 65536) DOES NOT FIT, shared 16384 B
+codegen k 2048 lane 16 mt  8 warps  8: 865 instructions, 107 registers (declared 112, register file 28672 of 65536), shared 16384 B
+codegen k 2048 lane 16 mt  4 warps  8: 545 instructions, 99 registers (declared 104, register file 26624 of 65536), shared 8192 B
+codegen k 4096 lane 16 mt  4 warps  8: 545 instructions, 99 registers (declared 104, register file 26624 of 65536), shared 8192 B
+codegen k 2048 lane 16 mt  4 warps 16 rowmap: 553 instructions, 113 registers (declared 120, register file 61440 of 65536)
+codegen k 4096 lane 16 mt  4 warps 16 rowmap: 553 instructions, 113 registers (declared 120, register file 61440 of 65536)
+codegen k  512 lane 16 mt  4 warps 16 rowmap: 369 instructions, 96 registers (declared 104, register file 53248 of 65536)
+codegen k  768 lane  8 mt  4 warps 16 rowmap: 467 instructions, 101 registers (declared 104, register file 53248 of 65536)
+gpu_fp8gemm_test: 59 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_fp8gemm_test --sim
+sim k 2048 n 40 lane 16 mt 8 warps 16 grid 2: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim k 4096 n 20 lane 16 mt 8 warps 16 grid 1: ok 0 of 220 outputs differ from the emulation (bit-identical)
+sim k 1024 n 33 lane 16 mt 8 warps 16 grid 2: ok 0 of 99 outputs differ from the emulation (bit-identical)
+sim k 768 n 130 lane 8 mt 8 warps 16 grid 2: ok 0 of 2730 outputs differ from the emulation (bit-identical)
+sim k 768 n 24 lane 8 mt 8 warps 8 grid 1: ok 0 of 264 outputs differ from the emulation (bit-identical)
+sim k 2048 n 16 lane 16 mt 4 warps 16 grid 1: ok 0 of 160 outputs differ from the emulation (bit-identical)
+sim mutant 1: caught 600 of 600 outputs differ from the emulation
+sim mutant 2: caught 600 of 600 outputs differ from the emulation
+sim mutant 3: caught 600 of 600 outputs differ from the emulation
+sim empty segment, mutant 4 (guard dropped): caught order 0: MEM at pc 68: global access outside the declared buffers (pc 68)
+sim k 2048 empty segment at index 0: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim k 2048 empty segment at index 1: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim k 2048 empty segment at index 3: ok 0 of 600 outputs differ from the emulation (bit-identical)
+sim rowmap k 2048 n 40 mt 4 warps 16: ok 0 of 600 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 4096 n 20 mt 4 warps 16 + empty segment: ok 0 of 220 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 512 n 40 mt 4 warps 16: ok 0 of 600 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 768 n 24 mt 4 warps 8: ok 0 of 264 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap k 2048 n 16 mt 4 warps 16: ok 0 of 160 outputs differ from the emulation (bit-identical), rows moved by YMAP
+sim rowmap mutant 1: caught 600 of 600 outputs differ from the emulation, rows moved by YMAP
+sim rowmap mutant 2: caught 600 of 600 outputs differ from the emulation, rows moved by YMAP
+sim rowmap mutant 3: caught 600 of 600 outputs differ from the emulation, rows moved by YMAP
+sim: 7687894 warp issues in total
+gpu_fp8gemm_test: 21 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_bf16_gemv_test --host-only
+host-only: emulation, oracle, budgets
+emulation vs oracle: abs 3.577e-08, scale 63.821
+codegen rows 1 warps  4 depth 8: 266 instructions, 60 registers (declared 64, register file 8192 of 65536)
+codegen rows 1 warps  8 depth 8: 234 instructions, 60 registers (declared 64, register file 16384 of 65536)
+codegen rows 1 warps 16 depth 8: 218 instructions, 60 registers (declared 64, register file 32768 of 65536)
+codegen rows 1 warps 32 depth 8: 210 instructions, 60 registers (declared 64, register file 65536 of 65536)
+codegen XBATCH 4 k 2048 warps 16 depth 8: 545 instructions, 88 registers (declared 96), shared 32768 bytes
+gpu_bf16_gemv_test: 191 checks, 0 failed: PASS
+
+RC 0
+COMMAND bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 build/codegen-rest-host/gpu_bf16_gemv_test --sim
+sim MASK k 2048 n 100 warps 8 depth 8 grid 2: ok 47 candidates of 100 rows, 0 rows wrong (candidates bit-identical, the rest -inf)
+sim MASK k 2048 n 96 warps 8 depth 4 grid 3: ok 33 candidates of 96 rows, 0 rows wrong (candidates bit-identical, the rest -inf)
+sim MASK k 512 n 70 warps 4 depth 2 grid 2: ok 32 candidates of 70 rows, 0 rows wrong (candidates bit-identical, the rest -inf)
+sim MASK mutant 4: caught 27 candidates of 64 rows, 64 rows wrong
+sim ROWS k 2048 n 96 T 3 ystride 100: ok 0 of 96 rows x 3 tokens differ from the emulation (bit-identical)
+sim ROWS k 4096 n 96 T 4 ystride 96: ok 0 of 96 rows x 4 tokens differ from the emulation (bit-identical)
+sim XBATCH k 1024 n 96 xb 2 ystride 100: ok 0 of 96 rows x 2 tokens differ from the emulation (bit-identical)
+sim XBATCH k 1024 n 96 xb 4 ystride 96: ok 0 of 96 rows x 4 tokens differ from the emulation (bit-identical)
+sim XBATCH k 2048 n 64 xb 2 ystride 70: ok 0 of 64 rows x 2 tokens differ from the emulation (bit-identical)
+sim XBATCH k 1024 n 40 xb 3 ystride 50: ok 0 of 40 rows x 3 tokens differ from the emulation (bit-identical)
+sim XBATCH mutant 4: caught 64 of 64 rows x 2 tokens differ from the emulation
+sim k 2048 n 100 rows 1 warps 8 depth 8 grid 2: ok 0 of 100 rows differ from the emulation (bit-identical)
+sim k 2048 n 100 rows 1 warps 8 depth 4 grid 3: ok 0 of 100 rows differ from the emulation (bit-identical)
+sim k 2048 n 64 rows 1 warps 8 depth 1 grid 2: ok 0 of 64 rows differ from the emulation (bit-identical)
+sim k 2048 n 96 rows 2 warps 8 depth 4 grid 2: ok 0 of 96 rows differ from the emulation (bit-identical)
+sim k 2048 n 96 rows 4 warps 8 depth 4 grid 1: ok 0 of 96 rows differ from the emulation (bit-identical)
+sim k 512 n 70 rows 1 warps 8 depth 2 grid 2: ok 0 of 70 rows differ from the emulation (bit-identical)
+sim k 512 n 70 rows 2 warps 4 depth 1 grid 3: ok 0 of 70 rows differ from the emulation (bit-identical)
+sim k 4096 n 40 rows 1 warps 8 depth 16 grid 2: ok 0 of 40 rows differ from the emulation (bit-identical)
+sim mutant 1: caught 64 of 64 rows differ from the emulation
+sim mutant 2: caught 64 of 64 rows differ from the emulation
+sim mutant 3: caught 64 of 64 rows differ from the emulation
+sim: 359562 warp issues in total
+gpu_bf16_gemv_test: 23 checks, 0 failed: PASS
+
+RC 0
+PASS final five-family host and warp-sim gate

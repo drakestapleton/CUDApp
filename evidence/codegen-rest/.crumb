@@ -1,0 +1,27 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [
+        {
+          "digest": "145721a775e8c14052fa289616e636b442b142d3841c8e64194054f7482fcfb1",
+          "last_commit": "",
+          "name": "2026-11-06",
+          "purpose": "Device-free six-family migration acceptance on seeded compiler e5b32567"
+        }
+      ],
+      "children_root": "sha256:302fbfeb14b445ade4de51fd33e3f07dcaf8f8e35c65334cb97b0f2a6607e366",
+      "compiled_at": "2026-11-06T05:03:31Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:07b914f7507027b6629261cbf555f76e853f61401f7e33014c9dd48ab5a0c08c",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "56042697fba0e0bc8218a01fd79853b08576cbdd",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "verification",
+  "name": "codegen-rest",
+  "purpose": "CPU-only seeded Omega codegen differential and simulator receipts",
+  "schema_version": "1.0.0"
+}

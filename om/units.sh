@@ -54,7 +54,7 @@ PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/n
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
     UNITS="$UNITS gemm_scalar=om/gemm-any/gemm_ir.om,om/conv2d/dense.om conv2d=om/gemm-any/gemm_ir.om,om/conv2d/conv.om conv_plan=om/gemm-any/gemm_ir.om,om/conv2d/conv.om,om/conv2d/plan.om"
-  UNITS="$UNITS cg_attn256=om/codegen/cg_attn256_emit.om,om/codegen/cg_attn256.om cg_pattn256=om/codegen/cg_pattn256_emit.om,om/codegen/cg_pattn256.om cg_router=om/codegen/cg_router_emit.om,om/codegen/cg_router.om cg_gemm=om/codegen/cg_gemm_emit.om,om/codegen/cg_gemm.om cg_bf16=om/codegen/cg_bf16_emit.om,om/codegen/cg_bf16.om cg_qg=om/codegen/cg_qg_emit.om,om/codegen/cg_qg.om"
+  UNITS="$UNITS cg_attn256=om/codegen/cg_rest_emit.om,om/codegen/cg_attn256.om cg_pattn256=om/codegen/cg_rest_emit.om,om/codegen/cg_pattn256.om cg_router=om/codegen/cg_rest_emit.om,om/codegen/cg_router.om cg_gemm=om/codegen/cg_rest_emit.om,om/codegen/cg_gemm.om cg_bf16=om/codegen/cg_rest_emit.om,om/codegen/cg_bf16.om cg_qg=om/codegen/cg_rest_emit.om,om/prefill-shape/admit.om,om/prefill-shape/order.om,om/codegen/cg_qg.om"
 fi
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"

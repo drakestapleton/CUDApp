@@ -143,7 +143,7 @@ GPU_FS_CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin
 GPU_FS_SRCS = src/omega_gpu_engine.c src/omega_gpu_platform.c src/omega_blackwell_encoder.c src/omega_blackwell_codegen.c \
 	src/omega_blackwell_matmul.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/sha256.c \
 	src/omega_gpu_session.c src/omega_gpu_fmt.c src/omega_gpu_matmul_api.c src/omega_gpu_attention_api.c \
-	src/omega_gpu_serving.c src/omega_gpu_wait.c $(CUDAPP_FS_BINDING)
+	src/omega_gpu_serving.c src/omega_gpu_wait.c src/omega_gpu_om_ir.c $(CUDAPP_FS_BINDING)
 GPU_FS_HDRS = src/omega_gpu_engine.h src/omega_gpu_platform.h src/omega_blackwell_codegen.h src/omega_blackwell_matmul.h \
 	src/omega_gpu_session.h src/omega_gpu_fmt.h src/omega_gpu_matmul_api.h src/omega_gpu_attention_api.h \
 	src/omega_gpu_serving.h src/omega_gpu_wait.h src/cudapp_native.h src/omega_api_plan.h src/omega_host_policy.h src/omega_gpu_apiviews.h src/omega_no_posix_session.h
@@ -267,7 +267,7 @@ GPU_NATIVE_RUNTIME_SRCS = src/omega_gpu_cmdlist.c src/omega_gpu_fp8_api.c \
 	src/omega_blackwell_codegen_gemm.c src/omega_gpu_fp8_pack.c src/omega_gpu_mem_cached.c \
 	src/omega_gpu_hostmath.c src/omega_native_artifact.c src/omega_cubin.c $(CUDAPP_HOST_BINDING) \
 	src/omega_gpu_q36_graph.c src/omega_gpu_decode_graph.c src/omega_gpu_router_api.c \
-	src/omega_gpu_gemm_ex.c src/omega_gpu_gemm.c src/omega_blackwell_codegen_qmma.c src/omega_gpu_om_ir.c
+	src/omega_gpu_gemm_ex.c src/omega_gpu_gemm.c src/omega_blackwell_codegen_qmma.c
 .PHONY: test-gpu-native-runtime
 build/test_omega_gpu_native_runtime: tests/test_omega_gpu_session_platform.c tests/native_runtime_controls.h \
 		$(GPU_FS_LINK) $(GPU_NATIVE_RUNTIME_SRCS) src/omega_gpu_native_runtime.h src/omega_gpu_q36_native.h \

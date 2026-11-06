@@ -56,6 +56,7 @@ typedef uint32_t (*OmegaOmIrUnit)(uint64_t *, uint64_t, uint64_t, uint64_t, uint
 int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64_t b, uint64_t c,
                            BlackwellIRProgram *prog, uint64_t *emit_err);
 
+#ifndef OMEGA_GPU_NO_POSIX
 /* Calls the unit (kind, a, b, c), replays its records into *prog, allocates, checks and encodes into code
  * (capacity code_cap) for a launch of `threads` threads per CTA. On success *kernel points into code and
  * *declared holds the QMD register declaration (omega_bw_gpr_declared). *emit_err gets meta[4] (may be NULL). */
@@ -65,6 +66,7 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
 
 /* Raw unit call for data kinds (kind 2: FFT twiddles): words receives OMEGA_OM_IR_WORDS u64. */
 int omega_gpu_om_ir_data(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint64_t *words);
+#endif
 
 const char *omega_gpu_om_ir_rc_name(int rc);
 

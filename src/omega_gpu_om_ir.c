@@ -18,6 +18,8 @@ static int field(uint64_t w, int *out) {
 }
 #endif
 
+/* Math-library data generation is outside the NO_POSIX engine boundary. */
+#ifndef OMEGA_GPU_NO_POSIX
 static int call_unit(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint64_t *ins, uint64_t *meta,
                      uint64_t *result) {
     *result = 0;
@@ -35,6 +37,7 @@ int omega_gpu_om_ir_data(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint
     memset(words, 0, OMEGA_OM_IR_WORDS * sizeof *words);
     return call_unit(kind, a, b, c, words, meta, &result);
 }
+#endif
 
 #ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
 /* The elementwise emitter's check (src/omega_gpu_elementwise_api.c check_loop_invariant): no value first defined
@@ -201,6 +204,7 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
 }
 #endif
 
+#ifndef OMEGA_GPU_NO_POSIX
 int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint32_t threads,
                           BlackwellIRProgram *prog, uint8_t *code, size_t code_cap,
                           OmegaBlackwellKernel *kernel, uint32_t *declared, uint64_t *emit_err) {
@@ -224,6 +228,7 @@ int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uin
     *declared = decl;
     return OMEGA_OM_IR_OK;
 }
+#endif
 
 const char *omega_gpu_om_ir_rc_name(int rc) {
     switch (rc) {

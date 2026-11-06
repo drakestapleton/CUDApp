@@ -292,7 +292,14 @@ for u in $UNITS $PURE_UNITS; do
   file=cudapp_om_$name.c
   profile=
   case "$name" in
-    revision|epoch|f16|streams_xq|c5|leftovers|bw_scalar|cg_fields|core_cubinmsg|core_cubadmit|attn_mm_dot|attn_mm_err|attn_mm_init|attn_mm_next|attn_args|attn_lay|attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
+    regalloc|attention_ir|cg_replay|cg_life|cg_invar)
+      frontend=bridge-freest
+      abi_name=bridge-freest
+      converter_pin=$FREEST_CONVERTER_PIN
+      frontend_pin=$FREEST_FRONTEND_PIN
+      file=cudapp_freest_$name.c
+      OBSOLETE="$OBSOLETE cudapp_om_$name.c" ;;
+    revision|epoch|f16|streams_xq|c5|leftovers|bw_scalar|cg_fields|core_cubinmsg|core_cubadmit|attn_host|attn_mm_dot|attn_mm_err|attn_mm_init|attn_mm_next|attn_args|attn_lay|attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
       frontend=bridge-freest
       abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
@@ -303,7 +310,7 @@ for u in $UNITS $PURE_UNITS; do
     av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|ar_carry|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name|model_graph_table|graph_headscale)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    attn_ds_*|attn_na_*|attn_host|attn_scanchk)
+    attn_ds_*|attn_na_*|attn_scanchk)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
     ar_*|cg_pack_h|cg_mrow|cg_sentin|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire|nvrm_va|nvrm_counts|nvrm_alloc_push)

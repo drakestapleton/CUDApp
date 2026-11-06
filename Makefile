@@ -45,15 +45,15 @@ CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-p
 # Portable checked Omega-to-C output; each unit has a separate private runtime namespace.
 CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
 CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_pathcopy.c src/cudapp_freest_streams_xq.c
-CUDAPP_FS_BINDING += src/cudapp_freest_cg_fields.c src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c $(wildcard src/cudapp_freest_attn_*.c)
+CUDAPP_FS_BINDING += src/cudapp_freest_regalloc.c src/cudapp_freest_cg_fields.c src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c $(wildcard src/cudapp_freest_attn_*.c) src/cudapp_freest_attention_ir.c src/cudapp_freest_cg_replay.c src/cudapp_freest_cg_life.c src/cudapp_freest_cg_invar.c
 CUDAPP_BINDING_SRCS = $(CUDAPP_HOST_BINDING) $(CUDAPP_FS_BINDING)
 # Units every explicit host link of src/omega_blackwell_codegen.c needs since RegAlloc #309, RegAllocRest and
 # FreestLeftovers #320: the allocator, the bind step, the kernel-dump leftovers and the SHA core under sha256.c.
 # With -Wl,--gc-sections only the referenced ones stay. Links that also take src/omega_cubin.c add
 # src/cudapp_freest_core_cubinmsg.c and src/cudapp_freest_core_cubadmit.c.
-BW_CODEGEN_BINDING = src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c \
+BW_CODEGEN_BINDING = src/cudapp_freest_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c \
 	src/cudapp_om_cg_bind.c src/cudapp_freest_leftovers.c src/cudapp_om_core_sha.c src/cudapp_freest_cg_fields.c \
-	src/cudapp_freest_pathcopy.c src/cudapp_om_cg_em.c src/cudapp_om_cg_replay.c src/cudapp_om_cg_life.c src/cudapp_om_cg_invar.c
+	src/cudapp_freest_pathcopy.c src/cudapp_om_cg_em.c src/cudapp_freest_cg_replay.c src/cudapp_freest_cg_life.c src/cudapp_freest_cg_invar.c
 OUT_DIR ?= build
 GPU_PROD_TARGET ?= $(OUT_DIR)/libomega_gpu.a
 NVIDIA_OPEN := $(PHYSICS_DIR)/third_party/nvidia-open-580.173.02

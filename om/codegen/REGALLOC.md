@@ -29,7 +29,7 @@ regenerates byte for byte.
 
 | Source under om/codegen | Generated C | Export |
 | --- | --- | --- |
-| regalloc.om | src/cudapp_om_regalloc.c | omega_ra_run |
+| regalloc.om | src/cudapp_freest_regalloc.c | omega_ra_run |
 | regalloc_ir.om | src/cudapp_om_regalloc_ir.c | omega_ra_ir |
 | regalloc_live.om | src/cudapp_om_regalloc_live.c | omega_ra_live |
 | cg_matmul.om | src/cudapp_om_cg_matmul.c | omega_cg_matmul |
@@ -44,9 +44,9 @@ regenerates byte for byte.
 | bw_hazard.om + bw_hazard_dec.om | src/cudapp_om_bw_hazard_dec.c | omega_hz_dec |
 | cg_bind.om | src/cudapp_om_cg_bind.c | omega_cg_bind |
 | cg_fields.om | src/cudapp_freest_cg_fields.c | omega_cg_fields |
-| cg_replay.om | src/cudapp_om_cg_replay.c | omega_cg_replay |
-| cg_life.om | src/cudapp_om_cg_life.c | omega_cg_life |
-| cg_invar.om | src/cudapp_om_cg_invar.c | omega_cg_invar |
+| cg_replay.om | src/cudapp_freest_cg_replay.c | omega_cg_replay |
+| cg_life.om | src/cudapp_freest_cg_life.c | omega_cg_life |
+| cg_invar.om | src/cudapp_freest_cg_invar.c | omega_cg_invar |
 | cg_budget.om | src/cudapp_om_cg_budget.c | omega_cg_budget |
 
 `bw_hazard.om` is the SM121 hazard decoder and checker behind
@@ -72,9 +72,13 @@ and freestanding C instruction dumps.
 It compiles the C oracle under renamed exports, compares the complete program
 including maps and refusal state, compares successful encodings, exercises
 exact-liveness boundaries, and runs existing encoder fixtures and BF16 warp
-simulation. `mutants.py` lowers altered Omega source with the pinned bridge,
-relinks only that unit's generated C and requires semantic failures; compile
-failure is not counted as detection.
+simulation. `mutants.py` lowers altered Omega source with the frontend,
+converter and flags named by that unit's checked `src/cudapp_om_<unit>.ident`
+(`bridge-freest` for `regalloc`, `cg_life` and `cg_replay`; `bridge-seeded`
+otherwise), verifies those pins and the checked C digest, relinks only that
+unit's generated C and requires semantic failures; compile or link failure is
+not counted as detection. `bridge-freest` also needs `OMEGA_SEED` (the
+bridge's baseline compiler).
 
 Pinned seeded compiler: omega-mv e5b32567, omc SHA-256
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.

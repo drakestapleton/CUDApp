@@ -73,6 +73,11 @@ baseline.mkdir(exist_ok=True)
 if any(exercise(baseline)):
     sys.exit('FAIL unmodified hosted default path; see ' + str(baseline))
 print('PASS unmodified hosted Omega session and policy boundaries', flush=True)
+# Unit mutants regenerate .om through om/units.sh, which executes the pinned
+# AArch64 omc. make sets SESSION_UNIT_MUTANTS=1 only where that compiler runs
+# (CUDAPP_OMC_HOST); elsewhere those mutants are reported NOT_RUN, never killed.
+run_units = os.environ['SESSION_UNIT_MUTANTS'] == '1'
+killed = not_run = 0
 for name, unit, replacements in mutants:
     directory = work/name
     directory.mkdir(exist_ok=True)
@@ -82,9 +87,14 @@ for name, unit, replacements in mutants:
         if text.count(old) != count:
             sys.exit('FAIL harness: missing/ambiguous mutant site ' + name)
         text = text.replace(old, new)
+    if unit != 'shell' and not run_units:
+        print('NOT_RUN Omega-unit mutant: ' + name + ' [' + unit + '] (requires the pinned AArch64 omc)', flush=True)
+        not_run += 1
+        continue
     changed = directory/source.name
     changed.write_text(text)
     if not any(exercise(directory, unit, changed)):
         sys.exit('FAIL mutant SURVIVED: ' + name)
     print('PASS behavioral mutant killed: ' + name + ' [' + unit + ']', flush=True)
-print('test-gpu-session-mutants: 16 of 16 mutants killed; 7 regenerated Omega-unit mutants')
+    killed += 1
+print('test-gpu-session-mutants: %d of %d mutants killed; %d Omega-unit mutants NOT_RUN' % (killed, killed, not_run))

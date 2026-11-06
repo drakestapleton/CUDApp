@@ -469,5 +469,8 @@ test-gpu-platform-aien-effects-mutants: test-gpu-platform-aien-effects
 # Compile the hosted session against the explicit fake provider: NO_POSIX would
 # select the C oracle and leave the default Omega units untested. The runner
 # rejects missing sites/build failures before counting behavioral mutant kills.
+# The seven Omega-unit mutants regenerate .om with the pinned AArch64 omc; off a
+# CUDAPP_OMC_HOST they print NOT_RUN and only the session-shell mutants count.
 test-gpu-session-mutants: $(GPU_FS_LINK)
-	SESSION_FS_OBJECTS='$(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)' CC='$(CC)' python3 tests/check_session_mutants.py
+	SESSION_FS_OBJECTS='$(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)' CC='$(CC)' SESSION_UNIT_MUTANTS='$(if $(CUDAPP_OMC_HOST),1,0)' \
+		OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" python3 tests/check_session_mutants.py

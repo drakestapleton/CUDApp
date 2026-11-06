@@ -102,7 +102,7 @@ src/omega_gpu_mem_cached.c	CHIP_SPECIFIC	Allocates GPU-cached weight buffers; re
 src/omega_gpu_mem_cached.h	CHIP_SPECIFIC	Documents the GPU-cached read-only weight invariant (nvos.h GPU_CACHEABLE: not coherent with CPU mappings).	NO_HOSTED_INCLUDE
 src/omega_gpu_moe_api.c	CHIP_SPECIFIC	Launches MoE matmul kernels from the Blackwell generators and the QMD builder.	NO_HOSTED_INCLUDE
 src/omega_gpu_moe_api.h	CHIP_SPECIFIC	Public packing contract is Blackwell tile-major B with col0 modulo 8 alignment and OMEGA_BW_MATMUL_MAX limits; includes omega_gpu_matmul_api.h.	NO_HOSTED_INCLUDE
-src/omega_gpu_om_ir.c	CHIP_SPECIFIC	Replays the BlackwellIR records a seeded Omega unit emits into a BlackwellIRProgram, allocates registers and encodes through the .om sm_121 encoder; migration-pending C.	NO_HOSTED_INCLUDE
+src/omega_gpu_om_ir.c	CHIP_SPECIFIC	Replays the BlackwellIR records a seeded Omega unit emits into a BlackwellIRProgram, allocates registers and encodes through the .om sm_121 encoder; migration-pending C. In GPU_FS_SRCS since the attention IR lowering; builds in make gpu-engine-freestanding.	FREESTANDING_PROVEN
 src/omega_gpu_om_ir.h	CHIP_SPECIFIC	Record and meta layout of the .om IR replay; includes omega_blackwell_codegen.h.	NO_HOSTED_INCLUDE
 src/omega_gpu_resident.c	CHIP_SPECIFIC	Widens descriptor words and invokes seeded Omega validation and the Blackwell IR replay; no hosted includes, not in the freestanding closure.	NO_HOSTED_INCLUDE
 src/omega_gpu_resident.h	CHIP_SPECIFIC	Internal builder contract for the bounded persistent Blackwell kernel; includes omega_gpu_om_ir.h.	NO_HOSTED_INCLUDE

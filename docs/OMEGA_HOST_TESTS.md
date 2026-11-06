@@ -151,6 +151,11 @@ encoder checks. The hosted `.om` comparison prints `NOT_RUN` and is not
 performed. `CUDAPP_ENCODER=diff` on x86-64 is an error: that mode executes the
 seeded binding.
 
+`make test-gpu-session-mutants` on x86-64 still runs the nine session-shell
+mutants. Its seven Omega-unit mutants regenerate `.om` through `om/units.sh`,
+so they print `NOT_RUN` there unless `OMEGA_OMC` is given and executes on that
+host. The final line counts only the mutants that ran.
+
 ## Omega slice gate
 
 The eight slices stay in `omega/slices/`: `doorbell.osc`, `sequencer.osc`,

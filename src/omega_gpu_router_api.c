@@ -6,6 +6,7 @@
  * omega_gpu_session_launch per call.
  */
 #include "omega_gpu_router_api.h"
+#include "omega_host_policy.h"
 #include "omega_gpu_session.h"
 #include <stdbool.h>
 #include <string.h>
@@ -95,7 +96,7 @@ int omega_gpu_router_alloc_shape(uint32_t layers, uint32_t experts, uint32_t sha
     if (!out || layers == 0 || layers > OMEGA_GPU_ROUTER_MAX_LAYERS) return OMEGA_GPU_ROUTER_BAD_ARGS;
     *out = NULL;
     if (!experts) experts = OMEGA_ROUTER_EXPERTS;
-    if ((experts != 128u && experts != 256u) || shared > 1u) return OMEGA_GPU_ROUTER_BAD_ARGS;
+    if (omega_host_shape(6, experts, shared, 0)) return OMEGA_GPU_ROUTER_BAD_ARGS;
     OmegaGpuRouter *r = omega_gpu_host_calloc(1, sizeof *r);
     if (!r) return OMEGA_GPU_ROUTER_BAD_ARGS;
     r->layers = layers; r->experts = experts; r->shared = shared; r->rows = experts + shared; r->slots = OMEGA_ROUTER_TOPK + shared;

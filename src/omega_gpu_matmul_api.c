@@ -30,6 +30,7 @@
  * tensors, the kernel cache (host and device copies) and its staging buffers.
  */
 #include "omega_gpu_matmul_api.h"
+#include "omega_host_policy.h"
 #include "omega_gpu_session.h"
 #include "omega_gpu_fmt.h"
 #include "omega_blackwell_codegen.h"
@@ -155,8 +156,9 @@ uint32_t omega_gpu_matmul_cta_budget(void) { return g.cta_budget; }
 /* ---- opt-in serving reservation (see the header) ---- */
 
 int omega_gpu_matmul_reserve(uint32_t max_rows, uint32_t max_k, uint32_t max_n, uint32_t max_n_one_row, uint32_t kernel_slots) {
-    if (max_rows == 0 || max_k == 0 || max_n == 0) { omega_gpu_session_set_error("matmul reserve: zero bound"); return OMEGA_GPU_MATMUL_BAD_ARGS; }
-    if (max_rows > OMEGA_BW_MATMUL_MAX_M || max_k > OMEGA_BW_MATMUL_MAX_K || max_n > OMEGA_BW_MATMUL_MAX_N || max_n_one_row > OMEGA_BW_MATMUL_MAX_N ||
+    int shape_rc = omega_host_shape(0, max_rows, max_k, max_n);
+    if (shape_rc == OMEGA_GPU_MATMUL_BAD_ARGS) { omega_gpu_session_set_error("matmul reserve: zero bound"); return shape_rc; }
+    if (shape_rc || max_n_one_row > OMEGA_BW_MATMUL_MAX_N ||
         kernel_slots > CACHE_SLOTS_MAX) {
         omega_gpu_session_set_error("matmul reserve: bound past the matmul envelope");
         return OMEGA_GPU_MATMUL_TOO_LARGE;
@@ -194,8 +196,9 @@ static int kernel_for(uint32_t kp, uint32_t np, uint32_t grid_x, uint32_t rt, ui
 static void launch_shape(uint32_t mp, uint32_t np, uint32_t *rows_per_launch, uint32_t *grid_x, uint32_t *rt, uint32_t *ct);
 
 int omega_gpu_matmul_prepare(uint32_t m, uint32_t k, uint32_t n) {
-    if (m == 0 || k == 0 || n == 0) { omega_gpu_session_set_error("matmul prepare: zero dimension"); return OMEGA_GPU_MATMUL_BAD_ARGS; }
-    if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) {
+    int shape_rc = omega_host_shape(0, m, k, n);
+    if (shape_rc == OMEGA_GPU_MATMUL_BAD_ARGS) { omega_gpu_session_set_error("matmul prepare: zero dimension"); return shape_rc; }
+    if (shape_rc) {
         omega_gpu_session_set_error("matmul prepare: shape past the matmul envelope");
         return OMEGA_GPU_MATMUL_TOO_LARGE;
     }
@@ -346,8 +349,9 @@ void omega_gpu_tensor_shape(const OmegaGpuTensor *t, uint32_t *k, uint32_t *n) {
 
 int omega_gpu_tensor_upload_bf16(uint32_t k, uint32_t n, const uint16_t *b, OmegaGpuTensor **out) {
     if (out) *out = NULL;
-    if (!b || !out || k == 0 || n == 0) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return OMEGA_GPU_MATMUL_TOO_LARGE;
+    if (!b || !out) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    int shape_rc = omega_host_shape(0, 1, k, n);
+    if (shape_rc) return shape_rc;
     OmegaGpuTensor *t = omega_gpu_host_calloc(1, sizeof *t);
     if (!t) return OMEGA_GPU_MATMUL_BAD_ARGS;
     t->k = k; t->n = n; t->kp = round_up(k, OMEGA_GPU_MATMUL_TILE_K); t->np = round_up(n, OMEGA_GPU_MATMUL_TILE_N);
@@ -375,8 +379,9 @@ int omega_gpu_tensor_upload_bf16(uint32_t k, uint32_t n, const uint16_t *b, Omeg
 
 int omega_gpu_tensor_upload_f32(uint32_t k, uint32_t n, const float *b, OmegaGpuTensor **out) {
     if (out) *out = NULL;
-    if (!b || !out || k == 0 || n == 0) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return OMEGA_GPU_MATMUL_TOO_LARGE;
+    if (!b || !out) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    int shape_rc = omega_host_shape(0, 1, k, n);
+    if (shape_rc) return shape_rc;
     size_t cnt = (size_t)k * n;
     uint16_t *h = omega_gpu_host_alloc(cnt * sizeof *h);
     if (!h) return OMEGA_GPU_MATMUL_BAD_ARGS;
@@ -572,8 +577,9 @@ static int matmul_core(uint32_t m, const uint16_t *a16, const float *a32, const 
 static int resident_entry(uint32_t m, const uint16_t *a, const OmegaGpuTensor *b, float *c, OmegaGpuMatmulInfo *info) {
     uint64_t t0 = now_ns();
     if (info) memset(info, 0, sizeof *info);
-    if (!a || !b || !c || m == 0 || !b->mem.cpu) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (m > OMEGA_BW_MATMUL_MAX_M) return OMEGA_GPU_MATMUL_TOO_LARGE;
+    if (!a || !b || !c || !b->mem.cpu) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    int shape_rc = omega_host_shape(0, m, 1, 1);
+    if (shape_rc) return shape_rc;
     int rc = matmul_core(m, a, NULL, b, c, info);
     if (info) info->call_ns = now_ns() - t0;
     return rc;
@@ -588,8 +594,9 @@ int omega_gpu_matmul_resident_f32(uint32_t m, const float *a, const OmegaGpuTens
                                   OmegaGpuMatmulInfo *info) {
     uint64_t t0 = now_ns();
     if (info) memset(info, 0, sizeof *info);
-    if (!a || !b || !c || m == 0 || !b->mem.cpu) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (m > OMEGA_BW_MATMUL_MAX_M) return OMEGA_GPU_MATMUL_TOO_LARGE;
+    if (!a || !b || !c || !b->mem.cpu) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    int shape_rc = omega_host_shape(0, m, 1, 1);
+    if (shape_rc) return shape_rc;
     int rc = matmul_core(m, NULL, a, b, c, info);
     if (info) info->call_ns = now_ns() - t0;
     return rc;
@@ -625,9 +632,9 @@ int omega_gpu_matmul_bf16(uint32_t m, uint32_t k, uint32_t n,
     OmegaGpuMatmulInfo local;
     if (!info) info = &local;
     memset(info, 0, sizeof *info);
-    if (!a || !b || !c || m == 0 || k == 0 || n == 0) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N)
-        return OMEGA_GPU_MATMUL_TOO_LARGE;
+    if (!a || !b || !c) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    int shape_rc = omega_host_shape(0, m, k, n);
+    if (shape_rc) return shape_rc;
     OmegaGpuTensor *t = NULL;
     int rc = omega_gpu_tensor_upload_bf16(k, n, b, &t);
     if (rc != OMEGA_GPU_MATMUL_OK) return rc;
@@ -646,9 +653,9 @@ int omega_gpu_matmul_f32(uint32_t m, uint32_t k, uint32_t n,
                          const float *a, const float *b, float *c,
                          OmegaGpuMatmulInfo *info) {
     if (info) memset(info, 0, sizeof *info);
-    if (!a || !b || !c || m == 0 || k == 0 || n == 0) return OMEGA_GPU_MATMUL_BAD_ARGS;
-    if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N)
-        return OMEGA_GPU_MATMUL_TOO_LARGE;
+    if (!a || !b || !c) return OMEGA_GPU_MATMUL_BAD_ARGS;
+    int shape_rc = omega_host_shape(0, m, k, n);
+    if (shape_rc) return shape_rc;
     size_t na = (size_t)m * k, nb = (size_t)k * n;
     uint16_t *ab = omega_gpu_host_alloc(na * sizeof *ab);
     uint16_t *bb = omega_gpu_host_alloc(nb * sizeof *bb);

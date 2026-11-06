@@ -1,0 +1,6 @@
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 crumb compile .
+crumb compile: 39 crumbs, 0 rewritten, HEAD df36ab9
+exit=0
+$ bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 crumb verify .
+crumb verify: OK: 39 crumbs current
+exit=0

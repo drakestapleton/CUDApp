@@ -43,7 +43,7 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS cmdlist_record=om/cmdlist/record.om cmdlist_plan=om/cmdlist/plan.om cmdlist_layout=om/cmdlist/layout.om cmdlist_access=om/cmdlist/plan.om,om/cmdlist/access.om"; fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_wire_pack=native/nvrm/wire.om,native/nvrm/wire_pack.om nvrm_wire_reply=native/nvrm/wire.om nvrm_heap_wire=native/nvrm/heap_wire.om"
-[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_uvm_wire=native/nvrm/uvm_wire.om nvrm_uvm_map_wire=native/nvrm/uvm_map_wire.om"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_uvm_wire=native/nvrm/uvm_fields.om,native/nvrm/uvm_wire.om nvrm_uvm_map_wire=native/nvrm/uvm_fields.om,native/nvrm/uvm_map_wire.om nvrm_struct=native/nvrm/uvm_fields.om,native/nvrm/struct.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS plat_policy=om/platform-linux/plat_policy.om"
   UNITS="$UNITS plat_rest=om/platform-linux/plat_rest.om"
@@ -262,7 +262,7 @@ for u in $UNITS $PURE_UNITS; do
     attn_buf|attn_math|attn_tables|attn_set|attn_fill|attn_fillf|attn_count|attn_cntf|attn_bfexp|attn_bffin|attn_view_any|attn_comp|attn_rpois|attn_z64|attn_bids|attn_rows|attn_gtab|attn_range|attn_total|attn_table|attn_touch|attn_blks|attn_rfit|attn_gath|attn_stage|attn_reset|attn_hmap|attn_eff|attn_best|attn_max|attn_ctx)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
-    ar_*|cg_pack_h|cg_mrow)
+    ar_*|cg_pack_h|cg_mrow|nvrm_struct|nvrm_uvm_wire|nvrm_uvm_map_wire)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

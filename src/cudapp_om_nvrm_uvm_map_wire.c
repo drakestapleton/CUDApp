@@ -37,6 +37,9 @@ static uint64_t o_io(unsigned op,uint64_t fd,const void *p,uint64_t n,uint64_t o
 static int o_valid(unsigned t,uint64_t v){unsigned w=o_width(t);__int128 x=o_value(t,v);__int128 m=((__int128)1)<<(t>=6?w-1:w);return t>=6?x>=-m&&x<m:x>=0&&x<m;}
 static int o_buf(const void *p,uint64_t n,uint64_t want,unsigned t){uintptr_t a=(uintptr_t)p;uint64_t z=t==11?4:t==12?8:o_width(t)/8;return p&&n==want&&a%z==0&&n<=UINTPTR_MAX/z&&a<=UINTPTR_MAX-n*z;}
 static int o_overlap(const void *a,uint64_t an,const void *b,uint64_t bn){uintptr_t x=(uintptr_t)a,y=(uintptr_t)b;return x<y+bn&&y<x+an;}
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+static int o_rbuf(const void *p,uint64_t n,uint64_t want,unsigned t){uintptr_t a=(uintptr_t)p;uint64_t z=t==11?4:o_width(t)/8;if(n>UINTPTR_MAX/z)return 0;if(want&&n>want)return 0;if(!n)return 1;if(!p)return 0;return a%z==0&&a<=UINTPTR_MAX-n*z;}
+static int o_rover(const void *a,uint64_t an,const void *b,uint64_t bn){return an&&bn&&o_overlap(a,an,b,bn);}
 #if !defined(__BYTE_ORDER__) || __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error seeded C profile requires little-endian storage
 #endif
@@ -74,7 +77,9 @@ static uint64_t o_fcv(unsigned t,unsigned s,uint64_t a){uint32_t u=(uint32_t)a;f
 static uint64_t o_arg32(float v){uint32_t b;memcpy(&b,&v,4);return b;}
 static uint64_t o_arg64(double v){uint64_t b;memcpy(&b,&v,8);return b;}
 static uint64_t f0(void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2, uint64_t v3);
-static uint64_t f1(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
+static uint64_t f1(uint64_t v0, const void *v1, uint64_t v1_n, const void *v2, uint64_t v2_n, void *v3, uint64_t v3_n);
+static uint64_t f2(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
+static uint64_t f3(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n);
 static uint64_t f0(void *v0, uint64_t v0_n, uint64_t v1, uint64_t v2, uint64_t v3){
 o_enter();
 {
@@ -87,12 +92,75 @@ if(c1++>=1000000)o_trap(4);
 }
 return o_leave(0);
 }
-static uint64_t f1(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n){
+static uint64_t f1(uint64_t v0, const void *v1, uint64_t v1_n, const void *v2, uint64_t v2_n, void *v3, uint64_t v3_n){
+o_enter();
+{
+uint64_t v4=0;
+uint64_t k1=v3_n;
+uint64_t c1=0;
+for(;o_op(8,5, v4, k1);v4=o_op(1,5, v4,1)){
+if(c1++>=1000000)o_trap(4);
+{uint64_t _i=v4;uint64_t _v=0ULL;o_put(v3, v3_n, _i,_v,2);}
+}
+}
+if(({uint64_t _a=v0;uint64_t _b=805306369ULL;o_op(6, 5, _a,_b);})){
+({uint64_t p1=0ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=8ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(16ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=75ULL;o_op(6, 5, _a,_b);})){
+({uint64_t p1=0ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(8ULL);
+}
+if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=34ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v0;uint64_t _b=73ULL;o_op(6, 5, _a,_b);});o_op(13, 1, _a,_b);})){
+({uint64_t p1=0ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=8ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=8ULL;uint64_t p2=o_get(v1, v1_n, 1ULL, 5);uint64_t p3=8ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(24ULL);
+}
+{
+uint64_t v4=0;
+uint64_t k1=16ULL;
+for(;o_op(8,5, v4, k1);v4=o_op(1,5, v4,1)){
+{uint64_t _i=v4;uint64_t _v=o_get(v2, v2_n, v4, 2);o_put(v3, v3_n, _i,_v,2);}
+}
+}
+if(({uint64_t _a=({uint64_t _a=v0;uint64_t _b=26ULL;o_op(6, 5, _a,_b);});uint64_t _b=({uint64_t _a=v0;uint64_t _b=38ULL;o_op(6, 5, _a,_b);});o_op(13, 1, _a,_b);})){
+return o_leave(20ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=37ULL;o_op(6, 5, _a,_b);})){
+({uint64_t p1=24ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=28ULL;uint64_t p2=o_get(v1, v1_n, 1ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=32ULL;uint64_t p2=o_get(v1, v1_n, 2ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(40ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=25ULL;o_op(6, 5, _a,_b);})){
+({uint64_t p1=16ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=20ULL;uint64_t p2=o_get(v1, v1_n, 1ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=24ULL;uint64_t p2=o_get(v1, v1_n, 2ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(32ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=27ULL;o_op(6, 5, _a,_b);})){
+({uint64_t p1=16ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=20ULL;uint64_t p2=o_get(v1, v1_n, 1ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=24ULL;uint64_t p2=o_get(v1, v1_n, 2ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=32ULL;uint64_t p2=o_get(v1, v1_n, 3ULL, 5);uint64_t p3=8ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=40ULL;uint64_t p2=o_get(v1, v1_n, 4ULL, 5);uint64_t p3=8ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(56ULL);
+}
+if(({uint64_t _a=v0;uint64_t _b=28ULL;o_op(6, 5, _a,_b);})){
+({uint64_t p1=16ULL;uint64_t p2=o_get(v1, v1_n, 0ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+({uint64_t p1=20ULL;uint64_t p2=o_get(v1, v1_n, 1ULL, 5);uint64_t p3=4ULL;f0(v3, v3_n, p1, p2, p3);});
+return o_leave(28ULL);
+}
+return o_leave(0ULL);
+}
+static uint64_t f2(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n){
 o_enter();
 {
 uint64_t v3=0;
-uint64_t k1=9264ULL;
+uint64_t k1=v2_n;
+uint64_t c1=0;
 for(;o_op(8,5, v3, k1);v3=o_op(1,5, v3,1)){
+if(c1++>=1000000)o_trap(4);
 {uint64_t _i=v3;uint64_t _v=0ULL;o_put(v2, v2_n, _i,_v,2);}
 }
 }
@@ -113,18 +181,22 @@ for(;o_op(8,5, v3, k1);v3=o_op(1,5, v3,1)){
 ({uint64_t p1=9256ULL;uint64_t p2=o_get(v0, v0_n, 6ULL, 5);uint64_t p3=4ULL;f0(v2, v2_n, p1, p2, p3);});
 return o_leave(9264ULL);
 }
-uint32_t omega_nvrm_uvm_map_wire(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n){
+static uint64_t f3(const void *v0, uint64_t v0_n, const void *v1, uint64_t v1_n, void *v2, uint64_t v2_n){
+o_enter();
+return o_leave(({f2(v0, v0_n, v1, v1_n, v2, v2_n);}));
+}
+uint32_t omega_nvrm_uvm_map_wire(uint64_t  *result, const void *p0, volatile uint64_t p0_n, const void *p1, volatile uint64_t p1_n, void *p2, volatile uint64_t p2_n){
   if(!o_buf(result,1,1,5))return 32;
-if(!o_buf(p0, p0_n,16, 5))return 32;
-  if(o_overlap(result,8,p0, p0_n*8))return 32;
-if(!o_buf(p1, p1_n,16, 2))return 32;
-  if(o_overlap(result,8,p1, p1_n*1))return 32;
-if(!o_buf(p2, p2_n,9264, 2))return 32;
-  if(o_overlap(result,8,p2, p2_n*1))return 32;
-if(o_overlap(p2, p2_n*1, p0, p0_n*8))return 32;
-if(o_overlap(p2, p2_n*1, p1, p1_n*1))return 32;
+if(!o_rbuf(p0, p0_n,16, 5))return 32;
+  if(o_rover(result,8,p0, p0_n*8))return 32;
+if(!o_rbuf(p1, p1_n,16, 2))return 32;
+  if(o_rover(result,8,p1, p1_n*1))return 32;
+if(!o_rbuf(p2, p2_n,9264, 2))return 32;
+  if(o_rover(result,8,p2, p2_n*1))return 32;
+if(o_rover(p2, p2_n*1, p0, p0_n*8))return 32;
+if(o_rover(p2, p2_n*1, p1, p1_n*1))return 32;
   if(o_busy)return 33;
-  o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f1(p0, p0_n, p1, p1_n, p2, p2_n);o_put(result,1,0,_result,5);}
+  o_busy=1;o_depth=0;int code=setjmp(o_jmp);if(!code){uint64_t _result=f3(p0, p0_n, p1, p1_n, p2, p2_n);o_put(result,1,0,_result,5);}
   o_busy=0;return (uint32_t)code;
 }
 #if defined(__GNUC__)

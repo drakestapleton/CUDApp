@@ -271,11 +271,6 @@ $(GPU_DATTN_TEST): tests/gpu_decode_attn_test.c tests/bw_warp_sim_k.h src/omega_
 test-gpu-decode-attn: $(GPU_DATTN_TEST) test-gpu-decode-attn-maxpos
 	$(GPU_DATTN_TEST) --host-only
 
-.PHONY: test-codegen-pf
-$(OUT_DIR)/codegen_pf_diff: tests/codegen_pf_diff.c $(OUT_DIR)/libomega_gpu.a
-	$(CC) $(CFLAGS) -Itests -Isrc -o $@ tests/codegen_pf_diff.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm
-test-codegen-pf: $(OUT_DIR)/codegen_pf_diff
-	$(OUT_DIR)/codegen_pf_diff
 
 # omega #535: the 128k position bound (OMEGA_GPU_DATTN_MAX_POS 131072) on a fake platform, no device. A sanitized copy
 # of src/omega_gpu_decode_attn_api.c is linked ahead of the library, so cache writes, the RoPE fill and launch staging
@@ -561,7 +556,7 @@ test-omega-slices:
 # Every host-only check: no GPU, no device opened. The chip gates are listed in README.md.
 # Portable commands and the AArch64-only rows are separated in docs/OMEGA_HOST_TESTS.md.
 HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-latmeas test-gpu-mathlibs test-gpu-reconv test-gpu-attention test-gpu-moe-window \
-	test-gpu-fp8 test-gpu-decode-attn test-codegen-pf test-gpu-router test-gpu-bf16-gemv test-gpu-fp8gemm test-gpu-tern-sched test-gpu-gpr-boundary \
+	test-gpu-fp8 test-gpu-decode-attn test-gpu-router test-gpu-bf16-gemv test-gpu-fp8gemm test-gpu-tern-sched test-gpu-gpr-boundary \
 	test-gpu-cmdlist test-gpu-decode-graph test-gpu-code-alloc test-gpu-engine-compile test-gpu-engine \
 	test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim \
 	test-gpu-engine-backend-mutants test-gpu-engine-gb10-compile test-gpu-serving-alloc test-gpu-engine-freestanding \

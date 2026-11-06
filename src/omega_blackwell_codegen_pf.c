@@ -2,9 +2,16 @@
 /* omega_blackwell_codegen_pf.c: device-resident prefill helper kernels (OWN-30B T3b). See the header. */
 #include "omega_blackwell_codegen_pf.h"
 #include "omega_bw_em.h"
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
 
-int omega_cg_pf_copy_from_omega(BlackwellIRProgram *prog, int mutant);
-int omega_blackwell_codegen_pf_copy_prog_c(BlackwellIRProgram *prog);
+int omega_cg_pf_copy_from_omega(BlackwellIRProgram *prog, int mutant) {
+    uint64_t err = 0;
+    int rc;
+    if (!prog) return -1;
+    rc = omega_gpu_om_ir_replay((OmegaOmIrUnit)omega_cg_pf_copy, 0, 0, 0, mutant ? 1u : 0u, prog, &err);
+return rc == 0 ? 0 : -1;
+}
 
 int omega_blackwell_codegen_pf_copy_prog(BlackwellIRProgram *prog) {
     if (!prog) return -1;

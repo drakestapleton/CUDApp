@@ -17,10 +17,12 @@ int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32
     spec->k = k;
     spec->n = n;
     spec->precision = precision;
-    sha256_hash(w, 16, spec->spec_id);
+    if (omega_bw_id(w, 16, spec->spec_id) != 0) return -1;
     return 0;
 }
 #else
+/* Explicit freestanding exception: portable view conversion refuses NO_POSIX.
+ * Pending omega-bridge#72 and its authorized pin; hosted defaults use .om. */
 int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32_t n, OmegaMatMulPrecision precision) {
     if (!spec || m == 0 || k == 0 || n == 0) return -1;
     if (m > OMEGA_BW_MATMUL_MAX_M || k > OMEGA_BW_MATMUL_MAX_K || n > OMEGA_BW_MATMUL_MAX_N) return -1;
@@ -57,6 +59,8 @@ int omega_matmul_spec_init(OmegaMatMulSpec *spec, uint32_t m, uint32_t k, uint32
 }
 #endif /* BW_BIND_C_PRIMARY */
 
+#if defined(OMEGA_GPU_NO_POSIX) || (defined(CUDAPP_MIGRATION_PENDING_BW_CPU) && CUDAPP_MIGRATION_PENDING_BW_CPU)
+/* Freestanding exception pending omega-bridge#72; otherwise a default-OFF C oracle. */
 int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
     if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
 
@@ -71,73 +75,47 @@ int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *
     }
     return 0;
 }
+#else
+int omega_matmul_cpu_oracle_i32(const uint32_t *a, const uint32_t *b, uint32_t *c, uint32_t m, uint32_t k, uint32_t n) {
+    if (!a || !b || !c) return -1;
+    if (!omega_bw_value(16, m, k, n, 0, 0)) return -1;
+    uint64_t result = 0;
+    uint32_t rc = omega_bw_cpui(&result, a, omega_bw_value(17, m, k, 0, 0, 0),
+                              b, omega_bw_value(17, k, n, 0, 0, 0),
+                              c, omega_bw_value(17, m, n, 0, 0, 0));
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
+}
+#endif
 
 
 float omega_fp16_to_fp32(uint16_t h) {
-    uint32_t sign = (uint32_t)(h & 0x8000) << 16;
-    uint32_t exp  = (uint32_t)(h & 0x7c00) >> 10;
-    uint32_t mant = (uint32_t)(h & 0x03ff);
-    uint32_t val;
-    if (exp == 0) {
-        if (mant == 0) {
-            val = sign;
-        } else {
-            exp = 1;
-            while ((mant & 0x0400) == 0) {
-                mant <<= 1;
-                exp--;
-            }
-            mant &= 0x03ff;
-            val = sign | ((exp + (127 - 15)) << 23) | (mant << 13);
-        }
-    } else if (exp == 31) {
-        val = sign | 0x7f800000 | (mant << 13);
-    } else {
-        val = sign | ((exp + (127 - 15)) << 23) | (mant << 13);
-    }
+    uint32_t val = (uint32_t)omega_bw_value(1, h, 0, 0, 0, 0);
     float f;
     memcpy(&f, &val, 4);
     return f;
 }
 
 float omega_bf16_to_fp32(uint16_t b) {
-    uint32_t val = (uint32_t)b << 16;
+    uint32_t val = (uint32_t)omega_bw_value(2, b, 0, 0, 0, 0);
     float f;
     memcpy(&f, &val, 4);
     return f;
 }
 
 uint16_t omega_fp32_to_fp16(float f) {
-#ifdef OMEGA_GPU_NO_POSIX
-    /* The host cast can import libgcc __truncsfhf2 on x86. Keep the
-     * freestanding conversion in checked, import-free Omega instead. */
     uint32_t bits;
     uint64_t out;
     memcpy(&bits, &f, sizeof(bits));
     if (omega_native_f16(&out, bits) != OMEGA_OK) __builtin_trap();
     return (uint16_t)out;
-#else
-    _Float16 h = (_Float16)f;
-    uint16_t u;
-    memcpy(&u, &h, 2);
-    return u;
-#endif
 }
 
 uint16_t omega_fp32_to_bf16(float f) {
-#ifndef OMEGA_GPU_NO_POSIX
-    __bf16 b = (__bf16)f;
-    uint16_t u;
-    memcpy(&u, &b, 2);
-    return u;
-#else
-    /* Freestanding (cut A.2): the __bf16 cast calls libgcc __truncsfbf2. Same rounding in integer form
-     * (omega_fp32_to_bf16_rne); the hosted cast and it agree on every one of the 2^32 inputs
-     * (make test-codegen-freestanding, bf16 sweep). */
     return omega_fp32_to_bf16_rne(f);
-#endif
 }
 
+#if defined(OMEGA_GPU_NO_POSIX) || (defined(CUDAPP_MIGRATION_PENDING_BW_CPU) && CUDAPP_MIGRATION_PENDING_BW_CPU)
+/* Freestanding exception pending omega-bridge#72; otherwise default-OFF C oracles. */
 int omega_matmul_cpu_oracle_f16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
     if (!a || !b || !c || m == 0 || k == 0 || n == 0) return -1;
     for (uint32_t i = 0; i < m; i++) {
@@ -165,6 +143,26 @@ int omega_matmul_cpu_oracle_bf16(const uint16_t *a, const uint16_t *b, float *c,
     }
     return 0;
 }
+#else
+int omega_matmul_cpu_oracle_f16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
+    if (!a || !b || !c) return -1;
+    if (!omega_bw_value(16, m, k, n, 0, 0)) return -1;
+    uint64_t result = 0;
+    uint32_t rc = omega_bw_cpuf16(&result, a, omega_bw_value(17, m, k, 0, 0, 0),
+                                b, omega_bw_value(17, k, n, 0, 0, 0),
+                                c, omega_bw_value(17, m, n, 0, 0, 0));
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
+}
+int omega_matmul_cpu_oracle_bf16(const uint16_t *a, const uint16_t *b, float *c, uint32_t m, uint32_t k, uint32_t n) {
+    if (!a || !b || !c) return -1;
+    if (!omega_bw_value(16, m, k, n, 0, 0)) return -1;
+    uint64_t result = 0;
+    uint32_t rc = omega_bw_cpubf16(&result, a, omega_bw_value(17, m, k, 0, 0, 0),
+                                 b, omega_bw_value(17, k, n, 0, 0, 0),
+                                 c, omega_bw_value(17, m, n, 0, 0, 0));
+    return (int)(int64_t)omega_bw_value(8, rc, result, 0, 0, 0);
+}
+#endif
 #ifndef OMEGA_GPU_NO_POSIX /* frees what the hosted allocating generators malloc (omega_blackwell_codegen.h, cut A.2) */
 void omega_blackwell_kernel_free(OmegaBlackwellKernel *kernel) {
     if (!kernel) return;
@@ -185,14 +183,14 @@ int omega_blackwell_bind_matmul_realization(const OmegaMatMulSpec *spec, const O
     int64_t arch = omega_bw_bind(9, 0, 0, w);
     if (arch < 0) return -1;
     memcpy(id->spec_id, spec->spec_id, 32);
-    sha256_hash(w, 27, id->machine_id);
+    if (omega_bw_id(w, 27, id->machine_id) != 0) return -1;
     memcpy(id->code_digest, kernel->code_digest, 32);
     id->sm_arch = (uint32_t)arch;
     memcpy(w + 128, id->spec_id, 32);
     memcpy(w + 160, id->machine_id, 32);
     memcpy(w + 192, id->code_digest, 32);
     if (omega_bw_bind(1, id->sm_arch, 0, w) != 100) return -1;
-    sha256_hash(w, 100, id->realization_id);
+    if (omega_bw_id(w, 100, id->realization_id) != 0) return -1;
     return 0;
 }
 #else

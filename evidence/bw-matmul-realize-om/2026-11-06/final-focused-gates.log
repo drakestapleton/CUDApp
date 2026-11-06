@@ -1,0 +1,658 @@
+Script started on 2026-11-06 01:12:33-06:00 [COMMAND="bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10 env OMEGA_SEED=/home/drakestapleton/work/cudastack/omega-bridge/build/bootstrap/omc OMEGA_OMC=/home/drakestapleton/work/cudastack/omega-mv/seed/out/omc OMEGA_BRIDGE=/home/drakestapleton/work/cudastack/lanes/BridgeDynViews sh -c "sh om/units.sh --check && make -j3 test-om-bw-matmul-mutants test-om-bw-matmul-coverage test-gpu-code-alloc test-gpu-cmdlist test-gpu-decode-graph test-gpu-native-runtime test-gpu-engine-sim test-gpu-matmul-api test-native-artifact-manifest test-codegen-freestanding"" <not executed on terminal>]
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit regalloc (bridge-seeded)
+generating portable unit regalloc_ir (bridge-seeded)
+generating portable unit regalloc_live (bridge-seeded)
+generating portable unit cg_matmul (bridge-seeded)
+generating portable unit cg_matmul_params (bridge-seeded)
+generating portable unit cg_matmul_i32 (bridge-seeded)
+generating portable unit cg_matmul_tensor (bridge-seeded)
+generating portable unit cg_matmul_loop (bridge-seeded)
+generating portable unit cg_matmul_frag (bridge-seeded)
+generating portable unit cg_matmul_block (bridge-seeded)
+generating portable unit cg_vecadd (bridge-seeded)
+generating portable unit bw_hazard (bridge-seeded)
+generating portable unit bw_hazard_dec (bridge-seeded)
+generating portable unit cg_bind (bridge-seeded)
+generating portable unit bw_identity (bridge-seeded)
+generating portable unit bw_cpui (bridge-seeded)
+generating portable unit bw_cpuf16 (bridge-seeded)
+generating portable unit bw_cpubf16 (bridge-seeded)
+generating portable unit bw_shape (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit bw_scalar (bridge-freest)
+PASS portable Omega units regenerate byte for byte
+python3 tests/om_bw_mutants.py
+cc -std=gnu11 -O0 -g -Wall -Wextra -Werror -ffp-contract=off -Isrc -DCUDAPP_MIGRATION_PENDING_BW_MATMUL=1 --coverage -o build/om-bw-coverage/diff /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_diff_test.c /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_realize_oracle.c build/libomega_gpu.a -lpthread -lm
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -o build/test_omega_gpu_code_alloc tests/test_omega_gpu_code_alloc.c src/cudapp_freest_bw_scalar.c
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build/gpu_cmdlist_test tests/gpu_cmdlist_test.c build/libomega_gpu.a -lpthread -lm
+./build/om-bw-coverage/diff
+KILLED half-exponent: compiled=0 differential=1
+PASS bw matmul realization differential checks=521338
+cd build/om-bw-coverage && gcov -b -c diff-om_bw_matmul_oracle.gcno diff-om_bw_realize_oracle.gcno
+File '/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c'
+Lines executed:100.00% of 112
+Branches executed:100.00% of 96
+Taken at least once:100.00% of 96
+Calls executed:100.00% of 9
+Creating 'om_bw_matmul_oracle.c.gcov'
+
+File '/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_realize_oracle.c'
+Lines executed:100.00% of 32
+Branches executed:100.00% of 16
+Taken at least once:81.25% of 16
+Calls executed:100.00% of 13
+Creating 'om_bw_realize_oracle.c.gcov'
+
+Lines executed:100.00% of 144
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -o build/gpu_decode_graph_test tests/gpu_decode_graph_test.c build/libomega_gpu.a -lpthread -lm
+KILLED half-subnormal: compiled=0 differential=1
+KILLED bf16-expand: compiled=0 differential=1
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test_omega_gpu_decode_graph_abort tests/test_omega_gpu_decode_graph_abort.c build/libomega_gpu.a -lpthread -lm
+KILLED bf16-round: compiled=0 differential=1
+KILLED alloc-round: compiled=0 differential=1
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/test_omega_gpu_decode_graph_timeline tests/test_omega_gpu_decode_graph_timeline.c build/libomega_gpu.a -lpthread -lm
+KILLED admit-cbank: compiled=0 differential=1
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_engine.o src/omega_gpu_engine.c
+mutant begin-fail-keeps-lock killed: 3 case(s) failed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_platform.o src/omega_gpu_platform.c
+KILLED identity-byte: compiled=0 differential=1
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_encoder.o src/omega_blackwell_encoder.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_codegen.o src/omega_blackwell_codegen.c
+KILLED integer-product: compiled=0 differential=1
+mutant begin-fail-stays-in-token killed: 3 case(s) failed
+KILLED half-dot-zero: compiled=0 differential=1
+KILLED bf16-dot-stride: compiled=0 differential=1
+mutant oneshot-old-bad-args-only killed: 3 case(s) failed
+KILLED shape-root-equality: compiled=0 differential=1
+PASS bw semantic mutants killed=11
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_matmul.o src/omega_blackwell_matmul.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_qmd.o src/omega_blackwell_qmd.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_realize.o src/omega_blackwell_realize.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/sha256.o src/sha256.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_session.o src/omega_gpu_session.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_fmt.o src/omega_gpu_fmt.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_matmul_api.o src/omega_gpu_matmul_api.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_attention_api.o src/omega_gpu_attention_api.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_serving.o src/omega_gpu_serving.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_wait.o src/omega_gpu_wait.c
+mutant abort-keeps-lock killed: 1 case(s) failed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_revision.o src/cudapp_freest_revision.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_epoch.o src/cudapp_freest_epoch.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_f16.o src/cudapp_freest_f16.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_bw_scalar.o src/cudapp_freest_bw_scalar.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections \
+	-Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/test_omega_blackwell_engine tests/test_omega_blackwell_engine.c tests/fake_m16_native.c \
+	src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpui.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c src/cudapp_om_bw_identity.c src/cudapp_om_bw_shape.c src/cudapp_om_cache_runtime.c src/cudapp_om_cg_bind.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_vecadd.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_bw_scalar.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c -Wl,--gc-sections -lm
+mutant abort-submits killed: 1 case(s) failed
+test-gpu-decode-graph-abort-mutants: 5 of 5 mutants killed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -DOMEGA_BLACKWELL_HOST_SIMULATOR -pthread -ffunction-sections -fdata-sections \
+	-Isrc -Itests -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -o build/test_omega_blackwell_matmul_bounds tests/test_omega_blackwell_matmul_bounds.c tests/fake_m16_native.c \
+	src/omega_blackwell_submit.c src/omega_blackwell_engine.c src/omega_gpu_engine.c src/omega_blackwell_matmul.c src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpui.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c src/cudapp_om_bw_identity.c src/cudapp_om_bw_shape.c src/cudapp_om_cache_runtime.c src/cudapp_om_cg_bind.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_vecadd.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_bw_scalar.c src/omega_blackwell_encoder.c src/omega_blackwell_qmd.c src/omega_blackwell_realize.c src/omega_vector.c src/omega_core.c src/omega_canonical.c src/sha256.c src/omega_gpu_wait.c -Wl,--gc-sections -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_matmul_api_test tests/gpu_matmul_api_test.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/gpu_matmul_r4_receipt tests/gpu_matmul_r4_receipt.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--wrap=fopen -o build/native_artifact_manifest_test tests/native_artifact_manifest_test.c src/omega_native_artifact.c src/omega_cubin.c src/omega_blackwell_realize.c src/sha256.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpui.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c src/cudapp_om_bw_identity.c src/cudapp_om_bw_shape.c src/cudapp_om_cache_runtime.c src/cudapp_om_cg_bind.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_vecadd.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_bw_scalar.c -lpthread
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc -o build/test_codegen_hosted tests/test_omega_codegen_freestanding.c \
+	src/omega_blackwell_codegen.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpui.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c src/cudapp_om_bw_identity.c src/cudapp_om_bw_shape.c src/cudapp_om_cache_runtime.c src/cudapp_om_cg_bind.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_vecadd.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_bw_scalar.c src/omega_blackwell_matmul.c src/sha256.c src/omega_gpu_om_ir.c
+./build/test_omega_gpu_code_alloc
+OMEGA_GPU_CODE_ALLOC PASS
+NO_TAIL mutant: killed (5 failing checks)
+source scan: no page-only code sizing
+./build/gpu_cmdlist_test --host-only
+codegen axpy: 23 insns, peak 12 gprs, declared 16
+codegen res add|norm: 128 insns, peak 40 gprs, declared 48
+codegen res combine|norm: 264 insns, peak 49 gprs, declared 56
+codegen res add: 45 insns, peak 28 gprs, declared 32
+codegen swiglu: 29 insns, peak 16 gprs, declared 24
+codegen argmax: 165 insns, peak 32 gprs, declared 40
+codegen argmax indexed: 160 insns, peak 40 gprs, declared 48
+host-only: 27 checks, 0 failed: PASS
+./build/gpu_cmdlist_test --sim
+sim res mode 5 scale 1 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 5 scale 1 mutant 1: x identical, y 2047/2048 outside tolerance
+sim res mode 6 scale 1 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 6 scale 1 mutant 1: x DIFFERS, y 2047/2048 outside tolerance
+sim res mode 5 scale 2^64 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 5 scale 2^64 mutant 1: x identical, y 2047/2048 outside tolerance
+sim res mode 6 scale 2^64 mutant 0: x identical, y 0/2048 outside tolerance
+sim res mode 6 scale 2^64 mutant 1: x DIFFERS, y 2048/2048 outside tolerance
+sim swiglu mutant 0: 0/6144 outside tolerance
+OMEGA_GPU_CODE_ALLOC_GATE PASS
+./build/test_omega_gpu_decode_graph_timeline
+sim swiglu mutant 1: 6144/6144 outside tolerance
+sim argmax tie 0 mutant 0: index 151625 value 49.9996 (ref 151625)
+ok   timeline exactly full: 4096 stamped launches read back
+sim argmax tie 0 mutant 1: index 151625 value 49.9996 (ref 151625)
+sim argmax tie 1 mutant 0: index 1007 value 60 (ref 1007)
+ok   one launch past the timeline: token fails, no write past stamp[]
+test_omega_gpu_decode_graph_timeline: 2 of 2 cases passed: PASS
+sim argmax tie 1 mutant 1: index 28784 value 49.9999 (ref 1007)
+sim res width 5120 mode 5 mutant 0: x identical, y 0/5120 outside tolerance
+sim res width 5120 mode 5 mutant 1: x identical, y 5120/5120 outside tolerance
+sim res width 5120 mode 4 mutant 0: x identical, y 0/5120 outside tolerance
+sim res width 5120 mode 4 mutant 1: x identical, y 5120/5120 outside tolerance
+sim res width 5120 mode 1 mutant 0: x identical, y 0/5120 outside tolerance
+sim swiglu width 17408 mutant 0: 0/17408 outside tolerance
+sim swiglu width 17408 mutant 1: 17407/17408 outside tolerance
+sim res rows 3 x 5120 mutant 0: x identical, y 0/15360 outside tolerance
+sim res rows 3 x 5120 mutant 1: x identical, y 15360/15360 outside tolerance
+sim gather 3 x 14336 mutant 0: 0/43008 wrong
+sim gather 3 x 14336 mutant 1: 43008/43008 wrong
+sim gate 6244 mutant 0: 0/6244 outside tolerance
+sim gate 6244 mutant 1: 6244/6244 outside tolerance
+sim swiglu rows 3 x 17408: 0 outside tolerance
+sim: 74 checks, 0 failed: PASS
+gcc -r -nostdlib -o build/gpu_fs/omega_gpu_freestanding.o build/gpu_fs/omega_gpu_engine.o build/gpu_fs/omega_gpu_platform.o build/gpu_fs/omega_blackwell_encoder.o build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/omega_blackwell_qmd.o build/gpu_fs/omega_blackwell_realize.o build/gpu_fs/sha256.o build/gpu_fs/omega_gpu_session.o build/gpu_fs/omega_gpu_fmt.o build/gpu_fs/omega_gpu_matmul_api.o build/gpu_fs/omega_gpu_attention_api.o build/gpu_fs/omega_gpu_serving.o build/gpu_fs/omega_gpu_wait.o build/gpu_fs/cudapp_freest_revision.o build/gpu_fs/cudapp_freest_epoch.o build/gpu_fs/cudapp_freest_f16.o build/gpu_fs/cudapp_freest_bw_scalar.o
+freestanding GPU link (18 files): only memcmp memcpy memset strcmp strlen undefined
+./build/test_omega_blackwell_engine
+[PASS] sim_setup_encoder_ok
+[PASS] sim_success_returns_ok
+[PASS] sim_success_state
+[PASS] sim_success_result_flags_clear
+[PASS] sim_success_not_blocked
+[PASS] sim_success_output_values
+[PASS] sim_success_unchanged_zero
+[PASS] sim_success_call_order
+[PASS] sim_success_driver_counts
+[PASS] sim_success_all_allocs_gpu_uncached
+[PASS] sim_success_alloc_sizes
+[PASS] sim_success_balanced
+[PASS] sim_success_large_pushbuffer_ring
+[PASS] sim_success_pushbuffer_parses
+[PASS] sim_success_doorbell_state_captured
+[PASS] sim_success_marker1_zeroed_before_doorbell
+[PASS] sim_success_marker2_zeroed_before_doorbell
+[PASS] sim_success_semaphore_zeroed_before_doorbell
+[PASS] sim_success_semaphore_init_value
+[PASS] sim_success_pushbuffer_order
+[PASS] sim_success_one_flush_two_releases
+[PASS] sim_success_cbank_upload_words_and_place
+[PASS] sim_success_args_upload_words_and_place
+[PASS] sim_success_qmd0_is_not_the_kernel_and_place
+[PASS] sim_success_qmd1_is_the_kernel_and_place
+[PASS] sim_success_flush_operation
+[PASS] sim_success_release1_address_payload_flags
+[PASS] sim_success_release2_is_marker_page_plus_0x10
+[PASS] sim_success_release2_payload_and_flags
+[PASS] sim_success_kernel_ran_once_with_right_program
+[PASS] sim_success_kernel_threads_and_count
+[PASS] sim_success_kernel_arguments_are_a_b_output
+[PASS] sim_success_kernel_program_and_cbank_addresses
+[PASS] sim_success_marker_and_semaphore_places
+[PASS] sim_success_poison_reached_device_output
+[PASS] sim_success_poison_never_equals_a_sum
+[PASS] sim_success_wait_counts
+[PASS] sim_success_wait_expected_values
+[PASS] sim_success_wait_timeouts_come_from_the_job
+[PASS] sim_success_wait_order_marker_marker2_semaphore
+[PASS] sim_success_run_info_words
+[PASS] sim_success_run_info_launch_time_set
+[PASS] sim_success_run_info_done_time_after_launch
+[PASS] sim_noc3_returns_ok
+[PASS] sim_noc3_output_values
+[PASS] sim_noc3_no_flush_in_pushbuffer
+[PASS] sim_noc3_one_release_only
+[PASS] sim_noc3_marker2_never_waited
+[PASS] sim_noc3_marker1_and_semaphore_waited
+[PASS] sim_noc3_run_info_marker2_not_reported
+[PASS] sim_noc3_balanced
+[PASS] sim_twice_first_ok
+[PASS] sim_twice_second_ok_busy_flag_released
+[PASS] sim_twice_driver_opened_and_closed_twice
+[PASS] sim_open_fail_name_step_state
+[PASS] sim_open_fail_errno_and_driver_code
+[PASS] sim_open_fail_driver_text_reported
+[PASS] sim_open_fail_nothing_else_touched
+[PASS] sim_open_fail_not_retained_not_blocked
+[PASS] sim_open_fail_run_info_reset_at_open
+[PASS] sim_open_fail_then_next_run_ok
+[PASS] sim_channel_fail_name_step_state
+[PASS] sim_channel_fail_errno_text_code
+[PASS] sim_channel_fail_closed_nothing_allocated
+[PASS] sim_channel_fail_then_next_run_ok
+[PASS] sim_alloc1_name_step_state
+[PASS] sim_alloc1_errno_code_text
+[PASS] sim_alloc1_stops_at_the_failure
+[PASS] sim_alloc1_balanced
+[PASS] sim_alloc2_name_step_state
+[PASS] sim_alloc2_errno_code_text
+[PASS] sim_alloc2_stops_at_the_failure
+[PASS] sim_alloc2_balanced
+[PASS] sim_alloc3_name_step_state
+[PASS] sim_alloc3_errno_code_text
+[PASS] sim_alloc3_stops_at_the_failure
+[PASS] sim_alloc3_balanced
+[PASS] sim_alloc4_name_step_state
+[PASS] sim_alloc4_errno_code_text
+[PASS] sim_alloc4_stops_at_the_failure
+[PASS] sim_alloc4_balanced
+[PASS] sim_alloc5_name_step_state
+[PASS] sim_alloc5_errno_code_text
+[PASS] sim_alloc5_stops_at_the_failure
+[PASS] sim_alloc5_balanced
+[PASS] sim_alloc6_name_step_state
+[PASS] sim_alloc6_errno_code_text
+[PASS] sim_alloc6_stops_at_the_failure
+[PASS] sim_alloc6_balanced
+[PASS] sim_alloc7_name_step_state
+[PASS] sim_alloc7_errno_code_text
+[PASS] sim_alloc7_stops_at_the_failure
+[PASS] sim_alloc7_balanced
+[PASS] sim_alloc8_name_step_state
+[PASS] sim_alloc8_errno_code_text
+[PASS] sim_alloc8_stops_at_the_failure
+[PASS] sim_alloc8_balanced
+[PASS] sim_short_pb_refused_as_alloc
+[PASS] sim_short_pb_own_check_text
+[PASS] sim_short_pb_balanced
+[PASS] sim_nocpu_marker_refused_as_alloc
+[PASS] sim_nocpu_marker_own_check_text
+[PASS] sim_nocpu_marker_balanced
+[PASS] sim_misaligned_qmd_refused_as_alloc
+[PASS] sim_misaligned_qmd_own_check_text
+[PASS] sim_misaligned_qmd_balanced
+[PASS] sim_short_input_a_refused_as_alloc
+[PASS] sim_short_input_a_own_check_text
+[PASS] sim_short_input_a_balanced
+[PASS] sim_nocpu_input_a_refused_as_alloc
+[PASS] sim_nocpu_input_a_own_check_text
+[PASS] sim_nocpu_input_a_balanced
+[PASS] sim_misaligned_input_a_refused_as_alloc
+[PASS] sim_misaligned_input_a_own_check_text
+[PASS] sim_misaligned_input_a_balanced
+[PASS] sim_nocpu_output_refused_as_alloc
+[PASS] sim_nocpu_output_own_check_text
+[PASS] sim_nocpu_output_balanced
+[PASS] sim_submit_fail_name_step_state
+[PASS] sim_submit_fail_errno_code_text
+[PASS] sim_submit_fail_is_not_uncertain
+[PASS] sim_submit_fail_cleaned_up
+[PASS] sim_unc_marker_hang_name_step_wait
+[PASS] sim_unc_marker_hang_last_state_submitted
+[PASS] sim_unc_marker_hang_limit_and_waited_ms
+[PASS] sim_unc_marker_hang_observed_words
+[PASS] sim_unc_marker_hang_sync_valid_mask
+[PASS] sim_unc_marker_hang_retained_and_blocked
+[PASS] sim_unc_marker_hang_nothing_freed_nothing_closed
+[PASS] sim_unc_marker_hang_driver_code
+[PASS] sim_unc_marker_hang_run_info_marker
+[PASS] sim_unc_marker_hang_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_marker_hang_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_marker_hang_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_marker_hang_no_marker2_wait_with_noc3
+[PASS] sim_unc_marker_hang_next_job_blocked
+[PASS] sim_unc_marker_hang_second_open_refused_by_backend
+[PASS] sim_unc_marker_hang_still_retained_after_refusals
+[PASS] sim_unc_marker_hang_drained_through_the_table
+[PASS] sim_unc_marker_hang_backend_works_again_after_drain
+[PASS] sim_unc_marker2_hang_name_step_wait
+[PASS] sim_unc_marker2_hang_last_state_submitted
+[PASS] sim_unc_marker2_hang_limit_and_waited_ms
+[PASS] sim_unc_marker2_hang_observed_words
+[PASS] sim_unc_marker2_hang_sync_valid_mask
+[PASS] sim_unc_marker2_hang_retained_and_blocked
+[PASS] sim_unc_marker2_hang_nothing_freed_nothing_closed
+[PASS] sim_unc_marker2_hang_driver_code
+[PASS] sim_unc_marker2_hang_run_info_marker
+[PASS] sim_unc_marker2_hang_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_marker2_hang_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_marker2_hang_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_marker2_hang_no_marker2_wait_with_noc3
+[PASS] sim_unc_marker2_hang_next_job_blocked
+[PASS] sim_unc_marker2_hang_second_open_refused_by_backend
+[PASS] sim_unc_marker2_hang_still_retained_after_refusals
+[PASS] sim_unc_marker2_hang_drained_through_the_table
+[PASS] sim_unc_marker2_hang_backend_works_again_after_drain
+[PASS] sim_unc_semaphore_hang_name_step_wait
+[PASS] sim_unc_semaphore_hang_last_state_submitted
+[PASS] sim_unc_semaphore_hang_limit_and_waited_ms
+[PASS] sim_unc_semaphore_hang_observed_words
+[PASS] sim_unc_semaphore_hang_sync_valid_mask
+[PASS] sim_unc_semaphore_hang_retained_and_blocked
+[PASS] sim_unc_semaphore_hang_nothing_freed_nothing_closed
+[PASS] sim_unc_semaphore_hang_driver_code
+[PASS] sim_unc_semaphore_hang_run_info_marker
+[PASS] sim_unc_semaphore_hang_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_semaphore_hang_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_semaphore_hang_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_semaphore_hang_no_marker2_wait_with_noc3
+[PASS] sim_unc_semaphore_hang_next_job_blocked
+[PASS] sim_unc_semaphore_hang_second_open_refused_by_backend
+[PASS] sim_unc_semaphore_hang_still_retained_after_refusals
+[PASS] sim_unc_semaphore_hang_drained_through_the_table
+[PASS] sim_unc_semaphore_hang_backend_works_again_after_drain
+[PASS] sim_unc_marker_overshoot_name_step_wait
+[PASS] sim_unc_marker_overshoot_last_state_submitted
+[PASS] sim_unc_marker_overshoot_limit_and_waited_ms
+[PASS] sim_unc_marker_overshoot_observed_words
+[PASS] sim_unc_marker_overshoot_sync_valid_mask
+[PASS] sim_unc_marker_overshoot_driver_text
+[PASS] sim_unc_marker_overshoot_retained_and_blocked
+[PASS] sim_unc_marker_overshoot_nothing_freed_nothing_closed
+[PASS] sim_unc_marker_overshoot_driver_code
+[PASS] sim_unc_marker_overshoot_run_info_marker
+[PASS] sim_unc_marker_overshoot_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_marker_overshoot_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_marker_overshoot_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_marker_overshoot_no_marker2_wait_with_noc3
+[PASS] sim_unc_marker_overshoot_next_job_blocked
+[PASS] sim_unc_marker_overshoot_second_open_refused_by_backend
+[PASS] sim_unc_marker_overshoot_still_retained_after_refusals
+[PASS] sim_unc_marker_overshoot_drained_through_the_table
+[PASS] sim_unc_marker_overshoot_backend_works_again_after_drain
+[PASS] sim_unc_marker2_overshoot_name_step_wait
+[PASS] sim_unc_marker2_overshoot_last_state_submitted
+[PASS] sim_unc_marker2_overshoot_limit_and_waited_ms
+[PASS] sim_unc_marker2_overshoot_observed_words
+[PASS] sim_unc_marker2_overshoot_sync_valid_mask
+[PASS] sim_unc_marker2_overshoot_driver_text
+[PASS] sim_unc_marker2_overshoot_retained_and_blocked
+[PASS] sim_unc_marker2_overshoot_nothing_freed_nothing_closed
+[PASS] sim_unc_marker2_overshoot_driver_code
+[PASS] sim_unc_marker2_overshoot_run_info_marker
+[PASS] sim_unc_marker2_overshoot_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_marker2_overshoot_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_marker2_overshoot_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_marker2_overshoot_no_marker2_wait_with_noc3
+[PASS] sim_unc_marker2_overshoot_next_job_blocked
+[PASS] sim_unc_marker2_overshoot_second_open_refused_by_backend
+[PASS] sim_unc_marker2_overshoot_still_retained_after_refusals
+[PASS] sim_unc_marker2_overshoot_drained_through_the_table
+[PASS] sim_unc_marker2_overshoot_backend_works_again_after_drain
+[PASS] sim_unc_semaphore_overshoot_name_step_wait
+[PASS] sim_unc_semaphore_overshoot_last_state_submitted
+[PASS] sim_unc_semaphore_overshoot_limit_and_waited_ms
+[PASS] sim_unc_semaphore_overshoot_observed_words
+[PASS] sim_unc_semaphore_overshoot_sync_valid_mask
+[PASS] sim_unc_semaphore_overshoot_driver_text
+[PASS] sim_unc_semaphore_overshoot_retained_and_blocked
+[PASS] sim_unc_semaphore_overshoot_nothing_freed_nothing_closed
+[PASS] sim_unc_semaphore_overshoot_driver_code
+[PASS] sim_unc_semaphore_overshoot_run_info_marker
+[PASS] sim_unc_semaphore_overshoot_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_semaphore_overshoot_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_semaphore_overshoot_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_semaphore_overshoot_no_marker2_wait_with_noc3
+[PASS] sim_unc_semaphore_overshoot_next_job_blocked
+[PASS] sim_unc_semaphore_overshoot_second_open_refused_by_backend
+[PASS] sim_unc_semaphore_overshoot_still_retained_after_refusals
+[PASS] sim_unc_semaphore_overshoot_drained_through_the_table
+[PASS] sim_unc_semaphore_overshoot_backend_works_again_after_drain
+[PASS] sim_unc_noc3_semaphore_hang_name_step_wait
+[PASS] sim_unc_noc3_semaphore_hang_last_state_submitted
+[PASS] sim_unc_noc3_semaphore_hang_limit_and_waited_ms
+[PASS] sim_unc_noc3_semaphore_hang_observed_words
+[PASS] sim_unc_noc3_semaphore_hang_sync_valid_mask
+[PASS] sim_unc_noc3_semaphore_hang_retained_and_blocked
+[PASS] sim_unc_noc3_semaphore_hang_nothing_freed_nothing_closed
+[PASS] sim_unc_noc3_semaphore_hang_driver_code
+[PASS] sim_unc_noc3_semaphore_hang_run_info_marker
+[PASS] sim_unc_noc3_semaphore_hang_run_info_done_time_only_if_marker_succeeded
+[PASS] sim_unc_noc3_semaphore_hang_run_info_marker2_when_it_was_the_failed_wait
+[PASS] sim_unc_noc3_semaphore_hang_run_info_semaphore_when_it_was_the_failed_wait
+[PASS] sim_unc_noc3_semaphore_hang_no_marker2_wait_with_noc3
+[PASS] sim_unc_noc3_semaphore_hang_next_job_blocked
+[PASS] sim_unc_noc3_semaphore_hang_second_open_refused_by_backend
+[PASS] sim_unc_noc3_semaphore_hang_still_retained_after_refusals
+[PASS] sim_unc_noc3_semaphore_hang_drained_through_the_table
+[PASS] sim_unc_noc3_semaphore_hang_backend_works_again_after_drain
+[PASS] sim_cleanup_free_role_name_step_state
+[PASS] sim_cleanup_free_role_flag_errno_text
+[PASS] sim_cleanup_free_role_every_free_attempted_and_closed
+[PASS] sim_cleanup_free_role_words_still_mapped_at_capture
+[PASS] sim_cleanup_free_role_not_uncertain
+[PASS] sim_cleanup_free_scratch_name_step_state
+[PASS] sim_cleanup_free_scratch_code_and_text
+[PASS] sim_cleanup_free_scratch_all_four_parts_attempted
+[PASS] sim_cleanup_free_scratch_sync_words_unmapped_before_free
+[PASS] sim_cleanup_close_name_step_state
+[PASS] sim_cleanup_close_flag_errno_text
+[PASS] sim_cleanup_close_all_freed_first
+[PASS] sim_cleanup_close_failure_still_releases_busy_flag
+[PASS] sim_unchanged_nowrite_name_step_state
+[PASS] sim_unchanged_nowrite_counts_every_word
+[PASS] sim_unchanged_nowrite_completion_was_seen
+[PASS] sim_unchanged_nowrite_cleaned_up_not_retained
+[PASS] sim_unchanged_half_counts_the_unwritten_half
+[PASS] sim_unchanged_wrong_program_bytes_detected
+[PASS] sim_guard_open_ok
+[PASS] sim_guard_channel_ok
+[PASS] sim_guard_alloc_zero_bytes_refused
+[PASS] sim_guard_alloc_unknown_role_refused
+[PASS] sim_guard_alloc_rounds_up_to_whole_pages
+[PASS] sim_guard_free_after_rounding_ok
+[PASS] sim_guard_wait_before_build_refused_without_driver_call
+[PASS] sim_guard_submit_before_build_refused
+[PASS] sim_guard_build_without_buffers_refused
+[PASS] sim_guard_alloc_scratch_ok
+[PASS] sim_guard_alloc_program_ok
+[PASS] sim_guard_alloc_a_ok
+[PASS] sim_guard_alloc_b_ok
+[PASS] sim_guard_alloc_output_ok
+[PASS] sim_guard_copy_in_negative_role_refused
+[PASS] sim_guard_free_negative_role_refused
+[PASS] sim_guard_build_null_job_refused
+[PASS] sim_guard_build_unknown_layout_refused
+[PASS] sim_guard_build_zero_count_refused
+[PASS] sim_guard_build_count_beyond_the_buffers_refused
+[PASS] sim_guard_copy_in_too_long_refused
+[PASS] sim_guard_copy_in_unknown_role_refused
+[PASS] sim_guard_copy_in_null_source_refused
+[PASS] sim_guard_fill_poison_too_long_refused
+[PASS] sim_guard_fill_poison_null_refused
+[PASS] sim_guard_copy_out_too_long_refused
+[PASS] sim_guard_copy_out_null_refused
+[PASS] sim_guard_free_unknown_role_refused
+[PASS] sim_guard_valid_copy_in_ok
+[PASS] sim_guard_valid_fill_poison_ok
+[PASS] sim_guard_valid_copy_out_returns_the_poison
+[PASS] sim_guard_drain_ok
+[PASS] sim_guard_nothing_leaked
+[PASS] sim_close_setup_through_the_table
+[PASS] sim_close_words_mapped_after_build
+[PASS] sim_close_returns_zero
+[PASS] sim_close_unmaps_every_sync_word
+[PASS] sim_close_released_everything
+[PASS] sim_vec_spec_init
+[PASS] sim_vec_success_returns_zero
+[PASS] sim_vec_success_output_values
+[PASS] sim_vec_success_parity_verified
+[PASS] sim_vec_success_completion_marker_and_semaphore
+[PASS] sim_vec_success_shape_fields
+[PASS] sim_vec_success_timestamps
+[PASS] sim_vec_success_timeouts_are_5000_each
+[PASS] sim_vec_success_all_protections_on
+[PASS] sim_vec_success_encoded_program_reached_the_device
+[PASS] sim_vec_success_poison_is_the_complement_of_the_sum
+[PASS] sim_vec_success_poison_never_collides_even_for_0xdeadbeef
+[PASS] sim_vec_success_balanced
+[PASS] sim_vec_wrong_math_returns_nonzero
+[PASS] sim_vec_wrong_math_parity_not_verified
+GB10_VECTOR_FAIL failure=CLEANUP step=FREE state=OUTPUT_PRODUCED drv_rc=-1 errno=5 text="fake driver says no"
+[PASS] sim_vec_cleanup_fault_returns_nonzero
+GB10_VECTOR_FAIL failure=OUTPUT_UNCHANGED step=SCAN state=OUTPUT_VISIBLE drv_rc=0 errno=0 text=""
+[PASS] sim_vec_unwritten_output_returns_nonzero
+GB10_VECTOR_FAIL failure=COMPLETION_WAIT step=WAIT_MARKER state=SUBMITTED drv_rc=-1 errno=0 text=""
+[PASS] sim_vec_hang_returns_nonzero
+[PASS] sim_vec_hang_blocks_the_process_and_retains
+[PASS] sim_vec_hang_drains
+[PASS] sim_vec_null_spec_refused
+[PASS] sim_vec_null_output_refused
+[PASS] sim_vec_null_input_refused
+[PASS] sim_vec_zero_count_refused
+[PASS] sim_vec_refusals_never_touch_the_driver
+[PASS] sim_vec_works_again
+[PASS] sim_persist_two_jobs_ok
+[PASS] sim_persist_one_open_one_channel_no_close
+[PASS] sim_persist_device_reported_open
+[PASS] sim_persist_pushbuffer_invalidates_shader_caches
+[PASS] sim_persist_per_job_buffers_still_freed
+[PASS] sim_persist_shutdown_closes
+[PASS] sim_persist_shutdown_idempotent
+[PASS] sim_persist_reopens_after_shutdown
+[PASS] sim_persist_fault_run_fails
+[PASS] sim_persist_recovers_after_fault
+[PASS] sim_persist_driver_fault_closes_device
+[PASS] sim_persist_fresh_open_after_driver_fault
+SUMMARY passed=346 failed=0
+./build/test_omega_blackwell_matmul_bounds
+[PASS] matmul_i32_2p31_dims_refused_before_open
+[PASS] matmul_tensor_2p31_dims_refused_before_open
+[PASS] matmul_i32_m_one_past_max_refused_before_open
+[PASS] matmul_tensor_n_one_past_max_refused_before_open
+[PASS] matmul_i32_code_size_overflow_refused_before_open
+[PASS] matmul_tensor_code_size_overflow_refused_before_open
+SUMMARY passed=6 failed=0
+./build/gpu_matmul_api_test --host-only
+fragment kernel K=2560 N=4096 unroll 4: 72 instructions, 48 registers
+blocked kernel K=4096 N=24576 rt=4 ct=4 unroll 1: 208 instructions, 108 registers
+blocked kernel K=12288 N=4096 rt=4 ct=4 unroll 1: 208 instructions, 108 registers
+blocked kernel K=4096 N=6144 rt=4 ct=4 unroll 1: 208 instructions, 108 registers
+PASS: 178 checks, 0 failed
+./build/gpu_matmul_r4_receipt --host-only
+host 37x80x52 comparator controls: clean=0 perturbed=1 stale=1 unwritten=1
+PASS: 7 checks, 0 failed
+./build/native_artifact_manifest_test
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=2 manifest min_driver is not a strict A.B.C version)
+  (refused as expected? rc=1 current driver 'garbage' is not a strict A.B.C version)
+  (refused as expected? rc=8 driver 580.173.01 is older than required 580.173.02)
+  (refused as expected? rc=2 cbank_words '2abc' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=2 cbank_words '+2' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=2 cbank_words '33' is not a decimal in 1..32 matching cbank_args.bin)
+  (refused as expected? rc=3 QMD launch fields disagree with the manifest grid/block/shared/gpr)
+native_artifact_manifest: 70 checks, 0 failed
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -o build/test_codegen_freestanding tests/test_omega_codegen_freestanding.c \
+	build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/sha256.o build/gpu_fs/cudapp_freest_f16.o build/gpu_fs/cudapp_freest_bw_scalar.o
+printf 'void *malloc(unsigned long);\nvoid *omega_gpu_fs_control(void) { return malloc(16); }\n' > build/gpu_fs/control/canary.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/control/canary.o build/gpu_fs/control/canary.c
+gcc -r -nostdlib -o build/gpu_fs/control/with_canary.o build/gpu_fs/omega_gpu_engine.o build/gpu_fs/omega_gpu_platform.o build/gpu_fs/omega_blackwell_encoder.o build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/omega_blackwell_qmd.o build/gpu_fs/omega_blackwell_realize.o build/gpu_fs/sha256.o build/gpu_fs/omega_gpu_session.o build/gpu_fs/omega_gpu_fmt.o build/gpu_fs/omega_gpu_matmul_api.o build/gpu_fs/omega_gpu_attention_api.o build/gpu_fs/omega_gpu_serving.o build/gpu_fs/omega_gpu_wait.o build/gpu_fs/cudapp_freest_revision.o build/gpu_fs/cudapp_freest_epoch.o build/gpu_fs/cudapp_freest_f16.o build/gpu_fs/cudapp_freest_bw_scalar.o build/gpu_fs/control/canary.o
+allowlist control: a malloc caller is refused by the nm -u check (as required)
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -DOMEGA_NATIVE_RUNTIME_TEST \
+	-DCUDAPP_NATIVE_RUNTIME_TEST -ffunction-sections -fdata-sections -Wl,--gc-sections \
+	-o build/test_omega_gpu_native_runtime tests/test_omega_gpu_session_platform.c build/gpu_fs/omega_gpu_freestanding.o src/omega_gpu_cmdlist.c src/omega_gpu_fp8_api.c src/omega_gpu_fp8gemm_api.c src/omega_blackwell_codegen_moe.c src/omega_blackwell_codegen_moe2.c src/omega_blackwell_codegen_gemm.c src/omega_gpu_fp8_pack.c src/omega_gpu_mem_cached.c src/omega_gpu_hostmath.c src/omega_native_artifact.c src/omega_cubin.c src/cudapp_om_ampere_enc_sm86.c src/cudapp_om_amp_runtime.c src/cudapp_om_attn_mirror_plan.c src/cudapp_om_attn_mirror_step.c src/cudapp_om_binding.c src/cudapp_om_bw_cpubf16.c src/cudapp_om_bw_cpuf16.c src/cudapp_om_bw_cpui.c src/cudapp_om_bw_enc_sm121.c src/cudapp_om_bw_hazard.c src/cudapp_om_bw_hazard_dec.c src/cudapp_om_bw_identity.c src/cudapp_om_bw_shape.c src/cudapp_om_cache_runtime.c src/cudapp_om_cg_bind.c src/cudapp_om_cg_matmul_block.c src/cudapp_om_cg_matmul.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_tensor.c src/cudapp_om_cg_vecadd.c src/cudapp_om_closure_alloc.c src/cudapp_om_closure_bind.c src/cudapp_om_closure_blob.c src/cudapp_om_closure_code.c src/cudapp_om_closure_cover.c src/cudapp_om_closure_dir.c src/cudapp_om_closure_intent.c src/cudapp_om_closure_launch.c src/cudapp_om_closure_pack.c src/cudapp_om_closure_reseal.c src/cudapp_om_closure_seal.c src/cudapp_om_closure_series.c src/cudapp_om_code_digest.c src/cudapp_om_command.c src/cudapp_om_compose.c src/cudapp_om_context_lookup.c src/cudapp_om_cubin_elf.c src/cudapp_om_digest.c src/cudapp_om_encode.c src/cudapp_om_graph.c src/cudapp_om_lease.c src/cudapp_om_mathlibs_ir.c src/cudapp_om_moe_admission.c src/cudapp_om_moe_group.c src/cudapp_om_moe_ids32.c src/cudapp_om_moe_maps32.c src/cudapp_om_moe_plan.c src/cudapp_om_moe_segs32.c src/cudapp_om_moe_windows.c src/cudapp_om_prefill_order.c src/cudapp_om_prefill_reading.c src/cudapp_om_prefill_shape.c src/cudapp_om_prefill_workspace.c src/cudapp_om_q38_emit.c src/cudapp_om_q38_runtime.c src/cudapp_om_quant_wire.c src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_repack.c src/cudapp_om_slotrev.c src/cudapp_om_templates.c src/cudapp_om_validate.c src/omega_gpu_q36_graph.c src/omega_gpu_decode_graph.c src/omega_gpu_router_api.c src/omega_gpu_gemm_ex.c src/omega_gpu_gemm.c src/omega_blackwell_codegen_qmma.c -lpthread -lm
+mutant room-off-by-one killed
+mutant timeline-after-failure killed
+test-gpu-decode-graph-timeline: 2 of 2 mutants killed
+./build/gpu_decode_graph_test --host-only
+dgraph prefetch 0 (red 0)
+fp8 knobs: variant 1 barrier 0 (wfi+inval_all) cta_budget 0 shape 0/0/0 cached 0
+ok: RES NORM builds (101 instructions, peak 40 registers)
+ok: RES ADD builds (45 instructions, peak 28 registers)
+ok: RES COMBINE|NORM builds (264 instructions, peak 49 registers)
+ok: SWIGLU builds (29 instructions, peak 16 registers)
+ok: ARGMAX identity builds (165 instructions, peak 32 registers)
+ok: ARGMAX indexed builds (160 instructions, peak 40 registers)
+ok: SWIGLU mutant 1 builds (29 instructions, peak 16 registers)
+ok: RES COMBINE|NORM mutant 2 builds (246 instructions, peak 49 registers)
+ok: RES ADD|COMBINE refused by codegen
+ok: fp8 record without a list: BAD_ARGS
+ok: bf16 record without a list: BAD_ARGS
+ok: router record without a list: BAD_ARGS
+ok: decode attn record without a list: BAD_ARGS
+ok: fp8 record with tab_va 0: BAD_ARGS
+ok: bf16 record with x_va 0: BAD_ARGS
+ok: router record with a NULL router: BAD_ARGS
+ok: decode attn record with a NULL cache: BAD_ARGS
+ok: graph create with an empty config: BAD_ARGS
+host-only: 18 checks, 0 failed: PASS
+./build/test_omega_gpu_decode_graph_abort
+ok   visibility sync refused at begin: split + one-shot recover
+ok   device open refused at begin: lock free, reopen recovers
+ok   abort_token: cancel a begun token, nothing submitted
+ok   end_token after a failed record: no submit, lock free
+ok   latched session: begin fails at once, no retry
+test_omega_gpu_decode_graph_abort: 5 of 5 cases passed: PASS
+./build/test_codegen_hosted --dump > build/codegen_dump_hosted.txt
+./build/test_codegen_freestanding --dump > build/codegen_dump_freestanding.txt
+cmp build/codegen_dump_hosted.txt build/codegen_dump_freestanding.txt
+codegen dumps byte-identical: 14 fixtures, 24448 code bytes
+./build/test_codegen_freestanding
+./build/test_omega_gpu_native_runtime
+PASS CMDLIST_CREATE_AFTER_LOCK_PRECEDING_CLOSE_IS_USABLE
+PASS CMDLIST_CREATE_AFTER_LOCK_PRECEDING_RECOVERY_IS_USABLE
+PASS CMDLIST_CLOSE_AFTER_CREATE_STILL_REFUSES_STALE_LIST
+HOST_ONLY synthetic encoded_code_bytes=1792 encoded_code_sha256=c96f7d079502c124b49eabffa8905043a360d457574b168f2ee0ed2013e7a673 qualification=NOT_RUN
+PASS NATIVE_SYNTHETIC_QUANT_COMPOSE_ENCODE_CACHE_SELECT_RECORD
+PASS NATIVE_REAL_COMPOSE_CAPACITY_REFUSES_WITHOUT_TRAP
+PASS NATIVE_TIMEOUT_RETAINS_CODE_UNTIL_CONFIRMED_TEARDOWN
+PASS NATIVE_NORMAL_CLOSE_INVALIDATES_EXACT_LEASE
+HOST_ONLY actual typed-owner mode-final wires; role0=SYNTHETIC_LABEL; kernel/GPU/qualification=NOT_RUN
+PASS NATIVE_ACTUAL_OWNER_MODEFINAL_OBSERVER_BINDING
+PASS NATIVE_PAIR_REQUIRES_BOTH_QMD_PUBLICATIONS
+PASS NATIVE_PAIR_REFUSES_MISSING_FIRST_QMD_PUBLICATION
+PASS NATIVE_PAIR_REFUSES_MISSING_SECOND_QMD_PUBLICATION
+PASS INSTALL_REFUSALS_ABI_1_1
+PASS FREESTANDING_NO_DEFAULT_PLATFORM
+PASS OPEN_LAUNCH_CLOSE_TYPED_UNCACHED_POLLING
+PASS OPEN_FAILURE_KEEPS_DRIVER_TEXT
+PASS CANCEL_BEFORE_SUBMIT_NOT_LATCHED
+PASS CANCEL_AFTER_SUBMIT_LATCHES_AND_PARKS
+PASS TIMEOUT_PARKS_NEVER_RELEASES
+PASS TIMEOUT_LATCH_REFUSES_CLOSE_REOPEN_INSTALL
+PASS TIMEOUT_RECOVER_SAME_PROCESS
+PASS RECOVER_TEARDOWN_FAULT_STAYS_LATCHED
+PASS RECOVER_MODULE_LATCH
+PASS STALE_HANDLE_REFUSED_AFTER_CLOSE_REOPEN
+PASS SERVING_RESERVATION_REFUSES_WITHOUT_ALLOC
+PASS MATMUL_CODE_BUFFER_ENCODED_IN_PLACE
+PASS WAIT_REFUSES_WITHOUT_CLOCK
+PASS FMT_BOUNDED_MATCHES_SNPRINTF
+test_omega_gpu_session_platform: 27 passed, 0 failed
+bf16 sweep: all 2^32 inputs equal the hosted __bf16 cast
+PASS: freestanding codegen contract (14 fixtures, 0 failing checks)
+
+Script done on 2026-11-06 01:14:09-06:00 [COMMAND_EXIT_CODE="0"]

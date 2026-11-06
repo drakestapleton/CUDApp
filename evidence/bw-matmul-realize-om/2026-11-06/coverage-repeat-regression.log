@@ -1,0 +1,59 @@
+cc -std=gnu11 -O0 -g -Wall -Wextra -Werror -ffp-contract=off -Isrc -DCUDAPP_MIGRATION_PENDING_BW_MATMUL=1 -o build/om_bw_diff tests/om_bw_diff_test.c tests/om_bw_matmul_oracle.c tests/om_bw_realize_oracle.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -O0 -g -Wall -Wextra -Werror -ffp-contract=off -Isrc -DCUDAPP_MIGRATION_PENDING_BW_MATMUL=1 -DOMEGA_BW_DIFF_RED=1 -o build/om_bw_diff_red tests/om_bw_diff_test.c tests/om_bw_matmul_oracle.c tests/om_bw_realize_oracle.c build/libomega_gpu.a -lpthread -lm
+python3 tests/om_bw_mutants.py
+rm -f build/om-bw-coverage/diff-*.gcda
+cc -std=gnu11 -O0 -g -Wall -Wextra -Werror -ffp-contract=off -Isrc -DCUDAPP_MIGRATION_PENDING_BW_MATMUL=1 --coverage -o build/om-bw-coverage/diff /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_diff_test.c /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_realize_oracle.c build/libomega_gpu.a -lpthread -lm
+./build/om_bw_diff
+PASS bw matmul realization differential checks=521475
+KILLED half-exponent: compiled=0 differential=1
+PASS bw differential red check killed
+./build/om-bw-coverage/diff
+PASS bw matmul realization differential checks=521475
+cd build/om-bw-coverage && gcov -b -c diff-om_bw_matmul_oracle.gcno diff-om_bw_realize_oracle.gcno
+File '/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c'
+Lines executed:100.00% of 112
+Branches executed:100.00% of 96
+Taken at least once:100.00% of 96
+Calls executed:100.00% of 9
+Creating 'om_bw_matmul_oracle.c.gcov'
+
+File '/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_realize_oracle.c'
+Lines executed:100.00% of 32
+Branches executed:100.00% of 16
+Taken at least once:81.25% of 16
+Calls executed:100.00% of 13
+Creating 'om_bw_realize_oracle.c.gcov'
+
+Lines executed:100.00% of 144
+KILLED half-subnormal: compiled=0 differential=1
+KILLED bf16-expand: compiled=0 differential=1
+KILLED bf16-round: compiled=0 differential=1
+KILLED alloc-round: compiled=0 differential=1
+KILLED admit-cbank: compiled=0 differential=1
+KILLED identity-byte: compiled=0 differential=1
+KILLED integer-product: compiled=0 differential=1
+KILLED half-dot-zero: compiled=0 differential=1
+KILLED bf16-dot-stride: compiled=0 differential=1
+KILLED shape-root-equality: compiled=0 differential=1
+KILLED name-terminator: compiled=0 differential=1
+PASS bw semantic mutants killed=12
+rm -f build/om-bw-coverage/diff-*.gcda
+cc -std=gnu11 -O0 -g -Wall -Wextra -Werror -ffp-contract=off -Isrc -DCUDAPP_MIGRATION_PENDING_BW_MATMUL=1 --coverage -o build/om-bw-coverage/diff /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_diff_test.c /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c /home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_realize_oracle.c build/libomega_gpu.a -lpthread -lm
+./build/om-bw-coverage/diff
+PASS bw matmul realization differential checks=521475
+cd build/om-bw-coverage && gcov -b -c diff-om_bw_matmul_oracle.gcno diff-om_bw_realize_oracle.gcno
+File '/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_matmul_oracle.c'
+Lines executed:100.00% of 112
+Branches executed:100.00% of 96
+Taken at least once:100.00% of 96
+Calls executed:100.00% of 9
+Creating 'om_bw_matmul_oracle.c.gcov'
+
+File '/home/drakestapleton/work/cudastack/lanes/BwMatmulRealize/tests/om_bw_realize_oracle.c'
+Lines executed:100.00% of 32
+Branches executed:100.00% of 16
+Taken at least once:81.25% of 16
+Calls executed:100.00% of 13
+Creating 'om_bw_realize_oracle.c.gcov'
+
+Lines executed:100.00% of 144

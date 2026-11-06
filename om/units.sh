@@ -121,6 +121,10 @@ AV=om/apiviews
 APIVIEWS="av_ewarg=$AV/ewarg.om av_fp8am=$AV/fp8am.om av_fp8en=$AV/fp8en.om av_fp8q=$AV/fp8q.om av_e4m3=$AV/e4m3.om av_fp8sc=$AV/fp8sc.om av_gdnch=$AV/gdnch.om av_gdnsl=$AV/gdnsl.om av_scan=$AV/scan.om"
 APIVIEWS_RT="av_bf16=$AV/bf16.om av_widen=$AV/widen.om av_rope=$AV/rope.om av_gdnsc=$AV/gdnsc.om av_gdnex=$AV/gdnex.om av_gdnpt=$AV/gdnpt.om av_gdnut=$AV/gdnut.om av_fp8x=$AV/fp8x.om av_fp8xb=$AV/fp8xb.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS $APIVIEWS $APIVIEWS_RT"
+UNITS="$UNITS bw_identity=om/cache/digest.om,om/blackwell/identity.om"
+UNITS="$UNITS bw_cpui=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpui.om bw_cpuf16=om/blackwell/views.om,om/blackwell/scalar.om,om/blackwell/shape.om,om/blackwell/cpuf16.om bw_cpubf16=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpubf16.om"
+UNITS="$UNITS bw_shape=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/shape_probe.om bw_name=om/blackwell/name.om"
+PURE_UNITS="$PURE_UNITS bw_scalar=om/blackwell/scalar.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
 [ -n "${OMEGA_OMC:-}" ] && [ -n "${OMEGA_BRIDGE:-}" ] || { echo "NOT_RUN: set OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
@@ -169,14 +173,15 @@ for u in $UNITS $PURE_UNITS; do
   bridge=$OMEGA_BRIDGE
   flags=
   file=cudapp_om_$name.c
+  profile=
   case "$name" in
-    revision|epoch|f16|c5|leftovers)
+    revision|epoch|f16|c5|leftovers|bw_scalar)
       frontend=bridge-freest
       abi_name=bridge-freest
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
-    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb)
+    av_bf16|av_widen|av_rope|av_gdnsc|av_gdnex|av_gdnpt|av_gdnut|av_fp8x|av_fp8xb|bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name)
       flags=--runtime-views
       abi_name=bridge-seeded-runtime ;;
   esac

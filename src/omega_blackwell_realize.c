@@ -2,6 +2,7 @@
 #include "omega_blackwell_realize.h"
 #include "sha256.h"
 #include <string.h>
+#include "omega_bw_policy.h"
 #include "omega_bw_bind.h"
 
 #ifndef BW_BIND_C_PRIMARY
@@ -9,7 +10,7 @@ int omega_blackwell_get_machine_id(SemanticId *out_machine_id) {
     uint8_t w[256] = {0};
     if (!out_machine_id) return -1;
     if (omega_bw_bind(2, 0, 0, w) != 27) return -1;
-    sha256_hash(w, 27, out_machine_id->bytes);
+    if (omega_bw_id(w, 27, out_machine_id->bytes) != 0) return -1;
     return 0;
 }
 
@@ -21,11 +22,13 @@ int omega_blackwell_realization_compute_id(OmegaBlackwellRealization *real) {
     memcpy(w + 160, real->machine_id.bytes, OMEGA_ID_BYTES);
     memcpy(w + 192, real->code_digest, sizeof(real->code_digest));
     if (omega_bw_bind(1, real->sm_architecture, 0, w) != 100) return -1;
-    sha256_hash(w, 100, real->realization_digest);
+    if (omega_bw_id(w, 100, real->realization_digest) != 0) return -1;
     memcpy(real->realization_id.bytes, real->realization_digest, OMEGA_ID_BYTES);
     return 0;
 }
 #else
+/* Explicit NO_POSIX exception pending omega-bridge#72; this is also the
+ * default-OFF C_BIND differential path. Hosted identities use Omega SHA. */
 
 int omega_blackwell_get_machine_id(SemanticId *out_machine_id) {
     if (!out_machine_id) return -1;

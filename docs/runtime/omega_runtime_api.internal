@@ -202,3 +202,4 @@ const OMEGA_GPU_ATTN_GMUT_COUNT # TEST ONLY: general attention mutant ids for th
 
 fn omega_gpu_pf_alloc_dev_locked # internal device-private allocation transport; caller already holds session lock
 fn omega_gpu_pf_copy_va_locked # internal copy transport and chip-time result; caller already holds session lock
+fn omega_gpu_mathlibs_test_set_mutant # TEST ONLY: selects a mutant of the mathlibs Omega unit (negative controls)

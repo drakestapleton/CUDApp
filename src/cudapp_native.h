@@ -81,6 +81,8 @@ uint32_t omega_bw_cpuf16(uint64_t  *result, const void *p0, uint64_t p0_n, const
 uint32_t omega_bw_cpubf16(uint64_t  *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n, void *p2, uint64_t p2_n);
 /* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
 uint32_t omega_bw_shape(uint64_t  *result, uint64_t p0, uint64_t p1, uint64_t p2);
+/* Omega Bridge runtime views: numeric extents are capacities; * is unsized. */
+uint32_t omega_bw_name(uint64_t  *result, const void *p0, uint64_t p0_n, void *p1, uint64_t p1_n);
 uint32_t omega_native_revision(uint64_t *result, uint64_t p0);
 uint32_t omega_native_epoch(uint64_t *result, uint64_t p0);
 uint32_t omega_native_f16(uint64_t *result, uint64_t p0);

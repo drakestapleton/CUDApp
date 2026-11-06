@@ -24,6 +24,7 @@ UNITS="${OMEGA_UNITS:-om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/mathli
 UNITS="$UNITS bw_identity=om/cache/digest.om,om/blackwell/identity.om"
 UNITS="$UNITS bw_cpui=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpui.om bw_cpuf16=om/blackwell/views.om,om/blackwell/scalar.om,om/blackwell/shape.om,om/blackwell/cpuf16.om bw_cpubf16=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/cpubf16.om"
 UNITS="$UNITS bw_shape=om/blackwell/views.om,om/blackwell/shape.om,om/blackwell/shape_probe.om"
+UNITS="$UNITS bw_name=om/blackwell/name.om"
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om bw_scalar=om/blackwell/scalar.om"
 DEST="${OMEGA_UNITS_DEST:-$ROOT/src}"
 OUTS="cudapp_native.h cudapp_om_units.ident"
@@ -76,7 +77,7 @@ for u in $UNITS $PURE_UNITS; do
       converter_pin=$FREEST_CONVERTER_PIN
       frontend_pin=$FREEST_FRONTEND_PIN
       file=cudapp_freest_$name.c ;;
-    bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape) profile=--runtime-views ;;
+    bw_cpui|bw_cpuf16|bw_cpubf16|bw_shape|bw_name) profile=--runtime-views ;;
   esac
   printf 'generating portable unit %s (%s)\n' "$name" "$frontend" >&2
   OMEGA_SEEDED_OMC="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/$frontend" $profile c "$src" > "$T/$file"

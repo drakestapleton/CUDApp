@@ -20,7 +20,7 @@ $CC $cflags -c -o "$tmp/dagsim.o" "$tmp/dagsim.c"
 $CC $cflags -c -o "$tmp/rx_costmodel.o" src/runtime/rx_costmodel.c
 # CUDA++ has no src/omega_om_units.c; src/sha256.c is sha256_hash on every host (Makefile DS_SHA_SRC).
 sha=src/sha256.c
-$CC $cflags -o "$tmp/unit" tests/dagsim/dagsim_unit.c "$tmp/dagsim.o" "$tmp/rx_costmodel.o" "$sha" -Wl,--wrap=rx_cm_predict -lm
+$CC $cflags -o "$tmp/unit" tests/dagsim/dagsim_unit.c "$tmp/dagsim.o" "$tmp/rx_costmodel.o" "$sha" src/cudapp_om_dag_parse.c src/cudapp_om_dag_fmt.c -Wl,--wrap=rx_cm_predict -lm
 set +e
 "$tmp/unit" > "$tmp/out" 2>&1
 rc=$?

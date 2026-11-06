@@ -32,7 +32,7 @@ int omega_gpu_dnn_activations(const OmegaGpuDnnActivationsShape *s,const void *i
     if(rc) {free(program);free(code);return rc;}
     OmegaGpuMem buffers[3]={0};
     omega_gpu_session_lock();
-    if(omega_gpu_session_open() || omega_gpu_session_alloc(p[0],&buffers[0]) ||
+    if(!omega_gpu_session_open() || omega_gpu_session_alloc(p[0],&buffers[0]) ||
        omega_gpu_session_alloc(p[1],&buffers[1]) || omega_gpu_session_alloc_code(kernel.code_size,&buffers[2])) {
         rc=OMEGA_GPU_DNN_ACTIVATIONS_CHIP;goto cleanup;
     }

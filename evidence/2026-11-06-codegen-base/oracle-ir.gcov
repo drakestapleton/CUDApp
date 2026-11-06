@@ -1,0 +1,449 @@
+        -:    0:Source:src/omega_gpu_om_ir.c
+        -:    0:Graph:~/work/cudastack/lanes/CodegenBaseOm/build/codegen-base-om/oracle_ir.gcno
+        -:    0:Data:~/work/cudastack/lanes/CodegenBaseOm/build/codegen-base-om/oracle_ir.gcda
+        -:    0:Runs:1
+        -:    1:/* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+        -:    2:/* ARCH-0042 ABI/replay dispatch shell; wire admission and lifetime policy are seeded Omega. */
+        -:    3:#include "omega_gpu_om_ir.h"
+        -:    4:
+        -:    5:#include <string.h>
+        -:    6:
+        -:    7:#include "cudapp_native.h"
+        -:    8:#include "omega_bw_fields.h"
+        -:    9:
+        -:   10:#define NONE64 UINT64_MAX
+        -:   11:
+        -:   12:#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
+function field called 158782 returned 100% blocks executed 100%
+   158782:   13:static int field(uint64_t w, int *out) {
+   158782:   14:    if (w == NONE64) { *out = -1; return 0; }
+branch  0 taken 65482 (fallthrough)
+branch  1 taken 93300
+    93300:   15:    if (w >= (uint64_t)BW_MAX_VREGS) return -1;
+branch  0 taken 12 (fallthrough)
+branch  1 taken 93288
+    93288:   16:    *out = (int)w;
+    93288:   17:    return 0;
+        -:   18:}
+        -:   19:#endif
+        -:   20:
+function call_unit called 4 returned 100% blocks executed 78%
+        4:   21:static int call_unit(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint64_t *ins, uint64_t *meta,
+        -:   22:                     uint64_t *result) {
+        4:   23:    *result = 0;
+        4:   24:    if (omega_mathlibs_ir(result, kind, a, b, c, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META) != OMEGA_OK)
+call    0 returned 4
+branch  1 taken 0 (fallthrough)
+branch  2 taken 4
+    #####:   25:        return OMEGA_OM_IR_BRIDGE;
+        4:   26:    if (*result == 1) return OMEGA_OM_IR_REFUSED;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 3
+       3*:   27:    if (*result != 0) return OMEGA_OM_IR_EMIT;
+branch  0 taken 0 (fallthrough)
+branch  1 taken 3
+        3:   28:    return OMEGA_OM_IR_OK;
+        -:   29:}
+        -:   30:
+function legacy_omega_gpu_om_ir_data called 5 returned 100% blocks executed 100%
+        5:   31:int omega_gpu_om_ir_data(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint64_t *words) {
+        -:   32:    static uint64_t meta[OMEGA_OM_IR_META];
+        -:   33:    uint64_t result;
+        5:   34:    if (!words) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 1 (fallthrough)
+branch  1 taken 4
+        4:   35:    memset(words, 0, OMEGA_OM_IR_WORDS * sizeof *words);
+        4:   36:    return call_unit(kind, a, b, c, words, meta, &result);
+call    0 returned 4
+        -:   37:}
+        -:   38:
+        -:   39:#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
+        -:   40:/* The elementwise emitter's check (src/omega_gpu_elementwise_api.c check_loop_invariant): no value first defined
+        -:   41: * inside a loop may be read after the loop before it is redefined. */
+function loop_invariant_ok called 511 returned 100% blocks executed 100%
+      511:   42:static int loop_invariant_ok(const BlackwellIRProgram *p, const uint64_t *meta) {
+      511:   43:    const OmegaRegAlloc *ra = &p->regalloc;
+      693:   44:    for (uint64_t L = 0; L < meta[5]; L++) {
+branch  0 taken 187
+branch  1 taken 506 (fallthrough)
+      187:   45:        int start = (int)meta[16 + 2 * L], end = (int)meta[17 + 2 * L];
+    12536:   46:        for (int v = 0; v < ra->num_vregs; v++) {
+branch  0 taken 12354
+branch  1 taken 182 (fallthrough)
+    12354:   47:            int fd = ra->intervals[v].first_def;
+    12354:   48:            if (fd < start || fd > end) continue;
+branch  0 taken 3535 (fallthrough)
+branch  1 taken 8819
+branch  2 taken 1655 (fallthrough)
+branch  3 taken 1880
+    19906:   49:            for (size_t i = (size_t)end + 1; i < p->count; i++) {
+branch  0 taken 18033
+branch  1 taken 1873 (fallthrough)
+    18033:   50:                const BlackwellIRInsn *in = &p->insns[i];
+    18033:   51:                if (in->src1_vreg == v || in->src2_vreg == v || in->src3_vreg == v) return 0;
+branch  0 taken 18030 (fallthrough)
+branch  1 taken 3
+branch  2 taken 18029 (fallthrough)
+branch  3 taken 1
+branch  4 taken 1 (fallthrough)
+branch  5 taken 18028
+    18028:   52:                if (in->dst_vreg == v && !in->is_uniform) break;
+branch  0 taken 3 (fallthrough)
+branch  1 taken 18025
+branch  2 taken 2 (fallthrough)
+branch  3 taken 1
+        -:   53:            }
+        -:   54:        }
+        -:   55:    }
+      506:   56:    return 1;
+        -:   57:}
+        -:   58:
+        -:   59:/* A value live into a loop and read inside it is read again by every later iteration: hold it to the closing BRA
+        -:   60: * (the elementwise emitter's loop_end fixup). */
+function extend_loop called 188 returned 100% blocks executed 100%
+      188:   61:static void extend_loop(BlackwellIRProgram *p, int start, int end) {
+    12542:   62:    for (int v = 0; v < p->regalloc.num_vregs; v++) {
+branch  0 taken 12354
+branch  1 taken 188 (fallthrough)
+    12354:   63:        OmegaLiveInterval *iv = &p->regalloc.intervals[v];
+    12354:   64:        if (iv->first_def >= 0 && iv->first_def < start && iv->last_use >= start && iv->last_use < end)
+branch  0 taken 10659 (fallthrough)
+branch  1 taken 1695
+branch  2 taken 8789 (fallthrough)
+branch  3 taken 1870
+branch  4 taken 1059 (fallthrough)
+branch  5 taken 7730
+branch  6 taken 1058 (fallthrough)
+branch  7 taken 1
+     1058:   65:            iv->last_use = end;
+        -:   66:    }
+      188:   67:}
+        -:   68:
+function legacy_omega_gpu_om_ir_replay called 1141 returned 100% blocks executed 96%
+     1141:   69:int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64_t b, uint64_t c,
+        -:   70:                           BlackwellIRProgram *prog, uint64_t *emit_err) {
+     1141:   71:    uint64_t ins[OMEGA_OM_IR_WORDS] = {0}, meta[OMEGA_OM_IR_META] = {0};
+     1141:   72:    uint64_t result = 0;
+     1141:   73:    if (emit_err) *emit_err = 0;
+branch  0 taken 1141 (fallthrough)
+branch  1 taken 0
+    1141*:   74:    if (!unit || !prog) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 1141 (fallthrough)
+branch  1 taken 0
+branch  2 taken 0 (fallthrough)
+branch  3 taken 1141
+     1141:   75:    uint32_t status = unit(&result, kind, a, b, c, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META);
+call    0 returned 1141
+     1141:   76:    if (emit_err) *emit_err = meta[4];
+branch  0 taken 1141 (fallthrough)
+branch  1 taken 0
+     1141:   77:    if (status != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+branch  0 taken 3 (fallthrough)
+branch  1 taken 1138
+     1138:   78:    if (result == 1) return OMEGA_OM_IR_REFUSED;
+branch  0 taken 407 (fallthrough)
+branch  1 taken 731
+      731:   79:    if (result != 0) return OMEGA_OM_IR_EMIT;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 729
+      729:   80:    uint64_t n = meta[0];
+      729:   81:    if (n == 0 || n > BW_MAX_IR_INSNS || meta[1] > BW_MAX_VREGS || meta[2] > BW_MAX_UVREGS || meta[5] > 24)
+branch  0 taken 588 (fallthrough)
+branch  1 taken 141
+branch  2 taken 586 (fallthrough)
+branch  3 taken 2
+branch  4 taken 584 (fallthrough)
+branch  5 taken 2
+branch  6 taken 582 (fallthrough)
+branch  7 taken 2
+branch  8 taken 2 (fallthrough)
+branch  9 taken 580
+      149:   82:        return OMEGA_OM_IR_REPLAY;
+      580:   83:    if (meta[6] != 0 &&
+branch  0 taken 8 (fallthrough)
+branch  1 taken 572
+        8:   84:        (meta[6] <= (uint64_t)BW_PHYS_GPR_MAX || meta[6] > (uint64_t)BW_PHYS_GPR_HW_LIMIT))
+branch  0 taken 5 (fallthrough)
+branch  1 taken 3
+branch  2 taken 2 (fallthrough)
+branch  3 taken 3
+        5:   85:        return OMEGA_OM_IR_REPLAY;
+      575:   86:    if (meta[7] != 0) {
+branch  0 taken 12 (fallthrough)
+branch  1 taken 563
+       12:   87:        uint64_t check = 0;
+       12:   88:        if (omega_ra_live(&check, 0, meta[7], meta[1], 0, 0, 0) != 0)
+call    0 returned 12
+branch  1 taken 0 (fallthrough)
+branch  2 taken 12
+       3*:   89:            return OMEGA_OM_IR_BRIDGE;
+       12:   90:        if (check != 0) return (int)check;
+branch  0 taken 3 (fallthrough)
+branch  1 taken 9
+        -:   91:    }
+        -:   92:
+      572:   93:    omega_bw_ir_init(prog);
+call    0 returned 572
+      572:   94:    if (meta[6] != 0 && omega_bw_ir_set_gpr_limit(prog, (uint32_t)meta[6]) != 0)
+branch  0 taken 3 (fallthrough)
+branch  1 taken 569
+call    2 returned 3
+branch  3 taken 0 (fallthrough)
+branch  4 taken 3
+    #####:   95:        return OMEGA_OM_IR_REPLAY;
+    18815:   96:    for (uint64_t v = 0; v < meta[1]; v++) {
+branch  0 taken 18247
+branch  1 taken 568 (fallthrough)
+    18247:   97:        uint64_t k = meta[64 + v];
+    36493:   98:        int got = k == 4 ? omega_bw_ir_alloc_vreg128(prog) :
+branch  0 taken 1 (fallthrough)
+branch  1 taken 18246
+call    2 returned 1
+    18246:   99:                  k == 2 ? omega_bw_ir_alloc_vreg64(prog) : k == 1 ? omega_bw_ir_alloc_vreg(prog) : -1;
+branch  0 taken 3571 (fallthrough)
+branch  1 taken 14675
+call    2 returned 3571
+branch  3 taken 14671 (fallthrough)
+branch  4 taken 4
+call    5 returned 14671
+    18247:  100:        if (got != (int)v) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 4 (fallthrough)
+branch  1 taken 18243
+        -:  101:    }
+      818:  102:    for (uint64_t u = 0; u < meta[2]; u++) {
+branch  0 taken 255
+branch  1 taken 563 (fallthrough)
+      255:  103:        uint64_t k = meta[320 + u];
+      255:  104:        int got = k == 2 ? omega_bw_ir_alloc_uvreg64(prog) : k == 1 ? omega_bw_ir_alloc_uvreg(prog) : -1;
+branch  0 taken 183 (fallthrough)
+branch  1 taken 72
+call    2 returned 183
+branch  3 taken 67 (fallthrough)
+branch  4 taken 5
+call    5 returned 67
+      255:  105:        if (got != (int)u) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 5 (fallthrough)
+branch  1 taken 250
+        -:  106:    }
+        -:  107:
+      563:  108:    uint64_t next_loop = 0;
+    40244:  109:    for (uint64_t i = 0; i < n; i++) {
+branch  0 taken 39702
+branch  1 taken 542 (fallthrough)
+    39702:  110:        const uint64_t *r = &ins[i * 8];
+        -:  111:        BlackwellIRInsn in;
+    39702:  112:        memset(&in, 0, sizeof in);
+    39721:  113:        if (r[0] > (uint64_t)BW_IR_ATOMG_ADD_F32_STRONG_GPU) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 2 (fallthrough)
+branch  1 taken 39700
+    39700:  114:        in.op = (BlackwellIROpcode)r[0];
+    79391:  115:        if (field(r[1], &in.dst_vreg) || field(r[2], &in.src1_vreg) || field(r[3], &in.src2_vreg) ||
+call    0 returned 39700
+branch  1 taken 39697 (fallthrough)
+branch  2 taken 3
+call    3 returned 39697
+branch  4 taken 39694 (fallthrough)
+branch  5 taken 3
+call    6 returned 39694
+branch  7 taken 39691 (fallthrough)
+branch  8 taken 3
+branch  9 taken 3 (fallthrough)
+branch 10 taken 39688
+    39691:  116:            field(r[4], &in.src3_vreg))
+call    0 returned 39691
+       12:  117:            return OMEGA_OM_IR_REPLAY;
+    39688:  118:        if (r[5] == NONE64) in.ureg = -1;
+branch  0 taken 36891 (fallthrough)
+branch  1 taken 2797
+     2797:  119:        else if (r[5] < (uint64_t)BW_MAX_UVREGS) in.ureg = (int)r[5];
+branch  0 taken 2790 (fallthrough)
+branch  1 taken 7
+        7:  120:        else return OMEGA_OM_IR_REPLAY;
+    39681:  121:        in.imm = (uint32_t)r[6];
+    39681:  122:        in.control = (uint32_t)(r[6] >> 32);
+    39681:  123:        in.is_uniform = (r[7] & 1u) != 0;
+    39681:  124:        in.predicate_p0 = (r[7] & 2u) != 0;
+    39681:  125:        in.predicate_not = (r[7] & 4u) != 0;
+    39681:  126:        in.dst_subreg = (uint8_t)(r[7] >> 16);
+    39681:  127:        in.src1_subreg = (uint8_t)(r[7] >> 24);
+    39681:  128:        in.src2_subreg = (uint8_t)(r[7] >> 32);
+    39681:  129:        in.src3_subreg = (uint8_t)(r[7] >> 40);
+    39681:  130:        in.bar_reg = (uint8_t)(r[7] >> 48);
+   39681*:  131:        if (omega_bw_ir_append(prog, &in) < 0) return OMEGA_OM_IR_REPLAY;
+call    0 returned 39681
+branch  1 taken 0 (fallthrough)
+branch  2 taken 39681
+    39869:  132:        while (next_loop < meta[5] && meta[17 + 2 * next_loop] == i) {
+branch  0 taken 8101 (fallthrough)
+branch  1 taken 31768
+branch  2 taken 188
+branch  3 taken 7913 (fallthrough)
+      188:  133:            extend_loop(prog, (int)meta[16 + 2 * next_loop], (int)i);
+call    0 returned 188
+      188:  134:            next_loop++;
+        -:  135:        }
+        -:  136:    }
+      542:  137:    if (next_loop != meta[5]) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 25 (fallthrough)
+branch  1 taken 517
+      517:  138:    if (meta[7] != 0) {
+branch  0 taken 9 (fallthrough)
+branch  1 taken 508
+       13:  139:        for (int v = 0; v < prog->regalloc.num_vregs; ++v) {
+branch  0 taken 8
+branch  1 taken 5 (fallthrough)
+        8:  140:            uint64_t hint = meta[352 + v], check = 0;
+        8:  141:            OmegaLiveInterval *iv = &prog->regalloc.intervals[v];
+        8:  142:            if (omega_ra_live(&check, 1, hint, (uint64_t)iv->first_def,
+branch  0 taken 0 (fallthrough)
+branch  1 taken 8
+        8:  143:                               (uint64_t)iv->last_use, n, (uint64_t)v) != 0)
+call    0 returned 8
+       4*:  144:                return OMEGA_OM_IR_BRIDGE;
+        8:  145:            if (check != 0) return (int)check;
+branch  0 taken 4 (fallthrough)
+branch  1 taken 4
+        4:  146:            if (hint != 0) iv->last_use = (int)hint;
+branch  0 taken 3 (fallthrough)
+branch  1 taken 1
+        -:  147:        }
+        -:  148:    }
+        -:  149:
+      513:  150:    if (omega_bw_regalloc_solve(prog) != 0) return OMEGA_OM_IR_REGALLOC;
+call    0 returned 513
+branch  1 taken 2 (fallthrough)
+branch  2 taken 511
+      511:  151:    if (!loop_invariant_ok(prog, meta)) return OMEGA_OM_IR_LOOP;
+call    0 returned 511
+branch  1 taken 5 (fallthrough)
+branch  2 taken 506
+      506:  152:    return OMEGA_OM_IR_OK;
+        -:  153:}
+        -:  154:#else
+        -:  155:int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64_t b, uint64_t c,
+        -:  156:                           BlackwellIRProgram *prog, uint64_t *emit_err) {
+        -:  157:    uint64_t ins[OMEGA_OM_IR_WORDS] = {0}, meta[OMEGA_OM_IR_META] = {0}, life[512] = {0};
+        -:  158:    uint64_t result = 0;
+        -:  159:    if (emit_err) *emit_err = 0;
+        -:  160:    if (!unit || !prog) return OMEGA_OM_IR_REPLAY;
+        -:  161:    uint32_t status = unit(&result, kind, a, b, c, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META);
+        -:  162:    if (emit_err) *emit_err = meta[4];
+        -:  163:    if (status != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+        -:  164:    if (result == 1) return OMEGA_OM_IR_REFUSED;
+        -:  165:    if (result != 0) return OMEGA_OM_IR_EMIT;
+        -:  166:    if (omega_cg_replay(&result, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META,
+        -:  167:                        BW_IR_ATOMG_ADD_F32_STRONG_GPU) != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+        -:  168:    if (result != 0) return (int)result;
+        -:  169:    omega_bw_ir_init(prog);
+        -:  170:    if (meta[6] != 0 && omega_bw_ir_set_gpr_limit(prog, (uint32_t)meta[6]) != 0)
+        -:  171:        return OMEGA_OM_IR_REPLAY;
+        -:  172:    for (uint64_t v = 0; v < meta[1]; ++v) {
+        -:  173:        uint64_t width = meta[64 + v];
+        -:  174:        int got = width == 4 ? omega_bw_ir_alloc_vreg128(prog) :
+        -:  175:                  width == 2 ? omega_bw_ir_alloc_vreg64(prog) : omega_bw_ir_alloc_vreg(prog);
+        -:  176:        if (got != (int)v) return OMEGA_OM_IR_REPLAY;
+        -:  177:    }
+        -:  178:    for (uint64_t u = 0; u < meta[2]; ++u) {
+        -:  179:        int got = meta[320 + u] == 2 ? omega_bw_ir_alloc_uvreg64(prog) : omega_bw_ir_alloc_uvreg(prog);
+        -:  180:        if (got != (int)u) return OMEGA_OM_IR_REPLAY;
+        -:  181:    }
+        -:  182:    for (uint64_t i = 0; i < meta[0]; ++i) {
+        -:  183:        BlackwellIRInsn in = {0};
+        -:  184:        if (omega_bw_fields_unpack(&ins[i * 8], &in) != 0) return OMEGA_OM_IR_BRIDGE;
+        -:  185:        if (omega_bw_ir_append(prog, &in) < 0) return OMEGA_OM_IR_REPLAY;
+        -:  186:    }
+        -:  187:    for (int v = 0; v < prog->regalloc.num_vregs; ++v) {
+        -:  188:        life[2 * v] = (uint64_t)(int64_t)prog->regalloc.intervals[v].first_def;
+        -:  189:        life[2 * v + 1] = (uint64_t)(int64_t)prog->regalloc.intervals[v].last_use;
+        -:  190:    }
+        -:  191:    if (omega_cg_life(&result, meta, OMEGA_OM_IR_META, life, 512) != OMEGA_OK) return OMEGA_OM_IR_BRIDGE;
+        -:  192:    if (result != 0) return (int)result;
+        -:  193:    for (int v = 0; v < prog->regalloc.num_vregs; ++v)
+        -:  194:        prog->regalloc.intervals[v].last_use = (int)(int64_t)life[2 * v + 1];
+        -:  195:    if (omega_bw_regalloc_solve(prog) != 0) return OMEGA_OM_IR_REGALLOC;
+        -:  196:    if (omega_cg_invar(&result, ins, OMEGA_OM_IR_WORDS, meta, OMEGA_OM_IR_META, life, 512) != OMEGA_OK)
+        -:  197:        return OMEGA_OM_IR_BRIDGE;
+        -:  198:    return (int)result;
+        -:  199:}
+        -:  200:#endif
+        -:  201:
+function legacy_omega_gpu_om_ir_build called 832 returned 100% blocks executed 100%
+      832:  202:int omega_gpu_om_ir_build(uint64_t kind, uint64_t a, uint64_t b, uint64_t c, uint32_t threads,
+        -:  203:                          BlackwellIRProgram *prog, uint8_t *code, size_t code_cap,
+        -:  204:                          OmegaBlackwellKernel *kernel, uint32_t *declared, uint64_t *emit_err) {
+      832:  205:    if (!prog || !code || !kernel || !declared || threads == 0) return OMEGA_OM_IR_REPLAY;
+branch  0 taken 832 (fallthrough)
+branch  1 taken 0
+branch  2 taken 832 (fallthrough)
+branch  3 taken 0
+branch  4 taken 832 (fallthrough)
+branch  5 taken 0
+branch  6 taken 832 (fallthrough)
+branch  7 taken 0
+branch  8 taken 104 (fallthrough)
+branch  9 taken 728
+      728:  206:    int rc = omega_gpu_om_ir_replay(omega_mathlibs_ir, kind, a, b, c, prog, emit_err);
+call    0 returned 728
+      728:  207:    if (rc != OMEGA_OM_IR_OK) return rc;
+branch  0 taken 546 (fallthrough)
+branch  1 taken 182
+      182:  208:    uint32_t peak = prog->regalloc.peak_gpr_usage;
+        -:  209:#ifdef CUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE
+      182:  210:    uint32_t decl = omega_bw_gpr_declared(peak);
+call    0 returned 182
+      182:  211:    if (decl < 64u) decl = 64u;
+branch  0 taken 182 (fallthrough)
+branch  1 taken 0
+      182:  212:    if (peak > BW_PHYS_GPR_MAX || !omega_bw_gpr_declared_ok(decl, peak) || (uint64_t)decl * threads > 65536u)
+branch  0 taken 182 (fallthrough)
+branch  1 taken 0
+call    2 returned 182
+branch  3 taken 182 (fallthrough)
+branch  4 taken 0
+branch  5 taken 52 (fallthrough)
+branch  6 taken 130
+       52:  213:        return OMEGA_OM_IR_BUDGET;
+        -:  214:#else
+        -:  215:    uint64_t budget = 0;
+        -:  216:    if (omega_cg_budget(&budget, peak, omega_bw_gpr_declared(peak), threads) != OMEGA_OK)
+        -:  217:        return OMEGA_OM_IR_BRIDGE;
+        -:  218:    if (budget == 0) return OMEGA_OM_IR_BUDGET;
+        -:  219:    uint32_t decl = (uint32_t)budget;
+        -:  220:#endif
+      130:  221:    if (omega_blackwell_kernel_encode_into(prog, code, code_cap, kernel) != 0) return OMEGA_OM_IR_ENCODE;
+call    0 returned 130
+branch  1 taken 65 (fallthrough)
+branch  2 taken 65
+       65:  222:    *declared = decl;
+       65:  223:    return OMEGA_OM_IR_OK;
+        -:  224:}
+        -:  225:
+function legacy_omega_gpu_om_ir_rc_name called 14 returned 100% blocks executed 100%
+       14:  226:const char *omega_gpu_om_ir_rc_name(int rc) {
+       14:  227:    switch (rc) {
+branch  0 taken 1
+branch  1 taken 1
+branch  2 taken 1
+branch  3 taken 1
+branch  4 taken 1
+branch  5 taken 1
+branch  6 taken 1
+branch  7 taken 1
+branch  8 taken 1
+branch  9 taken 1
+branch 10 taken 1
+branch 11 taken 3
+        1:  228:    case OMEGA_OM_IR_OK: return "ok";
+        1:  229:    case OMEGA_OM_IR_REFUSED: return "refused";
+        1:  230:    case OMEGA_OM_IR_EMIT: return "emit";
+        1:  231:    case OMEGA_OM_IR_BRIDGE: return "bridge";
+        1:  232:    case OMEGA_OM_IR_REPLAY: return "replay";
+        1:  233:    case OMEGA_OM_IR_REGALLOC: return "regalloc";
+        1:  234:    case OMEGA_OM_IR_LOOP: return "loop";
+        1:  235:    case OMEGA_OM_IR_BUDGET: return "budget";
+        1:  236:    case OMEGA_OM_IR_ENCODE: return "encode";
+        1:  237:    case OMEGA_OM_IR_LIVE_FLAG: return "liveness-flag";
+        1:  238:    case OMEGA_OM_IR_LIVE_RANGE: return "liveness-range";
+        3:  239:    default: return "?";
+        -:  240:    }
+        -:  241:}

@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T08:00:05Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:9120ca0fbb6bf76d4bb4fe248dfa06471ebfb4d3f06943227cd9a9f05b4f3675",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "79de6f90051664c90d59f1eafcfe538dc0940567",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "tests",
+  "name": "codegen_base",
+  "purpose": "Base codegen and common IR replay differential, mutation and coverage acceptance",
+  "schema_version": "1.0.0"
+}

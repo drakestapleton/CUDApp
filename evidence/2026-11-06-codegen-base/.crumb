@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T08:00:05Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:7f9b708c012811a50f77f25d68ee8ba510f554070de59a8e7369b36f9767f391",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 0,
+      "generated_at_commit": "79de6f90051664c90d59f1eafcfe538dc0940567",
+      "source_tree": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "layer": "evidence",
+  "name": "codegen_base_host_evidence",
+  "purpose": "Observed device-hidden host acceptance and C-oracle coverage for the base codegen migration",
+  "schema_version": "1.0.0"
+}

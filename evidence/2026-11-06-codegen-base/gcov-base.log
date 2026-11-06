@@ -1,0 +1,22 @@
+File 'src/omega_blackwell_codegen.c'
+Lines executed:26.67% of 570
+Branches executed:15.53% of 734
+Taken at least once:11.85% of 734
+Calls executed:18.72% of 187
+Creating 'omega_blackwell_codegen.c.gcov'
+
+File 'src/omega_bw_bind.h'
+Lines executed:100.00% of 4
+Branches executed:100.00% of 2
+Taken at least once:50.00% of 2
+Calls executed:100.00% of 1
+Creating 'omega_bw_bind.h.gcov'
+
+File 'src/omega_path_check.h'
+Lines executed:0.00% of 27
+Branches executed:0.00% of 40
+Taken at least once:0.00% of 40
+Calls executed:0.00% of 1
+Creating 'omega_path_check.h.gcov'
+
+Lines executed:25.96% of 601

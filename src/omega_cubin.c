@@ -409,11 +409,11 @@ static int cubin_pack_impl(uint32_t target_sm, const char *fn_name,
                         out, out_len, err, err_cap);
 }
 #else
+/* Only the cubin diagnostic/admission roots are needed here; both have checked
+ * import-free bindings. Do not open the unrelated full core freestanding gate. */
+#include "cudapp_native.h"
 #ifdef OMEGA_GPU_NO_POSIX
 #include "omega_native.h"
-#define omega_cubin_elf omega2_cubin_elf
-#else
-#include "omega_core_binding.h"
 #endif
 /* The array lengths of om/cubin/cubin_elf.om's entry, which documents the layouts. */
 #define CUBIN_OM_META 104u        /* 8 + 3 * OMEGA_CUBIN_MAX_PARAMS */
@@ -441,7 +441,7 @@ static void om_cubin_refusal(uint32_t target_sm, int rc, const uint64_t *d, size
     }
     char text[256];
     uint64_t n;
-    if (CORE_CALL(cubmsg, &n, m, 16, text, sizeof text) != OMEGA_OK) CORE_STOP();
+    if (omega_cubmsg(&n, m, 16, text, sizeof text) != OMEGA_OK) abort();
     memcpy(err, text, (size_t)n + 1);
 }
 
@@ -485,7 +485,11 @@ static int om_cubin_pack(uint32_t target_sm, const char *fn_name,
     }
     if (text_len <= CUBIN_OM_TEXT) memcpy(tx, text, text_len);
     uint64_t r = 0;
-    uint32_t st = CORE_CALL(cubin_elf, &r, m, CUBIN_OM_META, nm, sizeof nm, tx, CUBIN_OM_TEXT, o, CUBIN_OM_WORDS);
+#ifdef OMEGA_GPU_NO_POSIX
+    uint32_t st = omega2_cubin_elf(&r, m, CUBIN_OM_META, nm, sizeof nm, tx, CUBIN_OM_TEXT, o, CUBIN_OM_WORDS);
+#else
+    uint32_t st = omega_cubin_elf(&r, m, CUBIN_OM_META, nm, sizeof nm, tx, CUBIN_OM_TEXT, o, CUBIN_OM_WORDS);
+#endif
     free(tx);
     int rc = OMEGA_CUBIN_OK;
     if (st != OMEGA_OK) {
@@ -572,13 +576,12 @@ static int cubin_pack_impl(uint32_t target_sm, const char *fn_name,
 #endif
 
 #ifndef CUBIN_C_PRIMARY
-#include "omega_core_binding.h"
 /* Target and null-parameter admission. Pointer presence is a flag; the message is Omega. */
 static int cubin_admit(uint32_t target_sm, size_t nparams, int present, char *err, size_t err_cap) {
     uint64_t rc = 0;
     char msg[64];
-    if (CORE_CALL(cubadmit, &rc, target_sm, (uint64_t)nparams, present ? 1u : 0u, msg, sizeof msg) != OMEGA_OK)
-        CORE_STOP();
+    if (omega_cubadmit(&rc, target_sm, (uint64_t)nparams, present ? 1u : 0u, msg, sizeof msg) != OMEGA_OK)
+        abort();
     if (rc && err && err_cap) {
         size_t n = 0;
         while (n + 1 < err_cap && msg[n]) { err[n] = msg[n]; n++; }

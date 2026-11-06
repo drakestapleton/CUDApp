@@ -140,3 +140,45 @@ providers; its runtime-view selector is merged into the shared generator
 convention. Both qualification scripts forward the allocator oracle flag;
 their programs are compiled only and must not be executed without fresh
 hardware authorization.
+
+The single converter is now draft omega-bridge #77
+(`bb3a8ae10d940d82f14c41cd8f0f1c32021545f0`, containing #76). Its checked
+borrowed-view freestanding profile makes the #332 attention/view compositions,
+the #356 matmul-oracle compositions, `cg_fields` and the cubin message/admission
+compositions import-free. They are
+generated once as `src/cudapp_freest_<root>.c` for both hosted and NO_POSIX
+consumers; their obsolete `src/cudapp_om_<root>.c` copies are removed by the
+generator and refused by `--check`. The corresponding per-unit identities and
+aggregate custody identity change for the new converter/profile. Existing
+hosted computations and the native computation compiler are unchanged.
+
+The NO_POSIX partial-link import allowlist is unchanged. A new required
+negative control removes each of `omega_av_set`, `omega_av_copy` and
+`omega_av_fold`'s providers and requires the strong-provider link to fail.
+Direct codegen/regalloc and attention/API mutant harnesses select the same
+single generated implementation and emitter used in production. Codegen's
+explicit freestanding/oracle links retain `cg_fields` and BW scalar providers.
+
+The cubin allocating shell calls the checked import-free Omega message and
+admission providers even when it selects the caller-stack native packer. The
+native call is explicit rather than a global preprocessor alias that changes
+later hosted declarations. The broad unrelated core freestanding refusal gate
+is unchanged. Its native differential links the same two import-free diagnostic
+providers. No C computation fallback or additional import allowance is added.
+
+The conversion replaces exactly 40 hosted generated C files with 40
+freestanding generated C files. All 357 unit identities change to record the
+converter pin; other generated C bodies are unchanged, and the generated
+header changes only profile comments. The production archive is recreated
+before adding its current objects: incrementally updating it with `ar rcs`
+otherwise retains the removed hosted provider members. A membership control
+rejects the stale archive and requires all 40 replacement members and no
+obsolete member after the rebuild.
+
+At this checkpoint the native/session/BF16 differential, freestanding engine,
+codegen, native runtime, cubin message/admission and missing-provider gates
+pass (`/tmp/integ/6b-pin77-boundary-green.log`, rc0). The full attention
+typed-view gate is FAIL: `omega_av_pack` accepts a 31-element view where its
+declared fixed extent is 32 (differential exit5). That converter defect is
+being repaired in the bridge's owned #77 lane; no gate is waived and this
+checkpoint is not a completed converter qualification.

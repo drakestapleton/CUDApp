@@ -32,7 +32,7 @@ $CC $FLAGS -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_BASE -DCUDAPP_MIGRATION_PENDING_
   -include "$OUT/oracle_sass.h" -c src/omega_blackwell_codegen.c -o "$OUT/oracle_sass.o"
 OBJECTS="$OUT/oracle_base.o $OUT/oracle_ir.o $OUT/oracle_sass.o"
 for src in src/omega_blackwell_codegen.c src/omega_gpu_om_ir.c src/omega_blackwell_matmul.c src/omega_cubin.c src/sha256.c \
-           src/cudapp_om_*.c src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c; do
+           src/cudapp_om_*.c src/cudapp_freest_*.c; do
   name=$(basename "$src" .c)
   $CC $FLAGS -c "$src" -o "$OUT/$name.o"
   OBJECTS="$OBJECTS $OUT/$name.o"

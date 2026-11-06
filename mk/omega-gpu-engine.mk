@@ -202,7 +202,7 @@ build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c
 build/test_codegen_freestanding: $(CODEGEN_FS_TEST_DEPS) $(GPU_FS_LINK)
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -I$(GPU_NO_POSIX_DIR) -DOMEGA_GPU_NO_POSIX -o $@ tests/test_omega_codegen_freestanding.c \
-		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_FS_DIR)/cudapp_freest_bw_scalar.o $(GPU_NO_POSIX_OBJS)
+		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_FS_DIR)/cudapp_freest_bw_scalar.o $(GPU_FS_DIR)/cudapp_freest_cg_fields.o $(GPU_NO_POSIX_OBJS)
 test-codegen-freestanding: build/test_codegen_hosted build/test_codegen_freestanding test-gpu-fs-allowlist-control
 	./build/test_codegen_hosted --dump > build/codegen_dump_hosted.txt
 	./build/test_codegen_freestanding --dump > build/codegen_dump_freestanding.txt
@@ -218,6 +218,26 @@ test-gpu-fs-allowlist-control: $(GPU_FS_LINK)
 	@bad=$$(nm -u $(GPU_FS_DIR)/control/with_canary.o | awk '{print $$NF}' | grep -Ev '^(_GLOBAL_OFFSET_TABLE_|($(GPU_FS_ALLOWED)))$$' || true); \
 	if [ "$$bad" != "malloc" ]; then echo "allowlist control: expected exactly malloc refused, got '$$bad'"; exit 1; fi; \
 	echo "allowlist control: a malloc caller is refused by the nm -u check (as required)"
+
+# Strong providers are required even in a relocatable freestanding link. A
+# successful link after removing any selected provider is a broken control.
+.PHONY: test-gpu-fs-view-provider-control
+test-gpu-fs-view-provider-control: $(GPU_FS_LINK)
+	@mkdir -p $(GPU_FS_DIR)/control
+	@set -eu; for entry in attn_set:omega_av_set attn_buf:omega_av_copy attn_tables:omega_av_fold; do \
+		unit=$${entry%:*}; symbol=$${entry#*:}; objects=; found=0; \
+		for object in $(GPU_FS_OBJS); do \
+			if [ "$$object" = "$(GPU_FS_DIR)/cudapp_freest_$$unit.o" ]; then found=1; else objects="$$objects $$object"; fi; \
+		done; \
+		[ "$$found" = 1 ] || { echo "FAIL missing registered provider $$unit"; exit 1; }; \
+		if gcc -r -nostdlib -Wl,--require-defined=$$symbol -o $(GPU_FS_DIR)/control/without-$$unit.o \
+			$$objects $(GPU_NO_POSIX_OBJS) >$(GPU_FS_DIR)/control/without-$$unit.log 2>&1; then \
+			echo "FAIL missing-provider link unexpectedly succeeded: $$symbol"; exit 1; \
+		fi; \
+		grep -q "$$symbol" $(GPU_FS_DIR)/control/without-$$unit.log || { cat $(GPU_FS_DIR)/control/without-$$unit.log; exit 1; }; \
+		echo "strong missing-provider control caught: $$symbol"; \
+	done
+	@echo "freestanding view provider controls: PASS (3 required strong providers)"
 
 # native v1 P07 cut C, session part (aienos#286): the portable session over OmegaGpuPlatform.
 #  - test_omega_gpu_session_platform links the FREESTANDING partial-link object and drives it through a fake
@@ -248,7 +268,7 @@ build/test_omega_gpu_native_runtime: tests/test_omega_gpu_session_platform.c tes
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -I$(GPU_NO_POSIX_DIR) -DOMEGA_GPU_NO_POSIX -DOMEGA_NATIVE_RUNTIME_TEST \
 		-DCUDAPP_NATIVE_RUNTIME_TEST -ffunction-sections -fdata-sections -Wl,--gc-sections \
 		-o $@ tests/test_omega_gpu_session_platform.c $(GPU_FS_LINK) $(GPU_NATIVE_RUNTIME_SRCS) -lpthread -lm
-test-gpu-native-runtime: build/test_omega_gpu_native_runtime
+test-gpu-native-runtime: build/test_omega_gpu_native_runtime test-gpu-fs-view-provider-control
 	./build/test_omega_gpu_native_runtime
 GPU_LINUX_REF_SRCS = src/omega_gpu_session.c src/omega_gpu_platform.c src/omega_gpu_platform_linux.c om/platform-linux/gen/link/plat_fx_effects.c om/platform-linux/gen/link/plat_fx_wait.c src/omega_gpu_mem_reserve.c src/omega_gpu_fmt.c src/omega_blackwell_qmd.c src/omega_ampere_qmd.c $(CUDAPP_FS_BINDING)
 # omega #459: the command list over the reference (near-full ring with the #457 L2 invalidate prefix pending) needs the

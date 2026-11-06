@@ -23,12 +23,15 @@ def run(cmd,expect=0):
     return r
 cc=os.environ.get('CC','cc');flags=['-std=gnu11','-O2','-ffp-contract=off','-ffunction-sections','-fdata-sections','-Isrc','-Itests']
 units=dict(re.findall(r'^UNITS="\$UNITS (attn_(?:ds|na|mm)_\w+)=([^"\n]+)"$',(ROOT/'om/units.sh').read_text(),re.M))
-objects={}
+objects={};providers={}
 for name in units:
-    obj=out/(name+'.o');run([cc,*flags,'-c','src/cudapp_om_'+name+'.c','-o',obj]);objects[name]=obj
+    matches=sorted((ROOT/'src').glob('cudapp_*_'+name+'.c'))
+    if len(matches)!=1:raise SystemExit('FAIL expected exactly one provider '+name)
+    providers[name]=matches[0]
+    obj=out/(name+'.o');run([cc,*flags,'-c',providers[name],'-o',obj]);objects[name]=obj
 # parse_semver's existing Omega root is outside this residual slice.
 obj=out/'artifact_parse.o';run([cc,*flags,'-c','src/cudapp_om_artifact_parse.c','-o',obj]);objects['artifact_parse']=obj
-obj=out/'attn_buf.o';run([cc,*flags,'-c','src/cudapp_om_attn_buf.c','-o',obj]);objects['attn_buf']=obj
+obj=out/'attn_buf.o';run([cc,*flags,'-c','src/cudapp_freest_attn_buf.c','-o',obj]);objects['attn_buf']=obj
 obj=out/'blackwell_matmul.o';run([cc,*flags,'-c','src/omega_blackwell_matmul.c','-o',obj]);objects['blackwell_matmul']=obj
 obj=out/'bw_scalar.o';run([cc,*flags,'-c','src/cudapp_freest_bw_scalar.c','-o',obj]);objects['bw_scalar']=obj
 obj=out/'decode_scalar.o';run([cc,*flags,'-c','src/omega_gpu_decode_attn_api.c','-o',obj])
@@ -61,7 +64,10 @@ if a.mutants:
         source='\n'.join((ROOT/x).read_text() for x in units[name].split(','))+'\n'
         if source.count(site)!=1:raise SystemExit('FAIL mutant site '+name)
         om=out/('mutant-'+str(num)+'.om');om.write_text(source.replace(site,replacement))
-        cmd=['sh',str(Path(env['OMEGA_BRIDGE'])/'tools/bridge-seeded'),'--runtime-views','c',str(om)]
+        freestanding=providers[name].name.startswith('cudapp_freest_')
+        cmd=['sh',str(Path(env['OMEGA_BRIDGE'])/('tools/bridge-freest' if freestanding else 'tools/bridge-seeded'))]
+        if not freestanding:cmd+=['--runtime-views']
+        cmd+=['c',str(om)]
         r=subprocess.run(cmd,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         commands.append({'command':cmd,'rc':r.returncode,'output':r.stderr})
         if r.returncode:raise SystemExit('FAIL mutant generation '+r.stderr)

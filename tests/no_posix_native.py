@@ -94,6 +94,7 @@ for mode, extra, expected in (
     run([*flags, '-O0', '--coverage', '-DOMEGA_GPU_NO_POSIX', '-DCUDAPP_MIGRATION_PENDING_CUBIN_DIFF',
          *extra, '-I', ROOT / 'src', '-I', native,
          ROOT / 'tests/no_posix_cubin.c', ROOT / 'src/omega_cubin.c',
+         ROOT / 'src/cudapp_freest_core_cubinmsg.c', ROOT / 'src/cudapp_freest_core_cubadmit.c',
          native / 'omega_native.o', native / 'omega_api_defs.o', '-o', executable])
     run([executable], expected=expected)
     if mode == 'cubin':
@@ -107,6 +108,7 @@ run([*flags, '-O0', '--coverage', '-DOMEGA_GPU_NO_POSIX',
      ROOT / 'tests/test_omega_codegen_freestanding.c',
      ROOT / 'src/omega_blackwell_codegen.c', ROOT / 'src/omega_blackwell_matmul.c',
      ROOT / 'src/sha256.c', ROOT / 'src/cudapp_freest_f16.c',
+     ROOT / 'src/cudapp_freest_bw_scalar.c', ROOT / 'src/cudapp_freest_cg_fields.c',
      native / 'omega_native.o', native / 'omega_api_defs.o', '-o', oracle])
 # NO_POSIX's --no-sweep runs buffer/golden fixtures but not a second exhaustive
 # bf16 sweep. The normal test-codegen-freestanding target retains that sweep.

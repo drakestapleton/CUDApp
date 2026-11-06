@@ -30,8 +30,10 @@ for unit, old, new in mutants:
     with (d / 'generate.log').open('w') as log:
         subprocess.run(['sh', 'om/units.sh'], cwd=root, env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
     obj = d / (unit + '.o')
-    subprocess.run(cc + flags + ['-c', str(d / ('cudapp_om_' + unit + '.c')), '-o', str(obj)], cwd=root, check=True)
-    replace = 'cudapp_om_' + unit + '.o'
+    providers = sorted(d.glob('cudapp_*_' + unit + '.c'))
+    assert len(providers) == 1, providers
+    subprocess.run(cc + flags + ['-c', str(providers[0]), '-o', str(obj)], cwd=root, check=True)
+    replace = providers[0].with_suffix('.o').name
     selected = [str(obj) if pathlib.Path(o).name == replace else o for o in objects]
     assert sum(pathlib.Path(o).name == replace for o in objects) == 1
     exe = d / 'differential'

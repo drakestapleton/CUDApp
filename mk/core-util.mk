@@ -30,7 +30,7 @@ $(OUT_DIR)/test-core-sha-state: tests/test_core_sha_state.c src/sha256.c $(OUT_D
 test-core-sha-state: $(OUT_DIR)/test-core-sha-state
 	./$(OUT_DIR)/test-core-sha-state
 
-$(OUT_DIR)/test-core-cubin-message: tests/test_core_cubin_message.c tests/core_cubin_refusal_ref.inc src/cudapp_om_core_cubinmsg.c src/cudapp_native.h | $(OUT_DIR)
+$(OUT_DIR)/test-core-cubin-message: tests/test_core_cubin_message.c tests/core_cubin_refusal_ref.inc src/cudapp_freest_core_cubinmsg.c src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) -lpthread
 .PHONY: test-core-cubin-message
 test-core-cubin-message: $(OUT_DIR)/test-core-cubin-message
@@ -38,15 +38,15 @@ test-core-cubin-message: $(OUT_DIR)/test-core-cubin-message
 	@if ./$(OUT_DIR)/test-core-cubin-message --flip; then echo 'FAIL cubin message flip survived'; exit 1; else echo 'CORE-UTIL cubin message negative control caught'; fi
 
 $(OUT_DIR)/test-core-residue: tests/test_core_residue.c src/omega_cubin.c src/cudapp_om_cubin_elf.c \
-		src/cudapp_om_core_cubinmsg.c src/cudapp_om_core_cubadmit.c src/cudapp_om_core_ampack.c \
+		src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c src/cudapp_om_core_ampack.c \
 		src/cudapp_om_core_fmtnum.c src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) -lpthread
 $(OUT_DIR)/test-core-residue-diff: tests/test_core_residue.c src/omega_cubin.c src/cudapp_om_cubin_elf.c \
-		src/cudapp_om_core_cubinmsg.c src/cudapp_om_core_cubadmit.c src/cudapp_om_core_ampack.c \
+		src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c src/cudapp_om_core_ampack.c \
 		src/cudapp_om_core_fmtnum.c src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -DCUDAPP_MIGRATION_PENDING_CUBIN_DIFF -o $@ $(filter %.c,$^) -lpthread
 $(OUT_DIR)/test-core-residue-red: tests/test_core_residue.c src/omega_cubin.c src/cudapp_om_cubin_elf.c \
-		src/cudapp_om_core_cubinmsg.c src/cudapp_om_core_cubadmit.c src/cudapp_om_core_ampack.c \
+		src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c src/cudapp_om_core_ampack.c \
 		src/cudapp_om_core_fmtnum.c src/cudapp_native.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -DCUDAPP_MIGRATION_PENDING_CUBIN_DIFF -DCUDAPP_CUBIN_DIFF_SELFTEST -o $@ $(filter %.c,$^) -lpthread
 .PHONY: test-core-residue test-core-residue-mutants

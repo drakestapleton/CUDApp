@@ -15,7 +15,7 @@ CC = ["gcc", "-std=gnu11", "-O2", "-Wall", "-Wextra", "-Werror", "-pthread", "-I
 LINK = [
     "src/omega_cubin.c",
     "src/cudapp_om_cubin_elf.c",
-    "src/cudapp_om_core_cubinmsg.c",
+    "src/cudapp_freest_core_cubinmsg.c",
     "src/cudapp_om_core_fmtnum.c",
 ]
 
@@ -68,9 +68,9 @@ def main():
                 if gen.returncode != 0:
                     print(f"MUTANT {name} BROKEN: units.sh {gen.returncode}")
                     sys.exit(1)
-                generated = temp / f"cudapp_om_core_{unit}.c"
+                generated = temp / (f"cudapp_freest_core_{unit}.c" if unit == "cubadmit" else f"cudapp_om_core_{unit}.c")
                 other = ROOT / "src" / (
-                    "cudapp_om_core_ampack.c" if unit == "cubadmit" else "cudapp_om_core_cubadmit.c")
+                    "cudapp_om_core_ampack.c" if unit == "cubadmit" else "cudapp_freest_core_cubadmit.c")
                 binary = temp / "residue"
                 built = run(CC + ["-o", str(binary), "tests/test_core_residue.c", *LINK, str(generated), str(other)], log)
                 if built.returncode != 0:

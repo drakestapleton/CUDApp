@@ -63,7 +63,7 @@ test-om-cubin-mutants:
 	OMEGA_UNITS=$$(pwd)/$$d/cubin_elf.om OMEGA_UNITS_DEST=$$d OMEGA_OMC=$(OMEGA_MV)/seed/out/omc \
 		OMEGA_BRIDGE=$(OMEGA_BRIDGE_DIR) sh om/units.sh > /dev/null || exit 1; \
 	$(OM_CUBIN_BUILD) $(OM_CUBIN_DIFF) -o $$d/sweep tests/om_cubin_sweep_test.c src/omega_cubin.c \
-		$$d/cudapp_om_cubin_elf.c src/cudapp_om_core_cubinmsg.c || exit 1; \
+		$$d/cudapp_om_cubin_elf.c src/cudapp_freest_core_cubinmsg.c src/cudapp_freest_core_cubadmit.c || exit 1; \
 	if $$d/sweep > $$d/sweep.log 2>&1; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): $$(grep -m1 -e 'CUBIN DIFF' -e FAIL $$d/sweep.log)"; \
 	done

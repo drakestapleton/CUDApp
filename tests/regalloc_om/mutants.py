@@ -25,7 +25,7 @@ FIXED = ['src/cudapp_om_bw_enc_sm121.c', 'src/cudapp_freest_f16.c',
          'src/cudapp_om_bw_cpuf16.c', 'src/cudapp_om_bw_cpubf16.c', 'src/cudapp_om_bw_shape.c',
          'src/cudapp_om_bw_name.c', 'src/cudapp_om_cg_pack_len.c', 'src/cudapp_om_cg_pack_h.c',
          'src/cudapp_om_cg_em.c', 'src/cudapp_om_cg_reconv.c', 'src/cudapp_om_cg_sentin.c',
-         'src/cudapp_om_cg_fields.c', 'src/cudapp_om_cg_invar.c', 'src/cudapp_om_cg_budget.c']
+         'src/cudapp_freest_cg_fields.c', 'src/cudapp_om_cg_invar.c', 'src/cudapp_om_cg_budget.c']
 FLAGS = ['-std=gnu11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections', '-Isrc']
 LINK = {
     'liveness': ['tests/regalloc_om/liveness.c', str(OUT / 'successor.o'), 'src/omega_gpu_om_ir.c'],

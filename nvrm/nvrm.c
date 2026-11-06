@@ -1231,12 +1231,10 @@ static int nvrm_publish(Nvrm *rm, const NvrmMem *fifo, uint32_t entries, uint32_
     nvrm_cpu_barrier();
     return 0;
 #else
-    uint64_t token = 0, result = 0;
-    for (uint32_t i = 0; i < rm->live_count; i++)
-        if (rm->live[i].cpu == fifo->cpu && rm->live[i].cpu_live && rm->live[i].omega_mapping) {
-            token = rm->live[i].omega_mapping; break;
-        }
-    if (!token || !rm->omega_context) { errno = EINVAL; return -1; }
+    uint64_t token = 0, base = 0, result = 0;
+    /* The ring starts at the mapping: GP slot offsets are relative to the handle. */
+    if (nvrm_live_token(rm, fifo->cpu, fifo->size, &token, &base)) return -1;
+    if (base) { errno = EFAULT; return -1; }
     uint32_t status = omega2_ctx_streams_gp_publish(rm->omega_context, &result, token, entries, put,
                                                     (uint64_t)userd_off + offsetof(Nvc96fControl, GPPut), va, nwords);
     return nvrm_native_ok(status, result);

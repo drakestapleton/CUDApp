@@ -20,6 +20,25 @@ static int nvrm_mapping_context(Nvrm *rm) {
     }
     return 0;
 }
+/* Owned mapping handle and byte offset for [p, p+n) inside exactly one live,
+ * unquarantined CPU mapping of this client. 0 on one match; -1 with EINVAL
+ * (bad args/no context) or EFAULT (no or ambiguous owner). Shared by the
+ * submit stores and the platform marker poll; never a second owner. */
+static inline int nvrm_live_token(const Nvrm *rm, const void *p, size_t n, uint64_t *token, uint64_t *offset) {
+    if (!rm || !p || !n || !token || !offset || !rm->omega_context) { errno = EINVAL; return -1; }
+    uintptr_t a = (uintptr_t)p;
+    if (a > UINTPTR_MAX - n) { errno = EINVAL; return -1; }
+    uint32_t hits = 0;
+    for (uint32_t i = 0; i < rm->live_count; i++) {
+        const NvrmLiveAlloc *l = &rm->live[i];
+        uintptr_t b = (uintptr_t)l->cpu;
+        if (!l->cpu_live || l->quarantined || !l->omega_mapping || !b || a < b || l->size < n ||
+            a - b > l->size - n) continue;
+        *token = l->omega_mapping; *offset = a - b; hits++;
+    }
+    if (hits != 1) { errno = EFAULT; return -1; }
+    return 0;
+}
 #endif
 
 static int nvrm_file_open(const char *path) {

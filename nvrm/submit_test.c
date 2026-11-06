@@ -80,6 +80,15 @@ int main(int argc, char **argv) {
     assert(omega2_ctx_streams_gp_publish(rm.omega_context, &r, h, 8, 0, USERD, 0, 0x200000) == 0 && (int64_t)r == -EINVAL);
     assert(omega2_ctx_streams_ring(rm.omega_context, &r, rm.omega_usermode_mapping, 0x91, 1) == 0 && (int64_t)r == -EINVAL);
     assert(omega2_ctx_streams_ring(rm.omega_context, &r, rm.omega_usermode_mapping, 0x90, UINT64_C(0x100000000)) == 0 && (int64_t)r == -EINVAL);
+    /* nvrm_live_token: one owner and its offset; outside/straddling/no-owner/quarantined refused. */
+    uint64_t tk = 0, of = 0;
+    assert(nvrm_live_token(&rm, (uint8_t *)c->fifo.cpu + 0x40, 8, &tk, &of) == 0 && tk == rm.live[1].omega_mapping && of == 0x40);
+    assert(nvrm_live_token(&rm, (uint8_t *)c->fifo.cpu + PAGE - 4, 8, &tk, &of) == -1 && errno == EFAULT);
+    assert(nvrm_live_token(&rm, &tk, 8, &tk, &of) == -1 && errno == EFAULT);
+    assert(nvrm_live_token(&rm, c->fifo.cpu, 0, &tk, &of) == -1 && errno == EINVAL);
+    rm.live[1].quarantined = 1;
+    assert(nvrm_live_token(&rm, c->fifo.cpu, 8, &tk, &of) == -1 && errno == EFAULT);
+    rm.live[1].quarantined = 0;
     /* A foreign handle is refused by the context, never dereferenced. */
     assert(omega2_ctx_streams_gp_publish(rm.omega_context, &r, h ^ 0x40000, 8, 0, USERD, 0, 1) != 0 || (int64_t)r < 0);
     /* Without an owned handle the enqueue refuses rather than storing through the pointer. */

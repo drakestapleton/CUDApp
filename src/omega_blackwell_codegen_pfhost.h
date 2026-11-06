@@ -26,6 +26,10 @@
  * out: f32 rows of h. One CTA per row, h / 4 threads, 4 columns each (LDG.128 per slot).
  * Arguments (cbank 0x380): down u64, inv u64, wt u64, out u64.
  * mutant (tests only): 1 = FFMA instead of FMUL + FADD, 2 = the last slot is skipped.
+ *
+ * Builders default to seeded Omega om/codegen/cg_pfhost*.om and checked generic IR replay.
+ * CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST=1 selects the retained C differential oracle.
+ * Public layouts, accepted configurations and function signatures are unchanged.
  */
 #include <stdint.h>
 #include "omega_blackwell_codegen.h"

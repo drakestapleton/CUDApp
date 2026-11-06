@@ -9,3 +9,4 @@ $(OUT_DIR)/codegen_pfhost_diff: tests/codegen_pfhost_diff.c $(OUT_DIR)/codegen_p
 	$(CC) $(CFLAGS) -Itests -Isrc -o $@ $^ -lpthread -lm
 test-codegen-pfhost: $(OUT_DIR)/codegen_pfhost_diff
 	$(OUT_DIR)/codegen_pfhost_diff
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" python3 tests/codegen_pfhost_mutants.py $(OUT_DIR)

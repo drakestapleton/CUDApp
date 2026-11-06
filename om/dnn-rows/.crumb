@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T04:27:45Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:33581073a5bba55f87c1085f42ad51646286afbfc563f5c2ae7fd5c682375d6b",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 4,
+      "generated_at_commit": "b4c616cdf04eebdbd7d58ffa0b6a749dfa231bd4",
+      "source_tree": "sha256:0c03a67e9ca5e4892dd0718ee20bfb13ef378ea0c3080073e025cfbd4a006f3d"
+    }
+  },
+  "layer": "library",
+  "name": "dnn-rows",
+  "purpose": "Seeded any-shape softmax layernorm rmsnorm admission and IR",
+  "schema_version": "1.0.0"
+}

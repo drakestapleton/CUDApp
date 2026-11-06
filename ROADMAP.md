@@ -109,3 +109,14 @@ Omega implementations are reused. The handwritten C oracle is opt-in through
 `CUDAPP_MIGRATION_PENDING_C_CORE`; no hardware status is upgraded.
 See `om/core/README.md` and `evidence/core-util/2026-11-06/` for host evidence,
 negative controls, recompiled mutants and the authorization-gated chip runbook.
+
+## 2026-11-06: core allocator and matmul Omega lane (pending integration)
+
+The seeded core allocator, IR helpers, five matmul builders, scalar register/layout
+decisions and vecadd writer have host differential, ten recompiled Omega mutants,
+existing encoder fixtures and BF16 warp-simulator receipts in
+`evidence/regalloc-om/2026-11-06/README.md`. The full assigned file-set migration
+is not complete: realization, hazard analysis and remaining wrapper/packing/spec
+policy are still C. Native aggregate adoption and freestanding OM2 array support
+are pending integration; chip qualification is NOT_RUN. No roadmap row status is
+upgraded by this note.

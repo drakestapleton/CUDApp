@@ -1,0 +1,35 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+cd "$ROOT"
+: "${CC:=cc}"
+: "${REGALLOC_OUT:=$ROOT/build/regalloc-om}"
+mkdir -p "$REGALLOC_OUT"
+# The successor links the portable generated C of om/codegen (om/units.sh; src/cudapp_om_<unit>.c). The pinned
+# compiler regenerates it byte for byte first, so these sources are the checked lowering of the .om under test.
+if [ -n "${OMEGA_OMC:-}" ]; then sh om/units.sh --check; fi
+UNITS="src/cudapp_om_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_cg_matmul.c
+  src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_tensor.c
+  src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_block.c
+  src/cudapp_om_cg_vecadd.c src/cudapp_om_bw_enc_sm121.c src/cudapp_freest_f16.c"
+python3 - "$REGALLOC_OUT/oracle_names.h" <<'PY'
+import pathlib,re,sys
+source=pathlib.Path('src/omega_blackwell_codegen.c').read_text()
+names=sorted(set(re.findall(r'^(?:int|void|size_t|uint32_t|uint16_t) (omega_\w+)\(',source,re.M)))
+pathlib.Path(sys.argv[1]).write_text(''.join('#define '+n+' legacy_'+n+'\n' for n in names))
+PY
+FLAGS="-std=gnu11 -O2 -Wall -Wextra -Werror -ffunction-sections -fdata-sections -Isrc"
+$CC $FLAGS -DCUDAPP_MIGRATION_PENDING_C_REGALLOC -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL -DCUDAPP_MIGRATION_PENDING_C_ENCODER -include "$REGALLOC_OUT/oracle_names.h" -c src/omega_blackwell_codegen.c -o "$REGALLOC_OUT/oracle.o"
+$CC $FLAGS -c src/omega_blackwell_codegen.c -o "$REGALLOC_OUT/successor.o"
+$CC $FLAGS tests/regalloc_om/liveness.c "$REGALLOC_OUT/successor.o" src/omega_gpu_om_ir.c $UNITS \
+  -Wl,--gc-sections -o "$REGALLOC_OUT/liveness"
+"$REGALLOC_OUT/liveness"
+$CC $FLAGS tests/regalloc_om/differential.c "$REGALLOC_OUT/oracle.o" "$REGALLOC_OUT/successor.o" \
+  src/omega_gpu_om_ir.c src/omega_blackwell_matmul.c src/sha256.c $UNITS \
+  -Wl,--gc-sections -o "$REGALLOC_OUT/differential"
+"$REGALLOC_OUT/differential" "$@"
+$CC $FLAGS -Wno-unused-function -ffp-contract=off -Itests tests/regalloc_om/sim.c "$REGALLOC_OUT/successor.o" \
+  src/omega_gpu_om_ir.c src/omega_blackwell_matmul.c src/omega_blackwell_encoder.c src/sha256.c $UNITS \
+  -Wl,--gc-sections -lm -o "$REGALLOC_OUT/sim"
+"$REGALLOC_OUT/sim"

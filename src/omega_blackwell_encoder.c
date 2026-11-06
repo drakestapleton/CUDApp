@@ -2,6 +2,7 @@
 #include "omega_blackwell_encoder.h"
 #include "sha256.h"
 #include <string.h>
+#include "cudapp_native.h"
 
 /*
  * Bit-for-bit verified sm_121 instruction sequence for unsigned 32-bit vector addition.
@@ -42,6 +43,8 @@ static const BlackwellInstruction VECADD_INSTRUCTIONS[OMEGA_BW_VECADD_INSN_COUNT
     /* 01f0 */ { { 0x00007918, 0x00000000, 0x00000000, 0x000fc000 }, "NOP" },
 };
 
+/* Freestanding keeps the C writer: the portable binding of om/codegen/cg_vecadd.om uses hosted trap handling. */
+#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC)
 int omega_blackwell_encode_vecadd(uint8_t *code_buf, size_t max_len, size_t *out_len) {
     if (!code_buf || max_len < OMEGA_BW_VECADD_CODE_SIZE) return -1;
 
@@ -60,6 +63,16 @@ int omega_blackwell_encode_vecadd(uint8_t *code_buf, size_t max_len, size_t *out
     if (out_len) *out_len = OMEGA_BW_VECADD_CODE_SIZE;
     return 0;
 }
+#else
+int omega_blackwell_encode_vecadd(uint8_t *code_buf, size_t max_len, size_t *out_len) {
+    if (!code_buf || max_len < OMEGA_BW_VECADD_CODE_SIZE) return -1;
+    uint64_t result;
+    if (omega_cg_vec(&result, code_buf, OMEGA_BW_VECADD_CODE_SIZE) != 0 || result != 0)
+        return -1;
+    if (out_len) *out_len = OMEGA_BW_VECADD_CODE_SIZE;
+    return 0;
+}
+#endif
 
 int omega_blackwell_compute_code_digest(const uint8_t *code_buf, size_t len, uint8_t *out_digest) {
     if (!code_buf || len == 0 || !out_digest) return -1;

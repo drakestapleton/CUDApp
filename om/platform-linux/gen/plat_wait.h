@@ -28,16 +28,20 @@ typedef struct omega_native_context omega_native_context;
 uint32_t omega_native_context_create(uint64_t capacity, omega_native_context **out);
 uint32_t omega_native_context_destroy(omega_native_context *context);
 #endif
-#define OMEGA2_IDENT_plat_wait "omega-ident 1 unit=plat_wait abi=2 profile=OM-2 src=44d58dc55c29626aaf6f8c9590292c6271899f9b5605e84430556ae03ea77aef omc=d1a3047153e14676c4baf9248fa2b88bb1b68c37cfeb71d76f30f5230c7d2765 host=mapnew,mapdrop,mapget"
+#define OMEGA2_IDENT_plat_wait "omega-ident 1 unit=plat_wait abi=2 profile=OM-2 src=fd83645cd4f9e32c5777ebff47f64ea0f7bc288844d1946176cc24a5455ed91d omc=d1a3047153e14676c4baf9248fa2b88bb1b68c37cfeb71d76f30f5230c7d2765 host=mapdrop,mapget,maphold,mapbind"
 const char *omega2_ident_plat_wait(void);
 /* export fn plat_wait_budget ms ulong to ulong */
 uint32_t omega2_plat_wait_budget(uint64_t *result, uint64_t o_ms);
 /* export fn plat_wait_budget ms ulong to ulong */
 uint32_t omega2_ctx_plat_wait_budget(omega_native_context *context, uint64_t *result, uint64_t o_ms);
-/* export fn plat_wait_map fd long n ulong to long */
-uint32_t omega2_plat_wait_map(uint64_t *result, uint64_t o_fd, uint64_t o_n);
-/* export fn plat_wait_map fd long n ulong to long */
-uint32_t omega2_ctx_plat_wait_map(omega_native_context *context, uint64_t *result, uint64_t o_fd, uint64_t o_n);
+/* export fn plat_wait_hold addr ulong n ulong to long */
+uint32_t omega2_plat_wait_hold(uint64_t *result, uint64_t o_addr, uint64_t o_n);
+/* export fn plat_wait_hold addr ulong n ulong to long */
+uint32_t omega2_ctx_plat_wait_hold(omega_native_context *context, uint64_t *result, uint64_t o_addr, uint64_t o_n);
+/* export fn plat_wait_bind handle long fd long to long */
+uint32_t omega2_plat_wait_bind(uint64_t *result, uint64_t o_handle, uint64_t o_fd);
+/* export fn plat_wait_bind handle long fd long to long */
+uint32_t omega2_ctx_plat_wait_bind(omega_native_context *context, uint64_t *result, uint64_t o_handle, uint64_t o_fd);
 /* export fn plat_wait_drop handle long to long */
 uint32_t omega2_plat_wait_drop(uint64_t *result, uint64_t o_handle);
 /* export fn plat_wait_drop handle long to long */
@@ -76,16 +80,20 @@ typedef struct omega_native_context omega_native_context;
 uint32_t omega_native_context_create(uint64_t capacity, omega_native_context **out);
 uint32_t omega_native_context_destroy(omega_native_context *context);
 #endif
-#define OMEGA2_IDENT_plat_wait "omega-ident 1 unit=plat_wait abi=2 profile=OM-2 src=44d58dc55c29626aaf6f8c9590292c6271899f9b5605e84430556ae03ea77aef omc=cf4fcbbb4752c5dd0652b426c0f2d08f82e380e8fc6f5114acf51a4c077bb579 host=mapnew,mapdrop,mapget"
+#define OMEGA2_IDENT_plat_wait "omega-ident 1 unit=plat_wait abi=2 profile=OM-2 src=fd83645cd4f9e32c5777ebff47f64ea0f7bc288844d1946176cc24a5455ed91d omc=cf4fcbbb4752c5dd0652b426c0f2d08f82e380e8fc6f5114acf51a4c077bb579 host=mapdrop,mapget,maphold,mapbind"
 const char *omega2_ident_plat_wait(void);
 /* export fn plat_wait_budget ms ulong to ulong */
 uint32_t omega2_plat_wait_budget(uint64_t *result, uint64_t o_ms);
 /* export fn plat_wait_budget ms ulong to ulong */
 uint32_t omega2_ctx_plat_wait_budget(omega_native_context *context, uint64_t *result, uint64_t o_ms);
-/* export fn plat_wait_map fd long n ulong to long */
-uint32_t omega2_plat_wait_map(uint64_t *result, uint64_t o_fd, uint64_t o_n);
-/* export fn plat_wait_map fd long n ulong to long */
-uint32_t omega2_ctx_plat_wait_map(omega_native_context *context, uint64_t *result, uint64_t o_fd, uint64_t o_n);
+/* export fn plat_wait_hold addr ulong n ulong to long */
+uint32_t omega2_plat_wait_hold(uint64_t *result, uint64_t o_addr, uint64_t o_n);
+/* export fn plat_wait_hold addr ulong n ulong to long */
+uint32_t omega2_ctx_plat_wait_hold(omega_native_context *context, uint64_t *result, uint64_t o_addr, uint64_t o_n);
+/* export fn plat_wait_bind handle long fd long to long */
+uint32_t omega2_plat_wait_bind(uint64_t *result, uint64_t o_handle, uint64_t o_fd);
+/* export fn plat_wait_bind handle long fd long to long */
+uint32_t omega2_ctx_plat_wait_bind(omega_native_context *context, uint64_t *result, uint64_t o_handle, uint64_t o_fd);
 /* export fn plat_wait_drop handle long to long */
 uint32_t omega2_plat_wait_drop(uint64_t *result, uint64_t o_handle);
 /* export fn plat_wait_drop handle long to long */

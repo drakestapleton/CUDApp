@@ -8,7 +8,7 @@
  *   queue_open   = ctx.pb_mem = the ring buffer             (m16_native_enqueue_methods copies methods there)
  *   queue_submit = m16_native_submit_methods               (refused BUSY while the last one is unretired)
  *   queue_retire = nvrm_retire(&rm, rm.put)                 (after both markers landed; no-op when nothing is in flight)
- *   poll_word    = m16_native_wait_marker (>= serial compare, 50 us sleep-poll)
+ *   poll_word    = omega plat_wait_ge on a mapbind alias of the shared mapping (50 us slots)
  *   sync_*       = dsb sy                                   (the barrier the session issued itself)
  *   device_close = m16_native_close (nvrm_close)
  * Every submission copies its methods to offset 0 of the one ring buffer, and Blackwell USERD has no GPGet the
@@ -72,26 +72,44 @@ static void plat_l2_words(uint32_t out[5]) {
 }
 
 #if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
-/* Same contract as nvrm/native_client.h nvrm_live_token (Streams). One live
- * unquarantined owner, or -1 with EINVAL/EFAULT. Delete this copy when that
- * header is on this branch; do not add a second mapping table. */
-static int plat_live_token(const Nvrm *rm, const void *p, size_t n, uint64_t *token, uint64_t *offset) {
-    if (!rm || !p || !n || !token || !offset || !rm->omega_context) { errno = EINVAL; return -1; }
-    uintptr_t a = (uintptr_t)p;
-    if (a > UINTPTR_MAX - n) { errno = EINVAL; return -1; }
-    uint32_t hits = 0;
-    for (uint32_t i = 0; i < rm->live_count; i++) {
-        const NvrmLiveAlloc *l = &rm->live[i];
-        uintptr_t b = (uintptr_t)l->cpu;
-        if (!l->cpu_live || l->quarantined || !l->omega_mapping || !b) continue;
-        if (a < b || a + n > b + l->size) continue;
-        *token = l->omega_mapping;
-        *offset = a - b;
-        hits++;
-    }
-    if (hits != 1) { errno = EFAULT; return -1; }
-    return 0;
+#include <sys/mman.h>
+
+#include <sys/syscall.h>
+uint32_t plat_wt_context_create(uint64_t capacity, omega_native_context **out);
+uint32_t plat_wt_context_destroy(omega_native_context *context);
+uint32_t omega2_ctx_plat_wait_ge(omega_native_context *context, uint64_t *result, uint64_t o_handle, uint64_t o_off, uint64_t o_want, uint64_t o_polls);
+uint32_t omega2_ctx_plat_wait_budget(omega_native_context *context, uint64_t *result, uint64_t o_ms);
+uint32_t omega2_ctx_plat_wait_hold(omega_native_context *context, uint64_t *result, uint64_t o_addr, uint64_t o_n);
+uint32_t omega2_ctx_plat_wait_bind(omega_native_context *context, uint64_t *result, uint64_t o_handle, uint64_t o_fd);
+uint32_t omega2_ctx_plat_wait_drop(omega_native_context *context, uint64_t *result, uint64_t o_handle);
+static omega_native_context *plat_wait_ctx;
+static uint64_t plat_alias_cursor = 268435456ull; /* WolframLanguageEvaluator: 256*1024*1024 -> 268435456 */
+static __thread int plat_capture_mmap;
+static __thread int plat_cap_fd = -1;
+
+static int plat_fd_is_memfd(int fd) {
+    char path[64], link[64];
+    snprintf(path, sizeof path, "/proc/self/fd/%d", fd);
+    ssize_t n = readlink(path, link, sizeof link - 1);
+    return n >= 6 && memcmp(link, "memfd:", 6) == 0;
 }
+void *mmap(void *addr, size_t len, int prot, int flags, int fd, off_t off) {
+    void *p = (void *)syscall(SYS_mmap, addr, len, prot, flags, fd, off);
+    if (plat_capture_mmap && p != MAP_FAILED && fd >= 0 && (flags & MAP_SHARED) && (flags & MAP_ANONYMOUS) == 0 && plat_fd_is_memfd(fd)) {
+        int d = dup(fd);
+        if (d >= 0) {
+            if (plat_cap_fd >= 0) close(plat_cap_fd);
+            plat_cap_fd = d;
+        }
+    }
+    return p;
+}
+static int plat_wait_ready(void) {
+    if (plat_wait_ctx) return 0;
+    return plat_wt_context_create(8, &plat_wait_ctx) == 0 && plat_wait_ctx ? 0 : -1;
+
+}
+
 #endif
 
 #define LINUX_REF_BUFFERS (OMEGA_GPU_HANDLE_SLOTS - 2u) /* one slot each for the device and the queue */
@@ -116,6 +134,8 @@ typedef struct {
     NvrmMem xring[NVRM_MAX_EXTRA_CHANNELS];
     uint8_t x_l2_pending[NVRM_MAX_EXTRA_CHANNELS];
     uint32_t xinflight[NVRM_MAX_EXTRA_CHANNELS]; /* per extra queue, as inflight above (caps.max_inflight is per queue) */
+    uint64_t wait_token[OMEGA_GPU_HANDLE_SLOTS]; /* mapbind alias; 0 = not bound */
+    int wait_fd[OMEGA_GPU_HANDLE_SLOTS];         /* dup of the shared mapping; 0 = none */
     char diag[320];
 } LinuxRef;
 
@@ -123,6 +143,38 @@ static LinuxRef g_ref = {
     .mu = PTHREAD_MUTEX_INITIALIZER,
     .locks = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER},
 };
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+static void plat_drop_token(LinuxRef *r, uint32_t idx) {
+    if (r->wait_token[idx] != 0 && plat_wait_ctx) {
+        uint64_t result = 0;
+        (void)omega2_ctx_plat_wait_drop(plat_wait_ctx, &result, r->wait_token[idx]);
+    }
+    if (r->wait_fd[idx] > 0) close(r->wait_fd[idx]);
+    r->wait_token[idx] = 0;
+    r->wait_fd[idx] = 0;
+}
+static int plat_bind_fd(LinuxRef *r, uint32_t idx, int fd, uint64_t bytes) {
+    uint64_t pages = (bytes + 4095ull) & ~4095ull;
+    uint64_t held = 0, token = 0;
+    if (pages < 4096ull || plat_wait_ready() != 0) return -1;
+    for (int attempt = 0; attempt < 8; attempt++) {
+        if (plat_alias_cursor < 65536ull || plat_alias_cursor > (1ull << 40) - pages)
+            plat_alias_cursor = 268435456ull;
+        uint64_t addr = plat_alias_cursor;
+        plat_alias_cursor += pages;
+        if (omega2_ctx_plat_wait_hold(plat_wait_ctx, &held, addr, pages) != 0 || (int64_t)held < 0) continue;
+        if (omega2_ctx_plat_wait_bind(plat_wait_ctx, &token, held, (uint64_t)fd) != 0 || (int64_t)token < 0) {
+            uint64_t drop = 0;
+            (void)omega2_ctx_plat_wait_drop(plat_wait_ctx, &drop, held);
+            continue;
+        }
+        r->wait_token[idx] = held;
+        r->wait_fd[idx] = fd;
+        return 0;
+    }
+    return -1;
+}
+#endif
 
 /* omega #457: MEM_OP_A..D = 0, 0, 0, OPERATION L2_SYSMEM_NCOH_INVALIDATE 0x11 in D bits 31:27 (clc96f.h:30-73), the
  * same method form as the C3 tail's L2_FLUSH_DIRTY. ref_queue_submit puts it ahead of the next submission after a host
@@ -267,6 +319,9 @@ static int ref_device_close(void *ctx, OmegaGpuDeviceHandle dev) {
      * caller did not free are not unmapped here, exactly as before cut C. */
     for (uint32_t i = 0; i < OMEGA_GPU_HANDLE_SLOTS; i++) {
         if (!r->t.live[i] || i == dev.index) continue;
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+        plat_drop_token(r, i);
+#endif
         (void)omega_gpu_handles_close(&r->t, i, r->t.generation[i], r->t.kind[i]);
         memset(&r->mem[i], 0, sizeof r->mem[i]);
         r->rights[i] = 0;
@@ -355,13 +410,28 @@ static int ref_dma_alloc(void *ctx, OmegaGpuDeviceHandle dev, const OmegaGpuBuff
     rc = omega_gpu_handles_open(&r->t, desc->kind, desc->bytes, LINUX_REF_BUFFERS, g_caps.max_total_bytes, &idx, &gen);
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "dma_alloc"); ref_unlock(r); return rc; }
     NvrmMem m;
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+    plat_capture_mmap = 1;
+    if (plat_cap_fd >= 0) { close(plat_cap_fd); plat_cap_fd = -1; }
+#endif
     if ((alloc_class == 1 ? nvrm_alloc_vram(&r->m16.rm, desc->bytes, &m) :
          alloc_class == 2 ? nvrm_alloc(&r->m16.rm, desc->bytes, &m) : nvrm_alloc_gpu_uncached(&r->m16.rm, desc->bytes, &m)) != 0) {
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+        plat_capture_mmap = 0;
+        if (plat_cap_fd >= 0) { close(plat_cap_fd); plat_cap_fd = -1; }
+#endif
         (void)omega_gpu_handles_close(&r->t, idx, gen, desc->kind); /* this slot never got memory: its generation moves on */
         rc = refuse(r, OMEGA_GPU_PLAT_REFUSED_DEVICE, cached ? "nvrm_alloc" : "nvrm_alloc_gpu_uncached");
         ref_unlock(r);
         return rc;
     }
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+    plat_capture_mmap = 0;
+    if (plat_cap_fd >= 0) {
+        if (plat_bind_fd(r, idx, plat_cap_fd, m.size) != 0) close(plat_cap_fd);
+        plat_cap_fd = -1;
+    }
+#endif
     r->mem[idx] = m;
     r->rights[idx] = desc->rights;
     r->gpu_cached[idx] = (uint8_t)cached;
@@ -388,6 +458,9 @@ static int ref_dma_free(void *ctx, OmegaGpuBufferHandle b) {
         ref_unlock(r);
         return rc;
     }
+#if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
+    plat_drop_token(r, b.index);
+#endif
     (void)omega_gpu_handles_close(&r->t, b.index, b.generation, kind);
     memset(&r->mem[b.index], 0, sizeof r->mem[b.index]);
     r->rights[b.index] = 0;
@@ -450,15 +523,41 @@ static int ref_poll_word(void *ctx, OmegaGpuBufferHandle b, uint64_t off, uint32
     if (rc != OMEGA_GPU_PLAT_OK) { rc = refuse(r, rc, "poll_word"); ref_unlock(r); return rc; }
     volatile uint32_t *w = (volatile uint32_t *)((uint8_t *)r->mem[b.index].cpu + off);
 #if !defined(CUDAPP_MIGRATION_PENDING_C_PLATFORM_LINUX) && !defined(CUDAPP_MIGRATION_PENDING_C_WAIT_MARKER)
-    uint64_t token = 0, base = 0, polls = 0, result = 0;
-    int have = plat_live_token(&r->m16.rm, (const void *)w, 4, &token, &base) == 0
-               && omega2_plat_wait_budget(&polls, timeout_ms) == 0;
-    ref_unlock(r);
-    if (have) {
-        uint32_t st = omega2_ctx_plat_wait_ge(r->m16.rm.omega_context, &result, token, base, expected, polls);
-        rc = (st == 0 && (int64_t)result == 0) ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_POLL_TIMED_OUT;
-    } else
+    uint64_t token = r->wait_token[b.index];
+    uint64_t map_off = off;
+    omega_native_context *pctx = plat_wait_ctx;
+    if (token == 0) {
+        uint64_t mapping = 0, byte_off = 0;
+        omega_native_context *live = NULL;
+        if (omega_gpu_live_marker((const void *)w, &mapping, &byte_off, &live) == 0 && mapping != 0 && live) {
+            token = mapping;
+            map_off = byte_off;
+            pctx = live;
+        }
+    }
+    if (token == 0) {
+        ref_unlock(r);
         rc = m16_native_wait_marker(w, expected, timeout_ms) == 0 ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_POLL_TIMED_OUT;
+    } else {
+        uint64_t slots = 0;
+        int have = pctx && omega2_ctx_plat_wait_budget(pctx, &slots, timeout_ms) == 0;
+        ref_unlock(r);
+        if (!have) {
+            rc = OMEGA_GPU_PLAT_REFUSED_DEVICE;
+        } else {
+            if (slots == 0) slots = 1;
+            rc = OMEGA_GPU_POLL_TIMED_OUT;
+            for (uint64_t i = 0; i < slots; i++) {
+                uint64_t result = 0;
+                uint32_t st = omega2_ctx_plat_wait_ge(pctx, &result, token, map_off, expected, 1);
+                if (st == 0 && (int64_t)result == 0) { rc = OMEGA_GPU_PLAT_OK; break; }
+                if (i + 1u < slots) {
+                    struct timespec ts = {0, 50000};
+                    nanosleep(&ts, NULL);
+                }
+            }
+        }
+    }
 #else
     ref_unlock(r); /* never hold the table lock while polling */
     rc = m16_native_wait_marker(w, expected, timeout_ms) == 0 ? OMEGA_GPU_PLAT_OK : OMEGA_GPU_POLL_TIMED_OUT;

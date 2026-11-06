@@ -16,8 +16,9 @@ int main(void) {
     uint32_t *p = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     assert(p != MAP_FAILED);
     uint64_t h = 0, r = 0;
-    assert(omega2_plat_wait_map(&h, (uint64_t)fd, 4096) == 0);
-    assert((int64_t)h > 0);
+    /* WolframLanguageEvaluator: 256*1024*1024 -> 268435456. Alias, not the C mmap address. */
+    assert(omega2_plat_wait_hold(&h, 268435456ull, 4096) == 0 && (int64_t)h > 0);
+    assert(omega2_plat_wait_bind(&r, h, (uint64_t)fd) == 0 && (int64_t)r == 0);
 
     p[1] = 5;
     assert(omega2_plat_wait_ge(&r, h, 4, 5, 1) == 0 && (int64_t)r == 0);

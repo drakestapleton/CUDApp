@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 
 FakeDriver fk;
@@ -22,6 +24,8 @@ typedef struct {
     uint32_t handle;
     void *ptr;
     uint64_t size;
+    int fd_plus; /* 0 = not a shared mapping; else the memfd plus one */
+    size_t map_len;
 } LiveAlloc;
 
 static LiveAlloc g_live[FK_LIVE_MAX];
@@ -30,14 +34,26 @@ static void *g_chan_pb; /* the channel's own 4 KiB pushbuffer, not counted in fk
 
 /* ---- test-side helpers ---------------------------------------------------- */
 
+static void fake_unmap(LiveAlloc *a)
+{
+    if (a->fd_plus > 0 && a->ptr) {
+        munmap(a->ptr, a->map_len);
+        close(a->fd_plus - 1);
+    } else if (a->ptr) {
+        free(a->ptr);
+    }
+    a->ptr = NULL;
+    a->fd_plus = 0;
+    a->map_len = 0;
+}
+
 void fake_release_all(void)
 {
     size_t i;
     for (i = 0; i < FK_LIVE_MAX; i++) {
         if (g_live[i].handle != 0) {
-            free(g_live[i].ptr);
+            fake_unmap(&g_live[i]);
             g_live[i].handle = 0;
-            g_live[i].ptr = NULL;
         }
     }
     fk.live = 0;
@@ -101,7 +117,7 @@ static int inject(Nvrm *rm, int rc)
     return rc;
 }
 
-static void live_add(uint32_t handle, void *ptr, uint64_t size)
+static void live_add(uint32_t handle, void *ptr, uint64_t size, int fd_plus, size_t map_len)
 {
     size_t i;
     for (i = 0; i < FK_LIVE_MAX; i++) {
@@ -109,11 +125,18 @@ static void live_add(uint32_t handle, void *ptr, uint64_t size)
             g_live[i].handle = handle;
             g_live[i].ptr = ptr;
             g_live[i].size = size;
+            g_live[i].fd_plus = fd_plus;
+            g_live[i].map_len = map_len;
             fk.live++;
             return;
         }
     }
-    free(ptr); /* the table is full: more live buffers than any test needs */
+    if (fd_plus > 0) {
+        munmap(ptr, map_len);
+        close(fd_plus - 1);
+    } else {
+        free(ptr);
+    }
 }
 
 /* Returns 1 if the handle was live and is now released, else 0. */
@@ -122,9 +145,8 @@ static int live_release(uint32_t handle)
     size_t i;
     for (i = 0; i < FK_LIVE_MAX; i++) {
         if (g_live[i].handle == handle) {
-            free(g_live[i].ptr);
+            fake_unmap(&g_live[i]);
             g_live[i].handle = 0;
-            g_live[i].ptr = NULL;
             fk.live--;
             return 1;
         }
@@ -353,13 +375,20 @@ int nvrm_alloc(Nvrm *rm, uint64_t size, NvrmMem *out)
         mode = fk.alloc_mode;
         if (mode == FK_ALLOC_FAIL) return inject(rm, -1);
     }
-    if (posix_memalign(&p, 4096, (size_t)size) != 0) return -1;
+    int fd = memfd_create("fake-nvrm", MFD_CLOEXEC);
+    size_t map_len = (size_t)((size + 4095u) & ~4095u);
+    if (fd < 0 || ftruncate(fd, (off_t)map_len) != 0) {
+        if (fd >= 0) close(fd);
+        return -1;
+    }
+    p = mmap(NULL, map_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (p == MAP_FAILED) { close(fd); return -1; }
     memset(p, 0x5a, (size_t)size); /* dirty memory */
     out->handle = ++g_next_handle;
     out->size = size;
     out->cpu = p;
     out->va = (uint64_t)(uintptr_t)p;
-    live_add(out->handle, p, size);
+    live_add(out->handle, p, size, fd + 1, map_len);
     if (fk.alloc_size_n < FK_SIZE_LOG) fk.alloc_size_log[fk.alloc_size_n] = size;
     fk.alloc_size_n++;
     if (fk.alloc_calls >= 1 && fk.alloc_calls <= 16) fk.alloc_va[fk.alloc_calls - 1] = out->va;

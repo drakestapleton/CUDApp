@@ -1,0 +1,6 @@
+Differential test was written before the Omega unit existed.
+Command (home paths normalized to ~):
+taskset -c 10-14 nice -n 10 cc -Wall -Wextra -Werror -Isrc -c tests/codegen_pfhost_diff.c -o /tmp/pfhost-red.o
+Observed exit status: 1.
+Observed diagnostic: implicit declaration of function omega_cg_pfhost.
+After adding the Omega unit and generating the binding, the same test is built and executed by make test-codegen-pfhost (see focused.log).

@@ -64,6 +64,9 @@ fi
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS cg_attn=om/codegen/cg_attn_emit.om,om/codegen/cg_attn.om cg_pattn=om/codegen/cg_pattn_emit.om,om/codegen/cg_pattn.om"
 fi
+if [ -z "${OMEGA_UNITS:-}" ]; then
+  UNITS="$UNITS cg_pfhost=om/codegen/cg_pfhost_emit.om,om/codegen/cg_pfhost_rl.om,om/codegen/cg_pfhost_mc.om,om/codegen/cg_pfhost.om"
+fi
 PURE_UNITS="revision=om/pipeline/revision.om epoch=om/pipeline/epoch.om f16=om/numeric/f16.om"
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS attn_any=om/attn-any/emit.om,om/attn-any/kernel.om attn_any_plan=om/attn-any/plan.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then

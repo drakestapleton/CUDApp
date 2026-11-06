@@ -346,3 +346,35 @@ service-safety procedure, then run `build/gpu_decode_attn_test --out decode.json
 and `build/gpu_prefill_attn_test --out prefill.json`. Both default modes open the
 GPU; neither is run by the migration tests. Preserve the receipts separately
 from the host evidence and perform the window's required closeout checks.
+
+## Prefill host-work builders in Omega
+
+Router logits and MoE weighted combine default to `om/codegen/cg_pfhost*.om`.
+`CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST=1` selects the retained C builder
+oracle; it is off by default. Public APIs and spec layouts are unchanged.
+The Omega phases construct the records, virtual-register shapes, schedule,
+loop boundaries and branch displacements. C only replays the generic tape.
+
+```sh
+make test-codegen-pfhost
+make build/gpu_pfhost_test
+build/gpu_pfhost_test --sim
+```
+
+The differential enumerates every `k`, `e`, `t`, `h`, `top_k` and mutant
+selector accepted by the C spec validators. It compares return values, every
+IR field, solved register allocation and encoded bytes, including configurations
+whose builders refuse. A flipped instruction is the comparator's negative
+control. Separate router-address and combine-address Omega source mutants
+are regenerated with the pinned compiler and converter, linked in isolation,
+and must fail the same differential. Generation requires `OMEGA_OMC` and
+`OMEGA_BRIDGE` as documented above; it does not install a fallback compiler.
+Without an executable pinned compiler on non-AArch64 hosts, source mutation
+checks are `NOT_RUN`; the exhaustive checked-C differential still runs.
+The existing simulator checks both warp scheduling orders and the numerical
+mutants against the host references.
+
+Chip qualification is separate and needs a current exclusive GPU window.
+Only after obtaining that authorization, build `build/gpu_pfhost_test` and
+run its `--chip` mode using the current machine's window procedure. Never
+interpret the host differential or simulator as a hardware receipt.

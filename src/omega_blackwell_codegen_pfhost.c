@@ -2,6 +2,13 @@
 /* omega_blackwell_codegen_pfhost.c: router logits and MoE combine for the whole-prompt prefill (W-L1G-D). See the header. */
 #include "omega_blackwell_codegen_pfhost.h"
 #include "omega_bw_em.h"
+#include "omega_gpu_om_ir.h"
+#include "cudapp_native.h"
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST
+#define CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST 0
+#endif
+
+#if CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST
 
 static void fmul_s(Em *e, int d, unsigned dsub, int a, unsigned asub, int b, unsigned bsub) {
     BlackwellIRInsn i = I0(BW_IR_FMUL); i.dst_vreg = d; i.dst_subreg = (uint8_t)dsub; i.src1_vreg = a; i.src1_subreg = (uint8_t)asub; i.src2_vreg = b; i.src2_subreg = (uint8_t)bsub; emit(e, i, K_FIXED);
@@ -20,6 +27,7 @@ static void mul_add(Em *e, int fused, int acc, unsigned accsub, int a, unsigned 
     fmul_s(e, prod, 0, a, asub, b, bsub);
     fadd_s(e, acc, accsub, acc, accsub, prod, 0);
 }
+#endif
 
 /* ======================= router logits ======================= */
 int omega_rl_spec_ok(const OmegaRlSpec *s) {
@@ -34,6 +42,11 @@ int omega_rl_spec_ok(const OmegaRlSpec *s) {
 uint32_t omega_rl_shared_bytes(const OmegaRlSpec *s) { return omega_rl_spec_ok(s) ? s->t * 512u : 0u; }
 
 int omega_blackwell_codegen_rl_prog(const OmegaRlSpec *spec, BlackwellIRProgram *prog) {
+#if !CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST
+    if (!spec || !prog) return -1;
+    uint64_t config = (uint64_t)spec->t | ((uint64_t)(uint32_t)spec->mutant << 32);
+    return omega_gpu_om_ir_replay(omega_cg_pfhost, 0, spec->k, spec->e, config, prog, NULL) == OMEGA_OM_IR_OK ? 0 : -1;
+#else
     if (!omega_rl_spec_ok(spec) || !prog) return -1;
     const uint32_t K = spec->k, E = spec->e, T = spec->t, W = E / 32u, PASSES = T / W, GB = E * 16u;
     const uint32_t CHUNKS = spec->mutant == 2 ? K / 128u - 1u : K / 128u;
@@ -107,6 +120,7 @@ int omega_blackwell_codegen_rl_prog(const OmegaRlSpec *spec, BlackwellIRProgram 
     tail(e);
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
+#endif
 }
 
 /* ======================= MoE weighted combine ======================= */
@@ -118,6 +132,10 @@ int omega_mc_spec_ok(const OmegaMcSpec *s) {
 }
 
 int omega_blackwell_codegen_mc_prog(const OmegaMcSpec *spec, BlackwellIRProgram *prog) {
+#if !CUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST
+    if (!spec || !prog) return -1;
+    return omega_gpu_om_ir_replay(omega_cg_pfhost, 1, spec->h, spec->top_k, (uint64_t)(uint32_t)spec->mutant, prog, NULL) == OMEGA_OM_IR_OK ? 0 : -1;
+#else
     if (!omega_mc_spec_ok(spec) || !prog) return -1;
     const uint32_t H = spec->h, KS = spec->top_k, NQ = KS / 4u;
     const uint32_t USED = spec->mutant == 2 ? KS - 1u : KS;
@@ -143,4 +161,5 @@ int omega_blackwell_codegen_mc_prog(const OmegaMcSpec *spec, BlackwellIRProgram 
     tail(e);
     if (e->err) return -1;
     return omega_bw_regalloc_solve(prog);
+#endif
 }

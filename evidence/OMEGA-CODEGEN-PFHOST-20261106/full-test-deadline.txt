@@ -1,0 +1,6 @@
+Command: taskset -c 10-14 nice -n 10 make -j3 test
+Environment: pinned OMEGA_OMC / OMEGA_BRIDGE / OMEGA_MV / OMEGA_BRIDGE_DIR as in README.md
+Verdict: INCONCLUSIVE
+Observed: eval cell timed out after 3600s; KeyboardInterrupt: Execution interrupted
+No make return code or CUDA++ HOST TESTS PASS final line was observed.
+stdout was buffered in subprocess.run and was not persisted before the interruption. No full-suite retry was attempted, per Main policy.

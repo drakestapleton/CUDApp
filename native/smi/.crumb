@@ -1,0 +1,20 @@
+{
+  "extensions": {
+    "generated": {
+      "children": [],
+      "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compiled_at": "2026-11-06T01:49:06Z",
+      "compiler": "crumb-compile/1",
+      "digest": "sha256:bf677e7b4efb1311f8b10f248f9dd815aea22760c5bed8593e90cd612fb5f4e1",
+      "evidence_files": 0,
+      "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": 3,
+      "generated_at_commit": "61cb049c4eb6fcd4a0601abf1b0b9fa5688bf695",
+      "source_tree": "sha256:7a929dee6db8a2e433ea936fc67dcbd43f4fe2d1d6192faacf86f706d2eab438"
+    }
+  },
+  "layer": "development",
+  "name": "cudapp-smi",
+  "purpose": "Read-only Omega GPU status reporter (nvidia-smi successor); procfs/sysfs by default, resource-manager controls behind --rm",
+  "schema_version": "1.0.0"
+}

@@ -1,0 +1,1 @@
+REFUSE wrong_authority target=tpm-ntc-npct75x runner=hwman-cpu route=DIRECT_DEVICE

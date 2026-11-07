@@ -1,0 +1,2 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+REFUSE state_unreadable state=<evidence>/after/persist-short-write-w2.state

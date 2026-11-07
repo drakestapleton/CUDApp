@@ -1,0 +1,5 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+STEP claim generation=1
+STEP prepare arg=1
+STEP release generation=1
+REFUSE unsupported_op target=cpu-gb10-x925 op=matmul

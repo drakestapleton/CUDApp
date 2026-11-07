@@ -1,0 +1,1 @@
+ADMIT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=getrandom

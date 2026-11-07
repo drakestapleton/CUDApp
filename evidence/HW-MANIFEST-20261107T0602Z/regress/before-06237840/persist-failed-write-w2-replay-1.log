@@ -1,0 +1,2 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+REFUSE stale_generation have=2 want=1

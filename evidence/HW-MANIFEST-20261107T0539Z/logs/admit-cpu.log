@@ -1,0 +1,1 @@
+ADMIT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64

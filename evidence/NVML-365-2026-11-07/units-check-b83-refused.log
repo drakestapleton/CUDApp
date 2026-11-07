@@ -1,0 +1,2 @@
+NOT_RUN: toc.om is not the pinned converter
+rc=3

@@ -1,0 +1,19 @@
+compat/nvml/README.md:14:The bridge checkout is `OMEGA_CABI_BRIDGE`; its `src/toc.om` and
+compat/nvml/README.md:15:`tools/bridge-seeded` are pinned by sha256 in `om/omega-bridge-cabi.lock`. This
+mk/nvml.mk:3:# omega-bridge#83 C ABI emitter (OMEGA_CABI_BRIDGE, pinned by om/omega-bridge-cabi.lock),
+mk/nvml.mk:6:NVML_RUN := $(and $(filter 1,$(CUDAPP_OMC_HOST)),$(OMEGA_BRIDGE),$(OMEGA_CABI_BRIDGE))
+mk/nvml.mk:16:	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" OMEGA_CABI_BRIDGE="$(OMEGA_CABI_BRIDGE)" $(NVML_GATE)
+mk/nvml.mk:19:	@echo "test-nvml: NOT_RUN (requires CUDAPP_OMC_HOST=1 with OMEGA_OMC, OMEGA_BRIDGE and OMEGA_CABI_BRIDGE)"
+tests/nvml/README.md:5:     OMEGA_BRIDGE=/absolute/bridge OMEGA_CABI_BRIDGE=/absolute/cabi-bridge
+tests/nvml/README.md:11:- `OMEGA_CABI_BRIDGE` is the omega-bridge#83 checkout (cabi-1 emitter, built with `tools/build.sh`), used only for `native/nvml/api.om`. Its `src/toc.om` and `tools/bridge-seeded` must match `CABI_CONVERTER_PIN` and `CABI_FRONTEND_PIN` in `om/omega-bridge-cabi.lock`. This second pin is temporary (Manager(Aien) D2; unify under Linear DRA-154).
+tests/nvml/README.md:31:| 77 | compiler, `OMEGA_BRIDGE` or `OMEGA_CABI_BRIDGE` not configured or unreadable (NOT_RUN) |
+tests/nvml/README.md:33:| 74 | a pin row is missing or duplicated in `om/units.sh` or `om/omega-bridge-cabi.lock` |
+tests/nvml/gate.om:9:text NgCabOk "PASS cabi bridge pins: src/toc.om and tools/bridge-seeded match om/omega-bridge-cabi.lock\n"
+tests/nvml/gate.om:64:text NgCabE "OMEGA_CABI_BRIDGE="
+tests/nvml/gate.om:65:text NgCabNo "NOT_RUN: set OMEGA_CABI_BRIDGE (omega-bridge #83 checkout built with tools/build.sh) for the generated NVML library\n"
+tests/nvml/gate.om:66:text NgLock "om/omega-bridge-cabi.lock"
+tests/nvml/gate.om:69:text NgRcl "REFUSED: om/omega-bridge-cabi.lock needs exactly one CABI_CONVERTER_PIN and one CABI_FRONTEND_PIN row\n"
+tests/nvml/gate.om:70:text NgRct "REFUSED: OMEGA_CABI_BRIDGE src/toc.om digest is not the om/omega-bridge-cabi.lock pin\n"
+tests/nvml/gate.om:71:text NgRcf "REFUSED: OMEGA_CABI_BRIDGE tools/bridge-seeded digest is not the om/omega-bridge-cabi.lock pin\n"
+tests/nvml/gate.om:270:note refuse 0: om/units.sh FRONTEND_PIN; refuse 1: om/omega-bridge-cabi.lock CABI rows.
+tests/nvml/gate.om:458:note NgWhich 0: OMEGA_BRIDGE (om/units.sh pin); 1: OMEGA_CABI_BRIDGE (om/omega-bridge-cabi.lock pins).

@@ -1,0 +1,3 @@
+test-nvml: NOT_RUN (requires CUDAPP_OMC_HOST=1 with OMEGA_OMC, OMEGA_BRIDGE and OMEGA_CABI_BRIDGE)
+make: *** [mk/nvml.mk:20: test-nvml] Error 2
+rc=2

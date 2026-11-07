@@ -1,0 +1,13 @@
+diff --git a/tools/access/intel-cl.sh b/tools/access/intel-cl.sh
+index 03313a09..53c9b407 100644
+--- a/tools/access/intel-cl.sh
++++ b/tools/access/intel-cl.sh
+@@ -52,7 +52,7 @@ known_kernel() { case $1 in vadd|fsum16|gemm16) return 0 ;; *) return 1 ;; esac;
+ kcall() {
+   kk=$1; kv=$2; ko=$3; shift 3
+   case $kk in
+-    vadd) "$@" cl "$B/vadd.cl$kv.spv" vadd 1048576 "$B/a.bin" "$B/b.bin" "$ko" ;;
++    vadd) "$@" cl "$B/vadd.cl$kv.spv" vadd 1048576 $B/a.bin "$B/b.bin" "$ko" ;;
+     fsum16) "$@" cl "$B/fsum16.cl$kv.spv" fsum16 65536 "$B/x.bin" "$ko" ;;
+     gemm16) "$@" cl "$B/gemm16.cl$kv.spv" gemm16 65536 "$B/ga.bin" "$B/gb.bin" "$ko" ;;
+     *) echo "intel-cl: unknown kernel $kk" >&2; return 64 ;;

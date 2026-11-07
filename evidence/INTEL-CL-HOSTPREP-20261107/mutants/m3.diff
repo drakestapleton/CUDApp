@@ -1,8 +1,8 @@
 diff --git a/tools/access/intel-cl.sh b/tools/access/intel-cl.sh
-index 41b8bc21..ec47bad3 100644
+index 03313a09..b9dcbc45 100644
 --- a/tools/access/intel-cl.sh
 +++ b/tools/access/intel-cl.sh
-@@ -210,7 +210,7 @@ do_compare() {
+@@ -218,7 +218,7 @@ do_compare() {
        fi
        line=$("$C" check "$k" "$O/$f" 2>&1); ce=$?
        line=$(printf '%s' "$line" | tr ' \n' '_ ')

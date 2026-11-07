@@ -1,5 +1,5 @@
 SRC repo=aien-dev/CUDApp rev=0123456789abcdef0123456789abcdef01234567
-WHEN start=2026-11-07T04:35:19Z
+WHEN start=2026-11-07T05:07:41Z
 HOST os=Ubuntu_24.04.5_LTS kernel=7.0.0-1019-nvidia arch=aarch64
 DEVICE id=d7 vendor=other class=cpu model=unknown
 TOOL name=cc path=/usr/bin/aarch64-linux-gnu-gcc-13 sha256=a20520ee21543f243d40636a9181a142c45ecd989de31ab86b99a8ea5ada870d
@@ -14,4 +14,4 @@ ROW id=ctl-optin-cl kind=control want=2 verdict=FAIL dev=d7 exit=3 log=rows/ctl-
 ROW id=ctl-isolation-cl kind=control want=9 verdict=FAIL dev=d7 exit=3 log=rows/ctl-isolation-cl.log
 ROW id=ctl-require-cl kind=control want=9 verdict=FAIL dev=d7 exit=3 log=rows/ctl-require-cl.log
 ROW id=ctl-vendor-cl kind=control want=5 verdict=FAIL dev=d7 exit=3 log=rows/ctl-vendor-cl.log
-WHEN end=2026-11-07T04:35:19Z
+WHEN end=2026-11-07T05:07:42Z

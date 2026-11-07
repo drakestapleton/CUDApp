@@ -1,0 +1,77 @@
+COMMENT, not an approval. Head b7369f93f83c. Intel GPU qualification NOT_RUN. Recommendation: MERGE_AFTER_FIX for two blocking findings. No GitHub writes or checkout modifications.
+
+What I read at this head
+
+Compare range: 9b59446271ebc90ac7d4ba40c7c42bffa56b810f..b7369f93f83c3f7b56e432f568dedd8562b546de. Parent branches were not re-reviewed.
+
+Relevant reads:
+  tools/multitarget/spirv-host.c:83-535,797-846 and the remaining diff
+  tools/access/intel-cl.sh:1-235
+  tools/access/collect.sh:106-187
+  tools/access/plans/intel-gpu.tsv:1-36
+  tests/multitarget/run.sh:198-273 and existing GPU-script grep consumers
+  tests/access/run.sh:202-294 and new fixtures
+  backend/spirv/conform.om:231-249,333-407
+  docs/access/INTEL-CLOUD-SERVICES.md:85-142
+  evidence/INTEL-CL-HOSTPREP-20261107/: README, manifest, recorded results, mutants and Lean model
+
+No issue comments or previous review were relied on.
+
+Blocking findings
+
+1. P1: ICD pinning accepts paths that ocl-icd interprets as indirection, not libraries.
+
+tools/multitarget/spirv-host.c:335-349 checks absolute spelling, realpath and forbidden substrings, but not file type or the loader’s interpretation. Ocl-icd interprets a directory as an ICD search directory and a filename ending in .icd as a descriptor containing another library name. Only its other path form means direct library loading. ([github.com](https://github.com/OCL-dev/ocl-icd/blob/master/doc/libOpenCL.7.txt.in?utm_source=openai))
+
+[INFERENCE] With MT_CL_GPU=1, a clean-named directory containing NVIDIA’s descriptor, or a clean-named .icd file naming NVIDIA’s library, passes these checks. clGetPlatformIDs at line 442 can then load that driver before platform-count or vendor rejection. The required-mapping check at lines 527-529 is too late to prevent loading and is bypassed entirely by earlier failure returns.
+
+The shell wrapper rejects directories, but its regular-file check still accepts .icd descriptors (tools/access/intel-cl.sh:80-89). The directly built launcher accepts both cases.
+
+Ask: reject directory and descriptor interpretations in the launcher before calling OpenCL. At minimum, require a regular resolved file and reject a resolved .icd suffix. Keep the original/resolved forbid checks. Add negative controls for a clean-named descriptor and directory using a harmless mock driver, proving neither reaches driver initialization.
+
+This is an opted-in isolation defect, not a bypass of the main no-opt-in check.
+
+2. P2: Bundle paths are split and glob-expanded when constructing launcher arguments.
+
+tools/access/intel-cl.sh:46-52 serializes filenames into whitespace-separated text. Lines 111 and 173 reconstruct arguments with unquoted command substitution.
+
+[INFERENCE] ACCESS_BUNDLE=/work/intel bundle produces separate arguments for the path components. For vadd this changes argc and causes refusal instead of running the row. Glob characters in the directory name can also expand. Quoting the plan’s script path does not protect these inner expansions.
+
+Ask: construct positional arguments directly with a kernel case and quoted filenames, without serializing them through stdout. Use the same construction for the flag control. Add a shell argument-capture test with spaces and glob characters in ACCESS_BUNDLE; no GPU is needed.
+
+Other findings and scope limits
+
+  Opt-in and CPU exclusion: IMPLEMENTED. The launcher checks exact MT_CL_GPU=1 before argument/file processing (spirv-host.c:799-823). Enumeration requests GPU only, and the subsequent type check rejects CPU bits (lines 361-367,452-454). I found no CPU fallback in this target.
+
+  The wrapper intentionally supplies MT_CL_GPU=1 itself (intel-cl.sh:114). Running its run/reps/non-flag-control commands therefore opts in even when the caller’s environment lacks that variable. The entire access plan is not protected by the launcher flag: its pre-existing inventory/reference commands also run vendor tools. Do not use the whole plan as a no-opt-in safety probe.
+
+  MT_TARGET=0/1/2: [INFERENCE] no behavior or consumed log-format regression found in this diff. The relocated clear_prefix implementation is unchanged; g_require retains MT_REQUIRE outside target 3. The existing Apple/NVIDIA grep prefixes remain intact. Those targets were not executed here.
+
+  Non-blocking control-status defect: intel-cl.sh:129-131 turns every nonzero cmp status into “BYTES DIFFER” and exit 1. Thus a comparison I/O error can falsely PASS a mutant row whose want is 1. Preserve the distinction between mismatch and comparison failure. The subsequent conform comparison is a separate safeguard, not justification for a false VM receipt.
+
+  Compare is not a complete-window gate: intel-cl.sh:198-223 permits success with missing rows and with pass_on_d0=0. This is intentional in the synthetic test. Its exit 0 must not be presented as Intel qualification; the documented rcheck/device checks remain necessary.
+
+  Documentation wording needs tightening: “before any file or the loader is opened” is stronger than the implementation, which links libOpenCL.so.1 (intel-cl.sh:101-102). State “before job-file reads or OpenCL enumeration.” Also qualify “A control only passes … with no output” at INTEL-CLOUD-SERVICES.md:139-140 as applying to refusal controls, not mutant-output controls.
+
+Evidence and execution
+
+IMPLEMENTED: reviewed statically at the exact requested head.
+
+EXERCISED by this review:
+  nice -n 19 taskset -c 0-1 dash -n FILE
+  Applied to intel-cl.sh, collect.sh, both changed test scripts, apple-gpu.sh and nvidia-gpu.sh. Each exited 0.
+
+  (cd evidence/INTEL-CL-HOSTPREP-20261107 && nice -n 19 taskset -c 0-1 sha256sum -c SHA256SUMS)
+  Exited 0; every manifest entry reported OK.
+
+  git diff --check 9b59446271ebc90ac7d4ba40c7c42bffa56b810f b7369f93f83c3f7b56e432f568dedd8562b546de -- tools tests docs mk
+  Exited 0. The unrestricted check reported trailing whitespace in recorded logs; do not rewrite those receipts.
+
+AUTHOR-RECORDED, not rerun: the gate totals and three mutant failures match the committed logs. The identity receipt names e3561855610578be9da9d3f0f98560b253ce3a1a; changes between that revision and this head are evidence files only. The Lean result is explicitly a hand-copied decision model, not verification of loader behavior.
+
+QUALIFIED: none. GPU execution, gates, C compilation and hardware validation were NOT_RUN here. Final HEAD remained unchanged and git status remained clean.
+
+VERDICT aien-dev/CUDApp#0 head=b7369f93f83c3f7b56e432f568dedd8562b546de verdict=MERGE_AFTER_FIX model=gpt-6-astra provider=openai-codex reasoning=medium session=local-8722acb42c3c14746a2f3c08f3fa66392b0aa99376f386f33a75d3bf09b314b8 findings=2
+
+session_id: local-8722acb42c3c14746a2f3c08f3fa66392b0aa99376f386f33a75d3bf09b314b8
+exit=0

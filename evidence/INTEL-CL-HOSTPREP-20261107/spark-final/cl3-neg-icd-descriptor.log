@@ -1,0 +1,1 @@
+spirv-host: MT_CL_GPU_ICD is an .icd descriptor, not the driver library (not loaded)

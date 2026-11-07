@@ -1,10 +1,10 @@
-lean_run_code (Spark `lean` MCP, Lean v4.35.0) on IntelClGate.lean, 2026-11-07, file sha256 in ../SHA256SUMS:
+lean_run_code (Spark `lean` MCP, Lean v4.35.0) on IntelClGate.lean as committed in 56ffb3a0, 2026-11-07:
 success: true, no errors, no warnings, no sorry
 'output_needs_optin_gpu_isolation' does not depend on any axioms
 'no_optin_exit2' does not depend on any axioms
 'no_gpu_check_violates' does not depend on any axioms
 'compare_pass_means_agreement' does not depend on any axioms
 'vm_only_violates' does not depend on any axioms
-Verdict: PROVED (axioms: none) model=hand-copied from spirv-host.c MT_TARGET=3 and intel-cl.sh do_compare (see header).
-The two *_violates theorems are the negative controls: the property fails for a launcher without the GPU checks
-and for a compare that trusts the VM verdict alone.
+Verdict: PROVED (axioms: none) model=hand-copied from spirv-host.c MT_TARGET=3 (incl. the regular-ELF, not-.icd
+ICD check) and intel-cl.sh do_compare (see header). The two *_violates theorems are the negative controls: the
+property fails for a launcher without the GPU checks and for a compare that trusts the VM verdict alone.

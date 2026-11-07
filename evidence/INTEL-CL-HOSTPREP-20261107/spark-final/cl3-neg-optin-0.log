@@ -1,1 +1,1 @@
-spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any file or the OpenCL loader is opened)
+spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any input is read or OpenCL is called)

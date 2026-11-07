@@ -1,5 +1,5 @@
 PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
-Outputs: $HOME/work/hive/t_3bbd5f48/out/mut2/run
+Outputs: $HOME/work/hive/t_3bbd5f48/out/r2-m4/run
 COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
 COMPILE emit src=9b622253b25e00e225773a55f378e2659dc997ab69665b13658679c3b02a0db4 bin=49944893b38ea1fd1c09c82ceb601a69c651f613f240901fefd11e26a9e1f54e
 COMPILE conform src=557061f07a7e5c56a58ea630dbe1663a7ddffebdde0997d2a22628da97b4a3b1 bin=326f26824494ba54ab65705a093929b5f0f23d03dba829bd6b67747fc23eb44a
@@ -78,18 +78,22 @@ PASS bytes gemm16.vk.out = gemm16.ref sha256=a006702d315cfbc98b3cdb35df1572b605f
 PASS isolation-neg-cl exit=9 spirv-host: isolation FAILED: forbidden path "libpocl" present
 PASS isolation-neg-vk exit=9 spirv-host: isolation FAILED: forbidden path "vulkan_lvp" present
 PASS MT_TARGET=3 builds without Vulkan (OpenCL only)
-PASS cl3-neg-no-optin exit=2 spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any file or the OpenCL loader is opened)
-PASS cl3-neg-optin-0 exit=2 spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any file or the OpenCL loader is opened)
-PASS cl3-neg-optin-yes exit=2 spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any file or the OpenCL loader is opened)
+PASS cl3-neg-no-optin exit=2 spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any input is read or OpenCL is called)
+PASS cl3-neg-optin-0 exit=2 spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any input is read or OpenCL is called)
+PASS cl3-neg-optin-yes exit=2 spirv-host: this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any input is read or OpenCL is called)
 PASS cl3-neg-vk exit=2 spirv-host: this build is MT_TARGET=3 (vendor OpenCL GPU driver): only cl
 PASS cl3-neg-no-icd exit=3 spirv-host: build needs an absolute MT_CL_GPU_ICD (the vendor OpenCL ICD library)
 PASS cl3-neg-relative-icd exit=3 spirv-host: build needs an absolute MT_CL_GPU_ICD (the vendor OpenCL ICD library)
-PASS cl3-neg-icd-names-nvidia exit=9 spirv-host: isolation FAILED: MT_CL_GPU_ICD $HOME/work/hive/t_3bbd5f48/out/mut2/run/no-such-icd/libnvidia-opencl.so.1 contains forbidden "nvidia" (not loaded)
+PASS cl3-neg-icd-names-nvidia exit=9 spirv-host: isolation FAILED: MT_CL_GPU_ICD $HOME/work/hive/t_3bbd5f48/out/r2-m4/run/no-such-icd/libnvidia-opencl.so.1 contains forbidden "nvidia" (not loaded)
+FAIL cl3-neg-icd-directory exit=5 want=3 output=none spirv-host: expected exactly one OpenCL platform (pinned vendor ICD)
+FAIL cl3-neg-icd-descriptor exit=5 want=3 output=none spirv-host: expected exactly one OpenCL platform (pinned vendor ICD)
+FAIL cl3-neg-icd-not-elf exit=5 want=3 output=none spirv-host: expected exactly one OpenCL platform (pinned vendor ICD)
+FAIL cl3 ICD indirection reached the loader (strace shows the mock driver or the pin line was printed)
 PASS cl3-neg-icd-is-pocl exit=9 spirv-host: isolation FAILED: MT_CL_GPU_ICD $HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0 contains forbidden "libpocl" (not loaded)
-FAIL cl3-neg-cpu-only-platform exit=5 want=5 output=none spirv-host: device vendor id differs from MT_CL_GPU_VENDOR
+PASS cl3-neg-cpu-only-platform exit=5 spirv-host: no CL_DEVICE_TYPE_GPU device on the pinned platform (no CPU fallback)
 PASS cl3 loader pinned to the named ICD (PoCL platform listed, then refused for having no GPU)
 PASS cl3 GPU mode opened PoCL and no libnvidia, libcuda or /dev/nvidia path (strace)
 PASS default build ignores MT_CL_GPU=1: PoCL CPU device, bytes = vadd.ref
 NOT_RUN AMDGPU_HSACO checks: llvm-mc/llvm-readelf under LLVM_BIN or LD_LLD missing
 hardware NOT_RUN: every GPU target except the GB10 (no AMD, Intel, Apple, Qualcomm, Arm, Imagination, Broadcom or Vortex device on this host; PoCL and lavapipe are CPUs; MT_TARGET=3 ran its refusals only)
-MULTITARGET FAIL pass=73 fail=1 not_run=2
+MULTITARGET FAIL pass=74 fail=4 not_run=2

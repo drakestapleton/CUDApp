@@ -1,0 +1,7 @@
+cl
+$HOME/work/hive/t_3bbd5f48/out/final2/access/b dir [x]*/vadd.cl.spv
+vadd
+1048576
+$HOME/work/hive/t_3bbd5f48/out/final2/access/b dir [x]*/a.bin
+$HOME/work/hive/t_3bbd5f48/out/final2/access/b dir [x]*/b.bin
+OUT.bin

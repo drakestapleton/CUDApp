@@ -39,7 +39,9 @@ r2 #972) adds 5 `CHIP_SPECIFIC` rows (`src/omega_bw_hazard.{c,h}`, omega-mv#554;
 `src/omega_gpu_fp8_internal.h`, #961) and carries omega's review of the public headers (#954): `omega_gpu_matmul_api.h`,
 `omega_gpu_moe_api.h`, `omega_gpu_platform.h`, `omega_gpu_serving.{c,h}` and `omega_gpu_session.h` become `CHIP_SPECIFIC`,
 `omega_gpu_scan_ref.c` becomes `PORTABLE` (section 3). At that sync, the totals were 120 `CHIP_SPECIFIC`, 11 `PORTABLE`; 13
-`FREESTANDING_PROVEN`, 98 `NO_HOSTED_INCLUDE`, 17 `HOSTED_LIBC`, 3 `LINUX_DRIVER`. Command to recount: section 7.
+`FREESTANDING_PROVEN`, 98 `NO_HOSTED_INCLUDE`, 17 `HOSTED_LIBC`, 3 `LINUX_DRIVER`. Current totals at CUDApp main b774723f
+(150 rows, including the Ampere files and the four bf16 training GEMM rows, omega-mv#596): 137 `CHIP_SPECIFIC`, 13 `PORTABLE`;
+13 `FREESTANDING_PROVEN`, 114 `NO_HOSTED_INCLUDE`, 18 `HOSTED_LIBC`, 5 `LINUX_DRIVER`. Command to recount: section 7.
 
 `make test-runtime-portability` (host only, no compiler, no GPU) checks the table against the tree: every file has a row,
 every row names a real file, a `PORTABLE` row's file includes no Linux or NVRM header and no Blackwell header, and the

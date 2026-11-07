@@ -1,6 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# Host and simulator gate for tools/prof. No GPU is opened.
+# Host and simulator gate for tools/prof. No GPU is opened. The caller chooses CPU placement
+# (taskset/nice): fixed cores 10-14 here failed on a 4-CPU hosted runner (taskset: Invalid argument).
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 PROF="$ROOT/tools/prof"
@@ -18,7 +19,7 @@ fi
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT HUP INT TERM
 
-taskset -c 10-14 nice -n 10 "$OMEGA_OMC" < "$PROF/prof.om" > "$T/prof" 2>"$T/omc.err"
+"$OMEGA_OMC" < "$PROF/prof.om" > "$T/prof" 2>"$T/omc.err"
 chmod +x "$T/prof"
 
 "$T/prof" words 4294967408 0 > "$T/words.txt"
@@ -92,7 +93,7 @@ if grep -F 'bad = lt t1 t0' "$T/order.om" >/dev/null; then
     echo "order mutant sed did not apply"
     exit 1
 fi
-taskset -c 10-14 nice -n 10 "$OMEGA_OMC" < "$T/order.om" > "$T/order" 2>"$T/order.err"
+"$OMEGA_OMC" < "$T/order.om" > "$T/order" 2>"$T/order.err"
 chmod +x "$T/order"
 set +e
 "$T/order" report "$T/swap.bin" "$T/order.txt" >/dev/null 2>&1
@@ -106,7 +107,7 @@ if grep -F 'const flop_at ulong 16' "$T/flop.om" >/dev/null; then
     echo "flop mutant sed did not apply"
     exit 1
 fi
-taskset -c 10-14 nice -n 10 "$OMEGA_OMC" < "$T/flop.om" > "$T/flop" 2>"$T/flop.err"
+"$OMEGA_OMC" < "$T/flop.om" > "$T/flop" 2>"$T/flop.err"
 chmod +x "$T/flop"
 "$T/flop" report "$T/fix.bin" "$T/flop.txt"
 if diff -q "$PROF/golden.txt" "$T/flop.txt" >/dev/null; then

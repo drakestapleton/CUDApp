@@ -1,0 +1,54 @@
+persist-failed-write-w1.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=432 outcome=PASS
+persist-failed-write-w1 exit=74 last=REFUSE state_write_failed state=<evidence>/after/persist-failed-write-w1.state
+persist-failed-write-w1 state=[1 cpu-gb10-x925]
+persist-failed-write-w1-replay-0 exit=7 last=REFUSE stale_generation have=1 want=0
+persist-failed-write-w1-replay-1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=1->2 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=512 outcome=PASS
+persist-failed-write-w1-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=624 outcome=PASS
+persist-failed-write-w2.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=304 outcome=PASS
+persist-failed-write-w2 exit=74 last=REFUSE state_write_failed state=<evidence>/after/persist-failed-write-w2.state
+persist-failed-write-w2 state=[x cpu-gb10-x925]
+persist-failed-write-w2-replay-0 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-write-w2.state
+persist-failed-write-w2-replay-1 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-write-w2.state
+persist-failed-write-w2-replay-2 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-write-w2.state
+persist-short-write-w1.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=432 outcome=PASS
+persist-short-write-w1 exit=74 last=REFUSE state_write_failed state=<evidence>/after/persist-short-write-w1.state
+persist-short-write-w1 state=[1 cpu-gb10-x925]
+persist-short-write-w1-replay-0 exit=7 last=REFUSE stale_generation have=1 want=0
+persist-short-write-w1-replay-1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=1->2 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=256 outcome=PASS
+persist-short-write-w1-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=400 outcome=PASS
+persist-short-write-w2.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=352 outcome=PASS
+persist-short-write-w2 exit=74 last=REFUSE state_write_failed state=<evidence>/after/persist-short-write-w2.state
+persist-short-write-w2 state=[x cpu-gb10-x925]
+persist-short-write-w2-replay-0 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-short-write-w2.state
+persist-short-write-w2-replay-1 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-short-write-w2.state
+persist-short-write-w2-replay-2 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-short-write-w2.state
+persist-failed-sync-w1.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=304 outcome=PASS
+persist-failed-sync-w1 exit=74 last=REFUSE state_write_failed state=<evidence>/after/persist-failed-sync-w1.state
+persist-failed-sync-w1 state=[x cpu-gb10-x925]
+persist-failed-sync-w1-replay-0 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-sync-w1.state
+persist-failed-sync-w1-replay-1 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-sync-w1.state
+persist-failed-sync-w1-replay-2 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-sync-w1.state
+persist-failed-sync-w2.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=416 outcome=PASS
+persist-failed-sync-w2 exit=74 last=REFUSE state_write_failed state=<evidence>/after/persist-failed-sync-w2.state
+persist-failed-sync-w2 state=[x cpu-gb10-x925]
+persist-failed-sync-w2-replay-0 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-sync-w2.state
+persist-failed-sync-w2-replay-1 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-sync-w2.state
+persist-failed-sync-w2-replay-2 exit=7 last=REFUSE state_unreadable state=<evidence>/after/persist-failed-sync-w2.state
+check-m-cpuop exit=3 last=REFUSE manifest runner_op line=3
+check-m-tpmop exit=3 last=REFUSE manifest runner_op line=20
+check-m-runner exit=3 last=REFUSE manifest unknown_runner line=3
+check-m-famrun exit=3 last=REFUSE manifest runner_family_route line=20
+check-m-auth exit=3 last=REFUSE manifest runner_family_route line=3
+cpu-seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=416 outcome=PASS
+run-cpu-invented-op exit=3 last=REFUSE manifest runner_op line=3
+cpu state after invented op=[1 cpu-gb10-x925]
+run-cpu-invented-runner exit=3 last=REFUSE manifest unknown_runner line=3
+cpu state after invented runner=[1 cpu-gb10-x925]
+tpm-seed exit=0 last=RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=props arg=0 generation=0->1 tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 elapsed_ns=7545187 outcome=PASS
+run-tpm-invented-op exit=3 last=REFUSE manifest runner_op line=20
+tpm state after invented op=[1 tpm-ntc-npct75x]
+run-tpm-runner-family exit=3 last=REFUSE manifest runner_family_route line=20
+tpm state after runner family=[1 tpm-ntc-npct75x]
+fault-badsize-eio exit=13 last=REFUSE unexpected_fault_result kind=badsize result=-5 want=-22
+fault-badcc-kernel-einval exit=13 last=REFUSE unexpected_fault_result kind=badcc result=-22 want=721219
+fault-badcc-short-response exit=13 last=REFUSE unexpected_fault_result kind=badcc result=-1000 want=721219

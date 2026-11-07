@@ -14,6 +14,9 @@
 # usage: run.sh /abs/path/to/pinned-omc
 # Environment: HW_CPU (processor, default 19), HW_OUT (output dir to keep; default a new temp dir),
 #   HW_NO_TPM=1 makes every TPM check NOT_RUN.
+# Fault injection for the state-persistence and fault-oracle controls uses strace -e inject (strace
+# 6.8, an outside test tool only; it never runs in hwman's production path). Without strace those
+# controls are NOT_RUN.
 # Exit: 0 HW PASS (NOT_RUN checks listed); 1 FAIL; 64 usage; 69 pin refused; 74 I/O;
 # 77 NOT_RUN (not Linux AArch64).
 set -u
@@ -87,19 +90,28 @@ mutate m-blk '$1=="lpu-groq"{$25="-"}1';                     expect 3 neg-manife
 mutate m-unres '$1=="ppu-unresolved"{$22="BLOCKED_ACCESS"}1'; expect 3 neg-manifest-unresolved-route "$H" check "$out/m-unres.tsv"
 mutate m-tmo '$1=="cpu-gb10-x925"{$21="2s"}1';               expect 3 neg-manifest-timeout "$H" check "$out/m-tmo.tsv"
 mutate m-miss '$2!="BPU"';                                   expect 3 neg-manifest-missing-family "$H" check "$out/m-miss.tsv"
+# Runner binding: the closed runner table (core.om TRUN) refuses invented operations and runners.
+mutate m-cpuop '$1=="cpu-gb10-x925"{$12="sumsq64,fnv1a64,matmul"}1'
+expect 3 neg-manifest-cpu-op "$H" check "$out/m-cpuop.tsv";     says neg-manifest-cpu-op 'runner_op line='
+mutate m-tpmop '$1=="tpm-ntc-npct75x"{$12="props,getrandom,seal"}1'
+expect 3 neg-manifest-tpm-op "$H" check "$out/m-tpmop.tsv";     says neg-manifest-tpm-op 'runner_op line='
+mutate m-runner '$1=="cpu-gb10-x925"{$20="hwman-gpu"}1'
+expect 3 neg-manifest-unknown-runner "$H" check "$out/m-runner.tsv"; says neg-manifest-unknown-runner 'unknown_runner line='
+mutate m-famrun '$1=="tpm-ntc-npct75x"{$20="hwman-cpu"}1'
+expect 3 neg-manifest-runner-family "$H" check "$out/m-famrun.tsv"; says neg-manifest-runner-family 'runner_family_route line='
+mutate m-auth '$1=="cpu-gb10-x925"{$6="DIRECT_DEVICE"}1'
+expect 3 neg-manifest-runner-route "$H" check "$out/m-auth.tsv"; says neg-manifest-runner-route 'runner_family_route line='
 expect 74 neg-manifest-absent "$H" check "$out/absent.tsv"
 expect 2 neg-usage "$H" run "$M"
 
 # 3. Admission.
 expect 0 admit-cpu "$H" admit "$M" sumsq64 cpu-gb10-x925
-expect 0 admit-any-getrandom "$H" admit "$M" getrandom
 expect 4 neg-admit-unknown-target "$H" admit "$M" sumsq64 cpu-gb10-x926
 expect 5 neg-admit-unsupported-op "$H" admit "$M" getrandom cpu-gb10-x925
 expect 5 neg-admit-no-target "$H" admit "$M" matmul
 expect 6 neg-admit-not-admitted "$H" admit "$M" sumsq64 cpu-gb10-a725
 expect 6 neg-admit-gpu-lease "$H" admit "$M" cudapp-kernels gpu-gb10-sm121
-mutate m-auth '$1=="cpu-gb10-x925"{$6="DIRECT_DEVICE"}1'
-expect 6 neg-admit-wrong-authority "$H" admit "$out/m-auth.tsv" sumsq64 cpu-gb10-x925
+expect 3 neg-admit-runner-route "$H" admit "$out/m-auth.tsv" sumsq64 cpu-gb10-x925
 mutate m-off '$1=="cpu-gb10-x925"{$9="/sys/devices/system/nocpu"}1'
 expect 10 neg-admit-offline "$H" admit "$out/m-off.tsv" sumsq64 cpu-gb10-x925
 
@@ -131,9 +143,10 @@ expect 5 neg-cpu-unsupported-op $P "$H" run "$M" cpu-gb10-x925 getrandom 1 "$g" 
 expect 4 neg-cpu-unknown-target $P "$H" run "$M" cpu-gb10-x9250 sumsq64 1 "$g" "$S"
 mutate m-midr '$1=="cpu-gb10-x925"{$8="midr_el1=0x410fd871"}1'
 expect 8 neg-cpu-wrong-device $P "$H" run "$out/m-midr.tsv" cpu-gb10-x925 sumsq64 1 "$g" "$S" 0
-expect 6 neg-cpu-wrong-authority $P "$H" run "$out/m-auth.tsv" cpu-gb10-x925 sumsq64 1 "$g" "$S" 0
+expect 3 neg-cpu-runner-route $P "$H" run "$out/m-auth.tsv" cpu-gb10-x925 sumsq64 1 "$g" "$S" 0
 expect 10 neg-cpu-offline $P "$H" run "$out/m-off.tsv" cpu-gb10-x925 sumsq64 1 "$g" "$S" 0
-expect 6 neg-gpu-wrong-authority $P "$H" run "$M" gpu-gb10-sm121 cudapp-kernels 1 0 "$out/gpu.state"
+expect 6 neg-gpu-not-admitted $P "$H" run "$M" gpu-gb10-sm121 cudapp-kernels 1 0 "$out/gpu.state"
+says neg-gpu-not-admitted '^REFUSE not_admitted target=gpu-gb10-sm121 '
 [ ! -e "$out/gpu.state" ] && ok "gpu-no-claim state file never created" || bad "gpu-no-claim state file created"
 mutate m-t0 '$1=="cpu-gb10-x925"{$21="0"}1'
 expect 11 neg-cpu-timeout $P "$H" run "$out/m-t0.tsv" cpu-gb10-x925 sumsq64 16777216 "$g" "$S" 6148773953750958080
@@ -151,6 +164,41 @@ printf '0 tpm-ntc-npct75x\n' > "$out/wrong.state"
 expect 7 neg-cpu-wrong-handle $P "$H" run "$M" cpu-gb10-x925 sumsq64 1 0 "$out/wrong.state" 0
 printf '7x cpu-gb10-x925\n' > "$out/corrupt.state"
 expect 7 neg-cpu-corrupt-handle $P "$H" run "$M" cpu-gb10-x925 sumsq64 1 7 "$out/corrupt.state" 0
+# Binding controls on the live handle: refused before discovery or claim, the handle never moves.
+cp "$S" "$out/cpu.before" || exit 74
+expect 3 neg-cpu-invented-op $P "$H" run "$out/m-cpuop.tsv" cpu-gb10-x925 matmul 1 "$g" "$S"
+expect 3 neg-cpu-invented-runner $P "$H" run "$out/m-runner.tsv" cpu-gb10-x925 sumsq64 1 "$g" "$S" 0
+cmp -s "$S" "$out/cpu.before" && ok "cpu-binding-no-advance $(cat "$S")" || bad "cpu-binding-no-advance $(cat "$S")"
+# State persistence: a fresh handle at generation 1, then the run that would advance it to 2 with a
+# fault injected into the handle file (strace -P STATE). hwman writes 'x' at byte 0 and syncs before
+# submission (pwrite64 1, fsync 1), then the record from byte 1 (pwrite64 2, fsync 2) and byte 0.
+# persist NAME INJECT: refuse 74, no PASS, byte 0 still 'x', and generations 0, 1, 2 all refused (7).
+persist() {
+  st=$out/$1.state
+  rm -f "$st"
+  $P "$H" run "$M" cpu-gb10-x925 sumsq64 1 0 "$st" 0 > "$out/$1.seed.log" 2>&1 || { bad "$1-seed"; return; }
+  expect 74 "$1" $P strace -qq -o "$out/$1.strace" -P "$st" -e trace=pwrite64,fsync -e "inject=$2" \
+    "$H" run "$M" cpu-gb10-x925 sumsq64 1000 1 "$st" 332833500
+  says "$1" '^REFUSE state_write_failed state='
+  grep -q 'outcome=PASS' "$out/$1.log" && bad "$1-no-pass" || ok "$1-no-pass"
+  [ "$(head -c 1 "$st")" = x ] && ok "$1-poisoned" || bad "$1-poisoned $(cat "$st")"
+  for rg in 0 1 2; do expect 7 "$1-replay-$rg" $P "$H" run "$M" cpu-gb10-x925 sumsq64 1 "$rg" "$st" 0; done
+}
+if command -v strace > /dev/null 2>&1; then
+  persist neg-persist-failed-write 'pwrite64:error=ENOSPC:when=2'
+  persist neg-persist-short-write 'pwrite64:retval=3:when=2'
+  persist neg-persist-failed-sync 'fsync:error=EIO:when=2'
+  # the in-flight mark itself fails: refused before submission, the handle is untouched
+  st=$out/neg-persist-inflight.state
+  rm -f "$st"
+  $P "$H" run "$M" cpu-gb10-x925 sumsq64 1 0 "$st" 0 > "$out/neg-persist-inflight.seed.log" 2>&1 || bad "neg-persist-inflight-seed"
+  expect 74 neg-persist-inflight $P strace -qq -o "$out/neg-persist-inflight.strace" -P "$st" -e trace=pwrite64,fsync \
+    -e 'inject=pwrite64:error=EIO:when=1' "$H" run "$M" cpu-gb10-x925 sumsq64 1000 1 "$st" 332833500
+  grep -q '^STEP submit' "$out/neg-persist-inflight.log" && bad "neg-persist-inflight-no-submit" || ok "neg-persist-inflight-no-submit"
+  expect 0 persist-inflight-handle-kept $P "$H" run "$M" cpu-gb10-x925 sumsq64 1000 1 "$st" 332833500
+else
+  notrun "neg-persist-*: strace absent (fault injection)"
+fi
 notrun "neg-cpu-unpinned: needs a CPU set wider than the one processor this run is allotted"
 notrun "cpu-gb10-a725: no Cortex-A725 processor allotted to this run"
 
@@ -160,6 +208,7 @@ rm -f "$T"
 if [ "${HW_NO_TPM:-0}" = 1 ] || [ ! -e /dev/tpmrm0 ]; then
   notrun "tpm: HW_NO_TPM=1 or /dev/tpmrm0 absent"
 else
+  expect 0 admit-any-getrandom "$H" admit "$M" getrandom
   expect 0 tpm-props $P "$H" run "$M" tpm-ntc-npct75x props 0 0 "$T"
   if command -v tpm2_getcap > /dev/null 2>&1; then
     tpm2_getcap -T device:/dev/tpmrm0 properties-fixed > "$out/tpm2_getcap.txt" 2>&1
@@ -181,7 +230,9 @@ else
   expect 14 neg-tpm-props-arg $P "$H" run "$M" tpm-ntc-npct75x props 1 3 "$T"
   expect 5 neg-tpm-unsupported-op $P "$H" run "$M" tpm-ntc-npct75x sumsq64 1 3 "$T"
   expect 0 tpm-fault-badsize $P "$H" fault "$M" tpm-ntc-npct75x badsize 3 "$T"
+  says tpm-fault-badsize ' kind=badsize layer=kernel errno=-22 outcome=PASS$'
   expect 0 tpm-fault-badcc $P "$H" fault "$M" tpm-ntc-npct75x badcc 4 "$T"
+  says tpm-fault-badcc ' kind=badcc layer=tpmrm rc=0x000b0143 outcome=PASS$'
   expect 5 neg-tpm-fault-kind $P "$H" fault "$M" tpm-ntc-npct75x badlen 5 "$T"
   expect 5 neg-cpu-fault $P "$H" fault "$M" cpu-gb10-x925 badsize 0 "$out/cpu-fault.state"
   [ "$(cat "$T")" = "5 tpm-ntc-npct75x" ] && ok "tpm-handle generation=5" || bad "tpm-handle $(cat "$T")"
@@ -192,6 +243,29 @@ else
   mutate m-tt0 '$1=="tpm-ntc-npct75x"{$21="0"}1'
   expect 11 neg-tpm-timeout $P "$H" run "$out/m-tt0.tsv" tpm-ntc-npct75x props 0 5 "$T"
   says neg-tpm-timeout '^REFUSE timeout elapsed_ns=[0-9]* budget_ns=0$'
+  tg=6
+  # Binding controls: refused before discovery or claim, the handle never moves.
+  cp "$T" "$out/tpm.before" || exit 74
+  expect 3 neg-tpm-invented-op $P "$H" run "$out/m-tpmop.tsv" tpm-ntc-npct75x seal 1 "$tg" "$T"
+  expect 3 neg-tpm-runner-family $P "$H" run "$out/m-famrun.tsv" tpm-ntc-npct75x props 0 "$tg" "$T"
+  cmp -s "$T" "$out/tpm.before" && ok "tpm-binding-no-advance $(cat "$T")" || bad "tpm-binding-no-advance $(cat "$T")"
+  # Fault oracle: an unrelated failure injected on /dev/tpmrm0 (write 1 and read 1 are discovery,
+  # write 2 and read 2 the fault frame) must be a device error, never the expected refusal.
+  # fx NAME KIND INJECT RESULT
+  fx() {
+    expect 13 "$1" $P strace -qq -o /dev/null -P /dev/tpmrm0 -e trace=read,write -e "inject=$3" \
+      "$H" fault "$M" tpm-ntc-npct75x "$2" "$tg" "$T"
+    says "$1" "^REFUSE unexpected_fault_result kind=$2 result=$4 "
+    tg=$((tg + 1))
+  }
+  if command -v strace > /dev/null 2>&1; then
+    fx neg-fault-badsize-eio badsize 'write:error=EIO:when=2' -5
+    fx neg-fault-badcc-kernel-einval badcc 'write:error=EINVAL:when=2' -22
+    fx neg-fault-badcc-short-response badcc 'read:retval=4:when=2' -1000
+    [ "$(cat "$T")" = "$tg tpm-ntc-npct75x" ] && ok "tpm-fault-controls-advance generation=$tg" || bad "tpm-fault-controls-advance $(cat "$T")"
+  else
+    notrun "neg-fault-*: strace absent (fault injection)"
+  fi
 fi
 
 echo "HW pass=$npass fail=$nfail not_run=$nnr"

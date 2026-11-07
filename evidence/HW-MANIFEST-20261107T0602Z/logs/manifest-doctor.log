@@ -1,0 +1,28 @@
+TARGET cpu-gb10-x925 family=CPU route=NATIVE_ISA status=CHIP_TESTED admit=YES runner=hwman-cpu op=sumsq64,fnv1a64
+TARGET cpu-gb10-a725 family=CPU route=NATIVE_ISA status=PROPOSED admit=NO runner=hwman-cpu op=sumsq64,fnv1a64
+TARGET cpu-imac-x86-64 family=CPU route=NATIVE_ISA status=PRIOR_RECEIPT admit=NO runner=- op=-
+TARGET cpu-riscv64 family=CPU route=NATIVE_ISA status=PROPOSED admit=NO runner=- op=-
+TARGET gpu-gb10-sm121 family=GPU route=VENDOR_RUNTIME status=PRIOR_RECEIPT admit=NO runner=spark-window op=cudapp-kernels
+TARGET apu-gb10 family=APU route=DIRECT_DEVICE status=PROPOSED admit=NO runner=- op=-
+TARGET ppu-unresolved family=PPU route=UNRESOLVED status=BLOCKED_NAME admit=NO runner=- op=-
+TARGET spu-unresolved family=SPU route=UNRESOLVED status=BLOCKED_NAME admit=NO runner=- op=-
+TARGET asic-unresolved family=ASIC route=UNRESOLVED status=BLOCKED_NAME admit=NO runner=- op=-
+TARGET npu-ethos-u55 family=NPU route=DIRECT_DEVICE status=HOST_TESTED admit=NO runner=- op=encoder subset (see omega-npu)
+TARGET npu-ethos-u65 family=NPU route=DIRECT_DEVICE status=PROPOSED admit=NO runner=- op=-
+TARGET npu-ethos-u85 family=NPU route=DIRECT_DEVICE status=HOST_TESTED admit=NO runner=- op=encoder subset (see omega-npu)
+TARGET tpu-google-cloud family=TPU route=REMOTE_SERVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET tpu-google-edge family=TPU route=VENDOR_RUNTIME status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET lpu-groq family=LPU route=REMOTE_SERVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET mcu-cortex-m55 family=MCU route=NATIVE_ISA status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET isp-rp1-fe family=ISP route=DIRECT_DEVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE status=CHIP_TESTED admit=YES runner=hwman-tpm op=props,getrandom
+TARGET se-apple-sep family=SECURE_ENCLAVE route=FIRMWARE_OWNED status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET fpga-amd-vivado family=FPGA route=VENDOR_RUNTIME status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET dpu-bluefield family=DPU route=DIRECT_DEVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET wse-cerebras family=WSE route=REMOTE_SERVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET neuro-intel-loihi2 family=NEUROMORPHIC route=REMOTE_SERVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET photonic-lightmatter family=PHOTONIC route=VENDOR_RUNTIME status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET qpu-ibm family=QPU route=REMOTE_SERVICE status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET tsu-extropic family=TSU route=VENDOR_RUNTIME status=BLOCKED_ACCESS admit=NO runner=- op=-
+TARGET bpu-horizon family=BPU route=VENDOR_RUNTIME status=BLOCKED_ACCESS admit=NO runner=- op=-
+CHECK rows=27 families=21 admitted=2

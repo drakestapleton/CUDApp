@@ -1,0 +1,1 @@
+REFUSE not_admitted target=gpu-gb10-sm121 status=PRIOR_RECEIPT blocker=GPU runs require a spark-window lease, which this lane does not hold; hwman refuses the spark-window runner (wrong authority)

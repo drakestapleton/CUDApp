@@ -244,6 +244,20 @@ if [ -f "$out/bundle/SHA256SUMS" ] && [ "$(wc -l < "$out/bundle/SHA256SUMS")" -e
   ok "bundle holds 16 files (6 modules, 3 references, 5 inputs, spirv-host.c, intel-cl.sh) matching SHA256SUMS"
 else bad "bundle content or SHA256SUMS"; fi
 export ACCESS_BUNDLE=$out/bundle
+# Bundle paths with spaces and glob characters: every launcher argument must stay one argument.
+SB="$out/b dir [x]*"
+cp -R "$out/bundle" "$SB" || exit 74
+argvcase() { # NAME KERNEL VARIANT EXPECTED-ARGS...
+  an=$1; ak=$2; av=$3; shift 3
+  printf '%s\n' "$@" > "$out/argv-$an.want"
+  if [ -n "$av" ]; then ACCESS_BUNDLE=$SB sh "$I" argv "$ak" "$av" > "$out/argv-$an.got" 2>&1; else ACCESS_BUNDLE=$SB sh "$I" argv "$ak" > "$out/argv-$an.got" 2>&1; fi
+  if cmp -s "$out/argv-$an.want" "$out/argv-$an.got"; then ok "argv $an: $(wc -l < "$out/argv-$an.got") arguments, bundle path with spaces and [x]* kept whole"
+  else bad "argv $an differs: $(tr '\n' '|' < "$out/argv-$an.got")"; fi
+}
+argvcase vadd vadd "" cl "$SB/vadd.cl.spv" vadd 1048576 "$SB/a.bin" "$SB/b.bin" OUT.bin
+argvcase fsum16 fsum16 "" cl "$SB/fsum16.cl.spv" fsum16 65536 "$SB/x.bin" OUT.bin
+argvcase gemm16-mutant gemm16 mutant cl "$SB/gemm16.cl.mutant.spv" gemm16 65536 "$SB/ga.bin" "$SB/gb.bin" OUT.bin
+export ACCESS_BUNDLE="$SB"
 # 6c. The real plan's candidate and control rows on this GPU-less host, as provider intel-cloud: none may
 #     PASS. Its inventory and reference rows are left out (they would run vendor tools). MT_CL_GPU_ICD
 #     names a path that does not exist and OCL_ICD_VENDORS an empty place, so no OpenCL driver loads.
@@ -259,6 +273,9 @@ else bad "real intel plan on this host: $(grep -c '^ROW ' "$rb" 2>/dev/null) row
 if grep -q 'no-such-icd/libigdrcl.so missing' "$out/coll-intel-real/rows/cand-vadd-cl.log" 2>/dev/null; then ok "intel-cl.sh refused the missing ICD before any build or run"
 else bad "cand-vadd-cl log lacks the ICD refusal"; fi
 expect_rc intel-compare-real-plan 1 'COMPARE-SUMMARY pass=0 fail=6 not_run=0' sh "$I" compare "$out/coll-intel-real" "$CF" "$out/compare-real.txt"
+# The row helper also refuses an .icd descriptor (the launcher refuses it too; tests/multitarget/run.sh).
+mkdir -p "$out/aout-icd" && printf '%s\n' "$out/mock-driver/libmockcl.so" > "$out/vendor.icd" || exit 74
+expect_rc intel-cl-refuses-icd-descriptor 3 'is an .icd descriptor' env ACCESS_OUT="$out/aout-icd" MT_CL_GPU_ICD="$out/vendor.icd" sh "$I" run vadd
 # 6d. Spark-side compare on SYNTHETIC outputs (copies of references and planted-wrong bytes).
 cp "$M/vadd.ref" "$out/bundle-planted.bin" && poke "$out/bundle-planted.bin" 4096 377
 export ACCESS_WINDOW=SYNTHETIC-intel-compare

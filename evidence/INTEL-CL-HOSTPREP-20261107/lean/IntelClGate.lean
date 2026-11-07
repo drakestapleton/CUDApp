@@ -7,13 +7,14 @@ for this model only, not for the compiled launcher (that is what tests/multitarg
 Checked with the Spark `lean` MCP (Lean v4.35.0, Mathlib v4.35.0; no Mathlib import needed).
 -/
 
-def spirvHost3 (optin icdAbs icdForbidden icdResolves realForbidden onePlatform gpuFound devIsGpu
+def spirvHost3 (optin icdAbs icdForbidden icdResolves realForbidden icdIsElfLib onePlatform gpuFound devIsGpu
     vendorOk nameOk runOk isoInside isoFinal canWrite : Bool) : Nat :=
   if !optin then 2
   else if !icdAbs then 3
   else if icdForbidden then 9
   else if !icdResolves then 3
   else if realForbidden then 9
+  else if !icdIsElfLib then 3
   else if !onePlatform then 5
   else if !gpuFound then 5
   else if !devIsGpu then 5
@@ -26,32 +27,34 @@ def spirvHost3 (optin icdAbs icdForbidden icdResolves realForbidden onePlatform 
   else 0
 
 /- An output is written (exit 0) only with the opt-in, a GPU-typed device (no CPU fallback), an ICD path and
-realpath free of forbidden entries, and both isolation scans passing. -/
-set_option synthInstance.maxSize 8192 in
-set_option synthInstance.maxHeartbeats 1000000 in
-set_option maxRecDepth 100000 in
+realpath free of forbidden entries, an ICD that is a regular ELF library (not a directory or .icd descriptor),
+and both isolation scans passing. -/
+set_option synthInstance.maxSize 16384 in
+set_option synthInstance.maxHeartbeats 2000000 in
+set_option maxRecDepth 200000 in
 theorem output_needs_optin_gpu_isolation :
-    ∀ o a f r rf p g d v n ru ii fi w : Bool,
-      spirvHost3 o a f r rf p g d v n ru ii fi w = 0 →
-      o = true ∧ g = true ∧ d = true ∧ f = false ∧ rf = false ∧ ii = true ∧ fi = true := by
+    ∀ o a f r rf el p g d v n ru ii fi w : Bool,
+      spirvHost3 o a f r rf el p g d v n ru ii fi w = 0 →
+      o = true ∧ g = true ∧ d = true ∧ f = false ∧ rf = false ∧ el = true ∧ ii = true ∧ fi = true := by
   decide
 
 /- Without MT_CL_GPU=1 the exit is 2 whatever else holds (checked first; nothing is opened). -/
-set_option synthInstance.maxSize 8192 in
-set_option synthInstance.maxHeartbeats 1000000 in
-set_option maxRecDepth 100000 in
+set_option synthInstance.maxSize 16384 in
+set_option synthInstance.maxHeartbeats 2000000 in
+set_option maxRecDepth 200000 in
 theorem no_optin_exit2 :
-    ∀ a f r rf p g d v n ru ii fi w : Bool, spirvHost3 false a f r rf p g d v n ru ii fi w = 2 := by
+    ∀ a f r rf el p g d v n ru ii fi w : Bool, spirvHost3 false a f r rf el p g d v n ru ii fi w = 2 := by
   decide
 
 /-- Negative control 1: the same launcher with the two GPU checks removed (a CPU fallback). -/
-def spirvHost3NoGpuCheck (optin icdAbs icdForbidden icdResolves realForbidden onePlatform _gpuFound _devIsGpu
-    vendorOk nameOk runOk isoInside isoFinal canWrite : Bool) : Nat :=
+def spirvHost3NoGpuCheck (optin icdAbs icdForbidden icdResolves realForbidden icdIsElfLib onePlatform _gpuFound
+    _devIsGpu vendorOk nameOk runOk isoInside isoFinal canWrite : Bool) : Nat :=
   if !optin then 2
   else if !icdAbs then 3
   else if icdForbidden then 9
   else if !icdResolves then 3
   else if realForbidden then 9
+  else if !icdIsElfLib then 3
   else if !onePlatform then 5
   else if !vendorOk then 5
   else if !nameOk then 5
@@ -61,12 +64,12 @@ def spirvHost3NoGpuCheck (optin icdAbs icdForbidden icdResolves realForbidden on
   else if !canWrite then 4
   else 0
 
-set_option synthInstance.maxSize 8192 in
-set_option synthInstance.maxHeartbeats 1000000 in
-set_option maxRecDepth 100000 in
+set_option synthInstance.maxSize 16384 in
+set_option synthInstance.maxHeartbeats 2000000 in
+set_option maxRecDepth 200000 in
 theorem no_gpu_check_violates :
-    ¬ (∀ o a f r rf p g d v n ru ii fi w : Bool,
-      spirvHost3NoGpuCheck o a f r rf p g d v n ru ii fi w = 0 → d = true) := by
+    ¬ (∀ o a f r rf el p g d v n ru ii fi w : Bool,
+      spirvHost3NoGpuCheck o a f r rf el p g d v n ru ii fi w = 0 → d = true) := by
   decide
 
 /-- intel-cl.sh compare, one line: 0 pass, 1 fail, 2 not run. -/

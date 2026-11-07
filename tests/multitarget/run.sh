@@ -234,6 +234,37 @@ else
       refuse 3 cl3-neg-relative-icd 'build needs an absolute MT_CL_GPU_ICD' env MT_CL_GPU=1 "$out/spirv-host-cl3-relicd" $V3
       # shellcheck disable=SC2086
       refuse 9 cl3-neg-icd-names-nvidia 'contains forbidden "nvidia" (not loaded)' env MT_CL_GPU=1 "$out/spirv-host-cl3-nvpath" $V3
+      # ocl-icd reads a directory as a vendors search path and an .icd file as a descriptor naming another
+      # library: both, and a file that is not ELF, must be refused before any OpenCL call. The descriptors
+      # name a mock library that does not exist; it must never be looked for.
+      mkdir -p "$out/icd-dir" || exit 74
+      printf '%s\n' "$out/mock-driver/libmockcl.so" > "$out/icd-dir/mock.icd" && cp "$out/icd-dir/mock.icd" "$out/clean.icd" \
+        && printf 'not an ELF library\n' > "$out/notelf.so" || exit 74
+      if build3 spirv-host-cl3-icddir "$out/icd-dir" >> "$out/cl3.build.log" 2>&1 \
+         && build3 spirv-host-cl3-icdfile "$out/clean.icd" >> "$out/cl3.build.log" 2>&1 \
+         && build3 spirv-host-cl3-notelf "$out/notelf.so" >> "$out/cl3.build.log" 2>&1; then
+        # shellcheck disable=SC2086
+        refuse 3 cl3-neg-icd-directory 'MT_CL_GPU_ICD is not a regular file' env MT_CL_GPU=1 "$out/spirv-host-cl3-icddir" $V3
+        # shellcheck disable=SC2086
+        refuse 3 cl3-neg-icd-descriptor 'MT_CL_GPU_ICD is an .icd descriptor' env MT_CL_GPU=1 "$out/spirv-host-cl3-icdfile" $V3
+        # shellcheck disable=SC2086
+        refuse 3 cl3-neg-icd-not-elf 'MT_CL_GPU_ICD is not an ELF library' env MT_CL_GPU=1 "$out/spirv-host-cl3-notelf" $V3
+        if command -v strace > /dev/null 2>&1; then
+          : > "$out/cl3-indirect.strace"
+          for n3 in icddir icdfile; do
+            # shellcheck disable=SC2086
+            strace -f -qq -e trace=open,openat,stat,newfstatat,statx -o "$out/cl3-$n3.strace" env MT_CL_GPU=1 "$out/spirv-host-cl3-$n3" $V3 > /dev/null 2>&1
+            cat "$out/cl3-$n3.strace" >> "$out/cl3-indirect.strace"
+          done
+          if ! grep -q 'libmockcl\|mock.icd' "$out/cl3-indirect.strace" && ! grep -q 'cl target=gpu' "$out/cl3-neg-icd-directory.log" "$out/cl3-neg-icd-descriptor.log"; then
+            ok "cl3 directory and .icd descriptor refused before the loader: the mock driver they name was never looked for (strace)"
+          else bad "cl3 ICD indirection reached the loader (strace shows the mock driver or the pin line was printed)"; fi
+        else
+          notrun "cl3 ICD indirection strace check: strace not installed"
+        fi
+      else
+        bad "MT_TARGET=3 ICD indirection control builds"
+      fi
       if [ -n "$pocl" ]; then
         # shellcheck disable=SC2086
         refuse 9 cl3-neg-icd-is-pocl 'contains forbidden "libpocl" (not loaded)' env MT_CL_GPU=1 "$out/spirv-host-cl3" $V3

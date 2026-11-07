@@ -91,7 +91,10 @@ needs Drake's written approval before the instance is used.
    device must report vendor id `0x8086`, and the run prints platform, device name, `CL_DRIVER_VERSION`,
    device and IL versions, a timing line (setup, driver compile, run, profiled device ns) and the number
    of open `/dev/dri/` descriptors. It is opt-in twice: the build, and `MT_CL_GPU=1` at run time
-   (anything else exits 2 before any file or the loader is opened). The `/proc/self/maps` and
+   (anything else exits 2 before any input is read or any OpenCL call is made; `libOpenCL.so.1` itself
+   is linked). The ICD's realpath must be a regular ELF file not named `*.icd`: ocl-icd would read a
+   directory as a vendors search path and an `.icd` file as a descriptor naming another library. The
+   `/proc/self/maps` and
    `/proc/self/fd` isolation scan stays, with its own default forbid list
    (`libpocl:nvidia:libcuda:libnvcuda`, checked against the ICD path before loading and against every
    mapping after the run) and a required mapping (the ICD's realpath). The default build `MT_TARGET=0`
@@ -136,10 +139,13 @@ The rows: `cand-vadd-cl`, `cand-fsum16-cl`, `cand-gemm16-cl` (one module each, b
 `cand-reps-cl` (every kernel 10 times, every output = reference, timing kept), and the controls
 `ctl-{vadd,fsum16,gemm16}-mutant-cl` (planted-wrong kernels must differ, want 1), `ctl-optin-cl`
 (no `MT_CL_GPU=1`, want 2), `ctl-isolation-cl` (forbid `/dev/dri/`, want 9), `ctl-require-cl` (a
-required library never mapped, want 9), `ctl-vendor-cl` (expect AMD's vendor id, want 5). A control
-only passes with the launcher's named refusal text and no output. Commit the run directory, the
-compare file and the receipt under `evidence/ACCESS-intel-cloud-<window>/`. A candidate PASS counts
-only when rcheck accepts the receipt and the compare file says `fail=0` with the same rows PASS on `d0`.
+required library never mapped, want 9), `ctl-vendor-cl` (expect AMD's vendor id, want 5). A refusal
+control (`ctl-optin-cl`, `ctl-isolation-cl`, `ctl-require-cl`, `ctl-vendor-cl`) only passes with its exit,
+the launcher's named refusal text and no output file; a mutant control passes when its output differs
+from the reference (exit 1) and keeps that output for the Spark compare. Commit the run directory, the
+compare file and the receipt under `evidence/ACCESS-intel-cloud-<window>/`. The compare's exit 0 is not a
+window verdict (it needs neither every row nor a device). A candidate PASS counts only when rcheck
+accepts the receipt and the compare file says `fail=0` with the same rows PASS on `d0`.
 
 ## Teardown
 

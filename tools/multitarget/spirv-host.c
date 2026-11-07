@@ -50,11 +50,14 @@
  *      examples/hello_gpu.
  *   3  GPU through a vendor OpenCL driver on Linux (format SPIRV_CL only; DRA-194: Intel's compute runtime
  *      on an Arc Pro B-Series / Xe2 GPU). No Vulkan code is built. GPU mode is opt-in twice: this build,
- *      and MT_CL_GPU=1 in the environment at run time; anything else exits 2 before the OpenCL loader is
- *      touched. The loader is pinned to the one vendor ICD library MT_CL_GPU_ICD (absolute; for Intel the
- *      path named in /etc/OpenCL/vendors/intel.icd). That path and its realpath must not contain an
+ *      and MT_CL_GPU=1 in the environment at run time; anything else exits 2 before any input is read or
+ *      any OpenCL call is made (libOpenCL.so.1 itself is linked). The loader is pinned to the one vendor
+ *      ICD library MT_CL_GPU_ICD (absolute; for Intel the path named in /etc/OpenCL/vendors/intel.icd).
+ *      That path and its realpath must not contain an
  *      MT_FORBID entry ("libpocl:nvidia:libcuda:libnvcuda" by default: no CPU implementation, no NVIDIA
- *      driver), checked before the loader runs (exit 9). Inherited OCL_ICD_*, OPENCL_*, POCL_*, IGC_*, ZE_*
+ *      driver), checked before the loader runs (exit 9), and the realpath must be a regular ELF file not
+ *      named *.icd (ocl-icd would read a directory as a search path and an .icd file as a descriptor
+ *      naming another library; exit 3). Inherited OCL_ICD_*, OPENCL_*, POCL_*, IGC_*, ZE_*
  *      and NEOReadDebugKeys variables are removed. Only CL_DEVICE_TYPE_GPU is enumerated: a platform with
  *      no GPU device exits 5 (never a CPU fallback); with more than one, MT_CL_GPU_INDEX picks one. The
  *      device must report vendor id MT_CL_GPU_VENDOR (0x8086, Intel, by default) and a name containing
@@ -93,6 +96,10 @@
 #endif
 #if MT_TARGET == 1 || MT_TARGET == 3
 #include <limits.h>
+#endif
+#if MT_TARGET == 3
+#include <strings.h>
+#include <sys/stat.h>
 #endif
 #if MT_TARGET == 1
 #include <mach-o/dyld.h>
@@ -343,6 +350,18 @@ static int pin_cl_gpu(void)
                 g_icd, which);
         return 9;
     }
+    /* ocl-icd reads OCL_ICD_VENDORS as a search directory when it is one, as a descriptor naming another
+     * library when it ends in .icd, and loads it directly only otherwise. Only the last is a pin: the
+     * resolved path must be a regular ELF file whose name does not end in .icd. */
+    struct stat st;
+    size_t il = strlen(g_icd);
+    if (stat(g_icd, &st) != 0 || !S_ISREG(st.st_mode)) return die(3, "MT_CL_GPU_ICD is not a regular file (a directory would be a vendors search path; not loaded)");
+    if (il >= 4 && strcasecmp(g_icd + il - 4, ".icd") == 0) return die(3, "MT_CL_GPU_ICD is an .icd descriptor, not the driver library (not loaded)");
+    unsigned char magic[4] = { 0 };
+    FILE *lf = fopen(g_icd, "rb");
+    size_t got = lf ? fread(magic, 1, sizeof magic, lf) : 0;
+    if (lf) fclose(lf);
+    if (got != 4 || memcmp(magic, "\177ELF", 4) != 0) return die(3, "MT_CL_GPU_ICD is not an ELF library (not loaded)");
     if (clear_prefix("OCL_ICD_") || clear_prefix("OPENCL_") || clear_prefix("POCL_") || clear_prefix("IGC_") ||
         clear_prefix("ZE_") || clear_prefix("NEOReadDebugKeys"))
         return 3;
@@ -799,7 +818,7 @@ int main(int argc, char **argv)
     t_start = now_us();
 #if MT_TARGET == 3
     if (!cl_gpu_opted_in())
-        return die(2, "this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any file or the OpenCL loader is opened)");
+        return die(2, "this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any input is read or OpenCL is called)");
 #endif
     if (argc != 7 && argc != 8) return die(2, "usage: spirv-host cl|vk MODULE.spv KERNEL COUNT IN.bin [IN.bin] OUT.bin");
     Job j = { .api = argv[1], .module = argv[2], .kernel = argv[3], .nin = argc - 6, .out = argv[argc - 1] };

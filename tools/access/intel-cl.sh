@@ -14,7 +14,7 @@
 #       Builds the MT_TARGET=3 launcher once into $ACCESS_OUT/bin, runs KERNEL's module on the GPU with
 #       MT_CL_GPU=1, writes $ACCESS_OUT/outputs/KERNEL.cl[.mutant].gpu.out and compares it byte for byte
 #       with BUNDLE/KERNEL.ref. Exit 0 equal; 1 differ; 2..9 the launcher's own refusal; 3 build or ICD
-#       problem; 4 bundle changed; 64 usage.
+#       problem; 4 bundle changed; 72 cmp could not compare; 64 usage.
 #   intel-cl.sh reps N                                     (VM, one plan row)
 #       Runs every kernel N times (fresh processes; timing lines kept in the log). Exit 0 only if every
 #       output equals its reference; 1 otherwise.
@@ -31,7 +31,10 @@
 #       pinned omc) on every candidate and control output: want 0 for cand-K-cl, 1 for ctl-K-mutant-cl.
 #       A line passes only when conform.om gives its want and the VM row says PASS. Writes RESULT (must
 #       not exist). Exit 0 every compared output passes (at least one); 1 any fails or SHA256SUMS
-#       differs; 3 NOT_RUN (no output to compare); 64 usage.
+#       differs; 3 NOT_RUN (no output to compare); 64 usage. Exit 0 is not a window verdict: it does not
+#       require every row nor a device; only rcheck on the closed receipt decides what may be claimed.
+#   intel-cl.sh argv KERNEL [mutant]                       (any host; self-test)
+#       Prints the launcher arguments a run row would pass, one per line (OUT.bin for the output).
 #
 # Environment on the VM: ACCESS_BUNDLE and ACCESS_OUT (exported by collect.sh run); MT_CL_GPU_ICD (the
 # vendor ICD library; default: the path in /etc/OpenCL/vendors/intel.icd); MT_CC (cc); MT_CFLAGS (extra
@@ -43,12 +46,16 @@ export LC_ALL
 usage() { sed -n '3,/^set -u$/{/^#/p;}' "$0" >&2; exit 64; }
 digest() { d=$(sha256sum < "$1") || return 1; printf '%s\n' "${d%% *}"; }
 KERNELS="vadd fsum16 gemm16"
-args() { # KERNEL DIR: prints "COUNT IN..."
-  case $1 in
-    vadd) echo "1048576 $2/a.bin $2/b.bin" ;;
-    fsum16) echo "65536 $2/x.bin" ;;
-    gemm16) echo "65536 $2/ga.bin $2/gb.bin" ;;
-    *) return 1 ;;
+known_kernel() { case $1 in vadd|fsum16|gemm16) return 0 ;; *) return 1 ;; esac; }
+# kcall KERNEL VARIANT OUTFILE CMD...: runs CMD... cl MODULE KERNEL COUNT IN... OUTFILE with every path
+# passed as its own quoted argument (bundle paths may hold spaces or glob characters).
+kcall() {
+  kk=$1; kv=$2; ko=$3; shift 3
+  case $kk in
+    vadd) "$@" cl "$B/vadd.cl$kv.spv" vadd 1048576 "$B/a.bin" "$B/b.bin" "$ko" ;;
+    fsum16) "$@" cl "$B/fsum16.cl$kv.spv" fsum16 65536 "$B/x.bin" "$ko" ;;
+    gemm16) "$@" cl "$B/gemm16.cl$kv.spv" gemm16 65536 "$B/ga.bin" "$B/gb.bin" "$ko" ;;
+    *) echo "intel-cl: unknown kernel $kk" >&2; return 64 ;;
   esac
 }
 
@@ -85,7 +92,10 @@ icd_path() {
     '') echo 'intel-cl: no MT_CL_GPU_ICD and no /etc/OpenCL/vendors/intel.icd (Intel compute runtime not installed?)' >&2; return 3 ;;
     *) echo "intel-cl: ICD library \"$icd\" is not an absolute path; set MT_CL_GPU_ICD" >&2; return 3 ;;
   esac
-  [ -f "$icd" ] || { echo "intel-cl: ICD library $icd missing" >&2; return 3; }
+  [ -f "$icd" ] || { echo "intel-cl: ICD library $icd missing or not a regular file" >&2; return 3; }
+  case $(readlink -f "$icd") in
+    *.icd|*.ICD) echo "intel-cl: $icd is an .icd descriptor; give the driver library it names" >&2; return 3 ;;
+  esac
   printf '%s\n' "$icd"
 }
 # build NAME [-D...]: the MT_TARGET=3 launcher from the bundle's spirv-host.c, once per name.
@@ -104,21 +114,17 @@ build() {
   fi
   echo "LAUNCHER $out sha256=$(digest "$out") src=$(digest "$B/spirv-host.c") flags=$*"
 }
-# launch HOST KERNEL VARIANT OUTFILE: one run on the GPU; returns the launcher's exit.
+# launch HOST KERNEL VARIANT OUTFILE: one run on the GPU (opted in here); returns the launcher's exit.
 launch() {
-  h=$1; k=$2; v=$3; o=$4
-  # shellcheck disable=SC2046
-  set -- $(args "$k" "$B") || { echo "intel-cl: unknown kernel $k" >&2; return 64; }
-  n=$1; shift
-  rm -f "$o"
-  MT_CL_GPU=1 "$h" cl "$B/$k.cl$v.spv" "$k" "$n" "$@" "$o"
+  rm -f "$4"
+  kcall "$2" "$3" "$4" env MT_CL_GPU=1 "$1"
 }
 
 do_run() {
   [ "$#" -eq 1 ] || [ "$#" -eq 2 ] || usage
   k=$1; v=
   case ${2:-} in '') ;; mutant) v=.mutant ;; *) usage ;; esac
-  args "$k" . > /dev/null || usage
+  known_kernel "$k" || usage
   need_env
   build spirv-host-cl3 || exit 3
   o=$ACCESS_OUT/outputs/$k.cl$v.gpu.out
@@ -126,9 +132,13 @@ do_run() {
   rc=$?
   [ "$rc" -eq 0 ] || { echo "LAUNCH $k.cl$v exit=$rc (no compare)"; exit "$rc"; }
   echo "OUTPUT outputs/$k.cl$v.gpu.out sha256=$(digest "$o") reference=$k.ref sha256=$(digest "$B/$k.ref")"
-  if cmp "$o" "$B/$k.ref"; then echo "BYTES EQUAL $k.cl$v.gpu.out = $k.ref"; exit 0; fi
-  echo "BYTES DIFFER $k.cl$v.gpu.out != $k.ref"
-  exit 1
+  cmp "$o" "$B/$k.ref"
+  c=$?
+  case $c in
+    0) echo "BYTES EQUAL $k.cl$v.gpu.out = $k.ref"; exit 0 ;;
+    1) echo "BYTES DIFFER $k.cl$v.gpu.out != $k.ref"; exit 1 ;;
+    *) echo "COMPARE ERROR cmp exit $c (neither equal nor a mismatch)"; exit 72 ;;
+  esac
 }
 
 do_reps() {
@@ -169,9 +179,7 @@ do_ctl() {
   e=$ACCESS_OUT/bin/ctl-$1.err
   rm -f "$o"
   if [ "$1" = flag ]; then
-    # shellcheck disable=SC2046
-    set -- $(args vadd "$B"); n=$1; shift
-    env -u MT_CL_GPU "$h" cl "$B/vadd.cl.spv" vadd "$n" "$@" "$o" 2> "$e"
+    kcall vadd "" "$o" env -u MT_CL_GPU "$h" 2> "$e"
   else
     launch "$h" vadd "" "$o" 2> "$e"
   fi
@@ -223,6 +231,16 @@ do_compare() {
   exit 0
 }
 
+do_argv() {
+  [ "$#" -eq 1 ] || [ "$#" -eq 2 ] || usage
+  v=
+  case ${2:-} in '') ;; mutant) v=.mutant ;; *) usage ;; esac
+  known_kernel "$1" || usage
+  [ -n "${ACCESS_BUNDLE:-}" ] || { echo 'intel-cl: ACCESS_BUNDLE is not set' >&2; exit 64; }
+  B=$ACCESS_BUNDLE
+  kcall "$1" "$v" OUT.bin printf '%s\n'
+}
+
 [ "$#" -ge 1 ] || usage
 cmd=$1; shift
 case $cmd in
@@ -231,5 +249,6 @@ case $cmd in
   reps) do_reps "$@" ;;
   ctl) do_ctl "$@" ;;
   compare) do_compare "$@" ;;
+  argv) do_argv "$@" ;;
   *) usage ;;
 esac

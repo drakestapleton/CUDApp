@@ -1,0 +1,5 @@
+# id	kind	want	needs	command
+# Collector self-test plan (tests/access/run.sh). Every row runs on any Linux host; none opens a device.
+ctl-false	control	1	-	false
+cand-missing	candidate	0	-	MISSING_IMPLEMENTATION stub row for the self-test
+ref-absent	reference	0	no-such-tool-cudapp-access	no-such-tool-cudapp-access

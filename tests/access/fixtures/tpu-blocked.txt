@@ -1,0 +1,8 @@
+ACCESS1 provider=google-trc window=SYNTHETIC-trc-quota-not-granted claim=NONE
+SRC repo=aien-dev/omega-mv rev=fedcba9876543210fedcba9876543210fedcba98
+WHEN start=2026-11-07T04:00:00Z
+ROW id=inv-acceltype kind=inventory want=0 verdict=BLOCKED_ACCESS dev=none reason=no-TPU-quota
+ROW id=cand-vaddi32 kind=candidate want=0 verdict=BLOCKED_ACCESS dev=none reason=no-TPU-quota
+COST charged_usd=0
+TEARDOWN destroyed=yes by=SYNTHETIC verified_at=2026-11-07T04:01:00Z
+END rows=2

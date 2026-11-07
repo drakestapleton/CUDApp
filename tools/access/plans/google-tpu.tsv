@@ -1,0 +1,22 @@
+# id	kind	want	needs	command
+# Google TPU Research Cloud, one TPU VM (v5e or v6e, one chip), window W0 "access test plus first
+# StableHLO rows" (docs/access/GOOGLE-TRC.md). ACCESS_BUNDLE holds files copied from the Spark:
+# pjrt-oracle.py and case-*.mlir / neg-*.mlir from omega-mv seed/stablehlo/gate-irstablehlo.sh
+# (build/seed/stablehlo), never regenerated on the VM. ACCESS_REPO=aien-dev/omega-mv, ACCESS_REV its commit.
+# run as: collect.sh run google-trc THIS_FILE OUT
+inv-acceltype	inventory	0	curl	curl -sf -m 10 -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/accelerator-type
+inv-nodes	inventory	0	-	sh -c 'ls -l /dev/accel* /dev/vfio 2>&1; ls -d /dev/accel* /dev/vfio/[0-9]* > /dev/null 2>&1'
+inv-libtpu	inventory	0	python3	python3 -c 'import jax, jaxlib; print("jax", jax.__version__, "jaxlib", jaxlib.__version__); import importlib.metadata as m; print("libtpu", m.version("libtpu"))'
+# Reference: Google's runtime lists the chips through PJRT.
+ref-tpu-devices	reference	0	python3	python3 -c 'import jax; d = jax.devices("tpu"); print(d); raise SystemExit(0 if d else 1)'
+# Candidate: Omega-emitted StableHLO compiled by the TPU PJRT client (closed libtpu), compared bit
+# for bit by pjrt-oracle.py with the Wolfram-computed vectors of seed/stablehlo/cases.tsv.
+cand-vaddi32	candidate	0	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/case-1-vaddi32.mlir" i32 8 0,3,-2,2147483647,-2147483648,777777,0,-3 0,1,-1,2147483646,-2147483647,123456,-98765,7 0,2,-1,1,-1,654321,98765,-10
+cand-vaddu32	candidate	0	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/case-2-vaddu32.mlir" ui32 8 0,3,0,4294967294,0,123,65536,4294967295 0,1,4294967295,4294967295,2147483648,100,65535,3000000000 0,2,1,4294967295,2147483648,23,1,1294967295
+cand-vaddf32	candidate	0	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/case-6-vaddf32.mlir" f32 8 3.75,0.75,0,1048576.5,0.300000012,16777216,1.99999994e38,-7.625 1.5,0.25,-2,1048576,0.1,16777216,1e38,-7.75 2.25,0.5,2,0.5,0.2,1,1e38,0.125
+# f64 is not native on TPUs: this row records whether libtpu refuses (exit 2) or emulates it.
+cand-vaddf64	candidate	0	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/case-7-vaddf64.mlir" f64 8 0.30000000000000004,9007199254740992,3.75,0,2.0000000000000001e300,0.66666666666666663,0,0 0.1,9007199254740992,1.5,-2,1e300,0.3333333333333333,5,-0.0009765625 0.2,1,2.25,2,1e300,0.3333333333333333,-5,0.0009765625
+# Controls: each must be caught on the TPU exactly as on the PJRT CPU client.
+ctl-wrong-op	control	1	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/neg-wrongop.mlir" i32 8 0,3,-2,2147483647,-2147483648,777777,0,-3 0,1,-1,2147483646,-2147483647,123456,-98765,7 0,2,-1,1,-1,654321,98765,-10
+ctl-wrong-expected	control	1	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/case-1-vaddi32.mlir" i32 8 1,3,-2,2147483647,-2147483648,777777,0,-3 0,1,-1,2147483646,-2147483647,123456,-98765,7 0,2,-1,1,-1,654321,98765,-10
+ctl-malformed	control	2	python3	env PJRT_ORACLE_PLATFORM=tpu python3 "$ACCESS_BUNDLE/pjrt-oracle.py" "$ACCESS_BUNDLE/neg-nobrace.mlir" i32 8 0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0 0,0,0,0,0,0,0,0

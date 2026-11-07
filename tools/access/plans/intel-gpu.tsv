@@ -1,0 +1,18 @@
+# id	kind	want	needs	command
+# Intel Cloud Services (cloud.intel.com), one Linux instance with an Intel GPU (catalog: Arc Pro
+# B-Series, Xe2), window W0 "access test" (docs/access/INTEL-CLOUD-SERVICES.md).
+# run as: collect.sh run intel-cloud THIS_FILE OUT
+# Inventory: PCI identity and kernel driver, the OpenCL and Level Zero views, the render nodes.
+inv-drm	inventory	0	-	sh -c 'for d in /sys/class/drm/card*/device; do echo "$d $(cat $d/vendor) $(cat $d/device) $(basename $(readlink $d/driver))"; done; ls -l /dev/dri'
+inv-clinfo	inventory	0	clinfo	clinfo
+inv-sycl-ls	inventory	0	sycl-ls	sycl-ls --verbose
+inv-xpu-smi	inventory	0	xpu-smi	xpu-smi discovery
+# Reference: Intel's own stack running compute on the device. ze_peak comes from
+# github.com/oneapi-src/level-zero-tests (built on the instance at a pinned tag; see the packet).
+ref-ze-peak	reference	0	ze_peak	ze_peak -t sp_compute
+ref-ze-bandwidth	reference	0	ze_bandwidth	ze_bandwidth
+# Candidate: CUDA++ backend/spirv/emit.om SPIR-V through Intel's OpenCL driver, compared bit for bit
+# with backend/spirv/conform.om. Blocked until the two host changes named in the packet land.
+cand-vadd-cl	candidate	0	-	MISSING_IMPLEMENTATION spirv-host enumerates CPU devices only and conform.om has no native x86 build yet
+cand-fsum16-cl	candidate	0	-	MISSING_IMPLEMENTATION same blocker as cand-vadd-cl
+ctl-vadd-mutant-cl	control	1	-	MISSING_IMPLEMENTATION same blocker as cand-vadd-cl

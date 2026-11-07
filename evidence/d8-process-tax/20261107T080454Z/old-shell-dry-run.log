@@ -1,0 +1,83 @@
+ran sim-main: exit 0, outside VmRSS 14760 KiB
+ran sim-short: exit 1, outside VmRSS 14636 KiB
+ran sim-ballast: exit 0, outside VmRSS 538928 KiB
+ran hidden-gpu: exit 2, outside VmRSS missing KiB, driver missing MiB
+sim-main (sim), expected PASS:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2396/2396/14696 KiB, own 12288 KiB, open 0, beyond own 12 KiB (sums agree) PASS
+  B3  outside: pid 3829936 VmRSS 14760 KiB during the hold, line says 14696 KiB (tolerance 4096) PASS
+  B5  tax: 12 KiB = resident 12 + driver beyond own buffers 0; bar <= 262144 KiB PASS
+  -> PASS, as expected
+sim-short (sim), expected FAIL by B1:
+  B1  run: exit 1, checked 1048576 of 1048576 elements: 1 wrong, 1 never written FAIL
+  B2  line: resident 2272/2272/14572 KiB, own 12288 KiB, open 0, beyond own 12 KiB (sums agree) PASS
+  B3  outside: pid 3830454 VmRSS 14636 KiB during the hold, line says 14572 KiB (tolerance 4096) PASS
+  B5  tax: 12 KiB = resident 12 + driver beyond own buffers 0; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+sim-ballast (sim), expected FAIL by B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2272/2272/538864 KiB, own 12288 KiB, open 0, beyond own 524304 KiB (sums agree) PASS
+  B3  outside: pid 3831818 VmRSS 538928 KiB during the hold, line says 538864 KiB (tolerance 4096) PASS
+  B5  tax: 524304 KiB = resident 524304 + driver beyond own buffers 0; bar <= 262144 KiB FAIL
+  -> FAIL, as expected
+  ballast seen: beyond own buffers +524304 KiB >= 524288 KiB
+hidden-gpu (gpu), expected NOT_RUN:
+  run exited 2 without a device (NOT_RUN): GPU not available (stage: nvrm_open: open control nodes errno 2)
+  -> NOT_RUN, as expected
+GPU judge self-test on synthetic logs (not measurements):
+syn-good (gpu), expected PASS:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> PASS, as expected
+syn-no-driver (gpu), expected FAIL by B4 B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: no per-process report for pid 4242 ('missing')                     FAIL
+  B5  tax: not judged without the driver's report (resident part 1011 KiB)       FAIL
+  -> FAIL, as expected
+syn-driver-tax (gpu), expected FAIL by B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 5000 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 5108722 KiB = resident 1011 + driver beyond own buffers 5107711; bar <= 262144 KiB FAIL
+  -> FAIL, as expected
+syn-bad-sum (gpu), expected FAIL by B2:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: printed open 1000 / beyond 11 KiB disagree with its numbers, or own 12289 KiB is off FAIL
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29671 KiB = resident 1000 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+syn-two-lines (gpu), expected FAIL by B2:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: 2 D8 lines, 2 well-formed (exactly one required)                     FAIL
+  B3  outside: not judged without the line                                       FAIL
+  B4  driver: not judged without the line                                        FAIL
+  B5  tax: not judged without the line                                           FAIL
+  -> FAIL, as expected
+syn-no-line (gpu), expected FAIL by B2:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: 0 D8 lines, 0 well-formed (exactly one required)                     FAIL
+  B3  outside: not judged without the line                                       FAIL
+  B4  driver: not judged without the line                                        FAIL
+  B5  tax: not judged without the line                                           FAIL
+  -> FAIL, as expected
+syn-exit-1 (gpu), expected FAIL by B1:
+  B1  run: exit 1, checked 1048576 of 1048576 elements: 0 wrong, 0 never written FAIL
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+syn-no-device (gpu), expected NOT_RUN:
+  run exited 2 without a device (NOT_RUN): 
+  -> NOT_RUN, as expected
+GPU verdict self-test on a synthetic recorded run (not a measurement):
+  good run with both controls caught -> exit 0, as expected
+  ballast control not seen (a blind measurement) -> exit 1, as expected
+D8 DRY RUN: PASS (host simulator, device-hidden refusal, judge and verdict self-tests; the chip row stays NOT_RUN until --gpu runs in a window)

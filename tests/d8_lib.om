@@ -1,0 +1,630 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note tests/d8_lib.om -- the shared part of the D8 programs (tests/d8_process_tax.om, tests/d8_mutants.om). Make
+note concatenates it in front of each program and compiles the result with the pinned seeded omc (omega-mv e5b32567,
+note sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f); see mk/dx-d8.mk.
+note Byte regions: B holds 32 regions of 4096 bytes (Bn their lengths). Globals are never passed to functions, so
+note helpers take region numbers. By convention region 4 holds the output directory; regions 2, 3, 22, 23, 29 and 30
+note are scratch of these helpers (2 output, 3 argument and capture, 22 environment entry, 23 PATH, 29 capture
+note path, 30 path), region 19 receives the program found by which.
+note L is one loaded file (Ln its length). AL is a packed argument list for execprog: u16 count, then a u16 length
+note and the bytes of each argument (AP: write position and count). ST is a waitpid status.
+note execprog starts every child with an empty environment; callers that need variables pass them through
+note /usr/bin/env K=V (envkv) until omega-mv has an execprog form that takes an environment.
+global B uchar 131072
+global Bn ulong 32
+global L uchar 524288
+global Ln ulong 1
+global AL uchar 4096
+global AP ulong 2
+global ST uchar 8
+
+text TBig "d8: refused (a buffer bound or a failed host call)\n"
+text TSl "/"
+text TDevNul "/dev/null"
+text TPathV "PATH="
+
+note ---- regions
+fn bfail to void
+r = write 2 TBig 0 len TBig
+exit 90
+end
+
+fn bc r ulong c uchar to void
+n = get Bn r
+if ge n 4095
+bfail
+end
+put B add mul r 4096 n c
+put Bn r add n 1
+end
+
+fn bclr r ulong to void
+put Bn r 0
+end
+
+fn bt r ulong t view uchar * to void
+for i ulong len t
+bc r get t i
+end
+end
+
+fn bs r ulong t view uchar * to void
+bclr r
+bt r t
+end
+
+fn bb d ulong s ulong to void
+for i ulong get Bn s
+bc d get B add mul s 4096 i
+end
+end
+
+fn bu r ulong v ulong to void
+d = ulong 1
+while ge div v d 10 bound 20
+d = mul d 10
+end
+while gt d 0 bound 21
+bc r uchar add 48 rem div v d 10
+d = div d 10
+end
+end
+
+fn bz r ulong v ulong w ulong to void
+d = ulong 1
+for i ulong sub w 1
+d = mul d 10
+end
+while gt d 0 bound 21
+bc r uchar add 48 rem div v d 10
+d = div d 10
+end
+end
+
+fn bl r ulong v long to void
+if lt v 0
+bc r 45
+bu r ulong neg v
+else
+bu r ulong v
+end
+end
+
+fn bist r ulong t view uchar * to bool
+n = get Bn r
+if ne n len t
+ret false
+end
+for i ulong n
+if ne get B add mul r 4096 i get t i
+ret false
+end
+end
+ret true
+end
+
+fn beq a ulong b ulong to bool
+n = get Bn a
+if ne n get Bn b
+ret false
+end
+oa = mul a 4096
+ob = mul b 4096
+for i ulong n
+if ne get B add oa i get B add ob i
+ret false
+end
+end
+ret true
+end
+
+note ^[0-9]+$ of at most 18 digits as a value; -1 otherwise
+fn bnum r ulong to long
+n = get Bn r
+if or eq n 0 gt n 18
+ret neg long 1
+end
+v = long 0
+for i ulong n
+c = get B add mul r 4096 i
+if or lt c 48 gt c 57
+ret neg long 1
+end
+v = add mul v 10 long sub c 48
+end
+ret v
+end
+
+fn bout fd int r ulong to void
+o = mul r 4096
+n = get Bn r
+k = ulong 0
+while lt k n bound 4096
+w = write fd B add o k sub n k
+if le w 0
+bfail
+end
+k = add k ulong w
+end
+end
+
+fn say t view uchar * to void
+bs 2 t
+bout 1 2
+end
+
+fn barg i ulong r ulong to void
+n = argread i B mul r 4096 4095
+if lt n 0
+bfail
+end
+put Bn r ulong n
+end
+
+note path region d = OUTDIR "/" nm sx
+fn bpath d ulong nm view uchar * sx view uchar * to void
+bclr d
+bb d 4
+bt d TSl
+bt d nm
+bt d sx
+end
+
+note path region d = OUTDIR "/" nm
+fn bpath1 d ulong nm view uchar * to void
+bclr d
+bb d 4
+bt d TSl
+bt d nm
+end
+
+fn bopen r ulong flags int to long
+n = get Bn r
+if eq n 0
+bfail
+end
+ret fopen B mul r 4096 n flags 420
+end
+
+note writes region s to the file named by region p: flags 578 create/truncate, 1089 create/append
+fn bfile p ulong s ulong flags int to void
+fd = bopen p flags
+if lt fd 0
+bfail
+end
+bout int fd s
+c = fclose int fd
+end
+
+fn bexists r ulong to bool
+n = get Bn r
+if eq n 0
+ret false
+end
+ret eq faccess B mul r 4096 n 0 0
+end
+
+note UTC from realns. style 0 %Y-%m-%dT%H:%M:%S.%NZ, 1 %FT%TZ, 2 %Y%m%dT%H%M%SZ
+fn bsep r ulong style ulong c uchar to void
+if ne style 2
+bc r c
+end
+end
+
+note the civil date of a day count since 1970-01-01 (Hinnant's civil_from_days)
+fn bdate r ulong days ulong style ulong to void
+z = add days 719468
+era = div z 146097
+doe = sub z mul era 146097
+z = sub doe div doe 1460
+z = add z div doe 36524
+yoe = div sub z div doe 146096 365
+y = add yoe mul era 400
+z = add mul 365 yoe div yoe 4
+doe = sub doe sub z div yoe 100
+z = div add mul 5 doe 2 153
+era = add sub doe div add mul 153 z 2 5 1
+if ge z 10
+z = sub z 9
+else
+z = add z 3
+end
+if le z 2
+y = add y 1
+end
+bz r y 4
+bsep r style 45
+bz r z 2
+bsep r style 45
+bz r era 2
+end
+
+fn bstamp r ulong style ulong to void
+ns = ulong realns
+s = div ns 1000000000
+bdate r div s 86400 style
+s = rem s 86400
+bc r 84
+bz r div s 3600 2
+bsep r style 58
+bz r rem div s 60 60 2
+bsep r style 58
+bz r rem s 60 2
+if eq style 0
+bc r 46
+bz r rem ns 1000000000 9
+end
+bc r 90
+end
+
+note ---- the loaded file L
+fn fload r ulong to bool
+put Ln 0 0
+fd = bopen r 0
+if lt fd 0
+ret false
+end
+n = ulong 0
+while lt n len L bound 999999
+k = read int fd L n sub len L n
+if le k 0
+break
+end
+n = add n ulong k
+end
+put Ln 0 n
+c = fclose int fd
+ret true
+end
+
+fn lend p ulong to ulong
+n = get Ln 0
+q = p
+while lt q n bound 999999
+if eq get L q 10
+ret q
+end
+q = add q 1
+end
+ret n
+end
+
+fn lat p ulong t view uchar * to bool
+for i ulong len t
+if ne get L add p i get t i
+ret false
+end
+end
+ret true
+end
+
+fn leq p ulong e ulong t view uchar * to bool
+if ne sub e p len t
+ret false
+end
+ret lat p t
+end
+
+fn lpre p ulong e ulong t view uchar * to bool
+if lt sub e p len t
+ret false
+end
+ret lat p t
+end
+
+fn lhas p ulong e ulong t view uchar * to bool
+if lt sub e p len t
+ret false
+end
+for s ulong add sub sub e p len t 1
+if lat add p s t
+ret true
+end
+end
+ret false
+end
+
+fn lcopy p ulong e ulong r ulong to void
+q = p
+while lt q e bound 999999
+bc r get L q
+q = add q 1
+end
+end
+
+note lines equal to t (mode 0) or starting with t (mode 1)
+fn lcnt t view uchar * mode ulong to ulong
+c = ulong 0
+p = ulong 0
+while lt p get Ln 0 bound 999999
+e = lend p
+if eq mode 0
+if leq p e t
+c = add c 1
+end
+else
+if lpre p e t
+c = add c 1
+end
+end
+p = add e 1
+end
+ret c
+end
+
+note the first line starting with t, appended to region r; false when none
+fn lfirst t view uchar * r ulong to bool
+p = ulong 0
+while lt p get Ln 0 bound 999999
+e = lend p
+if lpre p e t
+lcopy p e r
+ret true
+end
+p = add e 1
+end
+ret false
+end
+
+note the first line containing a or b, appended to region r
+fn lfirst2 a view uchar * b view uchar * r ulong to void
+p = ulong 0
+while lt p get Ln 0 bound 999999
+e = lend p
+if or lhas p e a lhas p e b
+lcopy p e r
+ret
+end
+p = add e 1
+end
+end
+
+note every line starting with key: the rest, newline separated, into region r (sed -n 's/^key//p')
+fn lvals key view uchar * r ulong to void
+bclr r
+k = ulong 0
+p = ulong 0
+while lt p get Ln 0 bound 999999
+e = lend p
+if lpre p e key
+if gt k 0
+bc r 10
+end
+lcopy add p len key e r
+k = add k 1
+end
+p = add e 1
+end
+end
+
+note the digits of the last line "# exit: [0-9]*" into region r (empty when none)
+note ---- processes. AL is a packed argument list: u16 count, then a u16 length and the bytes per argument.
+fn alclr to void
+put AP 0 2
+put AP 1 0
+end
+
+fn alb r ulong to void
+n = get Bn r
+p = get AP 0
+if or ge get AP 1 64 gt add add p n 2 4096
+bfail
+end
+put AL p uchar and n 255
+put AL add p 1 uchar shr n 8
+o = mul r 4096
+for i ulong n
+put AL add add p 2 i get B add o i
+end
+put AP 0 add add p 2 n
+put AP 1 add get AP 1 1
+end
+
+fn alt t view uchar * to void
+bs 3 t
+alb 3
+end
+
+note the command, arguments joined by spaces (the "# command:" line)
+fn bcmd r ulong to void
+p = ulong 2
+for a ulong get AP 1
+n = add ulong get AL p shl ulong get AL add p 1 8
+if gt a 0
+bc r 32
+end
+for i ulong n
+bc r get AL add add p 2 i
+end
+p = add add p 2 n
+end
+end
+
+note fork and execprog AL. out 1: stdout and stderr appended to the file named by region r; out 2: stdout to
+note descriptor fd, stderr to /dev/null; out 0: inherited.
+fn spawn how ulong r ulong fd int to long
+put AL 0 uchar get AP 1
+put AL 1 0
+pid = fork
+if lt pid 0
+bfail
+end
+if eq pid 0
+if eq how 1
+f = bopen r 1089
+if lt f 0
+exit 127
+end
+x = dupfd int f 1 0
+x = dupfd int f 2 0
+end
+if eq how 2
+x = dupfd fd 1 0
+g = fopen TDevNul 0 len TDevNul 1 0
+if ge g 0
+x = dupfd int g 2 0
+end
+end
+x = execprog AL 0 get AP 0
+exit 127
+end
+ret pid
+end
+
+note exit code, or 128 + signal; -1 while running (opt 1, WNOHANG)
+fn reap pid long opt int to long
+w = waitpid int pid ST 0 4 opt
+if eq w 0
+ret neg long 1
+end
+if lt w 0
+bfail
+end
+s = get ST 0
+if ne s 0
+ret add 128 long and s 127
+end
+ret long get ST 1
+end
+
+fn runwait how ulong r ulong to long
+pid = spawn how r 0
+ret reap pid 0
+end
+
+note ---- environment and PATH
+fn bpfx r ulong t view uchar * to bool
+if lt get Bn r len t
+ret false
+end
+o = mul r 4096
+for i ulong len t
+if ne get B add o i get t i
+ret false
+end
+end
+ret true
+end
+
+note region d gets bytes [k, e) of region s
+fn bmid d ulong s ulong k ulong e ulong to void
+o = mul s 4096
+while lt k e bound 4096
+bc d get B add o k
+k = add k 1
+end
+end
+
+note region d gets region s from byte k on
+fn bfrom d ulong s ulong k ulong to void
+o = mul s 4096
+n = get Bn s
+while lt k n bound 4096
+bc d get B add o k
+k = add k 1
+end
+end
+
+fn envget key view uchar * r ulong to bool
+bclr r
+for i ulong ulong envcnt
+n = envread i B 90112 4095
+if lt n 0
+bfail
+end
+put Bn 22 ulong n
+if bpfx 22 key
+bfrom r 22 len key
+ret true
+end
+end
+ret false
+end
+
+note a program name searched along PATH into region 19 (command -v)
+fn which nm view uchar * to bool
+if not envget TPathV 23
+ret false
+end
+n = get Bn 23
+s = ulong 0
+p = ulong 0
+while le p n bound 4096
+if or eq p n eq get B add 94208 p 58
+bclr 19
+bmid 19 23 s p
+if eq get Bn 19 0
+bc 19 46
+end
+bt 19 TSl
+bt 19 nm
+if eq faccess B mul ulong 19 4096 get Bn 19 1 0
+ret true
+end
+s = add p 1
+end
+p = add p 1
+end
+ret false
+end
+
+fn mkdirp r ulong to void
+n = get Bn r
+for i ulong n
+last = eq add i 1 n
+if not last
+last = eq get B add mul r 4096 add i 1 47
+end
+if and last gt i 0
+x = makedir B mul r 4096 add i 1 493
+end
+end
+end
+
+note the D8_CORES pin: false when unpinned; the cores in region 16
+fn envkv key view uchar * to void
+if envget key 3
+bs 30 key
+bb 30 3
+alb 30
+end
+end
+
+note /usr/bin/env with the variables spark-window needs, then the spark-window found on PATH (region 18)
+fn capture to long
+bclr 3
+bfile 29 3 578
+rc = runwait 1 29
+bclr 3
+x = fload 29
+n = get Ln 0
+while gt n 0 bound 999999
+if ne get L sub n 1 10
+break
+end
+n = sub n 1
+end
+if gt n 4000
+n = ulong 4000
+end
+lcopy 0 n 3
+ret rc
+end
+
+fn catfile r ulong to void
+if fload r
+bclr 2
+n = get Ln 0
+k = ulong 0
+while lt k n bound 999999
+bc 2 get L k
+k = add k 1
+if ge get Bn 2 4000
+bout 1 2
+bclr 2
+end
+end
+bout 1 2
+end
+end

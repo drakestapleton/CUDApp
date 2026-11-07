@@ -1,0 +1,12 @@
+blind identical
+corrupt identical
+empty identical
+g-mainbad identical
+g-nodrv identical
+g-tax identical
+good identical
+good2 identical
+missingdir identical
+nodev identical
+nomain identical
+shortpass identical

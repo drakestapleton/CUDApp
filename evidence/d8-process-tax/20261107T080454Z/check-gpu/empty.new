@@ -1,0 +1,1 @@
+NOT_RUN: no main.log in /tmp/d8cmp/empty: the GPU run did not happen

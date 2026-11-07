@@ -1,0 +1,23 @@
+main (gpu), the bar:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> PASS
+n1-short (gpu), expected FAIL by B1:
+  B1  run: exit 0, checked 1048576 of 1048576 elements: 1 wrong, 1 never written FAIL
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+n2-ballast (gpu), expected FAIL by B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> PASS: NOT the expected FAIL by B5
+  ballast NOT seen: open cost '1000' KiB < 524288 KiB, the measurement is blind
+D8 PROCESS TAX: FAIL (main PASS, tax 29682 KiB; 2 control expectation(s) not met)

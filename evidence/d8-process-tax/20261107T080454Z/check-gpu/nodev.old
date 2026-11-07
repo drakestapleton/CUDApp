@@ -1,0 +1,4 @@
+main (gpu), the bar:
+  run exited 2 without a device (NOT_RUN): GPU not available (stage: x)
+  -> NOT_RUN
+D8 PROCESS TAX: NOT_RUN (the GPU was not available inside the window)

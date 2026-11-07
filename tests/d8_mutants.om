@@ -1,0 +1,312 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note tests/d8_mutants.om -- the D8 semantic mutants of om/graph/hello-plan.om (developer bar D8,
+note docs/issues/D8-process-tax.md). Make concatenates tests/d8_lib.om in front and compiles with the pinned
+note seeded omc; mk/graph-residue.mk runs it as part of test-graph-residue-mutants, after om/graph/residue-mutants.py.
+note   usage: d8_mutants OUT_DIR CC [CFLAG ...]   (environment: OMEGA_OMC, OMEGA_BRIDGE, PATH, HOME, TMPDIR)
+note For each mutant: the site must occur exactly once; the mutant source goes through om/units.sh (the
+note bridge's checked converter, OMEGA_UNITS=hello_plan=<mutant> into the lane), tests/test_graph_residue.c is
+note linked against the mutant's cudapp_om_hello_plan.c, and the result must exit nonzero or print other bytes
+note than OUT_DIR/graph-residue does. A surviving mutant is a FAIL (exit 1). Lanes:
+note OUT_DIR/graph-residue-mutants/<name>/{mutant.om,generate.log,compile.log,test,run.log}.
+note Regions: 1 message, 4 OUT_DIR (absolute), 5 CC, 6 lane, 7 file path, 8 log path, 9 lane file, 31 cwd.
+note execprog gives children an empty environment, so om/units.sh and CC run under /usr/bin/env with the
+note variables named above (until omega-mv has an execprog form that takes an environment).
+global X uchar 524288
+global Xn ulong 1
+global P ulong 1
+
+text TUse "usage: d8_mutants OUT_DIR CC [CFLAG ...]\n"
+text TLanes "/graph-residue-mutants"
+text TExp "/graph-residue-mutants/d8-expected.log"
+text TRef "/graph-residue"
+text TLib "/libomega_gpu.a"
+text TPlan "om/graph/hello-plan.om"
+text TMut "/mutant.om"
+text TGen "/generate.log"
+text TCmp "/compile.log"
+text TBin "/test"
+text TRun "/run.log"
+text TUnitC "/cudapp_om_hello_plan.c"
+text TEnvB "/usr/bin/env"
+text THomeV "HOME="
+text TTmpV "TMPDIR="
+text TOmcV "OMEGA_OMC="
+text TBriV "OMEGA_BRIDGE="
+text TUnitsV "OMEGA_UNITS=hello_plan="
+text TDestV "OMEGA_UNITS_DEST="
+text TSh "/bin/sh"
+text TUnitsSh "om/units.sh"
+text TTest "tests/test_graph_residue.c"
+text TPth "-lpthread"
+text TLm "-lm"
+text TOut "-o"
+text TFail "FAIL "
+text TSite ": mutation site count "
+text TGenF ": om/units.sh exit "
+text TCmpF ": compile exit "
+text TSurv "FAIL mutant "
+text TSurv2 " survived"
+text TKill "mutant "
+text TKill2 " killed rc="
+text TRefF "FAIL graph-residue reference: exit "
+text TPass "PASS graph residue D8: 3 compiled semantic mutants killed"
+text TN1 "d8-own-round"
+text TO1 "ownk = div add get c 3 1023 1024"
+text TW1 "ownk = div get c 3 1024"
+text TN2 "d8-beyond-sign"
+text TO2 "put d 4 1"
+text TW2 "put d 4 0"
+text TN3 "d8-driver-kib"
+text TO3 "put d 5 div add get c 4 1023 1024"
+text TW3 "put d 5 div get c 4 1000"
+
+note region d = OUT_DIR t
+fn opath d ulong t view uchar * to void
+bclr d
+bb d 4
+bt d t
+end
+
+note region d = lane t
+fn lpath d ulong t view uchar * to void
+bclr d
+bb d 6
+bt d t
+end
+
+note truncates the file named by region r
+fn trunc r ulong to void
+bclr 3
+bfile r 3 578
+end
+
+note sites of t in L; the last one in P
+fn lfind t view uchar * to ulong
+n = get Ln 0
+k = ulong 0
+if lt n len t
+ret k
+end
+for p ulong add sub n len t 1
+if lat p t
+k = add k 1
+put P 0 p
+end
+end
+ret k
+end
+
+note writes L[a, e) to fd
+fn lwr fd int a ulong e ulong to void
+while lt a e bound 999999
+w = write fd L a sub e a
+if le w 0
+bfail
+end
+a = add a ulong w
+end
+end
+
+fn say1 t view uchar * to void
+bs 1 t
+bc 1 10
+bout 1 1
+end
+
+note the message region 1 gets "FAIL <nm><b><rc>" (or "mutant <nm><b><rc>" when not fail) and is printed
+fn sayrc fail bool nm view uchar * b view uchar * rc long to void
+bs 1 TKill
+if fail
+bs 1 TFail
+end
+bt 1 nm
+bt 1 b
+bl 1 rc
+bc 1 10
+bout 1 1
+end
+
+note writes the mutant (L with the one site of old replaced by new) to lane/mutant.om
+fn wmut old view uchar * rep view uchar * to void
+lpath 7 TMut
+fd = bopen 7 578
+if lt fd 0
+bfail
+end
+p = get P 0
+lwr int fd 0 p
+bs 3 rep
+bout int fd 3
+lwr int fd add p len old get Ln 0
+c = fclose int fd
+end
+
+fn gen to long
+alclr
+alt TEnvB
+envkv TPathV
+envkv THomeV
+envkv TTmpV
+envkv TOmcV
+envkv TBriV
+bs 9 TUnitsV
+bb 9 7
+alb 9
+bs 9 TDestV
+bb 9 6
+alb 9
+alt TSh
+alt TUnitsSh
+lpath 8 TGen
+trunc 8
+ret runwait 1 8
+end
+
+fn build to long
+alclr
+alt TEnvB
+envkv TPathV
+envkv THomeV
+envkv TTmpV
+alb 5
+for i ulong sub ulong argcnt 3
+barg add i 3 9
+alb 9
+end
+alt TTest
+lpath 9 TUnitC
+alb 9
+opath 9 TLib
+alb 9
+alt TPth
+alt TLm
+alt TOut
+lpath 9 TBin
+alb 9
+lpath 8 TCmp
+trunc 8
+ret runwait 1 8
+end
+
+note the run log (region 8) against the reference X
+fn same to bool
+if not fload 8
+ret false
+end
+n = get Ln 0
+if ne n get Xn 0
+ret false
+end
+for i ulong n
+if ne get L i get X i
+ret false
+end
+end
+ret true
+end
+
+fn mutant nm view uchar * old view uchar * rep view uchar * to bool
+bclr 8
+bt 8 TPlan
+if not fload 8
+bfail
+end
+k = lfind old
+if ne k 1
+sayrc true nm TSite long k
+ret false
+end
+opath 6 TLanes
+bt 6 TSl
+bt 6 nm
+mkdirp 6
+wmut old rep
+rc = gen
+if ne rc 0
+sayrc true nm TGenF rc
+ret false
+end
+rc = build
+if ne rc 0
+sayrc true nm TCmpF rc
+ret false
+end
+alclr
+lpath 9 TBin
+alb 9
+lpath 8 TRun
+trunc 8
+rc = runwait 1 8
+if and eq rc 0 same
+bs 1 TSurv
+bt 1 nm
+bt 1 TSurv2
+bc 1 10
+bout 1 1
+ret false
+end
+sayrc false nm TKill2 rc
+ret true
+end
+
+note runs OUT_DIR/graph-residue once and keeps its output in X
+fn reference to bool
+opath 6 TLanes
+mkdirp 6
+alclr
+opath 9 TRef
+alb 9
+opath 8 TExp
+trunc 8
+rc = runwait 1 8
+if ne rc 0
+bs 1 TRefF
+bl 1 rc
+bc 1 10
+bout 1 1
+ret false
+end
+if not fload 8
+bfail
+end
+n = get Ln 0
+for i ulong n
+put X i get L i
+end
+put Xn 0 n
+ret true
+end
+
+fn main to int
+if lt argcnt 3
+r = write 2 TUse 0 len TUse
+ret 2
+end
+barg 1 4
+barg 2 5
+if ne get B mul ulong 4 4096 47
+k = cwd B mul ulong 31 4096 4095
+if le k 0
+bfail
+end
+put Bn 31 sub ulong k 1
+bt 31 TSl
+bb 31 4
+bclr 4
+bb 4 31
+end
+if not reference
+ret 1
+end
+if not mutant TN1 TO1 TW1
+ret 1
+end
+if not mutant TN2 TO2 TW2
+ret 1
+end
+if not mutant TN3 TO3 TW3
+ret 1
+end
+say1 TPass
+ret 0
+end

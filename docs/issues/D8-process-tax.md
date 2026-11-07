@@ -11,8 +11,8 @@ Labels: D8
 **Done when.** `hello_gpu` prints its own overhead line, and a chip receipt records it.
 
 **Command (on CUDApp#280).** `hello_gpu` prints the overhead line
-(`examples/hello_gpu/README.md`, "D8"). `tests/run_d8_process_tax.sh` holds the bar, which was fixed before any chip
-run:
+(`examples/hello_gpu/README.md`, "D8"). `tests/d8_process_tax.om` (compiled by the pinned seeded omc with
+`tests/d8_lib.om`) holds the bar, which was fixed before any chip run:
 
 - B1: the run passes.
 - B2: there is exactly one D8 line, and its printed differences add up.

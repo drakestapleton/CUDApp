@@ -130,7 +130,7 @@ The workarounds can be worse than the error. In Triton's sm_121 issue: "Those \"
 
 **Why people stay.** It is a fixed cost per process, small next to a large model on a large GPU.
 
-**CUDA++'s answer (row D8).** A CUDA++ process maps no CUDA library at all: on 2026-10-21 Aien's live Qwen3.6-35B-A3B server (mixture-of-experts, about 3B parameters active per token) had only the C library, the maths library, `libgcc_s` and the loader mapped (Omega `evidence/WHAT-OMEGA-IS-20261021/live-serve-no-cuda.txt`). The row is done when the memory a CUDA++ process holds beyond its own buffers is measured and printed. `hello_gpu` now prints that line, and `tests/run_d8_process_tax.sh` holds a bar fixed before any chip run: at most 256 MiB, with two negative controls (`docs/issues/D8-process-tax.md`). The dry run passes on the host. Status: PLANNED (chip NOT_RUN: needs a chip window, `make d8-process-tax`; section 3, D8).
+**CUDA++'s answer (row D8).** A CUDA++ process maps no CUDA library at all: on 2026-10-21 Aien's live Qwen3.6-35B-A3B server (mixture-of-experts, about 3B parameters active per token) had only the C library, the maths library, `libgcc_s` and the loader mapped (Omega `evidence/WHAT-OMEGA-IS-20261021/live-serve-no-cuda.txt`). The row is done when the memory a CUDA++ process holds beyond its own buffers is measured and printed. `hello_gpu` now prints that line, and `tests/d8_process_tax.om` holds a bar fixed before any chip run: at most 256 MiB, with two negative controls (`docs/issues/D8-process-tax.md`). The dry run passes on the host. Status: PLANNED (chip NOT_RUN: needs a chip window, `make d8-process-tax`; section 3, D8).
 
 ### 2.8 Lock-in by licence (rank 8)
 

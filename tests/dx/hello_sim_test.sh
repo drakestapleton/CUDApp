@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# Host test for developer bar rows D3, D4, D7, D8, D10 and D12 (docs/PAIN_POINTS.md), on hello_gpu --sim.
+# Host test for developer bar rows D3, D4, D7, D10 and D12 (docs/PAIN_POINTS.md), on hello_gpu --sim.
 #   usage: tests/dx/hello_sim_test.sh build/hello_gpu [build/hello_gpu_control]
 # No GPU: --sim runs the same kernel program on the host warp simulator (tests/bw_warp_sim.h).
 #   D4  --sim checks all 1048576 answers bit for bit and passes
@@ -10,9 +10,6 @@
 #   D7  two runs print the same output hash
 #   D10 two runs print the same machine-code hash, and the build time is printed
 #   D12 the work line gives the exact bytes moved and the floor time at the measured ceiling
-#   D8  --sim prints its own overhead line (own buffers 12288 KiB) before the launches; --hold-ms prints the
-#       pid; the control's --d8-ballast-mib shows up beyond the own buffers (tests/run_d8_process_tax.sh
-#       holds the bar)
 set -u
 H=${1:?usage: hello_sim_test.sh path/to/hello_gpu [path/to/hello_gpu_control]}
 HC=${2:-}
@@ -71,24 +68,6 @@ if [ -n "$HC" ]; then
 fi
 "$H" --bug=past-end > /dev/null 2>&1; rcu=$?
 exitis past-end-refused-on-gpu "$rcu" 2
-
-# D8: the overhead line, the hold, and the ballast negative control (control build only).
-d8=$(printf '%s\n' "$out1" | grep -E '^overhead \(D8, simulator, no device opened\): resident [0-9]+ KiB before buffers, [0-9]+ KiB with buffers; own buffers 12288 KiB; beyond own buffers [+-][0-9]+ KiB$' | wc -l)
-if [ "$d8" -eq 1 ]; then pass=$((pass+1)); echo "PASS d8-line"; else fail=$((fail+1)); echo "FAIL d8-line ($d8 well-formed lines)"; fi
-held=$("$H" --sim --hold-ms=10 2>&1); rch=$?
-exitis d8-hold-exit "$rch" 0
-want d8-hold "$held" 'hold (D8): pid ' '10 ms with buffers allocated'
-"$H" --sim --hold-ms=60001 > /dev/null 2>&1; rcl=$?
-exitis d8-hold-bounded "$rcl" 2
-"$H" --sim --d8-ballast-mib=64 > /dev/null 2>&1; rcd=$?
-exitis d8-ballast-absent-from-default-build "$rcd" 2
-if [ -n "$HC" ]; then
-	bal=$("$HC" --sim --d8-ballast-mib=64 2>&1); rcb2=$?
-	exitis d8-ballast-exit "$rcb2" 0
-	beyond=$(printf '%s\n' "$bal" | sed -n 's/^overhead (D8, simulator, no device opened): .*; beyond own buffers +\([0-9]*\) KiB$/\1/p')
-	if [ -n "$beyond" ] && [ "$beyond" -ge 65536 ]; then pass=$((pass+1)); echo "PASS d8-ballast-seen (+$beyond KiB)"
-	else fail=$((fail+1)); echo "FAIL d8-ballast-seen: 64 MiB of ballast, beyond own buffers '${beyond}' KiB"; fi
-fi
 
 echo "hello --sim tests: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

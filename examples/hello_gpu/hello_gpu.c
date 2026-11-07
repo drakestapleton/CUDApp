@@ -42,7 +42,7 @@
  * asked the driver for through the session, the cost of opening and the resident memory beyond its own
  * buffers. --sim prints the same line without the open (no device). `--hold-ms=N` (at most 60000) then
  * prints its pid and sleeps N ms with the buffers held, so an outside reader can record what the driver and
- * the kernel report for this process (tests/run_d8_process_tax.sh). `--d8-ballast-mib=N` is the line's
+ * the kernel report for this process (tests/d8_process_tax.om). `--d8-ballast-mib=N` is the line's
  * negative control: hello_gpu_control only (CUDAPP_MIGRATION_PENDING_HELLO_CONTROL, see above), it holds N MiB
  * of touched host memory through the measured window, and the measurement must see it.
  *
@@ -256,6 +256,9 @@ static void chunk_plan(uint32_t base, int bug, uint64_t d[16]) {
 }
 
 /* ---- D8: the memory this process holds beyond its own buffers -------------------------------------------- */
+/* Migration C (pure-Omega directive 2026-11-07): this D8 measurement, hold and ballast code is an addition to the
+ * existing hello_gpu.c; its arithmetic already lives in om/graph/hello-plan.om mode 5. Its .om successor is the
+ * native .om hello of aien-dev/CUDApp#79 (OM-GPU-RETIRE), which retires this file. */
 static uint64_t resident_kib(void) { /* VmRSS of this process; 0 when /proc cannot be read */
     FILE *f = fopen("/proc/self/status", "r");
     char line[256]; unsigned long long kib = 0;

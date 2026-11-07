@@ -98,6 +98,10 @@ jobs:
         run: make test-om-units test-om-encoder-mutants test-om-cubin-mutants OMEGA_MV="$RUNNER_TEMP/omega-mv" OMEGA_BRIDGE_DIR="$RUNNER_TEMP/omega-bridge"
       - name: Exact MMIO contract and wrong-cache-policy control
         run: make test-sm121-mmio OMEGA_MV="$RUNNER_TEMP/omega-mv"
+      - name: D8 process-tax dry run and D8 mutants (tests/d8_process_tax.om, tests/d8_mutants.om)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap
+          make d8-process-tax-dry-run test-graph-residue-mutants OMEGA_MV="$RUNNER_TEMP/omega-mv" OMEGA_BRIDGE_DIR="$RUNNER_TEMP/omega-bridge"
   sbom:
     runs-on: ubuntu-latest
     timeout-minutes: 10

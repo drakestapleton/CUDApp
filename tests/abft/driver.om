@@ -1,0 +1,856 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note tests/abft/driver.om: DRA-420/DRA-387 GEMM fault-detection evaluator driver, seeded Omega. It
+note checks the compiler pin and the frozen plan hash, builds build/abft/abft and cul1-unit with the
+note pinned omc, runs the CUL1 unit and the evaluator, and prints the evaluator's GATE lines.
+note From the repository root:
+note   mkdir -p build && "$OMEGA_OMC" < tests/abft/driver.om > build/abft-driver
+note   chmod +x build/abft-driver && OMEGA_OMC=/abs/omega-mv/seed/out/omc build/abft-driver [OUT_DIR] [FIRST LAST]
+note OMEGA_OMC must be omega-mv e5b32567 seed/out/omc (sha256 PIN); any other compiler is refused.
+note Exit: 0 every step and gate passed; 2 OMEGA_OMC unset; 1 pin, frozen-hash, input or output
+note failure; otherwise the failing step's status (omc, cul1-unit, then the evaluator: its failed
+note gate count, 64 for bad arguments). A signalled child is 128 + signal. Children get an empty
+note environment and inherit stdin and stderr.
+
+text pinhex "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
+text envkey "OMEGA_OMC="
+text frozen "tests/abft/FROZEN.sha256"
+text defout "build/abft"
+text slash "/"
+text two "  "
+text nl "\n"
+text p1 "tests/abft/frozen.om"
+text p2 "native/abft/lib.om"
+text p3 "native/abft/check.om"
+text p4 "native/abft/cand.om"
+text p5 "native/abft/sched.om"
+text p6 "native/abft/run.om"
+text q1 "native/learn53/task.om"
+text q2 "tests/learn53/fixtures.om"
+text q3 "native/abft/cul1.om"
+text q4 "tests/abft/cul1-unit.om"
+text nabft "abft"
+text nabsrc "abft.om"
+text nabtmp "abft.tmp"
+text nculu "cul1-unit"
+text ncusrc "cul1-unit.om"
+text ncutmp "cul1-unit.tmp"
+text nlog "abft.log"
+text gatep "GATE"
+text enoomc "OMEGA_OMC: set OMEGA_OMC to the pinned omega-mv e5b32567 seed/out/omc\n"
+text epin "abft: OMEGA_OMC is not the pinned omc "
+text efrz "abft: FAILED "
+text enofrz "abft: no properly formatted lines in tests/abft/FROZEN.sha256\n"
+text eread "abft: cannot read "
+text ewrite "abft: cannot write "
+text emkdir "abft: cannot create "
+text ebig "abft: input or argument too large\n"
+text eproc "abft: fork or wait failed\n"
+
+global pb uchar 4096
+global pbn ulong 1
+global ob uchar 4096
+global obn ulong 1
+global cp uchar 4096
+global cpn ulong 1
+global ab uchar 8192
+global av uchar 16384
+global avp ulong 1
+global avc ulong 1
+global avl ulong 1
+global fa uchar 4194304
+global fan ulong 1
+global fb uchar 4194304
+global fbn ulong 1
+global hexd uchar 64
+global stb uchar 4
+global kk uint 64
+global ivs uint 8
+global hv uint 8
+global ws uint 64
+global st uint 8
+global blk uchar 64
+global bk ulong 2
+
+note ---- output ------------------------------------------------------------------------------
+fn say t view uchar * to void
+r = write 1 t 0 len t
+end
+
+fn esay t view uchar * to void
+r = write 2 t 0 len t
+end
+
+fn die t view uchar * to void
+esay t
+exit 1
+end
+
+note stderr: T, then the path pb, then a newline; exit 1
+fn diep t view uchar * to void
+esay t
+r = write 2 pb 0 get pbn 0
+esay nl
+exit 1
+end
+
+note ---- paths: pb is the working path, ob the output directory --------------------------------
+fn pclear to void
+put pbn 0 0
+end
+
+fn pcat t view uchar * to void
+p = get pbn 0
+n = len t
+if gt add p n 4095
+die ebig
+end
+for i ulong n
+put pb add p i get t i
+end
+put pbn 0 add p n
+end
+
+note pb = OUT/NAME
+fn opath t view uchar * to void
+n = get obn 0
+for i ulong n
+put pb i get ob i
+end
+put pbn 0 n
+pcat slash
+pcat t
+end
+
+fn opr to long
+ret fopen pb 0 get pbn 0 0 0
+end
+
+fn opw to long
+ret fopen pb 0 get pbn 0 577 438
+end
+
+fn fclo fd long to void
+if ge fd 0
+r = fclose int fd
+end
+end
+
+note ---- packed argument list ---------------------------------------------------------------
+fn areset to void
+put avc 0 0
+put avp 0 2
+put av 0 0
+put av 1 0
+end
+
+fn afix to void
+p = get avp 0
+q = get avl 0
+m = sub sub p q 2
+if gt m 65535
+die ebig
+end
+put av q uchar and m 255
+put av add q 1 uchar shr m 8
+end
+
+fn anew to void
+p = get avp 0
+if gt add p 2 len av
+die ebig
+end
+put avl 0 p
+put avp 0 add p 2
+c = add get avc 0 1
+put avc 0 c
+put av 0 uchar and c 255
+put av 1 uchar shr c 8
+afix
+end
+
+note append the path pb to the current record
+fn apb to void
+p = get avp 0
+n = get pbn 0
+if gt add p n len av
+die ebig
+end
+for i ulong n
+put av add p i get pb i
+end
+put avp 0 add p n
+afix
+end
+
+note append argument I of this process as a new record
+fn aarg i ulong to void
+anew
+p = get avp 0
+n = argread i av p sub len av p
+if lt n 0
+die ebig
+end
+put avp 0 add p ulong n
+afix
+end
+
+note ---- children ---------------------------------------------------------------------------
+note run the argument list; a negative descriptor is inherited. Shell-style status.
+fn spawn fi int fo int to ulong
+pid = fork
+if lt pid 0
+die eproc
+end
+if eq pid 0
+if ge fi 0
+r = dupfd fi 0 0
+end
+if ge fo 0
+r = dupfd fo 1 0
+end
+r = execprog av 0 get avp 0
+if eq r -2
+exit 127
+end
+exit 126
+end
+r = waitpid int pid stb 0 4 0
+if ne r pid
+die eproc
+end
+sg = and ulong get stb 0 127
+if eq sg 0
+ret ulong get stb 1
+end
+ret add sg 128
+end
+
+note ---- files ------------------------------------------------------------------------------
+note fb = the bytes of the file pb; false when it cannot be read
+fn rdb to bool
+put fbn 0 0
+fd = opr
+if lt fd 0
+ret false
+end
+n = ulong 0
+while true bound 999999
+if eq n len fb
+die ebig
+end
+r = read int fd fb n sub len fb n
+if lt r 0
+fclo fd
+ret false
+end
+if eq r 0
+break
+end
+n = add n ulong r
+end
+fclo fd
+put fbn 0 n
+ret true
+end
+
+note append the file T to fa; exit 1 when it cannot be read (cat under set -e)
+fn cata t view uchar * to void
+pclear
+pcat t
+fd = opr
+if lt fd 0
+diep eread
+end
+n = get fan 0
+while true bound 999999
+if eq n len fa
+die ebig
+end
+r = read int fd fa n sub len fa n
+if lt r 0
+fclo fd
+diep eread
+end
+if eq r 0
+break
+end
+n = add n ulong r
+end
+fclo fd
+put fan 0 n
+end
+
+note write fa to the file pb
+fn wrfa to void
+fd = opw
+if lt fd 0
+diep ewrite
+end
+n = get fan 0
+o = ulong 0
+while lt o n bound 999999
+r = write int fd fa o sub n o
+if le r 0
+fclo fd
+diep ewrite
+end
+o = add o ulong r
+end
+r = fclose int fd
+if ne r 0
+diep ewrite
+end
+end
+
+note ---- SHA-256 (FIPS 180-4) ----------------------------------------------------------------
+note SHA-256 (FIPS 180-4) constants, copied from om/cache/digest.om kc_k and kc_iv
+fn shainit to void
+put kk 0 1116352408
+put kk 1 1899447441
+put kk 2 3049323471
+put kk 3 3921009573
+put kk 4 961987163
+put kk 5 1508970993
+put kk 6 2453635748
+put kk 7 2870763221
+put kk 8 3624381080
+put kk 9 310598401
+put kk 10 607225278
+put kk 11 1426881987
+put kk 12 1925078388
+put kk 13 2162078206
+put kk 14 2614888103
+put kk 15 3248222580
+put kk 16 3835390401
+put kk 17 4022224774
+put kk 18 264347078
+put kk 19 604807628
+put kk 20 770255983
+put kk 21 1249150122
+put kk 22 1555081692
+put kk 23 1996064986
+put kk 24 2554220882
+put kk 25 2821834349
+put kk 26 2952996808
+put kk 27 3210313671
+put kk 28 3336571891
+put kk 29 3584528711
+put kk 30 113926993
+put kk 31 338241895
+put kk 32 666307205
+put kk 33 773529912
+put kk 34 1294757372
+put kk 35 1396182291
+put kk 36 1695183700
+put kk 37 1986661051
+put kk 38 2177026350
+put kk 39 2456956037
+put kk 40 2730485921
+put kk 41 2820302411
+put kk 42 3259730800
+put kk 43 3345764771
+put kk 44 3516065817
+put kk 45 3600352804
+put kk 46 4094571909
+put kk 47 275423344
+put kk 48 430227734
+put kk 49 506948616
+put kk 50 659060556
+put kk 51 883997877
+put kk 52 958139571
+put kk 53 1322822218
+put kk 54 1537002063
+put kk 55 1747873779
+put kk 56 1955562222
+put kk 57 2024104815
+put kk 58 2227730452
+put kk 59 2361852424
+put kk 60 2428436474
+put kk 61 2756734187
+put kk 62 3204031479
+put kk 63 3329325298
+put ivs 0 1779033703
+put ivs 1 3144134277
+put ivs 2 1013904242
+put ivs 3 2773480762
+put ivs 4 1359893119
+put ivs 5 2600822924
+put ivs 6 528734635
+put ivs 7 1541459225
+end
+
+fn shasched to void
+for i ulong 16
+b = mul i 4
+v = shl uint get blk b 24
+v = or v shl uint get blk add b 1 16
+v = or v shl uint get blk add b 2 8
+v = or v uint get blk add b 3
+put ws i v
+end
+for j ulong 48
+q = add j 16
+x = get ws sub q 15
+y = get ws sub q 2
+s0 = xor xor rotr x 7 rotr x 18 shr x 3
+s1 = xor xor rotr y 17 rotr y 19 shr y 10
+put ws q add add add get ws sub q 16 s0 get ws sub q 7 s1
+end
+end
+
+fn shat1 i ulong to uint
+e = get st 4
+s1 = xor xor rotr e 6 rotr e 11 rotr e 25
+ch = xor and e get st 5 and not e get st 6
+ret add add add add get st 7 s1 ch get kk i get ws i
+end
+
+fn shat2 to uint
+a = get st 0
+b = get st 1
+c = get st 2
+s0 = xor xor rotr a 2 rotr a 13 rotr a 22
+mj = xor xor and a b and a c and b c
+ret add s0 mj
+end
+
+fn shacomp to void
+shasched
+for i ulong 8
+put st i get hv i
+end
+for i ulong 64
+t1 = shat1 i
+t2 = shat2
+put st 7 get st 6
+put st 6 get st 5
+put st 5 get st 4
+put st 4 add get st 3 t1
+put st 3 get st 2
+put st 2 get st 1
+put st 1 get st 0
+put st 0 add t1 t2
+end
+for i ulong 8
+put hv i add get hv i get st i
+end
+end
+
+fn shabyte b uchar to void
+n = get bk 0
+put blk n b
+n = add n 1
+if eq n 64
+shacomp
+n = ulong 0
+end
+put bk 0 n
+put bk 1 add get bk 1 1
+end
+
+fn hexch v uint to uchar
+if lt v 10
+ret uchar add v 48
+end
+ret uchar add v 87
+end
+
+fn shafinal to void
+bits = mul get bk 1 8
+shabyte 128
+while ne get bk 0 56 bound 64
+shabyte 0
+end
+for i ulong 8
+shabyte uchar and shr bits mul sub 7 i 8 255
+end
+for i ulong 8
+v = get hv i
+for j ulong 8
+put hexd add mul i 8 j hexch and shr v mul sub 7 j 4 15
+end
+end
+end
+
+note hexd = sha256 of the file pb; false when it cannot be read
+fn hashpb to bool
+fd = opr
+if lt fd 0
+ret false
+end
+m = new uchar 4096 0
+for i ulong 8
+put hv i get ivs i
+end
+put bk 0 0
+put bk 1 0
+while true
+r = read int fd m 0 len m
+if lt r 0
+fclo fd
+ret false
+end
+if eq r 0
+fclo fd
+shafinal
+ret true
+end
+for i ulong ulong r
+shabyte get m i
+end
+end
+ret false
+end
+
+note print "HEX  OUT/NAME" (sha256sum)
+fn sumln t view uchar * to void
+opath t
+if hashpb
+r = write 1 hexd 0 64
+say two
+r = write 1 pb 0 get pbn 0
+say nl
+else
+diep eread
+end
+end
+
+note ---- steps ------------------------------------------------------------------------------
+note cp = the value of OMEGA_OMC (empty when unset)
+fn envomc to void
+put cpn 0 0
+c = envcnt
+for i ulong ulong c
+n = envread i ab 0 len ab
+if gt n long len envkey
+if pfx
+k = sub ulong n len envkey
+for j ulong k
+put cp j get ab add len envkey j
+end
+put cpn 0 k
+ret
+end
+end
+end
+end
+
+note ab starts with OMEGA_OMC=
+fn pfx to bool
+for j ulong len envkey
+if ne get ab j get envkey j
+ret false
+end
+end
+ret true
+end
+
+note ob = argument 1 when it is not empty (${1:-build/abft}), else build/abft
+fn outset to void
+put obn 0 0
+if gt ulong argcnt 1
+n = argread 1 ob 0 len ob
+if lt n 0
+die ebig
+end
+put obn 0 ulong n
+end
+if eq get obn 0 0
+for i ulong len defout
+put ob i get defout i
+end
+put obn 0 len defout
+end
+end
+
+note mkdir -p ob
+fn mkout to void
+n = get obn 0
+for i ulong n
+if eq get ob i 47
+if gt i 0
+r = makedir ob 0 i 511
+end
+end
+end
+r = makedir ob 0 n 511
+if and ne r 0 ne r -17
+for i ulong n
+put pb i get ob i
+end
+put pbn 0 n
+diep emkdir
+end
+end
+
+note one FROZEN line [s, e): the hash of the file fb[s+66 .. e) must equal fb[s .. s+64)
+fn frzone s ulong e ulong to void
+k = sub e add s 66
+if gt k 4095
+die ebig
+end
+for i ulong k
+put pb i get fb add add s 66 i
+end
+put pbn 0 k
+g = false
+if hashpb
+g = true
+for i ulong 64
+if ne get hexd i get fb add s i
+g = false
+end
+end
+end
+if g
+else
+diep efrz
+end
+end
+
+note sha256sum -c tests/abft/FROZEN.sha256: every "HEX  PATH" line must match; malformed lines are
+note skipped, and a file with no well-formed line fails
+fn frzchk to void
+pclear
+pcat frozen
+if rdb
+else
+diep eread
+end
+nf = ulong 0
+s = ulong 0
+n = get fbn 0
+while lt s n bound 999999
+e = lend s
+if frzwell s e
+frzone s e
+nf = add nf 1
+end
+s = add e 1
+end
+if eq nf 0
+die enofrz
+end
+end
+
+note index of the next newline at or after s in fb, or the end of fb
+fn lend s ulong to ulong
+n = get fbn 0
+for i ulong sub n s
+if eq get fb add s i 10
+ret add s i
+end
+end
+ret n
+end
+
+note line [s, e) is 64 lowercase hex digits, two spaces and a nonempty path
+fn frzwell s ulong e ulong to bool
+if le e add s 66
+ret false
+end
+for i ulong 64
+c = get fb add s i
+if or lt c 48 gt c 102
+ret false
+end
+if and gt c 57 lt c 97
+ret false
+end
+end
+if ne get fb add s 64 32
+ret false
+end
+ret eq get fb add s 65 32
+end
+
+note compile OUT/SRC (written from fa) with the pinned omc into OUT/TMP, make it executable and
+note rename it to OUT/BIN; a compile failure exits with omc's status
+fn build src view uchar * tmp view uchar * bin view uchar * to void
+opath src
+wrfa
+fi = opr
+if lt fi 0
+diep eread
+end
+opath tmp
+fo = opw
+if lt fo 0
+fclo fi
+diep ewrite
+end
+areset
+anew
+apcp
+s = spawn int fi int fo
+fclo fi
+fclo fo
+if ne s 0
+exit int s
+end
+opath tmp
+r = chmx
+if ne r 0
+diep ewrite
+end
+rnm tmp bin
+end
+
+note chmod +x pb: add every execute bit the umask allows, as the shell does
+fn chmx to long
+um = int umask 18
+r = umask um
+ret chmod pb 0 get pbn 0 and 511 not um
+end
+
+note append the compiler path cp to the current record
+fn apcp to void
+p = get avp 0
+n = get cpn 0
+if gt add p n len av
+die ebig
+end
+for i ulong n
+put av add p i get cp i
+end
+put avp 0 add p n
+afix
+end
+
+note rename OUT/A to OUT/B
+fn rnm a view uchar * b view uchar * to void
+areset
+opath a
+anew
+apb
+opath b
+anew
+apb
+r = renames av 0 get avp 0 0
+if ne r 0
+diep ewrite
+end
+end
+
+note print every line of fb that starts with GATE
+fn gates to void
+n = get fbn 0
+s = ulong 0
+while lt s n bound 999999
+e = lend s
+if gatln s e
+r = write 1 fb s sub e s
+say nl
+end
+s = add e 1
+end
+end
+
+fn gatln s ulong e ulong to bool
+if lt sub e s len gatep
+ret false
+end
+for i ulong len gatep
+if ne get fb add s i get gatep i
+ret false
+end
+end
+ret true
+end
+
+note pb = the compiler; its sha256 must be the pin
+fn pinchk to void
+n = get cpn 0
+for i ulong n
+put pb i get cp i
+end
+put pbn 0 n
+g = false
+if hashpb
+g = true
+for i ulong 64
+if ne get hexd i get pinhex i
+g = false
+end
+end
+end
+if g
+else
+diep epin
+end
+end
+
+fn bldabft to void
+put fan 0 0
+cata p1
+cata p2
+cata p3
+cata p4
+cata p5
+cata p6
+build nabsrc nabtmp nabft
+end
+
+fn bldcul1 to void
+put fan 0 0
+cata q1
+cata q2
+cata q3
+cata q4
+build ncusrc ncutmp nculu
+end
+
+note OUT/abft with the arguments after OUT_DIR, stdout to OUT/abft.log; then the GATE lines
+fn runabft to ulong
+areset
+opath nabft
+anew
+apb
+c = ulong argcnt
+i = ulong 2
+while lt i c bound 65536
+aarg i
+i = add i 1
+end
+opath nlog
+fo = opw
+rc = ulong 1
+if ge fo 0
+rc = spawn -1 int fo
+fclo fo
+end
+opath nlog
+if rdb
+gates
+end
+ret rc
+end
+
+fn main to int
+envomc
+if eq get cpn 0 0
+esay enoomc
+ret 2
+end
+shainit
+outset
+mkout
+pinchk
+frzchk
+bldabft
+bldcul1
+sumln nabft
+sumln nculu
+sumln nabsrc
+sumln ncusrc
+areset
+opath nculu
+anew
+apb
+s = spawn -1 -1
+if ne s 0
+ret int s
+end
+ret int runabft
+end

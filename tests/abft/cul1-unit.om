@@ -1,6 +1,6 @@
 note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Unit cases for native/abft/cul1.om; concatenated after native/learn53/task.om, tests/learn53/fixtures.om
-note and native/abft/cul1.om (tests/abft/run.sh). keval stays the exact oracle; kabft is the checksum.
+note and native/abft/cul1.om (tests/abft/driver.om). keval stays the exact oracle; kabft is the checksum.
 global ksave uchar 4096
 fn kseeds want int to void
 for s ulong 8

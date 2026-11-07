@@ -46,7 +46,7 @@ $(OUT_DIR)/platform_linux_wait_mutant: tests/platform_linux_wait.c om/platform-l
 
 $(OUT_DIR)/platform_linux_fake_devctl: om/platform-linux/fake_devctl.om
 	@mkdir -p $(OUT_DIR)
-	$(OMEGA_MV)/seed/out/omc < om/platform-linux/fake_devctl.om > $@
+	$(OMEGA_OMC) < om/platform-linux/fake_devctl.om > $@
 	test -s $@
 	chmod +x $@
 
@@ -58,7 +58,7 @@ test-platform-linux-fake-device: $(OUT_DIR)/platform_linux_fake_devctl
 	$(OUT_DIR)/platform_linux_fake_devctl
 	@sed 's/uchar len msg/uchar 18/' om/platform-linux/fake_devctl.om > $(OUT_DIR)/fake_devctl_mutant.om
 	@if cmp -s $(OUT_DIR)/fake_devctl_mutant.om om/platform-linux/fake_devctl.om; then echo "MUTANT BROKEN"; exit 1; fi
-	@$(OMEGA_MV)/seed/out/omc < $(OUT_DIR)/fake_devctl_mutant.om > $(OUT_DIR)/fake_devctl_mutant
+	@$(OMEGA_OMC) < $(OUT_DIR)/fake_devctl_mutant.om > $(OUT_DIR)/fake_devctl_mutant
 	@chmod +x $(OUT_DIR)/fake_devctl_mutant
 	@$(OUT_DIR)/fake_devctl_mutant; test $$? -eq 4
 	@echo "PASS platform linux fake-device fixture (mutant exit 4)"

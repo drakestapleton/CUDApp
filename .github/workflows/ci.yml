@@ -98,6 +98,8 @@ jobs:
         run: make test-om-encoder-ldg OMEGA_MV="$RUNNER_TEMP/omega-mv"
       - name: ATOMG.E.MIN.64 exact words and nvdisasm oracle (seeded .om gate)
         run: make test-om-encoder-atomg OMEGA_MV="$RUNNER_TEMP/omega-mv"
+      - name: Guard predicates @P0 / @!P0 on every op, LDCU refusal and nvdisasm oracle (seeded .om gate)
+        run: make test-om-encoder-guard OMEGA_MV="$RUNNER_TEMP/omega-mv"
   sbom:
     runs-on: ubuntu-latest
     timeout-minutes: 10

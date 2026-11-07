@@ -14,7 +14,7 @@ note     or dst_subreg shl 16 or src1_subreg shl 24 or src2_subreg shl 32 or src
 note phys: vreg_to_phys 0..255 then uvreg_to_phys at 256..287 (C int, two's complement).
 note pad 1: omega_bw_encode_program (pad to the multiple of 8, at least 32); pad 0: exactly n instructions.
 note Result: the bytes written, or 0 when an instruction is refused (unknown op, an offset outside its
-note field, a BSSY delta below 2, a barrier register above 15) or n is above 1024.
+note field, a BSSY delta below 2, a barrier register above 15, a P0 guard on LDCU / LDCU.64) or n is above 1024.
 note Every constant is the decimal form of the C encoder's hex word (conversions by Wolfram,
 note evidence/CUDAPP-OM-ENCODER/wolfram-constants.txt).
 
@@ -506,21 +506,40 @@ end
 ret 1
 end
 
+note One instruction, then its guard (DRA-483): a predicated instruction (word 7 bit 1) gets pred o (0 @P0,
+note 8 @!P0) in w0 bits 12..15 on every op, which is where each op's word above carries 7 (always). LDCU and
+note LDCU.64 (ops 6, 7) are uniform-datapath instructions whose guard bits name UP0..UPT (nvdisasm 13.0.85
+note prints @UP0 for guard 0), so a P0 guard cannot be encoded there: refused. 61440 = 0xf000 (Wolfram).
+note Gate: om/encoder/guard_pred_test.om, make test-om-encoder-guard.
 fn enc1 o view ulong 16 w edit ulong 4 to ulong
 op = get o 0
+r = ulong 1
 if lt op 15
-ret enc_a o w
-end
+r = enc_a o w
+else
 if lt op 30
-ret enc_b o w
-end
+r = enc_b o w
+else
 if lt op 46
-ret enc_c o w
-end
+r = enc_c o w
+else
 if lt op 60
-ret enc_d o w
+r = enc_d o w
+else
+r = enc_e o w
 end
-ret enc_e o w
+end
+end
+end
+if or ne r 0 eq get o 9 0
+ret r
+end
+if isuld op
+ret 1
+end
+x = get w 0
+put w 0 or sub x and x 61440 shl pred o 12
+ret 0
 end
 
 note the 16 bytes of instruction i, each word little-endian

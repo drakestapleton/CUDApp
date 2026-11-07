@@ -95,7 +95,7 @@ Stored now: each is `nvdisasm` V13.0.85 `--binary SM121` reading words our own e
 our own bytes); the input bytes sit beside the listing; no NVIDIA-generated code is involved. They are
 kept as review evidence that the independent decoder agrees with the encoder. No test reads them: the
 gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ldg`,
-`make test-om-encoder-atomg`).
+`make test-om-encoder-atomg`, `make test-om-encoder-guard`).
 
 | Listing | Input (our bytes) | Why kept |
 |---|---|---|

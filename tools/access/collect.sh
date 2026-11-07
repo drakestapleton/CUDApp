@@ -11,7 +11,7 @@
 #       tools/access/plans/*.tsv file. OUT must not exist. Needs ACCESS_WINDOW (window id),
 #       ACCESS_REPO (owner/repo of the copied bundle) and ACCESS_REV (its 40-hex commit);
 #       ACCESS_BUNDLE (directory with copied artifacts) is optional. ACCESS_ROW_TIMEOUT caps each
-#       row in seconds (default 1800).
+#       row in seconds (default 1800). Rows see ACCESS_OUT, the absolute OUT, for files they keep.
 #   collect.sh close OUT CLAIM CHARGED_USD DESTROYED BY VERIFIED_AT
 #       On the Spark, after OUT was copied back and the instance was destroyed and the destruction
 #       checked in the provider console. CLAIM is ACCESS_TESTED or NONE; DESTROYED is yes or no.
@@ -114,6 +114,9 @@ do_run() {
   export ACCESS_BUNDLE
   tmo=${ACCESS_ROW_TIMEOUT:-1800}
   mkdir -p "$out/rows" || exit 74
+  # Rows may keep files (for example GPU outputs) under ACCESS_OUT; they are hashed into SHA256SUMS.
+  ACCESS_OUT=$(CDPATH= cd -- "$out" && pwd) || exit 74
+  export ACCESS_OUT
   cp "$plan" "$out/plan.tsv" || exit 74
   printf 'provider=%s\nwindow=%s\n' "$prov" "$(word "$ACCESS_WINDOW")" > "$out/meta" || exit 74
   body=$out/receipt.body

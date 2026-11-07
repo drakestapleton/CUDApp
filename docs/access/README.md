@@ -57,7 +57,8 @@ backend result and not a qualification. Backend qualification stays with DRA-193
 | `tools/access/rcheck.om` | the receipt checker, seeded Omega, pinned omc `2c824805…` |
 | `tools/access/collect.sh` | records one window on the VM (`run`) and closes it on the Spark (`close`) |
 | `tools/access/plans/amd-mi300x.tsv` | AMD W0 rows |
-| `tools/access/plans/intel-gpu.tsv` | Intel W0 rows |
+| `tools/access/plans/intel-gpu.tsv` | Intel W0 rows and the W1 OpenCL GPU candidate and control rows |
+| `tools/access/intel-cl.sh` | Intel W1: `bundle` (Spark), the row commands `run`/`reps`/`ctl` (VM), `compare` with conform.om (Spark) |
 | `tools/access/plans/google-tpu.tsv` | TPU W0 rows, including the first StableHLO candidate rows |
 | `tests/access/run.sh` | host gate: fixtures, one-line mutants, a checker mutant and a collector self-test |
 
@@ -72,4 +73,5 @@ sh tests/access/run.sh /absolute/path/to/omc    # omc sha256 2c82480596bbdc50…
 ```
 
 It ends `ACCESS GATE PASS pass=<n> fail=0` and exits 0. It opens no GPU and uses no network.
-Host receipt: `evidence/ACCESS-GATE-20261107T0127Z/` (52 of 52 at `cce2886e`, host CPU only).
+Host receipt: `evidence/ACCESS-GATE-20261107T0127Z/` (52 of 52 at `cce2886e`, host CPU only); the
+DRA-194 rows (section 6 of the gate) are in `evidence/INTEL-CL-HOSTPREP-20261107/`.

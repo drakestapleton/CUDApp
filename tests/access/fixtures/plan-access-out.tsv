@@ -1,0 +1,3 @@
+# id	kind	want	needs	command
+# Collector self-test (tests/access/run.sh): a row keeps a file under ACCESS_OUT; it must be hashed.
+ctl-kept	control	1	-	mkdir -p "$ACCESS_OUT/kept" && printf '%s' "$ACCESS_OUT" > "$ACCESS_OUT/kept/where" && false

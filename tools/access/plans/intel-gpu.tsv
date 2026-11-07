@@ -11,8 +11,26 @@ inv-xpu-smi	inventory	0	xpu-smi	xpu-smi discovery
 # github.com/oneapi-src/level-zero-tests (built on the instance at a pinned tag; see the packet).
 ref-ze-peak	reference	0	ze_peak	ze_peak -t sp_compute
 ref-ze-bandwidth	reference	0	ze_bandwidth	ze_bandwidth
-# Candidate: CUDA++ backend/spirv/emit.om SPIR-V through Intel's OpenCL driver, compared bit for bit
-# with backend/spirv/conform.om. Blocked until the two host changes named in the packet land.
-cand-vadd-cl	candidate	0	-	MISSING_IMPLEMENTATION spirv-host enumerates CPU devices only and conform.om has no native x86 build yet
-cand-fsum16-cl	candidate	0	-	MISSING_IMPLEMENTATION same blocker as cand-vadd-cl
-ctl-vadd-mutant-cl	control	1	-	MISSING_IMPLEMENTATION same blocker as cand-vadd-cl
+# Candidate (W1): CUDA++ backend/spirv/emit.om SPIR-V through Intel's OpenCL GPU driver, compared bit for
+# bit with backend/spirv/conform.om's reference. ACCESS_BUNDLE is made on the Spark with
+# `tools/access/intel-cl.sh bundle MT_OUT BUNDLE` (the OpenCL modules, inputs and conform.om references
+# that tests/multitarget/run.sh writes, plus spirv-host.c and intel-cl.sh, with SHA256SUMS). Each row
+# builds spirv-host.c with MT_TARGET=3 against the ICD library named in /etc/OpenCL/vendors/intel.icd
+# (once per window), runs one module on the GPU with MT_CL_GPU=1, keeps the output under
+# ACCESS_OUT/outputs/ and compares it with cmp: exit 0 equal, 1 differ, 2..9 the launcher refused.
+# After the copy back, `intel-cl.sh compare OUT CONFORM RESULT` re-checks every output with conform.om
+# on the Spark (docs/access/INTEL-CLOUD-SERVICES.md, "W1 on the instance").
+cand-vadd-cl	candidate	0	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" run vadd
+cand-fsum16-cl	candidate	0	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" run fsum16
+cand-gemm16-cl	candidate	0	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" run gemm16
+cand-reps-cl	candidate	0	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" reps 10
+# Controls: planted-wrong kernels must differ from the reference (want 1); planted refusals must give
+# the launcher's exit with no output: no opt-in (2), a forbidden /dev/dri/ descriptor (9), a required
+# library that is never mapped (9), the wrong GPU vendor (5).
+ctl-vadd-mutant-cl	control	1	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" run vadd mutant
+ctl-fsum16-mutant-cl	control	1	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" run fsum16 mutant
+ctl-gemm16-mutant-cl	control	1	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" run gemm16 mutant
+ctl-optin-cl	control	2	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" ctl flag
+ctl-isolation-cl	control	9	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" ctl isolation
+ctl-require-cl	control	9	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" ctl require
+ctl-vendor-cl	control	5	cc	sh "$ACCESS_BUNDLE/intel-cl.sh" ctl vendor

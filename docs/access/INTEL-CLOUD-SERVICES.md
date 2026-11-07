@@ -82,23 +82,64 @@ needs Drake's written approval before the instance is used.
 > them against Intel's own stack on the same GPU. Every run leaves a public receipt with exact
 > versions and logs. Linux, SSH and permission to build software are needed.
 
-## Host work before W1 (none of it is done)
+## Host work before W1 (done on the Spark CPU, DRA-194; Intel GPU NOT_RUN)
 
-1. `tools/multitarget/spirv-host.c` enumerates only `CL_DEVICE_TYPE_CPU` and pins the OpenCL loader
-   to one CPU library (PoCL). Running on an Intel GPU needs a GPU mode that accepts
-   `CL_DEVICE_TYPE_GPU` from Intel's driver, records the device name and driver version, and keeps
-   the current CPU-only mode and its isolation controls unchanged. This is a change to existing,
-   migration-pending C; its successor stays `backend/opencl/host.om` over omega-mv#888 (E2). The
-   Apple lane (DRA-195) is changing the same file for MoltenVK; the two changes must be coordinated.
-2. `conform.om` compares outputs, but the instance is x86-64 and the pinned omc writes AArch64
-   binaries. Either copy the output files back and compare on the Spark (simplest), or build the
-   compare with `target x86linux`, whose native x86 execution is itself NOT_RUN so far.
+1. **OpenCL GPU mode.** `tools/multitarget/spirv-host.c` (migration-pending C, built only with
+   `-DCUDAPP_MIGRATION_PENDING_SPIRV_HOST=1`) has a build `MT_TARGET=3`: the OpenCL ICD loader is
+   pinned to one vendor library `MT_CL_GPU_ICD` (Intel: the path in `/etc/OpenCL/vendors/intel.icd`),
+   only `CL_DEVICE_TYPE_GPU` is enumerated (no CPU fallback: a platform without a GPU exits 5), the
+   device must report vendor id `0x8086`, and the run prints platform, device name, `CL_DRIVER_VERSION`,
+   device and IL versions, a timing line (setup, driver compile, run, profiled device ns) and the number
+   of open `/dev/dri/` descriptors. It is opt-in twice: the build, and `MT_CL_GPU=1` at run time
+   (anything else exits 2 before any file or the loader is opened). The `/proc/self/maps` and
+   `/proc/self/fd` isolation scan stays, with its own default forbid list
+   (`libpocl:nvidia:libcuda:libnvcuda`, checked against the ICD path before loading and against every
+   mapping after the run) and a required mapping (the ICD's realpath). The default build `MT_TARGET=0`
+   is unchanged: PoCL CPU only, whatever `MT_CL_GPU` says. Successor: `backend/opencl/host.om` over
+   omega-mv#888 (E2).
+2. **Compare path: copy back, compare on the Spark.** On the VM each candidate row compares its output
+   with the conform.om reference in the bundle using `cmp` (exit 0 equal, 1 differ). The outputs stay in
+   the run directory (`outputs/`, hashed into `SHA256SUMS`); after the copy back,
+   `tools/access/intel-cl.sh compare` runs `conform.om check` on every output on the Spark and fails any
+   output whose bytes conform.om rejects, any control whose mutant was not caught, and any row the VM
+   recorded otherwise. An x86linux build of conform.om was not made: its native x86 execution is
+   NOT_RUN so far, and the Spark compare needs none.
 3. `ze_peak` and `ze_bandwidth` come from github.com/oneapi-src/level-zero-tests. Build them on the
    instance at a pinned tag and record the tag and binary sha256 in the receipt (TOOL lines). They
    are Intel's tests, used as the reference, not CUDA++ code.
 
-Until 1 and 2 land, the candidate rows stay `MISSING_IMPLEMENTATION` in the plan file and in every
-W0 receipt.
+Host evidence for 1 and 2 (Spark AArch64 CPU, no GPU): `evidence/INTEL-CL-HOSTPREP-20261107/`. Every
+Intel GPU row is NOT_RUN until a window runs.
+
+## W1 on the instance
+
+```
+# 1. Spark (CPU pool): produce the modules, inputs and references, then the bundle.
+SPIRV_VAL=... CUDAPP_MIGRATION_PENDING_SPIRV_HOST=1 POCL_LIBRARY=... MT_CFLAGS=-I<CL+vulkan headers> \
+  MT_OUT=<dir>/mt sh tests/multitarget/run.sh <abs>/omc          # MULTITARGET PASS
+sh tools/access/intel-cl.sh bundle <dir>/mt <dir>/intel-bundle      # 16 files + SHA256SUMS
+git rev-parse HEAD                                                 # ACCESS_REV
+# copy tools/access/collect.sh, tools/access/plans/intel-gpu.tsv and <dir>/intel-bundle to the VM
+
+# 2. VM (Ubuntu with Intel's compute runtime: intel-opencl-icd, ocl-icd-libopencl1, opencl-c-headers, a C compiler)
+ACCESS_WINDOW=intel-w1-<date> ACCESS_REPO=aien-dev/CUDApp ACCESS_REV=<40 hex> ACCESS_BUNDLE=$PWD/intel-bundle \
+  sh collect.sh run intel-cloud intel-gpu.tsv run-intel-w1
+# 3. copy run-intel-w1/ back, destroy the instance (Teardown below)
+
+# 4. Spark: conform.om at the same rev with the pinned omc, then compare, then close.
+<abs>/omc < backend/spirv/conform.om > <dir>/conform && chmod 700 <dir>/conform
+sh tools/access/intel-cl.sh compare run-intel-w1 <dir>/conform run-intel-w1.compare.txt
+RCHECK=<rcheck binary> sh tools/access/collect.sh close run-intel-w1 ACCESS_TESTED <usd> yes drake <time>
+```
+
+The rows: `cand-vadd-cl`, `cand-fsum16-cl`, `cand-gemm16-cl` (one module each, bytes = reference),
+`cand-reps-cl` (every kernel 10 times, every output = reference, timing kept), and the controls
+`ctl-{vadd,fsum16,gemm16}-mutant-cl` (planted-wrong kernels must differ, want 1), `ctl-optin-cl`
+(no `MT_CL_GPU=1`, want 2), `ctl-isolation-cl` (forbid `/dev/dri/`, want 9), `ctl-require-cl` (a
+required library never mapped, want 9), `ctl-vendor-cl` (expect AMD's vendor id, want 5). A control
+only passes with the launcher's named refusal text and no output. Commit the run directory, the
+compare file and the receipt under `evidence/ACCESS-intel-cloud-<window>/`. A candidate PASS counts
+only when rcheck accepts the receipt and the compare file says `fail=0` with the same rows PASS on `d0`.
 
 ## Teardown
 

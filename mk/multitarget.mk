@@ -20,6 +20,9 @@
 #   (one command line)
 # builds spirv-host.c with MT_TARGET=2 (NVIDIA's Vulkan driver, loader pinned to nvidia_icd.json), compares
 # bit for bit, cross-target and against CUDA++'s own hello_gpu (DRA-201, evidence/PORTABLE-APP-20261107/).
+# Intel GPU (an Intel Cloud Services instance; not a make target, hardware NOT_RUN so far): spirv-host.c
+# with MT_TARGET=3 (OpenCL GPU through Intel's ICD, opt-in MT_CL_GPU=1), driven by the plan rows of
+# tools/access/plans/intel-gpu.tsv and tools/access/intel-cl.sh (docs/access/INTEL-CLOUD-SERVICES.md, DRA-194).
 OMC ?=
 .PHONY: doctor-targets test-multitarget
 doctor-targets:

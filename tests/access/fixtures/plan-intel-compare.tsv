@@ -1,0 +1,7 @@
+# id	kind	want	needs	command
+# SYNTHETIC compare self-test (tests/access/run.sh 6d). No GPU: rows copy conform.om references (or the
+# planted-wrong copy @PLANTED@, substituted by run.sh) to where the Intel rows keep their GPU outputs.
+cand-vadd-cl	candidate	0	-	mkdir -p "$ACCESS_OUT/outputs" && cp "$ACCESS_BUNDLE/vadd.ref" "$ACCESS_OUT/outputs/vadd.cl.gpu.out"
+cand-fsum16-cl	candidate	0	-	mkdir -p "$ACCESS_OUT/outputs" && cp "$ACCESS_BUNDLE/fsum16.ref" "$ACCESS_OUT/outputs/fsum16.cl.gpu.out"
+ctl-vadd-mutant-cl	control	1	-	mkdir -p "$ACCESS_OUT/outputs" && cp "@PLANTED@" "$ACCESS_OUT/outputs/vadd.cl.mutant.gpu.out" && cmp -s "@PLANTED@" "$ACCESS_BUNDLE/vadd.ref"
+cand-gemm16-cl	candidate	0	-	MISSING_IMPLEMENTATION synthetic stub for the compare self-test

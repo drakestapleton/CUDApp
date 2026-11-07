@@ -1,0 +1,8 @@
+# id	kind	want	needs	command
+# SYNTHETIC compare self-test (tests/access/run.sh 6d): nothing ran, so the compare is NOT_RUN (exit 3).
+cand-vadd-cl	candidate	0	-	MISSING_IMPLEMENTATION synthetic stub
+cand-fsum16-cl	candidate	0	-	MISSING_IMPLEMENTATION synthetic stub
+cand-gemm16-cl	candidate	0	-	MISSING_IMPLEMENTATION synthetic stub
+ctl-vadd-mutant-cl	control	1	-	MISSING_IMPLEMENTATION synthetic stub
+ctl-fsum16-mutant-cl	control	1	-	MISSING_IMPLEMENTATION synthetic stub
+ctl-gemm16-mutant-cl	control	1	-	MISSING_IMPLEMENTATION synthetic stub

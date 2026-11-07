@@ -195,6 +195,80 @@ else
     else
       bad "isolation control build"
     fi
+    # MT_TARGET=3 (OpenCL GPU through one vendor ICD library, DRA-194). This host has no such GPU, so only
+    # the refusals run here; the GPU rows are tools/access/plans/intel-gpu.tsv (hardware NOT_RUN). No
+    # refusal may write an output. The ICDs given are PoCL (a CPU implementation) or paths that do not
+    # exist, so no NVIDIA library can load.
+    build3() { # NAME ICD [extra -D...]
+      n3=$1; icd3=$2; shift 2
+      # shellcheck disable=SC2086
+      $cc -std=c11 -O2 -Wall -Wextra -Werror -DCUDAPP_MIGRATION_PENDING_SPIRV_HOST=1 -DMT_TARGET=3 \
+        -DMT_CL_GPU_ICD="\"$icd3\"" "$@" ${MT_CFLAGS:-} "$root/tools/multitarget/spirv-host.c" -o "$out/$n3" -l:libOpenCL.so.1
+    }
+    # refuse WANT NAME TEXT cmd...: the command must exit WANT, print TEXT and write no output
+    refuse() {
+      rwant=$1; rname=$2; rtext=$3; shift 3
+      rm -f "$out/cl3.out"
+      "$@" > "$out/$rname.log" 2>&1
+      rgot=$?
+      if [ "$rgot" -eq "$rwant" ] && [ ! -e "$out/cl3.out" ] && grep -qF -- "$rtext" "$out/$rname.log"; then ok "$rname exit=$rgot $(tail -n 1 "$out/$rname.log")"
+      else bad "$rname exit=$rgot want=$rwant output=$([ -e "$out/cl3.out" ] && echo written || echo none) $(tail -n 1 "$out/$rname.log")"; fi
+    }
+    V3="cl $out/vadd.cl.spv vadd 1048576 $out/a.bin $out/b.bin $out/cl3.out"
+    if build3 spirv-host-cl3 "${pocl:-$out/no-such-icd/libpocl.so}" > "$out/cl3.build.log" 2>&1 \
+       && build3 spirv-host-cl3-noicd "" >> "$out/cl3.build.log" 2>&1 \
+       && build3 spirv-host-cl3-relicd libigdrcl.so >> "$out/cl3.build.log" 2>&1 \
+       && build3 spirv-host-cl3-nvpath "$out/no-such-icd/libnvidia-opencl.so.1" >> "$out/cl3.build.log" 2>&1; then
+      if nm -D "$out/spirv-host-cl3" 2>/dev/null | grep -q ' vk'; then bad "MT_TARGET=3 build references Vulkan symbols"
+      else ok "MT_TARGET=3 builds without Vulkan (OpenCL only)"; fi
+      # shellcheck disable=SC2086
+      refuse 2 cl3-neg-no-optin 'set MT_CL_GPU=1 to opt in' env -u MT_CL_GPU "$out/spirv-host-cl3" $V3
+      # shellcheck disable=SC2086
+      refuse 2 cl3-neg-optin-0 'set MT_CL_GPU=1 to opt in' env MT_CL_GPU=0 "$out/spirv-host-cl3" $V3
+      # shellcheck disable=SC2086
+      refuse 2 cl3-neg-optin-yes 'set MT_CL_GPU=1 to opt in' env MT_CL_GPU=yes "$out/spirv-host-cl3" $V3
+      refuse 2 cl3-neg-vk 'only cl' env MT_CL_GPU=1 "$out/spirv-host-cl3" vk "$out/vadd.vk.spv" vadd 1048576 "$out/a.bin" "$out/b.bin" "$out/cl3.out"
+      # shellcheck disable=SC2086
+      refuse 3 cl3-neg-no-icd 'build needs an absolute MT_CL_GPU_ICD' env MT_CL_GPU=1 "$out/spirv-host-cl3-noicd" $V3
+      # shellcheck disable=SC2086
+      refuse 3 cl3-neg-relative-icd 'build needs an absolute MT_CL_GPU_ICD' env MT_CL_GPU=1 "$out/spirv-host-cl3-relicd" $V3
+      # shellcheck disable=SC2086
+      refuse 9 cl3-neg-icd-names-nvidia 'contains forbidden "nvidia" (not loaded)' env MT_CL_GPU=1 "$out/spirv-host-cl3-nvpath" $V3
+      if [ -n "$pocl" ]; then
+        # shellcheck disable=SC2086
+        refuse 9 cl3-neg-icd-is-pocl 'contains forbidden "libpocl" (not loaded)' env MT_CL_GPU=1 "$out/spirv-host-cl3" $V3
+        # A copy that allows PoCL: the loader runs on the named library, which has only a CPU device.
+        if build3 spirv-host-cl3-cpuicd "$pocl" -DMT_FORBID='"nvidia"' >> "$out/cl3.build.log" 2>&1; then
+          # shellcheck disable=SC2086
+          refuse 5 cl3-neg-cpu-only-platform 'no CL_DEVICE_TYPE_GPU device on the pinned platform (no CPU fallback)' \
+            env MT_CL_GPU=1 POCL_DEVICES=cpu OCL_ICD_FILENAMES=/nonexistent "$out/spirv-host-cl3-cpuicd" $V3
+          if grep -q '^spirv-host: cl library=.* platform="Portable Computing Language"' "$out/cl3-neg-cpu-only-platform.log"; then
+            ok "cl3 loader pinned to the named ICD (PoCL platform listed, then refused for having no GPU)"
+          else bad "cl3-neg-cpu-only-platform did not reach the pinned platform"; fi
+          if command -v strace > /dev/null 2>&1; then
+            # shellcheck disable=SC2086
+            strace -f -qq -e trace=open,openat -o "$out/cl3-cpu.strace" env MT_CL_GPU=1 "$out/spirv-host-cl3-cpuicd" $V3 > /dev/null 2>&1
+            nv=$(grep -c -i 'libnvidia\|/dev/nvidia\|libcuda' "$out/cl3-cpu.strace")
+            if grep -q 'libpocl' "$out/cl3-cpu.strace" && [ "$nv" -eq 0 ]; then ok "cl3 GPU mode opened PoCL and no libnvidia, libcuda or /dev/nvidia path (strace)"
+            else bad "cl3 GPU mode strace: $nv NVIDIA/CUDA opens or PoCL not opened"; fi
+          else
+            notrun "cl3 strace open check: strace not installed"
+          fi
+        else
+          bad "MT_TARGET=3 PoCL-allowing control build"
+        fi
+        # The default build stays CPU-only whatever MT_CL_GPU says.
+        MT_CL_GPU=1 "$H" cl "$out/vadd.cl.spv" vadd 1048576 "$out/a.bin" "$out/b.bin" "$out/vadd.cl.optin.out" > "$out/run-vadd.cl.optin.log" 2>&1
+        rc3=$?
+        if [ "$rc3" -eq 0 ] && grep -q '^spirv-host: cl device=.* type=CPU$' "$out/run-vadd.cl.optin.log" && cmp -s "$out/vadd.cl.optin.out" "$out/vadd.ref"; then
+          ok "default build ignores MT_CL_GPU=1: PoCL CPU device, bytes = vadd.ref"
+        else bad "default build with MT_CL_GPU=1 exit=$rc3 (want 0, CPU device, bytes = vadd.ref)"; fi
+      else
+        notrun "cl3 PoCL-as-ICD refusals and default-build MT_CL_GPU check: POCL_LIBRARY not set"
+      fi
+    else
+      cat "$out/cl3.build.log"; bad "MT_TARGET=3 build"
+    fi
   fi
 fi
 
@@ -243,7 +317,7 @@ else
   notrun "AMDGPU_HSACO checks: llvm-mc/llvm-readelf under LLVM_BIN or LD_LLD missing"
 fi
 
-echo "hardware NOT_RUN: every GPU target except the GB10 (no AMD, Intel, Apple, Qualcomm, Arm, Imagination, Broadcom or Vortex device on this host; PoCL and lavapipe are CPUs)"
+echo "hardware NOT_RUN: every GPU target except the GB10 (no AMD, Intel, Apple, Qualcomm, Arm, Imagination, Broadcom or Vortex device on this host; PoCL and lavapipe are CPUs; MT_TARGET=3 ran its refusals only)"
 if [ "$nfail" -ne 0 ]; then echo "MULTITARGET FAIL pass=$npass fail=$nfail not_run=$nnr"; exit 1; fi
 echo "MULTITARGET PASS pass=$npass fail=0 not_run=$nnr"
 exit 0

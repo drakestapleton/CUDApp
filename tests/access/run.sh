@@ -199,6 +199,99 @@ coll claim-without-device 1 'reason=ACCESS_TESTED-needs-inventory-and-reference'
 coll tamper 1 'SHA256SUMS check failed' "$fx/plan-accept.tsv" NONE tamper
 if grep -q '^DEVICE id=d0 ' "$out/coll-accept/receipt.body"; then bad "collector found an accelerator DEVICE d0 on this host; the self-test assumes none"
 else ok "collector-no-accelerator-on-host (no DEVICE id=d0 line)"; fi
+# Rows see ACCESS_OUT, the absolute run directory, and files they keep there are hashed.
+sh "$C" run amd-devcloud "$fx/plan-access-out.tsv" "$out/coll-aout" > "$out/coll-aout.run.log" 2>&1
+if [ -f "$out/coll-aout/kept/where" ] && [ "$(cat "$out/coll-aout/kept/where")" = "$(cd "$out/coll-aout" && pwd)" ] \
+   && grep -q '  kept/where$' "$out/coll-aout/SHA256SUMS"; then ok "collector exports ACCESS_OUT (absolute run dir); a row's kept file is in SHA256SUMS"
+else bad "collector ACCESS_OUT: kept/where missing, wrong or not hashed"; fi
+
+# 6. Intel OpenCL GPU rows (DRA-194): tools/access/intel-cl.sh and the real plan's rows on this host.
+#    Every output here is SYNTHETIC (copied references on the host CPU); no Intel GPU exists here, so no
+#    row of the real plan can PASS and the Spark-side compare must refuse what does not match.
+poke() { printf "\\$3" | dd of="$1" bs=1 seek="$2" conv=notrunc status=none; }
+I=$root/tools/access/intel-cl.sh
+P=$root/tools/access/plans/intel-gpu.tsv
+tab=$(printf '\t')
+# 6a. The real plan: the W1 rows exist with their kind and want, and none is a stub any more.
+for r in cand-vadd-cl:candidate:0 cand-fsum16-cl:candidate:0 cand-gemm16-cl:candidate:0 cand-reps-cl:candidate:0 \
+         ctl-vadd-mutant-cl:control:1 ctl-fsum16-mutant-cl:control:1 ctl-gemm16-mutant-cl:control:1 \
+         ctl-optin-cl:control:2 ctl-isolation-cl:control:9 ctl-require-cl:control:9 ctl-vendor-cl:control:5; do
+  id=${r%%:*}; rest=${r#*:}; kind=${rest%%:*}; want=${rest#*:}
+  if grep -q "^$id$tab$kind$tab$want${tab}cc${tab}sh \"\$ACCESS_BUNDLE/intel-cl.sh\" " "$P"; then ok "plan row $id kind=$kind want=$want runs intel-cl.sh"
+  else bad "plan row $id kind=$kind want=$want missing or changed"; fi
+done
+if grep -q 'MISSING_IMPLEMENTATION' "$P"; then bad "intel-gpu.tsv still has a MISSING_IMPLEMENTATION row"; else ok "intel-gpu.tsv has no MISSING_IMPLEMENTATION row"; fi
+# 6b. A bundle from the seeded-Omega emit.om modules and conform.om inputs/references.
+build emit "$root/backend/spirv/emit.om"
+build conform "$root/backend/spirv/conform.om"
+CF=$out/conform
+M=$out/mt
+mkdir -p "$M" || exit 74
+for k in vadd fsum16 gemm16; do
+  "$out/emit" $k cl > "$M/$k.cl.spv" && "$out/emit" $k cl mutant > "$M/$k.cl.mutant.spv" && "$CF" ref $k "$M/$k.ref" || bad "emit/ref $k"
+done
+"$CF" in vadd "$M/a.bin" "$M/b.bin" && "$CF" in fsum16 "$M/x.bin" && "$CF" in gemm16 "$M/ga.bin" "$M/gb.bin" || bad "conform inputs"
+expect_rc() { # NAME WANT TEXT cmd...
+  en=$1; ew=$2; et=$3; shift 3
+  "$@" > "$out/$en.out" 2>&1
+  eg=$?
+  if [ "$eg" -eq "$ew" ] && grep -qF -- "$et" "$out/$en.out"; then ok "$en exit=$eg $(tail -n 1 "$out/$en.out")"
+  else bad "$en exit=$eg want=$ew text='$et' got='$(tail -n 1 "$out/$en.out")'"; fi
+}
+expect_rc intel-bundle 0 'BUNDLE ' sh "$I" bundle "$M" "$out/bundle"
+expect_rc intel-bundle-exists 64 'exists' sh "$I" bundle "$M" "$out/bundle"
+if [ -f "$out/bundle/SHA256SUMS" ] && [ "$(wc -l < "$out/bundle/SHA256SUMS")" -eq 16 ] && (cd "$out/bundle" && sha256sum -c --quiet SHA256SUMS); then
+  ok "bundle holds 16 files (6 modules, 3 references, 5 inputs, spirv-host.c, intel-cl.sh) matching SHA256SUMS"
+else bad "bundle content or SHA256SUMS"; fi
+export ACCESS_BUNDLE=$out/bundle
+# 6c. The real plan's candidate and control rows on this GPU-less host, as provider intel-cloud: none may
+#     PASS. Its inventory and reference rows are left out (they would run vendor tools). MT_CL_GPU_ICD
+#     names a path that does not exist and OCL_ICD_VENDORS an empty place, so no OpenCL driver loads.
+grep -v '^\(inv\|ref\)-' "$P" > "$out/intel-w1-rows.tsv" || exit 74
+MT_CL_GPU_ICD=$out/no-such-icd/libigdrcl.so OCL_ICD_VENDORS=$out/no-such-vendors \
+  sh "$C" run intel-cloud "$out/intel-w1-rows.tsv" "$out/coll-intel-real" > "$out/coll-intel-real.run.log" 2>&1
+rb=$out/coll-intel-real/receipt.body
+w1='^ROW id=\(cand\|ctl\)-[a-z0-9-]*-cl kind=\(candidate\|control\) '
+if [ -f "$rb" ] && [ "$(grep -c "$w1" "$rb")" -eq 11 ] && [ "$(grep -c '^ROW ' "$rb")" -eq 11 ] \
+   && ! grep -q "$w1.* verdict=PASS " "$rb" && ! grep -q '^DEVICE id=d0 ' "$rb"; then
+  ok "real intel plan on this host: 11 candidate/control rows recorded, none PASS, no Intel GPU device"
+else bad "real intel plan on this host: $(grep -c '^ROW ' "$rb" 2>/dev/null) rows; a candidate/control PASS or a d0 device appeared"; fi
+if grep -q 'no-such-icd/libigdrcl.so missing' "$out/coll-intel-real/rows/cand-vadd-cl.log" 2>/dev/null; then ok "intel-cl.sh refused the missing ICD before any build or run"
+else bad "cand-vadd-cl log lacks the ICD refusal"; fi
+expect_rc intel-compare-real-plan 1 'COMPARE-SUMMARY pass=0 fail=6 not_run=0' sh "$I" compare "$out/coll-intel-real" "$CF" "$out/compare-real.txt"
+# 6d. Spark-side compare on SYNTHETIC outputs (copies of references and planted-wrong bytes).
+cp "$M/vadd.ref" "$out/bundle-planted.bin" && poke "$out/bundle-planted.bin" 4096 377
+export ACCESS_WINDOW=SYNTHETIC-intel-compare
+cmpcase() { # NAME PLAN [tamper]
+  d=$out/coll-$1
+  sed "s|@PLANTED@|$out/bundle-planted.bin|g" "$fx/$2" > "$out/$1.tsv" || exit 74
+  sh "$C" run intel-cloud "$out/$1.tsv" "$d" > "$d.run.log" 2>&1 || bad "collector run $1"
+  [ "${3:-}" = tamper ] && printf 'x' >> "$d/outputs/vadd.cl.gpu.out"
+}
+cmpcase cmp-good plan-intel-compare.tsv
+expect_rc intel-compare-good 0 'COMPARE-SUMMARY pass=3 fail=0 not_run=3 pass_on_d0=0' sh "$I" compare "$out/coll-cmp-good" "$CF" "$out/compare-good.txt"
+grep -q '^COMPARE row=cand-vadd-cl .* conform_exit=0 vm_verdict=PASS dev=d7 verdict=PASS ' "$out/compare-good.txt" \
+  && grep -q '^COMPARE row=ctl-vadd-mutant-cl .* want=1 conform_exit=1 vm_verdict=PASS .* verdict=PASS .*first=1024' "$out/compare-good.txt" \
+  && ok "compare lines carry conform.om's verdict, the VM row and the device (d7: not an Intel GPU)" || bad "compare-good lines"
+expect_rc intel-compare-no-rewrite 64 'never rewritten' sh "$I" compare "$out/coll-cmp-good" "$CF" "$out/compare-good.txt"
+cmpcase cmp-tamper plan-intel-compare.tsv tamper
+expect_rc intel-compare-neg-tamper 1 'SHA256SUMS check failed' sh "$I" compare "$out/coll-cmp-tamper" "$CF" "$out/compare-tamper.txt"
+cmpcase cmp-lie plan-intel-compare-lie.tsv
+expect_rc intel-compare-neg-vm-pass-wrong-bytes 1 'COMPARE row=cand-vadd-cl' sh "$I" compare "$out/coll-cmp-lie" "$CF" "$out/compare-lie.txt"
+grep -q '^COMPARE row=cand-vadd-cl .* conform_exit=1 vm_verdict=PASS .* verdict=FAIL reason=conform-exit-differs-from-want' "$out/compare-lie.txt" \
+  && ok "compare refuses a VM PASS whose bytes conform.om rejects" || bad "compare-lie line"
+grep -q '^COMPARE row=ctl-vadd-mutant-cl .* conform_exit=0 .* verdict=FAIL ' "$out/compare-lie.txt" \
+  && ok "compare refuses a control whose output equals the reference (mutant not caught)" || bad "compare-lie control line"
+grep -q '^COMPARE row=cand-fsum16-cl .* conform_exit=0 vm_verdict=FAIL .* verdict=FAIL reason=vm-row-FAIL' "$out/compare-lie.txt" \
+  && ok "compare refuses correct bytes from a row the VM recorded as FAIL" || bad "compare-lie fsum16 line"
+cmpcase cmp-empty plan-intel-compare-empty.tsv
+expect_rc intel-compare-not-run 3 'COMPARE-SUMMARY pass=0 fail=0 not_run=6' sh "$I" compare "$out/coll-cmp-empty" "$CF" "$out/compare-empty.txt"
+expect_rc intel-compare-conform-missing 64 'not executable' sh "$I" compare "$out/coll-cmp-good" "$out/no-such-conform" "$out/compare-x.txt"
+# The synthetic receipt still cannot claim an Intel GPU: rcheck refuses its candidate PASS on the CPU.
+RCHECK=$R sh "$C" close "$out/coll-cmp-good" NONE 0 yes selftest 2026-11-07T00:00:00Z > "$out/coll-cmp-good.close.out" 2> "$out/coll-cmp-good.close.err"
+if [ "$?" -eq 1 ] && grep -q 'reason=pass-on-a-device-that-is-not-the-provider-accelerator' "$out/coll-cmp-good.close.err"; then
+  ok "rcheck refuses the synthetic compare receipt (candidate PASS on the host CPU)"
+else bad "rcheck accepted or failed differently on the synthetic compare receipt: $(cat "$out/coll-cmp-good.close.err")"; fi
 
 echo "ACCESS GATE $( [ "$nfail" -eq 0 ] && echo PASS || echo FAIL ) pass=$npass fail=$nfail"
 [ "$nfail" -eq 0 ]

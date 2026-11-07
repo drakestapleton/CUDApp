@@ -1,0 +1,9 @@
+# id	kind	want	needs	command
+# SYNTHETIC compare self-test (tests/access/run.sh 6d): rows whose recorded verdict disagrees with the
+# bytes they kept. The Spark-side compare must fail every one of them.
+# VM verdict PASS, bytes wrong (the planted copy kept as the real output):
+cand-vadd-cl	candidate	0	-	mkdir -p "$ACCESS_OUT/outputs" && cp "@PLANTED@" "$ACCESS_OUT/outputs/vadd.cl.gpu.out"
+# VM verdict FAIL, bytes right:
+cand-fsum16-cl	candidate	0	-	mkdir -p "$ACCESS_OUT/outputs" && cp "$ACCESS_BUNDLE/fsum16.ref" "$ACCESS_OUT/outputs/fsum16.cl.gpu.out" && exit 1
+# A control that "passes" (exit 1) although its output equals the reference (mutant not caught):
+ctl-vadd-mutant-cl	control	1	-	mkdir -p "$ACCESS_OUT/outputs" && cp "$ACCESS_BUNDLE/vadd.ref" "$ACCESS_OUT/outputs/vadd.cl.mutant.gpu.out" && exit 1

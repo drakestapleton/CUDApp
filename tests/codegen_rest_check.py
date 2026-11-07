@@ -28,7 +28,10 @@ def main():
     args = parser.parse_args()
     families = args.family or FAMILIES
     omc = Path(os.environ.get("OMEGA_OMC", Path.home()/"work/cudastack/omega-mv/seed/out/omc"))
-    if list(Path("/dev").glob("nvidia*")) or Path("/dev/cuse").exists() or Path("/dev/vfio").exists():
+    # Refuse when a node that reaches a GPU is visible: NVIDIA, aien-gpu, or a VFIO-bound group. The
+    # /dev/cuse and /dev/vfio/vfio control nodes of a hosted runner reach no device.
+    if (list(Path("/dev").glob("nvidia*")) or list(Path("/dev").glob("aien-gpu*"))
+            or [p for p in Path("/dev/vfio").glob("*") if p.name != "vfio"]):
         raise SystemExit("FAIL run inside bwrap --dev-bind / / --dev /dev --proc /proc --")
     bridge = Path(os.environ.get("OMEGA_BRIDGE", Path.home()/"work/cudastack/omega-bridge"))
     # Only the Omega mutants execute the seeded compiler; the differential does not.

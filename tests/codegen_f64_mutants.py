@@ -26,8 +26,10 @@ def main():
     bridge = Path(os.environ["OMEGA_BRIDGE"]) / "tools/bridge-seeded"
     if hashlib.sha256(omc.read_bytes()).hexdigest() != PIN:
         raise RuntimeError("NOT_RUN: seeded compiler pin differs")
-    # Defense in depth: this gate is a host verifier, never a device consumer.
-    if any(Path("/dev").glob("nvidia*")) or Path("/dev/cuse").exists() or Path("/dev/vfio").exists():
+    # Defense in depth: this gate is a host verifier, never a device consumer. Refuse when a node that
+    # reaches a GPU is visible (NVIDIA, aien-gpu, a VFIO-bound group); /dev/cuse and /dev/vfio/vfio reach none.
+    if (any(Path("/dev").glob("nvidia*")) or any(Path("/dev").glob("aien-gpu*"))
+            or [p for p in Path("/dev/vfio").glob("*") if p.name != "vfio"]):
         raise RuntimeError("NOT_RUN: run inside the required device-free bwrap namespace")
     env = dict(os.environ, OMEGA_SEEDED_OMC=str(omc))
     text = SOURCE.read_text()

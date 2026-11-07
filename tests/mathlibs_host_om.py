@@ -12,7 +12,10 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "build/mathlibs-host-om"
 OUT.mkdir(parents=True, exist_ok=True)
-if glob.glob("/dev/nvidia*") or Path("/dev/vfio").exists():
+# Refuse when a node that reaches a GPU is visible: NVIDIA, aien-gpu, or a VFIO-bound group. The
+# /dev/vfio/vfio control node of a hosted runner reaches no device.
+if (glob.glob("/dev/nvidia*") or glob.glob("/dev/aien-gpu*")
+        or [p for p in Path("/dev/vfio").glob("*") if p.name != "vfio"]):
     sys.exit("REFUSED: run under bwrap --dev-bind / / --dev /dev --proc /proc -- taskset -c 10-14 nice -n 10")
 
 

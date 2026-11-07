@@ -86,11 +86,22 @@ or B, and the removal is recorded here.
 
 ## 6. NVIDIA tool output stored in this repository
 
-None. #84 stored `tests/device-trace/expected.sass`, an `nvdisasm 13.0 --binary SM121` listing of the
+#84 stored `tests/device-trace/expected.sass`, an `nvdisasm 13.0 --binary SM121` listing of the
 trace emitter's own words, as a regression pin. #93 (2026-10-27) removed it:
 `tests/device-trace/run-emitter-checks.sh` now keeps the listing in a temporary directory and checks
-hand-written expectations (opcode counts and the address-path instructions), so nothing `nvdisasm`
-prints is committed.
+hand-written expectations (opcode counts and the address-path instructions).
+
+Stored now: each is `nvdisasm` V13.0.85 `--binary SM121` reading words our own encoder emitted (class B on
+our own bytes); the input bytes sit beside the listing; no NVIDIA-generated code is involved. They are
+kept as review evidence that the independent decoder agrees with the encoder. No test reads them: the
+gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ldg`,
+`make test-om-encoder-atomg`).
+
+| Listing | Input (our bytes) | Why kept |
+|---|---|---|
+| `evidence/ldg-offset-20261107/nvdisasm.txt` | `ldg_words.bin`: four LDG.E rows of #373's encoder fix | Shows the offsets 0, +0x40, -0x100000 and +0x7fffff decode as encoded. |
+| `evidence/atomg-min-20261107/nvdisasm.txt` | `min_words.bin`: the three ATOMG.E.MIN.64.STRONG.SYS rows of `om/encoder/atomg_min_test.om` | Shows op 64's words decode as the intended instruction and registers. |
+| `evidence/atomg-min-20261107/atomg_field_probe_nvdisasm.txt` | `atomg_field_probe.bin`: ATOMG_ADD_STRONG_SYS's words with the operation field (w2 bits 23..26) set to 0..15 and the type field (bits 9..11) to 0..7 | Records how operation 1 = MIN and type 2 = .64 were identified. |
 
 No listing of nvcc-generated code and no NVIDIA binary is stored.
 

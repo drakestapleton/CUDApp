@@ -1,5 +1,5 @@
 make OUT_DIR=build-corpus CUDAPP_ENCODER=om sm121dis-corpus-bins
-make[1]: Entering directory '/home/drakestapleton/work/ng/gpu/cudapp-fix'
+make[1]: Entering directory '$HOME/work/ng/gpu/cudapp-fix'
 mkdir -p build-corpus
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_ampere_codegen.c -o build-corpus/omega_ampere_codegen.o
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_ampere_qmd.c -o build-corpus/omega_ampere_qmd.o
@@ -161,9 +161,9 @@ cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I.
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build-corpus/gpu_isolation_test tests/gpu_isolation_test.c build-corpus/libomega_gpu.a -lpthread -lm
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build-corpus/bw_hazard_test tests/bw_hazard_test.c src/omega_bw_hazard.c build-corpus/libomega_gpu.a -lpthread -lm
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build-corpus/gpu_mathlibs_test tests/gpu_mathlibs_test.c build-corpus/libomega_gpu.a -lpthread -lm
-make[1]: Leaving directory '/home/drakestapleton/work/ng/gpu/cudapp-fix'
+make[1]: Leaving directory '$HOME/work/ng/gpu/cudapp-fix'
 make OUT_DIR=build-corpus-enc-c CUDAPP_ENCODER=c sm121dis-corpus-bins
-make[1]: Entering directory '/home/drakestapleton/work/ng/gpu/cudapp-fix'
+make[1]: Entering directory '$HOME/work/ng/gpu/cudapp-fix'
 mkdir -p build-corpus-enc-c
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_MIGRATION_PENDING_C_ENCODER -c src/omega_ampere_codegen.c -o build-corpus-enc-c/omega_ampere_codegen.o
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_MIGRATION_PENDING_C_ENCODER -c src/omega_ampere_qmd.c -o build-corpus-enc-c/omega_ampere_qmd.o
@@ -325,9 +325,9 @@ cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I.
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build-corpus-enc-c/gpu_isolation_test tests/gpu_isolation_test.c build-corpus-enc-c/libomega_gpu.a -lpthread -lm
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build-corpus-enc-c/bw_hazard_test tests/bw_hazard_test.c src/omega_bw_hazard.c build-corpus-enc-c/libomega_gpu.a -lpthread -lm
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build-corpus-enc-c/gpu_mathlibs_test tests/gpu_mathlibs_test.c build-corpus-enc-c/libomega_gpu.a -lpthread -lm
-make[1]: Leaving directory '/home/drakestapleton/work/ng/gpu/cudapp-fix'
+make[1]: Leaving directory '$HOME/work/ng/gpu/cudapp-fix'
 make OUT_DIR=build-corpus-enc-diff CUDAPP_ENCODER=diff sm121dis-corpus-bins
-make[1]: Entering directory '/home/drakestapleton/work/ng/gpu/cudapp-fix'
+make[1]: Entering directory '$HOME/work/ng/gpu/cudapp-fix'
 mkdir -p build-corpus-enc-diff
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_MIGRATION_PENDING_ENCODER_DIFF -c src/omega_ampere_codegen.c -o build-corpus-enc-diff/omega_ampere_codegen.o
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -DCUDAPP_MIGRATION_PENDING_ENCODER_DIFF -c src/omega_ampere_qmd.c -o build-corpus-enc-diff/omega_ampere_qmd.o
@@ -489,7 +489,7 @@ cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I.
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build-corpus-enc-diff/gpu_isolation_test tests/gpu_isolation_test.c build-corpus-enc-diff/libomega_gpu.a -lpthread -lm
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build-corpus-enc-diff/bw_hazard_test tests/bw_hazard_test.c src/omega_bw_hazard.c build-corpus-enc-diff/libomega_gpu.a -lpthread -lm
 cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -ffp-contract=off -Itests -o build-corpus-enc-diff/gpu_mathlibs_test tests/gpu_mathlibs_test.c build-corpus-enc-diff/libomega_gpu.a -lpthread -lm
-make[1]: Leaving directory '/home/drakestapleton/work/ng/gpu/cudapp-fix'
+make[1]: Leaving directory '$HOME/work/ng/gpu/cudapp-fix'
 rm -rf build-corpus/om-encoder/k-om build-corpus/om-encoder/k-c build-corpus/om-encoder/k-diff build-corpus/om-encoder/corpus-diff.log
 sh tools/sm121dis/corpus.sh build-corpus build-corpus/om-encoder/k-om
 build-corpus/gpu_matmul_api_test --host-only: exit 0, 53 kernels so far
@@ -532,7 +532,7 @@ build-corpus/gpu_mathlibs_test --host-only: exit 0, 786 kernels so far
 build-corpus/gpu_mathlibs_test --sim: exit 0, 786 kernels so far
 build-corpus/gpu_isolation_test --host-only: exit 0, 789 kernels so far
 build-corpus/bw_hazard_test: exit 0, 3191 kernels so far
-corpus: 3191 kernels in /home/drakestapleton/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/k-om
+corpus: 3191 kernels in $HOME/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/k-om
 sh tools/sm121dis/corpus.sh build-corpus-enc-c build-corpus/om-encoder/k-c
 build-corpus-enc-c/gpu_matmul_api_test --host-only: exit 0, 53 kernels so far
 build-corpus-enc-c/gpu_elementwise_test --host-only: exit 0, 63 kernels so far
@@ -574,8 +574,8 @@ build-corpus-enc-c/gpu_mathlibs_test --host-only: exit 0, 786 kernels so far
 build-corpus-enc-c/gpu_mathlibs_test --sim: exit 0, 786 kernels so far
 build-corpus-enc-c/gpu_isolation_test --host-only: exit 0, 789 kernels so far
 build-corpus-enc-c/bw_hazard_test: exit 0, 3191 kernels so far
-corpus: 3191 kernels in /home/drakestapleton/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/k-c
-CUDAPP_ENCODER_DIFF_LOG=/home/drakestapleton/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/corpus-diff.log sh tools/sm121dis/corpus.sh build-corpus-enc-diff build-corpus/om-encoder/k-diff
+corpus: 3191 kernels in $HOME/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/k-c
+CUDAPP_ENCODER_DIFF_LOG=$HOME/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/corpus-diff.log sh tools/sm121dis/corpus.sh build-corpus-enc-diff build-corpus/om-encoder/k-diff
 build-corpus-enc-diff/gpu_matmul_api_test --host-only: exit 0, 53 kernels so far
 build-corpus-enc-diff/gpu_elementwise_test --host-only: exit 0, 63 kernels so far
 build-corpus-enc-diff/gpu_reconv_test --host-only: exit 0, 86 kernels so far
@@ -616,7 +616,7 @@ build-corpus-enc-diff/gpu_mathlibs_test --host-only: exit 0, 786 kernels so far
 build-corpus-enc-diff/gpu_mathlibs_test --sim: exit 0, 786 kernels so far
 build-corpus-enc-diff/gpu_isolation_test --host-only: exit 0, 789 kernels so far
 build-corpus-enc-diff/bw_hazard_test: exit 0, 3191 kernels so far
-corpus: 3191 kernels in /home/drakestapleton/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/k-diff
+corpus: 3191 kernels in $HOME/work/ng/gpu/cudapp-fix/build-corpus/om-encoder/k-diff
 diff -r build-corpus/om-encoder/k-om build-corpus/om-encoder/k-c
 diff -r build-corpus/om-encoder/k-om build-corpus/om-encoder/k-diff
 encoder corpus: 3191 distinct kernels identical .om vs C; diff build 4495 program encodes and 398 single-instruction encodes, all SAME

@@ -1,4 +1,4 @@
-OMEGA_OMC="/home/drakestapleton/work/ng/gpu/bin/omc-e5b32567" OMEGA_BRIDGE="/home/drakestapleton/work/ng/gpu/omega-bridge" sh om/units.sh --check
+OMEGA_OMC="$HOME/work/ng/gpu/bin/omc-e5b32567" OMEGA_BRIDGE="$HOME/work/ng/gpu/omega-bridge" sh om/units.sh --check
 generating portable unit bw_enc_sm121 (bridge-seeded)
 generating portable unit cubin_elf (bridge-seeded)
 generating portable unit mathlibs_ir (bridge-seeded)

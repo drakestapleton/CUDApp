@@ -1,5 +1,5 @@
 cat om/encoder/bw_enc_sm121.om om/encoder/ldg_offset_test.om > build/om-encoder/ldg-offset.om
-/home/drakestapleton/work/ng/gpu/bin/omc-e5b32567 < build/om-encoder/ldg-offset.om > build/om-encoder/ldg-offset
+$HOME/work/ng/gpu/bin/omc-e5b32567 < build/om-encoder/ldg-offset.om > build/om-encoder/ldg-offset
 chmod +x build/om-encoder/ldg-offset
 build/om-encoder/ldg-offset
 build/om-encoder/ldg-offset bin > build/om-encoder/ldg-offset.bin

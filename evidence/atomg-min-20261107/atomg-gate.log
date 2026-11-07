@@ -1,5 +1,5 @@
 cat om/encoder/bw_enc_sm121.om om/encoder/atomg_min_test.om > build/om-encoder/atomg-min.om
-/home/drakestapleton/work/ng/gpu/bin/omc-e5b32567 < build/om-encoder/atomg-min.om > build/om-encoder/atomg-min
+$HOME/work/ng/gpu/bin/omc-e5b32567 < build/om-encoder/atomg-min.om > build/om-encoder/atomg-min
 chmod +x build/om-encoder/atomg-min
 build/om-encoder/atomg-min
 build/om-encoder/atomg-min bin > build/om-encoder/atomg-min.bin

@@ -1,0 +1,10 @@
+step 06-om-mutants start 2026-11-07T17:55:59Z head 07a89edb1ac359a196d485357ec87b63ead9584d dirty 2
+cmd: sh -c export OMEGA_OMC=/home/drakestapleton/workspace/hive-worktrees/arch-scale-x/omc/seed/out/omc OMEGA_BRIDGE=$HOME/work/hive/t_81083ab1/omega-bridge; time make OUT_DIR=build test-sm121dis-om-mutants
+OMEGA_OMC="/home/drakestapleton/workspace/hive-worktrees/arch-scale-x/omc/seed/out/omc" OMEGA_BRIDGE="/home/drakestapleton/work/hive/t_81083ab1/omega-bridge" sh tools/sm121dis/om_mutants.sh build/sm121dis-om-mutants build/sm121dis-kernels
+mutant 1 red ('s/^ret pk 0 24 8$/ret pk 0 25 8/'): 848916 corpus words print differently
+mutant 2 red ('s/^lit o s 21584$/lit o s 21585/'): 243660 corpus words print differently
+mutant 3 red ('s/^put t 1 3840$/put t 1 3841/'): 25245 corpus words print differently
+VERDICT PASS: every .om mutant changes the corpus text
+51.75user 7.40system 0:59.62elapsed 99%CPU (0avgtext+0avgdata 254224maxresident)k
+37560inputs+683496outputs (6major+1088185minor)pagefaults 0swaps
+step 06-om-mutants end 2026-11-07T18:42:02Z exit 0

@@ -1,0 +1,6 @@
+LDG_MMIO NAK fields: type 4, order 0x8, eviction 1
+bw_ldg_mmio_test: PASS (GB10 device NOT_RUN)
+  eviction priority 0 (EF), want normal (1)
+  memory order 0x0 (weak): a cached load, not MMIO
+w[2] = 0x0c0e1900: breaks the LDG_MMIO contract
+red check: omega-mv's LDG.E.EF word FAILS the LDG_MMIO contract, as it must

@@ -1,0 +1,9 @@
+compiler 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+host checks: 25, failures: 0
+host unit emitter: PASS
+host unit address: PASS
+host unit guard: PASS
+host unit body: PASS
+words: 640 bytes, 40 instructions
+offset 0x0080: want 'IMAD.WIDE.U32 R8, R6, 0x1, R4', got 'IMAD.WIDE.U32 R8, R7, 0x1, R4'
+offset 0x01c0: want 'IMAD.WIDE.U32 R8, R6, 0x1, R4', got 'IMAD.WIDE.U32 R8, R7, 0x1, R4'

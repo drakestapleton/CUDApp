@@ -8,8 +8,8 @@
 #      instructions. NVIDIA nvdisasm 13.0 stays an outside ORACLE only: when NVDISASM names it,
 #      its text of the same words must equal ours. Neither listing is committed (AGENTS.md
 #      forbids committing NVIDIA-tool output), so the expectations below are written by hand
-#      (opcode counts and the address-formation lines of the #85 repair: MOV of the record
-#      offset, then IMAD.WIDE.U32 base + offset).
+#      (opcode counts, the two S2R SR_GLOBALTIMERLO timer reads, and the address-formation lines
+#      of the #85 repair: MOV of the record offset, then IMAD.WIDE.U32 base + offset).
 #
 # Usage: OMEGA_COMPILER=/path/to/seed/out/omc [SM121DIS=build/sm121dis] [NVDISASM=/path/to/nvdisasm] \
 #        sh tests/device-trace/run-emitter-checks.sh
@@ -122,8 +122,10 @@ if ! diff -u "$work/ops.want" "$work/ops.txt"; then
   echo 'opcode counts differ from the hand-written expectation' >&2
   bad=1
 fi
-# Record address = capture base (R4:R5) + record offset, full 64-bit width.
-for want in '0010 @P0 BRA 0x140' '0070 MOV R6, 0x40' '0080 IMAD.WIDE.U32 R8, R6, 0x1, R4' \
+# Record address = capture base (R4:R5) + record offset, full 64-bit width. The two timer reads must name
+# SR_GLOBALTIMERLO: without NVDISASM this is the only check of S2R text (the f1b50cbf decoder printed SR82).
+for want in '0010 @P0 BRA 0x140' '0030 S2R R2, SR_GLOBALTIMERLO' '0170 S2R R2, SR_GLOBALTIMERLO' \
+            '0070 MOV R6, 0x40' '0080 IMAD.WIDE.U32 R8, R6, 0x1, R4' \
             '01b0 MOV R6, 0x80' '01c0 IMAD.WIDE.U32 R8, R6, 0x1, R4'; do
   off=${want%% *}; ins=${want#* }
   got=$(awk -v o="/*$off*/" '$1 == o { $1 = ""; sub(/^ +/, ""); sub(/ *;$/, ""); print }' "$work/got.sass")

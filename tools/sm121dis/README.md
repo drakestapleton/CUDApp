@@ -48,8 +48,9 @@ The checks that used to call `nvdisasm` now call mine:
   (the `build/sm121dis` command);
 - the hazard checker's register cross-check, `tests/bw_hazard_test.c --disasm` (`make test-bw-hazard-nvdisasm`,
   linked in, `omega_sm121_disasm`), over every kernel its sweep builds. Those kernels are in the comparison corpus.
-- `tests/device-trace/run-emitter-checks.sh` (the device-side trace emitter's 40 words; nvdisasm only when `NVDISASM`
-  is set, as an oracle that must print the same text) and `tools/artifact_smoke.sh` (each artifact's kernel text).
+- `tests/device-trace/run-emitter-checks.sh` (`make test-device-trace-emitter`, with its red decoder; the device-side
+  trace emitter's 40 words; nvdisasm only when `NVDISASM` is set, as an oracle that must print the same text) and
+  `tools/artifact_smoke.sh` (each artifact's kernel text).
   Every remaining nvdisasm call site, with its class, is in `evidence/C6-DISASM-OM/NVDISASM-CALL-SITES.md`.
 
 The script and target names are kept so older receipts still line up. `make test-zero-nvdisasm` proves that none

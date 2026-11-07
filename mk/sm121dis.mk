@@ -68,6 +68,18 @@ test-sm121dis-om-mutants:
 	@ls $(SM121DIS_K)/*.bin > /dev/null 2>&1 || { echo "NOT_RUN: no corpus in $(SM121DIS_K) (make test-sm121dis first)"; exit 2; }
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" sh tools/sm121dis/om_mutants.sh $(OUT_DIR)/sm121dis-om-mutants $(SM121DIS_K)
 
+# The device-trace emitter's words (tests/device-trace/run-emitter-checks.sh) decoded by our disassembler against the
+# hand-written expectations, never nvdisasm here (NVDISASM is cleared); then the red check: the faulty decoder must FAIL.
+.PHONY: test-device-trace-emitter
+test-device-trace-emitter: $(SM121DIS) $(SM121DIS_RED)
+	@test "$$(sha256sum < $(OMEGA_OMC) | cut -c1-64)" = 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f || { echo "NOT_RUN: wrong seeded compiler $(OMEGA_OMC)"; exit 3; }
+	NVDISASM= OMEGA_COMPILER="$(OMEGA_OMC)" SM121DIS=$(SM121DIS) sh tests/device-trace/run-emitter-checks.sh
+	@rc=0; NVDISASM= OMEGA_COMPILER="$(OMEGA_OMC)" SM121DIS=$(SM121DIS_RED) sh tests/device-trace/run-emitter-checks.sh \
+		> $(OUT_DIR)/device-trace-red.log 2>&1 || rc=$$?; \
+	if [ $$rc != 1 ] || ! grep -q '^offset 0x.*: want' $(OUT_DIR)/device-trace-red.log; then \
+		echo "RED CHECK BROKEN: the faulty decoder did not fail the expectations (exit $$rc)"; tail -3 $(OUT_DIR)/device-trace-red.log; exit 1; fi; \
+	echo "red check: the faulty decoder FAILS the device-trace expectations, as it must ($$(grep -c '^offset 0x' $(OUT_DIR)/device-trace-red.log) lines)"
+
 # The provenance checks (tools/divsqrt_nvdisasm_check.sh, tools/ldst_nvdisasm_check.sh, test-numeric-reduce-nvdisasm)
 # call build/sm121dis by that name, whatever OUT_DIR is.
 ifneq ($(OUT_DIR),build)

@@ -1,0 +1,853 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note cost: migration-cost meter for the portable application (docs/repro/MIGRATION-COST.md, DRA-202).
+note tools/repro/cost.sh only runs git, the pinned omc and sha256sum and writes their output as COSTIN1
+note records; every classification, sum and comparison is made here. Input on stdin, at most 262143
+note bytes, one record per line, fields separated by spaces:
+note   COSTIN1                              first line
+note   S NAME BASE HEAD                     a scope: the commits BASE..HEAD (40 lowercase hex each)
+note   C SHA AUTHOR_UNIX COMMIT_UNIX        one commit of the scope
+note   N ADD DEL PATH                       git diff --numstat BASE HEAD, a text file
+note   B PATH                               a binary file changed in the scope (no line counts)
+note   K MODULE BASE_SHA256|absent HEAD_SHA256|absent   emitted kernel module bytes at BASE and HEAD
+note   E KIND VALUE|NA                      an effort record of the scope (docs/repro/effort.tsv)
+note   X                                    end of the scope
+note   END NSCOPES                          last line
+note Every changed path must fall in one category (prefix table below); an unclassified path, a
+note malformed record or a count mismatch refuses the whole input. Effort NA means measured as not
+note available (NOT_MEASURED); a kind with no record prints NOT_RECORDED; NA mixed with a number refuses.
+note Exit 0 COST1 OK (stdout the table), 1 refuse (stderr one COST1 REFUSE line), 2 input unreadable or
+note over 262143 bytes. Pin: omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+note (omega-mv 369dbc96, the multitarget pin).
+global buf uchar 262144
+global st ulong 16
+global cat ulong 24
+global eff ulong 16
+global effn ulong 16
+global effna ulong 16
+global sna ulong 2
+note st: 0 bytes, 1 line number, 2 in scope, 3 scopes closed, 4 commits, 5 min author time,
+note 6 max commit time, 7 binary files, 8 header seen, 9 END seen, 10 kernel records.
+note cat[3c+0] files, [3c+1] added lines, [3c+2] deleted lines for category c (0..5, cnames order).
+text tHDR "COSTIN1"
+text tS "S"
+text tC "C"
+text tN "N"
+text tB "B"
+text tK "K"
+text tE "E"
+text tX "X"
+text tEND "END"
+text tNA "NA"
+text tabs "absent"
+text pbk "backend/"
+text ptm "tools/multitarget/"
+text pts "tests/multitarget/"
+text pmk "mk/"
+text pmf "Makefile"
+text pev "evidence/"
+text pdc "docs/"
+text c0 "app"
+text c1 "launcher"
+text c2 "test"
+text c3 "build"
+text c4 "evidence"
+text c5 "docs"
+text k0 "agent_wall_s"
+text k1 "agent_api_calls"
+text k2 "tokens_in"
+text k3 "tokens_out"
+text k4 "tokens_cache_read"
+text k5 "tokens_cache_write"
+text k6 "cost_usd_e7"
+text k7 "gpu_exclusive_s"
+text k8 "human_hands_on_s"
+text k9 "review_s"
+text msc "COST1 scope="
+text mba " base="
+text mhe " head="
+text mco "COMMITS n="
+text msp " span_s="
+text mcat "CAT "
+text mfi " files="
+text mad " add="
+text mde " del="
+text mtot "TOTAL files="
+text mbin "BINARY files="
+text mker "KERNEL "
+text vsame " same"
+text vdiff " differs"
+text vnew " new"
+text vrem " removed"
+text meff "EFFORT "
+text mnm " NOT_MEASURED"
+text mnr " NOT_RECORDED"
+text mend "COST1 END scope="
+text mok "COST1 OK scopes="
+text msp1 " "
+text mnl "\n"
+text mref "COST1 REFUSE line="
+text mrsn " reason="
+text mbig "COST1 REFUSE line=0 reason=input-unreadable-or-over-262143-bytes\n"
+text rhdr "first-line-must-be-COSTIN1"
+text rtag "unknown-record-tag"
+text rfld "wrong-field-count"
+text rscope "record-outside-a-scope"
+text rnest "scope-inside-a-scope"
+text rname "scope-name-not-1-to-16-of-a-z-0-9"
+text rhex "sha-not-40-lowercase-hex"
+text rnum "number-not-1-to-18-decimal-digits"
+text rtime "commit-time-before-author-time"
+text rpath "unclassified-path"
+text rk64 "kernel-sha-not-64-lowercase-hex-or-absent"
+text rkab "kernel-absent-at-base-and-head"
+text rkind "unknown-effort-kind"
+text rmix "effort-kind-has-NA-and-a-number"
+text rafter "record-after-END"
+text rcnt "END-count-differs-from-scopes"
+text ropen "input-ends-inside-a-scope"
+text rnoend "missing-END"
+text rempty "empty-line"
+
+fn pnum x ulong to void
+d = new uchar 24 0
+i = ulong 24
+y = x
+c = true
+while c bound 30
+i = sub i 1
+put d i uchar add ulong 48 rem y ulong 10
+y = div y ulong 10
+if eq y ulong 0
+c = false
+end
+end
+k = write 1 d i sub ulong 24 i
+ret
+end
+
+fn ptx t view uchar * to void
+k = write 1 t 0 len t
+ret
+end
+
+fn pspan a ulong b ulong to void
+k = write 1 buf a sub b a
+ret
+end
+
+fn refuse t view uchar * to void
+d = new uchar 24 0
+i = ulong 24
+y = get st 1
+c = true
+while c bound 30
+i = sub i 1
+put d i uchar add ulong 48 rem y ulong 10
+y = div y ulong 10
+if eq y ulong 0
+c = false
+end
+end
+k = write 2 mref 0 len mref
+k = write 2 d i sub ulong 24 i
+k = write 2 mrsn 0 len mrsn
+k = write 2 t 0 len t
+k = write 2 mnl 0 len mnl
+exit 1
+end
+
+note tend: end of the token that starts at p (next space or e).
+fn tend p ulong e ulong to ulong
+q = p
+while lt q e bound 999999
+if eq get buf q uchar 32
+ret q
+end
+q = add q 1
+end
+ret e
+end
+
+note fst: start of field i (0-based) of the line [s,e); fields are separated by one space each.
+note Returns e when the line has fewer fields.
+fn fst s ulong e ulong i ulong to ulong
+p = s
+j = ulong 0
+while lt j i bound 64
+p = tend p e
+if ge p e
+ret e
+end
+p = add p 1
+j = add j 1
+end
+ret p
+end
+
+note nfld: number of space-separated fields of [s,e); a doubled, leading or trailing space refuses.
+fn nfld s ulong e ulong to ulong
+n = ulong 1
+p = s
+if eq get buf s uchar 32
+refuse rfld
+end
+while lt p e bound 999999
+if eq get buf p uchar 32
+n = add n 1
+if eq add p 1 e
+refuse rfld
+end
+if eq get buf add p 1 uchar 32
+refuse rfld
+end
+end
+p = add p 1
+end
+ret n
+end
+
+note teq: the token [a,b) is exactly t.
+fn teq a ulong b ulong t view uchar * to bool
+m = len t
+if ne sub b a m
+ret false
+end
+i = ulong 0
+while lt i m bound 999999
+if ne get buf add a i get t i
+ret false
+end
+i = add i 1
+end
+ret true
+end
+
+note pfx: the bytes [a, a + len t) equal t and fit before b.
+fn pfx a ulong b ulong t view uchar * to bool
+m = len t
+if gt add a m b
+ret false
+end
+i = ulong 0
+while lt i m bound 999999
+if ne get buf add a i get t i
+ret false
+end
+i = add i 1
+end
+ret true
+end
+
+note num: decimal value of the token [a,b), 1..18 digits; refuses otherwise.
+fn num a ulong b ulong to ulong
+if eq a b
+refuse rnum
+end
+if gt sub b a ulong 18
+refuse rnum
+end
+x = ulong 0
+p = a
+while lt p b bound 64
+c = ulong get buf p
+if lt c ulong 48
+refuse rnum
+end
+if gt c ulong 57
+refuse rnum
+end
+x = add mul x ulong 10 sub c ulong 48
+p = add p 1
+end
+ret x
+end
+
+note hexn: the token [a,b) is exactly n lowercase hex digits.
+fn hexn a ulong b ulong n ulong to bool
+if ne sub b a n
+ret false
+end
+p = a
+while lt p b bound 999999
+c = ulong get buf p
+ok = false
+if ge c ulong 48
+if le c ulong 57
+ok = true
+end
+end
+if ge c ulong 97
+if le c ulong 102
+ok = true
+end
+end
+if eq ok false
+ret false
+end
+p = add p 1
+end
+ret true
+end
+
+note sname: 1..16 bytes of a-z, 0-9, '-' or uppercase S0-style letters A-Z.
+fn sname a ulong b ulong to bool
+if eq a b
+ret false
+end
+if gt sub b a ulong 16
+ret false
+end
+p = a
+while lt p b bound 64
+c = ulong get buf p
+ok = false
+if ge c ulong 48
+if le c ulong 57
+ok = true
+end
+end
+if ge c ulong 97
+if le c ulong 122
+ok = true
+end
+end
+if ge c ulong 65
+if le c ulong 90
+ok = true
+end
+end
+if eq c ulong 45
+ok = true
+end
+if eq ok false
+ret false
+end
+p = add p 1
+end
+ret true
+end
+
+note catof: category of the path [a,b): 0 app, 1 launcher, 2 test, 3 build, 4 evidence, 5 docs, 99 none.
+fn catof a ulong b ulong to ulong
+if pfx a b pbk
+ret ulong 0
+end
+if pfx a b ptm
+ret ulong 1
+end
+if pfx a b pts
+ret ulong 2
+end
+if pfx a b pmk
+ret ulong 3
+end
+if teq a b pmf
+ret ulong 3
+end
+if pfx a b pev
+ret ulong 4
+end
+if pfx a b pdc
+ret ulong 5
+end
+ret ulong 99
+end
+
+fn pcat c ulong to void
+if eq c ulong 0
+ptx c0
+end
+if eq c ulong 1
+ptx c1
+end
+if eq c ulong 2
+ptx c2
+end
+if eq c ulong 3
+ptx c3
+end
+if eq c ulong 4
+ptx c4
+end
+if eq c ulong 5
+ptx c5
+end
+ret
+end
+
+fn kindof a ulong b ulong to ulong
+if teq a b k0
+ret ulong 0
+end
+if teq a b k1
+ret ulong 1
+end
+if teq a b k2
+ret ulong 2
+end
+if teq a b k3
+ret ulong 3
+end
+if teq a b k4
+ret ulong 4
+end
+if teq a b k5
+ret ulong 5
+end
+if teq a b k6
+ret ulong 6
+end
+if teq a b k7
+ret ulong 7
+end
+if teq a b k8
+ret ulong 8
+end
+if teq a b k9
+ret ulong 9
+end
+ret ulong 99
+end
+
+fn pkind k ulong to void
+if eq k ulong 0
+ptx k0
+end
+if eq k ulong 1
+ptx k1
+end
+if eq k ulong 2
+ptx k2
+end
+if eq k ulong 3
+ptx k3
+end
+if eq k ulong 4
+ptx k4
+end
+if eq k ulong 5
+ptx k5
+end
+if eq k ulong 6
+ptx k6
+end
+if eq k ulong 7
+ptx k7
+end
+if eq k ulong 8
+ptx k8
+end
+if eq k ulong 9
+ptx k9
+end
+ret
+end
+
+fn inscope to void
+if eq get st 2 ulong 0
+refuse rscope
+end
+ret
+end
+
+note recS: open a scope, print its header and reset the sums.
+fn recS s ulong e ulong to void
+if ne nfld s e ulong 4
+refuse rfld
+end
+if ne get st 2 ulong 0
+refuse rnest
+end
+a = fst s e ulong 1
+b = tend a e
+if eq sname a b false
+refuse rname
+end
+p = fst s e ulong 2
+q = tend p e
+if eq hexn p q ulong 40 false
+refuse rhex
+end
+u = fst s e ulong 3
+if eq hexn u e ulong 40 false
+refuse rhex
+end
+i = ulong 0
+while lt i ulong 24 bound 30
+put cat i ulong 0
+i = add i 1
+end
+i = ulong 0
+while lt i ulong 16 bound 30
+put eff i ulong 0
+put effn i ulong 0
+put effna i ulong 0
+i = add i 1
+end
+put st 2 ulong 1
+put st 4 ulong 0
+put st 5 ulong 18446744073709551615
+put st 6 ulong 0
+put st 7 ulong 0
+put st 10 ulong 0
+ptx msc
+pspan a b
+ptx mba
+pspan p q
+ptx mhe
+pspan u e
+ptx mnl
+ret
+end
+
+fn recC s ulong e ulong to void
+inscope
+if ne nfld s e ulong 4
+refuse rfld
+end
+a = fst s e ulong 1
+if eq hexn a tend a e ulong 40 false
+refuse rhex
+end
+p = fst s e ulong 2
+ta = num p tend p e
+q = fst s e ulong 3
+ct = num q e
+if lt ct ta
+refuse rtime
+end
+put st 4 add get st 4 ulong 1
+if lt ta get st 5
+put st 5 ta
+end
+if gt ct get st 6
+put st 6 ct
+end
+ret
+end
+
+fn addcat c ulong f ulong ad ulong de ulong to void
+i = mul c ulong 3
+put cat i add get cat i f
+put cat add i 1 add get cat add i 1 ad
+put cat add i 2 add get cat add i 2 de
+ret
+end
+
+note recN: N ADD DEL PATH; the path is the rest of the line (field 3 to the end).
+fn recN s ulong e ulong to void
+inscope
+if lt nfld s e ulong 4
+refuse rfld
+end
+a = fst s e ulong 1
+ad = num a tend a e
+p = fst s e ulong 2
+de = num p tend p e
+q = fst s e ulong 3
+c = catof q e
+if eq c ulong 99
+refuse rpath
+end
+addcat c ulong 1 ad de
+ret
+end
+
+fn recB s ulong e ulong to void
+inscope
+if lt nfld s e ulong 2
+refuse rfld
+end
+q = fst s e ulong 1
+c = catof q e
+if eq c ulong 99
+refuse rpath
+end
+addcat c ulong 1 ulong 0 ulong 0
+put st 7 add get st 7 ulong 1
+ret
+end
+
+note ksha: 0 absent, 1 a 64-hex digest; refuses anything else.
+fn ksha a ulong b ulong to ulong
+if teq a b tabs
+ret ulong 0
+end
+if hexn a b ulong 64
+ret ulong 1
+end
+refuse rk64
+ret ulong 2
+end
+
+fn kcmp a ulong b ulong to bool
+i = ulong 0
+while lt i ulong 64 bound 70
+if ne get buf add a i get buf add b i
+ret false
+end
+i = add i 1
+end
+ret true
+end
+
+fn recK s ulong e ulong to void
+inscope
+if ne nfld s e ulong 4
+refuse rfld
+end
+m = fst s e ulong 1
+n = tend m e
+p = fst s e ulong 2
+q = tend p e
+u = fst s e ulong 3
+x = ksha p q
+y = ksha u e
+if eq add x y ulong 0
+refuse rkab
+end
+ptx mker
+pspan m n
+if eq x ulong 0
+ptx vnew
+else
+if eq y ulong 0
+ptx vrem
+else
+if kcmp p u
+ptx vsame
+else
+ptx vdiff
+end
+end
+end
+ptx mnl
+put st 10 add get st 10 ulong 1
+ret
+end
+
+fn recE s ulong e ulong to void
+inscope
+if ne nfld s e ulong 3
+refuse rfld
+end
+a = fst s e ulong 1
+k = kindof a tend a e
+if eq k ulong 99
+refuse rkind
+end
+p = fst s e ulong 2
+if teq p e tNA
+put effna k add get effna k ulong 1
+else
+v = num p e
+put eff k add get eff k v
+put effn k add get effn k ulong 1
+end
+ret
+end
+
+fn pcatline c ulong to void
+ptx mcat
+pcat c
+ptx mfi
+pnum get cat mul c ulong 3
+ptx mad
+pnum get cat add mul c ulong 3 ulong 1
+ptx mde
+pnum get cat add mul c ulong 3 ulong 2
+ptx mnl
+ret
+end
+
+fn peff k ulong to void
+if gt get effna k ulong 0
+if gt get effn k ulong 0
+refuse rmix
+end
+end
+ptx meff
+pkind k
+if gt get effna k ulong 0
+ptx mnm
+else
+if eq get effn k ulong 0
+ptx mnr
+else
+ptx msp1
+pnum get eff k
+end
+end
+ptx mnl
+ret
+end
+
+note recX: close the scope and print its table.
+fn recX s ulong e ulong name ulong to void
+inscope
+if ne nfld s e ulong 1
+refuse rfld
+end
+ptx mco
+pnum get st 4
+ptx msp
+if eq get st 4 ulong 0
+pnum ulong 0
+else
+pnum sub get st 6 get st 5
+end
+ptx mnl
+c = ulong 0
+while lt c ulong 6 bound 8
+pcatline c
+c = add c 1
+end
+f = ulong 0
+ad = ulong 0
+de = ulong 0
+c = ulong 0
+while lt c ulong 6 bound 8
+f = add f get cat mul c ulong 3
+ad = add ad get cat add mul c ulong 3 ulong 1
+de = add de get cat add mul c ulong 3 ulong 2
+c = add c 1
+end
+ptx mtot
+pnum f
+ptx mad
+pnum ad
+ptx mde
+pnum de
+ptx mnl
+ptx mbin
+pnum get st 7
+ptx mnl
+k = ulong 0
+while lt k ulong 10 bound 12
+peff k
+k = add k 1
+end
+put st 2 ulong 0
+put st 3 add get st 3 ulong 1
+ret
+end
+
+
+fn recEND s ulong e ulong to void
+if ne nfld s e ulong 2
+refuse rfld
+end
+if ne get st 2 ulong 0
+refuse ropen
+end
+a = fst s e ulong 1
+n = num a e
+if ne n get st 3
+refuse rcnt
+end
+put st 9 ulong 1
+ret
+end
+
+fn doline s ulong e ulong to void
+if eq s e
+refuse rempty
+end
+if eq get st 9 ulong 1
+refuse rafter
+end
+t = tend s e
+if eq get st 8 ulong 0
+if eq teq s e tHDR false
+refuse rhdr
+end
+put st 8 ulong 1
+ret
+end
+if teq s t tS
+recS s e
+a = fst s e ulong 1
+put sna 0 a
+put sna 1 tend a e
+ret
+end
+if teq s t tC
+recC s e
+ret
+end
+if teq s t tN
+recN s e
+ret
+end
+if teq s t tB
+recB s e
+ret
+end
+if teq s t tK
+recK s e
+ret
+end
+if teq s t tE
+recE s e
+ret
+end
+if teq s t tX
+recX s e ulong 0
+ptx mend
+pspan get sna 0 get sna 1
+ptx mnl
+ret
+end
+if teq s t tEND
+recEND s e
+ret
+end
+refuse rtag
+ret
+end
+
+fn main to int
+n = ulong 0
+c = true
+while c bound 300000
+k = read 0 buf n sub ulong 262144 n
+if lt k long 0
+w = write 2 mbig 0 len mbig
+ret 2
+end
+if eq k long 0
+c = false
+else
+n = add n ulong k
+if ge n ulong 262144
+w = write 2 mbig 0 len mbig
+ret 2
+end
+end
+end
+put st 0 n
+s = ulong 0
+while lt s n bound 300000
+e = s
+while lt e n bound 300000
+if eq get buf e uchar 10
+break
+end
+e = add e 1
+end
+put st 1 add get st 1 ulong 1
+doline s e
+s = add e 1
+end
+if eq get st 8 ulong 0
+refuse rhdr
+end
+if eq get st 9 ulong 0
+refuse rnoend
+end
+ptx mok
+pnum get st 3
+ptx mnl
+ret 0
+end

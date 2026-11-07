@@ -1,0 +1,26 @@
+# Published digests for the portable-application reproduction (docs/repro/README.md).
+# Source: evidence/PORTABLE-APP-20261107/outputs.sha256 (DRA-201, cuda201) at CUDApp bec13796; the GB10 and
+# Apple M2 output files were byte-identical there. tools/repro/produce.sh checks the gpu-in lines;
+# tools/repro/replay-nvidia.sh and replay-apple.sh check the out lines against each GPU's outputs.
+# gpu-in: the producer's outputs (seeded-Omega SPIR-V modules, inputs, bit-exact references)
+951a53c367df5c319b9235f055b23d0ac717c299f28a242ad88c6bcd6d7a7d9a  gpu-in/fsum16.vk.mutant.spv
+1c139c14212e0cee1fa7f702f33884b20df927210371dc6c6803b5a151015805  gpu-in/fsum16.vk.spv
+fabf98eb8a0767b95ef456ab1a3c3832608bbae362c2fa9df96c5670c62a3c45  gpu-in/gemm16.vk.mutant.spv
+191e4f4276746e84c8913a9ff4a9d312158d1faa068a0fa610463157a0bc4c9e  gpu-in/gemm16.vk.spv
+10284242f8ccd93c7bbf43f9a4a4b15c26f53ec797ca1a6daea702bc0918608f  gpu-in/vadd.vk.mutant.spv
+b56654c9853cfc2f869a7f3d9df44c6811875dffce596bd1e102468a2ce80444  gpu-in/vadd.vk.spv
+6f5b3e0f3febfb1aa9287e47ac3925c704a10af9d23bd5aa43575b2c771fa2c1  gpu-in/a.bin
+6b2796ecdf6972f7ae760450a1346987d65d7acf04e71d455f9fe76da846b316  gpu-in/b.bin
+fa4636b8a3c0a25cc9dfc6a1bd013577824b2f6efa65ef58e24d96e70d776c3c  gpu-in/ga.bin
+e79a069f2a866190df1c5b0f87d09f91f89e7925dcff6ac30acd8dc13c97dcee  gpu-in/gb.bin
+2c9a66bead7be566b1f0052df2daea2cb9920ebd19adeb84a451300fd0a7de01  gpu-in/x.bin
+6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290  gpu-in/fsum16.ref
+a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195  gpu-in/gemm16.ref
+72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6  gpu-in/vadd.ref
+# out: what any conforming GPU must write (real kernels = the references; mutants = the fixed wrong bytes)
+6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290  out/fsum16.vk.gpu.out
+46410fe789f1095b90fcc1052d5a6ad785a9db4735e5a1dd40b9749944aface7  out/fsum16.vk.mutant.gpu.out
+a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195  out/gemm16.vk.gpu.out
+2a4e6a24b4d07b4c92fd2650c9ddd388cf38e9b8dddc61010f47ea472fb02b12  out/gemm16.vk.mutant.gpu.out
+72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6  out/vadd.vk.gpu.out
+7b9b833c4c3c0ae96190353543412bf09159d73742eab031e4b49a284263da40  out/vadd.vk.mutant.gpu.out

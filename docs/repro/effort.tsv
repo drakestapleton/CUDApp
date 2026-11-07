@@ -1,0 +1,33 @@
+# Effort records for tools/repro/cost.sh (DRA-202). One record per line: SCOPE KIND VALUE SOURCE.
+# VALUE is a non-negative integer in the kind's unit, or NA (known and not measured). Several rows of one
+# kind are summed by cost.om. Kinds (fixed by tools/repro/cost.om):
+#   agent_wall_s        agent run wall-clock seconds (kanban task_runs ended_at - started_at)
+#   agent_api_calls     model API calls of the run's session (Hermes session_model_usage.api_call_count)
+#   tokens_in, tokens_out, tokens_cache_read, tokens_cache_write   Hermes sessions token counters
+#   cost_usd_e7         Hermes estimated_cost_usd x 10^7 (cost_status "estimated", cost_source
+#                       "official_docs_snapshot": list price from the provider's published table, not an invoice)
+#   gpu_exclusive_s     seconds an exclusive GB10 lease was held (spark-window close.json held_s)
+#   human_hands_on_s    Drake's hands-on time for the scope
+#   review_s            independent review time
+# Sources are local records on the Spark (spark-b87b), read 2026-11-07 with sqlite3 -readonly; they are
+# copied here because they are not public. The runs: kanban board aien-hive, task t_e1d7686d run 15
+# (DRA-195, session local-631f7f17...), task t_ebf8bda5 run 23 (DRA-201, session local-12752164...).
+S0 agent_wall_s NA CUDApp#138 work predates the kanban run records; no session record found
+S0 human_hands_on_s NA not recorded
+S1 agent_wall_s 3530 kanban aien-hive task_runs id 15 (t_e1d7686d) 1794014261-1794010731
+S1 agent_wall_s 1257 kanban aien-hive task_runs id 23 (t_ebf8bda5) 1794015548-1794014291
+S1 agent_api_calls 185 session_model_usage local-631f7f17 claude-opus-5-5
+S1 agent_api_calls 96 session_model_usage local-12752164 claude-opus-5-5
+S1 tokens_in 372 sessions.input_tokens local-631f7f17
+S1 tokens_in 194 sessions.input_tokens local-12752164
+S1 tokens_out 146351 sessions.output_tokens local-631f7f17
+S1 tokens_out 111453 sessions.output_tokens local-12752164
+S1 tokens_cache_read 59267382 sessions.cache_read_tokens local-631f7f17
+S1 tokens_cache_read 28162608 sessions.cache_read_tokens local-12752164
+S1 tokens_cache_write 551948 sessions.cache_write_tokens local-631f7f17
+S1 tokens_cache_write 397438 sessions.cache_write_tokens local-12752164
+S1 cost_usd_e7 175417244 sessions.estimated_cost_usd 17.5417244 local-631f7f17 (estimated)
+S1 cost_usd_e7 98495476 sessions.estimated_cost_usd 9.8495476 local-12752164 (estimated)
+S1 gpu_exclusive_s 48 evidence/PORTABLE-APP-20261107/gb10-gpu/window-close.json held_s (window 20261107T013053Z-901cc9)
+S1 human_hands_on_s NA no intervention is recorded in either run; earlier MacBook access setup (ssh, Lima) is not measured
+S1 review_s NA independent reviewer replay NOT_RUN

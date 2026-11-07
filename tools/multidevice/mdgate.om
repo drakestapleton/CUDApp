@@ -1,0 +1,608 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note mdgate: gate for MD2 two-device qualification receipts (docs/multidevice/PLAN.md section 7, DRA-203).
+note It reads one receipt on stdin (at most 65535 bytes): first line "MD2 v1", then one key=value per
+note line, last line "END". Every key appears at most once; unknown keys refuse. It decides whether the
+note receipt's claim follows from its own fields; it measures nothing and runs no device.
+note   claim=NOT_RUN                prints MDGATE NOT_RUN, exit 3 (no two-device run exists)
+note   claim=TWO_DEVICE_QUALIFIED   every key is required and every rule of PLAN.md section 7 must hold
+note Any other claim (for example a datacenter or N>2 claim) refuses. fixture=yes marks a test fixture:
+note a fixture that satisfies every rule prints MDGATE PASS-FIXTURE and exits 5, so a fixture can never
+note read as a hardware receipt. Exit 0 MDGATE PASS (fixture=no only), 1 FAIL (stderr one MDGATE FAIL
+note line), 2 input unreadable or over 65535 bytes, 3 NOT_RUN (empty input or claim=NOT_RUN), 5 PASS-FIXTURE.
+note Pin: omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f (omega-mv 369dbc96).
+global buf uchar 65536
+global st ulong 16
+global vs ulong 32
+global ve ulong 32
+global seen ulong 32
+note st: 0 bytes, 1 line number, 2 header seen, 3 END seen.
+note vs[k], ve[k]: value span of key k in buf; seen[k]: times key k appeared.
+text kt0 "fixture"
+text kt1 "claim"
+text kt2 "topology"
+text kt3 "devices"
+text kt4 "dev0"
+text kt5 "dev1"
+text kt6 "link"
+text kt7 "link_gbps"
+text kt8 "src"
+text kt9 "omc"
+text kt10 "shape"
+text kt11 "steps"
+text kt12 "elem_bytes"
+text kt13 "params"
+text kt14 "ref_ck"
+text kt15 "md_ck"
+text kt16 "md_ck1"
+text kt17 "ctl_rank_swap"
+text kt18 "ctl_drop_rank"
+text kt19 "ctl_kill_rank"
+text kt20 "ctl_stale_gen"
+text kt21 "ctl_corrupt"
+text kt22 "bytes_step"
+text kt23 "t1_step_us"
+text kt24 "t2_step_us"
+text kt25 "comm_us"
+text kt26 "overlap_us"
+text kt27 "eff_ppm"
+text kt28 "tput1_tok_s"
+text kt29 "tput2_tok_s"
+text kt30 "deps"
+text tHDR "MD2 v1"
+text tEND "END"
+text wyes "yes"
+text wno "no"
+text wqual "TWO_DEVICE_QUALIFIED"
+text wnr "NOT_RUN"
+text wt1 "T1"
+text wt1b "T1b"
+text wref "REFUSED"
+text wnref "NOT_REFUSED"
+text mfail "MDGATE FAIL line="
+text mrsn " reason="
+text mnl "\n"
+text mbig "MDGATE FAIL line=0 reason=input-unreadable-or-over-65535-bytes\n"
+text mnone "MDGATE NOT_RUN reason=no-receipt\n"
+text mnrun "MDGATE NOT_RUN reason=receipt-claims-NOT_RUN\n"
+text mpass "MDGATE PASS"
+text mpfix "MDGATE PASS-FIXTURE"
+text mtop " topology="
+text mlink " link_gbps="
+text mbyt " bytes_step="
+text mmin " min_bytes="
+text movh " overhead_ppm="
+text meff " eff_ppm="
+text rhdr "first-line-must-be-MD2-v1"
+text rkv "line-is-not-key=value"
+text rkey "unknown-key"
+text rdup "key-repeated"
+text rafter "line-after-END"
+text rnoend "missing-END"
+text rempty "empty-line"
+text rval "value-malformed-for-key"
+text rclaim "unknown-claim"
+text rmiss "qualified-claim-missing-a-key"
+text rdev "devices-must-be-2"
+text rsame "dev0-equals-dev1"
+text rck "two-device-checkpoint-differs-from-single-device-reference"
+text rck1 "rank-1-checkpoint-differs-from-rank-0"
+text rswap "rank-swap-control-equals-reference"
+text rctl "a-negative-control-was-not-refused"
+text rbytes "bytes_step-below-ordered-reduction-minimum"
+text rtime "times-inconsistent-overlap-comm-t2"
+text reff "eff_ppm-differs-from-t1-over-2-t2"
+text rzero "steps-link-or-throughput-zero"
+
+fn pnum x ulong to void
+d = new uchar 24 0
+i = ulong 24
+y = x
+c = true
+while c bound 30
+i = sub i 1
+put d i uchar add ulong 48 rem y ulong 10
+y = div y ulong 10
+if eq y ulong 0
+c = false
+end
+end
+k = write 1 d i sub ulong 24 i
+ret
+end
+
+fn ptx t view uchar * to void
+k = write 1 t 0 len t
+ret
+end
+
+fn pspan a ulong b ulong to void
+k = write 1 buf a sub b a
+ret
+end
+
+note fail: print the refusal for line ln (0 = a rule across keys) and exit 1.
+fn fail ln ulong t view uchar * to void
+d = new uchar 24 0
+i = ulong 24
+y = ln
+c = true
+while c bound 30
+i = sub i 1
+put d i uchar add ulong 48 rem y ulong 10
+y = div y ulong 10
+if eq y ulong 0
+c = false
+end
+end
+k = write 2 mfail 0 len mfail
+k = write 2 d i sub ulong 24 i
+k = write 2 mrsn 0 len mrsn
+k = write 2 t 0 len t
+k = write 2 mnl 0 len mnl
+exit 1
+end
+
+fn lfail t view uchar * to void
+fail get st 1 t
+ret
+end
+
+fn teq a ulong b ulong t view uchar * to bool
+m = len t
+if ne sub b a m
+ret false
+end
+i = ulong 0
+while lt i m bound 999999
+if ne get buf add a i get t i
+ret false
+end
+i = add i 1
+end
+ret true
+end
+
+note spaneq: the spans [a,b) and [c,c+(b-a)) of buf are equal and have the same length as [c,d).
+fn spaneq a ulong b ulong c ulong d ulong to bool
+if ne sub b a sub d c
+ret false
+end
+i = ulong 0
+while lt i sub b a bound 999999
+if ne get buf add a i get buf add c i
+ret false
+end
+i = add i 1
+end
+ret true
+end
+
+note numv: decimal value of [a,b), 1..18 digits; 2^64-1 when malformed.
+fn numv a ulong b ulong to ulong
+bad = ulong 18446744073709551615
+if eq a b
+ret bad
+end
+if gt sub b a ulong 18
+ret bad
+end
+x = ulong 0
+p = a
+while lt p b bound 64
+c = ulong get buf p
+if lt c ulong 48
+ret bad
+end
+if gt c ulong 57
+ret bad
+end
+x = add mul x ulong 10 sub c ulong 48
+p = add p 1
+end
+ret x
+end
+
+fn hexn a ulong b ulong n ulong to bool
+if ne sub b a n
+ret false
+end
+p = a
+while lt p b bound 999999
+c = ulong get buf p
+ok = false
+if ge c ulong 48
+if le c ulong 57
+ok = true
+end
+end
+if ge c ulong 97
+if le c ulong 102
+ok = true
+end
+end
+if eq ok false
+ret false
+end
+p = add p 1
+end
+ret true
+end
+
+note plain: 1..200 printable bytes without spaces (link, shape, deps).
+fn plain a ulong b ulong to bool
+if eq a b
+ret false
+end
+if gt sub b a ulong 200
+ret false
+end
+p = a
+while lt p b bound 300
+c = ulong get buf p
+if le c ulong 32
+ret false
+end
+if ge c ulong 127
+ret false
+end
+p = add p 1
+end
+ret true
+end
+
+fn keyof a ulong b ulong to ulong
+if teq a b kt0
+ret ulong 0
+end
+if teq a b kt1
+ret ulong 1
+end
+if teq a b kt2
+ret ulong 2
+end
+if teq a b kt3
+ret ulong 3
+end
+if teq a b kt4
+ret ulong 4
+end
+if teq a b kt5
+ret ulong 5
+end
+if teq a b kt6
+ret ulong 6
+end
+if teq a b kt7
+ret ulong 7
+end
+if teq a b kt8
+ret ulong 8
+end
+if teq a b kt9
+ret ulong 9
+end
+if teq a b kt10
+ret ulong 10
+end
+ret keyof2 a b
+end
+
+fn keyof2 a ulong b ulong to ulong
+if teq a b kt11
+ret ulong 11
+end
+if teq a b kt12
+ret ulong 12
+end
+if teq a b kt13
+ret ulong 13
+end
+if teq a b kt14
+ret ulong 14
+end
+if teq a b kt15
+ret ulong 15
+end
+if teq a b kt16
+ret ulong 16
+end
+if teq a b kt17
+ret ulong 17
+end
+if teq a b kt18
+ret ulong 18
+end
+if teq a b kt19
+ret ulong 19
+end
+if teq a b kt20
+ret ulong 20
+end
+ret keyof3 a b
+end
+
+fn keyof3 a ulong b ulong to ulong
+if teq a b kt21
+ret ulong 21
+end
+if teq a b kt22
+ret ulong 22
+end
+if teq a b kt23
+ret ulong 23
+end
+if teq a b kt24
+ret ulong 24
+end
+if teq a b kt25
+ret ulong 25
+end
+if teq a b kt26
+ret ulong 26
+end
+if teq a b kt27
+ret ulong 27
+end
+if teq a b kt28
+ret ulong 28
+end
+if teq a b kt29
+ret ulong 29
+end
+if teq a b kt30
+ret ulong 30
+end
+ret ulong 99
+end
+
+note valid: the value [a,b) has the form key k requires.
+fn valid k ulong a ulong b ulong to bool
+bad = ulong 18446744073709551615
+if eq k ulong 0
+ret or teq a b wyes teq a b wno
+end
+if eq k ulong 1
+ret plain a b
+end
+if eq k ulong 2
+ret or teq a b wt1 teq a b wt1b
+end
+if eq k ulong 8
+ret hexn a b ulong 40
+end
+if eq k ulong 9
+ret hexn a b ulong 64
+end
+if eq k ulong 4
+ret hexn a b ulong 64
+end
+if eq k ulong 5
+ret hexn a b ulong 64
+end
+if ge k ulong 14
+if le k ulong 17
+ret hexn a b ulong 64
+end
+end
+if ge k ulong 18
+if le k ulong 21
+ret or teq a b wref teq a b wnref
+end
+end
+if eq k ulong 6
+ret plain a b
+end
+if eq k ulong 10
+ret plain a b
+end
+if eq k ulong 30
+ret plain a b
+end
+ret ne numv a b bad
+end
+
+fn doline s ulong e ulong to void
+if eq s e
+lfail rempty
+end
+if eq get st 3 ulong 1
+lfail rafter
+end
+if eq get st 2 ulong 0
+if eq teq s e tHDR false
+lfail rhdr
+end
+put st 2 ulong 1
+ret
+end
+if teq s e tEND
+put st 3 ulong 1
+ret
+end
+q = s
+while lt q e bound 999999
+if eq get buf q uchar 61
+break
+end
+q = add q 1
+end
+if ge q e
+lfail rkv
+end
+k = keyof s q
+if eq k ulong 99
+lfail rkey
+end
+if gt get seen k ulong 0
+lfail rdup
+end
+v = add q 1
+if eq valid k v e false
+lfail rval
+end
+put seen k ulong 1
+put vs k v
+put ve k e
+ret
+end
+
+fn kis k ulong t view uchar * to bool
+ret teq get vs k get ve k t
+end
+
+fn kn k ulong to ulong
+ret numv get vs k get ve k
+end
+
+fn keq j ulong k ulong to bool
+ret spaneq get vs j get ve j get vs k get ve k
+end
+
+note rules: every rule of PLAN.md section 7 for a TWO_DEVICE_QUALIFIED claim.
+fn rules to void
+k = ulong 0
+while lt k ulong 31 bound 40
+if eq get seen k ulong 0
+fail ulong 0 rmiss
+end
+k = add k 1
+end
+if ne kn 3 ulong 2
+fail ulong 0 rdev
+end
+if keq 4 5
+fail ulong 0 rsame
+end
+if eq keq 15 14 false
+fail ulong 0 rck
+end
+if eq keq 16 15 false
+fail ulong 0 rck1
+end
+if keq 17 14
+fail ulong 0 rswap
+end
+k = ulong 18
+while le k ulong 21 bound 8
+if eq kis k wref false
+fail ulong 0 rctl
+end
+k = add k 1
+end
+if eq kn 11 ulong 0
+fail ulong 0 rzero
+end
+if eq kn 7 ulong 0
+fail ulong 0 rzero
+end
+if eq kn 28 ulong 0
+fail ulong 0 rzero
+end
+if eq kn 29 ulong 0
+fail ulong 0 rzero
+end
+eb = kn 12
+if ne eb ulong 4
+if ne eb ulong 8
+fail ulong 0 rval
+end
+end
+mn = mul mul ulong 2 eb kn 13
+if lt kn 22 mn
+fail ulong 0 rbytes
+end
+if gt kn 26 kn 25
+fail ulong 0 rtime
+end
+if gt kn 25 kn 24
+fail ulong 0 rtime
+end
+if eq kn 24 ulong 0
+fail ulong 0 rtime
+end
+ef = div mul kn 23 ulong 1000000 mul ulong 2 kn 24
+if ne ef kn 27
+fail ulong 0 reff
+end
+ret
+end
+
+fn report to void
+mn = mul mul ulong 2 kn 12 kn 13
+ptx mtop
+pspan get vs 2 get ve 2
+ptx mlink
+pnum kn 7
+ptx mbyt
+pnum kn 22
+ptx mmin
+pnum mn
+ptx movh
+pnum div mul sub kn 22 mn ulong 1000000 mn
+ptx meff
+pnum kn 27
+ptx mnl
+ret
+end
+
+fn main to int
+n = ulong 0
+c = true
+while c bound 70000
+k = read 0 buf n sub ulong 65536 n
+if lt k long 0
+w = write 2 mbig 0 len mbig
+ret 2
+end
+if eq k long 0
+c = false
+else
+n = add n ulong k
+if ge n ulong 65536
+w = write 2 mbig 0 len mbig
+ret 2
+end
+end
+end
+if eq n ulong 0
+w = write 1 mnone 0 len mnone
+ret 3
+end
+put st 0 n
+s = ulong 0
+while lt s n bound 70000
+e = s
+while lt e n bound 70000
+if eq get buf e uchar 10
+break
+end
+e = add e 1
+end
+put st 1 add get st 1 ulong 1
+doline s e
+s = add e 1
+end
+if eq get st 3 ulong 0
+fail get st 1 rnoend
+end
+if eq get seen 1 ulong 0
+fail ulong 0 rclaim
+end
+if kis 1 wnr
+w = write 1 mnrun 0 len mnrun
+ret 3
+end
+if eq kis 1 wqual false
+fail ulong 0 rclaim
+end
+rules
+if kis 0 wyes
+ptx mpfix
+report
+ret 5
+end
+ptx mpass
+report
+ret 0
+end

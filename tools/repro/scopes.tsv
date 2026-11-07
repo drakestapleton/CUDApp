@@ -1,0 +1,6 @@
+# Migration-cost scopes for tools/repro/cost.sh (DRA-202). One scope per line: NAME BASE HEAD DESCRIPTION.
+# BASE..HEAD are full commit ids of aien-dev/CUDApp; the metered change is the whole-tree diff BASE HEAD.
+# S0: the portable contract itself (CUDApp #138: target table, SPIR-V emitter, CPU-driver host gate).
+S0 c30c0be6222af7d13e38dd354a752fd17367adeb d89ec37e6a350057a419513afe252d2b2cf0e80d portable contract, CPU drivers only (CUDApp#138)
+# S1: the port to two GPU vendors (DRA-195 Apple M2 via MoltenVK, DRA-201 NVIDIA GB10 via NVIDIA Vulkan).
+S1 b774723f537cec16a359fe082b8100317a5b5490 bec1379663666503b614229cde334eb577f169e4 Apple M2 GPU + NVIDIA GB10 Vulkan targets (DRA-195, DRA-201)

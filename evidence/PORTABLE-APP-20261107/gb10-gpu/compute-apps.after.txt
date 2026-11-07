@@ -1,0 +1,2 @@
+pid, process_name, used_gpu_memory [MiB]
+68451, $HOME/.local/share/omega-tool-model/round40-fast/server, 335 MiB

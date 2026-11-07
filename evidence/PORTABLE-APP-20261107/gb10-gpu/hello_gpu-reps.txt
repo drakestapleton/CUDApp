@@ -1,0 +1,20 @@
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 859.3 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 854.5 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 855.7 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 853.6 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 855.4 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 853.9 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 831.6 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 821.4 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 853.0 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+      at the GB10's measured 195.1 GB/s read ceiling this needs at least 64.5 us; the GPU took 844.4 us (8% of the ceiling)
+output sha256 72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6

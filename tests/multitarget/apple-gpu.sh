@@ -14,7 +14,8 @@
 #   and SHA256SUMS over them (written by the producer).
 # Environment (absolute paths): MVK_LIB (libMoltenVK.dylib), MVK_INCLUDE (MoltenVK include dir with
 #   vulkan/vulkan.h), MT_CC (default cc), MT_EXPECT_DEVICE (default "Apple M2").
-# Outputs stay in DIR: *.gpu.out, run logs, identity.txt.
+# Outputs stay in DIR: *.gpu.out, run logs, identity.txt, timing.tsv (MT_REPS fresh runs per kernel,
+# default 10; timing is an observation, never a pass condition).
 # Exit: 0 APPLE-GPU PASS; 1 FAIL; 64 usage; 77 NOT_RUN (not macOS arm64 or MoltenVK missing).
 set -u
 LC_ALL=C

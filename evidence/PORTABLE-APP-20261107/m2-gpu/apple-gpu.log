@@ -1,0 +1,49 @@
+PASS inputs match producer SHA256SUMS (14 files)
+DATE 2026-11-07T01:29:36Z
+OS macOS 26.6.2 build 25G83; Darwin 25.6.0 arm64
+CPU Apple M2 cores=8 perf=4 eff=4 mem=8589934592
+MODEL Mac14,2
+GPU Chipset Model: Apple M2
+GPU Type: GPU
+GPU Total Number of Cores: 10
+GPU Vendor: Apple (0x106b)
+GPU Metal Support: Metal 4
+CC Apple clang version 17.0.0 (clang-1700.6.4.2)
+SDK 26.2
+MOLTENVK $HOME/work/hive/cuda201/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib sha256=aef00b13bcc808adf15b85bef9ae67393d92be7ed5dfe41cad16fa809e4a4c5f
+LAUNCHER_SRC $HOME/work/hive/cuda201/mac/CUDApp/tools/multitarget/spirv-host.c sha256=b66d63ec1713dbd182e8ab2f64073a0e7ee9b81b9d3f90e16a3c1ed9a6367dc8
+LAUNCHER $HOME/work/hive/cuda201/mac/gpu/spirv-host-mvk sha256=d6c1d17465a7ed2ab96efd2e891fbef334d12b132b3896bff20c24739598c424
+PASS bytes vadd.vk.gpu.out = vadd.ref sha256=72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+PASS negative vadd.vk.mutant differs from vadd.ref (planted wrong kernel detected)
+PASS repeat vadd.vk identical bytes
+PASS bytes fsum16.vk.gpu.out = fsum16.ref sha256=6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290
+PASS negative fsum16.vk.mutant differs from fsum16.ref (planted wrong kernel detected)
+PASS repeat fsum16.vk identical bytes
+PASS bytes gemm16.vk.gpu.out = gemm16.ref sha256=a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195
+PASS negative gemm16.vk.mutant differs from gemm16.ref (planted wrong kernel detected)
+PASS repeat gemm16.vk identical bytes
+spirv-host: vk target=moltenvk library=$HOME/work/hive/cuda201/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib linked=direct-no-loader MVK_CONFIG_FAST_MATH_ENABLED=0
+spirv-host: vk device="Apple M2" type=1 vendor=0x106b device_id=0x1a060208 api=1.2.357 driver="MoltenVK" info="1.4.2" conformance=1.4.4.0
+spirv-host: vk limits max_group_count_x=1073741824 max_invocations=1024 max_shared=32768 timestamp_period_ns=1
+spirv-host: vk portability_subset=enabled
+spirv-host: isolation: 519 images, pinned $HOME/work/hive/cuda201/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib loaded, none contains "libvulkan"
+PASS control cl-refused exit=2 spirv-host: this build is MT_TARGET=1 (MoltenVK): only vk
+PASS control isolation-forbid-moltenvk exit=9 spirv-host: isolation FAILED: forbidden path "libMoltenVK" present
+PASS control wrong-device exit=5 spirv-host: device name does not contain MT_EXPECT_DEVICE (Apple M9 Ultra)
+PASS control module-missing exit=4 spirv-host: module unreadable or not whole 32-bit words
+PASS control module-not-words exit=4 spirv-host: module unreadable or not whole 32-bit words
+tests/multitarget/apple-gpu.sh: line 88: 64574 Abort trap: 6           "$host" "$@" "$D/ctl.out" > "$D/ctl-$name.log" 2>&1
+PASS control wrong-entry-driver-abort exit=134 libc++abi: terminating due to uncaught exception of type MVK_spirv_cross::CompilerError: Entry point does not exist.
+PASS control short-input exit=4 spirv-host: input unreadable or not a multiple of COUNT floats
+OBSERVED fastmath=1 vadd bytes match reference (fast math is not the conformance mode)
+OBSERVED fastmath=1 fsum16 bytes match reference (fast math is not the conformance mode)
+OBSERVED fastmath=1 gemm16 bytes match reference (fast math is not the conformance mode)
+PASS timing reps vadd: 10/10 outputs = vadd.ref
+PASS timing reps fsum16: 10/10 outputs = fsum16.ref
+PASS timing reps gemm16: 10/10 outputs = gemm16.ref
+OUTPUT vadd.vk.gpu.out sha256=72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+OUTPUT fsum16.vk.gpu.out sha256=6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290
+OUTPUT gemm16.vk.gpu.out sha256=a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195
+route: SPIRV_VK -> MoltenVK -> Metal on the Apple GPU (vendor runtime); MSL_SOURCE, ANE and an independent Apple GPU driver are NOT_RUN
+APPLE-GPU PASS pass=20 fail=0
+EXIT 0

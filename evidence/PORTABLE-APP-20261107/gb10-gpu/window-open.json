@@ -1,0 +1,7 @@
+{"window_id": "20261107T013053Z-901cc9", "name": "cuda201-portable", "owner": "$USER@pid67719", "lease_min": 20, "gb10": "exclusive", "waited_s": 1, "state": {"utc": "2026-11-07T01:30:54Z", "loadavg": "8.69 8.76 10.85 10/3178 68162", "mem_avail_kB": 83745272, "gpu_util_pct": "0", "gpu_W": "5.34",
+ "gb10_lock_holders": "holds exclusive pid 67810 (s) (set by a finished flock; processes with /tmp/aien-gb10.lock open now: pid 67780 /bin/sh $HOME/.local/bin/spark-window _hold 20261107T01); ",
+ "quiet_lock_holders": "holds exclusive pid 67815 (s) (set by a finished flock; processes with /tmp/aien-quiet.lock open now: pid 67780 /bin/sh $HOME/.local/bin/spark-window _hold 20261107T01); ",
+ "quiet_waiters": "",
+ "gpu_apps": "68451, 335 MiB, $HOME/.local/share/omega-tool-model/round40-fast/server;",
+ "sensors_row": "1794015052,2026-11-06T19:30:52-06:00,170,5.30,0,8.69,84015480,0,12920", "sensors_row_age_s": 2}
+}

@@ -1,0 +1,7 @@
+HOST spark-b87b Linux 7.0.0-1019-nvidia aarch64
+CUDAPP 33f15580602a580e6a4afebe984ab14f3d8a5081 branch hive/t_ebf8bda5-portable-nv-apple dirty=3
+DATE 2026-11-07T01:28:00Z
+CC gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+de2aef092e639025fcf95508b7d3f006350f5c670dd6afb12556ec02e9a9f4a9  $HOME/work/hive/t_ebf8bda5/build/hello_gpu
+7fc458821c23f66950ab5825cd586c91cd98e1038b5cc3af6f6d891343152b80  $HOME/work/hive/t_ebf8bda5/build/hello_gpu_control
+18af54fd1c4f79afdb763aabb153a0bf7b36f293a556353373ef680d51b37008  $HOME/work/hive/t_ebf8bda5/build/libomega_gpu.a

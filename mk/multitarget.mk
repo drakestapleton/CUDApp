@@ -14,6 +14,12 @@
 # references with a SHA256SUMS file to the Mac, then
 #   MVK_LIB=/abs/libMoltenVK.dylib MVK_INCLUDE=/abs/MoltenVK/include sh tests/multitarget/apple-gpu.sh DIR
 # builds spirv-host.c with MT_TARGET=1 (MoltenVK linked directly) and compares every output bit for bit.
+# NVIDIA GPU replay (the GB10, inside an exclusive spark-window lease; not a make target): the same DIR, then
+#   MT_GPU_WINDOW=<id> CONFORM=<run.sh MT_OUT>/conform MT_COMPARE_DIR=<other GPU's outputs>
+#     HELLO_GPU=build/hello_gpu HELLO_GPU_CONTROL=build/hello_gpu_control sh tests/multitarget/nvidia-gpu.sh DIR
+#   (one command line)
+# builds spirv-host.c with MT_TARGET=2 (NVIDIA's Vulkan driver, loader pinned to nvidia_icd.json), compares
+# bit for bit, cross-target and against CUDA++'s own hello_gpu (DRA-201, evidence/PORTABLE-APP-20261107/).
 OMC ?=
 .PHONY: doctor-targets test-multitarget
 doctor-targets:

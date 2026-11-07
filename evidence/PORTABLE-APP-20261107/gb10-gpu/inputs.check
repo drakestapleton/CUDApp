@@ -1,0 +1,14 @@
+vadd.vk.spv: OK
+vadd.vk.mutant.spv: OK
+fsum16.vk.spv: OK
+fsum16.vk.mutant.spv: OK
+gemm16.vk.spv: OK
+gemm16.vk.mutant.spv: OK
+a.bin: OK
+b.bin: OK
+x.bin: OK
+ga.bin: OK
+gb.bin: OK
+vadd.ref: OK
+fsum16.ref: OK
+gemm16.ref: OK

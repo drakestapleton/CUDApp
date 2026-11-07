@@ -3,14 +3,16 @@
 #
 # Two layers, deliberately separate:
 #   1. emitter/address/guard/body-test.om -- host checks compiled by the pinned seed compiler.
-#   2. nvdisasm 13.0 on the emitted words   -- an outside oracle. It is not part of the
-#      delivered closure and no GPU is touched; it only confirms that the emitted words
-#      decode to the intended instructions. Its listing stays in the temporary work
-#      directory: AGENTS.md forbids committing NVIDIA-tool output, so the expectations
-#      below are written by hand (opcode counts and the address-formation lines of the
-#      #85 repair: MOV of the record offset, then IMAD.WIDE.U32 base + offset).
+#   2. Omega's own sm_121 disassembler (build/sm121dis, om/disasm/sm121_dis.om; CUDA++ C6,
+#      DRA-475) on the emitted words: it confirms that the emitted words decode to the intended
+#      instructions. NVIDIA nvdisasm 13.0 stays an outside ORACLE only: when NVDISASM names it,
+#      its text of the same words must equal ours. Neither listing is committed (AGENTS.md
+#      forbids committing NVIDIA-tool output), so the expectations below are written by hand
+#      (opcode counts and the address-formation lines of the #85 repair: MOV of the record
+#      offset, then IMAD.WIDE.U32 base + offset).
 #
-# Usage: OMEGA_COMPILER=/path/to/seed/out/omc sh tests/device-trace/run-emitter-checks.sh
+# Usage: OMEGA_COMPILER=/path/to/seed/out/omc [SM121DIS=build/sm121dis] [NVDISASM=/path/to/nvdisasm] \
+#        sh tests/device-trace/run-emitter-checks.sh
 set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 compiler=${OMEGA_COMPILER:-}
@@ -89,7 +91,19 @@ compile_unit "$work/dump_full.om" "$work/dump"
 echo "words: $(wc -c < "$work/words.bin") bytes, $(( $(wc -c < "$work/words.bin") / 16 )) instructions"
 [ "$(wc -c < "$work/words.bin")" = 640 ] || { echo 'expected 40 instructions (640 bytes)' >&2; exit 1; }
 
-nvdisasm --binary SM121 "$work/words.bin" > "$work/got.sass"
+dis=${SM121DIS:-$root/build/sm121dis}
+[ -x "$dis" ] || { echo "NOT_RUN: $dis missing (make build/sm121dis)" >&2; exit 69; }
+"$dis" -b SM121 "$work/words.bin" > "$work/got.sass" || {
+  echo 'Omega disassembler: some emitted words are not a known form (printed ??)' >&2; exit 1; }
+if [ -n "${NVDISASM:-}" ]; then
+  # ORACLE, offline only: nvdisasm's text of the same words, spacing collapsed, must equal ours.
+  "$NVDISASM" --binary SM121 "$work/words.bin" > "$work/oracle.sass"
+  norm() { awk '$1 ~ /^\/\*[0-9a-f]+\*\/$/ { $1 = $1; print }' "$1"; }
+  norm "$work/oracle.sass" > "$work/oracle.txt"; norm "$work/got.sass" > "$work/ours.txt"
+  cmp -s "$work/oracle.txt" "$work/ours.txt" || { echo 'Omega disassembler text differs from the nvdisasm oracle' >&2
+    diff "$work/oracle.txt" "$work/ours.txt" | head -6 >&2; exit 1; }
+  echo "oracle: nvdisasm text equals ours on all $(wc -l < "$work/ours.txt") words"
+fi
 # Opcode histogram of the two marker blocks (20 instructions each).
 awk '$1 ~ /^\/\*[0-9a-f]+\*\/$/ { op = $2; if (op ~ /^@/) op = $3; n[op]++ }
      END { for (o in n) print o, n[o] }' "$work/got.sass" | LC_ALL=C sort > "$work/ops.txt"
@@ -119,4 +133,4 @@ for want in '0010 @P0 BRA 0x140' '0070 MOV R6, 0x40' '0080 IMAD.WIDE.U32 R8, R6,
   fi
 done
 [ "$bad" = 0 ] || exit 1
-echo 'nvdisasm decode matches the hand-written expectations (40 instructions)'
+echo 'Omega disassembler decode matches the hand-written expectations (40 instructions)'

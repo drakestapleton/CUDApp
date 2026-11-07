@@ -75,7 +75,7 @@ static uint64_t mask(int at, int n) { return (n >= 64 ? ~0ULL : ((1ULL << n) - 1
 #define BRA_LO_MASK (mask(16, 8) | mask(34, 30))
 #define BRA_HI_MASK mask(0, 18)
 
-typedef struct { char *o; size_t n, at; int ok; } Out;
+typedef struct { char *o; size_t n, at; int ok, unk; } Out;
 
 static void put(Out *w, const char *fmt, ...) {
     if (w->at >= w->n) { w->ok = 0; return; }
@@ -94,7 +94,14 @@ static const char *SR[256] = {
     [0x21] = "SR_TID.X", [0x22] = "SR_TID.Y", [0x23] = "SR_TID.Z",
     [0x25] = "SR_CTAID.X", [0x26] = "SR_CTAID.Y", [0x27] = "SR_CTAID.Z",
     [0x00] = "SR_LANEID", [0x50] = "SR_CLOCKLO", [0x51] = "SR_CLOCKHI",
+    /* the device-side trace emitter's timer (tests/device-trace/run-emitter-checks.sh), nvdisasm 13.0.85 text */
+    [0x52] = "SR_GLOBALTIMERLO", [0x53] = "SR_GLOBALTIMERHI",
 };
+/* The special registers nvdisasm 13.0.85 prints by name (107 of 256; a sweep of S2R over 0..255, Wolfram bitmap,
+ * evidence/C6-DISASM-OM): one this table does not name is reported (?? ...), never printed as SR<n>. */
+static const uint64_t SR_NAMED[4] = { 0x7ffff7efffff800full, 0xffffffff003f001full, 0x000000000000ef3full,
+                                      0x8000000000000000ull };
+static int sr_named(uint64_t v) { return (int)((SR_NAMED[(v >> 6) & 3] >> (v & 63)) & 1); }
 static const char *ICMP[8] = { "F", "LT", "EQ", "LE", "GT", "NE", "GE", "T" };
 static const char *FCMP[16] = { "F", "LT", "EQ", "LE", "GT", "NE", "GE", "NUM", "NAN", "LTU", "EQU", "LEU", "GTU", "NEU", "GEU", "T" };
 static const char *MSIZE[8] = { ".U8" , ".S8", ".U16", ".S16", "", ".64", ".128", ".U.128" };
@@ -142,7 +149,7 @@ static void render(Out *w, const char *fmt, uint64_t lo, uint64_t hi, uint64_t p
         case 'R': pred(w, v & 7, (int)((v >> 3) & 1)); break;
         case 'l': put(w, "0x%x", (unsigned)v); break;
         case 'h': case 'm': put(w, "0x%x", (unsigned)v); break;
-        case 'S': if (SR[v]) put(w, "%s", SR[v]); else put(w, "SR%u", (unsigned)v); break;
+        case 'S': if (SR[v]) put(w, "%s", SR[v]); else if (sr_named(v)) w->unk = 1; else put(w, "SR%u", (unsigned)v); break;
         case 'G': put(w, "%s", ICMP[v]); break;
         case 'Z': if (!v) put(w, ".U32"); break;
         case 'z': put(w, "%s", MSIZE[v]); break;
@@ -271,7 +278,7 @@ static int imad_imm(Out *w, uint64_t lo, uint64_t hi) {
 
 static int c_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
     if (!out || outn < 40) return -2;
-    Out w = { out, outn, 0, 1 };
+    Out w = { out, outn, 0, 1, 0 };
     out[0] = 0;
     uint64_t g = bits(lo, 12, 3); int gneg = (int)bits(lo, 15, 1);
     if (!(g == 7 && !gneg)) { put(&w, "@"); pred(&w, g, gneg); put(&w, " "); }
@@ -286,6 +293,7 @@ static int c_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size
         lom = ~(lom | mask(12, 4)); him = HI_MASK & ~him;
         if ((lo_body & lom) != (r->lov & lom) || (hi_body & him) != (r->hiv & him)) continue;
         w.at = start; render(&w, r->fmt, lo, hi, pc);
+        if (w.unk) break; /* a field value nvdisasm names but this table does not: reported, never guessed */
         return w.ok ? 0 : -2;
     }
     w.at = 0;

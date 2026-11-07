@@ -2,8 +2,9 @@
 # native/nvml: the Omega side of the CUDA++ NVML subset
 
 Two pure Omega units carry RM request/reply policy and error-string encoding.
-The production C shell still contains call orchestration, copy bounds, handle
-mapping and cache management; see `compat/nvml/README.md` for its migration HOLD.
+`api.om` is the C ABI library unit: call orchestration, transport dispatch, copy
+bounds, handle mapping, the string cache and the process lock. The omega-bridge#83
+emitter generates `compat/nvml/` from it; see `compat/nvml/README.md`.
 
 | Unit | Sources (composed in this order, each followed by a newline) | Export |
 | --- | --- | --- |
@@ -20,7 +21,7 @@ rerun `om/units.sh`. `tests/nvml/gate.om` refuses a stale generated file.
 ## The step protocol
 
 A pure unit cannot touch the OS, so `nvml_step` is a resumable state machine.
-The C shell stores the op (s0) and its arguments (s1..s4), then loops:
+`api.om` stores the op (s0) and its arguments (s1..s4), then loops:
 
 1. call `omega_nvml_step`;
 2. if s8 asks for an action (1 ioctl, 2 open, 3 close), perform exactly that
@@ -64,12 +65,11 @@ everything it opened and leaves the refcount at 0.
   transport can carry this control is NOT_RUN (live RM is not authorized). The
   program-mode `cudapp-smi` needs aien-dev/omega-mv#1048 for the same control.
 - A trap inside the teardown after a failed init can leave descriptors open;
-  the shell then reports UNKNOWN.
+  the library then reports UNKNOWN.
 - Live resource-manager behavior is NOT_RUN: every test runs against
   `tests/nvml/rmfake.om`.
 
 Constants: `evidence/NVML-2026-11-06/wolfram.txt`. Tests: `tests/nvml/gate.om`
-(`make test-nvml`). The 476 checks in `tests/nvml/host.om` exercise a pure
-Omega port of the shell protocol against the fake transport, not a production
-shared library. Generated NVML ABI support is tracked by
-[omega-bridge#83](https://github.com/aien-dev/omega-bridge/issues/83).
+(`make test-nvml`). The 476 checks run twice: in `tests/nvml/host.om`, a pure
+Omega port of the protocol, and through the generated `libnvidia-ml.so.1` with
+the C caller `tests/nvml/nvml_test.c`; both against the fake transport.

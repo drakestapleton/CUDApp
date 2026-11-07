@@ -5,8 +5,8 @@ note tests/nvml/rmfake.om, with no foreign code. tests/nvml/gate.om composes thi
 note native/nvml/nvml.om query.om step.om errstr.om, tests/nvml/rmfake.om, then this file, and
 note compiles it with the pinned seeded omc.
 note
-note hv_run is the call protocol of the C ABI shell compat/nvml/cudapp_nvml.c (nvml_run and
-note nvml_act): stage the op and arguments, alternate nvml_step with the one action it requests,
+note hv_run is the call protocol of native/nvml/api.om (generated as compat/nvml/libnvidia-ml.c):
+note stage the op and arguments, alternate nvml_step with the one action it requests,
 note bound the copies, map the status. hv_ioctl, hv_open and hv_close are the test transport of
 note tests/nvml/transport.c (fault S included). Pointers of the C test become flags and slots:
 note a device handle is 0 (NULL), 1+index (issued by hv_handle) or 1000 (a foreign pointer); a

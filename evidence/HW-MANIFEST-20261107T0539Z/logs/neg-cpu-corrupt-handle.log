@@ -1,0 +1,2 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+REFUSE state_unreadable state=/tmp/cudapp-hw-20261107T0539Z/corrupt.state

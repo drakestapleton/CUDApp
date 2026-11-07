@@ -1,0 +1,8 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+STEP claim generation=5
+STEP prepare arg=1000000
+STEP submit elapsed_ns=2000035
+STEP complete result=4529795169249947525
+STEP quiesce cpu=19 elapsed_ns=2000035 budget_ns=2000000000
+STEP release generation=6
+RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=fnv1a64 arg=1000000 generation=5->6 cpu=19 midr_el1=0x410fd851 result=4529795169249947525 elapsed_ns=2000035 outcome=PASS

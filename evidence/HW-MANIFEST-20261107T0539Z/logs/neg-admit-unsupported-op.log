@@ -1,0 +1,1 @@
+REFUSE unsupported_op target=cpu-gb10-x925 op=getrandom

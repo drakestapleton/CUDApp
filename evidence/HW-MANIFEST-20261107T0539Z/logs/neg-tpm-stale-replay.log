@@ -1,0 +1,2 @@
+STEP discover tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 revision=159
+REFUSE stale_generation have=3 want=1

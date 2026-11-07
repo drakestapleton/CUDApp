@@ -5,25 +5,30 @@
  * cubin packer (the generated omega-bridge binding), in the frame formats the NG tools read, plus the result the
  * CUDApp unit returned. In CUDAPP_*_DIFF builds the CUDApp C oracle runs beside it and aborts on any difference,
  * so every recorded result is agreed by CUDApp's .om unit and its C oracle.
- * Files: $NGCAP_DIR/enc.in enc.out cubin.in cubin.out (appended). Unset NGCAP_DIR: records nothing.
+ * Files: ngcap/enc.in enc.out cubin.in cubin.out under the working directory (appended, created 0600, symlinks
+ * refused). No ngcap directory: records nothing.
  * Frame formats: seed/ng/gpu/README.md (NGBWENC1 / NGCUBIN1). Little-endian host (AArch64). */
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 uint32_t __real_omega_bw_enc_sm121(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n,
                                    uint64_t p2, uint64_t p3, void *p4, uint64_t p4_n);
 uint32_t __real_omega_cubin_elf(uint64_t *result, const void *p0, uint64_t p0_n, const void *p1, uint64_t p1_n,
                                 const void *p2, uint64_t p2_n, void *p3, uint64_t p3_n);
 
+/* name is one of the four fixed file names above; never derived from input */
 static FILE *cap(const char *name) {
-    const char *d = getenv("NGCAP_DIR");
-    if (!d || !d[0]) return NULL;
-    char p[4096];
-    snprintf(p, sizeof p, "%s/%s", d, name);
-    FILE *f = fopen(p, "ab");
-    if (!f) { fprintf(stderr, "ngcap: cannot open %s\n", p); abort(); }
+    int dir = open("ngcap", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (dir < 0) return NULL;
+    int fd = openat(dir, name, O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW | O_CLOEXEC, 0600);
+    close(dir);
+    if (fd < 0) { fprintf(stderr, "ngcap: cannot open ngcap/%s\n", name); abort(); }
+    FILE *f = fdopen(fd, "ab");
+    if (!f) abort();
     return f;
 }
 

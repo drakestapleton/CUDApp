@@ -10,10 +10,13 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[1]
 BRIDGE=Path(os.environ['OMEGA_BRIDGE'])
 OMC=Path(os.environ['OMEGA_OMC'])
-for p,h in [(OMC,'2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f'),(BRIDGE/'src/toc.om','d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538'),(BRIDGE/'tools/bridge-seeded','a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629')]:
+# Pins come from om/units.sh, the one place they are recorded (a copied toc.om pin went stale at the bridge repin).
+UNITS_PIN={k:v for k,v in (l.split('=',1) for l in (ROOT/'om/units.sh').read_text().splitlines() if l.split('=',1)[0] in ('OMC_PIN','CONVERTER_PIN','FRONTEND_PIN'))}
+for p,h in [(OMC,UNITS_PIN['OMC_PIN']),(BRIDGE/'src/toc.om',UNITS_PIN['CONVERTER_PIN']),(BRIDGE/'tools/bridge-seeded',UNITS_PIN['FRONTEND_PIN'])]:
     if hashlib.sha256(p.read_bytes()).hexdigest()!=h: raise SystemExit('NOT_RUN unpinned input '+str(p))
 if Path('/dev/nvidiactl').exists(): raise SystemExit('REFUSED: isolate /dev')
-VENDOR=Path(os.environ.get('NVRM_VENDOR',str(Path.home()/'workspace/_ext/open-gpu-kernel-modules-580.173.02')))
+# Default to the vendored 580.173.02 headers the Makefile builds against; NVRM_VENDOR still overrides.
+VENDOR=Path(os.environ.get('NVRM_VENDOR',str(ROOT/'third_party/nvidia-open-580.173.02')))
 INCS=[ROOT/'src',ROOT/'nvrm']+[VENDOR/p for p in ('src/common/sdk/nvidia/inc','kernel-open/common/inc','kernel-open/nvidia-uvm','src/nvidia/arch/nvalloc/unix/include')]
 CC=shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-D_GNU_SOURCE','-O2','-Wall','-Wextra','-Werror','-ffp-contract=off','-ffunction-sections','-fdata-sections','-Wl,--gc-sections']+['-I'+str(p) for p in INCS]
 UNITS=['nvrm_va','nvrm_alloc_scalar','nvrm_counts','nvrm_alloc_push']

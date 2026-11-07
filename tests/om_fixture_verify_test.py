@@ -9,8 +9,10 @@ root = Path(__file__).resolve().parents[1]
 os.chdir(root)
 out = root / 'build/fixture-verify'
 out.mkdir(parents=True, exist_ok=True)
-bridge = Path(os.environ.get('OMEGA_BRIDGE', '/tmp/bridge-73-apiviews'))
-env = dict(os.environ, OMEGA_SEEDED_OMC=os.environ.get('OMEGA_OMC', str(Path.home()/'work/cudastack/omega-mv/seed/out/omc')), OMEGA_SEED=os.environ.get('OMEGA_SEED', str(Path.home()/'work/cudastack/omega-bridge/build/bootstrap/omc')))
+bridge = Path(os.environ.get('OMEGA_BRIDGE', str(Path.home()/'work/cudastack/omega-bridge')))
+# OMEGA_SEED defaults to the bridge's own bootstrap compiler (tools/bootstrap.sh output), which is what the
+# hosted job builds next to OMEGA_BRIDGE; it no longer falls back to a lane checkout under the home directory.
+env = dict(os.environ, OMEGA_SEEDED_OMC=os.environ.get('OMEGA_OMC', str(Path.home()/'work/cudastack/omega-mv/seed/out/omc')), OMEGA_SEED=os.environ.get('OMEGA_SEED', str(bridge/'build/bootstrap/omc')))
 cc = ['gcc','-std=gnu11','-O2','-Wall','-Wextra','-Werror','-ffp-contract=off','-Isrc']
 unit = 'src/cudapp_freest_fixture_verify.c'
 source = 'tests/om_fixture_verify_test.c'

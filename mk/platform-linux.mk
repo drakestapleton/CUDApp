@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # Linux platform policy differential. No device is opened.
 CARRIED_HOST_TESTS += test-platform-linux-policy test-platform-linux-fake-device test-platform-linux-effects test-platform-linux-wait
+# The fake device controller is an Omega program compiled by the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-platform-linux-fake-device)
 .PHONY: test-platform-linux-policy test-platform-linux-fake-device test-platform-linux-effects test-platform-linux-wait
 
 $(OUT_DIR)/platform_linux_policy: tests/platform_linux_policy.c src/cudapp_om_plat_policy.c src/omega_gpu_platform_linux_cpolicy.h
@@ -48,6 +50,10 @@ $(OUT_DIR)/platform_linux_fake_devctl: om/platform-linux/fake_devctl.om
 	test -s $@
 	chmod +x $@
 
+ifneq ($(CUDAPP_OMC_HOST),1)
+test-platform-linux-fake-device:
+	@$(CUDAPP_REQUIRE_OMC)
+else
 test-platform-linux-fake-device: $(OUT_DIR)/platform_linux_fake_devctl
 	$(OUT_DIR)/platform_linux_fake_devctl
 	@sed 's/uchar len msg/uchar 18/' om/platform-linux/fake_devctl.om > $(OUT_DIR)/fake_devctl_mutant.om
@@ -56,6 +62,7 @@ test-platform-linux-fake-device: $(OUT_DIR)/platform_linux_fake_devctl
 	@chmod +x $(OUT_DIR)/fake_devctl_mutant
 	@$(OUT_DIR)/fake_devctl_mutant; test $$? -eq 4
 	@echo "PASS platform linux fake-device fixture (mutant exit 4)"
+endif
 
 # omega_gpu_live_marker (nvrm/nvrm.c) and its sole caller ref_poll_word. Host only, no device. The NVRM test maps
 # memfd pages through the native client; the platform test replaces memfd_create so the poll must take the lookup.
@@ -107,4 +114,4 @@ $(OUT_DIR)/platform_linux_rest: tests/platform_linux_rest.c src/cudapp_om_plat_r
 test-platform-linux-rest: $(OUT_DIR)/platform_linux_rest
 	$(OUT_DIR)/platform_linux_rest
 	@if $(OUT_DIR)/platform_linux_rest --red; then echo "FAIL platform rest red control survived"; exit 1; fi
-	python3 tests/platform_linux_rest_mutants.py
+	$(call CUDAPP_OMC_STEP,python3 tests/platform_linux_rest_mutants.py,platform rest .om mutants)

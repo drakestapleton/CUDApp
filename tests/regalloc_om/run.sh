@@ -8,7 +8,8 @@ cd "$ROOT"
 mkdir -p "$REGALLOC_OUT"
 # The successor links the portable generated C of om/codegen (om/units.sh; src/cudapp_om_<unit>.c). The pinned
 # compiler regenerates it byte for byte first, so these sources are the checked lowering of the .om under test.
-if [ -n "${OMEGA_OMC:-}" ]; then sh om/units.sh --check; fi
+if [ -n "${OMEGA_OMC:-}" ]; then sh om/units.sh --check
+else echo "NOT_RUN om/units.sh --check (requires the pinned AArch64 omc; the differential below still runs)"; fi
 UNITS="src/cudapp_freest_regalloc.c src/cudapp_om_regalloc_ir.c src/cudapp_om_regalloc_live.c src/cudapp_om_cg_matmul.c
   src/cudapp_om_cg_matmul_params.c src/cudapp_om_cg_matmul_i32.c src/cudapp_om_cg_matmul_tensor.c
   src/cudapp_om_cg_matmul_loop.c src/cudapp_om_cg_matmul_frag.c src/cudapp_om_cg_matmul_block.c

@@ -16,10 +16,13 @@ test-numeric-om-diff: $(AMPERE_CUBIN_DIR)/numeric-om-diff
 
 .PHONY: test-numeric-om-mutants
 test-numeric-om-mutants:
+	@$(CUDAPP_REQUIRE_OMC)
 	sh tools/numeric_om_mutants.sh
 
 CARRIED_HOST_TESTS += test-numeric-om-diff
 CARRIED_HOST_TESTS += test-numeric-om-mutants
+# Both numeric mutant runners regenerate units with the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-numeric-om-mutants test-numeric-rest-om-mutants)
 
 .PHONY: test-numeric-rest-om-diff
 $(AMPERE_CUBIN_DIR)/numeric-rest-om-diff: tests/numeric_rest_om_diff_test.c $(NUMERIC_SRCS) $(NUMERIC_DEPS) src/omega_blackwell_qmd.c src/omega_blackwell_qmd.h src/cudapp_om_bw_qmd.c
@@ -33,6 +36,7 @@ CARRIED_HOST_TESTS += test-numeric-rest-om-diff
 
 .PHONY: test-numeric-rest-om-mutants
 test-numeric-rest-om-mutants:
+	@$(CUDAPP_REQUIRE_OMC)
 	sh tools/numeric_rest_om_mutants.sh
 
 CARRIED_HOST_TESTS += test-numeric-rest-om-mutants

@@ -7,4 +7,4 @@ $(OUT_DIR)/gpu_resident_chip: tests/gpu_resident_chip.c tests/gpu_resident_fixtu
 .PHONY: test-gpu-resident
 test-gpu-resident: $(OUT_DIR)/gpu_resident_test $(OUT_DIR)/gpu_resident_chip
 	./$(OUT_DIR)/gpu_resident_test --sim
-	python3 tests/gpu_resident_mutants.py $(OUT_DIR)/libomega_gpu.a
+	$(call CUDAPP_OMC_STEP,python3 tests/gpu_resident_mutants.py $(OUT_DIR)/libomega_gpu.a,resident .om mutants)

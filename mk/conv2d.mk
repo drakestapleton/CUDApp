@@ -6,7 +6,10 @@ $(OUT_DIR)/gpu_conv2d_test: tests/gpu_conv2d_test.c tests/gpu_conv2d_ref.h $(OUT
 test-gpu-conv2d: $(OUT_DIR)/gpu_conv2d_test
 	$< --sim
 	$< --shell-contract
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-gpu-conv2d-mutants)
 test-gpu-conv2d-mutants: $(OUT_DIR)/gpu_conv2d_test
+	@$(CUDAPP_REQUIRE_OMC)
 	sh tests/gpu_conv2d_mutants.sh
 $(OUT_DIR)/gpu_conv2d_oracle_test: tests/gpu_conv2d_test.c tests/gpu_conv2d_ref.h src/omega_gpu_gemm.c $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(CFLAGS) -ffp-contract=off -Itests $(CONV2D_HOST_WRAP) -UCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=1 -o $@ $< src/omega_gpu_gemm.c $(OUT_DIR)/libomega_gpu.a -lpthread -lm

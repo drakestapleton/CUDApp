@@ -42,6 +42,13 @@ CUDAPP_HOST_IS_AARCH64 := 1
 CUDAPP_OMC_HOST := 1
 endif
 CUDAPP_TARGET_ONLY_TESTS := $(if $(CUDAPP_OMC_HOST),,test-om-spec-encoder test-portable-receipts test-model-capacity test-prof)
+# First recipe line of a CUDAPP_TARGET_ONLY_TESTS member defined in mk/*.mk:
+# off a CUDAPP_OMC_HOST, invoking the target directly prints NOT_RUN and exits 2.
+CUDAPP_REQUIRE_OMC = $(if $(CUDAPP_OMC_HOST),:,echo "$@: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"; exit 2)
+# One pinned-compiler step inside a portable target, as a whole recipe line:
+# $(call CUDAPP_OMC_STEP,<command>,<what>) runs <command> on a CUDAPP_OMC_HOST and
+# elsewhere prints "<target>: <what> NOT_RUN" instead. The other lines still run.
+CUDAPP_OMC_STEP = $(if $(CUDAPP_OMC_HOST),$(1),@echo "$@: $(2) NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host)")
 # Portable checked Omega-to-C output; each unit has a separate private runtime namespace.
 CUDAPP_HOST_BINDING = $(wildcard src/cudapp_om_*.c)
 CUDAPP_FS_BINDING = src/cudapp_freest_revision.c src/cudapp_freest_epoch.c src/cudapp_freest_f16.c src/cudapp_freest_leftovers.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_pathcopy.c src/cudapp_freest_streams_xq.c src/cudapp_freest_fixture_verify.c
@@ -558,7 +565,7 @@ test-omega-barrier-contract:
 test-omega-binding-portable:
 	CC=$(CC) OUT_DIR=$(OUT_DIR) sh tests/omega/test-binding-portable.sh
 test-omega-target-only:
-	sh tests/omega/test-target-only.sh
+	sh tests/omega/test-target-only.sh $(CUDAPP_TARGET_ONLY_TESTS)
 test-omega-slices:
 	sh tests/omega/run.sh $(or $(OMEGA_SLICE_FUZZ),120)
 
@@ -720,7 +727,7 @@ test-cm-route: $(OUT_DIR)/cm_route_unit $(OUT_DIR)/cm_route_oracle
 	./$(OUT_DIR)/cm_route_unit
 	./$(OUT_DIR)/cm_route_oracle
 	@if ./$(OUT_DIR)/cm_route_unit --red; then echo "FAIL route red control survived"; exit 1; fi
-	python3 tests/runtime/cm_route_mutants.py
+	$(call CUDAPP_OMC_STEP,python3 tests/runtime/cm_route_mutants.py,cm_route .om mutants)
 
 test-costmodel: $(RX_CM_UNIT) test-cm-route
 	./$(RX_CM_UNIT)
@@ -756,7 +763,7 @@ test-dagsim: $(DS_UNIT) $(DS_CLI)
 	sh tests/dagsim/run_cli.sh $(DS_CLI) $(OUT_DIR)/dagsim-cli-out
 	sh tests/dagsim/mutant_lifetime.sh
 	sh tests/dagsim/mutant_predict.sh
-	sh tests/dagsim/mutant_omega.sh $(DS_CLI)
+	$(call CUDAPP_OMC_STEP,sh tests/dagsim/mutant_omega.sh $(DS_CLI),dag_eval .om mutants)
 
 # Pure emitter/reconvergence and fragment-provider source differentials. Invoke
 # the entire make command under the device-free bwrap contract.

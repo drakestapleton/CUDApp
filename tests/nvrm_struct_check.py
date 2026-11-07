@@ -9,12 +9,16 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VENDOR = Path(os.environ.get("NVRM_VENDOR", str(Path.home() / "workspace/_ext/open-gpu-kernel-modules-580.173.02")))
+# Default to the vendored 580.173.02 headers the Makefile builds against; NVRM_VENDOR still overrides.
+VENDOR = Path(os.environ.get("NVRM_VENDOR", str(ROOT / "third_party/nvidia-open-580.173.02")))
 BRIDGE = Path(os.environ["OMEGA_BRIDGE"])
 OMC = Path(os.environ["OMEGA_OMC"])
-PINS = [(OMC, "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"),
-        (BRIDGE / "src/toc.om", "d84fd6ebd258170a023ed5235880cd3e1ca8664703a2542542a7f8d103120538"),
-        (BRIDGE / "tools/bridge-seeded", "a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629")]
+# Pins come from om/units.sh, the one place they are recorded (a copied toc.om pin went stale at the bridge repin).
+UNITS_PIN = dict(line.split("=", 1) for line in (ROOT / "om/units.sh").read_text().splitlines()
+                 if line.split("=", 1)[0] in ("OMC_PIN", "CONVERTER_PIN", "FRONTEND_PIN"))
+PINS = [(OMC, UNITS_PIN["OMC_PIN"]),
+        (BRIDGE / "src/toc.om", UNITS_PIN["CONVERTER_PIN"]),
+        (BRIDGE / "tools/bridge-seeded", UNITS_PIN["FRONTEND_PIN"])]
 for path, sha in PINS:
     if hashlib.sha256(path.read_bytes()).hexdigest() != sha:
         raise SystemExit(f"NOT_RUN unpinned verification input {path}")

@@ -29,10 +29,14 @@ test-graph-residue-coverage: test-graph-residue $(OUT_DIR)/hello_gpu-oracle
 
 .PHONY: test-graph-table-perm
 CARRIED_HOST_TESTS += test-graph-table-perm
+# Both graph mutant runners convert .om through the bridge's seeded converter (pinned AArch64 omc).
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-graph-table-perm test-graph-headscale)
 test-graph-table-perm:
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/graph/table-mutants.py
 
 .PHONY: test-graph-headscale
 CARRIED_HOST_TESTS += test-graph-headscale
 test-graph-headscale:
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/graph/headscale-mutants.py

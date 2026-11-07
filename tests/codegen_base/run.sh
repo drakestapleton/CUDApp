@@ -9,7 +9,8 @@ OUT=$CODEGEN_BASE_OUT
 mkdir -p "$OUT"
 # These are generated build profiles, never historical evidence.
 rm -f "$OUT"/*.gcda
-if [ -n "${OMEGA_OMC:-}" ]; then sh om/units.sh --check; fi
+if [ -n "${OMEGA_OMC:-}" ]; then sh om/units.sh --check
+else echo "NOT_RUN om/units.sh --check (requires the pinned AArch64 omc; the C comparison below still runs)"; fi
 python3 - "$OUT" <<'PY'
 import pathlib, re, sys
 out = pathlib.Path(sys.argv[1])

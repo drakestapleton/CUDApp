@@ -22,7 +22,10 @@ $(OUT_DIR)/test-core-algorithms: tests/test_core_algorithms.c $(CORE_UTIL_SOURCE
 test-core-algorithms: $(OUT_DIR)/test-core-algorithms
 	./$(OUT_DIR)/test-core-algorithms
 
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-core-mutants)
 test-core-mutants: $(OUT_DIR)/test-core-util
+	@$(CUDAPP_REQUIRE_OMC)
 	python3 tests/test_core_mutants.py --out-dir $(OUT_DIR) --receipt $(OUT_DIR)/core-util-mutants
 
 $(OUT_DIR)/test-core-sha-state: tests/test_core_sha_state.c src/sha256.c $(OUT_DIR)/core-util-sha-ref.o src/cudapp_om_core_sha.c src/omega_core_binding.h src/cudapp_native.h | $(OUT_DIR)
@@ -55,5 +58,13 @@ test-core-residue: $(OUT_DIR)/test-core-residue $(OUT_DIR)/test-core-residue-dif
 	./$(OUT_DIR)/test-core-residue-diff
 	@if ./$(OUT_DIR)/test-core-residue --flip >/dev/null; then echo 'FAIL ampack flip survived'; exit 1; else echo 'CORE-RESIDUE ampack negative control caught'; fi
 	@if ./$(OUT_DIR)/test-core-residue-red >/dev/null 2>&1; then echo 'RED CHECK BROKEN: flipped cubin bit passed'; exit 1; else echo 'CORE-RESIDUE red check: one flipped image bit aborts'; fi
+# The residue mutants regenerate units through om/units.sh (pinned AArch64 omc).
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-core-residue-mutants)
+ifeq ($(CUDAPP_OMC_HOST),1)
 test-core-residue-mutants: $(OUT_DIR)/test-core-residue
 	OMEGA_OMC="$(or $(OMEGA_OMC),$(HOME)/work/cudastack/omega-mv/seed/out/omc)" OMEGA_BRIDGE="$(or $(OMEGA_BRIDGE),$(HOME)/work/cudastack/omega-bridge)" python3 tests/test_core_residue_mutants.py
+else
+test-core-residue-mutants:
+	@echo "$@: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
+	@exit 2
+endif

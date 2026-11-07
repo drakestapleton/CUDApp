@@ -8,7 +8,10 @@ $(OUT_DIR)/gpu_dnn_activations_test: tests/gpu_dnn_activations_test.c tests/gpu_
 test-gpu-dnn-activations: $(OUT_DIR)/gpu_dnn_activations_test
 	./$(OUT_DIR)/gpu_dnn_activations_test --sim
 	./$(OUT_DIR)/gpu_dnn_activations_test --shell-contract
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-gpu-dnn-activations-mutants)
 test-gpu-dnn-activations-mutants: $(OUT_DIR)/gpu_dnn_activations_test
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" OUT_DIR="$(OUT_DIR)" CC="$(CC)" sh tests/gpu_dnn_activations_mutants.sh
 
 # Build only; deliberately not a CARRIED_HOST_TESTS target and never run by make.

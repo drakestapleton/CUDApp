@@ -19,13 +19,16 @@ if [ "$got" != "$pin" ]; then
   echo "REFUSED: omc digest $got is not the omega-mv e5b32567 pin" >&2
   exit 69
 fi
-fpin=23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
+# The frontend pin is read from om/units.sh, the one place it is recorded, so a bridge repin cannot leave
+# this copy stale (it still named an older bridge-seeded, 23ff7a23, after om/units.sh moved to a3a455bd).
+fpin=$(sed -n 's/^FRONTEND_PIN=\([0-9a-f]\{64\}\)$/\1/p' "$root/om/units.sh")
+[ "${#fpin}" -eq 64 ] || { echo "REFUSED: no FRONTEND_PIN in om/units.sh" >&2; exit 74; }
 got=$(sha256sum < "$br/tools/bridge-seeded" | cut -c1-64) || exit 74
 if [ "$got" != "$fpin" ]; then
   echo "REFUSED: bridge-seeded digest $got is not the om/units.sh frontend pin" >&2
   exit 69
 fi
-root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
 t=$root/tests/nvml
 nv=$root/native/nvml
 out=$(mktemp -d "${TMPDIR:-/tmp}/cudapp-nvml.XXXXXX") || exit 74

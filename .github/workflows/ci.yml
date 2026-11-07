@@ -22,7 +22,10 @@ jobs:
         run: bash tools/extract/audit-selftest.sh
   host-tests:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 40
+    # The #280 union runs 188 host targets; the reviewed head's serial run was inside target 27
+    # (gpu_serving_alloc_count_test) when 40 minutes cancelled it. -j4 uses the runner's 4 vCPUs; the
+    # exhaustive MoE differential alone ran 3366 s on one GB10 core. PROVISIONAL until an exact-head run is measured.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -56,7 +59,7 @@ jobs:
           OMEGA_OMC: ${{ runner.temp }}/omega-mv/seed/out/omc
           OMEGA_BRIDGE: ${{ runner.temp }}/omega-bridge
         run: |
-          rc=0; make test > "$RUNNER_TEMP/make-test.log" 2>&1 || rc=$?
+          rc=0; make -j4 test > "$RUNNER_TEMP/make-test.log" 2>&1 || rc=$?
           cat "$RUNNER_TEMP/make-test.log"
           [ "$rc" -eq 0 ] || exit "$rc"
           last=$(tail -n 1 "$RUNNER_TEMP/make-test.log")

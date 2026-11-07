@@ -17,4 +17,4 @@ test-codegen-f64: $(OUT_DIR)/codegen_f64_test $(OUT_DIR)/codegen_f64_diff_test $
 	$(OUT_DIR)/codegen_f64_test
 	$(OUT_DIR)/codegen_f64_diff_test
 	$(OUT_DIR)/codegen_f64_probe --sim
-	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" OMEGA_TEST_LIB="$(OUT_DIR)/libomega_gpu.a" python3 tests/codegen_f64_mutants.py
+	$(call CUDAPP_OMC_STEP,OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" OMEGA_TEST_LIB="$(OUT_DIR)/libomega_gpu.a" python3 tests/codegen_f64_mutants.py,f64 .om mutants)

@@ -31,7 +31,8 @@ def main():
     if list(Path("/dev").glob("nvidia*")) or Path("/dev/cuse").exists() or Path("/dev/vfio").exists():
         raise SystemExit("FAIL run inside bwrap --dev-bind / / --dev /dev --proc /proc --")
     bridge = Path(os.environ.get("OMEGA_BRIDGE", Path.home()/"work/cudastack/omega-bridge"))
-    if hashlib.sha256(omc.read_bytes()).hexdigest() != PIN:
+    # Only the Omega mutants execute the seeded compiler; the differential does not.
+    if args.mutants and hashlib.sha256(omc.read_bytes()).hexdigest() != PIN:
         raise SystemExit("FAIL pinned seeded compiler SHA256")
     scratch = tempfile.TemporaryDirectory(prefix="cudapp-codegen-rest-")
     out = (args.build_dir or Path(scratch.name)).resolve()

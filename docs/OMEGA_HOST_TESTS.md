@@ -40,9 +40,18 @@ GB10 stays NOT_RUN.
 
 On x86-64, `make test` does not count checks that execute the seeded AArch64
 binding or the pinned `omc`. Those targets still exist. Invoking one directly
-exits 2 and names the requirement. `make test-omega-target-only` prints the
-same lines and exits 0; that exit is the report, not a pass of the named
-checks. On AArch64 those checks stay inside `make test`.
+exits 2 and names the requirement. `make test-omega-target-only` prints one
+line per name in `CUDAPP_TARGET_ONLY_TESTS` and exits 0; that exit is the
+report, not a pass of the named checks. On AArch64 those checks stay inside
+`make test`. The list includes `test-qmma-probe-rest-mutants`,
+`test-core-residue-mutants`, `test-c5-policy`, `test-dagsim-jstr-om`,
+`test-disasm-words`, `test-graph-table-perm`, `test-graph-headscale`,
+`test-numeric-om-mutants`, `test-numeric-rest-om-mutants`, `test-nvrm-alloc`,
+`test-platform-linux-fake-device`, `test-prefill-host-rest`, `test-codegen-fixture-rest`,
+`test-gpu-attn-any-mutants`, `test-codegen-pfhost-admit-mutants`, `test-codegen-tc-mutants`,
+`test-codegen-tc-host-mutants`, `test-gpu-conv2d-mutants`, `test-core-mutants`,
+`test-gpu-dnn-activations-mutants`, `test-dnn-half-mutants`, `test-gpu-dnn-rows-mutants` and
+`test-engine-fixture-rest`.
 
 `test-gpu-imadhi-rc` and `test-dagsim` stay in `make test` on x86-64. They are
 host programs and do not open a device. On the VM in
@@ -154,7 +163,16 @@ seeded binding.
 `make test-gpu-session-mutants` on x86-64 still runs the nine session-shell
 mutants. Its seven Omega-unit mutants regenerate `.om` through `om/units.sh`,
 so they print `NOT_RUN` there unless `OMEGA_OMC` is given and executes on that
-host. The final line counts only the mutants that ran.
+host. The final line counts only the mutants that ran. The same split applies
+to `test-chip-enum-om` (differential, controls and fixture scan run; seven
+`.om` mutants print `NOT_RUN`), `test-codegen-base-om` (the C comparison runs;
+`om/units.sh --check` prints `NOT_RUN`), `test-regalloc-om` (same split) and
+`test-codegen-rest` (differential and coverage run; the Omega mutants print
+`NOT_RUN`). `CUDAPP_OMC_STEP` (Makefile) gives the same split to one recipe
+line: `test-cm-route`, `test-dagsim`, `test-nvrm-policy`, `test-nvrm-struct`,
+`test-codegen-f64`, `test-platform-linux-rest` and `test-gpu-resident` run
+their C and host checks and print `<target>: <what> NOT_RUN` for the step that
+executes the pinned `omc`.
 
 ## Omega slice gate
 

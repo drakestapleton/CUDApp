@@ -31,5 +31,8 @@ $(OUT_DIR)/codegen_pfhost_admit_cubin: tests/codegen_pfhost_admit_cubin.c $(OUT_
 .PHONY: test-codegen-pfhost-admit-cubin test-codegen-pfhost-admit-mutants
 test-codegen-pfhost-admit-cubin: $(OUT_DIR)/codegen_pfhost_admit_cubin
 	./$(OUT_DIR)/codegen_pfhost_admit_cubin
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-codegen-pfhost-admit-mutants)
 test-codegen-pfhost-admit-mutants: $(OUT_DIR)/codegen_pfhost_admit_diff
+	@$(CUDAPP_REQUIRE_OMC)
 	OUT_DIR="$(OUT_DIR)" python3 tests/codegen_pfhost_admit_mutants.py

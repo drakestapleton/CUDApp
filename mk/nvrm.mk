@@ -58,7 +58,7 @@ $(OUT_DIR)/nvrm-policy-red: nvrm/policy_test.c src/cudapp_om_nvrm_policy.c src/c
 test-nvrm-policy: $(OUT_DIR)/nvrm-policy-test $(OUT_DIR)/nvrm-policy-red
 	./$(OUT_DIR)/nvrm-policy-test
 	@if ./$(OUT_DIR)/nvrm-policy-red >/dev/null; then echo "FAIL: policy red check passed"; exit 1; else echo "NVRM policy red check caught"; fi
-	sh tests/nvrm_policy_mutants.sh
+	$(call CUDAPP_OMC_STEP,sh tests/nvrm_policy_mutants.sh,policy .om mutants)
 
 $(OUT_DIR)/nvrm-struct-test: tests/nvrm_struct_test.c tests/nvrm_struct_layout.c src/cudapp_om_nvrm_struct.c nvrm/nvrm_struct.h
 	@mkdir -p $(OUT_DIR)
@@ -67,9 +67,12 @@ $(OUT_DIR)/nvrm-struct-test: tests/nvrm_struct_test.c tests/nvrm_struct_layout.c
 CARRIED_HOST_TESTS += test-nvrm-struct
 test-nvrm-struct: $(OUT_DIR)/nvrm-struct-test
 	./$(OUT_DIR)/nvrm-struct-test
-	sh tests/nvrm_struct_check.sh
+	$(call CUDAPP_OMC_STEP,sh tests/nvrm_struct_check.sh,struct .om regeneration and mutants)
 
 .PHONY: test-nvrm-alloc
 CARRIED_HOST_TESTS += test-nvrm-alloc
+# The alloc check converts .om through the bridge's seeded converter (pinned AArch64 omc).
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-nvrm-alloc)
 test-nvrm-alloc:
+	@$(CUDAPP_REQUIRE_OMC)
 	sh tests/nvrm_alloc_check.sh

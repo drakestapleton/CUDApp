@@ -13,5 +13,8 @@ test-dnn-half: $(OUT_DIR)/dnn_half_test $(OUT_DIR)/dnn_half_alt_test
 	$(OUT_DIR)/dnn_half_test
 	$(OUT_DIR)/dnn_half_alt_test
 
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-dnn-half-mutants)
 test-dnn-half-mutants: $(OUT_DIR)/dnn_half_test
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" OMEGA_TEST_LIB="$(OUT_DIR)/libomega_gpu.a" python3 tests/gpu_dnn_half_mutants.py

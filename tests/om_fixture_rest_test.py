@@ -86,7 +86,7 @@ inc = ["-Invrm", "-Im16", "-I"+tp+"/src/common/sdk/nvidia/inc", "-I"+tp+"/kernel
 common = ["nvrm/nvrm.c", "m16/m16_native.c", "src/omega_ampere_qmd.c", "src/cudapp_om_amp_runtime.c", unit, text]
 # Match the integrated native NVRM link: serializers, transport and chip admission.
 common += [str(p.relative_to(root)) for p in sorted((root / "src").glob("cudapp_om_nvrm_*.c"))]
-common += ["src/omega_gpu_chip.c", "src/cudapp_om_chip_admit.c"]
+common += ["src/omega_gpu_chip.c", "src/cudapp_om_chip_admit.c", "src/cudapp_om_chip_enum.c"]
 for path in ["m16/m16_requalify.c", "m16/m16_concurrent.c", "nvrm/lifecycle_gates.c", "nvrm/submission_visibility_gates.c"]:
     extra = ["m16/m16_gpu_wait.c"] if path.endswith("m16_concurrent.c") else []
     name = Path(path).stem

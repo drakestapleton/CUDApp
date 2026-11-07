@@ -28,11 +28,21 @@ test-codegen-qmma-host: $(OUT_DIR)/gpu_qmma_probe_test
 CARRIED_HOST_TESTS += test-codegen-qmma-host
 
 CARRIED_HOST_TESTS += test-qmma-probe-rest test-qmma-probe-rest-mutants
+# The mutants regenerate qm_host/qm_self through the bridge's seeded converter,
+# which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-qmma-probe-rest-mutants)
 .PHONY: test-qmma-probe-rest test-qmma-probe-rest-mutants
 $(OUT_DIR)/qmma_probe_rest_test: tests/qmma_probe_rest_test.c $(QMMA_REST_SRC) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ $^ -lm
 test-qmma-probe-rest: $(OUT_DIR)/qmma_probe_rest_test
 	./$(OUT_DIR)/qmma_probe_rest_test
 	@if ./$(OUT_DIR)/qmma_probe_rest_test --red; then echo 'QMMA-REST RED FAIL'; exit 1; else echo 'QMMA-REST RED PASS'; fi
+ifeq ($(CUDAPP_OMC_HOST),1)
 test-qmma-probe-rest-mutants:
-	OUT_DIR=$(OUT_DIR) QMMA_REST_SRC='$(QMMA_REST_SRC)' python3 tests/qmma_probe_rest_mutants.py
+	OUT_DIR=$(OUT_DIR) QMMA_REST_SRC='$(QMMA_REST_SRC)' OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" \
+		python3 tests/qmma_probe_rest_mutants.py
+else
+test-qmma-probe-rest-mutants:
+	@echo "$@: NOT_RUN (requires the pinned AArch64 omc; set OMEGA_OMC to a pin that executes on this host; not part of the portable host suite)"
+	@exit 2
+endif

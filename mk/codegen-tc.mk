@@ -15,7 +15,10 @@ test-codegen-tc: $(OUT_DIR)/codegen_tc_diff
 	./$(OUT_DIR)/codegen_tc_diff
 
 .PHONY: test-codegen-tc-mutants
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-codegen-tc-mutants)
 test-codegen-tc-mutants: $(OUT_DIR)/codegen_tc_diff
+	@$(CUDAPP_REQUIRE_OMC)
 	OUT_DIR="$(OUT_DIR)" CC="$(CC)" python3 tests/codegen_tc_mutants.py
 
 $(OUT_DIR)/codegen_tc_sim: tests/codegen_tc_sim.c tests/bw_warp_sim_tc.h tests/bw_hmma_model.h $(OUT_DIR)/libomega_gpu.a
@@ -43,6 +46,9 @@ $(OUT_DIR)/codegen_tc_host_cubin: tests/codegen_tc_host_cubin.c $(OUT_DIR)/codeg
 .PHONY: test-codegen-tc-host-cubin test-codegen-tc-host-mutants
 test-codegen-tc-host-cubin: $(OUT_DIR)/codegen_tc_host_cubin
 	./$(OUT_DIR)/codegen_tc_host_cubin
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-codegen-tc-host-mutants)
 test-codegen-tc-host-mutants: $(OUT_DIR)/codegen_tc_host_diff
+	@$(CUDAPP_REQUIRE_OMC)
 	OUT_DIR="$(OUT_DIR)" python3 tests/codegen_tc_host_mutants.py
 CARRIED_HOST_TESTS += test-codegen-tc-host-cubin test-codegen-tc-host-mutants

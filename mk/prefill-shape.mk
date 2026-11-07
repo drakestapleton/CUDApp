@@ -57,6 +57,9 @@ ifeq ($(CUDAPP_OMC_HOST),1)
 endif
 
 CARRIED_HOST_TESTS += test-prefill-host-rest
+# The pfhost mutants convert .om through the bridge's seeded converter (pinned AArch64 omc).
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-prefill-host-rest)
 .PHONY: test-prefill-host-rest
 test-prefill-host-rest:
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" python3 om/apirest/pfhost-mutants.py

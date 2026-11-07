@@ -7,7 +7,8 @@
 #include <assert.h>
 static uint64_t digest = 1469598103934665603ULL;
 static void word(uint64_t x) { digest = (digest ^ x) * 1099511628211ULL; }
-static uint32_t pslot(uint32_t i) { uint32_t p=32,j=i-128; return i<128 ? (i<p?i:64+i-p) : (j<p?p+j:64+128+j-p); }
+/* The nonrotary second-half tail keeps its index (omega_dattn256_perm_slot; b2e3d13b repaired grperm to match). */
+static uint32_t pslot(uint32_t i) { uint32_t p=32,j=i-128; return i<128 ? (i<p?i:64+i-p) : (j<p?p+j:i); }
 static void tables(void) {
     uint32_t dst[24576];
     omega_graph_table(0,0,0,dst,24576);

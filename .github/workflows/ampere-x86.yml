@@ -34,8 +34,10 @@ jobs:
     runs-on: ubuntu-24.04
     # make test plus the offline nvdisasm corpus compare. host-x86.yml allows
     # 60 minutes for the suite alone. 40 cancelled this job during nvdisasm
-    # after the encoder oracle had already accepted the kernels.
-    timeout-minutes: 60
+    # after the encoder oracle had already accepted the kernels. 60 cancelled the #280 union's
+    # serial make test at target 27 of 186 (gpu_serving_alloc_count_test); the suite now runs -j4.
+    # PROVISIONAL until an exact-head run is measured.
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -117,7 +119,8 @@ jobs:
           for consumer in build/test_codegen_hosted build/test_codegen_freestanding build/ampere-cubin/f16-host; do
             LC_ALL=C readelf -h "$consumer" | grep -F 'Advanced Micro Devices X86-64'
           done
-          make test test-native-artifact zero-cuda-gate test-ampere-cubin-disasm
+          make -j4 test
+          make test-native-artifact zero-cuda-gate test-ampere-cubin-disasm
           make OUT_DIR=build-ampere-oracle CUDAPP_AMPERE_CORPUS=1 test-ampere-encoder-oracle
       - name: Remove only this run's ARM provenance handler
         if: always()

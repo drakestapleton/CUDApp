@@ -7,5 +7,8 @@ $(OUT_DIR)/gpu_dnn_rows_test: tests/gpu_dnn_rows_test.c tests/gpu_dnn_rows_ref.h
 test-gpu-dnn-rows: $(OUT_DIR)/gpu_dnn_rows_test
 	./$(OUT_DIR)/gpu_dnn_rows_test --sim
 	./$(OUT_DIR)/gpu_dnn_rows_test --shell-contract
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-gpu-dnn-rows-mutants)
 test-gpu-dnn-rows-mutants: $(OUT_DIR)/gpu_dnn_rows_test
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" OUT_DIR="$(OUT_DIR)" CC="$(CC)" sh tests/gpu_dnn_rows_mutants.sh

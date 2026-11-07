@@ -83,5 +83,8 @@ test-om-qmd-cov: tests/om_qmd_sweep_test.c $(OM_QMD_DEPS)
 
 CARRIED_HOST_TESTS += test-engine-fixture-rest
 .PHONY: test-engine-fixture-rest
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-engine-fixture-rest)
 test-engine-fixture-rest:
+	@$(CUDAPP_REQUIRE_OMC)
 	python3 tests/om_fixture_rest_test.py

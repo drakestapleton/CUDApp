@@ -7,5 +7,8 @@ $(OUT_DIR)/gpu_attn_any_test: tests/gpu_attn_any_test.c tests/gpu_attn_any_ref.h
 test-gpu-attn-any: $(OUT_DIR)/gpu_attn_any_test
 	./$(OUT_DIR)/gpu_attn_any_test --sim
 	./$(OUT_DIR)/gpu_attn_any_test --shell-contract
+# Converts .om through the bridge's seeded converter, which executes the pinned AArch64 omc.
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-gpu-attn-any-mutants)
 test-gpu-attn-any-mutants: $(OUT_DIR)/gpu_attn_any_test
+	@$(CUDAPP_REQUIRE_OMC)
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" OUT_DIR="$(OUT_DIR)" CC="$(CC)" sh tests/gpu_attn_any_mutants.sh

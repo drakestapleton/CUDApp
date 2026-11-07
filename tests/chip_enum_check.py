@@ -48,18 +48,25 @@ assert run([out/'om','--scan',out/'absent'],'missing-sysfs-om')==run([out/'c','-
 print('FIXTURE scan differential PASS vendor/class/device edges, capacities -1/0/1/2/3, null output, missing sysfs')
 text=(root/'om/admission/chip_enum.om').read_text()
 mutants=[('row-vendor','ce_eq a c','ce_eq a d'),('row-device','ce_eq b d','ce_eq b c'),('vendor','ce_eq a 4318','ce_eq a 4319'),('class','shr a 16 3','shr a 15 3'),('mask','ret and a b','ret or a b'),('capacity','lt a b','le a b'),('dot','ce_eq a 46','ce_eq a 47')]
+# make sets CHIP_ENUM_MUTANTS=1 only where the pinned omc executes (CUDAPP_OMC_HOST).
+run_mutants=os.environ['CHIP_ENUM_MUTANTS']=='1'
 for name,old,new in mutants:
     assert text.count(old)==1
+    if not run_mutants:
+        print('NOT_RUN',name,'(om/units.sh requires the pinned AArch64 omc)')
+        continue
     here=out/name;here.mkdir(exist_ok=True)
     unit=here/'chip_enum.om';unit.write_text(text.replace(old,new))
     env=dict(os.environ,OMEGA_UNITS=str(unit),OMEGA_UNITS_DEST=str(here))
     p=subprocess.run(['sh','om/units.sh'],env=env,capture_output=True)
     (here/'compile.log').write_bytes(p.stdout+p.stderr)
-    assert p.returncode==0,p.stderr
+    # On failure name the mutant, the exit status and the end of both streams (also kept in compile.log).
+    assert p.returncode==0,f'om/units.sh {name} rc={p.returncode} (log {here/"compile.log"}): '+(p.stdout+p.stderr).decode(errors='replace')[-2000:]
     build(here/'check',[str(here/'cudapp_om_chip_enum.c')])
     run([here/'check'],name,False)
     print('KILLED',name)
 cov=subprocess.run(['gcov','-b','-c','-t',str(out/'om-chip_enum_oracle.gcno')],capture_output=True)
 (out/'oracle.gcov').write_bytes(cov.stdout);(out/'coverage.log').write_bytes(cov.stderr)
 assert cov.returncode==0,cov.stderr
-print('CHIP ENUM DIFFERENTIAL RED LINK SEVEN MUTANTS PASS')
+if run_mutants:print('CHIP ENUM DIFFERENTIAL RED LINK SEVEN MUTANTS PASS')
+else:print('CHIP ENUM DIFFERENTIAL RED LINK PASS; SEVEN .om MUTANTS NOT_RUN (no pinned omc on this host)')

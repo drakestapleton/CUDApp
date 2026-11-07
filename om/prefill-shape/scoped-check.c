@@ -34,7 +34,8 @@ int main(void) {
     for(unsigned i=0;i<3;i++) {
         unsigned rt=(unsigned)so_call(41,so_eq(i,1),8,4,0),group=(unsigned)so_call(41,so_eq(i,1),4,0,0);
         expect(rt,8,group,0);
-        check(so_all(so_eq((uint64_t)(int64_t)scoped(rt,group),(uint64_t)(int64_t)OMEGA_GPU_PF_TOO_LARGE),so_eq(opened,1),so_eq(keyed,1)),"scoped call reached its own kernel key");
+        int src=scoped(rt,group);
+        check(so_all(so_eq((uint64_t)(int64_t)src,(uint64_t)(int64_t)OMEGA_GPU_PF_TOO_LARGE),so_eq(opened,1),so_eq(keyed,1)),"scoped call reached its own kernel key");
         expect(2,4,1,1);
         int rc=omega_gpu_pf_qgemm(256,128,OMEGA_GPU_PF_PLAIN,16,1,0,32,48,64,NULL);
         check(so_all(so_eq((uint64_t)(int64_t)rc,(uint64_t)(int64_t)OMEGA_GPU_PF_TOO_LARGE),so_eq(opened,1),so_eq(keyed,1)),"legacy settings unchanged after scoped call");
@@ -51,7 +52,8 @@ int main(void) {
     check(so_eq(omega_gpu_pf_qgemm_reading_option(0,0),UINT32_MAX),"zero reading rows refused");
     check(so_eq(omega_gpu_pf_qgemm_reading_option(64,4),UINT32_MAX),"unknown reading option refused");
     expect(8,8,6,0);
-    check(so_all(so_eq((uint64_t)(int64_t)scoped(8,6),(uint64_t)(int64_t)OMEGA_GPU_PF_BAD_ARGS),so_eq(opened,0),so_eq(keyed,0)),"invalid options refused before device access");
+    int brc=scoped(8,6);
+    check(so_all(so_eq((uint64_t)(int64_t)brc,(uint64_t)(int64_t)OMEGA_GPU_PF_BAD_ARGS),so_eq(opened,0),so_eq(keyed,0)),"invalid options refused before device access");
     omega_gpu_pf_qgemm_set_shape(0,0,0);omega_gpu_pf_qgemm_set_group(0);omega_gpu_pf_qgemm_test_set_mutant(0);
     printf("scoped qgemm isolation: %s\n",failed?"FAIL":"PASS");return failed?1:0;
 }

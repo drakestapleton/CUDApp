@@ -21,16 +21,40 @@
  *   (inputs, then output); cl also gets uint n as the last argument. Output starts as the NaN
  *   pattern 0xFFC0FFEE so an unwritten element can never compare equal to a real result.
  * Exit: 0 ran; 2 usage; 3 environment; 4 input; 5 device; 6 program; 7 kernel; 8 run; 9 isolation.
+ *
+ * MT_TARGET selects the build (default 0):
+ *   0  the CPU build above (Linux: PoCL for cl, lavapipe for vk).
+ *   1  Apple GPU through MoltenVK on macOS (format SPIRV_VK only; ADR 0043 names MoltenVK + SPIR-V as
+ *      the Apple oracle route, MSL_SOURCE stays PLANNED). The binary links MT_MVK_LIBRARY directly, with
+ *      no Vulkan loader. Every inherited MVK_* variable is removed and MVK_CONFIG_FAST_MATH_ENABLED is
+ *      set to MT_MVK_FAST_MATH ("0" by default: never compile Metal shaders with fast math, so binary32
+ *      adds keep IEEE round-to-nearest and the frozen fsum16 order). The device must be the only one,
+ *      VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, vendor 0x106b (Apple), driverID MOLTENVK, and its name
+ *      must contain MT_EXPECT_DEVICE ("Apple M2" by default). Isolation reads the dyld image list: it
+ *      fails (exit 9) unless MT_MVK_LIBRARY is loaded, and on any loaded image whose path contains
+ *      MT_FORBID ("libvulkan" by default: a Khronos loader could select another driver). This is a
+ *      vendor-runtime-backed route (Metal via MoltenVK), not an independent Apple GPU driver.
  */
 #if !defined(CUDAPP_MIGRATION_PENDING_SPIRV_HOST) || CUDAPP_MIGRATION_PENDING_SPIRV_HOST != 1
 #error "spirv-host is migration-pending C: build with -DCUDAPP_MIGRATION_PENDING_SPIRV_HOST=1 (default OFF)"
 #endif
+#ifndef MT_TARGET
+#define MT_TARGET 0
+#endif
+#if MT_TARGET != 0 && MT_TARGET != 1
+#error "MT_TARGET must be 0 (CPU: PoCL/lavapipe) or 1 (Apple GPU: MoltenVK)"
+#endif
 #define _GNU_SOURCE
+#if MT_TARGET == 0
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
+#include <dirent.h>
+#else
+#include <limits.h>
+#include <mach-o/dyld.h>
+#endif
 #include <vulkan/vulkan.h>
 
-#include <dirent.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -44,8 +68,23 @@
 #ifndef MT_LVP_ICD
 #define MT_LVP_ICD "/usr/share/vulkan/icd.d/lvp_icd.json"
 #endif
+#if MT_TARGET == 1
+#ifndef MT_MVK_LIBRARY
+#define MT_MVK_LIBRARY ""
+#endif
+#ifndef MT_MVK_FAST_MATH
+#define MT_MVK_FAST_MATH "0"
+#endif
+#ifndef MT_EXPECT_DEVICE
+#define MT_EXPECT_DEVICE "Apple M2"
+#endif
+#ifndef MT_FORBID
+#define MT_FORBID "libvulkan"
+#endif
+#else
 #ifndef MT_FORBID
 #define MT_FORBID "nvidia"
+#endif
 #endif
 #define MAX_BUFS 3
 #define POISON 0xFFC0FFEEu
@@ -67,6 +106,30 @@ static void *slurp(const char *path, size_t *size)
     return p;
 }
 
+#if MT_TARGET == 1
+/* Fails unless the pinned MoltenVK image is loaded, or when any loaded image names MT_FORBID.
+ * Paths are compared after realpath(): the MoltenVK release reaches dylib/ through a symlink. */
+static int isolation(void)
+{
+    char want[PATH_MAX], have[PATH_MAX];
+    if (!realpath(MT_MVK_LIBRARY, want)) return die(9, "isolation: cannot resolve MT_MVK_LIBRARY");
+    uint32_t n = _dyld_image_count();
+    int pinned = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        const char *name = _dyld_get_image_name(i);
+        if (!name) continue;
+        if (!realpath(name, have)) have[0] = 0;
+        if (have[0] && strcmp(have, want) == 0) pinned = 1;
+        if (strstr(name, MT_FORBID) || strstr(have, MT_FORBID)) {
+            fprintf(stderr, "spirv-host: isolation: loaded image %s\n", name);
+            return die(9, "isolation FAILED: forbidden path \"" MT_FORBID "\" present");
+        }
+    }
+    if (!pinned) return die(9, "isolation FAILED: pinned MoltenVK image " MT_MVK_LIBRARY " not loaded");
+    fprintf(stderr, "spirv-host: isolation: %u images, pinned %s loaded, none contains \"%s\"\n", n, want, MT_FORBID);
+    return 0;
+}
+#else
 /* Fails when any mapping or open descriptor of this process names MT_FORBID. */
 static int isolation(void)
 {
@@ -94,10 +157,12 @@ static int isolation(void)
     fprintf(stderr, "spirv-host: isolation: no mapping or descriptor contains \"%s\"\n", MT_FORBID);
     return 0;
 }
+#endif
 
 typedef struct { const char *api, *module, *kernel; uint32_t count; int nin; const char *in[2], *out;
                  void *code; size_t code_size; float *buf[MAX_BUFS]; size_t bytes[MAX_BUFS]; } Job;
 
+#if MT_TARGET == 0
 static int run_cl(Job *j)
 {
     const char *lib = MT_POCL_LIBRARY;
@@ -152,6 +217,7 @@ static int run_cl(Job *j)
     clReleaseKernel(k); clReleaseProgram(prog); clReleaseCommandQueue(q); clReleaseContext(ctx);
     return 0;
 }
+#endif
 
 #define VKOK(x, code, what) do { if ((x) != VK_SUCCESS) return die(code, what); } while (0)
 
@@ -165,28 +231,84 @@ static int memtype(VkPhysicalDevice pd, uint32_t bits)
     return -1;
 }
 
+#if MT_TARGET == 1
+extern char **environ;
+
+/* Removes every inherited MVK_* variable, then pins the fast-math mode before MoltenVK initializes. */
+static int pin_moltenvk(void)
+{
+    if (MT_MVK_LIBRARY[0] != '/') return die(3, "build needs an absolute MT_MVK_LIBRARY");
+    for (int again = 1; again;) {
+        again = 0;
+        for (char **e = environ; *e; e++) {
+            if (strncmp(*e, "MVK_", 4) != 0) continue;
+            char name[256];
+            size_t k = strcspn(*e, "=");
+            if (k >= sizeof name) return die(3, "MVK_ variable name too long");
+            memcpy(name, *e, k);
+            name[k] = 0;
+            if (unsetenv(name)) return die(3, "cannot clear an MVK_ variable");
+            again = 1;
+            break;
+        }
+    }
+    if (setenv("MVK_CONFIG_FAST_MATH_ENABLED", MT_MVK_FAST_MATH, 1)) return die(3, "cannot pin MoltenVK fast math");
+    fprintf(stderr, "spirv-host: vk target=moltenvk library=%s linked=direct-no-loader MVK_CONFIG_FAST_MATH_ENABLED=%s\n",
+            MT_MVK_LIBRARY, MT_MVK_FAST_MATH);
+    return 0;
+}
+#endif
+
 static int run_vk(Job *j)
 {
+#if MT_TARGET == 1
+    int prc = pin_moltenvk();
+    if (prc) return prc;
+    const uint32_t api = VK_API_VERSION_1_2;
+#else
     if (setenv("VK_DRIVER_FILES", MT_LVP_ICD, 1) || setenv("VK_ICD_FILENAMES", MT_LVP_ICD, 1) ||
         unsetenv("VK_ADD_DRIVER_FILES") || unsetenv("VK_INSTANCE_LAYERS") || unsetenv("VK_LAYER_PATH") ||
         unsetenv("VK_ADD_LAYER_PATH") || setenv("VK_LOADER_LAYERS_DISABLE", "~all~", 1))
         return die(3, "cannot pin Vulkan loader environment");
+    const uint32_t api = VK_API_VERSION_1_1;
+#endif
     VkApplicationInfo app = { .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, .pApplicationName = "cudapp-spirv-host",
-                              .apiVersion = VK_API_VERSION_1_1 };
+                              .apiVersion = api };
     VkInstanceCreateInfo ici = { .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, .pApplicationInfo = &app };
     VkInstance inst;
     VKOK(vkCreateInstance(&ici, NULL, &inst), 5, "vkCreateInstance");
     uint32_t npd = 0;
     VKOK(vkEnumeratePhysicalDevices(inst, &npd, NULL), 5, "vkEnumeratePhysicalDevices");
-    if (npd != 1) return die(5, "expected exactly one Vulkan device (pinned lavapipe)");
+    if (npd != 1) return die(5, "expected exactly one Vulkan device (pinned driver)");
     VkPhysicalDevice pd;
     VKOK(vkEnumeratePhysicalDevices(inst, &npd, &pd), 5, "vkEnumeratePhysicalDevices");
+#if MT_TARGET == 1
+    VkPhysicalDeviceDriverProperties drv = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES };
+    VkPhysicalDeviceProperties2 p2 = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &drv };
+    vkGetPhysicalDeviceProperties2(pd, &p2);
+    const VkPhysicalDeviceProperties pp = p2.properties;
+    fprintf(stderr, "spirv-host: vk device=\"%s\" type=%d vendor=0x%x device_id=0x%x api=%u.%u.%u driver=\"%s\" info=\"%s\""
+            " conformance=%u.%u.%u.%u\n", pp.deviceName, (int)pp.deviceType, pp.vendorID, pp.deviceID,
+            VK_API_VERSION_MAJOR(pp.apiVersion), VK_API_VERSION_MINOR(pp.apiVersion), VK_API_VERSION_PATCH(pp.apiVersion),
+            drv.driverName, drv.driverInfo, drv.conformanceVersion.major, drv.conformanceVersion.minor,
+            drv.conformanceVersion.subminor, drv.conformanceVersion.patch);
+    if (pp.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+        return die(5, "device is not VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU");
+    if (pp.vendorID != 0x106b) return die(5, "device vendor is not Apple (0x106b)");
+    if (drv.driverID != VK_DRIVER_ID_MOLTENVK) return die(5, "driver is not MoltenVK");
+    if (!strstr(pp.deviceName, MT_EXPECT_DEVICE))
+        return die(5, "device name does not contain MT_EXPECT_DEVICE (" MT_EXPECT_DEVICE ")");
+    fprintf(stderr, "spirv-host: vk limits max_group_count_x=%u max_invocations=%u max_shared=%u\n",
+            pp.limits.maxComputeWorkGroupCount[0], pp.limits.maxComputeWorkGroupInvocations,
+            pp.limits.maxComputeSharedMemorySize);
+#else
     VkPhysicalDeviceProperties pp;
     vkGetPhysicalDeviceProperties(pd, &pp);
     if (pp.deviceType != VK_PHYSICAL_DEVICE_TYPE_CPU) return die(5, "device is not VK_PHYSICAL_DEVICE_TYPE_CPU");
     fprintf(stderr, "spirv-host: vk icd=%s device=\"%s\" type=CPU api=%u.%u.%u driver=0x%x\n", MT_LVP_ICD, pp.deviceName,
             VK_API_VERSION_MAJOR(pp.apiVersion), VK_API_VERSION_MINOR(pp.apiVersion), VK_API_VERSION_PATCH(pp.apiVersion),
             pp.driverVersion);
+#endif
     uint32_t nq = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(pd, &nq, NULL);
     VkQueueFamilyProperties qf[16];
@@ -199,6 +321,22 @@ static int run_vk(Job *j)
     VkDeviceQueueCreateInfo qci = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, .queueFamilyIndex = fam,
                                     .queueCount = 1, .pQueuePriorities = &prio };
     VkDeviceCreateInfo dci = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, .queueCreateInfoCount = 1, .pQueueCreateInfos = &qci };
+#if MT_TARGET == 1
+    /* A portability device (MoltenVK) must have VK_KHR_portability_subset enabled when it offers it. */
+    uint32_t nx = 0;
+    VKOK(vkEnumerateDeviceExtensionProperties(pd, NULL, &nx, NULL), 5, "vkEnumerateDeviceExtensionProperties");
+    VkExtensionProperties *xp = calloc(nx ? nx : 1, sizeof *xp);
+    if (!xp) return die(5, "out of memory");
+    VKOK(vkEnumerateDeviceExtensionProperties(pd, NULL, &nx, xp), 5, "vkEnumerateDeviceExtensionProperties");
+    static const char *portability = "VK_KHR_portability_subset";
+    for (uint32_t i = 0; i < nx; i++)
+        if (strcmp(xp[i].extensionName, portability) == 0) {
+            dci.enabledExtensionCount = 1;
+            dci.ppEnabledExtensionNames = &portability;
+        }
+    free(xp);
+    fprintf(stderr, "spirv-host: vk portability_subset=%s\n", dci.enabledExtensionCount ? "enabled" : "absent");
+#endif
     VkDevice dev;
     VKOK(vkCreateDevice(pd, &dci, NULL, &dev), 5, "vkCreateDevice");
     VkQueue q;
@@ -286,6 +424,9 @@ int main(int argc, char **argv)
     if (argc != 7 && argc != 8) return die(2, "usage: spirv-host cl|vk MODULE.spv KERNEL COUNT IN.bin [IN.bin] OUT.bin");
     Job j = { .api = argv[1], .module = argv[2], .kernel = argv[3], .nin = argc - 6, .out = argv[argc - 1] };
     if (strcmp(j.api, "cl") != 0 && strcmp(j.api, "vk") != 0) return die(2, "api must be cl or vk");
+#if MT_TARGET == 1
+    if (strcmp(j.api, "vk") != 0) return die(2, "this build is MT_TARGET=1 (MoltenVK): only vk");
+#endif
     char *end;
     unsigned long c = strtoul(argv[4], &end, 10);
     if (*end || c == 0 || c > (1ul << 26)) return die(2, "COUNT must be 1..67108864");
@@ -302,7 +443,11 @@ int main(int argc, char **argv)
     if (!o) return die(4, "out of memory");
     for (uint32_t i = 0; i < j.count; i++) o[i] = POISON;
     j.buf[j.nin] = (float *)o;
+#if MT_TARGET == 1
+    int rc = run_vk(&j);
+#else
     int rc = strcmp(j.api, "cl") == 0 ? run_cl(&j) : run_vk(&j);
+#endif
     if (rc) return rc;
     rc = isolation();
     if (rc) return rc;

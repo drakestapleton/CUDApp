@@ -87,7 +87,7 @@ sed '0,/ PLANNED NOT_RUN /s// PLANNED PASS /' "$out/doctor.txt" > "$out/doctor-m
 if check_table "$out/doctor-mutant.txt"; then bad "table checker accepted a row claiming PASS"; else ok "table-negative row claiming PASS rejected"; fi
 
 # 3. Emit the SPIR-V modules (and the planted-wrong mutants) from Omega.
-for k in vadd fsum16; do for a in cl vk; do
+for k in vadd fsum16 gemm16; do for a in cl vk; do
   "$E" $k $a > "$out/$k.$a.spv" || bad "emit $k $a"
   "$E" $k $a mutant > "$out/$k.$a.mutant.spv" || bad "emit $k $a mutant"
   echo "MODULE $k.$a.spv sha256=$(digest "$out/$k.$a.spv") bytes=$(wc -c < "$out/$k.$a.spv")"
@@ -96,7 +96,7 @@ done; done
 # 4. spirv-val on every module; corrupted copies must fail it.
 if [ -n "${SPIRV_VAL:-}" ] && [ -x "$SPIRV_VAL" ]; then
   echo "TOOL spirv-val $("$SPIRV_VAL" --version 2>&1 | head -n 1)"
-  for k in vadd fsum16; do for m in "" .mutant; do
+  for k in vadd fsum16 gemm16; do for m in "" .mutant; do
     expect 0 "spirv-val-$k.cl$m" "$SPIRV_VAL" --target-env opencl2.1 "$out/$k.cl$m.spv"
     expect 0 "spirv-val-$k.vk$m" "$SPIRV_VAL" --target-env vulkan1.1 "$out/$k.vk$m.spv"
   done; done
@@ -115,7 +115,7 @@ if [ -n "${SPIRV_VAL:-}" ] && [ -x "$SPIRV_VAL" ]; then
 fi
 
 # 5. Omega loader: accepts, and refuses every wrong format, corruption and entry.
-for k in vadd fsum16; do
+for k in vadd fsum16 gemm16; do
   expect 0 "load-cl-$k" "$T" load SPIRV_CL "$out/$k.cl.spv" $k
   expect 0 "load-vk-$k" "$T" load SPIRV_VK "$out/$k.vk.spv" $k
 done
@@ -137,9 +137,11 @@ head -c 20 /dev/zero > "$out/sm121-odd.bin"
 expect 40 load-neg-sm121-odd "$T" load SM121_RAW "$out/sm121-odd.bin"
 
 # 6. Host reference (conform.om) and its cross-check against hello_gpu --sim.
-"$C" in vadd "$out/a.bin" "$out/b.bin" && "$C" in fsum16 "$out/x.bin" \
-  && "$C" ref vadd "$out/vadd.ref" && "$C" ref fsum16 "$out/fsum16.ref" || bad "conform inputs/reference"
+"$C" in vadd "$out/a.bin" "$out/b.bin" && "$C" in fsum16 "$out/x.bin" && "$C" in gemm16 "$out/ga.bin" "$out/gb.bin" \
+  && "$C" ref vadd "$out/vadd.ref" && "$C" ref fsum16 "$out/fsum16.ref" && "$C" ref gemm16 "$out/gemm16.ref" \
+  || bad "conform inputs/reference"
 echo "REFERENCE vadd sha256=$(digest "$out/vadd.ref") fsum16 sha256=$(digest "$out/fsum16.ref")"
+echo "REFERENCE gemm16 sha256=$(digest "$out/gemm16.ref")"
 if [ -n "${HELLO_GPU:-}" ] && [ -x "$HELLO_GPU" ]; then
   hs=$("$HELLO_GPU" --sim | sed -n 's/^output sha256 //p')
   if [ "$hs" = "$(digest "$out/vadd.ref")" ]; then ok "reference = hello_gpu --sim output sha256 $hs"; else bad "reference $(digest "$out/vadd.ref") != hello_gpu --sim $hs"; fi
@@ -149,6 +151,9 @@ fi
 cp "$out/vadd.ref" "$out/vadd.planted.out" && poke "$out/vadd.planted.out" 4096 377
 expect 1 conform-neg-planted "$C" check vadd "$out/vadd.planted.out"
 expect 0 conform-self "$C" check vadd "$out/vadd.ref"
+cp "$out/gemm16.ref" "$out/gemm16.planted.out" && poke "$out/gemm16.planted.out" 131072 377
+expect 1 conform-neg-planted-gemm16 "$C" check gemm16 "$out/gemm16.planted.out"
+expect 0 conform-self-gemm16 "$C" check gemm16 "$out/gemm16.ref"
 
 # 7. Execute on CPU implementations (migration-pending C launcher, default OFF).
 if [ "${CUDAPP_MIGRATION_PENDING_SPIRV_HOST:-0}" != 1 ]; then
@@ -170,13 +175,16 @@ else
       for m in "" .mutant; do
         "$H" $a "$out/vadd.$a$m.spv" vadd 1048576 "$out/a.bin" "$out/b.bin" "$out/vadd.$a$m.out" > "$out/run-vadd.$a$m.log" 2>&1 || bad "run vadd $a$m exit $?"
         "$H" $a "$out/fsum16.$a$m.spv" fsum16 65536 "$out/x.bin" "$out/fsum16.$a$m.out" > "$out/run-fsum16.$a$m.log" 2>&1 || bad "run fsum16 $a$m exit $?"
+        "$H" $a "$out/gemm16.$a$m.spv" gemm16 65536 "$out/ga.bin" "$out/gb.bin" "$out/gemm16.$a$m.out" > "$out/run-gemm16.$a$m.log" 2>&1 || bad "run gemm16 $a$m exit $?"
       done
       grep -h 'device=\|platform=' "$out/run-vadd.$a.log"
       expect 0 "conform-vadd-$a" "$C" check vadd "$out/vadd.$a.out"
       expect 0 "conform-fsum16-$a" "$C" check fsum16 "$out/fsum16.$a.out"
+      expect 0 "conform-gemm16-$a" "$C" check gemm16 "$out/gemm16.$a.out"
       expect 1 "conform-neg-vadd-$a-mutant" "$C" check vadd "$out/vadd.$a.mutant.out"
       expect 1 "conform-neg-fsum16-$a-mutant" "$C" check fsum16 "$out/fsum16.$a.mutant.out"
-      for k in vadd fsum16; do
+      expect 1 "conform-neg-gemm16-$a-mutant" "$C" check gemm16 "$out/gemm16.$a.mutant.out"
+      for k in vadd fsum16 gemm16; do
         if cmp -s "$out/$k.$a.out" "$out/$k.ref"; then ok "bytes $k.$a.out = $k.ref sha256=$(digest "$out/$k.ref")"; else bad "bytes $k.$a.out != $k.ref"; fi
       done
     done

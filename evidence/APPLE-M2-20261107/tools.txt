@@ -1,0 +1,17 @@
+Tools and pins for APPLE-M2-20261107 (verification oracles and platform dependencies; none generates SPIR-V or results)
+
+omc        2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f  aien-dev/omega-mv 369dbc96 seed/out/omc (git show)
+ollm       819664d5a2284189cd9baca67681675ed2b4685e19d1d976ce071b0f6fcaa5ea  aien-dev/aien-train 0518c915, tests/omegallm/build.sh, source 2d13b609
+ollm-mut-b 623890acd8ead52485376fc804f486618824fd786cfcbf3366dcdddf0083e0da  same, --mutant b (targets shifted)
+spirv-tools_2025.4-1~ppa2_arm64.deb      45defd68f509fce4853e371fea3e58702316b2922807b5e8b14570a046fe02f8  (SPIRV-Tools v2025.4; validator only)
+libvulkan-dev_1.4.328.1-1~1_arm64.deb    ad1170ca01e61f66d2d29cc705e08232097aa6ec9040ea84a3f29461b472431f  (headers for the Spark launcher build)
+opencl-c-headers_3.0~2023.12.14-1_all.deb 38f4696aa506640cb6d1dfd343f7ec15e4a7d26229d6e262351546b3e0f2f27b  (headers only; PoCL not used)
+lavapipe   Mesa 25.2.8 (mesa-vulkan-drivers 25.2.8-0ubuntu0.24.04.4), /usr/share/vulkan/icd.d/lvp_icd.json on spark-b87b; CPU Vulkan oracle
+MoltenVK   v1.4.2 (released 2026-07-20; GitHub release published 2026-07-24T14:00:46Z)
+           MoltenVK-macos.tar sha256 f95765a6229cb7b915990a2890ce12ebe36a730b021545d3d52ae69ce4c4024e = GitHub asset digest
+           MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib sha256 aef00b13bcc808adf15b85bef9ae67393d92be7ed5dfe41cad16fa809e4a4c5f (tar -xO | shasum equals the file used)
+           Role: Vulkan-on-Metal translation (SPIRV-Cross to MSL, Metal runtime compile). Apache-2.0. Platform dependency of the
+           Apple route like NVIDIA's kernel module for the GB10; replacement per ADR 0043: .om MSL_SOURCE emitter + Metal host via E2.
+Apple clang 17.0.0 (clang-1700.6.4.2), macOS SDK 26.2: builds the migration-pending launcher only
+Lima 2.2.0, Debian 13 cloud image (vz): hosts the AArch64 Linux guest for the CPU row
+TinyStoriesV2-GPT4-valid.txt sha256 6874bae9a4c1a4e7edcf0e53b86c17817e9cf881fc75ff2368da457b80c0585d (public dataset; same file as aien-train evidence/OMEGALLM/efi/inputs.txt)

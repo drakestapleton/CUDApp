@@ -9,22 +9,30 @@ note is the FP32 builder until IR v7 (omega-mv#883) carries floats; it is not a 
 note Opcode, enum and layout authority: registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html
 note Every module is checked by spirv-val and by backend/targets.om before any run.
 note
-note Kernels (n = element count for vadd, row count for fsum16; gid = global invocation x):
+note Kernels (n = element count for vadd and gemm16, row count for fsum16; gid = global invocation x):
 note   vadd    c[gid] = a[gid] + b[gid]                      for gid < n (hello_gpu's operation)
 note   fsum16  o[gid] = (((x[16g] + x[16g+1]) + x[16g+2]) ... + x[16g+15])  frozen left-to-right order
-note cl arguments: vadd (a, b, c, uint n), fsum16 (x, o, uint n).
-note vk bindings set 0: vadd a=0 b=1 c=2, fsum16 x=0 o=1; n = OpArrayLength of the output buffer;
-note LocalSize 64 1 1.
+note   gemm16  batched 16x16x16 GEMM, row-major, batch t = gid / 256, row r = (gid / 16) % 16,
+note           column j = gid % 16: c[gid] = ((a[r,0]*b[0,j] + a[r,1]*b[1,j]) + ...) + a[r,15]*b[15,j]
+note           with a[r,k] = a[256t + 16r + k], b[k,j] = b[256t + 16k + j]; every product and sum is one
+note           binary32 operation in the frozen k order. No device may fuse a multiply into an add: vk
+note           decorates each product and sum NoContraction (decoration 42, Shader only); cl declares
+note           ExecutionMode ContractionOff (31, Kernel only) on the entry point.
+note cl arguments: vadd (a, b, c, uint n), fsum16 (x, o, uint n), gemm16 (a, b, c, uint n).
+note vk bindings set 0: vadd a=0 b=1 c=2, fsum16 x=0 o=1, gemm16 a=0 b=1 c=2; n = OpArrayLength of the
+note output buffer; LocalSize 64 1 1.
 note
-note Usage: emit vadd|fsum16 cl|vk [mutant]
-note mutant plants a wrong kernel for negative controls: vadd uses OpFSub, fsum16 adds right-to-left.
+note Usage: emit vadd|fsum16|gemm16 cl|vk [mutant]
+note mutant plants a wrong kernel for negative controls: vadd uses OpFSub, fsum16 adds right-to-left,
+note gemm16 accumulates k from 15 down to 0.
 note Exit: 0 module written; 2 usage; 3 stdout write failed. Traps exit 100 + code.
 om2
 
-text tuse "usage: emit vadd|fsum16 cl|vk [mutant]\n"
+text tuse "usage: emit vadd|fsum16|gemm16 cl|vk [mutant]\n"
 text tio "emit: stdout write failed\n"
 text tvadd "vadd"
 text tfsum "fsum16"
+text tgemm "gemm16"
 text tcl "cl"
 text tvk "vk"
 text tmut "mutant"
@@ -49,12 +57,17 @@ const IB2 uint 17
 const IN uint 18
 const IK0 uint 20
 const IK16 uint 36
+const I256 uint 37
 const IDYN uint 40
+note gemm16 only: its 16 products and 15 sums have fixed ids IGM..IGM+30 so that the vk annotation
+note section can decorate them NoContraction before they are defined; dynamic ids start at IDYNG.
+const IGM uint 40
+const IDYNG uint 72
 
 global gw uint 4096
 global gob uchar 16384
 global garg uchar 16
-note gst: 0 word fill, 1 next id, 2 env (0 cl, 1 vk), 3 kernel (0 vadd, 1 fsum16), 4 mutant
+note gst: 0 word fill, 1 next id, 2 env (0 cl, 1 vk), 3 kernel (0 vadd, 1 fsum16, 2 gemm16), 4 mutant
 global gst ulong 8
 
 fn usage to void
@@ -119,6 +132,10 @@ if eq get gst 3 0
 wstr tvadd
 ret
 end
+if eq get gst 3 2
+wstr tgemm
+ret
+end
 wstr tfsum
 end
 
@@ -126,14 +143,17 @@ fn knamewc to uint
 if eq get gst 3 0
 ret strwc tvadd
 end
+if eq get gst 3 2
+ret strwc tgemm
+end
 ret strwc tfsum
 end
 
 fn nbuf to uint
-if eq get gst 3 0
-ret 3
-end
+if eq get gst 3 1
 ret 2
+end
+ret 3
 end
 
 note Buffer i (0-based) as an id: cl parameters and vk variables share IB0..IB2.
@@ -179,6 +199,11 @@ w 6
 w IMAIN
 kname
 w IGID
+if eq get gst 3 2
+op 16 3
+w IMAIN
+w 31
+end
 end
 
 fn decor to void
@@ -186,6 +211,15 @@ op 71 4
 w IGID
 w 11
 w 28
+if eq get gst 3 2
+if isvk
+for i uint 31
+op 71 3
+w add IGM i
+w 42
+end
+end
+end
 if not isvk
 op 71 3
 w IGID
@@ -295,6 +329,21 @@ op 43 5
 w IU64
 w add IK0 k
 w k
+w 0
+end
+end
+if eq get gst 3 2
+if isvk
+op 43 4
+w IU32
+w I256
+w 256
+end
+if not isvk
+op 43 5
+w IU64
+w I256
+w 256
 w 0
 end
 end
@@ -429,6 +478,68 @@ end
 st eptr IB1 x acc
 end
 
+note OpFMul (133) or OpFAdd (129) with a caller-fixed result id (the NoContraction targets).
+fn farithid c uint r uint a uint b uint to void
+op c 5
+w IF32
+w r
+w a
+w b
+end
+
+note gemm16 is split into small functions: omc refuses a function that needs more than 16 registers
+note (error 12).
+fn gbase x uint to uint
+ret iarith 132 iarith 134 x IK16 IK16
+end
+
+fn gcol x uint to uint
+j = iarith 137 x IK16
+tb = iarith 132 iarith 134 x I256 I256
+ret iarith 128 tb j
+end
+
+fn gk i uint to uint
+if eq get gst 4 1
+ret sub 15 i
+end
+ret i
+end
+
+fn gprod i uint ba uint bb uint to void
+k = gk i
+pa = ba
+pb = bb
+if ne k 0
+pa = iarith 128 ba add IK0 k
+pb = iarith 128 bb iarith 132 add IK0 k IK16
+end
+a = ld eptr IB0 pa
+b = ld eptr IB1 pb
+farithid 133 add IGM i a b
+end
+
+fn gsum i uint to void
+s = add add IGM 15 i
+p = sub s 1
+if eq i 1
+p = IGM
+end
+farithid 129 s p add IGM i
+end
+
+fn bgemm x uint to void
+ba = gbase x
+bb = gcol x
+for i uint 16
+gprod i ba bb
+if ne i 0
+gsum i
+end
+end
+st eptr IB2 x add IGM 30
+end
+
 fn count x uint to uint
 n = nid
 if isvk
@@ -499,6 +610,9 @@ end
 if eq get gst 3 1
 bfsum x
 end
+if eq get gst 3 2
+bgemm x
+end
 op 249 2
 w ml
 op 248 2
@@ -548,6 +662,9 @@ end
 if argis 1 tfsum
 put gst 3 1
 end
+if argis 1 tgemm
+put gst 3 2
+end
 put gst 2 9
 if argis 2 tcl
 put gst 2 0
@@ -565,6 +682,9 @@ end
 put gst 4 1
 end
 put gst 1 ulong IDYN
+if eq get gst 3 2
+put gst 1 ulong IDYNG
+end
 header
 decor
 types

@@ -1,0 +1,12 @@
+I 8400
+T 10 5554254
+T 20 5527414
+ROUNDTRIP resume 0->10->20 == 0->20 cmp rc 0
+298a55bfa1d0736cd89ba8a9fb272c7eaa8b8b85f2c07054ff544bdb67632c38  S2-10.CK
+e7beedb6c11417ee3cb184082e66fc3c406a687ced92521cc5880d70b5d13faf  S2.CK
+E 20 16 5512452 7952788
+eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+sample rc=0
+refuse-flip-payload rc=14
+E 20 16 5513973 7954982
+mut-b eval rc=0

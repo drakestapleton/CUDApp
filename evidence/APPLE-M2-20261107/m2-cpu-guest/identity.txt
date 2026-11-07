@@ -1,0 +1,6 @@
+DATE 2026-11-07T01:09:16Z
+GUEST Linux 6.12.95+deb13-cloud-arm64 aarch64; Debian GNU/Linux 13 (trixie)
+GUEST_CPUS 2 MIDR_EL1 0x00000000610f0000 (implementer 0x61 = Apple)
+GUEST_FEATURES Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 asimddp sha512 asimdfhm dit uscat ilrcpc flagm sb paca pacg dcpodp flagm2 frint i8mm bf16 bti
+VIRT Apple Inc. / Apple Virtualization Generic Platform
+OMC 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f  omc

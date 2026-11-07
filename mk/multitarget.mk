@@ -10,6 +10,10 @@
 # CUDAPP_MIGRATION_PENDING_SPIRV_HOST=1 plus POCL_LIBRARY to execute the modules. Its .om successors are
 # backend/opencl/host.om and backend/vulkan/host.om once Omega has checked shared-library calls
 # (E2, aien-dev/omega-mv#888).
+# Apple GPU replay (macOS on Apple silicon, not a make target): copy run.sh's MT_OUT modules, inputs and
+# references with a SHA256SUMS file to the Mac, then
+#   MVK_LIB=/abs/libMoltenVK.dylib MVK_INCLUDE=/abs/MoltenVK/include sh tests/multitarget/apple-gpu.sh DIR
+# builds spirv-host.c with MT_TARGET=1 (MoltenVK linked directly) and compares every output bit for bit.
 OMC ?=
 .PHONY: doctor-targets test-multitarget
 doctor-targets:

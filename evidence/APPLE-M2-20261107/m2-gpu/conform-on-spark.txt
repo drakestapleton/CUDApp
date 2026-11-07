@@ -1,0 +1,18 @@
+CONFORM vadd n=1048576 wrong=0 unwritten=0 first=none
+rc=0 vadd.vk.gpu.out
+CONFORM vadd n=1048576 wrong=1048576 unwritten=0 first=0
+rc=1 vadd.vk.mutant.gpu.out
+CONFORM vadd n=1048576 wrong=0 unwritten=0 first=none
+rc=0 vadd.vk.fastmath.out
+CONFORM fsum16 n=65536 wrong=0 unwritten=0 first=none
+rc=0 fsum16.vk.gpu.out
+CONFORM fsum16 n=65536 wrong=44123 unwritten=0 first=2
+rc=1 fsum16.vk.mutant.gpu.out
+CONFORM fsum16 n=65536 wrong=0 unwritten=0 first=none
+rc=0 fsum16.vk.fastmath.out
+CONFORM gemm16 n=65536 wrong=0 unwritten=0 first=none
+rc=0 gemm16.vk.gpu.out
+CONFORM gemm16 n=65536 wrong=47715 unwritten=0 first=0
+rc=1 gemm16.vk.mutant.gpu.out
+CONFORM gemm16 n=65536 wrong=0 unwritten=0 first=none
+rc=0 gemm16.vk.fastmath.out

@@ -1,0 +1,3 @@
+HOST spark-b87b Linux 7.0.0-1019-nvidia aarch64
+CUDAPP b774723f537cec16a359fe082b8100317a5b5490 branch hive/t_e1d7686d-apple-m2 dirty=6
+DATE 2026-11-07T01:04:19Z

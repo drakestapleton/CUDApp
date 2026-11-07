@@ -98,9 +98,9 @@ moves. All of it is seeded Omega except one migration-pending C launcher.
 |---|---|---|
 | Target table, one row per GPU family; `make doctor OMC=…` prints it | `backend/targets.om` (`targets doctor`) | IMPLEMENTED. GB10 (sm_121) SUPPORTED; every other GPU row PLANNED, hardware NOT_RUN; PoCL and lavapipe rows are HOST-ONLY (not a GPU) |
 | Code-object loader checks for `ob_code_load` | `backend/targets.om` (`targets load FORMAT FILE [ENTRY or gfx]`) | IMPLEMENTED: SPIR-V header, instruction stream, capability/addressing/memory model per environment, entry point; HSACO ELF64, HSA OSABI with code object v4/v5, EM_AMDGPU, e_flags mach, PT_NOTE NT_AMDGPU_METADATA msgpack (`amdhsa.target`, `amdhsa.version`, `amdhsa.kernels`); SM121_RAW shape. MSL_SOURCE and AARCH64 refused (PLANNED), CUBIN refused (reserved) |
-| SPIR-V builder: FP32 vadd and FP32 16-term sum (`fsum16`), OpenCL and Vulkan forms, plus planted-wrong mutants | `backend/spirv/emit.om` | IMPLEMENTED; every module passes `spirv-val`. Hand-built words because the pinned seed omc IR mode lacks the needed floating-point operations. E3 (omega-mv#883) tracks OSC IRv7, a separate compiler path; it does not by itself enable this seed SPIR-V path |
-| Host reference and bit compare | `backend/spirv/conform.om` | IMPLEMENTED; vadd reference digest equals `hello_gpu --sim` output digest |
-| Launcher that hands a module to PoCL (CPU) or Mesa lavapipe (CPU) | `tools/multitarget/spirv-host.c` | migration-pending C, `CUDAPP_MIGRATION_PENDING_SPIRV_HOST` default OFF; reason: no checked shared-library call (E2, omega-mv#888); successors `backend/opencl/host.om`, `backend/vulkan/host.om` |
+| SPIR-V builder: FP32 vadd, FP32 16-term sum (`fsum16`) and batched 16x16x16 FP32 GEMM (`gemm16`: frozen k order, vk products/sums NoContraction, cl ContractionOff), OpenCL and Vulkan forms, plus planted-wrong mutants | `backend/spirv/emit.om` | IMPLEMENTED; every module passes `spirv-val`. Hand-built words because the pinned seed omc IR mode lacks the needed floating-point operations. E3 (omega-mv#883) tracks OSC IRv7, a separate compiler path; it does not by itself enable this seed SPIR-V path |
+| Host reference and bit compare | `backend/spirv/conform.om` | IMPLEMENTED; vadd reference digest equals `hello_gpu --sim` output digest; gemm16 reference is separately rounded products summed in k order |
+| Launcher that hands a module to PoCL (CPU) or Mesa lavapipe (CPU), or (`MT_TARGET=1`, macOS) to the Apple GPU through MoltenVK linked directly | `tools/multitarget/spirv-host.c` | migration-pending C, `CUDAPP_MIGRATION_PENDING_SPIRV_HOST` default OFF; reason: no checked shared-library call (E2, omega-mv#888); successors `backend/opencl/host.om`, `backend/vulkan/host.om`. `tests/multitarget/apple-gpu.sh` replays run.sh's modules on an Apple GPU (MoltenVK is a vendor-runtime route over Metal; `MSL_SOURCE` stays PLANNED) |
 | gfx1151 vadd code object | `backend/amd/vadd-gfx1151.s` | ORACLE fixture assembled by `llvm-mc` + `ld.lld` to test the loader (see §6); not a first-party encoder |
 
 `make test-multitarget OMC=…` (`tests/multitarget/run.sh`) runs all of it with negative controls:
@@ -108,8 +108,10 @@ corrupted modules fail `spirv-val` and the loader, wrong environment or entry is
 kernels and a flipped output byte fail the compare, the launcher's isolation scan fails when told to
 forbid the CPU driver it loads, and patched HSACO copies (wrong gfx, e_flags, OSABI, ABI version, note
 type, note target, truncation) are refused. Bit-exact on PoCL and lavapipe means those CPU
-implementations only; no AMD, Intel, Apple, Qualcomm, Arm, Imagination, Broadcom or Vortex device has run
-anything (hardware NOT_RUN). A real AMD run next needs a queue: KFD + AQL through E1 (KFD `devctl`
+implementations only. The Apple M2 GPU row (MoltenVK over Metal) is EXERCISED on one MacBook Air
+(evidence/APPLE-M2-20261107); it is a vendor-runtime route, not an independent Apple driver, and no
+AMD, Intel, Qualcomm, Arm, Imagination, Broadcom or Vortex device has run anything (hardware NOT_RUN).
+A real AMD run next needs a queue: KFD + AQL through E1 (KFD `devctl`
 allowlist) or the HSA runtime through E2, on a machine with that GPU.
 
 ## 4. Per-token path, today and target (GB10)

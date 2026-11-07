@@ -1,0 +1,24 @@
+WolframLanguageEvaluator, 2026-11-07 (card apple195): independent check of conform.om's gemm16 reference, batch 0.
+Inputs follow backend/spirv/conform.om exactly: 0.21f32 and 0.17f32 are the binary32 values nearest 21/100 and 17/100,
+every product and sum is rounded to binary32 (round half to even), magnitudes stay normal.
+
+Code:
+r32[x_] := If[x == 0, 0, Module[{e = Floor[Log2[Abs[x]]]}, Round[x/2^(e - 23)]*2^(e - 23)]];
+bits[x_] := Module[{s = If[x < 0, 1, 0], ax = Abs[x], e}, If[ax == 0, s*2^31, e = Floor[Log2[ax]]; s*2^31 + (e + 127)*2^23 + (ax/2^e - 1)*2^23]];
+c21 = r32[21/100]; c17 = r32[17/100];
+ga[i_] := Module[{t = Quotient[i, 256], r = Mod[Quotient[i, 16], 16], k = Mod[i, 16], m, v}, m = Mod[13 t + 7 r + 3 k, 89]; v = r32[r32[m*c21] - 9]; If[Mod[k, 4] == 0, v*4096, v]];
+gb[i_] := Module[{t = Quotient[i, 256], k = Mod[Quotient[i, 16], 16], j = Mod[i, 16], m, v}, m = Mod[11 t + 5 k + 19 j, 83]; v = r32[r32[m*c17] - 7]; If[Mod[j, 3] == 0, v*256, v]];
+unf[i_] := Module[{t = 256 Quotient[i, 256], ra, cb, acc}, ra = t + 16 Mod[Quotient[i, 16], 16]; cb = t + Mod[i, 16]; acc = r32[ga[ra] gb[cb]]; Do[acc = r32[acc + r32[ga[ra + k] gb[cb + 16 k]]], {k, 1, 15}]; acc];
+fus[i_] := Module[{t = 256 Quotient[i, 256], ra, cb, acc}, ra = t + 16 Mod[Quotient[i, 16], 16]; cb = t + Mod[i, 16]; acc = r32[ga[ra] gb[cb]]; Do[acc = r32[acc + ga[ra + k] gb[cb + 16 k]], {k, 1, 15}]; acc];
+u = Table[unf[i], {i, 0, 255}]; f = Table[fus[i], {i, 0, 255}];
+{Hash[StringRiffle[IntegerString /@ (bits /@ u), ","], "SHA256", "HexString"], Count[MapThread[Equal, {u, f}], False], Length[u]}
+
+Result:
+{"da2f9d744e90f874800d03d03cbbcaa625a492edd0f9b22d53dec4843f21a27a", 105, 256}
+
+Comparison on the Spark:
+head -c 1024 gemm16.ref | od -An -v -tu4 | tr -s ' \n' ' ' | sed 's/^ //; s/ $//' | tr ' ' ',' | tr -d '\n' | sha256sum
+da2f9d744e90f874800d03d03cbbcaa625a492edd0f9b22d53dec4843f21a27a  -
+
+So the first 256 outputs of the Omega reference equal the exact-rational oracle bit for bit, and evaluating
+the same sums with fused multiply-adds would change 105 of those 256 outputs.

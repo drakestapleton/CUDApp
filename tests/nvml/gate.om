@@ -1,8 +1,12 @@
 note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Concatenate after tests/components/proc.om. Run from repository root.
-text NgAbiNo "NOT_RUN abi comparison (nvml.h absent; set CUDA_NVML_INCLUDE)\n"
-text NgAbiOk "PASS shell compiles against the CUDA nvml.h prototypes\n"
-text NgThinOk "PASS thin-shell guard\nPASS thin-shell guard negative control\n"
+text NgAbiNo "NOT_RUN abi and prototype comparison (nvml.h absent; set CUDA_NVML_INCLUDE)\n"
+text NgProOk "PASS generated nvml.h prototypes (11) compile against the CUDA nvml.h\nPASS prototype negative control (a changed nvmlDeviceGetName length type is rejected)\n"
+text NgExpOk "PASS ORACLE nm/readelf: libnvidia-ml.so.1 exports exactly the 11 api.om functions (T) with soname libnvidia-ml.so.1\n"
+text NgGrdOk "PASS ORACLE undefined-symbol guard: libnvidia-ml.so.1 imports only the C runtime allowlist and omega2_nvrm_open_file/close_file/ioctl\nPASS undefined-symbol guard negative control (an object calling ioctl is rejected)\n"
+text NgLibOk "PASS committed compat/nvml/libnvidia-ml.c, nvml.h and libnvidia-ml.map are the cabi bridge output of native/nvml/api.om\n"
+text NgLibP "PASS generated library libnvidia-ml.so.1 with the C caller: "
+text NgCabOk "PASS cabi bridge pins: src/toc.om and tools/bridge-seeded match om/omega-bridge-cabi.lock\n"
 text NgNameN "nvml"
 text NgNameQ "query"
 text NgNameE "errstr"
@@ -11,7 +15,6 @@ text NgMpass "mutants caught 22/22\n"
 text NgBuild "build"
 text NgComm "PASS committed "
 text NgBridge " is the bridge output of native/nvml\n"
-text NgFakeP "PASS fake tier: "
 text NgPure "PASS seeded Omega fake tier: "
 text NgNegP "PASS oracle negative control (altered string rejected: "
 text NgCloseP ")\n"
@@ -55,8 +58,70 @@ text NgS "native/nvml/step.om"
 text NgE "native/nvml/errstr.om"
 text NgF "tests/nvml/rmfake.om"
 text NgHost "tests/nvml/host.om"
-text NgShell "compat/nvml/cudapp_nvml.c"
-text NgFat "static int x(void) { return ioctl(3, 0x20800110); }\n"
+text NgFat "#include <sys/ioctl.h>\nint ng_fat(void);\nint ng_fat(void) { return ioctl(3, 0x20800110); }\n"
+text NgFatC "build/nvml/fat.c"
+text NgFatO "build/nvml/fat.o"
+text NgCabE "OMEGA_CABI_BRIDGE="
+text NgCabNo "NOT_RUN: set OMEGA_CABI_BRIDGE (omega-bridge #83 checkout built with tools/build.sh) for the generated NVML library\n"
+text NgLock "om/omega-bridge-cabi.lock"
+text NgCpinP "CABI_CONVERTER_PIN="
+text NgFpinP "CABI_FRONTEND_PIN="
+text NgRcl "REFUSED: om/omega-bridge-cabi.lock needs exactly one CABI_CONVERTER_PIN and one CABI_FRONTEND_PIN row\n"
+text NgRct "REFUSED: OMEGA_CABI_BRIDGE src/toc.om digest is not the om/omega-bridge-cabi.lock pin\n"
+text NgRcf "REFUSED: OMEGA_CABI_BRIDGE tools/bridge-seeded digest is not the om/omega-bridge-cabi.lock pin\n"
+text NgToc "/src/toc.om"
+text NgApi "native/nvml/api.om"
+text NgLc "lib-c"
+text NgLh "lib-h"
+text NgLm "lib-map"
+text NgLibC "build/nvml/lib.c"
+text NgLibH "build/nvml/lib.h"
+text NgLibM "build/nvml/lib.map"
+text NgCLib "compat/nvml/libnvidia-ml.c"
+text NgCH "compat/nvml/nvml.h"
+text NgCMap "compat/nvml/libnvidia-ml.map"
+text NgDiff "CUDAPP-NVML HOST FAIL (committed file is not the cabi bridge output: "
+text NgSo "build/nvml/libnvidia-ml.so.1"
+text NgPic "-fPIC"
+text NgShared "-shared"
+text NgSoname "-Wl,-soname,libnvidia-ml.so.1"
+text NgVers "-Wl,--version-script=compat/nvml/libnvidia-ml.map"
+text NgRdyn "-rdynamic"
+text NgRpath "-Wl,-rpath,$ORIGIN"
+text NgNm "/usr/bin/nm"
+text NgRe "/usr/bin/readelf"
+text NgDynF "-D"
+text NgDefF "--defined-only"
+text NgUndF "--undefined-only"
+text NgDynD "-d"
+text NgNmO "build/nvml/nm-defined.txt"
+text NgNuO "build/nvml/nm-undefined.txt"
+text NgReO "build/nvml/readelf.txt"
+text NgSonam "Library soname: [libnvidia-ml.so.1]"
+text NgT " T "
+text NgIoU " U ioctl"
+text NgTsym " U omega2_nvrm_ioctl"
+text NgX1 "nvmlInit_v2"
+text NgX2 "nvmlShutdown"
+text NgX3 "nvmlErrorString"
+text NgX4 "nvmlDeviceGetCount_v2"
+text NgX5 "nvmlDeviceGetHandleByIndex_v2"
+text NgX6 "nvmlDeviceGetName"
+text NgX7 "nvmlDeviceGetUUID"
+text NgX8 "nvmlDeviceGetTemperature"
+text NgX9 "nvmlDeviceGetMemoryInfo"
+text NgX10 "nvmlDeviceGetUtilizationRates"
+text NgX11 "nvmlDeviceGetComputeRunningProcesses_v3"
+note Undefined symbols a generated library may import: C runtime (trap exit, setjmp/longjmp, memory
+note copies, stack protector, the lock) and the #281 transport supplied by the executable. Anything
+note else, notably open/read/write/ioctl/mmap, means the library reaches the OS outside the transport.
+text NgAllow " _exit __longjmp_chk longjmp _longjmp setjmp _setjmp __sigsetjmp memcpy memset memmove __memcpy_chk __memset_chk pthread_mutex_lock pthread_mutex_unlock __stack_chk_fail __stack_chk_guard __cxa_finalize __gmon_start__ _ITM_deregisterTMCloneTable _ITM_registerTMCloneTable omega2_nvrm_open_file omega2_nvrm_close_file omega2_nvrm_ioctl "
+text NgLexp "exported symbols)\n"
+text NgLson "soname)\n"
+text NgLund "undefined-symbol guard)\n"
+text NgLneg "undefined-symbol guard negative control)\n"
+text NgLpro "generated prototype count)\n"
+text NgLsub "prototype negative control edit)\n"
 text NgOk "CUDAPP-NVML HOST PASS\n"
 text NgNo "NOT_RUN: set OMEGA_OMC (omega-mv e5b32567 omc) and OMEGA_BRIDGE (omega-bridge checkout)\n"
 text NgRp "REFUSED: no FRONTEND_PIN in om/units.sh\n"
@@ -72,7 +137,14 @@ text NgAO "build/nvml/abi-ours"
 text NgAC "build/nvml/abi-cuda"
 text NgAT "build/nvml/abi-ours.txt"
 text NgCT "build/nvml/abi-cuda.txt"
-text NgObj "build/nvml/shell-cuda.o"
+text NgProto "build/nvml/proto.c"
+text NgProtoB "build/nvml/proto-bad.c"
+text NgInc "#include <nvml.h>\n"
+text NgRetT "nvmlReturn_t nvml"
+text NgStrT "const char *nvml"
+text NgGnF "char *name, unsigned int length);"
+text NgGnT "char *name, unsigned long length);"
+text NgSyn "-fsyntax-only"
 text NgStd "-std=gnu11"
 text NgOpt "-O1"
 text NgWall "-Wall"
@@ -90,20 +162,13 @@ text NgDashI "-I"
 text NgSucc "Successful"
 text NgTab "\t"
 text NgNl "\n"
-text NgDev "/dev/"
-text NgNV0 "NV0"
-text NgNV2 "NV2080"
-text NgHex "0x2080"
-text NgOpen "open("
-text NgIo "ioctl("
-text NgClose "close("
-text NgMap "mmap("
-text NgRead "read("
-text NgWrite "write("
 global NgBr uchar 1024
 global NgBn ulong 1
 global NgCu uchar 1024
 global NgCn ulong 1
+global NgKr uchar 1024
+global NgKn ulong 1
+global NgWhich ulong 1
 
 fn ng_env key view uchar * dst edit uchar * to ulong
 b = new uchar 8192 0
@@ -184,6 +249,7 @@ if not hp_equal hash pin 64
 hp_say NgRb
 exit 69
 end
+ng_cabi
 n = ng_env NgCudaE b
 if eq n 0
 n = len NgCuda
@@ -198,14 +264,19 @@ end
 end
 
 fn ng_pin pin edit uchar 64 to void
-units = new uchar 65536 0
-n = hp_read NgUnits len NgUnits units len units
+ng_pinin NgUnits NgPref 0 pin
+end
+
+note refuse 0: om/units.sh FRONTEND_PIN; refuse 1: om/omega-bridge-cabi.lock CABI rows.
+fn ng_pinin path view uchar * prefix view uchar * refuse ulong pin edit uchar 64 to void
+rows = new uchar 65536 0
+n = hp_read path len path rows len rows
 hits = ulong 0
 for p ulong n
-if ng_line units p
-if le add p add len NgPref 65 n
-if ng_at units p NgPref
-if ng_pinrow units add p len NgPref pin
+if ng_line rows p
+if le add p add len prefix 65 n
+if ng_at rows p prefix
+if ng_pinrow rows add p len prefix pin
 hits = add hits 1
 end
 end
@@ -213,8 +284,80 @@ end
 end
 end
 if ne hits 1
+if eq refuse 0
 hp_say NgRp
+else
+hp_say NgRcl
+end
 exit 74
+end
+end
+
+note The #83 converter is used only for native/nvml/api.om; both of its files are pinned by digest.
+fn ng_cabi to void
+c = new uchar 1024 0
+w = new uchar 1024 0
+t = new uchar 1024 0
+hash = new uchar 64 0
+pin = new uchar 64 0
+k = ng_env NgCabE c
+if eq k 0
+hp_say NgCabNo
+exit 77
+end
+wn = ng_join c k NgWrap w
+tn = ng_join c k NgToc t
+if ne faccess w 0 wn 4 0
+hp_say NgCabNo
+exit 77
+end
+if ne faccess t 0 tn 4 0
+hp_say NgCabNo
+exit 77
+end
+put NgKn 0 wn
+for i ulong wn
+put NgKr i get w i
+end
+ng_pinin NgLock NgCpinP 1 pin
+ng_hash t tn hash
+if not hp_equal hash pin 64
+hp_say NgRct
+exit 69
+end
+ng_pinin NgLock NgFpinP 1 pin
+ng_hash w wn hash
+if not hp_equal hash pin 64
+hp_say NgRcf
+exit 69
+end
+hp_wpart 1 NgCabOk 0 len NgCabOk
+end
+
+fn ng_join c view uchar * k ulong suffix view uchar * dst edit uchar 1024 to ulong
+hp_require le add k len suffix len dst
+for i ulong k
+put dst i get c i
+end
+for i ulong len suffix
+put dst add k i get suffix i
+end
+ret add k len suffix
+end
+
+fn ng_put dst edit uchar 65536 k ulong src view uchar * off ulong n ulong to ulong
+hp_require le add k n len dst
+for i ulong n
+put dst add k i get src add off i
+end
+ret add k n
+end
+
+fn ng_need ok bool label view uchar * to void
+if not ok
+hp_wpart 2 NgFailP 0 len NgFailP
+hp_wpart 2 label 0 len label
+exit 1
 end
 end
 
@@ -302,6 +445,31 @@ ng_cat NgHost
 end
 
 fn ng_bridge mode view uchar * source view uchar * dest view uchar * to void
+put NgWhich 0 0
+ng_bridgew mode source dest
+end
+
+fn ng_bridgek mode view uchar * source view uchar * dest view uchar * to void
+put NgWhich 0 1
+ng_bridgew mode source dest
+put NgWhich 0 0
+end
+
+note NgWhich 0: OMEGA_BRIDGE (om/units.sh pin); 1: OMEGA_CABI_BRIDGE (om/omega-bridge-cabi.lock pins).
+fn ng_wrapc w edit uchar 2048 to ulong
+if eq get NgWhich 0 1
+for i ulong get NgKn 0
+put w i get NgKr i
+end
+ret get NgKn 0
+end
+for i ulong get NgBn 0
+put w i get NgBr i
+end
+ret get NgBn 0
+end
+
+fn ng_bridgew mode view uchar * source view uchar * dest view uchar * to void
 b = new uchar 2048 0
 hp_start NgEnv len NgEnv
 hp_arg NgPath len NgPath
@@ -313,13 +481,44 @@ put b add len NgSeed i get HOm i
 end
 hp_arg b add len NgSeed get HOn 0
 hp_arg NgSh len NgSh
-for i ulong get NgBn 0
-put b i get NgBr i
-end
-hp_arg b get NgBn 0
+n = ng_wrapc b
+hp_arg b n
 hp_arg mode len mode
 hp_arg source len source
 ng_exec dest 0
+end
+
+fn ng_same gen view uchar * kept view uchar * to void
+if not hp_cmp gen len gen kept len kept
+hp_wpart 2 NgDiff 0 len NgDiff
+hp_wpart 2 kept 0 len kept
+hp_wpart 2 NgCloseP 0 len NgCloseP
+exit 1
+end
+end
+
+fn ng_lib to void
+ng_bridgek NgLc NgApi NgLibC
+ng_same NgLibC NgCLib
+ng_bridgek NgLh NgApi NgLibH
+ng_same NgLibH NgCH
+ng_bridgek NgLm NgApi NgLibM
+ng_same NgLibM NgCMap
+hp_wpart 1 NgLibOk 0 len NgLibOk
+ng_cc
+hp_arg NgPic len NgPic
+hp_arg NgShared len NgShared
+hp_arg NgIsrc len NgIsrc
+hp_arg NgIcmp len NgIcmp
+hp_arg NgSoname len NgSoname
+hp_arg NgVers len NgVers
+hp_arg NgDashO len NgDashO
+hp_arg NgSo len NgSo
+hp_arg NgCLib len NgCLib
+hp_arg NgStep len NgStep
+hp_arg NgErr len NgErr
+hp_arg NgPth len NgPth
+hp_exec -1 -1 0
 end
 
 fn ng_binding saved view uchar * to void
@@ -355,21 +554,21 @@ ng_cc
 hp_arg NgIsrc len NgIsrc
 hp_arg NgIcmp len NgIcmp
 hp_arg NgItst len NgItst
-hp_arg NgShell len NgShell
-hp_arg NgStep len NgStep
-hp_arg NgErr len NgErr
-hp_arg NgFake len NgFake
-hp_arg NgTrans len NgTrans
-hp_arg NgTest len NgTest
-hp_arg NgPth len NgPth
+hp_arg NgRdyn len NgRdyn
 hp_arg NgDashO len NgDashO
 hp_arg NgOld len NgOld
+hp_arg NgTest len NgTest
+hp_arg NgTrans len NgTrans
+hp_arg NgFake len NgFake
+hp_arg NgSo len NgSo
+hp_arg NgRpath len NgRpath
+hp_arg NgPth len NgPth
 hp_exec -1 -1 0
 hp_start NgOld len NgOld
 hp_arg NgOrac len NgOrac
 ng_exec NgOut 0
 ng_result NgPass
-hp_wpart 1 NgFakeP 0 len NgFakeP
+hp_wpart 1 NgLibP 0 len NgLibP
 hp_wpart 1 NgPass 0 len NgPass
 end
 
@@ -459,99 +658,202 @@ hp_exec -1 -1 0
 hp_start NgAC len NgAC
 ng_exec NgCT 0
 hp_require hp_cmp NgAT len NgAT NgCT len NgCT
-ng_cc
-hp_arg NgDashC len NgDashC
-hp_arg NgDashI len NgDashI
-hp_arg b n
-hp_arg NgIsrc len NgIsrc
-hp_arg NgShell len NgShell
-hp_arg NgDashO len NgDashO
-hp_arg NgObj len NgObj
-hp_exec -1 -1 0
 ng_abimsg b n
-hp_wpart 1 NgAbiOk 0 len NgAbiOk
+ng_proto b n
 end
 
-fn ng_call b view uchar * p ulong word view uchar * to bool
-if eq p 0
+fn ng_proline h view uchar * p ulong q ulong to bool
+if lt sub q p 20
 ret false
 end
-v = get b sub p 1
-if or eq v 95 and ge v 97 le v 122
+if not or ng_at h p NgRetT ng_at h p NgStrT
 ret false
 end
-ret ng_at b p word
+ret and eq get h sub q 1 59 eq get h sub q 2 41
 end
 
-fn ng_thin b view uchar * used ulong to bool
-start = true
-skip = false
-for p ulong used
-v = get b p
-if eq v 10
-start = true
-skip = false
-continue
+fn ng_syntax inc view uchar * incn ulong file view uchar * code long to void
+ng_cc
+hp_arg NgSyn len NgSyn
+hp_arg NgDashI len NgDashI
+hp_arg inc incn
+hp_arg file len file
+hp_exec -1 -1 code
 end
-if start
-if or eq v 32 eq v 9
-continue
+
+fn ng_subst a view uchar * an ulong dst edit uchar 65536 to ulong
+k = ulong 0
+hits = ulong 0
+p = ulong 0
+while lt p an bound 65536
+if and le add p len NgGnF an ng_at a p NgGnF
+k = ng_put dst k NgGnT 0 len NgGnT
+p = add p len NgGnF
+hits = add hits 1
+else
+k = ng_put dst k a p 1
+p = add p 1
 end
-if eq v 42
-skip = true
 end
-if eq v 47
-if lt add p 1 used
-if eq get b add p 1 42
-skip = true
+ng_need eq hits 1 NgLsub
+ret k
+end
+
+note The generated header's 11 prototypes, alone after NVIDIA's nvml.h, must compile: any conflicting
+note type is a hard error. The negative control changes one parameter type and must be rejected.
+fn ng_proto inc view uchar * incn ulong to void
+h = new uchar 65536 0
+d = new uchar 65536 0
+x = new uchar 65536 0
+m = hp_read NgCH len NgCH h len h
+k = ng_put d 0 NgInc 0 len NgInc
+cnt = ulong 0
+p = ulong 0
+while lt p m bound 65536
+q = p
+while lt q m bound 65536
+if eq get h q 10
+break
+end
+q = add q 1
+end
+if ng_proline h p q
+k = ng_put d k h p sub q p
+k = ng_put d k NgNl 0 1
+cnt = add cnt 1
+end
+p = add q 1
+end
+ng_need eq cnt 11 NgLpro
+hp_write NgProto len NgProto d k
+ng_syntax inc incn NgProto 0
+kx = ng_subst d k x
+hp_write NgProtoB len NgProtoB x kx
+ng_syntax inc incn NgProtoB 1
+hp_wpart 1 NgProOk 0 len NgProOk
+end
+
+fn ng_countn b view uchar * n ulong w view uchar * wn ulong to ulong
+c = ulong 0
+for p ulong n
+if le add p wn n
+ok = true
+for i ulong wn
+if ne get b add p i get w i
+ok = false
+end
+end
+if ok
+c = add c 1
 end
 end
 end
-start = false
+ret c
 end
-if skip
-continue
+
+fn ng_sym b view uchar * n ulong sym view uchar * to void
+w = new uchar 65536 0
+k = ng_put w 0 NgT 0 len NgT
+k = ng_put w k sym 0 len sym
+k = ng_put w k NgNl 0 1
+ng_need eq ng_countn b n w k 1 NgLexp
 end
-if ng_at b p NgDev
+
+note nm lines are "<addr> <type> <name>[@version]"; each imported name must be in NgAllow.
+fn ng_undef path view uchar * dyn bool to bool
+b = new uchar 16384 0
+w = new uchar 65536 0
+hp_start NgNm len NgNm
+if dyn
+hp_arg NgDynF len NgDynF
+end
+hp_arg NgUndF len NgUndF
+hp_arg path len path
+ng_exec NgNuO 0
+n = hp_read NgNuO len NgNuO b len b
+lines = ulong 0
+p = ulong 0
+while lt p n bound 16384
+q = p
+while lt q n bound 16384
+if eq get b q 10
+break
+end
+q = add q 1
+end
+s = p
+while lt s q bound 16384
+if ne get b s 32
+break
+end
+s = add s 1
+end
+if ge add s 2 q
 ret false
 end
-if ng_at b p NgNV0
+en = add s 2
+while lt en q bound 16384
+if eq get b en 64
+break
+end
+en = add en 1
+end
+if gt sub en add s 2 250
 ret false
 end
-if ng_at b p NgNV2
+put w 0 32
+k = ng_put w 1 b add s 2 sub en add s 2
+put w k 32
+if not ng_hasn NgAllow len NgAllow w add k 1
 ret false
 end
-if ng_at b p NgHex
-ret false
+lines = add lines 1
+p = add q 1
 end
-if ng_call b p NgOpen
-ret false
-end
-if ng_call b p NgIo
-ret false
-end
-if ng_call b p NgClose
-ret false
-end
-if ng_call b p NgMap
-ret false
-end
-if ng_call b p NgRead
-ret false
-end
-if ng_call b p NgWrite
-ret false
-end
-end
-ret true
+ret gt lines 0
 end
 
 fn ng_guard to void
-b = new uchar 65536 0
-n = hp_read NgShell len NgShell b len b
-hp_require ng_thin b n
-hp_require not ng_thin NgFat len NgFat
-hp_say NgThinOk
+b = new uchar 16384 0
+hp_start NgNm len NgNm
+hp_arg NgDynF len NgDynF
+hp_arg NgDefF len NgDefF
+hp_arg NgSo len NgSo
+ng_exec NgNmO 0
+n = hp_read NgNmO len NgNmO b len b
+ng_need eq ng_countn b n NgNl 1 11 NgLexp
+ng_sym b n NgX1
+ng_sym b n NgX2
+ng_sym b n NgX3
+ng_sym b n NgX4
+ng_sym b n NgX5
+ng_sym b n NgX6
+ng_sym b n NgX7
+ng_sym b n NgX8
+ng_sym b n NgX9
+ng_sym b n NgX10
+ng_sym b n NgX11
+hp_start NgRe len NgRe
+hp_arg NgDynD len NgDynD
+hp_arg NgSo len NgSo
+ng_exec NgReO 0
+n = hp_read NgReO len NgReO b len b
+ng_need ng_has b n NgSonam NgLson
+hp_wpart 1 NgExpOk 0 len NgExpOk
+ng_need ng_undef NgSo true NgLund
+n = hp_read NgNuO len NgNuO b len b
+ng_need ng_has b n NgTsym NgLund
+hp_write NgFatC len NgFatC NgFat len NgFat
+ng_cc
+hp_arg NgDashC len NgDashC
+hp_arg NgFatC len NgFatC
+hp_arg NgDashO len NgDashO
+hp_arg NgFatO len NgFatO
+hp_exec -1 -1 0
+ng_need not ng_undef NgFatO false NgLneg
+n = hp_read NgNuO len NgNuO b len b
+ng_need ng_has b n NgIoU NgLneg
+hp_wpart 1 NgGrdOk 0 len NgGrdOk
 end
 
 fn ng_replace from view uchar * into view uchar * to void
@@ -686,6 +988,7 @@ ng_result NgPass
 hp_wpart 1 NgPure 0 len NgPure
 hp_wpart 1 NgPass 0 len NgPass
 ng_oracle
+ng_lib
 ng_caller
 ng_abi
 ng_guard

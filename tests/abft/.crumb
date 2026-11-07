@@ -2,5 +2,5 @@
   "schema_version": "1.0.0",
   "name": "gemm-fault-detection-tests",
   "layer": "tests",
-  "purpose": "Frozen DRA-420/DRA-387 evaluation plan, its committed SHA256 and the learn53 CUL1 integration unit; public fixtures, never sealed evaluation"
+  "purpose": "Frozen DRA-420/DRA-387 evaluation plan, its committed SHA256, the learn53 CUL1 integration unit and the seeded Omega driver (driver.om); public fixtures, never sealed evaluation"
 }

@@ -20,15 +20,20 @@ device scheduler has been exercised. Every device edge in section 10 is **NOT_RU
 | `native/abft/run.om` | Evaluator: fork, deadline, reap, collect, detect, admit, retry, tallies, witnesses, gates. |
 | `native/abft/cul1.om` | `kabft`: the same two-sided checksum on the merged learn53 CUL1 GEMM records. |
 | `tests/abft/cul1-unit.om` | CUL1 checksum unit cases. Uses `tests/learn53/fixtures.om`. |
-| `tests/abft/run.sh` | Pin check, frozen-hash check, build, unit run and full evaluator run. |
+| `tests/abft/driver.om` | Seeded Omega driver: pin check, frozen-hash check, build, unit run and full evaluator run. |
 
 ```sh
-OMEGA_OMC=/abs/omega-mv/seed/out/omc sh tests/abft/run.sh build/abft   # all 51 rows plus gates
-build/abft/abft FIRST LAST                                             # a row range; gates are skipped
+mkdir -p build && "$OMEGA_OMC" < tests/abft/driver.om > build/abft-driver && chmod +x build/abft-driver
+OMEGA_OMC=/abs/omega-mv/seed/out/omc build/abft-driver build/abft   # all 51 rows plus gates
+build/abft/abft FIRST LAST                                          # a row range; gates are skipped
 ```
 
+Run the driver from the repository root. It exits 0 when every step and gate passed, 2 when
+`OMEGA_OMC` is unset, 1 on a pin, frozen-hash, input or output failure, and otherwise with the
+failing step's status (omc, `cul1-unit`, then the evaluator).
+
 The compiler must be omega-mv `e5b32567a7aff3ce594e3254a622a846a6cd190b` `seed/out/omc`, sha256
-`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`; `run.sh` refuses any other.
+`2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`; the driver refuses any other.
 `build/abft/abft` exits with the number of failed gates (0 when all pass), or 64 for bad arguments.
 
 ## 2. Roles and isolation

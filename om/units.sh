@@ -336,15 +336,19 @@ cat >> "$T/cudapp_native.h" <<'HEADER'
 #endif
 #endif
 HEADER
+# NO_POSIX (om/no-posix.sh) composes a fixed set of roots, whatever OMEGA_UNITS selects: a selective run (the .om mutant
+# scripts) stays selective and leaves it alone, and a full run works in this run's own $T. A shared build/no_posix_regen
+# let the mutant scripts of a parallel make test rewrite one another's tools/omc-gen and om/no-posix/gen while another
+# ran them (native-x86-host on 630e119b: test-gpu-dnn-rows-mutants stopped inside om/units.sh).
 if [ "${1:-}" = --check ]; then
   bad=0
   for f in $OUTS; do cmp -s "$T/$f" "$DEST/$f" || { echo "FAIL $DEST/$f differs from pinned tools"; bad=1; }; done
   for f in $OBSOLETE; do [ ! -e "$DEST/$f" ] || { echo "FAIL obsolete $DEST/$f remains"; bad=1; }; done
   [ "$bad" = 0 ] || exit 1
-  sh "$ROOT/om/no-posix.sh" --check "$ROOT/build/no_posix_regen"
+  [ -n "${OMEGA_UNITS:-}" ] || sh "$ROOT/om/no-posix.sh" --check "$T/no_posix_regen"
   echo "PASS portable Omega units regenerate byte for byte"; exit 0
 fi
 for f in $OUTS; do cp "$T/$f" "$DEST/$f"; done
 for f in $OBSOLETE; do rm -f "$DEST/$f"; done
-sh "$ROOT/om/no-posix.sh" --generate "$ROOT/build/no_posix_regen"
+[ -n "${OMEGA_UNITS:-}" ] || sh "$ROOT/om/no-posix.sh" --generate "$T/no_posix_regen"
 echo "wrote checked portable Omega units to $DEST"

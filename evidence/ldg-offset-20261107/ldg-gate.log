@@ -1,0 +1,11 @@
+cat om/encoder/bw_enc_sm121.om om/encoder/ldg_offset_test.om > build/om-encoder/ldg-offset.om
+/home/drakestapleton/work/ng/gpu/bin/omc-e5b32567 < build/om-encoder/ldg-offset.om > build/om-encoder/ldg-offset
+chmod +x build/om-encoder/ldg-offset
+build/om-encoder/ldg-offset
+build/om-encoder/ldg-offset bin > build/om-encoder/ldg-offset.bin
+/usr/local/cuda/bin/nvdisasm -b SM121 -hex build/om-encoder/ldg-offset.bin > build/om-encoder/ldg-offset.nv
+build/om-encoder/ldg-offset check oracle < build/om-encoder/ldg-offset.nv
+red check 1: 's/^put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744$/put4 w wda o 31105 rb o 5 203299072 ctl o 991744/' exits 11, as it must
+red check 2: 's/^ret or lt imm 8388608 ge imm 4286578688$/ret or lt imm 8388609 ge imm 4286578687/' exits 20, as it must
+red check: oracle text without the -0x800000 line exits 4, as it must
+PASS LDG.E offset: 5 exact words, 4 refusals, nvdisasm 13.0.85 decodes all 5. GB10 DEVICE NOT_RUN

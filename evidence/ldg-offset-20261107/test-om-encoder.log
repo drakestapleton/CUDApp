@@ -9,5 +9,5 @@ rm -f build/om-encoder/diff.log
 CUDAPP_ENCODER_DIFF_LOG=build/om-encoder/diff.log build/om-encoder/codegen_diff --golden
 PASS: hosted golden-word fixtures through the .om encoder (0 failing checks)
 CUDAPP_ENCODER_DIFF_LOG=build/om-encoder/diff.log build/om-encoder/codegen_diff --dump > build/om-encoder/dump_diff.txt
-encoder diff: .om and C byte-identical on 151 golden instructions and 14 fixture programs
+encoder diff: .om and C byte-identical on 145 golden instructions and 14 fixture programs
 red check: one flipped bit aborts the encoder diff, as it must

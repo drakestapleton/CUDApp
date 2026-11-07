@@ -94,6 +94,8 @@ jobs:
         run: make test-om-units test-om-encoder-mutants test-om-cubin-mutants OMEGA_MV="$RUNNER_TEMP/omega-mv" OMEGA_BRIDGE_DIR="$RUNNER_TEMP/omega-bridge"
       - name: Exact MMIO contract and wrong-cache-policy control
         run: make test-sm121-mmio OMEGA_MV="$RUNNER_TEMP/omega-mv"
+      - name: LDG.E byte offset exact words, refusals and nvdisasm oracle (seeded .om gate)
+        run: make test-om-encoder-ldg OMEGA_MV="$RUNNER_TEMP/omega-mv"
   sbom:
     runs-on: ubuntu-latest
     timeout-minutes: 10

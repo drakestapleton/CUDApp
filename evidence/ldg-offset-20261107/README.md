@@ -38,5 +38,5 @@ captured encoder inputs) names the two instructions: insns 41 and 171, op 11, im
 | `make test-om-encoder` | n/a | 151 golden instructions and 14 fixture programs byte-identical; red check aborts (`test-om-encoder.log`) |
 | `make test-om-encoder-mutants` | 3 mutants | 4/4 red; mutant 4 fails the golden words (`mutants.log`) |
 | `make test-om-units` | n/a | PASS (`units.log`) |
-| corpus diff build | aborts in bw_hazard_test | see `corpus-after.log` |
+| `make test-om-encoder-corpus` (corpus diff build) | aborts in bw_hazard_test after 3264 SAME | 3191 distinct kernels identical .om vs C; diff build 4495 program encodes and 398 single-instruction encodes, all SAME (`corpus-after.log`, exit 0) |
 | freestanding C path | n/a | PASS, 14 fixtures, 0 failing checks |

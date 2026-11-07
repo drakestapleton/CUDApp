@@ -16,7 +16,11 @@
 #       the refusal of +0x800000, -0x800001, 0x7fffffff, 0x80000000; ORACLE NVIDIA nvdisasm 13.0.85 (offline,
 #       read-only, never shipped) must decode the accepted words as those offsets. Red checks: the pre-fix op-11
 #       line (offset dropped), a field bound widened by one, and the oracle text without its -0x800000 line.
-# The last three accept OMEGA_OMC, units and mutants also OMEGA_BRIDGE; their defaults retain the
+#   make test-om-encoder-atomg    op 64 ATOMG.E.MIN.64.STRONG.SYS (Omega NG trap word): om/encoder/atomg_min_test.om,
+#       composed after the encoder and compiled by the pinned omc, checks the exact words of three rows (one with RZ
+#       as destination); the nvdisasm 13.0.85 ORACLE must decode them as those instructions. Red checks: the signed
+#       type (.S64), RZ dropped for an absent destination, and the oracle text without its R14 line.
+# The last four accept OMEGA_OMC, units and mutants also OMEGA_BRIDGE; their defaults retain the
 # OMEGA_MV and OMEGA_BRIDGE_DIR checkout convention. Missing pins refuse.
 OMEGA_MV ?= ../omega-mv
 OMEGA_BRIDGE_DIR ?= ../omega-bridge
@@ -131,3 +135,32 @@ test-om-encoder-ldg: om/encoder/bw_enc_sm121.om om/encoder/ldg_offset_test.om
 	if [ $$rc != 4 ]; then echo "RED CHECK BROKEN: oracle text without -0x800000 exited $$rc, not 4"; exit 1; fi; \
 	echo "red check: oracle text without the -0x800000 line exits 4, as it must"
 	@echo "PASS LDG.E offset: 5 exact words, 4 refusals, nvdisasm 13.0.85 decodes all 5. GB10 DEVICE NOT_RUN"
+
+OM_ENC_ATOMG = $(OM_ENC_DIR)/atomg-min
+# Red checks as for test-om-encoder-ldg. 10: type 2 -> 3 encodes the signed .S64 min (row 0). 11: the destination
+# field ignores its presence flag, so an absent destination is not RZ (row 1).
+OM_ENC_ATOMG_RED = 10 's/^put4 w a or rb o 3 2147483648 or 144659712 rb o 5 ctl o 3284480$$/put4 w a or rb o 3 2147483648 or 144660224 rb o 5 ctl o 3284480/' \
+	11 's/^a = or or 31144 shl rz o 1 15 16 shl rb o 2 24$$/a = or or 31144 shl rb o 1 16 shl rb o 2 24/'
+.PHONY: test-om-encoder-atomg
+test-om-encoder-atomg: om/encoder/bw_enc_sm121.om om/encoder/atomg_min_test.om
+	@[ -x "$(OMEGA_OMC)" ] && [ "$$(sha256sum < $(OMEGA_OMC) | cut -c1-64)" = 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f ] || { echo "NOT_RUN: set OMEGA_OMC to the pinned seeded compiler"; exit 3; }
+	@case "$$($(NVDISASM) --version 2>/dev/null)" in *V13.0.85*) ;; *) echo "NOT_RUN: nvdisasm version must be 13.0.85"; exit 3;; esac
+	@mkdir -p $(OM_ENC_DIR)
+	cat om/encoder/bw_enc_sm121.om om/encoder/atomg_min_test.om > $(OM_ENC_ATOMG).om
+	$(OMEGA_OMC) < $(OM_ENC_ATOMG).om > $(OM_ENC_ATOMG)
+	chmod +x $(OM_ENC_ATOMG)
+	$(OM_ENC_ATOMG)
+	$(OM_ENC_ATOMG) bin > $(OM_ENC_ATOMG).bin
+	$(NVDISASM) -b SM121 -hex $(OM_ENC_ATOMG).bin > $(OM_ENC_ATOMG).nv
+	$(OM_ENC_ATOMG) check oracle < $(OM_ENC_ATOMG).nv
+	@set -- $(OM_ENC_ATOMG_RED); n=0; while [ $$# -gt 0 ]; do want=$$1; m=$$2; shift 2; n=$$((n+1)); d=$(OM_ENC_ATOMG)-red$$n; \
+	sed "$$m" om/encoder/bw_enc_sm121.om > $$d.om; \
+	if cmp -s $$d.om om/encoder/bw_enc_sm121.om; then echo "RED CHECK $$n BROKEN: '$$m' changed nothing"; exit 1; fi; \
+	cat $$d.om om/encoder/atomg_min_test.om | $(OMEGA_OMC) > $$d || exit 1; \
+	chmod +x $$d; rc=0; $$d || rc=$$?; \
+	if [ $$rc != $$want ]; then echo "RED CHECK $$n BROKEN: '$$m' exited $$rc, not $$want"; exit 1; fi; \
+	echo "red check $$n: '$$m' exits $$rc, as it must"; done
+	@rc=0; grep -v -- 'R14' $(OM_ENC_ATOMG).nv | $(OM_ENC_ATOMG) check oracle || rc=$$?; \
+	if [ $$rc != 4 ]; then echo "RED CHECK BROKEN: oracle text without the R14 line exited $$rc, not 4"; exit 1; fi; \
+	echo "red check: oracle text without the R14 line exits 4, as it must"
+	@echo "PASS ATOMG.E.MIN.64.STRONG.SYS: 3 exact rows, nvdisasm 13.0.85 decodes all 3. GB10 DEVICE NOT_RUN"

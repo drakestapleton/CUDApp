@@ -1,0 +1,258 @@
+	.headerflags	@"EF_CUDA_64BIT_ADDRESS EF_CUDA_SM121 EF_CUDA_VIRTUAL_SM(EF_CUDA_SM121)"
+	.headerflags	@"EF_CUDA_64BIT_ADDRESS EF_CUDA_SM121 EF_CUDA_VIRTUAL_SM(EF_CUDA_SM121)"
+        /*0000*/                   ATOMG.E.ADD.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5108 */
+        /*0010*/                   ATOMG.E.ADD.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5308 */
+        /*0020*/                   ATOMG.E.ADD.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5508 */
+        /*0030*/                   ATOMG.E.ADD.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5708 */
+        /*0040*/                   ATOMG.E.ADD.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5908 */
+        /*0050*/                   ATOMG.E.ADD.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5b08 */
+        /*0060*/                   ATOMG.E.ADD.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5d08 */
+        /*0070*/                   ATOMG.E.ADD.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00081f5f08 */
+        /*0080*/                   ATOMG.E.MIN.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5108 */
+        /*0090*/                   ATOMG.E.MIN.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5308 */
+        /*00a0*/                   ATOMG.E.MIN.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5508 */
+        /*00b0*/                   ATOMG.E.MIN.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5708 */
+        /*00c0*/                   ATOMG.E.MIN.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5908 */
+        /*00d0*/                   ATOMG.E.MIN.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5b08 */
+        /*00e0*/                   ATOMG.E.MIN.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5d08 */
+        /*00f0*/                   ATOMG.E.MIN.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00089f5f08 */
+        /*0100*/                   ATOMG.E.MAX.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5108 */
+        /*0110*/                   ATOMG.E.MAX.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5308 */
+        /*0120*/                   ATOMG.E.MAX.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5508 */
+        /*0130*/                   ATOMG.E.MAX.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5708 */
+        /*0140*/                   ATOMG.E.MAX.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5908 */
+        /*0150*/                   ATOMG.E.MAX.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5b08 */
+        /*0160*/                   ATOMG.E.MAX.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5d08 */
+        /*0170*/                   ATOMG.E.MAX.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00091f5f08 */
+        /*0180*/                   ATOMG.E.INC.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5108 */
+        /*0190*/                   ATOMG.E.INC.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5308 */
+        /*01a0*/                   ATOMG.E.INC.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5508 */
+        /*01b0*/                   ATOMG.E.INC.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5708 */
+        /*01c0*/                   ATOMG.E.INC.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5908 */
+        /*01d0*/                   ATOMG.E.INC.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5b08 */
+        /*01e0*/                   ATOMG.E.INC.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5d08 */
+        /*01f0*/                   ATOMG.E.INC.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e00099f5f08 */
+        /*0200*/                   ATOMG.E.DEC.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5108 */
+        /*0210*/                   ATOMG.E.DEC.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5308 */
+        /*0220*/                   ATOMG.E.DEC.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5508 */
+        /*0230*/                   ATOMG.E.DEC.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5708 */
+        /*0240*/                   ATOMG.E.DEC.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5908 */
+        /*0250*/                   ATOMG.E.DEC.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5b08 */
+        /*0260*/                   ATOMG.E.DEC.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5d08 */
+        /*0270*/                   ATOMG.E.DEC.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a1f5f08 */
+        /*0280*/                   ATOMG.E.AND.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5108 */
+        /*0290*/                   ATOMG.E.AND.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5308 */
+        /*02a0*/                   ATOMG.E.AND.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5508 */
+        /*02b0*/                   ATOMG.E.AND.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5708 */
+        /*02c0*/                   ATOMG.E.AND.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5908 */
+        /*02d0*/                   ATOMG.E.AND.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5b08 */
+        /*02e0*/                   ATOMG.E.AND.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5d08 */
+        /*02f0*/                   ATOMG.E.AND.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000a9f5f08 */
+        /*0300*/                   ATOMG.E.OR.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5108 */
+        /*0310*/                   ATOMG.E.OR.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5308 */
+        /*0320*/                   ATOMG.E.OR.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;               /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5508 */
+        /*0330*/                   ATOMG.E.OR.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5708 */
+        /*0340*/                   ATOMG.E.OR.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5908 */
+        /*0350*/                   ATOMG.E.OR.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;         /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5b08 */
+        /*0360*/                   ATOMG.E.OR.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;         /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5d08 */
+        /*0370*/                   ATOMG.E.OR.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;         /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b1f5f08 */
+        /*0380*/                   ATOMG.E.XOR.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                 /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5108 */
+        /*0390*/                   ATOMG.E.XOR.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5308 */
+        /*03a0*/                   ATOMG.E.XOR.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;              /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5508 */
+        /*03b0*/                   ATOMG.E.XOR.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5708 */
+        /*03c0*/                   ATOMG.E.XOR.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5908 */
+        /*03d0*/                   ATOMG.E.XOR.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5b08 */
+        /*03e0*/                   ATOMG.E.XOR.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5d08 */
+        /*03f0*/                   ATOMG.E.XOR.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000b9f5f08 */
+        /*0400*/                   ATOMG.E.EXCH.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;                /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5108 */
+        /*0410*/                   ATOMG.E.EXCH.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;            /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5308 */
+        /*0420*/                   ATOMG.E.EXCH.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5508 */
+        /*0430*/                   ATOMG.E.EXCH.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;            /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5708 */
+        /*0440*/                   ATOMG.E.EXCH.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;            /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5908 */
+        /*0450*/                   ATOMG.E.EXCH.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5b08 */
+        /*0460*/                   ATOMG.E.EXCH.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5d08 */
+        /*0470*/                   ATOMG.E.EXCH.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c1f5f08 */
+        /*0480*/                   ATOMG.E.SAFEADD.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;             /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5108 */
+        /*0490*/                   ATOMG.E.SAFEADD.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;         /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5308 */
+        /*04a0*/                   ATOMG.E.SAFEADD.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;          /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5508 */
+        /*04b0*/                   ATOMG.E.SAFEADD.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;         /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5708 */
+        /*04c0*/                   ATOMG.E.SAFEADD.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;         /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5908 */
+        /*04d0*/                   ATOMG.E.SAFEADD.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;    /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5b08 */
+        /*04e0*/                   ATOMG.E.SAFEADD.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;    /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5d08 */
+        /*04f0*/                   ATOMG.E.SAFEADD.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;    /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000c9f5f08 */
+        /*0500*/                   ATOMG.E.INVALID10.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;           /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5108 */
+        /*0510*/                   ATOMG.E.INVALID10.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5308 */
+        /*0520*/                   ATOMG.E.INVALID10.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5508 */
+        /*0530*/                   ATOMG.E.INVALID10.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5708 */
+        /*0540*/                   ATOMG.E.INVALID10.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5908 */
+        /*0550*/                   ATOMG.E.INVALID10.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5b08 */
+        /*0560*/                   ATOMG.E.INVALID10.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5d08 */
+        /*0570*/                   ATOMG.E.INVALID10.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d1f5f08 */
+        /*0580*/                   ATOMG.E.INVALID11.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;           /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5108 */
+        /*0590*/                   ATOMG.E.INVALID11.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5308 */
+        /*05a0*/                   ATOMG.E.INVALID11.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5508 */
+        /*05b0*/                   ATOMG.E.INVALID11.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5708 */
+        /*05c0*/                   ATOMG.E.INVALID11.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5908 */
+        /*05d0*/                   ATOMG.E.INVALID11.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5b08 */
+        /*05e0*/                   ATOMG.E.INVALID11.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5d08 */
+        /*05f0*/                   ATOMG.E.INVALID11.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000d9f5f08 */
+        /*0600*/                   ATOMG.E.INVALID12.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;           /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5108 */
+        /*0610*/                   ATOMG.E.INVALID12.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5308 */
+        /*0620*/                   ATOMG.E.INVALID12.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5508 */
+        /*0630*/                   ATOMG.E.INVALID12.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5708 */
+        /*0640*/                   ATOMG.E.INVALID12.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5908 */
+        /*0650*/                   ATOMG.E.INVALID12.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5b08 */
+        /*0660*/                   ATOMG.E.INVALID12.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5d08 */
+        /*0670*/                   ATOMG.E.INVALID12.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e1f5f08 */
+        /*0680*/                   ATOMG.E.INVALID13.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;           /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5108 */
+        /*0690*/                   ATOMG.E.INVALID13.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5308 */
+        /*06a0*/                   ATOMG.E.INVALID13.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5508 */
+        /*06b0*/                   ATOMG.E.INVALID13.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5708 */
+        /*06c0*/                   ATOMG.E.INVALID13.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5908 */
+        /*06d0*/                   ATOMG.E.INVALID13.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5b08 */
+        /*06e0*/                   ATOMG.E.INVALID13.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5d08 */
+        /*06f0*/                   ATOMG.E.INVALID13.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000e9f5f08 */
+        /*0700*/                   ATOMG.E.INVALID14.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;           /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5108 */
+        /*0710*/                   ATOMG.E.INVALID14.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5308 */
+        /*0720*/                   ATOMG.E.INVALID14.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5508 */
+        /*0730*/                   ATOMG.E.INVALID14.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5708 */
+        /*0740*/                   ATOMG.E.INVALID14.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5908 */
+        /*0750*/                   ATOMG.E.INVALID14.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5b08 */
+        /*0760*/                   ATOMG.E.INVALID14.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5d08 */
+        /*0770*/                   ATOMG.E.INVALID14.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f1f5f08 */
+        /*0780*/                   ATOMG.E.INVALID15.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;           /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5108 */
+        /*0790*/                   ATOMG.E.INVALID15.S32.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5308 */
+        /*07a0*/                   ATOMG.E.INVALID15.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;        /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5508 */
+        /*07b0*/                   ATOMG.E.INVALID15.S64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5708 */
+        /*07c0*/                   ATOMG.E.INVALID15.128.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;       /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5908 */
+        /*07d0*/                   ATOMG.E.INVALID15.INVALID5.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5b08 */
+        /*07e0*/                   ATOMG.E.INVALID15.INVALID6.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5d08 */
+        /*07f0*/                   ATOMG.E.INVALID15.INVALID7.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;  /* 0x80000006020479a8 */
+                                                                                                         /* 0x00321e000f9f5f08 */

@@ -146,6 +146,12 @@ typedef enum {
      * chip probe: tests/gpu_atomf32_probe_test.c. */
     BW_IR_ATOMG_ADD_F32_STRONG_SYS, /* ATOMG.E.ADD.F32.FTZ.RN.STRONG.SYS PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem += Rb */
     BW_IR_ATOMG_ADD_F32_STRONG_GPU, /* ATOMG.E.ADD.F32.FTZ.RN.STRONG.GPU PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem += Rb */
+    /* Omega NG kernel traps (2026-11-07, Hive NG D10): one launch-wide trap word holds the lowest
+     * (linear thread id << 4 | trap code); a trapping thread folds its key in with an unsigned 64-bit atomic min.
+     * Same layout as ATOMG_ADD_STRONG_SYS with w2 op bits 23..26 = 1 (MIN) and size bits 9..11 = 2 (.64, unsigned;
+     * 3 decodes .S64). src2_vreg and dst_vreg are 64-bit pairs; dst_vreg < 0 encodes RZ (no old value returned).
+     * Words: om/encoder/atomg_min_test.om, make test-om-encoder-atomg (nvdisasm 13.0.85 --binary SM121). */
+    BW_IR_ATOMG_MIN_U64_STRONG_SYS, /* ATOMG.E.MIN.64.STRONG.SYS PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem = min(mem, Rb) */
 } BlackwellIROpcode;
 
 /* Barrier (reconvergence) registers: the sm_121 BSSY/BSYNC words carry a 4-bit barrier id

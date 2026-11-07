@@ -97,6 +97,7 @@ static void test_decoder_vs_encoder(void) {
         { BW_IR_CCTL_IVALL, -1, -1, -1, { {0}, {0} } },
         { BW_IR_ATOMG_ADD_STRONG_SYS, 16, -1, 6, { {G(8,1)}, {G(12,2), G(16,1), U(6,1)} } },
         { BW_IR_ATOMG_EXCH_STRONG_SYS, 16, -1, 6, { {G(8,1)}, {G(12,2), G(16,1), U(6,1)} } },
+        { BW_IR_ATOMG_MIN_U64_STRONG_SYS, 16, -1, 6, { {G(8,2)}, {G(12,2), G(16,2), U(6,1)} } },
         { BW_IR_ISETP_GE_U32, 16, -1, -1, { {0}, {G(12,1), G(16,1)} } },
         { BW_IR_LOP3_XOR, 16, -1, -1, { {G(8,1)}, {G(12,1), G(16,1)} } },
         { BW_IR_FADD, 16, -1, -1, { {G(8,1)}, {G(12,1), G(16,1)} } },

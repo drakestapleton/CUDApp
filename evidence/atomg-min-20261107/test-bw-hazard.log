@@ -1,0 +1,288 @@
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_ampere_codegen.c -o build/omega_ampere_codegen.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen.c -o build/omega_blackwell_codegen.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_attn.c -o build/omega_blackwell_codegen_attn.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_attn256.c -o build/omega_blackwell_codegen_attn256.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_bf16.c -o build/omega_blackwell_codegen_bf16.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_dec.c -o build/omega_blackwell_codegen_dec.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_gdn.c -o build/omega_blackwell_codegen_gdn.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_gemm.c -o build/omega_blackwell_codegen_gemm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_moe.c -o build/omega_blackwell_codegen_moe.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_moe2.c -o build/omega_blackwell_codegen_moe2.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_pattn.c -o build/omega_blackwell_codegen_pattn.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_pattn256.c -o build/omega_blackwell_codegen_pattn256.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_pf.c -o build/omega_blackwell_codegen_pf.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_pfhost.c -o build/omega_blackwell_codegen_pfhost.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_qg.c -o build/omega_blackwell_codegen_qg.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_qmma.c -o build/omega_blackwell_codegen_qmma.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_router.c -o build/omega_blackwell_codegen_router.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_tc.c -o build/omega_blackwell_codegen_tc.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_tc2.c -o build/omega_blackwell_codegen_tc2.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_tern.c -o build/omega_blackwell_codegen_tern.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_codegen_tgemm.c -o build/omega_blackwell_codegen_tgemm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_blackwell_matmul.c -o build/omega_blackwell_matmul.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_attention_api.c -o build/omega_gpu_attention_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_bf16_gemv_api.c -o build/omega_gpu_bf16_gemv_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_cmdlist.c -o build/omega_gpu_cmdlist.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_decode_attn256_api.c -o build/omega_gpu_decode_attn256_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_decode_attn_api.c -o build/omega_gpu_decode_attn_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_decode_graph.c -o build/omega_gpu_decode_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_elementwise_api.c -o build/omega_gpu_elementwise_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8_api.c -o build/omega_gpu_fp8_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8_pack.c -o build/omega_gpu_fp8_pack.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8_slots.c -o build/omega_gpu_fp8_slots.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_fp8gemm_api.c -o build/omega_gpu_fp8gemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_gdn_api.c -o build/omega_gpu_gdn_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_gemm.c -o build/omega_gpu_gemm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_gemm_ex.c -o build/omega_gpu_gemm_ex.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_mathlibs_api.c -o build/omega_gpu_mathlibs_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_matmul_api.c -o build/omega_gpu_matmul_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_moe_api.c -o build/omega_gpu_moe_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_om_ir.c -o build/omega_gpu_om_ir.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_pfgemm.c -o build/omega_gpu_pfgemm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_pfhost.c -o build/omega_gpu_pfhost.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_prefill.c -o build/omega_gpu_prefill.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_prefill_attn256_api.c -o build/omega_gpu_prefill_attn256_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_prefill_attn_api.c -o build/omega_gpu_prefill_attn_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_q36_graph.c -o build/omega_gpu_q36_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_q38_graph.c -o build/omega_gpu_q38_graph.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_router_api.c -o build/omega_gpu_router_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_scan.c -o build/omega_gpu_scan.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_scan_ref.c -o build/omega_gpu_scan_ref.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_tcgemm_api.c -o build/omega_gpu_tcgemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_tern_api.c -o build/omega_gpu_tern_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/omega_gpu_tgemm_api.c -o build/omega_gpu_tgemm_api.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_bw_enc_sm121.c -o build/cudapp_om_bw_enc_sm121.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_encode.c -o build/cudapp_om_encode.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_q38_emit.c -o build/cudapp_om_q38_emit.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1  -c src/cudapp_om_validate.c -o build/cudapp_om_validate.o
+ar rcs build/libomega_gpu.a build/omega_ampere_codegen.o build/omega_ampere_qmd.o build/omega_blackwell_codegen.o build/omega_blackwell_codegen_attn.o build/omega_blackwell_codegen_attn256.o build/omega_blackwell_codegen_bf16.o build/omega_blackwell_codegen_dec.o build/omega_blackwell_codegen_gdn.o build/omega_blackwell_codegen_gemm.o build/omega_blackwell_codegen_moe.o build/omega_blackwell_codegen_moe2.o build/omega_blackwell_codegen_pattn.o build/omega_blackwell_codegen_pattn256.o build/omega_blackwell_codegen_pf.o build/omega_blackwell_codegen_pfhost.o build/omega_blackwell_codegen_qg.o build/omega_blackwell_codegen_qmma.o build/omega_blackwell_codegen_router.o build/omega_blackwell_codegen_tc.o build/omega_blackwell_codegen_tc2.o build/omega_blackwell_codegen_tern.o build/omega_blackwell_codegen_tgemm.o build/omega_blackwell_encoder.o build/omega_blackwell_engine.o build/omega_blackwell_matmul.o build/omega_blackwell_qmd.o build/omega_blackwell_realize.o build/omega_blackwell_submit.o build/omega_gpu_attention_api.o build/omega_gpu_bf16_gemv_api.o build/omega_gpu_chip.o build/omega_gpu_cmdlist.o build/omega_gpu_decode_attn256_api.o build/omega_gpu_decode_attn_api.o build/omega_gpu_decode_graph.o build/omega_gpu_elementwise_api.o build/omega_gpu_engine.o build/omega_gpu_fmt.o build/omega_gpu_fp8_api.o build/omega_gpu_fp8_pack.o build/omega_gpu_fp8_slots.o build/omega_gpu_fp8gemm_api.o build/omega_gpu_gdn_api.o build/omega_gpu_gemm.o build/omega_gpu_gemm_ex.o build/omega_gpu_hostmath.o build/omega_gpu_mathlibs_api.o build/omega_gpu_matmul_api.o build/omega_gpu_mem_cached.o build/omega_gpu_mem_reserve.o build/omega_gpu_moe_api.o build/omega_gpu_om_ir.o build/omega_gpu_pfgemm.o build/omega_gpu_pfhost.o build/omega_gpu_platform.o build/omega_gpu_platform_aien.o build/omega_gpu_platform_linux.o build/omega_gpu_prefill.o build/omega_gpu_prefill_attn256_api.o build/omega_gpu_prefill_attn_api.o build/omega_gpu_q36_graph.o build/omega_gpu_q38_graph.o build/omega_gpu_router_api.o build/omega_gpu_scan.o build/omega_gpu_scan_ref.o build/omega_gpu_serving.o build/omega_gpu_session.o build/omega_gpu_tcgemm_api.o build/omega_gpu_tern_api.o build/omega_gpu_tgemm_api.o build/omega_gpu_wait.o build/omega_fp8_slot_table.o build/omega_cubin.o build/omega_native_artifact.o build/omega_sm121_disasm.o build/sha256.o build/omega_canonical.o build/omega_core.o build/omega_vector.o build/cudapp_om_ampere_enc_sm86.o build/cudapp_om_amp_runtime.o build/cudapp_om_attn_mirror_plan.o build/cudapp_om_attn_mirror_step.o build/cudapp_om_binding.o build/cudapp_om_bw_enc_sm121.o build/cudapp_om_cache_runtime.o build/cudapp_om_closure_alloc.o build/cudapp_om_closure_bind.o build/cudapp_om_closure_blob.o build/cudapp_om_closure_code.o build/cudapp_om_closure_cover.o build/cudapp_om_closure_dir.o build/cudapp_om_closure_intent.o build/cudapp_om_closure_launch.o build/cudapp_om_closure_pack.o build/cudapp_om_closure_reseal.o build/cudapp_om_closure_seal.o build/cudapp_om_closure_series.o build/cudapp_om_code_digest.o build/cudapp_om_command.o build/cudapp_om_compose.o build/cudapp_om_context_lookup.o build/cudapp_om_cubin_elf.o build/cudapp_om_digest.o build/cudapp_om_encode.o build/cudapp_om_graph.o build/cudapp_om_lease.o build/cudapp_om_mathlibs_ir.o build/cudapp_om_moe_admission.o build/cudapp_om_moe_group.o build/cudapp_om_moe_ids32.o build/cudapp_om_moe_maps32.o build/cudapp_om_moe_plan.o build/cudapp_om_moe_segs32.o build/cudapp_om_moe_windows.o build/cudapp_om_prefill_order.o build/cudapp_om_prefill_reading.o build/cudapp_om_prefill_shape.o build/cudapp_om_prefill_workspace.o build/cudapp_om_q38_emit.o build/cudapp_om_q38_runtime.o build/cudapp_om_quant_wire.o build/cudapp_om_repack.o build/cudapp_om_slotrev.o build/cudapp_om_templates.o build/cudapp_om_validate.o build/cudapp_freest_revision.o build/cudapp_freest_epoch.o build/cudapp_freest_f16.o build/m16_native.o build/nvrm.o
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=1 -o build/bw_hazard_test tests/bw_hazard_test.c src/omega_bw_hazard.c build/libomega_gpu.a -lpthread -lm
+build/bw_hazard_test
+decoder vs encoder: 58 forms, 0 mismatched
+red receipt, pre-#553 attend (the kernel that faulted on the GB10): 2 findings
+  pre-#553 attend: IR 88 WAR R22 (release mask 0x3, last producer/reader IR 54)
+  pre-#553 attend: IR 89 WAR R23 (release mask 0x3, last producer/reader IR 54)
+fixed attend (e3a26848): rc 0, 0 findings, 631 of 632 instructions reachable
+  pre-#553 prep: IR 35 RAW R20 (release mask 0x1, last producer/reader IR 14)
+FINDING elementwise op6: IR 25 WAR R22 release 0x1 (last producer/reader IR 24) [triaged C]
+FINDING elementwise op6: IR 26 WAR R23 release 0x1 (last producer/reader IR 24) [triaged C]
+FINDING elementwise op7: IR 39 WAR R21 release 0x1 (last producer/reader IR 38) [triaged C]
+FINDING elementwise op8: IR 25 WAR R20 release 0x1 (last producer/reader IR 24) [triaged C]
+FINDING elementwise op8: IR 26 WAR R21 release 0x1 (last producer/reader IR 24) [triaged C]
+FINDING elementwise op9: IR 41 WAR R19 release 0x1 (last producer/reader IR 40) [triaged C]
+FINDING elementwise op10: IR 26 WAR R20 release 0x1 (last producer/reader IR 25) [triaged C]
+FINDING elementwise op10: IR 27 WAR R21 release 0x1 (last producer/reader IR 25) [triaged C]
+FINDING elementwise op11: IR 42 WAR R19 release 0x1 (last producer/reader IR 41) [triaged C]
+FINDING matmul_i32 m16 k16 n16: IR 15 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_i32 m32 k16 n64: IR 15 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_i32 m16 k32 n16: IR 15 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_i32 m64 k32 n64: IR 15 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor bf16: IR 19 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor bf16: IR 22 WAR R16 release 0x4 (last producer/reader IR 19) [triaged B]
+FINDING matmul_tensor bf16: IR 22 WAR R17 release 0x4 (last producer/reader IR 19) [triaged B]
+FINDING matmul_tensor bf16: IR 27 WAR R16 release 0x4 (last producer/reader IR 23) [triaged B]
+FINDING matmul_tensor bf16: IR 27 WAR R17 release 0x4 (last producer/reader IR 23) [triaged B]
+FINDING matmul_tensor bf16: IR 32 WAR R16 release 0x4 (last producer/reader IR 28) [triaged B]
+FINDING matmul_tensor bf16: IR 32 WAR R17 release 0x4 (last producer/reader IR 28) [triaged B]
+FINDING matmul_tensor bf16: IR 35 WAR R16 release 0x4 (last producer/reader IR 33) [triaged B]
+FINDING matmul_tensor bf16: IR 35 WAR R17 release 0x4 (last producer/reader IR 33) [triaged B]
+FINDING matmul_tensor bf16: IR 38 WAR R16 release 0x4 (last producer/reader IR 36) [triaged B]
+FINDING matmul_tensor bf16: IR 38 WAR R17 release 0x4 (last producer/reader IR 36) [triaged B]
+FINDING matmul_tensor bf16: IR 46 WAR R16 release 0x4 (last producer/reader IR 44) [triaged B]
+FINDING matmul_tensor bf16: IR 46 WAR R17 release 0x4 (last producer/reader IR 44) [triaged B]
+FINDING matmul_tensor bf16: IR 55 WAR R16 release 0x0 (last producer/reader IR 53) [triaged B]
+FINDING matmul_tensor bf16: IR 55 WAR R17 release 0x0 (last producer/reader IR 53) [triaged B]
+FINDING matmul_tensor bf16: IR 59 WAR R16 release 0x0 (last producer/reader IR 56) [triaged B]
+FINDING matmul_tensor bf16: IR 59 WAR R17 release 0x0 (last producer/reader IR 56) [triaged B]
+FINDING matmul_tensor bf16: IR 62 WAR R16 release 0x0 (last producer/reader IR 60) [triaged B]
+FINDING matmul_tensor bf16: IR 62 WAR R17 release 0x0 (last producer/reader IR 60) [triaged B]
+FINDING matmul_tensor_loop bf16 k16 n8 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n64 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n64 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n64 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n64 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n2048 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n2048 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n2048 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k16 n2048 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n8 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n64 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n64 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n64 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n64 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n2048 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n2048 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n2048 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k64 n2048 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n8 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n64 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n64 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n64 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n64 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n2048 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n2048 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n2048 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop bf16 k2048 n2048 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor fp16: IR 19 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor fp16: IR 22 WAR R16 release 0x4 (last producer/reader IR 19) [triaged B]
+FINDING matmul_tensor fp16: IR 22 WAR R17 release 0x4 (last producer/reader IR 19) [triaged B]
+FINDING matmul_tensor fp16: IR 27 WAR R16 release 0x4 (last producer/reader IR 23) [triaged B]
+FINDING matmul_tensor fp16: IR 27 WAR R17 release 0x4 (last producer/reader IR 23) [triaged B]
+FINDING matmul_tensor fp16: IR 32 WAR R16 release 0x4 (last producer/reader IR 28) [triaged B]
+FINDING matmul_tensor fp16: IR 32 WAR R17 release 0x4 (last producer/reader IR 28) [triaged B]
+FINDING matmul_tensor fp16: IR 35 WAR R16 release 0x4 (last producer/reader IR 33) [triaged B]
+FINDING matmul_tensor fp16: IR 35 WAR R17 release 0x4 (last producer/reader IR 33) [triaged B]
+FINDING matmul_tensor fp16: IR 38 WAR R16 release 0x4 (last producer/reader IR 36) [triaged B]
+FINDING matmul_tensor fp16: IR 38 WAR R17 release 0x4 (last producer/reader IR 36) [triaged B]
+FINDING matmul_tensor fp16: IR 46 WAR R16 release 0x4 (last producer/reader IR 44) [triaged B]
+FINDING matmul_tensor fp16: IR 46 WAR R17 release 0x4 (last producer/reader IR 44) [triaged B]
+FINDING matmul_tensor fp16: IR 55 WAR R16 release 0x0 (last producer/reader IR 53) [triaged B]
+FINDING matmul_tensor fp16: IR 55 WAR R17 release 0x0 (last producer/reader IR 53) [triaged B]
+FINDING matmul_tensor fp16: IR 59 WAR R16 release 0x0 (last producer/reader IR 56) [triaged B]
+FINDING matmul_tensor fp16: IR 59 WAR R17 release 0x0 (last producer/reader IR 56) [triaged B]
+FINDING matmul_tensor fp16: IR 62 WAR R16 release 0x0 (last producer/reader IR 60) [triaged B]
+FINDING matmul_tensor fp16: IR 62 WAR R17 release 0x0 (last producer/reader IR 60) [triaged B]
+FINDING matmul_tensor_loop fp16 k16 n8 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n64 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n64 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n64 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n64 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n2048 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n2048 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n2048 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k16 n2048 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n8 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n64 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n64 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n64 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n64 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n2048 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n2048 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n2048 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k64 n2048 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n8 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n64 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n64 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n64 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n64 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n2048 grid_x1: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n2048 grid_x2: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n2048 grid_x4: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_tensor_loop fp16 k2048 n2048 grid_x8: IR 40 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n8 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n8 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n8 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt1 ct2 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt1 ct2 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt1 ct4 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt2 ct2 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt2 ct2 unroll2: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt2 ct4 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt4 ct2 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n128 rt4 ct4 unroll1: IR 91 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k768 n2048 unroll1: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k768 n2048 unroll2: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k768 n2048 unroll4: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt1 ct2 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt1 ct2 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt1 ct4 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt2 ct2 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt2 ct2 unroll2: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt2 ct4 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt4 ct2 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k768 n2048 rt4 ct4 unroll1: IR 91 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n8 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n8 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n8 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt1 ct2 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt1 ct2 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt1 ct4 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt2 ct2 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt2 ct2 unroll2: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt2 ct4 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt4 ct2 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n128 rt4 ct4 unroll1: IR 91 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k2048 n2048 unroll1: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k2048 n2048 unroll2: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k2048 n2048 unroll4: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt1 ct2 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt1 ct2 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt1 ct4 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt2 ct2 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt2 ct2 unroll2: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt2 ct4 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt4 ct2 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k2048 n2048 rt4 ct4 unroll1: IR 91 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n8 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n8 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n8 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt1 ct2 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt1 ct2 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt1 ct4 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt2 ct2 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt2 ct2 unroll2: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt2 ct4 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt4 ct2 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n128 rt4 ct4 unroll1: IR 91 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k4096 n2048 unroll1: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k4096 n2048 unroll2: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag k4096 n2048 unroll4: IR 31 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt1 ct2 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt1 ct2 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt1 ct4 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt2 ct1 unroll1: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt2 ct1 unroll2: IR 35 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt2 ct2 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt2 ct2 unroll2: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt2 ct4 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt4 ct1 unroll1: IR 43 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt4 ct2 unroll1: IR 59 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+FINDING matmul_frag_block k4096 n2048 rt4 ct4 unroll1: IR 91 RAW UR4 release 0x2 (last producer/reader IR 0) [triaged A]
+sweep per generator (distinct kernels, clean, findings):
+  fp8_gemv              439 distinct,  439 clean,    0 findings
+  fp8_gemv2              58 distinct,   58 clean,    0 findings
+  bf16_gemv             110 distinct,  110 clean,    0 findings
+  fp8gemm               104 distinct,  104 clean,    0 findings
+  tern_gemv             828 distinct,  828 clean,    0 findings
+  router                 12 distinct,   12 clean,    0 findings
+  decode_attn             4 distinct,    4 clean,    0 findings
+  dec                    12 distinct,   12 clean,    0 findings
+  tcgemm                 50 distinct,   50 clean,    0 findings
+  tc_probe                1 distinct,    1 clean,    0 findings
+  tc_peak                20 distinct,   20 clean,    0 findings
+  qmma_peak              20 distinct,   20 clean,    0 findings
+  tc_bw                  10 distinct,   10 clean,    0 findings
+  qmma_probe              3 distinct,    3 clean,    0 findings
+  f2e4_probe              1 distinct,    1 clean,    0 findings
+  tc2                   240 distinct,  240 clean,    0 findings
+  qgemm                  60 distinct,   60 clean,    0 findings
+  pq                      8 distinct,    8 clean,    0 findings
+  rl                      6 distinct,    6 clean,    0 findings
+  mc                      6 distinct,    6 clean,    0 findings
+  pf_copy                 1 distinct,    1 clean,    0 findings
+  prefill_attn            8 distinct,    8 clean,    0 findings
+  attention             180 distinct,  180 clean,    0 findings
+  elementwise            16 distinct,   10 clean,    9 findings
+  matmul_i32              4 distinct,    0 clean,    4 findings
+  matmul_tensor           2 distinct,    0 clean,   38 findings
+  matmul_tensor_loop     54 distinct,    0 clean,   54 findings
+  matmul_frag_block      75 distinct,    0 clean,   75 findings
+  matmul_frag             9 distinct,    0 clean,    9 findings
+  cmdlist_nop             1 distinct,    1 clean,    0 findings
+sweep: 2584 variants built, 2342 distinct kernels, 2192 clean, 150 with findings, 189 findings, 0 not checked
+bw_hazard_test: 264 checks, 0 failed: PASS

@@ -572,6 +572,16 @@ static int bw_c_encode_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *ra
             w[3] = insn->control ? insn->control : 0x00321e00;
             break;
 
+        case BW_IR_ATOMG_MIN_U64_STRONG_SYS:
+            /* ATOMG.E.MIN.64.STRONG.SYS PT, Rd|RZ, desc[UR][Ra.64], Rb (golden words: om/encoder/atomg_min_test.om,
+             * oracle nvdisasm 13.0.85). ATOMG_ADD_STRONG_SYS's words with w2 op bits 23..26 = 1 (MIN) and size bits
+             * 9..11 = 2 (.64 unsigned). No destination vreg encodes RZ. */
+            w[0] = 0x79a8 | ((uint32_t)(insn->dst_vreg < 0 ? 0xff : (dst & 0xff)) << 16) | ((uint32_t)(src1 & 0xff) << 24);
+            w[1] = (uint32_t)(src2 & 0xff) | 0x80000000u;
+            w[2] = 0x089f5500u | (uint32_t)(ureg & 0xff);
+            w[3] = insn->control ? insn->control : 0x00321e00;
+            break;
+
         case BW_IR_ISETP_GE_U32:
             /* ISETP.GE.U32.AND P0, PT, Ra, Rb, PT. Checked with nvdisasm -b SM121. */
             w[0] = 0x720c | ((uint32_t)(src1 & 0xff) << 24);
@@ -918,7 +928,8 @@ _Static_assert(BW_IR_FADD == 30 && BW_IR_FSUB == 31 && BW_IR_FMUL == 32 && BW_IR
                BW_IR_LDG_E_64 == 56 && BW_IR_LDG_E_128 == 57 && BW_IR_LDS128 == 58 && BW_IR_MUFU_LG2 == 59,
                "bw_enc_sm121.om opcode numbers 30-59");
 _Static_assert(BW_IR_SHFL_BFLY == 60 && BW_IR_F2FP_BF16_PACK == 61 && BW_IR_ATOMG_ADD_F32_STRONG_SYS == 62 &&
-               BW_IR_ATOMG_ADD_F32_STRONG_GPU == 63, "bw_enc_sm121.om opcode numbers 60-63");
+               BW_IR_ATOMG_ADD_F32_STRONG_GPU == 63 && BW_IR_ATOMG_MIN_U64_STRONG_SYS == 64,
+               "bw_enc_sm121.om opcode numbers 60-64");
 
 /* Encodes n instructions through the .om unit into code (BW_OM_CODE_LEN bytes). pad != 0 is program mode (NOP
  * padding to a multiple of 8, at least 32). Returns the bytes written; 0 = refused. */

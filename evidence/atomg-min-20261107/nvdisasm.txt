@@ -1,0 +1,8 @@
+	.headerflags	@"EF_CUDA_64BIT_ADDRESS EF_CUDA_SM121 EF_CUDA_VIRTUAL_SM(EF_CUDA_SM121)"
+	.headerflags	@"EF_CUDA_64BIT_ADDRESS EF_CUDA_SM121 EF_CUDA_VIRTUAL_SM(EF_CUDA_SM121)"
+        /*0000*/                   ATOMG.E.MIN.64.STRONG.SYS PT, R4, desc[UR8][R2.64], R6 ;     /* 0x80000006020479a8 */
+                                                                                                /* 0x00321e00089f5508 */
+        /*0010*/                   ATOMG.E.MIN.64.STRONG.SYS PT, RZ, desc[UR8][R2.64], R6 ;     /* 0x8000000602ff79a8 */
+                                                                                                /* 0x00321e00089f5508 */
+        /*0020*/                   ATOMG.E.MIN.64.STRONG.SYS PT, R10, desc[UR4][R12.64], R14 ;  /* 0x8000000e0c0a79a8 */
+                                                                                                /* 0x00321e00089f5504 */

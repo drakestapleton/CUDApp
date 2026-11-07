@@ -32,9 +32,11 @@
 # mk/omega-gpu-engine.mk is omega 37fa50340345's blob (omega-mv #966). #966 swaps omega's freestanding C SHA-256 (src/omega_sha256_fs.c, test-sha256-fs-parity) for the bridge's freestanding Omega binding (src/omega_om_units_fs.c, test-sha256-freestanding-parity). CUDA++ never carried that C path: its GPU_FS_SRCS link src/sha256.c beside CUDAPP_FS_BINDING from its own om/units.sh at bridge 3dc4a00e, so the delta is not ported here; adopting the Omega SHA-256 binding needs that bridge pin moved. Any later omega edit to the file must still fail.
 Makefile	7e1426b3be2281979d00ac550a9397f913a38c30
 docs/runtime/API.md	9f5f34321bfb3f8623623ca9a174b68e3ff3c3ed
-docs/runtime/PORTABILITY.md	7b923a91e12f7f2e5c5954d80293517e19e8c959
+# docs/runtime/PORTABILITY.md and portability_table.tsv are omega a64e6705a's blobs (omega-mv#596: rows for the trainer bf16 GEMM files src/omega_blackwell_codegen_tgemm.{c,h}, src/omega_gpu_tgemm_api.{c,h}; unchanged through omega 943d9555).
+# The CUDA++ table already has those four rows with the same class and os_binding (CHIP_SPECIFIC, NO_HOSTED_INCLUDE) and its own totals and Ampere rows, so the blobs differ.
+docs/runtime/PORTABILITY.md	fb0d5f0ff5278a662934f79027aa5f398d9a4abe
 docs/runtime/omega_runtime_api.manifest	d02c0ebe0b6df7d4d8f52b51942dccd76cc8ec2d
-docs/runtime/portability_table.tsv	7d927220d172fafa6135fbb9069683c5a3030119
+docs/runtime/portability_table.tsv	798227e5bcf362a92cd303bc817b15a89738935d
 evidence/C3-GEMM/01-host-only.log	c581c5126718bc24ef10ed1b1637528018a260e5
 evidence/C3-GEMM/02-sim.log	fd97da9f29871abfc16fb2ed938c38a4d3c2314f
 evidence/C3-GEMM/README.md	0e730a9bf2072f34d59d9cdc1961f4112a7ff90e

@@ -72,3 +72,4 @@ sh tests/access/run.sh /absolute/path/to/omc    # omc sha256 2c82480596bbdc50…
 ```
 
 It ends `ACCESS GATE PASS pass=<n> fail=0` and exits 0. It opens no GPU and uses no network.
+Host receipt: `evidence/ACCESS-GATE-20261107T0127Z/` (52 of 52 at `cce2886e`, host CPU only).

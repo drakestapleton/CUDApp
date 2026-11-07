@@ -102,6 +102,8 @@ gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ld
 | `evidence/ldg-offset-20261107/nvdisasm.txt` | `ldg_words.bin`: four LDG.E rows of #373's encoder fix | Shows the offsets 0, +0x40, -0x100000 and +0x7fffff decode as encoded. |
 | `evidence/atomg-min-20261107/nvdisasm.txt` | `min_words.bin`: the three ATOMG.E.MIN.64.STRONG.SYS rows of `om/encoder/atomg_min_test.om` | Shows op 64's words decode as the intended instruction and registers. |
 | `evidence/atomg-min-20261107/atomg_field_probe_nvdisasm.txt` | `atomg_field_probe.bin`: ATOMG_ADD_STRONG_SYS's words with the operation field (w2 bits 23..26) set to 0..15 and the type field (bits 9..11) to 0..7 | Records how operation 1 = MIN and type 2 = .64 were identified. |
+| `evidence/guard-pred-20261107/nvdisasm-after.txt` | `guard_words.bin`: the 135 instructions of `om/encoder/guard_pred_test.om bin` at the DRA-483 fix (@P0 / @!P0 forms of 63 ops, 4 LDCU guard probes, 5 omega-mv #1044 bool/trap rows) | Shows every guard decodes as encoded, and that LDCU's guard bits name UP0. |
+| `evidence/guard-pred-20261107/nvdisasm-before.txt` | `guard_words_before.bin`: the same rows from the encoder before the fix | Shows the @P0 / @!P0 forms of 58 ops (MOV and STG.E among them) decoded with no guard (always), and @!P0 EXIT as @P0. |
 
 No listing of nvcc-generated code and no NVIDIA binary is stored.
 

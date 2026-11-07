@@ -1,0 +1,13 @@
+make OUT_DIR=build CUDAPP_ENCODER=om sm121dis-corpus-bins
+make OUT_DIR=build-enc-c CUDAPP_ENCODER=c sm121dis-corpus-bins
+make OUT_DIR=build-enc-diff CUDAPP_ENCODER=diff sm121dis-corpus-bins
+rm -rf build/om-encoder/k-om build/om-encoder/k-c build/om-encoder/k-diff build/om-encoder/corpus-diff.log
+sh tools/sm121dis/corpus.sh build build/om-encoder/k-om
+corpus: 3191 kernels in build/om-encoder/k-om
+sh tools/sm121dis/corpus.sh build-enc-c build/om-encoder/k-c
+corpus: 3191 kernels in build/om-encoder/k-c
+CUDAPP_ENCODER_DIFF_LOG=build/om-encoder/corpus-diff.log sh tools/sm121dis/corpus.sh build-enc-diff build/om-encoder/k-diff
+corpus: 3191 kernels in build/om-encoder/k-diff
+diff -r build/om-encoder/k-om build/om-encoder/k-c
+diff -r build/om-encoder/k-om build/om-encoder/k-diff
+encoder corpus: 3191 distinct kernels identical .om vs C; diff build 4495 program encodes and 399 single-instruction encodes, all SAME

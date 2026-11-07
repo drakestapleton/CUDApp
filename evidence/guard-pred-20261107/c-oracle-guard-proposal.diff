@@ -1,0 +1,16 @@
+--- a/src/omega_blackwell_codegen.c	2026-11-07 11:01:21.354725222 -0600
++++ b/src/omega_blackwell_codegen.c	2026-11-07 11:01:26.901996563 -0600
+@@ -895,6 +895,13 @@
+         default:
+             return -1;
+     }
++    /* DRA-483 (proposal, matches om/encoder/bw_enc_sm121.om enc1): the guard predicate of every op sits in
++     * w[0] bits 12..15 (7 always, 0 @P0, 8 @!P0). LDCU / LDCU.64 are uniform-datapath instructions whose
++     * guard bits name UP0..UPT (nvdisasm 13.0.85 prints @UP0), so a P0 guard is refused there. */
++    if (insn->predicate_p0) {
++        if (insn->op == BW_IR_LDCU || insn->op == BW_IR_LDCU64) return -1;
++        w[0] = (w[0] & ~0xF000u) | ((insn->predicate_not ? 0x8u : 0x0u) << 12);
++    }
+     return 0;
+ }
+ #endif /* C encoder, migration-pending */

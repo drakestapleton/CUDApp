@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
+/* MIGRATION: replace with the header generated from native/nvml/api.om by
+ * aien-dev/omega-bridge#83. This handwritten header is not generated output. */
 /* CUDA++ NVML subset: an ABI-compatible declaration of the libnvidia-ml entry points
  * compat/nvml/cudapp_nvml.c implements. Written for CUDA++; not NVIDIA's header. Type layouts,
  * enum values and symbol names follow nvml.h from CUDA 13.0 (NVML_API_VERSION 13); the line

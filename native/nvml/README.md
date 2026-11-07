@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception -->
 # native/nvml: the Omega side of the CUDA++ NVML subset
 
-Two pure Omega units carry every decision of the libnvidia-ml subset in
-`compat/nvml`:
+Two pure Omega units carry RM request/reply policy and error-string encoding.
+The production C shell still contains call orchestration, copy bounds, handle
+mapping and cache management; see `compat/nvml/README.md` for its migration HOLD.
 
 | Unit | Sources (composed in this order, each followed by a newline) | Export |
 | --- | --- | --- |
@@ -14,7 +15,7 @@ omc e5b32567) into the committed `src/cudapp_om_nvml_step.c` and
 `src/cudapp_om_nvml_errstr.c`; their prototypes are in `src/cudapp_native.h`
 and their identities in `src/cudapp_om_nvml_*.ident` and
 `src/cudapp_om_units.ident`. Never edit the generated C; edit the `.om` and
-rerun `om/units.sh`. `tests/nvml/run.sh` refuses a stale generated file.
+rerun `om/units.sh`. `tests/nvml/gate.om` refuses a stale generated file.
 
 ## The step protocol
 
@@ -67,5 +68,8 @@ everything it opened and leaves the refcount at 0.
 - Live resource-manager behavior is NOT_RUN: every test runs against
   `tests/nvml/rmfake.om`.
 
-Constants: `evidence/NVML-2026-11-06/wolfram.txt`. Tests: `tests/nvml/run.sh`
-(`make test-nvml`).
+Constants: `evidence/NVML-2026-11-06/wolfram.txt`. Tests: `tests/nvml/gate.om`
+(`make test-nvml`). The 476 checks in `tests/nvml/host.om` exercise a pure
+Omega port of the shell protocol against the fake transport, not a production
+shared library. Generated NVML ABI support is tracked by
+[omega-bridge#83](https://github.com/aien-dev/omega-bridge/issues/83).

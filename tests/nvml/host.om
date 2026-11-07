@@ -1,0 +1,942 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note CUDA++ NVML host tier in Omega: the checks of tests/nvml/nvml_test.c, one for one and in the
+note same order, run against native/nvml (nvml_step, nvml_errstr) and the RM fake
+note tests/nvml/rmfake.om, with no foreign code. tests/nvml/gate.om composes this program as
+note native/nvml/nvml.om query.om step.om errstr.om, tests/nvml/rmfake.om, then this file, and
+note compiles it with the pinned seeded omc.
+note
+note hv_run is the call protocol of the C ABI shell compat/nvml/cudapp_nvml.c (nvml_run and
+note nvml_act): stage the op and arguments, alternate nvml_step with the one action it requests,
+note bound the copies, map the status. hv_ioctl, hv_open and hv_close are the test transport of
+note tests/nvml/transport.c (fault S included). Pointers of the C test become flags and slots:
+note a device handle is 0 (NULL), 1+index (issued by hv_handle) or 1000 (a foreign pointer); a
+note scalar out-pointer is 1+slot in HvV (0 is NULL); the caller's output buffer is HvO.
+note One difference from the C caller: a trap inside a unit ends this program with the trap
+note status (101..114) instead of reading as NVML_ERROR_UNKNOWN; either way the tier fails.
+note usage: host ERRSTR_ORACLE.tsv; prints CUDAPP-NVML HOST PASS (N checks), exit 0, or
+note CUDAPP-NVML HOST FAIL (F of N checks), exit 1; a usage error exits 2.
+
+global HvA ulong 8
+global HvG ulong 4
+global HvO uchar 6144
+global HvV ulong 4
+global HvH ulong 4
+global HvC ulong 4
+global HvF ulong 4
+global HvR ulong 1
+global HvT uchar 2048
+global HvTs uchar 32
+
+text HvNm "NVIDIA GB10"
+text HvU0 "GPU-fb8e53f0-3207-e89b-d02f-acdfe2695b59"
+text HvU1 "GPU-fb8e53f0-3207-e89b-d02f-acdfe2695b5a"
+text HvUnk "Unknown Error"
+text HvFl "oadPA902cGnESgthvzxmwyerZXklpbijf"
+text HvFi "94944U000000000000000000000000000"
+text HvFc "000000112222234445556666667777770"
+text HvFr "000000003FUUUUUU333U34UUUU30U00U0"
+text HvFail "FAIL check "
+text HvNL "\n"
+text HvPass "CUDAPP-NVML HOST PASS ("
+text HvBad "CUDAPP-NVML HOST FAIL ("
+text HvOf " of "
+text HvChk " checks)\n"
+text HvUse "usage: host ERRSTR_ORACLE.tsv\n"
+
+const HvMAX ulong 18446744073709551615
+const HvNA32 ulong 4294967295
+const HvFOR ulong 1000
+
+note Decimal digits of v to fd.
+fn hv_num fd int v ulong to void
+rev = new uchar 32 0
+out = new uchar 32 0
+x = v
+n = ulong 0
+while true bound 32
+put rev n uchar add rem x 10 48
+n = add n 1
+x = div x 10
+if eq x 0
+break
+end
+end
+for i ulong n
+put out i get rev sub sub n 1 i
+end
+w = write fd out 0 n
+end
+
+fn hv_ck ok bool to void
+put HvC 0 add get HvC 0 1
+if not ok
+put HvC 1 add get HvC 1 1
+w = write 1 HvFail 0 len HvFail
+hv_num 1 get HvC 0
+w = write 1 HvNL 0 1
+end
+end
+
+fn hv_rc got ulong wt ulong to void
+hv_ck eq got wt
+end
+
+note The caller's output buffer: fill, little-endian reads and writes.
+fn hv_fill v ulong n ulong to void
+for i ulong n
+put HvO i uchar v
+end
+end
+
+fn hv_o32 at ulong to ulong
+r = ulong 0
+for i ulong 4
+r = or r shl ulong get HvO add at i mul 8 i
+end
+ret r
+end
+
+fn hv_o64 at ulong to ulong
+r = ulong 0
+for i ulong 8
+r = or r shl ulong get HvO add at i mul 8 i
+end
+ret r
+end
+
+fn hv_p32 at ulong v ulong to void
+for i ulong 4
+put HvO add at i uchar and shr v mul 8 i 255
+end
+end
+
+note strcmp(HvO, text) == 0 for the three expected strings.
+fn hv_isnm to bool
+n = len HvNm
+for i ulong n
+if ne get HvO i get HvNm i
+ret false
+end
+end
+ret eq get HvO n 0
+end
+
+fn hv_isu0 to bool
+n = len HvU0
+for i ulong n
+if ne get HvO i get HvU0 i
+ret false
+end
+end
+ret eq get HvO n 0
+end
+
+fn hv_isu1 to bool
+n = len HvU1
+for i ulong n
+if ne get HvO i get HvU1 i
+ret false
+end
+end
+ret eq get HvO n 0
+end
+
+note fake_reset of tests/nvml/transport.c.
+fn hv_reset st edit ulong 64 c ulong to void
+for i ulong 64
+put st i 0
+end
+put st 5 c
+put HvC 2 0
+end
+
+note One fake step; a trap or refusal counts as a violation and reads as transport status 1.
+fn hv_fstep st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+r = nvml_fake st h p
+if ne r 0
+put HvC 2 add get HvC 2 1
+put st 13 add get st 13 1
+ret 1
+end
+put HvR 0 get st 6
+ret 0
+end
+
+note Copy the header and parameter spans between the step buffer and the fake (in when tofk).
+fn hv_xfer b edit uchar BN h edit uchar HN p edit uchar PN hl ulong pl ulong tofk bool to void
+for i ulong hl
+if tofk
+put h i get b i
+else
+put b i get h i
+end
+end
+for j ulong pl
+if tofk
+put p j get b add PO j
+else
+put b add PO j get p j
+end
+end
+end
+
+note omega2_nvrm_ioctl over the fake: copy the request in, one step, copy the reply back.
+fn hv_ioctl s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hl = get s 11
+pl = get s 12
+if or gt hl HN gt pl PN
+ret 32
+end
+if and and eq get st 5 83 eq get s 10 42 ge hl 12
+if eq g32 b 8 545259792
+ret 1
+end
+end
+hv_xfer b h p hl pl true
+put st 0 1
+put st 1 get s 9
+put st 2 get s 10
+put st 3 hl
+put st 4 pl
+r = hv_fstep st h p
+hv_xfer b h p hl pl false
+ret r
+end
+
+fn hv_open s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+n = get s 13
+if or eq n 0 gt n PN
+ret 32
+end
+for i ulong n
+put p i get b add PO i
+end
+put st 0 2
+put st 7 n
+ret hv_fstep st h p
+end
+
+fn hv_close s edit ulong SN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+put st 0 3
+put st 1 get s 9
+ret hv_fstep st h p
+end
+
+note nvml_act: perform the requested action; false is a malformed request.
+fn hv_act s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to bool
+k = get s 8
+put HvR 0 0
+if eq k 1
+if gt get s 11 PO
+ret false
+end
+if gt get s 12 sub OO PO
+ret false
+end
+put s 15 hv_ioctl s b st h p
+put s 14 get HvR 0
+ret true
+end
+if eq k 2
+if eq get s 13 0
+ret false
+end
+if gt get s 13 sub OO PO
+ret false
+end
+put s 15 hv_open s b st h p
+put s 14 get HvR 0
+ret true
+end
+if eq k 3
+put s 15 hv_close s st h p
+put s 14 get HvR 0
+ret true
+end
+ret false
+end
+
+note The step reported done: bound the copies like nvml_run, copy out, map the status.
+fn hv_fin s edit ulong SN b edit uchar BN to ulong
+k = get s 7
+sp = get HvA 7
+if or gt k get HvA 5 and ne k 0 eq get HvA 6 0
+ret 999
+end
+if ne get s 27 0
+if or eq sp 0 gt get s 5 HvNA32
+ret 999
+end
+end
+for i ulong k
+put HvO i get b add OO i
+end
+if ne get s 27 0
+put HvV sub sp 1 get s 5
+end
+v = get s 6
+if or le v 30 eq v 999
+ret v
+end
+ret 999
+end
+
+note nvml_run: HvA holds op, four arguments, the output capacity, the output-pointer flag and
+note the scalar slot (1+index into HvV, 0 for NULL). Returns the nvmlReturn_t value.
+fn hv_run s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+rc = ulong 999
+for i ulong 5
+put s i get HvA i
+end
+put s 22 0
+for n ulong 4096
+if ne nvml_step s b 0
+break
+end
+if eq get s 8 0
+rc = hv_fin s b
+break
+end
+if not hv_act s b st h p
+break
+end
+end
+put s 22 0
+ret rc
+end
+
+fn hv_stage op ulong a1 ulong a2 ulong a3 ulong a4 ulong to void
+put HvA 0 op
+put HvA 1 a1
+put HvA 2 a2
+put HvA 3 a3
+put HvA 4 a4
+end
+
+fn hv_io cap ulong outok ulong sp ulong to void
+put HvA 5 cap
+put HvA 6 outok
+put HvA 7 sp
+end
+
+note API call arguments: hv_g sets HvG 0..2 before each entry point below.
+fn hv_g a ulong b ulong c ulong to void
+put HvG 0 a
+put HvG 1 b
+put HvG 2 c
+end
+
+fn hv_nz v ulong to ulong
+if ne v 0
+ret 1
+end
+ret 0
+end
+
+note nvml_index: the index of a handle hv_handle issued, or UINT64_MAX.
+fn hv_idx d ulong to ulong
+if and ge d 1 le d 8
+ret sub d 1
+end
+ret HvMAX
+end
+
+fn hv_init s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hv_stage 1 0 0 0 0
+hv_io 0 0 0
+ret hv_run s b st h p
+end
+
+fn hv_shut s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hv_stage 2 0 0 0 0
+hv_io 0 0 0
+ret hv_run s b st h p
+end
+
+note count: G0 the scalar slot.
+fn hv_count s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+sp = get HvG 0
+hv_stage 3 0 hv_nz sp 0 0
+hv_io 0 0 sp
+ret hv_run s b st h p
+end
+
+note handle: G0 the index, G1 the handle slot (1+index into HvH, 0 for NULL).
+fn hv_handle s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hs = get HvG 1
+put HvV 3 0
+hv_stage 4 get HvG 0 hv_nz hs 0 0
+hv_io 0 0 4
+rc = hv_run s b st h p
+if eq rc 0
+i = get HvV 3
+if ge i 8
+ret 999
+end
+put HvH sub hs 1 add i 1
+end
+ret rc
+end
+
+note name and uuid: G0 the device, G1 the buffer flag, G2 the length.
+fn hv_name s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hv_stage 5 hv_idx get HvG 0 get HvG 1 get HvG 2 0
+hv_io get HvG 2 get HvG 1 0
+ret hv_run s b st h p
+end
+
+fn hv_uuid s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hv_stage 6 hv_idx get HvG 0 get HvG 1 get HvG 2 0
+hv_io get HvG 2 get HvG 1 0
+ret hv_run s b st h p
+end
+
+note temperature: G0 the device, G1 the sensor, G2 the scalar slot.
+fn hv_temp s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+sp = get HvG 2
+hv_stage 7 hv_idx get HvG 0 hv_nz sp get HvG 1 0
+hv_io 0 0 sp
+ret hv_run s b st h p
+end
+
+note memory (24 bytes) and utilization (8 bytes): G0 the device, G1 the output flag.
+fn hv_mem s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hv_stage 8 hv_idx get HvG 0 get HvG 1 0 0
+hv_io 24 get HvG 1 0
+ret hv_run s b st h p
+end
+
+fn hv_util s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+hv_stage 9 hv_idx get HvG 0 get HvG 1 0 0
+hv_io 8 get HvG 1 0
+ret hv_run s b st h p
+end
+
+note processes: G0 the device, G1 the count slot, G2 the infos flag; capacity is 24 per entry.
+fn hv_procs s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to ulong
+sp = get HvG 1
+wc = ulong 0
+if ne sp 0
+wc = get HvV sub sp 1
+end
+hv_stage 10 hv_idx get HvG 0 hv_nz sp wc get HvG 2
+hv_io mul wc 24 get HvG 2 sp
+ret hv_run s b st h p
+end
+
+note nvmlErrorString: the slot of the cached text, or 32 for the static "Unknown Error".
+fn hv_errstr code ulong to ulong
+o = new uchar 64 0
+r = nvml_errstr code o
+n = and r 255
+sl = and shr r 8 255
+if and lt n 64 lt sl 32
+if eq get HvTs sl 0
+for i ulong 64
+put HvT add mul sl 64 i get o i
+end
+put HvT add mul sl 64 n 0
+put HvTs sl 1
+end
+ret sl
+end
+ret 32
+end
+
+note strcmp(nvmlErrorString(code), line[wo..wo+wn)) == 0.
+fn hv_streq sl ulong w edit uchar 65536 wo ulong wn ulong to bool
+if eq sl 32
+if ne wn len HvUnk
+ret false
+end
+for i ulong wn
+if ne get HvUnk i get w add wo i
+ret false
+end
+end
+ret true
+end
+if ge wn 64
+ret false
+end
+for i ulong wn
+if ne get HvT add mul sl 64 i get w add wo i
+ret false
+end
+end
+ret eq get HvT add mul sl 64 wn 0
+end
+
+note strtoll(line, NULL, 10) over fb[at..lim), then (nvmlReturn_t)(int)(unsigned) as the shell
+note widens it: the low 32 bits, sign-extended.
+fn hv_strtoll fb edit uchar 65536 at ulong lim ulong to ulong
+i = at
+while lt i lim bound 999999
+if and ne get fb i 32 ne get fb i 9
+break
+end
+i = add i 1
+end
+minus = false
+if lt i lim
+if eq get fb i 45
+minus = true
+i = add i 1
+else
+if eq get fb i 43
+i = add i 1
+end
+end
+end
+mag = ulong 0
+while lt i lim bound 999999
+if or lt get fb i 48 gt get fb i 57
+break
+end
+mag = add mul mag 10 ulong sub get fb i 48
+i = add i 1
+end
+if minus
+mag = sub 0 mag
+end
+mag = and mag HvNA32
+if ge mag 2147483648
+mag = or mag 18446744069414584320
+end
+ret mag
+end
+
+note One oracle line fb[ls..ln): false when it has no tab, else its check.
+fn hv_row fb edit uchar 65536 ls ulong ln ulong to bool
+tab = ls
+while lt tab ln bound 999999
+if eq get fb tab 9
+break
+end
+tab = add tab 1
+end
+if ge tab ln
+ret false
+end
+sl = hv_errstr hv_strtoll fb ls tab
+hv_ck hv_streq sl fb add tab 1 sub sub ln tab 1
+ret true
+end
+
+fn hv_rows fb edit uchar 65536 used ulong to ulong
+rows = ulong 0
+ls = ulong 0
+while lt ls used bound 999999
+ln = ls
+while lt ln used bound 999999
+if eq get fb ln 10
+break
+end
+ln = add ln 1
+end
+if hv_row fb ls ln
+rows = add rows 1
+end
+ls = add ln 1
+end
+ret rows
+end
+
+note errstrings: every row of the oracle, then the row count and pointer stability.
+fn hv_errs ap edit uchar 4096 an ulong to void
+fb = new uchar 65536 0
+fd = fopen ap 0 an 0 0
+hv_ck ge fd 0
+if lt fd 0
+ret
+end
+used = ulong 0
+while lt used 65536 bound 999999
+k = read int fd fb used sub 65536 used
+if le k 0
+break
+end
+used = add used ulong k
+end
+c = fclose int fd
+hv_ck eq hv_rows fb used 37
+hv_ck eq hv_errstr 0 hv_errstr 0
+hv_ck eq hv_errstr 31 hv_errstr 999
+end
+
+note Output checks over HvO (and HvV), kept out of the callers' registers.
+fn hv_memok to bool
+if ne hv_o64 0 131072000000
+ret false
+end
+if ne hv_o64 8 102400000000
+ret false
+end
+ret eq hv_o64 16 28672000000
+end
+
+fn hv_utilok to bool
+if ne hv_o32 0 42
+ret false
+end
+ret eq hv_o32 4 13
+end
+
+fn hv_pok at ulong pid ulong used ulong to bool
+if ne hv_o32 at pid
+ret false
+end
+ret eq hv_o64 add at 8 used
+end
+
+note Both entries report no GPU or compute instance.
+fn hv_naok to bool
+if ne hv_o32 16 HvNA32
+ret false
+end
+if ne hv_o32 20 HvNA32
+ret false
+end
+if ne hv_o32 40 HvNA32
+ret false
+end
+ret eq hv_o32 44 HvNA32
+end
+
+note Fault b: entry i is pid 1000+i using (1000+i)*65536 bytes.
+fn hv_bok to bool
+nb = ulong 0
+for i ulong 250
+o = mul i 24
+if ne hv_o32 o add 1000 i
+nb = add nb 1
+else
+if ne hv_o64 add o 8 mul add 1000 i 65536
+nb = add nb 1
+end
+end
+end
+ret eq nb 0
+end
+
+note Fault i: the second entry's memory is NVML_VALUE_NOT_AVAILABLE.
+fn hv_iok to bool
+if ne get HvV 0 2
+ret false
+end
+if ne hv_o64 8 351272960
+ret false
+end
+if ne hv_o32 24 4242
+ret false
+end
+ret eq hv_o64 32 HvMAX
+end
+
+note Every fd closed, every RM object freed, no request outside the RM contract.
+fn hv_clean st edit ulong 64 to void
+hv_ck eq get st 14 0
+hv_ck eq get st 15 0
+hv_ck eq get st 16 0
+hv_ck eq get st 8 get st 9
+hv_ck eq get st 13 0
+end
+
+fn hv_healthy s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to void
+put HvV 0 77
+put HvV 1 0
+put HvH 0 0
+put HvH 1 0
+hv_reset st 0
+hv_g 1 0 0
+hv_rc hv_count s b st h p 1
+hv_g 0 1 0
+hv_rc hv_handle s b st h p 1
+hv_rc hv_shut s b st h p 1
+hv_ck eq get st 8 0
+hv_rc hv_init s b st h p 0
+hv_g 1 0 0
+hv_rc hv_count s b st h p 0
+hv_ck eq get HvV 0 1
+hv_g 0 0 0
+hv_rc hv_count s b st h p 2
+hv_g 0 1 0
+hv_rc hv_handle s b st h p 0
+hv_ck ne get HvH 0 0
+hv_g 1 2 0
+hv_rc hv_handle s b st h p 2
+hv_g 0 0 0
+hv_rc hv_handle s b st h p 2
+d = get HvH 0
+hv_fill 120 128
+hv_g d 1 96
+hv_rc hv_name s b st h p 0
+hv_ck hv_isnm
+hv_g d 1 11
+hv_rc hv_name s b st h p 7
+hv_fill 120 128
+hv_g d 1 12
+hv_rc hv_name s b st h p 0
+hv_ck hv_isnm
+hv_g 0 1 64
+hv_rc hv_name s b st h p 2
+hv_g HvFOR 1 64
+hv_rc hv_name s b st h p 2
+hv_g d 0 64
+hv_rc hv_name s b st h p 2
+hv_fill 120 128
+hv_g d 1 96
+hv_rc hv_uuid s b st h p 0
+hv_ck hv_isu0
+hv_g d 1 40
+hv_rc hv_uuid s b st h p 7
+hv_fill 120 128
+hv_g d 1 41
+hv_rc hv_uuid s b st h p 0
+hv_ck hv_isu0
+hv_g d 0 80
+hv_rc hv_uuid s b st h p 2
+hv_g d 0 2
+hv_rc hv_temp s b st h p 0
+hv_ck eq get HvV 1 40
+hv_g d 1 2
+hv_rc hv_temp s b st h p 2
+hv_g d 0 0
+hv_rc hv_temp s b st h p 2
+hv_fill 165 24
+hv_g d 1 0
+hv_rc hv_mem s b st h p 0
+hv_ck hv_memok
+hv_g d 0 0
+hv_rc hv_mem s b st h p 2
+hv_p32 0 77
+hv_p32 4 77
+hv_g d 1 0
+hv_rc hv_util s b st h p 0
+hv_ck hv_utilok
+hv_g d 0 0
+hv_rc hv_util s b st h p 2
+put HvV 0 0
+hv_g d 1 0
+hv_rc hv_procs s b st h p 7
+hv_ck eq get HvV 0 2
+put HvV 0 1
+hv_g d 1 1
+hv_rc hv_procs s b st h p 7
+hv_ck eq get HvV 0 2
+put HvV 0 2
+hv_g d 1 0
+hv_rc hv_procs s b st h p 2
+hv_g d 0 1
+hv_rc hv_procs s b st h p 2
+hv_fill 0 120
+put HvV 0 5
+hv_g d 1 1
+hv_rc hv_procs s b st h p 0
+hv_ck eq get HvV 0 2
+hv_ck hv_pok 0 68451 351272960
+hv_ck hv_pok 24 4242 278003712
+hv_ck hv_naok
+hv_ck eq hv_o32 48 0
+hv_rc hv_shut s b st h p 0
+hv_g 1 0 0
+hv_rc hv_count s b st h p 1
+hv_g d 1 64
+hv_rc hv_name s b st h p 1
+hv_rc hv_shut s b st h p 1
+hv_clean st
+end
+
+note nvmlInit/nvmlShutdown keep a reference count; only the last shutdown tears down.
+fn hv_refcount s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to void
+put HvV 0 0
+hv_reset st 0
+hv_rc hv_init s b st h p 0
+opens = get st 8
+hv_ck eq opens 2
+hv_rc hv_init s b st h p 0
+hv_ck eq get st 8 opens
+hv_rc hv_shut s b st h p 0
+hv_g 1 0 0
+hv_rc hv_count s b st h p 0
+hv_ck eq get st 9 0
+hv_rc hv_shut s b st h p 0
+hv_g 1 0 0
+hv_rc hv_count s b st h p 1
+hv_clean st
+hv_rc hv_init s b st h p 0
+hv_rc hv_shut s b st h p 0
+hv_clean st
+end
+
+note A fault-table return code: a digit, F for GPU_IS_LOST (15) or U for UNKNOWN (999).
+fn hv_code c uchar to ulong
+if eq c 85
+ret 999
+end
+if eq c 70
+ret 15
+end
+ret ulong sub c 48
+end
+
+note Fault COUNT: the device count, then (fault 0 aside) both handles, their UUIDs and sensors.
+fn hv_cnt s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to void
+hv_g 1 0 0
+hv_rc hv_count s b st h p get HvF 3
+if eq get HvF 0 48
+hv_ck eq get HvV 0 0
+hv_g 0 1 0
+hv_rc hv_handle s b st h p 2
+ret
+end
+hv_ck eq get HvV 0 2
+put HvH 2 0
+put HvH 1 0
+hv_g 0 3 0
+hv_rc hv_handle s b st h p 0
+hv_g 1 2 0
+hv_rc hv_handle s b st h p 0
+hv_ck ne get HvH 2 get HvH 1
+hv_g get HvH 1 1 96
+hv_rc hv_uuid s b st h p 0
+hv_ck hv_isu1
+hv_g get HvH 2 1 96
+hv_rc hv_uuid s b st h p 0
+hv_ck hv_isu0
+hv_g get HvH 1 0 2
+hv_rc hv_temp s b st h p 0
+hv_ck eq get HvV 1 41
+hv_g 2 1 0
+hv_rc hv_handle s b st h p 2
+end
+
+note Fault PROCS: the process list and the letter's extra checks.
+fn hv_pcall s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to void
+letter = get HvF 0
+put HvV 0 256
+hv_fill 0 6144
+hv_g get HvH 0 1 1
+hv_rc hv_procs s b st h p get HvF 3
+if eq letter 108
+hv_ck eq get HvV 0 0
+end
+if eq letter 98
+hv_ck eq get HvV 0 250
+hv_ck hv_bok
+put HvV 0 249
+hv_g get HvH 0 1 1
+hv_rc hv_procs s b st h p 7
+hv_ck eq get HvV 0 250
+end
+if eq letter 105
+hv_ck hv_iok
+end
+end
+
+note The faulted call of kinds NAME..UTIL, which must return the table's code.
+fn hv_call s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN to void
+kind = get HvF 2
+d = get HvH 0
+if eq kind 2
+hv_g d 1 96
+hv_rc hv_name s b st h p get HvF 3
+end
+if eq kind 3
+hv_g d 1 96
+hv_rc hv_uuid s b st h p get HvF 3
+end
+if eq kind 4
+hv_g d 0 2
+hv_rc hv_temp s b st h p get HvF 3
+end
+if eq kind 5
+hv_g d 1 0
+hv_rc hv_mem s b st h p get HvF 3
+end
+if eq kind 6
+hv_g d 1 0
+hv_rc hv_util s b st h p get HvF 3
+end
+end
+
+note one(): row f of the fault table; HvF holds its letter, init code, call kind and call code.
+fn hv_one s edit ulong SN b edit uchar BN st edit ulong 64 h edit uchar HN p edit uchar PN f ulong to void
+put HvF 0 ulong get HvFl f
+put HvF 1 hv_code get HvFi f
+put HvF 2 ulong sub get HvFc f 48
+put HvF 3 hv_code get HvFr f
+put HvV 0 0
+put HvV 1 0
+put HvH 0 0
+hv_reset st get HvF 0
+r = hv_init s b st h p
+hv_ck eq r get HvF 1
+if ne r 0
+hv_g 1 0 0
+hv_rc hv_count s b st h p 1
+hv_clean st
+ret
+end
+kind = get HvF 2
+if ne kind 1
+hv_g 0 1 0
+hv_rc hv_handle s b st h p 0
+end
+if eq kind 1
+hv_cnt s b st h p
+end
+hv_call s b st h p
+if eq kind 7
+hv_pcall s b st h p
+end
+if eq get HvF 0 102
+hv_rc hv_shut s b st h p 999
+hv_g 1 0 0
+hv_rc hv_count s b st h p 1
+hv_ck eq get st 14 0
+hv_ck eq get st 13 0
+ret
+end
+hv_rc hv_shut s b st h p 0
+hv_clean st
+end
+
+fn main to int
+c = argcnt
+if ne c 2
+w = write 2 HvUse 0 len HvUse
+ret 2
+end
+s = new ulong SN 0
+b = new uchar BN 0
+st = new ulong 64 0
+h = new uchar HN 0
+p = new uchar PN 0
+ap = new uchar 4096 0
+an = argread 1 ap 0 4096
+if lt an 0
+hv_ck false
+else
+hv_errs ap ulong an
+end
+hv_healthy s b st h p
+hv_refcount s b st h p
+for f ulong 33
+hv_one s b st h p f
+end
+hv_healthy s b st h p
+hv_ck eq get HvC 2 0
+if ne get HvC 1 0
+w = write 1 HvBad 0 len HvBad
+hv_num 1 get HvC 1
+w = write 1 HvOf 0 len HvOf
+hv_num 1 get HvC 0
+w = write 1 HvChk 0 len HvChk
+ret 1
+end
+w = write 1 HvPass 0 len HvPass
+hv_num 1 get HvC 0
+w = write 1 HvChk 0 len HvChk
+ret 0
+end

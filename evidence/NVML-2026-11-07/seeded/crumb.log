@@ -1,0 +1,9 @@
+Command: taskset -c 2 nice -n 10 crumb compile tests/nvml && taskset -c 2 nice -n 10 crumb compile native/nvml && taskset -c 2 nice -n 10 crumb compile compat/nvml && taskset -c 2 nice -n 10 crumb verify .
+COMPILED   compat/nvml
+COMPILED   native/nvml
+COMPILED   tests/nvml
+crumb compile: 42 crumbs, 3 rewritten, HEAD 4bf5889
+crumb compile: 42 crumbs, 0 rewritten, HEAD 4bf5889
+crumb compile: 42 crumbs, 0 rewritten, HEAD 4bf5889
+crumb verify: OK: 42 crumbs current
+Exit: 0

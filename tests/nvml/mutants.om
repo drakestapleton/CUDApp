@@ -1,0 +1,71 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Same exact-line mutation sites as the predecessor NVML gate.
+text NmF0 "if eq v 86"
+text NmT0 "if eq v 87"
+text NmF1 "if eq v 27"
+text NmT1 "if eq v 28"
+text NmF2 "if or or eq x 18446744073709551614 eq x 18446744073709551610 eq x 18446744073709551597"
+text NmT2 "if false"
+text NmF3 "put b n uchar add 48 rem minor 10"
+text NmT3 "put b n uchar add 49 rem minor 10"
+text NmF4 "if gt get s 16 0"
+text NmT4 "if false"
+text NmF5 "if gt get s 16 1"
+text NmT5 "if false"
+text NmF6 "for t ulong 26"
+text NmT6 "for t ulong 2"
+text NmF7 "if eq g32 b add add PO 4 mul i 4 52928"
+text NmT7 "if eq g32 b add add PO 4 mul i 4 52929"
+text NmF8 "if ge get s 1 get s 21"
+text NmT8 "if gt get s 1 get s 21"
+text NmF9 "put b add OO 3 45"
+text NmT9 "put b add OO 3 46"
+text NmF10 "put b n 45"
+text NmT10 "put b n 95"
+text NmF11 "if eq g32 b add add add PO 24 mul tg 44 16 1"
+text NmT11 "if eq g32 b add add add PO 24 mul tg 44 16 2"
+text NmF12 "if ge v 2147483648"
+text NmT12 "if false"
+text NmF13 "if ne g32 b add PO 8 0"
+text NmT13 "if false"
+text NmF14 "p64 b add OO 16 mul sub t f 1024"
+text NmT14 "p64 b add OO 16 mul t 1024"
+text NmF15 "o = add add PO 16 mul rem add r 71 72 776"
+text NmT15 "o = add add PO 16 mul rem r 72 776"
+text NmF16 "p32 b OO div g 100"
+text NmT16 "p32 b OO g"
+text NmF17 "p64 b add q 8 18446744073709551615"
+text NmT17 "p64 b add q 8 0"
+text NmF18 "p32 b add q 16 4294967295"
+text NmT18 "p32 b add q 16 0"
+text NmF19 "if or gt c 72 ge r 72"
+text NmT19 "if false"
+text NmF20 "if gt f t"
+text NmT20 "if false"
+text NmF21 "n = w8 o n 32496501618079059"
+text NmT21 "n = w8 o n 32496501618079058"
+fn ng_mutants to void
+ng_mutant NgNameN NmF0 NmT0
+ng_mutant NgNameN NmF1 NmT1
+ng_mutant NgNameN NmF2 NmT2
+ng_mutant NgNameN NmF3 NmT3
+ng_mutant NgNameN NmF4 NmT4
+ng_mutant NgNameN NmF5 NmT5
+ng_mutant NgNameN NmF6 NmT6
+ng_mutant NgNameN NmF7 NmT7
+ng_mutant NgNameQ NmF8 NmT8
+ng_mutant NgNameQ NmF9 NmT9
+ng_mutant NgNameQ NmF10 NmT10
+ng_mutant NgNameQ NmF11 NmT11
+ng_mutant NgNameQ NmF12 NmT12
+ng_mutant NgNameQ NmF13 NmT13
+ng_mutant NgNameQ NmF14 NmT14
+ng_mutant NgNameQ NmF15 NmT15
+ng_mutant NgNameQ NmF16 NmT16
+ng_mutant NgNameQ NmF17 NmT17
+ng_mutant NgNameQ NmF18 NmT18
+ng_mutant NgNameQ NmF19 NmT19
+ng_mutant NgNameQ NmF20 NmT20
+ng_mutant NgNameE NmF21 NmT21
+hp_say NgMpass
+end

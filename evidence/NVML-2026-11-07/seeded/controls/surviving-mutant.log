@@ -1,0 +1,11 @@
+PASS committed src/cudapp_om_nvml_step.c is the bridge output of native/nvml
+PASS committed src/cudapp_om_nvml_errstr.c is the bridge output of native/nvml
+PASS seeded Omega fake tier: CUDAPP-NVML HOST PASS (476 checks)
+PASS oracle negative control (altered string rejected: CUDAPP-NVML HOST FAIL (1 of 476 checks))
+PASS fake tier: CUDAPP-NVML HOST PASS (476 checks)
+PASS abi: 55 facts equal to /usr/local/cuda/include/nvml.h
+PASS shell compiles against the CUDA nvml.h prototypes
+PASS thin-shell guard
+PASS thin-shell guard negative control
+component exec refusal: expected=1 wait[0]=0 wait[1]=0 wait[2]=0 wait[3]=0 exec-pipe=0 exec-byte=0 argv0=build/nvml/host
+component conductor refused

@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* CUDA++ NVML subset: the C ABI shell over the Omega unit nvml_step (native/nvml). It holds no
- * policy. Each entry point stores its op and arguments, then alternates omega_nvml_step with the
+/* MIGRATION: handwritten production ABI/protocol pending aien-dev/omega-bridge#83.
+ * Exercised protocol successor: tests/nvml/host.om (fake transport only); production successor
+ * is native/nvml/api.om plus bridge-generated ABI output, not implemented by this C file. */
+/* CUDA++ NVML subset: the C ABI shell over the Omega unit nvml_step (native/nvml).
+ * Each entry point stores its op and arguments, then alternates omega_nvml_step with the
  * one action the step requests, performed by the Omega RM transport (omega2_nvrm_*, native/nvrm/
  * transport.om), until the step reports done. Every return code, decode and teardown decision is
  * made in Omega. The shell only maps nvmlDevice_t to an index, bounds the copies and serializes

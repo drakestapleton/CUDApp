@@ -1,0 +1,725 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Concatenate after tests/components/proc.om. Run from repository root.
+text NgAbiNo "NOT_RUN abi comparison (nvml.h absent; set CUDA_NVML_INCLUDE)\n"
+text NgAbiOk "PASS shell compiles against the CUDA nvml.h prototypes\n"
+text NgThinOk "PASS thin-shell guard\nPASS thin-shell guard negative control\n"
+text NgNameN "nvml"
+text NgNameQ "query"
+text NgNameE "errstr"
+text NgFailP "CUDAPP-NVML HOST FAIL ("
+text NgMpass "mutants caught 22/22\n"
+text NgBuild "build"
+text NgComm "PASS committed "
+text NgBridge " is the bridge output of native/nvml\n"
+text NgFakeP "PASS fake tier: "
+text NgPure "PASS seeded Omega fake tier: "
+text NgNegP "PASS oracle negative control (altered string rejected: "
+text NgCloseP ")\n"
+text NgMutP "  mutant "
+text NgQuote " '"
+text NgCaught "': caught ("
+text NgAbiP "PASS abi: "
+text NgFacts " facts equal to "
+note Existing bridge shell and C ABI caller are MIGRATION dependencies, not Omega implementations.
+text NgDir "build/nvml"
+text NgSrc "build/nvml/unit.om"
+text NgBin "build/nvml/host"
+text NgOut "build/nvml/out"
+text NgHash "build/nvml/hash"
+text NgOld "build/nvml/caller"
+text NgFake "build/nvml/fake.c"
+text NgBad "build/nvml/bad.tsv"
+text NgOrac "tests/nvml/errstr-oracle.tsv"
+text NgPass "CUDAPP-NVML HOST PASS (476 checks)\n"
+text NgFail "CUDAPP-NVML HOST FAIL (1 of 476 checks)\n"
+text NgPin "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
+text NgPref "FRONTEND_PIN="
+text NgUnits "om/units.sh"
+text NgWrap "/tools/bridge-seeded"
+text NgEnv "/usr/bin/env"
+text NgPath "PATH=/usr/bin:/bin"
+text NgSeed "OMEGA_SEEDED_OMC="
+text NgSh "/bin/sh"
+text NgSha "/usr/bin/sha256sum"
+text NgCc "/usr/bin/cc"
+text NgC "c"
+text NgH "h"
+text NgCout "build/nvml/unit.c"
+text NgHout "build/nvml/unit.h"
+text NgHdr "src/cudapp_native.h"
+text NgStep "src/cudapp_om_nvml_step.c"
+text NgErr "src/cudapp_om_nvml_errstr.c"
+text NgN "native/nvml/nvml.om"
+text NgQ "native/nvml/query.om"
+text NgS "native/nvml/step.om"
+text NgE "native/nvml/errstr.om"
+text NgF "tests/nvml/rmfake.om"
+text NgHost "tests/nvml/host.om"
+text NgShell "compat/nvml/cudapp_nvml.c"
+text NgFat "static int x(void) { return ioctl(3, 0x20800110); }\n"
+text NgOk "CUDAPP-NVML HOST PASS\n"
+text NgNo "NOT_RUN: set OMEGA_OMC (omega-mv e5b32567 omc) and OMEGA_BRIDGE (omega-bridge checkout)\n"
+text NgRp "REFUSED: no FRONTEND_PIN in om/units.sh\n"
+text NgRo "REFUSED: omc digest is not the omega-mv e5b32567 pin\n"
+text NgRb "REFUSED: bridge-seeded digest is not the om/units.sh frontend pin\n"
+text NgOmEnv "OMEGA_OMC="
+text NgBrEnv "OMEGA_BRIDGE="
+text NgCudaE "CUDA_NVML_INCLUDE="
+text NgCuda "/usr/local/cuda/include"
+text NgNvH "/nvml.h"
+text NgAbi "tests/nvml/abi.c"
+text NgAO "build/nvml/abi-ours"
+text NgAC "build/nvml/abi-cuda"
+text NgAT "build/nvml/abi-ours.txt"
+text NgCT "build/nvml/abi-cuda.txt"
+text NgObj "build/nvml/shell-cuda.o"
+text NgStd "-std=gnu11"
+text NgOpt "-O1"
+text NgWall "-Wall"
+text NgExtra "-Wextra"
+text NgWerr "-Werror"
+text NgIsrc "-Isrc"
+text NgIcmp "-Icompat/nvml"
+text NgItst "-Itests/nvml"
+text NgTrans "tests/nvml/transport.c"
+text NgTest "tests/nvml/nvml_test.c"
+text NgPth "-lpthread"
+text NgDashO "-o"
+text NgDashC "-c"
+text NgDashI "-I"
+text NgSucc "Successful"
+text NgTab "\t"
+text NgNl "\n"
+text NgDev "/dev/"
+text NgNV0 "NV0"
+text NgNV2 "NV2080"
+text NgHex "0x2080"
+text NgOpen "open("
+text NgIo "ioctl("
+text NgClose "close("
+text NgMap "mmap("
+text NgRead "read("
+text NgWrite "write("
+global NgBr uchar 1024
+global NgBn ulong 1
+global NgCu uchar 1024
+global NgCn ulong 1
+
+fn ng_env key view uchar * dst edit uchar * to ulong
+b = new uchar 8192 0
+for i ulong ulong envcnt
+r = envread i b 0 len b
+if ge r long len key
+if hp_equal key b len key
+n = sub ulong r len key
+hp_require le n len dst
+for j ulong n
+put dst j get b add len key j
+end
+ret n
+end
+end
+end
+ret 0
+end
+
+fn ng_exec path view uchar * code long to void
+fd = hp_open path len path 524865 420
+hp_exec -1 fd code
+hp_close fd
+end
+
+fn ng_hash path view uchar * n ulong dst edit uchar 64 to void
+b = new uchar 2048 0
+hp_start NgSha len NgSha
+hp_arg path n
+ng_exec NgHash 0
+k = hp_read NgHash len NgHash b len b
+hp_require ge k 64
+for i ulong 64
+put dst i get b i
+end
+end
+
+fn ng_config to void
+b = new uchar 1024 0
+c = new uchar 1024 0
+hash = new uchar 64 0
+pin = new uchar 64 0
+on = ng_env NgOmEnv b
+bn = ng_env NgBrEnv c
+if or eq on 0 eq bn 0
+hp_say NgNo
+exit 77
+end
+if ne faccess b 0 on 1 0
+hp_say NgNo
+exit 77
+end
+hp_require le add bn len NgWrap len c
+for i ulong len NgWrap
+put c add bn i get NgWrap i
+end
+bn = add bn len NgWrap
+if ne faccess c 0 bn 4 0
+hp_say NgNo
+exit 77
+end
+put HOn 0 on
+for i ulong on
+put HOm i get b i
+end
+put NgBn 0 bn
+for i ulong bn
+put NgBr i get c i
+end
+ng_hash b on hash
+if not hp_equal hash NgPin 64
+hp_say NgRo
+exit 69
+end
+ng_pin pin
+ng_hash c bn hash
+if not hp_equal hash pin 64
+hp_say NgRb
+exit 69
+end
+n = ng_env NgCudaE b
+if eq n 0
+n = len NgCuda
+for i ulong n
+put b i get NgCuda i
+end
+end
+put NgCn 0 n
+for i ulong n
+put NgCu i get b i
+end
+end
+
+fn ng_pin pin edit uchar 64 to void
+units = new uchar 65536 0
+n = hp_read NgUnits len NgUnits units len units
+hits = ulong 0
+for p ulong n
+if ng_line units p
+if le add p add len NgPref 65 n
+if ng_at units p NgPref
+if ng_pinrow units add p len NgPref pin
+hits = add hits 1
+end
+end
+end
+end
+end
+if ne hits 1
+hp_say NgRp
+exit 74
+end
+end
+
+fn ng_line b view uchar * p ulong to bool
+if eq p 0
+ret true
+end
+ret eq get b sub p 1 10
+end
+
+fn ng_pinrow b view uchar * p ulong dst edit uchar 64 to bool
+for j ulong 64
+v = get b add p j
+if not ng_hex v
+ret false
+end
+put dst j v
+end
+ret eq get b add p 64 10
+end
+
+fn ng_hex v uchar to bool
+if and ge v 48 le v 57
+ret true
+end
+ret and ge v 97 le v 102
+end
+
+fn ng_at buf view uchar * pos ulong word view uchar * to bool
+if gt len word sub len buf pos
+ret false
+end
+for i ulong len word
+if ne get buf add pos i get word i
+ret false
+end
+end
+ret true
+end
+
+fn ng_has buf view uchar * used ulong word view uchar * to bool
+for p ulong used
+if le add p len word used
+if ng_at buf p word
+ret true
+end
+end
+end
+ret false
+end
+
+fn ng_cat path view uchar * to void
+hp_cat path len path
+p = get HUsed 0
+hp_require lt p len HSrc
+put HSrc p 10
+put HUsed 0 add p 1
+end
+
+fn ng_save to void
+fd = hp_open NgSrc len NgSrc 524865 420
+hp_src fd
+hp_close fd
+end
+
+fn ng_build to void
+ng_save
+infd = hp_open NgSrc len NgSrc 524288 0
+outfd = hp_open NgBin len NgBin 524865 493
+hp_tool 0
+hp_exec infd outfd 0
+hp_close infd
+hp_close outfd
+hp_require eq chmod NgBin 0 len NgBin 493 0
+end
+
+fn ng_comp to void
+put HUsed 0 0
+ng_cat NgN
+ng_cat NgQ
+ng_cat NgS
+ng_cat NgE
+ng_cat NgF
+ng_cat NgHost
+end
+
+fn ng_bridge mode view uchar * source view uchar * dest view uchar * to void
+b = new uchar 2048 0
+hp_start NgEnv len NgEnv
+hp_arg NgPath len NgPath
+for i ulong len NgSeed
+put b i get NgSeed i
+end
+for i ulong get HOn 0
+put b add len NgSeed i get HOm i
+end
+hp_arg b add len NgSeed get HOn 0
+hp_arg NgSh len NgSh
+for i ulong get NgBn 0
+put b i get NgBr i
+end
+hp_arg b get NgBn 0
+hp_arg mode len mode
+hp_arg source len source
+ng_exec dest 0
+end
+
+fn ng_binding saved view uchar * to void
+proto = new uchar 4096 0
+header = new uchar 65536 0
+ng_save
+ng_bridge NgC NgSrc NgCout
+hp_require hp_cmp NgCout len NgCout saved len saved
+ng_bridge NgH NgSrc NgHout
+n = hp_read NgHout len NgHout proto len proto
+k = hp_read NgHdr len NgHdr header len header
+hp_require gt n 0
+hp_require ng_hasn header k proto n
+hp_wpart 1 NgComm 0 len NgComm
+hp_wpart 1 saved 0 len saved
+hp_wpart 1 NgBridge 0 len NgBridge
+end
+
+fn ng_cc to void
+hp_start NgEnv len NgEnv
+hp_arg NgPath len NgPath
+hp_arg NgCc len NgCc
+hp_arg NgStd len NgStd
+hp_arg NgOpt len NgOpt
+hp_arg NgWall len NgWall
+hp_arg NgExtra len NgExtra
+hp_arg NgWerr len NgWerr
+end
+
+fn ng_caller to void
+ng_bridge NgC NgF NgFake
+ng_cc
+hp_arg NgIsrc len NgIsrc
+hp_arg NgIcmp len NgIcmp
+hp_arg NgItst len NgItst
+hp_arg NgShell len NgShell
+hp_arg NgStep len NgStep
+hp_arg NgErr len NgErr
+hp_arg NgFake len NgFake
+hp_arg NgTrans len NgTrans
+hp_arg NgTest len NgTest
+hp_arg NgPth len NgPth
+hp_arg NgDashO len NgDashO
+hp_arg NgOld len NgOld
+hp_exec -1 -1 0
+hp_start NgOld len NgOld
+hp_arg NgOrac len NgOrac
+ng_exec NgOut 0
+ng_result NgPass
+hp_wpart 1 NgFakeP 0 len NgFakeP
+hp_wpart 1 NgPass 0 len NgPass
+end
+
+fn ng_result expected view uchar * to void
+b = new uchar 65536 0
+n = hp_read NgOut len NgOut b len b
+hp_require ge n len expected
+hp_require ng_at b sub n len expected expected
+end
+
+fn ng_run oracle view uchar * code long to void
+hp_start NgBin len NgBin
+hp_arg oracle len oracle
+ng_exec NgOut code
+end
+
+fn ng_oracle to void
+b = new uchar 65536 0
+dst = new uchar 65536 0
+n = hp_read NgOrac len NgOrac b len b
+line = ulong 0
+p = ulong 0
+while lt p n bound 65536
+if eq get b p 10
+line = add line 1
+end
+put dst p get b p
+p = add p 1
+if and eq line 1 eq get b sub p 1 9
+break
+end
+end
+hp_require lt p n
+k = p
+for i ulong len NgSucc
+put dst k get NgSucc i
+k = add k 1
+end
+while lt p n bound 65536
+if eq get b p 10
+break
+end
+p = add p 1
+end
+while lt p n bound 65536
+put dst k get b p
+k = add k 1
+p = add p 1
+end
+hp_write NgBad len NgBad dst k
+hp_require not hp_cmp NgBad len NgBad NgOrac len NgOrac
+ng_run NgBad 1
+ng_result NgFail
+hp_wpart 1 NgNegP 0 len NgNegP
+hp_wpart 1 NgFail 0 sub len NgFail 1
+hp_wpart 1 NgCloseP 0 len NgCloseP
+end
+
+fn ng_abi to void
+b = new uchar 2048 0
+for i ulong get NgCn 0
+put b i get NgCu i
+end
+n = get NgCn 0
+for i ulong len NgNvH
+put b add n i get NgNvH i
+end
+if ne faccess b 0 add n len NgNvH 4 0
+hp_say NgAbiNo
+ret
+end
+ng_cc
+hp_arg NgIcmp len NgIcmp
+hp_arg NgAbi len NgAbi
+hp_arg NgDashO len NgDashO
+hp_arg NgAO len NgAO
+hp_exec -1 -1 0
+hp_start NgAO len NgAO
+ng_exec NgAT 0
+ng_cc
+hp_arg NgDashI len NgDashI
+hp_arg b n
+hp_arg NgAbi len NgAbi
+hp_arg NgDashO len NgDashO
+hp_arg NgAC len NgAC
+hp_exec -1 -1 0
+hp_start NgAC len NgAC
+ng_exec NgCT 0
+hp_require hp_cmp NgAT len NgAT NgCT len NgCT
+ng_cc
+hp_arg NgDashC len NgDashC
+hp_arg NgDashI len NgDashI
+hp_arg b n
+hp_arg NgIsrc len NgIsrc
+hp_arg NgShell len NgShell
+hp_arg NgDashO len NgDashO
+hp_arg NgObj len NgObj
+hp_exec -1 -1 0
+ng_abimsg b n
+hp_wpart 1 NgAbiOk 0 len NgAbiOk
+end
+
+fn ng_call b view uchar * p ulong word view uchar * to bool
+if eq p 0
+ret false
+end
+v = get b sub p 1
+if or eq v 95 and ge v 97 le v 122
+ret false
+end
+ret ng_at b p word
+end
+
+fn ng_thin b view uchar * used ulong to bool
+start = true
+skip = false
+for p ulong used
+v = get b p
+if eq v 10
+start = true
+skip = false
+continue
+end
+if start
+if or eq v 32 eq v 9
+continue
+end
+if eq v 42
+skip = true
+end
+if eq v 47
+if lt add p 1 used
+if eq get b add p 1 42
+skip = true
+end
+end
+end
+start = false
+end
+if skip
+continue
+end
+if ng_at b p NgDev
+ret false
+end
+if ng_at b p NgNV0
+ret false
+end
+if ng_at b p NgNV2
+ret false
+end
+if ng_at b p NgHex
+ret false
+end
+if ng_call b p NgOpen
+ret false
+end
+if ng_call b p NgIo
+ret false
+end
+if ng_call b p NgClose
+ret false
+end
+if ng_call b p NgMap
+ret false
+end
+if ng_call b p NgRead
+ret false
+end
+if ng_call b p NgWrite
+ret false
+end
+end
+ret true
+end
+
+fn ng_guard to void
+b = new uchar 65536 0
+n = hp_read NgShell len NgShell b len b
+hp_require ng_thin b n
+hp_require not ng_thin NgFat len NgFat
+hp_say NgThinOk
+end
+
+fn ng_replace from view uchar * into view uchar * to void
+b = new uchar 1048576 0
+n = get HUsed 0
+for i ulong n
+put b i get HSrc i
+end
+put HUsed 0 0
+p = ulong 0
+hits = ulong 0
+while lt p n bound 999999
+q = p
+while lt q n bound 999999
+if eq get b q 10
+break
+end
+q = add q 1
+end
+if and eq sub q p len from ng_at b p from
+hits = add hits 1
+ng_append into 0 len into
+else
+ng_append b p sub q p
+end
+put HSrc get HUsed 0 10
+put HUsed 0 add get HUsed 0 1
+p = add q 1
+end
+hp_require eq hits 1
+end
+
+fn ng_append b view uchar * p ulong n ulong to void
+hp_require le n sub len HSrc get HUsed 0
+for i ulong n
+put HSrc get HUsed 0 get b add p i
+put HUsed 0 add get HUsed 0 1
+end
+end
+
+fn ng_mutant unit view uchar * from view uchar * into view uchar * to void
+b = new uchar 65536 0
+put HUsed 0 0
+ng_cat NgN
+ng_cat NgQ
+ng_cat NgS
+ng_cat NgE
+ng_replace from into
+ng_cat NgF
+ng_cat NgHost
+ng_build
+ng_run NgOrac 1
+n = hp_read NgOut len NgOut b len b
+hp_require ng_has b n NgFailP
+hp_wpart 1 NgMutP 0 len NgMutP
+hp_wpart 1 unit 0 len unit
+hp_wpart 1 NgQuote 0 len NgQuote
+hp_wpart 1 from 0 len from
+hp_wpart 1 NgCaught 0 len NgCaught
+ng_last b n
+hp_wpart 1 NgCloseP 0 len NgCloseP
+end
+
+fn ng_last b view uchar * n ulong to void
+hp_require gt n 0
+p = sub n 1
+while gt p 0 bound 65536
+if eq get b sub p 1 10
+break
+end
+p = sub p 1
+end
+hp_wpart 1 b p sub sub n p 1
+end
+
+fn ng_abimsg path view uchar * pn ulong to void
+b = new uchar 65536 0
+digits = new uchar 32 0
+n = hp_read NgAT len NgAT b len b
+hp_require gt n 0
+lines = ulong 0
+for i ulong n
+if eq get b i 10
+lines = add lines 1
+end
+end
+dn = hp_num lines digits
+hp_wpart 1 NgAbiP 0 len NgAbiP
+hp_wpart 1 digits 0 dn
+hp_wpart 1 NgFacts 0 len NgFacts
+hp_wpart 1 path 0 pn
+hp_wpart 1 NgNvH 0 len NgNvH
+hp_wpart 1 NgNl 0 len NgNl
+end
+
+
+fn ng_hasn buf view uchar * used ulong word view uchar * wn ulong to bool
+for p ulong used
+if le add p wn used
+ok = true
+for i ulong wn
+if ne get buf add p i get word i
+ok = false
+end
+end
+if ok
+ret true
+end
+end
+end
+ret false
+end
+
+fn ng_work to int
+r = makedir NgBuild 0 len NgBuild 493
+hp_require or eq r 0 eq r -17
+r = makedir NgDir 0 len NgDir 493
+hp_require or eq r 0 eq r -17
+ng_config
+put HUsed 0 0
+ng_cat NgN
+ng_cat NgQ
+ng_cat NgS
+ng_binding NgStep
+put HUsed 0 0
+ng_cat NgE
+ng_binding NgErr
+ng_comp
+ng_build
+ng_run NgOrac 0
+ng_result NgPass
+hp_wpart 1 NgPure 0 len NgPure
+hp_wpart 1 NgPass 0 len NgPass
+ng_oracle
+ng_caller
+ng_abi
+ng_guard
+ng_mutants
+hp_wpart 1 NgOk 0 len NgOk
+ret 0
+end
+
+note Preserve the former driver's public failure code; internal helper/exec refusals never pass.
+fn main to int
+st = new uchar 4 0
+pid = fork
+if lt pid 0
+ret 74
+end
+if eq pid 0
+exit ng_work
+end
+hp_wait pid st
+if ne get st 0 0
+ret 1
+end
+rc = int get st 1
+if eq rc 0
+ret 0
+end
+if eq rc 77
+ret rc
+end
+if eq rc 69
+ret rc
+end
+if eq rc 74
+ret rc
+end
+ret 1
+end

@@ -59,8 +59,9 @@ jobs:
           OMEGA_OMC: ${{ runner.temp }}/omega-mv/seed/out/omc
           OMEGA_BRIDGE: ${{ runner.temp }}/omega-bridge
         run: |
-          rc=0; make -j4 test > "$RUNNER_TEMP/make-test.log" 2>&1 || rc=$?
-          cat "$RUNNER_TEMP/make-test.log"
+          # tee streams the log so a timeout still shows how far the suite got; with pipefail (the default bash -e shell lacks it),
+          # rc is make's status.
+          set -o pipefail; rc=0; make -j4 test 2>&1 | tee "$RUNNER_TEMP/make-test.log" || rc=$?
           [ "$rc" -eq 0 ] || exit "$rc"
           last=$(tail -n 1 "$RUNNER_TEMP/make-test.log")
           case $last in

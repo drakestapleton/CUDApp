@@ -17,8 +17,9 @@ jobs:
   x86-host-tests:
     runs-on: ubuntu-24.04
     # The #280 union adds the exhaustive MoE differential (3366 s on one GB10 core) to the
-    # portable suite. PROVISIONAL until an exact-head run is measured.
-    timeout-minutes: 120
+    # portable suite; H5 4854037e was cancelled at 120 minutes. PROVISIONAL until an exact-head
+    # run is measured.
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -52,8 +53,9 @@ jobs:
           CUDAPP_MEM_RESERVE_MIB: "0"
         run: |
           rc=0
-          make CC=gcc -j4 test > "$RUNNER_TEMP/make-test.log" 2>&1 || rc=$?
-          cat "$RUNNER_TEMP/make-test.log"
+          # tee streams the log so a timeout still shows how far the suite got (H5 was cancelled
+          # at 120 minutes with no output); with pipefail (the default bash -e shell lacks it), rc is make's status.
+          set -o pipefail; make CC=gcc -j4 test 2>&1 | tee "$RUNNER_TEMP/make-test.log" || rc=$?
           [ "$rc" -eq 0 ] || exit "$rc"
           last=$(tail -n 1 "$RUNNER_TEMP/make-test.log")
           case $last in

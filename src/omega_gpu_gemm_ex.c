@@ -46,6 +46,35 @@ static float u2f(uint32_t u) { float f; memcpy(&f, &u, 4); return f; }
 static uint32_t f2u(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
 static int fin(float f) { return (f2u(f) & 0x7f800000u) != 0x7f800000u; }
 static double dabs(double v) { return v < 0 ? -v : v; }
+/* The NaN a double operation gives, as the seeded Omega units define it (o_fpn in src/cudapp_om_gemm_ex_*.c, AArch64's
+ * rule): a NaN result is operand a's signaling NaN quieted, else b's, else a's quiet NaN, else b's, else the default NaN
+ * 0x7ff8000000000000. AArch64 arithmetic gives that already; x86-64's invalid operation gives the negative default NaN,
+ * and which operand of a + b or a * b x86 passes on is the compiler's choice. The oracle applies the rule itself, at the
+ * operations the units do in the same operand order, so the differential holds on both hosts. */
+static double fpn(double a, double b, double r) {
+    uint64_t ua, ub;
+    const uint64_t q = UINT64_C(0x8000000000000), dn = UINT64_C(0x7ff8000000000000);
+    if (r == r) return r;
+    memcpy(&ua, &a, 8); memcpy(&ub, &b, 8);
+    if (a != a && !(ua & q)) ua |= q;
+    else if (b != b && !(ub & q)) ua = ub | q;
+    else if (a != a) {}
+    else if (b != b) ua = ub;
+    else ua = dn;
+    memcpy(&r, &ua, 8);
+    return r;
+}
+static double dmul(double a, double b) { return fpn(a, b, a * b); }
+static double dadd(double a, double b) { return fpn(a, b, a + b); }
+/* s + a * b with the rule: the plain expression (left contractable, so test-gemm-ex-unfused's red check still finds the
+ * fused multiply-add a build without -ffp-contract=off makes), recomputed through the rule only when it gives a NaN; a
+ * NaN anywhere in the chain reaches the result, so a non-NaN result needs no rule. The recompute stays out of line: a
+ * product shared with it would have a second use, and the compiler fuses only a product whose one use is the add. */
+__attribute__((noinline, cold)) static double dmadd_nan(double s, double a, double b) { return dadd(s, dmul(a, b)); }
+static double dmadd(double s, double a, double b) {
+    const double t = s + a * b;
+    return t == t ? t : dmadd_nan(s, a, b);
+}
 
 static float h2f(uint16_t h) {
     uint32_t s = (uint32_t)(h >> 15) << 31, e = (h >> 10) & 31u, m = h & 0x3ffu;
@@ -178,7 +207,7 @@ static int scan_bad(unsigned t, const uint8_t *p, uint64_t rows, uint64_t cols, 
 }
 static double block_factor(const Call *c, uint64_t i, uint64_t kb, uint64_t j) {
     if (c->x.scale != OMEGA_GEMM_SCALE_BLOCK) return 1.0;
-    return (double)c->sa[(i / c->x.block_m) * c->sa_c + kb] * (double)c->sb[kb * c->sb_c + j / c->x.block_n];
+    return dmul((double)c->sa[(i / c->x.block_m) * c->sa_c + kb], (double)c->sb[kb * c->sb_c + j / c->x.block_n]);
 }
 
 /* stored rows x cols with leading dimension ld; 0 when ld is short or the span passes 2^56 */
@@ -342,7 +371,8 @@ static int run_part(Call *c, Bufs *bf, int any_bad, uint64_t m0, uint32_t mc, ui
 static double host_dot(const Call *c, uint64_t i, uint64_t j) {
     double s = 0.0;
     for (uint64_t kk = 0; kk < c->x.k; kk++)
-        s += (double)aval(c, i, kk) * (double)bval(c, kk, j) * block_factor(c, i, kk / (c->x.block_k ? c->x.block_k : 1u), j);
+        s = dmadd(s, dmul((double)aval(c, i, kk), (double)bval(c, kk, j)),
+                  block_factor(c, i, kk / (c->x.block_k ? c->x.block_k : 1u), j));
     return s;
 }
 
@@ -394,7 +424,7 @@ static int c_gemm_ex(const OmegaGemmExArgs *args) {
             c.A = (const uint8_t *)x->a + b * x->stride_a * esize(x->a_type);
             c.B = (const uint8_t *)x->b + b * x->stride_b * esize(x->b_type);
             if (x->scale != OMEGA_GEMM_SCALE_NONE) { c.sa = x->scale_a + b * x->scale_stride_a; c.sb = x->scale_b + b * x->scale_stride_b; }
-            if (x->scale == OMEGA_GEMM_SCALE_TENSOR) alpha *= (double)c.sa[0] * (double)c.sb[0];
+            if (x->scale == OMEGA_GEMM_SCALE_TENSOR) alpha = dmul(alpha, dmul((double)c.sa[0], (double)c.sb[0]));
             memset(bf.rowbad, 0, x->m); memset(bf.colbad, 0, x->n);
             const int bad_a = scan_bad(x->a_type, c.A, x->op_a ? x->k : x->m, x->op_a ? x->m : x->k, x->lda, !x->op_a, bf.rowbad);
             const int bad_b = scan_bad(x->b_type, c.B, x->op_b ? x->n : x->k, x->op_b ? x->k : x->n, x->ldb, x->op_b, bf.colbad);
@@ -433,8 +463,10 @@ static int c_gemm_ex(const OmegaGemmExArgs *args) {
                             uint64_t kb = x->scale == OMEGA_GEMM_SCALE_BLOCK ? k0 / x->block_k : 0;
                             if (g_mutant == 3 && x->scale == OMEGA_GEMM_SCALE_BLOCK) kb = (kb + 1u) % c.sa_c;
                             for (uint32_t i = 0; i < mc; i++)
-                                for (uint32_t j = 0; j < nc; j++)
-                                    bf.acc[(uint64_t)i * nc + j] += (double)bf.p[(uint64_t)i * nc + j] * block_factor(&c, m0 + i, kb, n0 + j);
+                                for (uint32_t j = 0; j < nc; j++) {
+                                    double *ac = &bf.acc[(uint64_t)i * nc + j];
+                                    *ac = dmadd(*ac, (double)bf.p[(uint64_t)i * nc + j], block_factor(&c, m0 + i, kb, n0 + j));
+                                }
                         }
                         k0 += kc;
                     }
@@ -446,9 +478,9 @@ static int c_gemm_ex(const OmegaGemmExArgs *args) {
                         if (compute) {
                             double a = one_part ? 0.0 + (double)bf.p[(uint64_t)i * nc + j] : bf.acc[(uint64_t)i * nc + j];
                             if (any_bad && (bf.rowbad[m0 + i] || bf.colbad[n0 + j])) { a = host_dot(&c, m0 + i, n0 + j); info.host_fixed++; }
-                            v = alpha * a;
+                            v = dmul(alpha, a);
                         }
-                        if (beta != 0.0) v += beta * load_c(x->c_type, C, ci);
+                        if (beta != 0.0) v = dmadd(v, beta, load_c(x->c_type, C, ci));
                         store_c(x->c_type, C, ci, v);
                     }
             }
@@ -485,7 +517,7 @@ static int c_fp8_block_rows(const uint8_t *w, const float *scale, double scale_m
             for (uint64_t c = 0; c < k; c++) {
                 uint64_t cb = c / block;
                 if (g_mutant == 5) cb = (cb + 1u) % kb;
-                dr[c] = (float)((double)e4m3f(wr[c]) * (double)sr[cb] * scale_mul); /* one rounding */
+                dr[c] = (float)dmul(dmul((double)e4m3f(wr[c]), (double)sr[cb]), scale_mul); /* one rounding */
             }
         }
         OmegaGemmExInfo pi;

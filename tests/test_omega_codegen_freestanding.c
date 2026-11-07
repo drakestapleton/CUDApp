@@ -174,6 +174,36 @@ static void buffer_contract(void) {
 }
 #endif
 
+/* LDG.E with a signed 24-bit byte offset (tern weight rows, src/omega_blackwell_codegen_tern.c ldg32). Oracle:
+ * nvdisasm 13.0 --binary SM121 decodes exactly these words as the text below (evidence/ldg-offset-20261107/). Before
+ * the fix the .om encoder dropped the offset while the C encoder kept it. Offsets outside the field are refused. */
+static void ldg_offset_golden(void) {
+    static const struct { uint32_t imm, w1; const char *text; } fx[] = {
+        { 0, 0x00000008U, "LDG.E R2, desc[UR8][R30.64]" },
+        { 0x40, 0x00004008U, "LDG.E R2, desc[UR8][R30.64+0x40]" },
+        { 0xfff00000U, 0xf0000008U, "LDG.E R2, desc[UR8][R30.64+-0x100000]" },
+        { 0x7fffff, 0x7fffff08U, "LDG.E R2, desc[UR8][R30.64+0x7fffff]" },
+    };
+    for (size_t i = 0; i < sizeof fx / sizeof fx[0]; i++) {
+        BlackwellIRInsn in;
+        memset(&in, 0, sizeof in);
+        in.op = BW_IR_LDG_E; in.dst_vreg = 2; in.src1_vreg = 30; in.src2_vreg = -1; in.src3_vreg = -1; in.ureg = 8;
+        in.imm = fx[i].imm;
+        uint32_t w[4];
+        int rc = omega_blackwell_encode_one(&in, w);
+        CHECK(rc == 0 && w[0] == 0x1e027981U && w[1] == fx[i].w1 && w[2] == 0x0c1e1900U && w[3] == 0x000f2200U,
+              "%s: rc %d words %08x %08x %08x %08x", fx[i].text, rc, w[0], w[1], w[2], w[3]);
+    }
+    BlackwellIRInsn big;
+    memset(&big, 0, sizeof big);
+    big.op = BW_IR_LDG_E; big.dst_vreg = 2; big.src1_vreg = 30; big.src2_vreg = -1; big.src3_vreg = -1; big.ureg = 8;
+    uint32_t w[4];
+    big.imm = 1u << 23;
+    CHECK(omega_blackwell_encode_one(&big, w) != 0, "LDG.E offset +0x800000 must be refused");
+    big.imm = (uint32_t)-(1 << 23);
+    CHECK(omega_blackwell_encode_one(&big, w) == 0, "LDG.E offset -0x800000 must encode");
+}
+
 /* Golden words (nvcc/nvdisasm oracles, independent of either encoder). The hosted build runs them with --golden
  * through the .om encoder (om/encoder/bw_enc_sm121.om); the freestanding build through the C encoder. */
 static void golden_fixtures(void) {
@@ -184,6 +214,7 @@ static void golden_fixtures(void) {
     CHECK(omega_blackwell_verify_codegen_fixtures_reconv() == 0, "reconv golden words");
     CHECK(omega_blackwell_verify_codegen_fixtures_bfly_f2fp() == 0, "SHFL.BFLY / F2FP.BF16 golden words (rc %d)", omega_blackwell_verify_codegen_fixtures_bfly_f2fp());
     CHECK(omega_blackwell_verify_codegen_fixtures_atomf32() == 0, "ATOMG.E.ADD.F32 golden words (rc %d)", omega_blackwell_verify_codegen_fixtures_atomf32());
+    ldg_offset_golden();
     CHECK(omega_blackwell_test_regalloc_bounds() == 0, "regalloc bounds");
 }
 

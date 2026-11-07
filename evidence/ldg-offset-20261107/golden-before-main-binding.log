@@ -1,0 +1,6 @@
+FAIL LDG.E R2, desc[UR8][R30.64+0x40]: rc 0 words 1e027981 00000008 0c1e1900 000f2200
+FAIL LDG.E R2, desc[UR8][R30.64+-0x100000]: rc 0 words 1e027981 00000008 0c1e1900 000f2200
+FAIL LDG.E R2, desc[UR8][R30.64+0x7fffff]: rc 0 words 1e027981 00000008 0c1e1900 000f2200
+FAIL LDG.E offset +0x800000 must be refused
+FAIL: hosted golden-word fixtures through the .om encoder (4 failing checks)
+exit=1

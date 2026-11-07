@@ -10,7 +10,7 @@
 #       .om (OUT_DIR), C oracle ($(OUT_DIR)-enc-c), diff ($(OUT_DIR)-enc-diff); the .om and C kernel sets must be
 #       identical file for file, and the diff build must log no DIFFER line.
 #   make test-om-units            the committed binding regenerates byte for byte from the pinned omc + bridge
-#   make test-om-encoder-mutants  three mutant .om encoders, each compiled by the pinned omc, must go red
+#   make test-om-encoder-mutants  four mutant .om encoders, each compiled by the pinned omc, must go red
 # The last two accept OMEGA_OMC and OMEGA_BRIDGE; their defaults retain the
 # OMEGA_MV and OMEGA_BRIDGE_DIR checkout convention. Missing pins refuse.
 OMEGA_MV ?= ../omega-mv
@@ -80,7 +80,8 @@ test-om-units:
 # fixture test linked with it must fail the golden words or differ from the C-encoded freestanding dump.
 OM_ENC_MUTANTS = 's/^ret or base shl rb o 1 16$$/ret or base shl rb o 1 17/' \
 	's/^p = 262144$$/p = 0/' \
-	's/^const NOPC ulong 1032192$$/const NOPC ulong 1032193/'
+	's/^const NOPC ulong 1032192$$/const NOPC ulong 1032193/' \
+	's/^put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744$$/put4 w wda o 31105 rb o 5 203299072 ctl o 991744/'
 test-om-encoder-mutants: build/test_codegen_freestanding
 	@[ -x "$(OMEGA_OMC)" ] && [ -f "$(OMEGA_BRIDGE)/src/toc.om" ] && [ -f "$(OMEGA_BRIDGE)/src/freest.om" ] || { echo "NOT_RUN: set pinned OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
 	@mkdir -p $(OM_ENC_DIR)

@@ -1,0 +1,43 @@
+build-diff/gpu_matmul_api_test --host-only: exit 0, 53 kernels so far
+build-diff/gpu_elementwise_test --host-only: exit 0, 63 kernels so far
+build-diff/gpu_reconv_test --host-only: exit 0, 86 kernels so far
+build-diff/gpu_attention_test --host-only: exit 0, 622 kernels so far
+build-diff/gpu_moe_window_test --host-only: exit 0, 622 kernels so far
+build-diff/gpu_fp8_api_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_decode_attn_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_router_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_bf16_gemv_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_fp8gemm_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_tc_probe_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_tc_peak_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_pf_mem_test --host-only: exit 0, 626 kernels so far
+build-diff/gpu_qmma_probe_test --host-only: exit 0, 628 kernels so far
+build-diff/gpu_cmdlist_test --host-only: exit 0, 628 kernels so far
+build-diff/gpu_decode_graph_test --host-only: exit 0, 628 kernels so far
+build-diff/gpu_attention_test --hd 128 --host-only: exit 0, 640 kernels so far
+build-diff/gpu_tcgemm_test --host-only: exit 0, 640 kernels so far
+build-diff/gpu_tcgemm_test --sim: exit 0, 640 kernels so far
+build-diff/gpu_prefill_attn_test --host-only: exit 0, 664 kernels so far
+build-diff/gpu_prefill_attn_test --sim: exit 0, 664 kernels so far
+build-diff/gpu_pfgemm_test --host-only: exit 0, 664 kernels so far
+build-diff/gpu_pfgemm_test --sim: exit 0, 664 kernels so far
+build-diff/gpu_qgemm_test --host-only: exit 0, 664 kernels so far
+build-diff/gpu_qgemm_test --sim: exit 0, 664 kernels so far
+build-diff/gpu_pfhost_test --host-only: exit 0, 664 kernels so far
+build-diff/gpu_pfhost_test --sim: exit 0, 664 kernels so far
+build-diff/gpu_cmdlist_test --host-only: exit 0, 664 kernels so far
+build-diff/gpu_cmdlist_test --sim: exit 0, 664 kernels so far
+build-diff/gpu_gpr_boundary_test: exit 0, 664 kernels so far
+build-diff/gpu_scan_test --host-only: exit 0, 674 kernels so far
+build-diff/gpu_scan_test --sim: exit 0, 674 kernels so far
+build-diff/gpu_gemm_test --host-only: exit 0, 746 kernels so far
+build-diff/gpu_gemm_test --sim: exit 0, 746 kernels so far
+build-diff/gpu_streams_test --host-only: exit 0, 750 kernels so far
+build-diff/gpu_streams_test --sim: exit 0, 750 kernels so far
+build-diff/gpu_mathlibs_test --host-only: exit 0, 786 kernels so far
+build-diff/gpu_mathlibs_test --sim: exit 0, 786 kernels so far
+build-diff/gpu_isolation_test --host-only: exit 0, 789 kernels so far
+build-diff/bw_hazard_test: exit 134, 1508 kernels so far
+ENCODER DIFF: .om and C encoders disagree (program, 310 insns)
+Aborted (core dumped)
+VERDICT FAIL: corpus producer failed: build-diff/bw_hazard_test

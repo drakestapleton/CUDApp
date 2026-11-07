@@ -1,0 +1,14 @@
+Cuda compilation tools, release 13.0, V13.0.85
+Build cuda_13.0.r13.0/compiler.36400806_0
+	.headerflags	@"EF_CUDA_64BIT_ADDRESS EF_CUDA_SM121 EF_CUDA_VIRTUAL_SM(EF_CUDA_SM121)"
+	.headerflags	@"EF_CUDA_64BIT_ADDRESS EF_CUDA_SM121 EF_CUDA_VIRTUAL_SM(EF_CUDA_SM121)"
+        /*0000*/                   LDG.E R2, desc[UR8][R30.64] ;            /* 0x000000081e027981 */
+                                                                            /* 0x000f22000c1e1900 */
+        /*0010*/                   LDG.E R2, desc[UR8][R30.64+0x40] ;       /* 0x000040081e027981 */
+                                                                            /* 0x000f22000c1e1900 */
+        /*0020*/                   LDG.E R2, desc[UR8][R30.64+-0x100000] ;  /* 0xf00000081e027981 */
+                                                                            /* 0x000f22000c1e1900 */
+        /*0030*/                   LDG.E R2, desc[UR8][R30.64+0x7fffff] ;   /* 0x7fffff081e027981 */
+                                                                            /* 0x000f22000c1e1900 */
+378661ff9ae9193ac8c1ad32cd0b3d376c9ba6e2e886a2f629e5226bed639eea  ldg_words.bin
+bc40070d596fa49b81c0905ca1d05e457aaec071280f742997d4a0b511781b25  /usr/local/cuda/bin/nvdisasm

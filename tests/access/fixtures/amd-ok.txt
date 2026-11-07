@@ -1,0 +1,15 @@
+ACCESS1 provider=amd-devcloud window=SYNTHETIC-amd-mi300x-fixture claim=ACCESS_TESTED
+SRC repo=aien-dev/CUDApp rev=0123456789abcdef0123456789abcdef01234567
+WHEN start=2026-11-07T00:00:00Z
+HOST os=SYNTHETIC-fixture-not-a-machine kernel=SYNTHETIC arch=x86_64
+DEVICE id=d0 vendor=amd class=gpu model=SYNTHETIC-fixture arch=gfx942 pci=SYNTHETIC count=1 driver=amdgpu
+DEVICE id=d7 vendor=amd class=cpu model=SYNTHETIC-host-cpu
+TOOL name=rocminfo path=/opt/rocm/bin/rocminfo sha256=SYNTHETIC
+ROW id=inv-rocminfo kind=inventory want=0 verdict=PASS dev=d0 exit=0 log=rows/inv-rocminfo.log
+ROW id=inv-amdsmi kind=inventory want=0 verdict=NOT_RUN dev=none reason=missing-tool-amd-smi
+ROW id=ref-sgemm kind=reference want=0 verdict=PASS dev=d0 exit=0 log=rows/ref-sgemm.log
+ROW id=cand-vadd kind=candidate want=0 verdict=MISSING_IMPLEMENTATION dev=none reason=no-gfx942-code-object-writer-or-launcher
+WHEN end=2026-11-07T01:00:00Z
+COST credit_usd=100 rate_usd_per_gpu_hour=2.59 gpu_hours=1.5 charged_usd=3.89
+TEARDOWN destroyed=yes by=SYNTHETIC verified_at=2026-11-07T01:05:00Z final_usage=SYNTHETIC
+END rows=4

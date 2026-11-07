@@ -1,0 +1,787 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note rcheck: checker for ACCESS1 cloud-window receipts (docs/access/RECEIPT.md).
+note It reads one receipt on stdin, at most 65535 bytes, and decides whether the receipt is
+note well formed and whether its claim is supported by its own rows. tools/access/collect.sh only
+note records commands and exit codes; every rule about what a receipt may claim lives here.
+note Exit 0 ACCEPT (stdout one RCHECK line), 1 REFUSE (stderr one RCHECK REFUSE line), 2 input
+note unreadable or larger than 65535 bytes. A window id that starts with SYNTHETIC prints
+note RCHECK ACCEPT-SYNTHETIC, so a test fixture can never read as a device receipt.
+note Pin: omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f (omega-mv e5b32567).
+global buf uchar 65536
+global st ulong 32
+global dcls ulong 8
+note st: 0 bytes, 1 ROW lines, 2 PASS, 3 FAIL, 4 NOT_RUN, 5 MISSING_IMPLEMENTATION, 6 BLOCKED_ACCESS,
+note 7 END rows value, 8 END seen, 9 TEARDOWN lines, 10 destroyed yes, 11 inventory PASS,
+note 12 reference PASS, 13 candidate PASS, 14 control PASS, 15 COST lines, 16 provider (1 amd 2 intel
+note 3 google), 17 claim (1 ACCESS_TESTED 2 NONE), 18 SRC lines, 19 synthetic window, 20 accelerator
+note DEVICE lines, 21 current line number, 22 header seen.
+note dcls[i] for device id di: 0 absent, 1 the provider's vendor and accelerator class, 2 anything else.
+text tACC "ACCESS1 "
+text tSRC "SRC "
+text tWHEN "WHEN "
+text tHOST "HOST "
+text tDEV "DEVICE "
+text tTOOL "TOOL "
+text tROW "ROW "
+text tCOST "COST "
+text tTEAR "TEARDOWN "
+text tEND "END "
+text kprov "provider="
+text kclaim "claim="
+text kwin "window="
+text krepo "repo="
+text krev "rev="
+text kid "id="
+text kvend "vendor="
+text kcls "class="
+text kmodel "model="
+text kkind "kind="
+text kverd "verdict="
+text kdev "dev="
+text kexit "exit="
+text kwant "want="
+text klog "log="
+text kchg "charged_usd="
+text kdes "destroyed="
+text kby "by="
+text krows "rows="
+text kvat "verified_at="
+text pamd "amd-devcloud"
+text pint "intel-cloud"
+text pgoo "google-trc"
+text cacc "ACCESS_TESTED"
+text cnone "NONE"
+text wamd "amd"
+text wint "intel"
+text wgoo "google"
+text woth "other"
+text wgpu "gpu"
+text wtpu "tpu"
+text wcpu "cpu"
+text kinv "inventory"
+text kref "reference"
+text kcand "candidate"
+text kctl "control"
+text vpass "PASS"
+text vfail "FAIL"
+text vnr "NOT_RUN"
+text vmiss "MISSING_IMPLEMENTATION"
+text vblk "BLOCKED_ACCESS"
+text wyes "yes"
+text wno "no"
+text wsyn "SYNTHETIC"
+text mref "RCHECK REFUSE line="
+text mrsn " reason="
+text mnl "\n"
+text macc "RCHECK ACCEPT"
+text msyn "-SYNTHETIC"
+text mprov " provider="
+text mclaim " claim="
+text mrows " rows="
+text mpass " pass="
+text mfail " fail="
+text mnr " not_run="
+text mmiss " missing="
+text mblk " blocked="
+text mbig "RCHECK REFUSE line=0 reason=input-unreadable-or-over-65535-bytes\n"
+text rhdr "first-line-must-be-ACCESS1"
+text rprov "unknown-provider"
+text rclaim "unknown-claim"
+text rwin "missing-window"
+text rtwice "header-repeated"
+text rrepo "src-missing-repo"
+text rrev "src-rev-not-40-lowercase-hex"
+text rdid "device-id-not-d0-to-d7"
+text rddup "device-id-repeated"
+text rdven "device-vendor-unknown"
+text rdcls "device-class-unknown"
+text rdmod "device-missing-model"
+text rkind "row-kind-unknown"
+text rverd "row-verdict-unknown"
+text rrid "row-missing-id"
+text rrdev "row-dev-not-a-declared-device"
+text rrexit "row-pass-or-fail-needs-decimal-exit"
+text rrlog "row-pass-or-fail-needs-log"
+text rnacc "pass-on-a-device-that-is-not-the-provider-accelerator"
+text rnz "pass-with-nonzero-exit"
+text rctl "control-pass-needs-nonzero-want-equal-to-exit"
+text rchg "cost-needs-decimal-charged_usd"
+text rdes "teardown-destroyed-must-be-yes-or-no"
+text rby "teardown-missing-by-or-verified_at"
+text rtdup "teardown-repeated"
+text rend "end-rows-not-decimal"
+text rafter "line-after-END"
+text rtag "unknown-line-tag"
+text rnoend "missing-END"
+text rcount "END-rows-differs-from-ROW-lines"
+text rnosrc "missing-SRC"
+text rnocost "missing-COST"
+text rnotear "missing-TEARDOWN"
+text rcand "candidate-pass-without-a-passing-control"
+text rclm "ACCESS_TESTED-needs-inventory-and-reference-pass-on-the-accelerator-and-destroyed-yes"
+text rnohdr "empty-receipt"
+
+fn pnum x ulong to void
+d = new uchar 24 0
+i = ulong 24
+y = x
+c = true
+while c bound 30
+i = sub i 1
+put d i uchar add ulong 48 rem y ulong 10
+y = div y ulong 10
+if eq y ulong 0
+c = false
+end
+end
+k = write 1 d i sub ulong 24 i
+ret
+end
+
+fn ptx t view uchar * to void
+k = write 1 t 0 len t
+ret
+end
+
+fn refuse t view uchar * to void
+d = new uchar 24 0
+i = ulong 24
+y = get st 21
+c = true
+while c bound 30
+i = sub i 1
+put d i uchar add ulong 48 rem y ulong 10
+y = div y ulong 10
+if eq y ulong 0
+c = false
+end
+end
+k = write 2 mref 0 len mref
+k = write 2 d i sub ulong 24 i
+k = write 2 mrsn 0 len mrsn
+k = write 2 t 0 len t
+k = write 2 mnl 0 len mnl
+exit 1
+end
+
+fn bump i ulong to void
+put st i add get st i ulong 1
+ret
+end
+
+note pfx: the bytes buf[s..s+len t) equal t and fit before e.
+fn pfx s ulong e ulong t view uchar * to bool
+m = len t
+if gt add s m e
+ret false
+end
+i = ulong 0
+while lt i m bound 999999
+if ne get buf add s i get t i
+ret false
+end
+i = add i 1
+end
+ret true
+end
+
+note kv: start of the value of key t (t ends in '=') in the line [s,e); 0 when absent.
+note A key counts only after a space, so "rev=" never matches inside "prev=".
+fn kv s ulong e ulong t view uchar * to ulong
+m = len t
+p = add s 1
+while le add p m e bound 999999
+if eq get buf sub p 1 uchar 32
+if pfx p e t
+ret add p m
+end
+end
+p = add p 1
+end
+ret ulong 0
+end
+
+fn vend v ulong e ulong to ulong
+p = v
+while lt p e bound 999999
+if eq get buf p uchar 32
+ret p
+end
+p = add p 1
+end
+ret e
+end
+
+note veq: the value starting at v (0 = absent) is exactly t.
+fn veq v ulong e ulong t view uchar * to bool
+if eq v ulong 0
+ret false
+end
+q = vend v e
+if ne sub q v len t
+ret false
+end
+ret pfx v q t
+end
+
+note vpre: the value starting at v begins with t.
+fn vpre v ulong e ulong t view uchar * to bool
+if eq v ulong 0
+ret false
+end
+q = vend v e
+ret pfx v q t
+end
+
+note vnum: decimal value of 1..18 digits, or 2^64-1 when absent or malformed.
+fn vnum v ulong e ulong to ulong
+bad = ulong 18446744073709551615
+if eq v ulong 0
+ret bad
+end
+q = vend v e
+if eq q v
+ret bad
+end
+if gt sub q v ulong 18
+ret bad
+end
+x = ulong 0
+p = v
+while lt p q bound 999999
+c = ulong get buf p
+if lt c ulong 48
+ret bad
+end
+if gt c ulong 57
+ret bad
+end
+x = add mul x ulong 10 sub c ulong 48
+p = add p 1
+end
+ret x
+end
+
+note vusd: a money value DIGITS or DIGITS.DIGITS, 1..20 bytes.
+fn vusd v ulong e ulong to bool
+if eq v ulong 0
+ret false
+end
+q = vend v e
+if eq q v
+ret false
+end
+if gt sub q v ulong 20
+ret false
+end
+dots = ulong 0
+p = v
+while lt p q bound 999999
+c = ulong get buf p
+if eq c ulong 46
+dots = add dots 1
+if eq p v
+ret false
+end
+else
+if lt c ulong 48
+ret false
+end
+if gt c ulong 57
+ret false
+end
+end
+p = add p 1
+end
+if gt dots ulong 1
+ret false
+end
+ret ne get buf sub q 1 uchar 46
+end
+
+fn hex40 v ulong e ulong to bool
+if eq v ulong 0
+ret false
+end
+q = vend v e
+if ne sub q v ulong 40
+ret false
+end
+p = v
+while lt p q bound 999999
+c = ulong get buf p
+ok = false
+if ge c ulong 48
+if le c ulong 57
+ok = true
+end
+end
+if ge c ulong 97
+if le c ulong 102
+ok = true
+end
+end
+if eq ok false
+ret false
+end
+p = add p 1
+end
+ret true
+end
+
+note devidx: index 0..7 of a device value "d0".."d7", or 8 when it is not one.
+fn devidx v ulong e ulong to ulong
+if eq v ulong 0
+ret ulong 8
+end
+q = vend v e
+if ne sub q v ulong 2
+ret ulong 8
+end
+if ne get buf v uchar 100
+ret ulong 8
+end
+c = ulong get buf add v 1
+if lt c ulong 48
+ret ulong 8
+end
+if gt c ulong 55
+ret ulong 8
+end
+ret sub c ulong 48
+end
+
+fn header s ulong e ulong to void
+if ne get st 22 ulong 0
+refuse rtwice
+end
+put st 22 ulong 1
+v = kv s e kprov
+pv = ulong 0
+if veq v e pamd
+pv = ulong 1
+end
+if veq v e pint
+pv = ulong 2
+end
+if veq v e pgoo
+pv = ulong 3
+end
+if eq pv ulong 0
+refuse rprov
+end
+put st 16 pv
+v = kv s e kclaim
+cv = ulong 0
+if veq v e cacc
+cv = ulong 1
+end
+if veq v e cnone
+cv = ulong 2
+end
+if eq cv ulong 0
+refuse rclaim
+end
+put st 17 cv
+v = kv s e kwin
+if eq v ulong 0
+refuse rwin
+end
+if eq vend v e v
+refuse rwin
+end
+if vpre v e wsyn
+put st 19 ulong 1
+end
+ret
+end
+
+fn srcline s ulong e ulong to void
+v = kv s e krepo
+if eq v ulong 0
+refuse rrepo
+end
+if eq hex40 kv s e krev e false
+refuse rrev
+end
+bump 18
+ret
+end
+
+fn devline s ulong e ulong to void
+i = devidx kv s e kid e
+if ge i ulong 8
+refuse rdid
+end
+if ne get dcls i ulong 0
+refuse rddup
+end
+v = kv s e kvend
+ven = ulong 0
+if veq v e wamd
+ven = ulong 1
+end
+if veq v e wint
+ven = ulong 2
+end
+if veq v e wgoo
+ven = ulong 3
+end
+if veq v e woth
+ven = ulong 4
+end
+if eq ven ulong 0
+refuse rdven
+end
+v = kv s e kcls
+cl = ulong 0
+if veq v e wgpu
+cl = ulong 1
+end
+if veq v e wtpu
+cl = ulong 3
+end
+if veq v e wcpu
+cl = ulong 9
+end
+if eq cl ulong 0
+refuse rdcls
+end
+if eq kv s e kmodel ulong 0
+refuse rdmod
+end
+note The provider's accelerator: amd and intel windows need a gpu, google-trc a tpu.
+want = ulong 1
+if eq get st 16 ulong 3
+want = ulong 3
+end
+mark = ulong 2
+if eq ven get st 16
+if eq cl want
+mark = ulong 1
+end
+end
+put dcls i mark
+if eq mark ulong 1
+bump 20
+end
+ret
+end
+
+note rowkind: 1 inventory 2 reference 3 candidate 4 control, else refuse.
+fn rowkind s ulong e ulong to ulong
+v = kv s e kkind
+if veq v e kinv
+ret ulong 1
+end
+if veq v e kref
+ret ulong 2
+end
+if veq v e kcand
+ret ulong 3
+end
+if veq v e kctl
+ret ulong 4
+end
+refuse rkind
+ret ulong 0
+end
+
+note rowverd: 1 PASS 2 FAIL 3 NOT_RUN 4 MISSING_IMPLEMENTATION 5 BLOCKED_ACCESS, else refuse.
+fn rowverd s ulong e ulong to ulong
+v = kv s e kverd
+if veq v e vpass
+ret ulong 1
+end
+if veq v e vfail
+ret ulong 2
+end
+if veq v e vnr
+ret ulong 3
+end
+if veq v e vmiss
+ret ulong 4
+end
+if veq v e vblk
+ret ulong 5
+end
+refuse rverd
+ret ulong 0
+end
+
+note ran: a PASS or FAIL row must name a declared device, a decimal exit and a log.
+fn ran s ulong e ulong to ulong
+i = devidx kv s e kdev e
+if ge i ulong 8
+refuse rrdev
+end
+if eq get dcls i ulong 0
+refuse rrdev
+end
+x = vnum kv s e kexit e
+if eq x ulong 18446744073709551615
+refuse rrexit
+end
+v = kv s e klog
+if eq v ulong 0
+refuse rrlog
+end
+if eq vend v e v
+refuse rrlog
+end
+ret i
+end
+
+fn rowline s ulong e ulong to void
+if eq kv s e kid ulong 0
+refuse rrid
+end
+kd = rowkind s e
+vd = rowverd s e
+bump 1
+bump add vd ulong 1
+if gt vd ulong 2
+ret
+end
+i = ran s e
+if eq vd ulong 2
+ret
+end
+x = vnum kv s e kexit e
+if eq kd ulong 4
+w = vnum kv s e kwant e
+if eq w ulong 0
+refuse rctl
+end
+if ne w x
+refuse rctl
+end
+bump 14
+ret
+end
+if ne get dcls i ulong 1
+refuse rnacc
+end
+if ne x ulong 0
+refuse rnz
+end
+bump add kd ulong 10
+ret
+end
+
+fn costline s ulong e ulong to void
+if eq vusd kv s e kchg e false
+refuse rchg
+end
+bump 15
+ret
+end
+
+fn tearline s ulong e ulong to void
+if ne get st 9 ulong 0
+refuse rtdup
+end
+v = kv s e kdes
+ok = false
+if veq v e wyes
+put st 10 ulong 1
+ok = true
+end
+if veq v e wno
+ok = true
+end
+if eq ok false
+refuse rdes
+end
+if eq kv s e kby ulong 0
+refuse rby
+end
+if eq kv s e kvat ulong 0
+refuse rby
+end
+bump 9
+ret
+end
+
+fn endline s ulong e ulong to void
+x = vnum kv s e krows e
+if eq x ulong 18446744073709551615
+refuse rend
+end
+put st 7 x
+put st 8 ulong 1
+ret
+end
+
+fn line s ulong e ulong to void
+if eq s e
+ret
+end
+if ne get st 8 ulong 0
+refuse rafter
+end
+if eq get st 22 ulong 0
+if eq pfx s e tACC false
+refuse rhdr
+end
+header s e
+ret
+end
+if pfx s e tSRC
+srcline s e
+ret
+end
+if pfx s e tWHEN
+ret
+end
+if pfx s e tHOST
+ret
+end
+if pfx s e tDEV
+devline s e
+ret
+end
+if pfx s e tTOOL
+ret
+end
+if pfx s e tROW
+rowline s e
+ret
+end
+if pfx s e tCOST
+costline s e
+ret
+end
+if pfx s e tTEAR
+tearline s e
+ret
+end
+if pfx s e tEND
+endline s e
+ret
+end
+if pfx s e tACC
+refuse rtwice
+end
+refuse rtag
+ret
+end
+
+fn verdict to void
+if eq get st 22 ulong 0
+refuse rnohdr
+end
+if eq get st 8 ulong 0
+refuse rnoend
+end
+if ne get st 7 get st 1
+refuse rcount
+end
+if eq get st 18 ulong 0
+refuse rnosrc
+end
+if eq get st 15 ulong 0
+refuse rnocost
+end
+if eq get st 9 ulong 0
+refuse rnotear
+end
+if gt get st 13 ulong 0
+if eq get st 14 ulong 0
+refuse rcand
+end
+end
+if eq get st 17 ulong 1
+ok = true
+if eq get st 11 ulong 0
+ok = false
+end
+if eq get st 12 ulong 0
+ok = false
+end
+if eq get st 10 ulong 0
+ok = false
+end
+if eq ok false
+refuse rclm
+end
+end
+ret
+end
+
+fn report to void
+ptx macc
+if eq get st 19 ulong 1
+ptx msyn
+end
+ptx mprov
+p = get st 16
+if eq p ulong 1
+ptx pamd
+end
+if eq p ulong 2
+ptx pint
+end
+if eq p ulong 3
+ptx pgoo
+end
+ptx mclaim
+if eq get st 17 ulong 1
+ptx cacc
+else
+ptx cnone
+end
+ptx mrows
+pnum get st 1
+ptx mpass
+pnum get st 2
+ptx mfail
+pnum get st 3
+ptx mnr
+pnum get st 4
+ptx mmiss
+pnum get st 5
+ptx mblk
+pnum get st 6
+ptx mnl
+ret
+end
+
+fn main to int
+n = ulong 0
+c = true
+while c bound 70000
+k = read 0 buf n sub ulong 65536 n
+if lt k long 0
+w = write 2 mbig 0 len mbig
+ret 2
+end
+if eq k long 0
+c = false
+else
+n = add n ulong k
+if ge n ulong 65536
+w = write 2 mbig 0 len mbig
+ret 2
+end
+end
+end
+put st 0 n
+s = ulong 0
+while lt s n bound 70000
+e = s
+while lt e n bound 70000
+if eq get buf e uchar 10
+break
+end
+e = add e 1
+end
+bump 21
+line s e
+s = add e 1
+end
+verdict
+report
+ret 0
+end

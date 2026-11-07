@@ -1,0 +1,18 @@
+# id	kind	want	needs	command
+# AMD Developer Cloud, 1x MI300X (gfx942), window W0 "access test" (docs/access/AMD-DEVELOPER-CLOUD.md).
+# Bare-OS or "Vanilla ROCm" Quick Start image; run as: collect.sh run amd-devcloud THIS_FILE OUT
+# Budget: W0 is at most 1.5 GPU-hours. Every row is capped by ACCESS_ROW_TIMEOUT (default 1800 s).
+# Inventory: the vendor's own view of the device, the kernel nodes and the driver.
+inv-rocminfo	inventory	0	rocminfo	rocminfo
+inv-amdsmi	inventory	0	amd-smi	amd-smi static --asic --vram --driver --bus
+inv-nodes	inventory	0	-	ls -l /dev/kfd /dev/dri
+inv-rocm-version	inventory	0	-	cat /opt/rocm/.info/version
+# Reference: the tuned vendor stack on the same device (rocBLAS SGEMM with its own CPU verification).
+ref-sgemm-verify	reference	0	rocblas-bench	rocblas-bench -f gemm -r f32_r --transposeA N --transposeB N -m 1024 -n 1024 -k 1024 --alpha 1 --beta 0 -v 1 -i 1
+ref-sgemm-4096	reference	0	rocblas-bench	rocblas-bench -f gemm -r f32_r --transposeA N --transposeB N -m 4096 -n 4096 -k 4096 --alpha 1 --beta 0 -i 50
+ref-bandwidth	reference	0	rocm-bandwidth-test	rocm-bandwidth-test
+# Candidate: Omega/CUDA++ on gfx942. Not runnable yet; replace a row only when its host gate is green.
+cand-vadd	candidate	0	-	MISSING_IMPLEMENTATION no first-party gfx942 code-object writer and no AQL or HSA launcher (CUDApp#40, ADR 0043 E1/E2, omega-mv#888)
+cand-fsum16	candidate	0	-	MISSING_IMPLEMENTATION same blocker as cand-vadd
+cand-sgemm	candidate	0	-	MISSING_IMPLEMENTATION same blocker as cand-vadd
+cand-model-forward	candidate	0	-	MISSING_IMPLEMENTATION no AMD backend for the shared model forward (DRA-193)

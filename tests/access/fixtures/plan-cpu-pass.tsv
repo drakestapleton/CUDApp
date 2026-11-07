@@ -1,0 +1,5 @@
+# id	kind	want	needs	command
+# Collector self-test plan (tests/access/run.sh): an inventory row that succeeds on the host CPU.
+# Without an accelerator DEVICE line the row is recorded on d7 (cpu), and rcheck must refuse it.
+inv-true	inventory	0	-	true
+ref-echo	reference	0	-	echo reference-ran

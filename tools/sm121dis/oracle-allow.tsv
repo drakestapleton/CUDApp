@@ -1,0 +1,18 @@
+# tools/sm121dis/oracle-allow.tsv: the declared ORACLE lines of the ZERO-NVDISASM static check (zero_nvdisasm.sh).
+# path<TAB>exact line text<TAB>why. Each names the CUDA toolkit only as an offline, read-only independent reader
+# (an oracle), an interop probe outside make test, or a pattern proving the toolkit is NOT used. CUDA++ C6, DRA-475.
+tools/doctor/cudapp_doctor.c	    const char *paths[] = { "/usr/local/cuda/bin/nvcc", "/usr/bin/nvcc" };	doctor reports whether nvcc exists; it runs nothing from the toolkit
+tools/ampere_nvdisasm.py	    parser.add_argument("--nvdisasm", default=os.environ.get("NVDISASM", "/usr/local/cuda/bin/nvdisasm"))	ORACLE: sm_86 (Ampere) encoder words against nvdisasm; our decoder is sm_121 only
+tools/runtime/clean-user-hello.sh	CUDA_RE='"(/usr/local/cuda[^"]*|/opt/nvidia[^"]*|[^"]*/(libcuda|libcudart|libcublas|libcudnn|libnvrtc|libnvJitLink|libnvidia-ptxjitcompiler)[^"/]*|[^"]*/nvcc)"'	negative pattern: the trace proves no CUDA file is opened or run
+tools/runtime/clean-user-hello.sh	else echo "# TRACE PASS: no CUDA file (/usr/local/cuda*, libcuda*, libnvrtc*, nvcc, ...) was opened or executed"; fi	negative pattern: the trace proves no CUDA file is opened or run
+tools/runtime/clean-user-hello.sh	nvcc_bin=$(S 'command -v nvcc' 2>/dev/null); [ -n "$nvcc_bin" ] || { [ -x /usr/local/cuda/bin/nvcc ] && nvcc_bin=/usr/local/cuda/bin/nvcc; }	negative pattern: the trace proves no CUDA file is opened or run
+tools/test_bw_spec_encoder.sh	NVDISASM="/usr/local/cuda/bin/nvdisasm"	ORACLE: spec encoder words against an independent decoder
+tools/test_bw_spec_encoder.sh	if [ ! -x "$NVDISASM" ] && command -v nvdisasm > /dev/null 2>&1; then	ORACLE: spec encoder words against an independent decoder
+tools/test_bw_spec_encoder.sh	  NVDISASM=$(command -v nvdisasm)	ORACLE: spec encoder words against an independent decoder
+tools/test_bw_spec_encoder.sh	  log "SKIP: (c) nvdisasm not found at /usr/local/cuda/bin/nvdisasm"	ORACLE: spec encoder words against an independent decoder
+tools/artifact_smoke.sh	    if command -v nvdisasm >/dev/null 2>&1; then	ORACLE: independent reader of the cubin container; build/sm121dis reads the text
+mk/ampere-cubin.mk	AMPERE_NVDISASM ?= /usr/local/cuda/bin/nvdisasm	ORACLE: sm_86 cubin read back by nvdisasm, offline
+mk/sm121dis.mk	NVDISASM ?= /usr/local/cuda/bin/nvdisasm	ORACLE: test-sm121-mmio semantic contract against nvdisasm 13.0.85
+mk/om-encoder.mk	NVDISASM ?= /usr/local/cuda/bin/nvdisasm	ORACLE: test-om-encoder-ldg/-atomg exact words against nvdisasm 13.0.85
+Makefile	CUDA_INC ?= /usr/local/cuda/include	cubin-probe interop target (links NVIDIA libcuda; not in make test)
+Makefile	CUDA_LIB ?= /usr/local/cuda/lib64	cubin-probe interop target (links NVIDIA libcuda; not in make test)

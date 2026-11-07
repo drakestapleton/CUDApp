@@ -9,6 +9,15 @@ for c in "$dir"/*.cubin; do
     [ -f "$c" ] || continue
     echo "== $c"
     m=${c%.cubin}.manifest
+    # Omega's own sm_121 disassembler reads the kernel text (the manifest's text role, the words inside the cubin);
+    # every word must be a known form (CUDA++ C6, DRA-475). nvdisasm below is an independent ORACLE reader only.
+    t=${c%.cubin}.text.bin
+    dis=${SM121DIS:-build/sm121dis}
+    if [ -x "$dis" ] && [ -f "$t" ]; then
+        "$dis" -b SM121 "$t" >/dev/null && echo "sm121dis: PASS ($(( $(wc -c < "$t") / 16 )) words)" || { echo "sm121dis: FAIL"; fail=1; }
+    else
+        echo "sm121dis: NOT_RUN ($dis or $t missing)"
+    fi
     if command -v nvdisasm >/dev/null 2>&1; then
         nvdisasm -c "$c" >/dev/null && echo "nvdisasm: PASS" || { echo "nvdisasm: FAIL"; fail=1; }
     else

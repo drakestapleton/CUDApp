@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* spirv-host: INTERIM C launcher that runs one SPIR-V module from backend/spirv/emit.om on a CPU
- * implementation: PoCL (OpenCL, format SPIRV_CL) or Mesa lavapipe (Vulkan, format SPIRV_VK).
+ * implementation: PoCL (OpenCL, format SPIRV_CL) or Mesa lavapipe (Vulkan, format SPIRV_VK), or on a
+ * GPU through a vendor Vulkan runtime (MT_TARGET below: MoltenVK on Apple, NVIDIA's driver on the GB10).
  * It is a host-only conformance harness; it never generates or edits SPIR-V and never chooses results.
  *
  * Why C: seeded Omega has no checked shared-library call yet, so a .om program cannot call
@@ -34,6 +35,26 @@
  *      fails (exit 9) unless MT_MVK_LIBRARY is loaded, and on any loaded image whose path contains
  *      MT_FORBID ("libvulkan" by default: a Khronos loader could select another driver). This is a
  *      vendor-runtime-backed route (Metal via MoltenVK), not an independent Apple GPU driver.
+ *   2  NVIDIA GPU through NVIDIA's own Vulkan driver on Linux (format SPIRV_VK only; DRA-201: the same
+ *      modules as on the Apple GPU, to compare one unchanged application across two GPU vendors). The
+ *      Khronos loader is pinned to the one manifest MT_NV_ICD (NVIDIA's nvidia_icd.json), layers are
+ *      disabled, every inherited __GL_* and __NV_* variable is removed and __GL_SHADER_DISK_CACHE is set
+ *      to MT_NV_DISK_CACHE ("0" by default: no on-disk shader cache, every run compiles the module;
+ *      MT_NV_CACHE_PATH names a private cache directory for the cache lifecycle test). The device must be
+ *      the only one, a GPU (integrated or discrete), vendor 0x10de, driverID NVIDIA_PROPRIETARY, name
+ *      containing MT_EXPECT_DEVICE ("NVIDIA GB10" by default). Isolation reads /proc/self/maps: it fails
+ *      (exit 9) unless a mapping contains MT_REQUIRE ("libnvidia-glcore", the driver's core) and on any
+ *      mapping or descriptor containing one of MT_FORBID ("vulkan_lvp:libpocl:libcuda.so:libnvcuda":
+ *      no CPU fallback and no CUDA library). This is a vendor-runtime route (NVIDIA's proprietary
+ *      Vulkan driver and its SPIR-V compiler), not CUDA++ execution: CUDA++'s own sm_121 path is
+ *      examples/hello_gpu.
+ *
+ * Every vk run also prints one observation line (never a pass condition):
+ *   spirv-host: time setup_us=... pipeline_us=... run_us=... device_ns=... total_us=... maxrss_kib=... buffers_bytes=...
+ * setup = instance, device, buffers and upload; pipeline = shader module + compute pipeline (the driver's
+ * compile); run = record, submit and wait; device_ns = the timestamp-query span around the dispatch
+ * (NOT_RUN when the queue has no timestamps); total = process start to output ready; maxrss = peak
+ * resident set of this process.
  */
 #if !defined(CUDAPP_MIGRATION_PENDING_SPIRV_HOST) || CUDAPP_MIGRATION_PENDING_SPIRV_HOST != 1
 #error "spirv-host is migration-pending C: build with -DCUDAPP_MIGRATION_PENDING_SPIRV_HOST=1 (default OFF)"
@@ -41,17 +62,19 @@
 #ifndef MT_TARGET
 #define MT_TARGET 0
 #endif
-#if MT_TARGET != 0 && MT_TARGET != 1
-#error "MT_TARGET must be 0 (CPU: PoCL/lavapipe) or 1 (Apple GPU: MoltenVK)"
+#if MT_TARGET != 0 && MT_TARGET != 1 && MT_TARGET != 2
+#error "MT_TARGET must be 0 (CPU: PoCL/lavapipe), 1 (Apple GPU: MoltenVK) or 2 (NVIDIA GPU: NVIDIA Vulkan driver)"
 #endif
 #define _GNU_SOURCE
 #if MT_TARGET == 0
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
-#include <dirent.h>
-#else
+#endif
+#if MT_TARGET == 1
 #include <limits.h>
 #include <mach-o/dyld.h>
+#else
+#include <dirent.h>
 #endif
 #include <vulkan/vulkan.h>
 
@@ -60,6 +83,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifndef MT_POCL_LIBRARY
@@ -81,10 +106,32 @@
 #ifndef MT_FORBID
 #define MT_FORBID "libvulkan"
 #endif
+#elif MT_TARGET == 2
+#ifndef MT_NV_ICD
+#define MT_NV_ICD "/usr/share/vulkan/icd.d/nvidia_icd.json"
+#endif
+#ifndef MT_NV_DISK_CACHE
+#define MT_NV_DISK_CACHE "0"
+#endif
+#ifndef MT_NV_CACHE_PATH
+#define MT_NV_CACHE_PATH ""
+#endif
+#ifndef MT_EXPECT_DEVICE
+#define MT_EXPECT_DEVICE "NVIDIA GB10"
+#endif
+#ifndef MT_REQUIRE
+#define MT_REQUIRE "libnvidia-glcore"
+#endif
+#ifndef MT_FORBID
+#define MT_FORBID "vulkan_lvp:libpocl:libcuda.so:libnvcuda"
+#endif
 #else
 #ifndef MT_FORBID
 #define MT_FORBID "nvidia"
 #endif
+#endif
+#ifndef MT_REQUIRE
+#define MT_REQUIRE ""
 #endif
 #define MAX_BUFS 3
 #define POISON 0xFFC0FFEEu
@@ -130,15 +177,36 @@ static int isolation(void)
     return 0;
 }
 #else
-/* Fails when any mapping or open descriptor of this process names MT_FORBID. */
-static int isolation(void)
+/* Name of the first MT_FORBID entry (colon-separated) contained in s goes to which; returns 1 if any. */
+static int forbidden(const char *s, char *which, size_t cap)
 {
-    char line[4096];
+    const char *p = MT_FORBID;
+    while (*p) {
+        size_t k = strcspn(p, ":");
+        if (k > 0 && k < cap) {
+            memcpy(which, p, k);
+            which[k] = 0;
+            if (strstr(s, which)) return 1;
+        }
+        p += k;
+        if (*p == ':') p++;
+    }
+    return 0;
+}
+
+/* Fails when any mapping or open descriptor of this process names an MT_FORBID entry, or (when
+ * MT_REQUIRE is set and need_required) when no mapping names MT_REQUIRE: the pinned driver must actually
+ * be loaded. Target 2 checks the requirement inside run_vk while the driver's objects exist. */
+static int isolation_check(int need_required)
+{
+    char line[4096], which[256];
     FILE *m = fopen("/proc/self/maps", "r");
     if (!m) return die(9, "isolation: cannot read /proc/self/maps");
-    int bad = 0;
-    while (fgets(line, sizeof line, m))
-        if (strstr(line, MT_FORBID)) { bad = 1; fprintf(stderr, "spirv-host: isolation: mapped %s", line); break; }
+    int bad = 0, required = !need_required || MT_REQUIRE[0] == 0;
+    while (fgets(line, sizeof line, m)) {
+        if (MT_REQUIRE[0] && strstr(line, MT_REQUIRE)) required = 1;
+        if (forbidden(line, which, sizeof which)) { bad = 1; fprintf(stderr, "spirv-host: isolation: mapped %s", line); break; }
+    }
     fclose(m);
     DIR *d = opendir("/proc/self/fd");
     if (!d) return die(9, "isolation: cannot read /proc/self/fd");
@@ -150,14 +218,29 @@ static int isolation(void)
         ssize_t k = readlink(link, target, sizeof target - 1);
         if (k <= 0) continue;
         target[k] = 0;
-        if (strstr(target, MT_FORBID)) { bad = 1; fprintf(stderr, "spirv-host: isolation: open fd %s\n", target); }
+        if (forbidden(target, which, sizeof which)) { bad = 1; fprintf(stderr, "spirv-host: isolation: open fd %s\n", target); }
     }
     closedir(d);
-    if (bad) return die(9, "isolation FAILED: forbidden path \"" MT_FORBID "\" present");
-    fprintf(stderr, "spirv-host: isolation: no mapping or descriptor contains \"%s\"\n", MT_FORBID);
+    if (bad) {
+        fprintf(stderr, "spirv-host: isolation FAILED: forbidden path \"%s\" present\n", which);
+        return 9;
+    }
+    if (!required) return die(9, "isolation FAILED: required driver \"" MT_REQUIRE "\" is not mapped");
+    fprintf(stderr, "spirv-host: isolation: no mapping or descriptor contains \"%s\"%s%s%s\n", MT_FORBID,
+            need_required && MT_REQUIRE[0] ? "; \"" : "", need_required ? MT_REQUIRE : "",
+            need_required && MT_REQUIRE[0] ? "\" mapped" : "");
     return 0;
 }
+static int isolation(void) { return isolation_check(MT_TARGET != 2); }
 #endif
+
+static double now_us(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec * 1e6 + (double)ts.tv_nsec / 1e3;
+}
+static double t_start;
 
 typedef struct { const char *api, *module, *kernel; uint32_t count; int nin; const char *in[2], *out;
                  void *code; size_t code_size; float *buf[MAX_BUFS]; size_t bytes[MAX_BUFS]; } Job;
@@ -231,27 +314,37 @@ static int memtype(VkPhysicalDevice pd, uint32_t bits)
     return -1;
 }
 
-#if MT_TARGET == 1
+#if MT_TARGET != 0
 extern char **environ;
 
-/* Removes every inherited MVK_* variable, then pins the fast-math mode before MoltenVK initializes. */
-static int pin_moltenvk(void)
+/* Removes every inherited environment variable whose name starts with prefix. */
+static int clear_prefix(const char *prefix)
 {
-    if (MT_MVK_LIBRARY[0] != '/') return die(3, "build needs an absolute MT_MVK_LIBRARY");
+    size_t pl = strlen(prefix);
     for (int again = 1; again;) {
         again = 0;
         for (char **e = environ; *e; e++) {
-            if (strncmp(*e, "MVK_", 4) != 0) continue;
+            if (strncmp(*e, prefix, pl) != 0) continue;
             char name[256];
             size_t k = strcspn(*e, "=");
-            if (k >= sizeof name) return die(3, "MVK_ variable name too long");
+            if (k >= sizeof name) return die(3, "inherited variable name too long");
             memcpy(name, *e, k);
             name[k] = 0;
-            if (unsetenv(name)) return die(3, "cannot clear an MVK_ variable");
+            if (unsetenv(name)) return die(3, "cannot clear an inherited driver variable");
             again = 1;
             break;
         }
     }
+    return 0;
+}
+#endif
+
+#if MT_TARGET == 1
+/* Removes every inherited MVK_* variable, then pins the fast-math mode before MoltenVK initializes. */
+static int pin_moltenvk(void)
+{
+    if (MT_MVK_LIBRARY[0] != '/') return die(3, "build needs an absolute MT_MVK_LIBRARY");
+    if (clear_prefix("MVK_")) return 3;
     if (setenv("MVK_CONFIG_FAST_MATH_ENABLED", MT_MVK_FAST_MATH, 1)) return die(3, "cannot pin MoltenVK fast math");
     fprintf(stderr, "spirv-host: vk target=moltenvk library=%s linked=direct-no-loader MVK_CONFIG_FAST_MATH_ENABLED=%s\n",
             MT_MVK_LIBRARY, MT_MVK_FAST_MATH);
@@ -259,10 +352,39 @@ static int pin_moltenvk(void)
 }
 #endif
 
+#if MT_TARGET == 2
+/* Pins the Khronos loader to NVIDIA's manifest, removes inherited __GL_* / __NV_* driver controls and
+ * pins the on-disk shader cache before the driver loads. */
+static int pin_nvidia(void)
+{
+    if (MT_NV_ICD[0] != '/') return die(3, "build needs an absolute MT_NV_ICD");
+    if (clear_prefix("__GL_") || clear_prefix("__NV_") || clear_prefix("VK_")) return 3;
+    if (setenv("VK_DRIVER_FILES", MT_NV_ICD, 1) || setenv("VK_ICD_FILENAMES", MT_NV_ICD, 1) ||
+        setenv("VK_LOADER_LAYERS_DISABLE", "~all~", 1) || setenv("__GL_SHADER_DISK_CACHE", MT_NV_DISK_CACHE, 1))
+        return die(3, "cannot pin Vulkan loader / NVIDIA driver environment");
+    if (MT_NV_CACHE_PATH[0]) {
+        if (MT_NV_CACHE_PATH[0] != '/') return die(3, "MT_NV_CACHE_PATH must be absolute");
+        if (setenv("__GL_SHADER_DISK_CACHE_PATH", MT_NV_CACHE_PATH, 1) ||
+            setenv("__GL_SHADER_DISK_CACHE_SKIP_CLEANUP", "1", 1))
+            return die(3, "cannot pin the NVIDIA shader cache path");
+    } else if (strcmp(MT_NV_DISK_CACHE, "0") != 0) {
+        return die(3, "an enabled shader cache needs a private absolute MT_NV_CACHE_PATH");
+    }
+    fprintf(stderr, "spirv-host: vk target=nvidia icd=%s layers=disabled __GL_SHADER_DISK_CACHE=%s cache_path=%s\n",
+            MT_NV_ICD, MT_NV_DISK_CACHE, MT_NV_CACHE_PATH[0] ? MT_NV_CACHE_PATH : "(driver default, unused)");
+    return 0;
+}
+#endif
+
 static int run_vk(Job *j)
 {
+    double t_setup0 = now_us();
 #if MT_TARGET == 1
     int prc = pin_moltenvk();
+    if (prc) return prc;
+    const uint32_t api = VK_API_VERSION_1_2;
+#elif MT_TARGET == 2
+    int prc = pin_nvidia();
     if (prc) return prc;
     const uint32_t api = VK_API_VERSION_1_2;
 #else
@@ -282,7 +404,7 @@ static int run_vk(Job *j)
     if (npd != 1) return die(5, "expected exactly one Vulkan device (pinned driver)");
     VkPhysicalDevice pd;
     VKOK(vkEnumeratePhysicalDevices(inst, &npd, &pd), 5, "vkEnumeratePhysicalDevices");
-#if MT_TARGET == 1
+#if MT_TARGET != 0
     VkPhysicalDeviceDriverProperties drv = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES };
     VkPhysicalDeviceProperties2 p2 = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &drv };
     vkGetPhysicalDeviceProperties2(pd, &p2);
@@ -292,15 +414,22 @@ static int run_vk(Job *j)
             VK_API_VERSION_MAJOR(pp.apiVersion), VK_API_VERSION_MINOR(pp.apiVersion), VK_API_VERSION_PATCH(pp.apiVersion),
             drv.driverName, drv.driverInfo, drv.conformanceVersion.major, drv.conformanceVersion.minor,
             drv.conformanceVersion.subminor, drv.conformanceVersion.patch);
+#if MT_TARGET == 1
     if (pp.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
         return die(5, "device is not VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU");
     if (pp.vendorID != 0x106b) return die(5, "device vendor is not Apple (0x106b)");
     if (drv.driverID != VK_DRIVER_ID_MOLTENVK) return die(5, "driver is not MoltenVK");
+#else
+    if (pp.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU && pp.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+        return die(5, "device is not a GPU (integrated or discrete): no CPU fallback");
+    if (pp.vendorID != 0x10de) return die(5, "device vendor is not NVIDIA (0x10de)");
+    if (drv.driverID != VK_DRIVER_ID_NVIDIA_PROPRIETARY) return die(5, "driver is not NVIDIA_PROPRIETARY");
+#endif
     if (!strstr(pp.deviceName, MT_EXPECT_DEVICE))
         return die(5, "device name does not contain MT_EXPECT_DEVICE (" MT_EXPECT_DEVICE ")");
-    fprintf(stderr, "spirv-host: vk limits max_group_count_x=%u max_invocations=%u max_shared=%u\n",
+    fprintf(stderr, "spirv-host: vk limits max_group_count_x=%u max_invocations=%u max_shared=%u timestamp_period_ns=%g\n",
             pp.limits.maxComputeWorkGroupCount[0], pp.limits.maxComputeWorkGroupInvocations,
-            pp.limits.maxComputeSharedMemorySize);
+            pp.limits.maxComputeSharedMemorySize, (double)pp.limits.timestampPeriod);
 #else
     VkPhysicalDeviceProperties pp;
     vkGetPhysicalDeviceProperties(pd, &pp);
@@ -357,6 +486,7 @@ static int run_vk(Job *j)
         VKOK(vkMapMemory(dev, m[i], 0, j->bytes[i], 0, &map[i]), 5, "vkMapMemory");
         memcpy(map[i], j->buf[i], j->bytes[i]);
     }
+    double t_pipe0 = now_us();
     VkShaderModuleCreateInfo smci = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, .codeSize = j->code_size, .pCode = j->code };
     VkShaderModule sm;
     VKOK(vkCreateShaderModule(dev, &smci, NULL, &sm), 6, "vkCreateShaderModule refused the module");
@@ -375,6 +505,14 @@ static int run_vk(Job *j)
                    .module = sm, .pName = j->kernel } };
     VkPipeline pipe;
     VKOK(vkCreateComputePipelines(dev, VK_NULL_HANDLE, 1, &cpci, NULL, &pipe), 7, "vkCreateComputePipelines (entry point?)");
+    double t_pipe1 = now_us();
+    /* Device-side span of the dispatch (observation only); skipped when the queue has no timestamps. */
+    VkQueryPool qp = VK_NULL_HANDLE;
+    const uint32_t tsbits = qf[fam].timestampValidBits;
+    if (tsbits) {
+        VkQueryPoolCreateInfo qpci = { .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO, .queryType = VK_QUERY_TYPE_TIMESTAMP, .queryCount = 2 };
+        VKOK(vkCreateQueryPool(dev, &qpci, NULL, &qp), 8, "vkCreateQueryPool");
+    }
     VkDescriptorPoolSize ps = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (uint32_t)nb };
     VkDescriptorPoolCreateInfo dpci = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, .maxSets = 1, .poolSizeCount = 1, .pPoolSizes = &ps };
     VkDescriptorPool dp;
@@ -399,18 +537,46 @@ static int run_vk(Job *j)
     VKOK(vkAllocateCommandBuffers(dev, &cbai, &cb), 8, "vkAllocateCommandBuffers");
     VkCommandBufferBeginInfo cbbi = { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
     VKOK(vkBeginCommandBuffer(cb, &cbbi), 8, "vkBeginCommandBuffer");
+    if (qp) vkCmdResetQueryPool(cb, qp, 0, 2);
     vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_COMPUTE, pipe);
     vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_COMPUTE, pl, 0, 1, &ds, 0, NULL);
     uint32_t groups = (j->count + LOCAL - 1) / LOCAL;
+    if (qp) vkCmdWriteTimestamp(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, qp, 0);
     vkCmdDispatch(cb, groups, 1, 1);
+    if (qp) vkCmdWriteTimestamp(cb, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, qp, 1);
     VkMemoryBarrier mb = { .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER, .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT, .dstAccessMask = VK_ACCESS_HOST_READ_BIT };
     vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &mb, 0, NULL, 0, NULL);
     VKOK(vkEndCommandBuffer(cb), 8, "vkEndCommandBuffer");
     VkSubmitInfo si = { .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .commandBufferCount = 1, .pCommandBuffers = &cb };
     VKOK(vkQueueSubmit(q, 1, &si, VK_NULL_HANDLE), 8, "vkQueueSubmit");
     VKOK(vkQueueWaitIdle(q), 8, "vkQueueWaitIdle");
+    double t_run1 = now_us();
     fprintf(stderr, "spirv-host: vk dispatched groups=%u local=%u\n", groups, LOCAL);
     memcpy(j->buf[nb - 1], map[nb - 1], j->bytes[nb - 1]);
+    char devns[32] = "NOT_RUN";
+    if (qp) {
+        uint64_t ts[2] = { 0, 0 };
+        VKOK(vkGetQueryPoolResults(dev, qp, 0, 2, sizeof ts, ts, sizeof ts[0], VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT),
+             8, "vkGetQueryPoolResults");
+        const uint64_t mask = tsbits >= 64 ? UINT64_MAX : ((1ull << tsbits) - 1);
+        const uint64_t ticks = ((ts[1] & mask) - (ts[0] & mask)) & mask;
+        snprintf(devns, sizeof devns, "%.0f", (double)ticks * (double)pp.limits.timestampPeriod);
+        vkDestroyQueryPool(dev, qp, NULL);
+    }
+    size_t total_bytes = 0;
+    for (int i = 0; i < nb; i++) total_bytes += j->bytes[i];
+    struct rusage ru;
+    long maxrss_kib = getrusage(RUSAGE_SELF, &ru) == 0 ? ru.ru_maxrss : -1;
+#if MT_TARGET == 1
+    if (maxrss_kib > 0) maxrss_kib /= 1024; /* macOS reports bytes, Linux KiB */
+#endif
+    fprintf(stderr, "spirv-host: time setup_us=%.0f pipeline_us=%.0f run_us=%.0f device_ns=%s total_us=%.0f maxrss_kib=%ld buffers_bytes=%zu\n",
+            t_pipe0 - t_setup0, t_pipe1 - t_pipe0, t_run1 - t_pipe1, devns, now_us() - t_start, maxrss_kib, total_bytes);
+#if MT_TARGET == 2
+    /* The driver must still be mapped while its objects exist; the loader may unload it at teardown. */
+    int irc = isolation_check(1);
+    if (irc) return irc;
+#endif
     vkDestroyCommandPool(dev, cp, NULL); vkDestroyDescriptorPool(dev, dp, NULL); vkDestroyPipeline(dev, pipe, NULL);
     vkDestroyPipelineLayout(dev, pl, NULL); vkDestroyDescriptorSetLayout(dev, dsl, NULL); vkDestroyShaderModule(dev, sm, NULL);
     for (int i = 0; i < nb; i++) { vkUnmapMemory(dev, m[i]); vkDestroyBuffer(dev, b[i], NULL); vkFreeMemory(dev, m[i], NULL); }
@@ -421,11 +587,14 @@ static int run_vk(Job *j)
 
 int main(int argc, char **argv)
 {
+    t_start = now_us();
     if (argc != 7 && argc != 8) return die(2, "usage: spirv-host cl|vk MODULE.spv KERNEL COUNT IN.bin [IN.bin] OUT.bin");
     Job j = { .api = argv[1], .module = argv[2], .kernel = argv[3], .nin = argc - 6, .out = argv[argc - 1] };
     if (strcmp(j.api, "cl") != 0 && strcmp(j.api, "vk") != 0) return die(2, "api must be cl or vk");
 #if MT_TARGET == 1
     if (strcmp(j.api, "vk") != 0) return die(2, "this build is MT_TARGET=1 (MoltenVK): only vk");
+#elif MT_TARGET == 2
+    if (strcmp(j.api, "vk") != 0) return die(2, "this build is MT_TARGET=2 (NVIDIA Vulkan driver): only vk");
 #endif
     char *end;
     unsigned long c = strtoul(argv[4], &end, 10);
@@ -443,7 +612,7 @@ int main(int argc, char **argv)
     if (!o) return die(4, "out of memory");
     for (uint32_t i = 0; i < j.count; i++) o[i] = POISON;
     j.buf[j.nin] = (float *)o;
-#if MT_TARGET == 1
+#if MT_TARGET != 0
     int rc = run_vk(&j);
 #else
     int rc = strcmp(j.api, "cl") == 0 ? run_cl(&j) : run_vk(&j);

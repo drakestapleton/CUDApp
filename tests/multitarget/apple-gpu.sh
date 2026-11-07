@@ -124,6 +124,24 @@ if build spirv-host-mvk-fast -DMT_MVK_FAST_MATH='"1"'; then
   cmp -s "$D/vadd.vk.gpu.out" "$D/vadd.ref" && cmp -s "$D/fsum16.vk.gpu.out" "$D/fsum16.ref" \
     && cmp -s "$D/gemm16.vk.gpu.out" "$D/gemm16.ref" || bad "conformance outputs not restored"
 fi
+# Timing (observation only, DRA-201): MT_REPS fresh processes per kernel with the conformance build. Every
+# repetition's output must still equal the reference. Same columns as nvidia-gpu.sh's timing.tsv.
+reps=${MT_REPS:-10}
+T=$D/timing.tsv
+printf 'target\tkernel\trep\tsetup_us\tpipeline_us\trun_us\tdevice_ns\ttotal_us\tmaxrss_kib\tbuffers_bytes\n' > "$T"
+field() { sed -n "s/^spirv-host: time .*$1=\([0-9A-Z_]*\).*/\1/p" "$2"; }
+for k in vadd fsum16 gemm16; do
+  case $k in vadd) n=1048576; set -- "$D/a.bin" "$D/b.bin" ;; fsum16) n=65536; set -- "$D/x.bin" ;; gemm16) n=65536; set -- "$D/ga.bin" "$D/gb.bin" ;; esac
+  same=0; r=1
+  while [ "$r" -le "$reps" ]; do
+    if run "$k.vk" "$H" "$k" "$n" "$@" && cmp -s "$D/$k.vk.gpu.out" "$D/$k.ref"; then same=$((same + 1)); fi
+    l=$D/run-$k.vk.log
+    printf 'apple-moltenvk\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$k" "$r" "$(field setup_us "$l")" "$(field pipeline_us "$l")" \
+      "$(field run_us "$l")" "$(field device_ns "$l")" "$(field total_us "$l")" "$(field maxrss_kib "$l")" "$(field buffers_bytes "$l")" >> "$T"
+    r=$((r + 1))
+  done
+  [ "$same" -eq "$reps" ] && ok "timing reps $k: $same/$reps outputs = $k.ref" || bad "timing reps $k: only $same/$reps outputs = $k.ref"
+done
 for k in vadd fsum16 gemm16; do echo "OUTPUT $k.vk.gpu.out sha256=$(digest "$D/$k.vk.gpu.out")"; done
 echo "route: SPIRV_VK -> MoltenVK -> Metal on the Apple GPU (vendor runtime); MSL_SOURCE, ANE and an independent Apple GPU driver are NOT_RUN"
 if [ "$nfail" -ne 0 ]; then echo "APPLE-GPU FAIL pass=$npass fail=$nfail"; exit 1; fi

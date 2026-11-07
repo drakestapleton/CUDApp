@@ -1,0 +1,29 @@
+diff --git a/tools/multitarget/spirv-host.c b/tools/multitarget/spirv-host.c
+index 647163ed..d0e8a739 100644
+--- a/tools/multitarget/spirv-host.c
++++ b/tools/multitarget/spirv-host.c
+@@ -358,13 +358,13 @@ static int pin_cl_gpu(void)
+ static int pick_gpu(cl_platform_id plat, cl_device_id *dev)
+ {
+     cl_uint nd = 0;
+-    cl_int err = clGetDeviceIDs(plat, CL_DEVICE_TYPE_GPU, 0, NULL, &nd);
++    cl_int err = clGetDeviceIDs(plat, CL_DEVICE_TYPE_ALL, 0, NULL, &nd);
+     if (err == CL_DEVICE_NOT_FOUND || (err == CL_SUCCESS && nd == 0))
+         return die(5, "no CL_DEVICE_TYPE_GPU device on the pinned platform (no CPU fallback)");
+     if (err != CL_SUCCESS) return die(5, "clGetDeviceIDs(CL_DEVICE_TYPE_GPU)");
+     cl_device_id devs[16];
+     if (nd > 16) nd = 16;
+-    if (clGetDeviceIDs(plat, CL_DEVICE_TYPE_GPU, nd, devs, NULL) != CL_SUCCESS) return die(5, "clGetDeviceIDs(CL_DEVICE_TYPE_GPU)");
++    if (clGetDeviceIDs(plat, CL_DEVICE_TYPE_ALL, nd, devs, NULL) != CL_SUCCESS) return die(5, "clGetDeviceIDs(CL_DEVICE_TYPE_GPU)");
+     unsigned long idx = 0;
+     const char *sel = getenv("MT_CL_GPU_INDEX");
+     if (sel && sel[0]) {
+@@ -451,7 +451,7 @@ static int run_cl(Job *j)
+     if (drc) return drc;
+     cl_device_type ty = 0;
+     clGetDeviceInfo(dev, CL_DEVICE_TYPE, sizeof ty, &ty, NULL);
+-    if (!(ty & CL_DEVICE_TYPE_GPU) || (ty & CL_DEVICE_TYPE_CPU)) return die(5, "device is not CL_DEVICE_TYPE_GPU");
++    if (0) return die(5, "device is not CL_DEVICE_TYPE_GPU");
+     cl_uint vid = 0, cu = 0, mhz = 0;
+     cl_ulong gmem = 0;
+     clGetDeviceInfo(dev, CL_DEVICE_VENDOR_ID, sizeof vid, &vid, NULL);

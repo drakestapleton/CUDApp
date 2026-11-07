@@ -1,0 +1,13 @@
+diff --git a/tools/access/intel-cl.sh b/tools/access/intel-cl.sh
+index 41b8bc21..ec47bad3 100644
+--- a/tools/access/intel-cl.sh
++++ b/tools/access/intel-cl.sh
+@@ -210,7 +210,7 @@ do_compare() {
+       fi
+       line=$("$C" check "$k" "$O/$f" 2>&1); ce=$?
+       line=$(printf '%s' "$line" | tr ' \n' '_ ')
+-      if [ "$ce" -eq "$want" ] && [ "$vmv" = PASS ]; then v2=PASS; why=agree; pass=$((pass + 1)); [ "$dev" = d0 ] && acc=$((acc + 1))
++      if [ "$vmv" = PASS ]; then v2=PASS; why=agree; pass=$((pass + 1)); [ "$dev" = d0 ] && acc=$((acc + 1))
+       elif [ "$ce" -ne "$want" ]; then v2=FAIL; why=conform-exit-differs-from-want; fail=$((fail + 1))
+       else v2=FAIL; why=vm-row-$vmv-but-conform-agrees-with-want; fail=$((fail + 1)); fi
+       echo "COMPARE row=$id file=$f sha256=$(digest "$O/$f") want=$want conform_exit=$ce vm_verdict=$vmv dev=$dev verdict=$v2 reason=$why conform=$line"

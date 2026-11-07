@@ -1,0 +1,89 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: $HOME/work/hive/t_3bbd5f48/out/mut3/access
+COMPILE rcheck src=45d131ab68d88f52f5880122d9338ee69dba30c5abc82710a8eeb768bcdf9e93 bin=1b4d14fc28e6b757a6c7cb1c13dcf6ead09a5d7f2424fb2c19973db81cd6ddd7
+PASS ok-amd exit=0 RCHECK ACCEPT-SYNTHETIC provider=amd-devcloud claim=ACCESS_TESTED rows=4 pass=2 fail=0 not_run=1 missing=1 blocked=0
+PASS ok-intel exit=0 RCHECK ACCEPT-SYNTHETIC provider=intel-cloud claim=ACCESS_TESTED rows=5 pass=4 fail=1 not_run=0 missing=0 blocked=0
+PASS ok-tpu-blocked exit=0 RCHECK ACCEPT-SYNTHETIC provider=google-trc claim=NONE rows=2 pass=0 fail=0 not_run=0 missing=0 blocked=2
+PASS ok-realwin exit=0 RCHECK ACCEPT provider=amd-devcloud claim=ACCESS_TESTED rows=4 pass=2 fail=0 not_run=1 missing=1 blocked=0
+PASS neg-pass-on-cpu exit=1 RCHECK REFUSE line=10 reason=pass-on-a-device-that-is-not-the-provider-accelerator
+PASS neg-wrong-vendor exit=1 RCHECK REFUSE line=8 reason=pass-on-a-device-that-is-not-the-provider-accelerator
+PASS neg-tpu-window-gpu-device exit=1 RCHECK REFUSE line=5 reason=pass-on-a-device-that-is-not-the-provider-accelerator
+PASS neg-undeclared-dev exit=1 RCHECK REFUSE line=10 reason=row-dev-not-a-declared-device
+PASS neg-pass-nonzero-exit exit=1 RCHECK REFUSE line=10 reason=pass-with-nonzero-exit
+PASS neg-pass-no-log exit=1 RCHECK REFUSE line=10 reason=row-pass-or-fail-needs-log
+PASS neg-end-count exit=1 RCHECK REFUSE line=15 reason=END-rows-differs-from-ROW-lines
+PASS neg-no-teardown exit=1 RCHECK REFUSE line=14 reason=missing-TEARDOWN
+PASS neg-claim-not-destroyed exit=1 RCHECK REFUSE line=15 reason=ACCESS_TESTED-needs-inventory-and-reference-pass-on-the-accelerator-and-destroyed-yes
+PASS neg-claim-no-reference exit=1 RCHECK REFUSE line=15 reason=ACCESS_TESTED-needs-inventory-and-reference-pass-on-the-accelerator-and-destroyed-yes
+PASS neg-short-rev exit=1 RCHECK REFUSE line=2 reason=src-rev-not-40-lowercase-hex
+PASS neg-upper-rev exit=1 RCHECK REFUSE line=2 reason=src-rev-not-40-lowercase-hex
+PASS neg-verdict-word exit=1 RCHECK REFUSE line=8 reason=row-verdict-unknown
+PASS neg-line-after-end exit=1 RCHECK REFUSE line=16 reason=line-after-END
+PASS neg-candidate-without-control exit=1 RCHECK REFUSE line=15 reason=candidate-pass-without-a-passing-control
+PASS neg-control-want-zero exit=1 RCHECK REFUSE line=10 reason=control-pass-needs-nonzero-want-equal-to-exit
+PASS neg-control-exit-differs exit=1 RCHECK REFUSE line=10 reason=control-pass-needs-nonzero-want-equal-to-exit
+PASS neg-header-twice exit=1 RCHECK REFUSE line=2 reason=header-repeated
+PASS neg-first-line exit=1 RCHECK REFUSE line=1 reason=first-line-must-be-ACCESS1
+PASS neg-provider exit=1 RCHECK REFUSE line=1 reason=unknown-provider
+PASS neg-claim-word exit=1 RCHECK REFUSE line=1 reason=unknown-claim
+PASS neg-unknown-tag exit=1 RCHECK REFUSE line=7 reason=unknown-line-tag
+PASS neg-cost-format exit=1 RCHECK REFUSE line=13 reason=cost-needs-decimal-charged_usd
+PASS neg-no-cost exit=1 RCHECK REFUSE line=14 reason=missing-COST
+PASS neg-device-repeated exit=1 RCHECK REFUSE line=6 reason=device-id-repeated
+PASS neg-device-id exit=1 RCHECK REFUSE line=6 reason=device-id-not-d0-to-d7
+PASS neg-no-end exit=1 RCHECK REFUSE line=14 reason=missing-END
+PASS neg-teardown-by exit=1 RCHECK REFUSE line=14 reason=teardown-missing-by-or-verified_at
+PASS neg-no-window exit=1 RCHECK REFUSE line=1 reason=missing-window
+PASS neg-src-no-repo exit=1 RCHECK REFUSE line=2 reason=src-missing-repo
+PASS neg-no-src exit=1 RCHECK REFUSE line=14 reason=missing-SRC
+PASS neg-device-vendor exit=1 RCHECK REFUSE line=5 reason=device-vendor-unknown
+PASS neg-device-class exit=1 RCHECK REFUSE line=5 reason=device-class-unknown
+PASS neg-device-model exit=1 RCHECK REFUSE line=5 reason=device-missing-model
+PASS neg-row-kind exit=1 RCHECK REFUSE line=8 reason=row-kind-unknown
+PASS neg-row-id exit=1 RCHECK REFUSE line=8 reason=row-missing-id
+PASS neg-destroyed-word exit=1 RCHECK REFUSE line=14 reason=teardown-destroyed-must-be-yes-or-no
+PASS neg-teardown-twice exit=1 RCHECK REFUSE line=15 reason=teardown-repeated
+PASS neg-end-word exit=1 RCHECK REFUSE line=15 reason=end-rows-not-decimal
+PASS neg-key-inside-value exit=1 RCHECK REFUSE line=10 reason=row-pass-or-fail-needs-decimal-exit
+PASS neg-empty exit=1 RCHECK REFUSE line=0 reason=empty-receipt
+PASS neg-over-65535-bytes exit=2 RCHECK REFUSE line=0 reason=input-unreadable-or-over-65535-bytes
+COMPILE rcheck-mut src=8e0f1d55e911f14e875967db26d824c6a0d59a22fa8f040938a0cd936ea75dcf bin=994b425267f820088256ede579d5592d67c569f37fee7d4b7daef87311929f66
+PASS mutant-checker-accepts-cpu-pass exit=0 RCHECK ACCEPT-SYNTHETIC provider=amd-devcloud claim=ACCESS_TESTED rows=4 pass=2 fail=0 not_run=1 missing=1 blocked=0
+PASS collector-accept exit=0 RCHECK ACCEPT-SYNTHETIC provider=amd-devcloud claim=NONE rows=3 pass=1 fail=0 not_run=1 missing=1 blocked=0
+PASS collector-cpu-pass exit=1 RCHECK REFUSE line=6 reason=pass-on-a-device-that-is-not-the-provider-accelerator
+PASS collector-claim-without-device exit=1 RCHECK REFUSE line=12 reason=ACCESS_TESTED-needs-inventory-and-reference-pass-on-the-accelerator-and-destroyed-yes
+PASS collector-tamper exit=1 SHA256SUMS check failed: the copied run differs from what was recorded
+PASS collector-no-accelerator-on-host (no DEVICE id=d0 line)
+PASS collector exports ACCESS_OUT (absolute run dir); a row's kept file is in SHA256SUMS
+PASS plan row cand-vadd-cl kind=candidate want=0 runs intel-cl.sh
+PASS plan row cand-fsum16-cl kind=candidate want=0 runs intel-cl.sh
+PASS plan row cand-gemm16-cl kind=candidate want=0 runs intel-cl.sh
+PASS plan row cand-reps-cl kind=candidate want=0 runs intel-cl.sh
+PASS plan row ctl-vadd-mutant-cl kind=control want=1 runs intel-cl.sh
+PASS plan row ctl-fsum16-mutant-cl kind=control want=1 runs intel-cl.sh
+PASS plan row ctl-gemm16-mutant-cl kind=control want=1 runs intel-cl.sh
+PASS plan row ctl-optin-cl kind=control want=2 runs intel-cl.sh
+PASS plan row ctl-isolation-cl kind=control want=9 runs intel-cl.sh
+PASS plan row ctl-require-cl kind=control want=9 runs intel-cl.sh
+PASS plan row ctl-vendor-cl kind=control want=5 runs intel-cl.sh
+PASS intel-gpu.tsv has no MISSING_IMPLEMENTATION row
+COMPILE emit src=9b622253b25e00e225773a55f378e2659dc997ab69665b13658679c3b02a0db4 bin=49944893b38ea1fd1c09c82ceb601a69c651f613f240901fefd11e26a9e1f54e
+COMPILE conform src=557061f07a7e5c56a58ea630dbe1663a7ddffebdde0997d2a22628da97b4a3b1 bin=326f26824494ba54ab65705a093929b5f0f23d03dba829bd6b67747fc23eb44a
+PASS intel-bundle exit=0 BUNDLE $HOME/work/hive/t_3bbd5f48/out/mut3/access/bundle files=16 SHA256SUMS=05294f7ed78345b98540b125ca3e86fa503e6e945baa74a9915aa19195861ac9
+PASS intel-bundle-exists exit=64 $HOME/work/hive/t_3bbd5f48/out/mut3/access/bundle exists; use a new directory
+PASS bundle holds 16 files (6 modules, 3 references, 5 inputs, spirv-host.c, intel-cl.sh) matching SHA256SUMS
+PASS real intel plan on this host: 11 candidate/control rows recorded, none PASS, no Intel GPU device
+PASS intel-cl.sh refused the missing ICD before any build or run
+PASS intel-compare-real-plan exit=1 COMPARE-SUMMARY pass=0 fail=6 not_run=0 pass_on_d0=0
+PASS intel-compare-good exit=0 COMPARE-SUMMARY pass=3 fail=0 not_run=3 pass_on_d0=0
+PASS compare lines carry conform.om's verdict, the VM row and the device (d7: not an Intel GPU)
+PASS intel-compare-no-rewrite exit=64 $HOME/work/hive/t_3bbd5f48/out/mut3/access/compare-good.txt exists; compare results are never rewritten
+PASS intel-compare-neg-tamper exit=1 SHA256SUMS check failed: the copied run differs from what was recorded
+PASS intel-compare-neg-vm-pass-wrong-bytes exit=1 COMPARE-SUMMARY pass=2 fail=1 not_run=3 pass_on_d0=0
+FAIL compare-lie line
+FAIL compare-lie control line
+PASS compare refuses correct bytes from a row the VM recorded as FAIL
+PASS intel-compare-not-run exit=3 COMPARE-SUMMARY pass=0 fail=0 not_run=6 pass_on_d0=0
+PASS intel-compare-conform-missing exit=64 CONFORM $HOME/work/hive/t_3bbd5f48/out/mut3/access/no-such-conform is not executable (build backend/spirv/conform.om with the pinned omc)
+PASS rcheck refuses the synthetic compare receipt (candidate PASS on the host CPU)
+ACCESS GATE FAIL pass=80 fail=2

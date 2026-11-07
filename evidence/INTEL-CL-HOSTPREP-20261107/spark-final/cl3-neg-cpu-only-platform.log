@@ -1,0 +1,3 @@
+spirv-host: cl target=gpu icd=$HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0 realpath=$HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0 MT_CL_GPU=1 forbid="nvidia" require="$HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0"
+spirv-host: cl library=$HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0 platform="Portable Computing Language" platform_vendor="The pocl project" platform_version="OpenCL 3.0 PoCL 7.2  Linux, Release, RELOC, SPIR-V, LLVM 18.1.3, SLEEF, POCL_DEBUG"
+spirv-host: no CL_DEVICE_TYPE_GPU device on the pinned platform (no CPU fallback)

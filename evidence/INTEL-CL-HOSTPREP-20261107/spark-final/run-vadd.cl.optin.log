@@ -1,0 +1,4 @@
+spirv-host: cl library=$HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0 platform="OpenCL 3.0 PoCL 7.2  Linux, Release, RELOC, SPIR-V, LLVM 18.1.3, SLEEF, POCL_DEBUG"
+spirv-host: cl device="cpu-generic-0xd87" type=CPU
+spirv-host: cl dispatched global=1048576 local=64
+spirv-host: isolation: no mapping or descriptor contains "nvidia"

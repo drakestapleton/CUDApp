@@ -1,0 +1,1 @@
+spirv-host: isolation FAILED: MT_CL_GPU_ICD $HOME/work/hive/t_3bbd5f48/tools/pocl/lib/libpocl.so.2.16.0 contains forbidden "libpocl" (not loaded)

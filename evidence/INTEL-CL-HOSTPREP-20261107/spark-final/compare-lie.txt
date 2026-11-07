@@ -1,0 +1,8 @@
+COMPARE1 run=coll-cmp-lie window=SYNTHETIC-intel-compare repo=aien-dev/CUDApp rev=0123456789abcdef0123456789abcdef01234567 conform_sha256=326f26824494ba54ab65705a093929b5f0f23d03dba829bd6b67747fc23eb44a sums_sha256=6d88c576128a9ff9d5b126f04ae2b5f1f8bb6c42bb05a25880f7e49452d9682e
+COMPARE row=cand-vadd-cl file=outputs/vadd.cl.gpu.out sha256=e8fcd28f4d17fec2903339a857396e68f70a9e59d4f12ee01fe3b771db249c52 want=0 conform_exit=1 vm_verdict=PASS dev=d7 verdict=FAIL reason=conform-exit-differs-from-want conform=CONFORM_vadd_n=1048576_wrong=1_unwritten=0_first=1024
+COMPARE row=ctl-vadd-mutant-cl file=outputs/vadd.cl.mutant.gpu.out sha256=72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6 want=1 conform_exit=0 vm_verdict=PASS dev=d7 verdict=FAIL reason=conform-exit-differs-from-want conform=CONFORM_vadd_n=1048576_wrong=0_unwritten=0_first=none
+COMPARE row=cand-fsum16-cl file=outputs/fsum16.cl.gpu.out sha256=6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290 want=0 conform_exit=0 vm_verdict=FAIL dev=d7 verdict=FAIL reason=vm-row-FAIL-but-conform-agrees-with-want conform=CONFORM_fsum16_n=65536_wrong=0_unwritten=0_first=none
+COMPARE row=ctl-fsum16-mutant-cl verdict=NOT_RUN reason=no-row-in-receipt
+COMPARE row=cand-gemm16-cl verdict=NOT_RUN reason=no-row-in-receipt
+COMPARE row=ctl-gemm16-mutant-cl verdict=NOT_RUN reason=no-row-in-receipt
+COMPARE-SUMMARY pass=0 fail=3 not_run=3 pass_on_d0=0

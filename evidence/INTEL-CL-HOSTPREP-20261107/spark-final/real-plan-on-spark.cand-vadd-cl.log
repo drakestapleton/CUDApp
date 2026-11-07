@@ -1,0 +1,6 @@
+# command: sh "$ACCESS_BUNDLE/intel-cl.sh" run vadd
+# start: 2026-11-07T04:35:19Z
+BUNDLE SHA256SUMS=55f90c8fed25cfda2e4b33e311b5d41f696c2c81ccec59cfd0686c28140e2b68
+intel-cl: ICD library $HOME/work/hive/t_3bbd5f48/out/final/access/no-such-icd/libigdrcl.so missing
+# exit: 3
+# end: 2026-11-07T04:35:19Z

@@ -1,0 +1,13 @@
+diff --git a/tools/multitarget/spirv-host.c b/tools/multitarget/spirv-host.c
+index 647163ed..f639a49d 100644
+--- a/tools/multitarget/spirv-host.c
++++ b/tools/multitarget/spirv-host.c
+@@ -798,7 +798,7 @@ int main(int argc, char **argv)
+ {
+     t_start = now_us();
+ #if MT_TARGET == 3
+-    if (!cl_gpu_opted_in())
++    if (0 && !cl_gpu_opted_in())
+         return die(2, "this build is MT_TARGET=3 and runs on a GPU: set MT_CL_GPU=1 to opt in (refused before any file or the OpenCL loader is opened)");
+ #endif
+     if (argc != 7 && argc != 8) return die(2, "usage: spirv-host cl|vk MODULE.spv KERNEL COUNT IN.bin [IN.bin] OUT.bin");

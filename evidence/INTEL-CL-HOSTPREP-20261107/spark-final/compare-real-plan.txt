@@ -1,0 +1,8 @@
+COMPARE1 run=coll-intel-real window=SYNTHETIC-collector-selftest repo=aien-dev/CUDApp rev=0123456789abcdef0123456789abcdef01234567 conform_sha256=326f26824494ba54ab65705a093929b5f0f23d03dba829bd6b67747fc23eb44a sums_sha256=6cc5fe7532f0f031597119d8a37e2a508440a7e24df22de426ed689e6119a6c0
+COMPARE row=cand-vadd-cl file=outputs/vadd.cl.gpu.out vm_verdict=FAIL dev=d7 verdict=FAIL reason=output-missing
+COMPARE row=ctl-vadd-mutant-cl file=outputs/vadd.cl.mutant.gpu.out vm_verdict=FAIL dev=d7 verdict=FAIL reason=output-missing
+COMPARE row=cand-fsum16-cl file=outputs/fsum16.cl.gpu.out vm_verdict=FAIL dev=d7 verdict=FAIL reason=output-missing
+COMPARE row=ctl-fsum16-mutant-cl file=outputs/fsum16.cl.mutant.gpu.out vm_verdict=FAIL dev=d7 verdict=FAIL reason=output-missing
+COMPARE row=cand-gemm16-cl file=outputs/gemm16.cl.gpu.out vm_verdict=FAIL dev=d7 verdict=FAIL reason=output-missing
+COMPARE row=ctl-gemm16-mutant-cl file=outputs/gemm16.cl.mutant.gpu.out vm_verdict=FAIL dev=d7 verdict=FAIL reason=output-missing
+COMPARE-SUMMARY pass=0 fail=6 not_run=0 pass_on_d0=0

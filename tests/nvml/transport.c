@@ -40,7 +40,7 @@ static uint32_t fake_step(uint64_t *result) {
     return 0;
 }
 
-uint32_t omega2_nvrm_open_file(uint64_t *result, const uint8_t *o_path, uint64_t o_path_len) {
+uint32_t omega2_nvrm_open_file(uint64_t *result, void *o_path, uint64_t o_path_len) {
     if (o_path_len == 0 || o_path_len > FAKE_PN) return 32;
     memcpy(fake_p, o_path, o_path_len);
     fake_st[0] = 2;
@@ -54,13 +54,13 @@ uint32_t omega2_nvrm_close_file(uint64_t *result, uint64_t o_fd) {
     return fake_step(result);
 }
 
-uint32_t omega2_nvrm_ioctl(uint64_t *result, uint64_t o_fd, uint64_t o_nr, uint8_t *o_h,
-                           uint64_t o_h_len, uint8_t *o_p, uint64_t o_p_len) {
+uint32_t omega2_nvrm_ioctl(uint64_t *result, uint64_t o_fd, uint64_t o_nr, void *o_h,
+                           uint64_t o_h_len, void *o_p, uint64_t o_p_len) {
     if (o_h_len > FAKE_HN || o_p_len > FAKE_PN) return 32;
     /* Fault S: the transport itself refuses the GPU name control (omega2 status 1). */
     if (fake_st[5] == 'S' && o_nr == 42 && o_h_len >= 12) {
         uint32_t cmd;
-        memcpy(&cmd, o_h + 8, 4);
+        memcpy(&cmd, (const uint8_t *)o_h + 8, 4);
         if (cmd == 0x20800110u) return 1;
     }
     memcpy(fake_h, o_h, o_h_len);

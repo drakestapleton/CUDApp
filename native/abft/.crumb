@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "gemm-fault-detection",
+  "layer": "native",
+  "purpose": "Seeded Omega GEMM fault detection (two-sided randomized checksum, thorough recompute, sampled elements) and DRA-387 schedule-perturbation/reduced-concurrency host bookkeeping; host SIMULATED only, GPU NOT_RUN"
+}

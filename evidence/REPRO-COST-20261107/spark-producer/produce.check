@@ -1,0 +1,14 @@
+gpu-in/fsum16.vk.mutant.spv: OK
+gpu-in/fsum16.vk.spv: OK
+gpu-in/gemm16.vk.mutant.spv: OK
+gpu-in/gemm16.vk.spv: OK
+gpu-in/vadd.vk.mutant.spv: OK
+gpu-in/vadd.vk.spv: OK
+gpu-in/a.bin: OK
+gpu-in/b.bin: OK
+gpu-in/ga.bin: OK
+gpu-in/gb.bin: OK
+gpu-in/x.bin: OK
+gpu-in/fsum16.ref: OK
+gpu-in/gemm16.ref: OK
+gpu-in/vadd.ref: OK

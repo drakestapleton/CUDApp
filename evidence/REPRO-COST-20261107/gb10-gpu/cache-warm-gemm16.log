@@ -1,0 +1,7 @@
+spirv-host: vk target=nvidia icd=/usr/share/vulkan/icd.d/nvidia_icd.json layers=disabled __GL_SHADER_DISK_CACHE=1 cache_path=$HOME/work/hive/t_c2fbba86/rr/out/nvidia/nvcache-on
+spirv-host: vk device="NVIDIA GB10" type=1 vendor=0x10de device_id=0x2e12 api=1.4.312 driver="NVIDIA" info="580.173.02" conformance=1.4.1.3
+spirv-host: vk limits max_group_count_x=2147483647 max_invocations=1024 max_shared=49152 timestamp_period_ns=1
+spirv-host: vk dispatched groups=1024 local=64
+spirv-host: time setup_us=327721 pipeline_us=132 run_us=927 device_ns=6784 total_us=329118 maxrss_kib=148072 buffers_bytes=786432
+spirv-host: isolation: no mapping or descriptor contains "vulkan_lvp:libpocl:libcuda.so:libnvcuda"; "libnvidia-glcore" mapped
+spirv-host: isolation: no mapping or descriptor contains "vulkan_lvp:libpocl:libcuda.so:libnvcuda"

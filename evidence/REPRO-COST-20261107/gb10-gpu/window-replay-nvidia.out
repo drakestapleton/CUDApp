@@ -1,0 +1,3 @@
+NVIDIA-GPU PASS pass=38 fail=0 not_run=3
+REPRO NVIDIA PASS files=6 (equal to the published GB10 and Apple M2 outputs)
+replay exit 0

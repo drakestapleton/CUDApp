@@ -1,0 +1,13 @@
+DATE 2026-11-07T03:07:17Z
+OS macOS 26.6.2 build 25G83; Darwin 25.6.0 arm64
+CPU Apple M2 cores=8 perf=4 eff=4 mem=8589934592
+MODEL Mac14,2
+GPU Chipset Model: Apple M2
+GPU Type: GPU
+GPU Total Number of Cores: 10
+GPU Vendor: Apple (0x106b)
+GPU Metal Support: Metal 4
+CC Apple clang version 17.0.0 (clang-1700.6.4.2)
+SDK 26.2
+MOLTENVK $HOME/work/hive/cuda202/out/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib sha256=aef00b13bcc808adf15b85bef9ae67393d92be7ed5dfe41cad16fa809e4a4c5f
+LAUNCHER_SRC $HOME/work/hive/cuda202/CUDApp/tools/multitarget/spirv-host.c sha256=b66d63ec1713dbd182e8ab2f64073a0e7ee9b81b9d3f90e16a3c1ed9a6367dc8

@@ -8,7 +8,7 @@ outputs that equal Omega's bit-exact reference (`evidence/PORTABLE-APP-20261107/
 | Claim about this package | Status |
 |---|---|
 | Package (pinned sources, tool fetch, producer, two GPU replays, published digests, cost meter) | IMPLEMENTED on this branch |
-| Author-side clean-room reproduction from a fresh clone of the pushed branch | see `evidence/REPRO-COST-20261107/README.md` |
+| Author-side clean-room reproduction from a fresh clone of the pushed branch | EXERCISED 2026-11-07 on the Spark (producer + GB10) and the Apple M2 from a fresh clone of `047b1d3e`, all PASS (`evidence/REPRO-COST-20261107/README.md`) |
 | Independent reproduction by someone outside AIEN | **NOT_RUN**: nobody outside was contacted. DRA-202 grants no outreach authorization; the package is prepared first, contact is Drake's decision |
 
 ## What you reproduce
@@ -29,10 +29,10 @@ outputs that equal Omega's bit-exact reference (`evidence/PORTABLE-APP-20261107/
 
 | Stage | Platform | Status |
 |---|---|---|
-| Producer (`tools/repro/produce.sh`) | Linux AArch64. Exercised on NVIDIA DGX Spark, Ubuntu 24.04 (DGX OS), kernel 7.0.0-1019-nvidia, gcc 13.3.0, Mesa lavapipe 25.2.8, Vulkan loader 1.4.328.1 | see evidence |
-| NVIDIA GPU (`tools/repro/replay-nvidia.sh`) | NVIDIA GB10 (DGX Spark), NVIDIA driver 580.173.02 | see evidence |
+| Producer (`tools/repro/produce.sh`) | Linux AArch64. Exercised on NVIDIA DGX Spark, Ubuntu 24.04 (DGX OS), kernel 7.0.0-1019-nvidia, gcc 13.3.0, Mesa lavapipe 25.2.8, Vulkan loader 1.4.328.1 | EXERCISED: `REPRO PRODUCE PASS files=14` |
+| NVIDIA GPU (`tools/repro/replay-nvidia.sh`) | NVIDIA GB10 (DGX Spark), NVIDIA driver 580.173.02 | EXERCISED: `REPRO NVIDIA PASS files=6` |
 | NVIDIA GPU, any other model or x86-64 | — | NOT_RUN: `tests/multitarget/nvidia-gpu.sh` refuses a host that is not Linux AArch64 |
-| Apple GPU (`tools/repro/replay-apple.sh`) | Apple M2, macOS 26.6.2, MoltenVK 1.4.2 | see evidence |
+| Apple GPU (`tools/repro/replay-apple.sh`) | Apple M2, macOS 26.6.2, MoltenVK 1.4.2 | EXERCISED: `REPRO APPLE PASS files=6` |
 | Apple M1/M3/M4 | — | NOT_RUN; set `MT_EXPECT_DEVICE` to the device name the launcher prints |
 | AMD, Intel, Qualcomm, other GPUs | — | NOT_RUN (no runner; access packets only, `docs/access/` on a separate branch) |
 | Producer on macOS or x86-64 | — | not supported: the seeded omc writes AArch64 Linux executables. On a Mac use an AArch64 Linux VM (DRA-195 used Lima 2.2.0 with Debian 13) |

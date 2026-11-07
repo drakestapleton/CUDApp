@@ -1,0 +1,4 @@
+CUDAPP 047b1d3e8e2085ba95c09e0617b07c650443ea56 26.6.2 arm64 2026-11-07T03:07:15Z
+APPLE-GPU PASS pass=20 fail=0
+REPRO APPLE PASS files=6 (equal to the published GB10 and Apple M2 outputs)
+replay exit 0

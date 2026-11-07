@@ -1,0 +1,7 @@
+{"window_id": "20261107T030800Z-377574", "name": "cuda202-repro", "owner": "$USER@pid3630768", "lease_min": 20, "gb10": "exclusive", "waited_s": 1, "state": {"utc": "2026-11-07T03:08:01Z", "loadavg": "10.46 10.43 10.09 12/3313 3632350", "mem_avail_kB": 81147228, "gpu_util_pct": "0", "gpu_W": "5.55",
+ "gb10_lock_holders": "holds exclusive pid 3630894 (s) (set by a finished flock; processes with /tmp/aien-gb10.lock open now: pid 3630839 /bin/sh $HOME/.local/bin/spark-window _hold 20261107T03); ",
+ "quiet_lock_holders": "holds exclusive pid 3630897 (s) (set by a finished flock; processes with /tmp/aien-quiet.lock open now: pid 3630839 /bin/sh $HOME/.local/bin/spark-window _hold 20261107T03); ",
+ "quiet_waiters": "",
+ "gpu_apps": "68451, 335 MiB, $HOME/.local/share/omega-tool-model/round40-fast/server;",
+ "sensors_row": "1794020880,2026-11-06T21:08:00-06:00,190,5.55,0,10.46,81208316,1,13172", "sensors_row_age_s": 1}
+}

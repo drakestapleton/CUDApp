@@ -1,0 +1,1 @@
+spirv-host: an enabled shader cache needs a private absolute MT_NV_CACHE_PATH

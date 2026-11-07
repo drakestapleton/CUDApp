@@ -1,0 +1,43 @@
+PASS compile cost.om
+PASS compile mdgate.om
+PASS cost.sh output = tests/repro/cost.expect (53 lines)
+PASS oracle S0 git shortstat = TOTAL files=38 add=3054 del=5
+PASS oracle S1 git shortstat = TOTAL files=120 add=5959 del=38
+PASS oracle vadd.vk at S1 head = published module b56654c9853cfc2f869a7f3d9df44c6811875dffce596bd1e102468a2ce80444
+PASS oracle fsum16.vk at S1 head = published module 1c139c14212e0cee1fa7f702f33884b20df927210371dc6c6803b5a151015805
+PASS oracle gemm16.vk at S1 head = published module 191e4f4276746e84c8913a9ff4a9d312158d1faa068a0fa610463157a0bc4c9e
+PASS neg unclassified-path refused: COST1 REFUSE line=50 reason=unclassified-path
+PASS neg bad-number refused: COST1 REFUSE line=6 reason=number-not-1-to-18-decimal-digits
+PASS neg na-mixed refused: COST1 REFUSE line=199 reason=effort-kind-has-NA-and-a-number
+PASS neg unknown-kind refused: COST1 REFUSE line=195 reason=unknown-effort-kind
+PASS neg end-count refused: COST1 REFUSE line=199 reason=END-count-differs-from-scopes
+PASS neg truncated refused: COST1 REFUSE line=198 reason=missing-END
+PASS neg ends-in-scope refused: COST1 REFUSE line=197 reason=missing-END
+PASS neg empty refused: COST1 REFUSE line=0 reason=first-line-must-be-COSTIN1
+PASS neg header refused: COST1 REFUSE line=1 reason=first-line-must-be-COSTIN1
+PASS neg changed kernel digest prints KERNEL vadd.vk differs
+PASS source mutant mut1 caught (exit 1COST1 REFUSE line=11 reason=unclassified-path )
+PASS source mutant mut2 caught (exit 0)
+PASS mdgate fixture-pass exit=5 MDGATE PASS-FIXTURE topology=T1 link_gbps=200 bytes_step=240000000 min_bytes=239963136 overhead_ppm=153 eff_ppm=833333
+PASS fixture verdict is labelled PASS-FIXTURE
+PASS mdgate real-copy-not-committed exit=0 MDGATE PASS topology=T1 link_gbps=200 bytes_step=240000000 min_bytes=239963136 overhead_ppm=153 eff_ppm=833333
+PASS mdgate empty exit=3 MDGATE NOT_RUN reason=no-receipt
+PASS mdgate claim-not-run exit=3 MDGATE NOT_RUN reason=receipt-claims-NOT_RUN
+PASS mdgate unknown-claim exit=1 MDGATE FAIL line=0 reason=unknown-claim
+PASS mdgate devices-must-be-2 exit=1 MDGATE FAIL line=0 reason=devices-must-be-2
+PASS mdgate dev0-equals-dev1 exit=1 MDGATE FAIL line=0 reason=dev0-equals-dev1
+PASS mdgate two-device-checkpoint-differs-from-single-device-reference exit=1 MDGATE FAIL line=0 reason=two-device-checkpoint-differs-from-single-device-reference
+PASS mdgate rank-1-checkpoint-differs-from-rank-0 exit=1 MDGATE FAIL line=0 reason=rank-1-checkpoint-differs-from-rank-0
+PASS mdgate rank-swap-control-equals-reference exit=1 MDGATE FAIL line=0 reason=rank-swap-control-equals-reference
+PASS mdgate a-negative-control-was-not-refused exit=1 MDGATE FAIL line=0 reason=a-negative-control-was-not-refused
+PASS mdgate bytes_step-below-ordered-reduction-minimum exit=1 MDGATE FAIL line=0 reason=bytes_step-below-ordered-reduction-minimum
+PASS mdgate times-inconsistent-overlap-comm-t2 exit=1 MDGATE FAIL line=0 reason=times-inconsistent-overlap-comm-t2
+PASS mdgate eff_ppm-differs-from-t1-over-2-t2 exit=1 MDGATE FAIL line=0 reason=eff_ppm-differs-from-t1-over-2-t2
+PASS mdgate qualified-claim-missing-a-key exit=1 MDGATE FAIL line=0 reason=qualified-claim-missing-a-key
+PASS mdgate key-repeated exit=1 MDGATE FAIL line=14 reason=key-repeated
+PASS mdgate unknown-key exit=1 MDGATE FAIL line=32 reason=unknown-key
+PASS mdgate value-malformed-for-key exit=1 MDGATE FAIL line=4 reason=value-malformed-for-key
+PASS mdgate first-line-must-be-MD2-v1 exit=1 MDGATE FAIL line=1 reason=first-line-must-be-MD2-v1
+PASS mdgate missing-END exit=1 MDGATE FAIL line=32 reason=missing-END
+PASS cost.sh refuses a compiler other than the pin (69)
+REPRO-GATE PASS pass=42 fail=0

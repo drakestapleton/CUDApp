@@ -1,0 +1,6 @@
+out/fsum16.vk.gpu.out: OK
+out/fsum16.vk.mutant.gpu.out: OK
+out/gemm16.vk.gpu.out: OK
+out/gemm16.vk.mutant.gpu.out: OK
+out/vadd.vk.gpu.out: OK
+out/vadd.vk.mutant.gpu.out: OK

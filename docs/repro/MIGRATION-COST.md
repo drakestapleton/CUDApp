@@ -82,7 +82,7 @@ S0 effort: NOT_MEASURED (the #138 work predates the run records that exist on th
 | conversion | app +218/−15 (one new kernel; 0 bytes of change to the existing kernels), launcher +326/−12, build +10 | MEASURED (lines); time not separable from the agent runs |
 | debugging | inside agent wall-clock | not separately measured |
 | validation | tests +430/−6, evidence 112 files, GPU 48 s | MEASURED |
-| deployment / packaging | this card (DRA-202): see the next section | MEASURED in the PR/issue at completion |
+| deployment / packaging | this card (DRA-202): 3067 s, 117 calls, est. USD 13.66 at a 03:10Z snapshot (`evidence/REPRO-COST-20261107/README.md`) | MEASURED snapshot; final figure on the issue |
 | tuning | none was done (no performance work in S1) | — |
 | human assistance | — | NOT_MEASURED |
 | compute | GB10 48 s exclusive; CPU time not metered | partial |

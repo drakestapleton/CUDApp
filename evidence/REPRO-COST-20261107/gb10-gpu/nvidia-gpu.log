@@ -1,0 +1,74 @@
+PASS inputs match producer SHA256SUMS (14 files)
+DATE 2026-11-07T03:08:10Z
+WINDOW 20261107T030800Z-377574
+HOST spark-b87b Linux 7.0.0-1019-nvidia aarch64
+OS Ubuntu 24.04.5 LTS
+CPU 0xd87 cores=20 mem_kib=127598532 kB
+NVIDIA_KERNEL_DRIVER NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.173.02  Release Build  (dvs-builder@U22-A24-5-4)  Tue Jun 23 08:34:19 UTC 2026 module=580.173.02
+ICD /usr/share/vulkan/icd.d/nvidia_icd.json sha256=7bdb6f27d35b66fc848df6f94b8773bba30ea3a7f06f114100d14154a235a34b library=libGLX_nvidia.so.0
+LIB /usr/lib/aarch64-linux-gnu/libGLX_nvidia.so.580.173.02 sha256=42668cce4e833c48155eafedaa214ad980273bf21112d8e971cd2a74e5ca2e3a
+LIB /usr/lib/aarch64-linux-gnu/libnvidia-glcore.so.580.173.02 sha256=507a18115d214b3c0e3cba434abbc990321fe97e43f1fbabf82f64e104cede77
+LIB /usr/lib/aarch64-linux-gnu/libnvidia-glvkspirv.so.580.173.02 sha256=b63396177492fc33c9081a03445d6bb26ec5cbe6c321c6544f13e812f94d284e
+LIB /usr/lib/aarch64-linux-gnu/libnvidia-gpucomp.so.580.173.02 sha256=d3cc3a9ed3d8e706f6dd3a6d47b6dc90de3694f232faa1940dae5769c57539e6
+LIB /usr/lib/aarch64-linux-gnu/libvulkan.so.1.4.328 sha256=08297dd28751395e49a3bc163b32d0fa5ae67c81e4677b7a7bbc7aa85c93bf1a
+FIRMWARE /lib/firmware/nvidia/580.173.02/gsp_ga10x.bin sha256=32cb7cf3e77f97e92f6e92135939ccb3ba382748144569c0dfccf3338d43d963
+FIRMWARE /lib/firmware/nvidia/580.173.02/gsp_tu10x.bin sha256=6f3ccbd570c7ac2a7ea910d9d87fc3d23db9ae3dfe82020ea07b17a30954495e
+CC cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+LAUNCHER_SRC $HOME/work/hive/t_c2fbba86/rr/CUDApp/tools/multitarget/spirv-host.c sha256=b66d63ec1713dbd182e8ab2f64073a0e7ee9b81b9d3f90e16a3c1ed9a6367dc8
+LAUNCHER $HOME/work/hive/t_c2fbba86/rr/out/nvidia/spirv-host-nv sha256=27346a3a9d0b1847361cf2a06f025f74b2403d147beacc728e2971a942d471e7
+PASS bytes vadd.vk.gpu.out = vadd.ref sha256=72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+PASS conform check vadd vadd.vk.gpu.out exit=0 CONFORM vadd n=1048576 wrong=0 unwritten=0 first=none
+PASS negative vadd.vk.mutant differs from vadd.ref (planted wrong kernel detected)
+PASS conform check vadd vadd.vk.mutant.gpu.out exit=1 CONFORM vadd n=1048576 wrong=1048576 unwritten=0 first=0
+PASS repeat vadd.vk identical bytes
+PASS bytes fsum16.vk.gpu.out = fsum16.ref sha256=6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290
+PASS conform check fsum16 fsum16.vk.gpu.out exit=0 CONFORM fsum16 n=65536 wrong=0 unwritten=0 first=none
+PASS negative fsum16.vk.mutant differs from fsum16.ref (planted wrong kernel detected)
+PASS conform check fsum16 fsum16.vk.mutant.gpu.out exit=1 CONFORM fsum16 n=65536 wrong=44123 unwritten=0 first=2
+PASS repeat fsum16.vk identical bytes
+PASS bytes gemm16.vk.gpu.out = gemm16.ref sha256=a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195
+PASS conform check gemm16 gemm16.vk.gpu.out exit=0 CONFORM gemm16 n=65536 wrong=0 unwritten=0 first=none
+PASS negative gemm16.vk.mutant differs from gemm16.ref (planted wrong kernel detected)
+PASS conform check gemm16 gemm16.vk.mutant.gpu.out exit=1 CONFORM gemm16 n=65536 wrong=47715 unwritten=0 first=0
+PASS repeat gemm16.vk identical bytes
+spirv-host: vk target=nvidia icd=/usr/share/vulkan/icd.d/nvidia_icd.json layers=disabled __GL_SHADER_DISK_CACHE=0 cache_path=(driver default, unused)
+spirv-host: vk device="NVIDIA GB10" type=1 vendor=0x10de device_id=0x2e12 api=1.4.312 driver="NVIDIA" info="580.173.02" conformance=1.4.1.3
+spirv-host: vk limits max_group_count_x=2147483647 max_invocations=1024 max_shared=49152 timestamp_period_ns=1
+spirv-host: isolation: no mapping or descriptor contains "vulkan_lvp:libpocl:libcuda.so:libnvcuda"; "libnvidia-glcore" mapped
+spirv-host: isolation: no mapping or descriptor contains "vulkan_lvp:libpocl:libcuda.so:libnvcuda"
+NOT_RUN cross-target byte compare: MT_COMPARE_DIR not set
+PASS control cl-refused exit=2 spirv-host: this build is MT_TARGET=2 (NVIDIA Vulkan driver): only vk
+PASS control isolation-forbid-driver exit=9 spirv-host: isolation FAILED: forbidden path "libnvidia-glcore" present
+PASS control isolation-require-missing exit=9 spirv-host: isolation FAILED: required driver "libnot-a-loaded-driver" is not mapped
+PASS control wrong-device exit=5 spirv-host: device name does not contain MT_EXPECT_DEVICE (NVIDIA H100)
+PASS control cpu-fallback-refused exit=5 spirv-host: device is not a GPU (integrated or discrete): no CPU fallback
+PASS control cache-needs-private-path exit=3 spirv-host: an enabled shader cache needs a private absolute MT_NV_CACHE_PATH
+PASS control module-missing exit=4 spirv-host: module unreadable or not whole 32-bit words
+PASS control module-not-words exit=4 spirv-host: module unreadable or not whole 32-bit words
+PASS control wrong-entry-driver exit=7 spirv-host: vkCreateComputePipelines (entry point?)
+PASS control short-input exit=4 spirv-host: input unreadable or not a multiple of COUNT floats
+PASS cache-on warm run vadd bytes = vadd.ref
+OBSERVED cache vadd pipeline_us off=10780 cold=15618 warm=109
+PASS cache-on warm run fsum16 bytes = fsum16.ref
+OBSERVED cache fsum16 pipeline_us off=16118 cold=20701 warm=119
+PASS cache-on warm run gemm16 bytes = gemm16.ref
+OBSERVED cache gemm16 pipeline_us off=25504 cold=28384 warm=132
+PASS cache-off build wrote nothing to its private path
+PASS cache-on build wrote 2 files to its private path
+PASS corrupted cache vadd: same bytes = vadd.ref
+PASS corrupted cache fsum16: same bytes = fsum16.ref
+PASS corrupted cache gemm16: same bytes = gemm16.ref
+PASS timing reps vadd: 10/10 outputs = vadd.ref
+PASS timing reps fsum16: 10/10 outputs = fsum16.ref
+PASS timing reps gemm16: 10/10 outputs = gemm16.ref
+NOT_RUN CUDA++ native baseline (hello_gpu on the GB10): HELLO_GPU not set
+NOT_RUN hello_gpu_control negative: HELLO_GPU_CONTROL not set
+OUTPUT vadd.vk.gpu.out sha256=72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6
+OUTPUT vadd.vk.mutant.gpu.out sha256=7b9b833c4c3c0ae96190353543412bf09159d73742eab031e4b49a284263da40
+OUTPUT fsum16.vk.gpu.out sha256=6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290
+OUTPUT fsum16.vk.mutant.gpu.out sha256=46410fe789f1095b90fcc1052d5a6ad785a9db4735e5a1dd40b9749944aface7
+OUTPUT gemm16.vk.gpu.out sha256=a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195
+OUTPUT gemm16.vk.mutant.gpu.out sha256=2a4e6a24b4d07b4c92fd2650c9ddd388cf38e9b8dddc61010f47ea472fb02b12
+PASS driver default shader cache $HOME/work/hive/t_c2fbba86/rr/home/.cache/nvidia unchanged (0 files)
+route: SPIRV_VK -> NVIDIA Vulkan driver 580.173.02 (proprietary user space, nvidia.ko) on the GB10 (vendor runtime, not CUDA++); CUDA++ own sm_121 path = hello_gpu vadd only
+NVIDIA-GPU PASS pass=38 fail=0 not_run=3

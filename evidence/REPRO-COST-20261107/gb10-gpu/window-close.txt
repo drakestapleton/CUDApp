@@ -1,0 +1,4 @@
+spark-window: verdict for its timings: quiet machine
+spark-window: window 20261107T030800Z-377574 closed (closed). It holds:
+  close.json
+  open.json

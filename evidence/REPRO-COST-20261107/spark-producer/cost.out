@@ -1,0 +1,53 @@
+COST1 scope=S0 base=c30c0be6222af7d13e38dd354a752fd17367adeb head=d89ec37e6a350057a419513afe252d2b2cf0e80d
+KERNEL vadd.cl new
+KERNEL vadd.vk new
+KERNEL fsum16.cl new
+KERNEL fsum16.vk new
+COMMITS n=3 span_s=33771
+CAT app files=4 add=2096 del=0
+CAT launcher files=2 add=346 del=0
+CAT test files=1 add=241 del=0
+CAT build files=3 add=23 del=2
+CAT evidence files=27 add=319 del=0
+CAT docs files=1 add=29 del=3
+TOTAL files=38 add=3054 del=5
+BINARY files=18
+EFFORT agent_wall_s NOT_MEASURED
+EFFORT agent_api_calls NOT_RECORDED
+EFFORT tokens_in NOT_RECORDED
+EFFORT tokens_out NOT_RECORDED
+EFFORT tokens_cache_read NOT_RECORDED
+EFFORT tokens_cache_write NOT_RECORDED
+EFFORT cost_usd_e7 NOT_RECORDED
+EFFORT gpu_exclusive_s NOT_RECORDED
+EFFORT human_hands_on_s NOT_MEASURED
+EFFORT review_s NOT_RECORDED
+COST1 END scope=S0
+COST1 scope=S1 base=b774723f537cec16a359fe082b8100317a5b5490 head=bec1379663666503b614229cde334eb577f169e4
+KERNEL vadd.cl same
+KERNEL vadd.vk same
+KERNEL fsum16.cl same
+KERNEL fsum16.vk same
+KERNEL gemm16.cl new
+KERNEL gemm16.vk new
+COMMITS n=3 span_s=1387
+CAT app files=2 add=218 del=15
+CAT launcher files=1 add=326 del=12
+CAT test files=3 add=430 del=6
+CAT build files=1 add=10 del=0
+CAT evidence files=112 add=4968 del=0
+CAT docs files=1 add=7 del=5
+TOTAL files=120 add=5959 del=38
+BINARY files=0
+EFFORT agent_wall_s 4787
+EFFORT agent_api_calls 281
+EFFORT tokens_in 566
+EFFORT tokens_out 257804
+EFFORT tokens_cache_read 87429990
+EFFORT tokens_cache_write 949386
+EFFORT cost_usd_e7 273912720
+EFFORT gpu_exclusive_s 48
+EFFORT human_hands_on_s NOT_MEASURED
+EFFORT review_s NOT_MEASURED
+COST1 END scope=S1
+COST1 OK scopes=2

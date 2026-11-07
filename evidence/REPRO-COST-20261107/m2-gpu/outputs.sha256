@@ -1,0 +1,8 @@
+6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290  apple/fsum16.vk.gpu.out
+46410fe789f1095b90fcc1052d5a6ad785a9db4735e5a1dd40b9749944aface7  apple/fsum16.vk.mutant.gpu.out
+a006702d315cfbc98b3cdb35df1572b605fcc0606ce8ed3073eccff237b06195  apple/gemm16.vk.gpu.out
+2a4e6a24b4d07b4c92fd2650c9ddd388cf38e9b8dddc61010f47ea472fb02b12  apple/gemm16.vk.mutant.gpu.out
+72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6  apple/vadd.vk.gpu.out
+7b9b833c4c3c0ae96190353543412bf09159d73742eab031e4b49a284263da40  apple/vadd.vk.mutant.gpu.out
+f95765a6229cb7b915990a2890ce12ebe36a730b021545d3d52ae69ce4c4024e  moltenvk/MoltenVK-macos.tar
+6c86d39afd80ffd1ef416f615e9b1da8ef4ed7c344301c6c06b5c8cee21b9432  apple/spirv-host-mvk

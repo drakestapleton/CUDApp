@@ -32,6 +32,8 @@
 # mk/omega-gpu-engine.mk is omega 37fa50340345's blob (omega-mv #966). #966 swaps omega's freestanding C SHA-256 (src/omega_sha256_fs.c, test-sha256-fs-parity) for the bridge's freestanding Omega binding (src/omega_om_units_fs.c, test-sha256-freestanding-parity). CUDA++ never carried that C path: its GPU_FS_SRCS link src/sha256.c beside CUDAPP_FS_BINDING from its own om/units.sh at bridge 3dc4a00e, so the delta is not ported here; adopting the Omega SHA-256 binding needs that bridge pin moved. Any later omega edit to the file must still fail.
 Makefile	7e1426b3be2281979d00ac550a9397f913a38c30
 docs/runtime/API.md	9f5f34321bfb3f8623623ca9a174b68e3ff3c3ed
+# src/omega_bw_hazard.c is omega f0d1e9f51ee1b2ab8098f4bb848b3a5f4ee68a7c's blob (bw-hazard: the header comment drops the removed omega_tc_patch_code, #641 x #984 on train r5; unchanged through omega da8b7e66).
+# CUDA++ held that blob byte-equal from f6783b75 and is ahead since 5d6495e0 (BlackwellIR op 64 ATOMG.E.MIN.64): the hazard decoder reads the ATOMG type field (word 2 bits 9..11), so 64-bit forms read and write register pairs. Omega has no op 64, so the blobs differ; any later omega edit to the file must still fail.
 # docs/runtime/PORTABILITY.md and portability_table.tsv are omega a64e6705a's blobs (omega-mv#596: rows for the trainer bf16 GEMM files src/omega_blackwell_codegen_tgemm.{c,h}, src/omega_gpu_tgemm_api.{c,h}; unchanged through omega 943d9555).
 # The CUDA++ table already has those four rows with the same class and os_binding (CHIP_SPECIFIC, NO_HOSTED_INCLUDE) and its own totals and Ampere rows, so the blobs differ.
 docs/runtime/PORTABILITY.md	fb0d5f0ff5278a662934f79027aa5f398d9a4abe
@@ -241,6 +243,7 @@ src/omega_blackwell_submit.c	5efba9c2ec7bd697487462361d851ce99777f5e6
 src/omega_blackwell_submit.h	41b36dcc36c576d3159b27e4d627a149a24d4ae3
 src/omega_bw_em.h	64dcafba938e9da31426bcb8025aab2d1b45b9ac
 src/omega_bw_em_q.h	13c2803a1867df08fd9628fd98cab4059b999fa6
+src/omega_bw_hazard.c	d26ff2bae87f3c0837a4343d318dabf865339039
 src/omega_bw_reconv.h	a10e07a371acdadcad8bdeb8bc498fcd3e43f1c5
 src/omega_canonical.c	0e91d5639a0f88f9f449828fc4a6311d9e1d1502
 src/omega_canonical.h	53cc8669910c7fca21bd3edc954eaec6a4c7bdc1

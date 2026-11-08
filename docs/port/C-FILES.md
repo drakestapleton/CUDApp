@@ -26,20 +26,20 @@ Reconciling the other counts:
 
 ## Families (Linear DRA-490..496)
 
-Strict leaf: the file includes no repository header except its own (both `"..."` and `<...>` includes resolved
-against the file's directory, `src/`, `m16/`, `nvrm/`, `tests/` and `third_party/`). Touched by #280: the path
-differs between the merge base `b774723f` and the #280 head `d4daaa35`.
+Strict leaf: the file includes no repository file except its own header (both `"..."` and `<...>` includes, of
+headers and of `.c` files, resolved against the file's directory, `src/`, `m16/`, `nvrm/`, `tests/` and
+`third_party/`). Touched by #280: the path differs between the merge base `b774723f` and the #280 head `d4daaa35`.
 
 | Family | Scope | Files | Lines | Touched by #280 | Untouched | Strict leaves |
 |---|---|---:|---:|---:|---:|---:|
 | DRA-490 | src codegen, encoder, cubin | 29 | 12613 | 28 | 1 | 11 |
 | DRA-491 | src runtime, engine, platform | 22 | 10079 | 22 | 0 | 5 |
 | DRA-492 | src library APIs and math | 32 | 13554 | 32 | 0 | 3 |
-| DRA-493 | tests | 96 | 34597 | 12 | 84 | 4 |
+| DRA-493 | tests | 96 | 34597 | 12 | 84 | 2 |
 | DRA-494 | tools | 10 | 2344 | 9 | 1 | 1 |
 | DRA-495 | m16 + nvrm | 7 | 2372 | 7 | 0 | 1 |
-| DRA-496 | om check drivers, compat, examples | 8 | 887 | 8 | 0 | 2 |
-| **total** | | **204** | **76446** | **118** | **86** | **27** |
+| DRA-496 | om check drivers, compat, examples | 8 | 887 | 8 | 0 | 1 |
+| **total** | | **204** | **76446** | **118** | **86** | **24** |
 
 ## What #280 means for the port
 
@@ -75,32 +75,34 @@ Other in-flight or existing Omega work named for this port:
 ## Port order
 
 Level = the length of the longest chain of hand-written `.c` files this file depends on, where file A depends on
-file B when A includes B's same-name header. Level 0 depends on no other hand-written `.c`. Port a level only after
-the levels below it. Two two-file cycles exist and must move together:
+file B when A includes B's same-name header or includes B's `.c` itself. Five files include another hand-written
+`.c` directly and cannot move before it: `om/attention-mirror/dispatch-check.c`, `tests/components/numerical.c`,
+`tests/moe/incumbent.c`, `tests/test_ampere_runtime.c` and `tests/test_nvrm_va_slots.c` (`git grep -nE
+'^\s*#\s*include\s*[<"][^>"]+\.c[>"]' f1b50cbf -- '*.c'`, outside `evidence/`). Level 0 depends on no other
+hand-written `.c`. Port a level only after the levels below it. Two two-file cycles exist and must move together:
 `src/omega_blackwell_engine.c` + `src/omega_blackwell_submit.c`, and
 `src/omega_gpu_mem_reserve.c` + `src/omega_gpu_platform_linux.c`. Within a level the table is sorted by family.
 
 | Level | Files |
 |---:|---:|
-| 0 | 43 |
+| 0 | 38 |
 | 1 | 29 |
-| 2 | 16 |
+| 2 | 18 |
 | 3 | 10 |
 | 4 | 29 |
 | 5 | 30 |
 | 6 | 42 |
-| 7 | 5 |
+| 7 | 8 |
 
-Strict leaves (27): `src/omega_ampere_qmd.c` 19, `src/omega_gpu_fmt.c` 66, `src/omega_gpu_chip.c` 76 (reads sysfs),
+Strict leaves (24): `src/omega_ampere_qmd.c` 19, `src/omega_gpu_fmt.c` 66, `src/omega_gpu_chip.c` 76 (reads sysfs),
 `src/omega_gpu_hostmath.c` 92, `src/omega_fp8_slot_table.c` 117, `src/omega_gpu_wait.c` 156,
 `m16/m16_gpu_wait.c` 162, `src/sha256.c` 164, `src/omega_gpu_platform.c` 193, `src/omega_blackwell_qmd.c` 238,
 `src/omega_bw_hazard.c` 268, `src/omega_sm121_disasm.c` 298, `src/omega_blackwell_codegen_moe2.c` 344,
 `src/omega_blackwell_codegen_gemm.c` 375, `src/omega_blackwell_codegen_router.c` 453, `src/omega_gpu_engine.c` 465,
 `src/omega_blackwell_codegen_moe.c` 504, `src/omega_blackwell_codegen_attn.c` 550,
 `src/omega_blackwell_codegen_tern.c` 595, `src/omega_blackwell_codegen_dec.c` 682,
-`compat/cuda/fixture/vadd_drv.c` 114, `om/attention-mirror/dispatch-check.c` 85, `tools/multitarget/spirv-host.c` 315,
-`tests/dagsim/sha256_host.c` 19, `tests/moe/incumbent.c` 29, `tests/ampere/test_f16_behavior.c` 186,
-`tests/test_ampere_runtime.c` 203.
+`compat/cuda/fixture/vadd_drv.c` 114, `tools/multitarget/spirv-host.c` 315,
+`tests/dagsim/sha256_host.c` 19, `tests/ampere/test_f16_behavior.c` 186.
 
 Recommended next order, given #280: land #280 first (DRA-154). Then delete the C of the three #280 ports whose
 parity is recorded below (DRA-155), then the remaining level-0 `src/` leaves (`omega_gpu_fmt.c`,
@@ -148,11 +150,18 @@ Findings:
 
 ## How this was measured
 
-From the card evidence directory (`~/work/hive/t_b810aa67`): `sh c-inventory.sh CUDApp i280-touched.txt`
-(per-file class, family, lines, repository includes, includer count, #280 touched), `sh c-deps.sh CUDApp i280p
-inventory.tsv` (dependency edges, Omega units referenced on main and on #280), `python3 c-order.py deps.tsv`
-(components and levels), `python3 c-render.py inventory.tsv order.tsv` (the table below).
-`i280-touched.txt` is `git diff --name-only b774723f d4daaa35`.
+The ORACLE measurement scripts of card t_b810aa67 (kept with the card evidence, outside this repository), run with
+`LC_ALL=en_US.UTF-8` from a checkout of `f1b50cbf` (`CUDApp`) and a tree of `d4daaa35` (`i280p`):
+`sh c-inventory.sh CUDApp i280-touched.txt > inventory.tsv` (per-file class, family, lines, repository includes,
+includer count, #280 touched), `sh c-deps.sh CUDApp i280p inventory.tsv > deps.tsv` (dependency edges, Omega units
+referenced on main and on #280), `python3 c-order.py deps.tsv > order.tsv` (components and levels),
+`python3 c-render.py inventory.tsv order.tsv` (the tables). `i280-touched.txt` is
+`git diff --name-only b774723f d4daaa35`. Two corrections to the card's first versions, made in review (factory
+bay 10, which keeps the corrected copies with its review evidence), produce the level and leaf figures above: in
+`c-inventory.sh` the candidate include path is normalized with `realpath -m --relative-to=. -- "$c"`, so `../`
+includes resolve (it used to strip only a leading `./`), and in `c-deps.sh` a directly included hand-written `.c` is
+an edge to that file, as a same-name `.h` already was. With both, the scripts reproduce the family table, the level
+counts and the file table below byte for byte.
 
 ## All 204 hand-written files
 
@@ -190,178 +199,178 @@ Includers: files outside `evidence/` that include the file's same-name header ("
 | 27 | `src/sha256.c` | DRA-492 | 164 | 0 | none | 18 | - | touched | 1 |
 | 28 | `tests/ampere/test_f16_behavior.c` | DRA-493 | 186 | 0 | none | - | native_f16 | - | 0 |
 | 29 | `tests/bw_mufu_ftz_test.c` | DRA-493 | 96 | 0 | none | - | - | - | 0 |
-| 30 | `tests/components/numerical.c` | DRA-493 | 78 | 0 | none | - | - | - | 0 |
-| 31 | `tests/dagsim/sha256_host.c` | DRA-493 | 19 | 0 | none | - | - | - | 0 |
-| 32 | `tests/moe/caller.c` | DRA-493 | 160 | 0 | none | - | moe_group, moe_ids32, moe_maps32, moe_plan, moe_segs32, moe_windows | - | 0 |
-| 33 | `tests/moe/incumbent.c` | DRA-493 | 29 | 0 | none | - | - | - | 0 |
-| 34 | `tests/omega/binding_portable_test.c` | DRA-493 | 54 | 0 | none | - | native_epoch, native_revision | - | 0 |
-| 35 | `tests/test_ampere_runtime.c` | DRA-493 | 203 | 0 | none | - | - | touched | 0 |
-| 36 | `tests/test_nvrm_va_slots.c` | DRA-493 | 80 | 0 | none | - | - | - | 0 |
-| 37 | `tests/test_omega_gpu_code_alloc.c` | DRA-493 | 32 | 0 | none | - | - | - | 0 |
-| 38 | `tests/zero_cuda_tool_stub.c` | DRA-493 | 69 | 0 | none | - | - | - | 0 |
-| 39 | `tools/multitarget/spirv-host.c` | DRA-494 | 315 | 0 | none | - | - | - | 0 |
-| 40 | `m16/m16_gpu_wait.c` | DRA-495 | 162 | 0 | none | 2 | - | touched | 0 |
-| 41 | `m16/m16_native.c` | DRA-495 | 115 | 0 | none | 8 | - | touched | 0 |
-| 42 | `compat/cuda/fixture/vadd_drv.c` | DRA-496 | 114 | 0 | none | - | - | touched | 0 |
-| 43 | `om/attention-mirror/dispatch-check.c` | DRA-496 | 85 | 0 | none | - | - | touched | 0 |
-| 44 | `src/omega_blackwell_codegen_attn256.c` | DRA-490 | 647 | 1 | src/omega_blackwell_codegen_attn.c | 2 | - | touched | 0 |
-| 45 | `src/omega_blackwell_codegen_bf16.c` | DRA-490 | 318 | 1 | src/omega_blackwell_qmd.c | 5 | - | touched | 0 |
-| 46 | `src/omega_blackwell_codegen_qmma.c` | DRA-490 | 139 | 1 | src/omega_gpu_fmt.c | 8 | - | touched | 4 |
-| 47 | `src/omega_blackwell_codegen_tc.c` | DRA-490 | 288 | 1 | src/omega_gpu_fmt.c | 24 | - | touched | 2 |
-| 48 | `src/omega_blackwell_encoder.c` | DRA-490 | 111 | 1 | src/sha256.c | 5 | - | touched | 1 |
-| 49 | `src/omega_blackwell_realize.c` | DRA-490 | 53 | 1 | src/sha256.c | 3 | - | touched | 0 |
-| 50 | `src/omega_canonical.c` | DRA-491 | 225 | 1 | src/sha256.c | 2 | - | touched | 6 |
-| 51 | `src/omega_gpu_mem_cached.c` | DRA-491 | 25 | 1 | src/omega_gpu_fmt.c, src/omega_gpu_platform.c | 7 | - | touched | 0 |
-| 52 | `src/runtime/rx_costmodel.c` | DRA-491 | 559 | 1 | src/sha256.c | 4 | - | touched | 10 |
-| 53 | `src/omega_gpu_pfhost.c` | DRA-492 | 60 | 1 | src/omega_blackwell_codegen_pfhost.c | 1 | - | touched | 1 |
-| 54 | `tests/ampere_cubin_test.c` | DRA-493 | 99 | 1 | src/omega_cubin.c | - | - | - | 0 |
-| 55 | `tests/components/direct-oracle.c` | DRA-493 | 41 | 1 | src/omega_blackwell_codegen_moe.c | - | - | - | 0 |
-| 56 | `tests/components/rowpipe-oracle.c` | DRA-493 | 119 | 1 | src/omega_blackwell_codegen_moe2.c | - | - | - | 0 |
-| 57 | `tests/components/staged-oracle.c` | DRA-493 | 80 | 1 | src/omega_blackwell_codegen_gemm.c | - | - | - | 0 |
-| 58 | `tests/fake_m16_native.c` | DRA-493 | 507 | 1 | m16/m16_native.c | 5 | - | touched | 0 |
-| 59 | `tests/gpu_tern_sched_test.c` | DRA-493 | 128 | 1 | src/omega_blackwell_codegen_tern.c | - | - | touched | 0 |
-| 60 | `tests/om_cubin_sweep_test.c` | DRA-493 | 170 | 1 | src/omega_cubin.c | - | - | - | 0 |
-| 61 | `tests/test_m16_gpu_wait.c` | DRA-493 | 318 | 1 | m16/m16_gpu_wait.c | - | - | - | 0 |
-| 62 | `tests/test_omega_bw_qmd_shared.c` | DRA-493 | 80 | 1 | src/omega_blackwell_qmd.c | - | - | - | 0 |
-| 63 | `tests/test_omega_gpu_engine.c` | DRA-493 | 1156 | 1 | src/omega_gpu_engine.c | - | - | touched | 0 |
-| 64 | `tests/test_omega_gpu_engine_compile.c` | DRA-493 | 167 | 1 | src/omega_gpu_engine.c | - | - | - | 0 |
-| 65 | `tests/test_omega_gpu_platform.c` | DRA-493 | 318 | 1 | src/omega_gpu_platform.c | - | - | - | 0 |
-| 66 | `tests/test_omega_gpu_wait.c` | DRA-493 | 304 | 1 | src/omega_gpu_wait.c | - | - | - | 0 |
-| 67 | `tools/doctor/cudapp_doctor.c` | DRA-494 | 204 | 1 | src/omega_gpu_chip.c | - | - | touched | 1 |
-| 68 | `tools/sm121dis/sm121dis.c` | DRA-494 | 58 | 1 | src/omega_sm121_disasm.c | - | - | touched | 1 |
-| 69 | `m16/m16_concurrent.c` | DRA-495 | 264 | 1 | m16/m16_gpu_wait.c, m16/m16_native.c | - | - | touched | 0 |
-| 70 | `m16/m16_requalify.c` | DRA-495 | 133 | 1 | m16/m16_native.c | - | - | touched | 0 |
-| 71 | `nvrm/nvrm.c` | DRA-495 | 1193 | 1 | src/omega_ampere_qmd.c | 6 | - | touched | 9 |
-| 72 | `nvrm/submission_visibility_gates.c` | DRA-495 | 79 | 1 | m16/m16_native.c | - | - | touched | 0 |
-| 73 | `src/omega_blackwell_codegen_gdn.c` | DRA-490 | 1118 | 2 | src/omega_blackwell_codegen_tc.c | 2 | - | touched | 2 |
-| 74 | `src/omega_blackwell_codegen_pattn.c` | DRA-490 | 549 | 2 | src/omega_blackwell_codegen_tc.c | 3 | - | touched | 1 |
-| 75 | `src/omega_blackwell_codegen_pattn256.c` | DRA-490 | 388 | 2 | src/omega_blackwell_codegen_tc.c | 2 | - | touched | 0 |
-| 76 | `src/omega_blackwell_engine.c` | DRA-491 | 753 | 2 | m16/m16_native.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c (cycle S8) | 4 | - | touched | 0 |
-| 77 | `src/omega_blackwell_submit.c` | DRA-491 | 811 | 2 | m16/m16_native.c, src/omega_blackwell_encoder.c, src/omega_blackwell_engine.c, src/omega_blackwell_qmd.c, src/omega_gpu_engine.c, src/omega_gpu_wait.c (cycle S8) | 16 | - | touched | 0 |
-| 78 | `src/omega_core.c` | DRA-491 | 474 | 2 | src/omega_canonical.c | 1 | - | touched | 0 |
-| 79 | `src/omega_gpu_mem_reserve.c` | DRA-491 | 91 | 2 | src/omega_gpu_platform.c, src/omega_gpu_platform_linux.c (cycle S14) | 2 | - | touched | 0 |
-| 80 | `src/omega_gpu_platform_linux.c` | DRA-491 | 531 | 2 | m16/m16_native.c, nvrm/nvrm.c, src/omega_ampere_qmd.c, src/omega_gpu_mem_reserve.c (cycle S14) | 6 | - | touched | 3 |
-| 81 | `src/omega_native_artifact.c` | DRA-491 | 737 | 2 | src/omega_blackwell_realize.c, src/sha256.c | 4 | - | touched | 6 |
-| 82 | `src/omega_numeric.c` | DRA-492 | 1661 | 2 | src/omega_blackwell_encoder.c, src/omega_blackwell_qmd.c | 3 | - | touched | 2 |
-| 83 | `tests/dagsim/dagsim_unit.c` | DRA-493 | 673 | 2 | src/runtime/rx_costmodel.c | - | - | - | 0 |
-| 84 | `tests/runtime/rx_costmodel_unit.c` | DRA-493 | 709 | 2 | src/runtime/rx_costmodel.c, src/sha256.c | - | - | - | 0 |
-| 85 | `tests/test_omega_ampere_encoder.c` | DRA-493 | 129 | 2 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_tc.c | - | - | - | 0 |
-| 86 | `tools/ampere_corpus.c` | DRA-494 | 76 | 2 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_tc.c | - | - | touched | 1 |
-| 87 | `tools/dagsim/dagsim.c` | DRA-494 | 814 | 2 | src/runtime/rx_costmodel.c | 2 | - | touched | 2 |
-| 88 | `nvrm/lifecycle_gates.c` | DRA-495 | 426 | 2 | m16/m16_native.c, nvrm/nvrm.c | - | - | touched | 0 |
-| 89 | `src/omega_blackwell_codegen.c` | DRA-490 | 2869 | 3 | src/omega_blackwell_submit.c, src/sha256.c | 51 | bw_enc_sm121 | touched | 13 |
-| 90 | `src/omega_gpu_platform_aien.c` | DRA-491 | 611 | 3 | src/omega_gpu_mem_reserve.c | 1 | - | touched | 1 |
-| 91 | `src/omega_gpu_session.c` | DRA-491 | 713 | 3 | src/omega_ampere_qmd.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_fmt.c, src/omega_gpu_platform_linux.c | 80 | native_epoch | touched | 5 |
-| 92 | `src/omega_numeric_reduce.c` | DRA-492 | 240 | 3 | src/omega_numeric.c | 2 | - | touched | 1 |
-| 93 | `src/omega_vector.c` | DRA-492 | 113 | 3 | src/omega_canonical.c, src/omega_core.c, src/sha256.c | 4 | - | touched | 3 |
-| 94 | `tests/native_artifact_manifest_test.c` | DRA-493 | 331 | 3 | src/omega_native_artifact.c, src/sha256.c | - | - | - | 0 |
-| 95 | `tests/test_omega_blackwell_arch_guard.c` | DRA-493 | 69 | 3 | tests/fake_m16_native.c, src/omega_blackwell_engine.c, src/omega_blackwell_submit.c | - | - | - | 0 |
-| 96 | `tests/zero_cuda_tool_argv_test.c` | DRA-493 | 290 | 3 | src/omega_blackwell_submit.c | - | - | - | 0 |
-| 97 | `tools/ampere_families.c` | DRA-494 | 148 | 3 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen_attn256.c, src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_dec.c, src/omega_blackwell_codegen_gdn.c, src/omega_blackwell_codegen_gemm.c, src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_pattn256.c, src/omega_blackwell_codegen_pattn.c, src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_pfhost.c, src/omega_blackwell_codegen_qg.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_router.c, src/omega_blackwell_codegen_tc2.c, src/omega_blackwell_codegen_tc.c, src/omega_blackwell_codegen_tern.c | - | - | touched | 1 |
-| 98 | `tools/dagsim/dagsim_cli.c` | DRA-494 | 222 | 3 | tools/dagsim/dagsim.c, src/runtime/rx_costmodel.c | - | - | touched | 1 |
-| 99 | `src/omega_blackwell_matmul.c` | DRA-490 | 203 | 4 | src/omega_blackwell_codegen.c, src/sha256.c | 18 | native_f16 | touched | 3 |
-| 100 | `src/omega_gpu_cmdlist.c` | DRA-491 | 664 | 4 | src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c | 32 | native_event, native_mcreseal, native_mcseal, native_revision | touched | 6 |
-| 101 | `src/omega_gpu_attention_api.c` | DRA-492 | 1860 | 4 | src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c, src/sha256.c | 6 | - | touched | 1 |
-| 102 | `src/omega_gpu_elementwise_api.c` | DRA-492 | 1142 | 4 | src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_session.c, src/sha256.c | 4 | - | touched | 1 |
-| 103 | `src/omega_gpu_fp8_slots.c` | DRA-492 | 155 | 4 | src/omega_fp8_slot_table.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 1 | - | touched | 2 |
-| 104 | `src/omega_gpu_gemm.c` | DRA-492 | 541 | 4 | src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 4 | - | touched | 7 |
-| 105 | `src/omega_gpu_gemm_ex.c` | DRA-492 | 501 | 4 | src/omega_gpu_session.c | 2 | - | touched | 8 |
-| 106 | `src/omega_gpu_mathlibs_api.c` | DRA-492 | 316 | 4 | src/omega_blackwell_codegen.c, src/omega_gpu_om_ir.c, src/omega_gpu_session.c | 1 | - | touched | 0 |
-| 107 | `src/omega_gpu_scan.c` | DRA-492 | 333 | 4 | src/omega_gpu_session.c | 2 | - | touched | 2 |
-| 108 | `src/omega_gpu_tcgemm_api.c` | DRA-492 | 215 | 4 | src/omega_gpu_fmt.c, src/omega_gpu_session.c | 1 | - | touched | 7 |
-| 109 | `tests/ampere/math_device.c` | DRA-493 | 160 | 4 | src/omega_ampere_codegen.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 110 | `tests/ampere/memory_refusal.c` | DRA-493 | 58 | 4 | src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 111 | `tests/ampere_numeric_host_test.c` | DRA-493 | 44 | 4 | src/omega_numeric.c, src/omega_numeric_reduce.c | - | - | - | 1 |
-| 112 | `tests/bw_encode_control_test.c` | DRA-493 | 70 | 4 | src/omega_blackwell_codegen.c | - | - | - | 0 |
-| 113 | `tests/bw_ldg_mmio_test.c` | DRA-493 | 110 | 4 | src/omega_blackwell_codegen.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 114 | `tests/gpu_atomf32_probe_test.c` | DRA-493 | 156 | 4 | src/omega_gpu_session.c | - | - | - | 0 |
-| 115 | `tests/gpu_imadhi_rc_test.c` | DRA-493 | 170 | 4 | src/omega_blackwell_codegen.c | - | - | - | 0 |
-| 116 | `tests/gpu_latmeas_test.c` | DRA-493 | 2066 | 4 | src/omega_blackwell_codegen.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 117 | `tests/gpu_qmma_probe_test.c` | DRA-493 | 289 | 4 | src/omega_blackwell_codegen_qmma.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 118 | `tests/gpu_tc_peak_test.c` | DRA-493 | 100 | 4 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 119 | `tests/gpu_tc_probe_test.c` | DRA-493 | 202 | 4 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 120 | `tests/test_ampere_session.c` | DRA-493 | 128 | 4 | src/omega_ampere_qmd.c, src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 121 | `tests/test_omega_blackwell_engine.c` | DRA-493 | 1075 | 4 | tests/fake_m16_native.c, src/omega_blackwell_encoder.c, src/omega_blackwell_engine.c, src/omega_blackwell_submit.c, src/omega_gpu_engine.c, src/omega_vector.c | - | - | - | 0 |
-| 122 | `tests/test_omega_gpu_engine_gb10.c` | DRA-493 | 169 | 4 | src/omega_blackwell_encoder.c, src/omega_blackwell_engine.c, src/omega_blackwell_realize.c, src/omega_blackwell_submit.c, src/omega_gpu_engine.c, src/omega_vector.c | - | - | - | 0 |
-| 123 | `tests/test_omega_gpu_platform_aien.c` | DRA-493 | 492 | 4 | nvrm/nvrm.c, src/omega_gpu_platform_aien.c, src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | touched | 0 |
-| 124 | `tools/own30b_decode_profile.c` | DRA-494 | 133 | 4 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_codegen_router.c, src/omega_gpu_session.c | - | - | touched | 1 |
-| 125 | `examples/hello_gpu/hello_gpu.c` | DRA-496 | 371 | 4 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_gpu_session.c, src/sha256.c | - | - | touched | 2 |
-| 126 | `om/q38-head/check.c` | DRA-496 | 139 | 4 | src/omega_gpu_session.c | - | - | touched | 0 |
-| 127 | `om/q38-head/norm-check.c` | DRA-496 | 73 | 4 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_session.c | - | - | touched | 0 |
-| 128 | `src/omega_gpu_decode_graph.c` | DRA-491 | 439 | 5 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 5 | - | touched | 3 |
-| 129 | `src/omega_gpu_q38_graph.c` | DRA-491 | 668 | 5 | src/omega_blackwell_codegen_dec.c, src/omega_blackwell_qmd.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 2 | q38_emit, q38_runtime | touched | 4 |
-| 130 | `src/omega_gpu_bf16_gemv_api.c` | DRA-492 | 323 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 5 | - | touched | 0 |
-| 131 | `src/omega_gpu_decode_attn256_api.c` | DRA-492 | 361 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | 5 | - | touched | 0 |
-| 132 | `src/omega_gpu_decode_attn_api.c` | DRA-492 | 280 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | 6 | - | touched | 1 |
-| 133 | `src/omega_gpu_fp8_api.c` | DRA-492 | 787 | 5 | src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_qmd.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_gemm_ex.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 23 | native_revision | touched | 0 |
-| 134 | `src/omega_gpu_fp8gemm_api.c` | DRA-492 | 464 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 5 | - | touched | 12 |
-| 135 | `src/omega_gpu_gdn_api.c` | DRA-492 | 642 | 5 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_hostmath.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 4 | - | touched | 0 |
-| 136 | `src/omega_gpu_matmul_api.c` | DRA-492 | 662 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 7 | - | touched | 4 |
-| 137 | `src/omega_gpu_moe_api.c` | DRA-492 | 425 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 1 | - | touched | 6 |
-| 138 | `src/omega_gpu_prefill.c` | DRA-492 | 197 | 5 | src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_platform.c | 13 | - | touched | 3 |
-| 139 | `src/omega_gpu_router_api.c` | DRA-492 | 387 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | 4 | native_revision | touched | 0 |
-| 140 | `src/omega_gpu_scan_ref.c` | DRA-492 | 76 | 5 | src/omega_gpu_scan.c | - | - | touched | 1 |
-| 141 | `src/omega_gpu_tern_api.c` | DRA-492 | 349 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 0 | - | touched | 5 |
-| 142 | `tests/gpu_artifact_export_test.c` | DRA-493 | 367 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_cubin.c, src/omega_gpu_attention_api.c, src/omega_native_artifact.c, src/sha256.c | - | - | - | 0 |
-| 143 | `tests/gpu_attention_test.c` | DRA-493 | 1516 | 5 | src/omega_blackwell_codegen.c, src/omega_gpu_attention_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 144 | `tests/gpu_cmdlist_test.c` | DRA-493 | 619 | 5 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 145 | `tests/gpu_elementwise_test.c` | DRA-493 | 390 | 5 | src/omega_blackwell_codegen.c, src/omega_gpu_elementwise_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 146 | `tests/gpu_gemm_test.c` | DRA-493 | 352 | 5 | src/omega_gpu_gemm.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 147 | `tests/gpu_isolation_test.c` | DRA-493 | 372 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 148 | `tests/gpu_mathlibs_test.c` | DRA-493 | 786 | 5 | src/omega_gpu_mathlibs_api.c, src/omega_gpu_om_ir.c, src/omega_sm121_disasm.c | - | - | touched | 0 |
-| 149 | `tests/gpu_reconv_test.c` | DRA-493 | 473 | 5 | src/omega_blackwell_codegen.c, src/omega_gpu_elementwise_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 150 | `tests/gpu_scan_test.c` | DRA-493 | 382 | 5 | src/omega_gpu_scan.c, src/omega_gpu_session.c, src/omega_numeric_reduce.c | - | - | touched | 1 |
-| 151 | `tests/gpu_session_probe.c` | DRA-493 | 57 | 5 | src/omega_gpu_elementwise_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 152 | `tests/gpu_streams_test.c` | DRA-493 | 393 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 153 | `tests/gpu_tilelab_test.c` | DRA-493 | 270 | 5 | src/omega_gpu_gemm.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 154 | `tests/test_omega_blackwell_matmul_bounds.c` | DRA-493 | 73 | 5 | tests/fake_m16_native.c, src/omega_blackwell_matmul.c, src/omega_blackwell_submit.c | - | - | - | 0 |
-| 155 | `tests/test_omega_codegen_freestanding.c` | DRA-493 | 226 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c | - | - | touched | 0 |
-| 156 | `tests/test_omega_gpu_platform_linux.c` | DRA-493 | 613 | 5 | tests/fake_m16_native.c, nvrm/nvrm.c, src/omega_blackwell_submit.c, src/omega_gpu_cmdlist.c, src/omega_gpu_mem_cached.c, src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | touched | 0 |
-| 157 | `tools/interop/cubin_probe.c` | DRA-494 | 152 | 5 | src/omega_blackwell_matmul.c | - | - | touched | 0 |
-| 158 | `src/omega_gpu_q36_graph.c` | DRA-491 | 1649 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 0 | moe_group, moe_windows, native_mcalloc, native_mcbind, native_mcblob, native_mccode, native_mccover, native_mcdir, native_mcintent, native_mclaunch, native_mcpack, native_mcseries, native_revision | touched | 9 |
-| 159 | `src/omega_gpu_serving.c` | DRA-491 | 26 | 6 | src/omega_gpu_attention_api.c, src/omega_gpu_matmul_api.c | 1 | - | touched | 0 |
-| 160 | `src/omega_gpu_fp8_pack.c` | DRA-492 | 76 | 6 | src/omega_blackwell_codegen_moe.c, src/omega_blackwell_matmul.c, src/omega_gpu_fp8_api.c, src/omega_gpu_hostmath.c | - | - | touched | 4 |
-| 161 | `src/omega_gpu_pfgemm.c` | DRA-492 | 264 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_blackwell_codegen_tc2.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_fp8_api.c, src/omega_gpu_prefill.c | - | native_qgorder, native_qgreading, native_qgworkspace | touched | 5 |
-| 162 | `src/omega_gpu_prefill_attn256_api.c` | DRA-492 | 283 | 6 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_prefill.c, src/omega_gpu_session.c | 2 | native_attnmirnext, native_attnmirplan | touched | 0 |
-| 163 | `src/omega_gpu_prefill_attn_api.c` | DRA-492 | 385 | 6 | src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_fmt.c, src/omega_gpu_prefill.c, src/omega_gpu_session.c | 2 | - | touched | 2 |
-| 164 | `src/omega_gpu_tgemm_api.c` | DRA-492 | 83 | 6 | src/omega_gpu_prefill.c | 1 | - | touched | 2 |
-| 165 | `tests/gpu_bf16_gemv_test.c` | DRA-493 | 422 | 6 | src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 166 | `tests/gpu_dattn256_multi_test.c` | DRA-493 | 119 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_decode_attn256_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 167 | `tests/gpu_decode_attn256_test.c` | DRA-493 | 482 | 6 | src/omega_gpu_decode_attn256_api.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 168 | `tests/gpu_decode_attn_test.c` | DRA-493 | 472 | 6 | src/omega_blackwell_qmd.c, src/omega_gpu_decode_attn_api.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 169 | `tests/gpu_decode_graph_test.c` | DRA-493 | 357 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_decode_graph.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 170 | `tests/gpu_exact_head_test.c` | DRA-493 | 302 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 171 | `tests/gpu_fp8_api_test.c` | DRA-493 | 1322 | 6 | src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 172 | `tests/gpu_fp8_slots_test.c` | DRA-493 | 335 | 6 | src/omega_fp8_slot_table.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_fp8_slots.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 173 | `tests/gpu_fp8gemm_test.c` | DRA-493 | 473 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 174 | `tests/gpu_gdn_multi_test.c` | DRA-493 | 236 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_gdn_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 175 | `tests/gpu_gdn_test.c` | DRA-493 | 1020 | 6 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_gdn_api.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 176 | `tests/gpu_gemm_ex_test.c` | DRA-493 | 912 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_gemm_ex.c, src/omega_gpu_gemm.c, src/omega_gpu_session.c | - | - | touched | 0 |
-| 177 | `tests/gpu_gpr_boundary_test.c` | DRA-493 | 86 | 6 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_gemm.c, src/omega_blackwell_codegen.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_codegen_router.c, src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_decode_attn_api.c, src/omega_gpu_fp8_api.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_router_api.c | - | - | - | 0 |
-| 178 | `tests/gpu_l2_reuse_test.c` | DRA-493 | 122 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 179 | `tests/gpu_l2_stale_test.c` | DRA-493 | 105 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 180 | `tests/gpu_launch_cost_test.c` | DRA-493 | 156 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | touched | 0 |
-| 181 | `tests/gpu_lmhead_fp8_study.c` | DRA-493 | 120 | 6 | src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 182 | `tests/gpu_matmul_api_test.c` | DRA-493 | 694 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_matmul_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 183 | `tests/gpu_matmul_r4_receipt.c` | DRA-493 | 379 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_matmul_api.c, src/sha256.c | - | - | - | 0 |
-| 184 | `tests/gpu_moe_window_test.c` | DRA-493 | 285 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_moe_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 185 | `tests/gpu_pf_mem_test.c` | DRA-493 | 107 | 6 | src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_prefill.c | - | - | - | 0 |
-| 186 | `tests/gpu_pfgemm_test.c` | DRA-493 | 336 | 6 | src/omega_blackwell_codegen_tc2.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_fp8_api.c, src/omega_gpu_prefill.c | - | - | - | 0 |
-| 187 | `tests/gpu_pfhost_test.c` | DRA-493 | 279 | 6 | src/omega_blackwell_codegen_pfhost.c, src/omega_gpu_pfhost.c, src/omega_gpu_prefill.c | - | - | - | 0 |
-| 188 | `tests/gpu_q38_graph_test.c` | DRA-493 | 456 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_q38_graph.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 189 | `tests/gpu_qgemm_test.c` | DRA-493 | 528 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_gpu_fp8_api.c, src/omega_gpu_prefill.c | - | - | - | 0 |
-| 190 | `tests/gpu_router_test.c` | DRA-493 | 510 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_router_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 191 | `tests/gpu_tcgemm_test.c` | DRA-493 | 330 | 6 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c, src/omega_gpu_tcgemm_api.c | - | - | - | 0 |
-| 192 | `tests/test_omega_gpu_decode_attn_maxpos.c` | DRA-493 | 375 | 6 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_submit.c, src/omega_gpu_decode_attn_api.c, src/omega_gpu_platform.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 193 | `tests/test_omega_gpu_decode_graph_abort.c` | DRA-493 | 440 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_decode_graph.c, src/omega_gpu_platform.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 194 | `tests/test_omega_gpu_decode_graph_timeline.c` | DRA-493 | 303 | 6 | src/omega_blackwell_submit.c, src/omega_gpu_cmdlist.c, src/omega_gpu_decode_graph.c, src/omega_gpu_platform.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 195 | `tests/test_omega_gpu_session_platform.c` | DRA-493 | 774 | 6 | src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_matmul_api.c, src/omega_gpu_session.c, src/omega_gpu_wait.c | - | - | touched | 0 |
-| 196 | `tools/artifact_export.c` | DRA-494 | 222 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_gpu_attention_api.c, src/omega_gpu_matmul_api.c, src/omega_native_artifact.c, src/sha256.c | - | - | touched | 1 |
-| 197 | `om/prefill-shape/cache-check.c` | DRA-496 | 36 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_gpu_prefill.c | - | - | touched | 0 |
-| 198 | `om/prefill-shape/scoped-check.c` | DRA-496 | 56 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_gpu_prefill.c | - | - | touched | 0 |
-| 199 | `om/q38-head/budget-check.c` | DRA-496 | 13 | 6 | src/omega_gpu_q38_graph.c | - | - | touched | 0 |
-| 200 | `tests/bw_hazard_test.c` | DRA-493 | 680 | 7 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_dec.c, src/omega_blackwell_codegen_gemm.c, src/omega_blackwell_codegen.c, src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_codegen_pattn.c, src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_pfhost.c, src/omega_blackwell_codegen_qg.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_router.c, src/omega_blackwell_codegen_tc2.c, src/omega_blackwell_codegen_tc.c, src/omega_blackwell_codegen_tern.c, src/omega_bw_hazard.c, src/omega_gpu_attention_api.c, src/omega_gpu_elementwise_api.c, src/omega_gpu_prefill_attn_api.c, src/omega_sm121_disasm.c | - | - | - | 0 |
-| 201 | `tests/gpu_prefill_attn256_test.c` | DRA-493 | 607 | 7 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_prefill_attn256_api.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 202 | `tests/gpu_prefill_attn_test.c` | DRA-493 | 656 | 7 | src/omega_blackwell_codegen_tc.c, src/omega_blackwell_qmd.c, src/omega_gpu_prefill_attn_api.c, src/omega_gpu_prefill.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 203 | `tests/gpu_serving_alloc_count_test.c` | DRA-493 | 673 | 7 | tests/fake_m16_native.c, nvrm/nvrm.c, src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_attention_api.c, src/omega_gpu_matmul_api.c, src/omega_gpu_serving.c, src/omega_gpu_session.c | - | - | - | 0 |
-| 204 | `tests/gpu_tgemm_test.c` | DRA-493 | 272 | 7 | src/omega_blackwell_codegen_tgemm.c, src/omega_gpu_prefill.c, src/omega_gpu_tgemm_api.c | - | - | - | 0 |
+| 30 | `tests/dagsim/sha256_host.c` | DRA-493 | 19 | 0 | none | - | - | - | 0 |
+| 31 | `tests/moe/caller.c` | DRA-493 | 160 | 0 | none | - | moe_group, moe_ids32, moe_maps32, moe_plan, moe_segs32, moe_windows | - | 0 |
+| 32 | `tests/omega/binding_portable_test.c` | DRA-493 | 54 | 0 | none | - | native_epoch, native_revision | - | 0 |
+| 33 | `tests/test_omega_gpu_code_alloc.c` | DRA-493 | 32 | 0 | none | - | - | - | 0 |
+| 34 | `tests/zero_cuda_tool_stub.c` | DRA-493 | 69 | 0 | none | - | - | - | 0 |
+| 35 | `tools/multitarget/spirv-host.c` | DRA-494 | 315 | 0 | none | - | - | - | 0 |
+| 36 | `m16/m16_gpu_wait.c` | DRA-495 | 162 | 0 | none | 2 | - | touched | 0 |
+| 37 | `m16/m16_native.c` | DRA-495 | 115 | 0 | none | 8 | - | touched | 0 |
+| 38 | `compat/cuda/fixture/vadd_drv.c` | DRA-496 | 114 | 0 | none | - | - | touched | 0 |
+| 39 | `src/omega_blackwell_codegen_attn256.c` | DRA-490 | 647 | 1 | src/omega_blackwell_codegen_attn.c | 2 | - | touched | 0 |
+| 40 | `src/omega_blackwell_codegen_bf16.c` | DRA-490 | 318 | 1 | src/omega_blackwell_qmd.c | 5 | - | touched | 0 |
+| 41 | `src/omega_blackwell_codegen_qmma.c` | DRA-490 | 139 | 1 | src/omega_gpu_fmt.c | 8 | - | touched | 4 |
+| 42 | `src/omega_blackwell_codegen_tc.c` | DRA-490 | 288 | 1 | src/omega_gpu_fmt.c | 24 | - | touched | 2 |
+| 43 | `src/omega_blackwell_encoder.c` | DRA-490 | 111 | 1 | src/sha256.c | 5 | - | touched | 1 |
+| 44 | `src/omega_blackwell_realize.c` | DRA-490 | 53 | 1 | src/sha256.c | 3 | - | touched | 0 |
+| 45 | `src/omega_canonical.c` | DRA-491 | 225 | 1 | src/sha256.c | 2 | - | touched | 6 |
+| 46 | `src/omega_gpu_mem_cached.c` | DRA-491 | 25 | 1 | src/omega_gpu_fmt.c, src/omega_gpu_platform.c | 7 | - | touched | 0 |
+| 47 | `src/runtime/rx_costmodel.c` | DRA-491 | 559 | 1 | src/sha256.c | 4 | - | touched | 10 |
+| 48 | `src/omega_gpu_pfhost.c` | DRA-492 | 60 | 1 | src/omega_blackwell_codegen_pfhost.c | 1 | - | touched | 1 |
+| 49 | `tests/ampere_cubin_test.c` | DRA-493 | 99 | 1 | src/omega_cubin.c | - | - | - | 0 |
+| 50 | `tests/components/direct-oracle.c` | DRA-493 | 41 | 1 | src/omega_blackwell_codegen_moe.c | - | - | - | 0 |
+| 51 | `tests/components/rowpipe-oracle.c` | DRA-493 | 119 | 1 | src/omega_blackwell_codegen_moe2.c | - | - | - | 0 |
+| 52 | `tests/components/staged-oracle.c` | DRA-493 | 80 | 1 | src/omega_blackwell_codegen_gemm.c | - | - | - | 0 |
+| 53 | `tests/fake_m16_native.c` | DRA-493 | 507 | 1 | m16/m16_native.c | 5 | - | touched | 0 |
+| 54 | `tests/gpu_tern_sched_test.c` | DRA-493 | 128 | 1 | src/omega_blackwell_codegen_tern.c | - | - | touched | 0 |
+| 55 | `tests/om_cubin_sweep_test.c` | DRA-493 | 170 | 1 | src/omega_cubin.c | - | - | - | 0 |
+| 56 | `tests/test_m16_gpu_wait.c` | DRA-493 | 318 | 1 | m16/m16_gpu_wait.c | - | - | - | 0 |
+| 57 | `tests/test_omega_bw_qmd_shared.c` | DRA-493 | 80 | 1 | src/omega_blackwell_qmd.c | - | - | - | 0 |
+| 58 | `tests/test_omega_gpu_engine.c` | DRA-493 | 1156 | 1 | src/omega_gpu_engine.c | - | - | touched | 0 |
+| 59 | `tests/test_omega_gpu_engine_compile.c` | DRA-493 | 167 | 1 | src/omega_gpu_engine.c | - | - | - | 0 |
+| 60 | `tests/test_omega_gpu_platform.c` | DRA-493 | 318 | 1 | src/omega_gpu_platform.c | - | - | - | 0 |
+| 61 | `tests/test_omega_gpu_wait.c` | DRA-493 | 304 | 1 | src/omega_gpu_wait.c | - | - | - | 0 |
+| 62 | `tools/doctor/cudapp_doctor.c` | DRA-494 | 204 | 1 | src/omega_gpu_chip.c | - | - | touched | 1 |
+| 63 | `tools/sm121dis/sm121dis.c` | DRA-494 | 58 | 1 | src/omega_sm121_disasm.c | - | - | touched | 1 |
+| 64 | `m16/m16_concurrent.c` | DRA-495 | 264 | 1 | m16/m16_gpu_wait.c, m16/m16_native.c | - | - | touched | 0 |
+| 65 | `m16/m16_requalify.c` | DRA-495 | 133 | 1 | m16/m16_native.c | - | - | touched | 0 |
+| 66 | `nvrm/nvrm.c` | DRA-495 | 1193 | 1 | src/omega_ampere_qmd.c | 6 | - | touched | 9 |
+| 67 | `nvrm/submission_visibility_gates.c` | DRA-495 | 79 | 1 | m16/m16_native.c | - | - | touched | 0 |
+| 68 | `src/omega_blackwell_codegen_gdn.c` | DRA-490 | 1118 | 2 | src/omega_blackwell_codegen_tc.c | 2 | - | touched | 2 |
+| 69 | `src/omega_blackwell_codegen_pattn.c` | DRA-490 | 549 | 2 | src/omega_blackwell_codegen_tc.c | 3 | - | touched | 1 |
+| 70 | `src/omega_blackwell_codegen_pattn256.c` | DRA-490 | 388 | 2 | src/omega_blackwell_codegen_tc.c | 2 | - | touched | 0 |
+| 71 | `src/omega_blackwell_engine.c` | DRA-491 | 753 | 2 | m16/m16_native.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c (cycle S8) | 4 | - | touched | 0 |
+| 72 | `src/omega_blackwell_submit.c` | DRA-491 | 811 | 2 | m16/m16_native.c, src/omega_blackwell_encoder.c, src/omega_blackwell_engine.c, src/omega_blackwell_qmd.c, src/omega_gpu_engine.c, src/omega_gpu_wait.c (cycle S8) | 16 | - | touched | 0 |
+| 73 | `src/omega_core.c` | DRA-491 | 474 | 2 | src/omega_canonical.c | 1 | - | touched | 0 |
+| 74 | `src/omega_gpu_mem_reserve.c` | DRA-491 | 91 | 2 | src/omega_gpu_platform.c, src/omega_gpu_platform_linux.c (cycle S14) | 2 | - | touched | 0 |
+| 75 | `src/omega_gpu_platform_linux.c` | DRA-491 | 531 | 2 | m16/m16_native.c, nvrm/nvrm.c, src/omega_ampere_qmd.c, src/omega_gpu_mem_reserve.c (cycle S14) | 6 | - | touched | 3 |
+| 76 | `src/omega_native_artifact.c` | DRA-491 | 737 | 2 | src/omega_blackwell_realize.c, src/sha256.c | 4 | - | touched | 6 |
+| 77 | `src/omega_numeric.c` | DRA-492 | 1661 | 2 | src/omega_blackwell_encoder.c, src/omega_blackwell_qmd.c | 3 | - | touched | 2 |
+| 78 | `tests/dagsim/dagsim_unit.c` | DRA-493 | 673 | 2 | src/runtime/rx_costmodel.c | - | - | - | 0 |
+| 79 | `tests/runtime/rx_costmodel_unit.c` | DRA-493 | 709 | 2 | src/runtime/rx_costmodel.c, src/sha256.c | - | - | - | 0 |
+| 80 | `tests/test_ampere_runtime.c` | DRA-493 | 203 | 2 | nvrm/nvrm.c | - | - | touched | 0 |
+| 81 | `tests/test_nvrm_va_slots.c` | DRA-493 | 80 | 2 | nvrm/nvrm.c | - | - | - | 0 |
+| 82 | `tests/test_omega_ampere_encoder.c` | DRA-493 | 129 | 2 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_tc.c | - | - | - | 0 |
+| 83 | `tools/ampere_corpus.c` | DRA-494 | 76 | 2 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_tc.c | - | - | touched | 1 |
+| 84 | `tools/dagsim/dagsim.c` | DRA-494 | 814 | 2 | src/runtime/rx_costmodel.c | 2 | - | touched | 2 |
+| 85 | `nvrm/lifecycle_gates.c` | DRA-495 | 426 | 2 | m16/m16_native.c, nvrm/nvrm.c | - | - | touched | 0 |
+| 86 | `src/omega_blackwell_codegen.c` | DRA-490 | 2869 | 3 | src/omega_blackwell_submit.c, src/sha256.c | 51 | bw_enc_sm121 | touched | 13 |
+| 87 | `src/omega_gpu_platform_aien.c` | DRA-491 | 611 | 3 | src/omega_gpu_mem_reserve.c | 1 | - | touched | 1 |
+| 88 | `src/omega_gpu_session.c` | DRA-491 | 713 | 3 | src/omega_ampere_qmd.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_fmt.c, src/omega_gpu_platform_linux.c | 80 | native_epoch | touched | 5 |
+| 89 | `src/omega_numeric_reduce.c` | DRA-492 | 240 | 3 | src/omega_numeric.c | 2 | - | touched | 1 |
+| 90 | `src/omega_vector.c` | DRA-492 | 113 | 3 | src/omega_canonical.c, src/omega_core.c, src/sha256.c | 4 | - | touched | 3 |
+| 91 | `tests/native_artifact_manifest_test.c` | DRA-493 | 331 | 3 | src/omega_native_artifact.c, src/sha256.c | - | - | - | 0 |
+| 92 | `tests/test_omega_blackwell_arch_guard.c` | DRA-493 | 69 | 3 | tests/fake_m16_native.c, src/omega_blackwell_engine.c, src/omega_blackwell_submit.c | - | - | - | 0 |
+| 93 | `tests/zero_cuda_tool_argv_test.c` | DRA-493 | 290 | 3 | src/omega_blackwell_submit.c | - | - | - | 0 |
+| 94 | `tools/ampere_families.c` | DRA-494 | 148 | 3 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen_attn256.c, src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_dec.c, src/omega_blackwell_codegen_gdn.c, src/omega_blackwell_codegen_gemm.c, src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_pattn256.c, src/omega_blackwell_codegen_pattn.c, src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_pfhost.c, src/omega_blackwell_codegen_qg.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_router.c, src/omega_blackwell_codegen_tc2.c, src/omega_blackwell_codegen_tc.c, src/omega_blackwell_codegen_tern.c | - | - | touched | 1 |
+| 95 | `tools/dagsim/dagsim_cli.c` | DRA-494 | 222 | 3 | tools/dagsim/dagsim.c, src/runtime/rx_costmodel.c | - | - | touched | 1 |
+| 96 | `src/omega_blackwell_matmul.c` | DRA-490 | 203 | 4 | src/omega_blackwell_codegen.c, src/sha256.c | 18 | native_f16 | touched | 3 |
+| 97 | `src/omega_gpu_cmdlist.c` | DRA-491 | 664 | 4 | src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c | 32 | native_event, native_mcreseal, native_mcseal, native_revision | touched | 6 |
+| 98 | `src/omega_gpu_attention_api.c` | DRA-492 | 1860 | 4 | src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c, src/sha256.c | 6 | - | touched | 1 |
+| 99 | `src/omega_gpu_elementwise_api.c` | DRA-492 | 1142 | 4 | src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_session.c, src/sha256.c | 4 | - | touched | 1 |
+| 100 | `src/omega_gpu_fp8_slots.c` | DRA-492 | 155 | 4 | src/omega_fp8_slot_table.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 1 | - | touched | 2 |
+| 101 | `src/omega_gpu_gemm.c` | DRA-492 | 541 | 4 | src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 4 | - | touched | 7 |
+| 102 | `src/omega_gpu_gemm_ex.c` | DRA-492 | 501 | 4 | src/omega_gpu_session.c | 2 | - | touched | 8 |
+| 103 | `src/omega_gpu_mathlibs_api.c` | DRA-492 | 316 | 4 | src/omega_blackwell_codegen.c, src/omega_gpu_om_ir.c, src/omega_gpu_session.c | 1 | - | touched | 0 |
+| 104 | `src/omega_gpu_scan.c` | DRA-492 | 333 | 4 | src/omega_gpu_session.c | 2 | - | touched | 2 |
+| 105 | `src/omega_gpu_tcgemm_api.c` | DRA-492 | 215 | 4 | src/omega_gpu_fmt.c, src/omega_gpu_session.c | 1 | - | touched | 7 |
+| 106 | `tests/ampere/math_device.c` | DRA-493 | 160 | 4 | src/omega_ampere_codegen.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 107 | `tests/ampere/memory_refusal.c` | DRA-493 | 58 | 4 | src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 108 | `tests/ampere_numeric_host_test.c` | DRA-493 | 44 | 4 | src/omega_numeric.c, src/omega_numeric_reduce.c | - | - | - | 1 |
+| 109 | `tests/bw_encode_control_test.c` | DRA-493 | 70 | 4 | src/omega_blackwell_codegen.c | - | - | - | 0 |
+| 110 | `tests/bw_ldg_mmio_test.c` | DRA-493 | 110 | 4 | src/omega_blackwell_codegen.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 111 | `tests/gpu_atomf32_probe_test.c` | DRA-493 | 156 | 4 | src/omega_gpu_session.c | - | - | - | 0 |
+| 112 | `tests/gpu_imadhi_rc_test.c` | DRA-493 | 170 | 4 | src/omega_blackwell_codegen.c | - | - | - | 0 |
+| 113 | `tests/gpu_latmeas_test.c` | DRA-493 | 2066 | 4 | src/omega_blackwell_codegen.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 114 | `tests/gpu_qmma_probe_test.c` | DRA-493 | 289 | 4 | src/omega_blackwell_codegen_qmma.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 115 | `tests/gpu_tc_peak_test.c` | DRA-493 | 100 | 4 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 116 | `tests/gpu_tc_probe_test.c` | DRA-493 | 202 | 4 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 117 | `tests/test_ampere_session.c` | DRA-493 | 128 | 4 | src/omega_ampere_qmd.c, src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 118 | `tests/test_omega_blackwell_engine.c` | DRA-493 | 1075 | 4 | tests/fake_m16_native.c, src/omega_blackwell_encoder.c, src/omega_blackwell_engine.c, src/omega_blackwell_submit.c, src/omega_gpu_engine.c, src/omega_vector.c | - | - | - | 0 |
+| 119 | `tests/test_omega_gpu_engine_gb10.c` | DRA-493 | 169 | 4 | src/omega_blackwell_encoder.c, src/omega_blackwell_engine.c, src/omega_blackwell_realize.c, src/omega_blackwell_submit.c, src/omega_gpu_engine.c, src/omega_vector.c | - | - | - | 0 |
+| 120 | `tests/test_omega_gpu_platform_aien.c` | DRA-493 | 492 | 4 | nvrm/nvrm.c, src/omega_gpu_platform_aien.c, src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | touched | 0 |
+| 121 | `tools/own30b_decode_profile.c` | DRA-494 | 133 | 4 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_codegen_router.c, src/omega_gpu_session.c | - | - | touched | 1 |
+| 122 | `examples/hello_gpu/hello_gpu.c` | DRA-496 | 371 | 4 | src/omega_ampere_codegen.c, src/omega_blackwell_codegen.c, src/omega_blackwell_qmd.c, src/omega_gpu_session.c, src/sha256.c | - | - | touched | 2 |
+| 123 | `om/q38-head/check.c` | DRA-496 | 139 | 4 | src/omega_gpu_session.c | - | - | touched | 0 |
+| 124 | `om/q38-head/norm-check.c` | DRA-496 | 73 | 4 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_session.c | - | - | touched | 0 |
+| 125 | `src/omega_gpu_decode_graph.c` | DRA-491 | 439 | 5 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 5 | - | touched | 3 |
+| 126 | `src/omega_gpu_q38_graph.c` | DRA-491 | 668 | 5 | src/omega_blackwell_codegen_dec.c, src/omega_blackwell_qmd.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 2 | q38_emit, q38_runtime | touched | 4 |
+| 127 | `src/omega_gpu_bf16_gemv_api.c` | DRA-492 | 323 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 5 | - | touched | 0 |
+| 128 | `src/omega_gpu_decode_attn256_api.c` | DRA-492 | 361 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | 5 | - | touched | 0 |
+| 129 | `src/omega_gpu_decode_attn_api.c` | DRA-492 | 280 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | 6 | - | touched | 1 |
+| 130 | `src/omega_gpu_fp8_api.c` | DRA-492 | 787 | 5 | src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_qmd.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_gemm_ex.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 23 | native_revision | touched | 0 |
+| 131 | `src/omega_gpu_fp8gemm_api.c` | DRA-492 | 464 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 5 | - | touched | 12 |
+| 132 | `src/omega_gpu_gdn_api.c` | DRA-492 | 642 | 5 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_hostmath.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 4 | - | touched | 0 |
+| 133 | `src/omega_gpu_matmul_api.c` | DRA-492 | 662 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 7 | - | touched | 4 |
+| 134 | `src/omega_gpu_moe_api.c` | DRA-492 | 425 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_gpu_fmt.c, src/omega_gpu_session.c | 1 | - | touched | 6 |
+| 135 | `src/omega_gpu_prefill.c` | DRA-492 | 197 | 5 | src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_platform.c | 13 | - | touched | 3 |
+| 136 | `src/omega_gpu_router_api.c` | DRA-492 | 387 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | 4 | native_revision | touched | 0 |
+| 137 | `src/omega_gpu_scan_ref.c` | DRA-492 | 76 | 5 | src/omega_gpu_scan.c | - | - | touched | 1 |
+| 138 | `src/omega_gpu_tern_api.c` | DRA-492 | 349 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 0 | - | touched | 5 |
+| 139 | `tests/gpu_artifact_export_test.c` | DRA-493 | 367 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_cubin.c, src/omega_gpu_attention_api.c, src/omega_native_artifact.c, src/sha256.c | - | - | - | 0 |
+| 140 | `tests/gpu_attention_test.c` | DRA-493 | 1516 | 5 | src/omega_blackwell_codegen.c, src/omega_gpu_attention_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 141 | `tests/gpu_cmdlist_test.c` | DRA-493 | 619 | 5 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 142 | `tests/gpu_elementwise_test.c` | DRA-493 | 390 | 5 | src/omega_blackwell_codegen.c, src/omega_gpu_elementwise_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 143 | `tests/gpu_gemm_test.c` | DRA-493 | 352 | 5 | src/omega_gpu_gemm.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 144 | `tests/gpu_isolation_test.c` | DRA-493 | 372 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 145 | `tests/gpu_mathlibs_test.c` | DRA-493 | 786 | 5 | src/omega_gpu_mathlibs_api.c, src/omega_gpu_om_ir.c, src/omega_sm121_disasm.c | - | - | touched | 0 |
+| 146 | `tests/gpu_reconv_test.c` | DRA-493 | 473 | 5 | src/omega_blackwell_codegen.c, src/omega_gpu_elementwise_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 147 | `tests/gpu_scan_test.c` | DRA-493 | 382 | 5 | src/omega_gpu_scan.c, src/omega_gpu_session.c, src/omega_numeric_reduce.c | - | - | touched | 1 |
+| 148 | `tests/gpu_session_probe.c` | DRA-493 | 57 | 5 | src/omega_gpu_elementwise_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 149 | `tests/gpu_streams_test.c` | DRA-493 | 393 | 5 | src/omega_gpu_cmdlist.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 150 | `tests/gpu_tilelab_test.c` | DRA-493 | 270 | 5 | src/omega_gpu_gemm.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 151 | `tests/test_omega_blackwell_matmul_bounds.c` | DRA-493 | 73 | 5 | tests/fake_m16_native.c, src/omega_blackwell_matmul.c, src/omega_blackwell_submit.c | - | - | - | 0 |
+| 152 | `tests/test_omega_codegen_freestanding.c` | DRA-493 | 226 | 5 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c | - | - | touched | 0 |
+| 153 | `tests/test_omega_gpu_platform_linux.c` | DRA-493 | 613 | 5 | tests/fake_m16_native.c, nvrm/nvrm.c, src/omega_blackwell_submit.c, src/omega_gpu_cmdlist.c, src/omega_gpu_mem_cached.c, src/omega_gpu_platform_linux.c, src/omega_gpu_session.c | - | - | touched | 0 |
+| 154 | `tools/interop/cubin_probe.c` | DRA-494 | 152 | 5 | src/omega_blackwell_matmul.c | - | - | touched | 0 |
+| 155 | `src/omega_gpu_q36_graph.c` | DRA-491 | 1649 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_mem_cached.c, src/omega_gpu_session.c | 0 | moe_group, moe_windows, native_mcalloc, native_mcbind, native_mcblob, native_mccode, native_mccover, native_mcdir, native_mcintent, native_mclaunch, native_mcpack, native_mcseries, native_revision | touched | 9 |
+| 156 | `src/omega_gpu_serving.c` | DRA-491 | 26 | 6 | src/omega_gpu_attention_api.c, src/omega_gpu_matmul_api.c | 1 | - | touched | 0 |
+| 157 | `src/omega_gpu_fp8_pack.c` | DRA-492 | 76 | 6 | src/omega_blackwell_codegen_moe.c, src/omega_blackwell_matmul.c, src/omega_gpu_fp8_api.c, src/omega_gpu_hostmath.c | - | - | touched | 4 |
+| 158 | `src/omega_gpu_pfgemm.c` | DRA-492 | 264 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_blackwell_codegen_tc2.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_fp8_api.c, src/omega_gpu_prefill.c | - | native_qgorder, native_qgreading, native_qgworkspace | touched | 5 |
+| 159 | `src/omega_gpu_prefill_attn256_api.c` | DRA-492 | 283 | 6 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_prefill.c, src/omega_gpu_session.c | 2 | native_attnmirnext, native_attnmirplan | touched | 0 |
+| 160 | `src/omega_gpu_prefill_attn_api.c` | DRA-492 | 385 | 6 | src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_fmt.c, src/omega_gpu_prefill.c, src/omega_gpu_session.c | 2 | - | touched | 2 |
+| 161 | `src/omega_gpu_tgemm_api.c` | DRA-492 | 83 | 6 | src/omega_gpu_prefill.c | 1 | - | touched | 2 |
+| 162 | `tests/gpu_bf16_gemv_test.c` | DRA-493 | 422 | 6 | src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 163 | `tests/gpu_dattn256_multi_test.c` | DRA-493 | 119 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_decode_attn256_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 164 | `tests/gpu_decode_attn256_test.c` | DRA-493 | 482 | 6 | src/omega_gpu_decode_attn256_api.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 165 | `tests/gpu_decode_attn_test.c` | DRA-493 | 472 | 6 | src/omega_blackwell_qmd.c, src/omega_gpu_decode_attn_api.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 166 | `tests/gpu_decode_graph_test.c` | DRA-493 | 357 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_cmdlist.c, src/omega_gpu_decode_graph.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 167 | `tests/gpu_exact_head_test.c` | DRA-493 | 302 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 168 | `tests/gpu_fp8_api_test.c` | DRA-493 | 1322 | 6 | src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 169 | `tests/gpu_fp8_slots_test.c` | DRA-493 | 335 | 6 | src/omega_fp8_slot_table.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_fp8_slots.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 170 | `tests/gpu_fp8gemm_test.c` | DRA-493 | 473 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 171 | `tests/gpu_gdn_multi_test.c` | DRA-493 | 236 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_gdn_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 172 | `tests/gpu_gdn_test.c` | DRA-493 | 1020 | 6 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_cmdlist.c, src/omega_gpu_gdn_api.c, src/omega_gpu_hostmath.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 173 | `tests/gpu_gemm_ex_test.c` | DRA-493 | 912 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_gemm_ex.c, src/omega_gpu_gemm.c, src/omega_gpu_session.c | - | - | touched | 0 |
+| 174 | `tests/gpu_gpr_boundary_test.c` | DRA-493 | 86 | 6 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_gemm.c, src/omega_blackwell_codegen.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_codegen_router.c, src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_decode_attn_api.c, src/omega_gpu_fp8_api.c, src/omega_gpu_fp8gemm_api.c, src/omega_gpu_router_api.c | - | - | - | 0 |
+| 175 | `tests/gpu_l2_reuse_test.c` | DRA-493 | 122 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 176 | `tests/gpu_l2_stale_test.c` | DRA-493 | 105 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 177 | `tests/gpu_launch_cost_test.c` | DRA-493 | 156 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | touched | 0 |
+| 178 | `tests/gpu_lmhead_fp8_study.c` | DRA-493 | 120 | 6 | src/omega_gpu_bf16_gemv_api.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 179 | `tests/gpu_matmul_api_test.c` | DRA-493 | 694 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_matmul_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 180 | `tests/gpu_matmul_r4_receipt.c` | DRA-493 | 379 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_matmul_api.c, src/sha256.c | - | - | - | 0 |
+| 181 | `tests/gpu_moe_window_test.c` | DRA-493 | 285 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_moe_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 182 | `tests/gpu_pf_mem_test.c` | DRA-493 | 107 | 6 | src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_prefill.c | - | - | - | 0 |
+| 183 | `tests/gpu_pfgemm_test.c` | DRA-493 | 336 | 6 | src/omega_blackwell_codegen_tc2.c, src/omega_blackwell_codegen_tc.c, src/omega_gpu_fp8_api.c, src/omega_gpu_prefill.c | - | - | - | 0 |
+| 184 | `tests/gpu_pfhost_test.c` | DRA-493 | 279 | 6 | src/omega_blackwell_codegen_pfhost.c, src/omega_gpu_pfhost.c, src/omega_gpu_prefill.c | - | - | - | 0 |
+| 185 | `tests/gpu_q38_graph_test.c` | DRA-493 | 456 | 6 | src/omega_gpu_cmdlist.c, src/omega_gpu_q38_graph.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 186 | `tests/gpu_qgemm_test.c` | DRA-493 | 528 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_gpu_fp8_api.c, src/omega_gpu_prefill.c | - | - | - | 0 |
+| 187 | `tests/gpu_router_test.c` | DRA-493 | 510 | 6 | src/omega_gpu_fp8_api.c, src/omega_gpu_router_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 188 | `tests/gpu_tcgemm_test.c` | DRA-493 | 330 | 6 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_fp8_api.c, src/omega_gpu_session.c, src/omega_gpu_tcgemm_api.c | - | - | - | 0 |
+| 189 | `tests/test_omega_gpu_decode_attn_maxpos.c` | DRA-493 | 375 | 6 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_submit.c, src/omega_gpu_decode_attn_api.c, src/omega_gpu_platform.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 190 | `tests/test_omega_gpu_decode_graph_abort.c` | DRA-493 | 440 | 6 | src/omega_blackwell_codegen_dec.c, src/omega_gpu_decode_graph.c, src/omega_gpu_platform.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 191 | `tests/test_omega_gpu_decode_graph_timeline.c` | DRA-493 | 303 | 6 | src/omega_blackwell_submit.c, src/omega_gpu_cmdlist.c, src/omega_gpu_decode_graph.c, src/omega_gpu_platform.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 192 | `tests/test_omega_gpu_session_platform.c` | DRA-493 | 774 | 6 | src/omega_blackwell_qmd.c, src/omega_blackwell_submit.c, src/omega_gpu_cmdlist.c, src/omega_gpu_fmt.c, src/omega_gpu_matmul_api.c, src/omega_gpu_session.c, src/omega_gpu_wait.c | - | - | touched | 0 |
+| 193 | `tools/artifact_export.c` | DRA-494 | 222 | 6 | src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_blackwell_qmd.c, src/omega_gpu_attention_api.c, src/omega_gpu_matmul_api.c, src/omega_native_artifact.c, src/sha256.c | - | - | touched | 1 |
+| 194 | `om/prefill-shape/cache-check.c` | DRA-496 | 36 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_gpu_prefill.c | - | - | touched | 0 |
+| 195 | `om/prefill-shape/scoped-check.c` | DRA-496 | 56 | 6 | src/omega_blackwell_codegen_qg.c, src/omega_gpu_prefill.c | - | - | touched | 0 |
+| 196 | `om/q38-head/budget-check.c` | DRA-496 | 13 | 6 | src/omega_gpu_q38_graph.c | - | - | touched | 0 |
+| 197 | `tests/bw_hazard_test.c` | DRA-493 | 680 | 7 | src/omega_blackwell_codegen_attn.c, src/omega_blackwell_codegen_bf16.c, src/omega_blackwell_codegen_dec.c, src/omega_blackwell_codegen_gemm.c, src/omega_blackwell_codegen.c, src/omega_blackwell_codegen_moe2.c, src/omega_blackwell_codegen_moe.c, src/omega_blackwell_codegen_pattn.c, src/omega_blackwell_codegen_pf.c, src/omega_blackwell_codegen_pfhost.c, src/omega_blackwell_codegen_qg.c, src/omega_blackwell_codegen_qmma.c, src/omega_blackwell_codegen_router.c, src/omega_blackwell_codegen_tc2.c, src/omega_blackwell_codegen_tc.c, src/omega_blackwell_codegen_tern.c, src/omega_bw_hazard.c, src/omega_gpu_attention_api.c, src/omega_gpu_elementwise_api.c, src/omega_gpu_prefill_attn_api.c, src/omega_sm121_disasm.c | - | - | - | 0 |
+| 198 | `tests/components/numerical.c` | DRA-493 | 78 | 7 | tests/gpu_fp8_api_test.c, tests/gpu_fp8gemm_test.c | - | - | - | 0 |
+| 199 | `tests/gpu_prefill_attn256_test.c` | DRA-493 | 607 | 7 | src/omega_blackwell_codegen_tc.c, src/omega_gpu_prefill_attn256_api.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 200 | `tests/gpu_prefill_attn_test.c` | DRA-493 | 656 | 7 | src/omega_blackwell_codegen_tc.c, src/omega_blackwell_qmd.c, src/omega_gpu_prefill_attn_api.c, src/omega_gpu_prefill.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 201 | `tests/gpu_serving_alloc_count_test.c` | DRA-493 | 673 | 7 | tests/fake_m16_native.c, nvrm/nvrm.c, src/omega_blackwell_codegen.c, src/omega_blackwell_matmul.c, src/omega_gpu_attention_api.c, src/omega_gpu_matmul_api.c, src/omega_gpu_serving.c, src/omega_gpu_session.c | - | - | - | 0 |
+| 202 | `tests/gpu_tgemm_test.c` | DRA-493 | 272 | 7 | src/omega_blackwell_codegen_tgemm.c, src/omega_gpu_prefill.c, src/omega_gpu_tgemm_api.c | - | - | - | 0 |
+| 203 | `tests/moe/incumbent.c` | DRA-493 | 29 | 7 | src/omega_gpu_q36_graph.c | - | - | - | 0 |
+| 204 | `om/attention-mirror/dispatch-check.c` | DRA-496 | 85 | 7 | src/omega_gpu_prefill_attn256_api.c | - | - | touched | 0 |

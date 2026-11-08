@@ -132,9 +132,6 @@ text NgBrEnv "OMEGA_BRIDGE="
 text NgCudaE "CUDA_NVML_INCLUDE="
 text NgCuda "/usr/local/cuda/include"
 text NgNvH "/nvml.h"
-text NgAbi "tests/nvml/abi.c"
-text NgAO "build/nvml/abi-ours"
-text NgAC "build/nvml/abi-cuda"
 text NgAT "build/nvml/abi-ours.txt"
 text NgCT "build/nvml/abi-cuda.txt"
 text NgProto "build/nvml/proto.c"
@@ -640,25 +637,12 @@ if ne faccess b 0 add n len NgNvH 4 0
 hp_say NgAbiNo
 ret
 end
-ng_cc
-hp_arg NgIcmp len NgIcmp
-hp_arg NgAbi len NgAbi
-hp_arg NgDashO len NgDashO
-hp_arg NgAO len NgAO
-hp_exec -1 -1 0
-hp_start NgAO len NgAO
-ng_exec NgAT 0
-ng_cc
-hp_arg NgDashI len NgDashI
-hp_arg b n
-hp_arg NgAbi len NgAbi
-hp_arg NgDashO len NgDashO
-hp_arg NgAC len NgAC
-hp_exec -1 -1 0
-hp_start NgAC len NgAC
-ng_exec NgCT 0
+note The 55 facts of both headers come from tests/nvml/abi.om (DWARF of cc -g3 on /dev/null, read in Omega).
+na_facts NgCH len NgCH NgAT
+na_facts b add n len NgNvH NgCT
 hp_require hp_cmp NgAT len NgAT NgCT len NgCT
 ng_abimsg b n
+na_neg
 ng_proto b n
 end
 

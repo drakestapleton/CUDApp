@@ -1,3 +1,4 @@
+/* ORACLE: foreign C caller of the generated ABI; not shipped */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Test transport for the CUDA++ NVML shell: the three omega2_nvrm_* entry points of
  * native/nvrm/transport.om (aien-dev/CUDApp#281), answered by the Omega RM fake

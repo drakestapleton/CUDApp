@@ -7,7 +7,7 @@ NVML_RUN := $(and $(filter 1,$(CUDAPP_OMC_HOST)),$(OMEGA_BRIDGE),$(OMEGA_CABI_BR
 ifneq ($(NVML_RUN),)
 CARRIED_HOST_TESTS += test-nvml
 NVML_GATE := $(OUT_DIR)/nvml_gate
-$(NVML_GATE): tests/components/proc.om tests/nvml/gate.om tests/nvml/mutants.om
+$(NVML_GATE): tests/components/proc.om tests/nvml/gate.om tests/nvml/mutants.om tests/nvml/abi.om
 	@mkdir -p $(OUT_DIR)
 	cat $^ | "$(OMEGA_OMC)" > $@.tmp
 	chmod +x $@.tmp

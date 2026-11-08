@@ -1,0 +1,759 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note tests/nvml/abi.om: the 55 NVML ABI facts the CUDA++ subset depends on, in seeded Omega. It
+note replaces the former C driver tests/nvml/abi.c and is composed after gate.om (mk/nvml.mk), which
+note calls na_facts once per header. The ORACLE tools see no C source: cc compiles /dev/null with
+note `-include HEADER -g3 -fno-eliminate-unused-debug-types`, and readelf lists the object's DWARF
+note types (--debug-dump=info) and macros (--debug-dump=macro). This unit reads both listings and
+note writes one fact per line in the former abi.c format: `sizeof(T) N`, `offsetof(T, f) N`, or
+note `NAME N` for an enumerator or an integer macro. A fact that is missing, ambiguous or not a
+note plain integer refuses the gate (CUDAPP-NVML HOST FAIL, exit 1).
+note NaSpec rows: `S T` is sizeof T, `O T f` is offsetof(T, f), `V NAME` is a value.
+text NaSpec "S nvmlDevice_t\nS nvmlReturn_t\nS nvmlTemperatureSensors_t\nS nvmlUtilization_t\nO nvmlUtilization_t gpu\nO nvmlUtilization_t memory\nS nvmlMemory_t\nO nvmlMemory_t total\nO nvmlMemory_t free\nO nvmlMemory_t used\nS nvmlProcessInfo_t\nO nvmlProcessInfo_t pid\nO nvmlProcessInfo_t usedGpuMemory\nO nvmlProcessInfo_t gpuInstanceId\nO nvmlProcessInfo_t computeInstanceId\nS nvmlProcessInfo_v2_t\nV NVML_VALUE_NOT_AVAILABLE\nV NVML_TEMPERATURE_GPU\nV NVML_TEMPERATURE_COUNT\nV NVML_DEVICE_NAME_BUFFER_SIZE\nV NVML_DEVICE_NAME_V2_BUFFER_SIZE\nV NVML_DEVICE_UUID_BUFFER_SIZE\nV NVML_DEVICE_UUID_V2_BUFFER_SIZE\nV NVML_SUCCESS\nV NVML_ERROR_UNINITIALIZED\nV NVML_ERROR_INVALID_ARGUMENT\nV NVML_ERROR_NOT_SUPPORTED\nV NVML_ERROR_NO_PERMISSION\nV NVML_ERROR_ALREADY_INITIALIZED\nV NVML_ERROR_NOT_FOUND\nV NVML_ERROR_INSUFFICIENT_SIZE\nV NVML_ERROR_INSUFFICIENT_POWER\nV NVML_ERROR_DRIVER_NOT_LOADED\nV NVML_ERROR_TIMEOUT\nV NVML_ERROR_IRQ_ISSUE\nV NVML_ERROR_LIBRARY_NOT_FOUND\nV NVML_ERROR_FUNCTION_NOT_FOUND\nV NVML_ERROR_CORRUPTED_INFOROM\nV NVML_ERROR_GPU_IS_LOST\nV NVML_ERROR_RESET_REQUIRED\nV NVML_ERROR_OPERATING_SYSTEM\nV NVML_ERROR_LIB_RM_VERSION_MISMATCH\nV NVML_ERROR_IN_USE\nV NVML_ERROR_MEMORY\nV NVML_ERROR_NO_DATA\nV NVML_ERROR_VGPU_ECC_NOT_SUPPORTED\nV NVML_ERROR_INSUFFICIENT_RESOURCES\nV NVML_ERROR_FREQ_NOT_SUPPORTED\nV NVML_ERROR_ARGUMENT_VERSION_MISMATCH\nV NVML_ERROR_DEPRECATED\nV NVML_ERROR_NOT_READY\nV NVML_ERROR_GPU_NOT_FOUND\nV NVML_ERROR_INVALID_STATE\nV NVML_ERROR_RESET_TYPE_NOT_SUPPORTED\nV NVML_ERROR_UNKNOWN\n"
+text NaG3 "-g3"
+text NaFeu "-fno-eliminate-unused-debug-types"
+text NaInc "-include"
+text NaLx "-x"
+text NaNull "/dev/null"
+text NaDi "--debug-dump=info"
+text NaDm "--debug-dump=macro"
+text NaObj "build/nvml/abi.o"
+text NaInfo "build/nvml/abi.info"
+text NaMacr "build/nvml/abi.mac"
+text NaBadH "build/nvml/abi-bad.h"
+text NaBadT "build/nvml/abi-bad.txt"
+text NaWideF "    unsigned int gpuInstanceId;"
+text NaWideT "    unsigned long long gpuInstanceId;"
+text NaNegOk "PASS abi negative control (a copy of the generated nvml.h with gpuInstanceId widened to 64 bits gives different facts)\n"
+text NaLneg "abi negative control edit)\n"
+text NaLfac "abi fact missing, ambiguous or not an integer in the DWARF listing)\n"
+text NaLcnt "abi fact count)\n"
+text NaTagP "(DW_TAG_"
+text NaAtP "DW_AT_"
+text NaAName "DW_AT_name"
+text NaASize "DW_AT_byte_size"
+text NaAType "DW_AT_type"
+text NaALoc "DW_AT_data_member_location"
+text NaAVal "DW_AT_const_value"
+text NaTTd "typedef)"
+text NaTPtr "pointer_type)"
+text NaTSt "structure_type)"
+text NaTMem "member)"
+text NaTEt "enumeration_type)"
+text NaTEn "enumerator)"
+text NaMDef "DW_MACRO_define"
+text NaMUnd "DW_MACRO_undef"
+text NaMac " macro : "
+text NaSzP "sizeof("
+text NaOfP "offsetof("
+text NaCom ", "
+text NaRp ") "
+text NaSp1 " "
+const NaNone ulong 18446744073709551615
+const NaCap ulong 16384
+note DIE table, one row per DWARF entry in listing order: offset, depth, tag (1 typedef, 2 pointer,
+note 3 structure, 4 member, 5 enumeration, 6 enumerator, 0 other), name span in the listing,
+note byte size, type reference, member offset, and a constant value with its present flag.
+global NaOff ulong 16384
+global NaDep ulong 16384
+global NaTag ulong 16384
+global NaNs ulong 16384
+global NaNl ulong 16384
+global NaSz ulong 16384
+global NaTy ulong 16384
+global NaLoc ulong 16384
+global NaVal ulong 16384
+global NaVf ulong 16384
+global NaDn ulong 1
+note Macro table: name span, value span, 1 define or 0 undef.
+global NaMs ulong 16384
+global NaMl ulong 16384
+global NaVs ulong 16384
+global NaVl ulong 16384
+global NaMd ulong 16384
+global NaMn ulong 1
+global NaOut uchar 65536
+global NaK ulong 1
+global NaCnt ulong 1
+global NaHit ulong 1
+
+note Facts of one header (path hdr, hn bytes) into the facts file out. Exits 90 on any tool refusal.
+fn na_facts hdr view uchar * hn ulong fo view uchar * to void
+na_tools hdr hn
+na_parse
+na_flush fo
+end
+
+note cc and readelf: build/nvml/abi.info and build/nvml/abi.mac for one header.
+fn na_tools hdr view uchar * hn ulong to void
+ng_cc
+hp_arg NaG3 len NaG3
+hp_arg NaFeu len NaFeu
+hp_arg NaInc len NaInc
+hp_arg hdr hn
+hp_arg NgDashC len NgDashC
+hp_arg NaLx len NaLx
+hp_arg NgC len NgC
+hp_arg NaNull len NaNull
+hp_arg NgDashO len NgDashO
+hp_arg NaObj len NaObj
+hp_exec -1 -1 0
+hp_start NgRe len NgRe
+hp_arg NaDi len NaDi
+hp_arg NaObj len NaObj
+ng_exec NaInfo 0
+hp_start NgRe len NgRe
+hp_arg NaDm len NaDm
+hp_arg NaObj len NaObj
+ng_exec NaMacr 0
+end
+
+note Both listings into the DIE and macro tables, then the NaSpec facts into NaOut.
+fn na_parse to void
+info = new uchar 1048576 0
+mac = new uchar 262144 0
+n = hp_read NaInfo len NaInfo info len info
+m = hp_read NaMacr len NaMacr mac len mac
+hp_require gt n 0
+hp_require gt m 0
+put NaDn 0 0
+put NaMn 0 0
+na_lines part info 0 n 0
+na_lines part mac 0 m 1
+put NaK 0 0
+put NaCnt 0 0
+na_spec part info 0 n part mac 0 m
+ng_need eq get NaCnt 0 55 NaLcnt
+end
+
+fn na_flush fo view uchar * to void
+o = new uchar 65536 0
+k = get NaK 0
+for i ulong k
+put o i get NaOut i
+end
+hp_write fo len fo o k
+end
+
+note kind 0: a DWARF info listing (DIE headers and attributes); kind 1: a macro listing.
+fn na_lines t view uchar * kind ulong to void
+p = ulong 0
+while lt p len t bound 999999
+q = na_eol t p
+if eq kind 0
+na_die t p q
+na_attr t p q
+else
+na_mline t p q
+end
+p = add q 1
+end
+end
+
+fn na_eol t view uchar * p ulong to ulong
+q = p
+while lt q len t bound 999999
+if eq get t q 10
+ret q
+end
+q = add q 1
+end
+ret q
+end
+
+fn na_tok t view uchar * s ulong q ulong to ulong
+k = s
+while lt k q bound 999999
+if eq get t k 32
+ret k
+end
+k = add k 1
+end
+ret q
+end
+
+fn na_find t view uchar * p ulong q ulong w view uchar * to ulong
+i = p
+while lt i q bound 999999
+if le add i len w q
+if ng_at t i w
+ret i
+end
+end
+i = add i 1
+end
+ret q
+end
+
+fn na_hv c ulong to ulong
+if and ge c 48 le c 57
+ret sub c 48
+end
+if and ge c 97 le c 102
+ret sub c 87
+end
+ret 16
+end
+
+note Lowercase hex digits from i up to the first other byte; NaNone without a digit or past 16.
+fn na_hex t view uchar * i ulong q ulong to ulong
+v = ulong 0
+k = i
+while lt k q bound 999999
+x = na_hv ulong get t k
+if eq x 16
+break
+end
+if ge sub k i 16
+ret NaNone
+end
+v = add mul v 16 x
+k = add k 1
+end
+if eq k i
+ret NaNone
+end
+ret v
+end
+
+note Exactly the bytes v..q-1 as an unsigned decimal of at most 19 digits, else NaNone.
+fn na_dec t view uchar * v ulong q ulong to ulong
+if ge v q
+ret NaNone
+end
+if gt sub q v 19
+ret NaNone
+end
+x = ulong 0
+k = v
+while lt k q bound 999999
+c = ulong get t k
+if or lt c 48 gt c 57
+ret NaNone
+end
+x = add mul x 10 sub c 48
+k = add k 1
+end
+ret x
+end
+
+note A DIE header line: " <DEPTH><HEX>: Abbrev Number: K (DW_TAG_NAME)". A null entry has no tag.
+fn na_die t view uchar * p ulong q ulong to void
+if lt sub q p 8
+ret
+end
+if ne get t p 32
+ret
+end
+if ne get t add p 1 60
+ret
+end
+i = add p 2
+d = ulong 0
+while lt i q bound 999999
+c = ulong get t i
+if or lt c 48 gt c 57
+break
+end
+d = add mul d 10 sub c 48
+i = add i 1
+end
+if ge add i 2 q
+ret
+end
+if ne get t i 62
+ret
+end
+if ne get t add i 1 60
+ret
+end
+off = na_hex t add i 2 q
+k = na_find t p q NaTagP
+if eq k q
+ret
+end
+na_new d off na_tagof t add k len NaTagP
+end
+
+fn na_tagof t view uchar * s ulong to ulong
+if ng_at t s NaTTd
+ret 1
+end
+if ng_at t s NaTPtr
+ret 2
+end
+if ng_at t s NaTSt
+ret 3
+end
+if ng_at t s NaTMem
+ret 4
+end
+if ng_at t s NaTEt
+ret 5
+end
+if ng_at t s NaTEn
+ret 6
+end
+ret 0
+end
+
+fn na_new d ulong off ulong tag ulong to void
+n = get NaDn 0
+hp_require lt n NaCap
+put NaOff n off
+put NaDep n d
+put NaTag n tag
+put NaNs n 0
+put NaNl n 0
+put NaSz n NaNone
+put NaTy n NaNone
+put NaLoc n NaNone
+put NaVal n 0
+put NaVf n 0
+put NaDn 0 add n 1
+end
+
+note Start of the text after the last ": " of the line p..q-1, or q.
+fn na_last t view uchar * p ulong q ulong to ulong
+if lt sub q p 2
+ret q
+end
+k = sub q 1
+while gt k p bound 999999
+if eq get t sub k 1 58
+if eq get t k 32
+ret add k 1
+end
+end
+k = sub k 1
+end
+ret q
+end
+
+note The attribute name w starts at a and ends at a space or a colon.
+fn na_isat t view uchar * a ulong q ulong w view uchar * to bool
+e = add a len w
+if ge e q
+ret false
+end
+if not ng_at t a w
+ret false
+end
+c = get t e
+if eq c 32
+ret true
+end
+ret eq c 58
+end
+
+note An attribute line "    <HEX>   DW_AT_NAME : VALUE" of the latest DIE.
+fn na_attr t view uchar * p ulong q ulong to void
+n = get NaDn 0
+if eq n 0
+ret
+end
+a = na_find t p q NaAtP
+if eq a q
+ret
+end
+v = na_last t p q
+if eq v q
+ret
+end
+i = sub n 1
+if na_isat t a q NaAName
+put NaNs i v
+put NaNl i sub q v
+ret
+end
+if na_isat t a q NaASize
+put NaSz i na_dec t v q
+ret
+end
+if na_isat t a q NaAType
+put NaTy i na_ref t v q
+ret
+end
+if na_isat t a q NaALoc
+put NaLoc i na_dec t v q
+ret
+end
+if na_isat t a q NaAVal
+na_sval t v q i
+end
+end
+
+note A type reference "<0xHEX>".
+fn na_ref t view uchar * v ulong q ulong to ulong
+if lt sub q v 4
+ret NaNone
+end
+if ne get t v 60
+ret NaNone
+end
+if ne get t add v 1 48
+ret NaNone
+end
+if ne get t add v 2 120
+ret NaNone
+end
+if ne get t sub q 1 62
+ret NaNone
+end
+ret na_hex t add v 3 sub q 1
+end
+
+note A constant "N" or "-N"; the DIE keeps its value only when the whole text is an integer.
+fn na_sval t view uchar * v ulong q ulong i ulong to void
+sg = eq get t v 45
+s = v
+if sg
+s = add v 1
+end
+x = na_dec t s q
+if eq x NaNone
+ret
+end
+if sg
+x = sub 0 x
+end
+put NaVal i x
+put NaVf i 1
+end
+
+note A macro line "DW_MACRO_define... macro : NAME VALUE" or "DW_MACRO_undef... macro : NAME".
+fn na_mline t view uchar * p ulong q ulong to void
+d = ulong 2
+if lt na_find t p q NaMDef q
+d = 1
+end
+if lt na_find t p q NaMUnd q
+d = 0
+end
+if eq d 2
+ret
+end
+m = na_find t p q NaMac
+if eq m q
+ret
+end
+s = add m len NaMac
+e = na_tok t s q
+if eq e s
+ret
+end
+n = get NaMn 0
+hp_require lt n NaCap
+put NaMs n s
+put NaMl n sub e s
+put NaMd n d
+vs = e
+if lt e q
+vs = add e 1
+end
+put NaVs n vs
+put NaVl n sub q vs
+put NaMn 0 add n 1
+end
+
+fn na_spec t view uchar * m view uchar * to void
+p = ulong 0
+while lt p len NaSpec bound 999999
+p = na_fact t m p
+end
+end
+
+note One NaSpec row at p: append its fact line; return the next row.
+fn na_fact t view uchar * m view uchar * p ulong to ulong
+q = na_eol NaSpec p
+s = add p 2
+e = na_tok NaSpec s q
+c = get NaSpec p
+put NaHit 0 0
+if eq c 83
+na_fs t s e
+end
+if eq c 79
+na_fo t s e q
+end
+if eq c 86
+na_fv t m s e
+end
+ng_need eq get NaHit 0 1 NaLfac
+na_out NgNl 0 1
+put NaCnt 0 add get NaCnt 0 1
+ret add q 1
+end
+
+fn na_fs t view uchar * s ulong e ulong to void
+na_out NaSzP 0 len NaSzP
+na_out NaSpec s sub e s
+na_out NaRp 0 len NaRp
+na_outn na_size t s sub e s
+end
+
+fn na_fo t view uchar * s ulong e ulong q ulong to void
+f = add e 1
+hp_require lt f q
+na_out NaOfP 0 len NaOfP
+na_out NaSpec s sub e s
+na_out NaCom 0 len NaCom
+na_out NaSpec f sub q f
+na_out NaRp 0 len NaRp
+na_outn na_offs t s sub e s f sub q f
+end
+
+fn na_fv t view uchar * m view uchar * s ulong e ulong to void
+na_out NaSpec s sub e s
+na_out NaSp1 0 1
+na_outn na_val t m s sub e s
+end
+
+fn na_out src view uchar * off ulong n ulong to void
+k = get NaK 0
+hp_require le add k n 65536
+for i ulong n
+put NaOut add k i get src add off i
+end
+put NaK 0 add k n
+end
+
+note A value as the C printf("%lld") of its 64 bits.
+fn na_outn v ulong to void
+d = new uchar 32 0
+x = v
+if ge v 9223372036854775808
+na_out HPMinus 0 1
+x = sub 0 v
+end
+n = hp_num x d
+na_out d 0 n
+end
+
+note The name of DIE i, or of macro i, equals the NaSpec name s..s+sl.
+fn na_dname t view uchar * i ulong s ulong sl ulong to bool
+ns = get NaNs i
+nl = get NaNl i
+ret na_name t ns nl s sl
+end
+
+fn na_mname m view uchar * i ulong s ulong sl ulong to bool
+ns = get NaMs i
+nl = get NaMl i
+ret na_name m ns nl s sl
+end
+
+note The listing name ns..ns+nl equals the NaSpec name s..s+sl.
+fn na_name t view uchar * ns ulong nl ulong s ulong sl ulong to bool
+if ne nl sl
+ret false
+end
+for i ulong nl
+if ne get t add ns i get NaSpec add s i
+ret false
+end
+end
+ret true
+end
+
+note The one typedef named s..s+sl, else NaNone.
+fn na_tdef t view uchar * s ulong sl ulong to ulong
+r = NaNone
+hits = ulong 0
+for i ulong get NaDn 0
+if eq get NaTag i 1
+if na_dname t i s sl
+r = i
+hits = add hits 1
+end
+end
+end
+if ne hits 1
+ret NaNone
+end
+ret r
+end
+
+fn na_byoff off ulong to ulong
+for i ulong get NaDn 0
+if eq get NaOff i off
+ret i
+end
+end
+ret NaNone
+end
+
+note Follow typedefs to the type they name (at most 8 steps).
+fn na_res i ulong to ulong
+k = i
+for step ulong 8
+if eq k NaNone
+ret NaNone
+end
+if ne get NaTag k 1
+ret k
+end
+r = get NaTy k
+if eq r NaNone
+ret NaNone
+end
+k = na_byoff r
+end
+ret NaNone
+end
+
+fn na_size t view uchar * s ulong sl ulong to ulong
+k = na_res na_tdef t s sl
+if eq k NaNone
+ret 0
+end
+z = get NaSz k
+if eq z NaNone
+ret 0
+end
+put NaHit 0 1
+ret z
+end
+
+fn na_offs t view uchar * s ulong sl ulong f ulong fl ulong to ulong
+k = na_res na_tdef t s sl
+if eq k NaNone
+ret 0
+end
+if ne get NaTag k 3
+ret 0
+end
+ret na_memb t k f fl
+end
+
+note The direct member f..f+fl of the structure DIE k.
+fn na_memb t view uchar * k ulong f ulong fl ulong to ulong
+d = get NaDep k
+j = add k 1
+while lt j get NaDn 0 bound 999999
+if le get NaDep j d
+ret 0
+end
+if eq get NaDep j add d 1
+if eq get NaTag j 4
+if na_dname t j f fl
+z = get NaLoc j
+if eq z NaNone
+ret 0
+end
+put NaHit 0 1
+ret z
+end
+end
+end
+j = add j 1
+end
+ret 0
+end
+
+note An enumerator (exactly one with a constant) or else a macro (exactly one define, no undef).
+fn na_val t view uchar * m view uchar * s ulong sl ulong to ulong
+r = ulong 0
+hits = ulong 0
+for i ulong get NaDn 0
+if eq get NaTag i 6
+if na_dname t i s sl
+if eq get NaVf i 1
+r = get NaVal i
+hits = add hits 1
+end
+end
+end
+end
+if eq hits 1
+put NaHit 0 1
+ret r
+end
+if gt hits 1
+ret 0
+end
+ret na_mval m s sl
+end
+
+fn na_mval m view uchar * s ulong sl ulong to ulong
+r = ulong 0
+hits = ulong 0
+for i ulong get NaMn 0
+if na_mname m i s sl
+hits = add hits 1
+r = i
+end
+end
+if ne hits 1
+ret 0
+end
+if ne get NaMd r 1
+ret 0
+end
+ret na_eval m get NaVs r get NaVl r
+end
+
+note A macro body N, -N, (N) or (-N), up to 4 levels of parentheses.
+fn na_eval m view uchar * vs ulong vl ulong to ulong
+a = vs
+b = add vs vl
+for step ulong 4
+if lt sub b a 3
+break
+end
+if ne get m a 40
+break
+end
+if ne get m sub b 1 41
+break
+end
+a = add a 1
+b = sub b 1
+end
+if ge a b
+ret 0
+end
+sg = eq get m a 45
+if sg
+a = add a 1
+end
+x = na_dec m a b
+if eq x NaNone
+ret 0
+end
+put NaHit 0 1
+if sg
+ret sub 0 x
+end
+ret x
+end
+
+note Widen gpuInstanceId in a copy of the generated header; its facts must differ from NVIDIA's.
+fn na_neg to void
+h = new uchar 65536 0
+d = new uchar 65536 0
+m = hp_read NgCH len NgCH h len h
+hp_require gt m 0
+k = na_wide part h 0 m d
+hp_write NaBadH len NaBadH d k
+na_facts NaBadH len NaBadH NaBadT
+hp_require not hp_cmp NaBadT len NaBadT NgCT len NgCT
+hp_wpart 1 NaNegOk 0 len NaNegOk
+end
+
+fn na_wide a view uchar * dst edit uchar 65536 to ulong
+k = ulong 0
+hits = ulong 0
+p = ulong 0
+while lt p len a bound 999999
+if ng_at a p NaWideF
+k = ng_put dst k NaWideT 0 len NaWideT
+p = add p len NaWideF
+hits = add hits 1
+else
+k = ng_put dst k a p 1
+p = add p 1
+end
+end
+ng_need eq hits 1 NaLneg
+ret k
+end

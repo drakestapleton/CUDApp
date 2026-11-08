@@ -1,3 +1,4 @@
+/* ORACLE: foreign C caller of the generated ABI; not shipped */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Control surface of the test transport (tests/nvml/transport.c). fake_get indexes the
  * tests/nvml/rmfake.om state: 8 opens, 9 closes, 10 allocs, 11 frees, 12 controls,

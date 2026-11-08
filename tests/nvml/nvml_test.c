@@ -1,3 +1,4 @@
+/* ORACLE: foreign C caller of the generated ABI; not shipped */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Host test of the CUDA++ NVML subset (compat/nvml) over the Omega RM fake (tests/nvml/rmfake.om).
  * Expected return codes follow the documented returns of each entry point in nvml.h (CUDA 13.0).

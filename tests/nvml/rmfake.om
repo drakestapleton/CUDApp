@@ -1,6 +1,6 @@
 note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note rmfake.om: host-only stand-in for the NVIDIA resource manager behind compat/nvml. Pure unit
-note nvml_fake, lowered by tests/nvml/run.sh and called by tests/nvml/transport.c in place of
+note nvml_fake, lowered by tests/nvml/gate.om and called by tests/nvml/transport.c in place of
 note omega2_nvrm_open_file, omega2_nvrm_close_file and omega2_nvrm_ioctl. No device file is opened.
 note Replies imitate a GB10 (one GPU, or two with fault 2); they are synthetic, not a hardware record.
 note

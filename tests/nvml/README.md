@@ -21,14 +21,14 @@ Make bootstraps `tests/components/proc.om`, `gate.om`, `mutants.om` and `abi.om`
 7. Exports and imports: `nm -D --defined-only` shows exactly the 11 api.om functions as `T`, `readelf -d` shows soname `libnvidia-ml.so.1`, and every undefined symbol is on the allowlist (C runtime, `pthread_mutex_*`, `omega2_nvrm_{open_file,close_file,ioctl}`). An object that calls `ioctl` directly must be rejected (negative control).
 8. All 22 mutants of the Omega units are caught, with the original failure/check counts. Mutation compilation and exec failure never count as a caught mutant.
 
-Without the CUDA header (`/usr/local/cuda/include/nvml.h` or `CUDA_NVML_INCLUDE`), step 6 prints NOT_RUN; the other steps still run.
+Without the CUDA header (`/usr/local/cuda/include/nvml.h` or `CUDA_NVML_INCLUDE`), step 6 prints NOT_RUN and the other steps still run, but the gate never prints `CUDAPP-NVML HOST PASS`: it ends `CUDAPP-NVML HOST INCOMPLETE (abi and prototype comparison NOT_RUN)` and exits 77.
 
 ## Exits
 
 | Exit | Meaning |
 | --- | --- |
 | 0 | `CUDAPP-NVML HOST PASS` |
-| 77 | compiler, `OMEGA_BRIDGE` or `OMEGA_CABI_BRIDGE` not configured or unreadable (NOT_RUN) |
+| 77 | compiler, `OMEGA_BRIDGE` or `OMEGA_CABI_BRIDGE` not configured or unreadable, or the CUDA `nvml.h` is absent (NOT_RUN; never PASS) |
 | 69 | a pinned digest differs (compiler, bridge frontend, CABI converter or CABI frontend) |
 | 74 | a pin row is missing or duplicated in `om/units.sh` or `om/omega-bridge-cabi.lock` |
 | 1 | rejected behavior: stale generated file, failed check, uncaught mutant, failed ORACLE check |

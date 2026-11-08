@@ -1,6 +1,8 @@
 note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note Concatenate after tests/components/proc.om. Run from repository root.
 text NgAbiNo "NOT_RUN abi and prototype comparison (nvml.h absent; set CUDA_NVML_INCLUDE)\n"
+text NgAbiInc "CUDAPP-NVML HOST INCOMPLETE (abi and prototype comparison NOT_RUN)\n"
+text NgAbiDif "abi: the 55 facts of compat/nvml/nvml.h differ from the CUDA nvml.h; see build/nvml/abi-ours.txt and abi-cuda.txt)\n"
 text NgProOk "PASS generated nvml.h prototypes (11) compile against the CUDA nvml.h\nPASS prototype negative control (a changed nvmlDeviceGetName length type is rejected)\n"
 text NgExpOk "PASS ORACLE nm/readelf: libnvidia-ml.so.1 exports exactly the 11 api.om functions (T) with soname libnvidia-ml.so.1\n"
 text NgGrdOk "PASS ORACLE undefined-symbol guard: libnvidia-ml.so.1 imports only the C runtime allowlist and omega2_nvrm_open_file/close_file/ioctl\nPASS undefined-symbol guard negative control (an object calling ioctl is rejected)\n"
@@ -166,6 +168,7 @@ global NgCn ulong 1
 global NgKr uchar 1024
 global NgKn ulong 1
 global NgWhich ulong 1
+global NgAbiSk ulong 1
 
 fn ng_env key view uchar * dst edit uchar * to ulong
 b = new uchar 8192 0
@@ -635,12 +638,13 @@ put b add n i get NgNvH i
 end
 if ne faccess b 0 add n len NgNvH 4 0
 hp_say NgAbiNo
+put NgAbiSk 0 1
 ret
 end
 note The 55 facts of both headers come from tests/nvml/abi.om (DWARF of cc -g3 on /dev/null, read in Omega).
 na_facts NgCH len NgCH NgAT
 na_facts b add n len NgNvH NgCT
-hp_require hp_cmp NgAT len NgAT NgCT len NgCT
+ng_need hp_cmp NgAT len NgAT NgCT len NgCT NgAbiDif
 ng_abimsg b n
 na_neg
 ng_proto b n
@@ -977,6 +981,10 @@ ng_caller
 ng_abi
 ng_guard
 ng_mutants
+if eq get NgAbiSk 0 1
+hp_wpart 1 NgAbiInc 0 len NgAbiInc
+ret 77
+end
 hp_wpart 1 NgOk 0 len NgOk
 ret 0
 end

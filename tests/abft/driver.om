@@ -526,6 +526,10 @@ n = envread i ab 0 len ab
 if gt n long len envkey
 if pfx
 k = sub ulong n len envkey
+note host words trap 3 on a path longer than 4095 bytes (OMEGESE, paths)
+if gt k 4095
+die ebig
+end
 for j ulong k
 put cp j get ab add len envkey j
 end
@@ -551,7 +555,7 @@ fn outset to void
 put obn 0 0
 if gt ulong argcnt 1
 n = argread 1 ob 0 len ob
-if lt n 0
+if or lt n 0 gt n 4095
 die ebig
 end
 put obn 0 ulong n

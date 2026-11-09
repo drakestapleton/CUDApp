@@ -27,6 +27,15 @@ static int live_fail(const char *what, nvmlReturn_t got, nvmlReturn_t want) {
     return 1;
 }
 
+/* NVML_VALUE_NOT_AVAILABLE is -1. Print NA so a compare does not treat
+ * 18446744073709551615 as a byte count. One call at a time: the buffer is shared. */
+static char live_byte_buf[32];
+static const char *live_bytes(unsigned long long n) {
+    if (n == (unsigned long long)NVML_VALUE_NOT_AVAILABLE) return "NA";
+    snprintf(live_byte_buf, sizeof live_byte_buf, "%llu", n);
+    return live_byte_buf;
+}
+
 static int live_probe(void) {
     unsigned count = 0;
     nvmlReturn_t rc = nvmlInit_v2();
@@ -72,12 +81,11 @@ static int live_probe(void) {
         printf("live gpu%u name=%s\n", i, name);
         printf("live gpu%u uuid=%s\n", i, uuid);
         printf("live gpu%u temperature_c=%u\n", i, temp);
-        printf("live gpu%u memory_total_bytes=%llu\n", i, (unsigned long long)mem.total);
-        printf("live gpu%u memory_used_bytes=%llu\n", i, (unsigned long long)mem.used);
+        printf("live gpu%u memory_total_bytes=%s\n", i, live_bytes(mem.total));
+        printf("live gpu%u memory_used_bytes=%s\n", i, live_bytes(mem.used));
         printf("live gpu%u procs=%u\n", i, procs_n);
         for (unsigned p = 0; p < procs_n; p++) {
-            printf("proc pid=%u used_bytes=%llu\n", infos[p].pid,
-                   (unsigned long long)infos[p].usedGpuMemory);
+            printf("proc pid=%u used_bytes=%s\n", infos[p].pid, live_bytes(infos[p].usedGpuMemory));
         }
     }
 
@@ -96,7 +104,10 @@ static int live_probe(void) {
         }
     }
     rc = nvmlShutdown();
-    if (rc != NVML_SUCCESS) return live_fail("shutdown", rc, NVML_SUCCESS);
+    if (rc != NVML_SUCCESS) {
+        fprintf(stderr, "FAIL shutdown: rc %d, want %d\n", (int)rc, (int)NVML_SUCCESS);
+        return 1;
+    }
     printf("live shutdown rc=0\n");
     printf("CUDAPP-NVML LIVE QUERIES DONE\n");
     return 0;

@@ -1,0 +1,7 @@
+26a27,28
+> hold-bound: hello_gpu --sim --hold-ms=N -> exit N, as expected
+> default-build-ballast: hello_gpu --sim --dN-ballast-mib=N -> exit N, as expected
+83c85
+< DN DRY RUN: PASS (host simulator, device-hidden refusal, judge and verdict self-tests; the chip row stays NOT_RUN until --gpu runs in a window)
+---
+> DN DRY RUN: PASS (host simulator, device-hidden refusal, hold bound, default-build ballast refusal, judge and verdict self-tests; the chip row stays NOT_RUN until gpu runs in a window)

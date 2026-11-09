@@ -85,6 +85,14 @@ int main(void) {
     printf("hello chunk digest %016llx\n",(unsigned long long)digest);
     print_work(N_TOTAL*8u,N_TOTAL*4u,N_TOTAL,128.0); target_sm=86;
     print_work(N_TOTAL*8u,N_TOTAL*4u,N_TOTAL,128.0); target_sm=121;
+    { /* D8 overhead line: both signs, own and driver bytes on and off a KiB boundary, the unreadable case.
+       * Migration C (pure-Omega directive 2026-11-07): retired with hello_gpu.c by the native .om hello of
+       * aien-dev/CUDApp#79 (OM-GPU-RETIRE); the D8 mutants are tests/d8_mutants.om. */
+      const uint64_t rss[] = {1, 1876, 3120, 15412, 1048576, UINT64_MAX / 4};
+      const uint64_t own[] = {0, 1, 1023, 1024, 12582912, 12583424};
+      for(unsigned i=0;i<6;i++) for(unsigned j=0;j<6;j++) for(unsigned k=0;k<6;k++) for(unsigned o=0;o<6;o++)
+          print_overhead(1, rss[i], rss[j], rss[k], own[o], own[o] * 2u + 1u, o);
+      print_overhead(0, 1876, 1876, 14168, 12582912, 0, 0); print_overhead(1, 0, 1, 1, 0, 0, 0); }
     BlackwellIRProgram p;assert(build_vecadd(&p)==0);for(size_t i=0;i<p.count;i++)word(p.insns[i].control);
 #ifdef CUDAPP_GRAPH_DIFF_RED
     digest ^= 1;

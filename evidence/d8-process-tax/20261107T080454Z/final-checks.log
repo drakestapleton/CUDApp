@@ -1,0 +1,557 @@
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit cubin_elf (bridge-seeded)
+generating portable unit mathlibs_ir (bridge-seeded)
+generating portable unit ampere_enc_sm86 (bridge-seeded)
+generating portable unit amp_runtime (bridge-seeded)
+generating portable unit repack (bridge-seeded)
+generating portable unit quant_wire (bridge-seeded)
+generating portable unit compose (bridge-seeded)
+generating portable unit encode (bridge-seeded)
+generating portable unit cache_runtime (bridge-seeded)
+generating portable unit lease (bridge-seeded)
+generating portable unit slotrev (bridge-seeded)
+generating portable unit command (bridge-seeded)
+generating portable unit validate (bridge-seeded)
+generating portable unit digest (bridge-seeded)
+generating portable unit code_digest (bridge-seeded)
+generating portable unit templates (bridge-seeded)
+generating portable unit graph (bridge-seeded)
+generating portable unit context_lookup (bridge-seeded)
+generating portable unit binding (bridge-seeded)
+generating portable unit moe_plan (bridge-seeded)
+generating portable unit moe_group (bridge-seeded)
+generating portable unit moe_ids32 (bridge-seeded)
+generating portable unit moe_maps32 (bridge-seeded)
+generating portable unit moe_segs32 (bridge-seeded)
+generating portable unit moe_windows (bridge-seeded)
+generating portable unit moe_admission (bridge-seeded)
+generating portable unit closure_pack (bridge-seeded)
+generating portable unit closure_bind (bridge-seeded)
+generating portable unit closure_blob (bridge-seeded)
+generating portable unit closure_cover (bridge-seeded)
+generating portable unit closure_intent (bridge-seeded)
+generating portable unit closure_seal (bridge-seeded)
+generating portable unit closure_reseal (bridge-seeded)
+generating portable unit closure_code (bridge-seeded)
+generating portable unit closure_launch (bridge-seeded)
+generating portable unit closure_dir (bridge-seeded)
+generating portable unit closure_alloc (bridge-seeded)
+generating portable unit closure_series (bridge-seeded)
+generating portable unit prefill_shape (bridge-seeded)
+generating portable unit prefill_reading (bridge-seeded)
+generating portable unit prefill_workspace (bridge-seeded)
+generating portable unit prefill_order (bridge-seeded)
+generating portable unit attn_mirror_plan (bridge-seeded)
+generating portable unit attn_mirror_step (bridge-seeded)
+generating portable unit q38_runtime (bridge-seeded)
+generating portable unit q38_emit (bridge-seeded)
+generating portable unit cg_qmma (bridge-seeded)
+generating portable unit cg_qmma_patch (bridge-seeded)
+generating portable unit qm_self (bridge-seeded)
+generating portable unit qm_host (bridge-seeded)
+generating portable unit cg_tgemm_spec (bridge-seeded)
+generating portable unit cg_tgemm (bridge-seeded)
+generating portable unit cg_pf (bridge-seeded)
+generating portable unit cg_tern (bridge-seeded)
+generating portable unit cg_tern_sched (bridge-seeded)
+generating portable unit cg_tern_policy (bridge-seeded)
+generating portable unit streams (bridge-seeded)
+generating portable unit numeric (bridge-seeded)
+generating portable unit numeric_tile (bridge-seeded)
+generating portable unit artifact_policy (bridge-seeded)
+generating portable unit artifact_parse (bridge-seeded)
+generating portable unit api_policy (bridge-seeded)
+generating portable unit cm_sort (bridge-seeded)
+generating portable unit cm_math (bridge-seeded)
+generating portable unit cm_fit (bridge-seeded)
+generating portable unit cm_stats (bridge-seeded)
+generating portable unit cm_features (bridge-seeded)
+generating portable unit cm_quantile (bridge-seeded)
+generating portable unit cm_decision (bridge-seeded)
+generating portable unit cm_prediction (bridge-seeded)
+generating portable unit cm_calibration (bridge-seeded)
+generating portable unit cm_blob (bridge-seeded)
+generating portable unit cm_digest (bridge-seeded)
+generating portable unit artifact_format (bridge-seeded)
+generating portable unit artifact_admit (bridge-seeded)
+generating portable unit artifact_elf (bridge-seeded)
+generating portable unit api_mm_plan (bridge-seeded)
+generating portable unit api_at_plan (bridge-seeded)
+generating portable unit api_ew_plan (bridge-seeded)
+generating portable unit api_bf_plan (bridge-seeded)
+generating portable unit api_da_plan (bridge-seeded)
+generating portable unit api_rt_plan (bridge-seeded)
+generating portable unit ew_ir (bridge-seeded)
+generating portable unit attention_ir (bridge-freest)
+generating portable unit cmdlist_record (bridge-seeded)
+generating portable unit cmdlist_plan (bridge-seeded)
+generating portable unit cmdlist_layout (bridge-seeded)
+generating portable unit cmdlist_access (bridge-seeded)
+generating portable unit nvrm_wire_pack (bridge-seeded)
+generating portable unit nvrm_wire_reply (bridge-seeded)
+generating portable unit nvrm_heap_wire (bridge-seeded)
+generating portable unit nvrm_uvm_wire (bridge-seeded--runtime-views)
+generating portable unit nvrm_uvm_map_wire (bridge-seeded--runtime-views)
+generating portable unit nvrm_struct (bridge-seeded--runtime-views)
+generating portable unit plat_policy (bridge-seeded)
+generating portable unit plat_rest (bridge-seeded)
+generating portable unit nvml_step (bridge-seeded)
+generating portable unit nvml_errstr (bridge-seeded)
+generating portable unit chip_admit (bridge-seeded)
+generating portable unit regalloc (bridge-freest)
+generating portable unit regalloc_ir (bridge-seeded)
+generating portable unit regalloc_live (bridge-seeded)
+generating portable unit cg_matmul (bridge-seeded)
+generating portable unit cg_matmul_params (bridge-seeded)
+generating portable unit cg_matmul_i32 (bridge-seeded)
+generating portable unit cg_matmul_tensor (bridge-seeded)
+generating portable unit cg_matmul_loop (bridge-seeded)
+generating portable unit cg_matmul_frag (bridge-seeded)
+generating portable unit cg_matmul_block (bridge-seeded)
+generating portable unit cg_vecadd (bridge-seeded)
+generating portable unit bw_hazard (bridge-seeded)
+generating portable unit bw_hazard_dec (bridge-seeded)
+generating portable unit cg_bind (bridge-seeded)
+generating portable unit scan_ir (bridge-seeded)
+generating portable unit scan_plan (bridge-seeded)
+generating portable unit aiengpu (bridge-seeded)
+generating portable unit sm121_dis (bridge-seeded)
+generating portable unit cg_moe (bridge-seeded)
+generating portable unit cg_moe2 (bridge-seeded)
+generating portable unit cg_moe_sched (bridge-seeded)
+generating portable unit cg_gdn (bridge-seeded)
+generating portable unit cg_gdn_policy (bridge-seeded)
+generating portable unit cg_dec (bridge-seeded)
+generating portable unit gdn_admit (bridge-seeded)
+generating portable unit bw_qmd (bridge-seeded)
+generating portable unit eng (bridge-seeded)
+generating portable unit fixture_text (bridge-seeded)
+generating portable unit dag_eval (bridge-seeded)
+generating portable unit dag_parse (bridge-seeded)
+generating portable unit dag_fmt (bridge-seeded)
+generating portable unit dag_res (bridge-seeded)
+generating portable unit dag_diff (bridge-seeded)
+generating portable unit own30b_prof (bridge-seeded)
+generating portable unit doctor (bridge-seeded)
+generating portable unit ampcorp (bridge-seeded)
+generating portable unit ampfam (bridge-seeded)
+generating portable unit artexp (bridge-seeded)
+generating portable unit cg_tc (bridge-seeded)
+generating portable unit gemm_any (bridge-seeded)
+generating portable unit dnn_rows (bridge-seeded)
+generating portable unit dnn_rows_plan (bridge-seeded)
+generating portable unit gemm_host (bridge-seeded)
+generating portable unit gemm_value (bridge-seeded)
+generating portable unit gemm_cfg (bridge-seeded)
+generating portable unit gemm_plan (bridge-seeded)
+generating portable unit gemm_span (bridge-seeded)
+generating portable unit tc_host (bridge-seeded)
+generating portable unit dnn_activations (bridge-seeded)
+generating portable unit dnn_activations_plan (bridge-seeded)
+generating portable unit cg_attn (bridge-seeded)
+generating portable unit cg_pattn (bridge-seeded)
+generating portable unit cg_pfhost (bridge-seeded)
+generating portable unit pf_admit (bridge-seeded)
+generating portable unit nvrm_policy (bridge-seeded)
+generating portable unit session_admit (bridge-seeded)
+generating portable unit session_words (bridge-seeded)
+generating portable unit session_park (bridge-seeded)
+generating portable unit cmdlist_book (bridge-seeded)
+generating portable unit cg_fields (bridge-freest)
+generating portable unit cg_replay (bridge-freest)
+generating portable unit cg_life (bridge-freest)
+generating portable unit cg_invar (bridge-freest)
+generating portable unit cg_budget (bridge-seeded)
+generating portable unit cm_route (bridge-seeded)
+generating portable unit numeric_rest (bridge-seeded)
+generating portable unit numeric_patch (bridge-seeded)
+generating portable unit numeric_check (bridge-seeded)
+generating portable unit numeric_trace (bridge-seeded)
+generating portable unit numeric_reduce (bridge-seeded)
+generating portable unit mathlibs_host (bridge-seeded)
+generating portable unit mathlibs_walk (bridge-seeded)
+generating portable unit mathlibs_step (bridge-seeded)
+generating portable unit mathlibs_many (bridge-seeded)
+generating portable unit mathlibs_index (bridge-seeded)
+generating portable unit mathlibs_fft (bridge-seeded)
+generating portable unit standalone_oracles (bridge-seeded)
+generating portable unit nvrm_va (bridge-seeded--runtime-views)
+generating portable unit nvrm_alloc_scalar (bridge-seeded)
+generating portable unit nvrm_counts (bridge-seeded--runtime-views)
+generating portable unit nvrm_alloc_push (bridge-seeded--runtime-views)
+generating portable unit dag_jstr (bridge-seeded)
+generating portable unit words (bridge-seeded)
+generating portable unit chip_enum (bridge-seeded)
+generating portable unit attn_any (bridge-seeded)
+generating portable unit attn_any_plan (bridge-seeded)
+generating portable unit gemm_scalar (bridge-seeded)
+generating portable unit conv2d (bridge-seeded)
+generating portable unit conv_plan (bridge-seeded)
+generating portable unit cg_attn256 (bridge-seeded)
+generating portable unit cg_pattn256 (bridge-seeded)
+generating portable unit cg_router (bridge-seeded)
+generating portable unit cg_gemm (bridge-seeded)
+generating portable unit cg_bf16 (bridge-seeded)
+generating portable unit cg_qg (bridge-seeded)
+generating portable unit core_sha (bridge-seeded)
+generating portable unit core_omcanon (bridge-seeded)
+generating portable unit core_omcidcmp (bridge-seeded)
+generating portable unit core_omcidhex (bridge-seeded)
+generating portable unit core_omparse (bridge-seeded)
+generating portable unit core_omcver (bridge-seeded)
+generating portable unit core_omcheck (bridge-seeded)
+generating portable unit core_object (bridge-seeded)
+generating portable unit core_graph (bridge-seeded)
+generating portable unit core_payload (bridge-seeded)
+generating portable unit core_param (bridge-seeded)
+generating portable unit core_effect (bridge-seeded)
+generating portable unit core_eval (bridge-seeded)
+generating portable unit core_vector (bridge-seeded)
+generating portable unit core_vecspec (bridge-seeded)
+generating portable unit core_vpay (bridge-seeded)
+generating portable unit core_fmt (bridge-seeded)
+generating portable unit core_fmtnum (bridge-seeded)
+generating portable unit core_fmtclip (bridge-seeded)
+generating portable unit core_hostmath (bridge-seeded)
+generating portable unit core_cubinmsg (bridge-freest)
+generating portable unit model_graph_wire (bridge-seeded)
+generating portable unit model_graph_node (bridge-seeded)
+generating portable unit model_graph_batch (bridge-seeded)
+generating portable unit model_graph_launch (bridge-seeded)
+generating portable unit model_graph_copy (bridge-seeded)
+generating portable unit model_graph_xfer (bridge-seeded)
+generating portable unit model_graph (bridge-seeded)
+generating portable unit model_graph_expert (bridge-seeded)
+generating portable unit model_graph_group (bridge-seeded)
+generating portable unit model_graph_address (bridge-seeded)
+generating portable unit model_graph_final_batch (bridge-seeded)
+generating portable unit model_graph_window (bridge-seeded)
+generating portable unit model_graph_layout (bridge-seeded)
+generating portable unit model_graph_aux (bridge-seeded)
+generating portable unit resident (bridge-seeded)
+generating portable unit resident_check (bridge-seeded)
+generating portable unit model_graph_residue (bridge-seeded)
+generating portable unit model_graph_table (bridge-seeded--runtime-views)
+generating portable unit hello_host (bridge-seeded)
+generating portable unit hello_plan (bridge-seeded)
+generating portable unit core_cubadmit (bridge-freest)
+generating portable unit core_ampack (bridge-seeded)
+generating portable unit graph_headscale (bridge-seeded--runtime-views)
+generating portable unit gemm_ex_plan (bridge-seeded)
+generating portable unit gemm_ex_row (bridge-seeded)
+generating portable unit gemm_ex_x3 (bridge-seeded)
+generating portable unit gemm_ex_acc (bridge-seeded)
+generating portable unit gemm_ex_dot (bridge-seeded)
+generating portable unit gemm_ex_epi (bridge-seeded)
+generating portable unit gemm_ex_fp8 (bridge-seeded)
+generating portable unit apish_shp (bridge-seeded)
+generating portable unit apish_pack (bridge-seeded)
+generating portable unit apish_slot (bridge-seeded)
+generating portable unit apish_blk (bridge-seeded)
+generating portable unit apish_trit (bridge-seeded)
+generating portable unit av_ewarg (bridge-seeded)
+generating portable unit av_fp8am (bridge-seeded)
+generating portable unit av_fp8en (bridge-seeded)
+generating portable unit av_fp8q (bridge-seeded)
+generating portable unit av_e4m3 (bridge-seeded)
+generating portable unit av_fp8sc (bridge-seeded)
+generating portable unit av_gdnch (bridge-seeded)
+generating portable unit av_gdnsl (bridge-seeded)
+generating portable unit av_scan (bridge-seeded)
+generating portable unit ah_rest (bridge-seeded)
+generating portable unit av_bf16 (bridge-seeded--runtime-views)
+generating portable unit av_widen (bridge-seeded--runtime-views)
+generating portable unit av_rope (bridge-seeded--runtime-views)
+generating portable unit av_gdnsc (bridge-seeded--runtime-views)
+generating portable unit av_gdnex (bridge-seeded--runtime-views)
+generating portable unit av_gdnpt (bridge-seeded--runtime-views)
+generating portable unit av_gdnut (bridge-seeded--runtime-views)
+generating portable unit av_fp8x (bridge-seeded--runtime-views)
+generating portable unit av_fp8xb (bridge-seeded--runtime-views)
+generating portable unit ar_carry (bridge-seeded--runtime-views)
+generating portable unit bw_identity (bridge-seeded)
+generating portable unit bw_cpui (bridge-seeded--runtime-views)
+generating portable unit bw_cpuf16 (bridge-seeded--runtime-views)
+generating portable unit bw_cpubf16 (bridge-seeded--runtime-views)
+generating portable unit bw_shape (bridge-seeded--runtime-views)
+generating portable unit bw_name (bridge-seeded--runtime-views)
+generating portable unit attn_args (bridge-freest)
+generating portable unit attn_lay (bridge-freest)
+generating portable unit attn_buf (bridge-freest)
+generating portable unit attn_math (bridge-freest)
+generating portable unit attn_tables (bridge-freest)
+generating portable unit attn_set (bridge-freest)
+generating portable unit attn_fill (bridge-freest)
+generating portable unit attn_fillf (bridge-freest)
+generating portable unit attn_count (bridge-freest)
+generating portable unit attn_cntf (bridge-freest)
+generating portable unit attn_bfexp (bridge-freest)
+generating portable unit attn_bffin (bridge-freest)
+generating portable unit attn_view_any (bridge-freest)
+generating portable unit attn_comp (bridge-freest)
+generating portable unit attn_rpois (bridge-freest)
+generating portable unit attn_z64 (bridge-freest)
+generating portable unit attn_bids (bridge-freest)
+generating portable unit attn_rows (bridge-freest)
+generating portable unit attn_gtab (bridge-freest)
+generating portable unit attn_range (bridge-freest)
+generating portable unit attn_total (bridge-freest)
+generating portable unit attn_table (bridge-freest)
+generating portable unit attn_touch (bridge-freest)
+generating portable unit attn_blks (bridge-freest)
+generating portable unit attn_rfit (bridge-freest)
+generating portable unit attn_gath (bridge-freest)
+generating portable unit attn_stage (bridge-freest)
+generating portable unit attn_reset (bridge-freest)
+generating portable unit attn_hmap (bridge-freest)
+generating portable unit attn_eff (bridge-freest)
+generating portable unit attn_best (bridge-freest)
+generating portable unit attn_max (bridge-freest)
+generating portable unit attn_ctx (bridge-freest)
+generating portable unit attn_ds_round (bridge-seeded--runtime-views)
+generating portable unit attn_ds_slot (bridge-seeded--runtime-views)
+generating portable unit attn_ds_vecf (bridge-seeded--runtime-views)
+generating portable unit attn_ds_vecb (bridge-seeded--runtime-views)
+generating portable unit attn_na_read (bridge-seeded--runtime-views)
+generating portable unit attn_na_cubin (bridge-seeded--runtime-views)
+generating portable unit attn_na_layout (bridge-seeded--runtime-views)
+generating portable unit attn_na_ver (bridge-seeded--runtime-views)
+generating portable unit attn_na_json (bridge-seeded--runtime-views)
+generating portable unit attn_mm_dot (bridge-freest)
+generating portable unit attn_mm_err (bridge-freest)
+generating portable unit attn_mm_init (bridge-freest)
+generating portable unit attn_mm_next (bridge-freest)
+generating portable unit attn_host (bridge-freest)
+generating portable unit attn_scanchk (bridge-seeded--runtime-views)
+generating portable unit attn_clock (bridge-seeded)
+generating portable unit ar_bf16 (bridge-seeded--runtime-views)
+generating portable unit ar_fill (bridge-seeded--runtime-views)
+generating portable unit ar_count (bridge-seeded--runtime-views)
+generating portable unit ar_args (bridge-seeded--runtime-views)
+generating portable unit ar_argsx (bridge-seeded--runtime-views)
+generating portable unit ar_pad (bridge-seeded--runtime-views)
+generating portable unit ar_idle (bridge-seeded--runtime-views)
+generating portable unit ar_route (bridge-seeded--runtime-views)
+generating portable unit ar_perm (bridge-seeded--runtime-views)
+generating portable unit ar_widen (bridge-seeded--runtime-views)
+generating portable unit ar_next (bridge-seeded--runtime-views)
+generating portable unit ar_key (bridge-seeded--runtime-views)
+generating portable unit ar_nan (bridge-seeded--runtime-views)
+generating portable unit ar_scale (bridge-seeded--runtime-views)
+generating portable unit ar_fold (bridge-seeded--runtime-views)
+generating portable unit ar_foldh (bridge-seeded--runtime-views)
+generating portable unit ar_acc (bridge-seeded--runtime-views)
+generating portable unit ar_mag (bridge-seeded--runtime-views)
+generating portable unit ar_tiles (bridge-seeded--runtime-views)
+generating portable unit ar_tg (bridge-seeded--runtime-views)
+generating portable unit ar_tile (bridge-seeded--runtime-views)
+generating portable unit ar_groups (bridge-seeded--runtime-views)
+generating portable unit ar_run (bridge-seeded--runtime-views)
+generating portable unit ar_tern (bridge-seeded--runtime-views)
+generating portable unit ar_trits (bridge-seeded--runtime-views)
+generating portable unit ar_rev (bridge-seeded--runtime-views)
+generating portable unit ar_pfcopy (bridge-seeded--runtime-views)
+generating portable unit ar_pfratio (bridge-seeded--runtime-views)
+generating portable unit ar_segok (bridge-seeded--runtime-views)
+generating portable unit ar_segb (bridge-seeded--runtime-views)
+generating portable unit ar_tspec (bridge-seeded--runtime-views)
+generating portable unit ar_calc (bridge-seeded--runtime-views)
+generating portable unit ar_launch (bridge-seeded--runtime-views)
+generating portable unit ar_cache (bridge-seeded--runtime-views)
+generating portable unit ar_tcspec (bridge-seeded--runtime-views)
+generating portable unit ar_tcperm (bridge-seeded--runtime-views)
+generating portable unit ar_tcinfo (bridge-seeded--runtime-views)
+generating portable unit ar_gtile (bridge-seeded--runtime-views)
+generating portable unit ar_gspec (bridge-seeded--runtime-views)
+generating portable unit ar_pfcount (bridge-seeded--runtime-views)
+generating portable unit ar_pfreg (bridge-seeded--runtime-views)
+generating portable unit ar_gargs (bridge-seeded--runtime-views)
+generating portable unit ar_gseg (bridge-seeded--runtime-views)
+generating portable unit ar_ginfo (bridge-seeded--runtime-views)
+generating portable unit ar_xnext (bridge-seeded--runtime-views)
+generating portable unit ar_gath32 (bridge-seeded--runtime-views)
+generating portable unit ar_gath16 (bridge-seeded--runtime-views)
+generating portable unit ar_slot (bridge-seeded--runtime-views)
+generating portable unit ar_sgate (bridge-seeded--runtime-views)
+generating portable unit ar_copy (bridge-seeded--runtime-views)
+generating portable unit ar_sstats (bridge-seeded--runtime-views)
+generating portable unit ar_victim (bridge-seeded--runtime-views)
+generating portable unit ar_mstep (bridge-seeded--runtime-views)
+generating portable unit cg_pack_len (bridge-seeded)
+generating portable unit cg_pack_h (bridge-seeded--runtime-views)
+generating portable unit cg_mrow (bridge-seeded--runtime-views)
+generating portable unit gemm_ex_policy (bridge-seeded)
+generating portable unit fixture_verify (bridge-freest)
+generating portable unit cg_em (bridge-seeded)
+generating portable unit cg_reconv (bridge-seeded)
+generating portable unit cg_sentin (bridge-seeded--runtime-views)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+generating portable unit c5 (bridge-freest)
+generating portable unit leftovers (bridge-freest)
+generating portable unit bw_scalar (bridge-freest)
+generating portable unit streams_xq (bridge-freest)
+tools/native: 9 unit(s) -> /tmp/tmp.EbH8r41gsc/no_posix_regen/aarch64linux/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+tools/native: 9 unit(s) -> /tmp/tmp.EbH8r41gsc/no_posix_regen/x86linux/omega_native.{c,h,o} + omega_api_decl.h, omega_api_defs.{c,o} (+ work/)
+PASS NO_POSIX checked native sources regenerate byte for byte (both ISAs)
+PASS portable Omega units regenerate byte for byte
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -o build/hello_gpu examples/hello_gpu/hello_gpu.c build/libomega_gpu.a -lpthread -lm
+cc -std=gnu11 -Wall -Wextra -Werror -MMD -MP -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -DCUDAPP_MIGRATION_PENDING_HELLO_CONTROL=1 -o build/hello_gpu_control examples/hello_gpu/hello_gpu.c build/libomega_gpu.a -lpthread -lm
+bash tests/dx/clean_user_cleanup_test.sh
+PASS collision-exit-3
+PASS collision-never-enters-gpu
+PASS collision-only-expected-privilege
+PASS existing-account-untouched
+PASS failure-exit-3
+PASS failure-never-enters-gpu
+PASS failure-only-expected-privilege
+PASS failed-creation-untouched
+PASS created-exit-3
+PASS created-never-enters-gpu
+PASS created-only-expected-privilege
+PASS created-name-nonempty
+PASS owned-process-cleanup
+PASS owned-account-cleanup
+PASS one-owned-account-deletion
+PASS created_again-exit-3
+PASS created_again-never-enters-gpu
+PASS created_again-only-expected-privilege
+PASS distinct-candidate-names
+PASS temp_failure-exit-3
+PASS temp_failure-never-enters-gpu
+PASS temp_failure-only-expected-privilege
+PASS temp-failure-no-privilege
+clean-user cleanup tests: 23 passed, 0 failed (mocked commands only)
+sh tests/dx/hello_sim_test.sh build/hello_gpu build/hello_gpu_control
+PASS sim-pass (exit 0)
+PASS sim-checks
+PASS work-line
+PASS hashes-printed
+PASS same-bits-twice
+PASS fault-exit (exit 1)
+PASS fault-report
+PASS fault-address-is-end-of-a
+PASS short-absent-from-default-build (exit 2)
+PASS short-exit (exit 1)
+PASS short-report
+PASS past-end-refused-on-gpu (exit 2)
+hello --sim tests: 12 passed, 0 failed
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -ffp-contract=off -Isrc tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -ffp-contract=off -Isrc -O0 --coverage -DCUDAPP_MIGRATION_PENDING_GRAPH_RESIDUE=1 -DCUDAPP_MIGRATION_PENDING_HELLO_HOST=1 tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue-oracle
+cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -ffp-contract=off -Isrc -DCUDAPP_GRAPH_DIFF_RED=1 tests/test_graph_residue.c build/libomega_gpu.a -lpthread -lm -o build/graph-residue-red
+build/graph-residue > build/graph-residue.log
+build/graph-residue-oracle > build/graph-residue-oracle.log
+cmp build/graph-residue.log build/graph-residue-oracle.log
+build/graph-residue-red > build/graph-residue-red.log
+PASS graph residue differential and red check
+cat tests/d8_lib.om tests/d8_mutants.om > build/d8_mutants.om
+"/home/drakestapleton/work/finish/d8tools/omega-mv/seed/out/omc" < build/d8_mutants.om > build/d8_mutants.tmp
+chmod +x build/d8_mutants.tmp
+mv build/d8_mutants.tmp build/d8_mutants
+OMEGA_OMC="/home/drakestapleton/work/finish/d8tools/omega-mv/seed/out/omc" OMEGA_BRIDGE="/home/drakestapleton/work/finish/d8tools/omega-bridge" CC="cc" GRAPH_RESIDUE_FLAGS="-std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -ffp-contract=off -Isrc" OUT_DIR="build" python3 om/graph/residue-mutants.py
+mutant poison killed rc=0
+mutant input-period killed rc=0
+mutant checker-sub killed rc=-6
+mutant shape-cap killed rc=0
+mutant timeline-room killed rc=-6
+mutant perm-stride killed rc=-6
+mutant load-scoreboard killed rc=0
+PASS graph residue: 7 compiled semantic mutants killed
+OMEGA_OMC="/home/drakestapleton/work/finish/d8tools/omega-mv/seed/out/omc" OMEGA_BRIDGE="/home/drakestapleton/work/finish/d8tools/omega-bridge" build/d8_mutants build cc -std=gnu11 -Wall -Wextra -Werror -D_GNU_SOURCE -O2 -Isrc -I./m16 -I./nvrm -I./third_party/nvidia-open-580.173.02/src/common/sdk/nvidia/inc -I./third_party/nvidia-open-580.173.02/kernel-open/common/inc -I./third_party/nvidia-open-580.173.02/kernel-open/nvidia-uvm -I./third_party/nvidia-open-580.173.02/src/nvidia/arch/nvalloc/unix/include -I./third_party/aien-gpu-abi1 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_PFHOST_ADMIT=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC=0 -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_TC_HOST=0 -DCUDAPP_MIGRATION_PENDING_C_GEMM_BUILDER=0 -DCUDAPP_MIGRATION_PENDING_GEMM_EX=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_STRUCT=0 -DCUDAPP_MIGRATION_PENDING_C_NVRM_ALLOC=0 -DCUDAPP_MIGRATION_PENDING_C_SUBMIT=0 -ffp-contract=off -Isrc
+mutant d8-own-round killed rc=0
+mutant d8-beyond-sign killed rc=0
+mutant d8-driver-kib killed rc=0
+PASS graph residue D8: 3 compiled semantic mutants killed
+cat tests/d8_lib.om tests/d8_process_tax.om > build/d8_process_tax.om
+"/home/drakestapleton/work/finish/d8tools/omega-mv/seed/out/omc" < build/d8_process_tax.om > build/d8_process_tax.tmp
+chmod +x build/d8_process_tax.tmp
+mv build/d8_process_tax.tmp build/d8_process_tax
+build/d8_process_tax dry-run "" /home/drakestapleton/work/finish/CUDApp-366/build/hello_gpu /home/drakestapleton/work/finish/CUDApp-366/build/hello_gpu_control
+ran sim-main: exit 0, outside VmRSS 14764 KiB
+ran sim-short: exit 1, outside VmRSS 14624 KiB
+ran sim-ballast: exit 0, outside VmRSS 538924 KiB
+ran hidden-gpu: exit 2, outside VmRSS missing KiB, driver missing MiB
+sim-main (sim), expected PASS:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2400/2400/14700 KiB, own 12288 KiB, open 0, beyond own 12 KiB (sums agree) PASS
+  B3  outside: pid 4019416 VmRSS 14764 KiB during the hold, line says 14700 KiB (tolerance 4096) PASS
+  B5  tax: 12 KiB = resident 12 + driver beyond own buffers 0; bar <= 262144 KiB PASS
+  -> PASS, as expected
+sim-short (sim), expected FAIL by B1:
+  B1  run: exit 1, checked 1048576 of 1048576 elements: 1 wrong, 1 never written FAIL
+  B2  line: resident 2260/2260/14560 KiB, own 12288 KiB, open 0, beyond own 12 KiB (sums agree) PASS
+  B3  outside: pid 4019530 VmRSS 14624 KiB during the hold, line says 14560 KiB (tolerance 4096) PASS
+  B5  tax: 12 KiB = resident 12 + driver beyond own buffers 0; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+sim-ballast (sim), expected FAIL by B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2268/2268/538860 KiB, own 12288 KiB, open 0, beyond own 524304 KiB (sums agree) PASS
+  B3  outside: pid 4019621 VmRSS 538924 KiB during the hold, line says 538860 KiB (tolerance 4096) PASS
+  B5  tax: 524304 KiB = resident 524304 + driver beyond own buffers 0; bar <= 262144 KiB FAIL
+  -> FAIL, as expected
+  ballast seen: beyond own buffers +524304 KiB >= 524288 KiB
+hidden-gpu (gpu), expected NOT_RUN:
+  run exited 2 without a device (NOT_RUN): GPU not available (stage: nvrm_open: open control nodes errno 2)
+  -> NOT_RUN, as expected
+hold-bound: hello_gpu --sim --hold-ms=60001 -> exit 2, as expected
+default-build-ballast: hello_gpu --sim --d8-ballast-mib=64 -> exit 2, as expected
+GPU judge self-test on synthetic logs (not measurements):
+syn-good (gpu), expected PASS:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> PASS, as expected
+syn-no-driver (gpu), expected FAIL by B4 B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: no per-process report for pid 4242 ('missing')                     FAIL
+  B5  tax: not judged without the driver's report (resident part 1011 KiB)       FAIL
+  -> FAIL, as expected
+syn-driver-tax (gpu), expected FAIL by B5:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 5000 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 5108722 KiB = resident 1011 + driver beyond own buffers 5107711; bar <= 262144 KiB FAIL
+  -> FAIL, as expected
+syn-bad-sum (gpu), expected FAIL by B2:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: printed open 1000 / beyond 11 KiB disagree with its numbers, or own 12289 KiB is off FAIL
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29671 KiB = resident 1000 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+syn-two-lines (gpu), expected FAIL by B2:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: 2 D8 lines, 2 well-formed (exactly one required)                     FAIL
+  B3  outside: not judged without the line                                       FAIL
+  B4  driver: not judged without the line                                        FAIL
+  B5  tax: not judged without the line                                           FAIL
+  -> FAIL, as expected
+syn-no-line (gpu), expected FAIL by B2:
+  B1  run: exit 0, 1048576 of 1048576 right, PASS                                PASS
+  B2  line: 0 D8 lines, 0 well-formed (exactly one required)                     FAIL
+  B3  outside: not judged without the line                                       FAIL
+  B4  driver: not judged without the line                                        FAIL
+  B5  tax: not judged without the line                                           FAIL
+  -> FAIL, as expected
+syn-exit-1 (gpu), expected FAIL by B1:
+  B1  run: exit 1, checked 1048576 of 1048576 elements: 0 wrong, 0 never written FAIL
+  B2  line: resident 2000/3000/15300 KiB, own 12289 KiB, open 1000, beyond own 1011 KiB (sums agree) PASS
+  B3  outside: pid 4242 VmRSS 15310 KiB during the hold, line says 15300 KiB (tolerance 4096) PASS
+  B4  driver: pid 4242 holds 40 MiB by the driver's report (session asked for 12320 KiB) PASS
+  B5  tax: 29682 KiB = resident 1011 + driver beyond own buffers 28671; bar <= 262144 KiB PASS
+  -> FAIL, as expected
+syn-no-device (gpu), expected NOT_RUN:
+  run exited 2 without a device (NOT_RUN): 
+  -> NOT_RUN, as expected
+GPU verdict self-test on a synthetic recorded run (not a measurement):
+  good run with both controls caught -> exit 0, as expected
+  ballast control not seen (a blind measurement) -> exit 1, as expected
+D8 DRY RUN: PASS (host simulator, device-hidden refusal, hold bound, default-build ballast refusal, judge and verdict self-tests; the chip row stays NOT_RUN until gpu runs in a window)
+SELFTEST PASS: planted 17 (one in a deleted file's history, one in a commit message, one in a NUL-byte blob, one gzipped), found 17; binary listed
+ERROR SELFTEST PASS: scan errors refuse; clean input and delimiter-path detection preserved

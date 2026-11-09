@@ -1,0 +1,13 @@
+# diff of build/graph-residue-mutants/d8-expected.log against d8-beyond-sign/run.log: 1512 changed lines; first 12 shown
+18,22c18,22
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 1 KiB in 1; open cost +0 KiB, beyond own buffers -1 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 2 KiB in 2; open cost +0 KiB, beyond own buffers -1 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 3 KiB in 3; open cost +0 KiB, beyond own buffers -1 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 12288 KiB; session driver allocations 24577 KiB in 4; open cost +0 KiB, beyond own buffers -12288 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 12289 KiB; session driver allocations 24578 KiB in 5; open cost +0 KiB, beyond own buffers -12289 KiB
+---
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 1 KiB in 1; open cost +0 KiB, beyond own buffers +1 KiB
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 2 KiB in 2; open cost +0 KiB, beyond own buffers +1 KiB
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 3 KiB in 3; open cost +0 KiB, beyond own buffers +1 KiB
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 12288 KiB; session driver allocations 24577 KiB in 4; open cost +0 KiB, beyond own buffers +12288 KiB
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 12289 KiB; session driver allocations 24578 KiB in 5; open cost +0 KiB, beyond own buffers +12289 KiB

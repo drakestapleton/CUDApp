@@ -16,8 +16,9 @@ test-graph-residue: $(OUT_DIR)/graph-residue $(OUT_DIR)/graph-residue-oracle $(O
 	$(OUT_DIR)/graph-residue-red > $(OUT_DIR)/graph-residue-red.log
 	@if cmp -s $(OUT_DIR)/graph-residue.log $(OUT_DIR)/graph-residue-red.log; then echo 'FAIL differential red check'; exit 1; fi
 	@echo 'PASS graph residue differential and red check'
-test-graph-residue-mutants: $(OUT_DIR)/graph-residue
+test-graph-residue-mutants: $(OUT_DIR)/graph-residue $(OUT_DIR)/d8_mutants
 	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" CC="$(CC)" GRAPH_RESIDUE_FLAGS="$(GRAPH_RESIDUE_FLAGS)" OUT_DIR="$(OUT_DIR)" python3 om/graph/residue-mutants.py
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" $(OUT_DIR)/d8_mutants $(OUT_DIR) $(CC) $(GRAPH_RESIDUE_FLAGS)
 $(OUT_DIR)/hello_gpu-oracle: examples/hello_gpu/hello_gpu.c src/cudapp_native.h $(OUT_DIR)/libomega_gpu.a
 	$(CC) $(GRAPH_RESIDUE_FLAGS) -O0 --coverage -DCUDAPP_MIGRATION_PENDING_HELLO_HOST=1 -DCUDAPP_MIGRATION_PENDING_HELLO_CONTROL=1 $< $(OUT_DIR)/libomega_gpu.a -lpthread -lm -o $@
 .PHONY: test-graph-residue-coverage

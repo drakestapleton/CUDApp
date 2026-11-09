@@ -130,7 +130,7 @@ The workarounds can be worse than the error. In Triton's sm_121 issue: "Those \"
 
 **Why people stay.** It is a fixed cost per process, small next to a large model on a large GPU.
 
-**CUDA++'s answer (row D8).** A CUDA++ process maps no CUDA library at all: on 2026-10-21 Aien's live Qwen3.6-35B-A3B server (mixture-of-experts, about 3B parameters active per token) had only the C library, the maths library, `libgcc_s` and the loader mapped (Omega `evidence/WHAT-OMEGA-IS-20261021/live-serve-no-cuda.txt`). The row is done when the memory a CUDA++ process holds beyond its own buffers is measured and printed. Status: PLANNED (needs a chip window; section 3, D8).
+**CUDA++'s answer (row D8).** A CUDA++ process maps no CUDA library at all: on 2026-10-21 Aien's live Qwen3.6-35B-A3B server (mixture-of-experts, about 3B parameters active per token) had only the C library, the maths library, `libgcc_s` and the loader mapped (Omega `evidence/WHAT-OMEGA-IS-20261021/live-serve-no-cuda.txt`). The row is done when the memory a CUDA++ process holds beyond its own buffers is measured and printed. `hello_gpu` now prints that line, and `tests/d8_process_tax.om` holds a bar fixed before any chip run: at most 256 MiB, with two negative controls (`docs/issues/D8-process-tax.md`). The dry run passes on the host. Status: PLANNED (chip NOT_RUN: needs a chip window, `make d8-process-tax`; section 3, D8).
 
 ### 2.8 Lock-in by licence (rank 8)
 
@@ -199,7 +199,7 @@ Each row has a done-when anyone can run. A row is DONE only with a receipt on a 
 | D5 | Builds in seconds, ships small | Fresh-checkout build time and library size printed by a receipt on the Spark | DONE (`evidence/dx/pain-points/d5-build-from-empty.txt`) |
 | D6 | A new chip works on day one or is refused with a sentence | `make doctor` names any unqualified NVIDIA GPU with what is missing and the porting steps; never a bare "no kernel image"; host test with an unknown PCI id | DONE (`evidence/dx/d2-doctor/fake-machines.txt`) |
 | D7 | Same inputs, same bits, at no cost | Two runs of the same job give the same output hash, on the simulator and on the chip | DONE: simulator (hello-gpu); GB10 for hello-gpu, bf16 GEMV, rmsnorm, decode attention, 10 runs each (`evidence/d7-same-bits-chip/2026-10-27/`); other kernels not hashed |
-| D8 | No per-process CUDA tax | The memory a CUDA++ process holds beyond its own buffers is measured and printed | PLANNED (needs a chip window) |
+| D8 | No per-process CUDA tax | The memory a CUDA++ process holds beyond its own buffers is measured and printed | PLANNED: line and command exist (`make d8-process-tax-dry-run` passes on the host); chip NOT_RUN (needs a chip window) |
 | D9 | No licence that stops you | At 2026-10-22, MIT and reverse-engineering/port rights; current candidate is Apache-2.0 WITH LLVM-exception with the exact MIT snapshot preserved (`docs/LICENSING_TRANSITION.md`) | Historical receipt `evidence/dx/pain-points/licence.txt` |
 | D10 | No compiling at run time | hello-gpu prints its kernel build time and the hash of its machine code, identical across runs; no cache directory | DONE for hello-gpu |
 | D11 | Open libraries with an easy default path | Any-shape GEMM, reductions, scans, sorts in source with host references | PLANNED (L386, Omega bar C3) |

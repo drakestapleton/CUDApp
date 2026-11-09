@@ -1,0 +1,13 @@
+# diff of build/graph-residue-mutants/d8-expected.log against d8-driver-kib/run.log: 2160 changed lines; first 12 shown
+17,18c17,18
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 0 KiB; session driver allocations 1 KiB in 0; open cost +0 KiB, beyond own buffers +0 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 1 KiB in 1; open cost +0 KiB, beyond own buffers -1 KiB
+---
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 0 KiB; session driver allocations 0 KiB in 0; open cost +0 KiB, beyond own buffers +0 KiB
+> overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 0 KiB in 1; open cost +0 KiB, beyond own buffers -1 KiB
+20,24c20,24
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 1 KiB; session driver allocations 3 KiB in 3; open cost +0 KiB, beyond own buffers -1 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 12288 KiB; session driver allocations 24577 KiB in 4; open cost +0 KiB, beyond own buffers -12288 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1 KiB with buffers; own buffers 12289 KiB; session driver allocations 24578 KiB in 5; open cost +0 KiB, beyond own buffers -12289 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1876 KiB with buffers; own buffers 0 KiB; session driver allocations 1 KiB in 0; open cost +0 KiB, beyond own buffers +1875 KiB
+< overhead (D8): resident 1 KiB before open, 1 KiB after open, 1876 KiB with buffers; own buffers 1 KiB; session driver allocations 1 KiB in 1; open cost +0 KiB, beyond own buffers +1874 KiB

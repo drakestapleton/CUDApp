@@ -1,0 +1,23 @@
+omc /home/drakestapleton/work/finish/d8tools/omega-mv/seed/out/omc
+2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f  /home/drakestapleton/work/finish/d8tools/omega-mv/seed/out/omc
+e5b32567a7aff3ce594e3254a622a846a6cd190b
+29d9cff72676bcef41a067bdcf4d8b0711042bcd
+94ead76b3e63aeb0175d881eed428d7478b92c8491efed16f90ae3930704366b  build/d8_process_tax
+c200b3ea70c24828d631cac35c8ad475df550641475cb39ae957f76b6163b14c  build/d8_mutants
+d4f4b199c63b4d41018db26757f08650f0b0f7dd265b88e3843d9d625c531d45  build/d8_process_tax.om
+bb011cd551f54882f7e241e293b0a665ad6353219a601b5406720b4deb6f678d  build/d8_mutants.om
+c3573b8f9424fe72801056d19274e4b65d91ef1d055fca8d380072bb5a7f5dbd  tests/d8_lib.om
+e3b5eb1f396e3a4e11af8cd591c743fc52e9ec5bea2630cbabbb27f8b785aba7  tests/d8_process_tax.om
+2c928c49f5b285e601d193d8977b452cdf0a5c6d74358e662e5e670a59fe6897  tests/d8_mutants.om
+bubblewrap 0.9.0
+env 0.8.0
+taskset from util-linux 2.39.3
+nice (GNU coreutils) 9.4
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+GNU Make 4.3
+git version 2.43.0
+sha256sum 0.8.0
+Linux 7.0.0-1019-nvidia aarch64
+nvidia-smi (ORACLE, chip run only; not run here): NVIDIA-SMI version  : 580.173.02
+spark-window: /home/drakestapleton/.local/bin/spark-window sha256 05723bbd639548989329b769030708b7fc50ed3a99e517e5d3bbeedc41c77878
+env: /usr/bin/env

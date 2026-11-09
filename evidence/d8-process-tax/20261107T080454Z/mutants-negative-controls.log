@@ -1,0 +1,7 @@
+# negative control 1: identity mutant (TW1 = TO1) must survive and fail the gate
+FAIL mutant d8-own-round survived
+exit 1
+# negative control 2: absent mutation site must fail the gate
+mutant d8-own-round killed rc=0
+FAIL d8-beyond-sign: mutation site count 0
+exit 1

@@ -1,4 +1,4 @@
-# D13: our own disassembler, in plain text a person can read
+# D13: my own disassembler, in plain text a person can read
 
 Labels: D13
 

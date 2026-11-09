@@ -37,8 +37,8 @@ produced this file):
 |---|---|---|
 | A. Public documentation | PTX ISA, CUDA Binary Utilities (including its SASS instruction lists), CUDA Driver API reference, NVIDIA `open-gpu-doc` | Read and cite. |
 | A. Open source under a permissive licence | NVIDIA open kernel module headers (MIT), Mesa NAK/NVK (MIT), LLVM `BinaryFormat/ELF.h` (Apache-2.0 WITH LLVM-exception), CUTLASS (BSD-3-Clause) | Cite the file and commit for each fact. Code is copied only with its notice, and only into `third_party/`. |
-| A. The chip | Running our own bytes on our own NVIDIA GPU | Any fact; the receipt is the evidence. |
-| B. NVIDIA SDK tools, oracle only | `nvcc`, `ptxas`, `cuobjdump`, `nvdisasm` installed on our own machine under the CUDA EULA | Only on inputs we wrote: our own probe kernels (CUDA C or PTX we authored) and bytes our own encoder emitted. Only for NVIDIA-GPU targets. Record the tool version. The tools are never shipped, wrapped or run by CUDA++ itself. |
+| A. The chip | Running my own bytes on my own NVIDIA GPU | Any fact; the receipt is the evidence. |
+| B. NVIDIA SDK tools, oracle only | `nvcc`, `ptxas`, `cuobjdump`, `nvdisasm` installed on my own machine under the CUDA EULA | Only on inputs I wrote: my own probe kernels (CUDA C or PTX I authored) and bytes my own encoder emitted. Only for NVIDIA-GPU targets. Record the tool version. The tools are never shipped, wrapped or run by CUDA++ itself. |
 
 ## 3. Not allowed
 
@@ -60,7 +60,7 @@ produced this file):
 In the source comment next to the fact, or in the test that pins it:
 
 - the class (A or B) and the exact source: document and section, file and commit, or tool and version;
-- for class B, the probe input (path of the `.cu`/`.ptx` we wrote) and the command line;
+- for class B, the probe input (path of the `.cu`/`.ptx` I wrote) and the command line;
 - the chip receipt that confirmed it, or NOT_RUN;
 - for golden words: whether they were written independently (from class A plus the chip) or copied from
   class B output. Copied words are a regression pin, not independent evidence
@@ -78,7 +78,7 @@ is listed in section 6.
 | Instruction latencies, QMD, dispatch order | `src/omega_gpu_elementwise_api.c`, `src/omega_gpu_cmdlist.c` | A | Mesa `sm120_instr_latencies.rs`, `qmd.rs`, `nvk_cmd_dispatch.c` (MIT). |
 | Tensor-core arithmetic model | `tests/gpu_tc_probe_test.c`, `tests/bw_hmma_model.h` | A (chip) | Fitted on chip outputs. |
 | cubin container writer | `src/omega_cubin.c`, `src/omega_cubin.h` | B | Layout read from a `ptxas 13.0.88 -arch=sm_121` reference output with `readelf`/`cuobjdump -elf` (the source does not name the probe input; the next change to the file records it). Header constants are also public in LLVM `ELF.h` (class A). No bytes copied. |
-| Decode cross-checks | `tests/gpu_reconv_test.c`, `tests/device-trace/run-emitter-checks.sh`, `tools/artifact_smoke.sh` | B | `nvdisasm`/`cuobjdump` read our own bytes. `gpu_reconv_test.c` and `artifact_smoke.sh` skip unavailable tools; `run-emitter-checks.sh` requires `nvdisasm` on `PATH`. |
+| Decode cross-checks | `tests/gpu_reconv_test.c`, `tests/device-trace/run-emitter-checks.sh`, `tools/artifact_smoke.sh` | B | `nvdisasm`/`cuobjdump` read my own bytes. `gpu_reconv_test.c` and `artifact_smoke.sh` skip unavailable tools; `run-emitter-checks.sh` requires `nvdisasm` on `PATH`. |
 
 No source comment or record in this repository says a fact was obtained by disassembling an NVIDIA
 library, driver or firmware. A fact found to have such an origin is removed and re-derived from class A
@@ -91,13 +91,13 @@ trace emitter's own words, as a regression pin. #93 (2026-10-27) removed it:
 `tests/device-trace/run-emitter-checks.sh` now keeps the listing in a temporary directory and checks
 hand-written expectations (opcode counts and the address-path instructions).
 
-Stored now: each is `nvdisasm` V13.0.85 `--binary SM121` reading words our own encoder emitted (class B on
-our own bytes); the input bytes sit beside the listing; no NVIDIA-generated code is involved. They are
+Stored now: each is `nvdisasm` V13.0.85 `--binary SM121` reading words my own encoder emitted (class B on
+my own bytes); the input bytes sit beside the listing; no NVIDIA-generated code is involved. They are
 kept as review evidence that the independent decoder agrees with the encoder. No test reads them: the
 gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ldg`,
 `make test-om-encoder-atomg`, `make test-om-encoder-guard`).
 
-| Listing | Input (our bytes) | Why kept |
+| Listing | Input (my bytes) | Why kept |
 |---|---|---|
 | `evidence/ldg-offset-20261107/nvdisasm.txt` | `ldg_words.bin`: four LDG.E rows of #373's encoder fix | Shows the offsets 0, +0x40, -0x100000 and +0x7fffff decode as encoded. |
 | `evidence/atomg-min-20261107/nvdisasm.txt` | `min_words.bin`: the three ATOMG.E.MIN.64.STRONG.SYS rows of `om/encoder/atomg_min_test.om` | Shows op 64's words decode as the intended instruction and registers. |
@@ -109,9 +109,9 @@ No listing of nvcc-generated code and no NVIDIA binary is stored.
 
 ## 7. Open questions for a lawyer
 
-1. Is compiling our own probe kernels with nvcc and reading the result with cuobjdump, to learn the
+1. Is compiling my own probe kernels with nvcc and reading the result with cuobjdump, to learn the
    encoding of NVIDIA instructions for an NVIDIA-GPU toolchain, within the CUDA EULA? §1.2(8) is limited to
    translation to non-NVIDIA platforms; does any other clause reach it?
 2. Is a toolchain that replaces nvcc on NVIDIA GPUs an "application" developed "only for use in systems
    with NVIDIA GPUs" (§2.1)?
-3. Can tool listings of our own code (section 6) be published, given §1.1.2(4)?
+3. Can tool listings of my own code (section 6) be published, given §1.1.2(4)?

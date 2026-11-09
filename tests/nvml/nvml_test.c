@@ -1,14 +1,116 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* Host test of the CUDA++ NVML subset (compat/nvml) over the Omega RM fake (tests/nvml/rmfake.om).
- * Expected return codes follow the documented returns of each entry point in nvml.h (CUDA 13.0).
- * usage: nvml_test ERRSTR_ORACLE.tsv */
+/* Host test of the CUDA++ NVML subset (compat/nvml).
+ * Default: Omega RM fake (tests/nvml/rmfake.om). usage: nvml_test ERRSTR_ORACLE.tsv
+ * Live (no fake, no libnvidia-ml): compile with -DCUDAPP_NVML_LIVE and link
+ * compat/nvml/cudapp_nvml.c, src/cudapp_om_nvml_step.c, src/cudapp_om_nvml_errstr.c
+ * and the #281 transport src/cudapp_om_nvrm_transport.c. usage: nvml-live --live
+ * Chip run belongs in an exclusive spark-window. This file does not open the GPU by itself
+ * except through nvmlInit_v2 when --live is passed. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "nvml.h"
+#ifndef CUDAPP_NVML_LIVE
 #include "transport.h"
+#endif
 
+#ifdef CUDAPP_NVML_LIVE
+
+/* Read-only probe. One line per field so the nvidia-smi oracle can join on the key.
+ * Negative control: handle index == device count must be NVML_ERROR_INVALID_ARGUMENT (2).
+ * Exit 0 only when init, every query, the negative control and shutdown all succeed.
+ * Exit 3 when init does not succeed (driver not available): not a chip pass. */
+static int live_fail(const char *what, nvmlReturn_t got, nvmlReturn_t want) {
+    fprintf(stderr, "FAIL %s: rc %d, want %d\n", what, (int)got, (int)want);
+    nvmlShutdown();
+    return 1;
+}
+
+static int live_probe(void) {
+    unsigned count = 0;
+    nvmlReturn_t rc = nvmlInit_v2();
+    if (rc != NVML_SUCCESS) {
+        printf("live init rc=%d\n", (int)rc);
+        fprintf(stderr, "NOT_RUN: nvmlInit_v2 rc %d (no chip pass)\n", (int)rc);
+        return 3;
+    }
+    rc = nvmlDeviceGetCount_v2(&count);
+    if (rc != NVML_SUCCESS) return live_fail("count", rc, NVML_SUCCESS);
+    printf("live count=%u\n", count);
+
+    for (unsigned i = 0; i < count; i++) {
+        nvmlDevice_t dev = NULL;
+        char name[NVML_DEVICE_NAME_V2_BUFFER_SIZE];
+        char uuid[NVML_DEVICE_UUID_V2_BUFFER_SIZE];
+        unsigned temp = 0;
+        unsigned procs_n = 0;
+        nvmlMemory_t mem;
+        nvmlProcessInfo_t infos[64];
+        char what[64];
+
+        snprintf(what, sizeof what, "handle %u", i);
+        rc = nvmlDeviceGetHandleByIndex_v2(i, &dev);
+        if (rc != NVML_SUCCESS) return live_fail(what, rc, NVML_SUCCESS);
+        snprintf(what, sizeof what, "name %u", i);
+        rc = nvmlDeviceGetName(dev, name, sizeof name);
+        if (rc != NVML_SUCCESS) return live_fail(what, rc, NVML_SUCCESS);
+        snprintf(what, sizeof what, "uuid %u", i);
+        rc = nvmlDeviceGetUUID(dev, uuid, sizeof uuid);
+        if (rc != NVML_SUCCESS) return live_fail(what, rc, NVML_SUCCESS);
+        snprintf(what, sizeof what, "temperature %u", i);
+        rc = nvmlDeviceGetTemperature(dev, NVML_TEMPERATURE_GPU, &temp);
+        if (rc != NVML_SUCCESS) return live_fail(what, rc, NVML_SUCCESS);
+        snprintf(what, sizeof what, "memory %u", i);
+        rc = nvmlDeviceGetMemoryInfo(dev, &mem);
+        if (rc != NVML_SUCCESS) return live_fail(what, rc, NVML_SUCCESS);
+        procs_n = 64;
+        snprintf(what, sizeof what, "procs %u", i);
+        rc = nvmlDeviceGetComputeRunningProcesses_v3(dev, &procs_n, infos);
+        if (rc != NVML_SUCCESS) return live_fail(what, rc, NVML_SUCCESS);
+
+        printf("live gpu%u name=%s\n", i, name);
+        printf("live gpu%u uuid=%s\n", i, uuid);
+        printf("live gpu%u temperature_c=%u\n", i, temp);
+        printf("live gpu%u memory_total_bytes=%llu\n", i, (unsigned long long)mem.total);
+        printf("live gpu%u memory_used_bytes=%llu\n", i, (unsigned long long)mem.used);
+        printf("live gpu%u procs=%u\n", i, procs_n);
+        for (unsigned p = 0; p < procs_n; p++) {
+            printf("proc pid=%u used_bytes=%llu\n", infos[p].pid,
+                   (unsigned long long)infos[p].usedGpuMemory);
+        }
+    }
+
+    /* Negative control: one past the last real index. A passing probe that also accepts
+     * this index has not established the bound. */
+    {
+        nvmlDevice_t bad = NULL;
+        rc = nvmlDeviceGetHandleByIndex_v2(count, &bad);
+        printf("live negative index=%u rc=%d want=%d\n", count, (int)rc,
+               (int)NVML_ERROR_INVALID_ARGUMENT);
+        if (rc != NVML_ERROR_INVALID_ARGUMENT) {
+            fprintf(stderr, "FAIL negative control: index %u rc %d, want %d\n", count, (int)rc,
+                    (int)NVML_ERROR_INVALID_ARGUMENT);
+            nvmlShutdown();
+            return 1;
+        }
+    }
+    rc = nvmlShutdown();
+    if (rc != NVML_SUCCESS) return live_fail("shutdown", rc, NVML_SUCCESS);
+    printf("live shutdown rc=0\n");
+    printf("CUDAPP-NVML LIVE QUERIES DONE\n");
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2 || strcmp(argv[1], "--live") != 0) {
+        fprintf(stderr, "usage: nvml-live --live\n");
+        return 2;
+    }
+    return live_probe();
+}
+
+#else
 static unsigned checks, fails;
 
 #define CHECK(cond, ...)                                                                           \
@@ -342,3 +444,4 @@ int main(int argc, char **argv) {
     printf("CUDAPP-NVML HOST PASS (%u checks)\n", checks);
     return 0;
 }
+#endif

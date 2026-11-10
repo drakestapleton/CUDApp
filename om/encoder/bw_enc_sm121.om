@@ -3,7 +3,7 @@ note It turns a solved BlackwellIR program into machine code: four 32-bit words 
 note little-endian, padded with NOPs to a multiple of 8 and at least 32 instructions.
 note It replaces encode_single_insn and omega_bw_encode_program of src/omega_blackwell_codegen.c,
 note which stays compiled only behind CUDAPP_MIGRATION_PENDING_C_ENCODER as the differential oracle
-note (and in the freestanding build, which has no native binding yet).
+note or the explicit CUDAPP_MIGRATION_PENDING_C_NO_POSIX oracle switch; both defaults use Omega.
 note
 note Input (bw_om_encode in src/omega_blackwell_codegen.c packs it; 8 ulong per instruction, at most 1024 instructions):
 note   0 op (the BlackwellIROpcode number)   1 dst_vreg   2 src1_vreg   3 src2_vreg   4 src3_vreg
@@ -14,7 +14,7 @@ note     or dst_subreg shl 16 or src1_subreg shl 24 or src2_subreg shl 32 or src
 note phys: vreg_to_phys 0..255 then uvreg_to_phys at 256..287 (C int, two's complement).
 note pad 1: omega_bw_encode_program (pad to the multiple of 8, at least 32); pad 0: exactly n instructions.
 note Result: the bytes written, or 0 when an instruction is refused (unknown op, an offset outside its
-note field, a BSSY delta below 2, a barrier register above 15) or n is above 1024.
+note field, a BSSY delta below 2, a barrier register above 15, a P0 guard on uniform LDCU) or n is above 1024.
 note Every constant is the decimal form of the C encoder's hex word (conversions by Wolfram,
 note evidence/CUDAPP-OM-ENCODER/wolfram-constants.txt).
 
@@ -612,9 +612,8 @@ end
 ret enc_f o w
 end
 
-note Guard ordinary instructions only when their encoded field is the documented always predicate.
-note BRA, BSSY, BSYNC and STG.STRONG.SYS encode their guard in their own cases.
-note WolframLanguageEvaluator: FromDigits["ffff0fff",16] -> 4294905855.
+note DRA-483 C1b: all guards name P0 except the uniform LDCU datapath, which is refused.
+note See PROVENANCE.md and guard_pred_test.om for the independent instruction oracle.
 fn enc1 o view ulong 16 w edit ulong 4 to ulong
 if ne encraw o w 0
 ret 1
@@ -623,14 +622,11 @@ op = get o 0
 if eq get o 9 0
 ret 0
 end
-if or or eq op 46 eq op 54 or eq op 55 eq op 22
-ret 0
-end
-a = get w 0
-if ne and shr a 12 15 7
+if isuld op
 ret 1
 end
-put w 0 or and a 4294905855 shl pred o 12
+x = get w 0
+put w 0 or sub x and x 61440 shl pred o 12
 ret 0
 end
 

@@ -1063,9 +1063,12 @@ static int bw_c_encode_insn(const BlackwellIRInsn *insn, const OmegaRegAlloc *ra
         default:
             return -1;
     }
-    if (insn->predicate_p0 && insn->op != BW_IR_BRA && insn->op != BW_IR_BSSY && insn->op != BW_IR_BSYNC &&
-        insn->op != BW_IR_STG_STRONG_SYS) {
-        if (((w[0] >> 12) & 0xfu) != 0x7u) return -1;
+    /* DRA-483 C1b oracle correction: bits 12..15 hold the guard on every form.
+     * LDCU and LDCU.64 use the uniform predicate namespace, so P0 is refused.
+     * This matches om/encoder/bw_enc_sm121.om and the reviewed F1 proposal. */
+    if ((insn->op == BW_IR_LDCU || insn->op == BW_IR_LDCU64) && insn->predicate_p0)
+        return -1;
+    if (insn->predicate_p0) {
         w[0] = (w[0] & ~0xf000u) | ((insn->predicate_not ? 0x8u : 0x0u) << 12);
     }
     return 0;

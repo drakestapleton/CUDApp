@@ -101,3 +101,52 @@ test-om-encoder-mutants: build/test_codegen_freestanding
 	if [ $$g = 0 ] && [ $$c = 0 ]; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): golden words $$( [ $$g = 1 ] && echo FAIL || echo pass ), dump vs C $$( [ $$c = 1 ] && echo DIFFERS || echo same )"; \
 	done
+OM_ENC_GUARD = $(OM_ENC_DIR)/guard-pred
+# DRA-483 (C1b): om/encoder/guard_pred_test.om, composed after the encoder and compiled by the pinned omc. Every op
+# 0..64 encoded @P0 and @!P0 must carry guard 0 / 8 in w0 bits 12..15 and equal the unpredicated words otherwise;
+# LDCU / LDCU.64 (uniform datapath, guard bits name UP0..UPT) must refuse both forms; the omega-mv #1044 bool and
+# trap rows through the program entry must get guards 7, 0, 8, 8, 8. ORACLE NVIDIA nvdisasm 13.0.85 (offline,
+# read-only, never shipped) must print @P0 / @!P0 on the 126 P-guarded words, @UP0 / @!UP0 on the 4 LDCU probe
+# words and the five #1044 guards. Then om/encoder/guard_spec_test.om: the spec encoder sp_enc (bc_encode's path)
+# must equal enc1 on every op 0..59 unpredicated, @P0 and @!P0.
+# Red checks: each triple is the file edited, the failure count the gate must print (exit 1), then one edit.
+# enc 122: guard left as each op encodes it, including the older EXIT raw form. enc 130: the guard
+# forced to 7 (always) again. enc 66: @!P0 encoded as @P0. enc 4: LDCU / LDCU.64 accept a P guard. spec 106: sp_enc
+# without the guard. spec 4: sp_enc accepts a P guard on LDCU / LDCU.64. Oracle red: no @!UP0 lines exits 4.
+OM_ENC_GUARD_RED = enc 122 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 x/' \
+	enc 130 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 or sub x and x 61440 shl ulong 7 12/' \
+	enc 66 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 or sub x and x 61440 shl and pred o 7 12/' \
+	enc 4 's/^if isuld op$$/if eq op 99/' \
+	spec 106 's/^put w 0 or sub gx and gx 61440 shl sp_val R_PRED 0 o 12$$/put w 0 gx/' \
+	spec 4 's/^if or eq get o 0 6 eq get o 0 7$$/if eq get o 0 99/'
+.PHONY: test-om-encoder-guard
+test-om-encoder-guard: om/encoder/bw_enc_sm121.om om/encoder/bw_spec_sm121.om om/encoder/guard_pred_test.om \
+		om/encoder/guard_spec_test.om
+	@[ -x "$(OMEGA_OMC)" ] && [ "$$(sha256sum < $(OMEGA_OMC) | cut -c1-64)" = 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f ] || { echo "NOT_RUN: set OMEGA_OMC to the pinned seeded compiler"; exit 3; }
+	@case "$$($(NVDISASM) --version 2>/dev/null)" in *V13.0.85*) ;; *) echo "NOT_RUN: nvdisasm version must be 13.0.85"; exit 3;; esac
+	@mkdir -p $(OM_ENC_DIR)
+	cat om/encoder/bw_enc_sm121.om om/encoder/guard_pred_test.om > $(OM_ENC_GUARD).om
+	$(OMEGA_OMC) < $(OM_ENC_GUARD).om > $(OM_ENC_GUARD)
+	chmod +x $(OM_ENC_GUARD)
+	$(OM_ENC_GUARD)
+	$(OM_ENC_GUARD) bin > $(OM_ENC_GUARD).bin
+	$(NVDISASM) -b SM121 -hex $(OM_ENC_GUARD).bin > $(OM_ENC_GUARD).nv
+	$(OM_ENC_GUARD) check oracle < $(OM_ENC_GUARD).nv
+	cat om/encoder/bw_enc_sm121.om om/encoder/bw_spec_sm121.om om/encoder/guard_spec_test.om > $(OM_ENC_GUARD)-spec.om
+	$(OMEGA_OMC) < $(OM_ENC_GUARD)-spec.om > $(OM_ENC_GUARD)-spec
+	chmod +x $(OM_ENC_GUARD)-spec
+	$(OM_ENC_GUARD)-spec
+	@set -- $(OM_ENC_GUARD_RED); n=0; while [ $$# -gt 0 ]; do f=$$1; want=$$2; m=$$3; shift 3; n=$$((n+1)); d=$(OM_ENC_GUARD)-red$$n; \
+	if [ $$f = enc ]; then src=om/encoder/bw_enc_sm121.om; else src=om/encoder/bw_spec_sm121.om; fi; \
+	sed "$$m" $$src > $$d.om; \
+	if cmp -s $$d.om $$src; then echo "RED CHECK $$n BROKEN: '$$m' changed nothing"; exit 1; fi; \
+	if [ $$f = enc ]; then cat $$d.om om/encoder/guard_pred_test.om; \
+	else cat om/encoder/bw_enc_sm121.om $$d.om om/encoder/guard_spec_test.om; fi | $(OMEGA_OMC) > $$d || exit 1; \
+	chmod +x $$d; rc=0; $$d > $$d.txt || rc=$$?; got=$$(tail -n 1 $$d.txt); \
+	if [ $$f = enc ]; then exp="guard predicate failures: $$want"; else exp="spec guard mismatches: $$want"; fi; \
+	if [ $$rc != 1 ] || [ "$$got" != "$$exp" ]; then echo "RED CHECK $$n BROKEN: '$$m' exited $$rc, '$$got', not 1 with '$$exp'"; exit 1; fi; \
+	echo "red check $$n ($$f): '$$m' exits 1 with $$want failures, as it must"; done
+	@rc=0; grep -v -- '@!UP0' $(OM_ENC_GUARD).nv | $(OM_ENC_GUARD) check oracle > /dev/null || rc=$$?; \
+	if [ $$rc != 4 ]; then echo "RED CHECK BROKEN: oracle text without @!UP0 exited $$rc, not 4"; exit 1; fi; \
+	echo "red check: oracle text without the @!UP0 lines exits 4, as it must"
+	@echo "PASS guard predicates: 63 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 135 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN"

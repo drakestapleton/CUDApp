@@ -93,6 +93,10 @@ hand-written expectations (opcode counts and the address-path instructions), so 
 prints is committed.
 
 No listing of nvcc-generated code and no NVIDIA binary is stored.
+The C1b guard gate (`make test-om-encoder-guard`) uses nvdisasm 13.0.85
+`-b SM121 -hex` only on bytes emitted by our seeded encoder and its own
+uniform-predicate probe words. Listings stay in ignored `build/om-encoder/`.
+No new instruction form is introduced by this guard correction.
 
 ## 7. Open questions for a lawyer
 

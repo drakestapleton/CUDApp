@@ -15,7 +15,7 @@ extern "C" {
 #define OMEGA_REENTRY 33u
 #define OMEGA_BAD_RT 34u
 #define OMEGA_NO_STACK 35u
-#define OMEGA2_IDENT_bw_enc_sm121 "omega-ident 1 unit=bw_enc_sm121 abi=2 profile=OM-2 src=cfbea40422a39e34bfa87fdbf508eee0851c6057e047cb88426d3318fc477f36 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+#define OMEGA2_IDENT_bw_enc_sm121 "omega-ident 1 unit=bw_enc_sm121 abi=2 profile=OM-2 src=3dc06b1c694f5d202a36585a620f61f1a7b3d6aaafda9dcad3cc942501006f02 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
 const char *omega2_ident_bw_enc_sm121(void);
 /* fn bw_enc_sm121 ins view ulong 8192 phys view ulong 288 n ulong pad ulong code edit uchar 16384 to ulong */
 uint32_t omega2_bw_enc_sm121(uint64_t *result, const uint64_t *o_ins, uint64_t o_ins_len, const uint64_t *o_phys, uint64_t o_phys_len, uint64_t o_n, uint64_t o_pad, uint8_t *o_code, uint64_t o_code_len);

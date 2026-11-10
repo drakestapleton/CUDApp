@@ -492,7 +492,10 @@ static void trace_handles(int fresh) {
 static char g_meminfo[64];
 static void trace_reserve(void) {
     static const char *ENVS[] = {NULL, "", "0", "1", "512", "4096", "17592186044415", "17592186044416", "17592186044417",
-                                 "18446744073709551615", "12x", "-1"};
+                                 "18446744073709551615", "12x", "-1", "-2", "-0", "+0", " +512", "\t+1",
+                                 "18446744073709551616", "-18446744073709551616", "1 ", " ", "+", "++1", "01",
+                                 "000000000000000000000000000000000000000000000000000000000000000000001",
+                                 "999999999999999999999999999999999999999999999999999999999999999999999"};
     const char *e = ENVS[below(sizeof ENVS / sizeof ENVS[0])];
     char envb[32];
     if (below(3) == 0) { snprintf(envb, sizeof envb, "%" PRIu64, pick()); e = envb; }
@@ -503,7 +506,17 @@ static void trace_reserve(void) {
     if (!f && fd >= 0) close(fd);
     if (!f) { fprintf(stderr, "cannot write %s\n", g_meminfo); exit(2); }
     fprintf(f, "MemTotal: 131072000 kB\n");
-    if (has_line) fprintf(f, "MemAvailable: %" PRIu64 " kB\n", avail);
+    if (has_line) {
+        static const char *FMTS[] = {"MemAvailable: %" PRIu64 " kB\n", "MemAvailable:\t+%" PRIu64 "\n",
+                                     "MemAvailable: -%" PRIu64 " kB\n", "MemAvailable: %" PRIu64 "xyz\n",
+                                     "MemFree: %" PRIu64 " kB\n", " MemAvailable: %" PRIu64 " kB\n",
+                                     "memAvailable: %" PRIu64 " kB\n", "MemAvailable: + kB %" PRIu64 "\n",
+                                     "MemAvailable: 18446744073709551616 kB %" PRIu64 "\n",
+                                     "MemAvailable: -18446744073709551616 kB %" PRIu64 "\n",
+                                     "MemAvailable: 0 kB %" PRIu64 "\n", "MemAvailable: kB %" PRIu64 "\n"};
+        const char *fmt = FMTS[below(sizeof FMTS / sizeof FMTS[0])];
+        fprintf(f, fmt, avail);
+    }
     fclose(f);
     if (e) setenv("CUDAPP_MEM_RESERVE_MIB", e, 1); else unsetenv("CUDAPP_MEM_RESERVE_MIB");
     uint64_t bytes = below(3) ? below(1ull << 37) : pick();

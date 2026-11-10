@@ -1,16 +1,23 @@
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 #ifndef OMEGA_GPU_MEM_CACHED_H
 #define OMEGA_GPU_MEM_CACHED_H
-/* GPU-cached device-visible memory for read-only weights (OWN-30B L2 kernel-time cut).
+/* GPU-cached device-visible DATA memory for weights or chip-only intermediates.
+ * No CPU_READ or HOST_POLLED right is granted: nvos.h NVOS32_ATTR2_GPU_CACHEABLE
+ * says system memory is not coherent with direct CPU mappings. Session command,
+ * constant-bank, QMD and completion buffers therefore stay GPU-uncached.
  *
- * The session's own allocations are GPU-uncached (nvos.h NVOS32_ATTR2_GPU_CACHEABLE: "For system memory this will not
- * be coherent with direct CPU mappings"). Weights are written once by the CPU before their first GPU use
- * (omega_gpu_session_sync_to_gpu), are never host-polled and never rewritten, so the GPU may cache them. Same descriptor
- * as omega_gpu_prefill.c in omega-own30b-tc (W-L1G, T3b 4a84906b) minus CPU_READ: the platform allows GPU-cached data buffers
- * only without CPU_READ / HOST_POLLED. Invariant here: the CPU writes the buffer once (fresh allocation, never read by the GPU
- * yet, so no stale L2 line exists), omega_gpu_session_sync_to_gpu flushes the CPU side, then only the GPU reads it, ever.
- * The caller holds the session lock with the device
- * open (as for omega_gpu_session_alloc); the buffer is freed and synced through the session like any other. */
+ * CPU initialization or rewrite requires omega_gpu_session_sync_to_gpu before
+ * submission (the Linux platform tracks required L2 invalidation). To read a
+ * chip-produced region on the host, copy it on the GPU into uncached staging,
+ * observe completion, then sync/read staging; never dereference this cached
+ * buffer as a CPU readback shortcut. The existing q38 graph uses that protocol.
+ *
+ * Caller holds the session lock with the device open, and retains the allocation
+ * until GPU completion. Where an existing versioned slot owns it, pin that slot
+ * before taking its address and unpin only after completion, without holding the
+ * slot-table lock while polling. Uncertain completion must use the session latch
+ * and parking protocol, not release memory still reachable by the device. This
+ * allocator does not introduce another lifetime table or select caller roles. */
 #include <stddef.h>
 #include "omega_gpu_session.h"
 #ifdef __cplusplus

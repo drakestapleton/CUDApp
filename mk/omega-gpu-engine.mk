@@ -486,3 +486,14 @@ test-gpu-platform-aien-effects-mutants: test-gpu-platform-aien-effects
 test-gpu-session-mutants: $(GPU_FS_LINK)
 	SESSION_FS_OBJECTS='$(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)' CC='$(CC)' SESSION_UNIT_MUTANTS='$(if $(CUDAPP_OMC_HOST),1,0)' \
 		OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" python3 tests/check_session_mutants.py
+
+# Existing .om process helper and a new .om conductor; no new host test script.
+CARRIED_HOST_TESTS += test-session-memory-om
+CUDAPP_TARGET_ONLY_TESTS += $(if $(CUDAPP_OMC_HOST),,test-session-memory-om)
+.PHONY: test-session-memory-om
+test-session-memory-om: om/session/reserve.om om/engine/fixture_rest.om om/engine/eng.om om/api/apish_slot.om tests/components/proc.om tests/session_memory_test.om tests/session_memory_gate.om
+	@$(CUDAPP_REQUIRE_OMC)
+	@mkdir -p build/session-memory build/components
+	cat tests/components/proc.om tests/session_memory_gate.om | "$(OMEGA_OMC)" > build/session-memory/gate
+	chmod +x build/session-memory/gate
+	./build/session-memory/gate "$(OMEGA_OMC)"

@@ -63,6 +63,30 @@ New scalar differential partitions cover every mode, independent fields, each bo
 WolframLanguageEvaluator: `ToCharacterCode["/memfd:"]` -> `{47,109,101,109,102,100,58}`; `2^63` -> `9223372036854775808` (signed descriptor threshold). No compiler/bridge pin or public API changes.
 
 
+## Shared reserve parsing (ham/session-cached, host only)
+
+`om/session/reserve.om` now owns C-locale unsigned-decimal parsing of
+`CUDAPP_MEM_RESERVE_MIB`, the `MemAvailable:` conversion, and saturating MiB-to-byte
+conversion. The existing engine unit still owns reserve admission. The shell
+borrows input bytes without copying them. `CUDAPP_MIGRATION_PENDING_C_MEMRESV`
+retains the original parser and arithmetic as the independently compiled oracle.
+A binding failure never selects that oracle: the reserve saturates or allocation
+is refused. File selection, O_NOFOLLOW/O_NONBLOCK/regular-file checks and locking
+are unchanged. Missing or malformed meminfo preserves the existing unknown-memory
+policy. This does not change any cache policy or make a C shell deletable.
+
+The new Omega cases exercise sign/whitespace/overflow/end-pointer semantics and
+long input, plus the unchanged handle generation, closed-handle, pin-underflow,
+pinned-eviction and capacity refusals. Compile `tests/components/proc.om` followed
+by `tests/session_memory_gate.om` with the pinned omc, then run the resulting
+conductor with that compiler path as its one argument, from the repository root.
+It composes the real parser, engine and existing slot unit and requires seven
+source mutants to exit at a failed assertion, not crash. The existing
+`make test-om-eng-diff test-om-eng-red test-om-eng-mutants` compares complete C
+and Omega runtime transcripts; its reserve string partitions include malformed
+lines and overflow values. `test-gpu-session-platform` and `test-gpu-serving-alloc`
+remain the integrated host gates. No chip receipt follows from these tests.
+
 ## Chip/live-RM/VFIO runbook — NOT_RUN
 
 Requires a fresh explicit exclusive window and exact operator approval. First integrate the stacked prerequisites and run the host commands above with the pinned compiler. In the authorized window, use the existing Linux session and stale-L2 chip runbooks: open the selected device, allocate a real shared buffer, record its captured alias token, publish a submission, observe the marker through Omega mapget, exercise timeout and stale-handle refusals, then release buffer/queue/device in order. Compare observed alias offsets and marker values to the submitted request and negative controls. Preserve raw logs and record device/driver/pin versions. Do not change gates, drivers, ports or ownership locks; do not infer permission from an empty lock. Host memfd and fake-device success are not chip qualification.

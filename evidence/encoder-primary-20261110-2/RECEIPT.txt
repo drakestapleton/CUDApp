@@ -1,0 +1,22 @@
+IMPLEMENTED / EXERCISED host only. New receipt for the primary parity sampler of ham/encoder-om-primary-2; evidence/encoder-primary-20261110/ is left unedited and describes the 729fe206 sampler.
+
+Sampler changes in om/encoder/primary_parity.om since 729fe206:
+1. Bay 16 F1 (231e9c9e, taken unchanged): registers 0..251 (reg = 37*(j>>3) mod 252) instead of 32 even values 0..124.
+2. Same class, found in the same function: control was j*256, so only 12 of 32 control bits ever varied (2048..2096896), and the
+   four subreg slots were always 0 although both encoders use phys + subreg. Control is now (j+1)*2654435761 mod 2^32 (all 32
+   bits vary, never 0) and subregs 0/1 are sampled on dst (not for uniform loads), src1, src2 and src3 (src3 only while reg is
+   below 251, so reg+4+subreg stays at or below 255). WolframLanguageEvaluator over the 4096 samples with j bit 3 set:
+   old 12 bits, new 32 bits, minimum 1189165, zero count 0; register maximum 251, src3 maximum 255.
+
+Run 2026-11-10T04:56:44Z-04:57:00Z, pool-12-13 (taskset -c 12,13, nice -n 10), depth-1 clone of 3b1a26916702cc8ed719b72faaa34c6f37b3a77a
+with the new sampler as a separate file, pinned omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f.
+C oracle rebuilt as tests/no_posix_native.py does (-O2, freestanding, C_NO_POSIX); native = build/test_codegen_freestanding,
+hosted = build/test_codegen_hosted, each fed the same 82837504-byte tape.
+- New sampler: C = native = hosted (cmp rc 0 both), seeded conductor rc 0. Full per-form counts: parity-counts.txt (632 rows,
+  accepted sum 605050; the 231e9c9e sampler gives 609350, and 72 rows differ from evidence/encoder-primary-20261110).
+- Control m3 (C oracle control masked to 21 bits at all 70 default-or-control sites): 231e9c9e sampler conductor rc 0
+  (survives), new sampler rc 1, ENCODER PARITY FAIL 0 8.
+- Control m4 (C oracle dst without dst_subreg): 231e9c9e sampler rc 0 (survives), new sampler rc 1, ENCODER PARITY FAIL 1 16.
+Raw lines: sampler-controls.txt.
+
+These are sampled host bytes, not hardware results. QUALIFIED / MERGED / DEPLOYED and chip runs: NOT_RUN.

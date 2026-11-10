@@ -3,7 +3,7 @@ note It turns a solved BlackwellIR program into machine code: four 32-bit words 
 note little-endian, padded with NOPs to a multiple of 8 and at least 32 instructions.
 note It replaces encode_single_insn and omega_bw_encode_program of src/omega_blackwell_codegen.c,
 note which stays compiled only behind CUDAPP_MIGRATION_PENDING_C_ENCODER as the differential oracle
-note (and in the freestanding build, which has no native binding yet).
+note or the explicit CUDAPP_MIGRATION_PENDING_C_NO_POSIX oracle switch; both defaults use Omega.
 note
 note Input (bw_om_encode in src/omega_blackwell_codegen.c packs it; 8 ulong per instruction, at most 1024 instructions):
 note   0 op (the BlackwellIROpcode number)   1 dst_vreg   2 src1_vreg   3 src2_vreg   4 src3_vreg
@@ -191,6 +191,7 @@ put4 w wda o 30732 imm 66085488 ctl o 2087424
 ret 0
 end
 if eq op 11
+note Existing C LDG.E signed byte-offset form (#373), identical to the wide-load field below.
 if not off24 imm
 ret 1
 end
@@ -624,6 +625,7 @@ ret enc_f o w
 end
 
 note A P0 guard is not a uniform guard: LDCU and LDCU.64 must refuse it (DRA-483).
+note See PROVENANCE.md and guard_pred_test.om for the independent instruction oracle.
 fn enc1 o view ulong 16 w edit ulong 4 to ulong
 r = encraw o w
 if or ne r 0 eq get o 9 0

@@ -21,7 +21,10 @@ Each moved decision has a default-OFF switch that restores the C oracle:
 `CUDAPP_MIGRATION_PENDING_C_<PART>` with PART one of ENGINE, WAIT, MEMRESV,
 MEMCACHE, SERVING, M16NATIVE, M16WAIT, PLATFORM, SUBMIT, BWENGINE, REQUALIFY,
 CONCURRENT, VISIBILITY, LIFECYCLE, plus `CUDAPP_MIGRATION_PENDING_QMD` for the
-QMD packer. Builds with `OMEGA_GPU_NO_POSIX` (freestanding) run the C oracle.
+QMD packer. QMD now uses the same `bw_qmd.om` source in hosted and
+`OMEGA_GPU_NO_POSIX` builds. The latter calls the checked caller-stack native
+root `omega2_bw_qmd`; it no longer selects the C QMD body automatically.
+Other engine parts retain their existing freestanding boundaries.
 
 ## Why the host differential is not chip evidence
 

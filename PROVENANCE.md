@@ -107,6 +107,26 @@ gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ld
 | `evidence/INTEG-280-20261110/opmove-nvdisasm.txt` | `opmove_words.bin`: the sixteen rows of `om/disasm/opmove_test.om bin`, one per BlackwellIR op 64..79 after the #280 numbering move | Shows each moved op's words decode as the intended instruction, and gave the exact text of the decoder rows added for them. |
 
 No listing of nvcc-generated code and no NVIDIA binary is stored.
+The C1b guard gate (`make test-om-encoder-guard`) uses nvdisasm 13.0.85
+`-b SM121 -hex` only on bytes emitted by our seeded encoder and its own
+uniform-predicate probe words. Listings stay in ignored `build/om-encoder/`.
+No new instruction form is introduced by this guard correction.
+`make test-om-encoder-ldg` uses the same pinned oracle only on our emitted
+LDG.E words. It checks the existing C #373 signed byte-offset field, restored
+in the seeded encoder and its spec table after operand parity exposed the
+omitted field. The listing remains ignored; no new instruction form is added.
+
+### LDG.E signed byte offset, ham/encoder-ldg-offset
+
+Class A decision source: Mesa NAK (MIT), commit
+`8190c11866dfb23e4dfacaea2f7cb795596d1fb1`,
+[sm70_encode.rs, OpLd::encode](https://gitlab.freedesktop.org/mesa/mesa/-/blob/8190c11866dfb23e4dfacaea2f7cb795596d1fb1/src/nouveau/compiler/nak/sm70_encode.rs#L3437-3512):
+global load selects opcode `0x981` with UGPR addressing, then unconditionally
+encodes `self.offset` in `40..64`. Its signed type is `i32` in
+[ir.rs, OpLd](https://gitlab.freedesktop.org/mesa/mesa/-/blob/8190c11866dfb23e4dfacaea2f7cb795596d1fb1/src/nouveau/compiler/nak/ir.rs#L6501-6516).
+Thus the existing C offset field is right; the seeded encoder and spec omitted it.
+The nvdisasm 13.0.85 LDG gate is secondary verification on our bytes only, not
+the decision source. Chip execution for this correction: NOT_RUN.
 
 ## 7. Open questions for a lawyer
 

@@ -1,0 +1,21 @@
+PASS LDG spec: nine signed-offset/boundary cases equal primitive encoder; omitted-field control refused
+red check 1 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 x/' exits 1 with 122 failures, as it must
+red check 2 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 or sub x and x 61440 shl ulong 7 12/' exits 1 with 130 failures, as it must
+red check 3 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 or sub x and x 61440 shl and pred o 7 12/' exits 1 with 66 failures, as it must
+red check 4 (enc): 's/^if isuld op$/if eq op 99/' exits 1 with 4 failures, as it must
+red check 5 (spec): 's/^put w 0 or sub gx and gx 61440 shl sp_val R_PRED 0 o 12$/put w 0 gx/' exits 1 with 106 failures, as it must
+red check 6 (spec): 's/^if or eq get o 0 6 eq get o 0 7$/if eq get o 0 99/' exits 1 with 4 failures, as it must
+red check: oracle text without the @!UP0 lines exits 4, as it must
+PASS guard predicates: 63 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 135 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN
+PASS one-instruction LDG C parity; pre-fix seeded encoder differs; public Mesa field selects C as correct
+PASS bare ELF: no imports/interpreter/TLS; hosted bytes identical; red exits 90
+PASS killed source mutant nop-word rc 2
+PASS killed source mutant nop-control rc 2
+PASS killed source mutant pad-floor rc 1
+PASS killed source mutant byte-size rc 1
+PASS killed source mutant nan-quiet rc 7
+PASS killed source mutant rne-tie rc 7
+PASS NO_POSIX native differential, red control and six killed mutants
+PASS NO_POSIX cubin production shell: C differential and injected-byte red control
+PASS C_NO_POSIX encoder oracle dump equals native dump; gcov recorded
+PASS encoder primary: 1024 samples per operand form, eight forms per opcode 0..78, C oracle = native = hosted = seeded conductor; flipped-byte control refused

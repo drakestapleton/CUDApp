@@ -27,6 +27,22 @@ uint64_t no_bf16(uint64_t o_raw)
         __builtin_trap();
     return r;
 }
+/* fn bw_qmd op ulong m view ulong 16 q edit ulong 224 to ulong */
+uint64_t bw_qmd(uint64_t o_op, const uint64_t o_m[16], uint64_t o_q[224])
+{
+    uint64_t r = 0;
+    if (omega2_bw_qmd(&r, (uint64_t)o_op, o_m, 16, o_q, 224) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn amp_qmd op ulong a view ulong 16 q edit uchar 256 to ulong */
+uint64_t amp_qmd(uint64_t o_op, const uint64_t o_a[16], uint8_t o_q[256])
+{
+    uint64_t r = 0;
+    if (omega2_amp_qmd(&r, (uint64_t)o_op, o_a, 16, o_q, 256) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
 /* fn decide op ulong a view ulong 16 o edit ulong 4 to ulong */
 uint64_t decide(uint64_t o_op, const uint64_t o_a[16], uint64_t o_o[4])
 {
@@ -74,4 +90,132 @@ uint64_t no_avbf(uint64_t o_md, uint64_t o_raw)
     if (omega2_no_avbf(&r, (uint64_t)o_md, (uint64_t)o_raw) != OMEGA_OK)
         __builtin_trap();
     return r;
+}
+/* fn ra_run m edit ulong 4096 to long */
+int64_t ra_run(uint64_t o_m[4096])
+{
+    uint64_t r = 0;
+    if (omega2_ra_run(&r, o_m, 4096) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn ra_ir kind ulong a long b long to long */
+int64_t ra_ir(uint64_t o_kind, int64_t o_a, int64_t o_b)
+{
+    uint64_t r = 0;
+    if (omega2_ra_ir(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn ra_live kind ulong a ulong b long c long d ulong e ulong to long */
+int64_t ra_live(uint64_t o_kind, uint64_t o_a, int64_t o_b, int64_t o_c, uint64_t o_d, uint64_t o_e)
+{
+    uint64_t r = 0;
+    if (omega2_ra_live(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c, (uint64_t)o_d, (uint64_t)o_e) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn cg_matmul kind ulong a ulong b ulong c ulong to ulong */
+uint64_t cg_matmul(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c)
+{
+    uint64_t r = 0;
+    if (omega2_cg_matmul(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_par grid ulong u ulong r ulong c ulong mutant long to ulong */
+uint64_t cg_par(uint64_t o_grid, uint64_t o_u, uint64_t o_r, uint64_t o_c, int64_t o_mutant)
+{
+    uint64_t r = 0;
+    if (omega2_cg_par(&r, (uint64_t)o_grid, (uint64_t)o_u, (uint64_t)o_r, (uint64_t)o_c, (uint64_t)o_mutant) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_i32 kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_i32(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512])
+{
+    uint64_t r = 0;
+    if (omega2_cg_i32(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c, o_i, 8192, o_m, 512) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_tens kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_tens(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512])
+{
+    uint64_t r = 0;
+    if (omega2_cg_tens(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c, o_i, 8192, o_m, 512) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_loop kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_loop(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512])
+{
+    uint64_t r = 0;
+    if (omega2_cg_loop(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c, o_i, 8192, o_m, 512) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_frag kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_frag(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512])
+{
+    uint64_t r = 0;
+    if (omega2_cg_frag(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c, o_i, 8192, o_m, 512) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_block kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_block(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512])
+{
+    uint64_t r = 0;
+    if (omega2_cg_block(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, (uint64_t)o_c, o_i, 8192, o_m, 512) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn cg_vec d edit uchar 512 to long */
+int64_t cg_vec(uint8_t o_d[512])
+{
+    uint64_t r = 0;
+    if (omega2_cg_vec(&r, o_d, 512) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn cg_bind kind ulong a ulong b ulong w edit uchar 256 to long */
+int64_t cg_bind(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint8_t o_w[256])
+{
+    uint64_t r = 0;
+    if (omega2_cg_bind(&r, (uint64_t)o_kind, (uint64_t)o_a, (uint64_t)o_b, o_w, 256) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn cg_pklen p edit ulong 12 to long */
+int64_t cg_pklen(uint64_t o_p[12])
+{
+    uint64_t r = 0;
+    if (omega2_cg_pklen(&r, o_p, 12) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn cg_pkh p view ulong 12 s view uchar * d edit ushort * to long */
+int64_t cg_pkh(const uint64_t o_p[12], const uint8_t *o_s, size_t o_s_len, uint16_t *o_d, size_t o_d_len)
+{
+    uint64_t r = 0;
+    if (omega2_cg_pkh(&r, o_p, 12, o_s, o_s_len, o_d, o_d_len) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
+}
+/* fn sentin q view ulong 5 c edit uint * to ulong */
+uint64_t sentin(const uint64_t o_q[5], uint32_t *o_c, size_t o_c_len)
+{
+    uint64_t r = 0;
+    if (omega2_sentin(&r, o_q, 5, o_c, o_c_len) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn bw_id_native data view uchar 256 n ulong dst edit uchar 32 to long */
+int64_t bw_id_native(const uint8_t o_data[256], uint64_t o_n, uint8_t o_dst[32])
+{
+    uint64_t r = 0;
+    if (omega2_bw_id_native(&r, o_data, 256, (uint64_t)o_n, o_dst, 32) != OMEGA_OK)
+        __builtin_trap();
+    return (int64_t)r;
 }

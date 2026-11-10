@@ -1,0 +1,20 @@
+m3 diff lines=140
+m4 diff lines=2
+conductor tip oracle-base oracle_rc=0 conductor_rc=0 first_fail=
+conductor tip oracle-m3 oracle_rc=0 conductor_rc=0 first_fail=
+conductor tip oracle-m4 oracle_rc=0 conductor_rc=0 first_fail=
+native tip rc=0
+hosted tip rc=0
+cmp tip base-native rc=0
+cmp tip base-hosted rc=0
+conductor tip native rc=0
+rows tip 632 accepted-sum 609350
+conductor new oracle-base oracle_rc=0 conductor_rc=0 first_fail=
+conductor new oracle-m3 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 0 8 
+conductor new oracle-m4 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 1 16 
+native new rc=0
+hosted new rc=0
+cmp new base-native rc=0
+cmp new base-hosted rc=0
+conductor new native rc=0
+rows new 632 accepted-sum 605050

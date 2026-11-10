@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# Recompile six semantic mutants of om/qmd/bw_qmd.om. Each must fail the sweep.
+# Recompile seven semantic mutants of om/qmd/bw_qmd.om. Each must fail the sweep.
 # Host only. Needs OMEGA_OMC (pinned e5b32567) and OMEGA_BRIDGE.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -47,6 +47,7 @@ PY
 run_one m_qmd0_w4 'put q 4 8388610' 'put q 4 8388611'
 run_one m_qmd1_w4 'put q 4 20905984' 'put q 4 20905985'
 run_one m_qmd1_w14 'put q 14 793772964' 'put q 14 793772965'
+run_one m_qmd1_offset 'put q 14 793772964' 'put q 13 793772964'
 run_one m_cbank_w0 'put q 0 641859584' 'put q 0 641859585'
 run_one m_cbank_w223 'put q 223 16776640' 'put q 223 16776641'
 run_one m_shared_cap 'if gt sm 32768' 'if gt sm 16384'

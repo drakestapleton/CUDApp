@@ -1,0 +1,7 @@
+KILLED a-column-low-bit	compile=0	exercise=0	comparison=different
+KILLED a-row-lane-stride	compile=0	exercise=0	comparison=different
+KILLED b-group-stride	compile=0	exercise=0	comparison=different
+KILLED padding-value	compile=0	exercise=0	comparison=different
+KILLED bf16-tie-even	compile=0	exercise=0	comparison=different
+KILLED row0-padding-zero	compile=0	exercise=0	comparison=different
+PASS fragment recompiled Omega semantic mutants=6

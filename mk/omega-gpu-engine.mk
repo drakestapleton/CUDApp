@@ -128,6 +128,7 @@ GPU_FS_DIR = build/gpu_fs
 GPU_NO_POSIX_DIR = build/no_posix/native
 GPU_NO_POSIX_OBJS = $(GPU_NO_POSIX_DIR)/omega_native.o $(GPU_NO_POSIX_DIR)/omega_api_defs.o
 GPU_NO_POSIX_CHECKED = $(wildcard om/no-posix/gen/*/*)
+GPU_NO_POSIX_CHECKED += $(wildcard om/codegen/regalloc*.om om/codegen/cg_matmul*.om om/codegen/cg_pack*.om om/codegen/cg_sentin.om om/codegen/cg_vecadd.om om/codegen/cg_bind.om om/blackwell/identity.om om/blackwell/id_native.om om/cache/digest.om)
 $(GPU_NO_POSIX_DIR)/.installed: om/no-posix.sh $(GPU_NO_POSIX_CHECKED) om/encoder/bw_enc_sm121.om om/cubin/cubin_elf.om om/numeric/no_bf16.om om/session/admit.om om/session/words.om om/session/park.om om/cmdlist/book.om om/streams/streams.om om/apiviews/no_avbf.om
 	sh om/units.sh --native-no-posix
 	touch $@
@@ -162,6 +163,9 @@ $(GPU_FS_LINK): $(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)
 	if [ -n "$$bad" ]; then echo "freestanding GPU link still needs: $$bad"; rm -f $@; exit 1; fi
 	@echo "freestanding GPU link ($(words $(GPU_FS_SRCS)) files): only $$(nm -u $@ | awk '{print $$NF}' | grep -Ev '^_GLOBAL_OFFSET_TABLE_$$' | sort -u | tr '\n' ' ')undefined"
 gpu-engine-freestanding: $(GPU_FS_LINK)
+
+# ham/cubin-qmd-om: additive QMD and realization root dependencies.
+$(GPU_NO_POSIX_DIR)/.installed: om/qmd/bw_qmd.om om/codegen/cg_bind.om om/cache/digest.om om/blackwell/identity.om om/blackwell/id_native.om om/encoder/amp_runtime.om om/encoder/amp_qmd.om
 
 .PHONY: test-no-posix-native
 test-no-posix-native: $(GPU_NO_POSIX_OBJS) build/test_codegen_freestanding
@@ -211,13 +215,21 @@ build/test_codegen_hosted: $(CODEGEN_FS_TEST_DEPS) src/omega_blackwell_codegen.c
 build/test_codegen_freestanding: $(CODEGEN_FS_TEST_DEPS) $(GPU_FS_LINK)
 	@mkdir -p build
 	gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -I$(GPU_NO_POSIX_DIR) -DOMEGA_GPU_NO_POSIX -o $@ tests/test_omega_codegen_freestanding.c \
-		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_FS_DIR)/cudapp_freest_bw_scalar.o $(GPU_FS_DIR)/cudapp_freest_cg_fields.o $(GPU_FS_DIR)/cudapp_freest_fixture_verify.o $(GPU_NO_POSIX_OBJS)
+		$(GPU_FS_DIR)/omega_blackwell_codegen.o $(GPU_FS_DIR)/omega_blackwell_matmul.o $(GPU_FS_DIR)/sha256.o $(GPU_FS_DIR)/cudapp_freest_f16.o $(GPU_FS_DIR)/cudapp_freest_bw_scalar.o $(GPU_FS_DIR)/cudapp_freest_cg_fields.o $(GPU_FS_DIR)/cudapp_freest_fixture_verify.o $(GPU_NO_POSIX_OBJS) \
+		$(GPU_FS_DIR)/omega_gpu_om_ir.o $(GPU_FS_DIR)/cudapp_freest_cg_replay.o $(GPU_FS_DIR)/cudapp_freest_cg_life.o $(GPU_FS_DIR)/cudapp_freest_cg_invar.o
 test-codegen-freestanding: build/test_codegen_hosted build/test_codegen_freestanding test-gpu-fs-allowlist-control
 	./build/test_codegen_hosted --dump > build/codegen_dump_hosted.txt
 	./build/test_codegen_freestanding --dump > build/codegen_dump_freestanding.txt
 	cmp build/codegen_dump_hosted.txt build/codegen_dump_freestanding.txt
 	@echo "codegen dumps byte-identical: $$(grep -c '^fixture ' build/codegen_dump_hosted.txt) fixtures, $$(grep -v -E '^(fixture|digest) ' build/codegen_dump_hosted.txt | tr -d '\n' | wc -c | awk '{print $$1/2}') code bytes"
 	./build/test_codegen_freestanding
+	@nm $(GPU_FS_DIR)/omega_blackwell_codegen.o > build/codegen-native-symbols.txt
+	@! grep -E ' [Tt] (bw_c_encode_insn|omega_bw_regalloc_c_oracle)$$' build/codegen-native-symbols.txt
+	@grep -q ' U omega2_ra_run$$' build/codegen-native-symbols.txt
+	@grep -q ' U omega2_cg_i32$$' build/codegen-native-symbols.txt
+	@grep -q ' U omega2_cg_block$$' build/codegen-native-symbols.txt
+	@grep -q ' U omega2_bw_enc_sm121$$' build/codegen-native-symbols.txt
+	@echo 'PASS freestanding core references native seeded encoder/allocator/builders; C encoder and allocator symbols absent'
 
 test-gpu-fs-allowlist-control: $(GPU_FS_LINK)
 	@mkdir -p $(GPU_FS_DIR)/control

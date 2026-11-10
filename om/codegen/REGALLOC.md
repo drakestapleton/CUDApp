@@ -59,14 +59,29 @@ launch geometry, program padding, buffer fit and the code-digest admission
 used by `omega_blackwell_matmul.c`, `omega_blackwell_realize.c`,
 `omega_blackwell_codegen.c` and `omega_blackwell_encoder.c` through
 `src/omega_bw_bind.h` (C oracle: `CUDAPP_MIGRATION_PENDING_C_BIND`). The C
-keeps memory, structs and SHA-256.
+keeps memory, structs and buffer routing. Under NO_POSIX, `cg_bind.om` and
+the shared `bw_id_native` wrapper over `cache/digest.om` and
+`blackwell/identity.om` produce the canonical binding and identity, without
+a C fallback. Kernel code-digest calls still route through `src/sha256.c`.
+
+`cg_sentin.om` exposes a uint-bit view for the native integer ABI; its private
+binary32 equality is unchanged, including signed zero and NaN behavior.
 
 The portable bridge has no integer-to-integer bitcast. `regalloc.om` stores
 signed words through `ra_u2l`/`ra_l2u`, a portable two's-complement
-reinterpretation. Freestanding builds (`OMEGA_GPU_NO_POSIX`) keep the
-migration-pending C, as the encoder does, because the portable binding uses
-hosted trap handling; `make test-codegen-freestanding` compares hosted Omega
-and freestanding C instruction dumps.
+reinterpretation. Freestanding builds (`OMEGA_GPU_NO_POSIX`) use the existing
+seeded allocator, five core matmul builders, scalar policies, fragment packers,
+sentinels, vecadd writer and binding decisions through checked caller-stack
+native units registered in `om/no-posix.sh`. They no longer select C computation
+merely because POSIX is unavailable. C remains an explicit default-OFF oracle.
+`make test-codegen-freestanding` compares hosted and native Omega instruction dumps.
+`make test-om-encoder-primary` compares 1024 register/control/predicate samples
+for each of eight operand forms of every opcode 0..78 against C, hosted Omega and native Omega; the conductor is
+`om/encoder/primary_parity.om`, including a flipped-byte refusal control.
+The operand-mode sweep also caught the seeded LDG.E encoder omitting its
+existing C signed byte-offset field. Both seeded encoder and spec table now
+use the same field as the existing wide-load forms. The dedicated LDG gate
+checks signed extrema, range refusal and dropped-offset/bound mutants.
 
 `tests/regalloc_om/run.sh` checks regeneration, then links the generated units.
 It compiles the C oracle under renamed exports, compares the complete program

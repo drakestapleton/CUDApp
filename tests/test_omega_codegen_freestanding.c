@@ -207,6 +207,27 @@ static void bf16_sweep(void) {
 #endif
 
 int main(int argc, char **argv) {
+    /* Migration debt: byte routing for primary_parity.om; no generation or encoder decisions here. */
+    if (argc > 1 && strcmp(argv[1], "--encoder-tape") == 0) {
+        uint64_t a[16];
+        size_t n;
+        while ((n = fread(a, 1, sizeof a, stdin)) == sizeof a) {
+            BlackwellIRInsn in = {
+                .op = (BlackwellIROpcode)a[0], .dst_vreg = (int)a[1], .src1_vreg = (int)a[2],
+                .src2_vreg = (int)a[3], .src3_vreg = (int)a[4], .ureg = (int)a[5],
+                .imm = (uint32_t)a[6], .control = (uint32_t)a[7], .is_uniform = a[8] != 0,
+                .predicate_p0 = a[9] != 0, .predicate_not = a[10] != 0, .bar_reg = (uint8_t)a[11],
+                .dst_subreg = (uint8_t)a[12], .src1_subreg = (uint8_t)a[13],
+                .src2_subreg = (uint8_t)a[14], .src3_subreg = (uint8_t)a[15]
+            };
+            uint32_t w[4] = {0};
+            int64_t rc = omega_blackwell_encode_one(&in, w);
+            if (rc) memset(w, 0, sizeof w);
+            if (fwrite(&rc, 1, sizeof rc, stdout) != sizeof rc ||
+                fwrite(w, 1, sizeof w, stdout) != sizeof w) return 2;
+        }
+        return n || ferror(stdin) ? 2 : 0;
+    }
     if (argc > 1 && strcmp(argv[1], "--dump") == 0) return dump();
 #ifdef OMEGA_GPU_NO_POSIX
     buffer_contract();

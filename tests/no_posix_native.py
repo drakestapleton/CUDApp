@@ -31,7 +31,13 @@ def run(args, expected=0):
     return p.stdout
 
 sources = sorted((ROOT / 'build/no_posix/sources').glob('*.om'))
-assert {p.stem for p in sources} == {'bw_enc_sm121', 'cubin_elf', 'no_bf16', 'admit', 'words', 'park', 'book', 'streams', 'no_avbf'}
+assert {p.stem for p in sources} == {
+    'bw_enc_sm121', 'cubin_elf', 'no_bf16', 'admit', 'words', 'park', 'book', 'streams', 'no_avbf',
+    'regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_params',
+    'cg_matmul_i32', 'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block',
+    'cg_vecadd', 'cg_bind', 'cg_pack_len', 'cg_pack_h', 'cg_sentin', 'bw_identity',
+    'bw_qmd', 'amp_qmd',
+}
 native = ROOT / 'build/no_posix/native'
 host = OUT / 'host'
 run([BRIDGE / 'tools/native', host, *sources])
@@ -107,11 +113,14 @@ print('PASS NO_POSIX cubin production shell: C differential and injected-byte re
 
 oracle = OUT / 'codegen-oracle'
 run([*flags, '-O0', '--coverage', '-DOMEGA_GPU_NO_POSIX',
+     '-DCUDAPP_MIGRATION_PENDING_C_REGALLOC', '-DCUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL',
+     '-DCUDAPP_MIGRATION_PENDING_C_BIND', '-DCUDAPP_MIGRATION_PENDING_C_PACK',
      '-DCUDAPP_MIGRATION_PENDING_C_NO_POSIX', '-I', ROOT / 'src', '-I', native,
      ROOT / 'tests/test_omega_codegen_freestanding.c',
      ROOT / 'src/omega_blackwell_codegen.c', ROOT / 'src/omega_blackwell_matmul.c',
      ROOT / 'src/sha256.c', ROOT / 'src/cudapp_freest_f16.c',
      ROOT / 'src/cudapp_freest_bw_scalar.c', ROOT / 'src/cudapp_freest_cg_fields.c',
+     ROOT / 'src/cudapp_freest_fixture_verify.c',
      native / 'omega_native.o', native / 'omega_api_defs.o', '-o', oracle])
 # NO_POSIX's --no-sweep runs buffer/golden fixtures but not a second exhaustive
 # bf16 sweep. The normal test-codegen-freestanding target retains that sweep.

@@ -1,0 +1,22 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Host-only supplementary receipt for the byte-capacity fix e1adbaa0 on ham/launch-batch-2.
+note receipt.om in this folder stays unedited: it describes 3b4f5807 (negatives=7, 4 batch mutants).
+note Additions only; not hardware qualification.
+text BASE "3b4f5807ff122af4b7982dd59e8c84f8a98c4679"
+text SOURCE "e1adbaa0af7cc4138ec558e1c7546db75b3d1026 plus this receipt and a comment-only change to run-host-trace.sh"
+text OMC "omega-mv e5b32567a7aff3ce594e3254a622a846a6cd190b; sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
+text BATCHSHA "8b10c1355e965a9f351f74dc0828bad41fc533dc63fd8e61c808a1b73f6e21a0"
+text LAUNCHSH "38b8bc4157d527d0c5cb9b20c079f3da596ffb069e2d9ab5131aa673114c88c1"
+text TESTSHA "c977ca4a7b0da88fa71ce5ab33457943922119aa92b45c63b6fc517aa2c5e56b"
+text FAKESHA "89b789c190e01076d9ccb311ddb0890c200903665fa0f43b85e8dc3bac9bdd03"
+text DEVSHA "2b1eaae83cc39ced98365dd0103d3ae1308f5577774618339f42ca2ae53314ef"
+text WAITSHA "5fad4c82183a885ad44fdcb8625bca0799398be93b87b55a2d9592de46d8bdc8"
+text CHANGE "gbappend byte guard: if gt add n get gbst 2 1048476 (was if gt n sub ulong 1048476 get gbst 2, which wrapped once a seam pushed used bytes past 1048476). Reserve 1048476 = 1048576 - 32 seam - 68 tail."
+text GATE "With OMEGA_COMPILER set to the pinned omc, under a CPU pool lock with taskset and nice 19: bwrap --dev-bind / / --dev /dev --proc /proc -- sh tests/host-trace/run-host-trace.sh OUTDIR; exit 0"
+text RESULT "HOSTTRACE_RECORDER_PASS 68; HOSTTRACE_LAUNCH_PASS 45 OMTRACE_OK 30; 13 malformed fragments rejected; mutations 4 of 4; BATCH_HOST_PASS checks=63519 parity_cases=32 parity_bytes=62976 batch_launches=287 kicks=1 waits=1 negatives=8; batch mutations: 6 of 6 compile and are detected; BATCH_NATIVE_WAIT_PASS completion timeout refusal; HOST TRACE CHECKS PASS"
+text NEGCTL "Same gate with batch.om restored from 3b4f5807: exit 1, FAIL: batch: BATCH_HOST_FAIL checks=3. Negative 8: exact reserve consumed, then a 4-byte append gives -75 and zero kicks. New mutants: bbyte (byte guard removed) and bcache (launch.om mappings 0-4 GPU-cached again) are both detected."
+text LIMITS "IMPLEMENTED and host EXERCISED only. Not QUALIFIED, MERGED or DEPLOYED. Chip behaviour of GPU-uncached mappings 0-4 and of the batch path NOT_RUN."
+fn main to int
+ret 0
+end

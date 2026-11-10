@@ -71,7 +71,7 @@ endif
 CARRIED_HOST_TESTS += test-live-marker
 .PHONY: test-live-marker
 LIVE_MARKER_MUT = $(OUT_DIR)/live_marker_mut
-LIVE_MARKER_NVRM_LINK = src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) \
+LIVE_MARKER_NVRM_LINK = src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_amp_qmd.c $(NVRM_SERIALIZER_SRCS) \
 	$(NVRM_ADMIT_SRCS) om/platform-linux/gen/link/plat_fx_wait.c
 LIVE_MARKER_NVRM_CC = $(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -Invrm -Isrc
 LIVE_MARKER_PLAT_CC = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -pthread -Isrc -Itests $(GPU_ENGINE_PHYS_INC)

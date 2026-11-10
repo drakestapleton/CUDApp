@@ -166,3 +166,29 @@ intermediate stamp can precede completion, so only endpoint span and host elapse
 are comparable to the old cost method. Receipt metadata labels these front-end
 stamps. The old dropped-launch negative remains a legacy-oracle check. Candidate
 chip data parity, cache ordering, drift and timing are all NOT_RUN here.
+
+## Native seeded callers
+
+`native/blackwell/batch.om` is the native counterpart for callers that compose
+`native/nvrm/context.om` and `native/blackwell/launch.om`, rather than the C ABI.
+It reuses `nvsend` and the existing sleeping `nvwait`; it does not open a second
+channel. Call `gbbopen` once, `gbbegin count`, then build a body with `gbbody n`
+(or the caller's QMD/inline-DMA builder without its tail) and call
+`gbappend kernel_id dependency` for every launch. Finally call `gbbsubmit budget_ns`.
+`dependency` is zero or an already-recorded producer's zero-based index plus one.
+The conservative stream drains and invalidates shader caches between bodies.
+It preserves dependencies; it does not claim independent dispatch overlap.
+
+The count limit is 512, the packet limit is 1048576 bytes. Any bad append poisons
+the entire recording. Nothing is sent until the exact declared count fits.
+One launch retains the old packet bytes. Larger batches carry one WFI release
+seal per launch and one final C3 completion tail. A failed wait names the first
+missing zero-based index in `gbst[4]` and caller id in `gbst[5]`; index=count means
+the final tail failed after every launch seal. It is completion attribution,
+not a GPU exception decoder. All packet, QMD, bank, code and data allocations
+remain pinned until completion. Timeout latches `nvfault`; never reuse or free
+these buffers before the existing context teardown has quiesced the channel.
+
+Host acceptance is `OMEGA_COMPILER=<pinned omc> sh tests/host-trace/run-host-trace.sh`.
+The chip probe is `tests/host-trace/batch-chip.om`, compiled with the real context;
+it measures a synthetic VECTOR_1D step, not model inference. Hardware remains NOT_RUN.

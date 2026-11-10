@@ -1,0 +1,31 @@
+IMPLEMENTED / EXERCISED host only. mac-ham FixRound3Cuda on ham/encoder-om-primary-3, answering factory bay 3 on
+reviewed commit 9b84f9413d7dc567294b313152363ecaf373cbe8. evidence/encoder-primary-20261110/, -2/ and -3/ are left unedited
+and describe the earlier samplers.
+
+Sampler change in om/encoder/primary_parity.om since dc062928 (bay 3 proposal): a refusal-edge pass. pp_case keeps imm
+below 288, barrier registers below 16, dst and src1 at or below 252 and the opcode at or below 78, so it never reached
+these refusal bounds of the two encoders: signed 24-bit offsets of LDG, STG and the fragment loads, the LDS offset, the
+BSSY delta below 2, the BSSY/BSYNC barrier limit 16, the f64 pair bound 254 (dst, src1, src2, src3, and 253 through a
+subreg), the top uniform register 31 and unknown opcodes 79 and 80. pp_edge adds 44 cases per opcode 0..80 (22 edges,
+then the same 22 with src2 and src3 absent), printed as "edge op=" rows after the 632 form rows. The gate
+(make test-om-encoder-primary) now also compares the counts with this receipt's parity-counts.txt.
+
+Run 2026-11-10T06:58:37Z-07:10:22Z, pool-19 (taskset -c 19, nice -n 10), depth-1 clone, device-free bwrap
+(--dev /dev --unshare-net), pinned omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f,
+omega-bridge d8174edd. Tape 83293696 bytes (82837504 + 81 x 44 x 128).
+- C oracle = native = hosted: each reply 15617568 bytes, sha256
+  3a7acc98b52d81c1a6f76a74ce2ad3f87ac5a63182fce3ee93d528448a5d0ec5; seeded conductor rc 0; flipped-byte control
+  refused (ENCODER PARITY FAIL 0 0).
+- parity-counts.txt: 632 form rows byte-identical to evidence/encoder-primary-20261110-3/parity-counts.txt (accepted
+  sum 605050), plus 81 edge rows (accepted sum 3338; ops 79 and 80 refuse all 44).
+- Oracle mutants (sed on src/omega_blackwell_codegen.c, built as tests/no_posix_native.py builds the C oracle): bay 3's
+  m1, mc31, ms1, md, mu, and seven refusal-edge mutants that each move one bound by one: eoffhi (offset upper bound,
+  three sites), eofflo (offset lower bound, three sites), elds (LDS offset), edelta (BSSY delta 1), ebar (barrier
+  limit, two sites), ef64d (f64 destination bound 255), ef64s (f64 src1 bound 255).
+  dc062928 sampler: m1, mc31, ms1, md, mu killed; all seven edge mutants survive (conductor rc 0).
+  this sampler:     all twelve killed; edge mutants fail at ENCODER PARITY FAIL op 8192+case
+                    (eoffhi 11 8194, eofflo 11 8195, elds 58 8194, edelta 54 8199, ebar 54 8202, ef64d 68 8205,
+                    ef64s 68 8207).
+Raw lines: sampler-controls.txt.
+
+These are sampled host bytes, not hardware results. QUALIFIED / MERGED / DEPLOYED and chip runs: NOT_RUN.

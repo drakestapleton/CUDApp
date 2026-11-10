@@ -181,6 +181,20 @@ static void qmd_and_submission_admission(void) {
     assert(omega_ampere_build_qmd(q, 0x100000, 0x200000, 0x300000, 32, 1, 1, 1, 64, 99u << 10) == 0);
     assert(omega_ampere_build_qmd(q, 0x100000, 0x200000, 0x300000, 32, 1, 1, 1, 64, 100u << 10) != 0);
     assert(omega_ampere_build_qmd(q, 0x100000, 0x200000, 0x300001, 32, 1, 1, 1, 64, 0) != 0);
+    /* Same generated inputs as tests/amp_qmd_test.om. The AMP_QMD_DIFF build
+     * compares this real ABI caller against the retained C wrapper, byte for byte. */
+    for (uint64_t n = 0; n < 4096; n++) {
+        uint64_t m[16] = {3, (n + 1) * 128, n * 16, n * 16,
+            n % 1024 + 1, 1, n + 1, n % 65535 + 1, n % 255 + 1, n * 127 % 102400};
+        if (n % 8 == 0) m[1]++;
+        if (n % 8 == 1) m[3]++;
+        if (n % 8 == 2) m[5] = 2;
+        if (n % 8 == 3) m[9] = 102400;
+        int rc = omega_ampere_build_qmd(q, m[1], m[2], m[3], (uint32_t)m[4],
+            (uint32_t)m[5], (uint32_t)m[6], (uint32_t)m[7], (uint32_t)m[8], (uint32_t)m[9]);
+        assert(omega_ampere_policy(m, NULL) == rc);
+    }
+    puts("PASS ampere ABI parity inputs: 4096 build + 4096 policy states");
     static Nvrm rm; fresh(&rm);
     uint32_t good[] = {nvrm_mthd(1, 0, 1), OMEGA_AMPERE_COMPUTE_B,
         nvrm_mthd(1, 0x021c, 1), (1u << 0) | (1u << 4) | (1u << 12),

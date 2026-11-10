@@ -6,7 +6,7 @@ AMPERE_NVDISASM ?= /usr/local/cuda/bin/nvdisasm
 AMPERE_CUBIN_SOURCES = tests/ampere_cubin_test.c src/omega_cubin.c $(CUDAPP_BINDING_SRCS)
 AMPERE_CUBIN_DEPS = $(AMPERE_CUBIN_SOURCES) src/omega_cubin.h src/cudapp_native.h
 
-.PHONY: test-ampere-cubin test-ampere-cubin-disasm
+.PHONY: test-ampere-cubin test-ampere-cubin-disasm test-om-ampere-elf-admission
 $(AMPERE_CUBIN_DIR)/host: $(AMPERE_CUBIN_DEPS)
 	@mkdir -p $(AMPERE_CUBIN_DIR)
 	$(CC) $(CFLAGS) -Isrc -pthread -o $@ $(AMPERE_CUBIN_SOURCES)
@@ -24,6 +24,19 @@ test-ampere-cubin-disasm: test-ampere-cubin
 	"$(AMPERE_NVDISASM)" -c $(AMPERE_CUBIN_DIR)/sm86.cubin > $(AMPERE_CUBIN_DIR)/sm86.sass
 	@grep -q 'EXIT' $(AMPERE_CUBIN_DIR)/sm86.sass || { echo 'FAIL: sm86 EXIT not decoded'; exit 1; }
 	@echo 'AMPERE CUBIN NVDISASM PASS; device NOT_RUN'
+
+# tests/cubin_elf_admission.om, composed after om/components/artifact_elf.om, runs the existing ELF admission unit on
+# the image test-ampere-cubin writes: original accepted, wrong text section size and truncated ELF refused inside the
+# program; a 200-byte prefix of the image must be refused as a file (exit 7). A prerequisite of test-om-cubin-mutants.
+test-om-ampere-elf-admission: test-ampere-cubin om/components/artifact_elf.om tests/cubin_elf_admission.om
+	@[ -x $(OMEGA_MV)/seed/out/omc ] || { echo "NOT_RUN: set OMEGA_MV"; exit 3; }
+	cat om/components/artifact_elf.om tests/cubin_elf_admission.om | $(OMEGA_MV)/seed/out/omc > $(AMPERE_CUBIN_DIR)/elf-admission
+	chmod +x $(AMPERE_CUBIN_DIR)/elf-admission
+	$(AMPERE_CUBIN_DIR)/elf-admission $(AMPERE_CUBIN_DIR)/sm86.cubin
+	head -c 200 $(AMPERE_CUBIN_DIR)/sm86.cubin > $(AMPERE_CUBIN_DIR)/sm86-trunc.cubin
+	@rc=0; $(AMPERE_CUBIN_DIR)/elf-admission $(AMPERE_CUBIN_DIR)/sm86-trunc.cubin > /dev/null || rc=$$?; \
+	if [ $$rc != 7 ]; then echo "RED CHECK BROKEN: truncated image exited $$rc, not 7"; exit 1; fi; \
+	echo "red check: a 200-byte image prefix exits 7, as it must"
 
 # Numeric defaults to the scalar, tile and remainder units in om/numeric/.
 # c selects both default-OFF C oracle flags; diff checks the preserved scalar

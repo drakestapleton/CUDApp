@@ -10,6 +10,23 @@ for pair in encoder/bw_enc_sm121 cubin/cubin_elf numeric/no_bf16 session/admit s
   name=${pair##*/}
   { printf 'om2\n'; cat "$ROOT/om/$pair.om"; } > "$OUT/sources/$name.om"
 done
+# Core encoder/codegen roots; the C implementations are explicit oracles in both profiles.
+for name in regalloc regalloc_ir regalloc_live cg_matmul cg_matmul_params cg_matmul_i32 cg_matmul_tensor cg_matmul_loop cg_matmul_frag cg_matmul_block cg_vecadd cg_bind cg_pack_len; do
+  { printf 'om2\n'; cat "$ROOT/om/codegen/$name.om"; } > "$OUT/sources/$name.om"
+done
+for name in cg_pack_h cg_sentin; do
+  cp "$ROOT/om/codegen/$name.om" "$OUT/sources/$name.om"
+done
+{ printf 'om2\n'; cat "$ROOT/om/cache/digest.om" "$ROOT/om/blackwell/identity.om" "$ROOT/om/blackwell/id_native.om"; } > "$OUT/sources/bw_identity.om"
+set -- "$OUT/sources/regalloc.om" "$OUT/sources/regalloc_ir.om" "$OUT/sources/regalloc_live.om" \
+  "$OUT/sources/cg_matmul.om" "$OUT/sources/cg_matmul_params.om" "$OUT/sources/cg_matmul_i32.om" \
+  "$OUT/sources/cg_matmul_tensor.om" "$OUT/sources/cg_matmul_loop.om" \
+  "$OUT/sources/cg_matmul_frag.om" "$OUT/sources/cg_matmul_block.om" "$OUT/sources/cg_vecadd.om" \
+  "$OUT/sources/cg_bind.om" "$OUT/sources/cg_pack_len.om" "$OUT/sources/cg_pack_h.om" "$OUT/sources/cg_sentin.om" \
+  "$OUT/sources/bw_identity.om"
+# ham/cubin-qmd-om: additive QMD roots; cg_bind and bw_identity come from the core block above.
+{ printf 'om2\n'; cat "$ROOT/om/qmd/bw_qmd.om"; } > "$OUT/sources/bw_qmd.om"
+{ printf 'om2\n'; cat "$ROOT/om/encoder/amp_runtime.om" "$ROOT/om/encoder/amp_qmd.om"; } > "$OUT/sources/amp_qmd.om"
 if [ "$MODE" = --install ]; then
   case "$(uname -m)" in
     aarch64) target=aarch64linux ;;
@@ -40,9 +57,11 @@ for target in aarch64linux x86linux; do
   if command -v "$triple-gcc" >/dev/null 2>&1; then native_cc="$triple-gcc"
   elif command -v clang >/dev/null 2>&1; then native_cc="clang --target=$triple -ffreestanding"
   else echo "NO_POSIX regeneration requires $triple-gcc or clang" >&2; exit 2; fi
+  # ham/cubin-qmd-om: native argv roots; install-time sources are the earlier block.
   CC="$native_cc" OMEGA_NATIVE_OMC2="$OMEGA_OMC" sh "$OMEGA_BRIDGE/tools/native" --target "$target" --freestanding "$OUT/$target" \
     "$OUT/sources/bw_enc_sm121.om" "$OUT/sources/cubin_elf.om" "$OUT/sources/no_bf16.om" \
-    "$OUT/sources/admit.om" "$OUT/sources/words.om" "$OUT/sources/park.om" "$OUT/sources/book.om" "$OUT/sources/streams.om" "$OUT/sources/no_avbf.om"
+    "$OUT/sources/bw_qmd.om" "$OUT/sources/amp_qmd.om" \
+    "$OUT/sources/admit.om" "$OUT/sources/words.om" "$OUT/sources/park.om" "$OUT/sources/book.om" "$OUT/sources/streams.om" "$OUT/sources/no_avbf.om" "$@"
   dest="$ROOT/om/no-posix/gen/$target"
   if [ "$MODE" = --generate ]; then mkdir -p "$dest"; fi
   for file in omega_native.c omega_native.h omega_api_decl.h omega_api_defs.c; do

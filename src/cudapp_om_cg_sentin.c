@@ -92,10 +92,10 @@ static uint64_t f1(const void *v0, uint64_t v0_n, void *v1, uint64_t v1_n, uint6
 o_enter();
 uint64_t __attribute__((unused)) v3=o_cast(4, 5, o_get(v0, v0_n, 4ULL, 5));
 if(({uint64_t _a=o_get(v0, v0_n, 3ULL, 5);uint64_t _b=0ULL;o_op(7, 5, _a,_b);})){
-{uint64_t _i=v2;uint64_t _v=v3;o_put(v1, v1_n, _i,_v,11);}
+{uint64_t _i=v2;uint64_t _v=v3;o_put(v1, v1_n, _i,_v,4);}
 return o_leave(1ULL);
 }
-if(({uint64_t _a=o_get(v1, v1_n, v2, 11);uint64_t _b=v3;o_fp(6, 11, _a,_b);})){
+if(({uint64_t _a=o_get(v1, v1_n, v2, 4);uint64_t _b=v3;o_fp(6, 11, _a,_b);})){
 return o_leave(1ULL);
 }
 return o_leave(0ULL);
@@ -153,7 +153,7 @@ uint32_t omega_sentin(uint64_t  *result, const void *p0, volatile uint64_t p0_n,
   if(!o_buf(result,1,1,5))return 32;
 if(!o_rbuf(p0, p0_n,5, 5))return 32;
   if(o_rover(result,8,p0, p0_n*8))return 32;
-if(!o_rbuf(p1, p1_n,0, 11))return 32;
+if(!o_rbuf(p1, p1_n,0, 4))return 32;
   if(o_rover(result,8,p1, p1_n*4))return 32;
 if(o_rover(p1, p1_n*4, p0, p0_n*8))return 32;
   if(o_busy)return 33;

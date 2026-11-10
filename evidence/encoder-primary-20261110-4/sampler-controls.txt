@@ -1,0 +1,57 @@
+m1 diff-lines=2
+mc31 diff-lines=140
+ms1 diff-lines=2
+md diff-lines=2
+mu diff-lines=2
+eoffhi diff-lines=6
+eofflo diff-lines=6
+elds diff-lines=2
+edelta diff-lines=2
+ebar diff-lines=4
+ef64d diff-lines=2
+ef64s diff-lines=2
+build oracle-base rc=0
+build oracle-m1 rc=0
+build oracle-mc31 rc=0
+build oracle-ms1 rc=0
+build oracle-md rc=0
+build oracle-mu rc=0
+build oracle-eoffhi rc=0
+build oracle-eofflo rc=0
+build oracle-elds rc=0
+build oracle-edelta rc=0
+build oracle-ebar rc=0
+build oracle-ef64d rc=0
+build oracle-ef64s rc=0
+compile pp-prev rc=0
+tape-prev bytes=82837504
+sampler=prev oracle=base oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=m1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 16
+sampler=prev oracle=mc31 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 0 8
+sampler=prev oracle=ms1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 32
+sampler=prev oracle=md oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 1 16
+sampler=prev oracle=mu oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 6 18
+sampler=prev oracle=eoffhi oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=eofflo oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=elds oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=edelta oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=ebar oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=ef64d oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=ef64s oracle_rc=0 conductor_rc=0 first_fail=
+cmp prev base-oracle vs gate C reply rc=1
+compile pp-head rc=0
+tape-head bytes=83293696
+sampler=head oracle=base oracle_rc=0 conductor_rc=0 first_fail=
+sampler=head oracle=m1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 16
+sampler=head oracle=mc31 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 0 8
+sampler=head oracle=ms1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 32
+sampler=head oracle=md oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 1 16
+sampler=head oracle=mu oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 6 18
+sampler=head oracle=eoffhi oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 11 8194
+sampler=head oracle=eofflo oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 11 8195
+sampler=head oracle=elds oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 58 8194
+sampler=head oracle=edelta oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 54 8199
+sampler=head oracle=ebar oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 54 8202
+sampler=head oracle=ef64d oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 8205
+sampler=head oracle=ef64s oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 8207
+cmp head base-oracle vs gate C reply rc=0

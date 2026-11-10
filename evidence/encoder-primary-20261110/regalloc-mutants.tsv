@@ -1,0 +1,20 @@
+pair-alignment	compile=0	exercise=1	FAIL program/map/partial-state case=1
+reserved-gpr	compile=0	exercise=1	FAIL program/map/partial-state case=0
+equal-endpoint-release	compile=0	exercise=1	FAIL program/map/partial-state case=17
+sort-order	compile=0	exercise=1	FAIL program/map/partial-state case=0
+reserved-ugpr	compile=0	exercise=1	FAIL program/map/partial-state case=4
+quad-alignment	compile=0	exercise=1	FAIL program/map/partial-state case=1
+shortened-override-check	compile=0	exercise=1	FAIL liveness case=3 rc=0 expected=10
+v159-boundary	compile=0	exercise=1	FAIL liveness case=1 rc=10 expected=0
+override-ignored	compile=0	exercise=1	FAIL program/map/partial-state case=53004
+override-shortened	compile=0	exercise=1	FAIL refusal case=53004
+spec-m-limit	compile=0	exercise=1	FAIL bind spec 70101 0
+spec-precision-byte	compile=0	exercise=1	FAIL bind spec 10101 5
+dispatch-bf16	compile=0	exercise=1	FAIL bind dispatch 2 1
+vector-ceil-div	compile=0	exercise=1	FAIL bind vector 5 2
+pad-minimum	compile=0	exercise=1	FAIL bind pad 4 0
+fit-boundary	compile=0	exercise=1	FAIL bind fit 3 2
+hazard-size-6	compile=0	exercise=1	FAIL hazard differential failures=8726
+hazard-size-class	compile=0	exercise=1	FAIL hazard differential failures=44870
+hazard-op-2433	compile=0	exercise=1	FAIL hazard differential failures=45643
+arch-le	compile=0	exercise=1	FAIL bind compute id 4 0

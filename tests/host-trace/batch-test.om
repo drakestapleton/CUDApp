@@ -1,0 +1,191 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Compose batch-fake.om vector.om launch.om batch.om batch-test.om. Host-only.
+global bttally ulong 2
+global btold uchar 65536
+global btgot uchar 65536
+global btdig uchar 32
+text btpass "BATCH_HOST_PASS checks="
+text btfail "BATCH_HOST_FAIL checks="
+text btpar " parity_cases=32 parity_bytes="
+text btcount " batch_launches=287 kicks=1 waits=1 negatives=8\n"
+global btbytes ulong 1
+fn btnum n ulong to void
+if ge n 10
+btnum div n 10
+end
+put btdig 0 uchar add ulong 48 rem n 10
+r = write 1 btdig 0 1
+end
+fn btck ok bool to void
+put bttally 0 add get bttally 0 1
+if not ok
+put bttally 1 add get bttally 1 1
+end
+end
+fn btreset to void
+put nvfault 0 0
+put bffail 0 0
+put gbst 3 0
+for i ulong 4
+put bfstat i 0
+end
+end
+fn btparity n uint to void
+gbbuild n
+sz = get gbused 0
+for i ulong sz
+put btold i get gbcmd i
+end
+btck gbbegin 1
+gbbody n
+btck gbappend ulong n 0
+btck gbbsubmit 1000000
+btck eq sz get gbst 2
+r = mapread get gbpkt 0 0 btgot 0 sz
+btck eq r long sz
+for i ulong sz
+btck eq get btold i get btgot i
+end
+put btbytes 0 add get btbytes 0 sz
+end
+fn btrecord n ulong to bool
+if not gbbegin n
+ret false
+end
+for i ulong n
+gbbody 64
+if not gbappend add ulong 100 i i
+ret false
+end
+end
+ret true
+end
+fn main to int
+btck gbopen 64
+btck gbbopen
+note Packet and control/code/marker mappings 0-4 GPU-uncached; data operands 5-7 cached.
+btck eq get bfallocs 0 9
+for i ulong 5
+btck eq get bfcache i 2
+end
+for i ulong 3
+btck eq get bfcache add i 5 1
+end
+btck eq get bfcache 8 2
+for i ulong 32
+btparity uint add i 1
+end
+btreset
+btck btrecord 287
+btck gbbsubmit 1000000
+btck eq get bfstat 0 1
+btck eq get bfstat 1 1
+btck eq get gbst 6 1
+btck eq get gbst 7 1
+for i ulong 287
+btck eq mapget get gbmem 3 add ulong 32 mul i 4 4 6
+end
+note Negative 1: future producer, then attempted submit must not send the valid prefix.
+btreset
+btck gbbegin 3
+gbbody 64
+btck gbappend 100 0
+gbbody 64
+btck not gbappend 101 2
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+btck eq get gbst 4 1
+btck eq get gbst 5 101
+note Negative 2: count > capacity before any send.
+btreset
+btck not gbbegin 513
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Negative 3: an extra launch poisons the whole recording, cannot send a prefix.
+btreset
+btck btrecord 1
+gbbody 64
+btck not gbappend 101 1
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Negative 4: failure inside a batch names index 1 and caller id 101, not final kernel 102.
+btreset
+btck btrecord 3
+put bffail 0 2
+btck not gbbsubmit 1000000
+btck eq get gbst 4 1
+btck eq get gbst 5 101
+btck eq get bfstat 0 1
+btck eq get bfstat 1 1
+btck eq get bfstat 2 4
+btck eq get bfstat 3 100000
+btck ne get nvfault 0 0
+btck not gbbegin 1
+btck not gbappend 104 0
+note Negative 5: incomplete recording refused before send.
+btreset
+btck gbbegin 2
+gbbody 64
+btck gbappend 100 0
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Negative 6: malformed body length is refused and poisons the batch.
+btreset
+btck gbbegin 1
+put gbused 0 3
+btck not gbappend 100 0
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Negative 7: byte capacity overflow refused before copy, never sends a prefix.
+btreset
+btck gbbegin 32
+for i ulong 16
+put gbused 0 65536
+ok = gbappend i 0
+if lt i 15
+btck ok
+else
+btck not ok
+end
+end
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Negative 8: after the reserve is consumed exactly, a further 4-byte body is refused (-75),
+note not accepted through an unsigned wrap and later trapped by the mapping bounds check.
+btreset
+put nverr 0 0
+btck gbbegin 18
+for i ulong 15
+put gbused 0 65536
+btck gbappend i 0
+end
+put gbused 0 64956
+btck gbappend 15 0
+btck eq get gbst 2 1048508
+put gbused 0 4
+btck not gbappend 16 0
+btck eq get nverr 0 -75
+btck eq get gbst 4 16
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Existing per-launch entry still does one send and one wait with unchanged completion checks.
+btreset
+btck gblaunch 64
+btck eq get bfstat 0 1
+btck eq get bfstat 1 1
+for i ulong 8
+r = mapdrop get gbmem i
+end
+r = mapdrop get gbpkt 0
+if ne get bttally 1 0
+r = write 1 btfail 0 len btfail
+btnum get bttally 1
+ret 1
+end
+r = write 1 btpass 0 len btpass
+btnum get bttally 0
+r = write 1 btpar 0 len btpar
+btnum get btbytes 0
+r = write 1 btcount 0 len btcount
+ret 0
+end

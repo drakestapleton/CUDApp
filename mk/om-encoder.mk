@@ -102,6 +102,29 @@ test-om-encoder-mutants: build/test_codegen_freestanding
 	if [ $$g = 0 ] && [ $$c = 0 ]; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): golden words $$( [ $$g = 1 ] && echo FAIL || echo pass ), dump vs native Omega $$( [ $$c = 1 ] && echo DIFFERS || echo same )"; \
 	done
+
+.PHONY: test-om-encoder-ldg-c
+$(OM_ENC_DIR)/ldg-c: gpu-engine-freestanding $(GPU_NO_POSIX_OBJS) tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.c
+	@mkdir -p $(OM_ENC_DIR)
+	$(OM_ENC_BUILD) -DOMEGA_GPU_NO_POSIX -DCUDAPP_MIGRATION_PENDING_C_REGALLOC -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL \
+		-DCUDAPP_MIGRATION_PENDING_C_ENCODER -DCUDAPP_MIGRATION_PENDING_C_BIND -DCUDAPP_MIGRATION_PENDING_C_PACK -DCUDAPP_MIGRATION_PENDING_C_CORE \
+		-I$(GPU_NO_POSIX_DIR) -o $@ tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.c src/omega_blackwell_matmul.c \
+		src/sha256.c src/cudapp_freest_f16.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_fixture_verify.c $(GPU_NO_POSIX_OBJS)
+test-om-encoder-ldg-c: $(OM_ENC_DIR)/ldg-c
+	cat om/encoder/bw_enc_sm121.om om/encoder/ldg_mini.om > $(OM_ENC_DIR)/ldg-mini.om
+	$(OMEGA_OMC) < $(OM_ENC_DIR)/ldg-mini.om > $(OM_ENC_DIR)/ldg-mini
+	chmod +x $(OM_ENC_DIR)/ldg-mini
+	$(OM_ENC_DIR)/ldg-mini > $(OM_ENC_DIR)/ldg-mini.tape
+	$(OM_ENC_DIR)/ldg-mini expected > $(OM_ENC_DIR)/ldg-mini.om.bin
+	$(OM_ENC_DIR)/ldg-c --encoder-tape < $(OM_ENC_DIR)/ldg-mini.tape > $(OM_ENC_DIR)/ldg-mini.c.bin
+	cmp $(OM_ENC_DIR)/ldg-mini.om.bin $(OM_ENC_DIR)/ldg-mini.c.bin
+	git show cb3395aad13d7cafea2cfaaf97a30a116da2293a:om/encoder/bw_enc_sm121.om > $(OM_ENC_DIR)/ldg-before.om
+	cat om/encoder/ldg_mini.om >> $(OM_ENC_DIR)/ldg-before.om
+	$(OMEGA_OMC) < $(OM_ENC_DIR)/ldg-before.om > $(OM_ENC_DIR)/ldg-before
+	chmod +x $(OM_ENC_DIR)/ldg-before
+	$(OM_ENC_DIR)/ldg-before expected > $(OM_ENC_DIR)/ldg-mini.before.bin
+	@if cmp -s $(OM_ENC_DIR)/ldg-mini.before.bin $(OM_ENC_DIR)/ldg-mini.c.bin; then echo 'FAIL pre-fix LDG witness unexpectedly agrees'; exit 1; fi
+	@echo 'PASS one-instruction LDG C parity; pre-fix seeded encoder differs; public Mesa field selects C as correct'
 OM_ENC_GUARD = $(OM_ENC_DIR)/guard-pred
 # DRA-483 (C1b): om/encoder/guard_pred_test.om, composed after the encoder and compiled by the pinned omc. Every op
 # 0..64 encoded @P0 and @!P0 must carry guard 0 / 8 in w0 bits 12..15 and equal the unpredicated words otherwise;

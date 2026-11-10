@@ -102,6 +102,18 @@ LDG.E words. It checks the existing C #373 signed byte-offset field, restored
 in the seeded encoder and its spec table after operand parity exposed the
 omitted field. The listing remains ignored; no new instruction form is added.
 
+### LDG.E signed byte offset, ham/encoder-ldg-offset
+
+Class A decision source: Mesa NAK (MIT), commit
+`8190c11866dfb23e4dfacaea2f7cb795596d1fb1`,
+[sm70_encode.rs, OpLd::encode](https://gitlab.freedesktop.org/mesa/mesa/-/blob/8190c11866dfb23e4dfacaea2f7cb795596d1fb1/src/nouveau/compiler/nak/sm70_encode.rs#L3437-3512):
+global load selects opcode `0x981` with UGPR addressing, then unconditionally
+encodes `self.offset` in `40..64`. Its signed type is `i32` in
+[ir.rs, OpLd](https://gitlab.freedesktop.org/mesa/mesa/-/blob/8190c11866dfb23e4dfacaea2f7cb795596d1fb1/src/nouveau/compiler/nak/ir.rs#L6501-6516).
+Thus the existing C offset field is right; the seeded encoder and spec omitted it.
+The nvdisasm 13.0.85 LDG gate is secondary verification on our bytes only, not
+the decision source. Chip execution for this correction: NOT_RUN.
+
 ## 7. Open questions for a lawyer
 
 1. Is compiling our own probe kernels with nvcc and reading the result with cuobjdump, to learn the

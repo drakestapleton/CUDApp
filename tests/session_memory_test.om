@@ -1,0 +1,221 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Wolfram: {2^20,4096*2^20,(2^44-1)*2^20,2^64-1,Mod[-2,2^64]} ->
+note {1048576,4294967296,18446744073708503040,18446744073709551615,18446744073709551614}; conversion results are bytes.
+note Concatenate reserve.om, engine/fixture_rest.om, engine/eng.om, api/apish_slot.om, then this file.
+note Exercises the existing handle and slot decisions unchanged; no second lifetime table.
+global Mtests ulong 1
+text MTpass "PASS "
+text MTfail "FAIL "
+text MTnl "\n"
+text MTenv "reserve environment"
+text MTline "MemAvailable conversion"
+text MTbytes "reserve byte saturation"
+text MTdone "SESSION_MEMORY PASS cases="
+text MTdouble "double release refused"
+text MTuse "use after release refused"
+text MTstale "stale generation refused"
+text MTunder "pin-count underflow refused"
+text MTpin "pinned eviction refused and version preserved"
+text MTunpin "completion unpin permits eviction"
+text MTcap "allocation at capacity refused"
+text MTempty ""
+text MTzero "0"
+text MTone "1"
+text MTdef "4096"
+text MTws " \t+512"
+text MTminus "-1"
+text MTneg2 "-2"
+text MTminus0 "-0"
+text MTmax "18446744073709551615"
+text MTov "18446744073709551616"
+text MTnegov "-18446744073709551616"
+text MTbad "12x"
+text MTtrws "1 "
+text MTspace " \t\n"
+text MTsign "+"
+text MTtwo "++1"
+text MTmem "MemAvailable: 8192 kB\n"
+text MTmws "MemAvailable:\t+4096"
+text MTmneg "MemAvailable: -1 kB"
+text MTmov "MemAvailable: 18446744073709551616 kB"
+text MTmnot "MemFree: 8192 kB"
+text MTmnone "MemAvailable: kB"
+text MTmcase "memAvailable: 1"
+text MTmshort "MemAvailable"
+text MTmlead " MemAvailable: 1"
+text MTmsuff "MemAvailable: 7xyz"
+text MTmzero "MemAvailable: 0"
+text MTmbad "MemAvailable: + kB"
+
+fn tmwrite b view uchar * to void
+i = ulong 0
+while lt i len b bound 4096
+r = write 1 b i sub len b i
+if le r 0
+exit 2
+end
+i = add i ulong r
+end
+end
+
+fn tmcheck ok bool name view uchar * to void
+if not ok
+tmwrite MTfail
+tmwrite name
+tmwrite MTnl
+exit 1
+end
+put Mtests 0 add get Mtests 0 1
+tmwrite MTpass
+tmwrite name
+tmwrite MTnl
+end
+
+fn tmenv b view uchar * want ulong to void
+o = new ulong 2 0
+r = memreserve 0 b 0 o
+tmcheck eq r want MTenv
+end
+
+fn tmline b view uchar * have ulong want ulong to void
+o = new ulong 2 0
+r = memreserve 1 b 0 o
+tmcheck eq r have MTline
+if ne have 0
+tmcheck eq get o 0 want MTline
+end
+end
+
+fn tmbytes n ulong want ulong to void
+b = new uchar 1 0
+o = new ulong 2 0
+r = memreserve 2 part b 0 0 n o
+tmcheck eq r want MTbytes
+end
+
+fn tmparses to void
+longv = new uchar 4096 48
+longws = new uchar 4096 32
+tmenv part MTempty 0 0 4096
+tmenv MTzero 0
+tmenv MTone 1
+tmenv MTdef 4096
+tmenv MTws 512
+tmenv MTminus 18446744073709551615
+tmenv MTneg2 18446744073709551614
+tmenv MTminus0 0
+tmenv MTmax 18446744073709551615
+tmenv MTov 18446744073709551615
+tmenv MTnegov 18446744073709551615
+tmenv MTbad 4096
+tmenv MTtrws 4096
+tmenv MTspace 4096
+tmenv MTsign 4096
+tmenv MTtwo 4096
+put longv 4095 49
+tmenv longv 1
+put longws 4095 49
+tmenv longws 1
+tmline MTmem 1 8192
+tmline MTmws 1 4096
+tmline MTmneg 1 18446744073709551615
+tmline MTmov 1 18446744073709551615
+tmline MTmnot 0 0
+tmline MTmnone 0 0
+tmline MTmcase 0 0
+tmline MTmshort 0 0
+tmline MTmlead 0 0
+tmline MTmsuff 1 7
+tmline MTmzero 1 0
+tmline MTmbad 0 0
+tmbytes 0 0
+tmbytes 1 1048576
+tmbytes 4096 4294967296
+tmbytes 17592186044415 18446744073708503040
+tmbytes 17592186044416 18446744073709551615
+tmbytes 18446744073709551615 18446744073709551615
+end
+
+fn tmhandles to void
+m = new ulong 24 0
+w = new ulong 16 0
+note A closed handle is refused by the exact hchk decision used for both check and close.
+put m 2 1
+put m 3 7
+put m 4 0
+put m 5 7
+put m 6 2
+put m 7 2
+hchk m w
+tmcheck eq get w 0 6 MTdouble
+hchk m w
+tmcheck eq get w 0 6 MTuse
+put m 4 1
+put m 5 8
+hchk m w
+tmcheck eq get w 0 6 MTstale
+note hopen uses nlive and max_slots; no DMA is requested when the admission returns LIMIT.
+put m 2 2
+put m 3 4096
+put m 4 4096
+put m 5 4096
+put m 6 18446744073709551615
+hopen m w
+tmcheck eq get w 0 11 MTcap
+end
+
+fn tmpins to void
+rec = new ulong 16 0
+put rec 0 2
+put rec 3 7
+put rec 4 8
+r = apishl 4 7 rec
+tmcheck and eq r -1 eq get rec 1 0 MTunder
+r = apishl 3 6 rec
+tmcheck and eq r -7 eq get rec 1 0 MTstale
+r = apishl 3 7 rec
+tmcheck and eq r 0 eq get rec 1 1 MTpin
+r = apishl 5 0 rec
+tmcheck and eq r -6 eq get rec 3 7 MTpin
+r = apishl 7 7 rec
+tmcheck eq r 0 MTpin
+r = apishl 4 7 rec
+tmcheck and eq r 0 eq get rec 1 0 MTunpin
+r = apishl 4 7 rec
+tmcheck and eq r -1 eq get rec 14 0 MTunder
+r = apishl 5 0 rec
+tmcheck and eq r 0 eq get rec 0 0 MTunpin
+r = apishl 3 7 rec
+tmcheck and eq r -7 eq get rec 1 0 MTuse
+end
+
+fn tmcount value ulong to void
+buf = new uchar 32 0
+v = value
+n = ulong 0
+while true bound 32
+put buf n uchar add rem v 10 48
+n = add n 1
+v = div v 10
+if eq v 0
+break
+end
+end
+while gt n 0 bound 32
+n = sub n 1
+r = write 1 buf n 1
+if ne r 1
+exit 2
+end
+end
+end
+
+fn main to int
+tmparses
+tmhandles
+tmpins
+tmwrite MTdone
+tmcount get Mtests 0
+tmwrite MTnl
+ret 0
+end

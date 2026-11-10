@@ -57,7 +57,7 @@ run(['gcc', '-std=gnu11', '-O2', '-I' + str(fs), 'tests/no_posix_session.c', '-o
 
 # Inspect actual consumers, including explicit flag=0 (not merely undefined).
 for flag in (0, 1):
-    for unit, omega, oracle in [('session', ['omega2_decide', 'omega2_emit', 'omega2_scan', 'omega2_streams_words'], ['ses_c', 'bw_mthd', 'xq_admit_c']),
+    for unit, omega, oracle in [('session', ['omega2_decide', 'omega2_emit', 'omega2_scan'], ['ses_c', 'bw_mthd']),
                                 ('cmdlist', ['omega2_book'], ['clbook_c'])]:
         obj = OUT / (unit + '-' + str(flag) + '.o')
         run(['gcc', '-std=gnu11', '-O0', '-ffreestanding', '-DOMEGA_GPU_NO_POSIX',
@@ -72,6 +72,13 @@ for flag in (0, 1):
             assert (symbol in dis) == (flag == 0), (unit, flag, symbol, 'relocation')
         for symbol in oracle:
             assert (symbol in nm) == (flag == 1), (unit, flag, symbol)
+        if unit == 'session':
+            # The extra-queue root migrated separately to bridge-freest xq.om.
+            # A session-oracle switch must not silently select its C oracle.
+            assert 'omega_streams_xq' in nm and 'omega_streams_xq' in dis
+            assert 'omega2_streams_words' not in nm and 'xq_admit_c' not in nm
+            assert 'omega2_streams_words' not in dis and 'xq_admit_c' not in dis
+
 
 # Each executable must build. A compiler failure never counts as a kill.
 mutants = [
@@ -80,7 +87,8 @@ mutants = [
     ('packet-tag', 'words', 'const MTHDTAG ulong 536870912', 'const MTHDTAG ulong 536870913'),
     ('park-found', 'park', 'ret 1\n', 'ret 0\n'),
     ('book-successor', 'book', 'add get a 1 1', 'add get a 1 2'),
-    ('queue-bound', 'streams', 'if or eq i 0 gt i 3', 'if or eq i 0 gt i 2'),
+    # The extra-queue index bound moved to om/streams/xq.om (bridge-freest omega_streams_xq);
+    # test-om-streams-mutants mutant 5 applies this same edit there.
 ]
 for name, unit, old, new in mutants:
     directory = OUT / name
@@ -103,4 +111,4 @@ for name, unit, old, new in mutants:
     with LOG.open('a') as f:
         f.write('KILLED ' + name + ' rc=' + str(p.returncode) + '\n')
     print('KILLED', name)
-print('PASS no-posix session: 5 exports hosted/freestanding differential; ABI refusal; symbol OFF/ON red; 6 killed mutants')
+print('PASS no-posix session: 5 exports hosted/freestanding differential; ABI refusal; symbol OFF/ON red; 5 killed mutants')

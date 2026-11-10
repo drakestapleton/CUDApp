@@ -54,7 +54,7 @@ int main(void) {
         if (record(s,r,0,0) || s || r != 0) return 6;
         idx[p] = gen[p] = 0;
     }
-    /* session xq_admit uses streams op6 with all 3 queue-open combinations. */
+    /* op 6 (xq_admit) moved to om/streams/xq.om; streams_words now refuses it. Kept as a refusal differential. */
     for (unsigned mask = 0; mask < 8; ++mask) for (unsigned k = 0; k < sizeof v / sizeof *v; ++k) {
         uint64_t a[16] = {v[k],mask&1,(mask>>1)&1,(mask>>2)&1}, o[32] = {0}, r = 0;
         uint32_t s = omega2_streams_words(&r,6,a,16,o,32);

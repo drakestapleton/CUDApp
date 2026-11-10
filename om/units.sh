@@ -98,6 +98,8 @@ if [ -z "${OMEGA_UNITS:-}" ]; then
 fi
 [ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS nvrm_policy=native/nvrm/policy.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then UNITS="$UNITS session_admit=om/session/admit.om session_words=om/session/words.om session_park=om/session/park.om cmdlist_book=om/cmdlist/book.om"; fi
+# ar_ roots use the existing checked runtime-view profile; no new converter profile.
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS ar_memreserve=om/session/reserve.om"
 if [ -z "${OMEGA_UNITS:-}" ]; then
   UNITS="$UNITS om/codegen/cg_fields.om om/codegen/cg_replay.om om/codegen/cg_life.om om/codegen/cg_invar.om om/codegen/cg_budget.om"
     UNITS="$UNITS cm_route=om/components/cm_route.om"

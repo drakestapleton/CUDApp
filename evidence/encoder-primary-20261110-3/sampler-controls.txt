@@ -1,0 +1,49 @@
+m1 diff lines=2
+mc31 diff lines=140
+ms1 diff lines=2
+ms2 diff lines=2
+ms3 diff lines=2
+md diff lines=2
+mu diff lines=2
+sampler=prev oracle=base oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=m1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 72 
+sampler=prev oracle=mc31 oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=ms1 oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=ms2 oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=ms3 oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=md oracle_rc=0 conductor_rc=0 first_fail=
+sampler=prev oracle=mu oracle_rc=0 conductor_rc=0 first_fail=
+native prev rc=0
+hosted prev rc=0
+cmp prev base-native rc=0
+cmp prev base-hosted rc=0
+conductor prev native rc=0
+rows prev 632 accepted-sum 609350
+sampler=tip oracle=base oracle_rc=0 conductor_rc=0 first_fail=
+sampler=tip oracle=m1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 16 
+sampler=tip oracle=mc31 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 0 8 
+sampler=tip oracle=ms1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 32 
+sampler=tip oracle=ms2 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 512 
+sampler=tip oracle=ms3 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 4 
+sampler=tip oracle=md oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 1 16 
+sampler=tip oracle=mu oracle_rc=0 conductor_rc=0 first_fail=
+native tip rc=0
+hosted tip rc=0
+cmp tip base-native rc=0
+cmp tip base-hosted rc=0
+conductor tip native rc=0
+rows tip 632 accepted-sum 605050
+sampler=uld oracle=base oracle_rc=0 conductor_rc=0 first_fail=
+sampler=uld oracle=m1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 68 16 
+sampler=uld oracle=mc31 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 0 8 
+sampler=uld oracle=ms1 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 32 
+sampler=uld oracle=ms2 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 512 
+sampler=uld oracle=ms3 oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 8 4 
+sampler=uld oracle=md oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 1 16 
+sampler=uld oracle=mu oracle_rc=0 conductor_rc=1 first_fail=ENCODER PARITY FAIL 6 18 
+native uld rc=0
+hosted uld rc=0
+cmp uld base-native rc=0
+cmp uld base-hosted rc=0
+conductor uld native rc=0
+rows uld 632 accepted-sum 605050

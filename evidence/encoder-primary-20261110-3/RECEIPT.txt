@@ -1,0 +1,24 @@
+IMPLEMENTED / EXERCISED host only. Factory bay 3 proposal on top of ham/encoder-om-primary-2 9b84f9413d7dc567294b313152363ecaf373cbe8.
+evidence/encoder-primary-20261110/ and evidence/encoder-primary-20261110-2/ are left unedited and describe the earlier samplers.
+
+Sampler change in om/encoder/primary_parity.om since 9b84f941: dst_subreg (slot 12) is also sampled on the uniform loads
+LDCU and LDCU.64 (ops 6 and 7). Both encoders ignore dst_subreg there (C: dst = uvreg_to_phys[dst_vreg]; seeded: o 1 =
+phys[d + 256]), so the rule was outside parity: a C or Omega change that added the subreg on a uniform destination
+passed the gate.
+
+Run 2026-11-10T05:36:04Z-05:36:45Z, pool-12-14 (taskset -c 12-14, nice -n 19), depth-1 clone of 9b84f941 with this
+sampler as a separate file, pinned omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f.
+C oracle rebuilt as tests/no_posix_native.py does (-O2, freestanding, C_NO_POSIX); native = build/test_codegen_freestanding,
+hosted = build/test_codegen_hosted, each fed the same 82837504-byte tape.
+- This sampler: C = native = hosted (cmp rc 0 both), seeded conductor rc 0 on the C and the native replies. parity-counts.txt
+  (632 rows, accepted sum 605050) is byte-identical to evidence/encoder-primary-20261110-2/parity-counts.txt: the extra
+  subreg changes no acceptance.
+- Oracle mutants (sed on src/omega_blackwell_codegen.c): m1 f64 odd-destination refusal dropped; mc31 control bit 31
+  dropped at all 70 control sites; ms1/ms2/ms3 src1/src2/src3 subreg ignored; md dst subreg ignored; mu dst subreg added
+  on uniform loads. Conductor result per sampler:
+  3b1a2691 sampler: m1 killed (68 72); mc31, ms1, ms2, ms3, md, mu survive.
+  9b84f941 sampler: m1, mc31, ms1, ms2, ms3, md killed; mu survives.
+  this sampler:     all seven killed; mu fails at ENCODER PARITY FAIL 6 18.
+Raw lines: sampler-controls.txt.
+
+These are sampled host bytes, not hardware results. QUALIFIED / MERGED / DEPLOYED and chip runs: NOT_RUN.

@@ -9,12 +9,17 @@
 #       3. its red check: the sweep with one flipped image bit must abort.
 #   make test-om-cubin-mutants   mutant .om packers, each compiled by the pinned omc, must turn the sweep red
 #       (needs OMEGA_MV and OMEGA_BRIDGE_DIR as in mk/om-encoder.mk; without them exit 3, NOT_RUN, never PASS).
+#       Its prerequisites run the two Omega tests of the Ampere writer outputs, so the CI om-units job runs them:
+#   make test-om-amp-qmd             tests/amp_qmd_test.om: amp_qmd.om against amp_runtime, the computation the retained
+#       C oracle calls (4096 build + 4096 policy states, all 256 bytes, refusal leaves the output unchanged); an
+#       injected bad byte must exit 2.
+#   make test-om-ampere-elf-admission (mk/ampere-cubin.mk) the ELF admission unit on the test-ampere-cubin image.
 OM_CUBIN_DIR = $(OUT_DIR)/om-cubin
 OM_CUBIN_BUILD = gcc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Isrc
 OM_CUBIN_DEPS = src/omega_cubin.c src/omega_cubin.h $(CUDAPP_BINDING_SRCS) src/cudapp_native.h
 OM_CUBIN_DIFF = -DCUDAPP_MIGRATION_PENDING_CUBIN_DIFF
 
-.PHONY: test-om-cubin test-om-cubin-mutants
+.PHONY: test-om-cubin test-om-cubin-mutants test-om-amp-qmd
 $(OM_CUBIN_DIR)/sweep_diff: tests/om_cubin_sweep_test.c $(OM_CUBIN_DEPS)
 	@mkdir -p $(OM_CUBIN_DIR)
 	$(OM_CUBIN_BUILD) $(OM_CUBIN_DIFF) -o $@ tests/om_cubin_sweep_test.c src/omega_cubin.c $(CUDAPP_BINDING_SRCS)
@@ -55,7 +60,16 @@ OM_CUBIN_MUTANTS = 's/^f = add f add add 117 mul 16 tkon m mul 3 n$$/f = add f a
 	's/^const PBASE ulong 896$$/const PBASE ulong 892/' \
 	's/^if gt get m 4 255$$/if gt get m 4 254/' \
 	's/^sh2 o b get l 10 32 mul 11 tkon m 2$$/sh2 o b get l 10 32 mul 0 tkon m 2/'
-test-om-cubin-mutants:
+test-om-amp-qmd: om/encoder/amp_runtime.om om/encoder/amp_qmd.om tests/amp_qmd_test.om
+	@[ -x $(OMEGA_MV)/seed/out/omc ] || { echo "NOT_RUN: set OMEGA_MV"; exit 3; }
+	@mkdir -p $(OM_CUBIN_DIR)
+	cat om/encoder/amp_runtime.om om/encoder/amp_qmd.om tests/amp_qmd_test.om | $(OMEGA_MV)/seed/out/omc > $(OM_CUBIN_DIR)/amp_qmd_test
+	chmod +x $(OM_CUBIN_DIR)/amp_qmd_test
+	$(OM_CUBIN_DIR)/amp_qmd_test
+	@rc=0; $(OM_CUBIN_DIR)/amp_qmd_test red > /dev/null || rc=$$?; \
+	if [ $$rc != 2 ]; then echo "RED CHECK BROKEN: amp_qmd_test red exited $$rc, not 2"; exit 1; fi; \
+	echo "red check: an injected output byte exits 2, as it must"
+test-om-cubin-mutants: test-om-amp-qmd test-om-ampere-elf-admission
 	@[ -x $(OMEGA_MV)/seed/out/omc ] && [ -f $(OMEGA_BRIDGE_DIR)/src/native.om ] || { echo "NOT_RUN: set OMEGA_MV and OMEGA_BRIDGE_DIR"; exit 3; }
 	@n=0; for m in $(OM_CUBIN_MUTANTS); do n=$$((n+1)); d=$(OM_CUBIN_DIR)/mutant$$n; rm -rf $$d; mkdir -p $$d; \
 	sed "$$m" om/cubin/cubin_elf.om > $$d/cubin_elf.om; \

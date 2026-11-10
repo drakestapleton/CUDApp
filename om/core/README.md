@@ -46,6 +46,22 @@ exports plus separate existing cubin/Ampere units. Native aggregate registration
 and no-libc qualification belong to the integration lane. Composition is not
 native execution evidence. There is no `NO_POSIX` C fallback.
 
+## Native realization identity composition
+
+Compose `om/cache/digest.om`, `om/blackwell/identity.om` and
+`om/blackwell/id_native.om` after an `om2` prefix. The adapter exposes
+`bw_id_native` with the native public `long` result while retaining the
+canonical `bw_identity` integer result and policy. The digest and identity
+output parameters are named `dst`: `out` is reserved in OM-2. Their types,
+function names and byte behavior do not change.
+
+`tests/identity_native.om` emits the complete digest bytes for 4096 distinct
+machine-wire and 4096 distinct realization-wire inputs. It also checks the
+length refusal. Run its composition against both the pre-rename and renamed
+units and compare stdout. Native root registration in the production aggregate
+is separate from this compatibility prerequisite. These are host checks, not
+physical identity or GPU qualification.
+
 ## Host gates
 
 Every test and compiler-driven mutant must run with device nodes hidden:

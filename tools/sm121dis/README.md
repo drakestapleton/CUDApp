@@ -29,6 +29,9 @@ the comparison with NVIDIA's tool.
 - Flipped-bit control (`negctl.sh`): flipping bit 16 of word 0 in each kernel must change our text and break parity in
   exactly that word.
 - A kernel that could not be saved whole (a full disk) fails the collection; it is never compared cut short.
+- IMAD.WIDE.U32's 32-bit immediate prints signed, as nvdisasm 13.0.85 prints it (`-0x2daee0ad` for the Philox
+  multiplier 0xd2511f53). Until 2026-11-10 both decoders printed it unsigned; the gpu_mathlibs_test Philox kernels
+  of the #280 integration were the first to reach bit 31, and 81 of their kernels failed the comparison.
 - A word the decoder does not know is printed as `?? <hex>` and fails the check. It is never guessed. That includes a
   special register nvdisasm names but this decoder does not (96 of 256 values; an S2R sweep, `sr-sweep.sh`).
 - BlackwellIR ops 64..79, the numbers the #280 integration moved (ATOMG.E.MIN.64 stays at 64; its conversions and
@@ -40,7 +43,16 @@ the comparison with NVIDIA's tool.
 
 ## How to run it
 
-    make test-sm121dis          # collect, compare with nvdisasm, then the red check
+    make test-sm121dis            # collect, compare with nvdisasm, then the red check
+    make test-sm121dis-opmove     # BlackwellIR ops 64..79 against nvdisasm 13.0.85, with three red checks
+    make test-sm121dis-om-mutants # three .om decoder mutants must each change the corpus text
+    make test-om-disasm           # no NVIDIA tool: 11 golden words and .om vs C on every row, with two red checks
+    make test-om-disasm-mutants   # four .om decoder mutants must each fail the .om vs C differential
+    make test-disasm-words        # word assembly and EXIT padding (src/cudapp_om_words.c) against its C oracle
+
+`test-sm121dis-om-mutants`, `test-om-disasm-mutants` and `test-disasm-words` need the pinned `OMEGA_OMC` and
+`OMEGA_BRIDGE`, like `om/units.sh`; `test-sm121dis-om-mutants` reads the corpus `test-sm121dis` collected.
+`test-sm121dis-opmove` needs the pinned `OMEGA_OMC` and refuses any nvdisasm other than 13.0.85.
 
 `nvdisasm` is used only here, as the reference to compare against. Nothing it prints goes into a kernel.
 
@@ -72,6 +84,7 @@ of these checks runs `nvdisasm`.
 | `oracle_pairs.sh` | turns nvdisasm's listing into the same one-line-per-word form |
 | `negctl.sh` | ORACLE harness: the flipped-bit negative control of the comparison |
 | `om_mutants.sh` | three `.om` decoder mutants through the pinned compiler and bridge; each must change the corpus text |
+| `om_vs_c.sh` | the `.om` decoder (default build) against the C decoder (`CUDAPP_DISASM=c` build) on a folder of kernels, `--pairs` text byte for byte; no make target calls it yet |
 | `oracle-allow.tsv` | the declared oracle lines the ZERO-NVDISASM static check accepts, each with its reason |
 
 ## Exact MMIO semantic contract (issue #171)

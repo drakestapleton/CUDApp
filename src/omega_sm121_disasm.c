@@ -194,7 +194,7 @@ static const Row ROWS[] = {
     /* integer */
     { 0x0000000000007224ull, 0x078e0200ull, "IMAD %d, %a, %b, %c" },
     { 0x0000000000007c24ull, 0x0f8e0200ull, "IMAD %d, %a, %B, %c" },
-    { 0x0000000000007825ull, 0x078e0000ull, "IMAD.WIDE.U32 %d, %a, %i, %c" },
+    { 0x0000000000007825ull, 0x078e0000ull, "IMAD.WIDE.U32 %d, %a, %s, %c" },
     { 0x0000000000007227ull, 0x078e0000ull, "IMAD.HI.U32 %d, %a, %b, %c" },
     { 0x0000000000007210ull, 0x07ffe000ull, "IADD3 %d, PT, PT, %N%a, %M%b, %c" },
     { 0x0000000000007810ull, 0x07ffe000ull, "IADD3 %d, PT, PT, %N%a, %s, %c" },

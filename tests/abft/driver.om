@@ -53,7 +53,9 @@ global ob uchar 4096
 global obn ulong 1
 global cp uchar 4096
 global cpn ulong 1
-global ab uchar 8192
+note ab holds one whole environment entry: Linux refuses any longer than 32 pages (131072 bytes on
+note 4 KiB pages, 2097152 on 64 KiB), so envread never returns -105 and a long OMEGA_OMC is not unset
+global ab uchar 2097152
 global av uchar 16384
 global avp ulong 1
 global avc ulong 1

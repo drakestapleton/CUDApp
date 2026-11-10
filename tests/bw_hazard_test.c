@@ -34,6 +34,7 @@
 #include "omega_blackwell_codegen_dec.h"
 #include "omega_blackwell_codegen_pattn.h"
 #include "omega_gpu_attention_api.h"
+#include "omega_gpu_gemm.h"
 #include "omega_gpu_elementwise_api.h"
 #include "omega_gpu_prefill_attn_api.h"
 #include <fcntl.h>
@@ -430,6 +431,19 @@ static void sweep_prog(const char *family, const char *variant, int patch) {
 }
 #define BUILD(call) (memset(&g_prog, 0, sizeof g_prog), (call) == 0)
 
+static void own_gemm_sweep(void) {
+    char v[96];
+    /* Own-model tensor GEMM: every double-buffered operand geometry, including pack kernels. */
+    for (unsigned ty = 0; ty < 3; ty++) for (unsigned rt = 1; rt <= 4; rt *= 2) for (unsigned ct = 1; ct <= 4; ct *= 2) {
+        OmegaGemmCfg cfg = { (OmegaGpuGemmType)ty, rt, ct, 2, 4, 4, 0, 8 };
+        for (unsigned kind = 0; kind < OMEGA_GEMM_K_COUNT; kind++) {
+            snprintf(v, sizeof v, "type%u rt%u ct%u kind%u", ty, rt, ct, kind);
+            if (BUILD(omega_gpu_gemm_codegen(&cfg, (OmegaGemmKind)kind, &g_prog)))
+                sweep_prog("ollm-gemm", v, ty == OMEGA_GPU_GEMM_E4M3 ? P_QMMA : P_NONE);
+        }
+    }
+}
+
 static void sweep(void) {
     char v[96];
     /* fp8 GEMV (MoE experts, attention projections): k values of the live models, every buildable lane / rows / warps / depth */
@@ -486,6 +500,7 @@ static void sweep(void) {
           snprintf(v, sizeof v, "RES mode%u", mode);
           if (BUILD(omega_blackwell_codegen_dec_prog(&s, &g_prog))) sweep_prog("dec", v, P_NONE);
       } }
+    own_gemm_sweep();
     /* tensor-core GEMM and probes */
     { unsigned ks[] = { 128, 768, 2048, 4096, 16384 };
       for (unsigned a = 0; a < 5; a++) for (unsigned rt = 1; rt <= 4; rt *= 2) for (unsigned ct = 1; ct <= 4; ct *= 2) for (unsigned w = 1; w <= 8; w *= 2) {
@@ -641,6 +656,13 @@ static void disasm_cross_check(const char *family, const char *variant, const ui
 }
 
 int main(int argc, char **argv) {
+    if (argc == 2 && !strcmp(argv[1], "--ollm-only")) {
+        own_gemm_sweep();
+        CHECK(g_variants == 81 && g_unchecked == 0 && g_findings_total == 0, "all 81 own GEMM streams checked clean");
+        printf("OLLM GEMM CHECKER streams=%zu distinct=%zu unchecked=%zu findings=%zu failed=%d\n",g_variants,g_nseen,g_unchecked,g_findings_total,g_failed);
+        return g_failed ? 1 : 0;
+    }
+
     const char *dir = "tests/fixtures/bw_hazard";
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--disasm")) g_disasm = 1;

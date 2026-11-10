@@ -1,0 +1,40 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Parse actual DMA packet WFI release markers. Host model, NOT GPU execution.
+fn bfdev m long off ulong words uint to bool
+mark = mapaddr get gbmem 3
+pos = off
+last = add off mul ulong words 4
+head = or uint 536870912 shl uint 5 16
+head = or head shr uint 92 2
+while le add pos 24 last
+w = mapget m pos 4
+if eq w ulong head
+va = or mapget m add pos 4 4 shl mapget m add pos 8 4 32
+val = mapget m add pos 12 4
+if and ge va mark lt va add mark 4096
+rel = sub va mark
+if ge rel 32
+note A launch seal must be WFI, followed by the canonical full shader invalidation.
+if ne mapget m add pos 20 4 1048577
+put nverr 0 -22
+ret false
+end
+if ne mapget m add pos 28 4 4113
+put nverr 0 -22
+ret false
+end
+idx = add div sub rel 32 4 1
+if eq idx get bffail 0
+ret true
+end
+end
+r = mapset get gbmem 3 rel 4 val
+end
+pos = add pos 24
+else
+pos = add pos 4
+end
+end
+r = mapset get gbmem 2 8192 4 6
+ret true
+end

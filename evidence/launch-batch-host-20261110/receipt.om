@@ -1,0 +1,20 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Host-only receipt, ham/launch-batch, 2026-11-10. Additions only; not hardware qualification.
+text BASE "cb3395aad13d7cafea2cfaaf97a30a116da2293a"
+text OMC "omega-mv e5b32567a7aff3ce594e3254a622a846a6cd190b; sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
+text BATCHSHA "68941ce4390061f58f7aff33e1ab1007da7e0236f093aab9eef6fcba4bdf9822"
+text LAUNCHSH "38b8bc4157d527d0c5cb9b20c079f3da596ffb069e2d9ab5131aa673114c88c1"
+text TESTSHA "518248c10ea343ab4cde00a072370c38643d9ab4dfac29de9aa292da576c3a6f"
+text WAITSHA "5fad4c82183a885ad44fdcb8625bca0799398be93b87b55a2d9592de46d8bdc8"
+text GATE "With OMEGA_COMPILER set to the pinned omc: flock -o $POOL_LOCK taskset -c 8-9 nice -n 10 bwrap --dev-bind / / --dev /dev --proc /proc -- sh tests/host-trace/run-host-trace.sh build/launch-batch/final-trace; exit 0"
+text LEGACY "HOSTTRACE_RECORDER_PASS 68; HOSTTRACE_LAUNCH_PASS 45; OMTRACE_OK 30; 13 malformed fragments rejected; original trace mutations 4 of 4 detected"
+text RESULT "BATCH_HOST_PASS checks=63486 parity_cases=32 parity_bytes=62976 batch_launches=287 kicks=1 waits=1 negatives=7"
+text NEGCTL "Future producer rejected with zero kicks and correct index/id; count 513 rejected; extra append rejected; simulated kernel ordinal 1/id 101 failure attributed correctly; incomplete count rejected; malformed body rejected; byte capacity overflow rejected. Every rejected recording refuses send. Timeout refuses reset/append. Four separately compiled mutants are detected: dependency guard removed, count guard removed, index changed, shader invalidation removed. Output: batch mutations: 4 of 4 compile and are detected"
+text WAIT "BATCH_NATIVE_WAIT_PASS completion timeout refusal; compiled with real native/nvrm/context.om and anonymous host mappings, no driver calls. strace -f -e nanosleep,clock_nanosleep observes 10 nanosleeps with tv_nsec=100000 in this run. No inherited busy-spin policy. Full module: HOST TRACE CHECKS PASS"
+text CHIPBIN "Real-context batch-chip.om compiled with exit 0. No-argument execution refused with exit 64 before any driver open. Main requires --chip. Hardware timing NOT_RUN at this host receipt; exclusive-window request is separate. Synthetic vector probe is not model training or decode."
+text DEBT "Only foreign-language edit: the existing tests/host-trace/run-host-trace.sh coordinator composes and runs the new Omega tests and reuses its existing mutation helper. No new foreign implementation or test was written. C runtime and C cmdlist APIs are unchanged."
+text LIMITS "IMPLEMENTED and host EXERCISED only. Not QUALIFIED, MERGED or DEPLOYED. Cache ordering, physical completions and model speed NOT_RUN. Existing C ABI command lists already batch one submission; this adds the missing native seeded caller unit. Caller-side aien-train integration is a separate owned change."
+fn main to int
+ret 0
+end

@@ -1,0 +1,121 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Chip run ONLY inside the owner's spark-window exclusive lease. No host test invokes main.
+note VECTOR_1D 287-launch synthetic step, NOT an Omega LLM step or decoded token.
+note Reports integer host wall nanoseconds. No fabricated GPU timestamps or training wait claim.
+global bcmode uchar 16
+global bcnum uchar 32
+text bcarg "--chip"
+text bcline "BATCH_CHIP "
+text bcsep " "
+text bclf "\n"
+fn bcprint n ulong to void
+if ge n 10
+bcprint div n 10
+end
+put bcnum 0 uchar add ulong 48 rem n 10
+r = write 1 bcnum 0 1
+end
+fn bcspace to void
+r = write 1 bcsep 0 1
+end
+fn bcverify to bool
+for i ulong 64
+v = mapget get gbmem 7 mul i 4 4
+if ne v mul i 3
+ret false
+end
+end
+ret true
+end
+fn bcstep bat bool to bool
+if bat
+if not gbbegin 287
+ret false
+end
+for i ulong 287
+gbbody 64
+if not gbappend i i
+ret false
+end
+end
+ret gbbsubmit 5000000000
+end
+for i ulong 287
+if not gblaunch 64
+ret false
+end
+end
+ret true
+end
+fn bcrun phase ulong bat bool to bool
+for rep ulong 20
+r = mapset get gbmem 7 0 4 4294967295
+start = monons
+if not bcstep bat
+ret false
+end
+elapsed = sub monons start
+if or lt elapsed 0 not bcverify
+ret false
+end
+r = write 1 bcline 0 len bcline
+bcprint phase
+bcspace
+bcprint rep
+bcspace
+bcprint 287
+bcspace
+if bat
+bcprint get gbst 6
+bcspace
+bcprint get gbst 7
+else
+bcprint 287
+bcspace
+bcprint 287
+end
+bcspace
+bcprint ulong elapsed
+r = write 1 bclf 0 1
+end
+ret true
+end
+fn main to int
+if ne argcnt 2
+ret 64
+end
+if ne argread 1 bcmode 0 16 long len bcarg
+ret 64
+end
+for i ulong len bcarg
+if ne get bcmode i get bcarg i
+ret 64
+end
+end
+if not gbopen 64
+ok = nvstop
+ret 2
+end
+if not gbbopen
+ok = nvstop
+ret 3
+end
+for i ulong 64
+r = mapset get gbmem 5 mul i 4 4 i
+r = mapset get gbmem 6 mul i 4 4 mul i 2
+end
+ok = bcrun 0 false
+if ok
+ok = bcrun 1 true
+end
+if ok
+ok = bcrun 2 false
+end
+if not nvstop
+ret 5
+end
+if not ok
+ret 4
+end
+ret 0
+end

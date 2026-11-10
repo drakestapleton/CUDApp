@@ -1,0 +1,127 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Compose: om/gemm-any/host.om ollm.om gemm_ir.om tests/gemm_pipeline.om.
+text GPOK "GEMM PIPELINE PASS (27 tensor geometries, 3 kernels each; 72 own-model plans; FP32 accumulator widths; held barriers 3/4)\n"
+fn gpcheck cfg view ulong 8 kind ulong to bool
+ins = new ulong 8192 0
+meta = new ulong 512 0
+rc = gemm_any_ir cfg kind ins meta
+if or ne rc 0 ne get meta 4 0
+ret false
+end
+if ne kind 2
+ret gt get meta 0 0
+end
+found = uint 0
+for i ulong get meta 0
+at = mul i 8
+op = get ins at
+if or eq op 15 eq op 16
+v = get ins add at 1
+if ne get meta add 64 v 4
+ret false
+end
+end
+if eq op 57
+ctrl = shr get ins add at 6 32
+sb = and shr ctrl 14 7
+if eq sb 3
+found = or found 1
+end
+if eq sb 4
+found = or found 2
+end
+end
+end
+ret and eq found 3 eq get meta 7 0
+end
+fn gpgeom to bool
+cfg = new ulong 8 0
+put cfg 3 2
+put cfg 4 4
+put cfg 5 4
+put cfg 7 8
+for ty ulong 3
+put cfg 0 ty
+for a ulong 3
+put cfg 1 shl ulong 1 a
+for b ulong 3
+put cfg 2 shl ulong 1 b
+for k ulong 3
+if not gpcheck cfg k
+ret false
+end
+end
+end
+end
+end
+ret true
+end
+fn gpplan d ulong n ulong k ulong rows ulong to bool
+x = new ulong 32 0
+p = new ulong 64 0
+put x 8 rows
+put x 9 n
+put x 10 k
+if ne gemm_ollm_cfg x 1 0
+ret false
+end
+if ne gemm_host_plan x p 0
+ret false
+end
+if or lt get p 0 rows lt get p 1 n
+ret false
+end
+if lt get p 2 k
+ret false
+end
+if eq rows 1
+if or ne get x 1 1 ne get x 2 1
+ret false
+end
+if ne get p 0 16
+ret false
+end
+end
+note Whole-vocabulary logits are split in two 16384-column chunks. D is included to bind the model.
+ret and gt d 0 eq rem get p 2 64 0
+end
+fn gpmodels to bool
+for s ulong 3
+d = shl ulong 256 s
+if eq s 0
+d = ulong 384
+end
+for q ulong 6
+rows = shl ulong 128 q
+if eq q 0
+rows = ulong 1
+end
+if not gpplan d d d rows
+ret false
+end
+if not gpplan d mul d 4 d rows
+ret false
+end
+if not gpplan d d mul d 4 rows
+ret false
+end
+if not gpplan d 16384 d rows
+ret false
+end
+end
+end
+ret true
+end
+fn main to int
+if not gpgeom
+ret 1
+end
+if not gpmodels
+ret 2
+end
+n = write 1 GPOK 0 len GPOK
+if ne n long len GPOK
+ret 4
+end
+ret 0
+end

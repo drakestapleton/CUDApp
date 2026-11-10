@@ -5,12 +5,12 @@
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "compiled_at": "2026-11-06T09:30:42Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:1f9c4a6f95d8c9e477189581d43e5cec9e610e0229009b6573a8367a9f9078e9",
+      "digest": "sha256:d2edee0144dee2a3eb209ad56b1881b46b4275835f40a2edefd5dc27390758c8",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 9,
-      "generated_at_commit": "a61802d5681e32cbd4fb86e4902da430e91139f3",
-      "source_tree": "sha256:4f62e09e9cc43f9b80c14d804e7eb1af386470bc958a239ae904405e14c49886"
+      "files": 10,
+      "generated_at_commit": "cb3395aad13d7cafea2cfaaf97a30a116da2293a",
+      "source_tree": "sha256:997d3e27a67c60f0b405a6cf79598e6d7edb0d40e1dddad1ca0d3c8a90a85ebd"
     }
   },
   "name": "kgen",

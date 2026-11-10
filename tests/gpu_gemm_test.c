@@ -203,7 +203,22 @@ static int sim_gemm(SimCtx *c, const OmegaGemmCfg *cfg, unsigned lay, uint32_t M
     return rc;
 }
 
+static uint32_t own_shape[3]; /* Optional exact own-model shape; no clipped dimensions. */
 static void sim_tier(void) {
+    if (own_shape[0]) {
+        uint32_t m=own_shape[0], n=own_shape[1], k=own_shape[2];
+        OmegaGemmCfg cfg={OMEGA_GPU_GEMM_BF16,1,1,1,1,4,0,0}; SimCtx cx; memset(&cx,0,sizeof cx);
+        void *a=malloc((size_t)m*k*2), *b=malloc((size_t)k*n*2); float *c=malloc((size_t)m*n*4);
+        if(!a||!b||!c){free(a);free(b);free(c);fprintf(stderr,"NOT_RUN: own-shape allocation\n");exit(2);}
+        fill(cfg.type,a,(uint64_t)m*k,17);fill(cfg.type,b,(uint64_t)k*n,29);
+        uint64_t checked=0; char first[200];
+        int rc=sim_build(&cx,&cfg); if(!rc)rc=sim_gemm(&cx,&cfg,0,m,n,k,a,b,c);
+        uint64_t bad=rc?1:compare(cfg.type,0,m,n,k,a,b,c,&checked,first,sizeof first);
+        check(!rc&&!bad,"own-model BF16 exact-shape simulator parity");
+        printf("OWN GEMM %ux%ux%u rc=%d checked=%"PRIu64" wrong=%"PRIu64"\n",m,n,k,rc,checked,bad);
+        sim_free(&cx);free(a);free(b);free(c);return;
+    }
+
     char w[600], first[200];
     static const uint32_t sh[][3] = { { 1, 1, 1 }, { 1, 1, 17 }, { 16, 8, 16 }, { 17, 9, 33 }, { 64, 64, 64 }, { 65, 63, 100 },
                                       { 3, 130, 70 }, { 100, 3, 257 }, { 129, 65, 31 }, { 31, 200, 129 } };
@@ -286,6 +301,15 @@ static void chip_one(OmegaGpuGemmType t, unsigned lay, uint32_t M, uint32_t N, u
 }
 
 static void chip_tier(int quick, unsigned part, unsigned nparts) {
+    if (own_shape[0]) {
+        uint32_t m = own_shape[0], n = own_shape[1], k = own_shape[2];
+        void *a = malloc((size_t)m*k*2), *b = malloc((size_t)k*n*2); float *c = malloc((size_t)m*n*4);
+        if (!a || !b || !c) { free(a); free(b); free(c); fprintf(stderr,"NOT_RUN: own-shape allocation\n"); exit(2); }
+        if(m==1){OmegaGemmCfg cfg={OMEGA_GPU_GEMM_BF16,1,1,1,1,4,0,0};omega_gpu_gemm_test_set_cfg(cfg.type,&cfg);}
+        chip_one(OMEGA_GPU_GEMM_BF16,0,m,n,k,a,b,c);
+        free(a); free(b); free(c); omega_gpu_session_close(); return;
+    }
+
     char w[200];
     const size_t need = (size_t)8192 * 8192 * 2 * 2 + (size_t)8192 * 8192 * 4 + ((size_t)8 << 30);
     if (!quick && mem_available() < need * 2) { printf("NOT_RUN: MemAvailable %zu MiB < %zu MiB\n", mem_available() >> 20, need * 2 >> 20); exit(2); }
@@ -336,15 +360,17 @@ int main(int argc, char **argv) {
     int quick = 0;
     unsigned part = 0, nparts = 1;
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--host-only")) tier = "host";
+        if (!strcmp(argv[i], "--shape") && i + 1 < argc && sscanf(argv[i + 1], "%u,%u,%u", &own_shape[0], &own_shape[1], &own_shape[2]) == 3 &&
+            own_shape[0] && own_shape[1] && own_shape[2] && own_shape[0] <= OMEGA_GPU_GEMM_MAX_DIM && own_shape[1] <= OMEGA_GPU_GEMM_MAX_DIM && own_shape[2] <= OMEGA_GPU_GEMM_MAX_DIM) i++;
+        else if (!strcmp(argv[i], "--host-only")) tier = "host";
         else if (!strcmp(argv[i], "--sim")) tier = "sim";
         else if (!strcmp(argv[i], "--quick")) quick = 1;
         else if (!strcmp(argv[i], "--part") && i + 1 < argc && sscanf(argv[i + 1], "%u/%u", &part, &nparts) == 2 && nparts > 0 && part < nparts) i++;
         else if (!strcmp(argv[i], "--ceiling") && i + 1 < argc && sscanf(argv[i + 1], "%lf,%lf", &CEIL_TFLOPS[0], &CEIL_TFLOPS[1]) == 2 && CEIL_TFLOPS[0] > 0 && CEIL_TFLOPS[1] > 0) i++;
-        else { fprintf(stderr, "usage: %s [--host-only | --sim | --quick] [--part I/N] [--ceiling BF16,E4M3]\n", argv[0]); return 2; }
+        else { fprintf(stderr, "usage: %s [--host-only | --sim | --quick | --shape M,N,K] [--part I/N] [--ceiling BF16,E4M3]\n", argv[0]); return 2; }
     }
     if (!strcmp(tier, "host")) host_only();
-    else if (!strcmp(tier, "sim")) { host_only(); sim_tier(); }
+    else if (!strcmp(tier, "sim")) { if (!own_shape[0]) host_only(); sim_tier(); }
     else { printf("ceiling: bf16 %.2f TFLOPS, e4m3 %.2f TFLOPS\n", CEIL_TFLOPS[0], CEIL_TFLOPS[1]); chip_tier(quick, part, nparts); }
     if (g_failed) printf("C3 gemm %s: FAIL (%d of %d)\n", tier, g_failed, g_checks);
     else printf("C3 gemm %s: PASS (%d checks)\n", tier, g_checks);

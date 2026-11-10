@@ -1,0 +1,72 @@
+mathlibs tier=sim fixture=tests/fixtures/mathlibs_rng_aienmath.txt
+host rng_reference_vs_aienmath rows=792 mismatches=0
+host rng_codegen kind=0 insns=168 gpr_peak=24 gpr_declared=64
+host rng_codegen kind=1 insns=168 gpr_peak=23 gpr_declared=64
+host rng_codegen kind=2 insns=232 gpr_peak=24 gpr_declared=64
+host fft_codegen n=4 inverse=0 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=4 inverse=1 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=8 inverse=0 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=8 inverse=1 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=16 inverse=0 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=16 inverse=1 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=32 inverse=0 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=32 inverse=1 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=64 inverse=0 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=64 inverse=1 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=0 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=1 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=0 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=1 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=0 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=1 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=0 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=1 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=0 insns=376 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=1 insns=376 gpr_peak=44 gpr_declared=64
+host fft_twiddles entries=8184 off_by_more_than_half_ulp=0
+host normal_model_sweep inputs=8388608 over_tol=0 worst_rel=3.256238e-07 at_A=20783 tol=2.87e-06 central~8360300
+sim rng_raw seed=0 stream0=0 ns=130 offset=0 per=17 mismatches=0
+sim rng_uniform seed=0 n=2210 mismatches=0
+sim rng_normal seed=0 n=2210 model_mismatches=0 over_tol=0 worst_rel=2.1803e-07
+sim rng_raw seed=0 stream0=0 ns=130 offset=1000 per=16 mismatches=0
+sim rng_raw seed=18446744073709551612 stream0=0 ns=130 offset=0 per=17 mismatches=0
+sim rng_uniform seed=18446744073709551612 n=2210 mismatches=0
+sim rng_normal seed=18446744073709551612 n=2210 model_mismatches=0 over_tol=0 worst_rel=2.1803e-07
+sim rng_raw seed=18446744073709551612 stream0=0 ns=130 offset=1000 per=16 mismatches=0
+sim rng_raw seed=1729 stream0=0 ns=130 offset=0 per=17 mismatches=0
+sim rng_uniform seed=1729 n=2210 mismatches=0
+sim rng_normal seed=1729 n=2210 model_mismatches=0 over_tol=0 worst_rel=2.3673e-07
+sim rng_raw seed=1729 stream0=18446744073709551488 ns=130 offset=3 per=5 mismatches=0
+sim rng_uniform seed=1729 n=650 mismatches=0
+sim rng_normal seed=1729 n=650 model_mismatches=0 over_tol=0 worst_rel=2.2538e-07
+sim rng_fixture rows_covered=581 of 792 comparisons=845 mismatches=0
+sim rng_mutant1 mismatches=2210 of 2210 (must be > 0)
+sim rng_mutant2 over_tol=2204 of 2210 (must be > 0)
+sim fft n=4 inverse=0 batch=3 normwise_err=1.0527e-16 tol=1.1921e-07 warp_orders_identical=1
+sim fft n=4 inverse=1 batch=3 normwise_err=4.0945e-08 tol=1.1921e-07 warp_orders_identical=1
+sim fft n=8 inverse=0 batch=3 normwise_err=5.7501e-08 tol=4.6661e-07 warp_orders_identical=1
+sim fft n=8 inverse=1 batch=3 normwise_err=5.1918e-08 tol=4.6661e-07 warp_orders_identical=1
+sim fft n=16 inverse=0 batch=3 normwise_err=5.0998e-08 tol=5.2622e-07 warp_orders_identical=1
+sim fft n=16 inverse=1 batch=3 normwise_err=5.0840e-08 tol=5.2622e-07 warp_orders_identical=1
+sim fft n=32 inverse=0 batch=3 normwise_err=8.1410e-08 tol=8.7362e-07 warp_orders_identical=1
+sim fft n=32 inverse=1 batch=3 normwise_err=7.8295e-08 tol=8.7362e-07 warp_orders_identical=1
+sim fft n=64 inverse=0 batch=3 normwise_err=7.5134e-08 tol=9.3322e-07 warp_orders_identical=1
+sim fft n=64 inverse=1 batch=3 normwise_err=7.2958e-08 tol=9.3322e-07 warp_orders_identical=1
+sim fft n=128 inverse=0 batch=3 normwise_err=8.2555e-08 tol=1.2806e-06 warp_orders_identical=1
+sim fft n=128 inverse=1 batch=3 normwise_err=9.2727e-08 tol=1.2806e-06 warp_orders_identical=1
+sim fft n=256 inverse=0 batch=3 normwise_err=9.4556e-08 tol=1.3402e-06 warp_orders_identical=1
+sim fft n=256 inverse=1 batch=3 normwise_err=8.9474e-08 tol=1.3402e-06 warp_orders_identical=1
+sim fft n=512 inverse=0 batch=3 normwise_err=1.0249e-07 tol=1.6876e-06 warp_orders_identical=1
+sim fft n=512 inverse=1 batch=3 normwise_err=9.9499e-08 tol=1.6876e-06 warp_orders_identical=1
+sim fft n=1024 inverse=0 batch=3 normwise_err=1.0519e-07 tol=1.7472e-06 warp_orders_identical=1
+sim fft n=1024 inverse=1 batch=3 normwise_err=1.0728e-07 tol=1.7472e-06 warp_orders_identical=1
+sim fft n=2048 inverse=0 batch=3 normwise_err=1.1160e-07 tol=2.0946e-06 warp_orders_identical=1
+sim fft n=2048 inverse=1 batch=3 normwise_err=1.1208e-07 tol=2.0946e-06 warp_orders_identical=1
+sim fft_mutant1 n=4 normwise_err=8.4399e-01 caught=1 expected=1
+sim fft_mutant1 n=64 normwise_err=1.4039e+00 caught=1 expected=1
+sim fft_mutant1 n=2048 normwise_err=1.4224e+00 caught=1 expected=1
+sim fft_mutant2 n=8 normwise_err=1.1819e+00 caught=1 expected=1
+sim fft_mutant2 n=16 normwise_err=9.6535e-01 caught=1 expected=1
+sim fft_mutant2 n=2048 normwise_err=8.7679e-01 caught=1 expected=1
+sim fft_mutant2 n=4 normwise_err=1.1889e-16 caught=0 expected=0
+mathlibs sim: PASS (429 checks)

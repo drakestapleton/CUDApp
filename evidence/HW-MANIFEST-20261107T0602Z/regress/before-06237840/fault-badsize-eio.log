@@ -1,0 +1,4 @@
+STEP discover tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 revision=159
+STEP claim generation=2
+STEP release generation=3
+FAULT target=tpm-ntc-npct75x kind=badsize layer=kernel errno=-5 outcome=PASS

@@ -1,10 +1,14 @@
+/* ORACLE/foreign-caller example: a C program calling the CUDA++ runtime's C API. Not first-party implementation. */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
-/* hello_gpu: the smallest complete Omega program. It adds two arrays of one million floats on the GPU
- * (c[i] = a[i] + b[i]) and checks every answer on the CPU.
+/* hello_gpu: the smallest complete caller of the runtime's C API (src/omega_gpu_session.h, the Omega Runtime API of
+ * docs/runtime/API.md). It adds two arrays of one million floats on the GPU (c[i] = a[i] + b[i]) and checks every
+ * answer on the CPU. It is C on purpose: it shows what a foreign (non-Omega) program has to do to use the runtime, so
+ * it is an example and a test of the C API, never first-party implementation (`.om` is the implementation language;
+ * the native .om hello of aien-dev/CUDApp#79 is to replace this program).
  *
- * What makes it "Omega": the GPU program (the kernel) is written below as a short list of machine-level
- * steps, handed to Omega's own code generator, and run through Omega's own launcher. Nothing here uses
- * CUDA, nvcc, PTX or any NVIDIA user-space library.
+ * What it uses: the GPU program (the kernel) is written below as a short list of machine-level steps, handed to the
+ * runtime's own code generator, and run through the runtime's own launcher. Nothing here uses CUDA, nvcc, PTX or any
+ * NVIDIA user-space library.
  *
  * The five steps, in the order they appear in main():
  *   1. Build the kernel      build_vecadd()   a list of IR instructions, then register allocation

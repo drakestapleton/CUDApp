@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-"""Recompile six semantic Omega mutants; compilation failure is not a kill."""
+"""Recompile seven semantic Omega mutants; compilation failure is not a kill."""
 import argparse
 import hashlib
 import os
@@ -17,6 +17,7 @@ MUTANTS = (
     ("two-block-padding", "zbuf c add bi 1 64\nif ge bi 56", "zbuf c add bi 1 64\nif ge bi 57"),
     ("message-bit-count", "bits = mul cnt 8", "bits = mul cnt 7"),
     ("length-byte-order", "sh = mul sub 7 i 8", "sh = mul i 8"),
+    ("one-shot-two-block", "if ge r 56", "if ge r 57"),
 )
 
 
@@ -68,7 +69,7 @@ def main():
                 (receipt / (name + ".ident")).write_text((temp / "cudapp_om_core_sha.ident").read_text())
                 log.write("KILLED: compiled mutant disagrees with FIPS digest\n")
             print(f"CORE-UTIL mutant {name} KILLED", flush=True)
-    print("CORE-UTIL mutants PASS: 6 recompiled semantic mutants killed")
+    print(f"CORE-UTIL mutants PASS: {len(MUTANTS)} recompiled semantic mutants killed")
 
 
 if __name__ == "__main__":

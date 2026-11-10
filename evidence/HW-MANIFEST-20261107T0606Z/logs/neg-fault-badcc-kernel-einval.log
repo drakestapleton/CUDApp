@@ -1,0 +1,4 @@
+STEP discover tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 revision=159
+STEP claim generation=7
+STEP release generation=8
+REFUSE unexpected_fault_result kind=badcc result=-22 want=721219

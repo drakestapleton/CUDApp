@@ -28,8 +28,15 @@ case $PWD in *nvdisasm*) echo "ZERO-NVDISASM: NOT_RUN (the checkout $PWD names n
 fail=0
 
 # 1. static
+# Declared ORACLE lines (tools/sm121dis/oracle-allow.tsv: path, exact line text, why): each names the toolkit only to
+# compare our output WITH an independent NVIDIA reader offline, or to prove the toolkit is NOT used. Any other line,
+# or an allowed line edited, fails (CUDA++ C6, DRA-475).
 hits=$(grep -rnE '/usr/local/cuda|command -v nvdisasm|which nvdisasm|cuda/bin/nvdisasm' src tests tools mk Makefile 2>/dev/null \
-       | grep -vE '^tools/sm121dis/(check|oracle_pairs|zero_nvdisasm)\.sh:')
+       | grep -vE '^tools/sm121dis/((check|oracle_pairs|zero_nvdisasm|negctl)\.sh|oracle-allow\.tsv):' \
+       | awk -F'\t' -v allow=tools/sm121dis/oracle-allow.tsv '
+           BEGIN { while ((getline l < allow) > 0) { if (l ~ /^#/ || l == "") continue; split(l, f, "\t"); ok[f[1] "\t" f[2]] = 1 } }
+           { p = $0; i = index(p, ":"); path = substr(p, 1, i - 1); r = substr(p, i + 1); j = index(r, ":"); txt = substr(r, j + 1)
+             if (!((path "\t" txt) in ok)) print }')
 if [ -n "$hits" ]; then
     echo "static: FAIL, these lines name the CUDA toolkit or look up nvdisasm:"; echo "$hits" | head -20; fail=1
 else

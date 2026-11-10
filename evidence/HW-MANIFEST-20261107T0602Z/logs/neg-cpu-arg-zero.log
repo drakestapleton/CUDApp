@@ -1,0 +1,4 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+STEP claim generation=7
+STEP release generation=7
+REFUSE invalid_argument arg=0

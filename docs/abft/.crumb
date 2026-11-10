@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "name": "gemm-fault-detection-docs",
+  "layer": "docs",
+  "purpose": "Contract, declarations (fault model, precision, rounding, independence, known misses) and receipts for native/abft"
+}

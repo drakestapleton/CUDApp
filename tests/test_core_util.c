@@ -8,7 +8,9 @@ void ref_sha256_hash(const uint8_t *, size_t, uint8_t *);
 static uint64_t rng = 0x4f4d454741ULL;
 static uint32_t random32(void) { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; return (uint32_t)rng; }
 static void hex(const uint8_t *d, char *h) { for(unsigned i=0;i<32;i++) sprintf(h+2*i,"%02x",d[i]); }
-static int vector(const uint8_t *p,size_t n,const char *want) { uint8_t d[32]; char h[65]; sha256_hash(p,n,d); hex(d,h); if(strcmp(h,want)) { fprintf(stderr,"SHA vector length %zu: %s\n",n,h);return 1;} return 0; }
+/* Each vector goes through both unit paths: sha256_hash (one-shot op 3 below 4096 bytes) and init/update/final. */
+static int vector(const uint8_t *p,size_t n,const char *want) { uint8_t d[32]; char h[65]; sha256_hash(p,n,d); hex(d,h); if(strcmp(h,want)) { fprintf(stderr,"SHA vector length %zu: %s\n",n,h);return 1;}
+    sha256_ctx c; sha256_init(&c); sha256_update(&c,p,n); sha256_final(&c,d); hex(d,h); if(strcmp(h,want)) { fprintf(stderr,"SHA vector length %zu (streaming): %s\n",n,h);return 1;} return 0; }
 static int unhex(char c) {
     if(c>='0'&&c<='9')return c-'0';
     if(c>='a'&&c<='f')return c-'a'+10;

@@ -113,7 +113,7 @@ int omega_gpu_om_ir_replay(OmegaOmIrUnit unit, uint64_t kind, uint64_t a, uint64
         const uint64_t *r = &ins[i * 8];
         BlackwellIRInsn in;
         memset(&in, 0, sizeof in);
-        /* Append-only enum includes binary64 through BW_IR_S32_F64 (78).
+        /* Append-only enum includes binary64 through BW_IR_S32_F64 (79).
          * Keep one bound: the boundary gate exercises LAST and LAST+1. */
         if (r[0] > (uint64_t)BW_IR_LAST) return OMEGA_OM_IR_REPLAY;
         in.op = (BlackwellIROpcode)r[0];

@@ -84,6 +84,17 @@ CUDAPP_ENCODER_DEFS = $(CUDAPP_ENCODER_DEFS_$(CUDAPP_ENCODER))
 ifeq ($(filter om c diff,$(CUDAPP_ENCODER)),)
 $(error CUDAPP_ENCODER must be om, c or diff)
 endif
+# sm_121 disassembler (CUDA++ C6, DRA-475): om (default) = om/disasm/sm121_dis.om through the generated binding
+# src/cudapp_om_sm121_dis.c; c = the migration-pending C decoder in src/omega_sm121_disasm.c, the differential oracle;
+# diff = both on every word, abort on any difference (mk/sm121dis.mk). Use a separate OUT_DIR per value.
+CUDAPP_DISASM ?= om
+CUDAPP_DISASM_DEFS_om :=
+CUDAPP_DISASM_DEFS_c := -DCUDAPP_MIGRATION_PENDING_C_DISASM
+CUDAPP_DISASM_DEFS_diff := -DCUDAPP_MIGRATION_PENDING_DISASM_DIFF
+CUDAPP_DISASM_DEFS = $(CUDAPP_DISASM_DEFS_$(CUDAPP_DISASM))
+ifeq ($(filter om c diff,$(CUDAPP_DISASM)),)
+$(error CUDAPP_DISASM must be om, c or diff)
+endif
 
 # sm_121 disassembler (C6, CUDApp#10): om (default) = om/disasm/sm121_dis.om through its generated binding
 # src/cudapp_om_sm121_dis.c; c = the migration-pending C decoder in src/omega_sm121_disasm.c, the differential oracle;

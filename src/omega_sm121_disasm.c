@@ -9,23 +9,31 @@
  * in the format names the bits it reads; every other bit of lo and of hi 0..40 (outside the guard) must equal the
  * row's fixed value, or the row does not match. The rows come from the words Omega's builders write
  * (src/omega_blackwell_codegen.c encode_single_insn, the em helpers, src/omega_osc_gpu.c); the text of each was
- * checked against nvdisasm 13.0 -b SM121 by tools/sm121dis/check.sh. */
+ * checked against nvdisasm 13.0 -b SM121 by tools/sm121dis/check.sh.
+ *
+ * CUDA++ C6 (DRA-475): the decoder is seeded Omega, om/disasm/sm121_dis.om, linked through the bridge-generated
+ * binding src/cudapp_om_sm121_dis.c (om/units.sh). Which decoder answers (make CUDAPP_DISASM=om|c|diff):
+ *   - default (om): omega_sm121_disasm and omega_sm121_padding_start call omega_sm121_dis; this file only moves bytes
+ *     and copies the text;
+ *   - CUDAPP_MIGRATION_PENDING_C_DISASM: the hand-written C decoder below, migration-pending, the differential oracle;
+ *   - CUDAPP_MIGRATION_PENDING_DISASM_DIFF: both on every word; any difference in status or text aborts
+ *     (CUDAPP_DISASM_DIFF_SELFTEST makes the C side read the word with bit 16 flipped: that build must abort). */
 #include "omega_sm121_disasm.h"
-#include "cudapp_native.h"
-#include "omega_dis_words.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* The decoder is om/disasm/sm121_dis.om (make CUDAPP_DISASM=om, the default). This C decoder is its migration-pending
- * differential oracle: it is compiled only with CUDAPP_MIGRATION_PENDING_C_DISASM (make CUDAPP_DISASM=c, the C decoder
- * alone) or CUDAPP_MIGRATION_PENDING_DISASM_DIFF (make CUDAPP_DISASM=diff, both on every word, abort on any
- * difference). */
 #if defined(CUDAPP_MIGRATION_PENDING_C_DISASM) && defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
 #error "CUDAPP_MIGRATION_PENDING_DISASM_DIFF needs the .om decoder: not with CUDAPP_MIGRATION_PENDING_C_DISASM"
 #endif
+#ifndef CUDAPP_MIGRATION_PENDING_C_DISASM
+#include "cudapp_native.h"
+#endif
+
 #if defined(CUDAPP_MIGRATION_PENDING_C_DISASM) || defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
+/* ---- migration-pending C decoder: the differential oracle (make CUDAPP_DISASM=c|diff) ---- */
+
 #define HI_BITS 41
 #define HI_MASK ((1ULL << HI_BITS) - 1)
 
@@ -67,7 +75,7 @@ static uint64_t mask(int at, int n) { return (n >= 64 ? ~0ULL : ((1ULL << n) - 1
 #define BRA_LO_MASK (mask(16, 8) | mask(34, 30))
 #define BRA_HI_MASK mask(0, 18)
 
-typedef struct { char *o; size_t n, at; int ok; } Out;
+typedef struct { char *o; size_t n, at; int ok, unk; } Out;
 
 static void put(Out *w, const char *fmt, ...) {
     if (w->at >= w->n) { w->ok = 0; return; }
@@ -86,7 +94,14 @@ static const char *SR[256] = {
     [0x21] = "SR_TID.X", [0x22] = "SR_TID.Y", [0x23] = "SR_TID.Z",
     [0x25] = "SR_CTAID.X", [0x26] = "SR_CTAID.Y", [0x27] = "SR_CTAID.Z",
     [0x00] = "SR_LANEID", [0x50] = "SR_CLOCKLO", [0x51] = "SR_CLOCKHI",
+    /* the device-side trace emitter's timer (tests/device-trace/run-emitter-checks.sh), nvdisasm 13.0.85 text */
+    [0x52] = "SR_GLOBALTIMERLO", [0x53] = "SR_GLOBALTIMERHI",
 };
+/* The special registers nvdisasm 13.0.85 prints by name (107 of 256; a sweep of S2R over 0..255, Wolfram bitmap,
+ * evidence/C6-DISASM-OM): one this table does not name is reported (?? ...), never printed as SR<n>. */
+static const uint64_t SR_NAMED[4] = { 0x7ffff7efffff800full, 0xffffffff003f001full, 0x000000000000ef3full,
+                                      0x8000000000000000ull };
+static int sr_named(uint64_t v) { return (int)((SR_NAMED[(v >> 6) & 3] >> (v & 63)) & 1); }
 static const char *ICMP[8] = { "F", "LT", "EQ", "LE", "GT", "NE", "GE", "T" };
 static const char *FCMP[16] = { "F", "LT", "EQ", "LE", "GT", "NE", "GE", "NUM", "NAN", "LTU", "EQU", "LEU", "GTU", "NEU", "GEU", "T" };
 static const char *MSIZE[8] = { ".U8" , ".S8", ".U16", ".S16", "", ".64", ".128", ".U.128" };
@@ -115,7 +130,12 @@ static void render(Out *w, const char *fmt, uint64_t lo, uint64_t hi, uint64_t p
         const Field *f = field_of(c);
         uint64_t v = f ? bits(f->hi ? hi : lo, f->at, f->n) : 0;
         switch (c) {
+#ifdef SM121DIS_MUTANT
+        case 'a': reg(w, "R", v == 255 ? v : v ^ 1); break; /* the red check: first source register off by one bit */
+        case 'd': case 'b': case 'c': reg(w, "R", v); break;
+#else
         case 'd': case 'a': case 'b': case 'c': reg(w, "R", v); break;
+#endif
         case 'D': case 'A': case 'B': case 'C': reg(w, "UR", v); break;
         case 'i': put(w, "0x%x", (unsigned)v); break;
         case 's': hex_s(w, (int32_t)(uint32_t)v); break;
@@ -129,7 +149,7 @@ static void render(Out *w, const char *fmt, uint64_t lo, uint64_t hi, uint64_t p
         case 'R': pred(w, v & 7, (int)((v >> 3) & 1)); break;
         case 'l': put(w, "0x%x", (unsigned)v); break;
         case 'h': case 'm': put(w, "0x%x", (unsigned)v); break;
-        case 'S': if (SR[v]) put(w, "%s", SR[v]); else put(w, "SR%u", (unsigned)v); break;
+        case 'S': if (SR[v]) put(w, "%s", SR[v]); else if (sr_named(v)) w->unk = 1; else put(w, "SR%u", (unsigned)v); break;
         case 'G': put(w, "%s", ICMP[v]); break;
         case 'Z': if (!v) put(w, ".U32"); break;
         case 'z': put(w, "%s", MSIZE[v]); break;
@@ -234,10 +254,6 @@ static const Row ROWS[] = {
     { 0x0000000000007945ull, 0x03800200ull, "BSSY.RECONVERGENT %y, %Y" },
     { 0x0000000000007941ull, 0x03800200ull, "BSYNC.RECONVERGENT %y" },
     { 0x0000000000007b1dull, 0x00010000ull, "BAR.SYNC.DEFER_BLOCKING 0x0" },
-    /* half and narrowing conversions the native f16 IR ops write (AttentionC, numeric fixture words): only the exact
-     * forms checked with nvdisasm 13.0.85 -b SM121 on 2026-11-05; other modifiers stay reported, not guessed */
-    { 0x20000000ff007230ull, 0x00004100ull, "HADD2.F32 %d, -RZ, %b.H0_H0" },
-    { 0x0000000000007304ull, 0x00200800ull, "F2F.F16.F32 %d, %b" },
 };
 
 /* IMAD with an immediate: nvdisasm names the special cases. Returns 0 for another instruction, 1 when printed. */
@@ -262,7 +278,7 @@ static int imad_imm(Out *w, uint64_t lo, uint64_t hi) {
 
 static int c_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
     if (!out || outn < 40) return -2;
-    Out w = { out, outn, 0, 1 };
+    Out w = { out, outn, 0, 1, 0 };
     out[0] = 0;
     uint64_t g = bits(lo, 12, 3); int gneg = (int)bits(lo, 15, 1);
     if (!(g == 7 && !gneg)) { put(&w, "@"); pred(&w, g, gneg); put(&w, " "); }
@@ -277,68 +293,86 @@ static int c_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size
         lom = ~(lom | mask(12, 4)); him = HI_MASK & ~him;
         if ((lo_body & lom) != (r->lov & lom) || (hi_body & him) != (r->hiv & him)) continue;
         w.at = start; render(&w, r->fmt, lo, hi, pc);
+        if (w.unk) break; /* a field value nvdisasm names but this table does not: reported, never guessed */
         return w.ok ? 0 : -2;
     }
     w.at = 0;
     put(&w, "?? 0x%016llx%016llx", (unsigned long long)hi, (unsigned long long)lo);
     return w.ok ? -1 : -2;
 }
-#endif /* the C decoder, the differential oracle */
+#endif /* the migration-pending C decoder */
+
+static uint64_t word_half(const uint8_t *w) { uint64_t v = 0; for (int i = 7; i >= 0; i--) v = v << 8 | w[i]; return v; }
+
+#if defined(CUDAPP_MIGRATION_PENDING_C_DISASM) || defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
+static int c_is_exit(uint64_t lo) { return (lo & 0xfff) == 0x94d; } /* EXIT, any guard */
+#endif
 
 #ifndef CUDAPP_MIGRATION_PENDING_C_DISASM
-/* The .om decoder om/disasm/sm121_dis.om through its generated binding src/cudapp_om_sm121_dis.c. It writes at most
- * OM_DIS_TEXT bytes without a NUL and returns the text length L, plus OM_DIS_UNKNOWN when no row matched. The C
- * decoder's contract follows: -2 when the text and its NUL do not fit (out then holds the first outn - 1 bytes, as
- * vsnprintf leaves them), else -1 for an unknown word, else 0. */
+/* The Omega decoder. Result word of omega_sm121_dis: bits 0..15 text length, 16 no form matched, 17 EXIT, 18 the
+ * text did not fit (om/disasm/sm121_dis.om). Returns as omega_sm121_disasm; *flags gets the result word. */
 #define OM_DIS_TEXT 256u
-#define OM_DIS_UNKNOWN 65536u
-static int om_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
-    if (!out || outn < 40) return -2;
-    const uint64_t w[4] = { lo, hi, pc, 0 };
-    char t[OM_DIS_TEXT];
+static int om_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn, uint64_t *flags) {
+    uint8_t t[OM_DIS_TEXT];
     uint64_t r = 0;
-    if (omega_sm121_dis(&r, w, 4, t, sizeof t) != 0) { out[0] = 0; return -2; }
-    size_t len = (size_t)(r & (OM_DIS_UNKNOWN - 1));
-    if (len > sizeof t) { out[0] = 0; return -2; }
-    size_t k = len < outn - 1 ? len : outn - 1;
-    memcpy(out, t, k);
-    out[k] = 0;
-    if (len >= outn) return -2;
-    return r & OM_DIS_UNKNOWN ? -1 : 0;
+    *flags = 0;
+    if (omega_sm121_dis(&r, lo, hi, pc, t, OM_DIS_TEXT) != OMEGA_OK) return -2;
+    *flags = r;
+    size_t n = (size_t)(r & 0xffffu);
+    if ((r >> 18) & 1u || n >= OM_DIS_TEXT) return -2;
+    if (!out || outn < 40) return -2;
+    if (n >= outn) { out[0] = 0; return -2; }
+    memcpy(out, t, n);
+    out[n] = 0;
+    return (r >> 16) & 1u ? -1 : 0;
 }
 #endif
 
-#if defined(CUDAPP_MIGRATION_PENDING_C_DISASM)
 int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_DISASM
     return c_sm121_disasm(lo, hi, pc, out, outn);
-}
-#elif defined(CUDAPP_MIGRATION_PENDING_DISASM_DIFF)
-/* Both decoders on every word; any difference in status or text aborts after naming the word. */
-int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
-    char c[OM_DIS_TEXT];
-    size_t cn = outn < sizeof c ? outn : sizeof c;
-    int a = om_sm121_disasm(lo, hi, pc, out, outn);
-    int b = c_sm121_disasm(lo, hi, pc, cn ? c : NULL, cn);
-    if (a != b || (a != -2 && strcmp(out, c) != 0)) {
-        fprintf(stderr, "DISASM DIFF: .om and C decoders disagree on %016llx %016llx pc 0x%llx: %d \"%s\" vs %d \"%s\"\n",
-                (unsigned long long)hi, (unsigned long long)lo, (unsigned long long)pc, a, a == -2 ? "" : out, b,
-                b == -2 ? "" : c);
+#else
+    if (!out || outn < 40) return -2;
+    uint64_t flags;
+    int rc = om_sm121_disasm(lo, hi, pc, out, outn, &flags);
+#ifdef CUDAPP_MIGRATION_PENDING_DISASM_DIFF
+    char c[256];
+#ifdef CUDAPP_DISASM_DIFF_SELFTEST
+    int crc = c_sm121_disasm(lo ^ (1ull << 16), hi, pc, c, outn < sizeof c ? outn : sizeof c);
+#else
+    int crc = c_sm121_disasm(lo, hi, pc, c, outn < sizeof c ? outn : sizeof c);
+#endif
+    if (crc != rc || (rc != -2 && strcmp(c, out) != 0) || (((flags >> 17) & 1u) != 0) != (c_is_exit(lo) != 0)) {
+        fprintf(stderr, "DISASM DIFFER pc 0x%llx word 0x%016llx%016llx: om %d \"%s\" c %d \"%s\"\n",
+                (unsigned long long)pc, (unsigned long long)hi, (unsigned long long)lo, rc, rc == -2 ? "" : out,
+                crc, crc == -2 ? "" : c);
         abort();
     }
-    return a;
-}
-#else
-int omega_sm121_disasm(uint64_t lo, uint64_t hi, uint64_t pc, char *out, size_t outn) {
-    return om_sm121_disasm(lo, hi, pc, out, outn);
-}
 #endif
-
-static uint64_t word_half(const uint8_t *w) { return omega_dis_word(w, 0, 0, 0); }
+    return rc;
+#endif
+}
 
 size_t omega_sm121_padding_start(const uint8_t *code, size_t len) {
     size_t end = 0;
-    for (size_t at = 0; code && len - at >= 16; at += 16)
-        end = (size_t)omega_dis_word(code + at, 1, at, end);
+    for (size_t at = 0; code && at + 16 <= len; at += 16) {
+#ifdef CUDAPP_MIGRATION_PENDING_C_DISASM
+        int ex = c_is_exit(word_half(code + at));
+#else
+        char t[OM_DIS_TEXT];
+        uint64_t flags;
+        (void)om_sm121_disasm(word_half(code + at), word_half(code + at + 8), at, t, sizeof t, &flags);
+        int ex = (int)((flags >> 17) & 1u);
+#ifdef CUDAPP_MIGRATION_PENDING_DISASM_DIFF
+        if (ex != c_is_exit(word_half(code + at))) {
+            fprintf(stderr, "DISASM DIFFER pc 0x%llx: EXIT flag om %d c %d\n", (unsigned long long)at, ex,
+                    c_is_exit(word_half(code + at)));
+            abort();
+        }
+#endif
+#endif
+        if (ex) end = at + 16;
+    }
     return end;
 }
 

@@ -16,8 +16,8 @@ MUTANTS = (
     ("swapped-dfma-operands", "wda o 29227 rb o 3 rb o 4", "wda o 29227 rb o 4 rb o 3"),
     ("dropped-pair-alignment", "if or ne and r 1 0 ge r 254", "if or ne and r 0 0 ge r 254"),
     ("wrong-dsetp-mode", "get o 6 66084864 ctl o 926720", "get o 6 66060288 ctl o 926720"),
-    ("bound-off-by-one", "if gt op 78", "if gt op 79"),
-    ("wrong-mufu-function", "pick eq op 72 6144 7168", "pick eq op 72 7168 6144"),
+    ("bound-off-by-one", "if gt op 79", "if gt op 80"),
+    ("wrong-mufu-function", "pick eq op 73 6144 7168", "pick eq op 73 7168 6144"),
 )
 
 

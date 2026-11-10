@@ -124,7 +124,7 @@ return o_leave(18446744073709551609ULL);
 }
 {uint64_t _i=1ULL;uint64_t _v=({uint64_t _a=o_get(v0, v0_n, 1ULL, 5);uint64_t _b=1ULL;o_op(1, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
 ({uint64_t p1=13ULL;f0(v0, v0_n, p1);});
-{uint64_t _i=14ULL;uint64_t _v=({uint64_t _a=o_get(v0, v0_n, 14ULL, 5);uint64_t _b=1ULL;o_op(1, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
+{uint64_t _i=14ULL;uint64_t _v=({uint64_t _a=({uint64_t _a=o_get(v0, v0_n, 14ULL, 5);uint64_t _b=1ULL;o_op(1, 5, _a,_b);});uint64_t _b=4294967295ULL;o_op(12, 5, _a,_b);});o_put(v0, v0_n, _i,_v,5);}
 if(({uint64_t _a=o_get(v0, v0_n, 14ULL, 5);uint64_t _b=o_get(v0, v0_n, 15ULL, 5);o_op(10, 5, _a,_b);})){
 {uint64_t _i=15ULL;uint64_t _v=o_get(v0, v0_n, 14ULL, 5);o_put(v0, v0_n, _i,_v,5);}
 }

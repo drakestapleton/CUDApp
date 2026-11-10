@@ -3,7 +3,7 @@
 The key point: developers who are using these tools today keep using the same
 names, the same paths, the same flags and the same output. A tool is replaced
 when the Omega build sits at the same path and behaves the same. Nobody has to
-learn anything. What changes under the hood is that the logic is written in our
+learn anything. What changes under the hood is that the logic is written in my
 language, compiled from the seed, and fast.
 
 Rule per tool: the Omega source lives in this repo under `tools/<name>/`, the
@@ -103,17 +103,17 @@ the JSON parsing and the API client surface are pure logic and can be written
 in Omega now; sockets are syscalls and are reachable now; the one physical
 gate is a TLS stack written in Omega, which is its own project and a
 security-sensitive one, because a wrong TLS is a hole, not a slowdown.
-Everything we own both ends of (the motor on 127.0.0.1:18091, the ledger, the
+Everything I own both ends of (the motor on 127.0.0.1:18091, the ledger, the
 desk handoffs, local CI) needs no TLS, so Omega HTTP over loopback comes
 first. Until a lane completes, the wrapper keeps its guard logic in Omega
 (Tier 2) and the wrapped binary stays: same name, same behavior.
 
-## Keep as-is (not our logic)
+## Keep as-is (not my logic)
 
 Third-party binaries and their thin launchers where the wrapper adds no
 decision: `claude`, `codex`, `code`, `gh`'s underlying binary, `pnpm`/`pnpx`,
 `python3.11`, `hermes*`, `bw` (Bitwarden CLI), `greptile-mcp`, `qwen-code`'s
-npm entry. Wrappers whose guard logic is ours (the `gh` guard, the `claude`
+npm entry. Wrappers whose guard logic is mine (the `gh` guard, the `claude`
 guard) get their guard ported to Omega at Tier 2 while the wrapped binary
 stays.
 

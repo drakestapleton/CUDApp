@@ -46,6 +46,8 @@ void sha256_final(sha256_ctx *ctx, uint8_t digest[SHA256_DIGEST_SIZE]) {
 }
 void sha256_hash(const uint8_t *data, size_t len, uint8_t digest[SHA256_DIGEST_SIZE]) {
     sha256_ctx ctx;
+    /* Short inputs take the unit's one-shot path (op 3, om/core/sha256.om oneshot/tail8); it ignores ctx. */
+    if (len < 4096) { sha_call(&ctx, data, len, 3, digest); return; }
     sha256_init(&ctx);
     sha256_update(&ctx, data, len);
     sha256_final(&ctx, digest);

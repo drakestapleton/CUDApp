@@ -1,0 +1,54 @@
+persist-failed-write-w1.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=544 outcome=PASS
+persist-failed-write-w1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=5392 outcome=PASS
+persist-failed-write-w1 state=[]
+persist-failed-write-w1-replay-0 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=320 outcome=PASS
+persist-failed-write-w1-replay-1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=1->2 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=400 outcome=PASS
+persist-failed-write-w1-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=384 outcome=PASS
+persist-failed-write-w2.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=560 outcome=PASS
+persist-failed-write-w2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=5456 outcome=PASS
+persist-failed-write-w2 state=[2 cpu-gb10-x925]
+persist-failed-write-w2-replay-0 exit=7 last=REFUSE stale_generation have=2 want=0
+persist-failed-write-w2-replay-1 exit=7 last=REFUSE stale_generation have=2 want=1
+persist-failed-write-w2-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=352 outcome=PASS
+persist-short-write-w1.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=384 outcome=PASS
+persist-short-write-w1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=5584 outcome=PASS
+persist-short-write-w1 state=[]
+persist-short-write-w1-replay-0 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=320 outcome=PASS
+persist-short-write-w1-replay-1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=1->2 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=288 outcome=PASS
+persist-short-write-w1-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=368 outcome=PASS
+persist-short-write-w2.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=400 outcome=PASS
+persist-short-write-w2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=5392 outcome=PASS
+persist-short-write-w2 state=[2 cpu-gb10-x925]
+persist-short-write-w2-replay-0 exit=7 last=REFUSE stale_generation have=2 want=0
+persist-short-write-w2-replay-1 exit=7 last=REFUSE stale_generation have=2 want=1
+persist-short-write-w2-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=288 outcome=PASS
+persist-failed-sync-w1.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=496 outcome=PASS
+persist-failed-sync-w1 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=5408 outcome=PASS
+persist-failed-sync-w1 state=[2 cpu-gb10-x925]
+persist-failed-sync-w1-replay-0 exit=7 last=REFUSE stale_generation have=2 want=0
+persist-failed-sync-w1-replay-1 exit=7 last=REFUSE stale_generation have=2 want=1
+persist-failed-sync-w1-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=400 outcome=PASS
+persist-failed-sync-w2.seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=720 outcome=PASS
+persist-failed-sync-w2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=5424 outcome=PASS
+persist-failed-sync-w2 state=[2 cpu-gb10-x925]
+persist-failed-sync-w2-replay-0 exit=7 last=REFUSE stale_generation have=2 want=0
+persist-failed-sync-w2-replay-1 exit=7 last=REFUSE stale_generation have=2 want=1
+persist-failed-sync-w2-replay-2 exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=2->3 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=304 outcome=PASS
+check-m-cpuop exit=0 last=CHECK rows=27 families=21 admitted=2
+check-m-tpmop exit=0 last=CHECK rows=27 families=21 admitted=2
+check-m-runner exit=0 last=CHECK rows=27 families=21 admitted=2
+check-m-famrun exit=0 last=CHECK rows=27 families=21 admitted=2
+check-m-auth exit=0 last=CHECK rows=27 families=21 admitted=2
+cpu-seed exit=0 last=RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=640 outcome=PASS
+run-cpu-invented-op exit=5 last=REFUSE unsupported_op target=cpu-gb10-x925 op=matmul
+cpu state after invented op=[1 cpu-gb10-x925]
+run-cpu-invented-runner exit=6 last=REFUSE wrong_authority target=cpu-gb10-x925 runner=hwman-gpu route=NATIVE_ISA
+cpu state after invented runner=[1 cpu-gb10-x925]
+tpm-seed exit=0 last=RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=props arg=0 generation=0->1 tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 elapsed_ns=7642804 outcome=PASS
+run-tpm-invented-op exit=0 last=RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=seal arg=1 generation=1->2 result=76 elapsed_ns=2923594 outcome=PASS
+tpm state after invented op=[2 tpm-ntc-npct75x]
+run-tpm-runner-family exit=6 last=REFUSE wrong_authority target=tpm-ntc-npct75x runner=hwman-cpu route=DIRECT_DEVICE
+tpm state after runner family=[2 tpm-ntc-npct75x]
+fault-badsize-eio exit=0 last=FAULT target=tpm-ntc-npct75x kind=badsize layer=kernel errno=-5 outcome=PASS
+fault-badcc-kernel-einval exit=0 last=FAULT target=tpm-ntc-npct75x kind=badcc layer=kernel errno=-22 outcome=PASS
+fault-badcc-short-response exit=0 last=FAULT target=tpm-ntc-npct75x kind=badcc layer=kernel errno=-1000 outcome=PASS

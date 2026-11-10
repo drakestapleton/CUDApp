@@ -1,0 +1,1 @@
+REFUSE not_admitted target=cpu-gb10-a725 status=PROPOSED blocker=no Cortex-A725 core is allotted to this lane (CPU pool grants core 19 only); same runner applies once one is

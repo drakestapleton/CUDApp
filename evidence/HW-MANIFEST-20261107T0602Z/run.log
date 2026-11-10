@@ -1,0 +1,132 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: <out>
+SRC backend/hw/core.om 144a73f1a20ae4f8da73bd259eda510b1f570abb8f4d518d35c4f67ac7426af2
+SRC backend/hw/cpu.om 4b1d44f2fc3536be2d81e2f8ad0b13c4031527715cd04d13da7f31d235886de1
+SRC backend/hw/tpm.om 21bf8a82d58c9bf1dfacb814529075a800e88ce94f6b74788bc4f326a378e173
+SRC backend/hw/main.om e5c9833334b7302b4df23c91823c7bcc2946b44dbd870b786f09e31fbbae5e2b
+SRC backend/hw/manifest.tsv a2326cfd7346e9511982062731bb7af8ef64ebbe7ddb96b91f12790d3bb33a4b
+COMPILE hwman bin=50062b0f0a77e4e2cf5d38bb49fc2bffe51294b22d15be3062492cde376df1b8
+PASS manifest-check exit=0 CHECK rows=27 families=21 admitted=2
+PASS manifest-doctor exit=0 CHECK rows=27 families=21 admitted=2
+PASS manifest-families CHECK rows=27 families=21 admitted=2
+PASS neg-manifest-schema exit=3 REFUSE manifest schema_version line=1
+PASS neg-manifest-header exit=3 REFUSE manifest header line=2
+PASS neg-manifest-fieldcount exit=3 REFUSE manifest field_count line=20
+PASS neg-manifest-emptyfield exit=3 REFUSE manifest empty_field line=27
+PASS neg-manifest-idcharset exit=3 REFUSE manifest id_charset line=27
+PASS neg-manifest-duplicate exit=3 REFUSE manifest duplicate_id line=27
+PASS neg-manifest-family exit=3 REFUSE manifest family line=27
+PASS neg-manifest-admit-without-evidence exit=3 REFUSE manifest admit_without_chip_evidence line=4
+PASS neg-manifest-blocked-without-blocker exit=3 REFUSE manifest blocked_without_blocker line=17
+PASS neg-manifest-unresolved-route exit=3 REFUSE manifest unresolved_route_status line=9
+PASS neg-manifest-timeout exit=3 REFUSE manifest timeout_ms line=3
+PASS neg-manifest-missing-family exit=3 REFUSE manifest missing_family BPU
+PASS neg-manifest-cpu-op exit=3 REFUSE manifest runner_op line=3
+PASS neg-manifest-cpu-op-class runner_op line=
+PASS neg-manifest-tpm-op exit=3 REFUSE manifest runner_op line=20
+PASS neg-manifest-tpm-op-class runner_op line=
+PASS neg-manifest-unknown-runner exit=3 REFUSE manifest unknown_runner line=3
+PASS neg-manifest-unknown-runner-class unknown_runner line=
+PASS neg-manifest-runner-family exit=3 REFUSE manifest runner_family_route line=20
+PASS neg-manifest-runner-family-class runner_family_route line=
+PASS neg-manifest-runner-route exit=3 REFUSE manifest runner_family_route line=3
+PASS neg-manifest-runner-route-class runner_family_route line=
+PASS neg-manifest-absent exit=74 
+PASS neg-usage exit=2 usage: hwman check MAN | doctor MAN | admit MAN OP [TARGET] | run MAN TARGET OP ARG GEN STATE [EXPECT] | fault MAN TARGET KIND GEN STATE
+PASS admit-cpu exit=0 ADMIT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64
+PASS neg-admit-unknown-target exit=4 REFUSE unknown_target target=cpu-gb10-x926
+PASS neg-admit-unsupported-op exit=5 REFUSE unsupported_op target=cpu-gb10-x925 op=getrandom
+PASS neg-admit-no-target exit=5 REFUSE no_admitted_target op=matmul
+PASS neg-admit-not-admitted exit=6 REFUSE not_admitted target=cpu-gb10-a725 status=PROPOSED blocker=no Cortex-A725 core is allotted to this lane (CPU pool grants core 19 only); same runner applies once one is
+PASS neg-admit-gpu-lease exit=6 REFUSE not_admitted target=gpu-gb10-sm121 status=PRIOR_RECEIPT blocker=GPU runs require a spark-window lease, which this lane does not hold; hwman refuses the spark-window runner (wrong authority)
+PASS neg-admit-runner-route exit=3 REFUSE manifest runner_family_route line=3
+PASS neg-admit-offline exit=10 REFUSE offline target=cpu-gb10-x925 errno=-2
+PASS cpu-sumsq64-1 exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=0->1 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=432 outcome=PASS
+PASS cpu-sumsq64-1000 exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=752 outcome=PASS
+PASS cpu-sumsq64-16777216 exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=16777216 generation=2->3 cpu=19 midr_el1=0x410fd851 result=6148773953750958080 elapsed_ns=6481129 outcome=PASS
+PASS cpu-fnv1a64-1 exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=fnv1a64 arg=1 generation=3->4 cpu=19 midr_el1=0x410fd851 result=12638153115695167455 elapsed_ns=320 outcome=PASS
+PASS cpu-fnv1a64-1000 exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=fnv1a64 arg=1000 generation=4->5 cpu=19 midr_el1=0x410fd851 result=10432030352173600877 elapsed_ns=1760 outcome=PASS
+PASS cpu-fnv1a64-1000000 exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=fnv1a64 arg=1000000 generation=5->6 cpu=19 midr_el1=0x410fd851 result=4529795169249947525 elapsed_ns=1938689 outcome=PASS
+PASS cpu-handle generation=6
+PASS cpu-identity STEP discover cpu=19 midr_el1=0x410fd851
+PASS neg-cpu-stale-replay exit=7 REFUSE stale_generation have=6 want=0
+PASS neg-cpu-oracle-mismatch exit=12 REFUSE oracle_mismatch result=332833500 want=332833501
+PASS neg-cpu-arg-zero exit=14 REFUSE invalid_argument arg=0
+PASS neg-cpu-arg-over exit=14 REFUSE invalid_argument arg=16777217
+PASS neg-cpu-arg-malformed exit=14 REFUSE invalid_argument arg=12x
+PASS neg-cpu-gen-malformed exit=14 REFUSE invalid_argument arg=-1
+PASS neg-cpu-unsupported-op exit=5 REFUSE unsupported_op target=cpu-gb10-x925 op=getrandom
+PASS neg-cpu-unknown-target exit=4 REFUSE unknown_target target=cpu-gb10-x9250
+PASS neg-cpu-wrong-device exit=8 REFUSE wrong_device midr=0x410fd851 manifest=midr_el1=0x410fd871 cpu=19
+PASS neg-cpu-runner-route exit=3 REFUSE manifest runner_family_route line=3
+PASS neg-cpu-offline exit=10 REFUSE offline target=cpu-gb10-x925 errno=-2
+PASS neg-gpu-not-admitted exit=6 REFUSE not_admitted target=gpu-gb10-sm121 status=PRIOR_RECEIPT blocker=GPU runs require a spark-window lease, which this lane does not hold; hwman refuses the spark-window runner (wrong authority)
+PASS neg-gpu-not-admitted-class ^REFUSE not_admitted target=gpu-gb10-sm121 
+PASS gpu-no-claim state file never created
+PASS neg-cpu-timeout exit=11 REFUSE timeout elapsed_ns=6580442 budget_ns=0
+PASS neg-cpu-timeout-class ^REFUSE timeout elapsed_ns=[0-9]* budget_ns=0$
+PASS neg-cpu-busy exit=9 REFUSE busy state=<out>/cpu.state
+PASS cpu-after-busy exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1 generation=8->9 cpu=19 midr_el1=0x410fd851 result=0 elapsed_ns=592 outcome=PASS
+PASS neg-cpu-wrong-handle exit=7 REFUSE wrong_handle target=cpu-gb10-x925 state=<out>/wrong.state
+PASS neg-cpu-corrupt-handle exit=7 REFUSE state_unreadable state=<out>/corrupt.state
+PASS neg-cpu-invented-op exit=3 REFUSE manifest runner_op line=3
+PASS neg-cpu-invented-runner exit=3 REFUSE manifest unknown_runner line=3
+PASS cpu-binding-no-advance 9 cpu-gb10-x925
+PASS neg-persist-failed-write exit=74 REFUSE state_write_failed state=<out>/neg-persist-failed-write.state
+PASS neg-persist-failed-write-class ^REFUSE state_write_failed state=
+PASS neg-persist-failed-write-no-pass
+PASS neg-persist-failed-write-poisoned
+PASS neg-persist-failed-write-replay-0 exit=7 REFUSE state_unreadable state=<out>/neg-persist-failed-write.state
+PASS neg-persist-failed-write-replay-1 exit=7 REFUSE state_unreadable state=<out>/neg-persist-failed-write.state
+PASS neg-persist-failed-write-replay-2 exit=7 REFUSE state_unreadable state=<out>/neg-persist-failed-write.state
+PASS neg-persist-short-write exit=74 REFUSE state_write_failed state=<out>/neg-persist-short-write.state
+PASS neg-persist-short-write-class ^REFUSE state_write_failed state=
+PASS neg-persist-short-write-no-pass
+PASS neg-persist-short-write-poisoned
+PASS neg-persist-short-write-replay-0 exit=7 REFUSE state_unreadable state=<out>/neg-persist-short-write.state
+PASS neg-persist-short-write-replay-1 exit=7 REFUSE state_unreadable state=<out>/neg-persist-short-write.state
+PASS neg-persist-short-write-replay-2 exit=7 REFUSE state_unreadable state=<out>/neg-persist-short-write.state
+PASS neg-persist-failed-sync exit=74 REFUSE state_write_failed state=<out>/neg-persist-failed-sync.state
+PASS neg-persist-failed-sync-class ^REFUSE state_write_failed state=
+PASS neg-persist-failed-sync-no-pass
+PASS neg-persist-failed-sync-poisoned
+PASS neg-persist-failed-sync-replay-0 exit=7 REFUSE state_unreadable state=<out>/neg-persist-failed-sync.state
+PASS neg-persist-failed-sync-replay-1 exit=7 REFUSE state_unreadable state=<out>/neg-persist-failed-sync.state
+PASS neg-persist-failed-sync-replay-2 exit=7 REFUSE state_unreadable state=<out>/neg-persist-failed-sync.state
+PASS neg-persist-inflight exit=74 REFUSE state_write_failed state=<out>/neg-persist-inflight.state
+PASS neg-persist-inflight-no-submit
+PASS persist-inflight-handle-kept exit=0 RECEIPT target=cpu-gb10-x925 family=CPU route=NATIVE_ISA runner=hwman-cpu op=sumsq64 arg=1000 generation=1->2 cpu=19 midr_el1=0x410fd851 result=332833500 elapsed_ns=736 outcome=PASS
+NOT_RUN neg-cpu-unpinned: needs a CPU set wider than the one processor this run is allotted
+NOT_RUN cpu-gb10-a725: no Cortex-A725 processor allotted to this run
+PASS admit-any-getrandom exit=0 ADMIT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=getrandom
+PASS tpm-props exit=0 RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=props arg=0 generation=0->1 tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 elapsed_ns=7465905 outcome=PASS
+PASS tpm-props-oracle tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001
+PASS tpm-getrandom-a exit=0 RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=getrandom arg=32 generation=1->2 result=b8a6823c17d2bdf7204e94d0e257be7cdcce8fb5e32a2fa7f7bcd8c30a38c611 elapsed_ns=3303869 outcome=PASS
+PASS tpm-getrandom-b exit=0 RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=getrandom arg=32 generation=2->3 result=7202a250e93a094ca10fe8ef23bbb81d61d109db48694a358aac895a506d4e2e elapsed_ns=3273517 outcome=PASS
+PASS tpm-getrandom-distinct 32+32 bytes
+PASS neg-tpm-stale-replay exit=7 REFUSE stale_generation have=3 want=1
+PASS neg-tpm-arg-over exit=14 REFUSE invalid_argument arg=33
+PASS neg-tpm-props-arg exit=14 REFUSE invalid_argument arg=1
+PASS neg-tpm-unsupported-op exit=5 REFUSE unsupported_op target=tpm-ntc-npct75x op=sumsq64
+PASS tpm-fault-badsize exit=0 FAULT target=tpm-ntc-npct75x kind=badsize layer=kernel errno=-22 outcome=PASS
+PASS tpm-fault-badsize-class  kind=badsize layer=kernel errno=-22 outcome=PASS$
+PASS tpm-fault-badcc exit=0 FAULT target=tpm-ntc-npct75x kind=badcc layer=tpmrm rc=0x000b0143 outcome=PASS
+PASS tpm-fault-badcc-class  kind=badcc layer=tpmrm rc=0x000b0143 outcome=PASS$
+PASS neg-tpm-fault-kind exit=5 REFUSE unsupported_fault kind=badlen
+PASS neg-cpu-fault exit=5 REFUSE unsupported_fault kind=badsize
+PASS tpm-handle generation=5
+PASS neg-tpm-wrong-device exit=8 REFUSE wrong_device tpm_manufacturer=0x4e544300 manifest=manufacturer=0x49465800
+PASS neg-tpm-offline exit=10 REFUSE offline target=tpm-ntc-npct75x errno=-2
+PASS neg-tpm-timeout exit=11 REFUSE timeout elapsed_ns=7618771 budget_ns=0
+PASS neg-tpm-timeout-class ^REFUSE timeout elapsed_ns=[0-9]* budget_ns=0$
+PASS neg-tpm-invented-op exit=3 REFUSE manifest runner_op line=20
+PASS neg-tpm-runner-family exit=3 REFUSE manifest runner_family_route line=20
+PASS tpm-binding-no-advance 6 tpm-ntc-npct75x
+PASS neg-fault-badsize-eio exit=13 REFUSE unexpected_fault_result kind=badsize result=-5 want=-22
+PASS neg-fault-badsize-eio-class ^REFUSE unexpected_fault_result kind=badsize result=-5 
+PASS neg-fault-badcc-kernel-einval exit=13 REFUSE unexpected_fault_result kind=badcc result=-22 want=721219
+PASS neg-fault-badcc-kernel-einval-class ^REFUSE unexpected_fault_result kind=badcc result=-22 
+PASS neg-fault-badcc-short-response exit=13 REFUSE unexpected_fault_result kind=badcc result=-1000 want=721219
+PASS neg-fault-badcc-short-response-class ^REFUSE unexpected_fault_result kind=badcc result=-1000 
+PASS tpm-fault-controls-advance generation=9
+HW pass=121 fail=0 not_run=2

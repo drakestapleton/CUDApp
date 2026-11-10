@@ -1,0 +1,8 @@
+STEP discover tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 revision=159
+STEP claim generation=0
+STEP prepare arg=0
+STEP submit elapsed_ns=7602627
+STEP complete rc=0
+STEP quiesce elapsed_ns=7602627 budget_ns=2000000000
+STEP release generation=1
+RECEIPT target=tpm-ntc-npct75x family=TPM route=DIRECT_DEVICE runner=hwman-tpm op=props arg=0 generation=0->1 tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 elapsed_ns=7602627 outcome=PASS

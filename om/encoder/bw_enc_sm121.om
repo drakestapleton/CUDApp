@@ -14,7 +14,7 @@ note     or dst_subreg shl 16 or src1_subreg shl 24 or src2_subreg shl 32 or src
 note phys: vreg_to_phys 0..255 then uvreg_to_phys at 256..287 (C int, two's complement).
 note pad 1: omega_bw_encode_program (pad to the multiple of 8, at least 32); pad 0: exactly n instructions.
 note Result: the bytes written, or 0 when an instruction is refused (unknown op, an offset outside its
-note field, a BSSY delta below 2, a barrier register above 15) or n is above 1024.
+note field, a BSSY delta below 2, a barrier register above 15, a P0 guard on LDCU / LDCU.64) or n is above 1024.
 note Every constant is the decimal form of the C encoder's hex word (conversions by Wolfram,
 note evidence/CUDAPP-OM-ENCODER/wolfram-constants.txt).
 
@@ -191,7 +191,10 @@ put4 w wda o 30732 imm 66085488 ctl o 2087424
 ret 0
 end
 if eq op 11
-put4 w wda o 31105 rb o 5 203299072 ctl o 991744
+if not off24 imm
+ret 1
+end
+put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744
 ret 0
 end
 if eq op 12
@@ -470,6 +473,9 @@ note ATOMG.E.ADD.F32.FTZ.RN.STRONG.SYS and .GPU (no dst vreg encodes RZ, presenc
 note Constants by Wolfram: FromDigits of 0c001f00 7f89 000e0000 000e2400 723e 10ff 004fc400 79a3 80000000
 note 0c1f5300 0c1ef300 00321e00 base 16 = 201334528 32649 917504 926720 29246 4351 5227520 31139 2147483648
 note 203379456 203354880 3284480.
+note op 64 (Omega NG kernel traps, Hive NG D10): ATOMG.E.MIN.64.STRONG.SYS, ATOMG.E.ADD's words with w2 op bits
+note 23..26 = 1 and type bits 9..11 = 2 (nvdisasm 13.0 SM121); no dst vreg encodes RZ. Wolfram: FromDigits of 79a8
+note 089f5500 base 16 = 31144 144659712.
 fn enc_e o view ulong 16 w edit ulong 4 to ulong
 op = get o 0
 if eq op 60
@@ -489,13 +495,18 @@ a = or or 31139 shl rz o 1 15 16 shl rb o 2 24
 put4 w a or rb o 3 2147483648 or s rb o 5 ctl o 3284480
 ret 0
 end
+if eq op 64
+a = or or 31144 shl rz o 1 15 16 shl rb o 2 24
+put4 w a or rb o 3 2147483648 or 144659712 rb o 5 ctl o 3284480
+ret 0
+end
 note WolframLanguageEvaluator: FromDigits[#,16]& /@ {"7245","7305","00201000","0020f000","004fe200","004e2200"}
 note -> {29253,29445,2101248,2158592,5235200,5120512}.
-if eq op 64
+if eq op 65
 put4 w wd o 29253 rb o 2 2101248 ctl o 5235200
 ret 0
 end
-if eq op 65
+if eq op 66
 put4 w wd o 29445 rb o 2 2158592 ctl o 5120512
 ret 0
 end
@@ -503,11 +514,11 @@ note Native half forms are the E1_CVT sm_121 fixtures in src/omega_numeric.c.
 note Widening is HADD2.F32 Rd,-RZ,Ra.H0_H0; narrowing is F2F.F16.F32 Rd,Ra.
 note WolframLanguageEvaluator: FromDigits[#,16]& /@ {"ff007230","20000000","4100","7304","00200800","010fca00","010e2800"}
 note -> {4278219312,536870912,16640,29444,2099200,17811968,17704960}.
-if eq op 66
+if eq op 67
 put4 w wd o 4278219312 or 536870912 rb o 2 16640 ctl o 17811968
 ret 0
 end
-if eq op 67
+if eq op 68
 put4 w wd o 29444 rb o 2 2099200 ctl o 17704960
 ret 0
 end
@@ -536,14 +547,14 @@ end
 
 fn enc_f o view ulong 16 w edit ulong 4 to ulong
 op = get o 0
-if gt op 78
+if gt op 79
 ret 1
 end
-if le op 71
+if le op 72
 if eq and dpair o 2 dpair o 3 0
 ret 1
 end
-if eq op 71
+if eq op 72
 if ne get o 15 0
 ret 1
 end
@@ -553,11 +564,11 @@ end
 if eq dpair o 1 0
 ret 1
 end
-if eq op 68
+if eq op 69
 put4 w wda o 29225 0 rb o 3 ctl o 926720
 ret 0
 end
-if eq op 69
+if eq op 70
 put4 w wda o 29224 rb o 3 0 ctl o 926720
 ret 0
 end
@@ -567,11 +578,11 @@ end
 put4 w wda o 29227 rb o 3 rb o 4 ctl o 926720
 ret 0
 end
-if le op 73
-put4 w wd o 29448 rb o 2 pick eq op 72 6144 7168 ctl o 926720
+if le op 74
+put4 w wd o 29448 rb o 2 pick eq op 73 6144 7168 ctl o 926720
 ret 0
 end
-if or eq op 75 eq op 78
+if or eq op 76 eq op 79
 if eq dpair o 2 0
 ret 1
 end
@@ -580,12 +591,12 @@ if eq dpair o 1 0
 ret 1
 end
 end
-if le op 75
-put4 w wd o 29456 rb o 2 pick eq op 74 2103296 3149824 ctl o 926720
+if le op 76
+put4 w wd o 29456 rb o 2 pick eq op 75 2103296 3149824 ctl o 926720
 ret 0
 end
-if le op 77
-put4 w wd o 29458 rb o 2 pick eq op 76 2104320 2103296 ctl o 926720
+if le op 78
+put4 w wd o 29458 rb o 2 pick eq op 77 2104320 2103296 ctl o 926720
 ret 0
 end
 put4 w wd o 29457 rb o 2 3199232 ctl o 926720
@@ -606,31 +617,24 @@ end
 if lt op 60
 ret enc_d o w
 end
-if lt op 68
+if lt op 69
 ret enc_e o w
 end
 ret enc_f o w
 end
 
-note Guard ordinary instructions only when their encoded field is the documented always predicate.
-note BRA, BSSY, BSYNC and STG.STRONG.SYS encode their guard in their own cases.
-note WolframLanguageEvaluator: FromDigits["ffff0fff",16] -> 4294905855.
+note A P0 guard is not a uniform guard: LDCU and LDCU.64 must refuse it (DRA-483).
 fn enc1 o view ulong 16 w edit ulong 4 to ulong
-if ne encraw o w 0
-ret 1
+r = encraw o w
+if or ne r 0 eq get o 9 0
+ret r
 end
 op = get o 0
-if eq get o 9 0
-ret 0
-end
-if or or eq op 46 eq op 54 or eq op 55 eq op 22
-ret 0
-end
-a = get w 0
-if ne and shr a 12 15 7
+if isuld op
 ret 1
 end
-put w 0 or and a 4294905855 shl pred o 12
+x = get w 0
+put w 0 or sub x and x 61440 shl pred o 12
 ret 0
 end
 

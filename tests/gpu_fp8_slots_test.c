@@ -121,6 +121,23 @@ static int host_tests(void) {
     CHECK(omega_fp8_slot_table_idle(&t), "idle when nothing is pinned or loading");
     omega_fp8_slot_table_fini(&t);
 
+    /* uint32 wrap: pins and pinned_now are uint32_t, so a pin at pinned_now = 0xffffffff wraps it to 0 and leaves
+     * pinned_high alone (src/omega_fp8_slot_table.c at f1b50cbf). Before the apish_slot.om fix the Omega unit
+     * compared in 64 bits and stored pinned_high = 2^32 truncated to 0. */
+    {
+        OmegaFp8SlotTable w; uint64_t vw = 0;
+        CHECK(omega_fp8_slot_table_init(&w, 1) == 0 && omega_fp8_slot_begin_load(&w, 0) == 0 &&
+              omega_fp8_slot_finish_load(&w, 0, 7, 1, &vw) == 0, "wrap table loaded");
+        w.rec[0].pins = 0xffffffffu; w.stats.pinned_now = 0xffffffffu; w.stats.pinned_high = 1;
+        OmegaFp8SlotStats ws;
+        CHECK(omega_fp8_slot_pin(&w, 0, vw) == 0, "pin at pinned_now 0xffffffff");
+        omega_fp8_slot_table_stats(&w, &ws);
+        CHECK(w.rec[0].pins == 0 && ws.pinned_now == 0 && ws.pinned_high == 1,
+              "uint32 wrap: pins %u pinned_now %u pinned_high %u (want 0 0 1)", w.rec[0].pins, ws.pinned_now, ws.pinned_high);
+        w.rec[0].pins = 0; w.stats.pinned_now = 0;
+        omega_fp8_slot_table_fini(&w);
+    }
+
     /* threaded race: 4 readers pin slot 0 at its current version; one writer reloads it as fast as it can. The shadow
      * stands for the slot's bytes: the writer bumps it between begin_load and finish_load (while the slot is hidden).
      * The writer runs until RELOADS reloads and PINS reader pins happened (60 s cap, which only a hung table reaches). */

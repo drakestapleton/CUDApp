@@ -7,8 +7,8 @@ C1_FLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -D_GNU_SOURCE -ffp-contract=off 
 C1_COMPILER = $(filter-out $(C1_LANG)/src/compiler/oscc_main.c,$(wildcard $(C1_LANG)/src/compiler/*.c)) $(C1_LANG)/src/omega_om_units.c
 C1_FOREIGN_SRCS = $(C1_LANG)/src/omega_osc_gpu.c $(C1_LANG)/src/omega_osc_launch_args.c $(C1_COMPILER)
 C1_FOREIGN_OBJS = $(patsubst $(C1_LANG)/src/%.c,$(C1_DIR)/foreign/%.o,$(C1_FOREIGN_SRCS))
-C1_SRCS = src/omega_blackwell_codegen.c src/omega_blackwell_matmul.c src/sha256.c $(CUDAPP_BINDING_SRCS)
-C1_HEADERS = src/omega_blackwell_codegen.h src/omega_cubin.h tests/bw_warp_sim.h $(wildcard tests/bw_warp_sim_k.h)
+C1_SRCS = src/omega_blackwell_codegen.c src/omega_blackwell_matmul.c src/omega_gpu_om_ir.c src/sha256.c $(CUDAPP_BINDING_SRCS)
+C1_HEADERS = src/omega_gpu_om_ir.h src/omega_blackwell_codegen.h src/omega_cubin.h tests/bw_warp_sim.h $(wildcard tests/bw_warp_sim_k.h)
 # Isolate the retained oracle library's native exports. Encoding/packaging still
 # resolve the unrenamed CUDApp exports, never its duplicate historical encoder.
 C1_FOREIGN_NAMES = -Domega_bw_enc_sm121=c1_mv_bw_enc_sm121 -Dsha256_init=c1_mv_sha256_init -Dsha256_update=c1_mv_sha256_update -Dsha256_final=c1_mv_sha256_final -Dsha256_hash=c1_mv_sha256_hash

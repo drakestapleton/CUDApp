@@ -16,8 +16,8 @@ Every claim is labelled MEASURED (with the path or command), MODELED, or NOT_RUN
 - **Boot-chain code is experimental and carries this notice at the top: "WARNING: This can and may permanently damage your system. No warranty of any kind. Do not use it unless you are a professional lab that is prepared to lose the hardware."**
 - **Boot-chain research stays read-only: parsing and documentation only.**
 
-Our driver may *load* NVIDIA's signed firmware unmodified, as nouveau and nova do. That load is itself the risky step: without
-`nvidia.ko`, our code must run the SEC2 → GSP-FMC boot. Drake decides before any run.
+My driver may *load* NVIDIA's signed firmware unmodified, as nouveau and nova do. That load is itself the risky step: without
+`nvidia.ko`, my code must run the SEC2 → GSP-FMC boot. Drake decides before any run.
 
 ## Layers, boot upward
 
@@ -44,7 +44,7 @@ NVIDIA-written settings, kernel config and built-in drivers until each row above
   VFIO_DEVICE_BIND_IOMMUFD) and the QEMU fixture must use the same kernel options, or it tests a path the Spark lacks.
 - **(b) nouveau / nova: not usable now.** The running kernel builds neither (nouveau and Rust removed in the config,
   MEASURED); their support for this chip is unverified.
-- **(c) our own kernel module:** L332's `aien_gpu.ko` (C) is used in windows 0 and 1 as a narrow bootstrap shim. It is a
+- **(c) my own kernel module:** L332's `aien_gpu.ko` (C) is used in windows 0 and 1 as a narrow bootstrap shim. It is a
   deviation from `.om`-first and should be retired once (a) can do the same reads.
 
 ## Chip identity: GB10B or GB20B? (blocks window 1)
@@ -95,7 +95,7 @@ test_gb10_gsp_boot 257 checks PASS, test_gsp_mmio 67 PASS, nvhdr 167 PASS, mutan
 Receipts follow the Q27 window standard (`~/handoffs/Q27/q27-window.sh`): every step timed into the window log, the log
 committed pass or fail, restore checked by `window1-check.sh` (now also: not the window boot, no pending `next_entry`).
 
-**Still open and stated plainly.** Window 1 runs NVIDIA's signed SEC2 → GSP-FMC boot from our code. The chip checks the
+**Still open and stated plainly.** Window 1 runs NVIDIA's signed SEC2 → GSP-FMC boot from my code. The chip checks the
 signatures, but a wrong sequence can leave GSP stopped until a reset, and whether a warm reboot resets it is NOT_RUN (L332
 RUNBOOK). The last resort is a power cycle at the wall by Drake. Drake picks whether and when.
 

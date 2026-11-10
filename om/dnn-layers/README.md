@@ -88,15 +88,17 @@ host/simulator/mutant commands use the mandatory device-free namespace.
 Native seam: `9be13fb2595f1b3668288b36c4d17ef976bcb3a7`.
 Seeded compiler: omega-mv `e5b32567`, omc SHA-256
 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
-Bridge checkout: `bc11b30b1faa9af8b875ae6fec24e5f49cf03ac4`;
+Bridge checkout: `29d9cff72676bcef41a067bdcf4d8b0711042bcd`;
 `om/units.sh` enforces `om/omega-bridge.lock` and generates the committed
 hosted/freestanding C and declarations. Generated identities are never
 hand-edited to resolve a stacked-branch conflict.
 
 ## Native scalar half seam
 
-`BW_IR_F16_TO_F32` is opcode 66 and `BW_IR_F32_TO_F16` is 67. Existing opcodes
-0..65 retain their values. Generic replay admits `BW_IR_LAST` and refuses
+`BW_IR_F16_TO_F32` is opcode 67 and `BW_IR_F32_TO_F16` is 68. Existing opcodes
+0..64 retain main's values. The #280 merge moved the unpublished integ
+conversion and binary64 IDs from 64..78 to 65..79, preserving main op 64.
+Generic replay admits `BW_IR_LAST` and refuses
 `BW_IR_LAST+1`; the replay-boundary regression also kills a compiled source
 mutant restoring the former bound of 63.
 

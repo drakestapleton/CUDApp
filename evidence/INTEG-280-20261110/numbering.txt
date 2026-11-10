@@ -1,0 +1,11 @@
+om2
+note Date 2026-11-10, ham/integ-280-land merge resolution. Historical evidence is unchanged.
+note Main's published BlackwellIR op 64 remains ATOMG_MIN_U64_STRONG_SYS.
+note Reviewed integ cb3395aa assigned overlapping numbers to its appended conversions and binary64 forms.
+note Old integ -> merged numbering: I2FP_U32 64 -> 65; F2I_U32 65 -> 66;
+note F16_TO_F32 66 -> 67; F32_TO_F16 67 -> 68; DADD 68 -> 69; DMUL 69 -> 70;
+note DFMA 70 -> 71; DSETP 71 -> 72; MUFU_RCP64H 72 -> 73; MUFU_RSQ64H 73 -> 74;
+note F64_F32 74 -> 75; F32_F64 75 -> 76; F64_S32 76 -> 77; F64_U32 77 -> 78; S32_F64 78 -> 79.
+note Regenerate bindings and identities with om/units.sh. Never reinterpret archived raw integ IR as current IR.
+note The internal eight-u64 record has no version field. Versioned external admission is a follow-up proposal,
+note not implemented here. Existing historical receipts retain their original source and numbering.

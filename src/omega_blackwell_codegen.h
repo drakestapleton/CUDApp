@@ -146,13 +146,19 @@ typedef enum {
      * chip probe: tests/gpu_atomf32_probe_test.c. */
     BW_IR_ATOMG_ADD_F32_STRONG_SYS, /* ATOMG.E.ADD.F32.FTZ.RN.STRONG.SYS PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem += Rb */
     BW_IR_ATOMG_ADD_F32_STRONG_GPU, /* ATOMG.E.ADD.F32.FTZ.RN.STRONG.GPU PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem += Rb */
-    /* C1 kernel conversions, append-only: preserve training opcodes 60..63. */
+    /* Omega NG kernel traps (2026-11-07, Hive NG D10): one launch-wide trap word holds the lowest
+     * (linear thread id << 4 | trap code); a trapping thread folds its key in with an unsigned 64-bit atomic min.
+     * Same layout as ATOMG_ADD_STRONG_SYS with w2 op bits 23..26 = 1 (MIN) and size bits 9..11 = 2 (.64, unsigned;
+     * 3 decodes .S64). src2_vreg and dst_vreg are 64-bit pairs; dst_vreg < 0 encodes RZ (no old value returned).
+     * Words: om/encoder/atomg_min_test.om, make test-om-encoder-atomg (nvdisasm 13.0.85 --binary SM121). */
+    BW_IR_ATOMG_MIN_U64_STRONG_SYS, /* ATOMG.E.MIN.64.STRONG.SYS PT, Rd|RZ, desc[UR][Ra.64], Rb: Rd = old, mem = min(mem, Rb) */
+    /* C1 kernel conversions, append-only: preserve main op 64; conversions occupy 65..68. */
     BW_IR_I2FP_U32, /* u32 -> f32, round to nearest even, fixed latency */
     BW_IR_F2I_U32,  /* f32 -> u32, toward zero, saturating, NaN -> 0; variable latency */
     /* Scalar half conversions: low f16 lane, f32 register; round-nearest-even. */
     BW_IR_F16_TO_F32,        /* HADD2.F32 Rd, -RZ, Ra.H0_H0; fixed latency */
     BW_IR_F32_TO_F16,        /* F2F.F16.F32 Rd, Ra; upper half cleared; variable latency */
-    /* IEEE binary64 register forms, append-only (68..78). Use alloc_vreg64.
+    /* IEEE binary64 register forms, append-only (69..79). Use alloc_vreg64.
      * MUFU.*64H alone reads/writes one high word: select subreg 1 explicitly;
      * it neither reads nor clears the low word. DSETP uses FSETP's imm modes/P0.
      * F64 arithmetic and F2F narrowing round nearest even; F2I truncates and

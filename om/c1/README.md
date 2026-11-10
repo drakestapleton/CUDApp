@@ -44,7 +44,7 @@ The pipeline is:
    refusals, metadata and machine bytes are compared with the C migration
    oracle, including deliberately broken lowering variants.
 4. CUDApp's default `om/encoder/bw_enc_sm121.om` encodes those instructions.
-   Conversion opcodes 64/65 are append-only; training opcodes 60..63 retain
+   Conversion opcodes 65/66 follow main's ATOMG MIN opcode 64; training opcodes 60..63 retain
    their existing meanings. Ordinary guard predicates are encoded fail-closed.
 5. CUDApp's default `om/cubin/cubin_elf.om` packs sm_121 ELF cubins. The test
    parses the section table and checks exact `.text` roundtrip; changing a text

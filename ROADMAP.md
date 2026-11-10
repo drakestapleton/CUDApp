@@ -163,7 +163,7 @@ The research in `docs/PAIN_POINTS.md` ranks what developers hit with CUDA and it
 | D10 | No compiling at run time | DONE for hello-gpu |
 | D11 | Open libraries with an easy default path | PLANNED (L386, Omega bar C3) |
 | D12 | Work per answer, against the machine's own ceiling | simulator DONE; chip open |
-| D13 | Our own disassembler, in plain text | PLANNED (L386, Omega bar C6) |
+| D13 | My own disassembler, in plain text | PLANNED (L386, Omega bar C6) |
 | D14 | Recover from a fault without restarting | PLANNED (L386, Omega bar C5) |
 
 ## 2026-11-06: core utility Omega migration

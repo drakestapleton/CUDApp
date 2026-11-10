@@ -22,7 +22,7 @@ static int encoding(BlackwellIRProgram *p) {
     const uint32_t base[]={0x7229,0x7228,0x722b,0x722a,0x7308,0x7308,0x7310,0x7310,0x7312,0x7312,0x7311};
     const uint32_t mod[]={0,0,0,0x03f06000,0x1800,0x1c00,0x201800,0x301000,0x201c00,0x201800,0x30d100};
     uint8_t code[16384];size_t n;
-    for(unsigned op=68;op<=BW_IR_LAST;op++)for(unsigned m=0;m<4;m++)for(unsigned g=0;g<3;g++)for(unsigned sub=0;sub<2;sub++) {
+    for(unsigned op=BW_IR_DADD;op<=BW_IR_LAST;op++)for(unsigned m=0;m<4;m++)for(unsigned g=0;g<3;g++)for(unsigned sub=0;sub<2;sub++) {
         if(sub&&(maps[m][0]<2||maps[m][1]<2||maps[m][2]<2||maps[m][3]<2))continue;
         omega_bw_ir_init(p);
         for(unsigned k=0;k<4;k++){CHECK(omega_bw_ir_alloc_vreg64(p)==(int)k);p->regalloc.vreg_to_phys[k]=(int)maps[m][k]-(int)(sub*2);}
@@ -32,7 +32,7 @@ static int encoding(BlackwellIRProgram *p) {
         CHECK(!omega_bw_ir_append(p,&in));CHECK(!omega_bw_encode_program(p,code,sizeof code,&n));
         uint32_t w[4];memcpy(w,code,16);
         unsigned d=maps[m][0],a=maps[m][1],b=maps[m][2],c=maps[m][3];
-        uint32_t want[4]={base[op-68],0,mod[op-68],in.control};
+        uint32_t want[4]={base[op-BW_IR_DADD],0,mod[op-BW_IR_DADD],in.control};
         if(op<=BW_IR_DFMA){want[0]|=(d<<16)|(a<<24);if(op==BW_IR_DADD)want[2]=b;else {want[1]=b;if(op==BW_IR_DFMA)want[2]=c;}}
         else if(op==BW_IR_DSETP){want[0]|=a<<24;want[1]=b;}
         else {want[0]|=d<<16;want[1]=a;}
@@ -45,15 +45,15 @@ static int encoding(BlackwellIRProgram *p) {
         }
     }
     /* Scalar halves need not be even; MUFU operates explicitly on high words. */
-    for(unsigned op=72;op<=78;op++) {
+    for(unsigned op=BW_IR_MUFU_RCP64H;op<=BW_IR_S32_F64;op++) {
         omega_bw_ir_init(p);for(unsigned k=0;k<4;k++){CHECK(omega_bw_ir_alloc_vreg64(p)==(int)k);p->regalloc.vreg_to_phys[k]=(int)(k*2+4);}
         BlackwellIRInsn in=instruction(op);in.control=0;unsigned d=4,a=6;
-        if(op==72||op==73){in.dst_subreg=in.src1_subreg=1;d++;a++;}
-        else if(op==74||op==76||op==77){in.src1_subreg=1;a++;}
+        if(op==BW_IR_MUFU_RCP64H||op==BW_IR_MUFU_RSQ64H){in.dst_subreg=in.src1_subreg=1;d++;a++;}
+        else if(op==BW_IR_F64_F32||op==BW_IR_F64_S32||op==BW_IR_F64_U32){in.src1_subreg=1;a++;}
         else {in.dst_subreg=1;d++;}
         CHECK(!omega_bw_ir_append(p,&in));CHECK(!omega_bw_encode_program(p,code,sizeof code,&n));
         uint32_t w[4];memcpy(w,code,16);
-        CHECK(w[0]==(base[op-68]|(d<<16))&&w[1]==a&&w[2]==mod[op-68]&&w[3]==0x000e2400);
+        CHECK(w[0]==(base[op-BW_IR_DADD]|(d<<16))&&w[1]==a&&w[2]==mod[op-BW_IR_DADD]&&w[3]==0x000e2400);
     }
     /* The implicit DFMA addend is RZ; P0 is the only exposed predicate output. */
     omega_bw_ir_init(p);for(unsigned k=0;k<4;k++){CHECK(omega_bw_ir_alloc_vreg64(p)==(int)k);p->regalloc.vreg_to_phys[k]=(int)(k*2);}
@@ -62,11 +62,11 @@ static int encoding(BlackwellIRProgram *p) {
     p->insns[0]=instruction(BW_IR_DSETP);p->insns[0].dst_vreg=0;
     CHECK(omega_bw_encode_program(p,code,sizeof code,&n)!=0);
     /* Encoder-side pair validation also protects direct/replayed physical maps. */
-    for(unsigned op=68;op<=BW_IR_LAST;op++) {
-        if(op==72||op==73)continue;
+    for(unsigned op=BW_IR_DADD;op<=BW_IR_LAST;op++) {
+        if(op==BW_IR_MUFU_RCP64H||op==BW_IR_MUFU_RSQ64H)continue;
         for(unsigned operand=0;operand<4;operand++) {
-            int pair=op<=70?(operand<3||(op==70&&operand==3)):op==71?(operand==1||operand==2):
-                     (op==74||op==76||op==77)?operand==0:operand==1;
+            int pair=op<=BW_IR_DFMA?(operand<3||(op==BW_IR_DFMA&&operand==3)):op==BW_IR_DSETP?(operand==1||operand==2):
+                     (op==BW_IR_F64_F32||op==BW_IR_F64_S32||op==BW_IR_F64_U32)?operand==0:operand==1;
             if(!pair)continue;
             for(unsigned invalid=0;invalid<4;invalid++) {
                 omega_bw_ir_init(p);for(unsigned k=0;k<4;k++){CHECK(omega_bw_ir_alloc_vreg64(p)==(int)k);p->regalloc.vreg_to_phys[k]=(int)(k*2);}
@@ -85,11 +85,11 @@ static int arithmetic(BlackwellIRProgram *p) {
     omega_bw_ir_init(p);for(unsigned i=0;i<4;i++){CHECK(omega_bw_ir_alloc_vreg64(p)==(int)i);p->regalloc.vreg_to_phys[i]=(int)(i*2);}
     WsSim s={.p=p};WsLane l={0};
     const double v[]={0.0,-0.0,1.0,-1.0,DBL_MAX,-DBL_MAX,DBL_MIN,-DBL_MIN,DBL_TRUE_MIN,-DBL_TRUE_MIN,INFINITY,-INFINITY,NAN,0x1.0000000000001p0,0x1.fffffffffffffp-1,0x1p-53};
-    for(unsigned i=0;i<sizeof v/sizeof *v;i++)for(unsigned j=0;j<sizeof v/sizeof *v;j++)for(unsigned op=68;op<=71;op++) {
-        double a=v[i],b=v[j],c=-1.0,want=op==68?a+b:op==69?a*b:fma(a,b,c);
+    for(unsigned i=0;i<sizeof v/sizeof *v;i++)for(unsigned j=0;j<sizeof v/sizeof *v;j++)for(unsigned op=BW_IR_DADD;op<=BW_IR_DSETP;op++) {
+        double a=v[i],b=v[j],c=-1.0,want=op==BW_IR_DADD?a+b:op==BW_IR_DMUL?a*b:fma(a,b,c);
         ws_wr64(&l,1,bits(a),p);ws_wr64(&l,2,bits(b),p);ws_wr64(&l,3,bits(c),p);
         BlackwellIRInsn in=instruction(op);
-        if(op==71)for(unsigned mode=0;mode<16;mode++) {
+        if(op==BW_IR_DSETP)for(unsigned mode=0;mode<16;mode++) {
             in.imm=0x03f00000u|(mode<<12);ws_lane_exec(&s,&l,&in,0,0,0,0);
             unsigned relation=(isnan(a)||isnan(b))?8u:a<b?1u:a>b?4u:2u;
             CHECK(!s.err&&l.p0==!!(relation&mode));
@@ -116,9 +116,9 @@ static int arithmetic(BlackwellIRProgram *p) {
         CHECK(l.r[0]==ws_f2u((float)ties[i]));
     }
     const uint32_t ints[]={0,1,0xffffffffu,0x80000000u,0x7fffffffu,0x01000001u};
-    for(unsigned i=0;i<sizeof ints/sizeof *ints;i++)for(unsigned op=74;op<=77;op++)if(op!=75) {
+    for(unsigned i=0;i<sizeof ints/sizeof *ints;i++)for(unsigned op=BW_IR_F64_F32;op<=BW_IR_F64_U32;op++)if(op!=BW_IR_F32_F64) {
         l.r[2]=ints[i];in=instruction(op);ws_lane_exec(&s,&l,&in,0,0,0,0);
-        double want=op==74?(double)ws_u2f(ints[i]):op==76?(double)(int32_t)ints[i]:(double)ints[i];
+        double want=op==BW_IR_F64_F32?(double)ws_u2f(ints[i]):op==BW_IR_F64_S32?(double)(int32_t)ints[i]:(double)ints[i];
         double got=value(ws_rd64(&l,0,p));CHECK(!s.err&&(isnan(want)?isnan(got):bits(got)==bits(want)));
     }
     /* MUFU is a scalar HIGH word op; the low destination word must survive.
@@ -126,17 +126,17 @@ static int arithmetic(BlackwellIRProgram *p) {
      * We require the structural contract and exact special values, not chip
      * bit identity for the deliberately approximate normal high word. */
     const uint32_t high[]={0,0x80000000u,1,0x80000001u,0x7ff00000u,0xfff00000u,0x7ff00001u,0x3ff00000u,0x40100000u};
-    for(unsigned op=72;op<=73;op++)for(unsigned i=0;i<sizeof high/sizeof *high;i++) {
+    for(unsigned op=BW_IR_MUFU_RCP64H;op<=BW_IR_MUFU_RSQ64H;op++)for(unsigned i=0;i<sizeof high/sizeof *high;i++) {
         l.r[0]=0x12345678;l.r[2]=0xffffffff;l.r[3]=high[i];
         in=instruction(op);in.dst_subreg=in.src1_subreg=1;ws_lane_exec(&s,&l,&in,0,0,0,0);
         CHECK(!s.err&&l.r[0]==0x12345678);
         uint32_t want=0;
         if(i<=3)want=(high[i]&0x80000000u)|0x7ff00000u;
         else if(i==4)want=0;
-        else if(i==5)want=op==72?0x80000000u:0x7fffffffu;
+        else if(i==5)want=op==BW_IR_MUFU_RCP64H?0x80000000u:0x7fffffffu;
         else if(i==6)want=0x7fffffffu;
         else if(i==7)want=0x3ff00000u;
-        else want=op==72?0x3fd00000u:0x3fe00000u;
+        else want=op==BW_IR_MUFU_RCP64H?0x3fd00000u:0x3fe00000u;
         CHECK(l.r[1]==want);
     }
     /* Exercise full simulator conductor as well as its per-lane path. */

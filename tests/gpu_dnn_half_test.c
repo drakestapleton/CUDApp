@@ -33,15 +33,15 @@ static int golden(BlackwellIRProgram *p, const char *dump) {
     FILE *f=fd<0?NULL:fdopen(fd,"wb");
     if(!f&&fd>=0)close(fd);
     if(dump&&!f)return 0;
-    for(unsigned op=66;op<=67;op++)for(unsigned j=0;j<4;j++)for(int g=0;g<3;g++) {
+    for(unsigned op=BW_IR_F16_TO_F32;op<=BW_IR_F32_TO_F16;op++)for(unsigned j=0;j<4;j++)for(int g=0;g<3;g++) {
         unsigned d=regs[j][0],a=regs[j][1];uint32_t w[4];
         if(words(p,op,d,a,g,code,&bytes)){if(f)fclose(f);return 0;}
         memcpy(w,code,sizeof w);
         uint32_t pred=(g==0?7u:g==1?0u:8u)<<12;
-        uint32_t base=op==66?0xff007230u:0x7304u;
+        uint32_t base=op==BW_IR_F16_TO_F32?0xff007230u:0x7304u;
         uint32_t want0=(base&~0xf000u)|(d<<16)|pred;
-        uint32_t want1=(op==66?0x20000000u:0u)|a;
-        if(w[0]!=want0||w[1]!=want1||w[2]!=(op==66?0x4100u:0x200800u)||w[3]!=0x010fca00u) {
+        uint32_t want1=(op==BW_IR_F16_TO_F32?0x20000000u:0u)|a;
+        if(w[0]!=want0||w[1]!=want1||w[2]!=(op==BW_IR_F16_TO_F32?0x4100u:0x200800u)||w[3]!=0x010fca00u) {
             if(f)fclose(f);
             return 0;
         }
@@ -54,20 +54,20 @@ static int golden(BlackwellIRProgram *p, const char *dump) {
 static int simulation(BlackwellIRProgram *p) {
     WsSim s={0};WsLane lane={0};s.p=p;
     p->regalloc.vreg_to_phys[0]=0;p->regalloc.vreg_to_phys[1]=1;
-    BlackwellIRInsn in={.op=(BlackwellIROpcode)66,.dst_vreg=0,.src1_vreg=1,
+    BlackwellIRInsn in={.op=BW_IR_F16_TO_F32,.dst_vreg=0,.src1_vreg=1,
         .src2_vreg=-1,.src3_vreg=-1,.ureg=-1};
     for(unsigned h=0;h<65536;h++) {
         lane.r[1]=h;s.err=0;ws_lane_exec(&s,&lane,&in,0,0,0,0);
         float want=omega_ref_f16_to_f32((uint16_t)h),got=ws_u2f(lane.r[0]);
         if(s.err||(!isnan(want)&&ws_f2u(want)!=ws_f2u(got))||(isnan(want)&&!isnan(got)))return 0;
         if((h&0x7c00u)!=0x7c00u) {
-            in.op=(BlackwellIROpcode)67;lane.r[1]=ws_f2u(want);s.err=0;
+            in.op=BW_IR_F32_TO_F16;lane.r[1]=ws_f2u(want);s.err=0;
             ws_lane_exec(&s,&lane,&in,0,0,0,0);
             if(s.err||lane.r[0]!=h)return 0;
-            in.op=(BlackwellIROpcode)66;
+            in.op=BW_IR_F16_TO_F32;
         }
     }
-    in.op=(BlackwellIROpcode)67;
+    in.op=BW_IR_F32_TO_F16;
     uint32_t seed=1;
     for(unsigned i=0;i<65536;i++) {
         seed=seed*1664525u+1013904223u;lane.r[1]=seed;s.err=0;
@@ -90,10 +90,10 @@ static int predicates(BlackwellIRProgram *p) {
     p->regalloc.vreg_to_phys[0]=0;
     p->regalloc.vreg_to_phys[1]=1;
     p->insns[1]=(BlackwellIRInsn){.op=BW_IR_EXIT};
-    for(unsigned op=66;op<=67;op++)for(unsigned guard=0;guard<3;guard++)
+    for(unsigned op=BW_IR_F16_TO_F32;op<=BW_IR_F32_TO_F16;op++)for(unsigned guard=0;guard<3;guard++)
         for(unsigned pattern=0;pattern<3;pattern++) {
-            uint32_t input=op==66?1u:ws_f2u(1.f);
-            uint32_t converted=op==66?ws_f2u(omega_ref_f16_to_f32((uint16_t)input)):
+            uint32_t input=op==BW_IR_F16_TO_F32?1u:ws_f2u(1.f);
+            uint32_t converted=op==BW_IR_F16_TO_F32?ws_f2u(omega_ref_f16_to_f32((uint16_t)input)):
                 omega_ref_f32_to_f16(ws_u2f(input));
             p->insns[0]=(BlackwellIRInsn){.op=(BlackwellIROpcode)op,
                 .dst_vreg=0,.src1_vreg=1,.src2_vreg=-1,.src3_vreg=-1,

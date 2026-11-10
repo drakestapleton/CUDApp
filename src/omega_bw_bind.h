@@ -4,8 +4,8 @@
 /* Spec bytes, the realization binding message, the machine descriptor, matmul dispatch, vector launch geometry,
  * program padding and the code-digest admission are first-party Omega (om/codegen/cg_bind.om, generated
  * src/cudapp_om_cg_bind.c, export omega_cg_bind). The C shells own memory, the structs and the SHA-256 calls. The C
- * kept under CUDAPP_MIGRATION_PENDING_C_BIND (default OFF; always on freestanding, whose link has no hosted trap
- * handling) is the differential oracle of tests/regalloc_om/run.sh. */
+ * kept under CUDAPP_MIGRATION_PENDING_C_BIND (default OFF in both builds; freestanding calls the native
+ * omega2_cg_bind and omega2_bw_id_native below) is the differential oracle of tests/regalloc_om/run.sh. */
 #if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_BIND)
 #define BW_BIND_C_PRIMARY 1
 #else

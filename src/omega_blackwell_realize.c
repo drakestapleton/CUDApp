@@ -1,3 +1,4 @@
+/* ORACLE: retained default-OFF C realization identity; production cg_bind and bw_identity are Omega on both host ABIs. */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 #include "omega_blackwell_realize.h"
 #include "sha256.h"
@@ -27,8 +28,7 @@ int omega_blackwell_realization_compute_id(OmegaBlackwellRealization *real) {
     return 0;
 }
 #else
-/* Explicit NO_POSIX exception pending omega-bridge#72; this is also the
- * default-OFF C_BIND differential path. Hosted identities use Omega SHA. */
+/* Default-OFF C_BIND differential oracle. Both production ABIs use Omega SHA. */
 
 int omega_blackwell_get_machine_id(SemanticId *out_machine_id) {
     if (!out_machine_id) return -1;

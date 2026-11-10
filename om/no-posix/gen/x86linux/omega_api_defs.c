@@ -27,6 +27,22 @@ uint64_t no_bf16(uint64_t o_raw)
         __builtin_trap();
     return r;
 }
+/* fn bw_qmd op ulong m view ulong 16 q edit ulong 224 to ulong */
+uint64_t bw_qmd(uint64_t o_op, const uint64_t o_m[16], uint64_t o_q[224])
+{
+    uint64_t r = 0;
+    if (omega2_bw_qmd(&r, (uint64_t)o_op, o_m, 16, o_q, 224) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
+/* fn amp_qmd op ulong a view ulong 16 q edit uchar 256 to ulong */
+uint64_t amp_qmd(uint64_t o_op, const uint64_t o_a[16], uint8_t o_q[256])
+{
+    uint64_t r = 0;
+    if (omega2_amp_qmd(&r, (uint64_t)o_op, o_a, 16, o_q, 256) != OMEGA_OK)
+        __builtin_trap();
+    return r;
+}
 /* fn decide op ulong a view ulong 16 o edit ulong 4 to ulong */
 uint64_t decide(uint64_t o_op, const uint64_t o_a[16], uint64_t o_o[4])
 {

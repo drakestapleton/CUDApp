@@ -64,6 +64,10 @@ static int cited(void) {
     CHECK((q1[36] & 0x7ffu) == 8u);
     CHECK(q1[36] == 78923784u);
     CHECK(omega_blackwell_verify_qmd_invariants(q1) == 0);
+    /* Wrong field offset: move the version word one slot earlier. */
+    q1[13] = q1[14]; q1[14] = 0;
+    CHECK(omega_blackwell_verify_qmd_invariants(q1) == -1);
+    q1[14] = q1[13]; q1[13] = 0;
     q1[37] ^= 1u;
     CHECK(omega_blackwell_verify_qmd_invariants(q1) == -1);
     CHECK(omega_blackwell_build_cbank_driver(cb, 0x2000) == 0);

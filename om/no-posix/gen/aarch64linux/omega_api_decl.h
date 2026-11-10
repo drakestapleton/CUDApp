@@ -19,6 +19,10 @@ uint64_t bw_enc_sm121(const uint64_t o_ins[8192], const uint64_t o_phys[288], ui
 uint64_t cubin_elf(const uint64_t o_m[104], const uint8_t o_nm[64], const uint8_t o_tx[16777216], uint64_t o_o[16777216]);
 /* fn no_bf16 raw ulong to ulong */
 uint64_t no_bf16(uint64_t o_raw);
+/* fn bw_qmd op ulong m view ulong 16 q edit ulong 224 to ulong */
+uint64_t bw_qmd(uint64_t o_op, const uint64_t o_m[16], uint64_t o_q[224]);
+/* fn amp_qmd op ulong a view ulong 16 q edit uchar 256 to ulong */
+uint64_t amp_qmd(uint64_t o_op, const uint64_t o_a[16], uint8_t o_q[256]);
 /* fn decide op ulong a view ulong 16 o edit ulong 4 to ulong */
 uint64_t decide(uint64_t o_op, const uint64_t o_a[16], uint64_t o_o[4]);
 /* fn emit op ulong a view ulong 16 o edit ulong 32 to ulong */

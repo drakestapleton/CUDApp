@@ -36,6 +36,7 @@ assert {p.stem for p in sources} == {
     'regalloc', 'regalloc_ir', 'regalloc_live', 'cg_matmul', 'cg_matmul_params',
     'cg_matmul_i32', 'cg_matmul_tensor', 'cg_matmul_loop', 'cg_matmul_frag', 'cg_matmul_block',
     'cg_vecadd', 'cg_bind', 'cg_pack_len', 'cg_pack_h', 'cg_sentin', 'bw_identity',
+    'bw_qmd', 'amp_qmd',
 }
 native = ROOT / 'build/no_posix/native'
 host = OUT / 'host'

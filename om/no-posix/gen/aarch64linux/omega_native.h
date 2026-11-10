@@ -27,6 +27,14 @@ uint32_t omega2_cubin_elf(uint64_t *result, const uint64_t *o_m, uint64_t o_m_le
 const char *omega2_ident_no_bf16(void);
 /* fn no_bf16 raw ulong to ulong */
 uint32_t omega2_no_bf16(uint64_t *result, uint64_t o_raw);
+#define OMEGA2_IDENT_bw_qmd "omega-ident 1 unit=bw_qmd abi=2 profile=OM-2 src=52178653011fa1ea98ba377bf9db6d9f3f883c80e531fcf4d052fc5038cb1873 omc=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
+const char *omega2_ident_bw_qmd(void);
+/* fn bw_qmd op ulong m view ulong 16 q edit ulong 224 to ulong */
+uint32_t omega2_bw_qmd(uint64_t *result, uint64_t o_op, const uint64_t *o_m, uint64_t o_m_len, uint64_t *o_q, uint64_t o_q_len);
+#define OMEGA2_IDENT_amp_qmd "omega-ident 1 unit=amp_qmd abi=2 profile=OM-2 src=df9eef7ffb22e2f9bb87176e91ddbc1b1f6c7cf04dfe8de53cf053bc79122d8e omc=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
+const char *omega2_ident_amp_qmd(void);
+/* fn amp_qmd op ulong a view ulong 16 q edit uchar 256 to ulong */
+uint32_t omega2_amp_qmd(uint64_t *result, uint64_t o_op, const uint64_t *o_a, uint64_t o_a_len, uint8_t *o_q, uint64_t o_q_len);
 #define OMEGA2_IDENT_admit "omega-ident 1 unit=admit abi=2 profile=OM-2 src=fc14535990c2241911f8202869017ad2c98ec5da24eb88ea0968bbe7ac8d73ba omc=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f"
 const char *omega2_ident_admit(void);
 /* fn decide op ulong a view ulong 16 o edit ulong 4 to ulong */

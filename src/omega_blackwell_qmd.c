@@ -1,9 +1,10 @@
+/* ORACLE: retained default-OFF C differential; production bodies are om/qmd/bw_qmd.om. C ABI buffer shell remains. */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Blackwell QMD and constant-bank packing.
  * Hosted default: om/qmd/bw_qmd.om through omega_bw_qmd. This file keeps the
  * caller's buffers and the null checks. The C packer below is the differential
- * oracle. It is compiled only in the freestanding build (OMEGA_GPU_NO_POSIX, the
- * portable binding uses POSIX trap handling), with CUDAPP_MIGRATION_PENDING_QMD,
+ * oracle. Hosted and freestanding builds call the checked Omega roots. The C
+ * packer is compiled only with CUDAPP_MIGRATION_PENDING_QMD,
  * or with CUDAPP_MIGRATION_PENDING_QMD_DIFF, which packs every call both ways and
  * aborts on any difference. Field citations stay in bw_qmd.om and omega_blackwell_qmd.h.
  *
@@ -22,11 +23,11 @@
 #include "omega_blackwell_qmd.h"
 #include <string.h>
 
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_QMD)
+#if defined(CUDAPP_MIGRATION_PENDING_QMD)
 #define QMD_C_PRIMARY 1
 #endif
 #if defined(QMD_C_PRIMARY) && defined(CUDAPP_MIGRATION_PENDING_QMD_DIFF)
-#error "CUDAPP_MIGRATION_PENDING_QMD_DIFF needs the .om packer: not with OMEGA_GPU_NO_POSIX or the C packer"
+#error "CUDAPP_MIGRATION_PENDING_QMD_DIFF needs the .om packer: not with the C packer"
 #endif
 
 #if defined(QMD_C_PRIMARY) || defined(CUDAPP_MIGRATION_PENDING_QMD_DIFF)
@@ -293,8 +294,12 @@ int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
 }
 
 #else
-#ifndef OMEGA_GPU_NO_POSIX
+#ifdef OMEGA_GPU_NO_POSIX
+#include "omega_native.h"
+#define omega_bw_qmd omega2_bw_qmd
+#else
 #include "cudapp_native.h"
+#endif
 
 #define QMD_OM_M 16
 #define QMD_OM_W 224
@@ -334,7 +339,7 @@ static int om_pack(uint64_t op, const uint64_t m[QMD_OM_M], uint32_t *out, int n
         for (int i = 0; i < OMEGA_BW_QMD_WORDS; i++) w[i] = out[i];
     }
     uint32_t st = omega_bw_qmd(&r, op, m, QMD_OM_M, w, QMD_OM_W);
-    if (st != OMEGA_OK) {
+    if (st != 0) {
 #ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
         qmd_diff_die("binding", 0, (int)st);
 #endif
@@ -475,5 +480,4 @@ int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
 #endif
     return orc;
 }
-#endif /* !OMEGA_GPU_NO_POSIX */
 #endif

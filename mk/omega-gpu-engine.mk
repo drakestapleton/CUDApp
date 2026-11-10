@@ -164,6 +164,9 @@ $(GPU_FS_LINK): $(GPU_FS_OBJS) $(GPU_NO_POSIX_OBJS)
 	@echo "freestanding GPU link ($(words $(GPU_FS_SRCS)) files): only $$(nm -u $@ | awk '{print $$NF}' | grep -Ev '^_GLOBAL_OFFSET_TABLE_$$' | sort -u | tr '\n' ' ')undefined"
 gpu-engine-freestanding: $(GPU_FS_LINK)
 
+# ham/cubin-qmd-om: additive QMD and realization root dependencies.
+$(GPU_NO_POSIX_DIR)/.installed: om/qmd/bw_qmd.om om/codegen/cg_bind.om om/cache/digest.om om/blackwell/identity.om om/blackwell/id_native.om om/encoder/amp_runtime.om om/encoder/amp_qmd.om
+
 .PHONY: test-no-posix-native
 test-no-posix-native: $(GPU_NO_POSIX_OBJS) build/test_codegen_freestanding
 	python3 tests/no_posix_native.py

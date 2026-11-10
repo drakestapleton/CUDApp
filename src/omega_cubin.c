@@ -1,3 +1,4 @@
+/* ORACLE: retained default-OFF C writer; production packing is om/cubin/cubin_elf.om. Allocating C ABI shell remains. */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* omega_cubin: explicitly selected sm_86/sm_121 cubin container writer. See omega_cubin.h for the ABI
  * facts and for what this file deliberately does not do. No device is opened,

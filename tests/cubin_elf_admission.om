@@ -1,0 +1,117 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Compose with om/components/artifact_elf.om. Input is the image emitted by ampere_cubin_test FILE.
+note Exercise the existing production ELF admission unit, not a new parser or relaxed loader.
+text cefn "ampere_exit"
+text cepass "PASS cubin ELF admission: original accepted; wrong text section size and truncated ELF refused\n"
+fn ce_rd b view uchar 65536 p ulong n ulong to ulong
+v = ulong 0
+for i ulong n
+v = or v shl ulong get b add p i mul i 8
+end
+ret v
+end
+fn ce_check elf view uchar 65536 n ulong to ulong
+buf = new uchar 512 0
+st = new ulong 32 0
+put st 1 n
+put st 2 16
+put st 3 len cefn
+for i ulong len cefn
+put buf add 256 i get cefn i
+end
+note Independent EXIT word from the existing fixture in tests/ampere_cubin_test.c.
+put buf 128 uchar 77
+put buf 129 uchar 121
+note WolframLanguageEvaluator: FromDigits[#,16]& /@ {"4d","79","80","ea","0f"} -> {77,121,128,234,15}.
+put buf 138 uchar 128
+put buf 139 uchar 3
+put buf 141 uchar 234
+put buf 142 uchar 15
+note Request buffer begins with the first 64 header bytes.
+if lt n 64
+ret 0
+end
+for i ulong 64
+put buf i get elf i
+end
+for step ulong 1024
+status = artifact_elf buf st
+if ne status 2
+ret status
+end
+off = get st 4
+cnt = get st 5
+if gt off n
+ret 0
+end
+if gt cnt sub n off
+ret 0
+end
+for i ulong cnt
+put buf i get elf add off i
+end
+end
+ret 0
+end
+fn main to int
+path = new uchar 4096 0
+elf = new uchar 65536 0
+if ne argcnt 2
+ret 2
+end
+pn = argread 1 path 0 4096
+if le pn 0
+ret 3
+end
+fd = fopen path 0 ulong pn 0 0
+if lt fd 0
+ret 4
+end
+n = ulong 0
+while lt n 65536 bound 65536
+k = read int fd elf n sub ulong 65536 n
+if lt k 0
+ret 5
+end
+if eq k 0
+break
+end
+n = add n ulong k
+end
+closed = fclose int fd
+if or ne closed 0 eq n 65536
+ret 6
+end
+if ne ce_check elf n 1
+ret 7
+end
+if ne ce_check elf 63 0
+ret 8
+end
+shoff = ce_rd elf 40 8
+if ne ce_check elf sub shoff 1 0
+ret 9
+end
+count = ce_rd elf 60 2
+found = false
+for i ulong count
+base = add shoff mul i 64
+if eq ce_rd elf add base 4 4 1
+if eq ce_rd elf add base 8 8 6
+put elf add base 32 uchar 17
+found = true
+end
+end
+end
+if not found
+ret 10
+end
+if ne ce_check elf n 0
+ret 11
+end
+k = write 1 cepass 0 len cepass
+if ne k long len cepass
+ret 12
+end
+ret 0
+end

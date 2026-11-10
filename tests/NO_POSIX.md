@@ -103,6 +103,6 @@ were added. C1b refuses P0 guards on the uniform LDCU and LDCU.64 forms in both
 the seeded encoder and C oracle.
 
 `make test-om-encoder-primary` exercises the production freestanding encoder
-on 1024 samples per operand form (eight forms for every opcode 0..78). Accepted/refused counts are
+on 1024 samples per operand form (eight forms for every opcode 0..79). Accepted/refused counts are
 written to `build/om-encoder/primary-counts.txt`; a flipped response byte must
 be rejected. Run with the same pinned `OMEGA_OMC` and `OMEGA_BRIDGE` as above.

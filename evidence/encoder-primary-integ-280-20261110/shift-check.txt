@@ -1,0 +1,5 @@
+new: form rows 640 edge rows 82 | old (-4): form rows 632 edge rows 81
+old rows matched at the #280 op number: 713 of 713
+new op 64 (ATOMG.E.MIN.64.STRONG.SYS, no integ counterpart): [('1024', '1024', '0'), ('1024', '1024', '0'), ('1024', '1024', '0'), ('1024', '1024', '0'), ('1024', '1024', '0'), ('1024', '1024', '0'), ('1024', '1024', '0'), ('1024', '1024', '0')] edge ('44', '44', '0')
+accepted sums new: forms 613242 edges 3382 | old: forms 605050 edges 3338
+mismatches 0

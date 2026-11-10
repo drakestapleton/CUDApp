@@ -1,0 +1,28 @@
+IMPLEMENTED / EXERCISED host only. mac-ham Cuda280Finish-2 (CUDApp #280 landing, ledger L1081), 2026-11-10.
+evidence/encoder-primary-20261110/, -2/, -3/ and -4/ are left unedited and describe the sampler on integ numbering.
+
+Why a new receipt: the #280 landing head merges integ 3457943d (which added make test-om-encoder-primary and
+receipt -4 on integ numbering, ops 0..78) with the #280 op-id move (main op 64 ATOMG.E.MIN.64.STRONG.SYS kept,
+integ ops 64..78 moved to 65..79). om/encoder/primary_parity.om took its opcode ranges from the old numbering, so on
+the merge it sampled forms for ops 0..78 only (op 79 skipped) and refusal edges for 0..80 (op 80 the only unknown).
+Sampler change: forms loop 79 -> 80 (ops 0..79), edge loop 81 -> 82 (ops 0..81; 80 and 81 unknown), as before one
+full opcode table plus two unknown ops. No other sampler line, form, case or bound changed.
+
+Run 2026-11-10T11:47:39Z-11:49:54Z, Spark (AArch64), pool-0-2 (taskset -c 0-2, nice -n 19), bwrap --unshare-net,
+worktree at merge commit 65117efbb44ab87f80e1c17a9dc33c22e7cd1c9e plus the sampler change (primary_parity.om sha256
+5ee6c16ca8bdd1338bea0418655dd19b7974d320dc106a37dc1c78339512a166, the committed file), pinned omc sha256
+2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f, omega-bridge 29d9cff7. Command:
+make -j3 test-om-encoder-primary (OM_ENC_PRIMARY_RECEIPT still -4). Tape 84347904 bytes (80 x 8 x 1024 + 82 x 44
+records of 128 bytes).
+- C oracle = native = hosted: each reply 15815232 bytes, sha256
+  1eb6b5d4a60c169f5b34084c25fc631b70aa456fe5f7a69e081ccdf1e80dfd42; seeded conductor rc 0; flipped-byte control
+  refused (ENCODER PARITY FAIL 0 0).
+- The counts compare against -4 failed, as expected: cmp differs first at line 545 (op 68 form 0, integ op 67).
+- parity-counts.txt (this directory, the run's build/om-encoder/primary-counts.txt): 640 form rows, 82 edge rows.
+  shift-check.txt: every one of the 713 rows of -4 (integ op k) is byte-equal to this file's row for op k (k < 64)
+  or op k+1 (k >= 64); the only new rows are op 64 (ATOMG.E.MIN.64.STRONG.SYS: 8 forms x 1024 accepted, 44 edge
+  samples accepted, 0 refused, C oracle = Omega) and the second unknown op 81 (44 refused). Accepted sums
+  613242 forms (605050 + 8192) and 3382 edges (3338 + 44).
+- Not rerun: -4's sampler-controls (oracle mutants). They test the sampler's cases, which did not change.
+
+These are sampled host bytes, not hardware results. QUALIFIED / MERGED / DEPLOYED and chip runs: NOT_RUN.

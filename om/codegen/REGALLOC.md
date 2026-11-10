@@ -76,7 +76,7 @@ native units registered in `om/no-posix.sh`. They no longer select C computation
 merely because POSIX is unavailable. C remains an explicit default-OFF oracle.
 `make test-codegen-freestanding` compares hosted and native Omega instruction dumps.
 `make test-om-encoder-primary` compares 1024 register/control/predicate samples
-for each of eight operand forms of every opcode 0..78 against C, hosted Omega and native Omega; the conductor is
+for each of eight operand forms of every opcode 0..79 against C, hosted Omega and native Omega; the conductor is
 `om/encoder/primary_parity.om`, including a flipped-byte refusal control.
 The operand-mode sweep also caught the seeded LDG.E encoder omitting its
 existing C signed byte-offset field. Both seeded encoder and spec table now

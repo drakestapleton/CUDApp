@@ -87,7 +87,8 @@ mutants = [
     ('packet-tag', 'words', 'const MTHDTAG ulong 536870912', 'const MTHDTAG ulong 536870913'),
     ('park-found', 'park', 'ret 1\n', 'ret 0\n'),
     ('book-successor', 'book', 'add get a 1 1', 'add get a 1 2'),
-    ('queue-bound', 'streams', 'if or eq i 0 gt i 3', 'if or eq i 0 gt i 2'),
+    # The extra-queue index bound moved to om/streams/xq.om (bridge-freest omega_streams_xq);
+    # test-om-streams-mutants mutant 5 applies this same edit there.
 ]
 for name, unit, old, new in mutants:
     directory = OUT / name
@@ -110,4 +111,4 @@ for name, unit, old, new in mutants:
     with LOG.open('a') as f:
         f.write('KILLED ' + name + ' rc=' + str(p.returncode) + '\n')
     print('KILLED', name)
-print('PASS no-posix session: 5 exports hosted/freestanding differential; ABI refusal; symbol OFF/ON red; 6 killed mutants')
+print('PASS no-posix session: 5 exports hosted/freestanding differential; ABI refusal; symbol OFF/ON red; 5 killed mutants')

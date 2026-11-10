@@ -22,7 +22,8 @@ static long bad, n, plant = -1;
 
 static void one(uint64_t lo, uint64_t hi, uint64_t pc) {
     char a[OM_DIS_TEXT], b[OM_DIS_TEXT];
-    int ra = om_sm121_disasm(lo, hi, pc, a, sizeof a);
+    uint64_t flags;
+    int ra = om_sm121_disasm(lo, hi, pc, a, sizeof a, &flags);
     int rb = c_sm121_disasm(lo, hi, pc, b, sizeof b);
     if (n++ == plant && a[0]) a[0] ^= 1;
     if (ra != rb || strcmp(a, b) != 0) {

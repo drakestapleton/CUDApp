@@ -15,8 +15,9 @@ SM121DIS_DIFF = $(OUT_DIR)/sm121dis_diff
 SM121DIS_DIFF_RED = $(OUT_DIR)/sm121dis_diff_red
 SM121DIS_K = $(OUT_DIR)/sm121dis-kernels
 SM121DIS_DEPS = tools/sm121dis/sm121dis.c src/omega_sm121_disasm.c src/omega_sm121_disasm.h src/cudapp_om_sm121_dis.c \
-	src/cudapp_native.h
-SM121DIS_SRCS = tools/sm121dis/sm121dis.c src/omega_sm121_disasm.c src/cudapp_om_sm121_dis.c
+	src/cudapp_native.h src/omega_dis_words.h src/cudapp_om_words.c
+# the command line reads each word through the seeded word unit (om/disasm/words.om, src/omega_dis_words.h)
+SM121DIS_SRCS = tools/sm121dis/sm121dis.c src/omega_sm121_disasm.c src/cudapp_om_sm121_dis.c src/cudapp_om_words.c
 SM121DIS_CC = $(CC) -std=gnu11 -Wall -Wextra -Werror -O2 -Isrc
 
 $(SM121DIS): $(SM121DIS_DEPS)
@@ -25,7 +26,7 @@ $(SM121DIS): $(SM121DIS_DEPS)
 # the red decoder: the C oracle with one planted fault (first source register off by one bit)
 $(SM121DIS_RED): $(SM121DIS_DEPS)
 	@mkdir -p $(OUT_DIR)
-	$(SM121DIS_CC) -DCUDAPP_MIGRATION_PENDING_C_DISASM -DSM121DIS_MUTANT=1 -o $@ tools/sm121dis/sm121dis.c src/omega_sm121_disasm.c
+	$(SM121DIS_CC) -DCUDAPP_MIGRATION_PENDING_C_DISASM -DSM121DIS_MUTANT=1 -o $@ tools/sm121dis/sm121dis.c src/omega_sm121_disasm.c src/cudapp_om_words.c
 $(SM121DIS_DIFF): $(SM121DIS_DEPS)
 	@mkdir -p $(OUT_DIR)
 	$(SM121DIS_CC) -DCUDAPP_MIGRATION_PENDING_DISASM_DIFF -o $@ $(SM121DIS_SRCS)
@@ -123,3 +124,37 @@ test-sm121-mmio: $(SM121_MMIO)
 		echo "FAIL: EF satisfied the MMIO.GPU contract"; exit 1; \
 	else rc=$$?; test "$$rc" = 4 || exit "$$rc"; \
 		echo "PASS: exact MMIO.GPU op and operands; wrong-EF negative refused. GB10 DEVICE NOT_RUN"; fi
+
+# BlackwellIR ops 64..79 after the #280 numbering move (evidence/INTEG-280-20261110/numbering.txt):
+# om/disasm/opmove_test.om, composed after the seeded encoder and this decoder and compiled by the pinned omc, encodes
+# one row of each op; Omega's own decoder must know every word and print the op's mnemonic, and the nvdisasm 13.0.85
+# ORACLE (offline, read-only, never shipped) must print the decoder's text for each word. Red checks: the rows
+# numbered as before the move (stale numbering, exit 41), the decoder without its DADD row (exit 15), the oracle text
+# without its DADD line (exit 4).
+SM121DIS_OPMOVE = $(OUT_DIR)/sm121dis-opmove
+SM121DIS_OPMOVE_RED = 's/^if eq op 553$$/if eq op 4096/'
+.PHONY: test-sm121dis-opmove
+test-sm121dis-opmove: om/encoder/bw_enc_sm121.om om/disasm/sm121_dis.om om/disasm/opmove_test.om
+	@[ -x "$(OMEGA_OMC)" ] && [ "$$(sha256sum < $(OMEGA_OMC) | cut -c1-64)" = 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f ] || { echo "NOT_RUN: set OMEGA_OMC to the pinned seeded compiler"; exit 3; }
+	@case "$$($(NVDISASM) --version 2>/dev/null)" in *V13.0.85*) ;; *) echo "NOT_RUN: nvdisasm version must be 13.0.85"; exit 3;; esac
+	@mkdir -p $(OUT_DIR)
+	cat om/encoder/bw_enc_sm121.om om/disasm/sm121_dis.om om/disasm/opmove_test.om > $(SM121DIS_OPMOVE).om
+	$(OMEGA_OMC) < $(SM121DIS_OPMOVE).om > $(SM121DIS_OPMOVE)
+	chmod +x $(SM121DIS_OPMOVE)
+	$(SM121DIS_OPMOVE)
+	$(SM121DIS_OPMOVE) bin > $(SM121DIS_OPMOVE).bin
+	$(NVDISASM) -b SM121 -hex $(SM121DIS_OPMOVE).bin > $(SM121DIS_OPMOVE).nv
+	$(SM121DIS_OPMOVE) check oracle < $(SM121DIS_OPMOVE).nv
+	@rc=0; $(SM121DIS_OPMOVE) stale numbering control || rc=$$?; \
+	if [ $$rc != 41 ]; then echo "RED CHECK BROKEN: the stale numbering exited $$rc, not 41"; exit 1; fi; \
+	echo "red check: the stale numbering (I2FP_U32 encoded as op 64) exits 41, as it must"
+	@sed $(SM121DIS_OPMOVE_RED) om/disasm/sm121_dis.om > $(SM121DIS_OPMOVE)-red.dis.om; \
+	if cmp -s $(SM121DIS_OPMOVE)-red.dis.om om/disasm/sm121_dis.om; then echo "RED CHECK BROKEN: the DADD row edit changed nothing"; exit 1; fi; \
+	cat om/encoder/bw_enc_sm121.om $(SM121DIS_OPMOVE)-red.dis.om om/disasm/opmove_test.om | $(OMEGA_OMC) > $(SM121DIS_OPMOVE)-red || exit 1; \
+	chmod +x $(SM121DIS_OPMOVE)-red; rc=0; $(SM121DIS_OPMOVE)-red || rc=$$?; \
+	if [ $$rc != 15 ]; then echo "RED CHECK BROKEN: the decoder without its DADD row exited $$rc, not 15"; exit 1; fi; \
+	echo "red check: the decoder without its DADD row exits 15, as it must"
+	@rc=0; grep -v -- 'DADD' $(SM121DIS_OPMOVE).nv | $(SM121DIS_OPMOVE) check oracle || rc=$$?; \
+	if [ $$rc != 4 ]; then echo "RED CHECK BROKEN: oracle text without the DADD line exited $$rc, not 4"; exit 1; fi; \
+	echo "red check: oracle text without the DADD line exits 4, as it must"
+	@echo "PASS BlackwellIR ops 64..79: 16 rows encoded, Omega's decoder knows all 16, nvdisasm 13.0.85 prints the same text. GB10 DEVICE NOT_RUN"

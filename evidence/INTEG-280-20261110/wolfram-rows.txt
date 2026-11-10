@@ -1,0 +1,45 @@
+Decoder rows added 2026-11-10 for BlackwellIR ops 64..79 (om/disasm/sm121_dis.om rows, src/omega_sm121_disasm.c ROWS).
+Formats are nvdisasm 13.0.85 -b SM121 text of the seeded encoder's words (opmove-nvdisasm.txt, input opmove_words.bin),
+with the operand fields replaced by the C table's % codes. lov and hiv are the encoder's words with those fields zero.
+
+WolframLanguageEvaluator:
+pack[s_String] := Module[{b = ToCharacterCode[s, "ASCII"], n}, n = 8*Ceiling[(Length[b] + 1)/8]; b = PadRight[b, n];
+  FromDigits[Reverse[#], 256] & /@ Partition[b, 8]];
+rows = {{"ATOMG.E.MIN.64.STRONG.SYS PT, %d, desc[%C][%a.64], %b", "80000000000079a8", "089f5500"},
+  {"HADD2.F32 %d, -RZ, %b.H0_H0", "20000000ff007230", "4100"}, {"F2F.F16.F32 %d, %b", "7304", "200800"},
+  {"DADD %d, %a, %c", "7229", "0"}, {"DMUL %d, %a, %b", "7228", "0"}, {"DFMA %d, %a, %b, %c", "722b", "0"},
+  {"DSETP.%g.AND %P, %Q, %a, %b, %R", "722a", "0"}, {"MUFU.RCP64H %d, %b", "7308", "1800"},
+  {"MUFU.RSQ64H %d, %b", "7308", "1c00"}, {"F2F.F64.F32 %d, %b", "7310", "201800"},
+  {"F2F.F32.F64 %d, %b", "7310", "301000"}, {"I2F.F64 %d, %b", "7312", "201c00"},
+  {"I2F.F64.U32 %d, %b", "7312", "201800"}, {"F2I.F64.TRUNC %d, %b", "7311", "30d100"}};
+check = {pack["MUFU.EX2 %d, %b"], pack["ATOMG.E.ADD.STRONG.SYS PT, %d, desc[%C][%a.64], %b"]};
+out = {#[[1]], FromDigits[#[[2]], 16], FromDigits[#[[3]], 16], BitAnd[FromDigits[#[[2]], 16], 4095],
+  StringLength[#[[1]]], pack[#[[1]]]} & /@ rows;
+{check, out}
+
+Result (check: the packing reproduces the existing MUFU.EX2 and ATOMG.E.ADD rows of sm121_dis.om exactly):
+check -> {{3627725565148419405, 27625367831586080},
+  {3334121982912320577, 5715723593321825345, 5773706365401712462, 7214815411678751828, 6583492058011628389,
+   2318330387017654565, 25125}}
+format | lov | hiv | opcode | length | packed format
+ATOMG.E.MIN.64.STRONG.SYS PT, %d, desc[%C][%a.64], %b | 9223372036854806952 | 144659712 | 2472 | 53 |
+  3334121982912320577 5993785561386469709 6436539176233947732 7216209352696275027 2691854549557452844
+  3762245533488078147 421529660509
+HADD2.F32 %d, -RZ, %b.H0_H0 | 2305843013491913264 | 16640 | 560 | 27 |
+  3694691337732637000 5921424460092874802 3479081711208246362 3164255
+F2F.F16.F32 %d, %b | 29444 | 2099200 | 772 | 18 | 3329903151980884550 2318338018805691206 25125
+DADD %d, %a, %c | 29225 | 0 | 553 | 15 | 3198722455854399812 27906842808100128
+DMUL %d, %a, %b | 29224 | 0 | 552 | 15 | 3198722455989734724 27625367831389472
+DFMA %d, %a, %b, %c | 29227 | 0 | 555 | 19 | 3198722455804659268 3198159505500218656 6497568
+DSETP.%g.AND %P, %Q, %a, %b, %R | 29226 | 0 | 554 | 31 |
+  7432397682590962500 3193092956320842030 3197878030522459424 23121768204084512
+MUFU.RCP64H %d, %b | 29448 | 6144 | 776 | 18 | 5783556705426494797 2318338018807133238 25125
+MUFU.RSQ64H %d, %b | 29448 | 7168 | 776 | 18 | 5860117899091793229 2318338018807133238 25125
+F2F.F64.F32 %d, %b | 29456 | 2103296 | 784 | 18 | 3329345699585602118 2318338018805691206 25125
+F2F.F32.F64 %d, %b | 29456 | 3149824 | 784 | 18 | 3328779451097297478 2318338018805823046 25125
+I2F.F64 %d, %b | 29458 | 2104320 | 786 | 14 | 2320539383054611017 107911593092133
+I2F.F64.U32 %d, %b | 29458 | 2103296 | 786 | 18 | 3329345699585602121 2318338018805691221 25125
+F2I.F64.TRUNC %d, %b | 29457 | 3199232 | 785 | 20 | 3329345699585798726 7216209451380200020 1646600236
+
+The HADD2.F32 and F2F.F16.F32 constants equal those the integration line's own decoder carried (672e891a,
+evidence/CUDAPP-OM-DISASM/wolfram-constants.txt), derived independently.

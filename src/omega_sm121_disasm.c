@@ -221,6 +221,20 @@ static const Row ROWS[] = {
     { 0x0000000000007305ull, 0x0020f000ull, "F2I.U32.TRUNC.NTZ %d, %b" },
     { 0x000000000000723eull, 0x0004807000ull, "F2FP.SATFINITE.E4M3.F32.PACK_AB_MERGE_C %d, %a, %b, %c" },
     { 0x000000000000723eull, 0x00000010ffull, "F2FP.BF16.F32.PACK_AB %d, %a, %b" },
+    /* the #280 integration's conversions and binary64 forms (BlackwellIR ops 65..79): only the exact forms its encoder
+     * writes, checked with nvdisasm 13.0.85 -b SM121 on 2026-11-10 (om/disasm/opmove_test.om); other modifiers stay
+     * reported, not guessed */
+    { 0x20000000ff007230ull, 0x00004100ull, "HADD2.F32 %d, -RZ, %b.H0_H0" },
+    { 0x0000000000007304ull, 0x00200800ull, "F2F.F16.F32 %d, %b" },
+    { 0x0000000000007229ull, 0x00000000ull, "DADD %d, %a, %c" },
+    { 0x0000000000007228ull, 0x00000000ull, "DMUL %d, %a, %b" },
+    { 0x000000000000722bull, 0x00000000ull, "DFMA %d, %a, %b, %c" },
+    { 0x000000000000722aull, 0x00000000ull, "DSETP.%g.AND %P, %Q, %a, %b, %R" },
+    { 0x0000000000007310ull, 0x00201800ull, "F2F.F64.F32 %d, %b" },
+    { 0x0000000000007310ull, 0x00301000ull, "F2F.F32.F64 %d, %b" },
+    { 0x0000000000007312ull, 0x00201c00ull, "I2F.F64 %d, %b" },
+    { 0x0000000000007312ull, 0x00201800ull, "I2F.F64.U32 %d, %b" },
+    { 0x0000000000007311ull, 0x0030d100ull, "F2I.F64.TRUNC %d, %b" },
     /* tensor cores */
     { 0x000000000000723cull, 0x00041800ull, "HMMA.16816.F32.BF16 %d, %a, %b, %c" },
     { 0x000000000000723cull, 0x00001800ull, "HMMA.16816.F32 %d, %a, %b, %c" },
@@ -229,6 +243,8 @@ static const Row ROWS[] = {
     { 0x0000000000007308ull, 0x00001000ull, "MUFU.RCP %d, %b" },
     { 0x0000000000007308ull, 0x00001400ull, "MUFU.RSQ %d, %b" },
     { 0x0000000000007308ull, 0x00000c00ull, "MUFU.LG2 %d, %b" },
+    { 0x0000000000007308ull, 0x00001800ull, "MUFU.RCP64H %d, %b" },
+    { 0x0000000000007308ull, 0x00001c00ull, "MUFU.RSQ64H %d, %b" },
     /* memory */
     { 0x0000000000007981ull, 0x0c1e1100ull, "LDG.E%z %d, desc[%B][%a.64%o]" },
     { 0x0000000000007986ull, 0x0c101100ull, "STG.E%z desc[%C][%a.64%o], %b" },
@@ -241,6 +257,7 @@ static const Row ROWS[] = {
     { 0x0000000000007981ull, 0x0c1f1900ull, "LDG.E.MMIO.GPU %d, desc[%B][%a.64%o]" },
     { 0x0000000000007986ull, 0x0c115900ull, "STG.E.STRONG.SYS desc[%C][%a.64%o], %b" },
     { 0x80000000000079a8ull, 0x081f5100ull, "ATOMG.E.ADD.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
+    { 0x80000000000079a8ull, 0x089f5500ull, "ATOMG.E.MIN.64.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
     { 0x0000000000007984ull, 0x08000800ull, "LDS %d, [%a+%B]" },
     { 0x0000000000007988ull, 0x08000800ull, "STS [%a+%C], %b" },
     { 0x0000000000007984ull, 0x00000000ull, "LDS%z %d, [%a%o]" },

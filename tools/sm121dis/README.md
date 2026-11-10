@@ -31,6 +31,12 @@ the comparison with NVIDIA's tool.
 - A kernel that could not be saved whole (a full disk) fails the collection; it is never compared cut short.
 - A word the decoder does not know is printed as `?? <hex>` and fails the check. It is never guessed. That includes a
   special register nvdisasm names but this decoder does not (96 of 256 values; an S2R sweep, `sr-sweep.sh`).
+- BlackwellIR ops 64..79, the numbers the #280 integration moved (ATOMG.E.MIN.64 stays at 64; its conversions and
+  binary64 forms are 65..79, `evidence/INTEG-280-20261110/numbering.txt`): `make test-sm121dis-opmove` encodes one row
+  of each with the seeded encoder (`om/disasm/opmove_test.om`), and my decoder must know every word with the op's
+  mnemonic while nvdisasm 13.0.85 prints the same text. The rows numbered as before the move must fail. Before the
+  2026-11-10 rows were added, 14 of those 16 words printed `??`; the C oracle got the same rows, so `diff` still
+  agrees.
 
 ## How to run it
 

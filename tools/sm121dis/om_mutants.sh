@@ -15,7 +15,7 @@ mkdir -p "$OUT"
 D0=$OUT/om-mut0
 mkdir -p "$D0"
 "$CC" -std=gnu11 -Wall -Wextra -Werror -O2 -I"$ROOT/src" -o "$D0/sm121dis" "$ROOT/tools/sm121dis/sm121dis.c" \
-    "$ROOT/src/omega_sm121_disasm.c" "$ROOT/src/cudapp_om_sm121_dis.c" || exit 1
+    "$ROOT/src/omega_sm121_disasm.c" "$ROOT/src/cudapp_om_sm121_dis.c" "$ROOT/src/cudapp_om_words.c" || exit 1
 for f in "$K"/*.bin; do "$D0/sm121dis" --pairs "$f"; done > "$D0/all.txt" 2>&1
 n=0
 for m in "$@"; do
@@ -24,12 +24,14 @@ for m in "$@"; do
     sed "$m" "$SRC" > "$d/sm121_dis.om"
     if cmp -s "$d/sm121_dis.om" "$SRC"; then echo "MUTANT $n BROKEN: '$m' changed nothing"; exit 1; fi
     rc=0
-    OMEGA_UNITS=$d/sm121_dis.om OMEGA_UNITS_DEST=$d sh "$ROOT/om/units.sh" > "$d/units.log" 2>&1 || rc=$?
+    # the word unit too: the command line reads its words through it, and the mutant's header must declare it
+    OMEGA_UNITS="$d/sm121_dis.om $ROOT/om/disasm/words.om" OMEGA_UNITS_DEST=$d sh "$ROOT/om/units.sh" \
+        > "$d/units.log" 2>&1 || rc=$?
     if [ "$rc" = 3 ]; then cat "$d/units.log"; echo "VERDICT NOT_RUN: pinned omc and bridge needed"; exit 3; fi
     [ "$rc" = 0 ] || { cat "$d/units.log"; echo "MUTANT $n: regeneration failed ($rc)"; exit 1; }
     # -I$d first: the mutant's own generated cudapp_native.h declares its omega_sm121_dis
     "$CC" -std=gnu11 -Wall -Wextra -Werror -O2 -I"$d" -I"$ROOT/src" -o "$d/sm121dis" "$ROOT/tools/sm121dis/sm121dis.c" \
-        "$ROOT/src/omega_sm121_disasm.c" "$d/cudapp_om_sm121_dis.c" || exit 1
+        "$ROOT/src/omega_sm121_disasm.c" "$d/cudapp_om_sm121_dis.c" "$d/cudapp_om_words.c" || exit 1
     for f in "$K"/*.bin; do "$d/sm121dis" --pairs "$f"; done > "$d/all.txt" 2>&1
     if cmp -s "$D0/all.txt" "$d/all.txt"; then echo "MUTANT $n SURVIVED: '$m'"; exit 1; fi
     echo "mutant $n red ('$m'): $(diff "$D0/all.txt" "$d/all.txt" | grep -c '^<') corpus words print differently"

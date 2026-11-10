@@ -95,7 +95,7 @@ Stored now: each is `nvdisasm` V13.0.85 `--binary SM121` reading words my own en
 my own bytes); the input bytes sit beside the listing; no NVIDIA-generated code is involved. They are
 kept as review evidence that the independent decoder agrees with the encoder. No test reads them: the
 gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ldg`,
-`make test-om-encoder-atomg`, `make test-om-encoder-guard`).
+`make test-om-encoder-atomg`, `make test-om-encoder-guard`, `make test-sm121dis-opmove`).
 
 | Listing | Input (my bytes) | Why kept |
 |---|---|---|
@@ -104,6 +104,7 @@ gates run `nvdisasm` live and check fixed expectations (`make test-om-encoder-ld
 | `evidence/atomg-min-20261107/atomg_field_probe_nvdisasm.txt` | `atomg_field_probe.bin`: ATOMG_ADD_STRONG_SYS's words with the operation field (w2 bits 23..26) set to 0..15 and the type field (bits 9..11) to 0..7 | Records how operation 1 = MIN and type 2 = .64 were identified. |
 | `evidence/guard-pred-20261107/nvdisasm-after.txt` | `guard_words.bin`: the 135 instructions of `om/encoder/guard_pred_test.om bin` at the DRA-483 fix (@P0 / @!P0 forms of 63 ops, 4 LDCU guard probes, 5 omega-mv #1044 bool/trap rows) | Shows every guard decodes as encoded, and that LDCU's guard bits name UP0. |
 | `evidence/guard-pred-20261107/nvdisasm-before.txt` | `guard_words_before.bin`: the same rows from the encoder before the fix | Shows the @P0 / @!P0 forms of 58 ops (MOV and STG.E among them) decoded with no guard (always), and @!P0 EXIT as @P0. |
+| `evidence/INTEG-280-20261110/opmove-nvdisasm.txt` | `opmove_words.bin`: the sixteen rows of `om/disasm/opmove_test.om bin`, one per BlackwellIR op 64..79 after the #280 numbering move | Shows each moved op's words decode as the intended instruction, and gave the exact text of the decoder rows added for them. |
 
 No listing of nvcc-generated code and no NVIDIA binary is stored.
 

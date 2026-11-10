@@ -1,0 +1,86 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Unit cases for native/abft/cul1.om; concatenated after native/learn53/task.om, tests/learn53/fixtures.om
+note and native/abft/cul1.om (tests/abft/driver.om). keval stays the exact oracle; kabft is the checksum.
+global ksave uchar 4096
+fn kseeds want int to void
+for s ulong 8
+check eq kabft 144 36 add mul s 2654435761 1 want
+end
+end
+fn abclean to void
+mat
+check eq keval 144 36 0
+kseeds 0
+end
+fn abone to void
+mat
+cw 7 60
+check eq keval 144 36 1
+kseeds 1
+mat
+cw 1 1073741845
+check eq keval 144 36 1
+kseeds 1
+mat
+cw 1 22
+cw 2 23
+kseeds 1
+end
+fn abcanary to void
+mat
+cw 0 0
+check eq kabft 144 36 1 1
+mat
+cw 4 0
+check eq keval 144 36 1
+check eq kabft 144 36 1 1
+mat
+cw 8 0
+check eq kabft 144 36 1 1
+end
+fn abrect to void
+note Declared miss: 2^31 added to C[0][0], C[0][1], C[1][0], C[1][1]; Wolfram 2^31+21 = 2147483669 etc.
+mat
+cw 1 2147483669
+cw 2 2147483672
+cw 5 2147483695
+cw 6 2147483702
+check eq keval 144 36 1
+kseeds 0
+end
+fn abrefuse to void
+vec
+check eq keval 136 28 0
+check eq kabft 136 28 1 69
+mat
+check eq kabft 144 32 1 65
+mat
+tw 21 1
+check eq kabft 144 36 1 65
+end
+fn abpure to void
+mat
+for i ulong 4096
+put ksave i get kt i
+end
+check eq kabft 144 36 7 0
+same = true
+for i ulong 4096
+if ne get ksave i get kt i
+same = false
+end
+end
+check same
+end
+fn main to int
+abclean
+abone
+abcanary
+abrect
+abrefuse
+abpure
+if ne get tally 1 0
+ret 1
+end
+ret 0
+end

@@ -2,8 +2,10 @@
 
 The source of record for the kernel language, checker2 and language-to-IR
 lowering is omega-mv at `omega-mv.lock` in this directory:
-`bb552199e8970bbdcb42c79acc8a36f9c1189e23`,
-[draft #1044](https://github.com/aien-dev/omega-mv/pull/1044), not a merged
+`37920c935ce2c2d6b4629a50ac474c0c933f4728` (omega-mv branch `ham/integ-280-c1`:
+the unsigned conversions at BlackwellIR 65/66 so published op 64 stays ATOMG MIN,
+evidence/INTEG-280-20261110/numbering.txt), on `bb552199e8970bbdcb42c79acc8a36f9c1189e23`
+of [draft #1044](https://github.com/aien-dev/omega-mv/pull/1044), not a merged
 compiler release. CUDApp owns sm_121 instruction encoding and cubin packaging.
 No frontend source is copied into CUDApp.
 

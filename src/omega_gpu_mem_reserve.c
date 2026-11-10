@@ -7,6 +7,7 @@
 #endif
 #include "omega_eng_dec.h"
 #include "omega_gpu_mem_reserve.h"
+#include "cudapp_native.h"
 
 #include "omega_gpu_platform.h"
 #include "omega_gpu_platform_linux.h"
@@ -60,20 +61,54 @@ static void human_bytes(char *out, size_t n, uint64_t b) {
     else snprintf(out, n, "%.1f GiB", (double)b / (double)(1ull << 30));
 }
 
-static unsigned long long reserve_mib_env(void) {
-    unsigned long long reserve_mib = CUDAPP_MEM_RESERVE_DEFAULT_MIB;
+/* Scalar parsing and saturation live in om/session/reserve.om. The default has no
+ * strtoull/sscanf fallback. A binding failure retains the maximum reserve or
+ * refuses the allocation; it must not turn a broken parser into a disabled guard. */
+static unsigned long long reserve_mib_env(int *valid) {
+    *valid = 1;
     const char *e = getenv("CUDAPP_MEM_RESERVE_MIB");
+#if defined(CUDAPP_MIGRATION_PENDING_C_MEMRESV)
+    unsigned long long reserve_mib = CUDAPP_MEM_RESERVE_DEFAULT_MIB;
     if (e && *e) { char *end = NULL; unsigned long long v = strtoull(e, &end, 10); if (end && end != e && *end == 0) reserve_mib = v; }
     return reserve_mib;
+#else
+    uint64_t result = UINT64_MAX, out[2] = {0};
+    if (omega_memreserve(&result, 0, e, e ? strlen(e) : 0, 0, out, 2) != 0) { *valid = 0; return UINT64_MAX; }
+    return result;
+#endif
 }
 
 /* Saturate rather than wrap: 2^44 MiB shifted by 20 is 2^64 (RtMem F9). */
-static uint64_t mib_bytes(unsigned long long mib) { return mib > (UINT64_MAX >> 20) ? UINT64_MAX : (uint64_t)mib << 20; }
+static uint64_t mib_bytes(unsigned long long mib) {
+#if defined(CUDAPP_MIGRATION_PENDING_C_MEMRESV)
+    return mib > (UINT64_MAX >> 20) ? UINT64_MAX : (uint64_t)mib << 20;
+#else
+    uint64_t result = UINT64_MAX, out[2] = {0};
+    if (omega_memreserve(&result, 2, NULL, 0, mib, out, 2) != 0) return UINT64_MAX;
+    return result;
+#endif
+}
 
-uint64_t omega_gpu_mem_reserve_bytes(void) { return mib_bytes(reserve_mib_env()); }
+static int reserve_available(const char *line, unsigned long long *kb) {
+#if defined(CUDAPP_MIGRATION_PENDING_C_MEMRESV)
+    return sscanf(line, "MemAvailable: %llu kB", kb) == 1;
+#else
+    uint64_t result = 0, out[2] = {0};
+    if (omega_memreserve(&result, 1, line, strlen(line), 0, out, 2) != 0) return -1;
+    if (result) *kb = out[0];
+    return result ? 1 : 0;
+#endif
+}
+
+uint64_t omega_gpu_mem_reserve_bytes(void) { int valid; return mib_bytes(reserve_mib_env(&valid)); }
 
 int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
-    const unsigned long long reserve_mib = reserve_mib_env();
+    int valid = 0;
+    const unsigned long long reserve_mib = reserve_mib_env(&valid);
+    if (!valid) {
+        snprintf(diag, diag_len, "dma_alloc: reserve parser binding refused");
+        return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+    }
     if (eng_on()) {
         unsigned long long avail_kb = 0;
         int have = 0;
@@ -82,9 +117,12 @@ int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
             FILE *f = meminfo_open();
             if (f) {
                 char line[256];
-                while (!have && fgets(line, sizeof line, f))
-                    have = sscanf(line, "MemAvailable: %llu kB", &avail_kb) == 1;
+                while (!have && fgets(line, sizeof line, f)) have = reserve_available(line, &avail_kb);
                 fclose(f);
+                if (have < 0) {
+                    snprintf(diag, diag_len, "dma_alloc: MemAvailable parser binding refused");
+                    return OMEGA_GPU_PLAT_REFUSED_LIMIT;
+                }
             }
         }
         in[0] = bytes;
@@ -107,7 +145,7 @@ int omega_gpu_mem_reserve_check(uint64_t bytes, char *diag, size_t diag_len) {
     FILE *f = meminfo_open();
     if (!f) return OMEGA_GPU_PLAT_OK;
     unsigned long long avail_kb = 0; int have = 0; char line[256];
-    while (!have && fgets(line, sizeof line, f)) have = sscanf(line, "MemAvailable: %llu kB", &avail_kb) == 1;
+    while (!have && fgets(line, sizeof line, f)) have = reserve_available(line, &avail_kb);
     fclose(f);
     if (!have) return OMEGA_GPU_PLAT_OK;
     /* Saturate rather than wrap: 2^54 kB times 1024 is 2^64 (RtMem F9). */

@@ -1,0 +1,115 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Concatenate tests/components/proc.om then this file. One argument: pinned omc.
+note Uses the existing checked process helper. All new test/conductor logic is Omega.
+text MGsrc "om/session/reserve.om"
+text MGfx "om/engine/fixture_rest.om"
+text MGeng "om/engine/eng.om"
+text MGslot "om/api/apish_slot.om"
+text MGtest "tests/session_memory_test.om"
+text MGdir "build/session-memory"
+text MGcomp "build/components"
+text MGbin "build/session-memory/check"
+text MGlog "build/session-memory/positive.log"
+text MGl1 "build/session-memory/default.log"
+text MGl2 "build/session-memory/saturation.log"
+text MGl3 "build/session-memory/prefix.log"
+text MGl4 "build/session-memory/sign.log"
+text MGl5 "build/session-memory/end.log"
+text MGl6 "build/session-memory/underflow.log"
+text MGl7 "build/session-memory/capacity.log"
+text MGpass "SESSION_MEMORY_GATE PASS mutants=7/7 KILLED; chip NOT_RUN\n"
+text MGkill "KILLED "
+text MGa "if eq len b 0\nret 4096"
+text MGan "if eq len b 0\nret 4097"
+text MGb "if gt value 17592186044415"
+text MGbn "if ge value 17592186044415"
+text MGc "ret eq get b 12 58"
+text MGcn "ret eq get b 12 59"
+text MGd "put dst 0 sub ulong 0 get dst 0"
+text MGdn "put dst 0 add ulong 0 get dst 0"
+text MGe "if eq get dst 1 len b"
+text MGen "if ne get dst 1 len b"
+text MGf "if or eq get rec 1 0 and eq get rec 5 0 ne get rec 3 ver"
+text MGfn "if or ne get rec 1 0 and eq get rec 5 0 ne get rec 3 ver"
+text MGg "if ge get m 3 get m 4"
+text MGgn "if gt get m 3 get m 4"
+
+fn mg_load to void
+put HUsed 0 0
+hp_cat MGsrc len MGsrc
+hp_cat MGfx len MGfx
+hp_cat MGeng len MGeng
+hp_cat MGslot len MGslot
+hp_cat MGtest len MGtest
+end
+
+fn mg_change old view uchar * next view uchar * to void
+hp_require eq len old len next
+hp_require gt len old 0
+n = get HUsed 0
+hp_require le len old n
+matches = ulong 0
+i = ulong 0
+while le i sub n len old bound 999999
+same = true
+for j ulong len old
+if ne get HSrc add i j get old j
+same = false
+break
+end
+end
+if same
+matches = add matches 1
+for j ulong len next
+put HSrc add i j get next j
+end
+i = add i len old
+else
+i = add i 1
+end
+end
+hp_require eq matches 1
+end
+
+fn mg_run expected long path view uchar * to void
+hp_build MGbin len MGbin
+fd = hp_open path len path or int 577 524288 420
+hp_start MGbin len MGbin
+hp_exec -1 fd expected
+hp_close fd
+end
+
+fn mg_mut old view uchar * next view uchar * path view uchar * to void
+mg_load
+mg_change old next
+mg_run 1 path
+hp_say MGkill
+hp_say old
+hp_say HPNew
+end
+
+fn main to int
+path = new uchar 1024 0
+hp_require eq argcnt 2
+n = argread 1 path 0 1024
+hp_require gt n 0
+put HOn 0 ulong n
+for i ulong ulong n
+put HOm i get path i
+end
+r = makedir MGdir 0 len MGdir 493
+hp_require or eq r 0 eq r -17
+r = makedir MGcomp 0 len MGcomp 493
+hp_require or eq r 0 eq r -17
+mg_load
+mg_run 0 MGlog
+mg_mut MGa MGan MGl1
+mg_mut MGb MGbn MGl2
+mg_mut MGc MGcn MGl3
+mg_mut MGd MGdn MGl4
+mg_mut MGe MGen MGl5
+mg_mut MGf MGfn MGl6
+mg_mut MGg MGgn MGl7
+hp_say MGpass
+ret 0
+end

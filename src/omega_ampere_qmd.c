@@ -4,7 +4,10 @@
 #include <stddef.h>
 #include <string.h>
 #ifdef CUDAPP_MIGRATION_PENDING_AMP_QMD_DIFF
+/* The differential oracle aborts, so it is hosted-only; NO_POSIX builds never include it. */
+#ifndef OMEGA_GPU_NO_POSIX
 #include <stdlib.h>
+#endif
 #endif
 /* Original C caller retained for differential verification, never the default. */
 #if defined(CUDAPP_MIGRATION_PENDING_AMP_QMD) || defined(CUDAPP_MIGRATION_PENDING_AMP_QMD_DIFF)

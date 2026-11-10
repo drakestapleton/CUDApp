@@ -305,8 +305,12 @@ int omega_blackwell_verify_qmd_invariants(const uint32_t *qmd1_words) {
 #define QMD_OM_W 224
 
 #ifdef CUDAPP_MIGRATION_PENDING_QMD_DIFF
+/* The differential oracle prints and aborts, so it is hosted-only: the freestanding closure (GPU_FS_CFLAGS) defines
+ * OMEGA_GPU_NO_POSIX and never includes these (tools/runtime_portability_check.sh). */
+#ifndef OMEGA_GPU_NO_POSIX
 #include <stdio.h>
 #include <stdlib.h>
+#endif
 static void qmd_diff_die(const char *what, int a, int b) {
     fprintf(stderr, "QMD DIFF %s %d %d\n", what, a, b);
     abort();

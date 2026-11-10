@@ -11,6 +11,8 @@
 #       identical file for file, and the diff build must log no DIFFER line.
 #   make test-om-units            the committed binding regenerates byte for byte from the pinned omc + bridge
 #   make test-om-encoder-mutants  three mutant .om encoders, each compiled by the pinned omc, must go red
+#     (after its prerequisites test-om-encoder-ldg, test-om-encoder-ldg-spec and test-om-encoder-ldg-c, so the
+#     CI om-units job, which already has the pinned omc, omega-bridge and nvdisasm 13.0.85, runs the LDG gates)
 # The last two accept OMEGA_OMC and OMEGA_BRIDGE; their defaults retain the
 # OMEGA_MV and OMEGA_BRIDGE_DIR checkout convention. Missing pins refuse.
 OMEGA_MV ?= ../omega-mv
@@ -85,7 +87,7 @@ test-om-units:
 OM_ENC_MUTANTS = 's/^ret or base shl rb o 1 16$$/ret or base shl rb o 1 17/' \
 	's/^p = 262144$$/p = 0/' \
 	's/^const NOPC ulong 1032192$$/const NOPC ulong 1032193/'
-test-om-encoder-mutants: build/test_codegen_freestanding
+test-om-encoder-mutants: build/test_codegen_freestanding test-om-encoder-ldg test-om-encoder-ldg-spec test-om-encoder-ldg-c
 	@[ -x "$(OMEGA_OMC)" ] && [ -f "$(OMEGA_BRIDGE)/src/toc.om" ] && [ -f "$(OMEGA_BRIDGE)/src/freest.om" ] || { echo "NOT_RUN: set pinned OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
 	@mkdir -p $(OM_ENC_DIR)
 	./build/test_codegen_freestanding --dump > $(OM_ENC_DIR)/c-dump.txt
@@ -118,7 +120,8 @@ test-om-encoder-ldg-c: $(OM_ENC_DIR)/ldg-c
 	$(OM_ENC_DIR)/ldg-mini expected > $(OM_ENC_DIR)/ldg-mini.om.bin
 	$(OM_ENC_DIR)/ldg-c --encoder-tape < $(OM_ENC_DIR)/ldg-mini.tape > $(OM_ENC_DIR)/ldg-mini.c.bin
 	cmp $(OM_ENC_DIR)/ldg-mini.om.bin $(OM_ENC_DIR)/ldg-mini.c.bin
-	git show cb3395aad13d7cafea2cfaaf97a30a116da2293a:om/encoder/bw_enc_sm121.om > $(OM_ENC_DIR)/ldg-before.om
+	sed '$(OM_ENC_LDG_PREFIX_SED)' om/encoder/bw_enc_sm121.om > $(OM_ENC_DIR)/ldg-before.om
+	@if cmp -s $(OM_ENC_DIR)/ldg-before.om om/encoder/bw_enc_sm121.om; then echo 'FAIL pre-fix LDG reversal changed nothing'; exit 1; fi
 	cat om/encoder/ldg_mini.om >> $(OM_ENC_DIR)/ldg-before.om
 	$(OMEGA_OMC) < $(OM_ENC_DIR)/ldg-before.om > $(OM_ENC_DIR)/ldg-before
 	chmod +x $(OM_ENC_DIR)/ldg-before
@@ -126,9 +129,13 @@ test-om-encoder-ldg-c: $(OM_ENC_DIR)/ldg-c
 	@if cmp -s $(OM_ENC_DIR)/ldg-mini.before.bin $(OM_ENC_DIR)/ldg-mini.c.bin; then echo 'FAIL pre-fix LDG witness unexpectedly agrees'; exit 1; fi
 	@echo 'PASS one-instruction LDG C parity; pre-fix seeded encoder differs; public Mesa field selects C as correct'
 OM_ENC_LDG = $(OM_ENC_DIR)/ldg-offset
-# Red checks: each pair is the exit the gate must give, then one edit of the encoder. 11: the pre-fix op-11 line
-# drops the offset (row 1, +0x40). 20: a field bound widened by one accepts +0x800000 (refused row 0).
-OM_ENC_LDG_RED = 11 's/^put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744$$/put4 w wda o 31105 rb o 5 203299072 ctl o 991744/' \
+# The pre-fix op-11 line (base cb3395aa) differs from the fixed line only by the dropped offset term, so
+# test-om-encoder-ldg-c and red check 11 rebuild it from the current source: neither needs Git history
+# (shallow CI checkout). Red checks: each pair is the exit the gate must give, then one edit of the encoder.
+# 11: the pre-fix op-11 line drops the offset (row 1, +0x40). 20: a field bound widened by one accepts
+# +0x800000 (refused row 0).
+OM_ENC_LDG_PREFIX_SED = s/^put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744$$/put4 w wda o 31105 rb o 5 203299072 ctl o 991744/
+OM_ENC_LDG_RED = 11 '$(OM_ENC_LDG_PREFIX_SED)' \
 	20 's/^ret or lt imm 8388608 ge imm 4286578688$$/ret or lt imm 8388609 ge imm 4286578687/'
 .PHONY: test-om-encoder-ldg
 test-om-encoder-ldg: om/encoder/bw_enc_sm121.om om/encoder/ldg_offset_test.om

@@ -1,16 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# CUDA++ NVML host tier: the libnvidia-ml C ABI subset (compat/nvml) over native/nvml against the
-# resource-manager fake tests/nvml/rmfake.om, the CUDA nvml.h ABI comparison and mutants. Device-free:
-# the fake transport replaces omega2_nvrm_*; nothing opens /dev/nvidia*.
-# Needs the pinned OMEGA_OMC and an OMEGA_BRIDGE checkout (rmfake.om and the mutants are bridged).
+# Seeded Omega NVML gate: the libnvidia-ml.so.1 generated from native/nvml/api.om by the
+# omega-bridge#83 C ABI emitter (OMEGA_CABI_BRIDGE, pinned by om/omega-bridge-cabi.lock),
+# the Omega fake-RM model and its mutants. No device access.
 .PHONY: test-nvml
-NVML_RUN := $(and $(filter 1,$(CUDAPP_OMC_HOST)),$(OMEGA_BRIDGE))
+NVML_RUN := $(and $(filter 1,$(CUDAPP_OMC_HOST)),$(OMEGA_BRIDGE),$(OMEGA_CABI_BRIDGE))
 ifneq ($(NVML_RUN),)
 CARRIED_HOST_TESTS += test-nvml
-test-nvml:
-	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" sh tests/nvml/run.sh
+NVML_GATE := $(OUT_DIR)/nvml_gate
+$(NVML_GATE): tests/components/proc.om tests/nvml/gate.om tests/nvml/mutants.om tests/nvml/abi.om
+	@mkdir -p $(OUT_DIR)
+	cat $^ | "$(OMEGA_OMC)" > $@.tmp
+	chmod +x $@.tmp
+	mv $@.tmp $@
+test-nvml: $(NVML_GATE)
+	OMEGA_OMC="$(OMEGA_OMC)" OMEGA_BRIDGE="$(OMEGA_BRIDGE)" OMEGA_CABI_BRIDGE="$(OMEGA_CABI_BRIDGE)" $(NVML_GATE)
 else
 test-nvml:
-	@echo "test-nvml: NOT_RUN (requires CUDAPP_OMC_HOST=1 with OMEGA_OMC and OMEGA_BRIDGE)"
+	@echo "test-nvml: NOT_RUN (requires CUDAPP_OMC_HOST=1 with OMEGA_OMC, OMEGA_BRIDGE and OMEGA_CABI_BRIDGE)"
 	@exit 2
 endif

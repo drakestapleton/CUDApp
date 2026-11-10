@@ -1,0 +1,13 @@
+head 27e0b93d9c45964159226d4a05a535bcf79fcfef started 2026-11-07T02:03:59Z
+make test-nvml CUDAPP_OMC_HOST=1 OMEGA_OMC=<pin> OMEGA_BRIDGE=<bridge> rc=0 last=CUDAPP-NVML HOST PASS
+om/units.sh --check rc=3 last=NOT_RUN: set OMEGA_SEED to baseline compiler
+crumb verify . rc=0 last=crumb verify: OK: 42 crumbs current
+NEG make test-nvml (env unset) rc=2 last=make: *** [mk/nvml.mk:15: test-nvml] Error 2
+NEG run.sh (env unset) rc=77 last=NOT_RUN: set OMEGA_OMC (omega-mv e5b32567 omc) and OMEGA_BRIDGE (omega-bridge checkout)
+NEG run.sh (non-pin omc) rc=69 last=REFUSED: omc digest 1b0df60a229936d785379d4a69ffabe4c1260f50c9b37230cdfbcc549f89e8eb is not the omega-mv e5b32567 pin
+NEG run.sh (om/units.sh without FRONTEND_PIN) rc=74 last=REFUSED: no FRONTEND_PIN in om/units.sh
+NEG run.sh (om/units.sh names another frontend pin) rc=69 last=REFUSED: bridge-seeded digest 23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37 is not the om/units.sh frontend pin
+NEG om/units.sh --check (tampered cudapp_om_nvml_step.c) rc=3 last=NOT_RUN: set OMEGA_SEED to baseline compiler
+finished 2026-11-07T02:04:23Z
+om/units.sh --check rc=0 last=PASS portable Omega units regenerate byte for byte
+NEG om/units.sh --check (tampered cudapp_om_nvml_step.c) rc=1 last=FAIL ~/work/hive/t_44f4eda6/tmp/dest2-head-27e0b93d/cudapp_om_nvml_step.c differs from pinned tools

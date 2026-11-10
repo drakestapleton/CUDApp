@@ -1,8 +1,9 @@
+/* ORACLE: foreign C caller of the generated ABI; not shipped */
 /* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception */
 /* Host test of the CUDA++ NVML subset (compat/nvml).
  * Default: Omega RM fake (tests/nvml/rmfake.om). usage: nvml_test ERRSTR_ORACLE.tsv
- * Live (no fake, no libnvidia-ml): compile with -DCUDAPP_NVML_LIVE and link
- * compat/nvml/cudapp_nvml.c, src/cudapp_om_nvml_step.c, src/cudapp_om_nvml_errstr.c
+ * Live (no fake, NVIDIA's libnvidia-ml never linked): compile with -DCUDAPP_NVML_LIVE and link
+ * the generated compat/nvml/libnvidia-ml.c, src/cudapp_om_nvml_step.c, src/cudapp_om_nvml_errstr.c
  * and the #281 transport src/cudapp_om_nvrm_transport.c. usage: nvml-live --live
  * Chip run belongs in an exclusive spark-window. This file does not open the GPU by itself
  * except through nvmlInit_v2 when --live is passed. */

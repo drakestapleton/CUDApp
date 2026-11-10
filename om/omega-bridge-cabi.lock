@@ -1,0 +1,7 @@
+# TEMPORARY second omega-bridge pin, used only by native/nvml/api.om (generated NVML library, CUDApp#365).
+# Approved as temporary by Manager(Aien) D2 (BOARD 2026-11-07T09:35:02Z). Unify under Linear DRA-154: one pin once
+# omega-bridge main holds both bc11b30b1faa (om/omega-bridge.lock) and the #83 commit 9172b525cdf0 (hive/bridge-83-abi,
+# emitter and evidence/cabi-1; pins below are its src/toc.om and tools/bridge-seeded), then regenerate all units.
+# tests/nvml/gate.om refuses a mismatch (69) or a missing row (74).
+CABI_CONVERTER_PIN=218214ab7dcc6658eed338bdd6347e2e26c23a34be259e601bef0689abf86821
+CABI_FRONTEND_PIN=be96a2c15e87d0e41baf29f2b5c13c8d0442d06bbc1c67cc27a5de1b7a48d351

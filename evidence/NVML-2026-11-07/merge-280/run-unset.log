@@ -1,0 +1,1 @@
+NOT_RUN: set OMEGA_OMC (omega-mv e5b32567 omc) and OMEGA_BRIDGE (omega-bridge checkout)

@@ -1,0 +1,41 @@
+$ cc --version
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+$ bwrap --version
+bubblewrap 0.9.0
+
+$ /usr/bin/env --version
+env (GNU coreutils) 9.4
+Copyright (C) 2023 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written by Richard Mlynarik, David MacKenzie, and Assaf Gordon.
+
+$ make --version
+GNU Make 4.3
+Built for aarch64-unknown-linux-gnu
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+$ git --version
+git version 2.43.0
+
+$ dpkg-query -W -f=${Package} ${Version}
+ dash libc6 binutils util-linux coreutils
+binutils 2.42-4ubuntu2.10
+coreutils 9.4-3ubuntu6.3
+dash 0.5.12-6ubuntu5
+libc6 2.39-0ubuntu8.9
+util-linux 2.39.3-9ubuntu6.6
+
+sha256 /home/drakestapleton/work/finish/nvml365-tools/omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+sha256 /home/drakestapleton/work/finish/nvml365-bridge/tools/bridge-seeded 23ff7a2356bb5d980060a4685a27ac46587013069b7d24b37c2873d7ee659b37
+omega-bridge source bc11b30b1faa9af8b875ae6fec24e5f49cf03ac4

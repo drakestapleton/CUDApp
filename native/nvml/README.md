@@ -1,8 +1,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception -->
 # native/nvml: the Omega side of the CUDA++ NVML subset
 
-Two pure Omega units carry every decision of the libnvidia-ml subset in
-`compat/nvml`:
+Two pure Omega units carry RM request/reply policy and error-string encoding.
+`api.om` is the C ABI library unit: call orchestration, transport dispatch, copy
+bounds, handle mapping, the string cache and the process lock. The omega-bridge#83
+emitter generates `compat/nvml/` from it; see `compat/nvml/README.md`.
 
 | Unit | Sources (composed in this order, each followed by a newline) | Export |
 | --- | --- | --- |
@@ -14,12 +16,12 @@ omc e5b32567) into the committed `src/cudapp_om_nvml_step.c` and
 `src/cudapp_om_nvml_errstr.c`; their prototypes are in `src/cudapp_native.h`
 and their identities in `src/cudapp_om_nvml_*.ident` and
 `src/cudapp_om_units.ident`. Never edit the generated C; edit the `.om` and
-rerun `om/units.sh`. `tests/nvml/run.sh` refuses a stale generated file.
+rerun `om/units.sh`. `tests/nvml/gate.om` refuses a stale generated file.
 
 ## The step protocol
 
 A pure unit cannot touch the OS, so `nvml_step` is a resumable state machine.
-The C shell stores the op (s0) and its arguments (s1..s4), then loops:
+`api.om` stores the op (s0) and its arguments (s1..s4), then loops:
 
 1. call `omega_nvml_step`;
 2. if s8 asks for an action (1 ioctl, 2 open, 3 close), perform exactly that
@@ -63,9 +65,11 @@ everything it opened and leaves the refcount at 0.
   transport can carry this control is NOT_RUN (live RM is not authorized). The
   program-mode `cudapp-smi` needs aien-dev/omega-mv#1048 for the same control.
 - A trap inside the teardown after a failed init can leave descriptors open;
-  the shell then reports UNKNOWN.
+  the library then reports UNKNOWN.
 - Live resource-manager behavior is NOT_RUN: every test runs against
   `tests/nvml/rmfake.om`.
 
-Constants: `evidence/NVML-2026-11-06/wolfram.txt`. Tests: `tests/nvml/run.sh`
-(`make test-nvml`).
+Constants: `evidence/NVML-2026-11-06/wolfram.txt`. Tests: `tests/nvml/gate.om`
+(`make test-nvml`). The 476 checks run twice: in `tests/nvml/host.om`, a pure
+Omega port of the protocol, and through the generated `libnvidia-ml.so.1` with
+the C caller `tests/nvml/nvml_test.c`; both against the fake transport.

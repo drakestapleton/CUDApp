@@ -1,0 +1,13 @@
+head 630e119bdc1682fe418a305f4548e60ff74e8153 started 2026-11-07T02:04:23Z
+make test-nvml CUDAPP_OMC_HOST=1 OMEGA_OMC=<pin> OMEGA_BRIDGE=<bridge> rc=0 last=CUDAPP-NVML HOST PASS
+om/units.sh --check rc=3 last=NOT_RUN: set OMEGA_SEED to baseline compiler
+crumb verify . rc=1 last=crumb verify: FAIL: 1 of 92 crumbs stale; run: crumb compile
+NEG make test-nvml (env unset) rc=2 last=make: *** [mk/nvml.mk:15: test-nvml] Error 2
+NEG run.sh (env unset) rc=77 last=NOT_RUN: set OMEGA_OMC (omega-mv e5b32567 omc) and OMEGA_BRIDGE (omega-bridge checkout)
+NEG run.sh (non-pin omc) rc=69 last=REFUSED: omc digest 1b0df60a229936d785379d4a69ffabe4c1260f50c9b37230cdfbcc549f89e8eb is not the omega-mv e5b32567 pin
+NEG run.sh (om/units.sh without FRONTEND_PIN) rc=74 last=REFUSED: no FRONTEND_PIN in om/units.sh
+NEG run.sh (om/units.sh names another frontend pin) rc=69 last=REFUSED: bridge-seeded digest a3a455bd77381e132215924295763e8728889d7d578278ae376de78324be8629 is not the om/units.sh frontend pin
+NEG om/units.sh --check (tampered cudapp_om_nvml_step.c) rc=3 last=NOT_RUN: set OMEGA_SEED to baseline compiler
+finished 2026-11-07T02:04:51Z
+om/units.sh --check rc=128 last=fatal: not a git repository (or any of the parent directories): .git
+NEG om/units.sh --check (tampered cudapp_om_nvml_step.c) rc=1 last=FAIL ~/work/hive/t_44f4eda6/tmp/dest2-trial-280-630e119b/cudapp_om_nvml_step.c differs from pinned tools

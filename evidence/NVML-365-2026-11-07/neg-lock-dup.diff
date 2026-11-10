@@ -1,0 +1,9 @@
+diff --git a/om/omega-bridge-cabi.lock b/om/omega-bridge-cabi.lock
+index c05154c8..49593931 100644
+--- a/om/omega-bridge-cabi.lock
++++ b/om/omega-bridge-cabi.lock
+@@ -5,3 +5,4 @@
+ # tests/nvml/gate.om refuses a mismatch (69) or a missing row (74).
+ CABI_CONVERTER_PIN=218214ab7dcc6658eed338bdd6347e2e26c23a34be259e601bef0689abf86821
+ CABI_FRONTEND_PIN=be96a2c15e87d0e41baf29f2b5c13c8d0442d06bbc1c67cc27a5de1b7a48d351
++CABI_CONVERTER_PIN=0000000000000000000000000000000000000000000000000000000000000000

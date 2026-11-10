@@ -1,0 +1,2 @@
+NOT_RUN: set OMEGA_CABI_BRIDGE (omega-bridge #83 checkout built with tools/build.sh) for the generated NVML library
+rc=77

@@ -2,8 +2,9 @@
 # Host checks for the unified trace (docs/trace/UNIFIED_TRACE.md). No device is opened.
 #
 # Every check is a seeded Omega program compiled by the pinned seed compiler; this script only
-# composes units, runs them and compares exit codes and output lines. It also applies four
-# deliberate source mutations and requires each to make a check fail (negative controls).
+# composes units, runs them and compares exit codes and output lines. It also applies ten
+# deliberate source mutations (four trace, six batch) and requires each to make a check fail
+# (negative controls).
 #
 # Usage: OMEGA_COMPILER=/path/to/seed/out/omc sh tests/host-trace/run-host-trace.sh [OUTDIR]
 #        OUTDIR keeps the sample trace files (default: a temporary directory, removed on exit).
@@ -111,4 +112,28 @@ build m4 "$n/trace/htrec.om" "$work/m4.src" || fail 'mutant m4 does not compile'
 s=0; "$work/m4" v "$work/mut.8.otr" > /dev/null 2>&1 || s=$?
 [ "$s" != 28 ] || fail 'mutant: end-before-start check removed, still rejected as time'
 echo 'mutations: 4 of 4 compile and are detected'
+# 6. Native launch batches: actual packet bytes, one kick/wait, refusal and index attribution.
+# The coordinator remains migration debt; policy, queue model and every new check are Omega.
+batch_units="$t/batch-fake.om $n/blackwell/vector.om $n/blackwell/launch.om"
+build batch $batch_units "$n/blackwell/batch.om" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch does not compile'
+"$work/batch" > "$out/batch.txt" || fail "batch: $(cat "$out/batch.txt")"
+grep -qx 'BATCH_HOST_PASS checks=[0-9]* parity_cases=32 parity_bytes=[0-9]* batch_launches=287 kicks=1 waits=1 negatives=8' "$out/batch.txt" || fail 'batch output'
+cat "$out/batch.txt"
+mutate "$n/blackwell/batch.om" 'if gt dep idx' 'if false' "$work/bdep.src"
+killed bdep $batch_units "$work/bdep.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: dependency mutant survived'
+mutate "$n/blackwell/batch.om" 'if or eq count 0 gt count 512' 'if eq count 0' "$work/bcap.src"
+killed bcap $batch_units "$work/bcap.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: capacity mutant survived'
+mutate "$n/blackwell/batch.om" 'put gbst 4 i' 'put gbst 4 n' "$work/bindex.src"
+killed bindex $batch_units "$work/bindex.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: index mutant survived'
+mutate "$n/blackwell/batch.om" 'gbemit 4113' 'gbemit 0' "$work/border.src"
+killed border $batch_units "$work/border.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: cache ordering mutant survived'
+mutate "$n/blackwell/batch.om" 'if gt add n get gbst 2 1048476' 'if false' "$work/bbyte.src"
+killed bbyte $batch_units "$work/bbyte.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: byte capacity mutant survived'
+mutate "$n/blackwell/launch.om" 'm = nvalloc size ge i 5' 'm = nvalloc size true' "$work/bcache.src"
+killed bcache "$t/batch-fake.om" "$n/blackwell/vector.om" "$work/bcache.src" "$n/blackwell/batch.om" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: GPU-cache attribute mutant survived'
+echo 'batch mutations: 6 of 6 compile and are detected'
+build batchwait "$n/nvrm/context.om" "$t/batch-wait-test.om" || fail 'native batch wait does not compile'
+"$work/batchwait" > "$out/batch-wait.txt" || fail 'native batch wait failed'
+grep -qx 'BATCH_NATIVE_WAIT_PASS completion timeout refusal' "$out/batch-wait.txt" || fail 'native batch wait output'
+cat "$out/batch-wait.txt"
 echo 'HOST TRACE CHECKS PASS'

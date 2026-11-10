@@ -1,0 +1,59 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Compose with the REAL native/nvrm/context.om. No driver function is invoked.
+note Shared anonymous host mapping lets a child deliver the completion; timeout stays fail-stop.
+global bwwait uchar 4
+text bwpass "BATCH_NATIVE_WAIT_PASS completion timeout refusal\n"
+fn main to int
+m = mapnew -1 0 4096 3 33
+if le m 0
+ret 1
+end
+put nvmmap 0 m
+put nvmlen 0 4096
+put nvsched 0 1
+put nvput 0 1
+put nvret 0 0
+child = fork
+if lt child 0
+r = mapdrop m
+ret 2
+end
+if eq child 0
+r = sleepns 1000000
+r = mapset m 0 4 6
+exit 0
+end
+ok = nvwait m 0 6 1000000000
+pid = waitpid int child bwwait 0 4 0
+if or not ok ne pid child
+r = mapdrop m
+ret 3
+end
+if ne get nvret 0 1
+r = mapdrop m
+ret 4
+end
+note A second wait without another send is refused.
+if nvwait m 0 6 1000000
+r = mapdrop m
+ret 5
+end
+put nvput 0 2
+r = mapset m 0 4 0
+start = monons
+if nvwait m 0 6 1000000
+r = mapdrop m
+ret 6
+end
+if or lt sub monons start 1000000 eq get nvfault 0 0
+r = mapdrop m
+ret 7
+end
+if ne get nverr 0 -110
+r = mapdrop m
+ret 8
+end
+r = mapdrop m
+r = write 1 bwpass 0 len bwpass
+ret 0
+end

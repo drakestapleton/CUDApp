@@ -11,6 +11,8 @@
 #       identical file for file, and the diff build must log no DIFFER line.
 #   make test-om-units            the committed binding regenerates byte for byte from the pinned omc + bridge
 #   make test-om-encoder-mutants  three mutant .om encoders, each compiled by the pinned omc, must go red
+#     (after its prerequisites test-om-encoder-ldg, test-om-encoder-ldg-spec and test-om-encoder-ldg-c, so the
+#     CI om-units job, which already has the pinned omc, omega-bridge and nvdisasm 13.0.85, runs the LDG gates)
 # The last two accept OMEGA_OMC and OMEGA_BRIDGE; their defaults retain the
 # OMEGA_MV and OMEGA_BRIDGE_DIR checkout convention. Missing pins refuse.
 OMEGA_MV ?= ../omega-mv
@@ -85,7 +87,7 @@ test-om-units:
 OM_ENC_MUTANTS = 's/^ret or base shl rb o 1 16$$/ret or base shl rb o 1 17/' \
 	's/^p = 262144$$/p = 0/' \
 	's/^const NOPC ulong 1032192$$/const NOPC ulong 1032193/'
-test-om-encoder-mutants: build/test_codegen_freestanding
+test-om-encoder-mutants: build/test_codegen_freestanding test-om-encoder-ldg test-om-encoder-ldg-spec test-om-encoder-ldg-c
 	@[ -x "$(OMEGA_OMC)" ] && [ -f "$(OMEGA_BRIDGE)/src/toc.om" ] && [ -f "$(OMEGA_BRIDGE)/src/freest.om" ] || { echo "NOT_RUN: set pinned OMEGA_OMC and OMEGA_BRIDGE"; exit 3; }
 	@mkdir -p $(OM_ENC_DIR)
 	./build/test_codegen_freestanding --dump > $(OM_ENC_DIR)/c-dump.txt
@@ -101,3 +103,71 @@ test-om-encoder-mutants: build/test_codegen_freestanding
 	if [ $$g = 0 ] && [ $$c = 0 ]; then echo "MUTANT $$n SURVIVED: '$$m'"; exit 1; fi; \
 	echo "mutant $$n red ('$$m'): golden words $$( [ $$g = 1 ] && echo FAIL || echo pass ), dump vs C $$( [ $$c = 1 ] && echo DIFFERS || echo same )"; \
 	done
+NVDISASM ?= /usr/local/cuda/bin/nvdisasm
+
+.PHONY: test-om-encoder-ldg-c
+$(OM_ENC_DIR)/ldg-c: gpu-engine-freestanding $(GPU_NO_POSIX_OBJS) tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.c
+	@mkdir -p $(OM_ENC_DIR)
+	$(OM_ENC_BUILD) -DOMEGA_GPU_NO_POSIX -DCUDAPP_MIGRATION_PENDING_C_REGALLOC -DCUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL \
+		-DCUDAPP_MIGRATION_PENDING_C_ENCODER -DCUDAPP_MIGRATION_PENDING_C_BIND -DCUDAPP_MIGRATION_PENDING_C_PACK -DCUDAPP_MIGRATION_PENDING_C_CORE \
+		-I$(GPU_NO_POSIX_DIR) -o $@ tests/test_omega_codegen_freestanding.c src/omega_blackwell_codegen.c src/omega_blackwell_matmul.c \
+		src/sha256.c src/cudapp_freest_f16.c src/cudapp_freest_bw_scalar.c src/cudapp_freest_fixture_verify.c $(GPU_NO_POSIX_OBJS)
+test-om-encoder-ldg-c: $(OM_ENC_DIR)/ldg-c
+	cat om/encoder/bw_enc_sm121.om om/encoder/ldg_mini.om > $(OM_ENC_DIR)/ldg-mini.om
+	$(OMEGA_OMC) < $(OM_ENC_DIR)/ldg-mini.om > $(OM_ENC_DIR)/ldg-mini
+	chmod +x $(OM_ENC_DIR)/ldg-mini
+	$(OM_ENC_DIR)/ldg-mini > $(OM_ENC_DIR)/ldg-mini.tape
+	$(OM_ENC_DIR)/ldg-mini expected > $(OM_ENC_DIR)/ldg-mini.om.bin
+	$(OM_ENC_DIR)/ldg-c --encoder-tape < $(OM_ENC_DIR)/ldg-mini.tape > $(OM_ENC_DIR)/ldg-mini.c.bin
+	cmp $(OM_ENC_DIR)/ldg-mini.om.bin $(OM_ENC_DIR)/ldg-mini.c.bin
+	sed '$(OM_ENC_LDG_PREFIX_SED)' om/encoder/bw_enc_sm121.om > $(OM_ENC_DIR)/ldg-before.om
+	@if cmp -s $(OM_ENC_DIR)/ldg-before.om om/encoder/bw_enc_sm121.om; then echo 'FAIL pre-fix LDG reversal changed nothing'; exit 1; fi
+	cat om/encoder/ldg_mini.om >> $(OM_ENC_DIR)/ldg-before.om
+	$(OMEGA_OMC) < $(OM_ENC_DIR)/ldg-before.om > $(OM_ENC_DIR)/ldg-before
+	chmod +x $(OM_ENC_DIR)/ldg-before
+	$(OM_ENC_DIR)/ldg-before expected > $(OM_ENC_DIR)/ldg-mini.before.bin
+	@if cmp -s $(OM_ENC_DIR)/ldg-mini.before.bin $(OM_ENC_DIR)/ldg-mini.c.bin; then echo 'FAIL pre-fix LDG witness unexpectedly agrees'; exit 1; fi
+	@echo 'PASS one-instruction LDG C parity; pre-fix seeded encoder differs; public Mesa field selects C as correct'
+OM_ENC_LDG = $(OM_ENC_DIR)/ldg-offset
+# The pre-fix op-11 line (base cb3395aa) differs from the fixed line only by the dropped offset term, so
+# test-om-encoder-ldg-c and red check 11 rebuild it from the current source: neither needs Git history
+# (shallow CI checkout). Red checks: each pair is the exit the gate must give, then one edit of the encoder.
+# 11: the pre-fix op-11 line drops the offset (row 1, +0x40). 20: a field bound widened by one accepts
+# +0x800000 (refused row 0).
+OM_ENC_LDG_PREFIX_SED = s/^put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744$$/put4 w wda o 31105 rb o 5 203299072 ctl o 991744/
+OM_ENC_LDG_RED = 11 '$(OM_ENC_LDG_PREFIX_SED)' \
+	20 's/^ret or lt imm 8388608 ge imm 4286578688$$/ret or lt imm 8388609 ge imm 4286578687/'
+.PHONY: test-om-encoder-ldg
+test-om-encoder-ldg: om/encoder/bw_enc_sm121.om om/encoder/ldg_offset_test.om
+	@[ -x "$(OMEGA_OMC)" ] && [ "$$(sha256sum < $(OMEGA_OMC) | cut -c1-64)" = 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f ] || { echo "NOT_RUN: set OMEGA_OMC to the pinned seeded compiler"; exit 3; }
+	@case "$$($(NVDISASM) --version 2>/dev/null)" in *V13.0.85*) ;; *) echo "NOT_RUN: nvdisasm version must be 13.0.85"; exit 3;; esac
+	@mkdir -p $(OM_ENC_DIR)
+	cat om/encoder/bw_enc_sm121.om om/encoder/ldg_offset_test.om > $(OM_ENC_LDG).om
+	$(OMEGA_OMC) < $(OM_ENC_LDG).om > $(OM_ENC_LDG)
+	chmod +x $(OM_ENC_LDG)
+	$(OM_ENC_LDG)
+	$(OM_ENC_LDG) bin > $(OM_ENC_LDG).bin
+	$(NVDISASM) -b SM121 -hex $(OM_ENC_LDG).bin > $(OM_ENC_LDG).nv
+	$(OM_ENC_LDG) check oracle < $(OM_ENC_LDG).nv
+	@set -- $(OM_ENC_LDG_RED); n=0; while [ $$# -gt 0 ]; do want=$$1; m=$$2; shift 2; n=$$((n+1)); d=$(OM_ENC_LDG)-red$$n; \
+	sed "$$m" om/encoder/bw_enc_sm121.om > $$d.om; \
+	if cmp -s $$d.om om/encoder/bw_enc_sm121.om; then echo "RED CHECK $$n BROKEN: '$$m' changed nothing"; exit 1; fi; \
+	cat $$d.om om/encoder/ldg_offset_test.om | $(OMEGA_OMC) > $$d || exit 1; \
+	chmod +x $$d; rc=0; $$d || rc=$$?; \
+	if [ $$rc != $$want ]; then echo "RED CHECK $$n BROKEN: '$$m' exited $$rc, not $$want"; exit 1; fi; \
+	echo "red check $$n: '$$m' exits $$rc, as it must"; done
+	@rc=0; grep -v -- '-0x800000' $(OM_ENC_LDG).nv | $(OM_ENC_LDG) check oracle || rc=$$?; \
+	if [ $$rc != 4 ]; then echo "RED CHECK BROKEN: oracle text without -0x800000 exited $$rc, not 4"; exit 1; fi; \
+	echo "red check: oracle text without the -0x800000 line exits 4, as it must"
+	@echo "PASS LDG.E offset: 5 exact words, 4 refusals, nvdisasm 13.0.85 decodes all 5. GB10 DEVICE NOT_RUN"
+
+.PHONY: test-om-encoder-ldg-spec
+test-om-encoder-ldg-spec:
+	@mkdir -p $(OM_ENC_DIR)
+	cat om/encoder/bw_enc_sm121.om om/encoder/bw_spec_sm121.om om/encoder/ldg_spec_test.om > $(OM_ENC_DIR)/ldg-spec.om
+	$(OMEGA_OMC) < $(OM_ENC_DIR)/ldg-spec.om > $(OM_ENC_DIR)/ldg-spec
+	chmod +x $(OM_ENC_DIR)/ldg-spec
+	$(OM_ENC_DIR)/ldg-spec
+	@rc=0; $(OM_ENC_DIR)/ldg-spec red || rc=$$?; test $$rc = 1
+	@echo 'PASS LDG spec: nine signed-offset/boundary cases equal primitive encoder; omitted-field control refused'
+

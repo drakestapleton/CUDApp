@@ -1,0 +1,20 @@
+IMPLEMENTED / EXERCISED, host only. Base cb3395aad13d7cafea2cfaaf97a30a116da2293a.
+Decision: the C encoder is correct; seeded bw_enc_sm121 and bw_spec_sm121 omitted the existing LDG.E signed byte offset.
+Class A: Mesa NAK MIT 8190c11866dfb23e4dfacaea2f7cb795596d1fb1, sm70_encode.rs OpLd::encode lines3437-3512 selects global opcode0x981 and set_field(40..64,self.offset); ir.rs OpLd lines6501-6516 declares offset i32. Exact links are in PROVENANCE.md. NVIDIA tool output was not the decision source.
+
+Minimal program: one LDG.E R2, desc[UR8][R30.64+64], no padding or kernel builder. om/encoder/ldg_mini.om writes the same field record to the existing C adapter and seeded enc1.
+C/fixed words: 1e027981 00004008 0c1e1900 000f2200.
+Pre-fix seeded words: 1e027981 00000008 0c1e1900 000f2200.
+make test-om-encoder-ldg-c: PASS one-instruction C parity; pre-fix source at cb3395aa must differ. Only the existing C test file gained field/byte routing, not encoding logic; this adapter is migration debt.
+
+Pinned omc SHA256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f.
+Under pool-19 lock, taskset -c19, nice -n10, device-free bwrap:
+sh om/units.sh; sh om/units.sh --check: exit0, byte-identical pinned regeneration including both native ISA artifacts.
+make -j1 test-om-encoder-ldg test-om-encoder-ldg-spec test-om-encoder-ldg-c test-om-encoder test-om-spec-encoder test-om-encoder-mutants: exit0.
+LDG gate: five exact accepted words, four range refusals, two semantic mutants killed and missing-oracle-line control refused. nvdisasm13.0.85 was an offline secondary oracle on our bytes only.
+Spec LDG gate: all nine signed-offset/boundary cases match primitive encoding; omitted-field control exits1.
+Full module: 145 C-oracle golden instructions and14 fixture programs byte-identical; spec encoder/decoder461 boundary cases pass; all three existing encoder backend mutants killed. Result lines are in result-lines.txt.
+
+Exact tensor dependency witness: clean owned worktree at 0229e455f7063a7dabab27090f970235d37fec5f plus only this primitive/spec offset correction and pinned regeneration. CUDAPP_ENCODER=diff make -j1 OUT_DIR=build-ldg-diff test-bw-hazard exits0: sweep2665 variants,2381 distinct kernels,2231 clean,150 with findings,189 findings,0 not checked; bw_hazard_test264 checks,0 failed. The previous failure at program310/sha16 70ebab56d234c2ec is retained in the tensor lane's original log, not rerun or rewritten.
+
+QUALIFIED / MERGED / DEPLOYED: NOT_RUN. Chip execution and inference-speed measurements: NOT_RUN.

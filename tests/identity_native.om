@@ -1,0 +1,44 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Compose cache/digest.om, blackwell/identity.om, blackwell/id_native.om and this file.
+note Run once against pre-rename digest/identity, once against the renamed units; compare complete stdout.
+note 4096 machine-wire states (27 bytes), then 4096 realization-wire states (100 bytes).
+note These are host-generated wire inputs, not hardware identities or authorization evidence.
+fn idn_case state ulong count ulong to int
+data = new uchar 256 0
+dst = new uchar 32 0
+for i ulong 256
+put data i uchar and add state i 255
+end
+put data 0 uchar and state 255
+put data 1 uchar and shr state 8 255
+if ne bw_id_native data count dst 0
+ret 1
+end
+pos = ulong 0
+while lt pos 32 bound 32
+k = write 1 dst pos sub ulong 32 pos
+if le k 0
+ret 2
+end
+pos = add pos ulong k
+end
+if ne bw_id_native data 257 dst long -1
+ret 3
+end
+ret 0
+end
+fn main to int
+for state ulong 4096
+r = idn_case state 27
+if ne r 0
+ret r
+end
+end
+for state ulong 4096
+r = idn_case add state 4096 100
+if ne r 0
+ret r
+end
+end
+ret 0
+end

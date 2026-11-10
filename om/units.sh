@@ -274,6 +274,7 @@ extern "C" {
 #define OMEGA_REENTRY 33u
 HEADER
 : > "$T/cudapp_om_units.ident"
+[ -n "${OMEGA_UNITS:-}" ] || UNITS="$UNITS amp_qmd=om/encoder/amp_runtime.om,om/encoder/amp_qmd.om"
 for u in $UNITS $PURE_UNITS; do
   case "$u" in
     *=*) name=${u%%=*}; parts=${u#*=} ;;

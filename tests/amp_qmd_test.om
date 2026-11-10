@@ -1,0 +1,93 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Compose amp_runtime.om, amp_qmd.om and this file, then compile with the pinned omc.
+note Host only. 4096 generated build states and the same 4096 policy states.
+note WolframLanguageEvaluator: 100*2^10 -> 102400 bytes.
+note Compare all 256 bytes and acceptance to amp_runtime, the computation called by the retained C oracle.
+note Rejected states must leave all output bytes unchanged. Unknown operation must refuse.
+text aqpass "PASS amp_qmd: 4096 build + 4096 policy states; all 256 bytes identical; refusal preserves output\n"
+fn aq_byte words view ulong 64 i ulong to uchar
+ret uchar and shr get words div i 4 mul rem i 4 8 255
+end
+note An extra command argument injects a bad output byte; the full comparison must exit 2.
+fn aq_case n ulong red bool to int
+args = new ulong 16 0
+meta = new ulong 16 0
+words = new ulong 64 0
+bytes = new uchar 256 165
+put args 0 mul add n 1 128
+put args 1 mul n 16
+put args 2 mul n 16
+put args 3 add rem n 1024 1
+put args 4 1
+put args 5 add n 1
+put args 6 add rem n 65535 1
+put args 7 add rem n 255 1
+put args 8 rem mul n 127 102400
+if eq rem n 8 0
+put args 0 add get args 0 1
+end
+if eq rem n 8 1
+put args 2 add get args 2 1
+end
+if eq rem n 8 2
+put args 4 2
+end
+if eq rem n 8 3
+put args 8 102400
+end
+put meta 0 3
+for i ulong 9
+put meta add i 1 get args i
+end
+expect = amp_runtime meta words
+actual = amp_qmd 1 args bytes
+if ne actual expect
+ret 1
+end
+if and red eq expect 1
+put bytes 0 xor get bytes 0 uchar 1
+end
+for i ulong 256
+want = uchar 165
+if eq expect 1
+want = aq_byte words i
+end
+if ne get bytes i want
+ret 2
+end
+end
+for i ulong 256
+put bytes i uchar 165
+end
+actual = amp_qmd 0 meta bytes
+if ne actual expect
+ret 3
+end
+for i ulong 256
+want = uchar 165
+if eq expect 1
+want = aq_byte words i
+end
+if ne get bytes i want
+ret 4
+end
+end
+if ne amp_qmd 2 args bytes 0
+ret 5
+end
+ret 0
+end
+fn main to int
+red = gt argcnt 1
+for n ulong 4096
+r = aq_case n red
+if ne r 0
+ret r
+end
+end
+k = write 1 aqpass 0 len aqpass
+if ne k long len aqpass
+ret 6
+end
+ret 0
+end

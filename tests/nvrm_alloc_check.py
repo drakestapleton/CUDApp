@@ -20,7 +20,7 @@ VENDOR=Path(os.environ.get('NVRM_VENDOR',str(ROOT/'third_party/nvidia-open-580.1
 INCS=[ROOT/'src',ROOT/'nvrm']+[VENDOR/p for p in ('src/common/sdk/nvidia/inc','kernel-open/common/inc','kernel-open/nvidia-uvm','src/nvidia/arch/nvalloc/unix/include')]
 CC=shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-D_GNU_SOURCE','-O2','-Wall','-Wextra','-Werror','-ffp-contract=off','-ffunction-sections','-fdata-sections','-Wl,--gc-sections']+['-I'+str(p) for p in INCS]
 UNITS=['nvrm_va','nvrm_alloc_scalar','nvrm_counts','nvrm_alloc_push']
-SRCS=[ROOT/'src'/('cudapp_om_'+u+'.c') for u in UNITS]+[ROOT/'src/cudapp_om_nvrm_policy.c',ROOT/'src/omega_ampere_qmd.c',ROOT/'src/cudapp_om_amp_runtime.c']
+SRCS=[ROOT/'src'/('cudapp_om_'+u+'.c') for u in UNITS]+[ROOT/'src/cudapp_om_nvrm_policy.c',ROOT/'src/omega_ampere_qmd.c',ROOT/'src/cudapp_om_amp_runtime.c',ROOT/'src/cudapp_om_amp_qmd.c']
 ENV=dict(os.environ,OMEGA_SEEDED_OMC=str(OMC))
 def run(cmd,**kw): return subprocess.run([str(c) for c in cmd],check=True,timeout=180,**kw)
 def same(a,b):

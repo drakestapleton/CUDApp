@@ -28,9 +28,9 @@ NVRM_SERIALIZER_SRCS = $(NVRM_WIRE_SRCS) src/cudapp_om_nvrm_uvm_wire.c src/cudap
 # nvrm_open admits the chip first (HelloC2 #296): omega_gpu_chip_admit_open/_card in src/omega_gpu_chip.c,
 # whose decisions are the generated om/admission/chip_admit.om and chip_enum.om units. Every binary that links nvrm.c needs them.
 NVRM_ADMIT_SRCS = src/omega_gpu_chip.c src/cudapp_om_chip_admit.c src/cudapp_om_chip_enum.c src/cudapp_om_nvrm_policy.c
-$(OUT_DIR)/nvrm-native-test: nvrm/native_test.c nvrm/native_ioctl_fixture.h nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
+$(OUT_DIR)/nvrm-native-test: nvrm/native_test.c nvrm/native_ioctl_fixture.h nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_amp_qmd.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
 	@mkdir -p $(OUT_DIR)
-	$(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -pthread -o $@ nvrm/native_test.c src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
+	$(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -pthread -o $@ nvrm/native_test.c src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_amp_qmd.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
 test-nvrm-native: $(OUT_DIR)/nvrm-native-test
 	./$(OUT_DIR)/nvrm-native-test
 
@@ -43,9 +43,9 @@ test-nvrm-differential: build/test_ampere_runtime $(OUT_DIR)/nvrm-c-oracle-test
 	cmp $(OUT_DIR)/nvrm-omega-fixture.out $(OUT_DIR)/nvrm-c-fixture.out
 	@echo "NVRM C/OMEGA DIFFERENTIAL PASS (same fake RM lifecycle assertions and output; HOST_ONLY)"
 
-$(OUT_DIR)/nvrm-boundary-test: nvrm/macro_boundary_test.c nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
+$(OUT_DIR)/nvrm-boundary-test: nvrm/macro_boundary_test.c nvrm/native_client.h nvrm/nvrm.c nvrm/nvrm.h src/cudapp_nvrm_native.h src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_amp_qmd.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
 	@mkdir -p $(OUT_DIR)
-	$(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -UCUDAPP_NVRM_TEST_TRANSPORT -pthread -o $@ nvrm/macro_boundary_test.c src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
+	$(CC) $(CFLAGS) -UCUDAPP_MIGRATION_PENDING_C_NVRM -DCUDAPP_MIGRATION_PENDING_C_NVRM=0 -UCUDAPP_NVRM_TEST_TRANSPORT -pthread -o $@ nvrm/macro_boundary_test.c src/cudapp_om_nvrm_transport.c src/omega_ampere_qmd.c src/cudapp_om_amp_runtime.c src/cudapp_om_amp_qmd.c $(NVRM_SERIALIZER_SRCS) $(NVRM_ADMIT_SRCS)
 test-nvrm-boundary: $(OUT_DIR)/nvrm-boundary-test
 	./$(OUT_DIR)/nvrm-boundary-test
 

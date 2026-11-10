@@ -83,7 +83,7 @@ print("PASS red control: ns_scale changed a real unit answer", flush=True)
 # Hardware fixtures are linked only; never executed, even in the device-free namespace.
 tp = "third_party/nvidia-open-580.173.02"
 inc = ["-Invrm", "-Im16", "-I"+tp+"/src/common/sdk/nvidia/inc", "-I"+tp+"/kernel-open/common/inc", "-I"+tp+"/kernel-open/nvidia-uvm", "-I"+tp+"/src/nvidia/arch/nvalloc/unix/include"]
-common = ["nvrm/nvrm.c", "m16/m16_native.c", "src/omega_ampere_qmd.c", "src/cudapp_om_amp_runtime.c", unit, text]
+common = ["nvrm/nvrm.c", "m16/m16_native.c", "src/omega_ampere_qmd.c", "src/cudapp_om_amp_runtime.c", "src/cudapp_om_amp_qmd.c", unit, text]
 # Match the integrated native NVRM link: serializers, transport and chip admission.
 common += [str(p.relative_to(root)) for p in sorted((root / "src").glob("cudapp_om_nvrm_*.c"))]
 common += ["src/omega_gpu_chip.c", "src/cudapp_om_chip_admit.c", "src/cudapp_om_chip_enum.c"]

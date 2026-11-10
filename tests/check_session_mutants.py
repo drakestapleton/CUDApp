@@ -51,7 +51,7 @@ def exercise(directory, unit=None, changed=None):
             subprocess.run(['sh', 'om/units.sh'], cwd=root, env=env, stdout=log, stderr=log, check=True)
             bindings[unit] = str(directory / ('cudapp_om_' + unit + '.c'))
         subprocess.run(cc + flags + ['-c', shell, '-o', str(directory/'session.o')], cwd=root, stdout=log, stderr=log, check=True)
-        subprocess.run(cc + flags + ['-DOMEGA_GPU_NO_POSIX', 'tests/test_omega_gpu_session_platform.c',
+        subprocess.run(cc + flags + ['-DOMEGA_GPU_NO_POSIX', '-Ibuild/no_posix/native', 'tests/test_omega_gpu_session_platform.c',
                        'tests/session_no_default.c', 'src/omega_ampere_qmd.c', 'src/cudapp_om_amp_runtime.c',
                        'src/cudapp_om_streams.c', str(directory/'session.o')] + objects +
                        [bindings[n] for n in ('session_admit', 'session_words', 'session_park')] +

@@ -1,0 +1,272 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Frozen DRA-420/DRA-387 evaluation plan (docs/abft/CONTRACT.md section 6). Its SHA256 is
+note committed in tests/abft/FROZEN.sha256 in the same commit, before any checker or tolerance
+note tuning. The candidate never reads this file; the evaluator owns rows, seeds, S and deadline.
+note Row: 0 id 1 dt 2 m 3 n 4 k 5 w 6 pol 7 tgt 8 site 9 fault 10 sub 11 p1 12 p2 13 seed 14 reps 15 flags
+note dt 0 exact u32 (mod 2^32), 1 bf16 x bf16 -> f32. pol 0 round robin, 1 seeded random, 2 run
+note ahead of tgt, 3 delay tgt at site. site 0 none, 1 load, 2 compute, 3 barrier arrival,
+note 4 intra-unit atomic (unsupported), 5 device instruction stream (unsupported).
+note fault 0 none, 1 single bit p2, 2 multi count p1 class p2 (0 any, 1 bits 23..31, 2 bits 0..7),
+note 3 stale (sub 1 skip init, 2 skip write, 3 identical stale), rows p1..p1+p2-1,
+note 4 index (sub 1 drop K tail, 2 transposed B, 3 row offset, 4 out-of-bounds write),
+note 5 sync (sub 1 no load barrier, 2 no compute barrier, 3 barrier counts workers 0..1 only,
+note 4 worker 0 skips a barrier: hang), 6 known undetected (sub 1 exact 2x2 rectangle of 2^31,
+note sub 3 bf16 2x2 rectangle +e -e -e +e with e = 2^p1), 7 common-mode A corruption at p1 bf16 bit p2.
+note flags bit0 transient fault, bit1 known-bad control (may remove a wait), bit2 timing row,
+note bit3 reduced-concurrency partner of the previous row.
+global pl ulong 1024
+global pn ulong 1
+global pcur ulong 1
+global pcfg ulong 4
+fn prow id ulong dt ulong m ulong n ulong k ulong w ulong to void
+b = mul sub id 1 16
+put pcur 0 b
+put pl b id
+put pl add b 1 dt
+put pl add b 2 m
+put pl add b 3 n
+put pl add b 4 k
+put pl add b 5 w
+put pn 0 id
+end
+fn prpol pol ulong tgt ulong site ulong to void
+b = get pcur 0
+put pl add b 6 pol
+put pl add b 7 tgt
+put pl add b 8 site
+end
+fn prf flt ulong sb ulong p1 ulong p2 ulong to void
+b = get pcur 0
+put pl add b 9 flt
+put pl add b 10 sb
+put pl add b 11 p1
+put pl add b 12 p2
+end
+fn prs seed ulong reps ulong flags ulong to void
+b = get pcur 0
+put pl add b 13 seed
+put pl add b 14 reps
+put pl add b 15 flags
+end
+fn pfill to void
+note config: 0 sampled elements S, 1 child deadline ns, 2 retries after detection, 3 plan version
+put pcfg 0 64
+put pcfg 1 20000000000
+put pcfg 2 1
+put pcfg 3 1
+note fault-free false-positive rows
+prow 1 1 16 16 16 4
+prpol 1 0 0
+prf 0 0 0 0
+prs 1001 100 0
+prow 2 1 64 48 80 4
+prpol 1 0 0
+prf 0 0 0 0
+prs 1002 40 0
+prow 3 1 128 128 128 8
+prpol 1 0 0
+prf 0 0 0 0
+prs 1003 10 0
+prow 4 0 64 48 80 4
+prpol 1 0 0
+prf 0 0 0 0
+prs 1004 40 0
+prow 5 1 33 17 41 4
+prpol 1 0 0
+prf 0 0 0 0
+prs 1005 40 0
+note single-element corruption
+prow 6 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 31
+prs 2001 20 0
+prow 7 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 30
+prs 2002 20 0
+prow 8 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 23
+prs 2003 20 0
+prow 9 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 22
+prs 2004 20 0
+prow 10 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 14
+prs 2005 20 0
+prow 11 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 0
+prs 2006 20 0
+prow 12 0 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 0
+prs 2007 20 0
+prow 13 0 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 17
+prs 2008 20 0
+prow 14 0 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 31
+prs 2009 20 0
+note multi-element corruption
+prow 15 1 64 48 80 4
+prpol 0 0 0
+prf 2 0 2 1
+prs 3001 20 0
+prow 16 1 64 48 80 4
+prpol 0 0 0
+prf 2 0 8 0
+prs 3002 20 0
+prow 17 1 64 48 80 4
+prpol 0 0 0
+prf 2 0 64 2
+prs 3003 20 0
+prow 18 0 64 48 80 4
+prpol 0 0 0
+prf 2 0 8 0
+prs 3004 20 0
+note stale buffers
+prow 19 1 64 48 80 4
+prpol 0 0 0
+prf 3 1 8 4
+prs 4001 5 0
+prow 20 1 64 48 80 4
+prpol 0 0 0
+prf 3 2 8 4
+prs 4002 5 0
+prow 21 1 64 48 80 4
+prpol 0 0 0
+prf 3 3 8 4
+prs 4003 5 0
+prow 22 0 64 48 80 4
+prpol 0 0 0
+prf 3 2 8 4
+prs 4004 5 0
+note indexing faults
+prow 23 1 64 64 64 4
+prpol 0 0 0
+prf 4 1 0 0
+prs 5001 5 0
+prow 24 1 64 64 64 4
+prpol 0 0 0
+prf 4 2 0 0
+prs 5002 5 0
+prow 25 1 64 64 64 4
+prpol 0 0 0
+prf 4 3 0 0
+prs 5003 5 0
+prow 26 1 64 64 64 4
+prpol 0 0 0
+prf 4 4 0 0
+prs 5004 3 0
+prow 27 0 64 64 64 4
+prpol 0 0 0
+prf 4 1 0 0
+prs 5005 5 0
+note synchronization faults (known-bad controls) under default and perturbed schedules
+prow 28 1 64 48 80 4
+prpol 0 0 0
+prf 5 1 0 0
+prs 6001 20 2
+prow 29 1 64 48 80 4
+prpol 1 0 0
+prf 5 1 0 0
+prs 6002 20 2
+prow 30 1 64 48 80 4
+prpol 2 0 1
+prf 5 1 0 0
+prs 6003 5 2
+prow 31 1 64 48 80 4
+prpol 0 0 0
+prf 5 2 0 0
+prs 6004 20 2
+prow 32 1 64 48 80 4
+prpol 1 0 0
+prf 5 2 0 0
+prs 6005 20 2
+prow 33 1 64 48 80 4
+prpol 3 1 2
+prf 5 2 0 0
+prs 6006 5 2
+prow 34 1 64 48 80 8
+prpol 1 0 0
+prf 5 3 0 0
+prs 6007 20 2
+prow 35 1 64 48 80 2
+prpol 1 0 0
+prf 5 3 0 0
+prs 6007 20 10
+prow 36 1 64 48 80 4
+prpol 0 0 0
+prf 5 4 0 0
+prs 6008 2 2
+prow 37 1 64 48 80 4
+prpol 1 0 0
+prf 5 1 0 0
+prs 6009 1 0
+note unsupported perturbation sites
+prow 38 1 64 48 80 4
+prpol 3 1 4
+prf 0 0 0 0
+prs 7001 1 0
+prow 39 1 64 48 80 4
+prpol 3 1 5
+prf 0 0 0 0
+prs 7002 1 0
+note known undetected patterns and common-mode input corruption
+prow 40 0 64 48 80 4
+prpol 0 0 0
+prf 6 1 0 0
+prs 8001 20 0
+prow 41 1 64 48 80 4
+prpol 0 0 0
+prf 6 3 4 0
+prs 8002 200 0
+prow 42 1 64 48 80 4
+prpol 0 0 0
+prf 7 0 100 14
+prs 8003 5 0
+note transient versus persistent fault recovery
+prow 43 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 30
+prs 9001 10 1
+prow 44 1 64 48 80 4
+prpol 0 0 0
+prf 1 0 0 30
+prs 9002 10 0
+note host cost rows (fault free, one worker, round robin)
+prow 45 1 64 64 64 1
+prpol 0 0 0
+prf 0 0 0 0
+prs 10001 10 4
+prow 46 1 128 128 128 1
+prpol 0 0 0
+prf 0 0 0 0
+prs 10002 5 4
+prow 47 1 256 256 256 1
+prpol 0 0 0
+prf 0 0 0 0
+prs 10003 3 4
+prow 48 0 128 128 128 1
+prpol 0 0 0
+prf 0 0 0 0
+prs 10004 5 4
+prow 49 0 256 256 256 1
+prpol 0 0 0
+prf 0 0 0 0
+prs 10005 3 4
+note reduced-concurrency witness pair with a correct barrier
+prow 50 1 64 48 80 8
+prpol 1 0 0
+prf 0 0 0 0
+prs 11001 5 0
+prow 51 1 64 48 80 2
+prpol 1 0 0
+prf 0 0 0 0
+prs 11001 5 8
+end

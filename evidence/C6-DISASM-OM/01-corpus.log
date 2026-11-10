@@ -1,0 +1,48 @@
+step 01-corpus start 2026-11-07T17:06:11Z head 0b9962c92c97fd61b2343cf2ac9a79bcd1ab7cfa dirty 0
+cmd: sh ../scratch/s01.sh build/sm121dis-kernels
+PASS: missing and failing corpus producers are refused
+PASS: decoder exit controls (serial and parallel)
+build/gpu_matmul_api_test --host-only: exit 0, 53 kernels so far
+build/gpu_elementwise_test --host-only: exit 0, 63 kernels so far
+build/gpu_reconv_test --host-only: exit 0, 86 kernels so far
+build/gpu_attention_test --host-only: exit 0, 622 kernels so far
+build/gpu_moe_window_test --host-only: exit 0, 622 kernels so far
+build/gpu_fp8_api_test --host-only: exit 0, 626 kernels so far
+build/gpu_decode_attn_test --host-only: exit 0, 626 kernels so far
+build/gpu_router_test --host-only: exit 0, 626 kernels so far
+build/gpu_bf16_gemv_test --host-only: exit 0, 626 kernels so far
+build/gpu_fp8gemm_test --host-only: exit 0, 626 kernels so far
+build/gpu_tc_probe_test --host-only: exit 0, 626 kernels so far
+build/gpu_tc_peak_test --host-only: exit 0, 626 kernels so far
+build/gpu_pf_mem_test --host-only: exit 0, 626 kernels so far
+build/gpu_qmma_probe_test --host-only: exit 0, 628 kernels so far
+build/gpu_cmdlist_test --host-only: exit 0, 628 kernels so far
+build/gpu_decode_graph_test --host-only: exit 0, 628 kernels so far
+build/gpu_attention_test --hd 128 --host-only: exit 0, 640 kernels so far
+build/gpu_tcgemm_test --host-only: exit 0, 640 kernels so far
+build/gpu_tcgemm_test --sim: exit 0, 640 kernels so far
+build/gpu_prefill_attn_test --host-only: exit 0, 664 kernels so far
+build/gpu_prefill_attn_test --sim: exit 0, 664 kernels so far
+build/gpu_pfgemm_test --host-only: exit 0, 664 kernels so far
+build/gpu_pfgemm_test --sim: exit 0, 664 kernels so far
+build/gpu_qgemm_test --host-only: exit 0, 664 kernels so far
+build/gpu_qgemm_test --sim: exit 0, 664 kernels so far
+build/gpu_pfhost_test --host-only: exit 0, 664 kernels so far
+build/gpu_pfhost_test --sim: exit 0, 664 kernels so far
+build/gpu_cmdlist_test --host-only: exit 0, 664 kernels so far
+build/gpu_cmdlist_test --sim: exit 0, 664 kernels so far
+build/gpu_gpr_boundary_test: exit 0, 664 kernels so far
+build/gpu_scan_test --host-only: exit 0, 674 kernels so far
+build/gpu_scan_test --sim: exit 0, 674 kernels so far
+build/gpu_gemm_test --host-only: exit 0, 746 kernels so far
+build/gpu_gemm_test --sim: exit 0, 746 kernels so far
+build/gpu_streams_test --host-only: exit 0, 750 kernels so far
+build/gpu_streams_test --sim: exit 0, 750 kernels so far
+build/gpu_mathlibs_test --host-only: exit 0, 786 kernels so far
+build/gpu_mathlibs_test --sim: exit 0, 786 kernels so far
+build/gpu_isolation_test --host-only: exit 0, 789 kernels so far
+build/bw_hazard_test: exit 0, 3191 kernels so far
+manifest: 3191 kernels, 1237248 words, sha256 0939127a973c165f163694a3fa4b4cb3ae398d9e80b8d8560c427eb073e2c4ce
+corpus: 3191 kernels in /home/drakestapleton/work/hive/t_81083ab1/CUDApp/build/sm121dis-kernels
+corpus.sh exit 0 in 214 s
+step 01-corpus end 2026-11-07T17:11:39Z exit 0

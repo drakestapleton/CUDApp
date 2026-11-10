@@ -1,0 +1,14 @@
+step 07-decoder-users start 2026-11-07T18:18:09Z head 07a89edb1ac359a196d485357ec87b63ead9584d dirty 3
+cmd: sh -c export OMEGA_OMC=/home/drakestapleton/workspace/hive-worktrees/arch-scale-x/omc/seed/out/omc OMEGA_BRIDGE=$HOME/work/hive/t_81083ab1/omega-bridge; for t in test-om-units test-gpu-elementwise test-gpu-fp8 test-gpu-reconv test-gpu-attention test-gpu-mathlibs test-gpu-latmeas test-bw-hazard test-bw-ldg-mmio test-om-encoder test-zero-nvdisasm; do rc=0; make -s OUT_DIR=build $t > ../ev/07-$t.log 2>&1 || rc=$?; echo "$t exit $rc: $(tail -1 ../ev/07-$t.log | cut -c1-160)"; done
+test-om-units exit 0: PASS portable Omega units regenerate byte for byte
+test-gpu-elementwise exit 0: PASS: 24 checks, 0 failed
+test-gpu-fp8 exit 0: gpu_fp8_api_test: 214 checks, 0 failed: PASS
+test-gpu-reconv exit 0: PASS: 119 checks, 0 failed
+test-gpu-attention exit 0: PASS: 348 checks, 0 failed
+test-gpu-mathlibs exit 0: mathlibs sim: PASS (429 checks)
+test-gpu-latmeas exit 0: latmeas host self-test PASS
+test-bw-hazard exit 0: bw_hazard_test: 264 checks, 0 failed: PASS
+test-bw-ldg-mmio exit 0: red check: omega-mv's LDG.E.EF word FAILS the LDG_MMIO contract, as it must
+test-om-encoder exit 0: red check: one flipped bit aborts the encoder diff, as it must
+test-zero-nvdisasm exit 0: red check: the planted nvdisasm calls FAIL the gate, as they must (2 lines)
+step 07-decoder-users end 2026-11-07T19:02:22Z exit 0

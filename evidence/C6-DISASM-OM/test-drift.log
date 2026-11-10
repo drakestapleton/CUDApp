@@ -1,0 +1,120 @@
+=== code classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 254d3c062ee6, none moved away from CUDA++ since the baseline)
+PASS: code classification at baseline
+=== code blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	af31bb5a4f0ffbf774b821f31926a4db3b038383
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 254d3c062ee6 and not in CUDA++)
+PASS: code blob gate
+=== header classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (1 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 1dfe9712c50c, none moved away from CUDA++ since the baseline)
+PASS: header classification at baseline
+=== header blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	2f88238630d9fd6a4c438013745aedc1550f5081
+DIVERGENCE: 1 shared, 0 same, 1 differ (1 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 1dfe9712c50c and not in CUDA++)
+PASS: header blob gate
+=== mixed classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 1dfe9712c50c, none moved away from CUDA++ since the baseline)
+PASS: mixed classification at baseline
+=== mixed blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	2f88238630d9fd6a4c438013745aedc1550f5081
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 1dfe9712c50c and not in CUDA++)
+PASS: mixed blob gate
+=== identical classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 1 same, 0 differ (0 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 254d3c062ee6, none moved away from CUDA++ since the baseline)
+PASS: identical classification at baseline
+=== identical blob gate (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 1 same, 0 differ (0 licence-header only, 0 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 254d3c062ee6, none moved away from CUDA++ since the baseline)
+PASS: identical blob gate
+=== large classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 2aca61c6e770, none moved away from CUDA++ since the baseline)
+PASS: large classification at baseline
+=== large blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	57f675cc176344229de1fd23ce49c67b50b4a2ef
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 2aca61c6e770 and not in CUDA++)
+PASS: large blob gate
+=== binary classification at baseline (exit 0, expected 0) ===
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (1 GPU paths, omega 97948c6a2db1, none moved away from CUDA++ since the baseline)
+PASS: binary classification at baseline
+=== binary blob gate (exit 1, expected 1) ===
+DRIFT	src/omega_gpu_case.c	differs	1d5e8a9f97214c0a726e2762d65c08ce9339ab1a
+DIVERGENCE: 1 shared, 0 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: FAIL (1 of 1 GPU paths changed in omega 97948c6a2db1 and not in CUDA++)
+PASS: binary blob gate
+=== built-in negative controls (exit 0, expected 0) ===
+control 1: red as required (src/omega_gpu_case.c)
+control 2: red as required (src/omega_gpu_same.c edited in a scratch Omega commit)
+control 3: src/omega_numeric.c is not in HEAD (fixture Omega); this row is not exercised
+control 3: src/omega_numeric.h is not in HEAD (fixture Omega); this row is not exercised
+control 3: src/omega_numeric_reduce.c is not in HEAD (fixture Omega); this row is not exercised
+control 3: src/omega_numeric_reduce.h is not in HEAD (fixture Omega); this row is not exercised
+real check:
+DIVERGENCE: 2 shared, 1 same, 1 differ (0 licence-header only, 1 code); 0 cudapp-only, 0 omega-only
+DRIFT-GATE: PASS (2 GPU paths, omega 0adedc339604, none moved away from CUDA++ since the baseline)
+SELF-TEST: PASS (all controls red, real check green)
+PASS: built-in negative controls
+=== invalid ref in direct mode (exit 2, expected 2) ===
+fatal: Needed a single revision
+DRIFT-GATE: NOT_RUN (map failed)
+PASS: invalid ref in direct mode
+=== invalid ref in self-test mode (exit 2, expected 2) ===
+fatal: Needed a single revision
+DRIFT-GATE: NOT_RUN (map failed)
+PASS: invalid ref in self-test mode
+=== baseline is a directory (exit 2, expected 2) ===
+DRIFT-GATE: NOT_RUN (baseline /home/drakestapleton/.hermes/profiles/worker/cache/scratch/tmp.STpk2HdMNu/baseline-directory is not a readable nonempty file)
+PASS: baseline is a directory
+=== baseline is unreadable (exit 2, expected 2) ===
+DRIFT-GATE: NOT_RUN (baseline /home/drakestapleton/.hermes/profiles/worker/cache/scratch/tmp.STpk2HdMNu/baseline is not a readable nonempty file)
+PASS: baseline is unreadable
+=== baseline comparison read error (exit 2, expected 2) ===
+injected awk read error
+DRIFT-GATE: NOT_RUN (baseline comparison failed)
+PASS: baseline comparison read error
+=== missing blob (exit 2, expected 2) ===
+fatal: git cat-file af31bb5a4f0ffbf774b821f31926a4db3b038383: bad file
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: missing blob
+=== missing blob (exit 2, expected 2) ===
+fatal: git cat-file 2721fea320e0429c40f26e27b873ef11f778eda5: bad file
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: missing blob
+=== diff error (exit 2, expected 2) ===
+injected diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: diff error
+=== diff error in self-test mode (exit 2, expected 2) ===
+injected diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT	src/omega_gpu_case.c	differs	af31bb5a4f0ffbf774b821f31926a4db3b038383
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: diff error in self-test mode
+=== diff reports identical for distinct blobs (exit 2, expected 2) ===
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 0
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: diff reports identical for distinct blobs
+=== one-time diff error in control 1 (exit 2, expected 2) ===
+injected one-time diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT	src/omega_gpu_case.c	differs	af31bb5a4f0ffbf774b821f31926a4db3b038383
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: one-time diff error in control 1
+=== one-time diff error in control 2 (exit 2, expected 2) ===
+control 1: red as required (src/omega_gpu_case.c)
+injected one-time diff error
+summary: expected differing blobs for src/omega_gpu_case.c, diff returned 2
+DRIFT	src/omega_gpu_same.c	differs	4d2b7f7850fa3bfa95740f2668a893b707e59eb4
+DRIFT-GATE: NOT_RUN (summary failed)
+PASS: one-time diff error in control 2
+DRIFT REGRESSION TESTS PASS

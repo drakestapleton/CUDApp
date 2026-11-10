@@ -1,0 +1,41 @@
+producer	new_kernels	kernels_so_far
+gpu_matmul_api_test --host-only	53	53
+gpu_elementwise_test --host-only	10	63
+gpu_reconv_test --host-only	23	86
+gpu_attention_test --host-only	536	622
+gpu_moe_window_test --host-only	0	622
+gpu_fp8_api_test --host-only	4	626
+gpu_decode_attn_test --host-only	0	626
+gpu_router_test --host-only	0	626
+gpu_bf16_gemv_test --host-only	0	626
+gpu_fp8gemm_test --host-only	0	626
+gpu_tc_probe_test --host-only	0	626
+gpu_tc_peak_test --host-only	0	626
+gpu_pf_mem_test --host-only	0	626
+gpu_qmma_probe_test --host-only	2	628
+gpu_cmdlist_test --host-only	0	628
+gpu_decode_graph_test --host-only	0	628
+gpu_attention_test --hd 128 --host-only	12	640
+gpu_tcgemm_test --host-only	0	640
+gpu_tcgemm_test --sim	0	640
+gpu_prefill_attn_test --host-only	24	664
+gpu_prefill_attn_test --sim	0	664
+gpu_pfgemm_test --host-only	0	664
+gpu_pfgemm_test --sim	0	664
+gpu_qgemm_test --host-only	0	664
+gpu_qgemm_test --sim	0	664
+gpu_pfhost_test --host-only	0	664
+gpu_pfhost_test --sim	0	664
+gpu_cmdlist_test --host-only	0	664
+gpu_cmdlist_test --sim	0	664
+gpu_gpr_boundary_test	0	664
+gpu_scan_test --host-only	10	674
+gpu_scan_test --sim	0	674
+gpu_gemm_test --host-only	72	746
+gpu_gemm_test --sim	0	746
+gpu_streams_test --host-only	4	750
+gpu_streams_test --sim	0	750
+gpu_mathlibs_test --host-only	36	786
+gpu_mathlibs_test --sim	0	786
+gpu_isolation_test --host-only	3	789
+bw_hazard_test	2402	3191

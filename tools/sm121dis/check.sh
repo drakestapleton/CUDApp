@@ -33,6 +33,13 @@ if [ "${1:-}" = --one ]; then
         else
             { echo "FAIL $n"; echo "[FAIL] $b: $(diff "$WORK/$b.want" "$WORK/$b.got" | grep -c '^<') of $n words differ"
               diff "$WORK/$b.want" "$WORK/$b.got" | head -6; } > "$WORK/$b.res.tmp"
+            # the instruction class (mnemonic, guard skipped) of every differing word, oracle side, for the report
+            awk 'NR == FNR { w[FNR] = $0; nw = FNR; next }
+                 { g[FNR] = $0; ng = FNR }
+                 END { m = nw > ng ? nw : ng
+                       for (i = 1; i <= m; i++) if (w[i] != g[i]) {
+                           split(w[i], t, " "); c = t[4]; if (c ~ /^@/) c = t[5]; if (w[i] == "") c = "(extra word)"
+                           print c } }' "$WORK/$b.want" "$WORK/$b.got" > "$WORK/$b.cls"
         fi
     fi
     mv "$WORK/$b.res.tmp" "$WORK/$b.res"
@@ -44,7 +51,7 @@ DIS=$1; DIR=$2; WORK=$3
 ls "$DIR"/*.bin >/dev/null 2>&1 || { echo "VERDICT NOT_RUN: no kernels in $DIR"; exit 2; }
 mkdir -p "$WORK"
 # "$WORK/." so a work dir that is a symlink (to /dev/shm, say) is swept too; a stale PASS must never be read back.
-find "$WORK/." -maxdepth 1 \( -name '*.res' -o -name '*.res.tmp' \) -exec rm -f {} +
+find "$WORK/." -maxdepth 1 \( -name '*.res' -o -name '*.res.tmp' -o -name '*.cls' \) -exec rm -f {} +
 echo "oracle: $("$NVDISASM" --version | grep -o "release [0-9.]*, V[0-9.]*")"
 JOBS=${SM121DIS_JOBS:-$(nproc 2>/dev/null || echo 1)}
 for f in "$DIR"/*.bin; do printf '%s\0' "$f"; done | xargs -0 -n 1 -P "$JOBS" sh "$HERE/check.sh" --one "$DIS" "$WORK"
@@ -61,5 +68,12 @@ for f in "$DIR"/*.bin; do
     fi
 done
 echo "kernels: $k, words: $words, failed kernels: $bad"
+echo "identical kernels: $((k - bad)), differing kernels: $bad"
+if ls "$WORK"/*.cls > /dev/null 2>&1; then
+    echo "differing words by instruction class (oracle mnemonic):"
+    cat "$WORK"/*.cls | LC_ALL=C sort | uniq -c | LC_ALL=C sort -k1,1nr -k2
+else
+    echo "differing instruction classes: none"
+fi
 [ $bad = 0 ] && { echo "VERDICT PASS"; exit 0; }
 echo "VERDICT FAIL"; exit 1

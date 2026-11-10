@@ -1,0 +1,9 @@
+compiler 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+host checks: 25, failures: 0
+host unit emitter: PASS
+host unit address: PASS
+host unit guard: PASS
+host unit body: PASS
+words: 640 bytes, 40 instructions
+oracle: nvdisasm text equals ours on all 40 words
+Omega disassembler decode matches the hand-written expectations (40 instructions)

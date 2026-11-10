@@ -1,0 +1,38 @@
+step 04-red start 2026-11-07T18:41:02Z head 07a89edb1ac359a196d485357ec87b63ead9584d dirty 4
+cmd: sh ../scratch/s04.sh
+red check: the faulty decoder FAILS the comparison, as it must (3190 kernels)
+kernels: 3191, words: 1237248, failed kernels: 3190
+identical kernels: 1, differing kernels: 3190
+differing words by instruction class (oracle mnemonic):
+ 213861 LOP3.LUT
+ 103985 IMAD
+  72083 FFMA
+  54722 IMAD.WIDE.U32
+  38868 FMUL
+  30899 FADD
+  29527 SHFL.DOWN
+  29099 STS
+  28632 LDS.128
+  24257 LDG.E
+  21431 HMMA.16816.F32.BF16
+  19839 STG.E
+  17111 ISETP.GE.U32.AND
+  15494 IADD3
+  12310 FMNMX
+  10934 LDG.E.128
+   9661 LDS
+   7830 LDG.E.64
+   4776 LDG.E.U16
+   2578 QMMA.16832.F32.E4M3.E4M3
+   1584 F2FP.BF16.F32.PACK_AB
+    378 ISETP.GE.AND
+    224 SHFL.BFLY
+     28 HMMA.16816.F32
+     18 F2FP.SATFINITE.E4M3.F32.PACK_AB_MERGE_C
+     12 LDG.E.STRONG.SYS
+      6 IMAD.HI.U32
+      6 SHF.L.U32
+      4 ATOMG.E.ADD.STRONG.SYS
+      4 STG.E.STRONG.SYS
+VERDICT FAIL
+step 04-red end 2026-11-07T19:14:55Z exit 0

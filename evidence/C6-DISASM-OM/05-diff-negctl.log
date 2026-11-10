@@ -1,0 +1,6 @@
+step 05-diff-negctl start 2026-11-07T17:43:16Z head 07a89edb1ac359a196d485357ec87b63ead9584d dirty 2
+cmd: sh ../scratch/s05.sh
+decoder differential: .om and migration-pending C decoders agree on every word of 3191 kernels
+red check: one flipped bit aborts the decoder differential, as it must (exit 134)
+DISASM DIFFER pc 0x0 word 0x000ea80008000a0000006b00ff0477ac: om 0 "LDCU.64 UR4, c[0x0][0x358]" c 0 "LDCU.64 UR5, c[0x0][0x358]"
+step 05-diff-negctl end 2026-11-07T18:41:02Z exit 124

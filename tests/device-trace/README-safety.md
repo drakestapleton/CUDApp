@@ -80,11 +80,14 @@ an instruction decoder or evidence that the emitter's instruction words work.
 The historical `expected.sass` described the original PR84 head
 `60d6c57fc6821accce0027d65dd239355beeb543`, including the erroneous
 multiply-based address formation, and was itself an NVIDIA-tool listing.
-PR #93 removed it. `run-emitter-checks.sh`
-now keeps the nvdisasm listing in its temporary directory and checks it against
-hand-written expectations: the opcode counts of the two 20-instruction marker
-blocks and the address-formation lines (`MOV R6, 0x40` / `0x80`, then
-`IMAD.WIDE.U32 R8, R6, 0x1, R4`). The emitter on main before this repair fails
+PR #93 removed it. `run-emitter-checks.sh` (`make test-device-trace-emitter`)
+now decodes the words with Omega's own sm_121 disassembler (`build/sm121dis`;
+nvdisasm only as an oracle when `NVDISASM` is set), keeps the listing in its
+temporary directory and checks it against hand-written expectations: the
+opcode counts of the two 20-instruction marker blocks, the two timer reads
+(`S2R R2, SR_GLOBALTIMERLO` at 0x30 and 0x170) and the address-formation lines
+(`MOV R6, 0x40` / `0x80`, then `IMAD.WIDE.U32 R8, R6, 0x1, R4`). The emitter
+on main before this repair fails
 that check (`IMAD.SHL R8, R4, 0x40, RZ` at offset 0x70). The historical receipt
 `evidence/device-trace/emitter-host-20261026/receipt.json` stays unchanged as
 a record of what ran on PR84's head.

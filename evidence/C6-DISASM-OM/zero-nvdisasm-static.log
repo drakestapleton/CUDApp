@@ -1,0 +1,9 @@
+== static ZERO-NVDISASM check at the branch (tools/sm121dis/zero_nvdisasm.sh section 1)
+static: PASS, no file outside the oracle harness names the CUDA toolkit or looks up nvdisasm
+== negative 1: a planted tools/zz_planted.sh naming the toolkit
+static: FAIL, these lines name the CUDA toolkit or look up nvdisasm:
+tools/zz_planted.sh:1:X=/usr/local/cuda/bin/nvdisasm
+== negative 2: an allowed Makefile line edited
+static: FAIL, these lines name the CUDA toolkit or look up nvdisasm:
+Makefile:127:CUDA_LIB ?= /usr/local/cuda/lib64x
+== base f1b50cbf (same grep, 3-file exception only): 15 lines, i.e. static FAIL at base

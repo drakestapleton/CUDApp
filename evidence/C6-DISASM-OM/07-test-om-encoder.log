@@ -1,0 +1,4 @@
+PASS: hosted golden-word fixtures through the .om encoder (0 failing checks)
+PASS: hosted golden-word fixtures through the .om encoder (0 failing checks)
+encoder diff: .om and C byte-identical on 145 golden instructions and 14 fixture programs
+red check: one flipped bit aborts the encoder diff, as it must

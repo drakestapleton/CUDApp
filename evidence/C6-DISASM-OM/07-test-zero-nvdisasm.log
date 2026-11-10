@@ -1,0 +1,10 @@
+static: PASS, no file outside the oracle harness names the CUDA toolkit or looks up nvdisasm
+attention_hd64: exit 0, execve naming nvdisasm: 0  ok
+attention_hd128: exit 0, execve naming nvdisasm: 0  ok
+elementwise: exit 0, execve naming nvdisasm: 0  ok
+fp8: exit 0, execve naming nvdisasm: 0  ok
+reconv: exit 0, execve naming nvdisasm: 0  ok
+hazard: exit 0, execve naming nvdisasm: 0  ok
+decoy: never called
+ZERO-NVDISASM: PASS (6 commands under strace, decoy calls 0, no execve of nvdisasm, static clean)
+red check: the planted nvdisasm calls FAIL the gate, as they must (2 lines)

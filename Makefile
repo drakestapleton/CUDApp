@@ -69,6 +69,17 @@ CUDAPP_ENCODER_DEFS = $(CUDAPP_ENCODER_DEFS_$(CUDAPP_ENCODER))
 ifeq ($(filter om c diff,$(CUDAPP_ENCODER)),)
 $(error CUDAPP_ENCODER must be om, c or diff)
 endif
+# sm_121 disassembler (CUDA++ C6, DRA-475): om (default) = om/disasm/sm121_dis.om through the generated binding
+# src/cudapp_om_sm121_dis.c; c = the migration-pending C decoder in src/omega_sm121_disasm.c, the differential oracle;
+# diff = both on every word, abort on any difference (mk/sm121dis.mk). Use a separate OUT_DIR per value.
+CUDAPP_DISASM ?= om
+CUDAPP_DISASM_DEFS_om :=
+CUDAPP_DISASM_DEFS_c := -DCUDAPP_MIGRATION_PENDING_C_DISASM
+CUDAPP_DISASM_DEFS_diff := -DCUDAPP_MIGRATION_PENDING_DISASM_DIFF
+CUDAPP_DISASM_DEFS = $(CUDAPP_DISASM_DEFS_$(CUDAPP_DISASM))
+ifeq ($(filter om c diff,$(CUDAPP_DISASM)),)
+$(error CUDAPP_DISASM must be om, c or diff)
+endif
 
 # Every C file of the GPU part, the shared base (tools/extract/shared.txt), the driver client and the generated
 # binding of the seeded Omega units (om/units.sh). src/omega_fp8_slot_table.c is the slot table under
@@ -85,7 +96,7 @@ vpath %.c src $(PHYSICS_DIR)/m16 $(PHYSICS_DIR)/nvrm
 $(OUT_DIR):
 	mkdir -p $@
 $(OUT_DIR)/%.o: %.c | $(OUT_DIR)
-	$(CC) $(CFLAGS) $(CUDAPP_ENCODER_DEFS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CUDAPP_ENCODER_DEFS) $(CUDAPP_DISASM_DEFS) -c $< -o $@
 
 .PHONY: all libcudapp test clean
 all: $(OUT_DIR)/libomega_gpu.a $(OUT_DIR)/libcudapp.a

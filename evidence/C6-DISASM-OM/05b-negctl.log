@@ -1,0 +1,7 @@
+step 05b-negctl start 2026-11-07T18:41:31Z head 07a89edb1ac359a196d485357ec87b63ead9584d dirty 4
+cmd: sh -c time sh tools/sm121dis/negctl.sh build/sm121dis build/sm121dis-kernels build/sm121dis-work
+flipped-bit control: kernels 3191, parity broken in exactly word 0: 3191, of those tracking nvdisasm on the flipped word: 3190, flipped word reported unknown (??): 1, failures: 0
+VERDICT PASS: one flipped bit changes our text and breaks parity on every kernel
+1079.28user 113.44system 10:41.34elapsed 185%CPU (0avgtext+0avgdata 61480maxresident)k
+180472inputs+959984outputs (130major+59801371minor)pagefaults 0swaps
+step 05b-negctl end 2026-11-07T19:25:36Z exit 0

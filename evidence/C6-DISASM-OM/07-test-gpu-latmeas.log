@@ -1,0 +1,10 @@
+emitted kernels in /tmp/latmeas-load-EqDgqO (1408 launches when run)
+gpu_latmeas_test --self-test PASS (0 checks failed)
+refusing synthetic input (pass --allow-synthetic to render a FAKE table)
+fill_template self-test PASS
+latmeas: wrote /home/drakestapleton/.hermes/profiles/worker/cache/scratch/tmp.0LYmgC0l4l/RECEIPT.txt
+latmeas: wrote /home/drakestapleton/.hermes/profiles/worker/cache/scratch/tmp.zrm4DKMN5C/RECEIPT.txt
+latmeas: wrote /home/drakestapleton/.hermes/profiles/worker/cache/scratch/tmp.q5kC0xvghV/RECEIPT.txt
+latmeas: wrote /home/drakestapleton/.hermes/profiles/worker/cache/scratch/tmp.q5kC0xvghV/RECEIPT.txt
+receipt self-test PASS
+latmeas host self-test PASS

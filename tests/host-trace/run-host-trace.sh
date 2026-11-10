@@ -2,8 +2,9 @@
 # Host checks for the unified trace (docs/trace/UNIFIED_TRACE.md). No device is opened.
 #
 # Every check is a seeded Omega program compiled by the pinned seed compiler; this script only
-# composes units, runs them and compares exit codes and output lines. It also applies four
-# deliberate source mutations and requires each to make a check fail (negative controls).
+# composes units, runs them and compares exit codes and output lines. It also applies ten
+# deliberate source mutations (four trace, six batch) and requires each to make a check fail
+# (negative controls).
 #
 # Usage: OMEGA_COMPILER=/path/to/seed/out/omc sh tests/host-trace/run-host-trace.sh [OUTDIR]
 #        OUTDIR keeps the sample trace files (default: a temporary directory, removed on exit).

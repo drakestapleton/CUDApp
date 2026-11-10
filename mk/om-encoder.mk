@@ -179,6 +179,9 @@ test-om-encoder-guard: om/encoder/bw_enc_sm121.om om/encoder/bw_spec_sm121.om om
 	@echo "PASS guard predicates: 63 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 135 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN"
 
 # Sampling, normalization and verification live in seeded Omega; the C test only routes the tape.
+# The per-form and per-edge acceptance counts must equal the committed receipt: a sampler or encoder change that
+# moves an acceptance needs a new receipt directory (earlier receipts stay unedited).
+OM_ENC_PRIMARY_RECEIPT = evidence/encoder-primary-20261110-4
 .PHONY: test-om-encoder-primary
 test-om-encoder-primary: test-no-posix-native build/test_codegen_hosted
 	@mkdir -p $(OM_ENC_DIR)
@@ -192,7 +195,8 @@ test-om-encoder-primary: test-no-posix-native build/test_codegen_hosted
 	cmp $(OM_ENC_DIR)/primary-c.bin $(OM_ENC_DIR)/primary-native.bin
 	cmp $(OM_ENC_DIR)/primary-c.bin $(OM_ENC_DIR)/primary-hosted.bin
 	@rc=0; $(OM_ENC_DIR)/primary-parity r < $(OM_ENC_DIR)/primary-c.bin > /dev/null 2> $(OM_ENC_DIR)/primary-red.txt || rc=$$?; test $$rc = 1
-	@echo 'PASS encoder primary: 1024 samples per operand form, eight forms per opcode 0..78, C oracle = native = hosted = seeded conductor; flipped-byte control refused'
+	cmp $(OM_ENC_DIR)/primary-counts.txt $(OM_ENC_PRIMARY_RECEIPT)/parity-counts.txt
+	@echo 'PASS encoder primary: 1024 samples per operand form, eight forms per opcode 0..78, 44 refusal-edge samples per opcode 0..80, C oracle = native = hosted = seeded conductor, counts = $(OM_ENC_PRIMARY_RECEIPT); flipped-byte control refused'
 NVDISASM ?= /usr/local/cuda/bin/nvdisasm
 OM_ENC_LDG = $(OM_ENC_DIR)/ldg-offset
 # The pre-fix op-11 line (base cb3395aa) differs from the fixed line only by the dropped offset term, so
@@ -236,4 +240,3 @@ test-om-encoder-ldg-spec:
 	$(OM_ENC_DIR)/ldg-spec
 	@rc=0; $(OM_ENC_DIR)/ldg-spec red || rc=$$?; test $$rc = 1
 	@echo 'PASS LDG spec: nine signed-offset/boundary cases equal primitive encoder; omitted-field control refused'
-

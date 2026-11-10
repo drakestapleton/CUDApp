@@ -58,7 +58,7 @@ int omega_ampere_build_qmd(uint32_t q[64], uint64_t code, uint64_t cbank,
     const uint64_t a[16] = {code, cbank, semaphore, tx, ty, gx, gy, registers, shared_bytes};
     uint64_t accepted = 0;
     if (!q) return -1;
-    int rc = omega_amp_qmd(&accepted, 1, a, 16, q, 256) == 0 && accepted == 1 ? 0 : -1;
+    int rc = omega_amp_qmd(&accepted, 1, a, 16, (void *)q, 256) == 0 && accepted == 1 ? 0 : -1;
 #ifdef CUDAPP_MIGRATION_PENDING_AMP_QMD_DIFF
     uint32_t oracle[64] = {0};
     int crc = c_ampere_build_qmd(oracle, code, cbank, semaphore, tx, ty, gx, gy, registers, shared_bytes);

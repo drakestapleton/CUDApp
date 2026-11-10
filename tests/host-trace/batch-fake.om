@@ -6,6 +6,9 @@ global nvstage uint 1
 global bfstat ulong 4
 note bfstat: kicks waits sleeps last sleep. bffail is 1-based simulated failing kernel, 0 none.
 global bffail ulong 1
+note bfcache: GPU-cache flag per nvalloc call, in call order (1 cached, 2 uncached).
+global bfcache uchar 16
+global bfallocs ulong 1
 fn nvfull to bool
 ret true
 end
@@ -13,6 +16,14 @@ fn nvchan to bool
 ret true
 end
 fn nvalloc want ulong cached bool to long
+k = get bfallocs 0
+if lt k 16
+put bfcache k uchar 2
+if cached
+put bfcache k uchar 1
+end
+end
+put bfallocs 0 add k 1
 ret mapnew -1 0 want 3 34
 end
 fn nvsend m long off ulong words uint to bool

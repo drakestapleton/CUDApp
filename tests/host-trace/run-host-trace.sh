@@ -116,7 +116,7 @@ echo 'mutations: 4 of 4 compile and are detected'
 batch_units="$t/batch-fake.om $n/blackwell/vector.om $n/blackwell/launch.om"
 build batch $batch_units "$n/blackwell/batch.om" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch does not compile'
 "$work/batch" > "$out/batch.txt" || fail "batch: $(cat "$out/batch.txt")"
-grep -qx 'BATCH_HOST_PASS checks=[0-9]* parity_cases=32 parity_bytes=[0-9]* batch_launches=287 kicks=1 waits=1 negatives=7' "$out/batch.txt" || fail 'batch output'
+grep -qx 'BATCH_HOST_PASS checks=[0-9]* parity_cases=32 parity_bytes=[0-9]* batch_launches=287 kicks=1 waits=1 negatives=8' "$out/batch.txt" || fail 'batch output'
 cat "$out/batch.txt"
 mutate "$n/blackwell/batch.om" 'if gt dep idx' 'if false' "$work/bdep.src"
 killed bdep $batch_units "$work/bdep.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: dependency mutant survived'
@@ -126,7 +126,11 @@ mutate "$n/blackwell/batch.om" 'put gbst 4 i' 'put gbst 4 n' "$work/bindex.src"
 killed bindex $batch_units "$work/bindex.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: index mutant survived'
 mutate "$n/blackwell/batch.om" 'gbemit 4113' 'gbemit 0' "$work/border.src"
 killed border $batch_units "$work/border.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: cache ordering mutant survived'
-echo 'batch mutations: 4 of 4 compile and are detected'
+mutate "$n/blackwell/batch.om" 'if gt add n get gbst 2 1048476' 'if false' "$work/bbyte.src"
+killed bbyte $batch_units "$work/bbyte.src" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: byte capacity mutant survived'
+mutate "$n/blackwell/launch.om" 'm = nvalloc size ge i 5' 'm = nvalloc size true' "$work/bcache.src"
+killed bcache "$t/batch-fake.om" "$n/blackwell/vector.om" "$work/bcache.src" "$n/blackwell/batch.om" "$t/batch-device.om" "$t/batch-test.om" || fail 'batch: GPU-cache attribute mutant survived'
+echo 'batch mutations: 6 of 6 compile and are detected'
 build batchwait "$n/nvrm/context.om" "$t/batch-wait-test.om" || fail 'native batch wait does not compile'
 "$work/batchwait" > "$out/batch-wait.txt" || fail 'native batch wait failed'
 grep -qx 'BATCH_NATIVE_WAIT_PASS completion timeout refusal' "$out/batch-wait.txt" || fail 'native batch wait output'

@@ -7,7 +7,7 @@ global btdig uchar 32
 text btpass "BATCH_HOST_PASS checks="
 text btfail "BATCH_HOST_FAIL checks="
 text btpar " parity_cases=32 parity_bytes="
-text btcount " batch_launches=287 kicks=1 waits=1 negatives=7\n"
+text btcount " batch_launches=287 kicks=1 waits=1 negatives=8\n"
 global btbytes ulong 1
 fn btnum n ulong to void
 if ge n 10
@@ -63,6 +63,15 @@ end
 fn main to int
 btck gbopen 64
 btck gbbopen
+note Packet and control/code/marker mappings 0-4 GPU-uncached; data operands 5-7 cached.
+btck eq get bfallocs 0 9
+for i ulong 5
+btck eq get bfcache i 2
+end
+for i ulong 3
+btck eq get bfcache add i 5 1
+end
+btck eq get bfcache 8 2
 for i ulong 32
 btparity uint add i 1
 end
@@ -139,6 +148,24 @@ else
 btck not ok
 end
 end
+btck not gbbsubmit 1000000
+btck eq get bfstat 0 0
+note Negative 8: after the reserve is consumed exactly, a further 4-byte body is refused (-75),
+note not accepted through an unsigned wrap and later trapped by the mapping bounds check.
+btreset
+put nverr 0 0
+btck gbbegin 18
+for i ulong 15
+put gbused 0 65536
+btck gbappend i 0
+end
+put gbused 0 64956
+btck gbappend 15 0
+btck eq get gbst 2 1048508
+put gbused 0 4
+btck not gbappend 16 0
+btck eq get nverr 0 -75
+btck eq get gbst 4 16
 btck not gbbsubmit 1000000
 btck eq get bfstat 0 0
 note Existing per-launch entry still does one send and one wait with unchanged completion checks.

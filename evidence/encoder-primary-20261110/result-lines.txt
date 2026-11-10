@@ -1,0 +1,54 @@
+red check 1 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 x/' exits 1 with 122 failures, as it must
+red check 2 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 or sub x and x 61440 shl ulong 7 12/' exits 1 with 130 failures, as it must
+red check 3 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 or sub x and x 61440 shl and pred o 7 12/' exits 1 with 66 failures, as it must
+red check 4 (enc): 's/^if isuld op$/if eq op 99/' exits 1 with 4 failures, as it must
+red check 5 (spec): 's/^put w 0 or sub gx and gx 61440 shl sp_val R_PRED 0 o 12$/put w 0 gx/' exits 1 with 106 failures, as it must
+red check 6 (spec): 's/^if or eq get o 0 6 eq get o 0 7$/if eq get o 0 99/' exits 1 with 4 failures, as it must
+red check: oracle text without the @!UP0 lines exits 4, as it must
+PASS guard predicates: 63 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 135 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN
+red check 1: 's/^put4 w wda o 31105 or rb o 5 shl and imm 16777215 8 203299072 ctl o 991744$/put4 w wda o 31105 rb o 5 203299072 ctl o 991744/' exits 11, as it must
+red check 2: 's/^ret or lt imm 8388608 ge imm 4286578688$/ret or lt imm 8388609 ge imm 4286578687/' exits 20, as it must
+red check: oracle text without the -0x800000 line exits 4, as it must
+PASS LDG.E offset: 5 exact words, 4 refusals, nvdisasm 13.0.85 decodes all 5. GB10 DEVICE NOT_RUN
+[spec-encoder] PASS: native unit test compiled (52356 bytes) and passed all internal assertions (exit 0)
+[spec-encoder] PASS: (a) spec-driven encoder matches bw_enc_sm121.om on all 461 boundary cases byte-for-byte!
+[spec-encoder] PASS: (b) decode(encode(x)) == x passed on all 461 corpus instructions!
+[spec-encoder] PASS: (c) sm121dis reads every sample instruction back with its exact operands
+[spec-encoder] PASS: mutant spec with shifted field offset fails byte identity (mutant=0x57202 vs ref=0x57201)
+[spec-encoder] PASS: out-of-range register 256 refused with declared error E_RANGE (code 2)
+[spec-encoder] PASS: invalid word pattern refused with declared error E_NOMAT (code 3)
+[spec-encoder] PASS: corrupted expected byte fails byte-identity comparison (exit 1)
+[spec-encoder] PASS: audit raw ranges, absent RZ parity, cold decode, active-operand mutant, read error and truncated records
+PASS: generated function binding, private state, semantic mutant=1, raw refusal=2
+[spec-encoder] ALL SPEC-DRIVEN ENCODER/DECODER VERIFICATIONS PASSED (HOST_TESTED)!
+PASS: hosted golden-word fixtures through the .om encoder (0 failing checks)
+PASS: hosted golden-word fixtures through the .om encoder (0 failing checks)
+encoder diff: .om and C byte-identical on 145 golden instructions and 14 fixture programs
+red check: one flipped bit aborts the encoder diff, as it must
+PASS: freestanding codegen contract (14 fixtures, 0 failing checks)
+PASS freestanding core references native seeded encoder/allocator/builders; C encoder and allocator symbols absent
+PASS bare ELF: no imports/interpreter/TLS; hosted bytes identical; red exits 90
+PASS killed source mutant nop-word rc 2
+PASS killed source mutant nop-control rc 2
+PASS killed source mutant pad-floor rc 1
+PASS killed source mutant byte-size rc 1
+PASS killed source mutant nan-quiet rc 7
+PASS killed source mutant rne-tie rc 7
+PASS NO_POSIX native differential, red control and six killed mutants
+PASS NO_POSIX cubin production shell: C differential and injected-byte red control
+PASS C_NO_POSIX encoder oracle dump equals native dump; gcov recorded
+PASS encoder primary: 1024 samples per operand form, eight forms per opcode 0..78, C oracle = native = hosted = seeded conductor; flipped-byte control refused
+mutant 1 red ('s/^ret or base shl rb o 1 16$/ret or base shl rb o 1 17/'): golden words FAIL, dump vs native Omega DIFFERS
+mutant 2 red ('s/^p = 262144$/p = 0/'): golden words FAIL, dump vs native Omega DIFFERS
+mutant 3 red ('s/^const NOPC ulong 1032192$/const NOPC ulong 1032193/'): golden words FAIL, dump vs native Omega DIFFERS
+PASS NO_POSIX checked native sources regenerate byte for byte (both ISAs)
+PASS portable Omega units regenerate byte for byte
+PASS exact-liveness flag-zero flag-invalid shortened past-end v159 v160
+PASS scalar register and matmul policies cases=10000 including uint32 wrap boundaries
+PASS regalloc differential cases=181614 refused=179193 encoded=2421 record-flip=caught
+PASS signed GE host-reference cases=98 register and immediate
+PASS existing encoder golden fixtures and vecadd SHA-256
+PASS matmul warp-sim cases=15 CPU oracle bit-identical
+PASS hazard decode differential cases=431079 refused=135482
+PASS hazard check differential cases=40495 refused=16278 findings=107648 capped=1 fixtures=485 c_s=0.967 omega_s=45.829
+PASS bind differential cases=50686 refused=38401

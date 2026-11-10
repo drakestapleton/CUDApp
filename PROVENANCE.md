@@ -97,6 +97,10 @@ The C1b guard gate (`make test-om-encoder-guard`) uses nvdisasm 13.0.85
 `-b SM121 -hex` only on bytes emitted by our seeded encoder and its own
 uniform-predicate probe words. Listings stay in ignored `build/om-encoder/`.
 No new instruction form is introduced by this guard correction.
+`make test-om-encoder-ldg` uses the same pinned oracle only on our emitted
+LDG.E words. It checks the existing C #373 signed byte-offset field, restored
+in the seeded encoder and its spec table after operand parity exposed the
+omitted field. The listing remains ignored; no new instruction form is added.
 
 ## 7. Open questions for a lawyer
 

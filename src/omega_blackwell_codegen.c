@@ -7,12 +7,40 @@
 #include <string.h>
 #include "cudapp_native.h"
 #include "omega_bw_bind.h"
-/* The seeded allocator and matmul builders run through portable generated C (om/units.sh), which still uses
- * hosted trap handling; the freestanding build keeps the migration-pending C, as the encoder does below. */
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC)
+/* Freestanding uses seeded caller-stack native units; C switches are default-OFF oracles. */
+#ifdef OMEGA_GPU_NO_POSIX
+#include "omega_native.h"
+#define omega_ra_ir omega2_ra_ir
+#define omega_ra_run omega2_ra_run
+#define omega_cg_par omega2_cg_par
+#define omega_cg_matmul omega2_cg_matmul
+#define omega_cg_pklen omega2_cg_pklen
+#define omega_cg_pkh omega2_cg_pkh
+#define omega_sentin(r, q, nq, c, nc) omega2_sentin(r, q, nq, (void *)(c), nc)
+#ifndef CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL
+/* Replay takes void views; native entries take typed views. These only route pointers. */
+#define BW_NATIVE_REPLAY(name) \
+static uint32_t bw_native_##name(uint64_t *r, uint64_t k, uint64_t a, uint64_t b, uint64_t c, \
+                                void *i, uint64_t ni, void *m, uint64_t nm) { \
+    return omega2_##name(r, k, a, b, c, i, ni, m, nm); \
+}
+BW_NATIVE_REPLAY(cg_i32)
+BW_NATIVE_REPLAY(cg_tens)
+BW_NATIVE_REPLAY(cg_loop)
+BW_NATIVE_REPLAY(cg_frag)
+BW_NATIVE_REPLAY(cg_block)
+#undef BW_NATIVE_REPLAY
+#define omega_cg_i32 bw_native_cg_i32
+#define omega_cg_tens bw_native_cg_tens
+#define omega_cg_loop bw_native_cg_loop
+#define omega_cg_frag bw_native_cg_frag
+#define omega_cg_block bw_native_cg_block
+#endif
+#endif
+#if defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC)
 #define BW_RA_C_PRIMARY 1
 #endif
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL)
+#if defined(CUDAPP_MIGRATION_PENDING_C_CODEGEN_MATMUL)
 #define BW_MATMUL_C_PRIMARY 1
 #endif
 #include "omega_gpu_om_ir.h"
@@ -2729,7 +2757,7 @@ uint32_t omega_matmul_frag_unroll(uint32_t kp) {
 }
 #endif
 
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_PACK)
+#if defined(CUDAPP_MIGRATION_PENDING_C_PACK)
 #define BW_PACK_C_PRIMARY 1
 #endif
 #ifndef BW_PACK_C_PRIMARY

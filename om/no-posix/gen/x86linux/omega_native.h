@@ -15,7 +15,7 @@ extern "C" {
 #define OMEGA_REENTRY 33u
 #define OMEGA_BAD_RT 34u
 #define OMEGA_NO_STACK 35u
-#define OMEGA2_IDENT_bw_enc_sm121 "omega-ident 1 unit=bw_enc_sm121 abi=2 profile=OM-2 src=3dc06b1c694f5d202a36585a620f61f1a7b3d6aaafda9dcad3cc942501006f02 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+#define OMEGA2_IDENT_bw_enc_sm121 "omega-ident 1 unit=bw_enc_sm121 abi=2 profile=OM-2 src=db9af32001a11d707781aca3bb78e3a044ba277b6f794bf1433d2adc6b088952 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
 const char *omega2_ident_bw_enc_sm121(void);
 /* fn bw_enc_sm121 ins view ulong 8192 phys view ulong 288 n ulong pad ulong code edit uchar 16384 to ulong */
 uint32_t omega2_bw_enc_sm121(uint64_t *result, const uint64_t *o_ins, uint64_t o_ins_len, const uint64_t *o_phys, uint64_t o_phys_len, uint64_t o_n, uint64_t o_pad, uint8_t *o_code, uint64_t o_code_len);
@@ -51,6 +51,70 @@ uint32_t omega2_streams_words(uint64_t *result, uint64_t o_op, const uint64_t *o
 const char *omega2_ident_no_avbf(void);
 /* fn no_avbf md ulong raw ulong to ulong */
 uint32_t omega2_no_avbf(uint64_t *result, uint64_t o_md, uint64_t o_raw);
+#define OMEGA2_IDENT_regalloc "omega-ident 1 unit=regalloc abi=2 profile=OM-2 src=ddc8a56c4c0ad88a2c38bdcdfbbb403c084b3f5df03e809d6fcfcff296e00d58 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_regalloc(void);
+/* fn ra_run m edit ulong 4096 to long */
+uint32_t omega2_ra_run(uint64_t *result, uint64_t *o_m, uint64_t o_m_len);
+#define OMEGA2_IDENT_regalloc_ir "omega-ident 1 unit=regalloc_ir abi=2 profile=OM-2 src=1ac4cde69b7e0241f68344b9e9f56ef2244c25633bd35844d3561ac921cb945d omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_regalloc_ir(void);
+/* fn ra_ir kind ulong a long b long to long */
+uint32_t omega2_ra_ir(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b);
+#define OMEGA2_IDENT_regalloc_live "omega-ident 1 unit=regalloc_live abi=2 profile=OM-2 src=b7740555acf94c0417179741408f00d8108396888039b89c37c02b94592c6131 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_regalloc_live(void);
+/* fn ra_live kind ulong a ulong b long c long d ulong e ulong to long */
+uint32_t omega2_ra_live(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_d, uint64_t o_e);
+#define OMEGA2_IDENT_cg_matmul "omega-ident 1 unit=cg_matmul abi=2 profile=OM-2 src=2a3079252e2920c31ca76f56797243feb4053fba7732a20e4e13ddc654f2e9b7 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul(void);
+/* fn cg_matmul kind ulong a ulong b ulong c ulong to ulong */
+uint32_t omega2_cg_matmul(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c);
+#define OMEGA2_IDENT_cg_matmul_params "omega-ident 1 unit=cg_matmul_params abi=2 profile=OM-2 src=661c3df61825310b483bd9336d64e9cdb87b363007c64f068d5086849b8e5965 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul_params(void);
+/* fn cg_par grid ulong u ulong r ulong c ulong mutant long to ulong */
+uint32_t omega2_cg_par(uint64_t *result, uint64_t o_grid, uint64_t o_u, uint64_t o_r, uint64_t o_c, uint64_t o_mutant);
+#define OMEGA2_IDENT_cg_matmul_i32 "omega-ident 1 unit=cg_matmul_i32 abi=2 profile=OM-2 src=0a6f0eda161d4cb2264813a0ae86a766c5826a1e17a80243dc963efcada75146 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul_i32(void);
+/* fn cg_i32 kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint32_t omega2_cg_i32(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t *o_i, uint64_t o_i_len, uint64_t *o_m, uint64_t o_m_len);
+#define OMEGA2_IDENT_cg_matmul_tensor "omega-ident 1 unit=cg_matmul_tensor abi=2 profile=OM-2 src=a864b4c4f4226f02a6c7c038b16aaf04cd20e7e994a7d4c39f7c707476782ae1 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul_tensor(void);
+/* fn cg_tens kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint32_t omega2_cg_tens(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t *o_i, uint64_t o_i_len, uint64_t *o_m, uint64_t o_m_len);
+#define OMEGA2_IDENT_cg_matmul_loop "omega-ident 1 unit=cg_matmul_loop abi=2 profile=OM-2 src=3485ba6ad107ceaaf63a17c587da7d7306f331827d488cc1d2e9370d4d17e6b5 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul_loop(void);
+/* fn cg_loop kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint32_t omega2_cg_loop(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t *o_i, uint64_t o_i_len, uint64_t *o_m, uint64_t o_m_len);
+#define OMEGA2_IDENT_cg_matmul_frag "omega-ident 1 unit=cg_matmul_frag abi=2 profile=OM-2 src=5cdb3fec7920c796dac4c73ca93716c456059e2cc405e73098163fd1ac6733f0 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul_frag(void);
+/* fn cg_frag kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint32_t omega2_cg_frag(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t *o_i, uint64_t o_i_len, uint64_t *o_m, uint64_t o_m_len);
+#define OMEGA2_IDENT_cg_matmul_block "omega-ident 1 unit=cg_matmul_block abi=2 profile=OM-2 src=ab817e1e3b0419679c948ce16f727419aad514131fabf7526440034af69d7574 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_matmul_block(void);
+/* fn cg_block kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint32_t omega2_cg_block(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t *o_i, uint64_t o_i_len, uint64_t *o_m, uint64_t o_m_len);
+#define OMEGA2_IDENT_cg_vecadd "omega-ident 1 unit=cg_vecadd abi=2 profile=OM-2 src=9a08dcdb025797282919ce8de24e92783c696b11ec34e5a9b4f0b460f0be52ed omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_vecadd(void);
+/* fn cg_vec d edit uchar 512 to long */
+uint32_t omega2_cg_vec(uint64_t *result, uint8_t *o_d, uint64_t o_d_len);
+#define OMEGA2_IDENT_cg_bind "omega-ident 1 unit=cg_bind abi=2 profile=OM-2 src=834bb0f0f5be78b9b21ffc123f9f0c5e068f767452cec4653954c84b9e905132 omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_bind(void);
+/* fn cg_bind kind ulong a ulong b ulong w edit uchar 256 to long */
+uint32_t omega2_cg_bind(uint64_t *result, uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint8_t *o_w, uint64_t o_w_len);
+#define OMEGA2_IDENT_cg_pack_len "omega-ident 1 unit=cg_pack_len abi=2 profile=OM-2 src=2ecfd0cc9309e08cc93bedd176c9903aa860a9a0e4ccf3dec874cb66d7ccd7ec omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_pack_len(void);
+/* fn cg_pklen p edit ulong 12 to long */
+uint32_t omega2_cg_pklen(uint64_t *result, uint64_t *o_p, uint64_t o_p_len);
+#define OMEGA2_IDENT_cg_pack_h "omega-ident 1 unit=cg_pack_h abi=2 profile=OM-2 src=056df72e8d8400449b8eb3904075b752165883c2a3695aee03f583e0715b333c omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_pack_h(void);
+/* fn cg_pkh p view ulong 12 s view uchar * d edit ushort * to long */
+uint32_t omega2_cg_pkh(uint64_t *result, const uint64_t *o_p, uint64_t o_p_len, const uint8_t *o_s, uint64_t o_s_len, uint16_t *o_d, uint64_t o_d_len);
+#define OMEGA2_IDENT_cg_sentin "omega-ident 1 unit=cg_sentin abi=2 profile=OM-2 src=9061ec992289c9ac188caa7a06a12fd3c1d80996cb098d022329500ad07454af omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_cg_sentin(void);
+/* fn sentin q view ulong 5 c edit uint * to ulong */
+uint32_t omega2_sentin(uint64_t *result, const uint64_t *o_q, uint64_t o_q_len, uint32_t *o_c, uint64_t o_c_len);
+#define OMEGA2_IDENT_bw_identity "omega-ident 1 unit=bw_identity abi=2 profile=OM-2 src=a051f55c6ffb24fc2c42d6181b1ca12db07611bd40939231bd5f5193c83a63ba omc=be8c51301307555254fc59e351d281aae1aa096d91521777e33a41c8b446448a"
+const char *omega2_ident_bw_identity(void);
+/* fn bw_id_native data view uchar 256 n ulong dst edit uchar 32 to long */
+uint32_t omega2_bw_id_native(uint64_t *result, const uint8_t *o_data, uint64_t o_data_len, uint64_t o_n, uint8_t *o_dst, uint64_t o_dst_len);
 #ifdef __cplusplus
 }
 #endif

@@ -44,8 +44,12 @@ static const BlackwellInstruction VECADD_INSTRUCTIONS[OMEGA_BW_VECADD_INSN_COUNT
     /* 01f0 */ { { 0x00007918, 0x00000000, 0x00000000, 0x000fc000 }, "NOP" },
 };
 
-/* Freestanding keeps the C writer: the portable binding of om/codegen/cg_vecadd.om uses hosted trap handling. */
-#if defined(OMEGA_GPU_NO_POSIX) || defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC)
+/* Both builds call cg_vecadd.om; C serialization is an explicit default-OFF oracle. */
+#ifdef OMEGA_GPU_NO_POSIX
+#include "omega_native.h"
+#define omega_cg_vec omega2_cg_vec
+#endif
+#if defined(CUDAPP_MIGRATION_PENDING_C_REGALLOC)
 int omega_blackwell_encode_vecadd(uint8_t *code_buf, size_t max_len, size_t *out_len) {
     if (!code_buf || max_len < OMEGA_BW_VECADD_CODE_SIZE) return -1;
 

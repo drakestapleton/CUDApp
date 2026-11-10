@@ -89,3 +89,20 @@ results, exact environment, negative controls and chip runbook.
 
 Protected regions (`frag_pack_*`, `result_sentinels`, session command lists,
 and #327's codegen-base migration) were not edited. No runtime API changes.
+
+## Encoder/core codegen completion on ham/encoder-om-primary
+
+The preceding inventory is historical at its named anchor. The core codegen
+NO_POSIX exceptions for allocator, five matmul IR builders, scalar matmul
+policies, fragment packing, result sentinels, vecadd and binding decisions now
+use their existing seeded units through native caller-stack bindings. The
+encoder itself already used that route at integration base `cb3395aa`.
+Explicit C switches still provide independent differential oracles; there is
+no C retry after an Omega refusal. No instruction forms or allocation rules
+were added. C1b refuses P0 guards on the uniform LDCU and LDCU.64 forms in both
+the seeded encoder and C oracle.
+
+`make test-om-encoder-primary` exercises the production freestanding encoder
+on 1024 samples per operand form (eight forms for every opcode 0..78). Accepted/refused counts are
+written to `build/om-encoder/primary-counts.txt`; a flipped response byte must
+be rejected. Run with the same pinned `OMEGA_OMC` and `OMEGA_BRIDGE` as above.

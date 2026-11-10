@@ -6,6 +6,10 @@
 
 #include "cudapp_native.h"
 #include "omega_bw_fields.h"
+#ifdef OMEGA_GPU_NO_POSIX
+#include "omega_native.h"
+#define omega_ra_live omega2_ra_live
+#endif
 
 #define NONE64 UINT64_MAX
 

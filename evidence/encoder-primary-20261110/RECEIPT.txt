@@ -1,0 +1,21 @@
+IMPLEMENTED / EXERCISED host only. Original integration base cb3395aad13d7cafea2cfaaf97a30a116da2293a.
+Reconciliation: bw_enc_sm121 was already native-primary on that base. Remaining NO_POSIX C computation was allocator/policies, five core matmul builders, vecadd, fragment packers/sentinels and binding decisions. These now use existing seeded native units. The two C files retain ABI/memory routing and fixtures; C computation is available only through explicit default-OFF oracle switches.
+
+Native registry: original nine roots plus regalloc,regalloc_ir,regalloc_live,cg_matmul,cg_matmul_params,cg_matmul_i32,cg_matmul_tensor,cg_matmul_loop,cg_matmul_frag,cg_matmul_block,cg_vecadd,cg_bind,cg_pack_len,cg_pack_h,cg_sentin,bw_identity. The last root composes canonical digest/identity and bw_id_native. Public sentinel storage is uint bits for the native integer ABI; private f32 equality remains unchanged. No scheduling/allocation decision or new instruction form introduced.
+Shared prerequisite331dba84fe3446d17c0d3ad983558ac51f6bf097 was cherry-picked as61f49e94d8634e075ea3726051dbe1923a789a5d, with generated source identities resolved by pinned regeneration. The separate LDG public-source correction is b4dc766320d92e46dcbda349c10ea87a6998a05f and is integrated before final READY.
+
+Pinned omc SHA256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f.
+Commands ran under pool-19 lock, taskset -c19 nice -n10, device-free bwrap:
+sh om/units.sh; sh om/units.sh --check: exit0, both native ISA artifacts regenerate byte-identically.
+make -j1 test-om-encoder-guard test-om-encoder-ldg test-om-spec-encoder test-om-encoder test-codegen-freestanding test-om-encoder-primary test-om-encoder-mutants test-regalloc-om: exit0.
+python3 tests/regalloc_om/mutants.py: exit0,20 semantic mutants KILLED; hazard-branch-sign is explicitly EQUIVALENT and not credited as killed.
+sh tests/regalloc_om/packers.sh; python3 tests/regalloc_om/packers_mutants.py: exit0, five fragment packers/result sentinels bitwise differential, short-view/row0 ASan regression, six recompiled semantic mutants KILLED.
+make test-om-encoder-ldg-spec: exit0, nine primitive/spec signed-offset cases; omitted-field control exits1.
+
+Parity: every opcode0..78, eight operand-mode partitions,1024 deterministic register/control/predicate samples per partition. Form bits select uniform source, absent src2, absent src3; samples also vary absent dst/src1/ureg. C oracle, hosted portable Omega, native Omega and independently compiled seeded conductor agree. Full per-form accepted/refused counts are the632 rows in parity-counts.txt. The byte-tape size was82837504. These are sampled host bytes, not hardware results.
+
+Controls: flipped response byte refused. C1b guard gate has135 oracle guard rows,180 primitive/spec forms, six killed semantic mutants and missing-oracle-line refusal. Explicit pre-C1b C oracle is refused at opcode6/sample1 (guard-c-negative.txt). Baseline cb3395aa freestanding object contains omega_bw_regalloc_c_oracle and no omega2_ra_run import, and is refused by the native-symbol condition. Default new object imports omega2_ra_run/cg_i32/cg_block/bw_enc_sm121 and contains neither C encoder nor C allocator symbol. Native bare suite killed nop-word,nop-control,pad-floor,byte-size,nan-quiet,rne-tie. Existing encoder backend mutants3/3 killed. Regalloc20 and packer6 rows are retained separately.
+
+C ORACLE-only: register allocation/interval/GPR rules; five core matmul IR emitters and shape/unroll policies; vecadd byte writer; fragment packers/result sentinels; C binding/padding/fit paths. The instruction C encoder was already default-OFF on the base and remains an explicit oracle with its C1b refusal corrected. Foreign-language migration debt: existing C ABI adapters,21-line test byte router, Make registration and existing no-posix registry script; no new host-language script.
+
+QUALIFIED / MERGED / DEPLOYED and chip/inference-speed measurements: NOT_RUN. Shared glue also touched by ham/cubin-qmd-om; second lander rebases and regenerates the no-posix sources. No push, default-branch merge or deployment performed.

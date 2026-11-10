@@ -18,4 +18,18 @@ static inline int64_t omega_bw_bind(uint64_t kind, uint64_t a, uint64_t b, uint8
     return (int64_t)r;
 }
 #endif
+/* ham/cubin-qmd-om: checked caller-stack QMD/realization root, no hosted trap runtime. */
+#if defined(OMEGA_GPU_NO_POSIX) && !defined(CUDAPP_MIGRATION_PENDING_C_BIND)
+#undef BW_BIND_C_PRIMARY
+#include "omega_native.h"
+static inline int64_t omega_bw_bind(uint64_t kind, uint64_t a, uint64_t b, uint8_t w[256]) {
+    uint64_t r = UINT64_MAX;
+    if (omega2_cg_bind(&r, kind, a, b, w, 256) != 0) return -1;
+    return (int64_t)r;
+}
+static inline int omega_bw_id(const uint8_t data[256], uint64_t n, uint8_t out[32]) {
+    uint64_t r = UINT64_MAX;
+    return omega2_bw_id_native(&r, data, 256, n, out, 32) == 0 && r == 0 ? 0 : -1;
+}
+#endif
 #endif

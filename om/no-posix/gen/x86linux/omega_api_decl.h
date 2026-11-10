@@ -31,6 +31,38 @@ uint64_t book(uint64_t o_op, const uint64_t o_a[16], uint64_t o_o[4]);
 uint64_t streams_words(uint64_t o_op, const uint64_t o_a[16], uint64_t o_o[32]);
 /* fn no_avbf md ulong raw ulong to ulong */
 uint64_t no_avbf(uint64_t o_md, uint64_t o_raw);
+/* fn ra_run m edit ulong 4096 to long */
+int64_t ra_run(uint64_t o_m[4096]);
+/* fn ra_ir kind ulong a long b long to long */
+int64_t ra_ir(uint64_t o_kind, int64_t o_a, int64_t o_b);
+/* fn ra_live kind ulong a ulong b long c long d ulong e ulong to long */
+int64_t ra_live(uint64_t o_kind, uint64_t o_a, int64_t o_b, int64_t o_c, uint64_t o_d, uint64_t o_e);
+/* fn cg_matmul kind ulong a ulong b ulong c ulong to ulong */
+uint64_t cg_matmul(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c);
+/* fn cg_par grid ulong u ulong r ulong c ulong mutant long to ulong */
+uint64_t cg_par(uint64_t o_grid, uint64_t o_u, uint64_t o_r, uint64_t o_c, int64_t o_mutant);
+/* fn cg_i32 kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_i32(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512]);
+/* fn cg_tens kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_tens(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512]);
+/* fn cg_loop kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_loop(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512]);
+/* fn cg_frag kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_frag(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512]);
+/* fn cg_block kind ulong a ulong b ulong c ulong i edit ulong 8192 m edit ulong 512 to ulong */
+uint64_t cg_block(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint64_t o_c, uint64_t o_i[8192], uint64_t o_m[512]);
+/* fn cg_vec d edit uchar 512 to long */
+int64_t cg_vec(uint8_t o_d[512]);
+/* fn cg_bind kind ulong a ulong b ulong w edit uchar 256 to long */
+int64_t cg_bind(uint64_t o_kind, uint64_t o_a, uint64_t o_b, uint8_t o_w[256]);
+/* fn cg_pklen p edit ulong 12 to long */
+int64_t cg_pklen(uint64_t o_p[12]);
+/* fn cg_pkh p view ulong 12 s view uchar * d edit ushort * to long */
+int64_t cg_pkh(const uint64_t o_p[12], const uint8_t *o_s, size_t o_s_len, uint16_t *o_d, size_t o_d_len);
+/* fn sentin q view ulong 5 c edit uint * to ulong */
+uint64_t sentin(const uint64_t o_q[5], uint32_t *o_c, size_t o_c_len);
+/* fn bw_id_native data view uchar 256 n ulong dst edit uchar 32 to long */
+int64_t bw_id_native(const uint8_t o_data[256], uint64_t o_n, uint8_t o_dst[32]);
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,2 @@
+omc: line 8: error 16
+exit 16

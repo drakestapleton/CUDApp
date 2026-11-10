@@ -1,0 +1,7 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+STEP claim generation=1
+STEP prepare arg=1000
+STEP submit elapsed_ns=5824
+STEP complete result=332833500
+STEP quiesce cpu=19 elapsed_ns=5824 budget_ns=2000000000
+REFUSE state_write_failed state=/tmp/cudapp-hw-20261107T0606Z/neg-persist-failed-write.state

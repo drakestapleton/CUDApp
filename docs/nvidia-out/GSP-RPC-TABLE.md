@@ -31,7 +31,7 @@ One new piece of evidence bears on this:
 
 ## 1. Boot sequence (GB20B primary; GB10B differences marked)
 
-**Signed boot chain: load unmodified only (SBC).** Marks a step where NVIDIA-signed code goes to the chip or runs on it. Our driver may only copy those bytes unmodified and point the chip at them.
+**Signed boot chain: load unmodified only (SBC).** Marks a step where NVIDIA-signed code goes to the chip or runs on it. My driver may only copy those bytes unmodified and point the chip at them.
 
 **FWSEC / VBIOS ucode step:**
 - **GB20B: yes, chip-side.** The driver does not load FWSEC. It waits for it:
@@ -94,7 +94,7 @@ Shared HAL bindings for GB10B and GB20B (MEASURED, `g_kernel_gsp_nvoc.c`):
 | Queues | 1 queue, RM task index 0 | — | `N/inc/kernel/gpu/gsp/message_queue.h:31-32` |
 | Oversize | the function is split across `CONTINUATION_RECORD` (71) elements | — | enum `rpc_global_enums.h:81` |
 
-### 2.2 Functions and events our driver needs
+### 2.2 Functions and events my driver needs
 
 Enum file: `N/inc/kernel/vgpu/rpc_global_enums.h`. Structs: `N/generated/g_rpc-structures.h` (shown as `S:`). Senders: `N/src/kernel/vgpu/rpc.c` (shown as `R:`).
 
@@ -115,7 +115,7 @@ Upstream reference: nova-core `drivers/gpu/nova-core/gsp/fw/r570_144/bindings.rs
 | CPU→GSP | FREE | 10 (`:20`) | `rpc_free_v03_00` {NVOS00_PARAMETERS_v03_00} (`S:160`) | `rpcRmApiFree_GSP` `R:11311` (header `R:11333`) | runtime | `:70` |
 | CPU→GSP | DUP_OBJECT | 21 (`:31`) | `rpc_dup_object_v03_00` (struct line NOT_VERIFIED) | `rpcRmApiDupObject_GSP` `R:11259` (header `R:11285`) | runtime (UVM dup paths, §3) | `:81` |
 | CPU→GSP | UNLOADING_GUEST_DRIVER | 47 (`:57`) | `rpc_unloading_guest_driver_v1F_07` (`S:378`) | `R:9166`; called `kernel_gsp.c:4339` | teardown | `:107` |
-| CPU→GSP | ALLOC_MEMORY | 4 (`:14`) | `rpc_alloc_memory_v13_01` (`S:79`) | `R:3458` (header `R:3470`). Under the GSP client only via `memRegisterWithGsp` (`N/src/kernel/mem_mgr/mem.c:515`, macro `inc/kernel/vgpu/rpc.h:113-150`), reached from `memdescSendMemDescToGSP` (`gpu/mem_mgr/mem_desc.c:4786,4865`). No serving-path caller found | runtime, **not on our path** | `:64` |
+| CPU→GSP | ALLOC_MEMORY | 4 (`:14`) | `rpc_alloc_memory_v13_01` (`S:79`) | `R:3458` (header `R:3470`). Under the GSP client only via `memRegisterWithGsp` (`N/src/kernel/mem_mgr/mem.c:515`, macro `inc/kernel/vgpu/rpc.h:113-150`), reached from `memdescSendMemDescToGSP` (`gpu/mem_mgr/mem_desc.c:4786,4865`). No serving-path caller found | runtime, **not on my path** | `:64` |
 | CPU→GSP | UPDATE_BAR_PDE | 70 (`:80`) | `rpc_update_bar_pde_v15_00` (`S:447`) | `R:9701`; called `gpu/bus/kern_bus.c:880`. Whether it fires on an iGPU with no BAR2 FB: NOT_VERIFIED | boot | `:130` |
 | GSP→CPU | GSP_INIT_DONE | 0x1001 (`:253`) | header only; rpc_result checked | `_kgspRpcRecvPoll` `kernel_gsp.c:1648,2338,2362-2367` | boot | `:292` (4097) |
 | GSP→CPU | GSP_RUN_CPU_SEQUENCER | 0x1002 (`:254`) | `rpc_run_cpu_sequencer_v17_00` {bufferSizeDWord, cmdIndex, regSaveArea[8], commandBuffer[]} (`S:1535`) | `_kgspRpcRunCpuSequencer` `kernel_gsp.c:1520` → `:5297` | boot, suspend/resume | `:293`; struct `:979` |
@@ -127,7 +127,7 @@ Upstream reference: nova-core `drivers/gpu/nova-core/gsp/fw/r570_144/bindings.rs
 | GSP→CPU | GSP_LOCKDOWN_NOTICE | 0x101c (`:280`) | `rpc_gsp_lockdown_notice_v17_00` (`S:1817`) | boot-safe list | boot | `:319` |
 | GSP→CPU | GSP_POST_NOCAT_RECORD | 0x1020 (`:284`) | `rpc_gsp_post_nocat_record_v01_00` (`S:1783`) | boot-safe list | any | `:323` |
 
-**Count: 20 rows.** That is 11 CPU→GSP functions (9 needed on our path; ALLOC_MEMORY is not on the path; UPDATE_BAR_PDE is NOT_VERIFIED), 1 bidirectional CONTINUATION_RECORD, and 8 GSP→CPU events. `RECOVERY_ACTION` 0x1022 (`:286`) exists but is not wired here: NOT_VERIFIED.
+**Count: 20 rows.** That is 11 CPU→GSP functions (9 needed on my path; ALLOC_MEMORY is not on the path; UPDATE_BAR_PDE is NOT_VERIFIED), 1 bidirectional CONTINUATION_RECORD, and 8 GSP→CPU events. `RECOVERY_ACTION` 0x1022 (`:286`) exists but is not wired here: NOT_VERIFIED.
 
 ### 2.3 Functions that the GSP client does NOT send (vGPU-guest only). Do not implement.
 
@@ -158,7 +158,7 @@ So these dedicated function numbers never appear on the GSP-client wire: [INFERE
 
 Legend:
 - **(a)** = becomes this GSP RPC.
-- **(b)** = CPU-side work our driver must do itself.
+- **(b)** = CPU-side work my driver must do itself.
 - Both = both.
 
 All RM-control routing claims rest on the export table flags word lacking `RMCTRL_FLAGS_ROUTE_TO_PHYSICAL` = 0x40 (`N/inc/kernel/rmapi/control.h:233`). Such a control is implemented in kernel RM. Kernel RM may then issue its own RPC.
@@ -197,7 +197,7 @@ All RM-control routing claims rest on the export table flags word lacking `RMCTR
 | 30 | UVM_UNREGISTER_{GPU,GPU_VASPACE,CHANNEL} | Both. (a) `UnsetPageDirectory` / FREE. (b) teardown | `U/uvm_gpu.c:3824,3842`; `U/uvm_user_channel.c:914`; `U/uvm_va_space.c:1431` |
 | 31 | Interrupts | **(b)**: MSI-X through VFIO eventfds (8 vectors, lead's measurement). Service the GSP message-queue interrupt plus the replayable-fault top half; RM-owned interrupts are drained through `nvUvmInterfaceServiceDeviceInterruptsRM` | `U/uvm_gpu_isr.c:218,282,598`; `U/uvm_gpu.c:1342` |
 
-**CPU-side (b) list for our driver:**
+**CPU-side (b) list for my driver:**
 1. VFIO_IOMMU_MAP_DMA for every sysmem object (#7).
 2. GMMU page tables for the RM VA space and the UVM page tree (#8, #22, #25, #28).
 3. TLB invalidates (#22, #28).
@@ -216,7 +216,7 @@ All RM-control routing claims rest on the export table flags word lacking `RMCTR
 
 1. nova-core chip list (`https://raw.githubusercontent.com/torvalds/linux/master/drivers/gpu/nova-core/gpu.rs`, fetched 2026-10-26, master branch with no commit pin, sha256 `374867636b5480b507114e29a467e9c77c64e02d47bde2d8c0ed495507f2edb6`).
    - Blackwell entries: GB100 and GB102 (`:138-140`), and GB202/203/205/206/207 (`:141-146`). They map to `BlackwellGB10x` / `BlackwellGB20x` (`:163-165`).
-   - **No GB10B and no GB20B.** Upstream nova lacks our chip (MEASURED on the fetched file).
+   - **No GB10B and no GB20B.** Upstream nova lacks my chip (MEASURED on the fetched file).
 2. nova-core r570 bindings (§2.2). They confirm the RPC numbers and the 48-byte element header for r570 only, not for the 580 firmware on this box.
 3. nouveau on GB10: David Airlie's experimental patches, roughly 100 patches, rework nouveau for the R610 firmware with DGX Spark boot/display support. The source for this is **secondary**: The Linux Camp, 2026-09-09, `https://thelinuxcamp.com/news/nouveau-nvk-experimental-patches-enable-nvidia-dgx-spark-gb10-support-mttzmgbr`, citing Phoronix.
    - Not merged according to that article. Patch contents are NOT_VERIFIED.

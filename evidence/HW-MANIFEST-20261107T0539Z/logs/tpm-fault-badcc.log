@@ -1,0 +1,4 @@
+STEP discover tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 revision=159
+STEP claim generation=4
+STEP release generation=5
+FAULT target=tpm-ntc-npct75x kind=badcc layer=tpm rc=0x143 outcome=PASS

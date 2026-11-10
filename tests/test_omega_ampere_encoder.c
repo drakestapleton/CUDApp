@@ -110,7 +110,7 @@ int main(void)
      * The corpus build records that refusal from the SM121 encode below. */
     program.count = 2; program.insns[1] = fixture(BW_IR_SHFL_BFLY, 0); if (refused(86)) return 1;
     { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }
-    for (unsigned op = BW_IR_SHFL_BFLY; op <= BW_IR_ATOMG_ADD_F32_STRONG_GPU; ++op) {
+    for (unsigned op = BW_IR_SHFL_BFLY; op <= BW_IR_ATOMG_MIN_U64_STRONG_SYS; ++op) {
         init(); program.insns[0] = fixture(op, 0);
         if (refused(86)) return 1;
         { size_t len; if (omega_bw_encode_program(&program, legacy, sizeof(legacy), &len) != 0) return 1; }

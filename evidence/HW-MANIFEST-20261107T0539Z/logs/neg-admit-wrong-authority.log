@@ -1,0 +1,1 @@
+REFUSE wrong_authority target=cpu-gb10-x925 runner=hwman-cpu route=DIRECT_DEVICE

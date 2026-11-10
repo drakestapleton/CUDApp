@@ -1,0 +1,37 @@
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_engine.o src/omega_gpu_engine.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_platform.o src/omega_gpu_platform.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_encoder.o src/omega_blackwell_encoder.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_codegen.o src/omega_blackwell_codegen.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_matmul.o src/omega_blackwell_matmul.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_qmd.o src/omega_blackwell_qmd.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_blackwell_realize.o src/omega_blackwell_realize.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/sha256.o src/sha256.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_session.o src/omega_gpu_session.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_fmt.o src/omega_gpu_fmt.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_matmul_api.o src/omega_gpu_matmul_api.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_attention_api.o src/omega_gpu_attention_api.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_serving.o src/omega_gpu_serving.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/omega_gpu_wait.o src/omega_gpu_wait.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_revision.o src/cudapp_freest_revision.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_epoch.o src/cudapp_freest_epoch.c
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-builtin -fno-stack-protector -U_FORTIFY_SOURCE -DOMEGA_GPU_NO_POSIX -DOMEGA_NUMERIC_CPU_ONLY -Isrc -c -o build/gpu_fs/cudapp_freest_f16.o src/cudapp_freest_f16.c
+gcc -r -nostdlib -o build/gpu_fs/omega_gpu_freestanding.o build/gpu_fs/omega_gpu_engine.o build/gpu_fs/omega_gpu_platform.o build/gpu_fs/omega_blackwell_encoder.o build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/omega_blackwell_qmd.o build/gpu_fs/omega_blackwell_realize.o build/gpu_fs/sha256.o build/gpu_fs/omega_gpu_session.o build/gpu_fs/omega_gpu_fmt.o build/gpu_fs/omega_gpu_matmul_api.o build/gpu_fs/omega_gpu_attention_api.o build/gpu_fs/omega_gpu_serving.o build/gpu_fs/omega_gpu_wait.o build/gpu_fs/cudapp_freest_revision.o build/gpu_fs/cudapp_freest_epoch.o build/gpu_fs/cudapp_freest_f16.o
+freestanding GPU link (17 files): only memcmp memcpy memset strcmp strlen undefined
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -Isrc -DOMEGA_GPU_NO_POSIX -o build/test_codegen_freestanding tests/test_omega_codegen_freestanding.c \
+	build/gpu_fs/omega_blackwell_codegen.o build/gpu_fs/omega_blackwell_matmul.o build/gpu_fs/sha256.o build/gpu_fs/cudapp_freest_f16.o
+./build/test_codegen_freestanding --dump > build/om-encoder/c-dump.txt
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+mutant 1 red ('s/^ret or base shl rb o 1 16$/ret or base shl rb o 1 17/'): golden words FAIL, dump vs C DIFFERS
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+mutant 2 red ('s/^p = 262144$/p = 0/'): golden words FAIL, dump vs C DIFFERS
+generating portable unit bw_enc_sm121 (bridge-seeded)
+generating portable unit revision (bridge-freest)
+generating portable unit epoch (bridge-freest)
+generating portable unit f16 (bridge-freest)
+mutant 3 red ('s/^const NOPC ulong 1032192$/const NOPC ulong 1032193/'): golden words FAIL, dump vs C DIFFERS

@@ -1,0 +1,118 @@
+spark-b87b
+Linux spark-b87b 7.0.0-1019-nvidia #19~24.04.2-Ubuntu SMP PREEMPT_DYNAMIC Sun Sep  6 18:35:11 UTC 2 aarch64 GNU/Linux
+Architecture:                            aarch64
+CPU op-mode(s):                          64-bit
+Byte Order:                              Little Endian
+CPU(s):                                  20
+On-line CPU(s) list:                     0-19
+Vendor ID:                               ARM
+Model name:                              Cortex-X925
+Model:                                   1
+Thread(s) per core:                      1
+Core(s) per socket:                      10
+Socket(s):                               1
+Stepping:                                r0p1
+Frequency boost:                         disabled
+CPU(s) scaling MHz:                      100%
+CPU max MHz:                             3900.0000
+CPU min MHz:                             1378.0000
+BogoMIPS:                                2000.00
+Flags:                                   fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 sm3 sm4 asimddp sha512 sve asimdfhm dit uscat ilrcpc flagm sb paca pacg dcpodp sve2 sveaes svepmull svebitperm svesha3 svesm4 flagm2 frint svei8mm svebf16 i8mm bf16 dgh bti ecv afp wfxt
+Model name:                              Cortex-A725
+Model:                                   1
+Thread(s) per core:                      1
+Core(s) per socket:                      10
+Socket(s):                               1
+Stepping:                                r0p1
+CPU(s) scaling MHz:                      100%
+CPU max MHz:                             2808.0000
+CPU min MHz:                             338.0000
+BogoMIPS:                                2000.00
+Flags:                                   fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 sm3 sm4 asimddp sha512 sve asimdfhm dit uscat ilrcpc flagm sb paca pacg dcpodp sve2 sveaes svepmull svebitperm svesha3 svesm4 flagm2 frint svei8mm svebf16 i8mm bf16 dgh bti ecv afp wfxt
+L1d cache:                               1.3 MiB (20 instances)
+L1i cache:                               1.3 MiB (20 instances)
+L2 cache:                                25 MiB (20 instances)
+L3 cache:                                24 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-19
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; CSV2, BHB
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Not affected
+cpu0 0x00000000410fd871
+cpu1 0x00000000410fd871
+cpu10 0x00000000410fd871
+cpu11 0x00000000410fd871
+cpu12 0x00000000410fd871
+cpu13 0x00000000410fd871
+cpu14 0x00000000410fd871
+cpu15 0x00000000410fd851
+cpu16 0x00000000410fd851
+cpu17 0x00000000410fd851
+cpu18 0x00000000410fd851
+cpu19 0x00000000410fd851
+cpu2 0x00000000410fd871
+cpu3 0x00000000410fd871
+cpu4 0x00000000410fd871
+cpu5 0x00000000410fd851
+cpu6 0x00000000410fd851
+cpu7 0x00000000410fd851
+cpu8 0x00000000410fd851
+cpu9 0x00000000410fd851
+TPM2_PT_FAMILY_INDICATOR:
+  raw: 0x322E3000
+  value: "2.0"
+TPM2_PT_LEVEL:
+  raw: 0
+TPM2_PT_REVISION:
+  raw: 0x9F
+  value: 1.59
+TPM2_PT_DAY_OF_YEAR:
+  raw: 0x9
+TPM2_PT_YEAR:
+  raw: 0x7E7
+TPM2_PT_MANUFACTURER:
+  raw: 0x4E544300
+  value: "NTC"
+TPM2_PT_VENDOR_STRING_1:
+  raw: 0x4E504354
+  value: "NPCT"
+TPM2_PT_VENDOR_STRING_2:
+  raw: 0x37357800
+  value: "75x"
+TPM2_PT_VENDOR_STRING_3:
+  raw: 0x2221233E
+  value: ""!#>"
+TPM2_PT_VENDOR_STRING_4:
+  raw: 0x726C7300
+  value: "rls"
+TPM2_PT_VENDOR_TPM_TYPE:
+  raw: 0x0
+TPM2_PT_FIRMWARE_VERSION_1:
+  raw: 0x70002
+TPM2_PT_FIRMWARE_VERSION_2:
+  raw: 0x40001
+TPM2_PT_INPUT_BUFFER:
+  raw: 0x400
+TPM2_PT_HR_TRANSIENT_MIN:
+  raw: 0x3
+TPM2_PT_HR_PERSISTENT_MIN:
+  raw: 0x7
+TPM2_PT_HR_LOADED_MIN:
+tool="tpm2_getcap" version="5.6" tctis="libtss2-tctildr" tcti-default=tcti-device
+strace -- version 6.8

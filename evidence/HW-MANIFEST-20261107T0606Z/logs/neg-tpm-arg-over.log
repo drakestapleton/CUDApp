@@ -1,0 +1,4 @@
+STEP discover tpm_manufacturer=0x4e544300 firmware=0x00070002.0x00040001 revision=159
+STEP claim generation=3
+STEP release generation=3
+REFUSE invalid_argument arg=33

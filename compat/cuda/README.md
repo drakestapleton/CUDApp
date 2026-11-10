@@ -94,9 +94,9 @@ sums.
 - `fixture/*` are class A, written for this gate.
 - `cuda.h` (CUDA 13.0, `CUDA_VERSION 13000`) is read from the local install at build time and is not
   committed.
-- No NVIDIA binary is opened, linked or run. The stub `libcuda.so.1` is generated from our own object.
+- No NVIDIA binary is opened, linked or run. The stub `libcuda.so.1` is generated from my own object.
 - The optional syntax check `ptxas -arch=sm_121 fixture/vadd_u32.ptx -o /dev/null` (ptxas V13.0.88) runs
-  class B on our own input. Nothing learned from it feeds a non-NVIDIA target, and its output is never
+  class B on my own input. Nothing learned from it feeds a non-NVIDIA target, and its output is never
   stored.
 - The x86_64 executable is a cross-built candidate (x86_64-linux-gnu-gcc 13.3.0 on the Spark). It has been
   checked statically and never run.

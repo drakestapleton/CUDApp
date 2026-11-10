@@ -96,8 +96,9 @@ int omega_bw_decode(const uint8_t b[16], OmegaBwInsn *d) {
         d->name = "STG"; if ((n = size_regs(w2)) < 0) return -1;
         R(d, A, (w2 & 0x100u) ? 2 : 1, 0); R(d, B, n, 0); if (w2 & 0x08000000u) R(d, C, 1, 1);
         d->late = 1; break;
-    case 0x9a8: /* ATOMG desc[URc][Ra.64], Rb -> Rd */
-        d->name = "ATOMG"; W(d, D, 1, 0); R(d, A, (w2 & 0x100u) ? 2 : 1, 0); R(d, B, 1, 0);
+    case 0x9a8: /* ATOMG desc[URc][Ra.64], Rb -> Rd: word 2 bits 9..11 = type (0 U32, 1 S32, 2 64, 3 S64; nvdisasm SM121) */
+        n = ((w2 >> 9) & 7u) == 2u || ((w2 >> 9) & 7u) == 3u ? 2 : 1;
+        d->name = "ATOMG"; W(d, D, n, 0); R(d, A, (w2 & 0x100u) ? 2 : 1, 0); R(d, B, n, 0);
         if (w2 & 0x08000000u) R(d, C, 1, 1);
         d->var = 1; d->late = 1; break;
     case 0x984: /* LDS Rd, [Ra+URb+imm]: word 2 bit 27 = uniform offset */

@@ -1,0 +1,20 @@
+commit 7863601676150a18241e39d75e364f9805270f1c
+host spark-b87b aarch64 2026-11-09T11:59:04Z
+omc omega-mv e5b32567 seed/out/omc, rebuilt by sh seed/omega-from-seed.sh (RC=0)
+command: OMC=<omega-mv e5b32567>/seed/out/omc sh evidence/xorwow-mix-20261109/run.sh OUTDIR
+omc sha256 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+source sha256 0c9fb9184724f62ce5f520924feed4fd1ba5650b8c9d11ce075c5d046a34592a
+compile good rc=0
+raw  162 323 500 499 500 501 500 500 500 501 499 499 501 500 500 501 500 500 500 500 500 500 500 502 501 500 499 501 501 500 500 500
+fold 500 501 502 500 500 501 501 501 501 500 501 500 501 501 501 501 500 500 500 500 500 500 500 502 501 500 499 501 501 500 500 500
+run good rc=0
+PASS stdout equals the Wolfram scores
+binary sha256 57a7667907f491e1d576a672b205f7937734b035b717a0550f468c11bf4cc2cc
+compile weyl rc=0
+PASS mutant weyl caught: exit 10
+compile nofold rc=0
+PASS mutant nofold caught: exit 30
+compile bmlen rc=0
+PASS mutant bmlen caught: exit 20
+RESULT PASS
+exit 0

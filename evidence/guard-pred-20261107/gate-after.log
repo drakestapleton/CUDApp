@@ -1,0 +1,22 @@
+cat om/encoder/bw_enc_sm121.om om/encoder/guard_pred_test.om > build/om-encoder/guard-pred.om
+$OMEGA_OMC < build/om-encoder/guard-pred.om > build/om-encoder/guard-pred
+chmod +x build/om-encoder/guard-pred
+build/om-encoder/guard-pred
+guard predicate failures: 0
+build/om-encoder/guard-pred bin > build/om-encoder/guard-pred.bin
+/usr/local/cuda/bin/nvdisasm -b SM121 -hex build/om-encoder/guard-pred.bin > build/om-encoder/guard-pred.nv
+build/om-encoder/guard-pred check oracle < build/om-encoder/guard-pred.nv
+oracle instructions: 135 guard mismatches: 0
+cat om/encoder/bw_enc_sm121.om om/encoder/bw_spec_sm121.om om/encoder/guard_spec_test.om > build/om-encoder/guard-pred-spec.om
+$OMEGA_OMC < build/om-encoder/guard-pred-spec.om > build/om-encoder/guard-pred-spec
+chmod +x build/om-encoder/guard-pred-spec
+build/om-encoder/guard-pred-spec
+spec guard mismatches: 0
+red check 1 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 x/' exits 1 with 121 failures, as it must
+red check 2 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 or sub x and x 61440 shl ulong 7 12/' exits 1 with 130 failures, as it must
+red check 3 (enc): 's/^put w 0 or sub x and x 61440 shl pred o 12$/put w 0 or sub x and x 61440 shl and pred o 7 12/' exits 1 with 66 failures, as it must
+red check 4 (enc): 's/^if isuld op$/if eq op 99/' exits 1 with 4 failures, as it must
+red check 5 (spec): 's/^put w 0 or sub gx and gx 61440 shl sp_val R_PRED 0 o 12$/put w 0 gx/' exits 1 with 106 failures, as it must
+red check 6 (spec): 's/^if or eq get o 0 6 eq get o 0 7$/if eq get o 0 99/' exits 1 with 4 failures, as it must
+red check: oracle text without the @!UP0 lines exits 4, as it must
+PASS guard predicates: 63 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 135 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN

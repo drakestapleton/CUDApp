@@ -1,0 +1,1 @@
+usage: hwman check MAN | doctor MAN | admit MAN OP [TARGET] | run MAN TARGET OP ARG GEN STATE [EXPECT] | fault MAN TARGET KIND GEN STATE

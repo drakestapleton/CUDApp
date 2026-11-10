@@ -1,0 +1,2 @@
+STEP discover cpu=19 midr_el1=0x410fd851
+REFUSE wrong_handle target=cpu-gb10-x925 state=/tmp/cudapp-hw-20261107T0602Z/wrong.state

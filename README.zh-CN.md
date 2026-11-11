@@ -1,12 +1,12 @@
-<!-- languages -->
-[English](README.md) · **简体中文**
-<!-- /languages -->
-
 <p align="center">
   <img src="docs/img/hero.svg" width="100%" alt="面向 NVIDIA DGX Spark（GB10，sm_121）的 CUDA++：我自己打通的从程序到 GPU 的路径。右侧是 CUDA++ 运行的第一个核函数的 32 条指令，逐位绘制自 src/omega_blackwell_encoder.c。">
 </p>
 
 # 面向 NVIDIA DGX Spark 的 CUDA++
+
+<!-- languages -->
+[English](README.md) · **简体中文**
+<!-- /languages -->
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23578452.svg)](https://doi.org/10.5281/zenodo.23578452) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23614483.svg)](https://doi.org/10.5281/zenodo.23614483)
 

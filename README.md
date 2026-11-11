@@ -1,3 +1,7 @@
+<!-- languages -->
+**English** · [简体中文](README.zh-CN.md)
+<!-- /languages -->
+
 <p align="center">
   <img src="docs/img/hero.svg" width="100%" alt="CUDA++ for the NVIDIA DGX Spark (GB10, sm_121): my own path from a program to the GPU. On the right, the 32 instructions of the first kernel CUDA++ ran, drawn bit by bit from src/omega_blackwell_encoder.c.">
 </p>

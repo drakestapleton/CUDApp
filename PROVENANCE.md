@@ -190,3 +190,34 @@ The emitted vadd object is the same in both.
 
 Status: host byte/format checks only. AMD loader interoperability, queue dispatch, numeric FP32
 outputs, boundary vectors, performance, Qwen execution and every AMD hardware row are **NOT_RUN**.
+
+## 9. AMD KFD and AQL host data layer (2026-11-12)
+
+`backend/amd/kfd/` is first-party seeded Omega: the 64-byte AQL kernel dispatch packet
+(`aql.om`), the vadd kernel-argument block (`kernarg.om`), table-driven byte records for twelve
+KFD requests plus aperture, event-wait and GPU-ID entries (`records.om` reading `requests.tsv`),
+and a sequential model of the order in which a host publishes a packet into a user-mode queue
+(`ring.om`). It opens no device and issues no request: the pinned compiler refuses every KFD
+`devctl` request (error 9), and the gate keeps one compile-only reproduction per request.
+
+Sources of the facts, each read for the fact named and nothing copied:
+
+| Fact | Source |
+|---|---|
+| KFD request numbers, record sizes, field offsets and widths (interface 1.14) | installed `/usr/include/linux/kfd_ioctl.h`, Ubuntu `linux-libc-dev:arm64` 6.8.0-139.139, sha256 `4123a021f00f85235e3e8dda4e0b4c4ec8ed4f7ce30e8882529f68652f765247`, AMD MIT-style permission notice in the header; public upstream [include/uapi/linux/kfd_ioctl.h at v6.8](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/kfd_ioctl.h?h=v6.8) (the installed file is digest-pinned, not assumed identical) |
+| The same layouts for x86-64 | installed `/usr/x86_64-linux-gnu/include/linux/kfd_ioctl.h`, `linux-libc-dev-amd64-cross` 6.8.0-25.25cross1, sha256 `d9bf51d2cde26ea18e2ec287674bb022d7b23a0858a14cdd55c55d3eb3ec339e` |
+| AQL packet layout, header bit fields, packet types, fence scopes, doorbell packet-ID rule | ROCR-Runtime tag `rocm-6.2.0` (commit `1d1b8456c3530e7b464f6d74ed0baa2b28345126`) [src/inc/hsa.h](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/inc/hsa.h), sha256 `2b23a43eef5b869b1a0c2245aa59e2b3da0f0c074dea5dae8d049ea4bf3a8e3b`, University of Illinois/NCSA licence; no runtime code linked |
+| Code object v5 and its metadata | LLVM 18.1.3 [AMDGPUUsage.rst](https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.3/llvm/docs/AMDGPUUsage.rst), sha256 `4222ab6cb3f1c73f5cdbdaedf8690a638528a9f6ba6ea3cca35ed325b8242c4c`, Apache-2.0 WITH LLVM-exception |
+| vadd kernel-argument layout (a, b, c at 0, 8, 16; count at 24; 28 bytes) | `backend/amd/vadd-gfx1151.s` in this repository, sha256 `cb653f777801f65199f5243bb3db0c67f966cafc13bc99f8632c90dc0fcc1f2e`; the gfx942 kernel of section 8 uses the same layout |
+
+`requests.tsv` was generated once by the test-only C program `tests/amd-kfd/layout-oracle.c`
+from the installed header, and the gate regenerates it from the live header every run and
+compares the whole table. `tests/amd-kfd/oracle.py` packs the expected bytes independently with
+the Python standard `struct` module. Both are verification oracles, never on the producer path.
+Test tools: GCC 13.3.0-6ubuntu2~24.04.1 (native and `x86_64-linux-gnu-gcc`), LLVM 18.1.3
+`llvm-mc-18`, `llvm-readelf-18`, `llvm-objcopy-18`, Python 3.12.3 run with `-I`. No NVIDIA tool
+and no fact learned from one was used.
+
+Status: host byte and order checks only. The ring model is an execution model of publication
+order, not a proof of memory ordering or doorbell coherency. KFD calls, queue creation, GPU
+memory, dispatch, completion and every AMD hardware row are **NOT_RUN**.

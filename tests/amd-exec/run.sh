@@ -26,7 +26,7 @@ out=$(CDPATH= cd -- "$out" && pwd)
 src=$root/backend/amd/gfx942
 printf 'PIN omc=%s\n' "$pin"
 python3 --version
-cat "$src/exec/fp.om" "$src/exec/main.om" > "$out/exec.om"
+cat "$src/exec/fp.om" "$src/exec/fma.om" "$src/exec/main.om" > "$out/exec.om"
 for name in hsaco exec; do
     input=$src/hsaco.om
     [ "$name" != exec ] || input=$out/exec.om
@@ -38,7 +38,13 @@ for name in hsaco exec; do
     cmp "$out/$name.1" "$out/$name.2"
     echo "PASS $name two builds byte-identical"
 done
-for kernel in vadd fsum16; do
+{ printf 'om2\n'; cat "$src/exec/fma.om" "$root/tests/amd-exec/fma-probe.om"; } > "$out/fma-probe.om"
+timeout 120 "$omc" < "$out/fma-probe.om" > "$out/fma-probe" 2> "$out/fma-probe.compile.log"
+[ ! -s "$out/fma-probe.compile.log" ] || { cat "$out/fma-probe.compile.log"; exit 1; }
+chmod 700 "$out/fma-probe"
+python3 -I "$root/tests/amd-exec/sgemm.py" probe "$out/fma-probe"
+kernels='vadd fsum16 sgemm'
+for kernel in $kernels; do
     for iteration in 1 2; do
         timeout 30 "$out/hsaco.$iteration" "$src/$kernel.isa" > "$out/$kernel.$iteration.hsaco"
     done
@@ -49,6 +55,9 @@ done
 digest=$(sha256sum < "$out/vadd.1.hsaco")
 [ "${digest%% *}" = 10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f ]
 echo 'PASS vadd code object unchanged from pre-generalization'
+digest=$(sha256sum < "$out/fsum16.1.hsaco")
+[ "${digest%% *}" = 15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478 ]
+echo 'PASS fsum16 code object unchanged from pre-SGEMM'
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then echo 'FAIL mutant did not apply'; exit 1; fi
 timeout 30 "$out/hsaco.1" "$out/flipped.isa" > "$out/flipped.hsaco"
@@ -58,6 +67,10 @@ python3 -I "$root/tests/amd-exec/oracle.py" reverse-table "$src/fsum16.isa" "$ou
 timeout 30 "$out/hsaco.1" "$out/reversed.isa" > "$out/reversed.hsaco"
 python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/reversed.hsaco" "$out/reversed.text"
 python3 -I "$root/tests/amd-exec/oracle.py" fsum-suite "$out/exec.1" "$out/fsum16.text" "$out/reversed.text" "$out"
+python3 -I "$root/tests/amd-exec/sgemm.py" mutant "$src/sgemm.isa" "$out/unfused.isa"
+timeout 30 "$out/hsaco.1" "$out/unfused.isa" > "$out/unfused.hsaco"
+python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/unfused.hsaco" "$out/unfused.text"
+python3 -I "$root/tests/amd-exec/sgemm.py" suite "$out/exec.1" "$out/sgemm.text" "$out/unfused.text" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2
@@ -70,5 +83,5 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 [ ! -e "$out/wrong-pin-must-not-exist" ]
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
-sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco"
-echo 'AMD-GFX942-EXEC PASS kernels=vadd,fsum16 counts=0,1,63,64,65,200 hardware=NOT_RUN'
+sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco" "$out/sgemm.1.hsaco"
+python3 -I "$root/tests/amd-exec/sgemm.py" summary "$kernels"

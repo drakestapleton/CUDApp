@@ -1,0 +1,9 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: AMD_OUT (or the fresh temporary directory)
+ORACLE llvm-mc-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objdump-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-readelf-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objcopy-18 llvm-objcopy, compatible with GNU objcopy
+COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
+omc: line 75: error 16
+FAIL compile hsaco exit=16

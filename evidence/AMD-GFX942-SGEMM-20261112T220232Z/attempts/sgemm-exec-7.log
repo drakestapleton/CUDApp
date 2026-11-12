@@ -1,0 +1,4 @@
+PIN omc=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Python 3.12.3
+PASS hsaco two builds byte-identical
+PASS exec two builds byte-identical

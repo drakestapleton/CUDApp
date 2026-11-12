@@ -85,7 +85,9 @@ def fixture(n, pairs):
 
 
 def invoke(exe, text, mem, expected_rc=0, count_offset=24):
-    result = subprocess.run([exe, str(text), str(mem), str(count_offset)], capture_output=True, timeout=60)
+    count, = struct.unpack_from('<I', mem.read_bytes(), count_offset)
+    result = subprocess.run([exe, str(text), str(mem), str(max(1, count)), '1'],
+                            capture_output=True, timeout=60)
     assert result.returncode == expected_rc, (text, result.returncode, expected_rc, result.stderr)
     assert result.stdout == b'' and result.stderr == b'', (result.stdout, result.stderr)
 

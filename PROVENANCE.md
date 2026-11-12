@@ -224,8 +224,8 @@ memory, dispatch, completion and every AMD hardware row are **NOT_RUN**.
 
 ## 10. gfx942 host instruction executor (2026-11-12)
 
-`backend/amd/gfx942/exec/` (`fp.om`, `main.om`, built as one unit) is a first-party seeded-Omega
-executor for exactly the gfx942 instructions the section 8 vadd kernel uses. It decodes the raw
+`backend/amd/gfx942/exec/` (`fp.om`, `fma.om`, `main.om`, concatenated as one unit) is a first-party
+seeded-Omega executor for the gfx942 instructions used by the kernels in sections 8, 11 and 12. It decodes the raw
 `.text` words of the emitted code object (the gate extracts `.text` through the ELF section headers)
 and runs wave64 workgroups over a flat byte file holding the kernel arguments and arrays.
 Every instruction and branch target is checked before memory is opened; anything outside the subset is
@@ -266,10 +266,10 @@ quoted `"n"` and YAML's `!!str n` all gave LLVM's `invalid HSA metadata` error i
 Instruction formats and opcodes use only the public sources in section 8; this kernel introduces
 no executor opcodes or new production dependency.
 
-The executor interface is now `exec RAW_TEXT MEMORY COUNT_OFFSET`, with a decimal byte offset
-for the uint dispatch count in the kernarg block. Its callers pass the appropriate offset;
-the instruction decoder does not infer a kernel from its filename or metadata. The existing
-integer binary32 addition and canonical NaN policy are unchanged.
+The executor interface is `exec RAW_TEXT MEMORY GRID_X GRID_Y`, with explicit decimal work-item
+extents and local size `(64,1,1)`. The one-dimensional vadd/fsum16 callers pass their count and
+one; tests deliberately overdispatch zero-size inputs to exercise masking. The decoder does not
+infer a kernel from its filename, metadata or kernarg layout. Addition and canonical NaNs are unchanged.
 
 `tests/amd-exec/oracle.py` computes each reduction independently by applying its rounded binary32
 reference after every addition. It checks all output bits, inputs, arguments and guard bytes, and
@@ -283,3 +283,48 @@ Status: IMPLEMENTED and EXERCISED on the Linux AArch64 host. Receipts under
 `evidence/AMD-GFX942-FSUM16-*` record the compiler pin, inputs, commands, output digests, failures
 and passing gates. AMD dispatch, timing, race behaviour, hardware NaN payloads and Qwen inference
 remain **NOT_RUN**. This is host code-object and instruction-model evidence, not hardware qualification.
+
+## 12. gfx942 ordered-FMA SGEMM (2026-11-12)
+
+`backend/amd/gfx942/sgemm.isa` implements row-major `C[M,N] = A[M,K] * B[K,N]`.
+Its ABI is three global pointers followed by uint `M`, `N`, `K` (36 bytes). One wave computes a
+64-column tile of one row: `s2` is group x, `s3` group y, and `v0` the lane. The descriptor enables
+both workgroup-ID SGPRs. Each output starts at positive zero and executes
+`acc = fma(A[m,k], B[k,n], acc)` in increasing `k`; `K=0` writes positive zero without input loads.
+The code uses `v_fmac_f32`, whose destination is its third source, not a rounded multiply plus add.
+Address construction uses full high/low 32-bit products and carry propagation.
+
+Instruction authority is LLVM **llvmorg-18.1.3**:
+- [VOP2Instructions.td](https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP2Instructions.td),
+  `V_FMAC_F32` tied destination/source2 declaration and gfx9/VI opcode `0x3b`; `V_MUL_F32` opcode
+  `0x05` is implemented for the executed separate-multiply/add negative control.
+- [SOPInstructions.td](https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SOPInstructions.td),
+  `S_MOV_B32_vi`, `S_ADD_U32_vi`, `S_SUB_U32_vi`, `S_ADDC_U32_vi`, `S_LSHL_B64_vi`,
+  `S_MUL_I32_vi`, `S_MUL_HI_U32_vi`, and `S_CBRANCH_SCC0`/`S_CBRANCH_SCC1`.
+  Existing format fields remain those listed in section 8. SCC is explicit executor state.
+
+The table writer stores numeric labels in a growable anonymous file. References resolve to checked
+signed 16-bit word offsets relative to the next instruction; duplicate/undefined labels and either
+overflow direction refuse with exit 4 before object output. There is no fixed label-count capacity.
+The gate checks both signed boundaries and both overflow controls; SGEMM's actual backward branch
+and complete instruction text independently match `llvm-mc-18 -mcpu=gfx942` assembly.
+
+`exec/fma.om` represents the exact finite product plus addend as an integer scaled by `2^298`.
+Binary32's exponent and significand limits require at most 554 bits, held in nine unsigned 64-bit
+limbs. It adds or subtracts exact magnitudes, then rounds once using a halfway bit, sticky bits and
+even-significand tie-breaking, retaining denormals. Overflow is handled after cancellation and
+rounding. Signed zeros and infinities follow the stated IEEE nearest-even model; NaNs remain the
+model's canonical `0x7fc00000` policy, not a promise of hardware payload parity.
+
+`tests/amd-exec/sgemm.py` is an independent **test-only** Python `fractions.Fraction` oracle.
+It rounds arbitrary rational results directly to binary32, with no host float FMA or double
+rounding. A streaming probe covers special-value combinations, seeded random triples, cancellation,
+subnormal halfway cases and overflow canceled before rounding. Matrix cases cover dimensions
+1, 3, 64, 65, empty dimensions and `K=0`; extra groups in both X and Y must preserve every guard.
+The mutant replaces the actual fused instruction by separately executed `v_mul_f32`/`v_add_f32`
+and must fail bit-for-bit comparison. Host gates retain all vadd/fsum16 controls and exact object
+digests, compare SGEMM metadata/descriptor bytes with independent assembly (including the group-Y
+enable bit), and build both executables and objects twice for byte identity.
+
+Receipts live under `evidence/AMD-GFX942-SGEMM-*`. AMD dispatch, performance, GPU memory ordering,
+hardware NaN payloads and Qwen inference remain **NOT_RUN**. This host model is not hardware qualification.

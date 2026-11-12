@@ -38,17 +38,26 @@ for name in hsaco exec; do
     cmp "$out/$name.1" "$out/$name.2"
     echo "PASS $name two builds byte-identical"
 done
-for iteration in 1 2; do
-    timeout 30 "$out/hsaco.$iteration" "$src/vadd.isa" > "$out/vadd.$iteration.hsaco"
+for kernel in vadd fsum16; do
+    for iteration in 1 2; do
+        timeout 30 "$out/hsaco.$iteration" "$src/$kernel.isa" > "$out/$kernel.$iteration.hsaco"
+    done
+    cmp "$out/$kernel.1.hsaco" "$out/$kernel.2.hsaco"
+    echo "PASS $kernel code object two builds byte-identical"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$kernel.1.hsaco" "$out/$kernel.text"
 done
-cmp "$out/vadd.1.hsaco" "$out/vadd.2.hsaco"
-echo 'PASS code object two builds byte-identical'
-python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/vadd.1.hsaco" "$out/vadd.text"
+digest=$(sha256sum < "$out/vadd.1.hsaco")
+[ "${digest%% *}" = 10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f ]
+echo 'PASS vadd code object unchanged from pre-generalization'
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then echo 'FAIL mutant did not apply'; exit 1; fi
 timeout 30 "$out/hsaco.1" "$out/flipped.isa" > "$out/flipped.hsaco"
 python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/flipped.hsaco" "$out/flipped.text"
 python3 -I "$root/tests/amd-exec/oracle.py" suite "$out/exec.1" "$out/vadd.text" "$out/flipped.text" "$out"
+python3 -I "$root/tests/amd-exec/oracle.py" reverse-table "$src/fsum16.isa" "$out/reversed.isa"
+timeout 30 "$out/hsaco.1" "$out/reversed.isa" > "$out/reversed.hsaco"
+python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/reversed.hsaco" "$out/reversed.text"
+python3 -I "$root/tests/amd-exec/oracle.py" fsum-suite "$out/exec.1" "$out/fsum16.text" "$out/reversed.text" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2
@@ -61,5 +70,5 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 [ ! -e "$out/wrong-pin-must-not-exist" ]
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
-sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco"
-echo 'AMD-GFX942-EXEC PASS counts=0,1,63,64,65,200 hardware=NOT_RUN'
+sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco"
+echo 'AMD-GFX942-EXEC PASS kernels=vadd,fsum16 counts=0,1,63,64,65,200 hardware=NOT_RUN'

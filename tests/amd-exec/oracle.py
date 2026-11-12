@@ -84,8 +84,8 @@ def fixture(n, pairs):
     return data, expected
 
 
-def invoke(exe, text, mem, expected_rc=0):
-    result = subprocess.run([exe, str(text), str(mem)], capture_output=True, timeout=60)
+def invoke(exe, text, mem, expected_rc=0, count_offset=24):
+    result = subprocess.run([exe, str(text), str(mem), str(count_offset)], capture_output=True, timeout=60)
     assert result.returncode == expected_rc, (text, result.returncode, expected_rc, result.stderr)
     assert result.stdout == b'' and result.stderr == b'', (result.stdout, result.stderr)
 
@@ -148,10 +148,88 @@ def suite(exe, text, flipped, out):
     print('CONTROL memory-range CAUGHT exit=67 memory-unchanged', flush=True)
 
 
+def reduce_ref(row):
+    result = row[0]
+    for value in row[1:]:
+        result = addref(result, value)
+    return result
+
+
+def fsum_fixture(n, rows):
+    capacity = max(64, ((n + 63) // 64) * 64) + 64
+    x = 32
+    o = x + capacity * 16 * 4
+    data = bytearray([0xa5] * (o + capacity * 4 + 32))
+    struct.pack_into('<QQI', data, 0, x, o, n)
+    for g in range(capacity):
+        row = rows[g % len(rows)]
+        assert len(row) == 16
+        struct.pack_into('<16I', data, x + g * 64, *row)
+    expected = bytearray(data)
+    for g in range(n):
+        struct.pack_into('<I', expected, o + g * 4, reduce_ref(rows[g % len(rows)]))
+    return data, expected
+
+
+def fsum_check(exe, text, mem, n, rows):
+    data, expected = fsum_fixture(n, rows)
+    mem.write_bytes(data)
+    invoke(exe, text, mem, count_offset=16)
+    actual = mem.read_bytes()
+    if actual != expected:
+        offset = next((i for i, (a, b) in enumerate(zip(actual, expected)) if a != b), None)
+        raise AssertionError(f'fsum bit mismatch rows={n} byte={offset} length={len(actual)}/{len(expected)}')
+
+
+def reverse_table(source, target):
+    lines = pathlib.Path(source).read_text().splitlines()
+    changed = []
+    offsets = []
+    for line in lines:
+        fields = line.split('#', 1)[0].split()
+        if len(fields) == 14 and fields[:2] == ['I', '7'] and fields[7] == '0x14':
+            old = int(fields[2])
+            offsets.append(old)
+            fields[2] = str(60 - old)
+            line = ' '.join(fields)
+        changed.append(line)
+    assert offsets == list(range(0, 64, 4)), offsets
+    pathlib.Path(target).write_text('\n'.join(changed) + '\n')
+
+
+def fsum_suite(exe, text, reversed_text, out):
+    mem = pathlib.Path(out) / 'fsum-memory.bin'
+    sensitive = [0x4c000000, 0xcc000000, 0x3f800000] + [0] * 13
+    rows = [sensitive, [0x80000000] * 16, [1] * 16, [0] * 16]
+    rows += [[a, b] * 8 for a, b in PAIRS]
+    for n in COUNTS:
+        fsum_check(exe, text, mem, n, rows)
+        print(f'PASS fsum16 rows={n} left-to-right every-output-bit and past-count guards', flush=True)
+    rng = random.Random(94216)
+    random_rows = [[rng.getrandbits(32) for _ in range(16)] for _ in range(200)]
+    fsum_check(exe, text, mem, len(random_rows), random_rows)
+    print('PASS fsum16 random rows=200 seed=94216 all 15 rounded additions', flush=True)
+    left = reduce_ref(sensitive)
+    right = reduce_ref(list(reversed(sensitive)))
+    assert left != right
+    try:
+        fsum_check(exe, reversed_text, mem, 1, [sensitive])
+    except AssertionError as error:
+        assert str(error).startswith('fsum bit mismatch'), error
+        print(f'CONTROL fsum16-right-to-left CAUGHT bits left={left:08x} right={right:08x} '
+              f'row={[f"{value:08x}" for value in sensitive]}', flush=True)
+    else:
+        raise AssertionError('fsum16 right-to-left mutant escaped')
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'extract':
         extract(*sys.argv[2:])
     elif sys.argv[1] == 'suite':
         suite(*sys.argv[2:])
+    elif sys.argv[1] == 'reverse-table':
+        reverse_table(*sys.argv[2:])
+    elif sys.argv[1] == 'fsum-suite':
+        fsum_suite(*sys.argv[2:])
     else:
         raise SystemExit('unknown oracle action')

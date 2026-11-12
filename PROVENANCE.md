@@ -183,6 +183,10 @@ the emitted input. The oracle is relocatable: no `ld.lld` was installed and none
 for this work. The gate compares `.text` bytes, rebased disassembly, metadata, and descriptor
 bytes excluding its relocated entry displacement; it does **not** claim linked-file identity.
 New logs/listings and tool/source digests are filed under `evidence/AMD-GFX942-HOST-*/`.
+`AMD-GFX942-HOST-20261112T210312Z` records the first commit `6ebd47b0`; `AMD-GFX942-HOST-20261112T212828Z`
+records the reviewed source (MessagePack values and lengths in their full spec encodings, with a gate case
+comparing every width boundary to hand-written spec bytes and a single-byte mutant that the comparison catches).
+The emitted vadd object is the same in both.
 
 Status: host byte/format checks only. AMD loader interoperability, queue dispatch, numeric FP32
 outputs, boundary vectors, performance, Qwen execution and every AMD hardware row are **NOT_RUN**.

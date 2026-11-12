@@ -1,0 +1,8 @@
+083e731ad4e966f04f281d06cec2815140167d25a77b75e14bedc47ad2e01bd3  backend/amd/gfx942/hsaco.om
+b5d2848b5a971bfe2a22d71595a619658ee4aeee672826f645013c0343604e8c  backend/amd/gfx942/vadd-gfx942.s
+b2c4e685c7e93f6127d5403128ee54e8ba2df47d90b1be3597cb1b2d79de6ff2  backend/amd/gfx942/vadd.isa
+5b7f4456ab012cc730ec1c41d1dd9752f8524999e19ffb2a851bef2d5ca683a6  tests/amd/run.sh
+8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994  backend/targets.om
+2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f  $HOME/work/hive/amdserve/AmdGfx942/pin/omc
+1482b348c0caf6bfbe8175c1cdd93e9ac93bedcc5d1294960f0af8d5ebe158eb  $HOME/work/hive/amdserve/Integrate/runs-s1-20261112T212828Z/hsaco
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  $HOME/work/hive/amdserve/Integrate/runs-s1-20261112T212828Z/hsaco.hsaco

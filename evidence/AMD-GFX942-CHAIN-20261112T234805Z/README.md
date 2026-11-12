@@ -1,14 +1,13 @@
 # gfx942 executor chain on the reviewed KFD layer: integration receipt
 
-Source: the files in `inputs.sha256` as committed at `55a438ec2fad558adb7d7ff9cb29705a5f474bd6` (CUDApp branch `amdserve/gfx942-exec-chain`): the
-executor, fsum16, SGEMM, the CDNA3 semantics fix, the KFD refusal cases, FP8 GEMV and the loop-bound fix, rebased onto
-the reviewed KFD head `52f3bc35`. This receipt replaces `AMD-GFX942-CHAIN-20261112T223225Z`, which was taken before the loop-bound
-fix. The per-slice receipts (`AMD-GFX942-EXEC-*`, `-SGEMM-*`, `-SGEMM-SEMANTICS-*`, `AMD-KFD-REVIEW-*`,
+Source: the files in `inputs.sha256` as committed at `b9e4a39be8e478f323d7dd5e91348fc652fdaa57` (CUDApp branch `amdserve/gfx942-exec-chain`): the
+executor, fsum16, SGEMM, the CDNA3 semantics fix, the KFD refusal cases, FP8 GEMV, the loop-bound fix and the review fixes for 4972c606 (grid dispatch loops past 1000000 workgroups, SMEM offset note), rebased onto
+the reviewed KFD head `52f3bc35`. This receipt replaces `AMD-GFX942-CHAIN-20261112T230144Z` (head 4972c606), reviewed MERGE_AFTER_FIX. The per-slice receipts (`AMD-GFX942-EXEC-*`, `-SGEMM-*`, `-SGEMM-SEMANTICS-*`, `AMD-KFD-REVIEW-*`,
 `-FP8GEMV-*`) record each slice on its own branch before the rebase; this receipt is the one that matches this tree.
-Compiler: omega-mv `e5b32567` `seed/out/omc`, sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f`.
-Host: spark-b87b, Linux AArch64, 20261112T230144Z. No device was opened.
+Compiler: omega-mv `e5b32567` `seed/out/omc`, sha256 `2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f` (machine-local path, so it is stated here and not listed in inputs.sha256; the gates refuse any other compiler, exit 69).
+Host: spark-b87b, Linux AArch64, 20261112T234805Z. No device was opened.
 
-Commands, from the CUDApp root, under `flock ~/handoffs/hive/queen/pool-8-9.lock nice -n 10 taskset -c 8,9`:
+Commands, from the CUDApp root, under `flock ~/handoffs/hive/queen/pool-14.lock nice -n 10 taskset -c 14`:
 
 ```sh
 AMD_EXEC_OUT=OUT/e sh tests/amd-exec/run.sh "$OMC"  # amd-exec.log
@@ -22,6 +21,7 @@ All four exited 0. Final lines:
 - `AMD-GFX942-EXEC PASS kernels=vadd,fsum16,sgemm,fp8gemv counts=0,1,63,64,65,200 sgemm_shapes=14 sgemm_cases=29 semantics_cases=350 fp8gemv_shapes=21 fp8gemv_cases=43 fp8_conversion_bytes=256 hardware=NOT_RUN`
 - `AMD-KFD-HOST PASS pass=23 fail=0 not_run=2`
 - `MULTITARGET PASS pass=22 fail=0 not_run=4`
+- New in this head: `PASS vadd count=0 GRID_Y=1000001 exit=0 memory-unchanged` and `CONTROL for-loop dispatch executor CAUGHT trap exit=104 at GRID_Y=1000001` (amd-exec.log); the SMEM bit-20 case is renamed `smem-offset-bit20-refused`.
 
 Hardware, separately and not from this tree: the vadd, fsum16, sgemm and fp8gemv objects this tree produces
 (digests in amd-exec.log) ran bit-exact on an AMD Instinct MI300X VF through libamdhip64 (AMD runtime as loader)

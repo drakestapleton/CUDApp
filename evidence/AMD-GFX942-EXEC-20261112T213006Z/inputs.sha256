@@ -1,0 +1,7 @@
+4b531c297bfd8cb9b1244d0d58d68e7b19d762ea0298ba3a437132e3d94939ae  backend/amd/gfx942/exec/fp.om
+428b7740597f8172e5de471027b730d41bb9df149d5eec2e97dcfeebb2419006  backend/amd/gfx942/exec/main.om
+083e731ad4e966f04f281d06cec2815140167d25a77b75e14bedc47ad2e01bd3  backend/amd/gfx942/hsaco.om
+b2c4e685c7e93f6127d5403128ee54e8ba2df47d90b1be3597cb1b2d79de6ff2  backend/amd/gfx942/vadd.isa
+420d9cb961337774185389ce42ad933b6601bb5dc8e2a10392a2824b5aece0f0  tests/amd-exec/oracle.py
+351169e8573d15fff9ca2d6ba54d2184eb96f725c39f10b8f1ff70127dbb6ace  tests/amd-exec/run.sh
+2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f  $HOME/work/hive/amdserve/AmdGfx942/pin/omc

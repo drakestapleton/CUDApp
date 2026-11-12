@@ -221,3 +221,24 @@ and no fact learned from one was used.
 Status: host byte and order checks only. The ring model is an execution model of publication
 order, not a proof of memory ordering or doorbell coherency. KFD calls, queue creation, GPU
 memory, dispatch, completion and every AMD hardware row are **NOT_RUN**.
+
+## 10. gfx942 host instruction executor (2026-11-12)
+
+`backend/amd/gfx942/exec/` (`fp.om`, `main.om`, built as one unit) is a first-party seeded-Omega
+executor for exactly the gfx942 instructions the section 8 vadd kernel uses. It decodes the raw
+`.text` words of the emitted code object (the gate extracts `.text` through the ELF section headers)
+and runs wave64 workgroups over a flat byte file holding the kernel arguments and the a, b, c arrays.
+Every instruction and branch target is checked before memory is opened; anything outside the subset is
+a refusal with a defined exit (65 malformed, 66 unsupported encoding, 67 memory range). Binary32
+addition is integer arithmetic (guard, round and sticky bits, ties to even, subnormals kept, no host
+floating point); NaN results are the canonical quiet NaN `0x7fc00000`, a policy of this model and not
+a claim about the hardware's NaN payloads.
+
+Facts: instruction formats and opcodes from the LLVM 18.1.3 sources already listed in section 8;
+IEEE 754-2019 for binary32 addition. `tests/amd-exec/oracle.py` (test only, Python standard library,
+run with `-I`) computes every expected output with binary64 addition rounded to binary32 by `struct`,
+which is exact for binary32 addition, and checks all output bits plus untouched words past `count`.
+
+Status: host execution model only. Waits complete at once and memory is sequential, so this checks
+what the kernel computes, not timing, races or the GPU's memory model. Every AMD hardware row is
+**NOT_RUN**.

@@ -173,9 +173,12 @@ def summary(kernels):
     import runpy
     counts = runpy.run_path(str(pathlib.Path(__file__).with_name('oracle.py')))['COUNTS']
     semantics = runpy.run_path(str(pathlib.Path(__file__).with_name('semantics.py')))['CASES']
+    fp8 = runpy.run_path(str(pathlib.Path(__file__).with_name('fp8gemv.py')))
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
-          f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} hardware=NOT_RUN')
+          f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} '
+          f'fp8gemv_shapes={len(fp8["SHAPES"])} fp8gemv_cases={2*len(fp8["SHAPES"])+1} '
+          f'fp8_conversion_bytes={len(range(256))} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

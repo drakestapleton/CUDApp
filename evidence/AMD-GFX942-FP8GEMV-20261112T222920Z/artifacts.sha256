@@ -1,0 +1,9 @@
+eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b  ../fp8-exec-out-3/hsaco.1
+eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b  ../fp8-exec-out-3/hsaco.2
+dd318a9636c37f2d0c90c9587338ddeeb8cb015674e679734a5b0ec3a62167b4  ../fp8-exec-out-3/exec.1
+dd318a9636c37f2d0c90c9587338ddeeb8cb015674e679734a5b0ec3a62167b4  ../fp8-exec-out-3/exec.2
+b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b  ../fp8-exec-out-3/fp8gemv.1.hsaco
+b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b  ../fp8-exec-out-3/fp8gemv.2.hsaco
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  ../fp8-exec-out-3/vadd.1.hsaco
+15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478  ../fp8-exec-out-3/fsum16.1.hsaco
+466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70  ../fp8-exec-out-3/sgemm.1.hsaco

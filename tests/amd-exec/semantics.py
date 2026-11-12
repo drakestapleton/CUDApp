@@ -126,6 +126,33 @@ for offset, address in [(4, 4), (-4, 12)]:
     case(f'global-store-{offset}', 505, glob(28, offset), {v(4): address, v(5): 0, v(3): 0xabcdef01},
          mem=mem, memory=bytes(changed))
 case('global-odd-address-pair', 21, glob(20, addr=5), refusal=66)
+# FP8 additions are separately derived from the manual, not the executor implementation.
+import runpy
+fp8_decode = runpy.run_path(str(pathlib.Path(__file__).with_name('fp8gemv.py')))['decode']
+cv = 0x7e000000 | 3 << 17 | 84 << 9 | 249
+for byte in range(256):
+    case(f'fp8-byte-{byte:02x}', '58,211-212', [cv, 0x601],
+         {v(1): 0xabcdef00 | byte, v(3,1): 0xdeadbeef, v(1,63): byte},
+         {v(3): fp8_decode(byte), v(3,63): fp8_decode(byte)}, ex=(1 << 63)|1)
+case('fp8-zero-exec', 211, [cv, 0x601], {v(3): 0xdeadbeef}, ex=0)
+for control in [0x10601, 0x20601, 0x30601, 0x1601, 0x800601]:
+    case(f'fp8-unsupported-sdwa-{control:x}', 212, [cv, control], refusal=66)
+case('fp8-non-sdwa', 211, [(cv & ~511) | 257], refusal=66)
+for op in [645, 646]:
+    for a, b in [(U32, U32), (0x80000000, 3), (0, 17)]:
+        answer = (a*b >> (32 if op == 646 else 0)) & U32
+        case(f'vmul-{op}-{a}-{b}', 361, [0xd0000003 | op << 16, 257 | 4 << 9],
+             {v(1): a, s(4): b, v(3,1): 0xdeadbeef}, {v(3): answer})
+case('vmul-vector-source', 361, [0xd2850003, 257 | 258 << 9],
+     {v(1): U32, v(2): 2}, {v(3): 0xfffffffe})
+case('vmul-modifier-refused', 361, [0xd2850103, 257 | 4 << 9], refusal=66)
+case('vmul-src2-refused', 361, [0xd2850003, 257 | 4 << 9 | 1 << 18], refusal=66)
+case('global-ubyte-last-byte', 503, [0xdc408000, 3 << 24 | 127 << 16 | 4],
+     {v(4): 0, v(5): 0}, {v(3): 255}, mem=b'\xff')
+case('global-ubyte-negative-offset', 503, [0xdc409fff, 3 << 24 | 127 << 16 | 4],
+     {v(4): 1, v(5): 0}, {v(3): 128}, mem=b'\x80')
+case('global-ubyte-range-refused', 503, [0xdc408000, 3 << 24 | 127 << 16 | 4],
+     {v(4): 1, v(5): 0}, mem=b'\xff', refusal=67)
 
 MUTATIONS = {
     'sub-no-borrow': ('put st 16 fmbool lt a b', 'put st 16 fmbool ge a b'),

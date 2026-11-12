@@ -398,3 +398,96 @@ branches, literals, SMEM component alignment, and GLOBAL offsets and memory guar
 mutants independently restore each corrected old behavior, including the inverted SCC, and each
 must fail its corresponding case. The final PASS derives the case count from the actual case table;
 all previous vadd/fsum16/SGEMM counts and controls remain. Hardware remains **NOT_RUN**.
+
+## 13. gfx942 E4M3FNUZ GEMV
+
+`backend/amd/gfx942/fp8gemv.isa` defines `fp8gemv(W,x,s,y,M,K)`: four 64-bit
+global pointers followed by two unsigned 32-bit dimensions, a 40-byte kernarg.
+W is row-major M-by-K **E4M3FNUZ** bytes; x[K], s[M], and y[M] are FP32.
+For each row m, acc starts at positive zero. In ascending k order, compute
+`acc = RN32(dequant(W[m*K+k]) * x[k] + acc)` with a single fused rounding.
+After the loop, compute `y[m] = RN32(s[m] * acc)` **once**, not a scale on each
+product or each accumulation step. K=0 still applies the scale to positive zero.
+The grid is `(M,1,1)`, local size `(64,1,1)`; each lane owns one row. The EXEC
+guard excludes every row at or beyond M, including deliberately extra groups.
+Pointer products and additions retain both 32-bit halves.
+
+### Format and encoding authority
+
+AMD [HIP 6.2.4 FP8 Numbers](https://rocm.docs.amd.com/projects/HIP/en/docs-6.2.4/reference/fp8_numbers.html),
+“Supported Devices”, explicitly lists **gfx940/gfx941/gfx942: FNUZ FP8 Yes,
+OCP FP8 No**. Its text says: “if you use this on gfx94x GPU, it will be fnuz
+number”, and defines NaN as sign set with all exponent and mantissa bits zero.
+LLVM [18.1.3 APFloat.h lines 162–179](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/include/llvm/ADT/APFloat.h#L162-L179)
+defines E5M2FNUZ bias16 and E4M3FNUZ bias8, with no infinity or signed zero;
+NaN occupies the negative-zero encoding. This kernel uses E4M3FNUZ only.
+It does not interpret weights as OCP E4M3FN (bias7, signed zero, other NaN codes).
+
+The AMD Instinct MI300 CDNA3 ISA, physical PDF pp58–60 (same locally hashed
+manual as section12.1), gives the FP8 format table and conversion rules.
+FP8 is E4M3, bias8, sole NaN0x80, sole zero0x00; exponent15 values are finite.
+The BF8 table's INF entry conflicts with its NaN entry; no BF8 operation is
+implemented or inferred from that cell. The explicit LLVM/HIP FNUZ definitions
+above establish the BF8 format name, not hardware qualification.
+
+LLVM18 [VOP1Instructions.td lines 589–621](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td#L589-L621)
+selects SDWA for byte0 under `HasCvtFP8VOP1Bug`.
+[Lines 1418–1444](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td#L1418-L1444)
+assign CVT_F32_FP8 opcode0x54 and fix SDWA destination selector bits42–40 to6.
+The kernel uses that SDWA BYTE0 form even where a non-SDWA encoding might exist.
+[VOP3Instructions.td lines1604–1611](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP3Instructions.td#L1604-L1611)
+assign MUL_LO_U32=0x285 and MUL_HI_U32=0x286. The format definitions cited in
+section8 supply VOP3A and SDWA bit positions. FLATInstructions.td's gfx9 GLOBAL
+table assigns unsigned-byte load opcode0x10. The host gate assembles the
+independent `fp8gemv-gfx942.s` with `llvm-mc-18 -mcpu=gfx942` and compares
+the complete instruction section, metadata note, and non-relocated descriptor
+bytes, rather than treating an accepted mnemonic as encoding proof.
+
+| Added instruction | Physical PDF page | Semantics and state effects checked by single-step cases |
+| --- | --- | --- |
+| V_CVT_F32_FP8 SDWA BYTE0 | 58–60, 211–212 | Convert low byte from E4M3FNUZ; active lanes only; preserve EXEC, VCC, SCC. All byte values checked, upper source bytes ignored. |
+| V_MUL_LO_U32 | 361 | Low32 of unsigned 32-by-32 multiplication; preserve flags and inactive destinations. |
+| V_MUL_HI_U32 | 361 | High32 of the same unsigned 64-bit product; preserve flags and inactive destinations. |
+| GLOBAL_LOAD_UBYTE | 87, 90, 503 | Same global address rule as dword load; exactly one byte read and zero-extended, including final byte of memory. |
+
+The executor accepts only conversion BYTE0 with LLVM's fixed destination selector
+and zero modifiers. Other selectors, non-SDWA conversion, other conversion opcodes,
+and unsupported modifiers refuse66. Its VOP3 multiply subset accepts a VGPR src0
+and an SGPR or VGPR src1, no src2 or modifiers. Byte loads retain address/range
+refusals67 and I/O refusals74. Validation still decodes every word before opening
+memory for execution. The conversion is integer-only in seeded Omega: extract
+the sign/exponent/fraction, normalize an FP8 subnormal, and construct exact FP32
+bits. No finite value requires rounding. The host maps the sole FP8 NaN to
+canonical FP32 0x7fc00000; this does **not** claim hardware NaN payload parity.
+FP32 multiplication and accumulation retain the exact integer FMA implementation
+and one nearest-even rounding, with denormals preserved.
+
+The producer's former eight-format array is replaced with an anonymous-file
+registry, growing with declared formats. Each record's field capacity derives
+from the maximum64 instruction bits; it does not bound the number of formats.
+Format IDs are keys, not array offsets. Branch references retain reserved SOPP
+format ID4. Registry checks cover sparse high IDs, extra unused formats with an
+unchanged object, and undeclared-format refusal before output. All earlier code
+objects must remain byte-identical to the corrected SGEMM chain.
+
+### Acceptance and hardware boundary
+
+`tests/amd-exec/fp8gemv.py` independently decodes the format into exact Python
+Fractions, then uses the rational FP32 rounding oracle. The single-step table
+checks every byte's conversion without GEMV or scaling hiding an error. The
+kernel gate also runs an all-byte matrix, the Cartesian M/K shape table, empty
+rows, finite/special FP32 inputs and scales, and whole-memory guards. Executable
+controls substitute a complete OCP E4M3FN converter and replace the scale
+multiply with a move; each must produce a bit mismatch. Earlier gates, shapes,
+SCC/VCC/addressing controls, and wrong-compiler preflight refusal remain.
+Final PASS counts are derived from the test tables. Gate receipts record actual
+commands, logs, compiler errors, outputs, hashes and observed exits.
+
+**Hardware NOT_RUN — required notebook check:** the manual's exact text on
+physical PDF p60 is: “The register SH_MEM_CONFIG, bit[8] must be set to 1 to
+produce the correct results for BF8 and FP8 operations.” When that bit is set,
+this kernel assumes **E4M3FNUZ** weight bytes (bias8, unsigned zero0x00, NaN0x80),
+not OCP E4M3FN. This host executor neither reads nor writes SH_MEM_CONFIG.
+The notebook must establish that register precondition through an authorized
+hardware path before dispatch. No register state, GPU dispatch, timing,
+throughput, ROCr loading, or device-output parity has been measured here.

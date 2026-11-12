@@ -13,11 +13,13 @@ export LC_ALL
 [ "$#" -eq 1 ] || { echo 'usage: run.sh /absolute/path/to/pinned-omc' >&2; exit 64; }
 omc=$1
 case $omc in /*) ;; *) echo 'usage: omc path must be absolute' >&2; exit 64 ;; esac
+for tool in dirname sed uname basename sha256sum; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "NOT_RUN required tool missing: $tool"; exit 77; }
+done
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
 # Use the existing gate as the one source of this repository's compiler digest.
 omc_pin=$(sed -n 's/^omc_pin=//p' "$root/tests/multitarget/run.sh")
 [ "${#omc_pin}" -eq 64 ] || { echo 'FAIL: cannot read repository compiler pin'; exit 1; }
-command -v sha256sum >/dev/null 2>&1 || { echo 'NOT_RUN sha256sum missing'; exit 77; }
 digest() { d=$(sha256sum < "$1") || return 1; printf '%s\n' "${d%% *}"; }
 [ -f "$omc" ] && [ -x "$omc" ] || { echo 'NOT_RUN pinned omc missing/not executable'; exit 77; }
 [ "$(digest "$omc")" = "$omc_pin" ] || { echo "REFUSED: compiler digest differs from pin $omc_pin" >&2; exit 69; }
@@ -41,6 +43,7 @@ echo "PIN omc $omc_pin (from tests/multitarget/run.sh)"
 echo "Outputs: $out"
 echo "ORACLE native-header sha256=$(digest /usr/include/linux/kfd_ioctl.h)"
 
+# Python oracles run with -I: PYTHON* variables (PYTHONOPTIMIZE strips asserts) are ignored.
 # A fake compiler leaves a marker if it is ever executed. The recursive gate must refuse its
 # digest before running it or creating its requested outputs. No alternate pin is injectable.
 printf '#!/bin/sh\nprintf executed > "%s"\nexit 0\n' "$out/WRONG-COMPILER-EXECUTED" > "$out/wrong-omc" || exit 74
@@ -82,7 +85,7 @@ if [ -d /usr/x86_64-linux-gnu/include ] && [ -f /usr/x86_64-linux-gnu/include/li
   "$xc" -std=c11 -O2 -Wall -Wextra -Werror -I/usr/x86_64-linux-gnu/include -c tests/amd-kfd/layout-oracle.c -o "$out/x86-layout.o" > "$out/x86-build.log" 2>&1
   rc=$?
   if [ "$rc" -ne 0 ]; then cat "$out/x86-build.log"; bad "x86-64 header oracle build exit=$rc"
-  elif python3 -c 'import pathlib,sys; assert pathlib.Path(sys.argv[1]).read_bytes()[18:20] == bytes([62,0])' "$out/x86-layout.o" \
+  elif python3 -I -c 'import pathlib,sys; assert pathlib.Path(sys.argv[1]).read_bytes()[18:20] == bytes([62,0])' "$out/x86-layout.o" \
        && "$objcopy" --dump-section ".kfdlayout=$out/x86-layout.bin" "$out/x86-layout.o" \
        && cmp -s "$out/native-layout.bin" "$out/x86-layout.bin"; then
     ok 'x86-64 cross-compiled header layout: all requests/sizes/offsets/widths equal native table (no x86 execution claimed)'
@@ -105,7 +108,7 @@ else notrun 'assembly ELF version: llvm-mc/llvm-readelf missing (source metadata
 
 # KFD cannot currently be *issued* by the pinned compiler: retain compile-only minimal
 # reproductions. The data layer itself uses no devctl. Never run a refused compiler output.
-python3 - "$out/native-table.tsv" "$out" <<'PY'
+python3 -I - "$out/native-table.tsv" "$out" <<'PY'
 import pathlib, sys
 rows = pathlib.Path(sys.argv[1]).read_text().splitlines()
 out = pathlib.Path(sys.argv[2])
@@ -124,7 +127,7 @@ for src in "$out"/allowlist-*.om; do
   if [ "$rc" -eq 9 ]; then ok "allowlist compile-only refusal $(basename "$src" .om) exit=9"
   else bad "allowlist expected refusal $(basename "$src" .om) exit=$rc"; fi
 done
-python3 tests/amd-kfd/oracle.py . "$out" > "$out/byte-oracle.log" 2>&1
+python3 -I tests/amd-kfd/oracle.py . "$out" > "$out/byte-oracle.log" 2>&1
 rc=$?
 cat "$out/byte-oracle.log"
 if [ "$rc" -eq 0 ]; then ok 'independent byte-oracle suite'; else bad "independent byte-oracle exit=$rc"; fi

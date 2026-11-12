@@ -1,0 +1,3 @@
+failed fixture gate: exit=1 (truncated table refused3 before fuel exhaustion)
+corrected complete fixture gate: exit=0
+command: flock /home/drakestapleton/handoffs/hive/queen/pool-14.lock nice -n 10 sh -c 'AMD_KFD_OUT=/home/drakestapleton/work/hive/amdserve/Gfx942Exec/sgemm-kfd-review-out-2 sh tests/amd-kfd/run.sh /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc > ../sgemm-kfd-review-2.log 2>&1'

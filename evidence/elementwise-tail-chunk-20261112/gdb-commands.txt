@@ -1,0 +1,6 @@
+The exact command that wrote gdb.txt (run from the checkout at 5783a549, SPARK_WINDOW set, core 7):
+
+gdb -q -batch -ex run -ex bt -ex "info registers x0 x1 x2 x3 x5 x19 x22 x23" -ex "frame 2" -ex "info registers x19 x20 x21 x22 x23 x24 x25 x26 x27 x28" --args ./build/gpu_elementwise_test --out FILE
+
+Lines about debuginfod were removed from the output (grep -v). The first register block is frame 0
+(memcpy); the second is frame 2 (run_1d).

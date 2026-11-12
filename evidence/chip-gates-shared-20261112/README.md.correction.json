@@ -21,9 +21,13 @@
         "rec0": 1
       }
     },
-    "chip_rerun_at_5783a549": "evidence/elementwise-tail-chunk-20261112/: twelve cases pass; swiglu_131073 is rc=UNWRITTEN with unwritten=131071; SIGSEGV in memcpy from run_abc with byte count 524288 while run_1d holds n = 131073 and a 1-element chunk"
+    "chip_reruns_at_5783a549": {
+      "receipt": "evidence/elementwise-tail-chunk-20261112/",
+      "run_1_unbuffered": "twelve cases pass; swiglu_131073 returns rc=UNWRITTEN with calls=2 and unwritten=131071 (its mutant call too); the process then exits 139, and this run does not show in which call",
+      "run_2_gdb": "a separate process: SIGSEGV in memcpy from run_abc from run_1d; destination range 524288 bytes (x5 - x0), 520112 bytes left at the fault (x2); run_1d holds 131073 and 1"
+    }
   },
-  "corrected_statement": "The failing call is the last chunk of a call longer than one chunk (first reached: swiglu_131073, a tail of one element). run_1d gave it the plan's p[10], the full chunk's 524288 bytes, instead of the chunk's own 4 bytes.",
+  "corrected_statement": "The affected call is the last chunk of a call longer than one chunk (first reached: swiglu_131073, a tail of one element). run_1d launched and copied it with the plan's p[10], the full chunk's 524288 bytes, instead of the chunk's own 4 bytes. Run 1 shows the 131071 unwritten words; run 2, a separate process, shows a 524288-byte copy faulting in a call with n = 131073.",
   "stands": [
     "every exit code and log in before-5783a549/ and after-97fc9eb3/",
     "the resident findings and the resident pass",

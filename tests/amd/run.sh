@@ -117,6 +117,55 @@ if grep -q 'NT_AMDGPU_METADATA' "$out/omega.readelf.txt" && grep -q 'amdhsa.targ
  && grep -q 'Flags: *0x54C, gfx942' "$out/omega.readelf.txt" && ! grep -q 'warning:\|error:' "$out/omega.readelf.txt"; then
   ok 'llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd'
 else bad 'llvm-readelf metadata/header/symbol check'; fi
+# MessagePack encoders at every width boundary (the vadd metadata only uses small values, so the object
+# comparisons above cannot see a width defect). The producer's own mpuint/mpstr are linked under a test
+# main; expected bytes are the msgpack spec formats written here by hand, not producer output.
+mptest() {
+  sed '/^fn main to int/,$d' "$1" > "$out/$2.om" || exit 74
+  cat >> "$out/$2.om" <<'MPMAIN'
+fn main to int
+mpuint 0
+mpuint 127
+mpuint 128
+mpuint 255
+mpuint 256
+mpuint 65535
+mpuint 65536
+mpuint 4294967295
+mpuint 4294967296
+a = new uchar 31 65
+mpstr a
+b = new uchar 32 66
+mpstr b
+c = new uchar 255 67
+mpstr c
+d = new uchar 256 68
+mpstr d
+e = new uchar 65536 69
+mpstr e
+flush
+ret 0
+end
+MPMAIN
+  timeout 120 "$omc" < "$out/$2.om" > "$out/$2" 2> "$out/$2.compile.err" && chmod 700 "$out/$2" \
+    && timeout 30 "$out/$2" > "$out/$2.bytes" 2> "$out/$2.err"
+}
+{ printf '\000\177\314\200\314\377\315\001\000\315\377\377\316\000\001\000\000\316\377\377\377\377\317\000\000\000\001\000\000\000\000'
+  printf '\277'; head -c 31 /dev/zero | tr '\000' A
+  printf '\331\040'; head -c 32 /dev/zero | tr '\000' B
+  printf '\331\377'; head -c 255 /dev/zero | tr '\000' C
+  printf '\332\001\000'; head -c 256 /dev/zero | tr '\000' D
+  printf '\333\000\001\000\000'; head -c 65536 /dev/zero | tr '\000' E; } > "$out/msgpack.expected" || exit 74
+if mptest "$src/hsaco.om" msgpack && cmp -s "$out/msgpack.bytes" "$out/msgpack.expected"; then
+  ok 'MessagePack uint and str encodings at every width boundary equal the spec bytes'
+else bad 'MessagePack width encodings'; fi
+# Control: the old single-byte value encoder (octet v) must be caught by the same comparison.
+# It must compile and run, so the comparison (not a build failure) is what catches it.
+sed 's/^if le v 127$/if le v 18446744073709551615/' "$src/hsaco.om" > "$out/mp-mutant-src.om" || exit 74
+if cmp -s "$src/hsaco.om" "$out/mp-mutant-src.om"; then bad 'MessagePack mutant did not apply'
+elif ! mptest "$out/mp-mutant-src.om" mp-mutant; then bad 'MessagePack mutant did not build and run'
+elif cmp -s "$out/mp-mutant.bytes" "$out/msgpack.expected"; then bad 'CONTROL single-byte MessagePack value escaped'
+else ok 'CONTROL single-byte MessagePack value CAUGHT by byte comparison'; fi
 # Negative 1: one bit in a TABLE operand (v_add_f32 src0 v4=260 -> v5=261).
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then bad 'instruction-table mutation did not apply'; fi

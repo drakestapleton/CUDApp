@@ -1,0 +1,23 @@
+PIN omc=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Python 3.12.3
+PASS hsaco two builds byte-identical
+PASS exec two builds byte-identical
+PASS code object two builds byte-identical
+PASS count=0 every-output-bit and past-count guards
+PASS count=1 every-output-bit and past-count guards
+PASS count=63 every-output-bit and past-count guards
+PASS count=64 every-output-bit and past-count guards
+PASS count=65 every-output-bit and past-count guards
+PASS count=200 every-output-bit and past-count guards
+PASS random binary32 pairs=4096 seed=942
+CONTROL one-bit-vadd-operand CAUGHT bit mismatch
+CONTROL outside-subset CAUGHT exit=66 memory-unchanged
+CONTROL unreachable-outside-subset CAUGHT exit=66 memory-unchanged
+CONTROL truncated-word CAUGHT exit=65 memory-unchanged
+CONTROL branch-inside-literal CAUGHT exit=65 memory-unchanged
+CONTROL memory-range CAUGHT exit=67 memory-unchanged
+CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation
+1482b348c0caf6bfbe8175c1cdd93e9ac93bedcc5d1294960f0af8d5ebe158eb  $HOME/work/hive/amdserve/Integrate/runs-ex-20261112T213006Z/hsaco.1
+3790cf767aad27c6ccbe6f220395d288c7dff9e69d503f93b5bfe74b9d83bd21  $HOME/work/hive/amdserve/Integrate/runs-ex-20261112T213006Z/exec.1
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  $HOME/work/hive/amdserve/Integrate/runs-ex-20261112T213006Z/vadd.1.hsaco
+AMD-GFX942-EXEC PASS counts=0,1,63,64,65,200 hardware=NOT_RUN

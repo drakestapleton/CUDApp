@@ -2,6 +2,25 @@
 #include "omega_gpu_resident.h"
 #include "gpu_resident_grid.h"
 #include "gpu_resident_fixture.h"
+#include "omega_bw_hazard.h"
+/* The static scoreboard checker over the encoded kernel. The warp simulator has no instruction latency, so a
+ * variable-latency producer (S2R, loads, atomics) read without its wait is invisible to it and is caught only here
+ * or on the chip (2026-11-12: S2R emitted fixed-latency, GB10 marker timeout). */
+static int hazards(unsigned n, unsigned ctas) {
+    static BlackwellIRProgram p; static OmegaBwHazardReport rep;
+    static uint8_t code[65536]; OmegaBlackwellKernel kernel; uint64_t err=0;
+    if(omega_gpu_resident_build(resident_model,n,64,ctas,&p,&err)) { fprintf(stderr,"resident build refused err=%llu\n",(unsigned long long)err);return 1; }
+    size_t bytes=omega_bw_program_code_bytes(&p);
+    if(bytes>sizeof code||omega_blackwell_kernel_encode_into(&p,code,bytes,&kernel)) { fprintf(stderr,"resident encode refused\n");return 1; }
+    int rc=omega_bw_hazard_check(code,bytes,&rep);
+    if(rc||rep.count) {
+        fprintf(stderr,"resident hazards layers=%u ctas=%u: rc=%d findings=%zu\n",n,ctas,rc,rep.count);
+        for(size_t i=0;i<rep.count&&i<OMEGA_BW_HAZARD_MAX;i++)
+            fprintf(stderr,"  IR %u %s R%u release 0x%x (producer/reader IR %u)\n",rep.f[i].pc,omega_bw_hazard_kind(rep.f[i].kind),rep.f[i].reg,rep.f[i].release,rep.f[i].src_pc);
+        return 1;
+    }
+    return 0;
+}
 static int run(int drop, unsigned order, unsigned quantum, unsigned witness) {
     float arena[64], expected[64];
     resident_input(arena,witness);
@@ -40,6 +59,7 @@ static int run(int drop, unsigned order, unsigned quantum, unsigned witness) {
 }
 int main(int argc,char **argv) {
     if(argc!=2||strcmp(argv[1],"--sim")) { fprintf(stderr,"use --sim; chip tier NOT_RUN\n");return 2; }
+    for(unsigned n=1;n<=5;n+=4) for(unsigned c=1;c<=2;c++) if(hazards(n,c)) return 1;
     for(unsigned w=0;w<2;w++) for(unsigned o=0;o<2;o++) for(unsigned q=1;q<=17;q+=8) if(run(0,o,q,w)) return 1;
     if(run(1,0,10000,0)) { fprintf(stderr,"dropped barrier survived\n");return 1; }
     uint32_t bad[40];memcpy(bad,resident_model,sizeof bad);bad[3]=64;
@@ -57,5 +77,5 @@ int main(int argc,char **argv) {
        !omega_gpu_resident_build(resident_model,5,0,2,&p,&err) ||
        !omega_gpu_resident_build(resident_model,5,64,0,&p,&err) ||
        !omega_gpu_resident_build(resident_model,5,64,3,&p,&err)) return 1;
-    puts("GPU RESIDENT PASS (reference, interleaved CTAs, barrier and descriptor controls); chip NOT_RUN");return 0;
+    puts("GPU RESIDENT PASS (scheduling hazards, reference, interleaved CTAs, barrier and descriptor controls); chip tier is gpu_resident_chip");return 0;
 }

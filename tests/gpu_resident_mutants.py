@@ -14,6 +14,7 @@ MUTANTS={
     'contracted-matvec': ('ef ins m FMUL r4 19 19 20 NONE 0', 'ef ins m 33 r4 19 19 20 18 0\nmov ins m 18 0'),
     'stale-generation': ('atomic ins m 27 27 3 26', 'atomic ins m 27 27 3 22'),
     'wrong-queue-stride': ('ef ins m IMADW r4 4 9 NONE 0 32', 'ef ins m IMADW r4 4 9 NONE 0 16'),
+    'fixed-latency-thread-id': ('emit ins m okk S2R KVAR 0 NONE r4 8 NONE NONE NONE 33', 'ef ins m S2R r4 8 NONE NONE NONE 33'),
 }
 def main():
     bridge=os.environ.get('OMEGA_BRIDGE')
@@ -36,7 +37,7 @@ def main():
                     subprocess.run(['sh',str(Path(bridge)/'tools/bridge-seeded'),'c',str(om)],stdout=out,env=env,check=True)
                 outputs.append(str(c))
             exe=t/name
-            subprocess.run([os.environ.get('CC','cc'),'-std=gnu11','-O2','-D_GNU_SOURCE','-ffp-contract=off','-I'+str(ROOT/'src'),'-I'+str(ROOT/'tests'),str(ROOT/'tests/gpu_resident_test.c'),str(ROOT/'src/omega_gpu_resident.c'),*outputs,str(archive),'-lpthread','-lm','-o',str(exe)],check=True)
+            subprocess.run([os.environ.get('CC','cc'),'-std=gnu11','-O2','-D_GNU_SOURCE','-ffp-contract=off','-I'+str(ROOT/'src'),'-I'+str(ROOT/'tests'),str(ROOT/'tests/gpu_resident_test.c'),str(ROOT/'src/omega_bw_hazard.c'),str(ROOT/'src/omega_gpu_resident.c'),*outputs,str(archive),'-lpthread','-lm','-o',str(exe)],check=True)
             got=subprocess.run([str(exe),'--sim'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
             if got.returncode==0: raise RuntimeError(name+': SURVIVED')
             print(f'{name}: KILLED rc={got.returncode}',flush=True)

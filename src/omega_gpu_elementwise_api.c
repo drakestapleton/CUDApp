@@ -1130,7 +1130,7 @@ static int run_1d(OmegaGpuEwOp op, uint32_t n, const void *a, const void *b, voi
         uint32_t ni = (uint32_t)rec[0];
         uint32_t grid = (uint32_t)rec[1];
         uint32_t params[4] = { ni, 0, 0, 0 };
-        size_t bytes=p[10];
+        size_t bytes = (size_t)ni * 4; /* this chunk's bytes: the plan's p[10] is not per chunk */
         rc = run_abc(k, (const uint8_t *)a + (size_t)i0 * 4, bytes, b ? (const uint8_t *)b + (size_t)i0 * 4 : a, bytes,
                      (uint8_t *)c + (size_t)i0 * 4, bytes, (uint32_t)rec[6], grid, params, info);
         i0 += ni;

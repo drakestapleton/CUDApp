@@ -363,7 +363,7 @@ return o_leave(0);
 }
 static uint64_t f24(void *v0, uint64_t v0_n, void *v1, uint64_t v1_n, uint64_t v2, uint64_t v3){
 o_enter();
-({uint64_t p2=14ULL;uint64_t p3=({uint64_t p0=v2;uint64_t p1=v3;uint64_t p2=65535ULL;uint64_t p3=65535ULL;f3(p0, p1, p2, p3);});uint64_t p4=0ULL;f13(v0, v0_n, v1, v1_n, p2, p3, p4);});
+({uint64_t p2=14ULL;uint64_t p3=({uint64_t p0=v2;uint64_t p1=v3;uint64_t p2=23ULL;uint64_t p3=65535ULL;f3(p0, p1, p2, p3);});uint64_t p4=0ULL;f13(v0, v0_n, v1, v1_n, p2, p3, p4);});
 return o_leave(0);
 }
 static uint64_t f25(void *v0, uint64_t v0_n, void *v1, uint64_t v1_n, uint64_t v2, uint64_t v3, uint64_t v4){
@@ -438,10 +438,10 @@ for(;o_op(8,5, v5, k1);v5=o_op(1,5, v5,1)){
 ({uint64_t p2=9ULL;uint64_t p3=({uint64_t p0=3ULL;uint64_t p1=22ULL;uint64_t p2=65535ULL;uint64_t p3=2ULL;f3(p0, p1, p2, p3);});uint64_t p4=4ULL;f13(v0, v0_n, v1, v1_n, p2, p3, p4);});
 ({uint64_t p2=24ULL;uint64_t p3=v3;f23(v0, v0_n, v1, v1_n, p2, p3);});
 ({uint64_t p2=25ULL;uint64_t p3=v2;f23(v0, v0_n, v1, v1_n, p2, p3);});
-({uint64_t p2=3ULL;uint64_t p3=({uint64_t p0=8ULL;uint64_t p1=65535ULL;uint64_t p2=65535ULL;uint64_t p3=65535ULL;f3(p0, p1, p2, p3);});uint64_t p4=33ULL;f13(v0, v0_n, v1, v1_n, p2, p3, p4);});
+({uint64_t p2=({uint64_t p0=3ULL;uint64_t p1=2ULL;uint64_t p2=0ULL;uint64_t p3=65535ULL;f4(p0, p1, p2, p3);});uint64_t p3=({uint64_t p0=8ULL;uint64_t p1=65535ULL;uint64_t p2=65535ULL;uint64_t p3=65535ULL;f3(p0, p1, p2, p3);});uint64_t p4=33ULL;f10(v0, v0_n, v1, v1_n, p2, p3, p4);});
 ({uint64_t p2=8ULL;uint64_t p3=1ULL;f32(v0, v0_n, v1, v1_n, p2, p3);});
 ({f15(v0, v0_n, v1, v1_n);});
-({uint64_t p2=3ULL;uint64_t p3=({uint64_t p0=8ULL;uint64_t p1=65535ULL;uint64_t p2=65535ULL;uint64_t p3=65535ULL;f3(p0, p1, p2, p3);});uint64_t p4=37ULL;f13(v0, v0_n, v1, v1_n, p2, p3, p4);});
+({uint64_t p2=({uint64_t p0=3ULL;uint64_t p1=2ULL;uint64_t p2=0ULL;uint64_t p3=65535ULL;f4(p0, p1, p2, p3);});uint64_t p3=({uint64_t p0=8ULL;uint64_t p1=65535ULL;uint64_t p2=65535ULL;uint64_t p3=65535ULL;f3(p0, p1, p2, p3);});uint64_t p4=37ULL;f10(v0, v0_n, v1, v1_n, p2, p3, p4);});
 return o_leave(0);
 }
 static uint64_t f34(void *v0, uint64_t v0_n, void *v1, uint64_t v1_n, uint64_t v2){

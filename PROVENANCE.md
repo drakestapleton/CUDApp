@@ -715,3 +715,144 @@ results for BF8 and FP8 operations.”
 [gemv2-arch]: https://rocm.docs.amd.com/en/docs-6.3.1/conceptual/gpu-arch/mi300.html
 [gemv2-cache]: https://rocm.docs.amd.com/projects/rocprofiler-compute/en/docs-7.2.2/conceptual/vector-l1-cache.html
 [gemv2-ds]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/DSInstructions.td
+
+## 16. gfx942 tiled full-attention core (27B)
+
+### Model and boundary
+
+The exact [Qwen3.8-27B-FP8 config at revision
+017b9c7af6b5689d5dd426a76e0bc077eb5ca20a][attn-config] is filed unchanged at
+`tests/amd-exec/model/qwen38-27b-fp8-config.json`. Its digest is checked
+against the historical Q27 manifest, rather than a mutable model name.
+Its `text_config` specifies `num_attention_heads=24`,
+`num_key_value_heads=4`, `head_dim=256`, `attn_output_gate=true`,
+`output_gate_type="swish"`, and full attention every fourth layer.
+The same configuration specifies `rms_norm_eps=1e-6`,
+`partial_rotary_factor=0.25`, and `rope_theta=10000000`.
+
+This commit implements **only the attention core**: Q is FP32, already
+Q-normalized and rotated; the BF16 K/V cache already contains the newest
+token. It writes FP32 attention values before the output gate. Q/K
+normalization, RoPE, cache append, and the output swish/sigmoid gate belong
+to separate kernels, not an implicit assumption that they are unnecessary.
+The mathematical reference is `tests/gpu_decode_attn256_test.c`: lines
+50–52 establish24/4 heads and6 queries per KV head, lines61–66 give the
+cache layout, and lines125–143 specify GQA mapping, the scaled dot product,
+max-subtracted softmax, and weighted V. Lines100–111 describe the preceding
+zero-centered `(1+w)` Q/K normalization and partial RoPE; lines118–123
+describe K/V BF16 cache append. These are model-math references, not
+NVIDIA tool or instruction facts.
+
+Both kernels share a48-byte kernarg:
+Q pointer at0, K at8, V at16, partials at24, output at32, token count T
+at40, cache capacity at44; the last two fields are unsigned32-bit.
+Q and output are `[24][256]` FP32. K and V are `[4][capacity][256]` BF16.
+T means **number of valid tokens**, not the newest zero-based position;
+the caller requires T<=capacity. A prep launch appending position P feeds
+T=P+1 to this core. Nonfinite model inputs are outside the numerical
+qualification fixtures; unsupported instructions and memory violations
+still have the executor's defined refusals.
+
+`attn256_part`: launch `(ceil(T/64),24)` workgroups of64 lanes, with
+workgroup X selecting a64-token tile and workgroup Y selecting the Q head.
+Both dimensions may be overdispatched: invalid tiles/heads return without
+accessing arrays. `attn256_merge`: launch `(1,24)` workgroups of64 lanes.
+The executor CLI takes **work-item grid X**, so its X argument is64 times
+the workgroup count, not the count itself. Both descriptors enable
+workgroup-id Y; the gate compares their descriptor bytes with LLVM18 and
+checks that bit explicitly.
+
+Partials contain `[24][ceil(T/64)]` records of1040 bytes: FP32 maximum
+at0, denominator at4, eight untouched padding bytes at8, and256 FP32
+unnormalized weighted sums at16. T=0 reads no Q/K/V/partial records and
+writes zero output. Partial buffers are scratch, not a persistent KV
+cache or a host computation dependency.
+
+### Scheduling and exact arithmetic order
+
+The wave64,304-CU and64-byte cache-line references in section15 apply here.
+One wave per head alone would offer only24 workgroups. Tiling the context
+adds independently schedulable workgroups without atomics or cross-wave
+barriers. Each lane owns four adjacent dimensions. Q loads use DWORDX4;
+the K and V loads for a token are DWORDX2, both issued before a single
+`vmcnt(0)` wait. Thus all lanes cover contiguous512-byte BF16 rows, not
+one strided scalar each. DS_BPERMUTE uses no allocated LDS; its lgkm wait
+and snapshot semantics are unchanged from section15. Hardware bandwidth,
+occupancy and performance remain NOT_RUN.
+
+Within each tile, visit tokens in ascending order. Each lane starts its
+dot accumulator at +0 and executes four RN32 FMA operations for dimensions
+`4*lane+j`, j=0,1,2,3. Six simultaneous XOR butterfly adds at distances
+32,16,8,4,2,1 follow. Multiply the resulting score by exact FP32
+`1/sqrt(256)=1/16=0.0625`. Every active lane obtains the same score.
+Initialize maximum m=-infinity, denominator l=+0, and each sum a=+0.
+For score s, set:
+
+* n=MAX32(m,s).
+* alpha=EXP2_32(RN32_MUL(RN32_SUB(m,n),LOG2E32)).
+* beta=EXP2_32(RN32_MUL(RN32_SUB(s,n),LOG2E32)).
+* l=RN32_ADD(RN32_MUL(l,alpha),beta).
+* a[d]=RN32_FMA(beta,V[d],RN32_MUL(a[d],alpha)).
+* m=n.
+
+LOG2E32 is the binary32 constant0x3fb8aa3b. The merge visits tile records
+in ascending tile order, reweights old and tile statistics by their
+maxima in the same manner, and uses FMA for both the merged denominator
+and sums. Finally it computes RCP32(l) once and multiplies each sum by it.
+It does not claim the same rounding order as a monolithic softmax or the
+Spark reduction.
+
+### Transcendental model and manual audit
+
+Ordinary add/subtract/multiply/FMA retain the executor's exact RN-even
+integer algorithms and denormal preservation. EXP and RCP are different:
+the ISA promises1ULP, not device-identical answer bits. The executor
+selects one representative within that allowance. EXP uses binary64
+range reduction, an18-term Taylor polynomial of exp(r*ln2), and exact
+binary64 powers of two before RN32 conversion. RCP uses binary64 division
+then RN32 conversion. Both implement the manual's input/output FTZ and
+special-value behavior. This binary64 use is in seeded Omega, not a host
+library or a production Python dependency.
+
+Recorded Wolfram query:
+`{N[Log[2],22], N[2 Log[2]^19/19!,22], N[1/Log[2],22], 1/Sqrt[256]}`
+returned ln2=0.69314718055994530941723212145817656807,
+the Taylor remainder bound1.55460168577147128381779943180201880963e-20,
+log2(e)=1.44269504088896340735992468100189213743, and1/16.
+The finite-precision implementation is additionally checked against
+independent Decimal120-digit enclosures, not justified by the polynomial
+remainder alone.
+
+| Instruction | CDNA3 physical PDF page | Semantics, flags, refusal boundary | LLVM18.1.3 source |
+| --- | --- | --- | --- |
+| S_LSHR_B32 | 103 | Unsigned source shifted by low5 shift-count bits; SCC iff result nonzero. Other flags unchanged. | [SOPInstructions.td][bf16-sop], opcode30 |
+| V_SUB_F32 | 169 | RN32 subtract, denormals preserved; active lanes only, EXEC/VCC/SCC unchanged. | [VOP2Instructions.td][bf16-vop2], opcode2 |
+| V_MAX_F32 | 172 | IEEE signaling-NaN quieting first, quiet NaN selects numeric operand, +0 preferred to -0; active lanes only, flags unchanged. | [VOP2Instructions.td][bf16-vop2], opcode11 |
+| V_EXP_F32 | 195 | pow(2,S0),1ULP, input/output denormals flushed; -infinity maps0, signed zero maps1, +infinity maps+infinity. | [VOP1Instructions.td][attn-vop1], opcode32 |
+| V_RCP_F32 | 196 | Reciprocal,1ULP, input/output denormals flushed; signed zero/infinity map to signed infinity/zero. | [VOP1Instructions.td][attn-vop1], opcode34 |
+
+Every new opcode has manual-derived single-step cases preserving inactive
+lanes/registers and flags, plus a control changing its semantics. The
+gate retains all earlier cases. Literal/source/modifier refusal boundaries
+remain those in sections10–15; no kernel-name recognition is introduced.
+
+`attention.py` independently uses Fraction arithmetic with RN-even at
+each ordinary instruction boundary and Decimal120-digit EXP reference
+values. It encloses the manual's1ULP allowance and rounds interval
+endpoints outward; an interval is a conservative enclosure, not a claim
+that every value inside is an allowed device result. These intervals are
+propagated through every reweighting, accumulation and final reciprocal.
+Every partial statistic and output must lie inside its own interval.
+All inputs, cache tails, padding, and guard bytes must stay unchanged.
+Per-output exact rational interval bounds and widths are emitted as JSON;
+each case prints the widest interval. No fixed arbitrary output tolerance
+replaces the per-instruction bound. Controls remove max subtraction,
+mis-map GQA, and load V from K; each must produce a numerical mismatch.
+
+**Hardware NOT_RUN:** MI300X execution of these attention objects, timing,
+the actual transcendental choices, and end-to-end model output require
+the parent's hardware bundle. Host byte parity and bounded numerical
+checks are not hardware qualification or a measured speedup.
+
+[attn-config]: https://huggingface.co/Qwen/Qwen3.8-27B-FP8/resolve/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/config.json
+[attn-vop1]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td

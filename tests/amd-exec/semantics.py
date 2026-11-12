@@ -51,6 +51,24 @@ for width, op in [(32, 28), (64, 29)]:
             seed[s(5)] = value >> 32
             result[s(9)] = shifted >> 32
         case(f'lshl{width}-{a}-{b}', 103, sop(op, b=6), seed, result, ncc=int(shifted != 0))
+for a, b in [(0, 1), (1, 32), (0x80000001, 33), (U32, 31)]:
+    shifted = a >> (b & 31)
+    case(f'lshr32-{a}-{b}', 103, sop(30), {s(4): a, s(5): b},
+         {s(8): shifted}, ncc=int(shifted != 0))
+for a, b, expected in [(0x80000000, 0, 0), (0, 0x80000000, 0),
+                       (0x7fc01234, 0x3f800000, 0x3f800000),
+                       (0x7f801234, 0x3f800000, 0x7fc01234),
+                       (0xbf800000, 0xc0000000, 0xbf800000)]:
+    case(f'fmax-{a:x}-{b:x}', 172, vop(11), {v(1): a, v(2): b}, {v(3): expected})
+case('fsub-denorm', 169, vop(2), {v(1): 3, v(2): 2}, {v(3): 1})
+for op, a, expected in [(32, 0xff800000, 0), (32, 0x80000000, 0x3f800000),
+                        (32, 0x7f800000, 0x7f800000), (32, 1, 0x3f800000),
+                        (32, 0x3f800000, 0x40000000), (32, 0xc2fc0000, 0x800000),
+                        (32, 0xc2fe0000, 0), (34, 0xff800000, 0x80000000),
+                        (34, 0xc0000000, 0xbf000000), (34, 0x80000000, 0xff800000),
+                        (34, 0, 0x7f800000), (34, 0x7f800000, 0), (34, 1, 0x7f800000)]:
+    case(f'trans-{op}-{a:x}', 195 if op == 32 else 196,
+         [0x7e000000 | 3 << 17 | op << 9 | 257], {v(1): a}, {v(3): expected})
 for op, label in [(36, 'mul-low'), (44, 'mul-high')]:
     for a, b in [(U32, U32), (0x80000000, 3), (0, 17)]:
         product = a*b
@@ -211,6 +229,11 @@ words[1] |= 1 << 16
 case('bpermute-unused-data1', 437, words, refusal=66)
 
 MUTATIONS = {
+    'lshr-left': ('r = shr a and b 31', 'r = and shl a and b 31 0xffffffff'),
+    'fsub-add': ('r = fpadd a xor b 0x80000000', 'r = fpadd a b'),
+    'fmax-ignores-snan': ('ret or a 0x400000', 'ret b'),
+    'exp-returns-input': ('r = fpexp r', 'r = r'),
+    'rcp-returns-input': ('r = fprcp r', 'r = r'),
     'sub-no-borrow': ('put st 16 fmbool lt a b', 'put st 16 fmbool ge a b'),
     'inactive-vcc': ('if or eq cl 6 and eq cl 5 or eq get st 10 25 eq get st 10 28', 'if eq cl 6'),
     'vcc-source': ('get st 17', 'get st 15'),
@@ -229,6 +252,9 @@ MUTATIONS = {
                           'src = and shr add vg get st 11 lane get st 7 2 63\nvs get st 13 lane vg get st 12 src'),
 }
 MUTANT_CASE = {
+    'lshr-left': 'lshr32-2147483649-33', 'fsub-add': 'fsub-denorm',
+    'fmax-ignores-snan': 'fmax-7f801234-3f800000',
+    'exp-returns-input': 'trans-32-3f800000', 'rcp-returns-input': 'trans-34-c0000000',
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',
     'vcc-source': 'cmp-vcc-source-snapshot', 'smem-low-bits': 'smem-component-low-bits',
     'smem-offset-low-bits': 'smem-component-low-bits',

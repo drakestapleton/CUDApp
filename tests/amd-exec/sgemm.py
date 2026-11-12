@@ -176,6 +176,7 @@ def summary(kernels):
     fp8 = runpy.run_path(str(pathlib.Path(__file__).with_name('fp8gemv.py')))
     bf16 = runpy.run_path(str(pathlib.Path(__file__).with_name('bf16gemv.py')))
     gemv2 = runpy.run_path(str(pathlib.Path(__file__).with_name('gemv2.py')))
+    attention = runpy.run_path(str(pathlib.Path(__file__).with_name('attention.py')))
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
           f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} '
@@ -183,7 +184,9 @@ def summary(kernels):
           f'fp8_conversion_bytes={len(range(256))} '
           f'bf16gemv_shapes={len(bf16["SHAPES"])} bf16gemv_cases={2*len(bf16["SHAPES"])+1} '
           f'gemv2_shapes={len(gemv2["SHAPES"])} gemv2_cases_per_kernel={2*len(gemv2["SHAPES"])+1} '
-          f'gemv2_sampled_shapes={len(gemv2["LARGE"])} hardware=NOT_RUN')
+          f'gemv2_sampled_shapes={len(gemv2["LARGE"])} '
+          f'attention_T={",".join(map(str, attention["SHAPES"]))} '
+          f'attention_cases={len(attention["SHAPES"])+1} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

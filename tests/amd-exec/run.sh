@@ -67,7 +67,11 @@ python3 -I "$root/tests/amd-exec/bf16gemv.py" swap-mutant "$out/exec.om" "$out/e
 timeout 120 "$omc" < "$out/exec-swapped.om" > "$out/exec-swapped" 2> "$out/exec-swapped.compile.log"
 [ ! -s "$out/exec-swapped.compile.log" ] || { cat "$out/exec-swapped.compile.log"; exit 1; }
 chmod 700 "$out/exec-swapped"
-kernels='vadd fsum16 sgemm fp8gemv bf16gemv fp8gemv2 bf16gemv2'
+kernels=
+for table in "$src/"*.isa; do
+    kernel=${table##*/}
+    kernels="${kernels}${kernels:+ }${kernel%.isa}"
+done
 for kernel in $kernels; do
     for iteration in 1 2; do
         timeout 30 "$out/hsaco.$iteration" "$src/$kernel.isa" > "$out/$kernel.$iteration.hsaco"
@@ -128,6 +132,17 @@ for kernel in fp8gemv2 bf16gemv2; do
     done
 done
 python3 -I "$root/tests/amd-exec/gemv2.py" suite "$out/exec.1" "$out/row-probe" "$out"
+cat "$src/exec/fp.om" "$root/tests/amd-exec/trans-probe.om" > "$out/trans-probe.om"
+timeout 120 "$omc" < "$out/trans-probe.om" > "$out/trans-probe" 2> "$out/trans-probe.compile.log"
+[ ! -s "$out/trans-probe.compile.log" ] || { cat "$out/trans-probe.compile.log"; exit 1; }
+chmod 700 "$out/trans-probe"
+python3 -I "$root/tests/amd-exec/attention.py" transprobe "$out/trans-probe"
+python3 -I "$root/tests/amd-exec/attention.py" mutate "$src/attn256_part.isa" "$out"
+for control in no-max wrong-gqa v-from-k; do
+    timeout 30 "$out/hsaco.1" "$out/attention-$control.isa" > "$out/attention-$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/attention-$control.hsaco" "$out/attention-$control.text"
+done
+python3 -I "$root/tests/amd-exec/attention.py" suite "$out/exec.1" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

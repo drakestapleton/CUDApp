@@ -1,0 +1,8 @@
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T212145Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T205320Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T204802Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T210941Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T211425Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T211755Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/runs/dry-20261026T210033Z/installer/home/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json
+/home/drakestapleton/handoffs/Q27/dry/inst-explore/home2/.local/share/aienos/models/qwen3.8-27b-fp8-017b9c7a/config.json

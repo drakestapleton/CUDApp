@@ -23,7 +23,7 @@ omc_pin=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
 digest() { d=$(sha256sum < "$1") || return 1; printf '%s\n' "${d%% *}"; }
 [ "$(digest "$omc")" = "$omc_pin" ] || { echo "REFUSED: compiler digest differs from pin $omc_pin" >&2; exit 69; }
 # Pin check deliberately precedes mkdir, source reads, every compilation, and every producer run.
-for tool in llvm-mc-18 llvm-objdump-18 llvm-readelf-18 llvm-objcopy-18 timeout cmp sed grep awk dd head tail wc tr mkdir chmod mktemp cat dirname sh od; do
+for tool in python3 llvm-mc-18 llvm-objdump-18 llvm-readelf-18 llvm-objcopy-18 timeout cmp sed grep awk dd head tail wc tr mkdir chmod mktemp cat dirname sh od; do
   command -v "$tool" >/dev/null 2>&1 || { echo "NOT_RUN missing tool $tool"; exit 3; }
 done
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
@@ -257,9 +257,56 @@ for control in missing-kernel duplicate-kernel argument-gap; do
   else bad "CONTROL $control exit=$rc or partial object escaped"; fi
 done
 echo "FSUM16 OBJECT sha256=$(digest "$out/fsum16-hsaco.hsaco") bytes=$(wc -c < "$out/fsum16-hsaco.hsaco" | tr -d ' ')"
+if [ "$(digest "$out/fsum16-hsaco.hsaco")" = 15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478 ]; then
+  ok 'fsum16 entire object unchanged from pre-SGEMM'
+else bad 'fsum16 object changed'; fi
+for producer in hsaco hsaco-again; do
+  timeout 30 "$out/$producer" "$src/sgemm.isa" > "$out/sgemm-$producer.hsaco" 2> "$out/sgemm-$producer.emit.err"; rc=$?
+  if [ "$rc" -ne 0 ] || [ -s "$out/sgemm-$producer.emit.err" ]; then
+    echo "FAIL sgemm emit exit=$rc"; cat "$out/sgemm-$producer.emit.err"; exit 1
+  fi
+done
+compare "$out/sgemm-hsaco.hsaco" "$out/sgemm-hsaco-again.hsaco" 'sgemm two code-object builds byte-identical'
+if ! llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -filetype=obj "$src/sgemm-gfx942.s" -o "$out/sgemm-oracle.o" > "$out/sgemm-assemble.log" 2>&1; then
+  echo 'FAIL sgemm oracle assembly'; cat "$out/sgemm-assemble.log"; exit 1
+fi
+llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -show-encoding "$src/sgemm-gfx942.s" > "$out/sgemm-encodings.txt" 2>&1 || exit 1
+for pair in sgemm-hsaco.hsaco:sgemm-omega sgemm-oracle.o:sgemm-oracle; do
+  file=${pair%:*}; name=${pair#*:}
+  llvm-objcopy-18 --dump-section .text="$out/$name.text" --dump-section .note="$out/$name.note" --dump-section .rodata="$out/$name.rodata" "$out/$file" "$out/$name.objcopy-rewrite" || exit 1
+  llvm-readelf-18 -h -S -s -n "$out/$file" > "$out/$name.readelf.txt" || exit 1
+  dd if="$out/$name.rodata" of="$out/$name.descriptor-head" bs=1 count=16 status=none || exit 74
+  dd if="$out/$name.rodata" of="$out/$name.descriptor-tail" bs=1 skip=24 status=none || exit 74
+done
+compare "$out/sgemm-omega.text" "$out/sgemm-oracle.text" 'sgemm .text including v_fmac_f32 and backward branch equals LLVM18 gfx942'
+compare "$out/sgemm-omega.note" "$out/sgemm-oracle.note" 'sgemm metadata note equals independent oracle'
+compare "$out/sgemm-omega.descriptor-head" "$out/sgemm-oracle.descriptor-head" 'sgemm descriptor sizes equal oracle'
+compare "$out/sgemm-omega.descriptor-tail" "$out/sgemm-oracle.descriptor-tail" 'sgemm descriptor resources including workgroup Y equal oracle'
+rsrc2=$(od -An -tu4 -j 52 -N 4 "$out/sgemm-omega.rodata" | tr -d ' ')
+if [ "$((rsrc2 & 256))" -eq 256 ] && grep -q 'v_fmac_f32' "$out/sgemm-encodings.txt"; then
+  ok 'sgemm workgroup-id-Y enabled in rsrc2 and v_fmac_f32 accepted by gfx942 oracle'
+else bad 'sgemm Y descriptor bit or fmac encoding'; fi
+entryva=$(awk '$8 == "sgemm" { print "0x" $2; exit }' "$out/sgemm-omega.readelf.txt")
+descva=$(awk '$8 == "sgemm.kd" { print "0x" $2; exit }' "$out/sgemm-omega.readelf.txt")
+disp=$(od -An -tu8 -j 16 -N 8 "$out/sgemm-omega.rodata" | tr -d ' ')
+if [ -n "$entryva" ] && [ -n "$descva" ] && [ "$disp" = "$((entryva - descva))" ]; then
+  ok 'sgemm descriptor entry displacement resolves to kernel symbol'
+else bad 'sgemm descriptor entry displacement'; fi
+if grep -q '\.name: *sgemm$' "$out/sgemm-omega.readelf.txt" \
+  && grep -q '\.kernarg_segment_size: *36$' "$out/sgemm-omega.readelf.txt" \
+  && grep -q '\.sgpr_count: *28$' "$out/sgemm-omega.readelf.txt" \
+  && grep -q '\.vgpr_count: *15$' "$out/sgemm-omega.readelf.txt" \
+  && grep -q '\.name: *K$' "$out/sgemm-omega.readelf.txt"; then
+  ok 'sgemm llvm-readelf metadata reports six arguments and descriptor resources'
+else bad 'sgemm llvm-readelf metadata'; fi
+if python3 -I "$root/tests/amd/branches.py" "$out/hsaco" "$src/sgemm.isa" "$out"; then
+  ok 'signed SOPP offset boundaries, undefined and duplicate labels'
+else bad 'signed SOPP offset controls'; fi
+compare "$out/sgemm-hsaco.hsaco" "$out/sgemm-hsaco-again.hsaco" 'sgemm original object preserved by all oracle tools'
+echo "SGEMM OBJECT sha256=$(digest "$out/sgemm-hsaco.hsaco") bytes=$(wc -c < "$out/sgemm-hsaco.hsaco" | tr -d ' ')"
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'
 if [ "$fail" -ne 0 ]; then echo "AMD-GFX942-HOST FAIL pass=$pass fail=$fail hardware=NOT_RUN"; exit 1; fi
-echo "AMD-GFX942-HOST PASS pass=$pass fail=0 hardware=NOT_RUN"
+echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm hardware=NOT_RUN"
 exit 0

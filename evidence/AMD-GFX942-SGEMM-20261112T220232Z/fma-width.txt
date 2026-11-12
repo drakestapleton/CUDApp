@@ -1,0 +1,19 @@
+External Python integer calculation, not production code:
+lo = 1 - 150
+scale = 2 * lo
+product_shift = 254 + 254 - 300 - scale
+product = ((1 << 24) - 1) ** 2 << product_shift
+addend = ((1 << 24) - 1) << (254 - 150 - scale)
+bits = (product + addend).bit_length()
+print("exact quantum exponent (base 2):", scale)
+print("maximum exact finite sum magnitude bits:", bits)
+print("required 64-bit limbs:", (bits + 63) // 64)
+print("subnormal rounding shift (bits):", -149 - scale)
+print("minimum-normal scaled bit index:", -126 - scale)
+
+Observed result:
+exact quantum exponent (base 2): -298
+maximum exact finite sum magnitude bits: 554
+required 64-bit limbs: 9
+subnormal rounding shift (bits): 149
+minimum-normal scaled bit index: 172

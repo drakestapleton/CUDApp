@@ -37,9 +37,9 @@ def exercise(root, out):
     root, out = pathlib.Path(root), pathlib.Path(out)
     events = []
 
-    def run(name, exe, args, want=0, expected=None):
+    def run(name, exe, args, want=0, expected=None, timeout=10):
         cmd = [str(out / exe), *map(str, args)]
-        p = subprocess.run(cmd, capture_output=True, timeout=10)
+        p = subprocess.run(cmd, capture_output=True, timeout=timeout)
         (out / (name + '.stdout')).write_bytes(p.stdout)
         (out / (name + '.stderr')).write_bytes(p.stderr)
         (out / (name + '.command')).write_text(' '.join(cmd) + '\nexit=' + str(p.returncode) + '\n')
@@ -167,11 +167,18 @@ def exercise(root, out):
     run('record-index-max', 'records', [src_table, 2**64 - 1], 3, b'')
     run('record-index-past-end', 'records', [src_table, len(oracle)], 3, b'')
     print('PASS records refuses index 2^64-1 and the first index past the table with exit=3, nothing emitted')
+    over_fuel = out / 'field-count-over-fuel.tsv'
+    # Keep every preceding field valid: a truncated table would refuse 3 before exhausting fuel.
+    over_fuel.write_text('0 4 1000001\n' + '0 4 1\n' * 1000001)
+    run('record-field-count-over-fuel', 'records', [over_fuel, 0], 104, b'', timeout=60)
+    print('CONTROL CAUGHT field-count-over-loop-fuel: Omega trap exit=104 no record emitted')
 
     steps = [1, 2, 3, 4, 5] * 40
     first = run('ring-wrap', 'ring', steps)
     assert first == b'RING ACCEPT body<header<write-index<doorbell<consume\n'
     assert run('ring-repeat', 'ring.repeat', steps) == first
+    run('ring-four-steps-usage', 'ring', [1, 2, 3, 4], 64, b'')
+    print('CONTROL CAUGHT ring-four-steps: minimum-argument usage exit=64 no output')
     for name, values in [('header-before-body', [2, 1, 3, 4, 5]),
                          ('write-index-before-header', [1, 3, 2, 4, 5]),
                          ('doorbell-before-write-index', [1, 2, 4, 3, 5]),

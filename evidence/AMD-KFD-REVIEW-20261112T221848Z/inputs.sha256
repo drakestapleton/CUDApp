@@ -1,0 +1,3 @@
+26f7c800d00e7880b50bb5a8a230d5b1d43be990579214b851fab0792986b088  backend/amd/kfd/ring.om
+b0e0f14eb7f56929a715fd57df401cba2786d24aa9774e2a8123f45d112acafe  backend/amd/kfd/records.om
+a0aa5406c44791e9092ce9ae0c039d4570a8c69ed1f5ea7a141041b2835efcde  tests/amd-kfd/oracle.py

@@ -1,0 +1,114 @@
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+text AOOK "ATTENTION OLLM PASS (36 resident KV wires; 2 fused kernel streams equal existing oracle-checked roots; future-token mask; invalid shape refusals)\n"
+fn aowire h ulong cap ulong bf ulong last bool to bool
+shape = new ulong 4 0
+tab = new uint 64 0
+args = new uint 32 0
+put shape 0 h
+put shape 1 cap
+pos = ulong 0
+if last
+pos = sub cap 1
+end
+put shape 2 pos
+put shape 3 bf
+put args 0 1234
+if ne attention_ollm_wire shape tab args 0
+ret false
+end
+if ne get tab 0 0
+ret false
+end
+if ne get tab 1 uint add pos 1
+ret false
+end
+if ne get tab 2 uint add h 4
+ret false
+end
+if ne get args 0 1234
+ret false
+end
+esize = ulong 4
+if eq bf 1
+esize = ulong 2
+end
+headb = mul mul cap 64 esize
+for i ulong h
+if ne get tab add i 4 uint mul i headb
+ret false
+end
+end
+if ne get args 12 uint mul h headb
+ret false
+end
+if ne get args 11 uint mul 64 esize
+ret false
+end
+put shape 2 cap
+if eq attention_ollm_wire shape tab args 0
+ret false
+end
+put shape 2 0
+put shape 0 7
+if eq attention_ollm_wire shape tab args 0
+ret false
+end
+ret true
+end
+fn aokernel bf ulong to bool
+ins = new ulong 8192 0
+ref = new ulong 8192 0
+meta = new ulong 512 0
+rm = new ulong 512 0
+if ne attention_ollm_ir bf ins meta 0
+ret false
+end
+kind = ulong 3
+if eq bf 1
+kind = ulong 2
+end
+if ne attention_ir kind 64 31 0 ref rm 0
+ret false
+end
+for i ulong 8192
+if ne get ins i get ref i
+ret false
+end
+end
+for i ulong 512
+if ne get meta i get rm i
+ret false
+end
+end
+ret gt get meta 0 0
+end
+fn main to int
+for bf ulong 2
+if not aokernel bf
+ret 1
+end
+for s ulong 3
+h = ulong 6
+if eq s 1
+h = ulong 8
+end
+if eq s 2
+h = ulong 16
+end
+for t ulong 3
+cap = shl ulong 512 mul t 2
+if not aowire h cap bf false
+ret 2
+end
+if not aowire h cap bf true
+ret 3
+end
+end
+end
+end
+n = write 1 AOOK 0 len AOOK
+if ne n long len AOOK
+ret 4
+end
+ret 0
+end

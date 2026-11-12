@@ -3,14 +3,14 @@
     "generated": {
       "children": [],
       "children_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compiled_at": "2026-11-06T11:13:43Z",
+      "compiled_at": "2026-11-10T02:27:04Z",
       "compiler": "crumb-compile/1",
-      "digest": "sha256:d529a11f33ec9c4b4dc0970de4f9fe61b0ed8cddc4630f2a1a1489167e90e0d8",
+      "digest": "sha256:2205210449ce4ecef8ad2dd6045eb3efa344aa9351fc45309cacfc33cd166ef9",
       "evidence_files": 0,
       "evidence_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "files": 8,
-      "generated_at_commit": "b734707bc475d8df6a42f3abb6423585f0037a2f",
-      "source_tree": "sha256:9b5d4a8160005ff8553c9fa21cbeb4660c8cfa3c1ff73062ce56e67f0156a7fe"
+      "files": 9,
+      "generated_at_commit": "cb3395aad13d7cafea2cfaaf97a30a116da2293a",
+      "source_tree": "sha256:17710fcaa70b145097d03130cedc98dee54fa37af46578954f223be650b39740"
     }
   },
   "name": "gemm-any",

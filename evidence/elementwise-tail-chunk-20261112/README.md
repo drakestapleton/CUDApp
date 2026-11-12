@@ -20,7 +20,8 @@ The two runs are separate processes and are reported separately.
 
 - SIGSEGV in `memcpy`, called from `run_abc`, called from `run_1d`.
 - Frame 0 (`memcpy`): x0, the destination, is 0xfffff4bff010; x5 is 0xfffff4c7f010, which is
-  x0 + 0x80000 (524288); x2, the bytes still to copy at the fault, is 0x7efb0 (520112).
+  x0 + 0x80000 (524288), the copy length; x3 is 0xfffff4bfffd0 and x2 is 0x7efb0 (520112), the
+  routine's own loop registers at the fault. They are given as read and not interpreted here.
 - Frame 2 (`run_1d`): registers hold 0x20001 (131073) and 1.
 
 Under gdb the fault came in a call with n = 131073 and a destination range of 524288 bytes. Whether

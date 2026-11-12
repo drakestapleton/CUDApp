@@ -38,6 +38,22 @@ for name in hsaco exec; do
     cmp "$out/$name.1" "$out/$name.2"
     echo "PASS $name two builds byte-identical"
 done
+{
+    cat "$src/exec/fp.om" "$src/exec/fma.om"
+    sed '/^fn main to int/,$d' "$src/exec/main.om"
+    cat "$root/tests/amd-exec/semantics-probe.om"
+} > "$out/semantics.om"
+mutants=$(python3 -I "$root/tests/amd-exec/semantics.py" mutate "$out/semantics.om" "$out")
+for variant in semantics $mutants; do
+    timeout 120 "$omc" < "$out/$variant.om" > "$out/$variant" 2> "$out/$variant.compile.log"
+    [ ! -s "$out/$variant.compile.log" ] || { cat "$out/$variant.compile.log"; exit 1; }
+    chmod 700 "$out/$variant"
+    if [ "$variant" = semantics ]; then
+        python3 -I "$root/tests/amd-exec/semantics.py" suite "$out/$variant" "$out"
+    else
+        python3 -I "$root/tests/amd-exec/semantics.py" control "$out/$variant" "$out" "$variant"
+    fi
+done
 { printf 'om2\n'; cat "$src/exec/fma.om" "$root/tests/amd-exec/fma-probe.om"; } > "$out/fma-probe.om"
 timeout 120 "$omc" < "$out/fma-probe.om" > "$out/fma-probe" 2> "$out/fma-probe.compile.log"
 [ ! -s "$out/fma-probe.compile.log" ] || { cat "$out/fma-probe.compile.log"; exit 1; }

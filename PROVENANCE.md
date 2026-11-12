@@ -328,3 +328,73 @@ enable bit), and build both executables and objects twice for byte identity.
 
 Receipts live under `evidence/AMD-GFX942-SGEMM-*`. AMD dispatch, performance, GPU memory ordering,
 hardware NaN payloads and Qwen inference remain **NOT_RUN**. This host model is not hardware qualification.
+
+### 12.1. CDNA3 semantics correction and complete subset audit
+
+The initial SGEMM host receipt at `df9c14a74c549adb029d243eaed5cb10fceecc84` established
+encoding/model agreement, **not correct ISA semantics**: `S_SUB_U32` incorrectly set SCC for
+no-borrow, and the kernel used branches matching that error. The correction uses SCC = borrow
+(`S1 > S0`), exits a row on SCC0, stores zero for empty K on SCC1, and continues K on SCC0.
+The historical receipt is retained unchanged; the correction receipt is a separate record.
+
+Semantic authority is the AMD *Instinct MI300 Instruction Set Architecture (CDNA3)* manual,
+local source `~/docs/amd-gpu/AMD_Instinct_MI300_CDNA3_ISA.txt`. Page numbers below are **physical
+PDF pages** (`doc-page amd-gpu/AMD_Instinct_MI300_CDNA3_ISA PAGE`), not the printed footer.
+LLVM 18 remains the independent encoding oracle, not an instruction-semantics oracle.
+
+| Implemented instruction | PDF page | Audited operation and side effects |
+|---|---:|---|
+| S_LOAD_DWORD | 68, 146 | One dword; each address component ignores its low two bits; flags unchanged. |
+| S_LOAD_DWORDX2 | 68, 70, 146 | Two consecutive dwords; even destination SGPR pair. |
+| S_LOAD_DWORDX4 | 68, 70, 147 | Four consecutive dwords; quad-aligned destination SGPRs. |
+| S_ADD_U32 | 97 | Low32 sum; SCC is unsigned carry-out. |
+| S_SUB_U32 | 97 | Low32 difference; SCC is unsigned **borrow** (`S1 > S0`). |
+| S_ADDC_U32 | 98 | Sum includes incoming SCC; replaces SCC with carry-out. |
+| S_LSHL_B32 | 103 | Shift count masked to five bits; SCC is nonzero result. |
+| S_LSHL_B64 | 103 | Shift count masked to six bits; even pairs, low word first; SCC is nonzero full result. |
+| S_MUL_I32 | 104 | Low32 product, signed/unsigned low bits identical; preserves SCC. |
+| S_MUL_HI_U32 | 106–107 | High32 unsigned product; preserves SCC. |
+| S_MOV_B32 | 115 | Bitwise copy; preserves SCC. |
+| S_AND_SAVEEXEC_B64 | 124–125 | Read source and old EXEC, AND into EXEC, save old EXEC to destination, SCC = new EXEC nonzero. Source/destination alias follows the pseudocode on p125. |
+| S_ENDPGM | 138 | Terminates the wave; implicit wait is satisfied by synchronous memory. |
+| S_CBRANCH_SCC0 | 139 | Branch iff SCC=0; signed16 DWORD displacement relative to next instruction; preserves flags. |
+| S_CBRANCH_SCC1 | 139 | Branch iff SCC=1; same displacement; preserves flags. |
+| S_CBRANCH_EXECZ | 140 | Branch iff whole EXEC=0; same displacement; preserves flags. |
+| S_WAITCNT | 141 | Supported vmcnt/lgkmcnt waits complete immediately in the synchronous model; no flag writes. |
+| V_ADD_F32 | 169 | FP32 add, nearest-even, input/output denormals retained. |
+| V_MUL_F32 | 170 | FP32 multiply with one rounding; implemented by exact FMA with a product-signed zero. |
+| V_LSHRREV_B32 | 173 | Unsigned right shift of S1 by S0[4:0]; no flags. |
+| V_LSHLREV_B32 | 173 | Low32 left shift of S1 by S0[4:0]; no flags. |
+| V_AND_B32 | 174 | Bitwise AND; no flags. |
+| V_ADD_CO_U32 | 175, 22 | Low32 sum; VCC receives carry-out for active lanes and zero for inactive lanes. |
+| V_ADDC_CO_U32 | 176, 22 | Includes incoming per-lane VCC, then replaces the whole VCC mask. |
+| V_ADD_U32 | 183 | Low32 sum; no carry-in or carry-out, preserves VCC. |
+| V_FMAC_F32 | 185 | Destination is third input; exact multiply-add followed by one rounding. |
+| V_MOV_B32 | 186 | Bitwise copy to active lanes only; no flags. |
+| V_CMP_GT_U32 | 251, 22 | Unsigned greater-than, VCC = EXEC AND comparison mask; EXEC unchanged. |
+| GLOBAL_LOAD_DWORD | 87, 90, 503–504 | 64-bit even VGPR address pair plus signed13 byte offset; active lanes load a dword. |
+| GLOBAL_STORE_DWORD | 87, 90, 505 | Same address calculation; active lanes store a dword. |
+
+All vector source operands observe the incoming VCC, including scalar VCC halves used as sources.
+All VCC-writing instructions replace the whole mask (p22), including when EXEC is zero.
+These rules fix inactive carry bits and read-after-write contamination in the sequential host lane loop.
+The scalar-memory fix masks each address component separately (p68), not their sum.
+Misaligned multi-dword SGPR destinations and 64-bit VGPR address pairs refuse with exit 66 (pp20–21,
+70). Negative immediate SMEM offsets with SOE=0 are undefined on p68 and refuse with exit 66:
+the general format table calls the field unsigned (p67), while individual load descriptions call
+it signed (pp146–147); the executor does not guess at this undefined case.
+
+General FP controls are p45: round mode 0 is nearest-even and denorm mode 3 retains inputs and
+outputs, matching the descriptors. The exact integer FP implementations and independent Fraction
+checks remain as described above. The canonical-NaN host policy is explicit; NaN payload propagation,
+exceptions, XNACK replay/clause hazards, memory races, timing, and hardware dispatch are not modeled.
+Only the kernels' synchronous flat-memory contract is exercised; this audit does not qualify hardware.
+
+`tests/amd-exec/semantics.py` contains manual-derived register/flag input/output cases, not expected
+values generated from the executor. A test-only sparse-state adapter calls the same production
+`step` routine used by wave execution, with actual encoded instruction words. Cases check inputs
+and untouched registers, flags, lane 63, inactive lanes, carry/borrow edges, masked shifts, signed
+branches, literals, SMEM component alignment, and GLOBAL offsets and memory guards. Executable
+mutants independently restore each corrected old behavior, including the inverted SCC, and each
+must fail its corresponding case. The final PASS derives the case count from the actual case table;
+all previous vadd/fsum16/SGEMM counts and controls remain. Hardware remains **NOT_RUN**.

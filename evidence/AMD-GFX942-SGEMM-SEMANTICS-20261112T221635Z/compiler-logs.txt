@@ -1,0 +1,14 @@
+exec.1.compile.log 0 bytes
+exec.2.compile.log 0 bytes
+fma-probe.compile.log 0 bytes
+hsaco.1.compile.log 0 bytes
+hsaco.2.compile.log 0 bytes
+inactive-vcc.compile.log 0 bytes
+semantics.compile.log 0 bytes
+smem-dest-alignment.compile.log 0 bytes
+smem-low-bits.compile.log 0 bytes
+smem-negative.compile.log 0 bytes
+smem-offset-low-bits.compile.log 0 bytes
+sub-no-borrow.compile.log 0 bytes
+vcc-source.compile.log 0 bytes
+vgpr-pair-alignment.compile.log 0 bytes

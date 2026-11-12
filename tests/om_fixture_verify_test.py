@@ -17,8 +17,8 @@ cc = ['gcc','-std=gnu11','-O2','-Wall','-Wextra','-Werror','-ffp-contract=off','
 unit = 'src/cudapp_freest_fixture_verify.c'
 source = 'tests/om_fixture_verify_test.c'
 rows = []
-def run(name, args, expect=0):
-    p = subprocess.run([str(x) for x in args], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def run(name, args, expect=0, cwd=None):
+    p = subprocess.run([str(x) for x in args], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
     (out/(name+'.log')).write_bytes(p.stdout)
     rows.append(f'{name}\t{p.returncode}\t'+ ' '.join(map(str,args)))
     (out/'commands.tsv').write_text('\n'.join(rows)+'\n')
@@ -68,5 +68,6 @@ assert p.returncode==1 and b'FAIL codegen fixture invocation' in p.stdout
 # Oracle coverage records source-derived branch partition reachability, not hardware qualification.
 run('build-coverage',['gcc','-std=gnu11','-O0','--coverage','-Isrc','-DCUDAPP_MIGRATION_PENDING_C_ENGINE_FIXTURE_REST=1',source,'-o',out/'coverage'])
 run('coverage',[out/'coverage'])
-run('gcov',['gcov','-b','-c','-o',out,out/'coverage-om_fixture_verify_test.gcno'])
+# gcov writes its .gcov files into the current directory: run it in the build directory, not the checkout
+run('gcov',['gcov','-b','-c','-o',out,out/'coverage-om_fixture_verify_test.gcno'],cwd=out)
 print('PASS seven exported fixtures; red golden-data control; mutants 7/7 KILLED; HW NOT_RUN',flush=True)

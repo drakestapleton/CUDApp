@@ -3,3 +3,6 @@ build/
 build-enc-c/
 build-enc-diff/
 build-ampere-oracle/
+
+# Python byte-code caches are build products (one was tracked until 2026-11-12, and every test run rewrote it)
+__pycache__/

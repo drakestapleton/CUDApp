@@ -1,10 +1,10 @@
 PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f (from tests/multitarget/run.sh)
-Outputs: $HOME/work/hive/amdserve/Integrate/runs-s2/gate2
+Outputs: $HOME/work/hive/amdserve/Integrate/runs-s2-20261112T215931Z/kfd
 ORACLE native-header sha256=4123a021f00f85235e3e8dda4e0b4c4ec8ed4f7ce30e8882529f68652f765247
 PASS CONTROL CAUGHT wrong-compiler-digest: exit=69 compiler not executed; output directory not created
 PASS deterministic build aql sha256=7740c5592d7606985967f00a6ae4ba7a7db6071643750463b3ab0bfaabbbdf96
 PASS deterministic build kernarg sha256=d74a67782d82364da35d03a7a09088a2d6d845fc6ab3af49395e6a4ee50683c1
-PASS deterministic build records sha256=92b8c3705c08d138d80c4cee683336d77ae9f6f3cd270ba6d645ce111d9a1685
+PASS deterministic build records sha256=df6ded9ec1d90879a0b44d84523a99abcd3a3d4b9c009b08a057e84aad4f5a4d
 PASS deterministic build ring sha256=cd9b6f9beeebf33a8f79d88896be6674200d6ea429d117cab6b08abff0f8f90f
 PASS native aarch64: every KFD request/record size/field offset/width equals installed kfd_ioctl.h
 ORACLE x86-64-header sha256=d9bf51d2cde26ea18e2ec287674bb022d7b23a0858a14cdd55c55d3eb3ec339e
@@ -29,13 +29,14 @@ PASS AQL field rules and overflowing/malformed numeric refusals
 PASS kernarg assembly metadata: code-object-v5 metadata 1.2; four explicit arguments; no hidden args
 CONTROL CAUGHT kernarg-one-byte-short: Omega exit=3 no block emitted
 PASS KFD 12 requests + auxiliary pointed records: every serialized field vs live header oracle
-CONTROL CAUGHT wrong-request-number: complete table comparison rejects GET_VERSION + 1
-CONTROL CAUGHT record-off-by-one-field: sizeof mismatch and emitted 12 bytes != header 8 bytes
-CONTROL CAUGHT field-offset-plus-one: header comparison and Omega range refusal exit=3
+CONTROL CAUGHT wrong-request-number: the row comparison that accepts requests.tsv rejects GET_VERSION + 1
+CONTROL CAUGHT record-off-by-one-field: row comparison rejects size 12, and Omega then emits 12 bytes where the header record is 8
+CONTROL CAUGHT field-offset-plus-one: row comparison rejects it, and Omega refuses the field range with exit=3
+PASS records refuses index 2^64-1 and the first index past the table with exit=3, nothing emitted
 PASS ring single-producer/consumer order, 40 launches, 16 slots, wrap and byte visibility checked
 CONTROL CAUGHT header-before-body: Omega model exit=3
 PASS ring write-index/doorbell/consumer/reuse/incomplete-order refusals
-ORACLE PASS subprocess_cases=77
+ORACLE PASS subprocess_cases=79
 PASS independent byte-oracle suite
 NOT_RUN AMD gfx942 hardware: KFD device calls, queue creation, mapped memory, AQL dispatch, completion and vadd execution
 NOT_RUN MI300X model loading, Qwen 27B inference, speed and hardware coherency

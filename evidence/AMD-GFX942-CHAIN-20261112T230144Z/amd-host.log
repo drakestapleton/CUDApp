@@ -5,8 +5,8 @@ ORACLE llvm-objdump-18 Ubuntu LLVM version 18.1.3
 ORACLE llvm-readelf-18 Ubuntu LLVM version 18.1.3
 ORACLE llvm-objcopy-18 llvm-objcopy, compatible with GNU objcopy
 COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
-COMPILE hsaco src=4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1 bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
-COMPILE hsaco-again src=4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1 bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
+COMPILE hsaco src=32ee1f43b2507fd99de93973b3c2fcbfa1b075f4321ff8cd75a0e6c489994b0d bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
+COMPILE hsaco-again src=32ee1f43b2507fd99de93973b3c2fcbfa1b075f4321ff8cd75a0e6c489994b0d bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
 PASS two producer compilations byte-identical
 PASS two code-object builds byte-identical
 OBJECT sha256=10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f bytes=2608
@@ -68,7 +68,9 @@ PASS growing-format-count byte-identical FP8 object (no capacity ceiling)
 CONTROL undefined-format CAUGHT exit=4 no object
 PASS growable format IDs/count and undefined-format control
 FP8GEMV OBJECT sha256=b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b bytes=2800
+PASS loop-fuel alarm quiet: largest gate input or object 5846 bytes, threshold 500000
+PASS loop-fuel alarm control CAUGHT a 600001-byte file
 hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
 hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.
 NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
-AMD-GFX942-HOST PASS pass=48 fail=0 kernels=vadd,fsum16,sgemm,fp8gemv hardware=NOT_RUN
+AMD-GFX942-HOST PASS pass=50 fail=0 kernels=vadd,fsum16,sgemm,fp8gemv hardware=NOT_RUN

@@ -40,6 +40,8 @@ CONTROL CAUGHT header-before-body: Omega model exit=3
 PASS ring write-index/doorbell/consumer/reuse/incomplete-order refusals
 ORACLE PASS subprocess_cases=81
 PASS independent byte-oracle suite
+PASS loop-fuel alarm quiet on the 6 KFD tables the gate feeds (threshold 500000 bytes)
+PASS loop-fuel alarm control CAUGHT the over-fuel table that traps 104
 NOT_RUN AMD gfx942 hardware: KFD device calls, queue creation, mapped memory, AQL dispatch, completion and vadd execution
 NOT_RUN MI300X model loading, Qwen 27B inference, speed and hardware coherency
-AMD-KFD-HOST PASS pass=21 fail=0 not_run=2
+AMD-KFD-HOST PASS pass=23 fail=0 not_run=2

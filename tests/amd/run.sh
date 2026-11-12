@@ -294,9 +294,50 @@ if python3 -I "$root/tests/amd/branches.py" "$out/hsaco" "$src/sgemm.isa" "$out"
 else bad 'signed SOPP offset controls'; fi
 compare "$out/sgemm-hsaco.hsaco" "$out/sgemm-hsaco-again.hsaco" 'sgemm original object preserved by all oracle tools'
 echo "SGEMM OBJECT sha256=$(digest "$out/sgemm-hsaco.hsaco") bytes=$(wc -c < "$out/sgemm-hsaco.hsaco" | tr -d ' ')"
+if [ "$(digest "$out/sgemm-hsaco.hsaco")" = 466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70 ]; then
+  ok 'corrected sgemm entire object unchanged from pre-FP8'
+else bad 'corrected sgemm object changed'; fi
+for producer in hsaco hsaco-again; do
+  timeout 30 "$out/$producer" "$src/fp8gemv.isa" > "$out/fp8gemv-$producer.hsaco" 2> "$out/fp8gemv-$producer.emit.err"; rc=$?
+  if [ "$rc" -ne 0 ] || [ -s "$out/fp8gemv-$producer.emit.err" ]; then
+    echo "FAIL fp8gemv emit exit=$rc"; cat "$out/fp8gemv-$producer.emit.err"; exit 1
+  fi
+done
+compare "$out/fp8gemv-hsaco.hsaco" "$out/fp8gemv-hsaco-again.hsaco" 'fp8gemv two code-object builds byte-identical'
+if ! llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -filetype=obj "$src/fp8gemv-gfx942.s" -o "$out/fp8gemv-oracle.o" > "$out/fp8gemv-assemble.log" 2>&1; then
+  echo 'FAIL fp8gemv oracle assembly'; cat "$out/fp8gemv-assemble.log"; exit 1
+fi
+llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -show-encoding "$src/fp8gemv-gfx942.s" > "$out/fp8gemv-encodings.txt" 2>&1 || exit 1
+for pair in fp8gemv-hsaco.hsaco:fp8gemv-omega fp8gemv-oracle.o:fp8gemv-oracle; do
+  file=${pair%:*}; name=${pair#*:}
+  llvm-objcopy-18 --dump-section .text="$out/$name.text" --dump-section .note="$out/$name.note" --dump-section .rodata="$out/$name.rodata" "$out/$file" "$out/$name.objcopy-rewrite" || exit 1
+  llvm-readelf-18 -h -S -s -n "$out/$file" > "$out/$name.readelf.txt" || exit 1
+  dd if="$out/$name.rodata" of="$out/$name.descriptor-head" bs=1 count=16 status=none || exit 74
+  dd if="$out/$name.rodata" of="$out/$name.descriptor-tail" bs=1 skip=24 status=none || exit 74
+done
+compare "$out/fp8gemv-omega.text" "$out/fp8gemv-oracle.text" 'fp8gemv .text including SDWA conversion and VOP3 mul equals LLVM18 gfx942'
+compare "$out/fp8gemv-omega.note" "$out/fp8gemv-oracle.note" 'fp8gemv metadata note equals independent oracle'
+compare "$out/fp8gemv-omega.descriptor-head" "$out/fp8gemv-oracle.descriptor-head" 'fp8gemv descriptor sizes equal oracle'
+compare "$out/fp8gemv-omega.descriptor-tail" "$out/fp8gemv-oracle.descriptor-tail" 'fp8gemv descriptor resources equal oracle'
+entryva=$(awk '$8 == "fp8gemv" { print "0x" $2; exit }' "$out/fp8gemv-omega.readelf.txt")
+descva=$(awk '$8 == "fp8gemv.kd" { print "0x" $2; exit }' "$out/fp8gemv-omega.readelf.txt")
+disp=$(od -An -tu8 -j 16 -N 8 "$out/fp8gemv-omega.rodata" | tr -d ' ')
+if [ -n "$entryva" ] && [ -n "$descva" ] && [ "$disp" = "$((entryva - descva))" ]; then
+  ok 'fp8gemv descriptor entry displacement resolves to kernel symbol'
+else bad 'fp8gemv descriptor entry displacement'; fi
+if grep -q 'v_cvt_f32_fp8' "$out/fp8gemv-encodings.txt" \
+  && grep -q 'src0_sel:BYTE_0' "$out/fp8gemv-encodings.txt" \
+  && grep -q '\.kernarg_segment_size: *40$' "$out/fp8gemv-omega.readelf.txt"; then
+  ok 'fp8gemv BYTE0 SDWA accepted by gfx942 oracle and kernarg is40 bytes'
+else bad 'fp8gemv SDWA encoding or metadata'; fi
+if python3 -I "$root/tests/amd/formats.py" "$out/hsaco" "$src/fp8gemv.isa" "$out/fp8gemv-hsaco.hsaco" "$out"; then
+  ok 'growable format IDs/count and undefined-format control'
+else bad 'format registry controls'; fi
+echo "FP8GEMV OBJECT sha256=$(digest "$out/fp8gemv-hsaco.hsaco") bytes=$(wc -c < "$out/fp8gemv-hsaco.hsaco" | tr -d ' ')"
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
+echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'
 if [ "$fail" -ne 0 ]; then echo "AMD-GFX942-HOST FAIL pass=$pass fail=$fail hardware=NOT_RUN"; exit 1; fi
-echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm hardware=NOT_RUN"
+echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm,fp8gemv hardware=NOT_RUN"
 exit 0

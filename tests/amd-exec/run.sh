@@ -59,7 +59,11 @@ timeout 120 "$omc" < "$out/fma-probe.om" > "$out/fma-probe" 2> "$out/fma-probe.c
 [ ! -s "$out/fma-probe.compile.log" ] || { cat "$out/fma-probe.compile.log"; exit 1; }
 chmod 700 "$out/fma-probe"
 python3 -I "$root/tests/amd-exec/sgemm.py" probe "$out/fma-probe"
-kernels='vadd fsum16 sgemm'
+python3 -I "$root/tests/amd-exec/fp8gemv.py" mutate "$out/exec.om" "$out/exec-ocp.om"
+timeout 120 "$omc" < "$out/exec-ocp.om" > "$out/exec-ocp" 2> "$out/exec-ocp.compile.log"
+[ ! -s "$out/exec-ocp.compile.log" ] || { cat "$out/exec-ocp.compile.log"; exit 1; }
+chmod 700 "$out/exec-ocp"
+kernels='vadd fsum16 sgemm fp8gemv'
 for kernel in $kernels; do
     for iteration in 1 2; do
         timeout 30 "$out/hsaco.$iteration" "$src/$kernel.isa" > "$out/$kernel.$iteration.hsaco"
@@ -74,6 +78,9 @@ echo 'PASS vadd code object unchanged from pre-generalization'
 digest=$(sha256sum < "$out/fsum16.1.hsaco")
 [ "${digest%% *}" = 15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478 ]
 echo 'PASS fsum16 code object unchanged from pre-SGEMM'
+digest=$(sha256sum < "$out/sgemm.1.hsaco")
+[ "${digest%% *}" = 466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70 ]
+echo 'PASS corrected sgemm code object unchanged from pre-FP8'
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then echo 'FAIL mutant did not apply'; exit 1; fi
 timeout 30 "$out/hsaco.1" "$out/flipped.isa" > "$out/flipped.hsaco"
@@ -87,6 +94,10 @@ python3 -I "$root/tests/amd-exec/sgemm.py" mutant "$src/sgemm.isa" "$out/unfused
 timeout 30 "$out/hsaco.1" "$out/unfused.isa" > "$out/unfused.hsaco"
 python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/unfused.hsaco" "$out/unfused.text"
 python3 -I "$root/tests/amd-exec/sgemm.py" suite "$out/exec.1" "$out/sgemm.text" "$out/unfused.text" "$out"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" scale-mutant "$src/fp8gemv.isa" "$out/no-scale.isa"
+timeout 30 "$out/hsaco.1" "$out/no-scale.isa" > "$out/no-scale.hsaco"
+python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/no-scale.hsaco" "$out/no-scale.text"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" suite "$out/exec.1" "$out/fp8gemv.text" "$out/exec-ocp" "$out/no-scale.text" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2
@@ -99,5 +110,5 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 [ ! -e "$out/wrong-pin-must-not-exist" ]
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
-sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco" "$out/sgemm.1.hsaco"
+sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco" "$out/sgemm.1.hsaco" "$out/fp8gemv.1.hsaco"
 python3 -I "$root/tests/amd-exec/sgemm.py" summary "$kernels"

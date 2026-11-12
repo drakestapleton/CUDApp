@@ -1,0 +1,1 @@
+LOAD REFUSE AMDGPU_HSACO code=33 reason=e_flags mach does not match the requested gfx target

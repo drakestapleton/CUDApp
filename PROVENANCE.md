@@ -136,3 +136,53 @@ the decision source. Chip execution for this correction: NOT_RUN.
 2. Is a toolchain that replaces nvcc on NVIDIA GPUs an "application" developed "only for use in systems
    with NVIDIA GPUs" (§2.1)?
 3. Can tool listings of my own code (section 6) be published, given §1.1.2(4)?
+
+## 8. gfx942 host-only code-object writer (2026-11-12)
+
+`backend/amd/gfx942/hsaco.om` is a first-party seeded-Omega writer for the fixed FP32 `vadd`
+kernel, not a general AMD assembler or a qualified AMD runtime. It reads the instruction-table
+data in `vadd.isa`, packs the words, resolves its forward branch, and serializes the ELF64 HSA v5
+object, kernel descriptor, dynamic/static symbols, SysV hash and MessagePack metadata note.
+The producing path uses no LLVM, linker, shell serializer, C, Rust or Python.
+`tests/amd/run.sh` coordinates builds and compares against public LLVM tools; it opens no GPU.
+
+All AMD facts are class A, independently sourced from **LLVM 18.1.3**, Apache-2.0 WITH
+LLVM-exception. These are the exact public sources used (tag `llvmorg-18.1.3`):
+
+| Fact | Source |
+|---|---|
+| HSA ELF64 header/flags, metadata keys, kernel descriptor/entry state and wave64 ABI | [AMDGPUUsage](https://releases.llvm.org/18.1.3/docs/AMDGPUUsage.html), sections “ELF Code Object”, “Kernel Descriptor”, “Initial Kernel Execution State”, “Code Object V5 Metadata”, and assembler `.amdhsa_kernel` directives |
+| `EM_AMDGPU=224`, HSA OSABI=64, ABI v5=3, gfx942 mach=0x4c, XNACK/SRAMECC ANY flags, note type 32 | [llvm/include/llvm/BinaryFormat/ELF.h](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/include/llvm/BinaryFormat/ELF.h) |
+| Descriptor offsets and RSRC1/2/3/kernel-property bit fields | [llvm/include/llvm/Support/AMDHSAKernelDescriptor.h](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/include/llvm/Support/AMDHSAKernelDescriptor.h) |
+| SMEM field layout and scalar-load opcodes | [SMInstructions.td](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SMInstructions.td), `SMEM_Real_vi`, `SM_Real_Loads_vi` |
+| SOP1/SOP2/SOPP layouts and shifts, saveexec, branch, wait/end opcodes | [SOPInstructions.td](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SOPInstructions.td), `SOP1_Real`, `SOP2_Real32`, `SOPP_Real_32`, `_vi` and gfx6–gfx10 definitions |
+| VOP1 move layout/opcode | [VOP1Instructions.td](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td), `VOP1e`, `V_MOV_B32` `_vi` |
+| VOP2 FP32 add, integer add/carry, shifts and mask layout/opcodes | [VOP2Instructions.td](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP2Instructions.td), `VOP2e`, `_vi` and gfx9 definitions |
+| VOPC unsigned bounds compare | [VOPCInstructions.td](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOPCInstructions.td), `VOPCe`, `V_CMP_GT_U32` `_vi` |
+| GLOBAL load/store and 64-bit VGPR address form | [FLATInstructions.td](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/FLATInstructions.td), `FLAT_Real`, `FLAT_Real_gfx940`, `GLOBAL_LOAD_DWORD`, `GLOBAL_STORE_DWORD` |
+| VGPR/SGPR resource granules and extra special SGPRs | [AMDGPUBaseInfo.cpp](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/Utils/AMDGPUBaseInfo.cpp), `getVGPREncodingGranule`, `getSGPREncodingGranule`, `getNumExtraSGPRs` |
+
+The ORACLE assembly `vadd-gfx942.s` was copied from the ended `t_bd34e75b` lane's untracked
+`backend/amd/gfx942/vadd-gfx942.s`; the original was not modified. Its kernel-argument layout
+was checked against `backend/amd/vadd-gfx1151.s` (a/b/c pointers at 0/8/16, count at 24,
+28 bytes). The new oracle fixes the copied single-VGPR `gid << 2` address path by preserving
+the high address bits and propagating addition carries; it also explicitly preserves FP32
+denormals (the assembler default flushes them). Resource declarations match the changed kernel.
+Only public AMD LLVM sources/tools informed these changes; no NVIDIA-tool fact was used.
+
+Read-only prior art inspected: CUDApp unmerged `feat/native-amd-agx-lab` at
+`268a2e9d`, `native/gpulab/{amd.om,test-amd.om,amd-oracle-input.om,README.md}`.
+That is a different gfx1100 integer lab/ABI; no code, instruction words or encoding constants
+from it were reused. The new table packs public LLVM field definitions and is checked against
+`llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -filetype=obj`.
+
+Verification-only installed oracles: Ubuntu LLVM 18.1.3 `llvm-mc-18`, `llvm-objdump-18`,
+`llvm-readelf-18` and `llvm-objcopy-18`. They are not dependencies of the producer binary.
+`llvm-objcopy --dump-section` receives an explicit disposable output so it never rewrites
+the emitted input. The oracle is relocatable: no `ld.lld` was installed and none was installed
+for this work. The gate compares `.text` bytes, rebased disassembly, metadata, and descriptor
+bytes excluding its relocated entry displacement; it does **not** claim linked-file identity.
+New logs/listings and tool/source digests are filed under `evidence/AMD-GFX942-HOST-*/`.
+
+Status: host byte/format checks only. AMD loader interoperability, queue dispatch, numeric FP32
+outputs, boundary vectors, performance, Qwen execution and every AMD hardware row are **NOT_RUN**.

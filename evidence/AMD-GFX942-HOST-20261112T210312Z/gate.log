@@ -1,0 +1,27 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: AMD_OUT (or the fresh temporary directory)
+ORACLE llvm-mc-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objdump-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-readelf-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objcopy-18 llvm-objcopy, compatible with GNU objcopy
+COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
+COMPILE hsaco src=c71a4062fd612fae36f964d8b31a5988d298a45947073db38e729784f808f47f bin=b7845af6703b6f3147472f832501f591848b573e5f22e7949cbd9c8ff1ad43d9
+COMPILE hsaco-again src=c71a4062fd612fae36f964d8b31a5988d298a45947073db38e729784f808f47f bin=b7845af6703b6f3147472f832501f591848b573e5f22e7949cbd9c8ff1ad43d9
+PASS two producer compilations byte-identical
+PASS two code-object builds byte-identical
+OBJECT sha256=10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f bytes=2608
+PASS load-gfx942 exit=0 LOAD ACCEPT AMDGPU_HSACO target=amdgcn-amd-amdhsa--gfx942 mach=0x4c abi=3 kernels=1 note=AMDGPU/NT_AMDGPU_METADATA bytes=2608
+PASS code section bytes equal llvm-mc-18 gfx942 oracle
+PASS AMDGPU metadata note bytes equal independent oracle
+PASS descriptor sizes/reserved prefix match oracle
+PASS descriptor resources/properties match oracle
+PASS descriptor entry displacement resolves to vadd (no relocation remains)
+PASS objdump -d listings equal (oracle rebased to emitted .text VA)
+PASS llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd
+PASS CONTROL instruction-table flipped bit CAUGHT code mismatch
+PASS control-wrong-mach exit=33 LOAD REFUSE AMDGPU_HSACO code=33 reason=e_flags mach does not match the requested gfx target
+PASS control-truncated exit=34 LOAD REFUSE AMDGPU_HSACO code=34 reason=no well-formed AMDGPU NT_AMDGPU_METADATA note in a PT_NOTE segment
+PASS CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup
+hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
+NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
+AMD-GFX942-HOST PASS pass=14 fail=0 hardware=NOT_RUN

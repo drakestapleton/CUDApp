@@ -1,0 +1,3 @@
+#!/bin/sh
+printf 'WRONG COMPILER EXECUTED\n'
+exit 99

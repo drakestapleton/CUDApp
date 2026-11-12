@@ -1,0 +1,1 @@
+LOAD REFUSE AMDGPU_HSACO code=34 reason=no well-formed AMDGPU NT_AMDGPU_METADATA note in a PT_NOTE segment

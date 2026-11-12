@@ -1,0 +1,1 @@
+LOAD ACCEPT AMDGPU_HSACO target=amdgcn-amd-amdhsa--gfx942 mach=0x4c abi=3 kernels=1 note=AMDGPU/NT_AMDGPU_METADATA bytes=2608

@@ -83,7 +83,7 @@ for op in [0, 1, 2]:
 case('smem-component-low-bits', 68, sm(0, offset=3), {s(0): 3, s(1): 0}, {s(8): 0x12340000}, mem=mem)
 for op, dest in [(1, 9), (2, 10)]:
     case(f'smem-bad-destination-{op}', 70, sm(op, d=dest), refusal=66)
-case('smem-negative-undefined', 68, sm(0, offset=1 << 20), refusal=66)
+case('smem-offset-bit20-refused', 68, sm(0, offset=1 << 20), refusal=66)
 # Vector integer operations: lane0/63 active, lane1 destination is untouched.
 for op, label, a, b, answer in [
     (19, 'and', 0xa5, 0x5a, 0), (52, 'add-wrap', U32, 2, 1),
@@ -161,14 +161,14 @@ MUTATIONS = {
     'smem-low-bits': ('p = or and get sr sb 0xfffffffc shl get sr add sb 1 32', 'p = or get sr sb shl get sr add sb 1 32'),
     'smem-offset-low-bits': ('put st 12 and x 0xfffffffc', 'put st 12 x'),
     'smem-dest-alignment': ('if ne and sd sub shl ulong 1 op 1 0', 'if false'),
-    'smem-negative': ('if ne shr x 20 0', 'if ne shr x 21 0'),
+    'smem-offset-bit20': ('if ne shr x 20 0', 'if ne shr x 21 0'),
     'vgpr-pair-alignment': ('if or ge va 255 ne and va 1 0', 'if ge va 255'),
 }
 MUTANT_CASE = {
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',
     'vcc-source': 'cmp-vcc-source-snapshot', 'smem-low-bits': 'smem-component-low-bits',
     'smem-offset-low-bits': 'smem-component-low-bits',
-    'smem-dest-alignment': 'smem-bad-destination-1', 'smem-negative': 'smem-negative-undefined',
+    'smem-dest-alignment': 'smem-bad-destination-1', 'smem-offset-bit20': 'smem-offset-bit20-refused',
     'vgpr-pair-alignment': 'global-odd-address-pair',
 }
 

@@ -3,6 +3,7 @@
 """Host-only acceptance. Invoke inside the mandatory no-device bwrap wrapper."""
 import os
 from pathlib import Path
+import shutil
 import subprocess
 
 root = Path(__file__).resolve().parent.parent
@@ -14,8 +15,8 @@ unit = "src/cudapp_om_eng.c"
 text = "src/cudapp_om_fixture_text.c"
 test = "tests/om_fixture_rest_test.c"
 
-def run(args, name, expected=0, cwd=None):
-    p = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd)
+def run(args, name, expected=0):
+    p = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (out / (name + ".log")).write_bytes(p.stdout)
     print(f"{name}: rc={p.returncode}", flush=True)
     if p.returncode != expected:
@@ -41,8 +42,11 @@ run(["gcc", "-std=gnu11", "-O0", "--coverage", "-Isrc",
      "-DCUDAPP_MIGRATION_PENDING_C_ENGINE_FIXTURE_REST=1",
      "-DCUDAPP_MIGRATION_PENDING_C_CLOCK_SCALARS=1", test, "-o", str(out/"coverage")], "build-coverage")
 run([str(out/"coverage")], "coverage")
-# gcov writes its .gcov files into the current directory: run it in the build directory, not the checkout
-run(["gcov", "-b", "-c", "-o", str(out), str(out/"coverage-om_fixture_rest_test.gcno")], "gcov", cwd=out)
+run(["gcov", "-b", "-c", "-o", str(out), str(out/"coverage-om_fixture_rest_test.gcno")], "gcov")
+# gcov finds the sources from the checkout and writes its .gcov files there: keep their text in the build
+# directory and the checkout clean (the pattern of tests/mathlibs_host_om.py)
+for path in root.glob("*.gcov"):
+    shutil.move(str(path), out / path.name)
 
 # Fresh mutant copies only; never modify production source or generated artifacts.
 source = (root / "om/engine/fixture_rest.om").read_text()

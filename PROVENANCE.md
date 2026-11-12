@@ -227,7 +227,7 @@ memory, dispatch, completion and every AMD hardware row are **NOT_RUN**.
 `backend/amd/gfx942/exec/` (`fp.om`, `main.om`, built as one unit) is a first-party seeded-Omega
 executor for exactly the gfx942 instructions the section 8 vadd kernel uses. It decodes the raw
 `.text` words of the emitted code object (the gate extracts `.text` through the ELF section headers)
-and runs wave64 workgroups over a flat byte file holding the kernel arguments and the a, b, c arrays.
+and runs wave64 workgroups over a flat byte file holding the kernel arguments and arrays.
 Every instruction and branch target is checked before memory is opened; anything outside the subset is
 a refusal with a defined exit (65 malformed, 66 unsupported encoding, 67 memory range). Binary32
 addition is integer arithmetic (guard, round and sticky bits, ties to even, subnormals kept, no host
@@ -242,3 +242,44 @@ which is exact for binary32 addition, and checks all output bits plus untouched 
 Status: host execution model only. Waits complete at once and memory is sequential, so this checks
 what the kernel computes, not timing, races or the GPU's memory model. Every AMD hardware row is
 **NOT_RUN**.
+
+## 11. gfx942 fsum16 and table-defined kernel metadata (2026-11-12)
+
+`backend/amd/gfx942/fsum16.isa` specifies the frozen left-to-right binary32 reduction already
+defined by `backend/spirv/emit.om`: each active row loads its first input and adds the remaining
+inputs in order, rounding after every addition. It does not start from zero or reassociate.
+The ABI is global pointers `x` and `o` followed by uint `n`; one wave64 workgroup covers consecutive
+rows. Both address paths compute the high and low halves before adding the pointers.
+
+The producer `backend/amd/gfx942/hsaco.om` reads its kernel name, arguments, sizes, register counts
+and descriptor resource words from `K`/`A` table rows (schema in `vadd.isa`). It no longer selects
+metadata by a hardcoded kernel name. Identifier bytes are streamed from the seekable table, and
+MessagePack and ELF sizes are derived from those bytes. This schema supports contiguous global-pointer
+and uint arguments; absent/duplicate kernel declarations, unsupported argument kinds and layout gaps
+are refusals with exit 4 before object output. The complete vadd object retains its previous digest,
+checked by both gates.
+
+`backend/amd/gfx942/fsum16-gfx942.s` is an independently written LLVM 18.1.3 oracle. The host gate
+compares its `.text`, metadata note and descriptor fields with the Omega object and checks the
+resolved kernel-entry displacement. Its metadata uses LLVM's explicit `!str n` tag: plain `n`,
+quoted `"n"` and YAML's `!!str n` all gave LLVM's `invalid HSA metadata` error in this run.
+Instruction formats and opcodes use only the public sources in section 8; this kernel introduces
+no executor opcodes or new production dependency.
+
+The executor interface is now `exec RAW_TEXT MEMORY COUNT_OFFSET`, with a decimal byte offset
+for the uint dispatch count in the kernarg block. Its callers pass the appropriate offset;
+the instruction decoder does not infer a kernel from its filename or metadata. The existing
+integer binary32 addition and canonical NaN policy are unchanged.
+
+`tests/amd-exec/oracle.py` computes each reduction independently by applying its rounded binary32
+reference after every addition. It checks all output bits, inputs, arguments and guard bytes, and
+reverses the load offsets in a test-only mutant table. The recorded order-sensitive row is
+`[0x4c000000, 0xcc000000, 0x3f800000, thirteen zero words]`: the Python reference measured
+left-to-right bits `0x3f800000`, reverse-order bits `0x00000000`; the executed mutant was caught.
+The earlier attempted row with `0x4b800000`/`0xcb800000` was not order-sensitive and was replaced
+after the oracle's explicit inequality assertion failed. No numerical tolerance is used.
+
+Status: IMPLEMENTED and EXERCISED on the Linux AArch64 host. Receipts under
+`evidence/AMD-GFX942-FSUM16-*` record the compiler pin, inputs, commands, output digests, failures
+and passing gates. AMD dispatch, timing, race behaviour, hardware NaN payloads and Qwen inference
+remain **NOT_RUN**. This is host code-object and instruction-model evidence, not hardware qualification.

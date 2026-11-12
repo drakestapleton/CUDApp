@@ -1,0 +1,41 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: AMD_OUT (or the fresh temporary directory)
+ORACLE llvm-mc-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objdump-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-readelf-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objcopy-18 llvm-objcopy, compatible with GNU objcopy
+COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
+COMPILE hsaco src=f1c9ff601936ed1a531dcd50bf852ce5986a36def0e9006db3b7628794e3c96f bin=b36c9262e005a7528f7c08d87c26f54767bf289aa9c1ed40e504b802b9d4e880
+COMPILE hsaco-again src=f1c9ff601936ed1a531dcd50bf852ce5986a36def0e9006db3b7628794e3c96f bin=b36c9262e005a7528f7c08d87c26f54767bf289aa9c1ed40e504b802b9d4e880
+PASS two producer compilations byte-identical
+PASS two code-object builds byte-identical
+OBJECT sha256=10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f bytes=2608
+PASS load-gfx942 exit=0 LOAD ACCEPT AMDGPU_HSACO target=amdgcn-amd-amdhsa--gfx942 mach=0x4c abi=3 kernels=1 note=AMDGPU/NT_AMDGPU_METADATA bytes=2608
+PASS code section bytes equal llvm-mc-18 gfx942 oracle
+PASS AMDGPU metadata note bytes equal independent oracle
+PASS descriptor sizes/reserved prefix match oracle
+PASS descriptor resources/properties match oracle
+PASS descriptor entry displacement resolves to vadd (no relocation remains)
+PASS objdump -d listings equal (oracle rebased to emitted .text VA)
+PASS llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd
+PASS MessagePack uint and str encodings at every width boundary equal the spec bytes
+PASS CONTROL single-byte MessagePack value CAUGHT by byte comparison
+PASS CONTROL instruction-table flipped bit CAUGHT code mismatch
+PASS control-wrong-mach exit=33 LOAD REFUSE AMDGPU_HSACO code=33 reason=e_flags mach does not match the requested gfx target
+PASS control-truncated exit=34 LOAD REFUSE AMDGPU_HSACO code=34 reason=no well-formed AMDGPU NT_AMDGPU_METADATA note in a PT_NOTE segment
+PASS CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup
+PASS vadd entire object unchanged from pre-generalization
+PASS fsum16 two code-object builds byte-identical
+PASS fsum16 .text bytes equal independent llvm-mc-18 oracle
+PASS fsum16 metadata note bytes equal independent oracle
+PASS fsum16 descriptor sizes match oracle
+PASS fsum16 descriptor resources/properties match oracle
+PASS fsum16 descriptor entry displacement resolves to kernel symbol
+PASS llvm-readelf parses fsum16 symbol, 20-byte kernarg and table register counts
+PASS CONTROL missing-kernel CAUGHT exit=4 before object emission
+PASS CONTROL duplicate-kernel CAUGHT exit=4 before object emission
+PASS CONTROL argument-gap CAUGHT exit=4 before object emission
+FSUM16 OBJECT sha256=15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478 bytes=2736
+hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
+NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
+AMD-GFX942-HOST PASS pass=27 fail=0 hardware=NOT_RUN

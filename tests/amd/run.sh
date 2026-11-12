@@ -195,6 +195,58 @@ if [ "$rc" -eq 69 ] && grep -q '^REFUSED: compiler digest differs from pin ' "$o
   && ! grep -q 'WRONG COMPILER EXECUTED' "$out/wrong-pin.log" && [ ! -e "$out/wrong-pin-must-not-exist" ]; then
   ok 'CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup'
 else bad "CONTROL wrong compiler digest exit=$rc or effect escaped"; fi
+# The generic table metadata must retain the existing complete vadd object, not just its .text.
+if [ "$(digest "$out/hsaco.hsaco")" = 10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f ]; then
+  ok 'vadd entire object unchanged from pre-generalization'
+else bad 'vadd object changed during metadata generalization'; fi
+for producer in hsaco hsaco-again; do
+  timeout 30 "$out/$producer" "$src/fsum16.isa" > "$out/fsum16-$producer.hsaco" 2> "$out/fsum16-$producer.err"; rc=$?
+  if [ "$rc" -ne 0 ] || [ -s "$out/fsum16-$producer.err" ]; then
+    echo "FAIL fsum16 producer exit=$rc"; cat "$out/fsum16-$producer.err"; exit 1
+  fi
+done
+compare "$out/fsum16-hsaco.hsaco" "$out/fsum16-hsaco-again.hsaco" 'fsum16 two code-object builds byte-identical'
+if ! llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -filetype=obj "$src/fsum16-gfx942.s" -o "$out/fsum16-oracle.o" > "$out/fsum16-assemble.log" 2>&1; then
+  echo 'FAIL fsum16 oracle assembly'; cat "$out/fsum16-assemble.log"; exit 1
+fi
+for pair in fsum16-hsaco.hsaco:fsum16-omega fsum16-oracle.o:fsum16-oracle; do
+  file=${pair%:*}; prefix=${pair#*:}
+  llvm-objcopy-18 --dump-section=.text="$out/$prefix.text" --dump-section=.rodata="$out/$prefix.rodata" --dump-section=.note="$out/$prefix.note" \
+    "$out/$file" "$out/$prefix.objcopy-rewrite" > "$out/$prefix.extract.log" 2>&1 || exit 1
+  llvm-readelf-18 -h -l -S -s -r -d --notes "$out/$file" > "$out/$prefix.readelf.txt" 2>&1 || exit 1
+  dd if="$out/$prefix.rodata" of="$out/$prefix.descriptor-head" bs=1 count=16 status=none || exit 74
+  dd if="$out/$prefix.rodata" of="$out/$prefix.descriptor-tail" bs=1 skip=24 status=none || exit 74
+done
+compare "$out/fsum16-omega.text" "$out/fsum16-oracle.text" 'fsum16 .text bytes equal independent llvm-mc-18 oracle'
+compare "$out/fsum16-omega.note" "$out/fsum16-oracle.note" 'fsum16 metadata note bytes equal independent oracle'
+compare "$out/fsum16-omega.descriptor-head" "$out/fsum16-oracle.descriptor-head" 'fsum16 descriptor sizes match oracle'
+compare "$out/fsum16-omega.descriptor-tail" "$out/fsum16-oracle.descriptor-tail" 'fsum16 descriptor resources/properties match oracle'
+entryva=$(awk '$8 == "fsum16" { print "0x" $2; exit }' "$out/fsum16-omega.readelf.txt")
+descva=$(awk '$8 == "fsum16.kd" { print "0x" $2; exit }' "$out/fsum16-omega.readelf.txt")
+disp=$(od -An -tu8 -j 16 -N 8 "$out/fsum16-omega.rodata" | tr -d ' ')
+if [ -n "$entryva" ] && [ -n "$descva" ] && [ "$disp" = "$((entryva - descva))" ]; then
+  ok 'fsum16 descriptor entry displacement resolves to kernel symbol'
+else bad 'fsum16 descriptor entry displacement'; fi
+if grep -q '\.name: *fsum16$' "$out/fsum16-omega.readelf.txt" \
+  && grep -q ' fsum16.kd$' "$out/fsum16-omega.readelf.txt" \
+  && grep -q '\.kernarg_segment_size: *20$' "$out/fsum16-omega.readelf.txt" \
+  && grep -q '\.sgpr_count: *18$' "$out/fsum16-omega.readelf.txt" \
+  && ! grep -q 'warning:\|error:' "$out/fsum16-omega.readelf.txt"; then
+  ok 'llvm-readelf parses fsum16 symbol, 20-byte kernarg and table register counts'
+else bad 'fsum16 llvm-readelf metadata/header/symbol check'; fi
+# Reject broken metadata before emitting any object; do not infer a kernel from its filename.
+for control in missing-kernel duplicate-kernel argument-gap; do
+  case $control in
+    missing-kernel) sed '/^K /d' "$src/fsum16.isa" ;;
+    duplicate-kernel) sed '/^K /p' "$src/fsum16.isa" ;;
+    argument-gap) sed 's/^A n 16 4 1$/A n 20 4 1/' "$src/fsum16.isa" ;;
+  esac > "$out/$control.isa"
+  timeout 30 "$out/hsaco" "$out/$control.isa" > "$out/$control.hsaco" 2> "$out/$control.err"; rc=$?
+  if [ "$rc" -eq 4 ] && [ ! -s "$out/$control.hsaco" ]; then
+    ok "CONTROL $control CAUGHT exit=4 before object emission"
+  else bad "CONTROL $control exit=$rc or partial object escaped"; fi
+done
+echo "FSUM16 OBJECT sha256=$(digest "$out/fsum16-hsaco.hsaco") bytes=$(wc -c < "$out/fsum16-hsaco.hsaco" | tr -d ' ')"
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'

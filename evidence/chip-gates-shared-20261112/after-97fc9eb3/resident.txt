@@ -1,0 +1,6 @@
+resident chip witness=0 mode=resident launches=1 submits=1 elapsed_ns=1342977 exact_f32=PASS
+resident chip witness=0 mode=cmdlist-layers launches=5 submits=1 elapsed_ns=2878117 exact_f32=PASS
+resident chip witness=1 mode=resident launches=1 submits=1 elapsed_ns=1403699 exact_f32=PASS
+resident chip witness=1 mode=cmdlist-layers launches=5 submits=1 elapsed_ns=1680309 exact_f32=PASS
+GPU RESIDENT CHIP PASS
+exit=0

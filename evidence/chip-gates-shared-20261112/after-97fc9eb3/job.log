@@ -1,0 +1,22 @@
+window_label finalize-shared-20261112T035501Z (GB10 shared with the live 35B and a training job; no lock; values only, no timing is a claim)
+date 2026-11-12T03:55:01Z host spark-b87b aarch64 driver NVRM version: NVIDIA UNIX Open Kernel Module for aarch64 580.173.02 Release Build (dvs-builder@U22-A24-5-4) Tue Jun 23 08:34:19 UTC 2026
+head 97fc9eb394c65d7ae64b067b9d3efd53206da68c status 0 files changed
+ab6cbdb77e0f10d1011a301bfe8d75522e6a3b709a2b5cc049915582a53d42f0  build/hello_gpu
+fe135014502191fa99c85edb948a5beb587eeb70f01dfa58754ca28549ff2b0d  build/hello_gpu_control
+d41554958008db30a14c8daf9dc7ee5ec2907242e4adbdab78f66b7abf2db351  build/cudapp-doctor
+c6703a8d50f268126907c4faa544d10da2379b81885557e0711f25657a629b7f  build/gpu_elementwise_test
+02e425ec9c6b332aac2f8d61d8506a177b693c16ecaa77f0bb22f8862f6c5db6  build/gpu_mathlibs_test
+7bbc7e86095b5c12b4695b56ca90e181b9c08a4fa613617d6b6409c62760d8b6  build/gpu_resident_chip
+7508007851644d53f5f82ea6fe42a0e3866187781bb830f4f1daf517090c8703  build/gpu_decode_attn_test
+53728813ed5cad525106aea522a9e76e2b63d133e28e4afee8e9387d556a5efa  build/zero-copy/chip-share
+775aaedf07d58b49503b1b5eae75c44cbf2c18aadcb930feb745c7b04b1e6363  build/libomega_gpu.a
+2026-11-12T03:55:01Z step doctor exit=0
+2026-11-12T03:55:03Z step hello-gpu exit=0
+2026-11-12T03:55:04Z step hello-gpu-control exit=1
+2026-11-12T03:55:04Z step elementwise exit=0
+2026-11-12T03:55:56Z step mathlibs exit=0
+2026-11-12T03:55:56Z step resident exit=0
+2026-11-12T03:55:56Z step zero-copy-share exit=0
+2026-11-12T03:57:33Z step decode-attn exit=0
+control_line 1
+35B 200 omega_llm 200

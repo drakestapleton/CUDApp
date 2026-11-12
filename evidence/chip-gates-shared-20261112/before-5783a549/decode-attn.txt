@@ -1,0 +1,29 @@
+cache alloc (1 layer, 131072 positions): rc=OK 5668.7 ms ()
+dattn_pos0 output sha256 e81b7427ea91d932b787c8b3aab785ebba891780039af46f87e57b557d31ecd8
+chip context 1                rc=OK        bad=0 worst=0.000 rows=ok (1 one-ulp k flips) grid=1x4 per_split=256 depth=4 kv_bytes=2048 fill=0.0ms chip_med=1727.1us (0.0 GB/s) call_med=1871.1us reps=20
+dattn_pos6 output sha256 9f1969292c8226ec86e1d91ef5f2706bbc8b2034b831d44351c0b72e651d06fd
+chip context 7                rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=1x4 per_split=256 depth=4 kv_bytes=14336 fill=0.0ms chip_med=1815.3us (0.0 GB/s) call_med=1958.2us reps=20
+dattn_pos255 output sha256 2a76c594bff6c41fbe33b90f5d4e5fa91c08c3b7945a757417170f301490c889
+chip context 256              rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=1x4 per_split=256 depth=4 kv_bytes=524288 fill=1.8ms chip_med=1457.0us (0.4 GB/s) call_med=1601.2us reps=20
+dattn_pos300 output sha256 7901e5e5c6499e531e16533afd9aa2e68cf0da8d0bc763b9feb7d62843ff60e8
+chip context 301 sharp q      rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=2x4 per_split=256 depth=4 kv_bytes=616448 fill=2.0ms chip_med=1718.6us (0.4 GB/s) call_med=1861.7us reps=20
+chip context 301 sharp q      mutant 1: caught (rc=OK bad=3630 worst=25.864)
+chip context 301 sharp q      mutant 2: caught (rc=OK bad=3773 worst=40.263)
+chip context 301 sharp q      mutant 3: caught (rc=OK bad=820 worst=6.838)
+chip context 301 sharp q      mutant 4: caught (rc=OK bad=2010 worst=18.655)
+dattn_pos1023 output sha256 c538767cf530fdc8495bfae1151c700e8a887cf5d1d4c6444a2ff38dffd41880
+chip context 1024             rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=4x4 per_split=256 depth=4 kv_bytes=2097152 fill=7.4ms chip_med=1654.9us (1.3 GB/s) call_med=1801.6us reps=20
+dattn_pos4095 output sha256 01db162e6a0fb8ae267b8dc1b2e97ffb48dc10b3094d015c86e6a6b5765c963c
+chip context 4096             rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=16x4 per_split=256 depth=4 kv_bytes=8388608 fill=28.1ms chip_med=1786.7us (4.7 GB/s) call_med=1933.8us reps=20
+dattn_pos8191 output sha256 58fde3abe0308ba8aa23a51c9506595e29929eae3b7dc19462553af2f5acaff6
+chip context 8192             rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=32x4 per_split=256 depth=4 kv_bytes=16777216 fill=56.2ms chip_med=1944.9us (8.6 GB/s) call_med=2093.4us reps=20
+dattn_pos32767 output sha256 3741c568cb32da1310250b01feeb882cdcaaa8bf38c28a2247ad462aaca3b798
+chip context 32768            rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=128x4 per_split=256 depth=4 kv_bytes=67108864 fill=222.1ms chip_med=4734.6us (14.2 GB/s) call_med=4890.8us reps=20
+dattn_pos65535 output sha256 2c59615d18096f123c61896c480587df3f0bbee36082638ace22f082600108fe
+chip context 65536 (old cap)  rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=256x4 per_split=256 depth=4 kv_bytes=134217728 fill=444.8ms chip_med=6055.9us (22.2 GB/s) call_med=6203.7us reps=20
+dattn_pos99999 output sha256 ac5341662877a98d99c94d56a666533ef62178572d3db207f0b0f37e7c310d06
+chip context 100000           rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=391x4 per_split=256 depth=4 kv_bytes=204800000 fill=676.4ms chip_med=6772.4us (30.2 GB/s) call_med=6918.6us reps=20
+dattn_pos131071 output sha256 7eaf8daf59ff6de9e169a2e75e1a2d8ec3b31568420b7b7f557168fe93e56651
+chip context 131072 (cap)     rc=OK        bad=0 worst=0.000 rows=ok (0 one-ulp k flips) grid=512x4 per_split=256 depth=4 kv_bytes=268435456 fill=875.3ms chip_med=8110.4us (33.1 GB/s) call_med=8274.8us reps=20
+gpu_decode_attn_test: 38 checks, 0 failed: PASS
+exit=0

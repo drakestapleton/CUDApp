@@ -1,0 +1,2 @@
+taskset: failed to execute ./build/zero-copy/chip-share: Permission denied
+exit=126

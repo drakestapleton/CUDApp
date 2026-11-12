@@ -1,7 +1,10 @@
 # Resident small-model kernel
 
 IMPLEMENTED in seeded Omega at compiler source `omega-mv@e5b32567`.
-Chip qualification is **NOT_RUN**. The ROADMAP row remains MISSING.
+Chip: EXERCISED on the GB10 on 2026-11-12, on a shared chip (values only), receipt
+`evidence/chip-gates-shared-20261112/`: `gpu_resident_chip --chip` passes both witnesses in both
+modes after the `S2R` scheduling fix described there. It is not QUALIFIED: the exclusive window of
+the runbook below is still NOT_RUN. The ROADMAP row is PARTIAL.
 This branch stacks on the generic replay in CodegenA commit `22ebf8f`.
 No replay implementation is forked or changed here.
 
@@ -68,12 +71,16 @@ operation. Existing `ws_run` callers keep quantum=0 and retain their scheduling.
 `tests/gpu_resident_grid.h` interleaves one-warp CTAs in both CTA orders and
 several instruction quanta; it executes the emitted polling loops, not a host
 replacement barrier. This SC/coherent memory model cannot qualify GPU caches,
-fences, progress or occupancy. The dropped-barrier control uses an intentionally
+fences, progress or occupancy. It also has no instruction latency: a
+variable-latency producer read without its wait passes the simulator. `gpu_resident_test`
+therefore runs the static hazard checker (`src/omega_bw_hazard.c`) on the encoded kernels
+(1 and 5 layers, 1 and 2 CTAs) before the simulator, and the mutant
+`fixed-latency-thread-id` must fail there. The dropped-barrier control uses an intentionally
 unfair long quantum so the reduction observes unfinished producer rows.
 Corrupted descriptors must be refused before replay. Source mutations must
 compile successfully, then fail the oracle. Missing tools are NOT_RUN.
 
-## Authorized chip runbook (NOT_RUN)
+## Authorized chip runbook (exclusive window: NOT_RUN)
 
 Only after the operator opens a current exclusive window, runs the platform's
 normal admission/doctor checks, and authorizes this exact candidate:

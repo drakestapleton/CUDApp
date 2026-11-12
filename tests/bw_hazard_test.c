@@ -37,6 +37,8 @@
 #include "omega_gpu_gemm.h"
 #include "omega_gpu_elementwise_api.h"
 #include "omega_gpu_prefill_attn_api.h"
+#include "omega_gpu_resident.h"
+#include "gpu_resident_fixture.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -445,8 +447,21 @@ static void own_gemm_sweep(void) {
     }
 }
 
+/* Resident descriptor kernel (om/resident): its S2R, loads, atomics and grid barrier. Added after the GB10 run of
+ * 2026-11-12, where an S2R without a write barrier hung the kernel and no host sweep had built it. */
+static void resident_sweep(void) {
+    char v[96]; (void)resident_reference; (void)resident_input;
+    for (unsigned n = 1; n <= 5; n += 4) for (unsigned ctas = 1; ctas <= 2; ctas++) {
+        uint64_t err = 0;
+        snprintf(v, sizeof v, "layers%u ctas%u", n, ctas);
+        if (BUILD(omega_gpu_resident_build(resident_model, n, 64, ctas, &g_prog, &err))) sweep_prog("resident", v, P_NONE);
+        else CHECK(0, "resident %s: build refused (err %llu)", v, (unsigned long long)err);
+    }
+}
+
 static void sweep(void) {
     char v[96];
+    resident_sweep();
     /* fp8 GEMV (MoE experts, attention projections): k values of the live models, every buildable lane / rows / warps / depth */
     { unsigned ks[] = { 256, 768, 2048, 4096, 8192 };
       for (unsigned a = 0; a < 5; a++) for (unsigned lb = 8; lb <= 16; lb += 8) for (unsigned rows = 1; rows <= 8; rows *= 2)

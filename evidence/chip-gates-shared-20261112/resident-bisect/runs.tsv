@@ -1,0 +1,12 @@
+run	layers	ctas	threads_per_cta	model	submit_rc	counter	generation
+r-5-1	5	1	32	fixture	0	0	5
+r-2-2	2	2	32	fixture	0	0	2
+r-3-2	3	2	32	fixture	-1	30	2
+r-4-2	4	2	32	fixture	-1	30	2
+r-5-2	5	2	32	fixture	-1	30	2
+v-t1-l3	3	2	1	fixture	0	0	3
+v-t2-l3	3	2	2	fixture	-1	1	2
+v-t4-l3	3	2	4	fixture	-1	3	2
+v-t16-l3	3	2	16	fixture	-1	15	2
+v-copy-l3	3	2	32	copy-x3	-1	31	2
+v-gaa-l3	3	2	32	gemv-add-add	-1	31	2

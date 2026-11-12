@@ -258,6 +258,9 @@ static const Row ROWS[] = {
     { 0x0000000000007986ull, 0x0c115900ull, "STG.E.STRONG.SYS desc[%C][%a.64%o], %b" },
     { 0x80000000000079a8ull, 0x081f5100ull, "ATOMG.E.ADD.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
     { 0x80000000000079a8ull, 0x089f5500ull, "ATOMG.E.MIN.64.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
+    /* BW_IR_ATOMG_EXCH_STRONG_SYS: the resident kernel's grid barrier (om/resident); text checked with nvdisasm 13.0.85
+     * on that kernel's own bytes, 2026-11-12 */
+    { 0x80000000000079a8ull, 0x0c1f5100ull, "ATOMG.E.EXCH.STRONG.SYS PT, %d, desc[%C][%a.64], %b" },
     { 0x0000000000007984ull, 0x08000800ull, "LDS %d, [%a+%B]" },
     { 0x0000000000007988ull, 0x08000800ull, "STS [%a+%C], %b" },
     { 0x0000000000007984ull, 0x00000000ull, "LDS%z %d, [%a%o]" },

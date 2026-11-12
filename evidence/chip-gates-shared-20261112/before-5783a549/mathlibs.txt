@@ -1,0 +1,200 @@
+mathlibs tier=chip fixture=tests/fixtures/mathlibs_rng_aienmath.txt philox_fixture=tests/fixtures/philox_curand_oracle.txt dist_fixture=tests/fixtures/philox_curand_dist_oracle.txt
+host rng_reference_vs_aienmath rows=792 mismatches=0
+host philox_reference_vs_random123_kat vectors=3 mismatches=0 nine_round_control_mismatches=3
+host philox_reference_vs_curand rows=1024 mismatches=0
+host philox_dist_reference_vs_curand uniform=896/896 uniform_double=896/896 uniform2_double=896/896 normal_within_2^-21s=896/896 normal_bit_exact=743 worst_err_over_s=1.848*2^-24 normal_double_rows=896 (not compared: no f64 IR)
+host philox_dist_negative_controls uniform_next_word=896/896 normal_sin_cos_swapped=896/896 uniform2_no_half_step=655/896 (must be caught)
+host rng_codegen kind=0 insns=168 gpr_peak=24 gpr_declared=64
+host rng_codegen kind=1 insns=168 gpr_peak=23 gpr_declared=64
+host rng_codegen kind=2 insns=232 gpr_peak=24 gpr_declared=64
+host fft_codegen n=4 inverse=0 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=4 inverse=1 insns=40 gpr_peak=17 gpr_declared=64
+host fft_codegen n=8 inverse=0 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=8 inverse=1 insns=112 gpr_peak=29 gpr_declared=64
+host fft_codegen n=16 inverse=0 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=16 inverse=1 insns=120 gpr_peak=35 gpr_declared=64
+host fft_codegen n=32 inverse=0 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=32 inverse=1 insns=176 gpr_peak=43 gpr_declared=64
+host fft_codegen n=64 inverse=0 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=64 inverse=1 insns=184 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=0 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=128 inverse=1 insns=240 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=0 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=256 inverse=1 insns=248 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=0 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=512 inverse=1 insns=304 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=0 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=1024 inverse=1 insns=312 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=0 insns=376 gpr_peak=44 gpr_declared=64
+host fft_codegen n=2048 inverse=1 insns=376 gpr_peak=44 gpr_declared=64
+host philox_codegen insns=104 gpr_peak=51 gpr_declared=64
+host philox_dist_codegen dist=0 b=0 code_bytes=1664
+host philox_dist_codegen dist=0 b=1 code_bytes=2432
+host philox_dist_codegen dist=0 b=2 code_bytes=2432
+host philox_dist_codegen dist=0 b=3 code_bytes=2432
+host philox_dist_codegen dist=1 b=0 code_bytes=2176
+host philox_dist_codegen dist=1 b=1 code_bytes=2944
+host philox_dist_codegen dist=1 b=2 code_bytes=2944
+host philox_dist_codegen dist=1 b=3 code_bytes=2944
+host philox_dist_codegen dist=2 b=0 code_bytes=3840
+host philox_dist_codegen dist=2 b=1 code_bytes=4608
+host philox_dist_codegen dist=2 b=2 code_bytes=4608
+host philox_dist_codegen dist=2 b=3 code_bytes=4608
+host philox_dist_codegen dist=3 b=0 code_bytes=3200
+host philox_dist_codegen dist=3 b=1 code_bytes=3968
+host philox_dist_codegen dist=3 b=2 code_bytes=3968
+host philox_dist_codegen dist=3 b=3 code_bytes=3968
+host philox_dist_codegen dist=4 b=0 code_bytes=4480
+host philox_dist_codegen dist=4 b=1 code_bytes=5376
+host philox_dist_codegen dist=4 b=2 code_bytes=5376
+host philox_dist_codegen dist=4 b=3 code_bytes=5376
+host philox_dist_mutant_targeting kernels=20 errors=0
+host unit_codegen kind=4 a=3 b=0 threads=2 code_bytes=896
+host unit_codegen kind=4 a=3 b=1 threads=2 code_bytes=768
+host unit_codegen kind=4 a=6 b=0 threads=16 code_bytes=896
+host unit_codegen kind=4 a=6 b=1 threads=16 code_bytes=768
+host unit_codegen kind=4 a=12 b=0 threads=1024 code_bytes=896
+host unit_codegen kind=4 a=12 b=1 threads=1024 code_bytes=768
+host unit_codegen kind=5 a=2 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=4 b=3 threads=256 code_bytes=512
+host unit_codegen kind=5 a=25 b=2 threads=256 code_bytes=512
+host unit_codegen kind=5 a=16 b=11 threads=256 code_bytes=512
+host fft_twiddles entries=16376 off_by_more_than_half_ulp=0
+host fft_plan_words plans=5 mismatches=0
+host fft_plan_launches r2c_4096x2500=6 nd_4x2048x4=11 nd_16x2048x16_transposes=4
+host normal_model_sweep inputs=8388608 over_tol=0 worst_rel=3.256238e-07 at_A=20783 tol=2.87e-06 central~8360300
+host many_plans lengths=4095 bluestein=3848 wrong=0
+host many_magic divisors=8199 divisions=285971042 wrong=0
+host many_tables twiddles=67117054 chirps=16781310 off_by_more_than_half_ulp=0
+host many_walk refusals=18 shapes=10 launches=130 malformed=0
+chip rng_raw base=0 ns=4096 offset=0 per=17 mismatches=0 unwritten=0 elapsed_ns=1717744 marker=1145324612
+chip rng_raw base=0 ns=4096 offset=1000 per=16 mismatches=0 unwritten=0 elapsed_ns=427236 marker=1145324612
+chip rng_raw base=1729 ns=4096 offset=0 per=17 mismatches=0 unwritten=0 elapsed_ns=2283990 marker=1145324612
+chip rng_raw base=1729 ns=4096 offset=1000 per=16 mismatches=0 unwritten=0 elapsed_ns=418404 marker=1145324612
+chip rng_raw base=18446744073709551612 ns=4096 offset=0 per=17 mismatches=0 unwritten=0 elapsed_ns=2781595 marker=1145324612
+chip rng_raw base=18446744073709551612 ns=4096 offset=1000 per=16 mismatches=0 unwritten=0 elapsed_ns=2565320 marker=1145324612
+chip rng_fixture rows_covered=792 of 792 comparisons=1683 mismatches=0
+chip rng_raw seed=291 stream0=2^64-100 ns=300 offset=7 per=5 mismatches=0
+chip rng_uniform base=1729 n=69632 mismatches=0
+chip rng_normal base=1729 n=69632 over_tol=0 worst_rel=3.411262e-07 tol=2.87e-06 differ_from_exact_mufu_model=9825
+chip rng_big kind=1 ns=131072 per=64 n=8388608 bad=0 worst_rel=0.000000e+00 elapsed_ns=1356477 ctas=1024 marker=1145324612
+chip rng_big kind=2 ns=131072 per=64 n=8388608 bad=0 worst_rel=3.511417e-07 elapsed_ns=3405137 ctas=1024 marker=1145324612
+chip rng_mutant1 mismatches=4352 of 4352 (must be > 0)
+chip rng_mutant2 over_tol=4335 of 4352 (must be > 0)
+chip fft n=4 inverse=0 batch=8 normwise_err=4.0945e-08 tol=1.1921e-07 unwritten=0 elapsed_ns=1019289
+chip fft n=4 inverse=1 batch=8 normwise_err=1.5413e-16 tol=1.1921e-07 unwritten=0 elapsed_ns=1475502
+chip fft n=8 inverse=0 batch=8 normwise_err=6.3445e-08 tol=4.6661e-07 unwritten=0 elapsed_ns=1194876
+chip fft n=8 inverse=1 batch=8 normwise_err=4.6531e-08 tol=4.6661e-07 unwritten=0 elapsed_ns=1339005
+chip fft n=16 inverse=0 batch=8 normwise_err=6.1581e-08 tol=5.2622e-07 unwritten=0 elapsed_ns=1695088
+chip fft n=16 inverse=1 batch=8 normwise_err=6.0001e-08 tol=5.2622e-07 unwritten=0 elapsed_ns=915736
+chip fft n=32 inverse=0 batch=8 normwise_err=7.4062e-08 tol=8.7362e-07 unwritten=0 elapsed_ns=1381902
+chip fft n=32 inverse=1 batch=8 normwise_err=7.3891e-08 tol=8.7362e-07 unwritten=0 elapsed_ns=798999
+chip fft n=64 inverse=0 batch=8 normwise_err=8.4960e-08 tol=9.3322e-07 unwritten=0 elapsed_ns=612469
+chip fft n=64 inverse=1 batch=8 normwise_err=8.6035e-08 tol=9.3322e-07 unwritten=0 elapsed_ns=2004404
+chip fft n=128 inverse=0 batch=8 normwise_err=8.7895e-08 tol=1.2806e-06 unwritten=0 elapsed_ns=308499
+chip fft n=128 inverse=1 batch=8 normwise_err=9.6626e-08 tol=1.2806e-06 unwritten=0 elapsed_ns=1487278
+chip fft n=256 inverse=0 batch=8 normwise_err=9.6759e-08 tol=1.3402e-06 unwritten=0 elapsed_ns=206690
+chip fft n=256 inverse=1 batch=8 normwise_err=9.9225e-08 tol=1.3402e-06 unwritten=0 elapsed_ns=2511592
+chip fft n=512 inverse=0 batch=8 normwise_err=1.0539e-07 tol=1.6876e-06 unwritten=0 elapsed_ns=615270
+chip fft n=512 inverse=1 batch=8 normwise_err=1.0095e-07 tol=1.6876e-06 unwritten=0 elapsed_ns=718679
+chip fft n=1024 inverse=0 batch=8 normwise_err=1.0634e-07 tol=1.7472e-06 unwritten=0 elapsed_ns=1433918
+chip fft n=1024 inverse=1 batch=8 normwise_err=1.0562e-07 tol=1.7472e-06 unwritten=0 elapsed_ns=1547407
+chip fft n=2048 inverse=0 batch=8 normwise_err=1.1323e-07 tol=2.0946e-06 unwritten=0 elapsed_ns=626534
+chip fft n=2048 inverse=1 batch=8 normwise_err=1.1229e-07 tol=2.0946e-06 unwritten=0 elapsed_ns=515957
+chip fft n=256 batch=2050 launches=3 last_ctas=2 normwise_err=1.0421e-07 tol=1.3402e-06 elapsed_ns=5696567
+chip fft_mutant1 n=64 normwise_err=1.4215e+00 caught=1 expected=1
+chip fft_mutant1 n=2048 normwise_err=1.4111e+00 caught=1 expected=1
+chip fft_mutant2 n=16 normwise_err=1.2552e+00 caught=1 expected=1
+chip fft_mutant2 n=4 normwise_err=3.5734e-08 caught=0 expected=0
+chip philox seed=0 subseq0=0 ns=4096 offset=0 per=68 mismatches=0 unwritten=0 elapsed_ns=721063
+chip philox seed=0 subseq0=4294967295 ns=2 offset=0 per=8 mismatches=0 unwritten=0 elapsed_ns=924169
+chip philox seed=0 subseq0=0 ns=4096 offset=4 per=68 mismatches=0 unwritten=0 elapsed_ns=716951
+chip philox seed=0 subseq0=4294967295 ns=2 offset=4 per=8 mismatches=0 unwritten=0 elapsed_ns=1124091
+chip philox seed=0 subseq0=0 ns=4096 offset=1000 per=68 mismatches=0 unwritten=0 elapsed_ns=1023705
+chip philox seed=0 subseq0=4294967295 ns=2 offset=1000 per=8 mismatches=0 unwritten=0 elapsed_ns=1532351
+chip philox seed=0 subseq0=0 ns=4096 offset=17179869184 per=68 mismatches=0 unwritten=0 elapsed_ns=1429950
+chip philox seed=0 subseq0=4294967295 ns=2 offset=17179869184 per=8 mismatches=0 unwritten=0 elapsed_ns=817240
+chip philox seed=1729 subseq0=0 ns=4096 offset=0 per=68 mismatches=0 unwritten=0 elapsed_ns=1326701
+chip philox seed=1729 subseq0=4294967295 ns=2 offset=0 per=8 mismatches=0 unwritten=0 elapsed_ns=1533695
+chip philox seed=1729 subseq0=0 ns=4096 offset=4 per=68 mismatches=0 unwritten=0 elapsed_ns=1534399
+chip philox seed=1729 subseq0=4294967295 ns=2 offset=4 per=8 mismatches=0 unwritten=0 elapsed_ns=206930
+chip philox seed=1729 subseq0=0 ns=4096 offset=1000 per=68 mismatches=0 unwritten=0 elapsed_ns=1124571
+chip philox seed=1729 subseq0=4294967295 ns=2 offset=1000 per=8 mismatches=0 unwritten=0 elapsed_ns=3973574
+chip philox seed=1729 subseq0=0 ns=4096 offset=17179869184 per=68 mismatches=0 unwritten=0 elapsed_ns=2242230
+chip philox seed=1729 subseq0=4294967295 ns=2 offset=17179869184 per=8 mismatches=0 unwritten=0 elapsed_ns=4376378
+chip philox seed=81985529216486895 subseq0=0 ns=4096 offset=0 per=68 mismatches=0 unwritten=0 elapsed_ns=207922
+chip philox seed=81985529216486895 subseq0=4294967295 ns=2 offset=0 per=8 mismatches=0 unwritten=0 elapsed_ns=919769
+chip philox seed=81985529216486895 subseq0=0 ns=4096 offset=4 per=68 mismatches=0 unwritten=0 elapsed_ns=2343702
+chip philox seed=81985529216486895 subseq0=4294967295 ns=2 offset=4 per=8 mismatches=0 unwritten=0 elapsed_ns=919529
+chip philox seed=81985529216486895 subseq0=0 ns=4096 offset=1000 per=68 mismatches=0 unwritten=0 elapsed_ns=206914
+chip philox seed=81985529216486895 subseq0=4294967295 ns=2 offset=1000 per=8 mismatches=0 unwritten=0 elapsed_ns=1733425
+chip philox seed=81985529216486895 subseq0=0 ns=4096 offset=17179869184 per=68 mismatches=0 unwritten=0 elapsed_ns=1326077
+chip philox seed=81985529216486895 subseq0=4294967295 ns=2 offset=17179869184 per=8 mismatches=0 unwritten=0 elapsed_ns=2142229
+chip philox seed=18446744073709551615 subseq0=0 ns=4096 offset=0 per=68 mismatches=0 unwritten=0 elapsed_ns=1021242
+chip philox seed=18446744073709551615 subseq0=4294967295 ns=2 offset=0 per=8 mismatches=0 unwritten=0 elapsed_ns=920216
+chip philox seed=18446744073709551615 subseq0=0 ns=4096 offset=4 per=68 mismatches=0 unwritten=0 elapsed_ns=1020650
+chip philox seed=18446744073709551615 subseq0=4294967295 ns=2 offset=4 per=8 mismatches=0 unwritten=0 elapsed_ns=1325725
+chip philox seed=18446744073709551615 subseq0=0 ns=4096 offset=1000 per=68 mismatches=0 unwritten=0 elapsed_ns=2043588
+chip philox seed=18446744073709551615 subseq0=4294967295 ns=2 offset=1000 per=8 mismatches=0 unwritten=0 elapsed_ns=1528255
+chip philox seed=18446744073709551615 subseq0=0 ns=4096 offset=17179869184 per=68 mismatches=0 unwritten=0 elapsed_ns=715127
+chip philox seed=18446744073709551615 subseq0=4294967295 ns=2 offset=17179869184 per=8 mismatches=0 unwritten=0 elapsed_ns=512277
+chip philox_curand_fixture rows_covered=1024 of 1024 comparisons=1024 mismatches=0
+chip philox_dist dist=1 mismatches=0 curand_rows_covered=896 curand_disagree=0
+chip philox_dist dist=2 mismatches=0 curand_rows_covered=896 curand_disagree=0
+chip philox_dist dist=3 mismatches=0 curand_rows_covered=896 curand_disagree=0
+chip philox_dist dist=4 mismatches=0 curand_rows_covered=896 curand_disagree=0
+chip philox_big ns=131072 per=64 mismatches=0 elapsed_ns=1241228 ctas=1024 marker=1145324612
+chip philox_mutant1 dist=0 offset=0 mismatches=2048 of 2048 (must be > 0)
+chip philox_mutant2 dist=0 offset=0 mismatches=2048 of 2048 (must be > 0)
+chip philox_mutant3 dist=1 offset=241 mismatches=8 of 2048 (must be > 0)
+chip philox_mutant4 dist=0 offset=1 mismatches=2048 of 2048 (must be > 0)
+chip philox_mutant5 dist=4 offset=0 mismatches=2048 of 2048 (must be > 0)
+chip philox_mutant6 dist=3 offset=0 mismatches=545 of 4096 (must be > 0)
+chip r2c n=8 batch=8 normwise_err=5.6443e-08 tol=8.5611e-07 elapsed_ns=2487289
+chip c2r n=8 batch=8 normwise_err=6.1857e-08 tol=7.3690e-07 elapsed_ns=3416976
+chip r2c n=16 batch=8 normwise_err=8.1066e-08 tol=1.5509e-06 elapsed_ns=3547121
+chip c2r n=16 batch=8 normwise_err=8.4845e-08 tol=1.0843e-06 elapsed_ns=2143077
+chip r2c n=32 batch=8 normwise_err=8.3708e-08 tol=1.6701e-06 elapsed_ns=3262896
+chip c2r n=32 batch=8 normwise_err=8.5748e-08 tol=1.1439e-06 elapsed_ns=2103795
+chip r2c n=64 batch=8 normwise_err=9.4054e-08 tol=2.3649e-06 elapsed_ns=2451144
+chip c2r n=64 batch=8 normwise_err=8.6692e-08 tol=1.4913e-06 elapsed_ns=4074839
+chip r2c n=128 batch=8 normwise_err=9.4063e-08 tol=2.4841e-06 elapsed_ns=3162863
+chip c2r n=128 batch=8 normwise_err=1.0146e-07 tol=1.5509e-06 elapsed_ns=2662730
+chip r2c n=256 batch=8 normwise_err=1.0545e-07 tol=3.1789e-06 elapsed_ns=2433368
+chip c2r n=256 batch=8 normwise_err=9.9560e-08 tol=1.8983e-06 elapsed_ns=1938275
+chip r2c n=512 batch=8 normwise_err=1.0389e-07 tol=3.2981e-06 elapsed_ns=1837602
+chip c2r n=512 batch=8 normwise_err=1.0622e-07 tol=1.9579e-06 elapsed_ns=1940081
+chip r2c n=1024 batch=8 normwise_err=1.1400e-07 tol=3.9930e-06 elapsed_ns=3263440
+chip c2r n=1024 batch=8 normwise_err=1.1662e-07 tol=2.3053e-06 elapsed_ns=1940227
+chip r2c n=2048 batch=8 normwise_err=1.1919e-07 tol=4.1122e-06 elapsed_ns=1840482
+chip c2r n=2048 batch=8 normwise_err=1.1898e-07 tol=2.3649e-06 elapsed_ns=1635440
+chip r2c n=4096 batch=8 normwise_err=1.2286e-07 tol=4.8070e-06 elapsed_ns=2450648
+chip c2r n=4096 batch=8 normwise_err=1.2403e-07 tol=2.7124e-06 elapsed_ns=1742385
+chip r2c n=4096 batch=2050 launches=6 normwise_err=1.2680e-07 elapsed_ns=10835512
+chip nd ndim=1 dims=256,0,0 inverse=0 normwise_err=8.8299e-08 tol=1.3402e-06 launches=1 elapsed_ns=656807
+chip nd ndim=1 dims=256,0,0 inverse=1 normwise_err=9.0562e-08 tol=1.3402e-06 launches=1 elapsed_ns=1940194
+chip nd ndim=2 dims=4,4,0 inverse=0 normwise_err=4.3201e-08 tol=2.3842e-07 launches=4 elapsed_ns=6903251
+chip nd ndim=2 dims=4,4,0 inverse=1 normwise_err=5.9778e-08 tol=2.3842e-07 launches=4 elapsed_ns=8677059
+chip nd ndim=2 dims=8,16,0 inverse=0 normwise_err=8.4314e-08 tol=9.9283e-07 launches=4 elapsed_ns=7168262
+chip nd ndim=2 dims=8,16,0 inverse=1 normwise_err=7.8208e-08 tol=9.9283e-07 launches=4 elapsed_ns=8236623
+chip nd ndim=2 dims=32,64,0 inverse=0 normwise_err=1.0811e-07 tol=1.8068e-06 launches=4 elapsed_ns=7207364
+chip nd ndim=2 dims=32,64,0 inverse=1 normwise_err=1.0804e-07 tol=1.8068e-06 launches=4 elapsed_ns=6132619
+chip nd ndim=2 dims=16,2048,0 inverse=0 normwise_err=1.2964e-07 tol=2.6209e-06 launches=7 elapsed_ns=12667098
+chip nd ndim=2 dims=16,2048,0 inverse=1 normwise_err=1.2949e-07 tol=2.6209e-06 launches=7 elapsed_ns=13455778
+chip nd ndim=2 dims=2048,4,0 inverse=0 normwise_err=1.1785e-07 tol=2.2139e-06 launches=7 elapsed_ns=12521801
+chip nd ndim=2 dims=2048,4,0 inverse=1 normwise_err=1.1728e-07 tol=2.2139e-06 launches=7 elapsed_ns=11962163
+chip nd ndim=3 dims=4,4,4 inverse=0 normwise_err=5.8676e-08 tol=3.5763e-07 launches=6 elapsed_ns=10379861
+chip nd ndim=3 dims=4,4,4 inverse=1 normwise_err=5.6695e-08 tol=3.5763e-07 launches=6 elapsed_ns=11565120
+chip nd ndim=3 dims=4,8,16 inverse=0 normwise_err=8.5363e-08 tol=1.1120e-06 launches=6 elapsed_ns=11113244
+chip nd ndim=3 dims=4,8,16 inverse=1 normwise_err=8.1493e-08 tol=1.1120e-06 launches=6 elapsed_ns=15021809
+chip nd ndim=3 dims=16,16,16 inverse=0 normwise_err=1.0801e-07 tol=1.5786e-06 launches=6 elapsed_ns=11292187
+chip nd ndim=3 dims=16,16,16 inverse=1 normwise_err=1.0561e-07 tol=1.5786e-06 launches=6 elapsed_ns=11237228
+chip nd ndim=3 dims=8,4,32 inverse=0 normwise_err=9.2681e-08 tol=1.4594e-06 launches=6 elapsed_ns=9774880
+chip nd ndim=3 dims=8,4,32 inverse=1 normwise_err=9.4771e-08 tol=1.4594e-06 launches=6 elapsed_ns=10734551
+chip real_mutant1 c2r=0 n=64 rc=0 normwise_err=6.3083e-01 caught=1
+chip real_mutant2 c2r=0 n=4096 rc=-5 normwise_err=-1.0000e+00 caught=1
+chip real_mutant2 c2r=1 n=4096 rc=0 normwise_err=nan caught=1
+chip transpose_mutant1 rc=0 normwise_err=1.3599e+00 caught=1
+chip transpose_mutant2 rc=-5 normwise_err=-1.0000e+00 caught=1
+mathlibs chip: PASS (938 checks)
+exit=0

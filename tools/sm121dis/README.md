@@ -40,6 +40,13 @@ the comparison with NVIDIA's tool.
   mnemonic while nvdisasm 13.0.85 prints the same text. The rows numbered as before the move must fail. Before the
   2026-11-10 rows were added, 14 of those 16 words printed `??`; the C oracle got the same rows, so `diff` still
   agrees.
+- `ATOMG.E.EXCH.STRONG.SYS` (BlackwellIR op 27, the resident kernel's grid barrier) was added on 2026-11-12 to both
+  decoders. Until then the two exchange words of that kernel printed `??`, and no check saw it because the resident
+  kernel was in no corpus: `bw_hazard_test` now builds it (4 kernels), so `make test-bw-hazard-nvdisasm` reads those
+  words. The text was compared with nvdisasm 13.0.85 on that kernel's own bytes. Row constants, WolframLanguageEvaluator
+  `{FromDigits["80000000000079a8",16], FromDigits["0c1f5100",16], FromDigits[Reverse[#],256]& /@ Partition[PadRight[Append[ToCharacterCode[text],0],56],8]}`
+  -> `{9223372036854806952, 203378944, {3334121982912320577, 5932458067399759941, 2329303646074261071,
+  2318338018805306448, 6720256143407670628, 3196768717813917019, 6432032}}`.
 
 ## How to run it
 

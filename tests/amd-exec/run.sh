@@ -67,7 +67,7 @@ python3 -I "$root/tests/amd-exec/bf16gemv.py" swap-mutant "$out/exec.om" "$out/e
 timeout 120 "$omc" < "$out/exec-swapped.om" > "$out/exec-swapped" 2> "$out/exec-swapped.compile.log"
 [ ! -s "$out/exec-swapped.compile.log" ] || { cat "$out/exec-swapped.compile.log"; exit 1; }
 chmod 700 "$out/exec-swapped"
-kernels='vadd fsum16 sgemm fp8gemv bf16gemv'
+kernels='vadd fsum16 sgemm fp8gemv bf16gemv fp8gemv2 bf16gemv2'
 for kernel in $kernels; do
     for iteration in 1 2; do
         timeout 30 "$out/hsaco.$iteration" "$src/$kernel.isa" > "$out/$kernel.$iteration.hsaco"
@@ -88,6 +88,9 @@ echo 'PASS corrected sgemm code object unchanged from pre-FP8'
 digest=$(sha256sum < "$out/fp8gemv.1.hsaco")
 [ "${digest%% *}" = b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b ]
 echo 'PASS fp8gemv code object unchanged from pre-BF16'
+digest=$(sha256sum < "$out/bf16gemv.1.hsaco")
+[ "${digest%% *}" = 59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa ]
+echo 'PASS bf16gemv code object unchanged from pre-GEMV2'
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then echo 'FAIL mutant did not apply'; exit 1; fi
 timeout 30 "$out/hsaco.1" "$out/flipped.isa" > "$out/flipped.hsaco"
@@ -109,6 +112,22 @@ python3 -I "$root/tests/amd-exec/bf16gemv.py" truncate-mutant "$src/bf16gemv.isa
 timeout 30 "$out/hsaco.1" "$out/truncated-x.isa" > "$out/truncated-x.hsaco"
 python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/truncated-x.hsaco" "$out/truncated-x.text"
 python3 -I "$root/tests/amd-exec/bf16gemv.py" suite "$out/exec.1" "$out/bf16gemv.text" "$out/exec-swapped" "$out/truncated-x.text" "$out"
+{
+    cat "$src/exec/fp.om" "$src/exec/fma.om"
+    sed '/^fn main to int/,$d' "$src/exec/main.om"
+    cat "$root/tests/amd-exec/row-probe.om"
+} > "$out/row-probe.om"
+timeout 120 "$omc" < "$out/row-probe.om" > "$out/row-probe" 2> "$out/row-probe.compile.log"
+[ ! -s "$out/row-probe.compile.log" ] || { cat "$out/row-probe.compile.log"; exit 1; }
+chmod 700 "$out/row-probe"
+for kernel in fp8gemv2 bf16gemv2; do
+    python3 -I "$root/tests/amd-exec/gemv2.py" mutate "$src/$kernel.isa" "$out"
+    for control in order tail stride; do
+        timeout 30 "$out/hsaco.1" "$out/$kernel-$control.isa" > "$out/$kernel-$control.hsaco"
+        python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$kernel-$control.hsaco" "$out/$kernel-$control.text"
+    done
+done
+python3 -I "$root/tests/amd-exec/gemv2.py" suite "$out/exec.1" "$out/row-probe" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2
@@ -121,5 +140,5 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 [ ! -e "$out/wrong-pin-must-not-exist" ]
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
-sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco" "$out/sgemm.1.hsaco" "$out/fp8gemv.1.hsaco" "$out/bf16gemv.1.hsaco"
+sha256sum "$out/hsaco.1" "$out/exec.1" "$out/"*.1.hsaco
 python3 -I "$root/tests/amd-exec/sgemm.py" summary "$kernels"

@@ -170,6 +170,46 @@ case('global-d16-hi-partial-tail', 507, half, {v(4): 2}, mem=b'\x01\x02\x03', re
 case('global-d16-hi-low-form-refused', 507, [half[0] ^ 1 << 18, half[1]], refusal=66)
 case('global-d16-hi-modifier-refused', 87, [half[0] | 1 << 16, half[1]], refusal=66)
 
+# New GEMV2 operations: literal expectations follow CDNA3 pseudocode, not executor output.
+for mask in (0, 1, 0x8000000000000001, U64):
+    case(f'mov64-exec-{mask}', 115, sop1(1, a=4, d=126),
+         {s(4): mask & U32, s(5): mask >> 32}, nex=mask, cc=1)
+case('mov64-odd-pair-refused', 115, sop1(1, a=5, d=126), refusal=66)
+for a, b in ((0, U32), (0xaaaaaaaa, 0x55555555), (0x80000001, 0x80000000)):
+    case(f'xor-{a}-{b}', 174, vop(21), {v(1): a, v(2): b}, {v(3): a ^ b})
+for op, width in ((21, 2), (23, 4)):
+    words = [0xdc008000 | op << 18, 4 | 127 << 16 | 8 << 24]
+    seed = {v(4): 4, v(5): 0}
+    payload = struct.pack('<16I', *range(0x11223340, 0x11223350))
+    case(f'global-wide-{width}', 504, words, seed,
+         {v(8+i): 0x11223341+i for i in range(width)}, mem=payload)
+    case(f'global-wide-{width}-boundary', 504, words, {v(4): 64-4*width, v(5): 0},
+         {v(8+i): 0x11223350-width+i for i in range(width)}, mem=payload)
+    case(f'global-wide-{width}-out-of-memory', 504, words, {v(4): 65-4*width, v(5): 0},
+         mem=payload, refusal=67)
+    bad = [words[0], 4 | 127 << 16 | (257-width) << 24]
+    case(f'global-wide-{width}-register-overflow', 504, bad, refusal=66)
+def ds(offset=0, addr=1, data=2, dest=2):
+    return [0xd87e0000 | offset, addr | data << 8 | dest << 24]
+# Aliasing destination DATA0 must observe the original wave, never earlier writes.
+seed = {v(1, lane): (lane ^ 1)*4 for lane in range(64)}
+seed.update({v(2, lane): 1000+lane for lane in range(64)})
+case('bpermute-alias-snapshot', 437, ds(), seed,
+     {v(2, lane): 1000+(lane ^ 1) for lane in range(64)}, ex=U64)
+case('bpermute-inactive-source', 437, ds(dest=3),
+     {v(1): 4, v(2, 1): 1234, v(3, 1): 0xfeed}, {v(3): 0}, ex=1)
+case('bpermute-byte-offset-wrap', 437, ds(7, dest=3),
+     {v(1): U32, v(2, 1): 456}, {v(3): 456, v(3, 1): 456}, ex=3)
+case('bpermute-inactive-destination', 437, ds(dest=3),
+     {v(1): 0, v(2): 9, v(3): 0xfeed}, ex=0)
+for modifier in (1 << 16, 1 << 25):
+    words = ds()
+    words[0] |= modifier
+    case(f'bpermute-unsupported-modifier-{modifier}', 437, words, refusal=66)
+words = ds()
+words[1] |= 1 << 16
+case('bpermute-unused-data1', 437, words, refusal=66)
+
 MUTATIONS = {
     'sub-no-borrow': ('put st 16 fmbool lt a b', 'put st 16 fmbool ge a b'),
     'inactive-vcc': ('if or eq cl 6 and eq cl 5 or eq get st 10 25 eq get st 10 28', 'if eq cl 6'),
@@ -180,6 +220,13 @@ MUTATIONS = {
     'smem-negative': ('if ne shr x 20 0', 'if ne shr x 21 0'),
     'vgpr-pair-alignment': ('if or ge va 255 ne and va 1 0', 'if ge va 255'),
     'd16-low-cleared': ('lo = and vg get st 13 lane 65535', 'lo = ulong 0'),
+    'mov64-loses-scc': ('put st 14 or get sr ss shl get sr add ss 1 32',
+                        'put st 14 or get sr ss shl get sr add ss 1 32\nput st 16 0'),
+    'xor-uses-or': ('r = xor a b', 'r = or a b'),
+    'wide-drops-last': ('for i ulong n\nvs add get st 13 i lane mread add p mul i 4',
+                       'for i ulong sub n 1\nvs add get st 13 i lane mread add p mul i 4'),
+    'bpermute-live-alias': ('vs get st 13 lane get perm lane',
+                          'src = and shr add vg get st 11 lane get st 7 2 63\nvs get st 13 lane vg get st 12 src'),
 }
 MUTANT_CASE = {
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',
@@ -188,6 +235,8 @@ MUTANT_CASE = {
     'smem-dest-alignment': 'smem-bad-destination-1', 'smem-negative': 'smem-negative-undefined',
     'vgpr-pair-alignment': 'global-odd-address-pair',
     'd16-low-cleared': 'global-d16-hi-3f80',
+    'mov64-loses-scc': 'mov64-exec-0', 'xor-uses-or': 'xor-2147483649-2147483648',
+    'wide-drops-last': 'global-wide-4', 'bpermute-live-alias': 'bpermute-alias-snapshot',
 }
 
 def run_case(exe, out, c):

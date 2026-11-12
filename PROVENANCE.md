@@ -595,3 +595,123 @@ remain. Final PASS counts come from the actual case tables.
 **Hardware NOT_RUN:** no AMD device, dispatch, memory-ordering/timing,
 throughput, ROCr loading, model weights, or Qwen end-to-end inference was
 exercised. The binary/text and host semantic gates are not GPU qualification.
+
+## 15. gfx942 wave-parallel FP8/BF16 GEMV
+
+`fp8gemv2.isa` and `bf16gemv2.isa` are separate kernel symbols and objects;
+the previous five kernels and producer remain unchanged. Their argument
+layouts and datatypes are the same as sections13–14. **Launch workgroup
+size64, GRID_X=64*M, GRID_Y=1.** Workgroup X is the output row; lane0 alone
+stores. An extra row group safely returns before touching vector memory.
+The descriptor does not request workgroup Y. The new kernels are not
+drop-in replacements for the old kernels' launch geometry.
+
+### Hardware observation and design
+
+The operator's MI300X notebook record
+`~/handoffs/hive/amdserve/evidence/AMD-MI300X-NOTEBOOK-20261112T224000Z`
+reports bit-exact old-kernel results. FP8 times for MxK
+17408x5120, 5120x17408, 5120x5120 were0.7472,2.5073,0.7295ms;
+BF16 times were0.7402,2.5001,0.7399ms. Time followed K rather than weight
+bytes. That observation motivates removing the dependent load/wait for
+every scalar k; it does not establish a tuned-kernel speedup.
+
+The CDNA3 manual physical PDF p12 defines a wavefront as64 work-items.
+[AMD's MI300 architecture description][gemv2-arch] specifies304 active CUs.
+One wave per row supplies M independently schedulable workgroups rather
+than the old ceil(M/64) groups. The [ROCm Compute Profiler7.2.2 vector-L1
+description][gemv2-cache] specifies64B cache lines and explains address
+coalescing and backpressure from outstanding requests. Each lane owns four
+consecutive columns. Across the wave, a chunk accesses contiguous weight
+and x ranges, instead of loading one scalar from widely separated rows.
+FP8 packs those four weights into one DWORD; BF16 uses DWORDX2; x uses
+DWORDX4. These are consecutive-byte accesses, not a claim that a memory
+instruction is a single cache transaction.
+
+The main loop prefetches four chunks into disjoint VGPRs: four weight loads
+and four x loads before one `s_waitcnt vmcnt(0)`. The CDNA3 manual p141
+defines this wait in terms of outstanding vector-memory operations; it
+does not require a wait after each issue. The load group processes1024
+columns before advancing pointers. The remaining columns use guarded
+scalar loads with EXEC saved/restored for every element. The batch size is
+a tuning choice, not an imposed input-size limit. No input is truncated.
+Resource use and the complete instruction stream are compared against
+LLVM18 gfx942, including all wide loads, FMAC, EXEC moves and DS operations.
+
+No LDS storage or barrier is used. `DS_BPERMUTE_B32` (p437) says:
+“This does not access LDS memory and may be called even if no LDS memory
+is allocated to the wave. It uses LDS hardware to implement an arbitrary
+swizzle across threads in a wavefront.” Its LLVM18 instruction declaration
+is under `let Uses = [EXEC]`; no M0/LDS-range setup is required here.
+Each permutation is followed by `s_waitcnt lgkmcnt(0)` before the add.
+
+### Exact accumulation order
+
+For lane L, start P[L]=+0. Visit chunks q=0,1,... in ascending order and
+j=0,1,2,3 within each chunk. When k=256*q+4*L+j is less than K, set
+P[L]=RN32_FMA(decode(W[row,k]),x[k],P[L]). The unrolled load grouping does
+not change this order. Then perform six simultaneous butterfly stages
+with distance32,16,8,4,2,1, in that exact order:
+`next[L] = RN32_ADD(P[L], P[L XOR distance])`. Each stage reads a snapshot
+of the previous stage. Store lane0, applying one final RN32 scale
+multiplication for FP8 only. Missing tail elements cause no arithmetic,
+not artificial zero products that might alter signed zero or NaN results.
+K=0 still follows the defined zero reduction and FP8 scaling.
+
+`tests/amd-exec/gemv2.py` records this algorithm using exact `Fraction`
+arithmetic and the independent binary32 rounding/FMA reference. Its add
+is the exact rational equivalent FMA(a,1,b), not host float arithmetic.
+The Omega executor's integer FP32 add/FMA paths retain denormals and use
+round-to-nearest-even; the explicit canonical-NaN policy from section10
+remains. Arithmetic order differs deliberately from the old serial GEMV.
+The tree-order control places +2^24,+1,-2^24 in lanes0,16,32 respectively;
+swapping the first two stages must change the output, not merely the code.
+
+### Added instruction semantics and refusal boundary
+
+All reused instructions retain the manual audit in sections12–14.
+New operations below have manual-derived single-step input/output/flag
+cases, including inactive lanes and refusals. The bounded source/destination
+subset is explicit: this is an executor, not a claim of complete gfx942.
+
+| Instruction | CDNA3 physical PDF page | Implemented semantics and boundary | LLVM18.1.3 source |
+| --- | --- | --- | --- |
+| S_MOV_B64 | 20,115 | Even SGPR pair to EXEC only; exact64-bit copy, SCC/VCC unchanged. Other forms refuse66. | [SOPInstructions.td][bf16-sop], SOP1 opcode1 |
+| V_XOR_B32 | 174 | Active-lane bitwise XOR; no flag writes or modifiers. | [VOP2Instructions.td][bf16-vop2], opcode21 |
+| GLOBAL_LOAD_DWORDX2 / DWORDX4 | 87,90,504 | Sequential2/4 little-endian dwords from the existing VGPR64/off address; flags and inactive lanes preserved. Full range checked before writes. | [FLATInstructions.td][bf16-flat], opcodes21/23 |
+| DS_BPERMUTE_B32 | 437 | Source lane=((address+offset)/4)%64, disabled source returns0, disabled destination unchanged; all source reads precede all writes. GDS/accumulator/DATA1 modifiers refuse66. | [DSInstructions.td][gemv2-ds], `DS_Real_vi`, opcode63 |
+
+Instruction words alone drive execution; the executor does not recognize
+kernel names, ISA tables, metadata, or expected answers. Unknown encodings
+refuse66. Truncated/bad text refuses65, flat-memory bounds67, I/O74, CLI64;
+the gate rejects a wrong compiler digest69 before invoking any compiler.
+The64-entry permutation temporary is the physical wave width, not an
+arbitrary software capacity. Per-instruction controls deliberately lose
+SCC on MOV64, substitute OR for XOR, omit a wide-load dword, and read an
+aliased permutation source live; all must fail the manual expectations.
+
+### Host acceptance and hardware handoff
+
+The gate retains all prior shapes and cases. New shape tables are the
+union of both old GEMV tables plus chunk-boundary/tail cases; the final
+PASS line derives its counts from the actual tables. Finite and special
+inputs check every output bit and every unchanged memory byte, including
+past-M guards. Additional controls change the reduction order, drop the
+tail, or change the row stride and must produce output mismatches.
+For each of the three notebook shapes, a test-only row entry executes
+first, middle and last rows with the real full M/K and full matrix address
+layout. All other output bytes must stay untouched. The production
+executor CLI is unchanged. The sampled row results are recorded in a TSV.
+Both compiler builds and emitted objects must be byte-identical.
+
+**Tuned hardware NOT_RUN:** performance, cache traffic, memory scheduling,
+device NaN payloads and device results require the parent's MI300X run.
+Host execution is not a memory-bandwidth measurement. BF16 uses exact
+widening; FP8 assumes E4M3FNUZ (bias8, sole NaN0x80). Beside that hardware
+row, the exact manual p60 precondition remains:
+“The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct
+results for BF8 and FP8 operations.”
+
+[gemv2-arch]: https://rocm.docs.amd.com/en/docs-6.3.1/conceptual/gpu-arch/mi300.html
+[gemv2-cache]: https://rocm.docs.amd.com/projects/rocprofiler-compute/en/docs-7.2.2/conceptual/vector-l1-cache.html
+[gemv2-ds]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/DSInstructions.td

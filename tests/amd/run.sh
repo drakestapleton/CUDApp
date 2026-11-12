@@ -370,10 +370,44 @@ if grep -q 'global_load_short_d16_hi' "$out/bf16gemv-encodings.txt" \
   ok 'bf16gemv D16_HI accepted by gfx942 oracle and kernarg is32 bytes'
 else bad 'bf16gemv D16_HI encoding or metadata'; fi
 echo "BF16GEMV OBJECT sha256=$(digest "$out/bf16gemv-hsaco.hsaco") bytes=$(wc -c < "$out/bf16gemv-hsaco.hsaco" | tr -d ' ')"
+if [ "$(digest "$out/bf16gemv-hsaco.hsaco")" = 59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa ]; then
+  ok 'bf16gemv entire object unchanged from pre-GEMV2'
+else bad 'bf16gemv object changed'; fi
+for kernel in fp8gemv2 bf16gemv2; do
+  for producer in hsaco hsaco-again; do
+    timeout 30 "$out/$producer" "$src/$kernel.isa" > "$out/$kernel-$producer.hsaco" 2> "$out/$kernel-$producer.emit.err"; rc=$?
+    if [ "$rc" -ne 0 ] || [ -s "$out/$kernel-$producer.emit.err" ]; then
+      echo "FAIL $kernel emit exit=$rc"; cat "$out/$kernel-$producer.emit.err"; exit 1
+    fi
+  done
+  compare "$out/$kernel-hsaco.hsaco" "$out/$kernel-hsaco-again.hsaco" "$kernel two code-object builds byte-identical"
+  if ! llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -filetype=obj "$src/$kernel-gfx942.s" -o "$out/$kernel-oracle.o" > "$out/$kernel-assemble.log" 2>&1; then
+    echo "FAIL $kernel oracle assembly"; cat "$out/$kernel-assemble.log"; exit 1
+  fi
+  llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -show-encoding "$src/$kernel-gfx942.s" > "$out/$kernel-encodings.txt" 2>&1 || exit 1
+  for pair in "$kernel-hsaco.hsaco:$kernel-omega" "$kernel-oracle.o:$kernel-oracle"; do
+    file=${pair%:*}; name=${pair#*:}
+    llvm-objcopy-18 --dump-section .text="$out/$name.text" --dump-section .note="$out/$name.note" --dump-section .rodata="$out/$name.rodata" "$out/$file" "$out/$name.objcopy-rewrite" || exit 1
+    llvm-readelf-18 -h -S -s -n "$out/$file" > "$out/$name.readelf.txt" || exit 1
+    dd if="$out/$name.rodata" of="$out/$name.descriptor-head" bs=1 count=16 status=none || exit 74
+    dd if="$out/$name.rodata" of="$out/$name.descriptor-tail" bs=1 skip=24 status=none || exit 74
+  done
+  compare "$out/$kernel-omega.text" "$out/$kernel-oracle.text" "$kernel .text wide loads, XOR, EXEC restore, DS bpermute and FMAC equal LLVM18 gfx942"
+  compare "$out/$kernel-omega.note" "$out/$kernel-oracle.note" "$kernel metadata note equals independent oracle"
+  compare "$out/$kernel-omega.descriptor-head" "$out/$kernel-oracle.descriptor-head" "$kernel descriptor sizes equal oracle"
+  compare "$out/$kernel-omega.descriptor-tail" "$out/$kernel-oracle.descriptor-tail" "$kernel descriptor resources equal oracle"
+  entryva=$(awk -v k="$kernel" '$8 == k { print "0x" $2; exit }' "$out/$kernel-omega.readelf.txt")
+  descva=$(awk -v k="$kernel.kd" '$8 == k { print "0x" $2; exit }' "$out/$kernel-omega.readelf.txt")
+  disp=$(od -An -tu8 -j 16 -N 8 "$out/$kernel-omega.rodata" | tr -d ' ')
+  if [ -n "$entryva" ] && [ -n "$descva" ] && [ "$disp" = "$((entryva - descva))" ]; then
+    ok "$kernel descriptor entry displacement resolves to kernel symbol"
+  else bad "$kernel descriptor entry displacement"; fi
+  echo "$kernel OBJECT sha256=$(digest "$out/$kernel-hsaco.hsaco") bytes=$(wc -c < "$out/$kernel-hsaco.hsaco" | tr -d ' ')"
+done
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
 echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'
 if [ "$fail" -ne 0 ]; then echo "AMD-GFX942-HOST FAIL pass=$pass fail=$fail hardware=NOT_RUN"; exit 1; fi
-echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv hardware=NOT_RUN"
+echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv,fp8gemv2,bf16gemv2 hardware=NOT_RUN"
 exit 0

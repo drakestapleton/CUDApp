@@ -1,0 +1,5 @@
+cwd=/home/drakestapleton/work/hive/amdserve/Gfx942Exec/gemv2
+host=spark-b87b
+branch=amdserve/gfx942-gemv2
+
+flock /home/drakestapleton/handoffs/hive/queen/pool-14.lock nice -n 10 sh -c 'out=/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-GEMV2-WORK; omc=/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc; AMD_OUT="$out/final-host" sh tests/amd/run.sh "$omc" > "$out/host-final.log" 2>&1; a=$?; echo host_exit=$a; AMD_EXEC_OUT="$out/final-exec" sh tests/amd-exec/run.sh "$omc" > "$out/exec-final.log" 2>&1; b=$?; echo exec_exit=$b; printf "host=%s\nexec=%s\n" "$a" "$b" > "$out/final-exits.txt"; tail -15 "$out/host-final.log"; tail -15 "$out/exec-final.log"; test "$a" -eq 0 && test "$b" -eq 0'

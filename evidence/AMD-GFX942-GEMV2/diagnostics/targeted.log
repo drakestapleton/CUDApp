@@ -1,0 +1,1 @@
+PASS manual single-instruction semantics cases=405 all implemented instructions flags/masks/addressing hardware=NOT_RUN

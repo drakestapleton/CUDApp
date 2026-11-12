@@ -126,5 +126,43 @@ def scale_mutant(source, target):
     pathlib.Path(target).write_text(text.replace(needle, 'I 8 260 1 4\n'))
 
 
+NESTED_WAVE = """while true bound 999999
+c = ulong 0
+while lt c 999998 bound 999999
+if not step pc
+ret
+end
+pc = get st 5
+c = add c 1
+end
+end
+"""
+FLAT_WAVE = """while true bound 999999
+if not step pc
+ret
+end
+pc = get st 5
+end
+"""
+
+
+def flat_mutant(source, target):
+    # The executor before the fix: one wave loop bound 999999 (the pinned compiler's largest bound).
+    text = pathlib.Path(source).read_text()
+    assert text.count(NESTED_WAVE) == 1
+    pathlib.Path(target).write_text(text.replace(NESTED_WAVE, FLAT_WAVE))
+
+
+def long_wave(exe, flat_exe, text, out):
+    # K=100000: eleven wave steps per k (two loads, wait, convert, FMA, four address adds, counter, branch), so one wave runs past 999999 steps.
+    check(exe, text, out, 1, 100000)
+    print('PASS fp8gemv M=1 K=100000 one wave past 999999 steps every-bit all-guards', flush=True)
+    memory = pathlib.Path(out)/'fp8gemv-memory.bin'
+    memory.write_bytes(fixture(1, 100000)[0])
+    result = subprocess.run([flat_exe, str(text), str(memory), '65', '1'], capture_output=True, timeout=600)
+    assert result.returncode == 104, result.returncode
+    print('CONTROL single-loop executor CAUGHT trap exit=104 on the same run', flush=True)
+
+
 if __name__ == '__main__':
-    {'suite': suite, 'mutate': mutate, 'scale-mutant': scale_mutant}[sys.argv[1]](*sys.argv[2:])
+    {'suite': suite, 'mutate': mutate, 'scale-mutant': scale_mutant, 'flat-mutant': flat_mutant, 'long-wave': long_wave}[sys.argv[1]](*sys.argv[2:])

@@ -344,6 +344,13 @@ if python3 -I "$root/tests/amd/formats.py" "$out/hsaco" "$src/fp8gemv.isa" "$out
   ok 'growable format IDs/count and undefined-format control'
 else bad 'format registry controls'; fi
 echo "FP8GEMV OBJECT sha256=$(digest "$out/fp8gemv-hsaco.hsaco") bytes=$(wc -c < "$out/fp8gemv-hsaco.hsaco" | tr -d ' ')"
+if sh "$root/tests/amd/loop-fuel.sh" "$src"/*.isa "$out"/*.hsaco > "$out/loop-fuel.log"; then
+  ok "loop-fuel alarm quiet: largest gate input or object $(sort -t= -k2 -n "$out/loop-fuel.log" | awk -F'bytes=' '{split($2,a," "); if (a[1]>m) m=a[1]} END {print m}') bytes, threshold 500000"
+else cat "$out/loop-fuel.log"; bad 'loop-fuel alarm fired'; fi
+head -c 600001 /dev/zero > "$out/loop-fuel-control.bin"
+if sh "$root/tests/amd/loop-fuel.sh" "$out/loop-fuel-control.bin" > "$out/loop-fuel-control.log"; then
+  bad 'loop-fuel alarm control escaped'
+else ok 'loop-fuel alarm control CAUGHT a 600001-byte file'; fi
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
 echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'

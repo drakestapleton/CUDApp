@@ -98,6 +98,11 @@ python3 -I "$root/tests/amd-exec/fp8gemv.py" scale-mutant "$src/fp8gemv.isa" "$o
 timeout 30 "$out/hsaco.1" "$out/no-scale.isa" > "$out/no-scale.hsaco"
 python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/no-scale.hsaco" "$out/no-scale.text"
 python3 -I "$root/tests/amd-exec/fp8gemv.py" suite "$out/exec.1" "$out/fp8gemv.text" "$out/exec-ocp" "$out/no-scale.text" "$out"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" flat-mutant "$out/exec.om" "$out/exec-flat.om"
+timeout 120 "$omc" < "$out/exec-flat.om" > "$out/exec-flat" 2> "$out/exec-flat.compile.log"
+[ ! -s "$out/exec-flat.compile.log" ] || { cat "$out/exec-flat.compile.log"; exit 1; }
+chmod 700 "$out/exec-flat"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" long-wave "$out/exec.1" "$out/exec-flat" "$out/fp8gemv.text" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

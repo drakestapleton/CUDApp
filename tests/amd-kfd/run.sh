@@ -131,6 +131,14 @@ python3 -I tests/amd-kfd/oracle.py . "$out" > "$out/byte-oracle.log" 2>&1
 rc=$?
 cat "$out/byte-oracle.log"
 if [ "$rc" -eq 0 ]; then ok 'independent byte-oracle suite'; else bad "independent byte-oracle exit=$rc"; fi
+set -- "$root/backend/amd/kfd/requests.tsv"
+for t in "$out"/*.tsv; do [ "$(basename "$t")" = field-count-over-fuel.tsv ] || set -- "$@" "$t"; done
+if sh "$root/tests/amd/loop-fuel.sh" "$@" > "$out/loop-fuel.log"; then
+  ok "loop-fuel alarm quiet on the $# KFD tables the gate feeds (threshold 500000 bytes)"
+else cat "$out/loop-fuel.log"; bad 'loop-fuel alarm fired'; fi
+if sh "$root/tests/amd/loop-fuel.sh" "$out/field-count-over-fuel.tsv" > "$out/loop-fuel-control.log"; then
+  bad 'loop-fuel alarm control escaped on the over-fuel table'
+else ok 'loop-fuel alarm control CAUGHT the over-fuel table that traps 104'; fi
 notrun 'AMD gfx942 hardware: KFD device calls, queue creation, mapped memory, AQL dispatch, completion and vadd execution'
 notrun 'MI300X model loading, Qwen 27B inference, speed and hardware coherency'
 if [ "$nfail" -ne 0 ]; then echo "AMD-KFD-HOST FAIL pass=$npass fail=$nfail not_run=$nnr"; exit 1; fi

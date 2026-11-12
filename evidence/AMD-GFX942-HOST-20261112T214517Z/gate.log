@@ -20,10 +20,11 @@ PASS objdump -d listings equal (oracle rebased to emitted .text VA)
 PASS llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd
 PASS MessagePack uint and str encodings at every width boundary equal the spec bytes
 PASS CONTROL single-byte MessagePack value CAUGHT by byte comparison
+PASS CONTROL str16 cutoff 65534 CAUGHT by byte comparison
 PASS CONTROL instruction-table flipped bit CAUGHT code mismatch
 PASS control-wrong-mach exit=33 LOAD REFUSE AMDGPU_HSACO code=33 reason=e_flags mach does not match the requested gfx target
 PASS control-truncated exit=34 LOAD REFUSE AMDGPU_HSACO code=34 reason=no well-formed AMDGPU NT_AMDGPU_METADATA note in a PT_NOTE segment
 PASS CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup
 hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
 NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
-AMD-GFX942-HOST PASS pass=16 fail=0 hardware=NOT_RUN
+AMD-GFX942-HOST PASS pass=17 fail=0 hardware=NOT_RUN

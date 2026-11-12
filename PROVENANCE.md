@@ -491,3 +491,107 @@ not OCP E4M3FN. This host executor neither reads nor writes SH_MEM_CONFIG.
 The notebook must establish that register precondition through an authorized
 hardware path before dispatch. No register state, GPU dispatch, timing,
 throughput, ROCr loading, or device-output parity has been measured here.
+
+## 14. gfx942 BF16 GEMV
+
+`backend/amd/gfx942/bf16gemv.isa` defines `bf16gemv(W,x,y,M,K)`: three
+64-bit global pointers at offsets0/8/16, unsigned32 M/K at24/28, a32-byte
+kernarg. W is row-major little-endian BF16, two bytes per element; x[K] and
+y[M] are FP32. Each row starts with acc=positive zero, then, for ascending k,
+`acc = RN32(BF16(W[m*K+k]) * x[k] + acc)` with **one fused rounding**.
+The output is acc; K=0 writes positive zero and M=0 writes nothing.
+The grid is `(M,1,1)` with local size `(64,1,1)`, one row per lane. EXEC
+excludes over-dispatched rows. The row product is multiplied and doubled
+with both32-bit halves and carry propagation; valid arrays must fit the
+machine's64-bit address space. No input is rounded to BF16.
+
+### Exact widening and the instruction choice
+
+BF16 is S1E8M7, bias127. LLVM18.1.3
+[APFloat.cpp lines127–129](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Support/APFloat.cpp#L127-L129)
+gives BF16 and FP32 the same exponent range, with precisions8 and24.
+**BF16-to-FP32 widening is exactly `uint32(bf16_bits) << 16`**: no finite
+rounding, zero flushing, or reinterpretation as IEEE FP16. Signed zeros,
+infinities and NaN sign/payload bits are carried by the widening itself.
+Subsequent FMA uses the existing explicit canonical-NaN host policy, which
+does not establish device NaN payload parity.
+
+The CDNA3 manual physical PDF p507 specifies `GLOBAL_LOAD_SHORT_D16_HI`:
+`VDATA[31 : 16].b16 = MEM[addr].b16; // VDATA[15:0] is preserved.`
+Initialize v7 once with `V_MOV_B32 v7,0` (p186), then use this high-half load
+for each weight. Nothing in the loop changes v7's low16 bits. This performs
+load and exact widening in **one instruction per weight**, rather than a
+ushort load followed by a shift. This is an instruction-count choice, not
+a measured throughput claim. Each iteration waits for VM_CNT before FMA
+and before the next partial-register load. BF16 has no FP8 format-select
+precondition: this path is a bitwise load followed by FP32 FMA; descriptor
+FP32 round mode0 and denorm mode3 retain input/output denormals (p45).
+
+### Semantics and encoding authority
+
+The manual is the same physical-page-numbered CDNA3 source as section12.1.
+All instructions used by this kernel are listed below, including reused
+ones. Encoding links name the pinned LLVM18.1.3 format/opcode definitions;
+the independent `bf16gemv-gfx942.s` is assembled by `llvm-mc-18 -mcpu=gfx942`.
+The gate compares **complete .text**, metadata note, descriptor bytes other
+than the ET_REL entry relocation, and checks the resolved entry separately.
+
+| Instruction | CDNA3 physical PDF page | Semantics | LLVM18.1.3 encoding |
+| --- | --- | --- | --- |
+| S_LOAD_DWORDX4 | 68,70,147 | Four dwords; component alignment, quad SGPR destination; flags unchanged. | [SMInstructions.td][bf16-sm], SMEM and `_vi` opcode |
+| S_LSHL_B32 | 103 | Low32 shift, count masked5bits; SCC=result nonzero. | [SOPInstructions.td][bf16-sop], SOP2 |
+| S_SUB_U32 | 97 | Low32 difference; SCC=unsigned borrow. | [SOPInstructions.td][bf16-sop], SOP2 |
+| S_AND_SAVEEXEC_B64 | 124–125 | Save old EXEC, AND source into EXEC; SCC=new EXEC nonzero. | [SOPInstructions.td][bf16-sop], SOP1 |
+| S_CBRANCH_EXECZ | 140 | Branch iff whole EXEC zero; signed16 DWORD displacement from next PC. | [SOPInstructions.td][bf16-sop], SOPP |
+| S_CBRANCH_SCC0 / S_CBRANCH_SCC1 | 139 | Branch iff SCC=0 / SCC=1; same displacement; flags unchanged. | [SOPInstructions.td][bf16-sop], SOPP |
+| S_WAITCNT | 141 | Wait for lgkmcnt/vmcnt0; no flag writes. | [SOPInstructions.td][bf16-sop], SOPP |
+| S_ENDPGM | 138 | End wave; implicit memory wait. | [SOPInstructions.td][bf16-sop], SOPP |
+| V_AND_B32 | 174 | Bitwise AND, flags unchanged. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| V_ADD_U32 | 183 | Low32 sum, no carry flags. | [VOP2Instructions.td][bf16-vop2], gfx9 |
+| V_CMP_GT_U32 | 22,251 | VCC=EXEC AND unsigned greater-than mask. | [VOPCInstructions.td][bf16-vopc], VOPCe |
+| V_LSHLREV_B32 / V_LSHRREV_B32 | 173 | Left / unsigned right shift, count masked5bits; flags unchanged. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| V_MUL_LO_U32 / V_MUL_HI_U32 | 361 | Low / high32 unsigned product; flags unchanged. | [VOP3Instructions.td][bf16-vop3], opcodes0x285/0x286 |
+| V_MOV_B32 | 186 | Bitwise copy to active lanes; flags unchanged. | [VOP1Instructions.td][bf16-vop1], VOP1e |
+| V_ADD_CO_U32 | 22,175 | Low32 sum; replace VCC with active-lane carry mask. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| V_ADDC_CO_U32 | 22,176 | Include incoming lane carry; replace VCC. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| GLOBAL_LOAD_SHORT_D16_HI | 87,90,507 | Read exactly two bytes into high16; preserve low16, flags, inactive lanes. | [FLATInstructions.td][bf16-flat], `FLAT_Real_AllAddr_vi<0x25>` |
+| GLOBAL_LOAD_DWORD | 87,90,503–504 | Active-lane32-bit load, VGPR64 address plus signed13 offset. | [FLATInstructions.td][bf16-flat], opcode0x14 |
+| GLOBAL_STORE_DWORD | 87,90,505 | Corresponding active-lane32-bit store. | [FLATInstructions.td][bf16-flat], opcode0x1c |
+| V_FMAC_F32 | 185 | Exact product plus destination, one nearest-even FP32 rounding. | [VOP2Instructions.td][bf16-vop2], gfx940 opcode0x3b |
+
+[bf16-sm]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SMInstructions.td
+[bf16-sop]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SOPInstructions.td
+[bf16-vop1]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td
+[bf16-vop2]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP2Instructions.td
+[bf16-vopc]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOPCInstructions.td
+[bf16-vop3]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP3Instructions.td#L1604-L1611
+[bf16-flat]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/FLATInstructions.td#L1969-L1993
+
+The only new executor instruction is `GLOBAL_LOAD_SHORT_D16_HI`, with the
+existing restricted GLOBAL VGPR64/off addressing, no cache modifiers.
+It reads exactly two little-endian bytes and preserves destination low16.
+Other D16 forms or modifiers refuse66; insufficient memory refuses67,
+I/O failure74. The single-step cases derive expected high/low halves from
+p507, including lane63, inactive lanes, unchanged flags, negative offsets,
+the final two bytes of memory, and truncated-memory refusals. A low-half
+clearing mutant must fail its manual-derived case.
+
+### Acceptance and hardware boundary
+
+`tests/amd-exec/bf16gemv.py` independently reconstructs BF16 finite values
+as exact Fractions and applies the existing rational single-rounding FMA
+oracle, not host floating arithmetic. The gate runs the Cartesian shape
+table M={0,1,63,64,65}, K={0,1,3,64,65,130} for finite and special inputs.
+The weight base is two-byte aligned but not dword aligned, so odd K tests
+both row-end alignments. Every byte of memory is checked: output elements,
+guard words, inputs, kernarg, and deliberately over-dispatched rows.
+An additional isolated-weight matrix checks each special class without an
+earlier NaN masking later operations. Controls execute a big-endian weight
+loader and an instruction-table mutant that truncates x's low16 bits before
+FMA; both must produce output-bit mismatches, not compilation/refusal errors.
+Previous kernel objects remain byte-identical and all prior gate cases
+remain. Final PASS counts come from the actual case tables.
+
+**Hardware NOT_RUN:** no AMD device, dispatch, memory-ordering/timing,
+throughput, ROCr loading, model weights, or Qwen end-to-end inference was
+exercised. The binary/text and host semantic gates are not GPU qualification.

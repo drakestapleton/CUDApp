@@ -1,0 +1,82 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: AMD_OUT (or the fresh temporary directory)
+ORACLE llvm-mc-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objdump-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-readelf-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objcopy-18 llvm-objcopy, compatible with GNU objcopy
+COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
+COMPILE hsaco src=4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1 bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
+COMPILE hsaco-again src=4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1 bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
+PASS two producer compilations byte-identical
+PASS two code-object builds byte-identical
+OBJECT sha256=10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f bytes=2608
+PASS load-gfx942 exit=0 LOAD ACCEPT AMDGPU_HSACO target=amdgcn-amd-amdhsa--gfx942 mach=0x4c abi=3 kernels=1 note=AMDGPU/NT_AMDGPU_METADATA bytes=2608
+PASS code section bytes equal llvm-mc-18 gfx942 oracle
+PASS AMDGPU metadata note bytes equal independent oracle
+PASS descriptor sizes/reserved prefix match oracle
+PASS descriptor resources/properties match oracle
+PASS descriptor entry displacement resolves to vadd (no relocation remains)
+PASS objdump -d listings equal (oracle rebased to emitted .text VA)
+PASS llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd
+PASS MessagePack uint and str encodings at every width boundary equal the spec bytes
+PASS CONTROL single-byte MessagePack value CAUGHT by byte comparison
+PASS CONTROL instruction-table flipped bit CAUGHT code mismatch
+PASS control-wrong-mach exit=33 LOAD REFUSE AMDGPU_HSACO code=33 reason=e_flags mach does not match the requested gfx target
+PASS control-truncated exit=34 LOAD REFUSE AMDGPU_HSACO code=34 reason=no well-formed AMDGPU NT_AMDGPU_METADATA note in a PT_NOTE segment
+PASS CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup
+PASS vadd entire object unchanged from pre-generalization
+PASS fsum16 two code-object builds byte-identical
+PASS fsum16 .text bytes equal independent llvm-mc-18 oracle
+PASS fsum16 metadata note bytes equal independent oracle
+PASS fsum16 descriptor sizes match oracle
+PASS fsum16 descriptor resources/properties match oracle
+PASS fsum16 descriptor entry displacement resolves to kernel symbol
+PASS llvm-readelf parses fsum16 symbol, 20-byte kernarg and table register counts
+PASS CONTROL missing-kernel CAUGHT exit=4 before object emission
+PASS CONTROL duplicate-kernel CAUGHT exit=4 before object emission
+PASS CONTROL argument-gap CAUGHT exit=4 before object emission
+FSUM16 OBJECT sha256=15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478 bytes=2736
+PASS fsum16 entire object unchanged from pre-SGEMM
+PASS sgemm two code-object builds byte-identical
+PASS sgemm .text including v_fmac_f32 and backward branch equals LLVM18 gfx942
+PASS sgemm metadata note equals independent oracle
+PASS sgemm descriptor sizes equal oracle
+PASS sgemm descriptor resources including workgroup Y equal oracle
+PASS sgemm workgroup-id-Y enabled in rsrc2 and v_fmac_f32 accepted by gfx942 oracle
+PASS sgemm descriptor entry displacement resolves to kernel symbol
+PASS sgemm llvm-readelf metadata reports six arguments and descriptor resources
+PASS SOPP forward-max exact signed-16-bit word=bf857fff
+PASS SOPP backward-min exact signed-16-bit word=bf858000
+CONTROL forward-overflow CAUGHT exit=4 before output
+CONTROL backward-overflow CAUGHT exit=4 before output
+CONTROL undefined-label CAUGHT exit=4 before output
+CONTROL duplicate-label CAUGHT exit=4 before output
+PASS signed SOPP offset boundaries, undefined and duplicate labels
+PASS sgemm original object preserved by all oracle tools
+SGEMM OBJECT sha256=466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70 bytes=2768
+PASS corrected sgemm entire object unchanged from pre-FP8
+PASS fp8gemv two code-object builds byte-identical
+PASS fp8gemv .text including SDWA conversion and VOP3 mul equals LLVM18 gfx942
+PASS fp8gemv metadata note equals independent oracle
+PASS fp8gemv descriptor sizes equal oracle
+PASS fp8gemv descriptor resources equal oracle
+PASS fp8gemv descriptor entry displacement resolves to kernel symbol
+PASS fp8gemv BYTE0 SDWA accepted by gfx942 oracle and kernarg is40 bytes
+PASS sparse-format-ids byte-identical FP8 object (no capacity ceiling)
+PASS growing-format-count byte-identical FP8 object (no capacity ceiling)
+CONTROL undefined-format CAUGHT exit=4 no object
+PASS growable format IDs/count and undefined-format control
+FP8GEMV OBJECT sha256=b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b bytes=2800
+PASS fp8gemv entire object unchanged from pre-BF16
+PASS bf16gemv two code-object builds byte-identical
+PASS bf16gemv .text including GLOBAL_LOAD_SHORT_D16_HI equals LLVM18 gfx942
+PASS bf16gemv metadata note equals independent oracle
+PASS bf16gemv descriptor sizes equal oracle
+PASS bf16gemv descriptor resources equal oracle
+PASS bf16gemv descriptor entry displacement resolves to kernel symbol
+PASS bf16gemv D16_HI accepted by gfx942 oracle and kernarg is32 bytes
+BF16GEMV OBJECT sha256=59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa bytes=2672
+hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
+hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.
+NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
+AMD-GFX942-HOST PASS pass=55 fail=0 kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv hardware=NOT_RUN

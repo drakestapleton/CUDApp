@@ -153,6 +153,22 @@ case('global-ubyte-negative-offset', 503, [0xdc409fff, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, {v(3): 128}, mem=b'\x80')
 case('global-ubyte-range-refused', 503, [0xdc408000, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, mem=b'\xff', refusal=67)
+# PDF p507: D16_HI replaces high16 only; low16, flags and inactive lanes are preserved.
+bf16 = runpy.run_path(str(pathlib.Path(__file__).with_name('bf16gemv.py')))
+half = [0xdc008000 | 37 << 18, 3 << 24 | 127 << 16 | 4]
+for bits in bf16['VALUES']:
+    case(f'global-d16-hi-{bits:04x}', 507, half,
+         {v(4): 2, v(5): 0, v(3): 0x1234beef, v(3,1): 0xdeadbeef,
+          v(4,63): 2, v(5,63): 0, v(3,63): 0xffff0000},
+         {v(3): bits << 16 | 0xbeef, v(3,63): bits << 16},
+         ex=(1 << 63)|1, mem=b'\xa5\xa5'+struct.pack('<H', bits))
+case('global-d16-hi-negative-offset', 507, [half[0] | 8190, half[1]],
+     {v(4): 2, v(5): 0, v(3): 0x12345678}, {v(3): 0x803f5678}, mem=b'\x3f\x80')
+case('global-d16-hi-zero-exec', 507, half, {v(3): 0xdeadbeef}, ex=0, mem=b'')
+case('global-d16-hi-short-memory', 507, half, mem=b'\x01', refusal=67)
+case('global-d16-hi-partial-tail', 507, half, {v(4): 2}, mem=b'\x01\x02\x03', refusal=67)
+case('global-d16-hi-low-form-refused', 507, [half[0] ^ 1 << 18, half[1]], refusal=66)
+case('global-d16-hi-modifier-refused', 87, [half[0] | 1 << 16, half[1]], refusal=66)
 
 MUTATIONS = {
     'sub-no-borrow': ('put st 16 fmbool lt a b', 'put st 16 fmbool ge a b'),
@@ -163,6 +179,7 @@ MUTATIONS = {
     'smem-dest-alignment': ('if ne and sd sub shl ulong 1 op 1 0', 'if false'),
     'smem-negative': ('if ne shr x 20 0', 'if ne shr x 21 0'),
     'vgpr-pair-alignment': ('if or ge va 255 ne and va 1 0', 'if ge va 255'),
+    'd16-low-cleared': ('lo = and vg get st 13 lane 65535', 'lo = ulong 0'),
 }
 MUTANT_CASE = {
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',
@@ -170,6 +187,7 @@ MUTANT_CASE = {
     'smem-offset-low-bits': 'smem-component-low-bits',
     'smem-dest-alignment': 'smem-bad-destination-1', 'smem-negative': 'smem-negative-undefined',
     'vgpr-pair-alignment': 'global-odd-address-pair',
+    'd16-low-cleared': 'global-d16-hi-3f80',
 }
 
 def run_case(exe, out, c):

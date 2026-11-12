@@ -334,10 +334,46 @@ if python3 -I "$root/tests/amd/formats.py" "$out/hsaco" "$src/fp8gemv.isa" "$out
   ok 'growable format IDs/count and undefined-format control'
 else bad 'format registry controls'; fi
 echo "FP8GEMV OBJECT sha256=$(digest "$out/fp8gemv-hsaco.hsaco") bytes=$(wc -c < "$out/fp8gemv-hsaco.hsaco" | tr -d ' ')"
+if [ "$(digest "$out/fp8gemv-hsaco.hsaco")" = b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b ]; then
+  ok 'fp8gemv entire object unchanged from pre-BF16'
+else bad 'fp8gemv object changed'; fi
+for producer in hsaco hsaco-again; do
+  timeout 30 "$out/$producer" "$src/bf16gemv.isa" > "$out/bf16gemv-$producer.hsaco" 2> "$out/bf16gemv-$producer.emit.err"; rc=$?
+  if [ "$rc" -ne 0 ] || [ -s "$out/bf16gemv-$producer.emit.err" ]; then
+    echo "FAIL bf16gemv emit exit=$rc"; cat "$out/bf16gemv-$producer.emit.err"; exit 1
+  fi
+done
+compare "$out/bf16gemv-hsaco.hsaco" "$out/bf16gemv-hsaco-again.hsaco" 'bf16gemv two code-object builds byte-identical'
+if ! llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -filetype=obj "$src/bf16gemv-gfx942.s" -o "$out/bf16gemv-oracle.o" > "$out/bf16gemv-assemble.log" 2>&1; then
+  echo 'FAIL bf16gemv oracle assembly'; cat "$out/bf16gemv-assemble.log"; exit 1
+fi
+llvm-mc-18 -triple=amdgcn-amd-amdhsa -mcpu=gfx942 -show-encoding "$src/bf16gemv-gfx942.s" > "$out/bf16gemv-encodings.txt" 2>&1 || exit 1
+for pair in bf16gemv-hsaco.hsaco:bf16gemv-omega bf16gemv-oracle.o:bf16gemv-oracle; do
+  file=${pair%:*}; name=${pair#*:}
+  llvm-objcopy-18 --dump-section .text="$out/$name.text" --dump-section .note="$out/$name.note" --dump-section .rodata="$out/$name.rodata" "$out/$file" "$out/$name.objcopy-rewrite" || exit 1
+  llvm-readelf-18 -h -S -s -n "$out/$file" > "$out/$name.readelf.txt" || exit 1
+  dd if="$out/$name.rodata" of="$out/$name.descriptor-head" bs=1 count=16 status=none || exit 74
+  dd if="$out/$name.rodata" of="$out/$name.descriptor-tail" bs=1 skip=24 status=none || exit 74
+done
+compare "$out/bf16gemv-omega.text" "$out/bf16gemv-oracle.text" 'bf16gemv .text including GLOBAL_LOAD_SHORT_D16_HI equals LLVM18 gfx942'
+compare "$out/bf16gemv-omega.note" "$out/bf16gemv-oracle.note" 'bf16gemv metadata note equals independent oracle'
+compare "$out/bf16gemv-omega.descriptor-head" "$out/bf16gemv-oracle.descriptor-head" 'bf16gemv descriptor sizes equal oracle'
+compare "$out/bf16gemv-omega.descriptor-tail" "$out/bf16gemv-oracle.descriptor-tail" 'bf16gemv descriptor resources equal oracle'
+entryva=$(awk '$8 == "bf16gemv" { print "0x" $2; exit }' "$out/bf16gemv-omega.readelf.txt")
+descva=$(awk '$8 == "bf16gemv.kd" { print "0x" $2; exit }' "$out/bf16gemv-omega.readelf.txt")
+disp=$(od -An -tu8 -j 16 -N 8 "$out/bf16gemv-omega.rodata" | tr -d ' ')
+if [ -n "$entryva" ] && [ -n "$descva" ] && [ "$disp" = "$((entryva - descva))" ]; then
+  ok 'bf16gemv descriptor entry displacement resolves to kernel symbol'
+else bad 'bf16gemv descriptor entry displacement'; fi
+if grep -q 'global_load_short_d16_hi' "$out/bf16gemv-encodings.txt" \
+  && grep -q '\.kernarg_segment_size: *32$' "$out/bf16gemv-omega.readelf.txt"; then
+  ok 'bf16gemv D16_HI accepted by gfx942 oracle and kernarg is32 bytes'
+else bad 'bf16gemv D16_HI encoding or metadata'; fi
+echo "BF16GEMV OBJECT sha256=$(digest "$out/bf16gemv-hsaco.hsaco") bytes=$(wc -c < "$out/bf16gemv-hsaco.hsaco" | tr -d ' ')"
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
 echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'
 if [ "$fail" -ne 0 ]; then echo "AMD-GFX942-HOST FAIL pass=$pass fail=$fail hardware=NOT_RUN"; exit 1; fi
-echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm,fp8gemv hardware=NOT_RUN"
+echo "AMD-GFX942-HOST PASS pass=$pass fail=0 kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv hardware=NOT_RUN"
 exit 0

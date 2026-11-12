@@ -14,7 +14,7 @@ sgemm:
   v_and_b32 v0, 0x3ff, v0
   s_waitcnt lgkmcnt(0)
   s_sub_u32 s14, s3, s10
-  s_cbranch_scc1 .Lend
+  s_cbranch_scc0 .Lend
   s_lshl_b32 s14, s2, 6
   v_add_u32 v1, s14, v0
   v_cmp_gt_u32 vcc, s11, v1
@@ -46,7 +46,7 @@ sgemm:
   v_mov_b32 v7, s19
   v_mov_b32 v4, 0
   s_sub_u32 s13, s12, 1
-  s_cbranch_scc0 .Lstore
+  s_cbranch_scc1 .Lstore
 .Lloop:
   global_load_dword v14, v[8:9], off
   global_load_dword v6, v[10:11], off
@@ -57,7 +57,7 @@ sgemm:
   v_add_co_u32 v10, vcc, s18, v10
   v_addc_co_u32 v11, vcc, v7, v11, vcc
   s_sub_u32 s13, s13, 1
-  s_cbranch_scc1 .Lloop
+  s_cbranch_scc0 .Lloop
 .Lstore:
   global_store_dword v[12:13], v4, off
 .Lend:

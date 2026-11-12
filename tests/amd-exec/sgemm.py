@@ -172,9 +172,10 @@ def mutant(source, target):
 def summary(kernels):
     import runpy
     counts = runpy.run_path(str(pathlib.Path(__file__).with_name('oracle.py')))['COUNTS']
+    semantics = runpy.run_path(str(pathlib.Path(__file__).with_name('semantics.py')))['CASES']
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
-          f'sgemm_cases={2*len(SHAPES)+1} hardware=NOT_RUN')
+          f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

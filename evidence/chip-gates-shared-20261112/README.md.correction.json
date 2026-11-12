@@ -1,0 +1,33 @@
+{
+  "corrects": "evidence/chip-gates-shared-20261112/README.md",
+  "written": "2026-11-12",
+  "found_by": "independent review of head b1818e36bd4d75d5909b84285d00903694b39849 (omp, xai-oauth/grok-4.7), finding 1",
+  "refused_sentence": "Since the per-chunk record (`av_ew_rec`) replaced the per-chunk plan call, that slot is not per chunk: a 4096-element EX2 copied 524288 bytes out of the device buffer into a 16384-byte result buffer.",
+  "also_stated_in": "the commit message of 97fc9eb394c65d7ae64b067b9d3efd53206da68c (not amended)",
+  "why_refused": "For n = 4096 the hosted plan (omega_api_ew_plan mode 2, ap_plan(AP_EW,2)) returns p[10] = 16384 and av_ew_rec returns rec[0] = 4096, so bytes = p[10] equals ni * 4 and that call cannot overflow. The README also cited a gdb backtrace that was not saved with the receipt.",
+  "measured": {
+    "reviewer_host_probe": {
+      "n=4096": {
+        "p8": 4096,
+        "p9": 32,
+        "p10": 16384,
+        "rec0": 4096
+      },
+      "n=131072,131073,135168,1572864": {
+        "p10": 524288,
+        "first_rec0": 131072
+      },
+      "tail_remain=1": {
+        "rec0": 1
+      }
+    },
+    "chip_rerun_at_5783a549": "evidence/elementwise-tail-chunk-20261112/: twelve cases pass; swiglu_131073 is rc=UNWRITTEN with unwritten=131071; SIGSEGV in memcpy from run_abc with byte count 524288 while run_1d holds n = 131073 and a 1-element chunk"
+  },
+  "corrected_statement": "The failing call is the last chunk of a call longer than one chunk (first reached: swiglu_131073, a tail of one element). run_1d gave it the plan's p[10], the full chunk's 524288 bytes, instead of the chunk's own 4 bytes.",
+  "stands": [
+    "every exit code and log in before-5783a549/ and after-97fc9eb3/",
+    "the resident findings and the resident pass",
+    "the fix in 97fc9eb3 (bytes = ni * 4)"
+  ],
+  "do_not_use_as_evidence": "the refused sentence, in the README or in the commit message"
+}

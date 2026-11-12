@@ -1,0 +1,31 @@
+
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/aarch64-linux-gnu/libthread_db.so.1".
+
+Program received signal SIGSEGV, Segmentation fault.
+__memcpy_sve () at ../sysdeps/aarch64/multiarch/memcpy_sve.S:126
+warning: 126	../sysdeps/aarch64/multiarch/memcpy_sve.S: No such file or directory
+#0  __memcpy_sve () at ../sysdeps/aarch64/multiarch/memcpy_sve.S:126
+#1  0x0000aaaaaaaaca84 in run_abc ()
+#2  0x0000aaaaaaaad008 in run_1d ()
+#3  0x0000aaaaaaaa5660 in chip ()
+#4  0x0000aaaaaaaa2fd4 in main ()
+x0             0xfffff4bff010      281474787962896
+x1             0x1004260fc0        68789080000
+x2             0x7efb0             520112
+x3             0xfffff4bfffd0      281474787966928
+x5             0xfffff4c7f010      281474788487184
+x19            0xfffff4bff010      281474787962896
+x22            0x80000             524288
+x23            0x20000             131072
+#2  0x0000aaaaaaaad008 in run_1d ()
+x19            0x1                 1
+x20            0x20001             131073
+x21            0xfffff7c9e010      281474838945808
+x22            0xfffff7c1d010      281474838417424
+x23            0xffffffffedb0      281474976705968
+x24            0xfffff4b7f010      281474787438608
+x25            0xffffffffea88      281474976705160
+x26            0x1                 1
+x27            0x20001             131073
+x28            0xffffffffea98      281474976705176

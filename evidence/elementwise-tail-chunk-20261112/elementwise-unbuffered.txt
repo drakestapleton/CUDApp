@@ -1,0 +1,18 @@
+PASS ex2_probe n=4096 rc=OK violations=0 worst_scaled_err=0.152538 chip_ns=5995923 calls=1 unwritten=0 | mutant rc=OK violations=4096 CAUGHT
+PASS shared_xchg_probe n=4096 rc=OK violations=0 worst_scaled_err=0 chip_ns=1684073 calls=1 unwritten=0 | mutant rc=OK violations=4096 CAUGHT
+rmsnorm_4x2048 output sha256 fec7ab6c2a6f67496ed95afce7ff8d0083cc0d28ca594087ff944058e4822667
+PASS rmsnorm_4x2048 n=8192 rc=OK violations=0 worst_scaled_err=0.0244808 chip_ns=2577599 calls=1 unwritten=0 | mutant rc=OK violations=8192 CAUGHT
+rmsnorm_1x256 output sha256 2a194f5e2fb95fbe2f584cbc7655a4683d00132738ffe3da3c43e234882d2470
+PASS rmsnorm_1x256 n=256 rc=OK violations=0 worst_scaled_err=0.0206888 chip_ns=1633113 calls=1 unwritten=0 | mutant rc=OK violations=256 CAUGHT
+rmsnorm_2x8192 output sha256 257fcd904344990ba68a1e26d8e4ed227121d50a369f2c62f0aca32664435d88
+PASS rmsnorm_2x8192 n=16384 rc=OK violations=0 worst_scaled_err=0 chip_ns=1639577 calls=1 unwritten=0 | mutant rc=OK violations=16384 CAUGHT
+PASS rope_32h_64d_pos17_theta10000 n=2048 rc=OK violations=0 worst_scaled_err=0 chip_ns=2420238 calls=1 unwritten=0 | mutant rc=OK violations=1024 CAUGHT
+PASS rope_4h_64d_pos17_theta10000 n=256 rc=OK violations=0 worst_scaled_err=0 chip_ns=2700240 calls=1 unwritten=0 | mutant rc=OK violations=128 CAUGHT
+PASS rope_32h_64d_pos1023_theta500000 n=2048 rc=OK violations=0 worst_scaled_err=0 chip_ns=1631545 calls=1 unwritten=0 | mutant rc=OK violations=1024 CAUGHT
+PASS rope_8h_64d_pos1023_theta500000 n=512 rc=OK violations=0 worst_scaled_err=0 chip_ns=1165990 calls=1 unwritten=0 | mutant rc=OK violations=256 CAUGHT
+PASS swiglu_5632 n=5632 rc=OK violations=0 worst_scaled_err=0.0196297 chip_ns=1430488 calls=1 unwritten=0 | mutant rc=OK violations=5630 CAUGHT
+PASS swiglu_8192 n=8192 rc=OK violations=0 worst_scaled_err=0.0177689 chip_ns=1909963 calls=1 unwritten=0 | mutant rc=OK violations=8192 CAUGHT
+PASS swiglu_1000 n=1000 rc=OK violations=0 worst_scaled_err=0.017264 chip_ns=2659408 calls=1 unwritten=0 | mutant rc=OK violations=1000 CAUGHT
+FAIL: swiglu_131073 rc=UNWRITTEN violations=0 worst=0.0236441
+FAIL swiglu_131073 n=131073 rc=UNWRITTEN violations=0 worst_scaled_err=0.0236441 chip_ns=2959425 calls=2 unwritten=131071 | mutant rc=UNWRITTEN violations=131073 CAUGHT
+exit=139

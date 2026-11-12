@@ -43,12 +43,12 @@ for iteration in 1 2; do
 done
 cmp "$out/vadd.1.hsaco" "$out/vadd.2.hsaco"
 echo 'PASS code object two builds byte-identical'
-python3 "$root/tests/amd-exec/oracle.py" extract "$out/vadd.1.hsaco" "$out/vadd.text"
+python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/vadd.1.hsaco" "$out/vadd.text"
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then echo 'FAIL mutant did not apply'; exit 1; fi
 timeout 30 "$out/hsaco.1" "$out/flipped.isa" > "$out/flipped.hsaco"
-python3 "$root/tests/amd-exec/oracle.py" extract "$out/flipped.hsaco" "$out/flipped.text"
-python3 "$root/tests/amd-exec/oracle.py" suite "$out/exec.1" "$out/vadd.text" "$out/flipped.text" "$out"
+python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/flipped.hsaco" "$out/flipped.text"
+python3 -I "$root/tests/amd-exec/oracle.py" suite "$out/exec.1" "$out/vadd.text" "$out/flipped.text" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

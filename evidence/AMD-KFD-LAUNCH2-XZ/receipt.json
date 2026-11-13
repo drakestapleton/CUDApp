@@ -1,0 +1,37 @@
+{
+  "source_head": "e3d6c654f4c836f623bf7261addf2ae838c486c4",
+  "branch": "amdserve/kfd-launch",
+  "commands": [
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/bundle.py --gate build/amd-kfd-launch/launch2-attempt4 --gemv-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/gemv2 --attention-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn --out /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2",
+      "exit": 0,
+      "log": "logs/bundle.log",
+      "log_sha256": "540505c9b01fd86b518c3b5e6761dcf8ad38fa9c816248c8da5b9959a52d871c"
+    },
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/notebook-check.py /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2 build/amd-kfd-launch/launch2-xz",
+      "exit": 0,
+      "log": "logs/notebook.log",
+      "log_sha256": "11e6af2593ea33f85aa555b51f07b3d3eefa345d8bd669a7957d0aa344ca852d"
+    },
+    {
+      "command": "(cd /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2 && sha256sum -c SHA256SUMS)",
+      "exit": 0,
+      "log": "logs/checksums.log",
+      "log_sha256": "b4b5900b357fc0bc65d3b11173b39fc6031b067348d77bf72b7ac318df73fd48"
+    }
+  ],
+  "cell_bytes": 55308,
+  "cell_sha256": "d8a27241ac7b000d9dda5384b929de6985112c96d2cfd83e8c31a6b1502e9d7f",
+  "bundle_path": "/home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2",
+  "binary_sha256": "70e63de39a28be6c8aa1bde9ac46ca93797e5bd4ea8633fddd5be3dae3e0070d",
+  "identical_asset_count": 11,
+  "identity_check": "Every xz_base85 asset decoded with lzma.decompress(base64.b85decode(...)); exact bytes compared against prior bundle and current disk files, SHA256 compared against both manifests; every delivered file except SHA256SUMS present in manifest. Exit 0.",
+  "notebook_checks": 32,
+  "prior_bundle_backup": "/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/launch2-before-xz",
+  "prior_launcher_evidence": "../AMD-KFD-LAUNCH2",
+  "device": "NOT_RUN",
+  "independent_review": "NOT_RUN",
+  "merged": "NOT_RUN",
+  "deployed": "NOT_RUN"
+}

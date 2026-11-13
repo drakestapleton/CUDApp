@@ -1,0 +1,19 @@
+CONTROLS first: asset digests, malformed ELF, argument header; GPU results require successful completion and bitwise parity
+launch2 candidate; OMEGA=seeded direct KFD; OMEGA objects via AMD HIP loader=comparison; no NVIDIA measurements
+pins {"compiler_head": "290ad5feb9fa34b47e3672f4921f16de7807fca1", "compiler_sha256": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b", "launcher_head": "e3d6c654f4c836f623bf7261addf2ae838c486c4", "launcher_source_sha256": {"backend/amd/kfd/launch/common.om": "988b185dd76cbe558a8520f1d38fd7063069f875bb939ba3d3dd70400edb980f", "backend/amd/kfd/launch/device.om": "c8906492dad2622cd6d404e87fa232cdc976500cb60632f3c7fb59e37bbabf94", "backend/amd/kfd/launch/dispatch.om": "491d8f1a650e4cdad7455ff172c4ee2d03eb6b19b6f1c7dd9a83dee7faf7530f", "backend/amd/kfd/launch/elf.om": "63fb1712a34ff9bec4c9e1e75990afeb76d63a765f5ab547bf0a4d05210337c9", "backend/amd/kfd/launch/main.om": "5ed9b6bc36ccf3d492f208ac8d1a988888d8086d8d3b3ef6e8eeda63ecbbaa32"}, "notebook_template_sha256": "69324021487a59cc6cb9c836fcf88532a451e5678b44205b6852226467d18b30"}
+assets {"attn256_gate.hsaco": "b2c6ef4a50b69faf76a7bd823c7c1bdd9a40083e9e1d9e2cee19446da730d856", "attn256_merge.hsaco": "a721017369917d2b757095198877f16f9aa41a8955dbf4bf55d73e29f83b2ec3", "attn256_part.hsaco": "9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95", "attn256_prep.hsaco": "9bbc291825b1c70d2b18bbb333a36982d355ffdf36b5e7bdedf09c84fb448f8a", "bf16gemv2.hsaco": "4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb", "fp8gemv2.hsaco": "99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0", "gdnconv4.hsaco": "c169381577b1ce5f0155904b3975d68a57ae01de906f3d2f359e7cf74a8969fd", "mlpsilu.hsaco": "2e22681a1fe0aa9a69796eec1326d4ee7679bda9d7d9985ae52fd7edffc5a69a", "omega-launch": "70e63de39a28be6c8aa1bde9ac46ca93797e5bd4ea8633fddd5be3dae3e0070d", "rmsnorm5120.hsaco": "f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f", "vadd.hsaco": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"}
+host arch=x86_64 kernel=7.0.0-1019-nvidia libc=('glibc', '2.39') work=/tmp/omega-launch2-z1pujd8k
+OMEGA topology table fail errno=2 path=/sys/class/kfd/kfd/topology/nodes
+OMEGA invocation {"argv": ["/tmp/omega-launch2-z1pujd8k/omega-launch", "inspect", "/tmp/omega-launch2-z1pujd8k/bad.hsaco", "vadd"], "label": "control-bad-elf"}
+OMEGA invocation control-bad-elf exit=65 expected=65
+OMEGA invocation {"argv": ["/tmp/omega-launch2-z1pujd8k/omega-launch", "run", "/tmp/omega-launch2-z1pujd8k/vadd.hsaco", "vadd", "4", "1", "/tmp/omega-launch2-z1pujd8k/bad.args", "/tmp/omega-launch2-z1pujd8k/unused"], "label": "control-bad-args"}
+OMEGA invocation control-bad-args exit=64 expected=64
+OMEGA CONTROL malformed ELF=65 argument-header=64 PASS
+OMEGA invocation {"argv": ["/tmp/omega-launch2-z1pujd8k/omega-launch", "vadd", "/tmp/omega-launch2-z1pujd8k/vadd.hsaco", "vadd"], "label": "absent-kfd"}
+OMEGA step open_kfd ok errno=0 phase=before detail=0
+OMEGA step open_kfd fail errno=2 phase=after detail=0
+OMEGA device=absent errno=2
+OMEGA invocation absent-kfd exit=77 expected=77
+OMEGA NOT_RUN /dev/kfd absent; errno=2 exit=77 checked
+receipt /tmp/launch2-cpu-tftbxdig/amdserve-launch2.txt; inputs, outputs and invocation logs retained in /tmp/omega-launch2-z1pujd8k
+RESULT NOT_RUN

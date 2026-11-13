@@ -1191,3 +1191,162 @@ remove each of the three BF16 conversions or shift the cache incorrectly.
 The generated notebook section checks all state/output/guard bytes,
 every timed cold copy, genuine wrong objects, and a separately labeled
 BF16 torch grouped-convolution reference. Hardware remains NOT_RUN.
+
+## 21. BF16 GDN query/key normalization and FP32 recurrent state
+
+Model fields remain pinned to config revision
+`017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`: 16 key heads,
+48 value heads, key/value dimensions 128. The reference is
+Transformers v5.8.0 `modeling_qwen3_5.py`, lines 228–231
+(`l2norm`), 317–328 (normalize before the FP32 cast, then scale Q),
+343–350 (decay, key/state reduction, delta, state update, query/state
+reduction), 354 (core output back to initial dtype), and 506–507
+(repeat each key head for its three value heads).
+
+This is the torch fallback contract without the optional FLA package.
+The model BF16 contract is retained even though kernel boundaries carry
+FP32 words: BF16 values are widened exactly, not treated as unconstrained
+FP32 values and silently advertised as the model's BF16 path.
+
+| Kernel | Kernarg byte offsets | Launch, block |
+| --- | --- | --- |
+| `gdnqknorm` | input Q/K 0, output Q/K 8; two pointers | 32 x 1 workgroups, 64 lanes |
+| `gdnstate` | Q/K 0, V 8, old state 16, new state 24, output 32, decay 40, beta 48; seven pointers | 3 x 16 workgroups, 64 lanes |
+
+All buffers are row-major FP32 words. Q/K layout is `[2][16][128]`;
+V/core output is `[48][128]`; state is `[48][128][128]` in
+`[value head][key row][value column]` order; decay/beta are `[48]`.
+Q/K input is the BF16-rounded, widened convolution output. Q/K output
+contains normalized K widened from BF16 and normalized Q widened from
+BF16 then scaled in FP32. Decay and beta are inputs here, not substituted
+constants or claimed fused gate computations. Old/new states must be
+distinct; the old state is immutable, and the caller swaps the pointers
+after the completed launch.
+
+For normalization, each lane squares x[lane] and x[lane+64], rounding
+each product to BF16 before widening. It adds those two in FP32, then
+executes snapshot XOR adds with shifts 32,16,8,4,2,1. The result is
+rounded to BF16. The epsilon scalar is first converted to BF16, as
+the BF16 tensor operation does; the sum with epsilon is rounded to
+BF16. V_RSQ_F32's manual interval is rounded to BF16, and each x*inverse
+product is rounded to BF16. Query heads alone then multiply by FP32
+`0x3db504f3`. This constant is checked by the recorded Python query
+`round32(Fraction(Decimal(1)/Decimal(128).sqrt()))` at precision 120;
+the assertion lives in `gdn.py`. BF16 conversion is RN-even with
+canonical NaNs, using the same existing instruction sequence as conv4.
+
+For recurrence, value head `3*group_y+group_x` uses key head `group_y`.
+Each lane handles columns lane and lane+64. All operations below round
+separately to FP32; there is no implicit contraction into FMA:
+`decayed = old * decay`; `kv = sum(decayed[row] * k[row])`;
+`delta = (v - kv) * beta`; `new = decayed + k * delta`;
+`output = sum(new[row] * q[row])`. Both sums start at +0 and add rows
+in ascending order 0 through 127. New state remains FP32. Core output
+is rounded to BF16 and widened, matching the reference's final cast.
+The reference library may use another reduction tree; we state this
+kernel's order rather than claiming its library reductions are bit-equal.
+
+No new instruction is introduced. The gate still compares every
+instruction word and descriptor to LLVM's oracle, runs the all-object
+scheduling check, and checks two builds for byte identity. `gdn.py`
+checks every state/output bit (or the RSQ-derived interval for Q/K),
+all unchanged input bytes and guards, and over-dispatch in X and Y.
+Controls change scale, epsilon, upper-half contributions, BF16
+normalization rounding, decay, beta, key-head selection, row stride,
+and BF16 core rounding. The full gate summary derives both new case
+counts from the test module, retaining all prior counts.
+
+`torch_gdn_probe.py` is an optional, CPU-only independent verification
+instrument, not a build/production dependency. The isolated reference
+is torch 2.9.0+cpu. It checks the fallback's BF16 operation dtypes and
+epsilon scalar conversion over every positive finite BF16 encoding.
+The ARM CPU BF16 `rsqrt` is not the numerical oracle: for input bits
+`0x425e0000`, it returns `0x3e0a0000`, whereas a precision-120 Decimal
+square root, independently rounded to BF16, gives `0x3e090000`. The CPU
+answer lies outside the CDNA3 RSQ one-ULP interval after BF16 conversion.
+The probe asserts that disagreement rather than widening the interval.
+For a second normalization reference, it substitutes only the FP64
+`rsqrt` primitive rounded to BF16; all other operations retain Torch's
+BF16 boundaries. It also compares every recurrent state/output bit using
+independent Torch operations in the explicitly declared reduction order.
+This is not a claim of bit parity with unmodified CPU Torch. The notebook
+timing reference retains Torch's own primitives/reduction tree and is
+labelled AMD-library work, not Omega.
+
+The compact notebook sections generate all fixtures and oracle outputs
+in-cell and pass the same fresh-namespace dependency check as section 18.
+Hardware execution and performance qualification remain NOT_RUN until
+the device notebook actually runs these objects.
+
+## 22. Remaining decode kernels and bounded access instruments
+
+The seeded objects in this section use the same explicit FP32-word ABI
+as the preceding kernels. BF16 boundary values are exactly widened;
+packed BF16 occurs only in the embedding input and attention KV cache.
+The implementation source is the `.isa` instruction table. Companion
+`.s` files are independently assembled by LLVM 18 solely as byte/descriptor
+oracles. Neither Python nor LLVM is a production kernel dependency.
+
+`gdnparams` consumes per-value-head a, b, A_log, and dt_bias. It rounds a/b
+to BF16, computes sigmoid(b), rounds beta to BF16, and emits FP32
+`exp(-exp(A_log)*softplus(a+dt_bias))` for the recurrent decay. Softplus
+uses the stable positive/negative split with the Torch threshold at 20.
+For small t, `log1p(t)` is evaluated as
+`log(1+t)*t/((1+t)-1)` using explicitly rounded operations; when `1+t`
+rounds to one it returns t. This avoids both cancellation and overflow.
+All transcendental operations retain the documented CDNA3 intervals.
+
+The added executor `V_LOG_F32` implementation computes log2 using a
+native binary64 mantissa reduction and odd atanh series. `log.py` checks
+it against a precision-120 Decimal logarithm and the ISA one-ULP
+enclosure; opcode special cases have independent exact-bit tests.
+An identity-instead-of-log control must fail.
+
+`gdnrmsgate` consumes BF16-rounded core/weight values widened to FP32,
+and rounds the FP32 projection z to BF16 before evaluating swish.
+Its RMS variance is FP32 with the documented wave-XOR sum, epsilon
+1e-6, normalization rounded to BF16, weight multiplication rounded to
+BF16, then FP32 swish(z) and final BF16 rounding. This is the ordering
+of Transformers' `Qwen3_5RMSNormGated`, not a reordered fused expression.
+Old/new recurrent states remain separate immutable-input/output buffers.
+
+`residual5120` rounds both FP32-word operands to BF16, adds in FP32,
+then rounds the result to BF16. This admits the FP32 projection output
+without losing the model's BF16 residual-add boundary. `embed5120`
+loads one selected, packed BF16 embedding row and widens it. The caller
+must validate the token index and bind the selected row pointer
+`embedding_base + token*10240`; this object does not accept an entire
+unbounded matrix or claim to validate a host token pointer.
+
+`argmax_part` reduces all 248320 FP32 logits into 3880 (ordered key,
+original index) pairs. `argmax_final` consumes all pairs and emits one
+uint32 token. Ties, including opposite signed zeros, select the first
+index. NaNs outrank numeric values and the first NaN wins, matching
+Torch argmax's selection behavior. Ordered integer keys preserve all
+finite FP32 ordering without lossy arithmetic or reduction additions.
+
+`decode.py`, `gdn.py`, and `prep_section.py` construct independent
+Fraction/Decimal or exact-bit oracles, adversarial fixtures, in-bounds
+numerical controls, and compact notebook sections. Prep checks Q/K RMS
+normalization, exactly 64 rotated dimensions out of 256, BF16 KV append,
+and unchanged prior cache rows. The attention gate remains sigmoid,
+whereas GDN's post-norm gate is swish. Library timing is labelled
+separately; it never substitutes for the interval oracle.
+
+`token_access.py` is a verification instrument, not a production runtime.
+It builds a seeded executor with per-buffer access checks for each
+concrete fixture, records every buffer's largest actually touched read
+and write byte, and executes numerical controls under the same checks.
+A separately compiled short-input-bound control must exit 68.
+`token-access.json` records those measurements. Hardware memory safety
+and timing remain NOT_RUN: a functional executor is not a GPU.
+
+After the host/executor gates and optional Torch probe have written
+`host.log`, `exec.log`, and `torch.log` under an evidence directory,
+`tests/amd-exec/token_bundle.py EVIDENCE NEW_DESTINATION` generates the
+notebook transport bundle. It derives object hashes, source head,
+kernarg offsets/types, launch dimensions, exact fixture buffer lengths,
+measured access maxima, case errors, and caught controls from the actual
+tables and gate outputs. `list.json` is the machine-readable list;
+`list.md` and `SHA256SUMS` are generated views. An existing destination is
+refused so an earlier evidence bundle cannot be silently replaced.

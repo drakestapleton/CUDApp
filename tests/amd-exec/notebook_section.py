@@ -45,6 +45,13 @@ def run_section(ctx):
             assert math.isfinite(x) and lo <= Fraction(x) <= hi, f'{name} interval mismatch offset={off} bits={bits:08x}'
             widest = max(widest, hi-lo)
             unchanged[off:off+4] = before[off:off+4]
+        for off,lo,hi in case.get('half_intervals',[]):
+            bits=struct.unpack_from('<H',actual,off)[0]<<16
+            x=struct.unpack('<f',struct.pack('<I',bits))[0]
+            lo,hi=Fraction(lo),Fraction(hi)
+            assert math.isfinite(x) and lo<=Fraction(x)<=hi, f'{name} BF16 interval mismatch offset={off}'
+            widest=max(widest,hi-lo)
+            unchanged[off:off+2]=before[off:off+2]
         for off, bits, width in case.get('exact', []):
             assert int.from_bytes(actual[off:off+width], 'little') == bits, f'{name} exact mismatch offset={off}'
             unchanged[off:off+width] = before[off:off+width]
@@ -125,6 +132,66 @@ def run_section(ctx):
                 new=state[:,:,-4:].clone()
                 out=F.silu(F.conv1d(state,weight,groups=n)[:,:,-1:]).float()
                 return out,new
+        elif name == 'gdnqknorm':
+            x=tensor(case['args'][0][1],4096).view(32,128).bfloat16()
+            def operation():
+                value=(x*torch.rsqrt((x*x).sum(dim=-1,keepdim=True)+1e-6)).float()
+                return torch.cat((value[:16]*(128**-0.5),value[16:]))
+        elif name == 'gdnstate':
+            qk=tensor(case['args'][0][1],4096).view(2,16,128).repeat_interleave(3,dim=1)
+            values=tensor(case['args'][1][1],48*128).view(48,128)
+            old=tensor(case['args'][2][1],48*128*128).view(48,128,128)
+            decay=tensor(case['args'][5][1],48).view(48,1,1)
+            beta=tensor(case['args'][6][1],48).view(48,1)
+            def operation():
+                state=old*decay
+                memory=(state*qk[1,:,:,None]).sum(dim=1)
+                delta=(values-memory)*beta
+                state=state+qk[1,:,:,None]*delta[:,None,:]
+                return (state*qk[0,:,:,None]).sum(dim=1).bfloat16().float(),state
+        elif name == 'residual5120':
+            a,b=(tensor(case['args'][j][1],5120).bfloat16() for j in (0,1))
+            operation=lambda: (a+b).float()
+        elif name == 'embed5120':
+            words=struct.unpack_from('<5120H',image,case['args'][0][1])
+            row=torch.tensor(words,device='cuda',dtype=torch.uint16).view(torch.bfloat16)
+            operation=lambda: row.float()
+        elif name == 'gdnparams':
+            a,b,A,dt=(tensor(case['args'][j][1],48) for j in range(4))
+            a,b=a.bfloat16(),b.bfloat16()
+            operation=lambda: ((-A.exp()*F.softplus(a.float()+dt)).exp(),b.sigmoid().float())
+        elif name == 'gdnrmsgate':
+            x=tensor(case['args'][0][1],6144).view(48,128).bfloat16()
+            w=tensor(case['args'][1][1],128).bfloat16()
+            z=tensor(case['args'][2][1],6144).view(48,128).bfloat16().float()
+            def operation():
+                norm=(x.float()*torch.rsqrt(x.float().square().mean(-1,keepdim=True)+1e-6)).bfloat16()
+                return ((norm*w).float()*F.silu(z)).bfloat16().float()
+        elif name == 'argmax_part':
+            logits=tensor(case['args'][0][1],248320).view(-1,64)
+            operation=lambda: logits.argmax(dim=-1)
+        elif name == 'argmax_final':
+            pairs=struct.unpack_from('<7760I',image,case['args'][0][1])
+            keys=torch.tensor(pairs[::2],device='cuda',dtype=torch.int64)
+            indices=torch.tensor(pairs[1::2],device='cuda',dtype=torch.int64)
+            operation=lambda: torch.where(keys==keys.max(),indices,248320).min()
+        elif name == 'attn256_prep':
+            q=tensor(case['args'][0][1],12288).view(24,512)[:,:256]
+            k=tensor(case['args'][1][1],1024).view(4,256)
+            v=tensor(case['args'][2][1],1024).view(4,256)
+            qw,kw=(tensor(case['args'][j][1],256) for j in (3,4))
+            cs=tensor(case['args'][5][1],64)
+            def rotate(x,w):
+                x=x*torch.rsqrt(x.square().mean(-1,keepdim=True)+1e-6)*(1+w)
+                a,b=x[:,:32].clone(),x[:,32:64].clone()
+                x[:,:32]=a*cs[:32]-b*cs[32:]
+                x[:,32:64]=b*cs[:32]+a*cs[32:]
+                return x
+            operation=lambda: (rotate(q,qw),rotate(k,kw).bfloat16(),v.bfloat16())
+        elif name == 'attn256_gate':
+            gate=tensor(case['args'][0][1],12288).view(24,512)[:,256:]
+            attention=tensor(case['args'][1][1],6144).view(24,256)
+            operation=lambda: attention*gate.sigmoid()
         else:
             raise ValueError('missing torch reference for '+name)
         operation(); torch.cuda.synchronize()
@@ -135,7 +202,12 @@ def run_section(ctx):
         elapsed = (time.perf_counter()-start)*1000/repetitions
         # Different reduction/exp implementations are deliberately not the Omega
         # interval oracle. Print the reference clock without claiming bit parity.
-        for value in reference if isinstance(reference,tuple) else (reference,):
+        for index,value in enumerate(reference if isinstance(reference,tuple) else (reference,)):
+            if name == 'attn256_prep':
+                if index==2:
+                    assert torch.equal(torch.isnan(value),torch.isnan(v))
+                    assert torch.equal(torch.isinf(value),torch.isinf(v))
+                    continue
             assert torch.isfinite(value).all().item()
         dtype = 'BF16-conv/cache FP32-accum/output' if name == 'gdnconv4' else 'FP32'
         say(f'torch {name} (AMD library, not Omega) warm_wall_ms={elapsed:.6f} dtype={dtype}')

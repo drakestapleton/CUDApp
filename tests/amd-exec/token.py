@@ -59,6 +59,12 @@ def check(actual,case):
         assert bits & 0x7fffffff < 0x7f800000 and lo <= finite(bits) <= hi, f'token mismatch {case["label"]} offset={off} bits={bits:08x} interval={lo},{hi}'
         widest = max(widest,hi-lo)
         untouched[off:off+4] = before[off:off+4]
+    for off,lo,hi in case.get('half_intervals',[]):
+        bits=struct.unpack_from('<H',actual,off)[0]<<16
+        lo,hi=Fraction(lo),Fraction(hi)
+        assert bits & 0x7fffffff < 0x7f800000 and lo<=finite(bits)<=hi, f'token mismatch BF16 interval offset={off}'
+        widest=max(widest,hi-lo)
+        untouched[off:off+2]=before[off:off+2]
     for off,bits,width in case.get('exact',[]):
         assert int.from_bytes(actual[off:off+width],'little') == bits, f'token mismatch exact offset={off}'
         untouched[off:off+width] = before[off:off+width]
@@ -72,6 +78,14 @@ def execute(exe,code,out,case):
     p = subprocess.run([exe,str(code),str(path),str(case['gx']*64),str(case['gy'])],capture_output=True,timeout=600)
     assert p.returncode==0 and not p.stdout and not p.stderr,p
     return check(path.read_bytes(),case)
+
+def midpoint_error(actual,case):
+    worst=Fraction(0)
+    for entries,width,shift in ((case['intervals'],4,0),(case.get('half_intervals',[]),2,16)):
+        for off,lo,hi in entries:
+            bits=int.from_bytes(actual[off:off+width],'little')<<shift
+            worst=max(worst,abs(finite(bits)-(Fraction(lo)+Fraction(hi))/2))
+    return worst
 
 
 def export(name,cases,controls,out,factory,parameters):

@@ -181,6 +181,9 @@ def summary(kernels):
     token = runpy.run_path(str(pathlib.Path(__file__).with_name('token.py')))
     norm = runpy.run_path(str(pathlib.Path(__file__).with_name('norm.py')))
     conv = runpy.run_path(str(pathlib.Path(__file__).with_name('gdnconv.py')))
+    gdn = runpy.run_path(str(pathlib.Path(__file__).with_name('gdn.py')))
+    decode = runpy.run_path(str(pathlib.Path(__file__).with_name('decode.py')))['SPECS']
+    prep_sections = runpy.run_path(str(pathlib.Path(__file__).with_name('prep_section.py')))['SPECS']
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
           f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} '
@@ -198,7 +201,10 @@ def summary(kernels):
           f'mlpsilu_cases={len(token["COUNTS"])} '
           f'rmsnorm5120_rows={",".join(map(str, sorted(set(r for r,_ in norm["CASES"]))))} '
           f'rmsnorm5120_cases={len(norm["CASES"])} '
-          f'gdnconv_channels={conv["CHANNELS"]} gdnconv_cases={len(conv["CASES"])} hardware=NOT_RUN')
+          f'gdnconv_channels={conv["CHANNELS"]} gdnconv_cases={len(conv["CASES"])} '
+          f'gdnqknorm_cases={len(gdn["QK_CASES"])} gdnstate_cases={len(gdn["STATE_CASES"])} '
+          f'decode_cases={sum(len(s[2]) for s in decode)} prep_section_cases={sum(len(s[2]) for s in prep_sections)} '
+          f'per_buffer_access_kernels={2+len(decode)+len(prep_sections)} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

@@ -137,6 +137,7 @@ timeout 120 "$omc" < "$out/trans-probe.om" > "$out/trans-probe" 2> "$out/trans-p
 [ ! -s "$out/trans-probe.compile.log" ] || { cat "$out/trans-probe.compile.log"; exit 1; }
 chmod 700 "$out/trans-probe"
 python3 -I "$root/tests/amd-exec/attention.py" transprobe "$out/trans-probe"
+python3 -I "$root/tests/amd-exec/log.py" "$out/trans-probe"
 python3 -I "$root/tests/amd-exec/attention.py" mutate "$src/attn256_part.isa" "$out"
 for control in no-max wrong-gqa v-from-k; do
     timeout 30 "$out/hsaco.1" "$out/attention-$control.isa" > "$out/attention-$control.hsaco"
@@ -174,6 +175,20 @@ for control in gdnconv4-no-input-round gdnconv4-no-conv-round gdnconv4-no-silu-r
     python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
 done
 python3 -I "$root/tests/amd-exec/gdnconv.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/gdn.py" mutate "$src" "$out"
+for control in $(python3 -I "$root/tests/amd-exec/gdn.py" controls); do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/gdn.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/decode.py" mutate "$src" "$out"
+for control in $(python3 -I "$root/tests/amd-exec/decode.py" controls); do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/decode.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/prep_section.py" "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/token_access.py" "$omc" "$src" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

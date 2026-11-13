@@ -1553,11 +1553,18 @@ existing AQL encoder detect either swapped writer.
 
 [ROCT rocm-6.2.0 topology.c](https://raw.githubusercontent.com/ROCm/ROCT-Thunk-Interface/rocm-6.2.0/src/topology.c)
 maps array_count to a temporary SIMD-array count and simd_arrays_per_engine to
-NumArrays (1088..1091), then assigns NumShaderBanks from their quotient
-(1144..1145). The existing queues.c wave formula subsequently divides
+NumArrays (1147..1150), then assigns NumShaderBanks from their quotient
+(1204..1205). The existing queues.c wave formula subsequently divides
 NumShaderBanks by NumArrays. Both divisions in the native sysfs formula are
 required. The array-bound-dominant fixture and missing-division mutant exercise it.
 
 A caller chooses a deadline through the generic argument manifest or a trailing
 plan/vadd CLI argument. Zero/default is unlimited. The ten-second threshold
 produces an alarm, not a cap. No new model-plan field or wire version was needed.
+
+The same conversion was also checked in the environment-matched
+[ROCm 7.2.2 topology.c](https://raw.githubusercontent.com/ROCm/rocm-systems/rocm-7.2.2/projects/rocr-runtime/libhsakmt/src/topology.c),
+lines 1171..1174 and 1234..1235 of the downloaded file, SHA-256
+97269f0baf231d490032fc47ea8fe9e1101232477e10f74ff15e616d8e54ad86.
+Line numbers here refer to the downloaded source, not the web reader's extracted
+line numbering.

@@ -589,6 +589,17 @@ endif
 test: $(HOST_TESTS)
 	@echo "CUDA++ HOST TESTS PASS ($(words $(HOST_TESTS)) targets)"
 
+# Pre-landing host AMD gate set, separate from the CUDA++ host suite.
+# OMEGA_OMC must name the absolute seeded compiler; each gate checks its own pin.
+# AMD_WEIGHTS supplies the local checkpoint oracle used by documented commands.
+# Caller holds CPU-pool isolation and supplies python3 with the documented dependencies.
+.PHONY: test-amd
+test-amd:
+	sh tests/amd/run.sh "$(OMEGA_OMC)"
+	sh tests/amd-kfd/run.sh "$(OMEGA_OMC)"
+	sh tests/amd-exec/run.sh "$(OMEGA_OMC)"
+	sh tests/multitarget/run.sh "$(OMEGA_OMC)"
+
 .PHONY: test-prof
 ifeq ($(CUDAPP_OMC_HOST),1)
 test-prof:

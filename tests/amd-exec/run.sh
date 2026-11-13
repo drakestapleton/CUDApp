@@ -24,19 +24,11 @@ out=${AMD_EXEC_OUT:-$(mktemp -d "${TMPDIR:-/tmp}/gfx942-exec.XXXXXX")}
 mkdir -p "$out"
 out=$(CDPATH= cd -- "$out" && pwd)
 src=$root/backend/amd/gfx942
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out"
 printf 'PIN omc=%s\n' "$pin"
 python3 --version
 # Instruments run with this directory first on sys.path; a stdlib-named module here breaks oracle imports.
-python3 -I - "$root/tests/amd-exec" <<'PY'
-import pathlib, sys
-def shadows(names):
-    return sorted(n for n in names if n in sys.stdlib_module_names)
-assert shadows(['token']) == ['token'], 'shadow control missed'
-print('CONTROL stdlib-named module token CAUGHT')
-found = shadows(p.stem for p in pathlib.Path(sys.argv[1]).glob('*.py'))
-assert not found, f'test modules shadow stdlib: {found}'
-print('PASS no tests/amd-exec module shadows the Python standard library')
-PY
+python3 -I "$root/tests/amd-exec/stdlib-shadow.py" test "$root/tests/amd-exec"
 cat "$src/exec/fp.om" "$src/exec/fma.om" "$src/exec/main.om" > "$out/exec.om"
 for name in hsaco exec rope; do
     input=$src/$name.om
@@ -222,5 +214,13 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 [ ! -e "$out/wrong-pin-must-not-exist" ]
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
+# Execute Markdown shell blocks verbatim with the caller's documented python3.
+# Weights are an explicit outside oracle dependency, never silently substituted.
+if [ -z "${AMD_WEIGHTS:-}" ] || [ ! -d "$AMD_WEIGHTS" ]; then
+    echo 'NOT_RUN documented commands require AMD_WEIGHTS checkpoint directory'
+    exit 77
+fi
+OMEGA_OMC="$omc" AMD_DOC_OUT="$out/documented" python3 "$root/tests/amd-exec/documented.py"
 sha256sum "$out/hsaco.1" "$out/exec.1" "$out/"*.1.hsaco
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out"
 python3 -I "$root/tests/amd-exec/sgemm.py" summary "$kernels"

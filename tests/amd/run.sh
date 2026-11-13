@@ -32,6 +32,8 @@ mkdir -p "$out" || exit 74
 # Canonicalize only after mkdir, so recursive wrong-pin control can prove it created no output dir.
 out=$(CDPATH= cd -- "$out" && pwd) || exit 74
 src=$root/backend/amd/gfx942
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out" || exit 1
+python3 -I "$root/tests/amd/receipt-test.py" || exit 1
 printf 'PIN omc %s\nOutputs: AMD_OUT (or the fresh temporary directory)\n' "$omc_pin"
 for tool in llvm-mc-18 llvm-objdump-18 llvm-readelf-18 llvm-objcopy-18; do
   "$tool" --version > "$out/$tool.version" 2>&1 || { echo "FAIL cannot run $tool"; exit 1; }
@@ -117,49 +119,16 @@ if grep -q 'NT_AMDGPU_METADATA' "$out/omega.readelf.txt" && grep -q 'amdhsa.targ
  && grep -q 'Flags: *0x54C, gfx942' "$out/omega.readelf.txt" && ! grep -q 'warning:\|error:' "$out/omega.readelf.txt"; then
   ok 'llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd'
 else bad 'llvm-readelf metadata/header/symbol check'; fi
-# MessagePack encoders at every width boundary, both sides, and the uint64 maximum (the vadd metadata only uses small values, so the object
-# comparisons above cannot see a width defect). The producer's own mpuint/mpstr are linked under a test
-# main; expected bytes are the msgpack spec formats written here by hand, not producer output.
+# Generate the probe and expected bytes from MessagePack width thresholds.
+python3 -I "$root/tests/amd/boundaries.py" "$out" || exit 1
+python3 -I "$root/tests/amd/loop-sites.py" test "$root" > "$out/loop-sites.log" || exit 1
+cat "$out/loop-sites.log"
 mptest() {
   sed '/^fn main to int/,$d' "$1" > "$out/$2.om" || exit 74
-  cat >> "$out/$2.om" <<'MPMAIN'
-fn main to int
-mpuint 0
-mpuint 127
-mpuint 128
-mpuint 255
-mpuint 256
-mpuint 65535
-mpuint 65536
-mpuint 4294967295
-mpuint 4294967296
-mpuint 18446744073709551615
-a = new uchar 31 65
-mpstr a
-b = new uchar 32 66
-mpstr b
-c = new uchar 255 67
-mpstr c
-d = new uchar 256 68
-mpstr d
-f = new uchar 65535 70
-mpstr f
-e = new uchar 65536 69
-mpstr e
-flush
-ret 0
-end
-MPMAIN
+  cat "$out/msgpack-main.om" >> "$out/$2.om" || exit 74
   timeout 120 "$omc" < "$out/$2.om" > "$out/$2" 2> "$out/$2.compile.err" && chmod 700 "$out/$2" \
     && timeout 30 "$out/$2" > "$out/$2.bytes" 2> "$out/$2.err"
 }
-{ printf '\000\177\314\200\314\377\315\001\000\315\377\377\316\000\001\000\000\316\377\377\377\377\317\000\000\000\001\000\000\000\000\317\377\377\377\377\377\377\377\377'
-  printf '\277'; head -c 31 /dev/zero | tr '\000' A
-  printf '\331\040'; head -c 32 /dev/zero | tr '\000' B
-  printf '\331\377'; head -c 255 /dev/zero | tr '\000' C
-  printf '\332\001\000'; head -c 256 /dev/zero | tr '\000' D
-  printf '\332\377\377'; head -c 65535 /dev/zero | tr '\000' F
-  printf '\333\000\001\000\000'; head -c 65536 /dev/zero | tr '\000' E; } > "$out/msgpack.expected" || exit 74
 if mptest "$src/hsaco.om" msgpack && cmp -s "$out/msgpack.bytes" "$out/msgpack.expected"; then
   ok 'MessagePack uint and str encodings at every width boundary equal the spec bytes'
 else bad 'MessagePack width encodings'; fi
@@ -437,6 +406,7 @@ echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary 
 echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'
 if [ "$fail" -ne 0 ]; then echo "AMD-GFX942-HOST FAIL pass=$pass fail=$fail hardware=NOT_RUN"; exit 1; fi
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out" || exit 1
 kernels=
 for table in "$src/"*.isa; do
   name=${table##*/}

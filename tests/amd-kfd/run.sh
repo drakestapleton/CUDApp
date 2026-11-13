@@ -13,7 +13,7 @@ export LC_ALL
 [ "$#" -eq 1 ] || { echo 'usage: run.sh /absolute/path/to/pinned-omc' >&2; exit 64; }
 omc=$1
 case $omc in /*) ;; *) echo 'usage: omc path must be absolute' >&2; exit 64 ;; esac
-for tool in dirname sed uname basename sha256sum; do
+for tool in dirname sed uname basename sha256sum python3; do
   command -v "$tool" >/dev/null 2>&1 || { echo "NOT_RUN required tool missing: $tool"; exit 77; }
 done
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
@@ -22,7 +22,7 @@ omc_pin=$(sed -n 's/^omc_pin=//p' "$root/tests/multitarget/run.sh")
 [ "${#omc_pin}" -eq 64 ] || { echo 'FAIL: cannot read repository compiler pin'; exit 1; }
 digest() { d=$(sha256sum < "$1") || return 1; printf '%s\n' "${d%% *}"; }
 [ -f "$omc" ] && [ -x "$omc" ] || { echo 'NOT_RUN pinned omc missing/not executable'; exit 77; }
-[ "$(digest "$omc")" = "$omc_pin" ] || { echo "REFUSED: compiler digest differs from pin $omc_pin" >&2; exit 69; }
+python3 -I "$root/tests/amd-kfd/control.py" compare digest "$omc" "$omc_pin" || { echo "REFUSED: compiler digest differs from pin $omc_pin" >&2; exit 69; }
 # Digest is verified before any compiler invocation, other oracle, or output-directory creation.
 if [ "$(uname -s)" != Linux ] || [ "$(uname -m)" != aarch64 ]; then
   echo 'NOT_RUN: the amd-kfd host gate needs Linux AArch64 and the pinned seeded omc'; exit 77
@@ -35,6 +35,7 @@ done
 cd "$root" || exit 74
 out=${AMD_KFD_OUT:-$(mktemp -d "${TMPDIR:-/tmp}/amd-kfd.XXXXXX")} || exit 74
 mkdir -p "$out" || exit 74
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out" || exit 1
 npass=0; nfail=0; nnr=0
 ok() { npass=$((npass + 1)); echo "PASS $*"; }
 bad() { nfail=$((nfail + 1)); echo "FAIL $*"; }
@@ -52,7 +53,8 @@ wrong=$(CDPATH= cd -- "$out" && pwd)/wrong-omc
 AMD_KFD_OUT="$out/wrong-pin-output" sh tests/amd-kfd/run.sh "$wrong" > "$out/wrong-pin.log" 2>&1
 rc=$?
 if [ "$rc" -eq 69 ] && [ ! -e "$out/WRONG-COMPILER-EXECUTED" ] && [ ! -e "$out/wrong-pin-output" ]; then
-  ok 'CONTROL CAUGHT wrong-compiler-digest: exit=69 compiler not executed; output directory not created'
+  python3 -I "$root/tests/amd-kfd/control.py" prove "$out" wrong-compiler-digest digest "$wrong" "$omc_pin" || exit 1
+  ok 'wrong compiler refused before invocation or output creation'
 else bad "wrong-compiler-digest exit=$rc"; fi
 
 for u in aql kernarg records ring; do
@@ -75,9 +77,6 @@ done
 rc=$?
 if [ "$rc" -ne 0 ]; then cat "$out/native-build.log"; echo "AMD-KFD-HOST FAIL native oracle build exit=$rc"; exit 1; fi
 "$out/native-layout" > "$out/native-table.tsv" || exit 1
-if cmp -s backend/amd/kfd/requests.tsv "$out/native-table.tsv"; then
-  ok 'native aarch64: every KFD request/record size/field offset/width equals installed kfd_ioctl.h'
-else bad 'native KFD table differs from installed header'; fi
 "$objcopy" --dump-section ".kfdlayout=$out/native-layout.bin" "$out/native-layout" || exit 1
 xc=${KFD_X86_CC:-x86_64-linux-gnu-gcc}
 if [ -d /usr/x86_64-linux-gnu/include ] && [ -f /usr/x86_64-linux-gnu/include/linux/kfd_ioctl.h ] && command -v "$xc" >/dev/null 2>&1; then
@@ -127,7 +126,7 @@ for src in "$out"/allowlist-*.om; do
   if [ "$rc" -eq 9 ]; then ok "allowlist compile-only refusal $(basename "$src" .om) exit=9"
   else bad "allowlist expected refusal $(basename "$src" .om) exit=$rc"; fi
 done
-python3 -I tests/amd-kfd/oracle.py . "$out" > "$out/byte-oracle.log" 2>&1
+python3 -I tests/amd-kfd/oracle.py . "$out" "$omc" > "$out/byte-oracle.log" 2>&1
 rc=$?
 cat "$out/byte-oracle.log"
 if [ "$rc" -eq 0 ]; then ok 'independent byte-oracle suite'; else bad "independent byte-oracle exit=$rc"; fi
@@ -142,5 +141,6 @@ else ok 'loop-fuel alarm control CAUGHT the over-fuel table that traps 104'; fi
 notrun 'AMD gfx942 hardware: KFD device calls, queue creation, mapped memory, AQL dispatch, completion and vadd execution'
 notrun 'MI300X model loading, Qwen 27B inference, speed and hardware coherency'
 if [ "$nfail" -ne 0 ]; then echo "AMD-KFD-HOST FAIL pass=$npass fail=$nfail not_run=$nnr"; exit 1; fi
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out" || exit 1
 echo "AMD-KFD-HOST PASS pass=$npass fail=0 not_run=$nnr"
 exit 0

@@ -20,18 +20,17 @@ zero without reading inputs; an overdispatched row performs no buffer access.
 
 ## Reproduce
 
-The acceptance harness requires an externally held free queen pool lock and
-`nice`. It snapshots the producer, kernel, executor, and oracle inputs into a
-new private output directory before compiling. Never point `--out` at an
-existing run. Example (replace paths with the current assigned pin and an
-unused output path):
+Run from the repository root under an externally held free queen CPU-pool lock,
+with `nice` and CPU affinity. Set `OMEGA_OMC` to the absolute pinned compiler,
+`AMD_WEIGHTS` to the local checkpoint directory with its manifest, and
+`AMD_DOC_OUT` to a new private output parent. The harness snapshots its inputs.
+Use `python3` on the caller's PATH; missing dependencies are NOT_RUN.
 
 ```sh
-flock -n "$HOME/handoffs/hive/queen/pool-0.lock" nice -n 10 \
-  python3 tests/amd-exec/fp8block.py \
-  --omc "$HOME/work/hive/amdserve/AmdGfx942/pin/omc" \
-  --weights "$HOME/workspace/l182-final/aien-demo/weights/qwen3.8-27b-fp8" \
-  --out "$HOME/handoffs/hive/amdserve/evidence/fp8block/new-run"
+python3 tests/amd-exec/fp8block.py \
+  --omc "$OMEGA_OMC" \
+  --weights "$AMD_WEIGHTS" \
+  --out "$AMD_DOC_OUT/fp8block"
 ```
 
 The harness refuses an unpinned compiler before making an output directory.
@@ -66,7 +65,7 @@ After the source and acceptance evidence have been committed, generate the
 bundle from that exact evidence; do not maintain copied ABI lists by hand:
 
 ```sh
-python3 tests/amd-exec/fp8block_bundle.py RUN_DIRECTORY NEW_BUNDLE_DIRECTORY
+python3 tests/amd-exec/fp8block_bundle.py "$AMD_DOC_OUT/fp8block" "$AMD_DOC_OUT/fp8block-bundle"
 ```
 
 This derives `list.json`, `list.md`, and `SHA256SUMS` from the tested table and

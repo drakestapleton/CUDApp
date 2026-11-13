@@ -10,10 +10,10 @@ The change deliberately trades inactive lanes and repeated query/key reads for m
 
 ## Host acceptance
 
-Run under a free queen CPU-pool lock with `nice`. Use an isolated, new output directory and the pinned branch compiler:
+Run from the repository root under an externally held free queen CPU-pool lock with `nice` and CPU affinity. Set `OMEGA_OMC` to the absolute pinned compiler path and `AMD_DOC_OUT` to a new private output parent. The documented interpreter is `python3` on the caller's PATH; it must provide NumPy. Missing dependencies are NOT_RUN, never a pass using a substituted interpreter.
 
-```
-python tests/amd-exec/gdnstate_w.py --omc /path/to/pinned/omc --out /new/private/output
+```sh
+python3 tests/amd-exec/gdnstate_w.py --omc "$OMEGA_OMC" --out "$AMD_DOC_OUT/gdnstate_w"
 ```
 
 NumPy is an outside verification dependency. The instrument snapshots its inputs before compiling. It checks deterministic seeded producer/executor compilation and object production, then compares LLVM instruction bytes, metadata and descriptor fields.

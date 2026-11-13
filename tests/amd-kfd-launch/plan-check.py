@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # External CPU oracle for the native Omega plan executor.
-import json,os,struct,subprocess,sys,tempfile,shutil
+import json,os,struct,subprocess,sys,tempfile,shutil,hashlib,datetime
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 gate=Path(sys.argv[1]).resolve()
@@ -9,7 +9,9 @@ cases=[]
 def run(name,args,want):
  p=subprocess.run(list(map(str,args)),capture_output=True,timeout=90)
  assert p.returncode==want,(name,p.returncode,want,p.stdout[-3000:],p.stderr[-3000:])
- cases.append({'case':name,'exit':p.returncode,'expected':want})
+ log=gate/('plan-row-'+str(len(cases)))
+ log.with_suffix('.stdout').write_bytes(p.stdout);log.with_suffix('.stderr').write_bytes(p.stderr)
+ cases.append({'case':name,'command':list(map(str,args)),'exit':p.returncode,'expected':want,'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'stdout_path':str(log.with_suffix('.stdout')),'stderr_path':str(log.with_suffix('.stderr')),'stdout_sha256':hashlib.sha256(p.stdout).hexdigest(),'stderr_sha256':hashlib.sha256(p.stderr).hexdigest()})
  return p
 with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  d=Path(td); nodes=d/'nodes'; node=nodes/'2';node.mkdir(parents=True)
@@ -34,12 +36,17 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  argv=[pth,gate/'vadd.hsaco',gate/'vadd.hsaco',weight]
  for arch,pre in [('a64',[]),('x86',[qemu])]:
   prefix=[*pre,gate/('launch-'+arch),'plan']
-  command=[*prefix,*argv]
+  def planargv(path):return [*prefix,path,*argv[1:]]
+  command=planargv(pth)
   p=run(arch+' valid preflight absent KFD',command,77)
   assert b'OMEGA device=absent' in p.stdout
   for value in ('-1','not-a-number','18446744073709551616'):
    p=run(arch+' refuses malformed caller deadline '+value,[*command,value],2)
    assert b'OMEGA step open_kfd' not in p.stdout
+  p=run(arch+' positive twin argc',planargv(pth),77)
+  assert b'OMEGA step open_kfd' in p.stdout
+  p=run(arch+' refuses argc',planargv(pth)[:-1],64)
+  assert p.stdout==b'OMEGA refuse plan field=argc\n'
   mutations={
    'bad-magic':(0,b'BADPLAN!'), 'zero-code':(8,struct.pack('<Q',0)),
    'count-overflow':(24,struct.pack('<Q',2**63)), 'zero-prompt':(40,bytes(8)),
@@ -63,15 +70,21 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
   too_large=bytearray(plan)
   for off in (96,144):struct.pack_into('<Q',too_large,off,2**63-4096)
   overflow=d/'arena-overflow.plan';overflow.write_bytes(too_large)
-  p=run(arch+' refuses arena sum overflow',[*prefix,overflow,*argv[1:]],64)
-  assert b'OMEGA step open_kfd' not in p.stdout
+  p=run(arch+' positive twin arena sum overflow',planargv(pth),77)
+  assert b'OMEGA step open_kfd' in p.stdout
+  p=run(arch+' refuses arena sum overflow',planargv(overflow),64)
+  assert p.stdout==b'OMEGA refuse plan field=add-overflow\n'
+  reasons={'bad-magic': 'magic', 'zero-code': 'code-count', 'count-overflow': 'multiply-overflow', 'zero-prompt': 'count', 'bad-token': 'token-index', 'bad-name': 'span-offset', 'bad-kind': 'buffer-kind', 'bad-flags': 'buffer-flags', 'bad-file-index': 'file-index', 'bad-file-range': 'span-offset', 'odd-widen': 'widen-size', 'token-not-GTT': 'token-buffer', 'prompt-padding': 'padding', 'bad-code-index': 'code-index', 'bad-block': 'workgroup', 'bad-kernarg-size': 'kernarg-size', 'bad-reloc-alignment': 'relocation-alignment', 'duplicate-reloc': 'duplicate-relocation', 'bad-buffer-offset': 'span-size', 'nonzero-pointer': 'relocation-pointer', 'dispatch-padding': 'padding', 'pool-overlap': 'pool-layout'}
   for name,(off,value) in mutations.items():
    bad=d/(name+'.plan');bad.write_bytes(plan[:off]+value+plan[off+len(value):])
-   p=run(arch+' refuses '+name,[*prefix,bad,*argv[1:]],64)
-   assert b'OMEGA step open_kfd' not in p.stdout,name
+   p=run(arch+' positive twin '+name,planargv(pth),77)
+   assert b'OMEGA step open_kfd' in p.stdout,name
+   p=run(arch+' refuses '+name,planargv(bad),64)
+   assert p.stdout==('OMEGA refuse plan field='+reasons[name]+'\n').encode(),(name,p.stdout)
  run('compile plan syscall oracle',['cc','-Wall','-Wextra','-Werror',root/'tests/amd-kfd-launch/trace.c','-o',gate/'trace'],0)
  p=run('native plan execution and ring wrap',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],0)
  assert b'packets=60 freed=all' in p.stderr,p.stderr[-2000:]
+ assert b'OMEGA alarm slow_dispatch' not in p.stdout
  assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout,p.stdout[-2000:]
  # An accepted descriptor with nonzero LDS exercises plantemplate, not a handcrafted packet.
  ldsargv=[pth,gate/'vadd-lds.hsaco',gate/'vadd-lds.hsaco',weight]
@@ -97,9 +110,11 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  assert b'allocations=10 packets=60 freed=all' in p.stderr
  assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout
  p=run('unlimited default permits slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],0)
- assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
+ assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==3,p.stdout
  p=run('explicit zero timeout permits slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'0'],0)
- assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
+ assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==3,p.stdout
+ p=run('CONTROL plan missing re-arm detected',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'plan-no-alarm-rearm','plan',*argv],0)
+ assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==1,p.stdout
  run('caller deadline refuses slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1)
  p=run('missing completion refuses plan',['env','KFD_TEST_PLAN=1','KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1)
  assert b'child_exit=75' in p.stderr and b'OMEGA_PLAN complete' not in p.stdout

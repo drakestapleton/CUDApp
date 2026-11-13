@@ -69,6 +69,7 @@ static int queued,packets;
 static int planmode;
 static size_t ring_index=5,allocation_count=10;
 static unsigned clocks;
+static time_t elapsed_seconds;
 static unsigned expected_gpu=1,expected_minor=128;
 static int denied;
 static int topology_fd=-1;
@@ -317,9 +318,10 @@ int main(int argc,char **argv) {
                     fprintf(stderr,"TEST_SIM packet_kernel_object=%llu\n",(unsigned long long)word(queue.ring_base_address+32));
                     fprintf(stderr,"TEST_SIM packet_kernarg_address=%llu\n",(unsigned long long)word(queue.ring_base_address+40));
                 }
+                if(getenv("KFD_TEST_EXPIRE") && word(queue.write_pointer_address)>(uint64_t)packets) elapsed_seconds+=11;
                 if(!getenv("KFD_TEST_NO_COMPLETE")) complete_packets();
                 if(getenv("KFD_TEST_EXPIRE")) {
-                    struct timespec now; rd(a[1],&now,sizeof now); now.tv_sec+=11; wr(a[1],&now,sizeof now);
+                    struct timespec now; rd(a[1],&now,sizeof now); now.tv_sec+=elapsed_seconds; wr(a[1],&now,sizeof now);
                 }
             }
         }

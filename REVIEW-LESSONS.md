@@ -41,3 +41,29 @@ during a wait, once per dispatch, without preventing a slow correct operation.
 The gate exercises default/explicit-zero slow completion, explicit timeout
 refusal and malformed timeout inputs; its external watchdog is unchanged.
 Raw timing summaries are recomputed from step records before receipt acceptance.
+
+## RCCA launcher round 2: independent controls and observable refusals
+
+The packet fix introduced an ABI reversal and its tests copied that belief.
+Both packet writers now run through the independently gated AQL encoder with
+private=20 and group=4096 as well as private=0. The batch publication test calls
+plantemplate itself. Real ELF admission still refuses nonzero private segments;
+that refusal has an explicit gate row. Do not infer scratch-memory support from
+the synthetic ABI unit.
+
+The a64 plan negative table once rejected its own valid twin due to a duplicated
+argument. Every refusal now shares the argv builder with a freshly run positive
+twin reaching open_kfd, and asserts its specific machine-readable parser reason.
+The row receipt retains commands, timestamps, raw logs and digests. Removing a
+parser check must fail its reason assertion, even if a later check also exits64.
+
+A presence-only alarm test missed false alarms and absent re-arming. Fast native
+generic and plan simulations now assert no alarm. Repeated slow generic dispatches
+and three plan steps assert one alarm per dispatch. Threshold-zero and missing
+re-arm mutations are explicitly detected. The simulated clock advances at each
+published batch and stays monotonic across start, wait and completion reads.
+
+Producer-source references are vendored unmodified with their own licenses,
+URLs and SHA256SUMS under tests/amd-kfd-launch/reference. The gate checks their
+bytes and the cited mapping lines offline. External field derivations require
+producer source, not an inference from field names.

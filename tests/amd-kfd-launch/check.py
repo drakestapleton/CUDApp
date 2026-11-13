@@ -37,6 +37,17 @@ def run(label,args,want=0,data=None):
     if p.returncode!=want:
         print(p.stdout.decode(errors='replace')); print(row['stderr']); raise SystemExit(1)
     return p
+reference=root/'tests/amd-kfd-launch/reference'
+for line in (reference/'SHA256SUMS').read_text().splitlines():
+    digest,name=line.split()
+    assert hashlib.sha256((reference/name).read_bytes()).hexdigest()==digest,name
+source=(reference/'topology-rocm-6.2.0.c').read_text().splitlines()
+assert 'array_count' in source[1146] and 'simd_arrays_per_engine' in source[1148]
+assert 'NumArrays' in source[1203] and 'NumShaderBanks' in source[1204]
+source=(reference/'topology-rocm-7.2.2.c').read_text().splitlines()
+assert 'array_count' in source[1170] and 'simd_arrays_per_engine' in source[1172]
+assert 'NumArrays' in source[1233] and 'NumShaderBanks' in source[1234]
+print('PRIMARY SOURCE PASS producer mapping and pinned files',flush=True)
 parts=['common','elf','device','dispatch','plan','main']
 body=''.join((src/(x+'.om')).read_text() for x in parts)+(root/'backend/amd/kfd/cli.om').read_text()
 def compile(label,text,target='a64'):
@@ -107,6 +118,7 @@ vobj,vdata,kd,ka=objects['vadd']
 calcs={'ELF_magic':int.from_bytes(b'\x7fELF','little'),'ELF_class_data_version_osabi':int.from_bytes(bytes([2,1,1,64]),'little'),'ELF_type_machine':int.from_bytes(struct.pack('<HH',3,224),'little'),'manifest_magic':int.from_bytes(b'OMKFD001','little'),'f32_one':struct.pack('<f',1.0).hex(),'f32_one_plus_one':struct.pack('<f',1.0+1.0).hex()}
 (out/'calculation-oracles.json').write_text(json.dumps(calcs,indent=2)+'\n')
 mutations={ 'oversized':vdata[:63], 'wrong-machine':vdata[:18]+b'\0\0'+vdata[20:], 'wave32':vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|1024)+vdata[kd+58:], 'negative-entry':vdata[:kd+16]+struct.pack('<q',-1)+vdata[kd+24:] }
+mutations['private-segment-unsupported']=vdata[:kd+4]+struct.pack('<I',20)+vdata[kd+8:]
 mutations['queue-pointer-required']=vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|4)+vdata[kd+58:]
 for label,data in mutations.items():
     pth=out/(label+'.hsaco'); pth.write_bytes(data)
@@ -163,8 +175,25 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     ldsobj=out/'vadd-lds.hsaco';ldsobj.write_bytes(lds)
     p=run('accepted ELF with nonzero LDS uses HSA packet group field',[out/'trace',tmp,bins['a64'],'vadd',ldsobj,'vadd','10000000000'])
     p=run('generic default alarms without refusing a slow completion',['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'])
+    assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==1
+    twice=body.replace('dispatch\nstepbegin streadback','dispatch\nr = checked mapset lh 7 8 8 1\ndispatch\nstepbegin streadback')
+    twice=twice.replace('for i ulong get launch 2 bound 9223372036854775807\nwhile', 'for j ulong get launch 2 bound 9223372036854775807\ni = add j mapget lh 5 56 8\nwhile')
+    assert twice!=body
+    u=compile('generic-two-dispatches',twice)
+    p=run('generic slow alarm re-arms for second dispatch',['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,u,'vadd',vobj,'vadd'])
+    assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==2,p.stdout
+    mutant=twice.replace('put dispatchalarm 0 0\n','')
+    assert mutant!=twice
+    u=compile('generic-no-alarm-rearm',mutant)
+    p=run('CONTROL generic missing re-arm detected',['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,u,'vadd',vobj,'vadd'])
+    assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==1
+    mutant=body.replace('gt elapsed 10000000000','gt elapsed 0')
+    assert mutant!=body
+    u=compile('alarm-threshold-zero',mutant)
+    p=run('CONTROL fast dispatch false alarm detected',[out/'trace',tmp,u,'vadd',vobj,'vadd'])
     assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
     p=run('native simulated orchestration',command)
+    assert b'OMEGA alarm slow_dispatch' not in p.stdout
     diagnostics(p,1,0,0x40000000)
     for name,variables,read,signal,output,child_exit in [
         ('unconsumed timeout',['KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1'],0,1,0x7fc00000,75),
@@ -289,14 +318,16 @@ unit+='''fn main to int
 # Reuse the separately gated HSA packet encoder, not a second copy of launcher offsets.
 aql_bytes=run('compile independent AQL encoder',[omc],data=(root/'backend/amd/kfd/aql.om').read_bytes()+(root/'backend/amd/kfd/cli.om').read_bytes()).stdout
 aql=out/'aql-oracle';aql.write_bytes(aql_bytes);aql.chmod(0o700)
-def packet_agrees_with_aql(p):
+def packet_agrees_with_aql(p,private=0):
     assert len(p.stdout)==112
     ring,code,args,sig,wp,bell=struct.unpack('<6Q',p.stdout[:48])
     kobj,karg=code+64,args
-    expected=run('independent AQL nonzero LDS encoding',[aql,2,64,1,1,256,1,1,0,4096,kobj,karg,sig,1,2,2]).stdout
+    expected=run('independent AQL nonzero LDS encoding',[aql,2,64,1,1,256,1,1,private,4096,kobj,karg,sig,1,2,2]).stdout
     assert p.stdout[48:]==expected,(p.stdout[48:].hex(),expected.hex())
 u=compile('publication-unit',unit)
 packet_agrees_with_aql(run('native publication order',[out/'publication',u]))
+u=compile('publication-distinct-segments',unit.replace('put el 9 4096','put el 9 4096\nput el 10 20'))
+packet_agrees_with_aql(run('generic ABI private20 group4096',['env','EXPECTED_PRIVATE=20',out/'publication',u]),20)
 mutant=unit.replace('hput 24 4 get el 10\nhput 28 4 get el 9','hput 24 4 get el 9\nhput 28 4 get el 10')
 assert mutant!=unit
 u=compile('publication-swapped-segments',mutant)
@@ -326,23 +357,26 @@ main=unit[unit.index('fn main to int'):]
 setup="""put launch 10 16
 put ps 6 1
 put ps 20 ulong checked mapnew -1 0 4096 3 34
-zerohdr
-hput 0 4 1
-hput 4 2 64
-hput 6 2 1
-hput 8 2 1
-hput 12 4 256
-hput 16 4 1
-hput 20 4 1
-hput 28 4 4096
-hput 32 8 add mapaddr lh 0 64
-hput 40 8 mapaddr lh 1
-hput 56 8 mapaddr lh 7
-r = checked mapwrite long get ps 20 0 hdr 0 64
+put ps 0 ulong checked mapnew -1 0 4096 3 34
+put ps 2 4096
+r = checked mapset long get ps 0 4 4 4
+r = checked mapset long get ps 0 8 4 1
+put ps 17 ulong checked mapnew -1 0 4096 3 34
+r = checked mapset long get ps 17 48 8 64
+r = checked mapset long get ps 17 72 8 4096
+put ps 19 ulong checked mapnew -1 0 4096 3 34
+r = checked mapset t 192 8 ulong lh 0
+plantemplate 0
 planpublish 0 0"""
-planunit+=main.replace('packet 0',setup)
+planunit+=main.replace('mapnew -1 0 192 3 34','mapnew -1 0 4096 3 34').replace('packet 0',setup)
 u=compile('plan-publication-unit',planunit)
-packet_agrees_with_aql(run('native batch publication order',[out/'publication',u]))
+packet_agrees_with_aql(run('native batch publication order through plantemplate',[out/'publication',u]))
+u=compile('plan-publication-distinct-segments',planunit.replace('r = checked mapset long get ps 17 72 8 4096','r = checked mapset long get ps 17 72 8 4096\nr = checked mapset long get ps 17 80 8 20'))
+packet_agrees_with_aql(run('plantemplate ABI private20 group4096',['env','EXPECTED_PRIVATE=20',out/'publication',u]),20)
+mutant=planunit.replace('hput 24 4 cm code 80\nhput 28 4 cm code 72','hput 24 4 cm code 72\nhput 28 4 cm code 80')
+assert mutant!=planunit
+u=compile('plan-publication-swapped-segments',mutant)
+run('CONTROL plantemplate-only swapped segments',[out/'publication',u],1)
 mutant=planunit.replace('plancopy sent\ncpufence\n','').replace('r = checked mapset lh 5 56 8 add sent get ps 6','plancopy sent\nr = checked mapset lh 5 56 8 add sent get ps 6')
 assert mutant!=planunit
 u=compile('plan-publication-early-header',mutant)
@@ -350,6 +384,9 @@ run('CONTROL batch early valid header',[out/'publication',u],1)
 mutant=body.replace('hput 24 4 cm code 80\nhput 28 4 cm code 72','hput 24 4 cm code 72\nhput 28 4 cm code 80')
 assert mutant!=body
 compile('plan-swapped-segments',mutant)
+mutant=body.replace('put dispatchalarm 0 0\n','')
+assert mutant!=body
+compile('plan-no-alarm-rearm',mutant)
 run('native plan CPU contracts',[sys.executable,'-I',root/'tests/amd-kfd-launch/plan-check.py',out])
 for receipt in sorted((root/'evidence').glob('amd-qwen38-native-*')):
     state=receipt/'native/state.json'

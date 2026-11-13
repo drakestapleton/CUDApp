@@ -55,7 +55,7 @@ int main(int argc,char **argv) {
                 CHECK(wg[0]==64 && wg[1]==1 && wg[2]==1);
                 CHECK(grid[0]==256 && grid[1]==1 && grid[2]==1);
                 /* HSA dispatch private at 24, group at 28; descriptor order is the reverse. */
-                CHECK(u64(a[0]+24)==(UINT64_C(4096)<<32) && u64(a[0]+32)==a[1]+64);
+                CHECK(u64(a[0]+24)==((UINT64_C(4096)<<32) | (getenv("EXPECTED_PRIVATE")?strtoul(getenv("EXPECTED_PRIVATE"),NULL,10):0)) && u64(a[0]+32)==a[1]+64);
                 CHECK(u64(a[0]+40)==a[2] && !u64(a[0]+48) && u64(a[0]+56)==a[3]);
                 if(!published) { unsigned char packet[64]; readmem(a[0],packet,64); CHECK(write(1,packet,64)==64); }
                 published=1;

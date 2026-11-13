@@ -1568,3 +1568,14 @@ lines 1171..1174 and 1234..1235 of the downloaded file, SHA-256
 97269f0baf231d490032fc47ea8fe9e1101232477e10f74ff15e616d8e54ad86.
 Line numbers here refer to the downloaded source, not the web reader's extracted
 line numbering.
+
+## Launcher review-round-2 corrective checks
+
+The independent RCCA is retained with the release receipt. Corrective actions
+live in the launcher gate and REVIEW-LESSONS.md: the batch publication unit uses
+plantemplate, both packet writers compare private20/group4096 against aql.om,
+nonzero-private ELF is explicitly refused, alarm absence/re-arming have mutation
+controls, and every malformed-plan refusal has a fresh valid twin plus a specific
+reason line. Upstream topology/queue/kernel producer files are retained unchanged
+with their original licenses and SHA256SUMS in tests/amd-kfd-launch/reference;
+README.md records exact URLs and raw-file line ranges. The arithmetic is unchanged.

@@ -1,0 +1,254 @@
+[
+  {
+    "case": "compile launch-a64",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile launch-x86",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile object writer",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse truncated",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse truncated",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse wrong-machine",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse wrong-machine",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse wave32",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse wave32",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse negative-entry",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse negative-entry",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 missing descriptor",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 absent KFD",
+    "exit": 77,
+    "expected": 77,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse argument header",
+    "exit": 64,
+    "expected": 64,
+    "stderr": ""
+  },
+  {
+    "case": "x86 missing descriptor",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 absent KFD",
+    "exit": 77,
+    "expected": 77,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse argument header",
+    "exit": 64,
+    "expected": 64,
+    "stderr": ""
+  },
+  {
+    "case": "compile UAPI layout oracle",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "UAPI layout",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile trace instrument",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile publication instrument",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "native simulated orchestration",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=0 bytes=4096 va=f7e517e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=4096 bytes=4096 va=f7e517c00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=8192 bytes=4096 va=f7e517a00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=12288 bytes=4096 va=f7e517800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=16384 bytes=4096 va=f7e517600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=20480 bytes=4096 va=f7e517400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=24576 bytes=4096 va=f7e517200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=28672 bytes=4096 va=f7e517000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=32768 bytes=4902912 va=f7e516a00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=4935680 bytes=4096 va=f7e516800000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=4 offset=0 bytes=8192 va=0\nTEST_SIM ioctl request=0xc0084b03 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM child_exit=0 allocations=10 packets=1 queued=0\nTEST_SIM PASS allocations=10 packets=1 freed=all device=NOT_RUN\n"
+  },
+  {
+    "case": "native generic CLI ring wrap",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=0 bytes=4096 va=e0b478c00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4096 bytes=4096 va=e0b478a00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=8192 bytes=4096 va=e0b478800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=12288 bytes=4096 va=e0b478600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=16384 bytes=4096 va=e0b478400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=20480 bytes=4096 va=e0b478200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=24576 bytes=4096 va=e0b478000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=28672 bytes=4096 va=e0b477e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=32768 bytes=4902912 va=e0b477800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4935680 bytes=4096 va=e0b477600000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=5 offset=0 bytes=8192 va=0\nTEST_SIM ioctl request=0xc0084b03 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM child_exit=0 allocations=10 packets=200 queued=0\nTEST_SIM PASS allocations=10 packets=200 freed=all device=NOT_RUN\n"
+  },
+  {
+    "case": "CONTROL missing device completion",
+    "exit": 1,
+    "expected": 1,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=0 bytes=4096 va=e91d43a00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4096 bytes=4096 va=e91d43800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=8192 bytes=4096 va=e91d43600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=12288 bytes=4096 va=e91d43400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=16384 bytes=4096 va=e91d43200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=20480 bytes=4096 va=e91d43000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=24576 bytes=4096 va=e91d42e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=28672 bytes=4096 va=e91d42c00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=32768 bytes=4902912 va=e91d42600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4935680 bytes=4096 va=e91d42400000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=5 offset=0 bytes=8192 va=0\nTEST_SIM child_exit=75 allocations=10 packets=0 queued=1\nTEST_SIM FAIL WEXITSTATUS(st)==0 && count==10 && packets && !queued errno=0\n"
+  },
+  {
+    "case": "compile bad-gpu-record",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "CONTROL wrong GPU record",
+    "exit": 1,
+    "expected": 1,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM FAIL a.gpu_id==1 && a.va_addr && !(a.va_addr%2097152) && a.size && !(a.size%4096) errno=0\n"
+  },
+  {
+    "case": "compile publication-unit",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "native publication order",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "PUBLICATION PASS body-before-header-before-wptr-before-doorbell\n"
+  },
+  {
+    "case": "compile publication-early-header",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "CONTROL early valid header",
+    "exit": 1,
+    "expected": 1,
+    "stderr": "PUBLICATION FAIL wg[0]==64 && wg[1]==1 && wg[2]==1\n"
+  }
+]

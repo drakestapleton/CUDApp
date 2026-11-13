@@ -1,0 +1,45 @@
+{
+  "source_head": "be122c6f0afa641fb363b75e89c395e8fd166478",
+  "branch": "amdserve/kfd-launch",
+  "base": "b9e4a39be8e478f323d7dd5e91348fc652fdaa57",
+  "commands": [
+    {
+      "command": "env AMD_KFD_LAUNCH_OUT=build/amd-kfd-launch/final-1 python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/amdserve/OmegaKfd/omega-mv/seed/out/omc",
+      "exit": 0
+    },
+    {
+      "command": "python3 -I tests/amd-kfd-launch/bundle.py --gate build/amd-kfd-launch/final-1 --gemv-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/gemv2 --attention-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn --out /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch1",
+      "exit": 0
+    },
+    {
+      "command": "python3 -I tests/amd-kfd-launch/notebook-check.py /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch1 build/amd-kfd-launch/final-1",
+      "exit": 0
+    }
+  ],
+  "cpu_wrapper": "flock ~/handoffs/hive/queen/pool-4-5.lock nice -n 10 taskset -c 4,5",
+  "summary": {
+    "compiler": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b",
+    "checks": 42,
+    "failures": 0,
+    "qemu": "/usr/bin/qemu-x86_64",
+    "device": "NOT_RUN",
+    "orchestration": "native CPU syscall simulation only",
+    "publication": "native instruction-step observation only",
+    "objects": {
+      "fp8gemv": "b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b",
+      "fsum16": "15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478",
+      "sgemm": "466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70",
+      "vadd": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"
+    },
+    "binaries": {
+      "a64": "e96b82d42b3dd44f442c856d2f10736bfcba1df458f2dfb46fd22805c6e12ac5",
+      "x86": "1d906fe2f7f7eabcaba72cc9d7a7b7f51082a70eb504e09d6bd2920db7968c7a"
+    }
+  },
+  "notebook_checks": 30,
+  "qualification_log_sha256": "d59b7180b9ca9e07abf01e25e27f5b5e04b42117e172dedb9b9d72887ca5d043",
+  "cell_sha256": "3d203c721ac43a5fd6e949b59b9580a24ff375050db88a38e3e19b73979e4cce",
+  "device": "NOT_RUN",
+  "merging": "NOT_RUN",
+  "deployment": "NOT_RUN"
+}

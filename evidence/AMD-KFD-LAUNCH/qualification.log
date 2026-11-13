@@ -1,0 +1,62 @@
+COMMAND env AMD_KFD_LAUNCH_OUT=build/amd-kfd-launch/final-1 python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/amdserve/OmegaKfd/omega-mv/seed/out/omc
+PASS compile launch-a64 exit 0 expected 0
+PASS compile launch-x86 exit 0 expected 0
+CONTROL wrong compiler refused before execution/output
+PASS compile object writer exit 0 expected 0
+PASS build fp8gemv exit 0 expected 0
+PASS a64 inspect fp8gemv exit 0 expected 0
+PASS x86 inspect fp8gemv exit 0 expected 0
+PASS build fsum16 exit 0 expected 0
+PASS a64 inspect fsum16 exit 0 expected 0
+PASS x86 inspect fsum16 exit 0 expected 0
+PASS build sgemm exit 0 expected 0
+PASS a64 inspect sgemm exit 0 expected 0
+PASS x86 inspect sgemm exit 0 expected 0
+PASS build vadd exit 0 expected 0
+PASS a64 inspect vadd exit 0 expected 0
+PASS x86 inspect vadd exit 0 expected 0
+PASS a64 refuse truncated exit 65 expected 65
+PASS x86 refuse truncated exit 65 expected 65
+PASS a64 refuse wrong-machine exit 65 expected 65
+PASS x86 refuse wrong-machine exit 65 expected 65
+PASS a64 refuse wave32 exit 65 expected 65
+PASS x86 refuse wave32 exit 65 expected 65
+PASS a64 refuse negative-entry exit 65 expected 65
+PASS x86 refuse negative-entry exit 65 expected 65
+PASS a64 missing descriptor exit 65 expected 65
+PASS a64 absent KFD exit 77 expected 77
+PASS a64 refuse argument header exit 64 expected 64
+PASS x86 missing descriptor exit 65 expected 65
+PASS x86 absent KFD exit 77 expected 77
+PASS x86 refuse argument header exit 64 expected 64
+PASS compile UAPI layout oracle exit 0 expected 0
+PASS UAPI layout exit 0 expected 0
+PASS compile trace instrument exit 0 expected 0
+PASS compile publication instrument exit 0 expected 0
+PASS native simulated orchestration exit 0 expected 0
+PASS native generic CLI ring wrap exit 0 expected 0
+PASS CONTROL missing device completion exit 1 expected 1
+PASS compile bad-gpu-record exit 0 expected 0
+PASS CONTROL wrong GPU record exit 1 expected 1
+PASS compile publication-unit exit 0 expected 0
+PASS native publication order exit 0 expected 0
+PASS compile publication-early-header exit 0 expected 0
+PASS CONTROL early valid header exit 1 expected 1
+AMD-KFD-LAUNCH CPU PASS {"binaries": {"a64": "e96b82d42b3dd44f442c856d2f10736bfcba1df458f2dfb46fd22805c6e12ac5", "x86": "1d906fe2f7f7eabcaba72cc9d7a7b7f51082a70eb504e09d6bd2920db7968c7a"}, "checks": 42, "compiler": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b", "device": "NOT_RUN", "failures": 0, "objects": {"fp8gemv": "b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b", "fsum16": "15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478", "sgemm": "466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70", "vadd": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"}, "orchestration": "native CPU syscall simulation only", "publication": "native instruction-step observation only", "qemu": "/usr/bin/qemu-x86_64"}
+NOT_RUN every AMD device row: KFD queues, GPU mappings, completion, parity, timing, Qwen inference
+EXIT 0
+COMMAND python3 -I tests/amd-kfd-launch/bundle.py --gate build/amd-kfd-launch/final-1 --gemv-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/gemv2 --attention-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn --out /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch1
+{"assets": {"attn256_gate.hsaco": "b2c6ef4a50b69faf76a7bd823c7c1bdd9a40083e9e1d9e2cee19446da730d856", "attn256_merge.hsaco": "a721017369917d2b757095198877f16f9aa41a8955dbf4bf55d73e29f83b2ec3", "attn256_part.hsaco": "9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95", "attn256_prep.hsaco": "9bbc291825b1c70d2b18bbb333a36982d355ffdf36b5e7bdedf09c84fb448f8a", "bf16gemv2.hsaco": "4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb", "fp8gemv2.hsaco": "99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0", "gdnconv4.hsaco": "c169381577b1ce5f0155904b3975d68a57ae01de906f3d2f359e7cf74a8969fd", "mlpsilu.hsaco": "2e22681a1fe0aa9a69796eec1326d4ee7679bda9d7d9985ae52fd7edffc5a69a", "omega-launch": "1d906fe2f7f7eabcaba72cc9d7a7b7f51082a70eb504e09d6bd2920db7968c7a", "rmsnorm5120.hsaco": "f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f", "vadd.hsaco": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"}, "binary_sha256": "1d906fe2f7f7eabcaba72cc9d7a7b7f51082a70eb504e09d6bd2920db7968c7a", "cell_sha256": "3d203c721ac43a5fd6e949b59b9580a24ff375050db88a38e3e19b73979e4cce", "device": "NOT_RUN"}
+EXIT 0
+COMMAND python3 -I tests/amd-kfd-launch/notebook-check.py /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch1 build/amd-kfd-launch/final-1
+launch1 candidate; OMEGA=seeded direct KFD; AMD_LIBRARY=HIP same objects; no NVIDIA measurements
+pins {"compiler_head": "290ad5feb9fa34b47e3672f4921f16de7807fca1", "compiler_sha256": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b", "launcher_head": "be122c6f0afa641fb363b75e89c395e8fd166478", "launcher_source_sha256": {"backend/amd/kfd/launch/common.om": "9e4b3a71a10e72e421c893bf420ccdcf02cafbdb1b1af9c9584260052286a700", "backend/amd/kfd/launch/device.om": "6e1d3a2f4aff50b824b1c330cdf01b669590421c51abe7b0735185858b860117", "backend/amd/kfd/launch/dispatch.om": "54cb3902c766a4be167d35de439e81338bb0ad26d05f59c9c6c538e2be5c3c4c", "backend/amd/kfd/launch/elf.om": "63fb1712a34ff9bec4c9e1e75990afeb76d63a765f5ab547bf0a4d05210337c9", "backend/amd/kfd/launch/main.om": "017de92ff8e02e0fa778a217431f034e6d27e5ce1c2ca51c709ef7c0439d4b7e"}}
+assets {"attn256_gate.hsaco": "b2c6ef4a50b69faf76a7bd823c7c1bdd9a40083e9e1d9e2cee19446da730d856", "attn256_merge.hsaco": "a721017369917d2b757095198877f16f9aa41a8955dbf4bf55d73e29f83b2ec3", "attn256_part.hsaco": "9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95", "attn256_prep.hsaco": "9bbc291825b1c70d2b18bbb333a36982d355ffdf36b5e7bdedf09c84fb448f8a", "bf16gemv2.hsaco": "4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb", "fp8gemv2.hsaco": "99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0", "gdnconv4.hsaco": "c169381577b1ce5f0155904b3975d68a57ae01de906f3d2f359e7cf74a8969fd", "mlpsilu.hsaco": "2e22681a1fe0aa9a69796eec1326d4ee7679bda9d7d9985ae52fd7edffc5a69a", "omega-launch": "1d906fe2f7f7eabcaba72cc9d7a7b7f51082a70eb504e09d6bd2920db7968c7a", "rmsnorm5120.hsaco": "f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f", "vadd.hsaco": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"}
+host arch=aarch64 kernel=7.0.0-1019-nvidia libc=('glibc', '2.39') work=/tmp/omega-launch1-7sqthvd8
+OMEGA NOT_RUN target requires x86_64 Linux; AMD device rows NOT_RUN
+receipt /tmp/launch1-cpu-5tt6uw4f/amdserve-launch1.txt; inputs, outputs and exact invocation logs retained in /tmp/omega-launch1-7sqthvd8
+OMEGA CONTROL malformed ELF=65 argument-header=64 PASS
+OMEGA NOT_RUN /dev/kfd absent; errno=2 exit=77 checked
+FAIL asset unpack: asset digest omega-launch
+NOTEBOOK_CPU PASS 30 rows; all device rows NOT_RUN
+EXIT 0

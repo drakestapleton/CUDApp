@@ -1,0 +1,206 @@
+[
+  {
+    "case": "compile launch-a64",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile launch-x86",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile object writer",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "x86 inspect vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse truncated",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse truncated",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse wrong-machine",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse wrong-machine",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse wave32",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse wave32",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse negative-entry",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse negative-entry",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 missing descriptor",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "a64 absent KFD",
+    "exit": 77,
+    "expected": 77,
+    "stderr": ""
+  },
+  {
+    "case": "a64 refuse argument header",
+    "exit": 64,
+    "expected": 64,
+    "stderr": ""
+  },
+  {
+    "case": "x86 missing descriptor",
+    "exit": 65,
+    "expected": 65,
+    "stderr": ""
+  },
+  {
+    "case": "x86 absent KFD",
+    "exit": 77,
+    "expected": 77,
+    "stderr": ""
+  },
+  {
+    "case": "x86 refuse argument header",
+    "exit": 64,
+    "expected": 64,
+    "stderr": ""
+  },
+  {
+    "case": "compile UAPI layout oracle",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "UAPI layout",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile trace instrument",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile publication instrument",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "native simulated orchestration",
+    "exit": 1,
+    "expected": 0,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM FAIL WEXITSTATUS(st)==0 && count==10 && packets && !queued errno=0\n"
+  }
+]

@@ -1,0 +1,1014 @@
+om2
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Concatenate common, elf, device, dispatch, main, then existing cli.om under om2.
+note Fixed arrays below are Linux pathname or ABI records, not input-size limits.
+global pathbuf uchar 4096
+global chunk uchar 4096
+global hdr uchar 88
+global ids uchar 4
+global one uchar 1
+text newline "\n"
+text failed "OMEGA error="
+text kfdpath "/dev/kfd"
+fn checked r long to long
+if lt r 0
+emit failed
+if eq r -9223372036854775808
+exit 74
+end
+printnum ulong neg r
+emit newline
+exit 74
+end
+ret r
+end
+fn printnum v ulong to void
+b = new uchar 20 0
+p = ulong 20
+while gt v 9 bound 20
+p = sub p 1
+put b p uchar add rem v 10 48
+v = div v 10
+end
+p = sub p 1
+put b p uchar add v 48
+emit part b p sub 20 p
+end
+fn roundup n ulong a ulong to ulong
+if gt n sub 9223372036854775807 sub a 1
+exit 65
+end
+ret mul div add n sub a 1 a a
+end
+fn patharg i ulong to ulong
+n = argread i pathbuf 0 len pathbuf
+if lt n 1
+exit 64
+end
+ret ulong n
+end
+fn argfile i ulong flags int to int
+n = patharg i
+ret int checked fopen pathbuf 0 n flags 384
+end
+fn filesize fd int to ulong
+n = checked fseek fd 0 2
+r = checked fseek fd 0 0
+ret ulong n
+end
+fn zerohdr to void
+for i ulong 88
+put hdr i 0
+end
+end
+fn hput off ulong width ulong v ulong to void
+for i ulong width
+put hdr add off i uchar and shr v mul i 8 255
+end
+end
+fn hget off ulong width ulong to ulong
+v = ulong 0
+for i ulong width
+v = or v shl ulong get hdr add off i mul i 8
+end
+ret v
+end
+fn fword fd int off ulong width ulong to ulong
+b = new uchar 8 0
+r = pread fd b 0 width long off
+if ne r long width
+exit 65
+end
+v = ulong 0
+for i ulong width
+v = or v shl ulong get b i mul i 8
+end
+ret v
+end
+fn byteat fd int off ulong to uchar
+r = pread fd one 0 1 long off
+if ne r 1
+exit 65
+end
+ret get one 0
+end
+fn filecopy fd int src ulong dst long off ulong n ulong to void
+p = ulong 0
+while lt p n bound 9223372036854775807
+k = sub n p
+if gt k len chunk
+k = len chunk
+end
+r = checked pread fd chunk 0 k long add src p
+if eq r 0
+exit 65
+end
+r = checked mapwrite dst add off p chunk 0 ulong r
+p = add p ulong r
+end
+end
+fn zeromap dst long off ulong n ulong to void
+for i ulong len chunk bound 4096
+put chunk i 0
+end
+p = ulong 0
+while lt p n bound 9223372036854775807
+k = sub n p
+if gt k len chunk
+k = len chunk
+end
+r = checked mapwrite dst add off p chunk 0 k
+p = add p k
+end
+end
+fn savefile fd int src long n ulong to void
+p = ulong 0
+while lt p n bound 9223372036854775807
+k = sub n p
+if gt k len chunk
+k = len chunk
+end
+r = checked mapread src p chunk 0 k
+q = ulong 0
+while lt q k bound 9223372036854775807
+r = checked write fd chunk q sub k q
+if eq r 0
+exit 74
+end
+q = add q ulong r
+end
+p = add p k
+end
+end
+fn span off ulong n ulong total ulong to void
+if gt off total
+exit 65
+end
+if gt n sub total off
+exit 65
+end
+end
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note ELF64 HSA v5 gfx942 images emitted by backend/amd/gfx942/hsaco.om.
+note el: fd,size,phoff,phnum,shoff,shnum,kdVA,imageBytes,kernarg,group,private,kdFile.
+global el ulong 12
+fn ew off ulong width ulong to ulong
+ret fword int get el 0 off width
+end
+fn ph i ulong to ulong
+ret add get el 2 mul i 56
+end
+fn sh i ulong to ulong
+ret add get el 4 mul i 64
+end
+fn vaoff va ulong n ulong to ulong
+for i ulong get el 3 bound 65535
+p = ph i
+if eq ew p 4 1
+base = ew add p 16 8
+if ge va base
+d = sub va base
+sz = ew add p 32 8
+if le d sz
+if le n sub sz d
+ret add ew add p 8 8 d
+end
+end
+end
+end
+end
+exit 65
+end
+fn symmatch off ulong size ulong namelen ulong to bool
+if lt size add namelen 4
+ret false
+end
+for i ulong namelen bound 4096
+if ne byteat int get el 0 add off i get pathbuf i
+ret false
+end
+end
+if ne byteat int get el 0 add off namelen 46
+ret false
+end
+if ne byteat int get el 0 add add off namelen 1 107
+ret false
+end
+if ne byteat int get el 0 add add off namelen 2 100
+ret false
+end
+ret eq byteat int get el 0 add add off namelen 3 0
+end
+fn acceptsym s ulong to void
+if or ne ew add s 4 1 17 ne ew add s 16 8 64
+exit 65
+end
+v = ew add s 8 8
+if ne get el 6 0
+if ne get el 6 v
+exit 65
+end
+end
+if ne rem v 64 0
+exit 65
+end
+put el 6 v
+end
+fn findsym sec ulong namelen ulong to void
+linkidx = ew add sec 40 4
+if ge linkidx get el 5
+exit 65
+end
+strsec = sh linkidx
+if ne ew add strsec 4 4 3
+exit 65
+end
+strbase = ew add strsec 24 8
+strsize = ew add strsec 32 8
+span strbase strsize get el 1
+base = ew add sec 24 8
+size = ew add sec 32 8
+span base size get el 1
+if or ne ew add sec 56 8 24 ne rem size 24 0
+exit 65
+end
+for i ulong div size 24 bound 9223372036854775807
+s = add base mul i 24
+noff = ew s 4
+if ge noff strsize
+exit 65
+end
+if symmatch add strbase noff sub strsize noff namelen
+acceptsym s
+end
+end
+end
+fn segment i ulong to void
+p = ph i
+if eq ew p 4 1
+base = ew add p 16 8
+sz = ew add p 32 8
+memsz = ew add p 40 8
+span ew add p 8 8 sz get el 1
+if gt sz memsz
+exit 65
+end
+span base memsz 9223372036854775807
+last = add base memsz
+if gt last get el 7
+put el 7 last
+end
+for j ulong i bound 65535
+q = ph j
+if eq ew q 4 1
+qb = ew add q 16 8
+qe = add qb ew add q 40 8
+if and lt base qe lt qb last
+exit 65
+end
+end
+end
+end
+end
+fn parseelf objarg ulong namearg ulong to void
+fd = argfile objarg 0
+put el 0 ulong fd
+put el 1 filesize fd
+span 0 64 get el 1
+if or ne ew 0 4 1179403647 ne ew 4 4 1073807618
+exit 65
+end
+if or ne ew 8 1 3 ne ew 16 4 14680067
+exit 65
+end
+if or ne ew 20 4 1 ne ew 52 2 64
+exit 65
+end
+if or ne ew 54 2 56 ne ew 58 2 64
+exit 65
+end
+note gfx942 machine selection; XNACK/SRAMECC any or enabled are accepted.
+if ne and ew 48 4 255 76
+exit 65
+end
+put el 2 ew 32 8
+put el 3 ew 56 2
+put el 4 ew 40 8
+put el 5 ew 60 2
+span get el 2 mul get el 3 56 get el 1
+span get el 4 mul get el 5 64 get el 1
+for i ulong get el 3 bound 65535
+segment i
+end
+if eq get el 7 0
+exit 65
+end
+namelen = patharg namearg
+for i ulong get el 5 bound 65535
+s = sh i
+t = ew add s 4 4
+if or eq t 4 eq t 9
+if ne ew add s 32 8 0
+exit 65
+end
+end
+if or eq t 2 eq t 11
+findsym s namelen
+end
+end
+if eq get el 6 0
+exit 65
+end
+d = vaoff get el 6 64
+put el 11 d
+put el 8 ew add d 8 4
+put el 9 ew d 4
+put el 10 ew add d 4 4
+note This writer declares no private segment or hidden ABI arguments.
+if or ne get el 10 0 gt get el 9 65536
+exit 65
+end
+if ne and ew add d 56 2 1024 0
+exit 65
+end
+entry = bitcast long ew add d 16 8
+if lt entry 0
+exit 65
+end
+v = add get el 6 ulong entry
+q = vaoff v 4
+end
+fn loadelf dst long to void
+for i ulong get el 3 bound 65535
+p = ph i
+if eq ew p 4 1
+filecopy int get el 0 ew add p 8 8 dst ew add p 16 8 ew add p 32 8
+zeromap dst add ew add p 16 8 ew add p 32 8 sub ew add p 40 8 ew add p 32 8
+end
+end
+end
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note dev: kfd,render,gpu,simds,simdpercu,arrays,arraysperengine,xcc,ctxperxcc,ctl,debug.
+global dev ulong 11
+global dirbuf uchar 4096
+global nodepath uchar 4096
+global noden ulong 1
+text nodes "/sys/class/kfd/kfd/topology/nodes/"
+text props "/properties"
+text gpufile "/gpu_id"
+text render "/dev/dri/renderD"
+text gfxkey "gfx_target_version"
+text drmkey "drm_render_minor"
+text simdkey "simd_count"
+text cukey "simd_per_cu"
+text arrkey "array_count"
+text engkey "simd_arrays_per_engine"
+text xcckey "num_xcc"
+text absent "OMEGA device=absent errno=2\n"
+fn addpath b view uchar * p ulong to ulong
+span p len b len pathbuf
+for i ulong len b bound 4096
+put pathbuf add p i get b i
+end
+ret add p len b
+end
+fn nodefile suffix view uchar * to int
+n = get noden 0
+for i ulong n bound 4096
+put pathbuf i get nodepath i
+end
+n = addpath suffix n
+ret int checked fopen pathbuf 0 n 0 0
+end
+fn propvalue fd int key view uchar * to ulong
+r = checked fseek fd 0 0
+idx = ulong 0
+match = true
+value = ulong 0
+number = false
+while true bound 9223372036854775807
+r = read fd one 0 1
+if eq r 0
+exit 66
+end
+r = checked r
+c = get one 0
+if eq c 10
+if and match number
+ret value
+end
+idx = ulong 0
+match = true
+number = false
+value = ulong 0
+continue
+end
+if number
+if match
+if or lt c 48 gt c 57
+exit 66
+end
+if gt value div sub ulong 18446744073709551615 ulong sub c 48 10
+exit 66
+end
+value = add mul value 10 ulong sub c 48
+end
+else
+if eq c 32
+if ne idx len key
+match = false
+end
+number = true
+else
+if lt idx len key
+if ne c get key idx
+match = false
+end
+else
+match = false
+end
+idx = add idx 1
+end
+end
+end
+ret 0
+end
+fn nodecheck to bool
+fd = nodefile props
+gfx = propvalue fd gfxkey
+if ne gfx 90402
+r = checked fclose fd
+ret false
+end
+put dev 1 propvalue fd drmkey
+put dev 3 propvalue fd simdkey
+put dev 4 propvalue fd cukey
+put dev 5 propvalue fd arrkey
+put dev 6 propvalue fd engkey
+put dev 7 propvalue fd xcckey
+r = checked fclose fd
+fd = nodefile gpufile
+v = ulong 0
+while true bound 9223372036854775807
+r = checked read fd one 0 1
+if eq r 0
+break
+end
+c = get one 0
+if eq c 10
+break
+end
+if or lt c 48 gt c 57
+exit 66
+end
+if gt v 429496729
+exit 66
+end
+v = add mul v 10 ulong sub c 48
+end
+if or eq v 0 gt v 4294967295
+exit 66
+end
+put dev 2 v
+r = checked fclose fd
+ret true
+end
+fn topology to void
+dfd = int checked fopen nodes 0 len nodes 65536 0
+found = false
+while not found bound 9223372036854775807
+r = checked getdnts dfd dirbuf 0 len dirbuf
+if eq r 0
+exit 66
+end
+p = ulong 0
+while lt p ulong r bound 4096
+span p 20 ulong r
+sz = add ulong get dirbuf add p 16 shl ulong get dirbuf add p 17 8
+if lt sz 20
+exit 66
+end
+span p sz ulong r
+c = get dirbuf add p 19
+if and ge c 48 le c 57
+n = len nodes
+for i ulong n bound 4096
+put nodepath i get nodes i
+end
+j = add p 19
+while true bound 4096
+if ge j add p sz
+exit 66
+end
+if eq get dirbuf j 0
+break
+end
+if ge n len nodepath
+exit 66
+end
+put nodepath n get dirbuf j
+n = add n 1
+j = add j 1
+end
+put noden 0 n
+if nodecheck
+found = true
+break
+end
+end
+p = add p sz
+end
+end
+r = checked fclose dfd
+n = addpath render 0
+minor = get dev 1
+if gt minor 4294967295
+exit 66
+end
+b = new uchar 10 0
+p = ulong 10
+while gt minor 9 bound 10
+p = sub p 1
+put b p uchar add rem minor 10 48
+minor = div minor 10
+end
+p = sub p 1
+put b p uchar add minor 48
+n = addpath part b p sub 10 p n
+put dev 1 ulong checked fopen pathbuf 0 n 2 0
+end
+fn connectkfd to void
+fd = fopen kfdpath 0 len kfdpath 2 0
+if eq fd -2
+emit absent
+exit 77
+end
+put dev 0 ulong checked fd
+zerohdr
+r = checked kfdctl int fd 2148027137 hdr 0 8
+if or ne hget 0 4 1 lt hget 4 4 14
+exit 67
+end
+topology
+zerohdr
+hput 0 4 get dev 1
+hput 4 4 get dev 2
+r = checked kfdctl int get dev 0 1074285333 hdr 0 8
+for i ulong 4
+put ids i uchar and shr get dev 2 mul i 8 255
+end
+end
+fn ctxsizes to void
+if or eq get dev 4 0 eq get dev 7 0
+exit 66
+end
+if eq get dev 6 0
+exit 66
+end
+cu = div div get dev 3 get dev 4 get dev 7
+if eq cu 0
+exit 66
+end
+waves = mul cu 40
+maxwaves = mul div div get dev 5 get dev 6 get dev 6 512
+if lt maxwaves waves
+waves = maxwaves
+end
+if eq waves 0
+exit 66
+end
+ctl = roundup add 40 add mul waves 8 8 4096
+wg = roundup mul cu add add ulong 0x80000 0x4000 add ulong 0x10000 0x1000 4096
+put dev 8 add ctl wg
+put dev 9 ctl
+put dev 10 roundup mul waves 32 64
+if gt get dev 8 4294967295
+exit 66
+end
+end
+fn mapgpu kh ulong to void
+zerohdr
+hput 0 8 kh
+hput 16 4 1
+r = checked kfdctl int get dev 0 3222817560 hdr 0 24 ids 0 4
+if ne hget 20 4 1
+exit 68
+end
+end
+note Allocation record on the caller's table: CPU handle, KFD handle, byte size (24 bytes).
+fn gpumem n ulong flags ulong table long rec ulong to long
+sz = roundup n 4096
+h = checked kfdres sz
+zerohdr
+hput 8 8 sz
+hput 32 4 get dev 2
+hput 36 4 flags
+r = checked kfdctl int get dev 0 3223866134 hdr 0 40 h
+kh = hget 16 8
+moff = hget 24 8
+r = checked mapset table rec 8 ulong h
+r = checked mapset table add rec 8 8 kh
+r = checked mapset table add rec 16 8 sz
+mapgpu kh
+r = checked mapbind h int get dev 1 moff 3
+ret h
+end
+fn gpufree table long rec ulong to void
+kh = mapget table add rec 8 8
+zerohdr
+hput 0 8 kh
+hput 16 4 1
+r = checked kfdctl int get dev 0 3222817561 hdr 0 24 ids 0 4
+if ne hget 20 4 1
+exit 68
+end
+r = checked mapdrop long mapget table rec 8
+zerohdr
+hput 0 8 kh
+r = checked kfdctl int get dev 0 1074285335 hdr 0 8
+end
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note launch: table,ninputs,repeats,timeoutns,outbytes,groupsX,groupsY,queueid,bell,belloff.
+global launch ulong 10
+text timed "OMEGA dispatch_ns="
+text repeatlabel " packets="
+fn lh i ulong to long
+ret long mapget long get launch 0 mul i 24 8
+end
+fn allocate i ulong n ulong flags ulong to long
+ret gpumem n flags long get launch 0 mul i 24
+end
+fn queueinit to void
+ctxsizes
+r = allocate 3 1024 0xa6000002
+r = allocate 4 4096 0xa6000002
+r = allocate 5 4096 0xa6000002
+n = roundup mul add get dev 8 get dev 10 get dev 7 4096
+r = allocate 6 n 0xe4000002
+r = allocate 7 4096 0xa6000002
+zeromap lh 3 0 1024
+zeromap lh 4 0 8
+zeromap lh 5 0 8
+zeromap lh 6 0 n
+zeromap lh 7 0 64
+note USER signal ABI: kind 1 at 0, value at 8, no interrupt event.
+r = checked mapset lh 7 0 8 1
+r = checked mapset lh 7 8 8 get launch 2
+for i ulong get dev 7 bound 9223372036854775807
+p = mul i get dev 8
+r = checked mapset lh 6 add p 16 4 mul sub get dev 7 i get dev 8
+r = checked mapset lh 6 add p 20 4 mul get dev 10 get dev 7
+end
+for i ulong 16
+r = checked mapset lh 3 mul i 64 4 1
+end
+zerohdr
+hput 32 4 1024
+hput 36 4 get dev 2
+hput 40 4 2
+hput 44 4 100
+hput 48 4 7
+hput 80 4 get dev 8
+hput 84 4 get dev 9
+note gfx942 AQL queues require no EOP allocation (ROCT queues.c).
+r = checked kfdctl int get dev 0 3227011842 hdr 0 88 lh 3 lh 4 lh 5 long 0 lh 6
+put launch 7 hget 52 4
+belloff = hget 24 8
+put launch 9 rem belloff 8192
+put launch 8 ulong checked kfdmap int get dev 0 sub belloff rem belloff 8192 8192
+end
+fn packet id ulong to void
+slot = mul rem id 16 64
+zerohdr
+note First dword kept INVALID until every other field is published.
+hput 0 2 1
+hput 2 2 2
+hput 4 2 64
+hput 6 2 1
+hput 8 2 1
+hput 12 4 mul get launch 5 64
+hput 16 4 get launch 6
+hput 20 4 1
+hput 24 4 get el 10
+hput 28 4 get el 9
+hput 32 8 add mapaddr lh 0 get el 6
+hput 40 8 mapaddr lh 1
+hput 56 8 mapaddr lh 7
+r = checked mapset lh 3 slot 4 1
+r = checked mapwrite lh 3 add slot 4 hdr 4 60
+cpufence
+note type KERNEL_DISPATCH=2, barrier=1, acquire/release SYSTEM=2, dimensions=2.
+r = checked mapset lh 3 slot 4 0x00021502
+cpufence
+r = checked mapset lh 4 0 8 add id 1
+cpufence
+r = checked mapset long get launch 8 get launch 9 8 id
+end
+fn deadline start long to void
+now = monons
+if lt now start
+exit 75
+end
+if gt ulong sub now start get launch 3
+exit 75
+end
+end
+fn dispatch to void
+start = monons
+if lt start 0
+exit 74
+end
+for i ulong get launch 2 bound 9223372036854775807
+while ge sub i mapget lh 5 0 8 16 bound 9223372036854775807
+deadline start
+cpurelax
+end
+packet i
+end
+while ne mapget lh 7 8 8 0 bound 9223372036854775807
+deadline start
+cpurelax
+end
+cpufence
+elapsed = sub monons start
+emit timed
+printnum ulong elapsed
+emit repeatlabel
+printnum get launch 2
+emit newline
+end
+fn teardown to void
+zerohdr
+hput 0 4 get launch 7
+r = checked kfdctl int get dev 0 3221768963 hdr 0 8
+r = checked mapdrop long get launch 8
+for i ulong add get launch 1 8 bound 9223372036854775807
+gpufree long get launch 0 mul i 24
+end
+r = checked mapdrop long get launch 0
+r = checked fclose int get dev 1
+r = checked fclose int get dev 0
+r = checked fclose int get el 0
+end
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+text runmode "run"
+text inspectmode "inspect"
+text vaddmode "vadd"
+text parsed "OMEGA elf=accepted image_bytes="
+text argslabel " kernarg_bytes="
+text passed "OMEGA vadd=PASS count=256\n"
+global config ulong 3
+fn mode name view uchar * to bool
+n = patharg 1
+if ne n len name
+ret false
+end
+for i ulong n bound 4096
+if ne get pathbuf i get name i
+ret false
+end
+end
+ret true
+end
+fn configread to void
+fd = argfile 6 0
+put config 0 ulong fd
+size = filesize fd
+span 0 48 size
+note Eight ASCII bytes OMKFD001.
+if ne fword fd 0 8 0x31303044464b4d4f
+exit 64
+end
+if ne fword fd 8 8 get el 8
+exit 64
+end
+put launch 4 fword fd 16 8
+put launch 2 fword fd 24 8
+put launch 3 fword fd 32 8
+put config 1 fword fd 40 8
+if gt get config 1 div get el 8 8
+exit 64
+end
+put config 2 add 48 mul get config 1 16
+span get config 2 get el 8 size
+if ne add get config 2 get el 8 size
+exit 64
+end
+if or eq get launch 4 0 eq get launch 2 0
+exit 64
+end
+if or gt get launch 2 9223372036854775807 eq get launch 3 0
+exit 64
+end
+for i ulong get config 1 bound 9223372036854775807
+p = add 48 mul i 16
+off = fword fd p 8
+span off 8 get el 8
+if ne rem off 8 0
+exit 64
+end
+if gt fword fd add p 8 8 get launch 1
+exit 64
+end
+if ne fword fd add get config 2 off 8 0
+exit 64
+end
+for j ulong i bound 9223372036854775807
+if eq off fword fd add 48 mul j 16 8
+exit 64
+end
+end
+end
+end
+fn prepare to void
+n = mul add get launch 1 8 24
+put launch 0 ulong checked mapnew -1 0 n 3 34
+r = allocate 0 get el 7 0xe0000001
+loadelf r
+r = allocate 1 get el 8 0xa4000002
+r = allocate 2 get launch 4 0xa0000001
+end
+fn loadinputs to void
+for i ulong get launch 1 bound 9223372036854775807
+fd = argfile add i 7 0
+size = filesize fd
+if eq size 0
+exit 64
+end
+h = allocate add i 8 size 0xa0000001
+filecopy fd 0 h 0 size
+r = checked fclose fd
+end
+filecopy int get config 0 get config 2 lh 1 0 get el 8
+for i ulong get config 1 bound 9223372036854775807
+p = add 48 mul i 16
+off = fword int get config 0 p 8
+idx = fword int get config 0 add p 8 8
+h = lh 2
+if lt idx get launch 1
+h = lh add idx 8
+end
+r = checked mapset lh 1 off 8 mapaddr h
+end
+r = checked fclose int get config 0
+end
+fn vaddinputs to void
+if ne get el 8 28
+exit 65
+end
+h = allocate 8 1024 0xa0000001
+h = allocate 9 1024 0xa0000001
+note IEEE754 binary32 1 + 1 = 2; exact independent host oracle in the gate.
+for i ulong 256
+r = checked mapset lh 8 mul i 4 4 0x3f800000
+r = checked mapset lh 9 mul i 4 4 0x3f800000
+r = checked mapset lh 2 mul i 4 4 0x7fc00000
+end
+r = checked mapset lh 1 0 8 mapaddr lh 8
+r = checked mapset lh 1 8 8 mapaddr lh 9
+r = checked mapset lh 1 16 8 mapaddr lh 2
+r = checked mapset lh 1 24 4 256
+end
+fn vaddcheck to void
+for i ulong 256
+if ne mapget lh 2 mul i 4 4 0x40000000
+exit 76
+end
+end
+emit passed
+end
+fn main to int
+if lt argcnt 4
+ret 64
+end
+isinspect = mode inspectmode
+isvadd = mode vaddmode
+isrun = mode runmode
+if not or isinspect or isvadd isrun
+ret 64
+end
+parseelf 2 3
+if isinspect
+emit parsed
+printnum get el 7
+emit argslabel
+printnum get el 8
+emit newline
+r = checked fclose int get el 0
+ret 0
+end
+if isvadd
+if ne argcnt 4
+ret 64
+end
+put launch 1 2
+put launch 2 1
+put launch 3 10000000000
+put launch 4 1024
+put launch 5 4
+put launch 6 1
+else
+if lt argcnt 8
+ret 64
+end
+put launch 1 sub ulong argcnt 8
+put launch 5 argnum 4
+put launch 6 argnum 5
+if or eq get launch 5 0 gt get launch 5 div ulong 4294967295 64
+ret 64
+end
+if or eq get launch 6 0 gt get launch 6 4294967295
+ret 64
+end
+configread
+end
+connectkfd
+prepare
+if isvadd
+vaddinputs
+else
+loadinputs
+end
+queueinit
+dispatch
+if isvadd
+vaddcheck
+else
+fd = argfile sub ulong argcnt 1 577
+savefile fd lh 2 get launch 4
+r = checked fclose fd
+end
+teardown
+ret 0
+end
+note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+note Shared CLI unsigned parser; append after aql.om, kernarg.om, records.om or ring.om.
+note A uint64 text needs at most 20 decimal digits or 0x plus 16 hexadecimal digits.
+note Buffer 21 permits the extra byte that makes an overlong value refuse, not truncate.
+note WolframLanguageEvaluator: {2^64-1,Quotient[2^64-1,10],Mod[2^64-1,10]} ->
+note {18446744073709551615,1844674407370955161,5} (integer range, dimensionless).
+fn argnum i ulong to ulong
+ab = new uchar 21 0
+n = argread i ab 0 21
+if lt n 1
+exit 2
+end
+k = ulong n
+s = ulong 0
+hex = false
+if gt k 2
+if and eq get ab 0 48 eq get ab 1 120
+hex = true
+s = ulong 2
+end
+end
+m = sub k s
+if hex
+if gt m 16
+exit 2
+end
+end
+v = ulong 0
+for j ulong m
+d = ulong get ab add j s
+dv = ulong 16
+if and ge d 48 le d 57
+dv = sub d 48
+end
+if hex
+if and ge d 97 le d 102
+dv = sub d 87
+end
+if eq dv 16
+exit 2
+end
+v = or shl v 4 dv
+else
+if gt dv 9
+exit 2
+end
+if gt v 1844674407370955161
+exit 2
+end
+if and eq v 1844674407370955161 gt dv 5
+exit 2
+end
+v = add mul v 10 dv
+end
+end
+ret v
+end
+note Full write or exit 74. Applies to files and pipes, including partial writes and EINTR.
+fn emit b view uchar * to void
+p = ulong 0
+while lt p len b bound 999999
+r = write 1 b p sub len b p
+if eq r neg long 4
+continue
+end
+if le r 0
+exit 74
+end
+p = add p ulong r
+end
+end

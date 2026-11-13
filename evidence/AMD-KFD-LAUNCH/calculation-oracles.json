@@ -1,0 +1,8 @@
+{
+  "ELF_magic": 1179403647,
+  "ELF_class_data_version_osabi": 1073807618,
+  "ELF_type_machine": 14680067,
+  "manifest_magic": 3544385976535829839,
+  "f32_one": "0000803f",
+  "f32_one_plus_one": "00000040"
+}

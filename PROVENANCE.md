@@ -1554,8 +1554,9 @@ existing AQL encoder detect either swapped writer.
 [ROCT rocm-6.2.0 topology.c](https://raw.githubusercontent.com/ROCm/ROCT-Thunk-Interface/rocm-6.2.0/src/topology.c)
 maps array_count to a temporary SIMD-array count and simd_arrays_per_engine to
 NumArrays, then assigns NumShaderBanks from their quotient.
-The exact pinned raw-file ranges are in
-`tests/amd-kfd-launch/reference/sources.json`. The existing queues.c wave formula subsequently divides
+Pinned statement anchors are in
+`tests/amd-kfd-launch/reference/sources.json`; the gate derives and verifies the
+raw-file ranges shown in reference/README.md. The existing queues.c wave formula subsequently divides
 NumShaderBanks by NumArrays. Both divisions in the native sysfs formula are
 required. The array-bound-dominant fixture and missing-division mutant exercise it.
 
@@ -1565,10 +1566,8 @@ produces an alarm, not a cap. No new model-plan field or wire version was needed
 
 The same conversion was also checked in the environment-matched
 [ROCm 7.2.2 topology.c](https://raw.githubusercontent.com/ROCm/rocm-systems/rocm-7.2.2/projects/rocr-runtime/libhsakmt/src/topology.c),
-with its exact ranges and digest in the same canonical reference manifest.
-The downloaded file SHA-256 is
-97269f0baf231d490032fc47ea8fe9e1101232477e10f74ff15e616d8e54ad86.
-Line numbers here refer to the downloaded source, not the web reader's extracted
+with its statement anchors and digest in the same canonical reference manifest.
+Derived line numbers refer to the downloaded source, not a web reader's extracted
 line numbering.
 
 ## Launcher review-round-2 corrective checks
@@ -1608,3 +1607,16 @@ record and stderr, retaining exit2 and empty binary-output stdout. The existing
 full-write helper now accepts an fd internally; emit preserves its stdout API.
 The original2c824 seed KFD suite passes23 host checks, and the26540 launcher gate
 passes199 checks. Requalification of the new executable is required.
+
+## Compatible launcher hardware receipt
+
+The latest pointer is evidence/amd-qwen38-native-compatible-20261113. It qualifies
+committed launcher source230a57b618ac62ceb628518507321762a1aaa5cd and executable
+f646ea5d16d545b5c9c6efcab74d1e9a522de2d9dd3a06e4638a3eb2f6b9c504,
+with normal/nonzero-LDS vadd, original coding24/control, and warmup plus five
+accepted lighthouse256 runs. All256 IDs agree with the reused independent AMD
+HIP graph. Five medians26.726,26.783,26.765,26.718,26.717 ms give26.726 ms/token,
+37.4167 reciprocal median-step tokens/s and4.6921x the dated125.4 ms Spark graph
+baseline. AMD median prefill781.661 ms is slower than saved Spark507 ms.
+Earlier receipts remain immutable. No fresh Spark run or full Spark token parity,
+startup speed ratio, quality equivalence or HTTP deployment is claimed.

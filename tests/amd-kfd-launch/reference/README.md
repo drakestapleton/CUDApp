@@ -1,7 +1,8 @@
 # Pinned primary sources for the KFD topology conversion
 
 These are unmodified upstream files, retaining their upstream license headers.
-`sources.json` is the canonical source of URLs, digests and line ranges.
+`sources.json` is the canonical source of URLs, digests and unique statement anchors.
+Raw line ranges are derived from those anchors in the pinned files.
 `SHA256SUMS` and the table below are derived views checked by the gate. The launcher gate checks every digest and the cited
 producer statements offline before compiling. Retrieve each file from the URL
 below and verify its listed digest before replacing a reference.

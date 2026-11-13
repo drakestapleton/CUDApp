@@ -94,3 +94,7 @@ the plan table verifies every ID on stderr and asserts stdout stays empty.
 original compiler's test-amd suites before the newer launcher's gate, so a shared
 CLI change cannot pass release readiness by testing only its newer caller. Keep
 both pins explicit; hardware qualification remains a separate exact-binary check.
+
+Reference ranges are derived from unique first/last statement anchors in the
+pinned raw files. The gate compares the generated README table with those actual
+line positions, so merely widening a stored numeric range cannot pass.

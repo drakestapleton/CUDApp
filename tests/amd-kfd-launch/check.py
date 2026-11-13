@@ -46,12 +46,17 @@ for row in references:
     assert hashlib.sha256(path.read_bytes()).hexdigest()==row['sha256'],row['file']
     lines=path.read_text().splitlines()
     for span in row['ranges']:
-        assert 1<=span['start']<=span['end']<=len(lines)
-        quoted='\n'.join(lines[span['start']-1:span['end']])
+        assert set(span)=={'first','last','contains'}
+        starts=[i for i,line in enumerate(lines) if line.strip()==span['first']]
+        assert len(starts)==1,(row['file'],span['first'])
+        ends=[i for i in range(starts[0],len(lines)) if lines[i].strip()==span['last']]
+        assert ends,(row['file'],span['last'])
+        span['derived_start']=starts[0]+1;span['derived_end']=ends[0]+1
+        quoted='\n'.join(lines[starts[0]:ends[0]+1])
         assert all(token in quoted for token in span['contains']),(row['file'],span)
 checksums=''.join(r['sha256']+'  '+r['file']+'\n' for r in sorted(references,key=lambda r:r['file']))
 assert (reference/'SHA256SUMS').read_text()==checksums
-source_table='| Local file | Upstream URL | Relevant lines |\n| --- | --- | --- |\n'+''.join('| '+r['file']+' | '+r['url']+' | '+', '.join(str(s['start'])+('-'+str(s['end']) if s['end']!=s['start'] else '') for s in r['ranges'])+' |\n' for r in references)
+source_table='| Local file | Upstream URL | Relevant lines |\n| --- | --- | --- |\n'+''.join('| '+r['file']+' | '+r['url']+' | '+', '.join(str(s['derived_start'])+('-'+str(s['derived_end']) if s['derived_end']!=s['derived_start'] else '') for s in r['ranges'])+' |\n' for r in references)
 readme=(reference/'README.md').read_text()
 assert readme.count('<!-- generated from sources.json -->\n')==readme.count('<!-- end generated source table -->')==1
 assert readme.split('<!-- generated from sources.json -->\n')[1].split('<!-- end generated source table -->')[0]==source_table

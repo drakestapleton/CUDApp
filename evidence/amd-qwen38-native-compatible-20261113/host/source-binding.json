@@ -1,0 +1,22 @@
+{
+  "source_commit": "230a57b618ac62ceb628518507321762a1aaa5cd",
+  "verified_against_tree": "5eb0790654002bbc9dd460e26d8aeb21595a8b95",
+  "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+  "source_files": {
+    "backend/amd/kfd/launch/common.om": "d50eccc84b535627c9ad47506b7ae36f3091ed7ca69a3a40061569a6bacafd4d",
+    "backend/amd/kfd/launch/elf.om": "ac76a586743437adf2d2e08b8e6d332517b09bdfb569c8a3fca5f7b089f823f4",
+    "backend/amd/kfd/launch/device.om": "bf85fe1d7e7410c72375f79d2950edace8384afd476dc98b6119236627f02675",
+    "backend/amd/kfd/launch/dispatch.om": "77cc0ae549d217f203a23a09ed66971f578125e804beb9887bc0c4222efefa9c",
+    "backend/amd/kfd/launch/plan.om": "c42b9092269cbe395b9d952f8492d0083efe8d34bfcf9414862aff5499e414a7",
+    "backend/amd/kfd/launch/main.om": "07939085e7472fe0c0c1f392e9edbb372be08e3e12ae02571f87e591f4b4d25f",
+    "backend/amd/kfd/cli.om": "942b09ad8d611130573370dbcc44c23a055622d5d5d61d5c124232bc709673b2"
+  },
+  "inputs": {
+    "a64": "61a50c82260e22a3df79548b0cc825a1a54dea421825ab00877102bb27f08aa4",
+    "x86": "6f39562c3dbe3596c04373829296f16a855c1e11304304476450120b6a142aea"
+  },
+  "binaries": {
+    "a64": "8f3818465a9136e64485468ca3aa49b09100cf2a529d432297a3988cce65390d",
+    "x86": "f646ea5d16d545b5c9c6efcab74d1e9a522de2d9dd3a06e4638a3eb2f6b9c504"
+  }
+}

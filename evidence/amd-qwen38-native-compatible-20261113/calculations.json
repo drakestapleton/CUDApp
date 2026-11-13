@@ -1,0 +1,20 @@
+{
+  "accepted_decode_ms": [
+    26.726,
+    26.783,
+    26.765,
+    26.718,
+    26.717
+  ],
+  "median_decode_ms": 26.726,
+  "derived_reciprocal_median_step_tokens_s": 37.416747736286766,
+  "historical_spark_graph_ms": 125.4,
+  "historical_spark_graph_time_ratio": 4.692060166130361,
+  "median_prefill_ms": 781.6610000000001,
+  "median_process_ready_s": 19.012281970120966,
+  "median_process_first_generated_id_s": 19.793420070782304,
+  "median_process_total_s": 26.718436596915126,
+  "sampled_peak_rss_kib": 3288,
+  "sampled_peak_vram_kib": 37555700,
+  "sampled_peak_gtt_kib": 183860
+}

@@ -1,0 +1,7 @@
+{
+  "source_commit": "230a57b618ac62ceb628518507321762a1aaa5cd",
+  "compiler_commit": "64d6db3bb8a0c6b4a4f5334b75191abf77c66ab9",
+  "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+  "binary_sha256": "f646ea5d16d545b5c9c6efcab74d1e9a522de2d9dd3a06e4638a3eb2f6b9c504",
+  "status": "compatible hardware qualification candidate; release gates and review pending"
+}

@@ -6,22 +6,22 @@
       "sha256": "df339eb2532374fecdab571efcf49131dd79f31c236792ab1cb260dbd18f4c3f",
       "ranges": [
         {
-          "start": 1147,
-          "end": 1150,
           "contains": [
             "array_count",
             "simd_arrays_per_engine",
             "simd_arrays_count",
             "NumArrays"
-          ]
+          ],
+          "first": "else if (strcmp(prop_name, \"array_count\") == 0)",
+          "last": "props->NumArrays = (uint32_t)prop_val;"
         },
         {
-          "start": 1204,
-          "end": 1205,
           "contains": [
             "NumShaderBanks",
             "simd_arrays_count/props->NumArrays"
-          ]
+          ],
+          "first": "if (props->NumArrays != 0)",
+          "last": "props->NumShaderBanks = simd_arrays_count/props->NumArrays;"
         }
       ]
     },
@@ -31,22 +31,22 @@
       "sha256": "97269f0baf231d490032fc47ea8fe9e1101232477e10f74ff15e616d8e54ad86",
       "ranges": [
         {
-          "start": 1171,
-          "end": 1174,
           "contains": [
             "array_count",
             "simd_arrays_per_engine",
             "simd_arrays_count",
             "NumArrays"
-          ]
+          ],
+          "first": "else if (strcmp(prop_name, \"array_count\") == 0)",
+          "last": "props->NumArrays = (uint32_t)prop_val;"
         },
         {
-          "start": 1234,
-          "end": 1235,
           "contains": [
             "NumShaderBanks",
             "simd_arrays_count/props->NumArrays"
-          ]
+          ],
+          "first": "if (props->NumArrays != 0)",
+          "last": "props->NumShaderBanks = simd_arrays_count/props->NumArrays;"
         }
       ]
     },
@@ -56,15 +56,15 @@
       "sha256": "6653cd7b55466616a44e4b7e89619081adee33a813c07b17dd850fa230c7fef4",
       "ranges": [
         {
-          "start": 292,
-          "end": 298,
           "contains": [
             "NumFComputeCores",
             "NumSIMDPerCU",
             "NumXcc",
             "NumShaderBanks /",
             "NumArrays"
-          ]
+          ],
+          "first": "uint32_t cu_num = node.NumFComputeCores / node.NumSIMDPerCU / node.NumXcc;",
+          "last": "wg_data_size = cu_num * WG_CONTEXT_DATA_SIZE_PER_CU(q->gfxv);"
         }
       ]
     },
@@ -74,21 +74,21 @@
       "sha256": "b6f18da3603c196d1b6a58ff9607524365c5ed33e6716895cff0fc621c1742d6",
       "ranges": [
         {
-          "start": 461,
-          "end": 465,
           "contains": [
             "array_count",
             "NUM_XCC",
             "simd_arrays_per_engine"
-          ]
+          ],
+          "first": "sysfs_show_32bit_prop(buffer, offs, \"array_count\",",
+          "last": "dev->node_props.simd_arrays_per_engine);"
         },
         {
-          "start": 2082,
-          "end": 2083,
           "contains": [
             "simd_arrays_per_engine",
             "max_sh_per_se"
-          ]
+          ],
+          "first": "dev->node_props.simd_arrays_per_engine =",
+          "last": "gfx_info->max_sh_per_se;"
         }
       ]
     },
@@ -98,21 +98,21 @@
       "sha256": "aeacf7c1aed367e499bf6ee65489d42ffacd7c68dcd7e43f4f9e795559f2f999",
       "ranges": [
         {
-          "start": 1041,
-          "end": 1041,
           "contains": [
             "array_count",
             "cu->array_count"
-          ]
+          ],
+          "first": "dev->node_props.array_count = cu->array_count;",
+          "last": "dev->node_props.array_count = cu->array_count;"
         },
         {
-          "start": 2286,
-          "end": 2287,
           "contains": [
             "array_count",
             "max_sh_per_se",
             "max_shader_engines"
-          ]
+          ],
+          "first": "cu->array_count = gfx_info->max_sh_per_se *",
+          "last": "gfx_info->max_shader_engines;"
         }
       ]
     }

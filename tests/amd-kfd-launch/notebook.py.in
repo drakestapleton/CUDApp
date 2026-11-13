@@ -1,6 +1,6 @@
 # launch2: one cell, Python standard-library measuring harness only.
 # The production launcher and object writer are seeded Omega, not Python or HIP.
-import base64, ctypes, hashlib, json, math, os, platform, re, selectors, struct, subprocess, tempfile, time, zlib
+import base64, ctypes, hashlib, json, lzma, math, os, platform, re, selectors, struct, subprocess, tempfile, time
 from pathlib import Path
 BUNDLE = json.loads(r'''@BUNDLE@''')
 REPORT = Path('amdserve-launch2.txt')
@@ -11,7 +11,7 @@ def say(line):
     temp=REPORT.with_suffix('.tmp'); temp.write_text('\n'.join(ROWS)+'\n'); temp.replace(REPORT)
     print(ROWS[-1],flush=True)
 def asset(name):
-    a=BUNDLE['assets'][name]; data=zlib.decompress(base64.b64decode(a['zlib_base64']))
+    a=BUNDLE['assets'][name]; data=lzma.decompress(base64.b85decode(a['xz_base85']))
     if hashlib.sha256(data).hexdigest()!=a['sha256']: raise RuntimeError('asset digest '+name)
     p=WORK/name; p.write_bytes(data)
     if name=='omega-launch': p.chmod(0o700)

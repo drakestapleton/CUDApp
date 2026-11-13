@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # External notebook-test artifact packaging; not a production dependency.
-import argparse,base64,hashlib,json,subprocess,zlib
+import argparse,base64,hashlib,json,lzma,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser()
 p.add_argument('--gate',type=Path,required=True)
@@ -19,7 +19,7 @@ assert compiler[1].split()[0]==summary['compiler']
 bundle={'sources':{'launcher_head':git(root,'rev-parse','HEAD').decode().strip(),'compiler_head':compiler[0].split()[0],'compiler_sha256':summary['compiler'],'launcher_source_sha256':{str(f.relative_to(root)):sha(f.read_bytes()) for f in sorted((root/'backend/amd/kfd/launch').glob('*.om'))}},'assets':{}}
 bundle['sources']['notebook_template_sha256']=sha((root/'tests/amd-kfd-launch/notebook.py.in').read_bytes())
 def add(name,data,source):
-    bundle['assets'][name]={'sha256':sha(data),'zlib_base64':base64.b64encode(zlib.compress(data,9)).decode(),'source':source}
+    bundle['assets'][name]={'sha256':sha(data),'xz_base85':base64.b85encode(lzma.compress(data,preset=9|lzma.PRESET_EXTREME)).decode(),'source':source}
 binary=(a.gate/'launch-x86').read_bytes()
 assert sha(binary)==summary['binaries']['x86']
 add('omega-launch',binary,{'gate':'tests/amd-kfd-launch/check.py'})
@@ -43,7 +43,7 @@ required={'fp8gemv2.hsaco':'99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e
 for name,digest in required.items(): assert bundle['assets'][name]['sha256']==digest,(name,'not the approved object')
 a.out.mkdir(parents=True,exist_ok=False)
 for name,record in bundle['assets'].items():
-    path=a.out/name; path.write_bytes(zlib.decompress(base64.b64decode(record['zlib_base64'])))
+    path=a.out/name; path.write_bytes(lzma.decompress(base64.b85decode(record['xz_base85'])))
     if name=='omega-launch': path.chmod(0o700)
 text=(root/'tests/amd-kfd-launch/notebook.py.in').read_text()
 assert text.count('@BUNDLE@')==1

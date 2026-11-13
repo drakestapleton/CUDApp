@@ -45,7 +45,7 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
    p=run(arch+' positive twin deadline '+repr(value),deadlineargv('0'),77)
    assert b'OMEGA step open_kfd' in p.stdout
    p=run(arch+' refuses malformed caller deadline '+repr(value),deadlineargv(value),2)
-   assert p.stdout==('OMEGA refuse number field='+reason+'\n').encode(),(value,p.stdout)
+   assert p.stdout==b'' and p.stderr==('OMEGA refuse number field='+str(['text','hex-length','hex-digit','decimal-digit','decimal-range','decimal-overflow'].index(reason))+'\n').encode(),(value,p.stdout)
   p=run(arch+' positive twin argc',planargv(pth),77)
   assert b'OMEGA step open_kfd' in p.stdout
   p=run(arch+' refuses argc',planargv(pth)[:-1],64)

@@ -1602,3 +1602,9 @@ machine-readable reason lines on its existing exit2 paths; valid parsing and
 numeric bounds are unchanged. Every deadline refusal has a valid zero twin.
 These diagnostic-source changes produce a new executable and require a new
 hardware receipt; the earlier373e receipt remains an immutable historical run.
+
+Shared-CLI compatibility correction: numeric refusal diagnostics use a local fixed
+record and stderr, retaining exit2 and empty binary-output stdout. The existing
+full-write helper now accepts an fd internally; emit preserves its stdout API.
+The original2c824 seed KFD suite passes23 host checks, and the26540 launcher gate
+passes199 checks. Requalification of the new executable is required.

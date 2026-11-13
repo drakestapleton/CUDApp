@@ -81,3 +81,11 @@ Reference URLs, digests and raw-file ranges now have one canonical manifest,
 reference/sources.json. The existing gate verifies each quoted range and checks
 that SHA256SUMS and the README table are exact derived views. PROVENANCE points
 to the manifest instead of maintaining another copy of the raw line numbers.
+
+The shared CLI fragment is appended after main by the original KFD seed tools.
+New diagnostic globals broke that compiler mode, and stdout diagnostics polluted
+binary packet output. Keep the diagnostic label local, preserve empty payload
+stdout on refusal, and send errors to stderr through the full-write helper.
+Before reviewing a shared CLI change, run both the pinned older KFD gate and the
+new launcher gate. Numeric field IDs0..5 identify the six existing parser checks;
+the plan table verifies every ID on stderr and asserts stdout stays empty.

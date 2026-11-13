@@ -438,10 +438,8 @@ def word_width_unit(width):
     # The valid and refusing twins share real storage and the same known bytes.
     setup='fn main to int\nput ps 0 ulong checked mapnew -1 0 16 3 34\nput ps 2 16\nr = checked mapset long get ps 0 0 4 287454020\nr = checked mapset long get ps 0 4 4 1432778632\n'
     main=setup+'value = pw 0 '+str(width)+'\n'
-    if width<=8:
-        expected=0x5566778811223344 & ((1<<(width*8))-1)
-        main+='if ne value ulong '+str(expected)+'\nret 99\nend\nret 0\nend\n'
-    else:main+='ret 99\nend\n'
+    expected=0x5566778811223344 & ((1<<(min(width,8)*8))-1)
+    main+='if ne value ulong '+str(expected)+'\nret 99\nend\nret 0\nend\n'
     return ringunit+main
 for width in (1,4,8):
     u=compile('plan-helper-valid-width-'+str(width),word_width_unit(width))
@@ -455,8 +453,10 @@ for dispatches,slots in [(1,16),(15,16),(16,32),(20,32),(1126,2048),(33554431,33
 ringmain+='ret 0\nend\n'
 u=compile('plan-ring-boundaries',ringunit+ringmain)
 run('native plan ring capacity boundaries',[u])
-u=compile('plan-ring-unrepresentable',ringunit+'fn main to int\nput ps 6 33554432\nplanring\nret 99\nend\n')
-valid=compile('plan-ring-largest-representable',ringunit+'fn main to int\nput ps 6 33554431\nplanring\nif ne get launch 10 33554432\nret 99\nend\nret 0\nend\n')
+def ring_capacity_unit(dispatches):
+    return ringunit+'fn main to int\nput ps 6 '+str(dispatches)+'\nplanring\nif ne get launch 10 33554432\nret 99\nend\nret 0\nend\n'
+u=compile('plan-ring-unrepresentable',ring_capacity_unit(33554432))
+valid=compile('plan-ring-largest-representable',ring_capacity_unit(33554431))
 refuse('CONTROL plan ring exceeds UAPI size',[u],64,[valid],empty_value)
 # The batch path has its own body-before-header observation and early-header control.
 planunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))

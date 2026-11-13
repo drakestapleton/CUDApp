@@ -135,3 +135,9 @@ flat-scratch-init, private-size and dynamic-stack requests before allocation.
 Pin the producer bit definitions, not just prose field names. A runtime admission
 change produces a new executable: prior card receipts remain historical until
 that exact executable is qualified on the card.
+The word-width and ring-limit composed units now use identical assertions on both
+paths. The legal-width8/illegal-width9 sources differ only in the pw input literal;
+the largest legal/illegal ring sources differ only in their dispatch-count literal.
+Do not remove the value assertion from the refusing source: rejection happens
+before it. A direct source-difference check and fresh native runs verified each
+pair succeeds0/refuses64.

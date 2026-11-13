@@ -33,9 +33,13 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  pth=d/'valid.plan';pth.write_bytes(plan)
  argv=[pth,gate/'vadd.hsaco',gate/'vadd.hsaco',weight]
  for arch,pre in [('a64',[]),('x86',[qemu])]:
-  command=[*pre,gate/('launch-'+arch),'plan',*argv]
+  prefix=[*pre,gate/('launch-'+arch),'plan']
+  command=[*prefix,*argv]
   p=run(arch+' valid preflight absent KFD',command,77)
   assert b'OMEGA device=absent' in p.stdout
+  for value in ('-1','not-a-number','18446744073709551616'):
+   p=run(arch+' refuses malformed caller deadline '+value,[*command,value],2)
+   assert b'OMEGA step open_kfd' not in p.stdout
   mutations={
    'bad-magic':(0,b'BADPLAN!'), 'zero-code':(8,struct.pack('<Q',0)),
    'count-overflow':(24,struct.pack('<Q',2**63)), 'zero-prompt':(40,bytes(8)),
@@ -59,16 +63,20 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
   too_large=bytearray(plan)
   for off in (96,144):struct.pack_into('<Q',too_large,off,2**63-4096)
   overflow=d/'arena-overflow.plan';overflow.write_bytes(too_large)
-  p=run(arch+' refuses arena sum overflow',[*command[:3],overflow,*argv[1:]],64)
+  p=run(arch+' refuses arena sum overflow',[*prefix,overflow,*argv[1:]],64)
   assert b'OMEGA step open_kfd' not in p.stdout
   for name,(off,value) in mutations.items():
    bad=d/(name+'.plan');bad.write_bytes(plan[:off]+value+plan[off+len(value):])
-   p=run(arch+' refuses '+name,[*command[:3],bad,*argv[1:]],64)
+   p=run(arch+' refuses '+name,[*prefix,bad,*argv[1:]],64)
    assert b'OMEGA step open_kfd' not in p.stdout,name
  run('compile plan syscall oracle',['cc','-Wall','-Wextra','-Werror',root/'tests/amd-kfd-launch/trace.c','-o',gate/'trace'],0)
  p=run('native plan execution and ring wrap',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],0)
  assert b'packets=60 freed=all' in p.stderr,p.stderr[-2000:]
  assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout,p.stdout[-2000:]
+ # An accepted descriptor with nonzero LDS exercises plantemplate, not a handcrafted packet.
+ ldsargv=[pth,gate/'vadd-lds.hsaco',gate/'vadd-lds.hsaco',weight]
+ run('plan ELF nonzero LDS packet fields',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',*ldsargv],0)
+ run('CONTROL plan swapped private-group',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'plan-swapped-segments','plan',*ldsargv],1)
  (gate/'plan-simulation.stdout').write_bytes(p.stdout);(gate/'plan-simulation.stderr').write_bytes(p.stderr)
  # Raw file ranges share the same VRAM arena as the data-pool buffer.
  rawplan=bytearray(plan)
@@ -88,7 +96,12 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  p=run('1504 model buffers retain constant map count',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',hugepath,*argv[1:]],0)
  assert b'allocations=10 packets=60 freed=all' in p.stderr
  assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout
- p=run('missing completion refuses plan',['env','KFD_TEST_PLAN=1','KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],1)
+ p=run('unlimited default permits slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],0)
+ assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
+ p=run('explicit zero timeout permits slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'0'],0)
+ assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
+ run('caller deadline refuses slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1)
+ p=run('missing completion refuses plan',['env','KFD_TEST_PLAN=1','KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1)
  assert b'child_exit=75' in p.stderr and b'OMEGA_PLAN complete' not in p.stdout
 (gate/'plan-check.json').write_text(json.dumps({'cases':cases,'device':'NOT_RUN'},indent=2)+'\n')
 print('PLAN_CPU PASS',len(cases),'cases; device NOT_RUN')

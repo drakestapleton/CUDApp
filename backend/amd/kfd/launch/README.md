@@ -15,9 +15,9 @@ On Spark run CPU jobs through the assigned pool lock, nice and CPU affinity. `AM
 ## Commands
 
 ```
-omega-launch plan PLAN.bin CODE_OBJECT... WEIGHT_FILE...
+omega-launch plan PLAN.bin CODE_OBJECT... WEIGHT_FILE... [TIMEOUT_NS]
 omega-launch inspect OBJECT.hsaco KERNEL
-omega-launch vadd VADD.hsaco vadd
+omega-launch vadd VADD.hsaco vadd [TIMEOUT_NS]
 omega-launch run OBJECT.hsaco KERNEL GROUPS_X GROUPS_Y ARGS.bin INPUT... OUTPUT.bin
 ```
 
@@ -28,6 +28,11 @@ The loader accepts ELF64 little-endian AMDHSA code-object V5, gfx942, bounded no
 ### Argument manifest
 
 All integers are little-endian. The header is `OMKFD001`, followed by five u64 fields: raw kernarg byte length, output byte length, repeat count, timeout nanoseconds and relocation count. Each relocation is two u64 values: raw-kernarg byte offset and input-buffer index. Raw kernarg bytes follow the relocation pairs. There must be exactly that many bytes and the raw size must equal the descriptor's kernarg size. Pointer slots must be aligned, in bounds, unique and initially zero. Indices refer to the positional input files; the index equal to their count means the output buffer. The launcher writes only these slots with addresses of its own mapped allocations. Other scalar fields remain as supplied.
+
+A missing timeout or zero means no automatic deadline. A positive timeout is the
+caller-selected watchdog in nanoseconds. Generic run takes the same zero/unlimited
+convention from its argument manifest. Dispatches over ten seconds emit a one-time
+warning while waiting and may still complete. The threshold is not a refusal limit.
 
 Exit classes: 64 CLI/argument contract; 65 ELF/span contract; 66 topology; 67 insufficient KFD ABI; 74 syscall or I/O failure; 75 completion timeout; 77 `/dev/kfd` absent (prints `errno=2`). Compiler handle/span refusals remain documented traps. Normal completion destroys the queue, releases mappings/allocations and closes fds. On an error exit Linux releases the process's descriptors and KFD context; no persistent service or queue is created.
 

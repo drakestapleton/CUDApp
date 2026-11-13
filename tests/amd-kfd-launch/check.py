@@ -4,6 +4,9 @@
 import hashlib
 import json
 import os
+import re
+import statistics
+import math
 from pathlib import Path
 import shutil
 import struct
@@ -155,7 +158,12 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     node=Path(tmp)/'2'; node.mkdir()
     (node/'gpu_id').write_text('1\n')
     (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 128\nsimd_count 32\nsimd_per_cu 4\nmax_waves_per_simd 8\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
-    command=[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd']
+    command=[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd','10000000000']
+    lds=bytearray(vdata);struct.pack_into('<I',lds,kd,4096)
+    ldsobj=out/'vadd-lds.hsaco';ldsobj.write_bytes(lds)
+    p=run('accepted ELF with nonzero LDS uses HSA packet group field',[out/'trace',tmp,bins['a64'],'vadd',ldsobj,'vadd','10000000000'])
+    p=run('generic default alarms without refusing a slow completion',['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'])
+    assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
     p=run('native simulated orchestration',command)
     diagnostics(p,1,0,0x40000000)
     for name,variables,read,signal,output,child_exit in [
@@ -207,6 +215,17 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     assert mutant!=body
     bad=compile('bad-gpu-record',mutant)
     run('CONTROL wrong GPU record',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+# An array-bound-dominant topology distinguishes both required ROCT divisions.
+with tempfile.TemporaryDirectory(prefix='kfd-ctx-',dir='/tmp') as tmp:
+    node=Path(tmp)/'2';node.mkdir()
+    (node/'gpu_id').write_text('1\n')
+    (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 128\nsimd_count 1216\nsimd_per_cu 4\nmax_waves_per_simd 8\narray_count 4\nsimd_arrays_per_engine 2\nnum_xcc 1\n')
+    command=['env','KFD_TEST_CTX_BOUND=1',out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd','10000000000']
+    run('CWSR bound uses converted NumShaderBanks',command)
+    mutant=body.replace('mul div div get dev 5 get dev 6 get dev 6 512','mul div get dev 5 get dev 6 512')
+    assert mutant!=body
+    bad=compile('wrong-one-division-context',mutant)
+    run('CONTROL missing topology conversion',['env','KFD_TEST_CTX_BOUND=1',out/'trace',tmp,bad,'vadd',vobj,'vadd','10000000000'],1)
 # Card-shaped discovery: CPUs, denied gpu_id/properties, and only node 3 readable.
 # Denial is injected at syscall entry, so this remains deterministic under root.
 with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
@@ -267,9 +286,18 @@ unit+='''fn main to int
 +ret 0
 +end
 +'''.replace('\n+','\n')
+# Reuse the separately gated HSA packet encoder, not a second copy of launcher offsets.
+aql_bytes=run('compile independent AQL encoder',[omc],data=(root/'backend/amd/kfd/aql.om').read_bytes()+(root/'backend/amd/kfd/cli.om').read_bytes()).stdout
+aql=out/'aql-oracle';aql.write_bytes(aql_bytes);aql.chmod(0o700)
+def packet_agrees_with_aql(p):
+    assert len(p.stdout)==112
+    ring,code,args,sig,wp,bell=struct.unpack('<6Q',p.stdout[:48])
+    kobj,karg=code+64,args
+    expected=run('independent AQL nonzero LDS encoding',[aql,2,64,1,1,256,1,1,0,4096,kobj,karg,sig,1,2,2]).stdout
+    assert p.stdout[48:]==expected,(p.stdout[48:].hex(),expected.hex())
 u=compile('publication-unit',unit)
-run('native publication order',[out/'publication',u])
-mutant=unit.replace('hput 24 4 get el 9\nhput 28 4 get el 10','hput 24 4 get el 10\nhput 28 4 get el 9')
+packet_agrees_with_aql(run('native publication order',[out/'publication',u]))
+mutant=unit.replace('hput 24 4 get el 10\nhput 28 4 get el 9','hput 24 4 get el 9\nhput 28 4 get el 10')
 assert mutant!=unit
 u=compile('publication-swapped-segments',mutant)
 run('CONTROL swapped group-private segments',[out/'publication',u],1)
@@ -306,7 +334,7 @@ hput 8 2 1
 hput 12 4 256
 hput 16 4 1
 hput 20 4 1
-hput 24 4 4096
+hput 28 4 4096
 hput 32 8 add mapaddr lh 0 64
 hput 40 8 mapaddr lh 1
 hput 56 8 mapaddr lh 7
@@ -314,12 +342,26 @@ r = checked mapwrite long get ps 20 0 hdr 0 64
 planpublish 0 0"""
 planunit+=main.replace('packet 0',setup)
 u=compile('plan-publication-unit',planunit)
-run('native batch publication order',[out/'publication',u])
+packet_agrees_with_aql(run('native batch publication order',[out/'publication',u]))
 mutant=planunit.replace('plancopy sent\ncpufence\n','').replace('r = checked mapset lh 5 56 8 add sent get ps 6','plancopy sent\nr = checked mapset lh 5 56 8 add sent get ps 6')
 assert mutant!=planunit
 u=compile('plan-publication-early-header',mutant)
 run('CONTROL batch early valid header',[out/'publication',u],1)
+mutant=body.replace('hput 24 4 cm code 80\nhput 28 4 cm code 72','hput 24 4 cm code 72\nhput 28 4 cm code 80')
+assert mutant!=body
+compile('plan-swapped-segments',mutant)
 run('native plan CPU contracts',[sys.executable,'-I',root/'tests/amd-kfd-launch/plan-check.py',out])
+for receipt in sorted((root/'evidence').glob('amd-qwen38-native-*')):
+    state=receipt/'native/state.json'
+    if not state.exists():continue
+    run('verify archived native evidence '+receipt.name,[sys.executable,'-I',receipt/'verify.py'])
+    v=json.loads(state.read_text());prompt=len(v['fixture']['prompt_ids'])
+    for row in [v['control'],*v['rows']]:
+        text=(receipt/'native'/(row['label']+'.stdout')).read_text()
+        steps=[tuple(map(int,m)) for m in re.findall(r'^OMEGA_STEP (\d+) tok=(\d+) us=(\d+)$',text,re.M)]
+        assert math.isclose(sum(u for _,_,u in steps[:prompt])/1000,row['prefill_ms'],rel_tol=0,abs_tol=1e-9)
+        assert statistics.median(u/1000 for _,_,u in steps[prompt:])==row['decode_ms_median']
+    print('RAW TIMING PASS',receipt.name,flush=True)
 summary={'compiler':pin,'checks':len(results),'failures':sum(r['exit']!=r['expected'] for r in results),'qemu':qemu,'device':'NOT_RUN','orchestration':'native CPU syscall simulation only','publication':'native instruction-step observation only','objects':{name:hashlib.sha256(data).hexdigest() for name,(p,data,k,a) in objects.items()},'binaries':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in bins.items()}}
 (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('AMD-KFD-LAUNCH CPU PASS',json.dumps(summary,sort_keys=True))

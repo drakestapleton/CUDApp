@@ -1541,3 +1541,23 @@ replies. The compiler supplies the owned mapping address, while caller pointer
 bytes remain zero. Host oracle cases exercise inventories beyond the former
 64-record buffer, growth between query and fill, malformed counts and duplicate
 selected GPU IDs. This changes discovery, not the card-tested dispatch kernels.
+
+### Launcher packet fields, topology mapping and caller deadlines
+
+The existing backend/amd/kfd/aql.om restates the published HSA dispatch layout
+from [ROCr rocm-6.2.0 hsa.h](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/inc/hsa.h):
+packet private bytes 24..27 and group bytes 28..31. AMD code descriptors use the
+opposite group/private order at bytes 0 and 4. The launcher translates that
+order in both writers; nonzero-LDS ELF fixtures and a byte comparison with the
+existing AQL encoder detect either swapped writer.
+
+[ROCT rocm-6.2.0 topology.c](https://raw.githubusercontent.com/ROCm/ROCT-Thunk-Interface/rocm-6.2.0/src/topology.c)
+maps array_count to a temporary SIMD-array count and simd_arrays_per_engine to
+NumArrays (1088..1091), then assigns NumShaderBanks from their quotient
+(1144..1145). The existing queues.c wave formula subsequently divides
+NumShaderBanks by NumArrays. Both divisions in the native sysfs formula are
+required. The array-bound-dominant fixture and missing-division mutant exercise it.
+
+A caller chooses a deadline through the generic argument manifest or a trailing
+plan/vadd CLI argument. Zero/default is unlimited. The ten-second threshold
+produces an alarm, not a cap. No new model-plan field or wire version was needed.

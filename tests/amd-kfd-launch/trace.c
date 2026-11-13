@@ -182,7 +182,7 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         queue_image[3]=planmode?32:16;
         queue_image[4]=UINT64_MAX;
         queue_image[8]=UINT64_C(0x2000000010000);
-        queue_image[9]=(UINT64_C(31)<<32)|7;
+        queue_image[9]=(UINT64_C(31)<<32)|(getenv("KFD_TEST_CTX_BOUND")?303:7);
         queue_image[17]=128;
         queue_image[22]=UINT64_C(2)<<32;
         queue_image[24]=allocs[ring_index+1].va;
@@ -193,6 +193,12 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         CHECK(!queue.eop_buffer_address && !queue.eop_buffer_size);
         CHECK(queue.ctx_save_restore_address==allocs[ring_index+3].va && queue.ctx_save_restore_size<=allocs[ring_index+3].size);
         CHECK(queue.ctl_stack_size<=queue.ctx_save_restore_size);
+        if(getenv("KFD_TEST_CTX_BOUND")) {
+            /* ROCT topology: NumShaderBanks=4/2=2; queues: min(304*40,2/2*512)=512. */
+            uint64_t ctl=8192,wg=UINT64_C(304)*(0x80000+0x4000+0x10000+0x1000);
+            CHECK(queue.ctl_stack_size==ctl && queue.ctx_save_restore_size==ctl+wg);
+            CHECK(word(queue.ctx_save_restore_address+16)==((UINT64_C(16384)<<32) | (ctl+wg)));
+        }
         queue.queue_id=7; queue.doorbell_offset=8; wr(p,&queue,sizeof queue); queued=1; break;
     case AMDKFD_IOC_DESTROY_QUEUE: {
         struct kfd_ioctl_destroy_queue_args a; rd(p,&a,sizeof a);
@@ -208,6 +214,9 @@ static void complete_packets(void) {
         uint32_t h; rd(p,&h,4); CHECK(h==0x21502);
         uint16_t wg[3]; rd(p+4,wg,sizeof wg); CHECK(wg[0]==64 && wg[1]==1 && wg[2]==1);
         uint64_t kd=word(p+32),args=word(p+40),sig=word(p+56);
+        /* HSA packet private/group ordering is independent of the AMD descriptor order. */
+        uint64_t segments=word(kd);
+        CHECK(word(p+24)==((segments&UINT64_C(0xffffffff))<<32 | segments>>32));
         if(planmode) {
             size_t ci=1+(size_t)(packets%2);
             CHECK(kd>=allocs[ci].va && kd+64<=allocs[ci].va+allocs[ci].size);

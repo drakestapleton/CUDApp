@@ -36,7 +36,7 @@ String pool, then data pool immediately after it, then a 32-byte trailer immedia
 u64 string_pool_offset, string_pool_length, data_pool_offset, data_pool_length (absolute).
 
 ## Execution
-Packets in table order, barrier bit on every packet (same strict order as the HIP stream), completion signal on the last packet of each step; per-step timeout 10 s. The dispatch list is identical every step (device step counter `step_advance`), so packet templates and VRAM kernargs are built once. The ring holds the whole step, grows by powers of two from 16 packets, and is bounded by the UAPI's 32-bit byte-size field. Body copying and aligned header publication are separate phases with CPU fences; one write-pointer/doorbell publication releases each step.
+Packets in table order, barrier bit on every packet (same strict order as the HIP stream), completion signal on the last packet of each step; the optional trailing CLI timeout is per step, with zero/default meaning unlimited. A step over 10 s emits an alarm without refusing it. Only a caller-selected positive deadline exits 75. The dispatch list is identical every step (device step counter `step_advance`), so packet templates and VRAM kernargs are built once. The ring holds the whole step, grows by powers of two from 16 packets, and is bounded by the UAPI's 32-bit byte-size field. Body copying and aligned header publication are separate phases with CPU fences; one write-pointer/doorbell publication releases each step.
 Output per step: `OMEGA_STEP i tok=T us=U` (us = launcher wall clock from first packet write to signal). Final line `OMEGA_PLAN ids=[...]` with the n_gen generated tokens.
 
 ## Model fixture gate

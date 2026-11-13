@@ -180,6 +180,7 @@ def summary(kernels):
     prep = runpy.run_path(str(pathlib.Path(__file__).with_name('prep.py')))
     token = runpy.run_path(str(pathlib.Path(__file__).with_name('token.py')))
     norm = runpy.run_path(str(pathlib.Path(__file__).with_name('norm.py')))
+    conv = runpy.run_path(str(pathlib.Path(__file__).with_name('gdnconv.py')))
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
           f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} '
@@ -196,7 +197,8 @@ def summary(kernels):
           f'mlpsilu_counts={",".join(map(str, token["COUNTS"]))} '
           f'mlpsilu_cases={len(token["COUNTS"])} '
           f'rmsnorm5120_rows={",".join(map(str, sorted(set(r for r,_ in norm["CASES"]))))} '
-          f'rmsnorm5120_cases={len(norm["CASES"])} hardware=NOT_RUN')
+          f'rmsnorm5120_cases={len(norm["CASES"])} '
+          f'gdnconv_channels={conv["CHANNELS"]} gdnconv_cases={len(conv["CASES"])} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

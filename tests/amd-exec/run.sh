@@ -168,6 +168,12 @@ for control in rmsnorm5120-no-one rmsnorm5120-wrong-mean rmsnorm5120-dropped-chu
     python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
 done
 python3 -I "$root/tests/amd-exec/norm.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/gdnconv.py" mutate "$src" "$out"
+for control in gdnconv4-no-input-round gdnconv4-no-conv-round gdnconv4-no-silu-round gdnconv4-wrong-cache-shift; do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/gdnconv.py" suite "$out/exec.1" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

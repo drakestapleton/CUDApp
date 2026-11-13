@@ -52,6 +52,8 @@ def check(actual,case):
     assert len(actual)==len(before),'token mismatch memory length'
     untouched = bytearray(actual)
     widest = Fraction(0)
+    for off in case.get('bf16_outputs',[]):
+        assert struct.unpack_from('<I',actual,off)[0]&0xffff==0, f'token mismatch BF16 output offset={off}'
     for off,lo,hi in case['intervals']:
         bits = struct.unpack_from('<I',actual,off)[0]
         lo,hi = Fraction(lo),Fraction(hi)

@@ -1,0 +1,26 @@
+URL https://raw.githubusercontent.com/huggingface/transformers/v5.8.0/src/transformers/models/qwen3_5/modeling_qwen3_5.py
+sha256 641da34484f6b9769e28615c680cc4e3202afbf5bdbf1da7d56d5a3d678918c7
+211:    hidden_states,
+212:    conv_state,
+213:    weight,
+214:    bias=None,
+215:    activation=None,
+216:):
+217:    _, hidden_size, seq_len = hidden_states.shape
+218:    state_len = conv_state.shape[-1]
+219:
+220:    hidden_states_new = torch.cat([conv_state, hidden_states], dim=-1).to(weight.dtype)
+221:    conv_state.copy_(hidden_states_new[:, :, -state_len:])
+222:    out = F.conv1d(hidden_states_new, weight.unsqueeze(1), bias, padding=0, groups=hidden_size)
+223:    out = F.silu(out[:, :, -seq_len:])
+224:    out = out.to(hidden_states.dtype)
+225:    return out
+455:        if use_precomputed_states and seq_len == 1:
+456:            # Single-token cached decode: the fused per-step kernel updates the conv state in-place.
+457:            mixed_qkv = self.causal_conv1d_update(
+458:                mixed_qkv,
+459:                conv_state,
+460:                self.conv1d.weight.squeeze(1),
+461:                self.conv1d.bias,
+462:                self.activation,
+463:            )

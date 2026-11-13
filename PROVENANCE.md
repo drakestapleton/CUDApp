@@ -1133,3 +1133,49 @@ as §18: all outputs/guards, genuine wrong-object controls, event and
 warm/cold wall timing with every timed copy checked, and a separate torch
 line labeled “(AMD library, not Omega)”. Kernel and notebook hardware
 execution remain NOT_RUN until the parent runs that section on MI300X.
+
+## 20. Gated delta net BF16 causal convolution
+
+`gdnconv4` implements the single-token cached convolution in
+[Transformers v5.8.0 lines211–225 and455–463][prep-reference].
+The pinned config revision017b9c7a (§17) has kernel4, key heads16,
+value heads48, head dimensions128 and BF16 model weights. The channel
+layout is Q[16][128], K[16][128], V[48][128], totaling10240.
+
+The dtype boundaries follow the reference, not a new FP32-only variant:
+line220 concatenates the existing cache and projected token and converts
+to the weight dtype; line221 copies the last state_len entries back;
+line222 runs the grouped BF16 convolution, whose result is BF16;
+line223 applies SiLU to that BF16 result, producing BF16; line224 converts
+back to the incoming hidden-state dtype. This interface takes the incoming
+projection as FP32, explicitly rounds it to BF16 for the append, uses BF16
+weights/cache and FP32 accumulating FMA, rounds the convolution result to
+BF16 before SiLU, and rounds SiLU to BF16 before widening its output to
+FP32. Subsequent Q/K normalization therefore receives those widened values.
+
+ABI (40 bytes): input pointer0, weight pointer8, old_cache pointer16,
+new_cache pointer24, output pointer32. Input/output are [10240] FP32;
+weight/old_cache/new_cache are [10240][4] BF16, tap-major inside each
+channel. All buffers are disjoint. The new state is old[1],old[2],old[3],
+RN_BF16(input). Old state is immutable; the caller swaps old/new pointers
+after the launch. Grid X=160, Y=1, block64; additional X/Y groups return.
+
+For each channel, start the accumulator at +0 and FMA the four new-cache
+samples and weights in ascending tap order. BF16 conversion is RN-even
+with signed-zero preservation, infinity preservation and canonical NaN
+0x7fc0. SiLU uses the stable sigmoid order in §18 on the widened BF16
+convolution result. The manual's EXP/RCP error enclosures are propagated
+through FP32 operations and the final BF16 rounding. Every output must
+also lie on the BF16 bit lattice; interval membership alone is insufficient.
+Every new-cache halfword is checked exactly. Existing audited instructions
+are reused, and the all-object scheduling gate is mandatory.
+
+`tests/amd-exec/gdnconv.py` independently constructs the updated cache,
+performs Fraction FMA and BF16 rounding at each stated boundary, and reports
+every output interval and its maximum width. Its cases include zero cache,
+different histories, BF16 ties, subnormals, large values, infinities/NaNs,
+partial dispatch and full10240-channel overdispatch. Separate controls
+remove each of the three BF16 conversions or shift the cache incorrectly.
+The generated notebook section checks all state/output/guard bytes,
+every timed cold copy, genuine wrong objects, and a separately labeled
+BF16 torch grouped-convolution reference. Hardware remains NOT_RUN.

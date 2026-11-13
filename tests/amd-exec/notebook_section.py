@@ -38,6 +38,8 @@ def run_section(ctx):
         assert len(actual) == len(before), 'notebook memory size mismatch'
         unchanged = bytearray(actual)
         widest = Fraction(0)
+        for off in case.get('bf16_outputs',[]):
+            assert struct.unpack_from('<I',actual,off)[0]&0xffff==0, f'{name} BF16 rounding mismatch offset={off}'
         for off, lo, hi in case['intervals']:
             bits = struct.unpack_from('<I', actual, off)[0]
             x = struct.unpack('<f', struct.pack('<I', bits))[0]
@@ -111,6 +113,20 @@ def run_section(ctx):
             n = 5120
             x,w = (tensor(case['args'][j][1],n) for j in (0,1))
             operation = lambda: x*torch.rsqrt(x.square().mean()+1e-6)*(1+w)
+        elif name == 'gdnconv4':
+            n = 16*128*2+48*128
+            x = tensor(case['args'][0][1],n).view(1,n,1)
+            def bfloat(off):
+                values=struct.unpack_from('<'+str(n*4)+'H',image,off)
+                words=struct.pack('<'+str(n*4)+'I',*(v<<16 for v in values))
+                return torch.tensor(struct.unpack('<'+str(n*4)+'f',words),device='cuda',dtype=torch.bfloat16)
+            weight=bfloat(case['args'][1][1]).view(n,1,4)
+            old=bfloat(case['args'][2][1]).view(1,n,4)
+            def operation():
+                state=torch.cat((old,x),dim=-1).to(weight.dtype)
+                new=state[:,:,-4:].clone()
+                out=F.silu(F.conv1d(state,weight,groups=n)[:,:,-1:]).float()
+                return out,new
         else:
             raise ValueError('missing torch reference for '+name)
         operation(); torch.cuda.synchronize()
@@ -121,8 +137,10 @@ def run_section(ctx):
         elapsed = (time.perf_counter()-start)*1000/repetitions
         # Different reduction/exp implementations are deliberately not the Omega
         # interval oracle. Print the reference clock without claiming bit parity.
-        assert torch.isfinite(reference).all().item()
-        say(f'torch {name} (AMD library, not Omega) warm_wall_ms={elapsed:.6f} dtype=FP32')
+        for value in reference if isinstance(reference,tuple) else (reference,):
+            assert torch.isfinite(value).all().item()
+        dtype = 'BF16-conv/cache FP32-accum/output' if name == 'gdnconv4' else 'FP32'
+        say(f'torch {name} (AMD library, not Omega) warm_wall_ms={elapsed:.6f} dtype={dtype}')
     except ImportError:
         say(f'torch {name} (AMD library, not Omega) NOT_RUN unavailable')
     return True

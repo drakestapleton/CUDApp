@@ -797,3 +797,14 @@ test-dagsim-resolve-om:
 .PHONY: test-dagsim-corpus-om
 test-dagsim-corpus-om:
 	sh tests/dagsim/corpus_gate.sh
+
+# The shared CLI is consumed by both original-seed AMD tools and the newer
+# native launcher. Release readiness must validate both compiler paths.
+AMD_LAUNCH_OMC ?=
+.PHONY: test-amd-launch test-amd-release
+test-amd-launch:
+	@test -n "$(AMD_LAUNCH_OMC)" || { echo "Set AMD_LAUNCH_OMC to the launcher COMPILER pin" >&2; exit 64; }
+	python3 -I tests/amd-kfd-launch/check.py "$(AMD_LAUNCH_OMC)"
+
+test-amd-release: test-amd
+	$(MAKE) test-amd-launch AMD_LAUNCH_OMC="$(AMD_LAUNCH_OMC)"

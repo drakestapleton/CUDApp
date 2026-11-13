@@ -89,3 +89,8 @@ stdout on refusal, and send errors to stderr through the full-write helper.
 Before reviewing a shared CLI change, run both the pinned older KFD gate and the
 new launcher gate. Numeric field IDs0..5 identify the six existing parser checks;
 the plan table verifies every ID on stderr and asserts stdout stays empty.
+
+`make test-amd-release` is the repository's combined pre-review gate. It runs the
+original compiler's test-amd suites before the newer launcher's gate, so a shared
+CLI change cannot pass release readiness by testing only its newer caller. Keep
+both pins explicit; hardware qualification remains a separate exact-binary check.

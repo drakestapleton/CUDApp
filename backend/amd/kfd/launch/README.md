@@ -10,6 +10,16 @@ Intent: exercise our seeded gfx942 code objects through Omega on MI300X, with a 
 python3 -I tests/amd-kfd-launch/check.py /absolute/path/to/omega-mv/seed/out/omc
 ```
 
+For release readiness, run the repository target below. It first runs the AMD,
+KFD, execution and multitarget suites with their original seeded compiler, then
+the launcher suite with its own newer pin. This catches shared-CLI compatibility
+and binary-output regressions as well as native-launcher failures. Both compiler
+paths are explicit and independently digest-checked; a missing tool or pin fails.
+
+```
+make test-amd-release OMEGA_OMC=/absolute/path/to/original/omc AMD_LAUNCH_OMC=/absolute/path/to/launcher/omc
+```
+
 On Spark run CPU jobs through the assigned pool lock, nice and CPU affinity. `AMD_KFD_LAUNCH_OUT` chooses a new evidence directory; do not overwrite an old receipt. The gate emits `results.json`, `summary.json`, binaries, malformed objects and calculation queries/results. It exercises native and qemu-x86_64 ELF parsing and absent-device errno; a native ptrace instrument replaces device opens with memfds and all KFD ioctls with checked replies. It checks GPU identity, UAPI layout, same-VA render mappings, separate KFD doorbell mapping, queue fields, generic CLI ring wrap, output bytes and cleanup. A second instrument checks each native instruction's packet publication order. Wrong GPU records, early valid headers and missing completion must fail. These instruments are not a GPU emulator, shader executor or hardware qualification.
 
 ## Commands
@@ -186,3 +196,8 @@ The CPU table checks the reason and runs a valid positive twin through the same
 argument builder before counting a refusal. ABI publication checks call both real
 packet writers, comparing private=20/group=4096 with the independent AQL encoder;
 this synthetic unit does not expand the ELF loader's supported scratch subset.
+
+Numeric refusals preserve empty payload stdout and report
+`OMEGA refuse number field=N` on stderr with exit 2. The six field IDs are
+specified at the shared CLI parser's diagnostic helper. Valid numeric parsing
+and its unsigned bounds are unchanged.

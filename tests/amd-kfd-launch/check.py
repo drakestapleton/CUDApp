@@ -357,8 +357,19 @@ ringunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','
 ringunit+=(root/'backend/amd/kfd/cli.om').read_text()
 # pw widths are fixed at production call sites. This defensive helper boundary is
 # not reachable by plan bytes; exercise it explicitly instead of inventing a plan row.
-widthunit=ringunit+'fn main to int\nput ps 2 16\nr = pw 0 9\nret 99\nend\n'
-u=compile('plan-helper-word-width',widthunit)
+def word_width_unit(width):
+    # The valid and refusing twins share real storage and the same known bytes.
+    setup='fn main to int\nput ps 0 ulong checked mapnew -1 0 16 3 34\nput ps 2 16\nr = checked mapset long get ps 0 0 4 287454020\nr = checked mapset long get ps 0 4 4 1432778632\n'
+    main=setup+'value = pw 0 '+str(width)+'\n'
+    if width<=8:
+        expected=0x5566778811223344 & ((1<<(width*8))-1)
+        main+='if ne value ulong '+str(expected)+'\nret 99\nend\nret 0\nend\n'
+    else:main+='ret 99\nend\n'
+    return ringunit+main
+for width in (1,4,8):
+    u=compile('plan-helper-valid-width-'+str(width),word_width_unit(width))
+    run('positive twin plan helper legal width '+str(width),[u])
+u=compile('plan-helper-word-width',word_width_unit(9))
 p=run('plan helper refuses impossible input width',[u],64)
 assert p.stdout==b'OMEGA refuse plan field=word-width\n'
 ringmain='fn main to int\n'

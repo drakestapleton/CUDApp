@@ -98,3 +98,12 @@ both pins explicit; hardware qualification remains a separate exact-binary check
 Reference ranges are derived from unique first/last statement anchors in the
 pinned raw files. The gate compares the generated README table with those actual
 line positions, so merely widening a stored numeric range cannot pass.
+
+A defensive helper unit is still a negative-control row. Declaring its invalid
+input unreachable from the public parser does not exempt it from a real valid
+twin. The word-width unit once left its map handle uninitialized: invalid width9
+refused64, but legal width8 trapped103. Its guard-removal result therefore did
+not establish a meaningful positive baseline. The shared word_width_unit builder
+now initializes real mapped data for both paths; legal widths1,4,8 must read the
+known bytes successfully before width9's specific refusal counts. The ring helper
+has its own successful boundary table before the unrepresentable-size refusal.

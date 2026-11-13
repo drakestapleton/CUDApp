@@ -491,3 +491,55 @@ not OCP E4M3FN. This host executor neither reads nor writes SH_MEM_CONFIG.
 The notebook must establish that register precondition through an authorized
 hardware path before dispatch. No register state, GPU dispatch, timing,
 throughput, ROCr loading, or device-output parity has been measured here.
+
+## 14. Seeded direct-KFD gfx942 launcher
+
+`backend/amd/kfd/launch/` is the direct syscall path. Its `COMPILER` pin names
+the seeded omega-mv compiler with checked KFD words. The Linux UAPI layout
+oracle compares installed `linux/kfd_ioctl.h` to `backend/amd/kfd/requests.tsv`;
+the executable does not link that oracle, libc, ROCr, HIP, or a Python runtime.
+The acceptance gate's ptrace simulation never opens a real GPU pathname.
+
+For the FP8 prerequisite, the named upstream source is Linux **v6.18**, not a
+claim about an uninspected ROCm 7.2.2 driver:
+- [register_process, kfd_device_queue_manager.c](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/gpu/drm/amd/amdkfd/kfd_device_queue_manager.c?h=v6.18),
+  lines 1404–1441, calls the ASIC's `update_qpd` at line 1429.
+- [update_qpd_v9, kfd_device_queue_manager_v9.c](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/gpu/drm/amd/amdkfd/kfd_device_queue_manager_v9.c?h=v6.18)
+  initializes `sh_mem_config` (alignment/retry and F8_MODE for GC 9.4.3/9.4.4)
+  and `sh_mem_bases` (LDS/scratch apertures), clearing the alternate aperture.
+  SET_MEMORY_POLICY changes cache policy; it is not required to initialize these
+  bases. The launcher therefore does not request that extra ioctl. It does not
+  enable debugger RUNTIME_ENABLE either.
+- The AMD Instinct MI300 CDNA3 ISA manual, physical PDF p60 (local extracted
+  `AMD_Instinct_MI300_CDNA3_ISA.txt`, lines 3104–3105), requires
+  SH_MEM_CONFIG bit 8 to be set for correct BF8/FP8 results. Source inspection
+  explains the intended driver default; device output remains the required test.
+
+Queue-context sizing and MI300 AQL's zero EOP allocation follow
+[ROCT-Thunk-Interface rocm-6.2.0, src/queues.c](https://github.com/ROCm/ROCT-Thunk-Interface/blob/rocm-6.2.0/src/queues.c)
+and its `hsakmttypes.h` context-save header. Dimensions come from the selected
+topology node. The coherent USER signal layout follows
+[ROCR-Runtime rocm-6.2.0, src/core/inc/amd_hsa_signal.h](https://github.com/ROCm/ROCR-Runtime/blob/rocm-6.2.0/src/core/inc/amd_hsa_signal.h):
+kind at offset zero, value at offset eight. These pinned sources are references,
+not runtime dependencies, and no ROCm 7.2.2 driver-source equivalence is claimed.
+
+The launcher publishes the AQL body before its valid header, then write pointer
+and doorbell, with fences and system-scope packet semantics. A native
+instruction-step test observes ordering, and an early-header mutant must fail.
+The generic CLI ring-wrap and missing-completion controls exercise repeats and
+timeout, separately from the GPU.
+
+The notebook is an external Python-standard-library measuring instrument.
+Its rational scalar oracle checks the finite fixture calculations against the
+fmaf wave64-lane reference. `libm.so.6` supplies only that independent reference.
+Optional `libamdhip64` is a labelled AMD_LIBRARY comparison, never a fallback
+for the Omega path; the cell records its actual runtime version. QEMU, the host
+C compiler and ptrace are test instruments only. Exact object source commits,
+digests, compiler pin, cell and binary hashes come from the bundle generator.
+The correct attention-merge digest is an explicit integration input; the
+silicon-wrong predecessor is rejected rather than silently substituted.
+
+**Hardware NOT_RUN in this lane:** actual mappings, queues, completion, parity,
+register state, kernel timing, attention execution, full Qwen 27B inference and
+Spark comparison. CPU acceptance, object inclusion and another lane's device
+receipt are not this launcher's device evidence.

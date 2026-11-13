@@ -1,0 +1,177 @@
+# launch1: one cell, Python standard-library measuring harness only.
+# The production launcher and object writer are seeded Omega, not Python or HIP.
+import base64, ctypes, hashlib, json, math, os, platform, re, struct, subprocess, tempfile, time, zlib
+from pathlib import Path
+BUNDLE = json.loads(r'''@BUNDLE@''')
+REPORT = Path('amdserve-launch1.txt')
+ROWS = []
+WORK = Path(tempfile.mkdtemp(prefix='omega-launch1-'))
+def say(line):
+    ROWS.append(str(line).replace('\n',' '))
+    temp=REPORT.with_suffix('.tmp'); temp.write_text('\n'.join(ROWS)+'\n'); temp.replace(REPORT)
+    print(ROWS[-1],flush=True)
+def asset(name):
+    a=BUNDLE['assets'][name]; data=zlib.decompress(base64.b64decode(a['zlib_base64']))
+    if hashlib.sha256(data).hexdigest()!=a['sha256']: raise RuntimeError('asset digest '+name)
+    p=WORK/name; p.write_bytes(data)
+    if name=='omega-launch': p.chmod(0o700)
+    return p
+try:
+    ASSETS={name:asset(name) for name in BUNDLE['assets']}
+except Exception as exc:
+    say('FAIL asset unpack: '+str(exc))
+    raise
+BIN=ASSETS['omega-launch']
+REPEATS=200
+SHAPES=[('tail-control',7,1031),('gate/up',17408,5120),('down',5120,17408),('hidden',5120,5120)]
+say('launch1 candidate; OMEGA=seeded direct KFD; AMD_LIBRARY=HIP same objects; no NVIDIA measurements')
+say('pins '+json.dumps(BUNDLE['sources'],sort_keys=True))
+say('assets '+json.dumps({k:v['sha256'] for k,v in BUNDLE['assets'].items()},sort_keys=True))
+say('host arch='+platform.machine()+' kernel='+platform.release()+' libc='+str(platform.libc_ver())+' work='+str(WORK))
+
+def f32(x): return struct.unpack('<f',struct.pack('<f',x))[0]
+LIBM=ctypes.CDLL('libm.so.6')
+FMA=LIBM.fmaf; FMA.argtypes=[ctypes.c_float]*3; FMA.restype=ctypes.c_float
+FP8_CODES=(0x38,0x40,0x48,0xb8,0xc0,0xc8,0x01,0x09)
+BF16_VALUES=(0.75,-0.5,1.25,-1.5,0.0625,0.875,-0.25,0.03125)
+def fp8(code,bias=8):
+    if code==0x80: return float('nan')
+    sign=-1 if code&128 else 1; e=(code>>3)&15; m=code&7
+    return sign*math.ldexp(m/8 if e==0 else 1+m/8,(1 if e==0 else e)-bias)
+def row(kind,r,k):
+    if kind=='fp8':
+        data=bytes(FP8_CODES[(i*5+r*3)%len(FP8_CODES)] for i in range(k))
+        return data,[fp8(x) for x in data]
+    values=[BF16_VALUES[(i*5+r*3)%len(BF16_VALUES)] for i in range(k)]
+    return b''.join(struct.pack('<f',x)[2:] for x in values),values
+
+def reference(weights,x,scale):
+    lanes=[]
+    for lane in range(64):
+        value=0.0
+        for block in range(0,len(x),256):
+            for j in range(4):
+                k=block+4*lane+j
+                if k<len(x): value=FMA(weights[k],x[k],value)
+        lanes.append(value)
+    for distance in (32,16,8,4,2,1): lanes=[f32(lanes[i]+lanes[i^distance]) for i in range(64)]
+    return f32(lanes[0]*scale)
+
+def fixture(kind,m,k):
+    x=[((i*13)%31-15)/16 for i in range(k)]
+    unique=[row(kind,r,k) for r in range(4)]
+    scales=[(1.0,0.5,2.0,0.25)[r] if kind=='fp8' else 1.0 for r in range(4)]
+    expected=[struct.pack('<f',reference(w,x,scales[r])) for r,(_,w) in enumerate(unique)]
+    wpath=WORK/'weights.bin'
+    with wpath.open('wb') as f:
+        for r in range(m): f.write(unique[r%4][0])
+    xpath=WORK/'x.bin'; xpath.write_bytes(struct.pack('<'+'f'*k,*x))
+    paths=[wpath,xpath]
+    if kind=='fp8':
+        spath=WORK/'scale.bin'; spath.write_bytes(b''.join(struct.pack('<f',scales[r%4]) for r in range(m))); paths.append(spath)
+        wrong=[struct.pack('<f',reference([fp8(c,7) for c in data],x,scales[r])) for r,(data,_) in enumerate(unique)]
+        if wrong==expected: raise RuntimeError('FP8 mode control is not discriminating')
+    return paths,b''.join(expected[r%4] for r in range(m))
+
+def manifest(kind,m,k,n):
+    ptrs=4 if kind=='fp8' else 3
+    raw=bytes(ptrs*8)+struct.pack('<II',m,k)
+    pairs=b''.join(struct.pack('<QQ',i*8,i) for i in range(ptrs))
+    return b'OMKFD001'+struct.pack('<QQQQQ',len(raw),m*4,n,300_000_000_000,ptrs)+pairs+raw
+
+def invoke(arguments,label,expected=0):
+    start=time.perf_counter_ns()
+    p=subprocess.run([str(BIN),*map(str,arguments)],capture_output=True,timeout=330)
+    elapsed=time.perf_counter_ns()-start
+    (WORK/(label+'.stdout')).write_bytes(p.stdout); (WORK/(label+'.stderr')).write_bytes(p.stderr)
+    if p.returncode!=expected: raise RuntimeError(label+' exit='+str(p.returncode)+' stdout='+p.stdout.decode(errors='replace')+' stderr='+p.stderr.decode(errors='replace'))
+    return p,elapsed
+
+def omega(kind,m,k,paths,expected,n):
+    args=WORK/'args.bin'; args.write_bytes(manifest(kind,m,k,n))
+    output=WORK/'out.bin'
+    p,wall=invoke(['run',ASSETS[kind+'gemv2.hsaco'],kind+'gemv2',m,1,args,*paths,output],kind+'-'+str(m)+'-'+str(k))
+    got=output.read_bytes()
+    if got!=expected: raise RuntimeError('OMEGA output bits differ '+kind+' '+str((m,k)))
+    match=re.fullmatch(rb'OMEGA dispatch_ns=(\d+) packets=(\d+)\n',p.stdout)
+    if not match or int(match[2])!=n: raise RuntimeError('OMEGA timing receipt malformed')
+    return int(match[1])/n,wall/n
+
+class Hip:
+    def __init__(self):
+        self.lib=None
+        for name in ('libamdhip64.so','/opt/rocm/lib/libamdhip64.so','/opt/rocm/lib64/libamdhip64.so'):
+            try: self.lib=ctypes.CDLL(name); self.name=name; break
+            except OSError: pass
+        if self.lib is None: raise FileNotFoundError('libamdhip64 unavailable')
+        P=ctypes.c_void_p; U=ctypes.c_uint; Z=ctypes.c_size_t; I=ctypes.c_int
+        signatures={'hipInit':[U],'hipRuntimeGetVersion':[ctypes.POINTER(I)],'hipMalloc':[ctypes.POINTER(P),Z], 'hipFree':[P], 'hipMemcpy':[P,P,Z,I], 'hipModuleLoadData':[ctypes.POINTER(P),P], 'hipModuleGetFunction':[ctypes.POINTER(P),P,ctypes.c_char_p], 'hipModuleUnload':[P], 'hipModuleLaunchKernel':[P,U,U,U,U,U,U,U,P,ctypes.POINTER(P),ctypes.POINTER(P)], 'hipDeviceSynchronize':[], 'hipEventCreate':[ctypes.POINTER(P)], 'hipEventRecord':[P,P], 'hipEventSynchronize':[P], 'hipEventElapsedTime':[ctypes.POINTER(ctypes.c_float),P,P], 'hipEventDestroy':[P]}
+        for name,types in signatures.items():
+            fn=getattr(self.lib,name); fn.argtypes=types; fn.restype=I
+        self.call('hipInit',0); version=I(); self.call('hipRuntimeGetVersion',ctypes.byref(version)); self.version=version.value
+    def call(self,name,*args):
+        rc=getattr(self.lib,name)(*args)
+        if rc: raise RuntimeError('AMD_LIBRARY '+name+' rc='+str(rc))
+    def measure(self,kind,m,k,paths,expected,n):
+        P=ctypes.c_void_p; ptrs=[]; mod=P(); ev=[]
+        try:
+            for data in [p.read_bytes() for p in paths]+[struct.pack('<I',0x7fc00000)*m]:
+                ptr=P(); self.call('hipMalloc',ctypes.byref(ptr),len(data)); ptrs.append(ptr)
+                host=ctypes.create_string_buffer(data); self.call('hipMemcpy',ptr,host,len(data),1)
+            image=ctypes.create_string_buffer(ASSETS[kind+'gemv2.hsaco'].read_bytes())
+            self.call('hipModuleLoadData',ctypes.byref(mod),image)
+            fn=P(); self.call('hipModuleGetFunction',ctypes.byref(fn),mod,(kind+'gemv2').encode())
+            values=ptrs+[ctypes.c_uint32(m),ctypes.c_uint32(k)]
+            params=(P*len(values))(*(ctypes.addressof(v) for v in values))
+            for _ in range(2):
+                event=P(); self.call('hipEventCreate',ctypes.byref(event)); ev.append(event)
+            self.call('hipDeviceSynchronize')
+            start=time.perf_counter_ns(); self.call('hipEventRecord',ev[0],None)
+            for _ in range(n): self.call('hipModuleLaunchKernel',fn,m,1,1,64,1,1,0,None,params,None)
+            self.call('hipEventRecord',ev[1],None); self.call('hipEventSynchronize',ev[1]); wall=time.perf_counter_ns()-start
+            ms=ctypes.c_float(); self.call('hipEventElapsedTime',ctypes.byref(ms),*ev)
+            result=ctypes.create_string_buffer(len(expected)); self.call('hipMemcpy',result,ptrs[-1],len(expected),2)
+            if result.raw!=expected: raise RuntimeError('AMD_LIBRARY output bits differ '+kind+' '+str((m,k)))
+            return ms.value*1_000_000/n,wall/n
+        finally:
+            for e in ev: self.call('hipEventDestroy',e)
+            if mod.value: self.call('hipModuleUnload',mod)
+            for p in ptrs: self.call('hipFree',p)
+
+def main():
+    if platform.machine()!='x86_64':
+        say('OMEGA NOT_RUN target requires x86_64 Linux; AMD device rows NOT_RUN'); return
+    # Refusals run before any device access, including on a machine without KFD.
+    bad=WORK/'bad.hsaco'; bad.write_bytes(b'bad ELF')
+    invoke(['inspect',bad,'vadd'],'control-bad-elf',65)
+    args=WORK/'bad.args'; args.write_bytes(bytes(48))
+    invoke(['run',ASSETS['vadd.hsaco'],'vadd',4,1,args,WORK/'unused'],'control-bad-args',64)
+    say('OMEGA CONTROL malformed ELF=65 argument-header=64 PASS')
+    if not Path('/dev/kfd').exists():
+        invoke(['vadd',ASSETS['vadd.hsaco'],'vadd'],'absent-kfd',77)
+        say('OMEGA NOT_RUN /dev/kfd absent; errno=2 exit=77 checked'); return
+    p,wall=invoke(['vadd',ASSETS['vadd.hsaco'],'vadd'],'vadd')
+    if b'OMEGA vadd=PASS count=256\n' not in p.stdout: raise RuntimeError('vadd receipt missing')
+    say('OMEGA vadd PASS '+p.stdout.decode().strip().replace('\n','; '))
+    try:
+        hip=Hip(); say('AMD_LIBRARY '+hip.name+' runtime_version='+str(hip.version)+' same object bytes; not the Omega path')
+    except FileNotFoundError:
+        hip=None; say('AMD_LIBRARY NOT_RUN libamdhip64 unavailable')
+    for label,m,k in SHAPES:
+        for kind in ('fp8','bf16'):
+            paths,expected=fixture(kind,m,k)
+            n=1 if label=='tail-control' else REPEATS
+            dispatch,wall=omega(kind,m,k,paths,expected,n)
+            say('OMEGA '+label+' '+kind+' M='+str(m)+' K='+str(k)+' n='+str(n)+' bitwise=PASS CPU_dispatch_ns/packet='+str(dispatch)+' process_wall_ns/packet='+str(wall))
+            if hip:
+                event,wall=hip.measure(kind,m,k,paths,expected,n)
+                say('AMD_LIBRARY '+label+' '+kind+' bitwise=PASS GPU_event_ns/packet='+str(event)+' host_submit_wait_ns/packet='+str(wall))
+    say('CONTROL FP8 FNUZ-vs-OCP reference discrimination PASS; tail shapes exercised both kernels')
+    say('NOT_RUN full Qwen 27B serving, Spark comparison, attention dispatch; kernel timings alone are not model throughput')
+try:
+    main()
+except Exception as exc:
+    say('FAIL '+type(exc).__name__+' '+str(exc)+'; full stdout/stderr files in '+str(WORK))
+    raise
+finally:
+    say('receipt '+str(REPORT.resolve())+'; inputs, outputs and exact invocation logs retained in '+str(WORK))

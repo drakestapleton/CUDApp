@@ -1,0 +1,1262 @@
+{
+  "schema": "fp8block-acceptance-v1",
+  "status": "EXERCISED",
+  "hardware": "NOT_RUN",
+  "performance": "NOT_RUN",
+  "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+  "source_sha256": {
+    "token_access.py": "4b3db017488b92a8d09440f3eeb289ca21c4fe39cb742c40a735803709398907",
+    "main.om": "4c5cb7e199e28c45aa96aa42bb2b01e2ba341039d33a15edc0a133ab3d3c606e",
+    "fp8gemv_b128.isa": "c948393eba773a12a012d2093fbf58c50500ce591c810567b5200702f46b31aa",
+    "row-probe.om": "06f3987449f5ffd7b38bf1d5c96590e855d5cc091137c7ea5d299755e2ffe6b6",
+    "fp8block.py": "bce40dec545e46153649039edac7c658db75ec4bd1f9aa84ec3cafcff4ad785c",
+    "hsaco.om": "4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1",
+    "fp8gemv_b128-gfx942.s": "c4731577d7be1679c1d952b5d9ad2805808cf91964cf56e630bfede69cc40825",
+    "fp.om": "90b87189e2647f9071e90a738a9b0d2e0ca7b88950c401ce00d5feadd86e0006",
+    "sgemm.py": "8a262ab521815b893e12790c8acbff0e44511224055ce81848201b81acb71e0a",
+    "fma.om": "7ec0ae5afbab2a81dfa9852b3178b91ed05e3a42a988e59affe98b12d19da73e"
+  },
+  "checkpoint": {
+    "manifest_sha256": "9c42e61b30d2f16144b105fe9cc1ac6a58e70bd3f1dde0f6d3f502eb633bb7bb",
+    "shards": [
+      {
+        "file": "layers-0.safetensors",
+        "sha256": "07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466"
+      },
+      {
+        "file": "layers-3.safetensors",
+        "sha256": "302f9af90bb683a8be9e96d124b470a2eddee6612c95c39a8e93f26eb654563d"
+      }
+    ]
+  },
+  "decode_table_sha256": "05b9b79371e8438a68643d0a0ecd44dd49f157947c2ff0a69599acd2278ad303",
+  "kernarg_size": 40,
+  "grid_workgroups": [
+    "M",
+    1,
+    1
+  ],
+  "block": [
+    64,
+    1,
+    1
+  ],
+  "objects": {
+    "fp8gemv_b128": {
+      "file": "fp8gemv_b128.hsaco",
+      "sha256": "d31f212fb2c5dcac5e59fd87dbfbba32ff449d6ba11bde5f634710342eac5325"
+    },
+    "fp8gemv_b128-per-row-scale": {
+      "file": "fp8gemv_b128-per-row-scale.hsaco",
+      "sha256": "f7667827e2134eb54870fc3b849cfc89c3bbbf4eb4064a391cbda7f123e53c3b"
+    },
+    "fp8gemv_b128-transposed-scale": {
+      "file": "fp8gemv_b128-transposed-scale.hsaco",
+      "sha256": "6ce5012584baa7f1b1660a2227a692c3de0b2204e97d5c63cd07aaeb16181392"
+    },
+    "fp8gemv_b128-no-tail-block": {
+      "file": "fp8gemv_b128-no-tail-block.hsaco",
+      "sha256": "31e04e0a9d3282ef5be03d8c09b86d46e7b7d0141d1bb7cbbd8ae0d9c0d73b69"
+    }
+  },
+  "cases": [
+    {
+      "case": "all-ocp-bytes",
+      "M": 256,
+      "K": 1,
+      "rows": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255
+      ],
+      "overdispatch_row": 256,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-0-1",
+      "M": 0,
+      "K": 1,
+      "rows": [],
+      "overdispatch_row": 0,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-0",
+      "M": 3,
+      "K": 0,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-1",
+      "M": 3,
+      "K": 1,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-63",
+      "M": 3,
+      "K": 63,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-64",
+      "M": 3,
+      "K": 64,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-65",
+      "M": 3,
+      "K": 65,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-127",
+      "M": 3,
+      "K": 127,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-128",
+      "M": 3,
+      "K": 128,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-129",
+      "M": 3,
+      "K": 129,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-191",
+      "M": 3,
+      "K": 191,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-255",
+      "M": 3,
+      "K": 255,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-3-256",
+      "M": 3,
+      "K": 256,
+      "rows": [
+        0,
+        1,
+        2
+      ],
+      "overdispatch_row": 3,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "tail-257-259",
+      "M": 257,
+      "K": 259,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        255,
+        256
+      ],
+      "overdispatch_row": 257,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": null
+    },
+    {
+      "case": "checkpoint-10240-5120",
+      "M": 10240,
+      "K": 5120,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        5120,
+        10239
+      ],
+      "overdispatch_row": 10240,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-0.safetensors",
+        "shard_sha256": "07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466",
+        "weight": "model.language_model.layers.0.linear_attn.in_proj_qkv.weight",
+        "weight_data_offsets": [
+          1132608,
+          53561408
+        ],
+        "scale": "model.language_model.layers.0.linear_attn.in_proj_qkv.weight_scale_inv",
+        "scale_sha256": "ad7da085d1446c0262135ea70e629086b28d5a04dc2de201a07d09d3c5f1e358",
+        "row_sha256": {
+          "0": "703f8637cd1f74dc1e91cb43b241ee1a141d452441843c506d56f43c1e5d3514",
+          "1": "9a76294d664073e8b799257466e1c6d5ed115af323a1d46529ef2308c1c7b392",
+          "127": "6fc98e60b42c7a081a46a81c4df1571db2344a34c98ef76b82aa759ba62c8885",
+          "128": "cd448a65744aeec09cc18cb8f1b191a231aa2f84e32209888ffc8f88741439d6",
+          "5120": "521395b82a181465b5cf1fed44f1a25e669aa5140ca957f556a1eca7275a39b1",
+          "10239": "32176299f53bc7838c8637007fced9f88a9cbc7b4a47f02e1e6d9837503953f4"
+        }
+      }
+    },
+    {
+      "case": "checkpoint-6144-5120",
+      "M": 6144,
+      "K": 5120,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        3072,
+        6143
+      ],
+      "overdispatch_row": 6144,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-0.safetensors",
+        "shard_sha256": "07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466",
+        "weight": "model.language_model.layers.0.linear_attn.in_proj_z.weight",
+        "weight_data_offsets": [
+          53561408,
+          85018688
+        ],
+        "scale": "model.language_model.layers.0.linear_attn.in_proj_z.weight_scale_inv",
+        "scale_sha256": "c510749e06dc10c6ebd29af85c6151b52a7de07fa9e5aa1ae82e36e8544d6562",
+        "row_sha256": {
+          "0": "fce57611283e8fcf6ae138a8f1f1a4e2ab85c6913b9c124faa824b0d86f60d98",
+          "1": "896ea5ddbfd08af53e7520d1f1ec99d8ba033cd757a77d487af248e78c5ddbcd",
+          "127": "78935c31c1ea3ed01b2a509a1df496b28b68b88fc2647192c46ef99725127756",
+          "128": "b675fcc3080eeb9b90248868f4dca124a22590e67999b8cc3220e8f1ba84e71a",
+          "3072": "62900a3d385b62d0e0838bd757d50994fa453534ace2dd0797879b19c8ad2c6f",
+          "6143": "5b9608e3be908537f80ea224e14d1e5cab435368acc7e4c9ae3ad889d2feb27d"
+        }
+      }
+    },
+    {
+      "case": "checkpoint-5120-6144",
+      "M": 5120,
+      "K": 6144,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        2560,
+        5119
+      ],
+      "overdispatch_row": 5120,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-0.safetensors",
+        "shard_sha256": "07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466",
+        "weight": "model.language_model.layers.0.linear_attn.out_proj.weight",
+        "weight_data_offsets": [
+          85018688,
+          116475968
+        ],
+        "scale": "model.language_model.layers.0.linear_attn.out_proj.weight_scale_inv",
+        "scale_sha256": "67d30be39e6ddd926e0d5a09075311f29aa7fe2e1ee35b2d04d582a5427dd656",
+        "row_sha256": {
+          "0": "2c8a6f64aa77b67e37db1eeaa0456ab94a4257e71f13b341fb87b3dfbb3e7a9a",
+          "1": "ec24f58ef292622777509bbf553be05660d3d7daa2fff718fef3e48aee0e7f8e",
+          "127": "90d998038643d55efb7f6ce04ba73ab0b60d3594e0cf4a1aa1638ab6efa48912",
+          "128": "34f08ba06aaba1ba6b89780c22e71cab8c705f13ae7936182b786bc44893557d",
+          "2560": "1c3bbff41394a1dde9be500feea2fcb76a81538a315faa6b751728c23ca48636",
+          "5119": "02534059b6b4edd43fbd868695dd44af96e3c1c16f4f9dd7a1fc859953d8aab7"
+        }
+      }
+    },
+    {
+      "case": "checkpoint-5120-17408",
+      "M": 5120,
+      "K": 17408,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        2560,
+        5119
+      ],
+      "overdispatch_row": 5120,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-0.safetensors",
+        "shard_sha256": "07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466",
+        "weight": "model.language_model.layers.0.mlp.down_proj.weight",
+        "weight_data_offsets": [
+          116475968,
+          205604928
+        ],
+        "scale": "model.language_model.layers.0.mlp.down_proj.weight_scale_inv",
+        "scale_sha256": "b1f2251e85c8543362f41efd0ec2a5eedb741d9653d1cb56a7b9581f11cb3b65",
+        "row_sha256": {
+          "0": "29f276e2ae10b9e23ae0cb86a70a4e82baff61c6cc8385e449e1b24620e83815",
+          "1": "8a120729887a906b2f8ed0963994b09bd52ea77e21e8dc07d09ac2d0fc6ca103",
+          "127": "d4a5c914ac1a59b56d84f8444894546d8a9b573f944fde6c5b79ad9a0ef1454f",
+          "128": "af809e860e2c0cd7be23278ee8abfc1a335e4b711eddad10c8f1b94dc3e87450",
+          "2560": "77561bc81c60d016095bc99a745203eb5578eed517288f8d5fc0d63690cabade",
+          "5119": "0bb1d2f2dc818fd7bb3fd6ab378599cfe0989025d37bc7de5ff79937b345f5b5"
+        }
+      }
+    },
+    {
+      "case": "checkpoint-17408-5120",
+      "M": 17408,
+      "K": 5120,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        8704,
+        17407
+      ],
+      "overdispatch_row": 17408,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-0.safetensors",
+        "shard_sha256": "07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466",
+        "weight": "model.language_model.layers.0.mlp.gate_proj.weight",
+        "weight_data_offsets": [
+          205604928,
+          294733888
+        ],
+        "scale": "model.language_model.layers.0.mlp.gate_proj.weight_scale_inv",
+        "scale_sha256": "61495ba505545f7c426e4d42262e7f3d3c8bcf498b67210487372778110d71d5",
+        "row_sha256": {
+          "0": "4c75b2763672cec7af0c1aaf4ede5849957fdb1deffac835da6212357977c19d",
+          "1": "8d37e4a3017dc9f598a2d13da23f60390b350847cde72693ff1de9002980c4e9",
+          "127": "c8cce30b9aff551f39cea56581fde0b41712c5ceaa75e59617fd3e7d16f9eeae",
+          "128": "2681a34fa808cbd4d10f079fad6d75fd99ce46667ff7206bd142dd667443b330",
+          "8704": "53daed99d7685dde64359500138b520cc3be2a9a3fdb20cae6952e2efdf38090",
+          "17407": "c67fa3eaf69a021ba315e427a312dadba8e2646bc9cebd57c4715b6c97d6c37f"
+        }
+      }
+    },
+    {
+      "case": "checkpoint-1024-5120",
+      "M": 1024,
+      "K": 5120,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        512,
+        1023
+      ],
+      "overdispatch_row": 1024,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-3.safetensors",
+        "shard_sha256": "302f9af90bb683a8be9e96d124b470a2eddee6612c95c39a8e93f26eb654563d",
+        "weight": "model.language_model.layers.3.self_attn.k_proj.weight",
+        "weight_data_offsets": [
+          267453824,
+          272696704
+        ],
+        "scale": "model.language_model.layers.3.self_attn.k_proj.weight_scale_inv",
+        "scale_sha256": "04fd70ae4f9f80b4dbace9f2c6ea7edb2eda8b3611c5967b28180fd34623cf3b",
+        "row_sha256": {
+          "0": "d15cc7dd7bb4171c4977db290a0c5394bcbe6c9f2d4114573ec977774d816513",
+          "1": "688c0116a7b1bd1945b23ab5ee6ae2becbf66405212c0e083e53aa1d8bd52798",
+          "127": "66eae0029bd370389a47a0ce27f65a662f199dfb52731161af1fd8d981326fa1",
+          "128": "56dd6dc31b114595605979c6229cf1fe33adbb40dd84758f422f56f4b23d1934",
+          "512": "9e0682ee84e10470ce69e89d30bb672e07fc70e08327f3a9458b7635b21c424e",
+          "1023": "0690d985d5f2b8a881c4f288f60a3d44e0cf7fc73e6f57d4162803781ac9db71"
+        }
+      }
+    },
+    {
+      "case": "checkpoint-12288-5120",
+      "M": 12288,
+      "K": 5120,
+      "rows": [
+        0,
+        1,
+        127,
+        128,
+        6144,
+        12287
+      ],
+      "overdispatch_row": 12288,
+      "comparison": "every memory byte; exact RN-even Fraction wave oracle",
+      "checkpoint": {
+        "shard": "layers-3.safetensors",
+        "shard_sha256": "302f9af90bb683a8be9e96d124b470a2eddee6612c95c39a8e93f26eb654563d",
+        "weight": "model.language_model.layers.3.self_attn.q_proj.weight",
+        "weight_data_offsets": [
+          304153984,
+          367068544
+        ],
+        "scale": "model.language_model.layers.3.self_attn.q_proj.weight_scale_inv",
+        "scale_sha256": "d9bd057c5836811405913af9faf32a9595ff3c156cf9272fc501c512863e35fd",
+        "row_sha256": {
+          "0": "3beccaf9b372605f94d96690759bab4ddf5927ab1dd70bf3f6a7a8b43db31a3f",
+          "1": "f0da1dbdedd500899beefb63595a3e925751c75f8ce016d98b4218131c2d555e",
+          "127": "c09d22c48ffe4e3bef5916e541d89811e5e05660dbc9be2b4ed6bdc5ec2eb34e",
+          "128": "dae9c746bf8a8bd6d644aec5668988f9b3edb64f1d3fea542bcbf1de7a400a2f",
+          "6144": "aef24c086c743dfb44fceb986675520ecf02233991e0c86579ed5ed7232cd05b",
+          "12287": "99d01efa61df1f2f924c1226dc6a3a92944ccb5fecf767ae6c0357f814888c74"
+        }
+      }
+    }
+  ],
+  "bounds": [
+    {
+      "case": "tail-257-259",
+      "M": 257,
+      "K": 259,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        255,
+        256
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 66563,
+          "max_read_offset": 66562,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 1036,
+          "max_read_offset": 1035,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 18,
+          "max_read_offset": 17,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 1028,
+          "max_read_offset": null,
+          "max_write_offset": 1027
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-10240-5120",
+      "M": 10240,
+      "K": 5120,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        5120,
+        10239
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 52428800,
+          "max_read_offset": 52428799,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 6400,
+          "max_read_offset": 6399,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 40960,
+          "max_read_offset": null,
+          "max_write_offset": 40959
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-6144-5120",
+      "M": 6144,
+      "K": 5120,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        3072,
+        6143
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 31457280,
+          "max_read_offset": 31457279,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 3840,
+          "max_read_offset": 3839,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 24576,
+          "max_read_offset": null,
+          "max_write_offset": 24575
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-5120-6144",
+      "M": 5120,
+      "K": 6144,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        2560,
+        5119
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 31457280,
+          "max_read_offset": 31457279,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 24576,
+          "max_read_offset": 24575,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 3840,
+          "max_read_offset": 3839,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 20480,
+          "max_read_offset": null,
+          "max_write_offset": 20479
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-5120-17408",
+      "M": 5120,
+      "K": 17408,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        2560,
+        5119
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 89128960,
+          "max_read_offset": 89128959,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 69632,
+          "max_read_offset": 69631,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 10880,
+          "max_read_offset": 10879,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 20480,
+          "max_read_offset": null,
+          "max_write_offset": 20479
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-17408-5120",
+      "M": 17408,
+      "K": 5120,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        8704,
+        17407
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 89128960,
+          "max_read_offset": 89128959,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 10880,
+          "max_read_offset": 10879,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 69632,
+          "max_read_offset": null,
+          "max_write_offset": 69631
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-1024-5120",
+      "M": 1024,
+      "K": 5120,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        512,
+        1023
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 5242880,
+          "max_read_offset": 5242879,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 640,
+          "max_read_offset": 639,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 4096,
+          "max_read_offset": null,
+          "max_write_offset": 4095
+        }
+      ]
+    },
+    {
+      "case": "checkpoint-12288-5120",
+      "M": 12288,
+      "K": 5120,
+      "sampled_rows": [
+        0,
+        1,
+        127,
+        128,
+        6144,
+        12287
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 62914560,
+          "max_read_offset": 62914559,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 7680,
+          "max_read_offset": 7679,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 49152,
+          "max_read_offset": null,
+          "max_write_offset": 49151
+        }
+      ]
+    },
+    {
+      "case": "per-row-scale",
+      "M": 257,
+      "K": 389,
+      "sampled_rows": [
+        1
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 99973,
+          "max_read_offset": 777,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 1556,
+          "max_read_offset": 1555,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 24,
+          "max_read_offset": 15,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 1028,
+          "max_read_offset": null,
+          "max_write_offset": 7
+        }
+      ]
+    },
+    {
+      "case": "transposed-scale",
+      "M": 257,
+      "K": 389,
+      "sampled_rows": [
+        128,
+        256
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 99973,
+          "max_read_offset": 99972,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 1556,
+          "max_read_offset": 1555,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 24,
+          "max_read_offset": 23,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 1028,
+          "max_read_offset": null,
+          "max_write_offset": 1027
+        }
+      ]
+    },
+    {
+      "case": "no-tail-block",
+      "M": 257,
+      "K": 389,
+      "sampled_rows": [
+        128,
+        256
+      ],
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "W",
+          "bytes": 99973,
+          "max_read_offset": 99967,
+          "max_write_offset": null
+        },
+        {
+          "name": "x",
+          "bytes": 1556,
+          "max_read_offset": 1535,
+          "max_write_offset": null
+        },
+        {
+          "name": "scale_inv",
+          "bytes": 24,
+          "max_read_offset": 21,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 1028,
+          "max_read_offset": null,
+          "max_write_offset": 1027
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "mutant": "per-row-scale",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "mutant": "transposed-scale",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "mutant": "no-tail-block",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "buffer": "kernarg",
+      "result": "CAUGHT one-byte-short span",
+      "exit": 68
+    },
+    {
+      "buffer": "W",
+      "result": "CAUGHT one-byte-short span",
+      "exit": 68
+    },
+    {
+      "buffer": "x",
+      "result": "CAUGHT one-byte-short span",
+      "exit": 68
+    },
+    {
+      "buffer": "scale_inv",
+      "result": "CAUGHT one-byte-short span",
+      "exit": 68
+    },
+    {
+      "buffer": "y",
+      "result": "CAUGHT one-byte-short span",
+      "exit": 68
+    }
+  ]
+}

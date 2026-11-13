@@ -53,14 +53,28 @@ remain for syscall failures. All allocation/map buffers have separate rows.
 
 Queue state includes ring, write/read pointers, context save and a coherent USER signal. The signal starts at the repeat count; each dispatch decrements it. Context sizes follow the cited ROCT gfx942 formula using actual node SIMD, shader-array and XCC properties, rather than a card-name constant. gfx942 AQL needs no EOP allocation. Context debug headers follow the ROCT ABI. The ring's configured size is not a limit on repeats: read-pointer backpressure permits wraparound.
 
-The read-pointer allocation contains the AMD command processor queue tail. It is
-zero-initialized and sets `queue_properties` at read-pointer offset 52 to 2
-(`AMD_QUEUE_PROPERTIES_IS_PTR64`, bit 1). `read_dispatch_id_field_base_byte_offset`
-at offset 8 stays zero: this minimal queue does not provide a preceding HSA queue
-header. The ELF parser therefore refuses kernels requiring `ENABLE_SGPR_QUEUE_PTR`.
-The CPU instrument checks the field at CREATE_QUEUE, and a pointer-mode mutant
-with that bit cleared must fail. The field requirement follows the pinned ROCr
-queue ABI; only card execution can establish whether it explains a prior timeout.
+The launcher owns a zero-initialized 4096-byte AMD queue object. Its write and
+read dispatch IDs are at bytes 56 and 128 of the same live mapping. CREATE_QUEUE
+receives those checked offsets through the compiler, which validates alignment,
+handle lifetime, writable kind and the complete eight-byte extent. The launcher
+owns the larger object extent required by the command processor.
+
+The HSA prefix names the ring, queue size and ID. The queue's read-pointer base
+offset is 128, pointer mode at byte 180 is 2, and the inactive USER signal is a
+separate live allocation. GET_PROCESS_APERTURES_NEW supplies LDS and scratch
+aperture high words for the selected GPU, with exactly one matching record
+required. Empty, truncated, duplicate, invalid or unmatched results are refused.
+CU and wave limits come from the selected node's topology properties. The trusted
+kernel subset still excludes private scratch and queue-pointer arguments.
+
+The AQL ring is executable, readable, writable, coherent GTT memory (allocation
+flags 0xe6000002). Both the full queue layout and executable ring were required
+in the MI300X tests. A non-executable ring generated a GPU memory fault at the
+ring address; setting executable alone with the old minimal queue still timed
+out. No diagnostic observer, event injection, HIP or ROCr participates in the
+production path. The CPU gate checks the entire queue image and zeroed tail,
+ring permission, aperture selection and inactive signal, and rejects deliberately
+broken versions.
 
 The packet body is written while its header is INVALID. A CPU fence precedes the final aligned header write; further fences precede write-pointer and 8-byte doorbell publication. The dispatch has system acquire/release fence scopes and barrier semantics. The launcher bounds host polling by the requested monotonic timeout, waits for signal zero, fences, and copies output. It reports `OMEGA dispatch_ns=... packets=...`; this is host-monotonic dispatch-and-wait time, not GPU event time and not model tokens/s.
 
@@ -98,6 +112,9 @@ included; RESULT is last even on exceptions. `notebook-check.py NEW_DIR GATE_DIR
 checks both parsers, real x86/qemu refusals and absent-device behavior, receipt
 streaming, read-only proc sampling while a real child waits, and digest refusal.
 
-**NOT_RUN until the authorized MI300X run:** actual KFD/GPU execution, direct and
-HIP vadd completion/parity, full 27B serving and any Spark comparison. CPU simulation
-and emulation do not qualify the dispatch on silicon or establish a timeout cause.
+The earlier launch4 bundle remains a vadd diagnostic harness. Hardware evidence
+for the full queue fix is recorded separately: the uninstrumented x86 executable
+`fd85139a4ea58a892a74b910c6432038feb5edbe41c6e4f118357cc57f30aa60`
+passed vadd, 200 repeated vadd packets across ring wrap, fsum16, SGEMM and FP8 GEMV
+with exact fixture outputs on MI300X. These kernel checks do not establish full
+27B serving or a like-for-like Spark comparison.

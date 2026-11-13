@@ -59,7 +59,7 @@ static void replace_call(struct user_pt_regs *r,int nr) {
     struct iovec v={&nr,sizeof nr};
     CHECK(!ptrace(PTRACE_SETREGSET,child,(void *)NT_ARM_SYSTEM_CALL,&v));
 }
-struct alloc { uint64_t va,size,off,handle; int mapped,freed; };
+struct alloc { uint64_t va,size,off,handle; uint32_t flags; int mapped,freed; };
 static struct alloc *allocs;
 static size_t count;
 static uint64_t endoff;
@@ -109,6 +109,24 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         struct kfd_ioctl_acquire_vm_args a; rd(p,&a,sizeof a);
         CHECK(a.drm_fd==(unsigned)drm && a.gpu_id==expected_gpu); break;
     }
+    case AMDKFD_IOC_GET_PROCESS_APERTURES_NEW: {
+        struct kfd_ioctl_get_process_apertures_new_args a; rd(p,&a,sizeof a);
+        CHECK(a.num_of_nodes==64 && a.kfd_process_device_apertures_ptr && !a.pad);
+        struct kfd_process_device_apertures ap[2] = {
+            {UINT64_C(0x3000000000000),UINT64_C(0x30000ffffffff),UINT64_C(0x4000000000000),UINT64_C(0x40000ffffffff),0x10000,UINT64_C(0x7fffffffffff),expected_gpu+1,0},
+            {UINT64_C(0x1000000000000),UINT64_C(0x10000ffffffff),UINT64_C(0x2000000000000),UINT64_C(0x20000ffffffff),0x10000,UINT64_C(0x7fffffffffff),expected_gpu,0}
+        };
+        const char *mode=getenv("KFD_TEST_APERTURE");
+        a.num_of_nodes=2;
+        if(mode) {
+            if(!strcmp(mode,"missing")) ap[1].gpu_id=expected_gpu+2;
+            if(!strcmp(mode,"duplicate")) ap[0].gpu_id=expected_gpu;
+            if(!strcmp(mode,"truncated")) a.num_of_nodes=64;
+            if(!strcmp(mode,"invalid")) ap[1].lds_limit=0;
+            if(!strcmp(mode,"empty")) a.num_of_nodes=0;
+        }
+        wr(a.kfd_process_device_apertures_ptr,ap,sizeof ap); wr(p,&a,sizeof a); break;
+    }
     case AMDKFD_IOC_ALLOC_MEMORY_OF_GPU: {
         struct kfd_ioctl_alloc_memory_of_gpu_args a; rd(p,&a,sizeof a);
         CHECK(a.gpu_id==expected_gpu && a.va_addr && !(a.va_addr%2097152) && a.size && !(a.size%4096));
@@ -116,7 +134,7 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         CHECK(a.flags & KFD_IOC_ALLOC_MEM_FLAGS_PUBLIC);
         allocs=realloc(allocs,(count+1)*sizeof *allocs); CHECK(allocs);
         a.handle=count+1; a.mmap_offset=endoff;
-        allocs[count++]=(struct alloc){a.va_addr,a.size,endoff,a.handle,0,0};
+        allocs[count++]=(struct alloc){a.va_addr,a.size,endoff,a.handle,a.flags,0,0};
         CHECK(a.size<=INT64_MAX-endoff); endoff+=a.size;
         CHECK(!ftruncate(dback,(off_t)endoff)); wr(p,&a,sizeof a); break;
     }
@@ -142,12 +160,23 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         }
         CHECK(count==10 && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
         CHECK(queue.ring_base_address==allocs[5].va && queue.ring_size==1024);
-        CHECK(queue.write_pointer_address==allocs[6].va && queue.read_pointer_address==allocs[7].va);
-        /* AMD CP ABI: queue_properties is 52 bytes after read_dispatch_id.
-         * ROCr sets bit 1 for the 64-bit HSA_LARGE_MODEL runtime. */
-        CHECK((word(queue.read_pointer_address+48)>>32)==2);
+        CHECK(allocs[5].flags & KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE);
+        CHECK(queue.write_pointer_address==allocs[7].va+56 && queue.read_pointer_address==allocs[7].va+128);
+        /* Independent queue image, including all unused bytes and the inactive signal. */
+        uint64_t queue_image[512]={0};
+        queue_image[0]=UINT64_C(1)<<32;
+        queue_image[1]=allocs[5].va;
+        queue_image[3]=16;
+        queue_image[4]=UINT64_MAX;
+        queue_image[8]=UINT64_C(0x2000000010000);
+        queue_image[9]=(UINT64_C(31)<<32)|7;
+        queue_image[17]=128;
+        queue_image[22]=UINT64_C(2)<<32;
+        queue_image[24]=allocs[6].va;
         for (size_t off=0;off<4096;off+=8)
-            CHECK(word(queue.read_pointer_address+off)==(off==48 ? UINT64_C(2)<<32 : 0));
+            CHECK(word(allocs[7].va+off)==queue_image[off/8]);
+        for (size_t off=0;off<4096;off+=8)
+            CHECK(word(allocs[6].va+off)==(off==0 ? 1 : 0));
         CHECK(!queue.eop_buffer_address && !queue.eop_buffer_size);
         CHECK(queue.ctx_save_restore_address==allocs[8].va && queue.ctx_save_restore_size<=allocs[8].size);
         CHECK(queue.ctl_stack_size<=queue.ctx_save_restore_size);

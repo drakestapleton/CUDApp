@@ -113,7 +113,7 @@ def diagnostics(p,read,signal,output):
             name,value=line.removeprefix('OMEGA diag ').split()
             rows[name]=int(value)
     expected={'queue_read_pointer':read,'queue_write_pointer':1,'signal_kind':1,'signal_value':signal,
-              'queue_properties':2,'read_pointer_base_offset':0,'ring_header':0x21502,'ring_slot_byte_offset':0,'queue_id':7,'doorbell_offset':8,
+              'queue_properties':2,'read_pointer_base_offset':128,'ring_header':0x21502,'ring_slot_byte_offset':0,'queue_id':7,'doorbell_offset':8,
               'wait_timeout_ns':10_000_000_000,'output_first8_nan_fill_count':8 if output==0x7fc00000 else 0,
               'output_first8_expected_vadd_sum_count':8 if output==0x40000000 else 0}
     for name,off,fmt in [('kernel_code_entry_byte_offset',16,'Q'),('compute_pgm_rsrc1',48,'I'),
@@ -134,7 +134,7 @@ def diagnostics(p,read,signal,output):
 with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     node=Path(tmp)/'2'; node.mkdir()
     (node/'gpu_id').write_text('1\n')
-    (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 128\nsimd_count 32\nsimd_per_cu 4\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
+    (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 128\nsimd_count 32\nsimd_per_cu 4\nmax_waves_per_simd 8\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
     command=[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd']
     p=run('native simulated orchestration',command)
     diagnostics(p,1,0,0x40000000)
@@ -147,17 +147,25 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
         diagnostics(p,read,signal,output)
         if child_exit==75:
             assert b'OMEGA step signal_wait fail errno=110' in p.stdout
-    mutant=body.replace('r = checked mapset lh 5 52 4 2\n','r = checked mapset lh 5 52 4 0\n')
+    mutant=body.replace('r = checked mapset lh 5 180 4 2\n','r = checked mapset lh 5 180 4 0\n')
     assert mutant!=body
     bad=compile('queue-ptr32',mutant)
     p=run('CONTROL wrong queue pointer width',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
-    assert b'queue.read_pointer_address+48' in p.stderr
-    mutant=body.replace('r = checked mapset lh 5 52 4 2\n',
-                        'r = checked mapset lh 5 52 4 2\nr = checked mapset lh 5 2040 8 1\n')
+    assert b'queue_image' in p.stderr
+    mutant=body.replace('r = checked mapset lh 5 180 4 2\n',
+                        'r = checked mapset lh 5 180 4 2\nr = checked mapset lh 5 2040 8 1\n')
     assert mutant!=body
     bad=compile('queue-tail-dirty',mutant)
     p=run('CONTROL nonzero unused queue tail',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
-    assert b'queue.read_pointer_address+off' in p.stderr
+    assert b'queue_image' in p.stderr
+    mutant=body.replace('r = allocate 3 1024 0xe6000002', 'r = allocate 3 1024 0xa6000002')
+    assert mutant!=body
+    bad=compile('ring-not-executable',mutant)
+    p=run('CONTROL ring lacks execute permission',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    assert b'KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE' in p.stderr
+    for mode in ('missing','duplicate','truncated','invalid','empty'):
+        p=run('CONTROL aperture '+mode,['env','KFD_TEST_APERTURE='+mode,*command],1)
+        assert b'child_exit=66 ' in p.stderr and b'queued=0' in p.stderr
     # The generic CLI reuses the ring across its boundary, not only one packet.
     ins=[]
     for name in ('a','b'):
@@ -183,7 +191,7 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     for index in range(4):
         node=Path(tmp)/str(index); node.mkdir()
         (node/'gpu_id').write_text('0\n' if index<2 else '37820\n')
-        (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 136\nsimd_count 32\nsimd_per_cu 4\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
+        (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 136\nsimd_count 32\nsimd_per_cu 4\nmax_waves_per_simd 8\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
     command=['env','KFD_TEST_SORT_NODES=1','KFD_TEST_GPU=37820','KFD_TEST_MINOR=136',out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd']
     for deny in ('2/gpu_id','2/properties'):
         args=['env','KFD_TEST_DENY='+deny,*command]
@@ -229,7 +237,7 @@ unit+='''fn main to int
 +hput 8 8 mapaddr lh 0
 +hput 16 8 mapaddr lh 1
 +hput 24 8 mapaddr lh 7
-+hput 32 8 mapaddr lh 4
++hput 32 8 add mapaddr lh 5 56
 +hput 40 8 mapaddr b
 +r = checked write 1 hdr 0 48
 +packet 0

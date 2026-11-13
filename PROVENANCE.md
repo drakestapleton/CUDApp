@@ -539,24 +539,35 @@ digests, compiler pin, cell and binary hashes come from the bundle generator.
 The correct attention-merge digest is an explicit integration input; the
 silicon-wrong predecessor is rejected rather than silently substituted.
 
-**Hardware NOT_RUN in this lane:** actual mappings, queues, completion, parity,
-register state, kernel timing, attention execution, full Qwen 27B inference and
-Spark comparison. CPU acceptance, object inclusion and another lane's device
-receipt are not this launcher's device evidence.
+Hardware qualification is scoped by executable and fixture. The direct queue
+results below establish selected kernels, mappings and completion. Register
+state, full Qwen 27B serving, attention through this launcher and a like-for-like
+Spark comparison remain outside those kernel checks.
 
-### Direct queue pointer-width initialization
+### Direct queue layout and executable AQL ring
 
-The AMD command processor queue tail is based on pinned ROCr rocm-6.2.0:
-- [amd_hsa_queue.h](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/inc/amd_hsa_queue.h) places `read_dispatch_id` at byte 128 and `queue_properties` at byte 180, a relative offset of 52; `AMD_QUEUE_PROPERTIES_IS_PTR64` is bit 1.
-- [amd_aql_queue.cpp](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/core/runtime/amd_aql_queue.cpp) sets that bit for its 64-bit queue and passes the address of `read_dispatch_id` as the KFD read pointer.
+The queue layout follows AMD ROCr's named release sources, also checked against
+ROCm 7.2.2 during the device investigation:
+- [amd_hsa_queue.h, rocm-6.2.0](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/inc/amd_hsa_queue.h) places write_dispatch_id at 56, read_dispatch_id at 128, the read-pointer base offset at 136, queue_properties at 180 and queue_inactive_signal at 192. IS_PTR64 is bit 1.
+- [amd_aql_queue.cpp, rocm-6.2.0](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/core/runtime/amd_aql_queue.cpp) initializes the full queue, aperture high words and CU/wave limits, and passes the dispatch-ID addresses to KFD.
+- [Linux KFD UAPI](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/kfd_ioctl.h?h=v6.18) defines GET_PROCESS_APERTURES_NEW and executable GPU allocation permission. Runtime apertures are selected by the actual GPU ID; they are not hard-coded from one card.
 
-The launcher initializes the tail from the read-pointer base, including that bit.
-It does not construct ROCr's full HSA queue header, and therefore refuses a kernel
-descriptor requesting the queue pointer SGPR. A ptrace assertion checks the tail
-on the actual CREATE_QUEUE call. Clearing IS_PTR64 is a planted-error control;
-this check fails on the preceding launcher. Those CPU results establish the
-initialized bytes, not GPU consumption or completion. launch4 is the separate
-hardware experiment and retains the launch3 baseline receipt unchanged.
+The launcher now owns the full zeroed queue object, an inactive USER signal, and
+an executable GTT ring. Checked compiler offsets bind both dispatch pointers to
+that same live queue map. The CPU oracle checks every queue byte and allocation
+permission before CREATE_QUEUE and rejects wrong pointer mode, a dirty tail,
+missing execute permission and malformed aperture results. The loader still
+refuses queue-pointer SGPR and private-scratch requirements outside its trusted
+kernel subset.
+
+MI300X diagnostic controls established that neither the old minimal queue with
+execute permission nor the full queue without execute permission completed.
+The latter produced a memory-fault event at the ring VA. The combined production
+fix then passed uninstrumented vadd, 200-packet ring wrap, fsum16, SGEMM and FP8
+GEMV with exact fixture outputs, executable SHA-256
+`fd85139a4ea58a892a74b910c6432038feb5edbe41c6e4f118357cc57f30aa60`.
+These kernel results do not qualify a complete model-serving path. Earlier
+failed diagnostic receipts remain separate evidence and are not overwritten.
 
 The descriptor requirement bit is defined by the pinned LLVM llvmorg-19.1.7
 [AMDHSAKernelDescriptor.h](https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-19.1.7/llvm/include/llvm/Support/AMDHSAKernelDescriptor.h),

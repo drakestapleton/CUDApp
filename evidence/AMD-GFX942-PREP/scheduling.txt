@@ -1,0 +1,14 @@
+PASS scheduling attn256_gate trans_instructions=2 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling attn256_merge trans_instructions=3 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling attn256_part trans_instructions=2 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling attn256_prep trans_instructions=2 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling bf16gemv trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling bf16gemv2 trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling fp8gemv trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling fp8gemv2 trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling fsum16 trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling sgemm trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling vadd trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+CONTROL scheduling-attn256_merge-no-wait CAUGHT missing transcendental wait: attn256_merge-no-trans-wait.hsaco: ['000000000474:v_rcp_f32 -> 000000000478:v_mul_f32']
+CONTROL scheduling-attn256_gate-no-wait CAUGHT missing transcendental wait: attn256_gate-no-trans-wait.hsaco: ['0000000003E0:v_exp_f32 -> 0000000003E4:v_add_f32']
+PASS scheduling objects=11 controls=2 hardware=NOT_RUN

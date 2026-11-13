@@ -831,8 +831,8 @@ remainder alone.
 | V_EXP_F32 | 195 | pow(2,S0),1ULP, input/output denormals flushed; -infinity maps0, signed zero maps1, +infinity maps+infinity. | [VOP1Instructions.td][attn-vop1], opcode32 |
 | V_RCP_F32 | 196 | Reciprocal,1ULP, input/output denormals flushed; signed zero/infinity map to signed infinity/zero. | [VOP1Instructions.td][attn-vop1], opcode34 |
 
-Every new opcode has manual-derived single-step cases preserving inactive
-lanes/registers and flags, plus a control changing its semantics. The
+Every new opcode has manual-derived single-step cases checking results
+and flags; the shared vector-lane dispatcher retains its inactive-lane cases. The
 gate retains all earlier cases. Literal/source/modifier refusal boundaries
 remain those in sections10–15; no kernel-name recognition is introduced.
 
@@ -856,3 +856,186 @@ checks are not hardware qualification or a measured speedup.
 
 [attn-config]: https://huggingface.co/Qwen/Qwen3.8-27B-FP8/resolve/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/config.json
 [attn-vop1]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td
+
+## 17. gfx942 fused full-attention preparation and output gate
+
+This follows the same pinned [Q27 config][attn-config] as section16.
+The gate verifies its digest and the compiled specialization:24 Q heads,
+4 KV heads,256 dimensions, epsilon1e-6, theta10000000, and64 rotary
+dimensions (partial factor0.25). This is the text decode path: the three
+MRoPE position axes all equal P, so interleaving sections[11,11,10]
+does not change the32 inverse-frequency indices. Multimodal unequal-axis
+position construction is not implemented by this text-position producer.
+
+### Reference and layouts
+
+Reference: [Transformers v5.8.0 modeling_qwen3_5.py][prep-reference].
+Lines128–140 define inverse frequencies; lines147–175 form/interleave
+the position embeddings. Lines541–545 define `rotate_half(x)` as
+`[-x_second_half, x_first_half]`; lines570–585 apply it only to the
+rotary prefix. Lines659–665 split each512-element Q projection head into
+Q256 and gate256, then apply Q/K norms. Lines668–672 apply RoPE and append
+K/V. Lines710–723 define zero-centered RMSNorm with `(1 + weight)`.
+Line690 multiplies attention output by **sigmoid(gate)**; this is not
+`silu(gate)`. The latter belongs to the gated-delta norm at lines177–190.
+The config's `output_gate_type: swish` must not override the full-attention
+reference. The existing mathematical reference
+`tests/gpu_decode_attn256_test.c:100–123` agrees on norm/rotation/append
+and line19 explicitly places sigmoid outside the attention core.
+
+This implementation's explicit ABI uses FP32 projection/norm values and
+position embeddings, then rounds only K/V cache storage to BF16.
+It follows the reference formulas, not a claim of PyTorch BF16-intermediate
+bit identity. Norm weights are FP32 views of model weights, shared across
+heads. No weight values, epsilon, or gate data are invented by the kernel.
+
+`attn256_prep` has80-byte kernarg, alignment8:
+
+| Byte offset | Argument | Layout/type |
+| --- | --- | --- |
+| 0 | Q_gate | FP32 `[24][512]`, Q then gate in each head |
+| 8 | K_raw | FP32 `[4][256]` |
+| 16 | V_raw | FP32 `[4][256]` |
+| 24 | Q_weight | FP32 `[256]`, zero-centered |
+| 32 | K_weight | FP32 `[256]`, zero-centered |
+| 40 | cos_sin | FP32 cos32 followed by sin32, shared token position |
+| 48 | Q_out | FP32 `[24][256]` |
+| 56 | K_cache | BF16 `[4][capacity][256]` |
+| 64 | V_cache | BF16 `[4][capacity][256]` |
+| 72 | P | u32 append position |
+| 76 | capacity | u32 allocated cache capacity |
+
+Launch24 by1 workgroups of64 lanes. Head=`s2`, Y=`s3` must be0.
+Overdispatched heads/Y and P>=capacity write nothing. This is the real
+allocated-memory boundary, not an arbitrary token cap. After this launch,
+the core's token count is `T=P+1`. Each wave handles one Q head; the first
+four waves also process the corresponding K/V head. Inputs must not alias
+outputs or the cache append slices. Historical cache positions, packed
+gate halves, raw projections, norm weights and guard bytes remain unchanged.
+
+Norm order: lane i visits dimensions4i+j, j0..3, with FP32 FMA of x*x
+into+0. All64 lanes use snapshot XOR32,16,8,4,2,1 ADD reductions.
+Multiply the sum by1/256, add epsilon (separate RN32 operations), then
+V_RSQ_F32. Multiply x by this reciprocal norm, then by RN32(1+weight).
+For each rotary pair d,d+32, d0..31, output is separately rounded
+`x[d]*cos[d] + (-x[d+32])*sin[d]` and
+`x[d+32]*cos[d] + x[d]*sin[d]`. This is **half pairing**, not adjacent
+even/odd pairing. The DS_BPERMUTE address XOR is32 bytes (lane XOR8),
+with all16 participating lanes active. Dimensions64..255 are unchanged
+after norm. No FMA contraction is substituted across the two rotation
+products/addition.
+
+K and V use integer RN-even BF16 conversion: add0x7fff and retained
+low-bit parity, then shift16. Infinities and signed zero survive;
+any NaN becomes quiet0x7fc0, preventing signaling/low-payload NaNs from
+turning into infinity. Two BF16 values are packed into each existing
+GLOBAL_STORE_DWORD, so no new store opcode or misaligned write is needed.
+
+`attn256_gate` has24-byte kernarg: Q_gate pointer0, core attention FP32
+`[24][256]` pointer8, output of that shape pointer16. Launch96 by1 groups
+of64; overdispatch is guarded. It reads the packed gate half at
+`head*512+256+dimension`. It computes t=exp2(RN32(-abs(g)*LOG2E32)),
+r=rcp(RN32(1+t)), then sigma=r for nonnegative g and sigma=RN32(t*r)
+for negative g. Output is RN32(attention*sigma), not multiplied by g.
+This stable form avoids positive exponent overflow. The gate is a separate
+tiny kernel before o_proj; the existing GEMV2 objects remain unchanged.
+The gate declares32 VGPRs (highest referenced v30), not the prep kernel's48.
+
+### Seeded host position-embedding producer
+
+`backend/amd/gfx942/rope.om` accepts exactly one little-endian u32 P
+on stdin and emits256 bytes: cos32 then sin32 as little-endian FP32.
+Missing/trailing input refuses64 with no output; I/O failure is74.
+It is compiled with the same seeded pin, uses only Omega native arithmetic
+and syscalls, and has no Python/libm/runtime dependency.
+
+Inverse frequency is RN32(1 / RN32(theta^(i/32))), i0..31; position
+is converted to FP32 and multiplied at a FP32 boundary. Power uses
+binary64 range reduction and18 exponential terms. The test-only
+`ropefreq-probe.om` compares all32 frequencies bit-for-bit with independent
+Decimal120-digit power followed by the two required FP32 roundings.
+For sin/cos the producer reduces the FP32 angle with a split pi/2 in
+binary64, computes21st/20th-degree sine/cosine series, selects the quadrant,
+and rounds once to FP32. The64 generated values are shared across every
+attention layer for this token; no head recomputes them on the GPU.
+
+Recorded calculations:
+
+* Wolfram `N[Log[10000000],22]` ->16.11809565095831978812594;
+  `N[2/Pi,22]` ->0.6366197723675813430755351.
+* Wolfram `N[Pi/2-157079601287841796875/10^20,30]`
+  ->3.13916478650481321691639751442e-7.
+  Python byte encoding, `struct.unpack("<Q",struct.pack("<d",
+  3.139164786504813216916397514420985846996875529075603e-7))[0]`
+  ->0x3e95110b4611a626, used as a binary64 bitcast to avoid the pinned
+  compiler's long fractional-literal parser limit.
+* Wolfram `N[Pi,125]` supplied the independent oracle's recorded pi
+  constant; it is not read from the producer.
+* Wolfram `{N[(786/1000)^23/23!,24],N[(786/1000)^22/22!,24],
+  N[2^-42+2^-53+40*2^-52,24],N[2^-39,24]}`
+  ->{1.52133245558152738690949e-25,4.45173619317749744261046e-24,
+  2.36366481942695827456191e-13,1.81898940354585647583008e-12}.
+
+MODELED binary64 allowance, not a formal Lean proof: the21-significant-bit
+high pi/2 part times the at-most32-bit quadrant index is exact in binary64;
+its first subtraction is exact. The low-part representation/product
+errors contribute at most2^-42 over u32 positions. The residual stays
+within0.786 despite quotient rounding; series truncation is bounded by
+the recorded terms, with conservative binary64 roundoff accounting
+2^-53+40*2^-52. The gate's absolute check allows2^-39 plus half a final
+FP32 ULP against independent Decimal120 sine/cosine, including P=2^32-1.
+This allowance is only for generated embeddings; the GPU applies their
+actual bits and gets no added arbitrary output tolerance.
+
+### New opcode audit and gates
+
+| Instruction | CDNA3 physical PDF page | Semantics and side effects | LLVM18.1.3 source |
+| --- | --- | --- | --- |
+| V_RSQ_F32 | 197 | Reciprocal square root,1ULP, input/output FTZ; -0 -> -inf, +0 -> +inf,4 ->0.5,+inf ->+0,-inf -> negative quiet NaN. Active lanes only; EXEC/VCC/SCC and inactive registers unchanged. | [VOP1Instructions.td][attn-vop1], opcode36 |
+| Floating inline selectors240..248 | 42, Table23 | FP32 bits for ±0.5, ±1, ±2, ±4 and the manual's exact0x3e22f983 for1/(2*pi). Scalar/vector MOV preserve flags; inactive vector lanes remain untouched. | Operand encodings, not new opcodes |
+| S_NOP | 138 | Issue delay1..16 clocks from low4 immediate bits; no register, flag or memory changes. The functional executor advances PC only and does not model elapsed cycles. | SOPP opcode0 |
+
+The executor uses native binary64 sqrt/divide followed by FP32/FTZ as
+a bounded representative, not the actual MI300X approximation. Manual
+single-step cases include both end lanes, inactive-lane sentinels, signed
+zeros, subnormals, negative input, infinities and4. Replacing RSQ by
+RCP must be CAUGHT. The bulk probe checks4096 independent positive normal
+inputs against Decimal120 and the manual1ULP enclosure. S_NOP is the only
+other new opcode; earlier audit tables and refusal boundaries apply.
+Every added inline selector has scalar and vector single-step cases, plus
+V_ADD_F32 with inline1.0. Restoring the old refusal must be CAUGHT.
+LLVM selects inline1.0 instead of a literal DWORD; the production tables
+use selector242 so their bytes, lengths and branch displacements match.
+
+CDNA3 pp28–29, Table11: “The hardware does not check for the following
+dependencies; they must be resolved by inserting NOPs or independent
+instructions.” A VALU transcendental followed by a consuming non-trans
+VALU needs one wait state. The merge's RCP and gate's EXP therefore have
+`s_nop 0`; other EXP/RSQ results already have independent intervening
+instructions. `tests/amd/scheduling.py` checks LLVM-decoded bytes from
+every emitted object for this rule, including all earlier GEMV versions.
+It emits real mutant objects with those NOPs removed and requires
+both scheduling failures. This is a static check for this specific hazard,
+not a cycle model or a claim that all other hardware hazards are covered.
+S_NOP single-step cases check low/high immediate bits and unchanged flags;
+a mutant clearing SCC must be CAUGHT.
+
+The prep oracle propagates RSQ intervals through every norm and rotation
+operation, checks every Q output and every appended K/V element, and
+requires all input/history/guard bytes unchanged. BF16 V conversion is
+bit-for-bit including denormals, ties, signed zero, infinities and NaNs.
+For K it reports any BF16 result made ambiguous by the allowed RSQ interval
+rather than hiding it. Exact per-Q-output intervals/widths are filed as
+JSON; each case prints its widest interval. Controls omit the norm's1,
+use the wrong half-pair, write the wrong cache position, truncate BF16,
+multiply the sigmoid result by g, and use the wrong packed-head stride.
+Host-producer controls corrupt rotary dimension and malformed input.
+All earlier gate counts and controls remain. Both new code objects and
+the producer/executor get two byte-identical builds, with LLVM instruction
+and complete descriptor/note parity as before.
+
+**Hardware NOT_RUN:** preparation/gate objects, RSQ/EXP/RCP choices,
+generated-position end-to-end model quality and timing require the
+parent's MI300X bundle. This does not claim complete serving.
+
+[prep-reference]: https://github.com/huggingface/transformers/blob/v5.8.0/src/transformers/models/qwen3_5/modeling_qwen3_5.py

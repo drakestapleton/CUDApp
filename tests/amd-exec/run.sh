@@ -27,8 +27,8 @@ src=$root/backend/amd/gfx942
 printf 'PIN omc=%s\n' "$pin"
 python3 --version
 cat "$src/exec/fp.om" "$src/exec/fma.om" "$src/exec/main.om" > "$out/exec.om"
-for name in hsaco exec; do
-    input=$src/hsaco.om
+for name in hsaco exec rope; do
+    input=$src/$name.om
     [ "$name" != exec ] || input=$out/exec.om
     for iteration in 1 2; do
         timeout 120 "$omc" < "$input" > "$out/$name.$iteration" 2> "$out/$name.$iteration.compile.log"
@@ -143,6 +143,19 @@ for control in no-max wrong-gqa v-from-k; do
     python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/attention-$control.hsaco" "$out/attention-$control.text"
 done
 python3 -I "$root/tests/amd-exec/attention.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/prep.py" mutate "$src" "$out"
+for control in no-one wrong-pair wrong-position truncate-cache extra-swish wrong-gate-stride; do
+    timeout 30 "$out/hsaco.1" "$out/prep-$control.isa" > "$out/prep-$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/prep-$control.hsaco" "$out/prep-$control.text"
+done
+timeout 120 "$omc" < "$out/rope-wrong-dim.om" > "$out/rope-wrong-dim" 2> "$out/rope-wrong-dim.compile.log"
+[ ! -s "$out/rope-wrong-dim.compile.log" ] || { cat "$out/rope-wrong-dim.compile.log"; exit 1; }
+chmod 700 "$out/rope-wrong-dim"
+{ sed '/^fn main to int/,$d' "$src/rope.om"; cat "$root/tests/amd-exec/ropefreq-probe.om"; } > "$out/ropefreq-probe.om"
+timeout 120 "$omc" < "$out/ropefreq-probe.om" > "$out/ropefreq-probe" 2> "$out/ropefreq-probe.compile.log"
+[ ! -s "$out/ropefreq-probe.compile.log" ] || { cat "$out/ropefreq-probe.compile.log"; exit 1; }
+chmod 700 "$out/ropefreq-probe"
+python3 -I "$root/tests/amd-exec/prep.py" suite "$out/exec.1" "$out/rope.1" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

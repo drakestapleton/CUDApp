@@ -88,6 +88,7 @@ attn256_merge:
   s_sub_u32 s28, s18, 1
   s_cbranch_scc1 .L41
   v_rcp_f32 v20, v17
+  s_nop 0
   v_mul_f32 v12, v20, v12
   v_mul_f32 v13, v20, v13
   v_mul_f32 v14, v20, v14

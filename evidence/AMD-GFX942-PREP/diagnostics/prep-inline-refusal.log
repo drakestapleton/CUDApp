@@ -1,0 +1,27 @@
+PASS pinned Q27 config digest and compiled attention dimensions/norm/rotary contract
+PASS rope inverse frequencies=32 bit-exact Decimal power -> RN32 -> reciprocal -> RN32
+PASS rope P=0 cos/sin=64 Decimal-precision=120 max_absolute_error=0
+PASS rope P=1 cos/sin=64 Decimal-precision=120 max_absolute_error=2.92568116e-08
+PASS rope P=63 cos/sin=64 Decimal-precision=120 max_absolute_error=2.94943453e-08
+PASS rope P=64 cos/sin=64 Decimal-precision=120 max_absolute_error=2.92312321e-08
+PASS rope P=65 cos/sin=64 Decimal-precision=120 max_absolute_error=2.77499675e-08
+PASS rope P=8191 cos/sin=64 Decimal-precision=120 max_absolute_error=2.93129703e-08
+PASS rope P=65535 cos/sin=64 Decimal-precision=120 max_absolute_error=2.95510689e-08
+PASS rope P=262143 cos/sin=64 Decimal-precision=120 max_absolute_error=2.84634678e-08
+PASS rope P=4294967295 cos/sin=64 Decimal-precision=120 max_absolute_error=2.93083118e-08
+CONTROL rope-malformed-record CAUGHT lengths=0,3,5 exit=64 no-output
+PASS RSQ manual-1ULP enclosing-oracle inputs=4096 Decimal-precision=120 seed=942197 FTZ
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/prep.py", line 272, in <module>
+    else: suite(sys.argv[2],sys.argv[3],pathlib.Path(sys.argv[4]))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/prep.py", line 252, in suite
+    for p in POSITIONS: prep_check(exe,rope,out/'attn256_prep.text',out,p)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/prep.py", line 163, in prep_check
+    actual = run(exe,code,out/'prep.memory',data,25*64,2)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/prep.py", line 156, in run
+    assert result.returncode == 0 and result.stderr == b'' and result.stdout == b'', result
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: CompletedProcess(args=['/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/focused2/exec.1', '/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/focused2/attn256_prep.text', '/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/focused2/prep.memory', '1600', '2'], returncode=66, stdout=b'', stderr=b'')

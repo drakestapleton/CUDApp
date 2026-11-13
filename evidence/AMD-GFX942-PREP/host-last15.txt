@@ -1,0 +1,15 @@
+PASS scheduling bf16gemv trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling bf16gemv2 trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling fp8gemv trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling fp8gemv2 trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling fsum16 trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling sgemm trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+PASS scheduling vadd trans_instructions=0 rule=CDNA3-p28-29-trans-consumer
+CONTROL scheduling-attn256_merge-no-wait CAUGHT missing transcendental wait: attn256_merge-no-trans-wait.hsaco: ['000000000474:v_rcp_f32 -> 000000000478:v_mul_f32']
+CONTROL scheduling-attn256_gate-no-wait CAUGHT missing transcendental wait: attn256_gate-no-trans-wait.hsaco: ['0000000003E0:v_exp_f32 -> 0000000003E4:v_add_f32']
+PASS scheduling objects=11 controls=2 hardware=NOT_RUN
+PASS all emitted objects satisfy CDNA3 transcendental consumer wait
+hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
+hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.
+NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
+AMD-GFX942-HOST PASS pass=97 fail=0 kernels=attn256_gate,attn256_merge,attn256_part,attn256_prep,bf16gemv,bf16gemv2,fp8gemv,fp8gemv2,fsum16,sgemm,vadd hardware=NOT_RUN

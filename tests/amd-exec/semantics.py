@@ -69,6 +69,13 @@ for op, a, expected in [(32, 0xff800000, 0), (32, 0x80000000, 0x3f800000),
                         (34, 0, 0x7f800000), (34, 0x7f800000, 0), (34, 1, 0x7f800000)]:
     case(f'trans-{op}-{a:x}', 195 if op == 32 else 196,
          [0x7e000000 | 3 << 17 | op << 9 | 257], {v(1): a}, {v(3): expected})
+for a, expected in [(0xff800000, 0xffc00000), (0x80000000, 0xff800000),
+                    (0, 0x7f800000), (0x40800000, 0x3f000000),
+                    (0x7f800000, 0), (1, 0x7f800000), (0x80000001, 0xff800000),
+                    (0xbf800000, 0xffc00000)]:
+    case(f'rsq-{a:x}', 197, [0x7e000000 | 3 << 17 | 36 << 9 | 257],
+         {v(1): a, v(3,1): 0xdeadbeef, v(1,63): a},
+         {v(3): expected, v(3,63): expected}, ex=(1 << 63)|1)
 for op, label in [(36, 'mul-low'), (44, 'mul-high')]:
     for a, b in [(U32, U32), (0x80000000, 3), (0, 17)]:
         product = a*b
@@ -93,6 +100,8 @@ for ex in [0, 1]:
 for wait in [0xc07f, 0x0f70]:
     case(f'wait-{wait}', 141, [0xbf8c0000 | wait])
 case('endpgm', 138, [0xbf810000], running=0)
+for immediate in (0,15,65535):
+    case(f'nop-{immediate}',138,[0xbf800000 | immediate])
 # Scalar memory components individually ignore low two bits (p68), not just the final sum.
 mem = struct.pack('<16I', *range(0x12340000, 0x12340010))
 for op in [0, 1, 2]:
@@ -126,6 +135,13 @@ case('cmp-zero-exec', 22, [cmpword | 257], ex=0, nvc=0)
 case('vmov-inline-negative', 186, [0x7e000200 | 3 << 17 | 193], result={v(3): U32})
 case('vmov-literal', 186, [0x7e000200 | 3 << 17 | 255, 0x80000001], result={v(3): 0x80000001})
 case('vmov-exec-hi', 186, [0x7e000200 | 3 << 17 | 127], result={v(3): 0x80000000, v(3,63): 0x80000000}, ex=(1 << 63)|1)
+# Table23 p42 specifies the floating inline selector bits, including exact 1/(2*pi).
+for selector, value in enumerate((0.5,-0.5,1.0,-1.0,2.0,-2.0,4.0,-4.0,None),240):
+    bits = 0x3e22f983 if value is None else struct.unpack('<I',struct.pack('<f',value))[0]
+    case(f'vmov-inline-float-{selector}',42,[0x7e000200 | 3 << 17 | selector],
+         {v(3,1):0xdeadbeef},{v(3):bits,v(3,63):bits},ex=(1 << 63)|1)
+    case(f'smov-inline-float-{selector}',42,sop1(0,a=selector),result={s(8):bits})
+case('vadd-inline-one',42,vop(1,a=242),{v(2):0x3f800000},{v(3):0x40000000})
 # FP bit patterns: exact denormal addition, halfway-to-even, signed zero, exact fused cancellation.
 # The exhaustive Fraction oracle separately covers the numerical algorithms and special values.
 for name, op, a, b, c, answer, page in [
@@ -234,6 +250,11 @@ MUTATIONS = {
     'fmax-ignores-snan': ('ret or a 0x400000', 'ret b'),
     'exp-returns-input': ('r = fpexp r', 'r = r'),
     'rcp-returns-input': ('r = fprcp r', 'r = r'),
+    'rsq-is-rcp': ('r = fprsq r', 'r = fprcp r'),
+    'inline-float-refused': ('if and ge s 240 le s 248\nret\nend',
+                             'if and ge s 240 le s 248\nfail 66\nend'),
+    'nop-clears-scc': ('if eq cl 4\nop = get st 10\ncc = get st 16',
+                      'if eq cl 4\nop = get st 10\nif eq op 0\nput st 16 0\nend\ncc = get st 16'),
     'sub-no-borrow': ('put st 16 fmbool lt a b', 'put st 16 fmbool ge a b'),
     'inactive-vcc': ('if or eq cl 6 and eq cl 5 or eq get st 10 25 eq get st 10 28', 'if eq cl 6'),
     'vcc-source': ('get st 17', 'get st 15'),
@@ -255,6 +276,9 @@ MUTANT_CASE = {
     'lshr-left': 'lshr32-2147483649-33', 'fsub-add': 'fsub-denorm',
     'fmax-ignores-snan': 'fmax-7f801234-3f800000',
     'exp-returns-input': 'trans-32-3f800000', 'rcp-returns-input': 'trans-34-c0000000',
+    'rsq-is-rcp': 'rsq-40800000',
+    'inline-float-refused': 'vmov-inline-float-242',
+    'nop-clears-scc': 'nop-0',
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',
     'vcc-source': 'cmp-vcc-source-snapshot', 'smem-low-bits': 'smem-component-low-bits',
     'smem-offset-low-bits': 'smem-component-low-bits',

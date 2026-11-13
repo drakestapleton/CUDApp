@@ -412,6 +412,9 @@ for table in "$src/"*.isa; do
   else bad "$kernel descriptor entry displacement"; fi
   echo "$kernel OBJECT sha256=$(digest "$out/$kernel-hsaco.hsaco") bytes=$(wc -c < "$out/$kernel-hsaco.hsaco" | tr -d ' ')"
 done
+if python3 -I "$root/tests/amd/scheduling.py" "$src" "$out"; then
+  ok 'all emitted objects satisfy CDNA3 transcendental consumer wait'
+else bad 'CDNA3 transcendental consumer wait'; fi
 # The loader's ACCEPT is NOT a kernel execution check or proof of runtime-loader interoperability.
 echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows'
 echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'

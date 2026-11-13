@@ -189,6 +189,16 @@ done
 python3 -I "$root/tests/amd-exec/decode.py" suite "$out/exec.1" "$out"
 python3 -I "$root/tests/amd-exec/prep_section.py" "$out/exec.1" "$out"
 python3 -I "$root/tests/amd-exec/token_access.py" "$omc" "$src" "$out"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" flat-mutant "$out/exec.om" "$out/exec-flat.om"
+timeout 120 "$omc" < "$out/exec-flat.om" > "$out/exec-flat" 2> "$out/exec-flat.compile.log"
+[ ! -s "$out/exec-flat.compile.log" ] || { cat "$out/exec-flat.compile.log"; exit 1; }
+chmod 700 "$out/exec-flat"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" long-wave "$out/exec.1" "$out/exec-flat" "$out/fp8gemv.text" "$out"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" flat-grid-mutant "$out/exec.om" "$out/exec-flatgrid.om"
+timeout 120 "$omc" < "$out/exec-flatgrid.om" > "$out/exec-flatgrid" 2> "$out/exec-flatgrid.compile.log"
+[ ! -s "$out/exec-flatgrid.compile.log" ] || { cat "$out/exec-flatgrid.compile.log"; exit 1; }
+chmod 700 "$out/exec-flatgrid"
+python3 -I "$root/tests/amd-exec/fp8gemv.py" tall-grid "$out/exec.1" "$out/exec-flatgrid" "$out/vadd.text" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

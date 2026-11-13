@@ -126,5 +126,89 @@ def scale_mutant(source, target):
     pathlib.Path(target).write_text(text.replace(needle, 'I 8 260 1 4\n'))
 
 
+NESTED_WAVE = """while true bound 999999
+c = ulong 0
+while lt c 999998 bound 999999
+if not step pc
+ret
+end
+pc = get st 5
+c = add c 1
+end
+end
+"""
+FLAT_WAVE = """while true bound 999999
+if not step pc
+ret
+end
+pc = get st 5
+end
+"""
+
+
+def flat_mutant(source, target):
+    # The executor before the fix: one wave loop bound 999999 (the pinned compiler's largest bound).
+    text = pathlib.Path(source).read_text()
+    assert text.count(NESTED_WAVE) == 1
+    pathlib.Path(target).write_text(text.replace(NESTED_WAVE, FLAT_WAVE))
+
+
+def long_wave(exe, flat_exe, text, out):
+    # K=100000: eleven wave steps per k (two loads, wait, convert, FMA, four address adds, counter, branch), so one wave runs past 999999 steps.
+    check(exe, text, out, 1, 100000)
+    print('PASS fp8gemv M=1 K=100000 one wave past 999999 steps every-bit all-guards', flush=True)
+    memory = pathlib.Path(out)/'fp8gemv-memory.bin'
+    memory.write_bytes(fixture(1, 100000)[0])
+    result = subprocess.run([flat_exe, str(text), str(memory), '65', '1'], capture_output=True, timeout=600)
+    assert result.returncode == 104, result.returncode
+    print('CONTROL single-loop executor CAUGHT trap exit=104 on the same run', flush=True)
+
+
+NESTED_GRID = """y = ulong 0
+while lt y ny bound 999999
+c = ulong 0
+while and lt y ny lt c 999998 bound 999999
+g = ulong 0
+while lt g groups bound 999999
+d = ulong 0
+while and lt g groups lt d 999998 bound 999999
+wave g y
+g = add g 1
+d = add d 1
+end
+end
+y = add y 1
+c = add c 1
+end
+end
+"""
+FLAT_GRID = """for y ulong ny
+for g ulong groups
+wave g y
+end
+end
+"""
+
+
+def flat_grid_mutant(source, target):
+    # The dispatch loops before the fix: a variable-count for, which the pinned compiler stops after 1000000 passes (trap 104).
+    text = pathlib.Path(source).read_text()
+    assert text.count(NESTED_GRID) == 1
+    pathlib.Path(target).write_text(text.replace(NESTED_GRID, FLAT_GRID))
+
+
+def tall_grid(exe, flat_exe, text, out):
+    # vadd with count 0 (64 zero bytes of memory): every wave ends before a load, so GRID_Y=1000001 runs 1000001 workgroups.
+    memory = pathlib.Path(out)/'tall-grid-memory.bin'
+    memory.write_bytes(bytes(64))
+    result = subprocess.run([exe, str(text), str(memory), '1', '1000001'], capture_output=True, timeout=1200)
+    assert result.returncode == 0, result.returncode
+    assert memory.read_bytes() == bytes(64)
+    print('PASS vadd count=0 GRID_Y=1000001 exit=0 memory-unchanged', flush=True)
+    result = subprocess.run([flat_exe, str(text), str(memory), '1', '1000001'], capture_output=True, timeout=1200)
+    assert result.returncode == 104, result.returncode
+    print('CONTROL for-loop dispatch executor CAUGHT trap exit=104 at GRID_Y=1000001', flush=True)
+
+
 if __name__ == '__main__':
-    {'suite': suite, 'mutate': mutate, 'scale-mutant': scale_mutant}[sys.argv[1]](*sys.argv[2:])
+    {'suite': suite, 'mutate': mutate, 'scale-mutant': scale_mutant, 'flat-mutant': flat_mutant, 'long-wave': long_wave, 'flat-grid-mutant': flat_grid_mutant, 'tall-grid': tall_grid}[sys.argv[1]](*sys.argv[2:])

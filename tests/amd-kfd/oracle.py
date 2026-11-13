@@ -104,7 +104,16 @@ def exercise(root, out):
 
     src_table = root / 'backend/amd/kfd/requests.tsv'
     native_table = out / 'native-table.tsv'
-    assert src_table.read_bytes() == native_table.read_bytes(), 'header and repository table differ'
+    def header_rows(path):
+        # Every number of every row (requests, sizes, field offsets, widths, counts); comments ignored.
+        return [tuple(map(int, line.split('#', 1)[0].split())) for line in pathlib.Path(path).read_text().splitlines()]
+
+    def matches_header(path):
+        # The one comparison that accepts the repository table: the same numbers, row for row, as the
+        # table regenerated from the live kfd_ioctl.h by the C layout oracle this run.
+        return header_rows(path) == header_rows(native_table)
+
+    assert matches_header(src_table), 'header and repository table differ'
     oracle = table(native_table)
     with (out / 'request-list.tsv').open('w') as report:
         for idx, (req, size, name, fields) in enumerate(oracle):
@@ -131,8 +140,9 @@ def exercise(root, out):
     lines[0] = f'{a + 1}\t{b}\t{c}\t# {comment.strip()}'
     wrong_req = out / 'wrong-request.tsv'
     wrong_req.write_text('\n'.join(lines) + '\n')
-    assert wrong_req.read_bytes() != native_table.read_bytes()
-    print('CONTROL CAUGHT wrong-request-number: complete table comparison rejects GET_VERSION + 1')
+    assert not matches_header(wrong_req)
+    # records never emits the request number, so the header comparison is the only guard for it.
+    print('CONTROL CAUGHT wrong-request-number: the row comparison that accepts requests.tsv rejects GET_VERSION + 1')
 
     # One extra u32 field in the record extent: eight bytes becomes twelve, independently caught
     # both by the header table compare and the exact serialized record length/bytes comparison.
@@ -140,19 +150,23 @@ def exercise(root, out):
     lines[0] = f'{a}\t{b + 4}\t{c}\t# {comment.strip()}'
     wrong_size = out / 'one-field-too-large.tsv'
     wrong_size.write_text('\n'.join(lines) + '\n')
-    assert wrong_size.read_bytes() != native_table.read_bytes()
+    assert not matches_header(wrong_size)
     changed = run('record-off-by-one-field', 'records', [wrong_size, 0, 1, 14])
-    assert changed != struct.pack('<II', 1, 14) and len(changed) == 12
-    print('CONTROL CAUGHT record-off-by-one-field: sizeof mismatch and emitted 12 bytes != header 8 bytes')
+    assert len(changed) == 12 and len(changed) != oracle[0][1]
+    print('CONTROL CAUGHT record-off-by-one-field: row comparison rejects size 12, and Omega then emits 12 bytes where the header record is %d' % oracle[0][1])
     lines = src_table.read_text().splitlines()
     nums, comment = lines[2].split('#', 1)
     off, width, count = map(int, nums.split())
     lines[2] = f'{off + 1}\t{width}\t{count}\t# {comment.strip()}'
     wrong_off = out / 'wrong-field-offset.tsv'
     wrong_off.write_text('\n'.join(lines) + '\n')
-    assert wrong_off.read_bytes() != native_table.read_bytes()
+    assert not matches_header(wrong_off)
     run('record-field-offset', 'records', [wrong_off, 0, 1, 14], 3, b'')
-    print('CONTROL CAUGHT field-offset-plus-one: header comparison and Omega range refusal exit=3')
+    print('CONTROL CAUGHT field-offset-plus-one: row comparison rejects it, and Omega refuses the field range with exit=3')
+    # Index at the top of the 64-bit range: idx + 1 must not wrap into an empty, successful run.
+    run('record-index-max', 'records', [src_table, 2**64 - 1], 3, b'')
+    run('record-index-past-end', 'records', [src_table, len(oracle)], 3, b'')
+    print('PASS records refuses index 2^64-1 and the first index past the table with exit=3, nothing emitted')
     over_fuel = out / 'field-count-over-fuel.tsv'
     # Keep every preceding field valid: a truncated table would refuse 3 before exhausting fuel.
     over_fuel.write_text('0 4 1000001\n' + '0 4 1\n' * 1000001)

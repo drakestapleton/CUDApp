@@ -1,0 +1,35 @@
+{
+  "records": [
+    {
+      "case": "actual notebook x86 via qemu, absent KFD and refusals",
+      "exit": 0
+    },
+    {
+      "case": "a64 inspect vadd.hsaco",
+      "exit": 0,
+      "stdout": "OMEGA elf=accepted image_bytes=2608 kernarg_bytes=28\n"
+    },
+    {
+      "case": "x86 inspect vadd.hsaco",
+      "exit": 0,
+      "stdout": "OMEGA elf=accepted image_bytes=2608 kernarg_bytes=28\n"
+    },
+    {
+      "case": "real child observes streaming and three proc samples while waiting; fields unchanged; nonzero exit retained; missing files explicit",
+      "exit": 75,
+      "expected": 75
+    },
+    {
+      "case": "CONTROL execution failure keeps RESULT last",
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "case": "CONTROL corrupted binary digest refused before execution",
+      "exit": 1,
+      "expected": 1
+    }
+  ],
+  "device": "NOT_RUN",
+  "HIP_comparison": "NOT_RUN CPU host; no GPU runtime is imported by the CPU gate"
+}

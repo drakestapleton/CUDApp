@@ -1,0 +1,5 @@
+CONTROLS first: asset digests, malformed ELF, argument header; no changed doorbell values or dispatch variants
+FAIL asset unpack: asset digest omega-launch
+FAIL RuntimeError asset digest omega-launch; full stdout/stderr files in /tmp/omega-launch3-ljo2mgpr
+receipt /tmp/launch3-cpu-t8shhlp3/digest-control/amdserve-launch3.txt; inputs, outputs and invocation logs retained in /tmp/omega-launch3-ljo2mgpr
+RESULT FAIL

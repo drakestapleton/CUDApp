@@ -1,0 +1,51 @@
+{
+  "source_head": "6e13387936a5b1ca56c6a4ed59bcec9a4b1cb2fb",
+  "branch": "amdserve/kfd-launch",
+  "commands": [
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 env AMD_KFD_LAUNCH_OUT=\"/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/amd-kfd-launch/launch3-attempt1\" python3 -I tests/amd-kfd-launch/check.py \"/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/launch2-pin/omc\"",
+      "exit": 1,
+      "log": "logs/gate-attempt1.log",
+      "log_sha256": "b4f19581cf7d85b001815e65161cd0a5b9c8a7a20b47aec9e1bfb6f743770cfa"
+    },
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 env AMD_KFD_LAUNCH_OUT=\"/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/amd-kfd-launch/launch3-attempt2\" python3 -I tests/amd-kfd-launch/check.py \"/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/launch2-pin/omc\"",
+      "exit": 0,
+      "log": "logs/gate-attempt2.log",
+      "log_sha256": "1e8ff15c0a4bcd72e3b94f452d3abc8d9bba0c0d059fa5a129b93ee6dd9addec"
+    },
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/bundle.py --gate build/amd-kfd-launch/launch3-attempt2 --out /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch3",
+      "exit": 0,
+      "log": "logs/bundle.log",
+      "log_sha256": "95a33d3b6ca85111e95132f4057632f7b3e3ac7832cf4c25e27a01444f6f033b"
+    },
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/notebook-check.py /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch3 build/amd-kfd-launch/launch3-attempt2",
+      "exit": 0,
+      "log": "logs/notebook-check.log",
+      "log_sha256": "9e2e9a14f7b349278adaca1e1b1f933298f7e7176186f3e4ff0e4c9182112b90"
+    },
+    {
+      "command": "(cd /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch3 && sha256sum -c SHA256SUMS)",
+      "exit": 0,
+      "log": "logs/checksums.log",
+      "log_sha256": "68ca2702c79e84792e393071f699ae8c2214b022a7de503077be7c5d20a5ec5f"
+    }
+  ],
+  "compiler_head": "290ad5feb9fa34b47e3672f4921f16de7807fca1",
+  "compiler_sha256": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b",
+  "binary_sha256": "58b4d956b77394ef94509ebf3c42cbef81bb796642f4d9f554737b9c2a2cb2b9",
+  "cell_bytes": 41990,
+  "cell_sha256": "58ad5598c5e1412320f841b7a605629ac6cdfa1ae3b905bed5d8704263b110b9",
+  "bundle_path": "/home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch3",
+  "launcher_checks": 52,
+  "notebook_checks": 6,
+  "first_attempt": "Compiler error 9: mapget accepts only widths 4 or 8 in retained compiler. Descriptor properties now read aligned u32 and masked to u16; both targets then passed. Failed attempt preserved.",
+  "diagnostics": "CPU syscall simulation: success; read-pointer unchanged and NaN output at timeout; expected output with nonzero signal at timeout; completion without output fails readback. All create-queue input qwords compared to intercepted ioctl input. Descriptor fields compared with the object file; packet addresses compared with the observed packet.",
+  "node_3_only": "CPU fixtures skip CPU gpu_id=0 and injected EPERM for gpu_id or properties, then select node=3 gpu_id=37820 render_minor=136. See results.json.",
+  "device": "NOT_RUN",
+  "independent_review": "NOT_RUN parent integration responsibility",
+  "merged": "NOT_RUN",
+  "deployed": "NOT_RUN"
+}

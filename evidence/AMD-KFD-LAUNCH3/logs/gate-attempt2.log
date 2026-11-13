@@ -1,0 +1,55 @@
+PASS compile launch-a64 exit 0 expected 0
+PASS compile launch-x86 exit 0 expected 0
+CONTROL wrong compiler refused before execution/output
+PASS compile object writer exit 0 expected 0
+PASS build fp8gemv exit 0 expected 0
+PASS a64 inspect fp8gemv exit 0 expected 0
+PASS x86 inspect fp8gemv exit 0 expected 0
+PASS build fsum16 exit 0 expected 0
+PASS a64 inspect fsum16 exit 0 expected 0
+PASS x86 inspect fsum16 exit 0 expected 0
+PASS build sgemm exit 0 expected 0
+PASS a64 inspect sgemm exit 0 expected 0
+PASS x86 inspect sgemm exit 0 expected 0
+PASS build vadd exit 0 expected 0
+PASS a64 inspect vadd exit 0 expected 0
+PASS x86 inspect vadd exit 0 expected 0
+PASS a64 refuse truncated exit 65 expected 65
+PASS x86 refuse truncated exit 65 expected 65
+PASS a64 refuse wrong-machine exit 65 expected 65
+PASS x86 refuse wrong-machine exit 65 expected 65
+PASS a64 refuse wave32 exit 65 expected 65
+PASS x86 refuse wave32 exit 65 expected 65
+PASS a64 refuse negative-entry exit 65 expected 65
+PASS x86 refuse negative-entry exit 65 expected 65
+PASS a64 missing descriptor exit 65 expected 65
+PASS a64 absent KFD exit 77 expected 77
+PASS a64 refuse argument header exit 64 expected 64
+PASS x86 missing descriptor exit 65 expected 65
+PASS x86 absent KFD exit 77 expected 77
+PASS x86 refuse argument header exit 64 expected 64
+PASS compile UAPI layout oracle exit 0 expected 0
+PASS UAPI layout exit 0 expected 0
+PASS compile trace instrument exit 0 expected 0
+PASS compile publication instrument exit 0 expected 0
+PASS native simulated orchestration exit 0 expected 0
+PASS CONTROL diagnostics unconsumed timeout exit 1 expected 1
+PASS CONTROL diagnostics output without completion timeout exit 1 expected 1
+PASS CONTROL diagnostics completion without output exit 1 expected 1
+PASS native generic CLI ring wrap exit 0 expected 0
+PASS CONTROL missing device completion exit 1 expected 1
+PASS compile bad-gpu-record exit 0 expected 0
+PASS CONTROL wrong GPU record exit 1 expected 1
+PASS node-3-only discovery 2/gpu_id exit 0 expected 0
+PASS node-3-only discovery 2/properties exit 0 expected 0
+PASS CONTROL missing selected render node exit 1 expected 1
+PASS compile fatal-topology-open exit 0 expected 0
+PASS CONTROL inaccessible node must not abort exit 1 expected 1
+PASS compile fatal-cpu-node exit 0 expected 0
+PASS CONTROL CPU node must not abort exit 1 expected 1
+PASS compile publication-unit exit 0 expected 0
+PASS native publication order exit 0 expected 0
+PASS compile publication-early-header exit 0 expected 0
+PASS CONTROL early valid header exit 1 expected 1
+AMD-KFD-LAUNCH CPU PASS {"binaries": {"a64": "a5741b585f0f054101b39c4b621870c06c81859d80813e20c6ffbd1cb7cbb7e1", "x86": "58b4d956b77394ef94509ebf3c42cbef81bb796642f4d9f554737b9c2a2cb2b9"}, "checks": 52, "compiler": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b", "device": "NOT_RUN", "failures": 0, "objects": {"fp8gemv": "b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b", "fsum16": "15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478", "sgemm": "466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70", "vadd": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"}, "orchestration": "native CPU syscall simulation only", "publication": "native instruction-step observation only", "qemu": "/usr/bin/qemu-x86_64"}
+NOT_RUN every AMD device row: KFD queues, GPU mappings, completion, parity, timing, Qwen inference

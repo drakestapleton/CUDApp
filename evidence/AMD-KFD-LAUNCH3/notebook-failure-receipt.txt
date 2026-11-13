@@ -1,0 +1,9 @@
+CONTROLS first: asset digests, malformed ELF, argument header; no changed doorbell values or dispatch variants
+launch3 candidate; OMEGA=seeded direct KFD; REFERENCE (AMD runtime loading our object, not the Omega launcher)=independent comparison
+pins {"compiler_head": "290ad5feb9fa34b47e3672f4921f16de7807fca1", "compiler_sha256": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b", "launcher_head": "6e13387936a5b1ca56c6a4ed59bcec9a4b1cb2fb", "launcher_source_sha256": {"backend/amd/kfd/launch/common.om": "988b185dd76cbe558a8520f1d38fd7063069f875bb939ba3d3dd70400edb980f", "backend/amd/kfd/launch/device.om": "c8906492dad2622cd6d404e87fa232cdc976500cb60632f3c7fb59e37bbabf94", "backend/amd/kfd/launch/dispatch.om": "963889dd7f1ad62ffe13686577ada63990ad42d79f97c6d4f0de366e2aee0e18", "backend/amd/kfd/launch/elf.om": "63fb1712a34ff9bec4c9e1e75990afeb76d63a765f5ab547bf0a4d05210337c9", "backend/amd/kfd/launch/main.om": "468650e5918d92df3be203c4d61953330373375c04d0d0be9a42b815b44fb5f1"}, "notebook_template_sha256": "212cbe1c8f36a704cc1023a2894f6c6907db9feecc05e42ab7f9dc9f002c1bca"}
+assets {"omega-launch": "58b4d956b77394ef94509ebf3c42cbef81bb796642f4d9f554737b9c2a2cb2b9", "vadd.hsaco": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"}
+host arch=aarch64 kernel=7.0.0-1019-nvidia libc=('glibc', '2.39') work=/tmp/omega-launch3-j938qeok
+OMEGA topology table fail errno=2 path=/sys/class/kfd/kfd/topology/nodes
+FAIL RuntimeError CONTROL forced execution failure; full stdout/stderr files in /tmp/omega-launch3-j938qeok
+receipt /tmp/launch3-cpu-t8shhlp3/amdserve-launch3.txt; inputs, outputs and invocation logs retained in /tmp/omega-launch3-j938qeok
+RESULT FAIL

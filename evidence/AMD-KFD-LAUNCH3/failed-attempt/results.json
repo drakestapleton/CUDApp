@@ -1,0 +1,8 @@
+[
+  {
+    "case": "compile launch-a64",
+    "exit": 9,
+    "expected": 0,
+    "stderr": "omc: line 855: error 9\n"
+  }
+]

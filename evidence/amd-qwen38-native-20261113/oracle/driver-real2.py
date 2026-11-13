@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # real2: device-stepped Omega decode, graph replay and per-launch comparison.
 import os, sys, json, time, lzma, base64, ctypes, hashlib, subprocess, urllib.request, statistics
 from pathlib import Path

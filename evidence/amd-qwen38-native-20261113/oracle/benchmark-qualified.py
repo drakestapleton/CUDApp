@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """External experiment: archived Spark prompt, fixed generation length and capacity."""
 from pathlib import Path
 import hashlib,json,os,re,statistics,struct,subprocess,threading,time,traceback

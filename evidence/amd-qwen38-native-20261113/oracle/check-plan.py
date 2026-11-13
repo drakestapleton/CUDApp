@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """Harness check, independent of emit-plan.py: parse PLAN with FORMAT.md rules only, then
 (1) every file-backed buffer is exactly one checkpoint tensor's byte range (from the safetensors headers),
 (2) kind 2/4 buffers are 1-D BF16 vectors and their widened values match safetensors' own decoding,

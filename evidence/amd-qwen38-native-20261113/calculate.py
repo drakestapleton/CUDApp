@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # External calculation and evidence verifier, not a production dependency.
 from pathlib import Path
 import json,statistics

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 # External evidence verifier, not a production dependency.
 from pathlib import Path
 import ast,hashlib,json,math,re,subprocess,sys
@@ -6,6 +7,9 @@ hashes=json.loads((D/'SHA256.json').read_text())
 actual={str(f.relative_to(D)) for f in D.rglob('*') if f.is_file() and f.name!='SHA256.json'}
 assert actual==set(hashes),(actual-set(hashes),set(hashes)-actual)
 for name,digest in hashes.items():assert hashlib.sha256((D/name).read_bytes()).hexdigest()==digest,name
+for name,entry in json.loads((D/'oracle/ORIGINAL_SCRIPTS.json').read_text()).items():
+ raw=(D/name).read_bytes();prefix=entry['portable_prefix'].encode();assert raw.startswith(prefix)
+ assert hashlib.sha256(raw[len(prefix):]).hexdigest()==entry['original_sha256'],name
 v=json.loads((D/'native/state.json').read_text());h=json.loads((D/'numerical/graph.json').read_text());f=json.loads((D/'oracle/lighthouse256.json').read_text())
 assert h['capacity']==f['capacity']==131072 and len(h['ids'])==256
 assert h['fixture_sha256']==hashlib.sha256((D/'oracle/lighthouse256.json').read_bytes()).hexdigest()

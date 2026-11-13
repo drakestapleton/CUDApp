@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """Harness (oracle only): run real2's own Card and AMD-library reference on the lighthouse256 fixture to place the
 native plan's first divergence (index 109). Card source is not edited; GOLD and capacity are overridden here as in
 emit-plan.py. One mode per process, so each gets a fresh device:

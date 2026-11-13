@@ -112,7 +112,10 @@ Build the launcher with the compiler pinned in
 launcher gate checks its compiler digest and rebuilds the code objects. The
 host gates and their exact build head are recorded under `host/`.
 
-The scripts in `oracle/` are copied external measuring instruments. They are
+The scripts in `oracle/` are portable copies of external measuring instruments.
+Only the repository license header was prepended; `oracle/ORIGINAL_SCRIPTS.json`
+records the original hashes and the exact prefix, so the original bytes can be
+verified by removing that prefix. No measuring algorithm was changed. They are
 not imported by, linked into, or required at runtime by the native executable.
 They require Torch and safetensors to record/check a model plan on the CPU.
 `driver-real2.py` pins the checkpoint files and contains the independent HIP
@@ -148,3 +151,6 @@ check and its control. `numerical/` contains all three numerical diagnostics.
 
 Run `python3 verify.py` to verify artifact hashes, raw native steps and IDs,
 independent graph agreement, the coding fixture and the calculation output.
+
+Measurement data is CC0-1.0. Source and documentation retain the repository
+license, Apache-2.0 WITH LLVM-exception.

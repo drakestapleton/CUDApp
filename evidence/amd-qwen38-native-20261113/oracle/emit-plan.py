@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """Harness: write an OMPLAN01 plan (FORMAT.md) from real2's own Card.emit, then decode the file independently and
 compare it with the recorded launch list. Python never touches weight bytes: buffers name (file, offset, length).
 Usage: emit-plan.py DRIVER WEIGHTS OUT.plan [--controls] [--capacity=N] [--fixture-json=PATH]

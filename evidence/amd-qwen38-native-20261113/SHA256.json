@@ -1,8 +1,8 @@
 {
-  "calculate.py": "c9907da0f8f509c4717347383f8871844ce6ed77c441edb01cf7491fc032fb91",
+  "calculate.py": "5d605ec98e6ce34983ef9af789cbee1e9a0e4b73a645c09e4b8f8abb7096de5a",
   "calculations.json": "25d440289ec8e2ca973b5336334fb823ec186162bd7e48d0dfa5a289bb76a8f9",
-  "README.md": "b974209566ad42b0424731501dcbc17f13014b5a3fbdb229f4491109b43b7480",
-  "verify.py": "9a5acf0aa130c17d4ffc3b4e0d88bcf16c1fe5f2fc8c8e8e1cb4ec4130190c9c",
+  "README.md": "38bcb6527ea312f288d9d24bebae6f9cc5237365a4fb065816868850fee8c4f5",
+  "verify.py": "e76124d1ce08c7b2baa60818ccc0819ef0628831a9ee6e15b00ba64df91ca2b0",
   "host/qualification.json": "5d2a21e369345d4450c68fc1ceb5d0a7793aeaf2cdf6dc5eebe5f7e94a766f81",
   "host/exec.log": "2659d5091957bc07c4622e671c86a697a08810c79cd5dfe0a0b5c2eacc4633cb",
   "host/amd.log": "3a7ce100b2cb29bf68b8c0ea644b5f7ada4b942d5221a15a049ef60383f788b5",
@@ -40,12 +40,13 @@
   "numerical/forced.json": "6d8251007316b24d554611da3d83d15f16819fa3daa70d181c25620399b9667f",
   "numerical/reference.json": "6fc9e4b19f06a837d3d7172269b66f631c37da88b83b69c4400d4c0eb02aad82",
   "numerical/graph.json": "ee7b6ee6f97f891e5d35ede9734781bc62981e899bf1a0c0652110f7ed21f264",
-  "oracle/driver-real2.py": "2cc90e51b32686ea599dd971aa47522da250051d89baaea6e15f03a053f67d46",
-  "oracle/emit-plan.py": "5ae0f666f4745884c41d13934d4e69630e9824ff25eabd98fb9e7f72114fdb67",
-  "oracle/benchmark-qualified.py": "0028ebf2beb99f6651f85e262f155410bc17ca5535ce8c605f83ab24b9e93d81",
-  "oracle/check-plan.py": "2def29956c7126860d801c38427caecb99742efaf6c5984f7397319c52ba9d76",
+  "oracle/driver-real2.py": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d",
+  "oracle/emit-plan.py": "26831cddb6834fe75e74e8a5269332b3acb9f72e9d2e7926a63b45565cf9d0cb",
+  "oracle/benchmark-qualified.py": "ae944abf9fcff6f8e53ed70c7934186e0d6f19569bef5c15d3679491a988f3d0",
+  "oracle/ORIGINAL_SCRIPTS.json": "caadcab1e3f08ba27f0762429db60acc71ce49b14e82a10fc24283e544a15221",
+  "oracle/check-plan.py": "71f7c021e6cfa1695017b325c6f95406c6c3eedd59a60a134da1280882cf0c20",
   "oracle/lighthouse256.json": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95",
-  "oracle/lighthouse-oracle.py": "aaadc43e0858bf7907bce6fd87e7ec5609bc49be94278505bd45ddea684f3eb9",
+  "oracle/lighthouse-oracle.py": "eeb7ea8ef2ae6c2ad86c0d869c7d98a606cacc396fb90feeff9cc298a7b2d2e8",
   "spark-baseline/qualification.json": "03ea33de0101e9230f4c88aaadf3c108bcee3ecdfe784c220fb9624c53b7f339",
   "spark-baseline/decode1.response.json": "54013f1b924b50a58400291c4c11b8a39949917d6b0b007deecbf6dfa3bc5d58",
   "spark-baseline/decode1.request.u32le": "6454e84adc8f7914afacd79e0e2f9dd587aba942f130d0ae87f259fa1ba045f5",
@@ -57,5 +58,5 @@
   "coding24/coding24-control.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "coding24/coding24-control.stdout": "6878ab0047c5f92f134577df90eaf7c8e0603e15785c573ea1a75cd4ff52abd1",
   "coding24/coding24.stdout": "ad7166d98130828adba0b77c0b429b8491bf5940408c0744dd56519244784c1b",
-  "coding24/coding24-check.py": "ea24cc666cba3df2609dd65e4a217b2f6eb62063fbf7edcd8be874359b297e39"
+  "coding24/coding24-check.py": "697bffe90614fffcba2f9e56a2e342d5d1f52ec8214712ac937817b9ac8211ce"
 }

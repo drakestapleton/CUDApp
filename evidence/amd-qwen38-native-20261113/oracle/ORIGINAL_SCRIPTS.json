@@ -1,0 +1,26 @@
+{
+  "oracle/driver-real2.py": {
+    "original_sha256": "2cc90e51b32686ea599dd971aa47522da250051d89baaea6e15f03a053f67d46",
+    "portable_prefix": "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
+  },
+  "oracle/emit-plan.py": {
+    "original_sha256": "5ae0f666f4745884c41d13934d4e69630e9824ff25eabd98fb9e7f72114fdb67",
+    "portable_prefix": "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
+  },
+  "oracle/benchmark-qualified.py": {
+    "original_sha256": "0028ebf2beb99f6651f85e262f155410bc17ca5535ce8c605f83ab24b9e93d81",
+    "portable_prefix": "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
+  },
+  "oracle/check-plan.py": {
+    "original_sha256": "2def29956c7126860d801c38427caecb99742efaf6c5984f7397319c52ba9d76",
+    "portable_prefix": "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
+  },
+  "oracle/lighthouse-oracle.py": {
+    "original_sha256": "aaadc43e0858bf7907bce6fd87e7ec5609bc49be94278505bd45ddea684f3eb9",
+    "portable_prefix": "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
+  },
+  "coding24/coding24-check.py": {
+    "original_sha256": "ea24cc666cba3df2609dd65e4a217b2f6eb62063fbf7edcd8be874359b297e39",
+    "portable_prefix": "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
+  }
+}

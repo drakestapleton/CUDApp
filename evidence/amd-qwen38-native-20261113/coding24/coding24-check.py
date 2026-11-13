@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 from pathlib import Path
 import json,subprocess,re,runpy,hashlib,traceback

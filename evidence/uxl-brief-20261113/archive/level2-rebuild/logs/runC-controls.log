@@ -1,0 +1,110 @@
++ date -u +%FT%TZ
+2026-11-13T18:51:08Z
++ git clone -q https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp
++ echo ### rc=0
+### rc=0
++ git -C CUDApp checkout -q dc536882c06a692991be97dc65cd2d037d82b129
++ echo ### rc=0
+### rc=0
++ git -C CUDApp rev-parse HEAD
+dc536882c06a692991be97dc65cd2d037d82b129
++ cp ../B/omega-mv/seed/out/omc omc-onebyte
++ python3 -c 
+import pathlib; p=pathlib.Path('omc-onebyte'); b=bytearray(p.read_bytes()); b[-1]^=1; p.write_bytes(b)
++ + wc -l
+cmp -l ../B/omega-mv/seed/out/omc omc-onebyte
+1
++ sha256sum ../B/omega-mv/seed/out/omc omc-onebyte
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  ../B/omega-mv/seed/out/omc
+93a01e5877b9cc4eee7a96730d704688ed8f74ad3a1b4cb580285a9971d89f56  omc-onebyte
++ cd CUDApp
++ ls -d build
+ls: cannot access 'build': No such file or directory
++ realpath ../omc-onebyte
++ python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/omc-onebyte
+REFUSED compiler digest
++ echo ### rc=69 wrong-compiler (one byte changed)
+### rc=69 wrong-compiler (one byte changed)
++ ls -d build
+ls: cannot access 'build': No such file or directory
++ echo ### ls-build rc=2 (2 = no build directory was created)
+### ls-build rc=2 (2 = no build directory was created)
++ git status --short --ignored
++ head -5
++ echo ### git status lines above (none = tree untouched)
+### git status lines above (none = tree untouched)
++ python3 -I tests/amd-kfd-launch/check.py ../../B/omega-mv/seed/out/omc
++ echo ### rc=64 relative compiler path
+### rc=64 relative compiler path
++ ls -d build
+ls: cannot access 'build': No such file or directory
++ mkdir -p ../noqemu-bin
++ realpath ../noqemu-bin
++ NQ=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin
++ env PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin sh -c command -v qemu-x86_64; echo "### command -v qemu rc=$?"; command -v python3 cc
+### command -v qemu rc=127
+/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin/python3
++ realpath ../../B/omega-mv/seed/out/omc
++ env PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/B/omega-mv/seed/out/omc
++ echo ### rc=1 gate without qemu-x86_64 on PATH
+### rc=1 gate without qemu-x86_64 on PATH
++ tail -2 ../noqemu-gate-stdout.log
++ cut -c1-240
+AssertionError
+
++ tail -5 ../noqemu-gate-stderr.log
++ grep -c ^PASS  ../noqemu-gate-stdout.log
+208
++ grep -c ^FAIL  ../noqemu-gate-stdout.log
+1
++ python3 -c 
+import json; s=json.load(open('build/amd-kfd-launch/gate/summary.json')); print('summary checks',s['checks'],'failures',s['failures'],'qemu',s['qemu'])
+Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: 'build/amd-kfd-launch/gate/summary.json'
++ sha256sum build/amd-kfd-launch/gate/launch-x86 build/amd-kfd-launch/gate/launch-a64 build/amd-kfd-launch/gate/vadd.hsaco
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  build/amd-kfd-launch/gate/launch-x86
+2d6bfba83dcf836f879e318df9df2cc75bd46909f6173c7b3f7b7c36b9e89a47  build/amd-kfd-launch/gate/launch-a64
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  build/amd-kfd-launch/gate/vadd.hsaco
++ python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py
+EVIDENCE PASS 65 hashed files; raw steps/IDs; independent graph; reference coding24; calculations
++ echo ### rc=0 verify.py clean
+### rc=0 verify.py clean
++ python3 -c 
+import pathlib; p=pathlib.Path('evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout'); b=bytearray(p.read_bytes()); b[-2]^=1; p.write_bytes(b)
++ git status --short
+ M evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout
++ python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/CUDApp/evidence/amd-qwen38-native-refusal-20261113/verify.py", line 9, in <module>
+    for name,digest in hashes.items():assert hashlib.sha256((D/name).read_bytes()).hexdigest()==digest,name
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: native/sample1.stdout
++ echo ### rc=1 verify.py after one-byte tamper of native/sample1.stdout
+### rc=1 verify.py after one-byte tamper of native/sample1.stdout
++ date -u +%FT%TZ
+2026-11-13T18:51:55Z
+	Command being timed: "sh ../runC-controls.sh"
+	User time (seconds): 6.63
+	System time (seconds): 13.65
+	Percent of CPU this job got: 43%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:46.99
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 181120
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 121
+	Minor (reclaiming a frame) page faults: 708455
+	Voluntary context switches: 1986934
+	Involuntary context switches: 35167
+	Swaps: 0
+	File system inputs: 25640
+	File system outputs: 355136
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+runC sh rc=0

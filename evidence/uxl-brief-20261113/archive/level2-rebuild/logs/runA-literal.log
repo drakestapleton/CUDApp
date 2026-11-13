@@ -1,0 +1,80 @@
+=== Level 1 block ===
+Cloning into 'CUDApp'...
+### rc=0 pwd=SCRATCH/A
+### rc=0 pwd=SCRATCH/A/CUDApp
+Note: switching to 'dc536882c06a692991be97dc65cd2d037d82b129'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at dc536882 Derive AMD scratch checks from the pinned descriptor definition
+### rc=0 pwd=SCRATCH/A/CUDApp
+EVIDENCE PASS 65 hashed files; raw steps/IDs; independent graph; reference coding24; calculations
+### rc=0 pwd=SCRATCH/A/CUDApp
+=== Level 2 block ===
+Cloning into 'omega-mv'...
+Updating files:  36% (9885/26956)Updating files:  37% (9974/26956)Updating files:  38% (10244/26956)Updating files:  39% (10513/26956)Updating files:  40% (10783/26956)Updating files:  41% (11052/26956)Updating files:  42% (11322/26956)Updating files:  43% (11592/26956)Updating files:  44% (11861/26956)Updating files:  45% (12131/26956)Updating files:  46% (12400/26956)Updating files:  47% (12670/26956)Updating files:  48% (12939/26956)Updating files:  49% (13209/26956)Updating files:  50% (13478/26956)Updating files:  51% (13748/26956)Updating files:  52% (14018/26956)Updating files:  53% (14287/26956)Updating files:  54% (14557/26956)Updating files:  55% (14826/26956)Updating files:  56% (15096/26956)Updating files:  57% (15365/26956)Updating files:  58% (15635/26956)Updating files:  59% (15905/26956)Updating files:  60% (16174/26956)Updating files:  61% (16444/26956)Updating files:  62% (16713/26956)Updating files:  63% (16983/26956)Updating files:  64% (17252/26956)Updating files:  65% (17522/26956)Updating files:  66% (17791/26956)Updating files:  67% (18061/26956)Updating files:  68% (18331/26956)Updating files:  68% (18561/26956)Updating files:  69% (18600/26956)Updating files:  70% (18870/26956)Updating files:  71% (19139/26956)Updating files:  72% (19409/26956)Updating files:  73% (19678/26956)Updating files:  74% (19948/26956)Updating files:  75% (20217/26956)Updating files:  76% (20487/26956)Updating files:  77% (20757/26956)Updating files:  78% (21026/26956)Updating files:  79% (21296/26956)Updating files:  80% (21565/26956)Updating files:  81% (21835/26956)Updating files:  82% (22104/26956)Updating files:  83% (22374/26956)Updating files:  84% (22644/26956)Updating files:  85% (22913/26956)Updating files:  86% (23183/26956)Updating files:  87% (23452/26956)Updating files:  88% (23722/26956)Updating files:  89% (23991/26956)Updating files:  90% (24261/26956)Updating files:  91% (24530/26956)Updating files:  92% (24800/26956)Updating files:  93% (25070/26956)Updating files:  94% (25339/26956)Updating files:  95% (25609/26956)Updating files:  96% (25878/26956)Updating files:  97% (26148/26956)Updating files:  98% (26417/26956)Updating files:  99% (26687/26956)Updating files: 100% (26956/26956)Updating files: 100% (26956/26956), done.
+### rc=0 pwd=SCRATCH/A/CUDApp
+Note: switching to '2ee0a70d1830581b706f288e722f3329d51f3583'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 2ee0a70d Keep the exact closure policy beside its enforcement
+### rc=0 pwd=SCRATCH/A/CUDApp
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  omega-mv/seed/out/omc
+### rc=0 pwd=SCRATCH/A/CUDApp
+../runA-literal.sh: 19: cd: can't cd to CUDApp
+### rc=2 pwd=SCRATCH/A/CUDApp
+realpath: ../omega-mv/seed/out/omc: No such file or directory
+### rc=64 pwd=SCRATCH/A/CUDApp
+sha256sum: build/amd-kfd-launch/gate/launch-x86: No such file or directory
+### rc=1 pwd=SCRATCH/A/CUDApp
+	Command being timed: "sh ../runA-literal.sh"
+	User time (seconds): 9.39
+	System time (seconds): 2.55
+	Percent of CPU this job got: 19%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:02.34
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 201140
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 47
+	Minor (reclaiming a frame) page faults: 132986
+	Voluntary context switches: 49186
+	Involuntary context switches: 13611
+	Swaps: 0
+	File system inputs: 82840
+	File system outputs: 1438224
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+runA sh rc=0

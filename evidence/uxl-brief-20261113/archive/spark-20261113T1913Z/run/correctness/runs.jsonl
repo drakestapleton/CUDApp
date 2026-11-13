@@ -1,0 +1,130 @@
+{
+  "name": "golden",
+  "reply_id": "chatcmpl-18e7b0b47853302d0000",
+  "prompt_tokens": 24,
+  "completion_tokens": 24,
+  "client_wall_s": 3.443073,
+  "client_ms_per_token": 143.461375,
+  "chip_ms_per_token": 125.5,
+  "server_wall_ms_per_token": 126.7,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "9935a9d47d2b",
+  "server_log_line": "lock wait 0 ms, prompt 24 tok, reuse Cold (0 tok), fed 24 (0 stepped), prefill 527 ms (gemm chip 322 ms, gdn chip 13 ms, attn chip 2 ms, host 102 ms, restore 0 ms, snapshot 38 ms), decode 24 tok in 2914 ms, graph chip 125.5 ms/token, wall 126.7 ms/token"
+}
+{
+  "name": "turn2b_resumed",
+  "reply_id": "chatcmpl-18e7b0b5482a0efa0001",
+  "prompt_tokens": 48,
+  "completion_tokens": 24,
+  "client_wall_s": 3.409067,
+  "client_ms_per_token": 142.04445833333332,
+  "chip_ms_per_token": 124.9,
+  "server_wall_ms_per_token": 126.1,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "b2e49412bf82",
+  "server_log_line": "lock wait 0 ms, prompt 48 tok, reuse Snapshot(17) (17 tok), fed 31 (0 stepped), prefill 507 ms (gemm chip 321 ms, gdn chip 14 ms, attn chip 2 ms, host 98 ms, restore 9 ms, snapshot 11 ms), decode 24 tok in 2900 ms, graph chip 124.9 ms/token, wall 126.1 ms/token"
+}
+{
+  "name": "golden2",
+  "reply_id": "chatcmpl-18e7b0b615a441830002",
+  "prompt_tokens": 24,
+  "completion_tokens": 24,
+  "client_wall_s": 3.383241,
+  "client_ms_per_token": 140.968375,
+  "chip_ms_per_token": 125.6,
+  "server_wall_ms_per_token": 126.8,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "9935a9d47d2b",
+  "server_log_line": "lock wait 0 ms, prompt 24 tok, reuse Cold (0 tok), fed 24 (0 stepped), prefill 464 ms (gemm chip 315 ms, gdn chip 13 ms, attn chip 1 ms, host 81 ms, restore 0 ms, snapshot 10 ms), decode 24 tok in 2917 ms, graph chip 125.6 ms/token, wall 126.8 ms/token"
+}
+{
+  "name": "turn2_resumed",
+  "reply_id": "chatcmpl-18e7b0b6e14d35830003",
+  "prompt_tokens": 70,
+  "completion_tokens": 24,
+  "client_wall_s": 3.414398,
+  "client_ms_per_token": 142.26658333333333,
+  "chip_ms_per_token": 126.5,
+  "server_wall_ms_per_token": 127.8,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "dfdcfc27ed35",
+  "server_log_line": "lock wait 0 ms, prompt 70 tok, reuse Live(47) (47 tok), fed 23 (0 stepped), prefill 474 ms (gemm chip 320 ms, gdn chip 13 ms, attn chip 2 ms, host 94 ms, restore 0 ms, snapshot 10 ms), decode 24 tok in 2939 ms, graph chip 126.5 ms/token, wall 127.8 ms/token"
+}
+{
+  "name": "turn3_resumed",
+  "reply_id": "chatcmpl-18e7b0b7af0d076a0004",
+  "prompt_tokens": 110,
+  "completion_tokens": 2,
+  "client_wall_s": 0.726714,
+  "client_ms_per_token": 363.35699999999997,
+  "chip_ms_per_token": 256.4,
+  "server_wall_ms_per_token": 259.0,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "2fef52079ba0",
+  "server_log_line": "lock wait 0 ms, prompt 110 tok, reuse Live(93) (93 tok), fed 17 (0 stepped), prefill 466 ms (gemm chip 318 ms, gdn chip 11 ms, attn chip 2 ms, host 92 ms, restore 0 ms, snapshot 10 ms), decode 2 tok in 259 ms, graph chip 256.4 ms/token, wall 259.0 ms/token"
+}
+{
+  "name": "control",
+  "reply_id": "chatcmpl-18e7b0b7dc80bcaf0005",
+  "prompt_tokens": 24,
+  "completion_tokens": 24,
+  "client_wall_s": 3.465755,
+  "client_ms_per_token": 144.40645833333335,
+  "chip_ms_per_token": 127.2,
+  "server_wall_ms_per_token": 128.4,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "d9aa8080c982",
+  "server_log_line": "lock wait 0 ms, prompt 24 tok, reuse Cold (0 tok), fed 24 (0 stepped), prefill 511 ms (gemm chip 325 ms, gdn chip 13 ms, attn chip 1 ms, host 115 ms, restore 0 ms, snapshot 10 ms), decode 24 tok in 2953 ms, graph chip 127.2 ms/token, wall 128.4 ms/token"
+}
+{
+  "name": "turn2_cold",
+  "reply_id": "chatcmpl-18e7b0b8ad468d660006",
+  "prompt_tokens": 70,
+  "completion_tokens": 24,
+  "client_wall_s": 3.570201,
+  "client_ms_per_token": 148.758375,
+  "chip_ms_per_token": 127.3,
+  "server_wall_ms_per_token": 128.6,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "dfdcfc27ed35",
+  "server_log_line": "lock wait 0 ms, prompt 70 tok, reuse Cold (0 tok), fed 70 (0 stepped), prefill 610 ms (gemm chip 335 ms, gdn chip 21 ms, attn chip 3 ms, host 154 ms, restore 0 ms, snapshot 14 ms), decode 24 tok in 2958 ms, graph chip 127.3 ms/token, wall 128.6 ms/token"
+}
+{
+  "name": "turn2b_cold",
+  "reply_id": "chatcmpl-18e7b0b984492b9a0007",
+  "prompt_tokens": 48,
+  "completion_tokens": 24,
+  "client_wall_s": 3.744310,
+  "client_ms_per_token": 156.01291666666665,
+  "chip_ms_per_token": 135.0,
+  "server_wall_ms_per_token": 136.7,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "b2e49412bf82",
+  "server_log_line": "lock wait 0 ms, prompt 48 tok, reuse Cold (0 tok), fed 48 (0 stepped), prefill 600 ms (gemm chip 348 ms, gdn chip 18 ms, attn chip 2 ms, host 159 ms, restore 0 ms, snapshot 12 ms), decode 24 tok in 3143 ms, graph chip 135.0 ms/token, wall 136.7 ms/token"
+}
+{
+  "name": "control2",
+  "reply_id": "chatcmpl-18e7b0ba6608952d0008",
+  "prompt_tokens": 24,
+  "completion_tokens": 24,
+  "client_wall_s": 3.719065,
+  "client_ms_per_token": 154.96104166666666,
+  "chip_ms_per_token": 134.3,
+  "server_wall_ms_per_token": 135.9,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "d9aa8080c982",
+  "server_log_line": "lock wait 0 ms, prompt 24 tok, reuse Cold (0 tok), fed 24 (0 stepped), prefill 591 ms (gemm chip 351 ms, gdn chip 13 ms, attn chip 2 ms, host 155 ms, restore 0 ms, snapshot 22 ms), decode 24 tok in 3126 ms, graph chip 134.3 ms/token, wall 135.9 ms/token"
+}
+{
+  "name": "turn3_cold",
+  "reply_id": "chatcmpl-18e7b0bb4635254f0009",
+  "prompt_tokens": 110,
+  "completion_tokens": 2,
+  "client_wall_s": 1.346721,
+  "client_ms_per_token": 673.3605,
+  "chip_ms_per_token": 272.3,
+  "server_wall_ms_per_token": 276.0,
+  "lock_wait_ms": 0,
+  "ids_sha256_12": "2fef52079ba0",
+  "server_log_line": "lock wait 0 ms, prompt 110 tok, reuse Cold (0 tok), fed 110 (0 stepped), prefill 1069 ms (gemm chip 497 ms, gdn chip 29 ms, attn chip 5 ms, host 376 ms, restore 0 ms, snapshot 26 ms), decode 2 tok in 276 ms, graph chip 272.3 ms/token, wall 276.0 ms/token"
+}

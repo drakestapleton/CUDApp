@@ -1,0 +1,653 @@
+
+################ env.txt ################
+## date
+2026-11-13T18:47:12Z
+## uname -a
+Linux spark-b87b 7.0.0-1019-nvidia #19~24.04.2-Ubuntu SMP PREEMPT_DYNAMIC Sun Sep  6 18:35:11 UTC 2 aarch64 aarch64 aarch64 GNU/Linux
+## os-release
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+VERSION_ID="24.04"
+## getconf PAGESIZE
+4096
+## glibc
+ldd (Ubuntu GLIBC 2.39-0ubuntu8.9) 2.39
+## nproc
+20
+## clean-env tool lookup (PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
+git -> /usr/bin/git
+python3 -> /usr/bin/python3
+cc -> /usr/bin/cc
+gcc -> /usr/bin/gcc
+clang -> MISSING
+qemu-x86_64 -> /usr/bin/qemu-x86_64
+qemu-x86_64-static -> MISSING
+sha256sum -> /usr/bin/sha256sum
+realpath -> /usr/bin/realpath
+strace -> /usr/bin/strace
+readelf -> /usr/bin/readelf
+objdump -> /usr/bin/objdump
+## versions
+git version 2.43.0
+Python 3.12.3
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+qemu-x86_64 version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+## readlink cc
+/usr/bin/aarch64-linux-gnu-gcc-13
+## dpkg owners
+qemu-user: /usr/bin/qemu-x86_64
+gcc-13-aarch64-linux-gnu: /usr/bin/aarch64-linux-gnu-gcc-13
+python3.12-minimal: /usr/bin/python3.12
+git: /usr/bin/git
+## login-shell tool lookup (may differ)
+qemu-x86_64 -> /usr/bin/qemu-x86_64
+python3 -> /usr/bin/python3
+cc -> /usr/bin/cc
+git -> /usr/bin/git
+## ptrace_scope
+1
+## unprivileged_userns_clone / apparmor userns
+1
+1
+## binfmt x86
+llvm-18-runtime.binfmt python3.12 qemu-alpha qemu-armeb qemu-cris qemu-hexagon qemu-hppa qemu-i386 qemu-loongarch64 qemu-m68k qemu-microblaze qemu-mips qemu-mips64 qemu-mips64el qemu-mipsel qemu-mipsn32 qemu-mipsn32el qemu-ppc qemu-ppc64 qemu-ppc64le qemu-riscv32 qemu-riscv64 qemu-s390x qemu-sh4 qemu-sh4eb qemu-sparc qemu-sparc32plus qemu-sparc64 qemu-x86_64 qemu-xtensa qemu-xtensaeb register status 
+## lane-ish env vars in login shell (names only)
+none
+## df
+/dev/nvme0n1p2  3.7T  3.1T  444G  88% /
+
+################ pool.sh ################
+#!/bin/sh
+# usage: pool.sh CMD...   runs CMD under hive CPU pool locks 10-11,10,11 on cores 10,11 at nice 10
+# with a clean environment (no lane variables): HOME, PATH (system only), LANG, TERM.
+Q=/home/drakestapleton/handoffs/hive/queen
+exec flock "$Q/pool-10-11.lock" flock "$Q/pool-10.lock" flock "$Q/pool-11.lock" \
+  taskset -c 10,11 nice -n 10 \
+  env -i HOME="$HOME" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin LANG=C.UTF-8 TERM=dumb "$@"
+
+################ runB-clone.sh ################
+set -x
+date -u +%FT%TZ
+git clone https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp; echo "### rc=$?"
+cd CUDApp; echo "### rc=$?"
+git checkout dc536882c06a692991be97dc65cd2d037d82b129; echo "### rc=$?"
+cd ..
+git clone https://www.aienos.com/rad/z6do9WDBhuSnvopDkgFdFr1yWA62.git omega-mv; echo "### rc=$?"
+git -C omega-mv checkout 2ee0a70d1830581b706f288e722f3329d51f3583; echo "### rc=$?"
+sha256sum omega-mv/seed/out/omc; echo "### rc=$?"
+date -u +%FT%TZ
+
+---------------- output: runB-clone.log ----------------
++ date -u +%FT%TZ
+2026-11-13T18:47:43Z
++ git clone https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp
+Cloning into 'CUDApp'...
++ echo ### rc=0
+### rc=0
++ cd CUDApp
++ echo ### rc=0
+### rc=0
++ git checkout dc536882c06a692991be97dc65cd2d037d82b129
+Note: switching to 'dc536882c06a692991be97dc65cd2d037d82b129'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at dc536882 Derive AMD scratch checks from the pinned descriptor definition
++ echo ### rc=0
+### rc=0
++ cd ..
++ git clone https://www.aienos.com/rad/z6do9WDBhuSnvopDkgFdFr1yWA62.git omega-mv
+Cloning into 'omega-mv'...
++ echo ### rc=0
+### rc=0
++ git -C omega-mv checkout 2ee0a70d1830581b706f288e722f3329d51f3583
+Note: switching to '2ee0a70d1830581b706f288e722f3329d51f3583'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 2ee0a70d Keep the exact closure policy beside its enforcement
++ echo ### rc=0
+### rc=0
++ sha256sum omega-mv/seed/out/omc
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  omega-mv/seed/out/omc
++ echo ### rc=0
+### rc=0
++ date -u +%FT%TZ
+2026-11-13T18:47:57Z
+	Command being timed: "../pool.sh sh ../runB-clone.sh"
+	User time (seconds): 8.57
+	System time (seconds): 1.83
+	Percent of CPU this job got: 77%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:13.49
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 210588
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2
+	Minor (reclaiming a frame) page faults: 123464
+	Voluntary context switches: 39836
+	Involuntary context switches: 20093
+	Swaps: 0
+	File system inputs: 6096
+	File system outputs: 1438200
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+
+################ runB-gate.sh ################
+# Level 2 block of BRIEF.md section 6, lines after the omc hash, verbatim; cwd = directory holding CUDApp and omega-mv
+echo "START $(date -u +%FT%T.%NZ)"
+cd CUDApp; echo "### rc=$? cd CUDApp"
+python3 -I tests/amd-kfd-launch/check.py "$(realpath ../omega-mv/seed/out/omc)" > ../../gate-stdout.log 2> ../../gate-stderr.log; echo "### rc=$? check.py"
+sha256sum build/amd-kfd-launch/gate/launch-x86; echo "### rc=$? sha256sum"
+echo "END $(date -u +%FT%T.%NZ)"
+
+---------------- output: runB-gate.log ----------------
+START 2026-11-13T18:48:25.355545827Z
+### rc=0 cd CUDApp
+### rc=0 check.py
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  build/amd-kfd-launch/gate/launch-x86
+### rc=0 sha256sum
+END 2026-11-13T18:48:46.033806334Z
+	Command being timed: "../pool.sh sh ../runB-gate.sh"
+	User time (seconds): 4.95
+	System time (seconds): 12.71
+	Percent of CPU this job got: 85%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:20.69
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 181120
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 92
+	Minor (reclaiming a frame) page faults: 317419
+	Voluntary context switches: 2140141
+	Involuntary context switches: 26343
+	Swaps: 0
+	File system inputs: 13320
+	File system outputs: 138024
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+
+################ runA-literal.sh ################
+echo "=== Level 1 block ==="
+git clone https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+cd CUDApp
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+git checkout dc536882c06a692991be97dc65cd2d037d82b129
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+echo "=== Level 2 block ==="
+git clone https://www.aienos.com/rad/z6do9WDBhuSnvopDkgFdFr1yWA62.git omega-mv
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+git -C omega-mv checkout 2ee0a70d1830581b706f288e722f3329d51f3583
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+sha256sum omega-mv/seed/out/omc
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+#   26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991
+
+cd CUDApp
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+python3 -I tests/amd-kfd-launch/check.py "$(realpath ../omega-mv/seed/out/omc)"
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+#   ends with: AMD-KFD-LAUNCH CPU PASS {...}
+sha256sum build/amd-kfd-launch/gate/launch-x86
+echo "### rc=$? pwd=$(pwd | sed s,/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild,SCRATCH,)"
+#   08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1
+
+---------------- output: runA-literal.log ----------------
+=== Level 1 block ===
+Cloning into 'CUDApp'...
+### rc=0 pwd=SCRATCH/A
+### rc=0 pwd=SCRATCH/A/CUDApp
+Note: switching to 'dc536882c06a692991be97dc65cd2d037d82b129'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at dc536882 Derive AMD scratch checks from the pinned descriptor definition
+### rc=0 pwd=SCRATCH/A/CUDApp
+EVIDENCE PASS 65 hashed files; raw steps/IDs; independent graph; reference coding24; calculations
+### rc=0 pwd=SCRATCH/A/CUDApp
+=== Level 2 block ===
+Cloning into 'omega-mv'...
+### rc=0 pwd=SCRATCH/A/CUDApp
+Note: switching to '2ee0a70d1830581b706f288e722f3329d51f3583'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 2ee0a70d Keep the exact closure policy beside its enforcement
+### rc=0 pwd=SCRATCH/A/CUDApp
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  omega-mv/seed/out/omc
+### rc=0 pwd=SCRATCH/A/CUDApp
+../runA-literal.sh: 19: cd: can't cd to CUDApp
+### rc=2 pwd=SCRATCH/A/CUDApp
+realpath: ../omega-mv/seed/out/omc: No such file or directory
+### rc=64 pwd=SCRATCH/A/CUDApp
+sha256sum: build/amd-kfd-launch/gate/launch-x86: No such file or directory
+### rc=1 pwd=SCRATCH/A/CUDApp
+	Command being timed: "sh ../runA-literal.sh"
+	User time (seconds): 9.39
+	System time (seconds): 2.55
+	Percent of CPU this job got: 19%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:02.34
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 201140
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 47
+	Minor (reclaiming a frame) page faults: 132986
+	Voluntary context switches: 49186
+	Involuntary context switches: 13611
+	Swaps: 0
+	File system inputs: 82840
+	File system outputs: 1438224
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+runA sh rc=0
+
+################ runC-controls.sh ################
+# Controls, run from SCRATCH/C. Separate fresh clone so the Run B tree stays untouched.
+set -x
+date -u +%FT%TZ
+git clone -q https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp; echo "### rc=$?"
+git -C CUDApp checkout -q dc536882c06a692991be97dc65cd2d037d82b129; echo "### rc=$?"
+git -C CUDApp rev-parse HEAD
+# --- control 1: compiler with exactly one byte changed (last byte XOR 0x01) ---
+cp ../B/omega-mv/seed/out/omc omc-onebyte
+python3 -c "
+import pathlib; p=pathlib.Path('omc-onebyte'); b=bytearray(p.read_bytes()); b[-1]^=1; p.write_bytes(b)"
+cmp -l ../B/omega-mv/seed/out/omc omc-onebyte | wc -l
+sha256sum ../B/omega-mv/seed/out/omc omc-onebyte
+cd CUDApp
+ls -d build 2>&1
+python3 -I tests/amd-kfd-launch/check.py "$(realpath ../omc-onebyte)"; echo "### rc=$? wrong-compiler (one byte changed)"
+ls -d build 2>&1; echo "### ls-build rc=$? (2 = no build directory was created)"
+git status --short --ignored | head -5; echo "### git status lines above (none = tree untouched)"
+# --- control 2: the path form the brief's realpath protects against (relative path) ---
+python3 -I tests/amd-kfd-launch/check.py ../../B/omega-mv/seed/out/omc; echo "### rc=$? relative compiler path"
+ls -d build 2>&1
+# --- qemu-absent run: PATH is a symlink farm of /usr/bin without qemu-x86_64* ---
+mkdir -p ../noqemu-bin
+for f in /usr/bin/*; do b=$(basename "$f"); case "$b" in qemu-x86_64*) ;; *) ln -sf "$f" ../noqemu-bin/"$b";; esac; done
+NQ=$(realpath ../noqemu-bin)
+env PATH="$NQ" sh -c 'command -v qemu-x86_64; echo "### command -v qemu rc=$?"; command -v python3 cc'
+env PATH="$NQ" python3 -I tests/amd-kfd-launch/check.py "$(realpath ../../B/omega-mv/seed/out/omc)" > ../noqemu-gate-stdout.log 2> ../noqemu-gate-stderr.log; echo "### rc=$? gate without qemu-x86_64 on PATH"
+tail -2 ../noqemu-gate-stdout.log | cut -c1-240; tail -5 ../noqemu-gate-stderr.log
+grep -c '^PASS ' ../noqemu-gate-stdout.log; grep -c '^FAIL ' ../noqemu-gate-stdout.log
+python3 -c "
+import json; s=json.load(open('build/amd-kfd-launch/gate/summary.json')); print('summary checks',s['checks'],'failures',s['failures'],'qemu',s['qemu'])"
+sha256sum build/amd-kfd-launch/gate/launch-x86 build/amd-kfd-launch/gate/launch-a64 build/amd-kfd-launch/gate/vadd.hsaco
+# --- Level 1 tamper control (this throwaway clone only): change one byte of one published raw file ---
+python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py; echo "### rc=$? verify.py clean"
+python3 -c "
+import pathlib; p=pathlib.Path('evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout'); b=bytearray(p.read_bytes()); b[-2]^=1; p.write_bytes(b)"
+git status --short
+python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py; echo "### rc=$? verify.py after one-byte tamper of native/sample1.stdout"
+date -u +%FT%TZ
+
+---------------- output: runC-controls.log ----------------
++ date -u +%FT%TZ
+2026-11-13T18:51:08Z
++ git clone -q https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp
++ echo ### rc=0
+### rc=0
++ git -C CUDApp checkout -q dc536882c06a692991be97dc65cd2d037d82b129
++ echo ### rc=0
+### rc=0
++ git -C CUDApp rev-parse HEAD
+dc536882c06a692991be97dc65cd2d037d82b129
++ cp ../B/omega-mv/seed/out/omc omc-onebyte
++ python3 -c 
+import pathlib; p=pathlib.Path('omc-onebyte'); b=bytearray(p.read_bytes()); b[-1]^=1; p.write_bytes(b)
++ + wc -l
+cmp -l ../B/omega-mv/seed/out/omc omc-onebyte
+1
++ sha256sum ../B/omega-mv/seed/out/omc omc-onebyte
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  ../B/omega-mv/seed/out/omc
+93a01e5877b9cc4eee7a96730d704688ed8f74ad3a1b4cb580285a9971d89f56  omc-onebyte
++ cd CUDApp
++ ls -d build
+ls: cannot access 'build': No such file or directory
++ realpath ../omc-onebyte
++ python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/omc-onebyte
+REFUSED compiler digest
++ echo ### rc=69 wrong-compiler (one byte changed)
+### rc=69 wrong-compiler (one byte changed)
++ ls -d build
+ls: cannot access 'build': No such file or directory
++ echo ### ls-build rc=2 (2 = no build directory was created)
+### ls-build rc=2 (2 = no build directory was created)
++ git status --short --ignored
++ head -5
++ echo ### git status lines above (none = tree untouched)
+### git status lines above (none = tree untouched)
++ python3 -I tests/amd-kfd-launch/check.py ../../B/omega-mv/seed/out/omc
++ echo ### rc=64 relative compiler path
+### rc=64 relative compiler path
++ ls -d build
+ls: cannot access 'build': No such file or directory
++ mkdir -p ../noqemu-bin
++ realpath ../noqemu-bin
++ NQ=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin
++ env PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin sh -c command -v qemu-x86_64; echo "### command -v qemu rc=$?"; command -v python3 cc
+### command -v qemu rc=127
+/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin/python3
++ realpath ../../B/omega-mv/seed/out/omc
++ env PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/noqemu-bin python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/B/omega-mv/seed/out/omc
++ echo ### rc=1 gate without qemu-x86_64 on PATH
+### rc=1 gate without qemu-x86_64 on PATH
++ tail -2 ../noqemu-gate-stdout.log
++ cut -c1-240
+AssertionError
+
++ tail -5 ../noqemu-gate-stderr.log
++ grep -c ^PASS  ../noqemu-gate-stdout.log
+208
++ grep -c ^FAIL  ../noqemu-gate-stdout.log
+1
++ python3 -c 
+import json; s=json.load(open('build/amd-kfd-launch/gate/summary.json')); print('summary checks',s['checks'],'failures',s['failures'],'qemu',s['qemu'])
+Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: 'build/amd-kfd-launch/gate/summary.json'
++ sha256sum build/amd-kfd-launch/gate/launch-x86 build/amd-kfd-launch/gate/launch-a64 build/amd-kfd-launch/gate/vadd.hsaco
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  build/amd-kfd-launch/gate/launch-x86
+2d6bfba83dcf836f879e318df9df2cc75bd46909f6173c7b3f7b7c36b9e89a47  build/amd-kfd-launch/gate/launch-a64
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  build/amd-kfd-launch/gate/vadd.hsaco
++ python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py
+EVIDENCE PASS 65 hashed files; raw steps/IDs; independent graph; reference coding24; calculations
++ echo ### rc=0 verify.py clean
+### rc=0 verify.py clean
++ python3 -c 
+import pathlib; p=pathlib.Path('evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout'); b=bytearray(p.read_bytes()); b[-2]^=1; p.write_bytes(b)
++ git status --short
+ M evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout
++ python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/CUDApp/evidence/amd-qwen38-native-refusal-20261113/verify.py", line 9, in <module>
+    for name,digest in hashes.items():assert hashlib.sha256((D/name).read_bytes()).hexdigest()==digest,name
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: native/sample1.stdout
++ echo ### rc=1 verify.py after one-byte tamper of native/sample1.stdout
+### rc=1 verify.py after one-byte tamper of native/sample1.stdout
++ date -u +%FT%TZ
+2026-11-13T18:51:55Z
+	Command being timed: "sh ../runC-controls.sh"
+	User time (seconds): 6.63
+	System time (seconds): 13.65
+	Percent of CPU this job got: 43%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:46.99
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 181120
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 121
+	Minor (reclaiming a frame) page faults: 708455
+	Voluntary context switches: 1986934
+	Involuntary context switches: 35167
+	Swaps: 0
+	File system inputs: 25640
+	File system outputs: 355136
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+runC sh rc=0
+
+################ runD-more.sh ################
+D=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild
+echo "=== D1: same symlink-farm PATH as the qemu-absent run, plus qemu-x86_64 (shows the farm itself is not the cause) ==="
+cd $D/C/CUDApp
+git checkout -q -- evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout; git status --short; echo "### tree restored rc=$?"
+rm -rf build
+cp -a ../noqemu-bin ../withqemu-bin && ln -s /usr/bin/qemu-x86_64 ../withqemu-bin/qemu-x86_64
+WQ=$(realpath ../withqemu-bin)
+t0=$(date +%s.%N)
+env PATH="$WQ" python3 -I tests/amd-kfd-launch/check.py "$(realpath ../../B/omega-mv/seed/out/omc)" > ../withqemu-gate-stdout.log 2> ../withqemu-gate-stderr.log; echo "### rc=$? gate with farm PATH + qemu-x86_64"
+t1=$(date +%s.%N); echo "seconds $(echo "$t1 - $t0" | bc)"
+grep -c '^PASS ' ../withqemu-gate-stdout.log; grep -c '^FAIL ' ../withqemu-gate-stdout.log; grep -o '^AMD-KFD-LAUNCH CPU PASS {"binaries": {"a64": "[0-9a-f]*", "x86": "[0-9a-f]*"}, "checks": [0-9]*' ../withqemu-gate-stdout.log
+python3 -c "
+import json; s=json.load(open('build/amd-kfd-launch/gate/summary.json')); print('summary checks',s['checks'],'failures',s['failures'],'qemu',s['qemu'])"
+echo "=== D2: seed/omega-from-seed.sh in a local copy of the omega-mv clone, bounded by timeout 600 ==="
+cd $D/S
+git clone -q --no-hardlinks ../B/omega-mv omega-mv; echo "### rc=$? local clone"
+git -C omega-mv checkout -q 2ee0a70d1830581b706f288e722f3329d51f3583; git -C omega-mv rev-parse HEAD
+cd omega-mv
+sha256sum seed/out/omc
+mv seed/out/omc ../omc.checked-in; echo "### moved checked-in omc aside rc=$? (so a pass cannot come from the committed file)"
+t0=$(date +%s.%N)
+timeout 600 sh seed/omega-from-seed.sh > ../from-seed.log 2>&1; echo "### rc=$? sh seed/omega-from-seed.sh (124 = hit the 600 s bound)"
+t1=$(date +%s.%N); echo "seconds $(echo "$t1 - $t0" | bc)"
+tail -25 ../from-seed.log | cut -c1-200
+sha256sum seed/out/omc ../omc.checked-in; cmp seed/out/omc ../omc.checked-in && echo "seed-built omc is byte-identical to the checked-in omc"
+git status --short | head -10; echo "### git status lines above (none = tracked files unchanged)"
+
+---------------- output: runD-more.log ----------------
+=== D1: same symlink-farm PATH as the qemu-absent run, plus qemu-x86_64 (shows the farm itself is not the cause) ===
+### tree restored rc=0
+### rc=0 gate with farm PATH + qemu-x86_64
+seconds 20.709560299
+274
+0
+AMD-KFD-LAUNCH CPU PASS {"binaries": {"a64": "2d6bfba83dcf836f879e318df9df2cc75bd46909f6173c7b3f7b7c36b9e89a47", "x86": "08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1"}, "checks": 274
+summary checks 274 failures 0 qemu /home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/withqemu-bin/qemu-x86_64
+=== D2: seed/omega-from-seed.sh in a local copy of the omega-mv clone, bounded by timeout 600 ===
+### rc=0 local clone
+2ee0a70d1830581b706f288e722f3329d51f3583
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  seed/out/omc
+### moved checked-in omc aside rc=0 (so a pass cannot come from the committed file)
+### rc=0 sh seed/omega-from-seed.sh (124 = hit the 600 s bound)
+seconds .892790089
+PASS seed0 408 bytes, rebuilds itself
+PASS hex1 776 bytes, born from seed0
+PASS asm2 2464 bytes, born from hex1
+PASS om4 om4.bin 16200 bytes
+PASS diagnostic source identity and generated strings
+PASS omc fixpoint 26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991
+PASS generated compiler size record
+SIZE_RECORD PASS cases=8
+PASS fwd exit 0
+PASS fwd runs, exit 7
+PASS mut exit 0
+PASS mut runs, exit 0
+PASS cycle exit 9
+PASS assign exit 7
+RC=0
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  seed/out/omc
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  ../omc.checked-in
+seed-built omc is byte-identical to the checked-in omc
+### git status lines above (none = tracked files unchanged)
+	Command being timed: "./pool.sh sh runD-more.sh"
+	User time (seconds): 7.25
+	System time (seconds): 13.95
+	Percent of CPU this job got: 85%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:24.75
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 210184
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 68
+	Minor (reclaiming a frame) page faults: 410174
+	Voluntary context switches: 2185017
+	Involuntary context switches: 22547
+	Swaps: 0
+	File system inputs: 218656
+	File system outputs: 1376048
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+
+################ S/from-seed.log (run D2, checked-in omc moved aside first) ################
+PASS seed0 408 bytes, rebuilds itself
+PASS hex1 776 bytes, born from seed0
+PASS asm2 2464 bytes, born from hex1
+PASS om4 om4.bin 16200 bytes
+PASS diagnostic source identity and generated strings
+PASS omc fixpoint 26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991
+PASS generated compiler size record
+SIZE_RECORD PASS cases=8
+PASS fwd exit 0
+PASS fwd runs, exit 7
+PASS mut exit 0
+PASS mut runs, exit 0
+PASS cycle exit 9
+PASS assign exit 7
+RC=0
+
+################ runE-from-seed.sh ################
+# Proof run for the corrected "rebuild the compiler from its seed" command, as an outside engineer would type it.
+# Fresh local copy of the public omega-mv clone (SCRATCH/B/omega-mv, cloned over https), nothing moved aside.
+D=/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild
+cd $D && rm -rf S2 && mkdir S2 && cd S2
+git clone -q --no-hardlinks ../B/omega-mv omega-mv; echo "### rc=$? local clone"
+git -C omega-mv checkout -q 2ee0a70d1830581b706f288e722f3329d51f3583; echo "### rc=$? checkout"
+cd omega-mv
+git rev-parse HEAD
+echo "--- git status --short --untracked-files=all BEFORE ---"; git status --short --untracked-files=all; echo "### before: $(git status --short --untracked-files=all | wc -l) lines"
+sha256sum seed/out/omc seed/out/omc.sha256 seed/omc/size-history.tsv
+stat -c '%y %n' seed/out/omc
+t0=$(date +%s.%N)
+sh seed/omega-from-seed.sh > ../from-seed.log 2>&1; rc=$?
+t1=$(date +%s.%N)
+echo "### rc=$rc sh seed/omega-from-seed.sh"; echo "wall seconds $(echo "$t1 - $t0" | bc)"
+cat ../from-seed.log
+echo "--- git status --short --untracked-files=all AFTER ---"; git status --short --untracked-files=all; echo "### after: $(git status --short --untracked-files=all | wc -l) lines"
+echo "--- git status --short --ignored AFTER (ignored build output) ---"; git status --short --ignored | head -5
+git diff --stat | tail -1; echo "### git diff rc=$(git diff --quiet; echo $?) (0 = no tracked content changed)"
+sha256sum seed/out/omc seed/out/omc.sha256 seed/omc/size-history.tsv
+stat -c '%y %n' seed/out/omc
+du -sh build 2>/dev/null
+
+---------------- output: runE-from-seed.log ----------------
+### rc=0 local clone
+### rc=0 checkout
+2ee0a70d1830581b706f288e722f3329d51f3583
+--- git status --short --untracked-files=all BEFORE ---
+### before: 0 lines
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  seed/out/omc
+0849fb227b8e30fb76415e53b3544edb667163a5cafc416f35c86ee91f075cae  seed/out/omc.sha256
+c9396cad17540c666d21d5121dbbe93a34ebb57d4d0566e3aa822c354897de7f  seed/omc/size-history.tsv
+2026-11-13 12:54:36.277974797 -0600 seed/out/omc
+### rc=0 sh seed/omega-from-seed.sh
+wall seconds .827506231
+PASS seed0 408 bytes, rebuilds itself
+PASS hex1 776 bytes, born from seed0
+PASS asm2 2464 bytes, born from hex1
+PASS om4 om4.bin 16200 bytes
+PASS diagnostic source identity and generated strings
+PASS omc fixpoint 26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991
+PASS generated compiler size record
+SIZE_RECORD PASS cases=8
+PASS fwd exit 0
+PASS fwd runs, exit 7
+PASS mut exit 0
+PASS mut runs, exit 0
+PASS cycle exit 9
+PASS assign exit 7
+RC=0
+--- git status --short --untracked-files=all AFTER ---
+### after: 0 lines
+--- git status --short --ignored AFTER (ignored build output) ---
+!! build/
+### git diff rc=0 (0 = no tracked content changed)
+26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991  seed/out/omc
+0849fb227b8e30fb76415e53b3544edb667163a5cafc416f35c86ee91f075cae  seed/out/omc.sha256
+c9396cad17540c666d21d5121dbbe93a34ebb57d4d0566e3aa822c354897de7f  seed/omc/size-history.tsv
+2026-11-13 12:54:37.694332697 -0600 seed/out/omc
+3.3M	build
+	Command being timed: "./pool.sh sh runE-from-seed.sh"
+	User time (seconds): 2.19
+	System time (seconds): 1.51
+	Percent of CPU this job got: 101%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.64
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 209944
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 13
+	Minor (reclaiming a frame) page faults: 109589
+	Voluntary context switches: 2744
+	Involuntary context switches: 644
+	Swaps: 0
+	File system inputs: 199544
+	File system outputs: 1233160
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

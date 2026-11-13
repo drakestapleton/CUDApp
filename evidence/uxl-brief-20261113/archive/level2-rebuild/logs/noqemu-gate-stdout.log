@@ -1,0 +1,219 @@
+PRIMARY SOURCE PASS producer mapping, pins and derived reference views
+PASS compile launch-a64 exit 0 expected 0
+PASS compile launch-x86 exit 0 expected 0
+CONTROL wrong compiler refused before execution/output
+PASS compile object writer exit 0 expected 0
+PASS build addnorm5120 exit 0 expected 0
+PASS a64 inspect addnorm5120 exit 0 expected 0
+PASS build argmax_final exit 0 expected 0
+PASS a64 inspect argmax_final exit 0 expected 0
+PASS build argmax_part exit 0 expected 0
+PASS a64 inspect argmax_part exit 0 expected 0
+PASS build attn256_gate exit 0 expected 0
+PASS a64 inspect attn256_gate exit 0 expected 0
+PASS build attn256_merge exit 0 expected 0
+PASS a64 inspect attn256_merge exit 0 expected 0
+PASS build attn256_merge_step exit 0 expected 0
+PASS a64 inspect attn256_merge_step exit 0 expected 0
+PASS build attn256_part exit 0 expected 0
+PASS a64 inspect attn256_part exit 0 expected 0
+PASS build attn256_part_step exit 0 expected 0
+PASS a64 inspect attn256_part_step exit 0 expected 0
+PASS build attn256_prep exit 0 expected 0
+PASS a64 inspect attn256_prep exit 0 expected 0
+PASS build attn256_prep_step exit 0 expected 0
+PASS a64 inspect attn256_prep_step exit 0 expected 0
+PASS build bf16gemv exit 0 expected 0
+PASS a64 inspect bf16gemv exit 0 expected 0
+PASS build bf16gemv2 exit 0 expected 0
+PASS a64 inspect bf16gemv2 exit 0 expected 0
+PASS build embed5120 exit 0 expected 0
+PASS a64 inspect embed5120 exit 0 expected 0
+PASS build embed5120_step exit 0 expected 0
+PASS a64 inspect embed5120_step exit 0 expected 0
+PASS build fp8gemv exit 0 expected 0
+PASS a64 inspect fp8gemv exit 0 expected 0
+PASS build fp8gemv2 exit 0 expected 0
+PASS a64 inspect fp8gemv2 exit 0 expected 0
+PASS build fp8gemv_b128 exit 0 expected 0
+PASS a64 inspect fp8gemv_b128 exit 0 expected 0
+PASS build fp8gemv_b128f exit 0 expected 0
+PASS a64 inspect fp8gemv_b128f exit 0 expected 0
+PASS build fsum16 exit 0 expected 0
+PASS a64 inspect fsum16 exit 0 expected 0
+PASS build gdnconv4 exit 0 expected 0
+PASS a64 inspect gdnconv4 exit 0 expected 0
+PASS build gdnconv4_step exit 0 expected 0
+PASS a64 inspect gdnconv4_step exit 0 expected 0
+PASS build gdnparams exit 0 expected 0
+PASS a64 inspect gdnparams exit 0 expected 0
+PASS build gdnqknorm exit 0 expected 0
+PASS a64 inspect gdnqknorm exit 0 expected 0
+PASS build gdnrmsgate exit 0 expected 0
+PASS a64 inspect gdnrmsgate exit 0 expected 0
+PASS build gdnstate exit 0 expected 0
+PASS a64 inspect gdnstate exit 0 expected 0
+PASS build gdnstate_step exit 0 expected 0
+PASS a64 inspect gdnstate_step exit 0 expected 0
+PASS build gdnstate_w exit 0 expected 0
+PASS a64 inspect gdnstate_w exit 0 expected 0
+PASS build mlpsilu exit 0 expected 0
+PASS a64 inspect mlpsilu exit 0 expected 0
+PASS build readfirst_probe exit 0 expected 0
+PASS a64 inspect readfirst_probe exit 0 expected 0
+PASS build residual5120 exit 0 expected 0
+PASS a64 inspect residual5120 exit 0 expected 0
+PASS build rmsnorm5120 exit 0 expected 0
+PASS a64 inspect rmsnorm5120 exit 0 expected 0
+PASS build sgemm exit 0 expected 0
+PASS a64 inspect sgemm exit 0 expected 0
+PASS build step_advance exit 0 expected 0
+PASS a64 inspect step_advance exit 0 expected 0
+PASS build vadd exit 0 expected 0
+PASS a64 inspect vadd exit 0 expected 0
+MODEL SOURCE PASS all required objects rebuilt; missing/changed controls caught
+PASS positive twin a64 refuse oversized exit 0 expected 0
+PASS a64 refuse oversized exit 65 expected 65
+PASS positive twin a64 refuse wrong-machine exit 0 expected 0
+PASS a64 refuse wrong-machine exit 65 expected 65
+PASS positive twin a64 refuse wave32 exit 0 expected 0
+PASS a64 refuse wave32 exit 65 expected 65
+PASS positive twin a64 refuse negative-entry exit 0 expected 0
+PASS a64 refuse negative-entry exit 65 expected 65
+PASS positive twin a64 refuse private-segment-unsupported exit 0 expected 0
+PASS a64 refuse private-segment-unsupported exit 65 expected 65
+PASS positive twin a64 refuse queue-pointer-required exit 0 expected 0
+PASS a64 refuse queue-pointer-required exit 65 expected 65
+PASS positive twin a64 refuse scratch-enable exit 0 expected 0
+PASS a64 refuse scratch-enable exit 65 expected 65
+PASS positive twin a64 refuse private-buffer exit 0 expected 0
+PASS a64 refuse private-buffer exit 65 expected 65
+PASS positive twin a64 refuse flat-scratch-init exit 0 expected 0
+PASS a64 refuse flat-scratch-init exit 65 expected 65
+PASS positive twin a64 refuse private-size exit 0 expected 0
+PASS a64 refuse private-size exit 65 expected 65
+PASS positive twin a64 refuse dynamic-stack exit 0 expected 0
+PASS a64 refuse dynamic-stack exit 65 expected 65
+PASS positive twin a64 missing descriptor exit 0 expected 0
+PASS a64 missing descriptor exit 65 expected 65
+PASS a64 absent KFD exit 77 expected 77
+PASS positive twin a64 refuse argument header exit 77 expected 77
+PASS a64 refuse argument header exit 64 expected 64
+PASS compile UAPI layout oracle exit 0 expected 0
+PASS UAPI layout exit 0 expected 0
+PASS compile trace instrument exit 0 expected 0
+PASS compile publication instrument exit 0 expected 0
+PASS accepted ELF with nonzero LDS uses HSA packet group field exit 0 expected 0
+PASS generic default alarms without refusing a slow completion exit 0 expected 0
+PASS compile generic-two-dispatches exit 0 expected 0
+PASS generic slow alarm re-arms for second dispatch exit 0 expected 0
+PASS compile generic-no-alarm-rearm exit 0 expected 0
+PASS positive twin CONTROL generic missing re-arm detected exit 0 expected 0
+PASS CONTROL generic missing re-arm detected exit 0 expected 0
+PASS compile alarm-threshold-zero exit 0 expected 0
+PASS positive twin CONTROL fast dispatch false alarm detected exit 0 expected 0
+PASS CONTROL fast dispatch false alarm detected exit 0 expected 0
+PASS native simulated orchestration exit 0 expected 0
+PASS positive twin CONTROL diagnostics unconsumed timeout exit 0 expected 0
+PASS CONTROL diagnostics unconsumed timeout exit 1 expected 1
+PASS positive twin CONTROL diagnostics output without completion timeout exit 0 expected 0
+PASS CONTROL diagnostics output without completion timeout exit 1 expected 1
+PASS positive twin CONTROL diagnostics completion without output exit 0 expected 0
+PASS CONTROL diagnostics completion without output exit 1 expected 1
+PASS compile queue-ptr32 exit 0 expected 0
+PASS positive twin CONTROL wrong queue pointer width exit 0 expected 0
+PASS CONTROL wrong queue pointer width exit 1 expected 1
+PASS compile queue-tail-dirty exit 0 expected 0
+PASS positive twin CONTROL nonzero unused queue tail exit 0 expected 0
+PASS CONTROL nonzero unused queue tail exit 1 expected 1
+PASS compile ring-not-executable exit 0 expected 0
+PASS positive twin CONTROL ring lacks execute permission exit 0 expected 0
+PASS CONTROL ring lacks execute permission exit 1 expected 1
+PASS positive twin CONTROL aperture missing exit 0 expected 0
+PASS CONTROL aperture missing exit 1 expected 1
+PASS positive twin CONTROL aperture duplicate exit 0 expected 0
+PASS CONTROL aperture duplicate exit 1 expected 1
+PASS positive twin CONTROL aperture oversized exit 0 expected 0
+PASS CONTROL aperture oversized exit 1 expected 1
+PASS positive twin CONTROL aperture invalid exit 0 expected 0
+PASS CONTROL aperture invalid exit 1 expected 1
+PASS positive twin CONTROL aperture empty exit 0 expected 0
+PASS CONTROL aperture empty exit 1 expected 1
+PASS positive twin CONTROL aperture large-duplicate exit 0 expected 0
+PASS CONTROL aperture large-duplicate exit 1 expected 1
+PASS aperture inventory large exit 0 expected 0
+PASS aperture inventory grow exit 0 expected 0
+PASS native generic CLI ring wrap exit 0 expected 0
+PASS positive twin CONTROL missing device completion exit 0 expected 0
+PASS CONTROL missing device completion exit 1 expected 1
+PASS compile bad-gpu-record exit 0 expected 0
+PASS positive twin CONTROL wrong GPU record exit 0 expected 0
+PASS CONTROL wrong GPU record exit 1 expected 1
+PASS CWSR bound uses converted NumShaderBanks exit 0 expected 0
+PASS compile wrong-one-division-context exit 0 expected 0
+PASS positive twin CONTROL missing topology conversion exit 0 expected 0
+PASS CONTROL missing topology conversion exit 1 expected 1
+PASS node-3-only discovery 2/gpu_id exit 0 expected 0
+PASS node-3-only discovery 2/properties exit 0 expected 0
+PASS positive twin CONTROL missing selected render node exit 0 expected 0
+PASS CONTROL missing selected render node exit 1 expected 1
+PASS compile fatal-topology-open exit 0 expected 0
+PASS positive twin CONTROL inaccessible node must not abort exit 0 expected 0
+PASS CONTROL inaccessible node must not abort exit 1 expected 1
+PASS compile fatal-cpu-node exit 0 expected 0
+PASS positive twin CONTROL CPU node must not abort exit 0 expected 0
+PASS CONTROL CPU node must not abort exit 1 expected 1
+PASS compile independent AQL encoder exit 0 expected 0
+PASS compile publication-unit exit 0 expected 0
+PASS native publication order exit 0 expected 0
+PASS independent AQL nonzero LDS encoding exit 0 expected 0
+PASS compile publication-distinct-segments exit 0 expected 0
+PASS generic ABI private20 group4096 exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #2 exit 0 expected 0
+PASS compile publication-swapped-segments exit 0 expected 0
+PASS positive twin CONTROL swapped group-private segments exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #3 exit 0 expected 0
+PASS CONTROL swapped group-private segments exit 1 expected 1
+PASS compile publication-early-header exit 0 expected 0
+PASS positive twin CONTROL early valid header exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #4 exit 0 expected 0
+PASS CONTROL early valid header exit 1 expected 1
+PASS compile plan-helper-valid-width-1 exit 0 expected 0
+PASS positive twin plan helper legal width 1 exit 0 expected 0
+PASS compile plan-helper-valid-width-4 exit 0 expected 0
+PASS positive twin plan helper legal width 4 exit 0 expected 0
+PASS compile plan-helper-valid-width-8 exit 0 expected 0
+PASS positive twin plan helper legal width 8 exit 0 expected 0
+PASS compile plan-helper-word-width exit 0 expected 0
+PASS positive twin plan helper refuses impossible input width exit 0 expected 0
+PASS plan helper refuses impossible input width exit 64 expected 64
+PASS compile plan-ring-boundaries exit 0 expected 0
+PASS native plan ring capacity boundaries exit 0 expected 0
+PASS compile plan-ring-unrepresentable exit 0 expected 0
+PASS compile plan-ring-largest-representable exit 0 expected 0
+PASS positive twin CONTROL plan ring exceeds UAPI size exit 0 expected 0
+PASS CONTROL plan ring exceeds UAPI size exit 64 expected 64
+PASS compile plan-publication-unit exit 0 expected 0
+PASS native batch publication order through plantemplate exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #5 exit 0 expected 0
+PASS compile plan-publication-distinct-segments exit 0 expected 0
+PASS plantemplate ABI private20 group4096 exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #6 exit 0 expected 0
+PASS compile plan-publication-swapped-segments exit 0 expected 0
+PASS positive twin CONTROL plantemplate-only swapped segments exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #7 exit 0 expected 0
+PASS CONTROL plantemplate-only swapped segments exit 1 expected 1
+PASS compile plan-publication-early-header exit 0 expected 0
+PASS positive twin CONTROL batch early valid header exit 0 expected 0
+PASS independent AQL nonzero LDS encoding #8 exit 0 expected 0
+PASS CONTROL batch early valid header exit 1 expected 1
+PASS compile plan-swapped-segments exit 0 expected 0
+PASS compile plan-no-alarm-rearm exit 0 expected 0
+FAIL native plan CPU contracts exit 1 expected 0
+
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/uxl-brief-20261113/PublicRebuild/C/CUDApp/tests/amd-kfd-launch/plan-check.py", line 7, in <module>
+    qemu=shutil.which('qemu-x86_64');assert qemu
+                                            ^^^^
+AssertionError
+

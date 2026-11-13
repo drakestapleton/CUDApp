@@ -1,0 +1,1 @@
+raw runC-controls.log on the Spark: 7987 lines, sha256 ccd0136eeea51e5e3744b5766d9f0b89c314b18e1dbb075ec976ea440ec8ee75; deliver copy drops only the sh -x trace lines of the PATH symlink loop (+ b=..., + ln -sf ..., + basename ..., + case ...): 110 lines kept

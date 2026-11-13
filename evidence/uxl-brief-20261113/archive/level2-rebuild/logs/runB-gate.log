@@ -1,0 +1,29 @@
+START 2026-11-13T18:48:25.355545827Z
+### rc=0 cd CUDApp
+### rc=0 check.py
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  build/amd-kfd-launch/gate/launch-x86
+### rc=0 sha256sum
+END 2026-11-13T18:48:46.033806334Z
+	Command being timed: "../pool.sh sh ../runB-gate.sh"
+	User time (seconds): 4.95
+	System time (seconds): 12.71
+	Percent of CPU this job got: 85%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:20.69
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 181120
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 92
+	Minor (reclaiming a frame) page faults: 317419
+	Voluntary context switches: 2140141
+	Involuntary context switches: 26343
+	Swaps: 0
+	File system inputs: 13320
+	File system outputs: 138024
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

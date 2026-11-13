@@ -1,0 +1,1 @@
+cd /workspace/uxl; date -u +%FT%TZ; tail -5 pre.log; du -sh /tmp/qwen3.8-27b-fp8; ls /tmp/qwen3.8-27b-fp8 | wc -l; tail -5 uxl-l3.log; ps aux | grep -c "uxl-l3.sh"

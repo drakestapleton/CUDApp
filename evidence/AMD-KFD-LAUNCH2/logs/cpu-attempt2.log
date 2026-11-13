@@ -1,0 +1,4 @@
+FAIL compile launch-a64 exit 12 expected 0
+
+omc: line 634: error 12
+

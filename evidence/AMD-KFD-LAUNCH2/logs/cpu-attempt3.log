@@ -1,0 +1,45 @@
+PASS compile launch-a64 exit 0 expected 0
+PASS compile launch-x86 exit 0 expected 0
+CONTROL wrong compiler refused before execution/output
+PASS compile object writer exit 0 expected 0
+PASS build fp8gemv exit 0 expected 0
+PASS a64 inspect fp8gemv exit 0 expected 0
+PASS x86 inspect fp8gemv exit 0 expected 0
+PASS build fsum16 exit 0 expected 0
+PASS a64 inspect fsum16 exit 0 expected 0
+PASS x86 inspect fsum16 exit 0 expected 0
+PASS build sgemm exit 0 expected 0
+PASS a64 inspect sgemm exit 0 expected 0
+PASS x86 inspect sgemm exit 0 expected 0
+PASS build vadd exit 0 expected 0
+PASS a64 inspect vadd exit 0 expected 0
+PASS x86 inspect vadd exit 0 expected 0
+PASS a64 refuse truncated exit 65 expected 65
+PASS x86 refuse truncated exit 65 expected 65
+PASS a64 refuse wrong-machine exit 65 expected 65
+PASS x86 refuse wrong-machine exit 65 expected 65
+PASS a64 refuse wave32 exit 65 expected 65
+PASS x86 refuse wave32 exit 65 expected 65
+PASS a64 refuse negative-entry exit 65 expected 65
+PASS x86 refuse negative-entry exit 65 expected 65
+PASS a64 missing descriptor exit 65 expected 65
+PASS a64 absent KFD exit 77 expected 77
+PASS a64 refuse argument header exit 64 expected 64
+PASS x86 missing descriptor exit 65 expected 65
+PASS x86 absent KFD exit 77 expected 77
+PASS x86 refuse argument header exit 64 expected 64
+PASS compile UAPI layout oracle exit 0 expected 0
+PASS UAPI layout exit 0 expected 0
+PASS compile trace instrument exit 0 expected 0
+PASS compile publication instrument exit 0 expected 0
+PASS native simulated orchestration exit 0 expected 0
+PASS native generic CLI ring wrap exit 0 expected 0
+PASS CONTROL missing device completion exit 1 expected 1
+PASS compile bad-gpu-record exit 0 expected 0
+PASS CONTROL wrong GPU record exit 1 expected 1
+PASS node-3-only discovery 2/gpu_id exit 0 expected 0
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/tests/amd-kfd-launch/check.py", line 144, in <module>
+    assert b'OMEGA topology skip CPU gpu_id=0\n' in p.stdout
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

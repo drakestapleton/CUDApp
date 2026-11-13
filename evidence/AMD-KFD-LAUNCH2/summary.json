@@ -1,0 +1,19 @@
+{
+  "compiler": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b",
+  "checks": 49,
+  "failures": 0,
+  "qemu": "/usr/bin/qemu-x86_64",
+  "device": "NOT_RUN",
+  "orchestration": "native CPU syscall simulation only",
+  "publication": "native instruction-step observation only",
+  "objects": {
+    "fp8gemv": "b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b",
+    "fsum16": "15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478",
+    "sgemm": "466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70",
+    "vadd": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"
+  },
+  "binaries": {
+    "a64": "7f32ab1e3e8ad63586828c0aa93babdbd88edd566f7a7976a6aa884be352e09e",
+    "x86": "70e63de39a28be6c8aa1bde9ac46ca93797e5bd4ea8633fddd5be3dae3e0070d"
+  }
+}

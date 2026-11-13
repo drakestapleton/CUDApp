@@ -1,0 +1,244 @@
+{
+  "source_head": "f9995a658f1470956fc6aefe63a41910712e1bdc",
+  "branch": "amdserve/kfd-launch",
+  "base": "f3cadd6ee33ec4fcc829fc4c58e284e1d48554f2",
+  "summary": {
+    "compiler": "ca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b",
+    "checks": 49,
+    "failures": 0,
+    "qemu": "/usr/bin/qemu-x86_64",
+    "device": "NOT_RUN",
+    "orchestration": "native CPU syscall simulation only",
+    "publication": "native instruction-step observation only",
+    "objects": {
+      "fp8gemv": "b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b",
+      "fsum16": "15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478",
+      "sgemm": "466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70",
+      "vadd": "10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f"
+    },
+    "binaries": {
+      "a64": "7f32ab1e3e8ad63586828c0aa93babdbd88edd566f7a7976a6aa884be352e09e",
+      "x86": "70e63de39a28be6c8aa1bde9ac46ca93797e5bd4ea8633fddd5be3dae3e0070d"
+    }
+  },
+  "notebook": {
+    "records": [
+      {
+        "case": "actual notebook x86 via qemu, absent KFD and refusals",
+        "exit": 0
+      },
+      {
+        "case": "a64 inspect vadd.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=2608 kernarg_bytes=28\n"
+      },
+      {
+        "case": "x86 inspect vadd.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=2608 kernarg_bytes=28\n"
+      },
+      {
+        "case": "a64 inspect fp8gemv2.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=4152 kernarg_bytes=40\n"
+      },
+      {
+        "case": "x86 inspect fp8gemv2.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=4152 kernarg_bytes=40\n"
+      },
+      {
+        "case": "a64 inspect bf16gemv2.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3824 kernarg_bytes=32\n"
+      },
+      {
+        "case": "x86 inspect bf16gemv2.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3824 kernarg_bytes=32\n"
+      },
+      {
+        "case": "a64 inspect attn256_part.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3552 kernarg_bytes=48\n"
+      },
+      {
+        "case": "x86 inspect attn256_part.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3552 kernarg_bytes=48\n"
+      },
+      {
+        "case": "a64 inspect attn256_merge.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3104 kernarg_bytes=48\n"
+      },
+      {
+        "case": "x86 inspect attn256_merge.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3104 kernarg_bytes=48\n"
+      },
+      {
+        "case": "a64 inspect attn256_prep.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=5032 kernarg_bytes=80\n"
+      },
+      {
+        "case": "x86 inspect attn256_prep.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=5032 kernarg_bytes=80\n"
+      },
+      {
+        "case": "a64 inspect attn256_gate.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=2736 kernarg_bytes=24\n"
+      },
+      {
+        "case": "x86 inspect attn256_gate.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=2736 kernarg_bytes=24\n"
+      },
+      {
+        "case": "a64 inspect gdnconv4.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3264 kernarg_bytes=40\n"
+      },
+      {
+        "case": "x86 inspect gdnconv4.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3264 kernarg_bytes=40\n"
+      },
+      {
+        "case": "a64 inspect rmsnorm5120.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3032 kernarg_bytes=28\n"
+      },
+      {
+        "case": "x86 inspect rmsnorm5120.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=3032 kernarg_bytes=28\n"
+      },
+      {
+        "case": "a64 inspect mlpsilu.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=2752 kernarg_bytes=28\n"
+      },
+      {
+        "case": "x86 inspect mlpsilu.hsaco",
+        "exit": 0,
+        "stdout": "OMEGA elf=accepted image_bytes=2752 kernarg_bytes=28\n"
+      },
+      {
+        "case": "tail-control fp8 CPU rational scalar vs lane-FMA reference",
+        "m": 7,
+        "k": 1031,
+        "expected_sha256": "a549bc17f49cb4145ef791e5ccb78d6608a1a58f8150ebeccb0237df506cfbbd",
+        "exit": 0
+      },
+      {
+        "case": "tail-control bf16 CPU rational scalar vs lane-FMA reference",
+        "m": 7,
+        "k": 1031,
+        "expected_sha256": "1839b9e14d663957d1d0770b35894a5b27d9e5d3bf37693bbe7eaf2b7ad95548",
+        "exit": 0
+      },
+      {
+        "case": "gate/up fp8 CPU rational scalar vs lane-FMA reference",
+        "m": 17408,
+        "k": 5120,
+        "expected_sha256": "f696489bfb51308f4c770190a99a6c120178ccac04e79922386f7ea17cf5ea5e",
+        "exit": 0
+      },
+      {
+        "case": "gate/up bf16 CPU rational scalar vs lane-FMA reference",
+        "m": 17408,
+        "k": 5120,
+        "expected_sha256": "199df312cfa8a57af7dcc0a1f047edc1f113b97503dfe844e2bd41e713b05217",
+        "exit": 0
+      },
+      {
+        "case": "down fp8 CPU rational scalar vs lane-FMA reference",
+        "m": 5120,
+        "k": 17408,
+        "expected_sha256": "1bc09f05f9898ab8d1fc785f52f2d20bf920539b32f4b01826d17d8811e0b8ae",
+        "exit": 0
+      },
+      {
+        "case": "down bf16 CPU rational scalar vs lane-FMA reference",
+        "m": 5120,
+        "k": 17408,
+        "expected_sha256": "fd4b2d3db2e2cc626f434f870789d9d6fa47e51a2944de56aefce274c9acb131",
+        "exit": 0
+      },
+      {
+        "case": "hidden fp8 CPU rational scalar vs lane-FMA reference",
+        "m": 5120,
+        "k": 5120,
+        "expected_sha256": "d1f5428373b38f2ed51fd975eb5441b79d58ba626d108ff19e2cf8d14b871811",
+        "exit": 0
+      },
+      {
+        "case": "hidden bf16 CPU rational scalar vs lane-FMA reference",
+        "m": 5120,
+        "k": 5120,
+        "expected_sha256": "ab8ea3d28994eed298ec076b5d03574148d1b747c27e064d640e636eb3da2594",
+        "exit": 0
+      },
+      {
+        "case": "real child observed first stdout line persisted before exit; stderr partial preserved",
+        "exit": 0
+      },
+      {
+        "case": "CONTROL execution failure keeps RESULT last",
+        "exit": 1,
+        "expected": 1
+      },
+      {
+        "case": "CONTROL corrupted binary digest refused before execution",
+        "exit": 1,
+        "expected": 1
+      }
+    ],
+    "device": "NOT_RUN",
+    "calculations": "fixture/reference in notebook.py.in; Fraction scalar sum then IEEE binary32 compared to fmaf lane reduction; quantities dimensionless"
+  },
+  "commands": [
+    {
+      "command": "AMD_KFD_LAUNCH_OUT=/home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/amd-kfd-launch/launch2-attempt4 flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/check.py /home/drakestapleton/work/hive/amdserve/OmegaLaunch/CUDApp/build/launch2-pin/omc",
+      "exit": 0,
+      "log": "logs/cpu-attempt4.log",
+      "log_sha256": "7daa4a2d695b9f1b6e765f35493546156891867e9f7c05a8c3cb7dc1f6e7be87"
+    },
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/bundle.py --gate build/amd-kfd-launch/launch2-attempt4 --gemv-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/gemv2 --attention-tree /home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn --out build/launch2-bundle",
+      "exit": 0,
+      "log": "logs/bundle-candidate.log",
+      "log_sha256": "6990fd0dcd1bfd9c500f9169c5c4c50604f4875f08019145a0abeaaeda11b668"
+    },
+    {
+      "command": "flock -n -o /home/drakestapleton/handoffs/hive/queen/pool-0-2.lock taskset -c 0-2 nice -n 10 python3 -I tests/amd-kfd-launch/notebook-check.py build/launch2-bundle build/amd-kfd-launch/launch2-attempt4",
+      "exit": 0,
+      "log": "logs/notebook-attempt1.log",
+      "log_sha256": "d42b54f97b56f33f8434747daf2332d76294c087119e3ec7d619617a4c6538b9"
+    },
+    {
+      "command": "test ! -e /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2 && cp -a build/launch2-bundle /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2 && (cd /home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2 && sha256sum -c SHA256SUMS)",
+      "exit": 0,
+      "log": "logs/bundle-sha256.log",
+      "log_sha256": "b4b5900b357fc0bc65d3b11173b39fc6031b067348d77bf72b7ac318df73fd48"
+    }
+  ],
+  "bundle_path": "/home/drakestapleton/handoffs/hive/amdserve/notebook-probe/launch2",
+  "cell_bytes": 70000,
+  "cell_sha256": "fd3aead842195089aca046de8103ae71914ffd78508344414b5dc40259200175",
+  "binary_sha256": "70e63de39a28be6c8aa1bde9ac46ca93797e5bd4ea8633fddd5be3dae3e0070d",
+  "bundle_sha256_manifest": "7f71f565c07d536b2afd927a54bb519bb324528f9c8bdad75fc8ba6d629f288e",
+  "compiler_pin": "290ad5feb9fa34b47e3672f4921f16de7807fca1\nca20b6a5181d63b03d2dbbd2bdafd5cae225116e477997853f6f45d9d7d9641b  seed/out/omc\n",
+  "compiler_choice": "Original launcher pin extracted from omega-mv 290ad5feb; newer compiler still had pending gates when choice was made. No repin.",
+  "compiler_extract_command": "git -C ../../OmegaKfd/omega-mv show 290ad5feb:seed/out/omc > build/launch2-pin/omc; chmod +x build/launch2-pin/omc",
+  "simulation": "AArch64 ptrace, memfd device replacements, sorted fake topology and injected EPERM; no GPU syscall executed. x86 parser/refusal paths via qemu.",
+  "prior_attempts": "logs/exits.tsv: original lock wait cancelled before execution; first actual compile failed register pool 12, fixed by extracting nodigit; next gate showed fixture directory order did not exercise skips, fixed by sorting simulated directory records. Both failures retained.",
+  "device": "NOT_RUN",
+  "independent_review": "NOT_RUN (parent integration responsibility)",
+  "merging": "NOT_RUN",
+  "deployment": "NOT_RUN"
+}

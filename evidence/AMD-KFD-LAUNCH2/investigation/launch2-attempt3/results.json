@@ -1,0 +1,264 @@
+[
+  {
+    "case": "compile launch-a64",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile launch-x86",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile object writer",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "build fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2800 kernarg_bytes=40\n"
+  },
+  {
+    "case": "x86 inspect fp8gemv",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2800 kernarg_bytes=40\n"
+  },
+  {
+    "case": "build fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2736 kernarg_bytes=20\n"
+  },
+  {
+    "case": "x86 inspect fsum16",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2736 kernarg_bytes=20\n"
+  },
+  {
+    "case": "build sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2768 kernarg_bytes=36\n"
+  },
+  {
+    "case": "x86 inspect sgemm",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2768 kernarg_bytes=36\n"
+  },
+  {
+    "case": "build vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "a64 inspect vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2608 kernarg_bytes=28\n"
+  },
+  {
+    "case": "x86 inspect vadd",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "OMEGA elf=accepted image_bytes=2608 kernarg_bytes=28\n"
+  },
+  {
+    "case": "a64 refuse truncated",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "x86 refuse truncated",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "a64 refuse wrong-machine",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "x86 refuse wrong-machine",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "a64 refuse wave32",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "x86 refuse wave32",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "a64 refuse negative-entry",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "x86 refuse negative-entry",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "a64 missing descriptor",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "a64 absent KFD",
+    "exit": 77,
+    "expected": 77,
+    "stderr": "",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd fail errno=2 phase=after detail=0\nOMEGA device=absent errno=2\n"
+  },
+  {
+    "case": "a64 refuse argument header",
+    "exit": 64,
+    "expected": 64,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "x86 missing descriptor",
+    "exit": 65,
+    "expected": 65,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "x86 absent KFD",
+    "exit": 77,
+    "expected": 77,
+    "stderr": "",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd fail errno=2 phase=after detail=0\nOMEGA device=absent errno=2\n"
+  },
+  {
+    "case": "x86 refuse argument header",
+    "exit": 64,
+    "expected": 64,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "case": "compile UAPI layout oracle",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "UAPI layout",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "",
+    "stdout": "2148027137\t8\t2\t# GET_VERSION\n0\t4\t1\t# major_version\n4\t4\t1\t# minor_version\n1074285333\t8\t2\t# ACQUIRE_VM\n0\t4\t1\t# drm_fd\n4\t4\t1\t# gpu_id\n3222293268\t16\t3\t# GET_PROCESS_APERTURES_NEW\n0\t8\t1\t# kfd_process_device_apertures_ptr\n8\t4\t1\t# num_of_nodes\n12\t4\t1\t# pad\n3227011842\t88\t15\t# CREATE_QUEUE\n0\t8\t1\t# ring_base_address\n8\t8\t1\t# write_pointer_address\n16\t8\t1\t# read_pointer_address\n24\t8\t1\t# doorbell_offset\n32\t4\t1\t# ring_size\n36\t4\t1\t# gpu_id\n40\t4\t1\t# queue_type\n44\t4\t1\t# queue_percentage\n48\t4\t1\t# queue_priority\n52\t4\t1\t# queue_id\n56\t8\t1\t# eop_buffer_address\n64\t8\t1\t# eop_buffer_size\n72\t8\t1\t# ctx_save_restore_address\n80\t4\t1\t# ctx_save_restore_size\n84\t4\t1\t# ctl_stack_size\n3221768963\t8\t2\t# DESTROY_QUEUE\n0\t4\t1\t# queue_id\n4\t4\t1\t# pad\n3223866134\t40\t6\t# ALLOC_MEMORY_OF_GPU\n0\t8\t1\t# va_addr\n8\t8\t1\t# size\n16\t8\t1\t# handle\n24\t8\t1\t# mmap_offset\n32\t4\t1\t# gpu_id\n36\t4\t1\t# flags\n1074285335\t8\t1\t# FREE_MEMORY_OF_GPU\n0\t8\t1\t# handle\n3222817560\t24\t4\t# MAP_MEMORY_TO_GPU\n0\t8\t1\t# handle\n8\t8\t1\t# device_ids_array_ptr\n16\t4\t1\t# n_devices\n20\t4\t1\t# n_success\n3222817561\t24\t4\t# UNMAP_MEMORY_FROM_GPU\n0\t8\t1\t# handle\n8\t8\t1\t# device_ids_array_ptr\n16\t4\t1\t# n_devices\n20\t4\t1\t# n_success\n3223341832\t32\t7\t# CREATE_EVENT\n0\t8\t1\t# event_page_offset\n8\t4\t1\t# event_trigger_data\n12\t4\t1\t# event_type\n16\t4\t1\t# auto_reset\n20\t4\t1\t# node_id\n24\t4\t1\t# event_id\n28\t4\t1\t# event_slot_index\n1074285321\t8\t2\t# DESTROY_EVENT\n0\t4\t1\t# event_id\n4\t4\t1\t# pad\n3222817548\t24\t5\t# WAIT_EVENTS\n0\t8\t1\t# events_ptr\n8\t4\t1\t# num_events\n12\t4\t1\t# wait_for_all\n16\t4\t1\t# timeout\n20\t4\t1\t# wait_result\n0\t56\t8\t# APERTURE_ENTRY\n0\t8\t1\t# lds_base\n8\t8\t1\t# lds_limit\n16\t8\t1\t# scratch_base\n24\t8\t1\t# scratch_limit\n32\t8\t1\t# gpuvm_base\n40\t8\t1\t# gpuvm_limit\n48\t4\t1\t# gpu_id\n52\t4\t1\t# pad\n0\t48\t4\t# SIGNAL_EVENT_ENTRY\n0\t8\t1\t# signal_event_data.last_event_age\n32\t8\t1\t# kfd_event_data_ext\n40\t4\t1\t# event_id\n44\t4\t1\t# pad\n0\t4\t1\t# DEVICE_ID\n0\t4\t1\t# device_id\n"
+  },
+  {
+    "case": "compile trace instrument",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "compile publication instrument",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "native simulated orchestration",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=0 bytes=4096 va=eeee4f000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=4096 bytes=4096 va=eeee4ee00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=8192 bytes=4096 va=eeee4ec00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=12288 bytes=4096 va=eeee4ea00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=16384 bytes=4096 va=eeee4e800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=20480 bytes=4096 va=eeee4e600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=24576 bytes=4096 va=eeee4e400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=28672 bytes=4096 va=eeee4e200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=32768 bytes=4902912 va=eeee4dc00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=4935680 bytes=4096 va=eeee4da00000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=4 offset=0 bytes=8192 va=0\nTEST_SIM ioctl request=0xc0084b03 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM child_exit=0 allocations=10 packets=1 queued=0\nTEST_SIM PASS allocations=10 packets=1 freed=all device=NOT_RUN\n",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd ok errno=0 phase=after detail=0\nOMEGA step version ok errno=0 phase=before detail=0\nOMEGA step version ok errno=0 phase=after detail=0\nOMEGA step topology ok errno=0 phase=before detail=0\nOMEGA step topology_node ok errno=0 phase=before detail=2\nOMEGA step topology_node ok errno=0 phase=after detail=2\nOMEGA topology selected node=2 gpu_id=1 render_minor=128\nOMEGA step topology ok errno=0 phase=before detail=2\nOMEGA step topology ok errno=0 phase=after detail=2\nOMEGA step render_open ok errno=0 phase=before detail=128\nOMEGA step render_open ok errno=0 phase=after detail=128\nOMEGA step acquire_vm ok errno=0 phase=before detail=1\nOMEGA step acquire_vm ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=0\nOMEGA step memory_reserve ok errno=0 phase=after detail=0\nOMEGA step memory_alloc ok errno=0 phase=before detail=0\nOMEGA step memory_alloc ok errno=0 phase=after detail=0\nOMEGA step memory_map ok errno=0 phase=before detail=0\nOMEGA step memory_map ok errno=0 phase=after detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=0\nOMEGA step code_object_load ok errno=0 phase=before detail=2608\nOMEGA step code_object_load ok errno=0 phase=after detail=2608\nOMEGA step memory_reserve ok errno=0 phase=before detail=1\nOMEGA step memory_reserve ok errno=0 phase=after detail=1\nOMEGA step memory_alloc ok errno=0 phase=before detail=1\nOMEGA step memory_alloc ok errno=0 phase=after detail=1\nOMEGA step memory_map ok errno=0 phase=before detail=1\nOMEGA step memory_map ok errno=0 phase=after detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=2\nOMEGA step memory_reserve ok errno=0 phase=after detail=2\nOMEGA step memory_alloc ok errno=0 phase=before detail=2\nOMEGA step memory_alloc ok errno=0 phase=after detail=2\nOMEGA step memory_map ok errno=0 phase=before detail=2\nOMEGA step memory_map ok errno=0 phase=after detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=2\nOMEGA step memory_reserve ok errno=0 phase=before detail=8\nOMEGA step memory_reserve ok errno=0 phase=after detail=8\nOMEGA step memory_alloc ok errno=0 phase=before detail=8\nOMEGA step memory_alloc ok errno=0 phase=after detail=8\nOMEGA step memory_map ok errno=0 phase=before detail=8\nOMEGA step memory_map ok errno=0 phase=after detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=8\nOMEGA step memory_reserve ok errno=0 phase=before detail=9\nOMEGA step memory_reserve ok errno=0 phase=after detail=9\nOMEGA step memory_alloc ok errno=0 phase=before detail=9\nOMEGA step memory_alloc ok errno=0 phase=after detail=9\nOMEGA step memory_map ok errno=0 phase=before detail=9\nOMEGA step memory_map ok errno=0 phase=after detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=9\nOMEGA step memory_reserve ok errno=0 phase=before detail=3\nOMEGA step memory_reserve ok errno=0 phase=after detail=3\nOMEGA step memory_alloc ok errno=0 phase=before detail=3\nOMEGA step memory_alloc ok errno=0 phase=after detail=3\nOMEGA step memory_map ok errno=0 phase=before detail=3\nOMEGA step memory_map ok errno=0 phase=after detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=3\nOMEGA step memory_reserve ok errno=0 phase=before detail=4\nOMEGA step memory_reserve ok errno=0 phase=after detail=4\nOMEGA step memory_alloc ok errno=0 phase=before detail=4\nOMEGA step memory_alloc ok errno=0 phase=after detail=4\nOMEGA step memory_map ok errno=0 phase=before detail=4\nOMEGA step memory_map ok errno=0 phase=after detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=4\nOMEGA step memory_reserve ok errno=0 phase=before detail=5\nOMEGA step memory_reserve ok errno=0 phase=after detail=5\nOMEGA step memory_alloc ok errno=0 phase=before detail=5\nOMEGA step memory_alloc ok errno=0 phase=after detail=5\nOMEGA step memory_map ok errno=0 phase=before detail=5\nOMEGA step memory_map ok errno=0 phase=after detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=5\nOMEGA step memory_reserve ok errno=0 phase=before detail=6\nOMEGA step memory_reserve ok errno=0 phase=after detail=6\nOMEGA step memory_alloc ok errno=0 phase=before detail=6\nOMEGA step memory_alloc ok errno=0 phase=after detail=6\nOMEGA step memory_map ok errno=0 phase=before detail=6\nOMEGA step memory_map ok errno=0 phase=after detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=6\nOMEGA step memory_reserve ok errno=0 phase=before detail=7\nOMEGA step memory_reserve ok errno=0 phase=after detail=7\nOMEGA step memory_alloc ok errno=0 phase=before detail=7\nOMEGA step memory_alloc ok errno=0 phase=after detail=7\nOMEGA step memory_map ok errno=0 phase=before detail=7\nOMEGA step memory_map ok errno=0 phase=after detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=7\nOMEGA step queue_create ok errno=0 phase=before detail=1\nOMEGA step queue_create ok errno=0 phase=after detail=1\nOMEGA step doorbell_map ok errno=0 phase=before detail=8\nOMEGA step doorbell_map ok errno=0 phase=after detail=8\nOMEGA step dispatch ok errno=0 phase=before detail=1\nOMEGA step dispatch ok errno=0 phase=after detail=1\nOMEGA step signal_wait ok errno=0 phase=before detail=1\nOMEGA step signal_wait ok errno=0 phase=after detail=1\nOMEGA dispatch_ns=1259101 packets=1\nOMEGA step readback ok errno=0 phase=before detail=1024\nOMEGA vadd=PASS count=256\nOMEGA step readback ok errno=0 phase=after detail=1024\nOMEGA step cleanup ok errno=0 phase=before detail=0\nOMEGA step cleanup ok errno=0 phase=after detail=0\n"
+  },
+  {
+    "case": "native generic CLI ring wrap",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=0 bytes=4096 va=f77ca5200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4096 bytes=4096 va=f77ca5000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=8192 bytes=4096 va=f77ca4e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=12288 bytes=4096 va=f77ca4c00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=16384 bytes=4096 va=f77ca4a00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=20480 bytes=4096 va=f77ca4800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=24576 bytes=4096 va=f77ca4600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=28672 bytes=4096 va=f77ca4400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=32768 bytes=4902912 va=f77ca3e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4935680 bytes=4096 va=f77ca3c00000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=5 offset=0 bytes=8192 va=0\nTEST_SIM ioctl request=0xc0084b03 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM child_exit=0 allocations=10 packets=200 queued=0\nTEST_SIM PASS allocations=10 packets=200 freed=all device=NOT_RUN\n",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd ok errno=0 phase=after detail=0\nOMEGA step version ok errno=0 phase=before detail=0\nOMEGA step version ok errno=0 phase=after detail=0\nOMEGA step topology ok errno=0 phase=before detail=0\nOMEGA step topology_node ok errno=0 phase=before detail=2\nOMEGA step topology_node ok errno=0 phase=after detail=2\nOMEGA topology selected node=2 gpu_id=1 render_minor=128\nOMEGA step topology ok errno=0 phase=before detail=2\nOMEGA step topology ok errno=0 phase=after detail=2\nOMEGA step render_open ok errno=0 phase=before detail=128\nOMEGA step render_open ok errno=0 phase=after detail=128\nOMEGA step acquire_vm ok errno=0 phase=before detail=1\nOMEGA step acquire_vm ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=0\nOMEGA step memory_reserve ok errno=0 phase=after detail=0\nOMEGA step memory_alloc ok errno=0 phase=before detail=0\nOMEGA step memory_alloc ok errno=0 phase=after detail=0\nOMEGA step memory_map ok errno=0 phase=before detail=0\nOMEGA step memory_map ok errno=0 phase=after detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=0\nOMEGA step code_object_load ok errno=0 phase=before detail=2608\nOMEGA step code_object_load ok errno=0 phase=after detail=2608\nOMEGA step memory_reserve ok errno=0 phase=before detail=1\nOMEGA step memory_reserve ok errno=0 phase=after detail=1\nOMEGA step memory_alloc ok errno=0 phase=before detail=1\nOMEGA step memory_alloc ok errno=0 phase=after detail=1\nOMEGA step memory_map ok errno=0 phase=before detail=1\nOMEGA step memory_map ok errno=0 phase=after detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=2\nOMEGA step memory_reserve ok errno=0 phase=after detail=2\nOMEGA step memory_alloc ok errno=0 phase=before detail=2\nOMEGA step memory_alloc ok errno=0 phase=after detail=2\nOMEGA step memory_map ok errno=0 phase=before detail=2\nOMEGA step memory_map ok errno=0 phase=after detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=2\nOMEGA step memory_reserve ok errno=0 phase=before detail=8\nOMEGA step memory_reserve ok errno=0 phase=after detail=8\nOMEGA step memory_alloc ok errno=0 phase=before detail=8\nOMEGA step memory_alloc ok errno=0 phase=after detail=8\nOMEGA step memory_map ok errno=0 phase=before detail=8\nOMEGA step memory_map ok errno=0 phase=after detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=8\nOMEGA step memory_reserve ok errno=0 phase=before detail=9\nOMEGA step memory_reserve ok errno=0 phase=after detail=9\nOMEGA step memory_alloc ok errno=0 phase=before detail=9\nOMEGA step memory_alloc ok errno=0 phase=after detail=9\nOMEGA step memory_map ok errno=0 phase=before detail=9\nOMEGA step memory_map ok errno=0 phase=after detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=9\nOMEGA step memory_reserve ok errno=0 phase=before detail=3\nOMEGA step memory_reserve ok errno=0 phase=after detail=3\nOMEGA step memory_alloc ok errno=0 phase=before detail=3\nOMEGA step memory_alloc ok errno=0 phase=after detail=3\nOMEGA step memory_map ok errno=0 phase=before detail=3\nOMEGA step memory_map ok errno=0 phase=after detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=3\nOMEGA step memory_reserve ok errno=0 phase=before detail=4\nOMEGA step memory_reserve ok errno=0 phase=after detail=4\nOMEGA step memory_alloc ok errno=0 phase=before detail=4\nOMEGA step memory_alloc ok errno=0 phase=after detail=4\nOMEGA step memory_map ok errno=0 phase=before detail=4\nOMEGA step memory_map ok errno=0 phase=after detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=4\nOMEGA step memory_reserve ok errno=0 phase=before detail=5\nOMEGA step memory_reserve ok errno=0 phase=after detail=5\nOMEGA step memory_alloc ok errno=0 phase=before detail=5\nOMEGA step memory_alloc ok errno=0 phase=after detail=5\nOMEGA step memory_map ok errno=0 phase=before detail=5\nOMEGA step memory_map ok errno=0 phase=after detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=5\nOMEGA step memory_reserve ok errno=0 phase=before detail=6\nOMEGA step memory_reserve ok errno=0 phase=after detail=6\nOMEGA step memory_alloc ok errno=0 phase=before detail=6\nOMEGA step memory_alloc ok errno=0 phase=after detail=6\nOMEGA step memory_map ok errno=0 phase=before detail=6\nOMEGA step memory_map ok errno=0 phase=after detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=6\nOMEGA step memory_reserve ok errno=0 phase=before detail=7\nOMEGA step memory_reserve ok errno=0 phase=after detail=7\nOMEGA step memory_alloc ok errno=0 phase=before detail=7\nOMEGA step memory_alloc ok errno=0 phase=after detail=7\nOMEGA step memory_map ok errno=0 phase=before detail=7\nOMEGA step memory_map ok errno=0 phase=after detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=7\nOMEGA step queue_create ok errno=0 phase=before detail=1\nOMEGA step queue_create ok errno=0 phase=after detail=1\nOMEGA step doorbell_map ok errno=0 phase=before detail=8\nOMEGA step doorbell_map ok errno=0 phase=after detail=8\nOMEGA step dispatch ok errno=0 phase=before detail=200\nOMEGA step dispatch ok errno=0 phase=after detail=200\nOMEGA step signal_wait ok errno=0 phase=before detail=200\nOMEGA step signal_wait ok errno=0 phase=after detail=200\nOMEGA dispatch_ns=224581666 packets=200\nOMEGA step readback ok errno=0 phase=before detail=1024\nOMEGA step readback ok errno=0 phase=after detail=1024\nOMEGA step cleanup ok errno=0 phase=before detail=0\nOMEGA step cleanup ok errno=0 phase=after detail=0\n"
+  },
+  {
+    "case": "CONTROL missing device completion",
+    "exit": 1,
+    "expected": 1,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=0 bytes=4096 va=e0d71ec00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4096 bytes=4096 va=e0d71ea00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=8192 bytes=4096 va=e0d71e800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=12288 bytes=4096 va=e0d71e600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=16384 bytes=4096 va=e0d71e400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=20480 bytes=4096 va=e0d71e200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=24576 bytes=4096 va=e0d71e000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=28672 bytes=4096 va=e0d71de00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=32768 bytes=4902912 va=e0d71d800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=6 offset=4935680 bytes=4096 va=e0d71d600000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=5 offset=0 bytes=8192 va=0\nTEST_SIM child_exit=75 allocations=10 packets=0 queued=1\nTEST_SIM FAIL WEXITSTATUS(st)==0 && count==10 && packets && !queued errno=0\n",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd ok errno=0 phase=after detail=0\nOMEGA step version ok errno=0 phase=before detail=0\nOMEGA step version ok errno=0 phase=after detail=0\nOMEGA step topology ok errno=0 phase=before detail=0\nOMEGA step topology_node ok errno=0 phase=before detail=2\nOMEGA step topology_node ok errno=0 phase=after detail=2\nOMEGA topology selected node=2 gpu_id=1 render_minor=128\nOMEGA step topology ok errno=0 phase=before detail=2\nOMEGA step topology ok errno=0 phase=after detail=2\nOMEGA step render_open ok errno=0 phase=before detail=128\nOMEGA step render_open ok errno=0 phase=after detail=128\nOMEGA step acquire_vm ok errno=0 phase=before detail=1\nOMEGA step acquire_vm ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=0\nOMEGA step memory_reserve ok errno=0 phase=after detail=0\nOMEGA step memory_alloc ok errno=0 phase=before detail=0\nOMEGA step memory_alloc ok errno=0 phase=after detail=0\nOMEGA step memory_map ok errno=0 phase=before detail=0\nOMEGA step memory_map ok errno=0 phase=after detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=0\nOMEGA step code_object_load ok errno=0 phase=before detail=2608\nOMEGA step code_object_load ok errno=0 phase=after detail=2608\nOMEGA step memory_reserve ok errno=0 phase=before detail=1\nOMEGA step memory_reserve ok errno=0 phase=after detail=1\nOMEGA step memory_alloc ok errno=0 phase=before detail=1\nOMEGA step memory_alloc ok errno=0 phase=after detail=1\nOMEGA step memory_map ok errno=0 phase=before detail=1\nOMEGA step memory_map ok errno=0 phase=after detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=2\nOMEGA step memory_reserve ok errno=0 phase=after detail=2\nOMEGA step memory_alloc ok errno=0 phase=before detail=2\nOMEGA step memory_alloc ok errno=0 phase=after detail=2\nOMEGA step memory_map ok errno=0 phase=before detail=2\nOMEGA step memory_map ok errno=0 phase=after detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=2\nOMEGA step memory_reserve ok errno=0 phase=before detail=8\nOMEGA step memory_reserve ok errno=0 phase=after detail=8\nOMEGA step memory_alloc ok errno=0 phase=before detail=8\nOMEGA step memory_alloc ok errno=0 phase=after detail=8\nOMEGA step memory_map ok errno=0 phase=before detail=8\nOMEGA step memory_map ok errno=0 phase=after detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=8\nOMEGA step memory_reserve ok errno=0 phase=before detail=9\nOMEGA step memory_reserve ok errno=0 phase=after detail=9\nOMEGA step memory_alloc ok errno=0 phase=before detail=9\nOMEGA step memory_alloc ok errno=0 phase=after detail=9\nOMEGA step memory_map ok errno=0 phase=before detail=9\nOMEGA step memory_map ok errno=0 phase=after detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=9\nOMEGA step memory_reserve ok errno=0 phase=before detail=3\nOMEGA step memory_reserve ok errno=0 phase=after detail=3\nOMEGA step memory_alloc ok errno=0 phase=before detail=3\nOMEGA step memory_alloc ok errno=0 phase=after detail=3\nOMEGA step memory_map ok errno=0 phase=before detail=3\nOMEGA step memory_map ok errno=0 phase=after detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=3\nOMEGA step memory_reserve ok errno=0 phase=before detail=4\nOMEGA step memory_reserve ok errno=0 phase=after detail=4\nOMEGA step memory_alloc ok errno=0 phase=before detail=4\nOMEGA step memory_alloc ok errno=0 phase=after detail=4\nOMEGA step memory_map ok errno=0 phase=before detail=4\nOMEGA step memory_map ok errno=0 phase=after detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=4\nOMEGA step memory_reserve ok errno=0 phase=before detail=5\nOMEGA step memory_reserve ok errno=0 phase=after detail=5\nOMEGA step memory_alloc ok errno=0 phase=before detail=5\nOMEGA step memory_alloc ok errno=0 phase=after detail=5\nOMEGA step memory_map ok errno=0 phase=before detail=5\nOMEGA step memory_map ok errno=0 phase=after detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=5\nOMEGA step memory_reserve ok errno=0 phase=before detail=6\nOMEGA step memory_reserve ok errno=0 phase=after detail=6\nOMEGA step memory_alloc ok errno=0 phase=before detail=6\nOMEGA step memory_alloc ok errno=0 phase=after detail=6\nOMEGA step memory_map ok errno=0 phase=before detail=6\nOMEGA step memory_map ok errno=0 phase=after detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=6\nOMEGA step memory_reserve ok errno=0 phase=before detail=7\nOMEGA step memory_reserve ok errno=0 phase=after detail=7\nOMEGA step memory_alloc ok errno=0 phase=before detail=7\nOMEGA step memory_alloc ok errno=0 phase=after detail=7\nOMEGA step memory_map ok errno=0 phase=before detail=7\nOMEGA step memory_map ok errno=0 phase=after detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=7\nOMEGA step queue_create ok errno=0 phase=before detail=1\nOMEGA step queue_create ok errno=0 phase=after detail=1\nOMEGA step doorbell_map ok errno=0 phase=before detail=8\nOMEGA step doorbell_map ok errno=0 phase=after detail=8\nOMEGA step dispatch ok errno=0 phase=before detail=1\nOMEGA step dispatch ok errno=0 phase=after detail=1\nOMEGA step signal_wait ok errno=0 phase=before detail=1\nOMEGA step signal_wait fail errno=110 phase=after detail=1\n"
+  },
+  {
+    "case": "compile bad-gpu-record",
+    "exit": 0,
+    "expected": 0,
+    "stderr": ""
+  },
+  {
+    "case": "CONTROL wrong GPU record",
+    "exit": 1,
+    "expected": 1,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM FAIL a.gpu_id==expected_gpu && a.va_addr && !(a.va_addr%2097152) && a.size && !(a.size%4096) errno=0\n",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd ok errno=0 phase=after detail=0\nOMEGA step version ok errno=0 phase=before detail=0\nOMEGA step version ok errno=0 phase=after detail=0\nOMEGA step topology ok errno=0 phase=before detail=0\nOMEGA step topology_node ok errno=0 phase=before detail=2\nOMEGA step topology_node ok errno=0 phase=after detail=2\nOMEGA topology selected node=2 gpu_id=1 render_minor=128\nOMEGA step topology ok errno=0 phase=before detail=2\nOMEGA step topology ok errno=0 phase=after detail=2\nOMEGA step render_open ok errno=0 phase=before detail=128\nOMEGA step render_open ok errno=0 phase=after detail=128\nOMEGA step acquire_vm ok errno=0 phase=before detail=1\nOMEGA step acquire_vm ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=0\nOMEGA step memory_reserve ok errno=0 phase=after detail=0\nOMEGA step memory_alloc ok errno=0 phase=before detail=0\n"
+  },
+  {
+    "case": "node-3-only discovery 2/gpu_id",
+    "exit": 0,
+    "expected": 0,
+    "stderr": "TEST_SIM ioctl request=0x80084b01 bytes=8\nTEST_SIM ioctl request=0x40084b15 bytes=8\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=0 bytes=4096 va=f9da62200000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=4096 bytes=4096 va=f9da62000000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=8192 bytes=4096 va=f9da61e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=12288 bytes=4096 va=f9da61c00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=16384 bytes=4096 va=f9da61a00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=20480 bytes=4096 va=f9da61800000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=24576 bytes=4096 va=f9da61600000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=28672 bytes=4096 va=f9da61400000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=32768 bytes=4902912 va=f9da60e00000\nTEST_SIM ioctl request=0xc0284b16 bytes=40\nTEST_SIM ioctl request=0xc0184b18 bytes=24\nTEST_SIM mmap fd_kind=render fd=5 offset=4935680 bytes=4096 va=f9da60c00000\nTEST_SIM ioctl request=0xc0584b02 bytes=88\nTEST_SIM mmap fd_kind=kfd fd=4 offset=0 bytes=8192 va=0\nTEST_SIM ioctl request=0xc0084b03 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM ioctl request=0xc0184b19 bytes=24\nTEST_SIM ioctl request=0x40084b17 bytes=8\nTEST_SIM child_exit=0 allocations=10 packets=1 queued=0\nTEST_SIM PASS allocations=10 packets=1 freed=all device=NOT_RUN\n",
+    "stdout": "OMEGA step open_kfd ok errno=0 phase=before detail=0\nOMEGA step open_kfd ok errno=0 phase=after detail=0\nOMEGA step version ok errno=0 phase=before detail=0\nOMEGA step version ok errno=0 phase=after detail=0\nOMEGA step topology ok errno=0 phase=before detail=0\nOMEGA step topology_node ok errno=0 phase=before detail=3\nOMEGA step topology_node ok errno=0 phase=after detail=3\nOMEGA topology selected node=3 gpu_id=37820 render_minor=136\nOMEGA step topology ok errno=0 phase=before detail=3\nOMEGA step topology ok errno=0 phase=after detail=3\nOMEGA step render_open ok errno=0 phase=before detail=136\nOMEGA step render_open ok errno=0 phase=after detail=136\nOMEGA step acquire_vm ok errno=0 phase=before detail=37820\nOMEGA step acquire_vm ok errno=0 phase=after detail=37820\nOMEGA step memory_reserve ok errno=0 phase=before detail=0\nOMEGA step memory_reserve ok errno=0 phase=after detail=0\nOMEGA step memory_alloc ok errno=0 phase=before detail=0\nOMEGA step memory_alloc ok errno=0 phase=after detail=0\nOMEGA step memory_map ok errno=0 phase=before detail=0\nOMEGA step memory_map ok errno=0 phase=after detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=0\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=0\nOMEGA step code_object_load ok errno=0 phase=before detail=2608\nOMEGA step code_object_load ok errno=0 phase=after detail=2608\nOMEGA step memory_reserve ok errno=0 phase=before detail=1\nOMEGA step memory_reserve ok errno=0 phase=after detail=1\nOMEGA step memory_alloc ok errno=0 phase=before detail=1\nOMEGA step memory_alloc ok errno=0 phase=after detail=1\nOMEGA step memory_map ok errno=0 phase=before detail=1\nOMEGA step memory_map ok errno=0 phase=after detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=1\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=1\nOMEGA step memory_reserve ok errno=0 phase=before detail=2\nOMEGA step memory_reserve ok errno=0 phase=after detail=2\nOMEGA step memory_alloc ok errno=0 phase=before detail=2\nOMEGA step memory_alloc ok errno=0 phase=after detail=2\nOMEGA step memory_map ok errno=0 phase=before detail=2\nOMEGA step memory_map ok errno=0 phase=after detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=2\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=2\nOMEGA step memory_reserve ok errno=0 phase=before detail=8\nOMEGA step memory_reserve ok errno=0 phase=after detail=8\nOMEGA step memory_alloc ok errno=0 phase=before detail=8\nOMEGA step memory_alloc ok errno=0 phase=after detail=8\nOMEGA step memory_map ok errno=0 phase=before detail=8\nOMEGA step memory_map ok errno=0 phase=after detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=8\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=8\nOMEGA step memory_reserve ok errno=0 phase=before detail=9\nOMEGA step memory_reserve ok errno=0 phase=after detail=9\nOMEGA step memory_alloc ok errno=0 phase=before detail=9\nOMEGA step memory_alloc ok errno=0 phase=after detail=9\nOMEGA step memory_map ok errno=0 phase=before detail=9\nOMEGA step memory_map ok errno=0 phase=after detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=9\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=9\nOMEGA step memory_reserve ok errno=0 phase=before detail=3\nOMEGA step memory_reserve ok errno=0 phase=after detail=3\nOMEGA step memory_alloc ok errno=0 phase=before detail=3\nOMEGA step memory_alloc ok errno=0 phase=after detail=3\nOMEGA step memory_map ok errno=0 phase=before detail=3\nOMEGA step memory_map ok errno=0 phase=after detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=3\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=3\nOMEGA step memory_reserve ok errno=0 phase=before detail=4\nOMEGA step memory_reserve ok errno=0 phase=after detail=4\nOMEGA step memory_alloc ok errno=0 phase=before detail=4\nOMEGA step memory_alloc ok errno=0 phase=after detail=4\nOMEGA step memory_map ok errno=0 phase=before detail=4\nOMEGA step memory_map ok errno=0 phase=after detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=4\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=4\nOMEGA step memory_reserve ok errno=0 phase=before detail=5\nOMEGA step memory_reserve ok errno=0 phase=after detail=5\nOMEGA step memory_alloc ok errno=0 phase=before detail=5\nOMEGA step memory_alloc ok errno=0 phase=after detail=5\nOMEGA step memory_map ok errno=0 phase=before detail=5\nOMEGA step memory_map ok errno=0 phase=after detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=5\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=5\nOMEGA step memory_reserve ok errno=0 phase=before detail=6\nOMEGA step memory_reserve ok errno=0 phase=after detail=6\nOMEGA step memory_alloc ok errno=0 phase=before detail=6\nOMEGA step memory_alloc ok errno=0 phase=after detail=6\nOMEGA step memory_map ok errno=0 phase=before detail=6\nOMEGA step memory_map ok errno=0 phase=after detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=6\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=6\nOMEGA step memory_reserve ok errno=0 phase=before detail=7\nOMEGA step memory_reserve ok errno=0 phase=after detail=7\nOMEGA step memory_alloc ok errno=0 phase=before detail=7\nOMEGA step memory_alloc ok errno=0 phase=after detail=7\nOMEGA step memory_map ok errno=0 phase=before detail=7\nOMEGA step memory_map ok errno=0 phase=after detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=before detail=7\nOMEGA step memory_cpu_map ok errno=0 phase=after detail=7\nOMEGA step queue_create ok errno=0 phase=before detail=37820\nOMEGA step queue_create ok errno=0 phase=after detail=37820\nOMEGA step doorbell_map ok errno=0 phase=before detail=8\nOMEGA step doorbell_map ok errno=0 phase=after detail=8\nOMEGA step dispatch ok errno=0 phase=before detail=1\nOMEGA step dispatch ok errno=0 phase=after detail=1\nOMEGA step signal_wait ok errno=0 phase=before detail=1\nOMEGA step signal_wait ok errno=0 phase=after detail=1\nOMEGA dispatch_ns=1391054 packets=1\nOMEGA step readback ok errno=0 phase=before detail=1024\nOMEGA vadd=PASS count=256\nOMEGA step readback ok errno=0 phase=after detail=1024\nOMEGA step cleanup ok errno=0 phase=before detail=0\nOMEGA step cleanup ok errno=0 phase=after detail=0\n"
+  }
+]

@@ -1,0 +1,14 @@
+README.md: OK
+attn256_gate.hsaco: OK
+attn256_merge.hsaco: OK
+attn256_part.hsaco: OK
+attn256_prep.hsaco: OK
+bf16gemv2.hsaco: OK
+bundle.json: OK
+cell.py: OK
+fp8gemv2.hsaco: OK
+gdnconv4.hsaco: OK
+mlpsilu.hsaco: OK
+omega-launch: OK
+rmsnorm5120.hsaco: OK
+vadd.hsaco: OK

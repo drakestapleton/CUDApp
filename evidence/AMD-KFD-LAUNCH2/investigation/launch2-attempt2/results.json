@@ -1,0 +1,8 @@
+[
+  {
+    "case": "compile launch-a64",
+    "exit": 12,
+    "expected": 0,
+    "stderr": "omc: line 634: error 12\n"
+  }
+]

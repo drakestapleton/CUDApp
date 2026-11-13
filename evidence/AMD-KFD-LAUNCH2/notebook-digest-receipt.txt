@@ -1,0 +1,5 @@
+CONTROLS first: asset digests, malformed ELF, argument header; GPU results require successful completion and bitwise parity
+FAIL asset unpack: asset digest omega-launch
+FAIL RuntimeError asset digest omega-launch; full stdout/stderr files in /tmp/omega-launch2-ainecg0w
+receipt /tmp/launch2-cpu-8k5txm23/digest-control/amdserve-launch2.txt; inputs, outputs and invocation logs retained in /tmp/omega-launch2-ainecg0w
+RESULT FAIL

@@ -141,3 +141,12 @@ the largest legal/illegal ring sources differ only in their dispatch-count liter
 Do not remove the value assertion from the refusing source: rejection happens
 before it. A direct source-difference check and fresh native runs verified each
 pair succeeds0/refuses64.
+
+CA12: a passing twin is necessary but a shared exit code alone cannot identify
+the refusal site. Object guards now emit distinct stable field IDs on stderr
+while preserving exit65 and empty payload stdout. The ELF mutation and missing
+symbol rows assert the exact ID; manifest magic asserts its own stderr reason;
+the ring-limit unit asserts field=ring-size. Search covered all existing exit65
+sites in common.om/elf.om and all check.py inspect refusals, including the new
+scratch requests on both targets. Keep raw class exits stable and test the
+reason too, so a later guard cannot conceal a missing earlier one.

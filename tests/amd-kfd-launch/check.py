@@ -201,22 +201,26 @@ for name,off,fmt,bit in [('scratch-enable',52,'I',1),('private-buffer',56,'H',1)
     data=bytearray(vdata)
     struct.pack_into('<'+fmt,data,kd+off,struct.unpack_from('<'+fmt,data,kd+off)[0]|bit)
     mutations[name]=bytes(data)
+reasons={'oversized':5,'wrong-machine':17,'wave32':25,'negative-entry':28,'private-segment-unsupported':24,'queue-pointer-required':27,'scratch-enable':26,'private-buffer':26,'flat-scratch-init':26,'private-size':26,'dynamic-stack':26}
 for label,data in mutations.items():
     pth=out/(label+'.hsaco'); pth.write_bytes(data)
     for target,binary in bins.items():
         if target=='x86' and not qemu: continue
-        refuse(target+' refuse '+label,([qemu] if target=='x86' else [])+[binary,'inspect',pth,'vadd'],65,([qemu] if target=='x86' else [])+[binary,'inspect',vobj,'vadd'],inspected_value)
+        p=refuse(target+' refuse '+label,([qemu] if target=='x86' else [])+[binary,'inspect',pth,'vadd'],65,([qemu] if target=='x86' else [])+[binary,'inspect',vobj,'vadd'],inspected_value)
+        assert p.stdout==b'' and p.stderr==('OMEGA refuse object field='+str(reasons[label])+'\n').encode(),(label,p.stdout,p.stderr)
 for target,binary in bins.items():
     if target=='x86' and not qemu: continue
     pre=([qemu] if target=='x86' else [])
-    refuse(target+' missing descriptor',pre+[binary,'inspect',vobj,'not_a_kernel'],65,pre+[binary,'inspect',vobj,'vadd'],inspected_value)
+    p=refuse(target+' missing descriptor',pre+[binary,'inspect',vobj,'not_a_kernel'],65,pre+[binary,'inspect',vobj,'vadd'],inspected_value)
+    assert p.stdout==b'' and p.stderr==b'OMEGA refuse object field=23\n'
     if not Path('/dev/kfd').exists():
         p=run(target+' absent KFD',pre+[binary,'vadd',vobj,'vadd'],77)
         assert b'OMEGA device=absent errno=2\n' in p.stdout
         assert b'OMEGA step open_kfd fail errno=2 phase=after detail=0\n' in p.stdout
     goodargs=out/'good-args'; goodargs.write_bytes(b'OMKFD001'+struct.pack('<5Q',28,1024,1,0,0)+bytes(28))
     badargs=out/'bad-args'; badargs.write_bytes(b'BADMAGIC'+goodargs.read_bytes()[8:])
-    refuse(target+' refuse argument header',pre+[binary,'run',vobj,'vadd',4,1,badargs,out/'unused'],64,pre+[binary,'run',vobj,'vadd',4,1,goodargs,out/'unused'],preflight_value)
+    p=refuse(target+' refuse argument header',pre+[binary,'run',vobj,'vadd',4,1,badargs,out/'unused'],64,pre+[binary,'run',vobj,'vadd',4,1,goodargs,out/'unused'],preflight_value)
+    assert p.stdout==b'' and p.stderr==b'OMEGA refuse manifest field=magic\n'
 # Full native host orchestration with a syscall instrument: no GPU opens reach Linux.
 run('compile UAPI layout oracle',['cc','-Wall','-Wextra','-Werror',root/'tests/amd-kfd/layout-oracle.c','-o',out/'layout'])
 layout=run('UAPI layout',[out/'layout']).stdout
@@ -457,7 +461,8 @@ def ring_capacity_unit(dispatches):
     return ringunit+'fn main to int\nput ps 6 '+str(dispatches)+'\nplanring\nif ne get launch 10 33554432\nret 99\nend\nret 0\nend\n'
 u=compile('plan-ring-unrepresentable',ring_capacity_unit(33554432))
 valid=compile('plan-ring-largest-representable',ring_capacity_unit(33554431))
-refuse('CONTROL plan ring exceeds UAPI size',[u],64,[valid],empty_value)
+p=refuse('CONTROL plan ring exceeds UAPI size',[u],64,[valid],empty_value)
+assert p.stdout==b'OMEGA refuse plan field=ring-size\n'
 # The batch path has its own body-before-header observation and early-header control.
 planunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))
 planunit+=(root/'backend/amd/kfd/cli.om').read_text()

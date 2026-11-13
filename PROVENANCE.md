@@ -1629,3 +1629,11 @@ positions are pinned in tests/amd-kfd-launch/reference/sources.json from ROCm
 7.2.2 AMDHSAKernelDescriptor.h; fresh ELF inspect twins cover each independently
 on both host targets. Earlier executable qualifications remain historical until
 the changed executable has its own card receipt.
+
+Launcher object refusals now include a machine-readable field ID on stderr,
+preserving exit65 and empty payload stdout. The IDs distinguish existing guard
+sites in common.om and elf.om. Inspect mutation rows assert their exact reason;
+manifest magic and ring-limit rows assert their own distinct diagnostic. This
+is diagnostic observability, with unchanged valid object parsing. The changed
+executable requires its own hardware qualification; older receipts remain dated
+proof for their recorded binary only.

@@ -5,6 +5,7 @@ No production dependency; the numerical intervals come from the host oracle.
 def run_section(ctx):
     import base64
     import ctypes as C
+    import math
     import struct
     import time
     from fractions import Fraction

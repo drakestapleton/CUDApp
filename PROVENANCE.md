@@ -1098,6 +1098,11 @@ timed output and guard (all cold copies, not sampled), records wrong-object
 controls, and labels the separate torch measurement
 “(AMD library, not Omega)”. Cold inputs occupy distinct addresses exceeding
 the notebook's COLD_BYTES. No notebook timing is inferred from host runs.
+Each exported source is executed in the loader's fresh empty namespace;
+all generated/decorated/nested function code is also checked for unresolved
+global lookups before export. A control removes the math import and must
+be CAUGHT in the deferred interval checker. Factory execution alone does
+not exercise that checker; hardware notebook execution stays NOT_RUN.
 
 ## 19. Standalone zero-centered RMSNorm5120
 

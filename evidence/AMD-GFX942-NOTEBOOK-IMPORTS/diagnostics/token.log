@@ -1,0 +1,21 @@
+PASS mlpsilu N=0 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS mlpsilu N=1 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS mlpsilu N=63 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=64 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=65 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=17408 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+CONTROL mlpsilu-no-silu CAUGHT token mismatch N=17408 offset=139456 bits=c0800000 interval=0,0
+CONTROL mlpsilu-wrong-up CAUGHT token mismatch N=17408 offset=139472 bits=461c4000 interval=-4915201/65536,-4915199/65536
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/token.py", line 131, in <module>
+    elif sys.argv[1]=='suite': suite(sys.argv[2],pathlib.Path(sys.argv[3]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/token.py", line 125, in suite
+    export('mlpsilu',cases,CONTROLS,out,mlp_case,[(n,) for n in COUNTS])
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/token.py", line 83, in export
+    namespace = section['fresh_namespace'](generated,name+'.py')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/section.py", line 83, in fresh_namespace
+    assert symbol in namespace or hasattr(builtins,symbol), f'unresolved notebook global {symbol} in {code.co_name}'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unresolved notebook global _lru_cache_wrapper in lru_cache

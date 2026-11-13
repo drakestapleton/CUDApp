@@ -78,10 +78,16 @@ def export(name,cases,controls,out,factory,parameters):
     payload = dict(name=name,cases=cases,controls=list(controls),timing=len(cases)-1)
     serialized = json.dumps(payload,separators=(',',':')).encode()
     (out/(name+'-intervals.json')).write_bytes(serialized+b'\n')
-    generate = runpy.run_path(str(HERE/'section.py'))['generate']
-    generated = generate(name,factory,parameters,controls,(HERE/'notebook_section.py').read_text())
-    namespace = {}
-    exec(compile(generated,name+'.py','exec'),namespace)
+    section = runpy.run_path(str(HERE/'section.py'))
+    generated = section['generate'](name,factory,parameters,controls,(HERE/'notebook_section.py').read_text())
+    namespace = section['fresh_namespace'](generated,name+'.py')
+    missing_math = '    import math\n'
+    assert generated.count(missing_math)==1
+    try: section['fresh_namespace'](generated.replace(missing_math,'',1),name+'-no-math.py')
+    except AssertionError as error:
+        assert str(error).startswith('unresolved notebook global math in '),error
+        print(f'CONTROL notebook-{name}-missing-math CAUGHT fresh-loader-namespace {error}',flush=True)
+    else: raise AssertionError('missing math import escaped')
     actual = namespace['_make_payload']()
     assert actual == payload, f'generated fixture mismatch {name}'
     # A missing case must not escape the fixture/oracle parity check.
@@ -93,7 +99,7 @@ def export(name,cases,controls,out,factory,parameters):
     size = len(generated.encode())
     assert size < 15000, f'notebook section size alarm: {name} bytes={size} target<15000 (relay cell~60000)'
     (out/(name+'.py')).write_text(generated)
-    print(f'PASS notebook-{name} code_bytes={size} in-cell-fixtures/oracle=host-identical every-case/no-embedded-images hardware=NOT_RUN',flush=True)
+    print(f'PASS notebook-{name} code_bytes={size} fresh-loader-namespace/all-function-globals in-cell-fixtures/oracle=host-identical every-case/no-embedded-images hardware=NOT_RUN',flush=True)
 
 
 def mutate(src,out):

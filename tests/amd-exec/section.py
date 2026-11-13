@@ -62,3 +62,24 @@ def generate(name,factory,parameters,controls,runtime):
             f'    return dict(name={name!r},cases=cases,controls={list(controls)!r},timing=len(cases)-1)\n')
     runtime=ast.unparse(Specialize(name).visit(ast.parse(runtime)))
     return '# Generated from canonical host fixture/oracle functions; no embedded memory images.\n'+header+assignments+'\n'+'\n'.join(definitions.values())+'\n'+create+runtime+'\n'
+
+
+def fresh_namespace(source,name):
+    """Match the loader's exec(source,{}) and check deferred function lookups too."""
+    import builtins
+    import dis
+    namespace={}
+    exec(compile(source,name,'exec'),namespace)
+    functions=[inspect.unwrap(value) for value in namespace.values()]
+    pending=[value.__code__ for value in functions if inspect.isfunction(value) and value.__globals__ is namespace]
+    seen=set()
+    while pending:
+        code=pending.pop()
+        if code in seen: continue
+        seen.add(code)
+        for instruction in dis.get_instructions(code):
+            if instruction.opname=='LOAD_GLOBAL':
+                symbol=instruction.argval
+                assert symbol in namespace or hasattr(builtins,symbol), f'unresolved notebook global {symbol} in {code.co_name}'
+        pending.extend(value for value in code.co_consts if isinstance(value,types.CodeType))
+    return namespace

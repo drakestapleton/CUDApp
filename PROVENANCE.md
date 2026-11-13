@@ -519,7 +519,7 @@ Queue-context sizing and MI300 AQL's zero EOP allocation follow
 [ROCT-Thunk-Interface rocm-6.2.0, src/queues.c](https://github.com/ROCm/ROCT-Thunk-Interface/blob/rocm-6.2.0/src/queues.c)
 and its `hsakmttypes.h` context-save header. Dimensions come from the selected
 topology node. The coherent USER signal layout follows
-[ROCR-Runtime rocm-6.2.0, src/core/inc/amd_hsa_signal.h](https://github.com/ROCm/ROCR-Runtime/blob/rocm-6.2.0/src/core/inc/amd_hsa_signal.h):
+[ROCR-Runtime rocm-6.2.0, src/inc/amd_hsa_signal.h](https://github.com/ROCm/ROCR-Runtime/blob/rocm-6.2.0/src/inc/amd_hsa_signal.h):
 kind at offset zero, value at offset eight. These pinned sources are references,
 not runtime dependencies, and no ROCm 7.2.2 driver-source equivalence is claimed.
 
@@ -543,3 +543,17 @@ silicon-wrong predecessor is rejected rather than silently substituted.
 register state, kernel timing, attention execution, full Qwen 27B inference and
 Spark comparison. CPU acceptance, object inclusion and another lane's device
 receipt are not this launcher's device evidence.
+
+### Direct queue pointer-width initialization
+
+The AMD command processor queue tail is based on pinned ROCr rocm-6.2.0:
+- [amd_hsa_queue.h](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/inc/amd_hsa_queue.h) places `read_dispatch_id` at byte 128 and `queue_properties` at byte 180, a relative offset of 52; `AMD_QUEUE_PROPERTIES_IS_PTR64` is bit 1.
+- [amd_aql_queue.cpp](https://raw.githubusercontent.com/ROCm/ROCR-Runtime/rocm-6.2.0/src/core/runtime/amd_aql_queue.cpp) sets that bit for its 64-bit queue and passes the address of `read_dispatch_id` as the KFD read pointer.
+
+The launcher initializes the tail from the read-pointer base, including that bit.
+It does not construct ROCr's full HSA queue header, and therefore refuses a kernel
+descriptor requesting the queue pointer SGPR. A ptrace assertion checks the tail
+on the actual CREATE_QUEUE call. Clearing IS_PTR64 is a planted-error control;
+this check fails on the preceding launcher. Those CPU results establish the
+initialized bytes, not GPU consumption or completion. launch4 is the separate
+hardware experiment and retains the launch3 baseline receipt unchanged.

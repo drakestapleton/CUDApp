@@ -1,8 +1,8 @@
-# launch3: external Python measuring harness; the production launcher is seeded Omega.
+# launch4: external Python measuring harness; the production launcher is seeded Omega.
 import base64, ctypes, hashlib, json, lzma, os, platform, selectors, struct, subprocess, tempfile, time
 from pathlib import Path
 BUNDLE = json.loads(r'''@BUNDLE@''')
-REPORT = Path('amdserve-launch3.txt')
+REPORT = Path('amdserve-launch4.txt')
 ROWS = []
 WORK = None
 ASSETS = {}
@@ -188,12 +188,12 @@ def run():
     say('CONTROLS first: asset digests, malformed ELF, argument header; no changed doorbell values or dispatch variants')
     result='FAIL'
     try:
-        WORK=Path(tempfile.mkdtemp(prefix='omega-launch3-'))
+        WORK=Path(tempfile.mkdtemp(prefix='omega-launch4-'))
         try: ASSETS={name:asset(name) for name in BUNDLE['assets']}
         except Exception as exc:
             say('FAIL asset unpack: '+str(exc)); raise
         BIN=ASSETS['omega-launch']
-        say('launch3 candidate; OMEGA=seeded direct KFD; '+REFERENCE+'=independent comparison')
+        say('launch4 candidate; queue tail IS_PTR64=1; OMEGA=seeded direct KFD; '+REFERENCE+'=independent comparison')
         say('pins '+json.dumps(BUNDLE['sources'],sort_keys=True))
         say('assets '+json.dumps({k:v['sha256'] for k,v in BUNDLE['assets'].items()},sort_keys=True))
         say('host arch='+platform.machine()+' kernel='+platform.release()+' libc='+str(platform.libc_ver())+' work='+str(WORK))

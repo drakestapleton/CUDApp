@@ -143,6 +143,9 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         CHECK(count==10 && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
         CHECK(queue.ring_base_address==allocs[5].va && queue.ring_size==1024);
         CHECK(queue.write_pointer_address==allocs[6].va && queue.read_pointer_address==allocs[7].va);
+        /* AMD CP ABI: queue_properties is 52 bytes after read_dispatch_id.
+         * ROCr AMD_QUEUE_PROPERTIES_IS_PTR64 is bit 1 for ELF64 kernels. */
+        CHECK((word(queue.read_pointer_address+48)>>32)==2);
         CHECK(!queue.eop_buffer_address && !queue.eop_buffer_size);
         CHECK(queue.ctx_save_restore_address==allocs[8].va && queue.ctx_save_restore_size<=allocs[8].size);
         CHECK(queue.ctl_stack_size<=queue.ctx_save_restore_size);

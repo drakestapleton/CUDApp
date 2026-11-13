@@ -84,6 +84,7 @@ vobj,vdata,kd,ka=objects['vadd']
 calcs={'ELF_magic':int.from_bytes(b'\x7fELF','little'),'ELF_class_data_version_osabi':int.from_bytes(bytes([2,1,1,64]),'little'),'ELF_type_machine':int.from_bytes(struct.pack('<HH',3,224),'little'),'manifest_magic':int.from_bytes(b'OMKFD001','little'),'f32_one':struct.pack('<f',1.0).hex(),'f32_one_plus_one':struct.pack('<f',1.0+1.0).hex()}
 (out/'calculation-oracles.json').write_text(json.dumps(calcs,indent=2)+'\n')
 mutations={ 'truncated':vdata[:63], 'wrong-machine':vdata[:18]+b'\0\0'+vdata[20:], 'wave32':vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|1024)+vdata[kd+58:], 'negative-entry':vdata[:kd+16]+struct.pack('<q',-1)+vdata[kd+24:] }
+mutations['queue-pointer-required']=vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|4)+vdata[kd+58:]
 for label,data in mutations.items():
     pth=out/(label+'.hsaco'); pth.write_bytes(data)
     for target,binary in bins.items():
@@ -112,7 +113,7 @@ def diagnostics(p,read,signal,output):
             name,value=line.removeprefix('OMEGA diag ').split()
             rows[name]=int(value)
     expected={'queue_read_pointer':read,'queue_write_pointer':1,'signal_kind':1,'signal_value':signal,
-              'ring_header':0x21502,'ring_slot_byte_offset':0,'queue_id':7,'doorbell_offset':8,
+              'queue_properties':2,'read_pointer_base_offset':0,'ring_header':0x21502,'ring_slot_byte_offset':0,'queue_id':7,'doorbell_offset':8,
               'wait_timeout_ns':10_000_000_000,'output_first8_nan_fill_count':8 if output==0x7fc00000 else 0,
               'output_first8_expected_vadd_sum_count':8 if output==0x40000000 else 0}
     for name,off,fmt in [('kernel_code_entry_byte_offset',16,'Q'),('compute_pgm_rsrc1',48,'I'),
@@ -146,6 +147,11 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
         diagnostics(p,read,signal,output)
         if child_exit==75:
             assert b'OMEGA step signal_wait fail errno=110' in p.stdout
+    mutant=body.replace('r = checked mapset lh 5 52 4 2\n','r = checked mapset lh 5 52 4 0\n')
+    assert mutant!=body
+    bad=compile('queue-ptr32',mutant)
+    p=run('CONTROL wrong queue pointer width',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    assert b'queue.read_pointer_address+48' in p.stderr
     # The generic CLI reuses the ring across its boundary, not only one packet.
     ins=[]
     for name in ('a','b'):

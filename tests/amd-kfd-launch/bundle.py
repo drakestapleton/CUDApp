@@ -34,9 +34,9 @@ assert text.count('@BUNDLE@')==1
 cell=text.replace('@BUNDLE@',json.dumps(bundle,separators=(',',':')))
 (a.out/'cell.py').write_text(cell)
 (a.out/'bundle.json').write_text(json.dumps(bundle,indent=2)+'\n')
-readme=f"""# launch3 notebook probe
+readme=f"""# launch4 notebook probe
 
-READY for the authorized MI300X notebook diagnostic run. CPU launcher gates passed;
+READY for the authorized MI300X notebook queue-pointer fix run. CPU launcher gates passed;
 actual KFD/GPU execution and the HIP comparison remain NOT_RUN.
 
 Paste all of `cell.py` into one notebook cell. It needs x86-64 Linux, Python 3
@@ -45,10 +45,13 @@ the readable gfx942 topology node and its exact DRM render device. The compariso
 needs the installed ROCm torch package and the libamdhip64 that it loads; no torch
 kernels are run. No package/model downloads, credentials, strace or dmesg are needed.
 
-Download `amdserve-launch3.txt`, including on failure. CONTROLS is first, every
+Download `amdserve-launch4.txt`, including on failure. CONTROLS is first, every
 launcher stdout line is saved as it arrives, and RESULT is last. The direct vadd
 uses its existing timeout, printed as `OMEGA diag wait_timeout_ns`, and existing
-dispatch bytes. It reads queue pointers, signal, packet header/addresses, loaded
+packet bytes. The read-pointer page now initializes the AMD CP queue tail with
+64-bit pointer mode. The only device experiment is this corrected direct launch,
+compared with the separately retained launch3 baseline. It reads queue properties,
+queue pointers, signal, packet header/addresses, loaded
 descriptor fields and first eight output words on success or timeout. Values
 are decimal; create_queue_input_qword_N is the little-endian u64 at byte offset
 8*N in the 88-byte ioctl input, including compiler-bound mapping addresses.

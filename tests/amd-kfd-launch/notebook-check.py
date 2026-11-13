@@ -6,7 +6,7 @@ bundle=Path(sys.argv[1]).resolve(); gate=Path(sys.argv[2]).resolve()
 assert not Path('/dev/kfd').exists(), 'CPU gate refuses a host with a KFD device'
 qemu=shutil.which('qemu-x86_64'); assert qemu
 cell=(bundle/'cell.py').read_text(); records=[]
-with tempfile.TemporaryDirectory(prefix='launch3-cpu-') as tmp:
+with tempfile.TemporaryDirectory(prefix='launch4-cpu-') as tmp:
     prior=Path.cwd(); os.chdir(tmp)
     ns={'__name__':'__notebook_test__'}
     exec(compile(cell,'cell.py','exec'),ns)
@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix='launch3-cpu-') as tmp:
     finally:
         subprocess.Popen=oldpopen; platform.machine=oldmachine
     binary=ns['BIN']
-    report=Path('amdserve-launch3.txt').read_text()
+    report=Path('amdserve-launch4.txt').read_text()
     assert 'argument-header=64 PASS' in report and 'errno=2 exit=77 checked' in report
     assert report=='\n'.join(ns['ROWS'])+'\n'
     assert report.splitlines()[0].startswith('CONTROLS ') and report.splitlines()[-1]=='RESULT NOT_RUN'
@@ -51,7 +51,7 @@ print('OMEGA streaming-first',flush=True)
 print('OMEGA step signal_wait ok errno=0 phase=before detail=1',flush=True)
 deadline=time.monotonic()+5
 while True:
-    receipt=pathlib.Path('amdserve-launch3.txt').read_text()
+    receipt=pathlib.Path('amdserve-launch4.txt').read_text()
     if 'sample=2 pid='+str(os.getpid()) in receipt and 'OMEGA streaming-first\n' in receipt:
         break
     if time.monotonic()>deadline: sys.exit(91)
@@ -65,15 +65,15 @@ sys.exit(75)
     p,_=ns['invoke'](['-c',child,ns['KFD_PROC_ROOT']],'streaming-proc-control',expected=None,sample=True)
     assert p.returncode==75 and p.stdout.endswith(b'OMEGA streaming-last\n')
     assert p.stderr==b'diagnostic-tail'
-    report=Path('amdserve-launch3.txt').read_text()
+    report=Path('amdserve-launch4.txt').read_text()
     assert 'OMEGA stderr diagnostic-tail\n' in report and 'OMEGA proc samples=3;' in report
     for sample in range(3):
         lines=[s for s in report.splitlines() if s.startswith('OMEGA proc sample='+str(sample)+' ')]
         for field,value in [('size','1024'),('type','2'),('gpuid','37820'),('cu_occupancy','0'),('vram_37820','4096')]:
             assert any('/'+field+' value='+json.dumps(value) in s for s in lines),(sample,field,lines)
     ns['sample_kfd'](0,3)
-    assert 'missing/unreadable errno=2' in Path('amdserve-launch3.txt').read_text()
-    (gate/'notebook-proc-receipt.txt').write_text(Path('amdserve-launch3.txt').read_text())
+    assert 'missing/unreadable errno=2' in Path('amdserve-launch4.txt').read_text()
+    (gate/'notebook-proc-receipt.txt').write_text(Path('amdserve-launch4.txt').read_text())
     records.append({'case':'real child observes streaming and three proc samples while waiting; fields unchanged; nonzero exit retained; missing files explicit','exit':p.returncode,'expected':75})
     ns['BIN']=binary
     original_main=ns['main']
@@ -83,7 +83,7 @@ sys.exit(75)
     except RuntimeError: pass
     else: raise AssertionError('forced failure survived')
     ns['main']=original_main
-    report=Path('amdserve-launch3.txt').read_text()
+    report=Path('amdserve-launch4.txt').read_text()
     assert report.splitlines()[0].startswith('CONTROLS ') and report.splitlines()[-1]=='RESULT FAIL'
     (gate/'notebook-failure-receipt.txt').write_text(report)
     records.append({'case':'CONTROL execution failure keeps RESULT last','exit':1,'expected':1})
@@ -97,7 +97,7 @@ sys.exit(75)
     except RuntimeError as exc:
         assert str(exc)=='asset digest omega-launch'
     else: raise AssertionError('asset digest mutant survived')
-    report=Path('amdserve-launch3.txt').read_text()
+    report=Path('amdserve-launch4.txt').read_text()
     assert 'FAIL asset unpack: asset digest omega-launch' in report
     assert report.splitlines()[0].startswith('CONTROLS ') and report.splitlines()[-1]=='RESULT FAIL'
     (gate/'notebook-digest-receipt.txt').write_text(report)

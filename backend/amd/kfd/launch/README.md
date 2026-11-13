@@ -22,7 +22,7 @@ omega-launch run OBJECT.hsaco KERNEL GROUPS_X GROUPS_Y ARGS.bin INPUT... OUTPUT.
 
 The generic grid is groups X/Y with workgroup dimensions 64/1/1 (wave64). The vadd smoke uses our vadd object and checks every output bit. `inspect` validates without opening a device. Objects are trusted first-party kernels, not an untrusted-code sandbox.
 
-The loader accepts ELF64 little-endian AMDHSA code-object V5, gfx942, bounded nonoverlapping load segments and a defined `.kd` descriptor. It loads segments at their virtual offsets and zeroes BSS; no relocations, negative entry offsets, wave32, scratch/private-segment requirement, or oversize LDS. No LLVM-generated object substitutes for our seeded writer. Malformed input is refused before GPU allocation.
+The loader accepts ELF64 little-endian AMDHSA code-object V5, gfx942, bounded nonoverlapping load segments and a defined `.kd` descriptor. It loads segments at their virtual offsets and zeroes BSS; no relocations, negative entry offsets, wave32, scratch/private-segment requirement, an ENABLE_SGPR_QUEUE_PTR requirement, or oversize LDS. No LLVM-generated object substitutes for our seeded writer. Malformed input is refused before GPU allocation.
 
 ### Argument manifest
 
@@ -53,10 +53,19 @@ remain for syscall failures. All allocation/map buffers have separate rows.
 
 Queue state includes ring, write/read pointers, context save and a coherent USER signal. The signal starts at the repeat count; each dispatch decrements it. Context sizes follow the cited ROCT gfx942 formula using actual node SIMD, shader-array and XCC properties, rather than a card-name constant. gfx942 AQL needs no EOP allocation. Context debug headers follow the ROCT ABI. The ring's configured size is not a limit on repeats: read-pointer backpressure permits wraparound.
 
+The read-pointer allocation contains the AMD command processor queue tail. It is
+zero-initialized and sets `queue_properties` at read-pointer offset 52 to 2
+(`AMD_QUEUE_PROPERTIES_IS_PTR64`, bit 1). `read_dispatch_id_field_base_byte_offset`
+at offset 8 stays zero: this minimal queue does not provide a preceding HSA queue
+header. The ELF parser therefore refuses kernels requiring `ENABLE_SGPR_QUEUE_PTR`.
+The CPU instrument checks the field at CREATE_QUEUE, and a pointer-mode mutant
+with that bit cleared must fail. The field requirement follows the pinned ROCr
+queue ABI; only card execution can establish whether it explains a prior timeout.
+
 The packet body is written while its header is INVALID. A CPU fence precedes the final aligned header write; further fences precede write-pointer and 8-byte doorbell publication. The dispatch has system acquire/release fence scopes and barrier semantics. The launcher bounds host polling by the requested monotonic timeout, waits for signal zero, fences, and copies output. It reports `OMEGA dispatch_ns=... packets=...`; this is host-monotonic dispatch-and-wait time, not GPU event time and not model tokens/s.
 
 Success and timeout also emit `OMEGA diag NAME VALUE` decimal rows, read only
-from existing owned mappings: queue read/write pointers, signal kind/value,
+from existing owned mappings: queue read/write pointers, queue properties and read-pointer base offset, signal kind/value,
 last published packet slot/header and actual packet kernel/kernarg addresses,
 descriptor fields, and the first eight available output words. Vadd reports
 counts matching its expected sum and NaN fill. `create_queue_input_qword_N`
@@ -75,7 +84,7 @@ x86 executable and vadd object into `cell.py`, using xz then base85. Source comm
 and hashes are generated into `bundle.json`; README and SHA256SUMS are generated.
 The manifest covers every delivered file except itself.
 
-The targeted diagnostic bundle is `notebook-probe/launch3/`. It runs the unchanged
+The targeted diagnostic bundle is `notebook-probe/launch4/`. It runs the corrected
 Omega vadd once, while the Python parent samples the child's KFD proc queue,
 occupancy and VRAM files read-only. Missing files are explicit. After Omega exits,
 even on timeout, it runs the identical object and inputs once through the installed
@@ -83,7 +92,7 @@ torch-loaded HIP runtime, labelled `REFERENCE (AMD runtime loading our object, n
 the Omega launcher)`. Torch supplies the runtime, not kernels or a correctness
 oracle. No other kernels, doorbell variants or added Omega packets are run.
 
-The cell persists `amdserve-launch3.txt` after every line and retains raw child
+The cell persists `amdserve-launch4.txt` after every line and retains raw child
 stdout/stderr. CONTROLS is first; topology and every launcher stdout line are
 included; RESULT is last even on exceptions. `notebook-check.py NEW_DIR GATE_DIR`
 checks both parsers, real x86/qemu refusals and absent-device behavior, receipt

@@ -33,7 +33,7 @@ Exit classes: 64 CLI/argument contract; 65 ELF/span contract; 66 topology; 67 in
 
 ## Memory and dispatch
 
-Select a gfx942 topology node and its DRM render minor; use that node's GPU ID, never an NVIDIA identifier. GET_VERSION requires KFD 1.14 or later, then ACQUIRE_VM binds the render fd. Each buffer has one 2 MiB-aligned reservation and 64-bit sizes. ALLOC receives its compiler-bound address, MAP_MEMORY its checked GPU-ID span, and the returned mmap offset is mapped through the render fd at that same reserved address. Public VRAM holds code, inputs and output; GTT holds kernargs and queue state. The doorbell is instead mapped through `/dev/kfd`. No raw caller-provided ioctl address is trusted.
+Select a gfx942 topology node and its DRM render minor; use that node's GPU ID, never an NVIDIA identifier. GET_VERSION requires KFD 1.14 or later, then ACQUIRE_VM binds the render fd. Each buffer has one 2 MiB-aligned reservation and 64-bit sizes. ALLOC receives its compiler-bound address, MAP_MEMORY its checked GPU-ID span, and the returned mmap offset is mapped through the render fd at that same reserved address. Public VRAM holds code, inputs and output; In the generic command, GTT holds kernargs and queue state. The persistent plan places static kernargs in VRAM; its token cell and queue state stay in coherent GTT. The doorbell is instead mapped through `/dev/kfd`. No raw caller-provided ioctl address is trusted.
 
 Discovery reads `gpu_id` before properties, skips CPU nodes (`gpu_id=0`), and
 skips nodes whose files cannot be opened or read. Each skipped failure records
@@ -56,9 +56,11 @@ Queue state includes ring, write/read pointers, context save and a coherent USER
 
 The launcher owns a zero-initialized 4096-byte AMD queue object. Its write and
 read dispatch IDs are at bytes 56 and 128 of the same live mapping. CREATE_QUEUE
-receives those checked offsets through the compiler, which validates alignment,
-handle lifetime, writable kind and the complete eight-byte extent. The launcher
-owns the larger object extent required by the command processor.
+receives the same opaque queue handle for both pointers, with zero address
+bytes in the caller header. The compiler selects the fixed AMD AQL layout,
+binds base+56 and base+128, and validates the complete 256-byte ABI object,
+handle lifetime and writable kind. The launcher owns and clears a 4096-byte
+allocation containing that object.
 
 The HSA prefix names the ring, queue size and ID. The queue's read-pointer base
 offset is 128, pointer mode at byte 180 is 2, and the inactive USER signal is a
@@ -133,7 +135,13 @@ only its declared byte range, excluding alignment padding. This avoids consuming
 runtime map handle for each model tensor. Normal weight ranges copy directly from
 files; BF16 vectors widen exactly into F32. Initialization and zero fill precede
 timing. Kernargs and packet templates are built once. Each step replays the list,
-with ring backpressure and one completion signal on the last dispatch. The host
+with ring backpressure and one completion signal on the last dispatch. The plan
+ring grows from the established 1024-byte minimum to a power of two large enough
+for the complete step. Its size must fit the KFD UAPI byte-count field. The host
+invalidates owned slots, copies packet bodies in contiguous chunks, fences,
+publishes aligned headers, then fences before publishing the write pointer and
+one doorbell per step. Static kernargs reside in VRAM. No performance claim
+follows from those implementation choices without a matching card measurement. The host
 writes prompt tokens, then reads generated IDs from the coherent token buffer.
 
 `OMEGA_STEP i tok=T us=U` measures monotonic wall time from the first packet write

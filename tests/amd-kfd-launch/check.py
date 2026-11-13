@@ -158,7 +158,7 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     bad=compile('queue-tail-dirty',mutant)
     p=run('CONTROL nonzero unused queue tail',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
     assert b'queue_image' in p.stderr
-    mutant=body.replace('r = allocate 3 1024 0xe6000002', 'r = allocate 3 1024 0xa6000002')
+    mutant=body.replace('r = allocate 3 mul get launch 10 64 0xe6000002', 'r = allocate 3 mul get launch 10 64 0xa6000002')
     assert mutant!=body
     bad=compile('ring-not-executable',mutant)
     p=run('CONTROL ring lacks execute permission',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
@@ -257,6 +257,46 @@ mutant=unit.replace(line,'').replace('r = checked mapset lh 3 slot 4 0x00021502\
 assert mutant!=unit
 u=compile('publication-early-header',mutant)
 run('CONTROL early valid header',[out/'publication',u],1)
+# Ring capacity follows the dispatch count, the established AQL minimum,
+# and the 32-bit CREATE_QUEUE byte-size wire field.
+ringunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))
+ringunit+=(root/'backend/amd/kfd/cli.om').read_text()
+ringmain='fn main to int\n'
+for dispatches,slots in [(1,16),(15,16),(16,32),(20,32),(1126,2048),(33554431,33554432)]:
+    ringmain+='put ps 6 '+str(dispatches)+'\nplanring\nif ne get launch 10 '+str(slots)+'\nret 99\nend\n'
+ringmain+='ret 0\nend\n'
+u=compile('plan-ring-boundaries',ringunit+ringmain)
+run('native plan ring capacity boundaries',[u])
+u=compile('plan-ring-unrepresentable',ringunit+'fn main to int\nput ps 6 33554432\nplanring\nret 99\nend\n')
+run('CONTROL plan ring exceeds UAPI size',[u],64)
+# The batch path has its own body-before-header observation and early-header control.
+planunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))
+planunit+=(root/'backend/amd/kfd/cli.om').read_text()
+main=unit[unit.index('fn main to int'):]
+setup="""put launch 10 16
+put ps 6 1
+put ps 20 ulong checked mapnew -1 0 4096 3 34
+zerohdr
+hput 0 4 1
+hput 4 2 64
+hput 6 2 1
+hput 8 2 1
+hput 12 4 256
+hput 16 4 1
+hput 20 4 1
+hput 24 4 4096
+hput 32 8 add mapaddr lh 0 64
+hput 40 8 mapaddr lh 1
+hput 56 8 mapaddr lh 7
+r = checked mapwrite long get ps 20 0 hdr 0 64
+planpublish 0 0"""
+planunit+=main.replace('packet 0',setup)
+u=compile('plan-publication-unit',planunit)
+run('native batch publication order',[out/'publication',u])
+mutant=planunit.replace('plancopy sent\ncpufence\n','').replace('r = checked mapset lh 5 56 8 add sent get ps 6','plancopy sent\nr = checked mapset lh 5 56 8 add sent get ps 6')
+assert mutant!=planunit
+u=compile('plan-publication-early-header',mutant)
+run('CONTROL batch early valid header',[out/'publication',u],1)
 run('native plan CPU contracts',[sys.executable,'-I',root/'tests/amd-kfd-launch/plan-check.py',out])
 summary={'compiler':pin,'checks':len(results),'failures':sum(r['exit']!=r['expected'] for r in results),'qemu':qemu,'device':'NOT_RUN','orchestration':'native CPU syscall simulation only','publication':'native instruction-step observation only','objects':{name:hashlib.sha256(data).hexdigest() for name,(p,data,k,a) in objects.items()},'binaries':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in bins.items()}}
 (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')

@@ -56,6 +56,11 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
    'dispatch-padding':(248+108,b'\x01'),
    'pool-overlap':(len(plan)-32,struct.pack('<Q',len(prefix)-1)),
   }
+  too_large=bytearray(plan)
+  for off in (96,144):struct.pack_into('<Q',too_large,off,2**63-4096)
+  overflow=d/'arena-overflow.plan';overflow.write_bytes(too_large)
+  p=run(arch+' refuses arena sum overflow',[*command[:3],overflow,*argv[1:]],64)
+  assert b'OMEGA step open_kfd' not in p.stdout
   for name,(off,value) in mutations.items():
    bad=d/(name+'.plan');bad.write_bytes(plan[:off]+value+plan[off+len(value):])
    p=run(arch+' refuses '+name,[*command[:3],bad,*argv[1:]],64)
@@ -74,6 +79,15 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  p=run('raw file range in shared arena',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',rawpath,*argv[1:]],0)
  assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout
 
+ # The real model has 1504 buffers. Their count must not consume map handles.
+ extra=1504-3
+ hugehead=bytearray(header);struct.pack_into('<Q',hugehead,24,1504)
+ hugeprefix=bytes(hugehead)+codes+buffers+struct.pack('<6Q',16,0,0,0,0,1)*extra+prompt+b''.join(entries)
+ hugeplan=hugeprefix+names+data+struct.pack('<4Q',len(hugeprefix),len(names),len(hugeprefix)+len(names),len(data))
+ hugepath=d/'many-buffers.plan';hugepath.write_bytes(hugeplan)
+ p=run('1504 model buffers retain constant map count',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',hugepath,*argv[1:]],0)
+ assert b'allocations=10 packets=60 freed=all' in p.stderr
+ assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout
  p=run('missing completion refuses plan',['env','KFD_TEST_PLAN=1','KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],1)
  assert b'child_exit=75' in p.stderr and b'OMEGA_PLAN complete' not in p.stdout
 (gate/'plan-check.json').write_text(json.dumps({'cases':cases,'device':'NOT_RUN'},indent=2)+'\n')

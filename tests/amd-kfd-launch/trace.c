@@ -161,14 +161,14 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
             fprintf(stderr,"TEST_SIM queue_input_qword_%zu=%llu\n",i,(unsigned long long)value);
         }
         CHECK(count==allocation_count && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
-        CHECK(queue.ring_base_address==allocs[ring_index].va && queue.ring_size==1024);
+        CHECK(queue.ring_base_address==allocs[ring_index].va && queue.ring_size==(planmode?2048:1024));
         CHECK(allocs[ring_index].flags & KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE);
         CHECK(queue.write_pointer_address==allocs[ring_index+2].va+56 && queue.read_pointer_address==allocs[ring_index+2].va+128);
         /* Independent queue image, including all unused bytes and the inactive signal. */
         uint64_t queue_image[512]={0};
         queue_image[0]=UINT64_C(1)<<32;
         queue_image[1]=allocs[ring_index].va;
-        queue_image[3]=16;
+        queue_image[3]=planmode?32:16;
         queue_image[4]=UINT64_MAX;
         queue_image[8]=UINT64_C(0x2000000010000);
         queue_image[9]=(UINT64_C(31)<<32)|7;
@@ -193,7 +193,7 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
 static void complete_packets(void) {
     uint64_t nw=word(queue.write_pointer_address);
     while ((uint64_t)packets<nw) {
-        uint64_t p=queue.ring_base_address+(uint64_t)(packets%16)*64;
+        uint64_t p=queue.ring_base_address+(uint64_t)(packets%(planmode?32:16))*64;
         uint32_t h; rd(p,&h,4); CHECK(h==0x21502);
         uint16_t wg[3]; rd(p+4,wg,sizeof wg); CHECK(wg[0]==64 && wg[1]==1 && wg[2]==1);
         uint64_t kd=word(p+32),args=word(p+40),sig=word(p+56);

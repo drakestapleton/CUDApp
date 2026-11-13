@@ -553,8 +553,9 @@ ROCm 7.2.2 during the device investigation:
 - [Linux KFD UAPI](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/kfd_ioctl.h?h=v6.18) defines GET_PROCESS_APERTURES_NEW and executable GPU allocation permission. Runtime apertures are selected by the actual GPU ID; they are not hard-coded from one card.
 
 The launcher now owns the full zeroed queue object, an inactive USER signal, and
-an executable GTT ring. Checked compiler offsets bind both dispatch pointers to
-that same live queue map. The CPU oracle checks every queue byte and allocation
+an executable GTT ring. The compiler-owned AMD queue-object binding places the dispatch pointers at
+bytes 56 and 128 within that same live queue map. Caller address fields stay
+zero, and the compiler checks the complete 256-byte ABI object extent. The CPU oracle checks every queue byte and allocation
 permission before CREATE_QUEUE and rejects wrong pointer mode, a dirty tail,
 missing execute permission and malformed aperture results. The loader still
 refuses queue-pointer SGPR and private-scratch requirements outside its trusted

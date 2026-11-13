@@ -12,6 +12,7 @@ import pathlib
 import re
 import struct
 import subprocess
+import runpy
 import sys
 
 
@@ -163,10 +164,26 @@ def exercise(root, out):
     assert not matches_header(wrong_off)
     run('record-field-offset', 'records', [wrong_off, 0, 1, 14], 3, b'')
     print('CONTROL CAUGHT field-offset-plus-one: row comparison rejects it, and Omega refuses the field range with exit=3')
-    # Index at the top of the 64-bit range: idx + 1 must not wrap into an empty, successful run.
-    run('record-index-max', 'records', [src_table, 2**64 - 1], 3, b'')
+    # Generate both upper-domain edges, including the wrap case, from the wire width.
+    indices = runpy.run_path(str(root / 'tests/amd/boundaries.py'))['record_indices']()
+    for index in indices:
+        run('record-index-' + str(index), 'records', [src_table, index], 3, b'')
     run('record-index-past-end', 'records', [src_table, len(oracle)], 3, b'')
-    print('PASS records refuses index 2^64-1 and the first index past the table with exit=3, nothing emitted')
+    print(f'PASS records refuses generated upper-domain indices {indices} and first past-end index')
+    source = (root / 'backend/amd/kfd/records.om').read_text()
+    guard = 'if eq idx 18446744073709551615\nret 3\nend\n'
+    assert source.count(guard) == 1, 'index guard mutant did not apply'
+    mutant = out / 'records-index-mutant.om'
+    mutant.write_text(source.replace(guard, '') + (root / 'backend/amd/kfd/cli.om').read_text())
+    binary = out / 'records-index-mutant'
+    p = subprocess.run([sys.argv[3]], input=mutant.read_bytes(), capture_output=True, timeout=120)
+    (out / 'records-index-mutant.compile.log').write_bytes(p.stderr)
+    assert p.returncode == 0 and not p.stderr, ('INVALID index mutant setup', p.returncode, p.stderr)
+    binary.write_bytes(p.stdout)
+    binary.chmod(0o700)
+    p = subprocess.run([str(binary), str(src_table), str(indices[-1])], capture_output=True, timeout=10)
+    assert p.returncode == 0 and not p.stdout and not p.stderr, ('INVALID index mutant outcome', p)
+    print(f'CONTROL index-guard-removal CAUGHT actual_exit={p.returncode} expected_exit=3 empty_stdout')
     over_fuel = out / 'field-count-over-fuel.tsv'
     # Keep every preceding field valid: a truncated table would refuse 3 before exhausting fuel.
     over_fuel.write_text('0 4 1000001\n' + '0 4 1\n' * 1000001)

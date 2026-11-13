@@ -128,7 +128,7 @@ for src in "$out"/allowlist-*.om; do
   if [ "$rc" -eq 9 ]; then ok "allowlist compile-only refusal $(basename "$src" .om) exit=9"
   else bad "allowlist expected refusal $(basename "$src" .om) exit=$rc"; fi
 done
-python3 -I tests/amd-kfd/oracle.py . "$out" > "$out/byte-oracle.log" 2>&1
+python3 -I tests/amd-kfd/oracle.py . "$out" "$omc" > "$out/byte-oracle.log" 2>&1
 rc=$?
 cat "$out/byte-oracle.log"
 if [ "$rc" -eq 0 ]; then ok 'independent byte-oracle suite'; else bad "independent byte-oracle exit=$rc"; fi

@@ -46,6 +46,13 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
    assert b'OMEGA step open_kfd' in p.stdout
    p=run(arch+' refuses malformed caller deadline '+repr(value),deadlineargv(value),2)
    assert p.stdout==b'' and p.stderr==('OMEGA refuse number field='+str(['text','hex-length','hex-digit','decimal-digit','decimal-range','decimal-overflow'].index(reason))+'\n').encode(),(value,p.stdout)
+  # stderr I/O failure is distinct from a normal semantic refusal. Preserve
+  # binary payload stdout even when the diagnostic destination is unavailable.
+  def closedstderr(value):return ['sh','-c','exec 2>&-; exec "$@"','number-stderr',*deadlineargv(value)]
+  p=run(arch+' positive twin closed stderr',closedstderr('0'),77)
+  assert b'OMEGA step open_kfd' in p.stdout
+  p=run(arch+' numeric diagnostic I/O failure',closedstderr('not-a-number'),74)
+  assert p.stdout==p.stderr==b''
   p=run(arch+' positive twin argc',planargv(pth),77)
   assert b'OMEGA step open_kfd' in p.stdout
   p=run(arch+' refuses argc',planargv(pth)[:-1],64)

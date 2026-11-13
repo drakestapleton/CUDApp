@@ -184,7 +184,7 @@ A notebook carrying an unlanded object cannot qualify the release tree.
 
 ## Full-model hardware qualification
 
-The [November 13 compatible native model receipt](../../../../evidence/amd-qwen38-native-compatible-20261113/README.md)
+The [November 13 scratch-refusal native model receipt](../../../../evidence/amd-qwen38-native-refusal-20261113/README.md)
 records the final hardware-qualified executable, the exact coding reference check, five longer
 requests compared with an independent AMD execution path, and the archived
 Spark comparison. It retains raw IDs, timings, controls, source/compiler hashes,

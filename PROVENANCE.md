@@ -1611,7 +1611,7 @@ Requalification of the new executable is required.
 
 ## Compatible launcher hardware receipt
 
-The latest pointer is evidence/amd-qwen38-native-compatible-20261113. It qualifies
+The historical compatible receipt is evidence/amd-qwen38-native-compatible-20261113. It qualifies
 committed launcher source230a57b618ac62ceb628518507321762a1aaa5cd and executable
 f646ea5d16d545b5c9c6efcab74d1e9a522de2d9dd3a06e4638a3eb2f6b9c504,
 with normal/nonzero-LDS vadd, original coding24/control, and warmup plus five
@@ -1627,13 +1627,25 @@ initializer, private-segment-size SGPR and dynamic-stack descriptor requests eve
 when private_segment_fixed_size is zero. The queue has no scratch backing. Bit
 positions are pinned in tests/amd-kfd-launch/reference/sources.json from ROCm
 7.2.2 AMDHSAKernelDescriptor.h; fresh ELF inspect twins cover each independently
-on both host targets. Earlier executable qualifications remain historical until
-the changed executable has its own card receipt.
+on both host targets. This admission change requires a separate exact-binary
+card receipt; the latest qualification below supplies it.
 
 Launcher object refusals now include a machine-readable field ID on stderr,
 preserving exit65 and empty payload stdout. The IDs distinguish existing guard
 sites in common.om and elf.om. Inspect mutation rows assert their exact reason;
 manifest magic and ring-limit rows assert their own distinct diagnostic. This
-is diagnostic observability, with unchanged valid object parsing. The changed
-executable requires its own hardware qualification; older receipts remain dated
+is diagnostic observability, with unchanged valid object parsing. The latest
+qualification below records the changed executable; older receipts remain dated
 proof for their recorded binary only.
+
+## Scratch-refusal launcher hardware qualification
+
+The latest hardware qualification is
+[evidence/amd-qwen38-native-refusal-20261113](evidence/amd-qwen38-native-refusal-20261113/README.md).
+It records the exact committed source, compiler, executable and model identities
+for the scratch-admission and precise-refusal update. Normal/nonzero-LDS vector
+checks, the original coding reference and corrupted-weight comparison, and a
+warmup plus five longer requests all completed. Every accepted longer request
+matches the reused independent AMD graph. The receipt owns the raw records and
+recomputed metrics, including the dated Spark comparison and its limits.
+Release checks, independent review and forge landing remain separate stages.

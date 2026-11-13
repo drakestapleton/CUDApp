@@ -37,6 +37,12 @@ def table(path):
 def exercise(root, out):
     root, out = pathlib.Path(root), pathlib.Path(out)
     events = []
+    exits = {}
+    controls = runpy.run_path(str(root / 'tests/amd-kfd/control.py'))
+    matches = controls['matches']
+
+    def caught(label, name):
+        controls['prove'](out, label, 'exit', exits[name], 0)
 
     def run(name, exe, args, want=0, expected=None, timeout=10):
         cmd = [str(out / exe), *map(str, args)]
@@ -44,6 +50,11 @@ def exercise(root, out):
         (out / (name + '.stdout')).write_bytes(p.stdout)
         (out / (name + '.stderr')).write_bytes(p.stderr)
         (out / (name + '.command')).write_text(' '.join(cmd) + '\nexit=' + str(p.returncode) + '\n')
+        exits[name] = p.returncode
+        if want == 0:
+            assert matches('exit', p.returncode, 0), (name, p.returncode, p.stderr)
+        else:
+            assert not matches('exit', p.returncode, 0), (name, 'unexpected acceptance')
         assert p.returncode == want, (name, p.returncode, want, p.stderr)
         if expected is not None:
             (out / (name + '.expected')).write_bytes(expected)
@@ -73,7 +84,7 @@ def exercise(root, out):
         v = list(launches[0])
         v[field] = value
         run('aql-invalid-' + str(i), 'aql', v, 3, b'')
-    print('CONTROL CAUGHT grid-size-zero: Omega exit=3 no packet emitted')
+    caught('grid-size-zero', 'aql-invalid-0')
     for v in ('-1', '18446744073709551616', '0x10000000000000000', 'no', '0x', ''):
         args = list(launches[0])
         args[9] = v
@@ -101,18 +112,12 @@ def exercise(root, out):
     run('kernarg-short', 'kernarg', [*values, size - 1], 3, b'')
     run('kernarg-count-overflow', 'kernarg', [*values[:3], 4294967296], 3, b'')
     print('PASS kernarg assembly metadata: code-object-v5 metadata 1.2; four explicit arguments; no hidden args')
-    print('CONTROL CAUGHT kernarg-one-byte-short: Omega exit=3 no block emitted')
+    caught('kernarg-one-byte-short', 'kernarg-short')
 
     src_table = root / 'backend/amd/kfd/requests.tsv'
     native_table = out / 'native-table.tsv'
-    def header_rows(path):
-        # Every number of every row (requests, sizes, field offsets, widths, counts); comments ignored.
-        return [tuple(map(int, line.split('#', 1)[0].split())) for line in pathlib.Path(path).read_text().splitlines()]
-
     def matches_header(path):
-        # The one comparison that accepts the repository table: the same numbers, row for row, as the
-        # table regenerated from the live kfd_ioctl.h by the C layout oracle this run.
-        return header_rows(path) == header_rows(native_table)
+        return matches('table', path, native_table)
 
     assert matches_header(src_table), 'header and repository table differ'
     oracle = table(native_table)
@@ -143,7 +148,7 @@ def exercise(root, out):
     wrong_req.write_text('\n'.join(lines) + '\n')
     assert not matches_header(wrong_req)
     # records never emits the request number, so the header comparison is the only guard for it.
-    print('CONTROL CAUGHT wrong-request-number: the row comparison that accepts requests.tsv rejects GET_VERSION + 1')
+    controls['prove'](out, 'wrong-request-number', 'table', wrong_req, native_table)
 
     # One extra u32 field in the record extent: eight bytes becomes twelve, independently caught
     # both by the header table compare and the exact serialized record length/bytes comparison.
@@ -154,7 +159,7 @@ def exercise(root, out):
     assert not matches_header(wrong_size)
     changed = run('record-off-by-one-field', 'records', [wrong_size, 0, 1, 14])
     assert len(changed) == 12 and len(changed) != oracle[0][1]
-    print('CONTROL CAUGHT record-off-by-one-field: row comparison rejects size 12, and Omega then emits 12 bytes where the header record is %d' % oracle[0][1])
+    controls['prove'](out, 'record-off-by-one-field', 'table', wrong_size, native_table)
     lines = src_table.read_text().splitlines()
     nums, comment = lines[2].split('#', 1)
     off, width, count = map(int, nums.split())
@@ -163,7 +168,7 @@ def exercise(root, out):
     wrong_off.write_text('\n'.join(lines) + '\n')
     assert not matches_header(wrong_off)
     run('record-field-offset', 'records', [wrong_off, 0, 1, 14], 3, b'')
-    print('CONTROL CAUGHT field-offset-plus-one: row comparison rejects it, and Omega refuses the field range with exit=3')
+    controls['prove'](out, 'field-offset-plus-one', 'table', wrong_off, native_table)
     # Generate both upper-domain edges, including the wrap case, from the wire width.
     indices = runpy.run_path(str(root / 'tests/amd/boundaries.py'))['record_indices']()
     for index in indices:
@@ -188,14 +193,14 @@ def exercise(root, out):
     # Keep every preceding field valid: a truncated table would refuse 3 before exhausting fuel.
     over_fuel.write_text('0 4 1000001\n' + '0 4 1\n' * 1000001)
     run('record-field-count-over-fuel', 'records', [over_fuel, 0], 104, b'', timeout=60)
-    print('CONTROL CAUGHT field-count-over-loop-fuel: Omega trap exit=104 no record emitted')
+    caught('field-count-over-loop-fuel', 'record-field-count-over-fuel')
 
     steps = [1, 2, 3, 4, 5] * 40
     first = run('ring-wrap', 'ring', steps)
     assert first == b'RING ACCEPT body<header<write-index<doorbell<consume\n'
     assert run('ring-repeat', 'ring.repeat', steps) == first
     run('ring-four-steps-usage', 'ring', [1, 2, 3, 4], 64, b'')
-    print('CONTROL CAUGHT ring-four-steps: minimum-argument usage exit=64 no output')
+    caught('ring-four-steps', 'ring-four-steps-usage')
     for name, values in [('header-before-body', [2, 1, 3, 4, 5]),
                          ('write-index-before-header', [1, 3, 2, 4, 5]),
                          ('doorbell-before-write-index', [1, 2, 4, 3, 5]),
@@ -204,7 +209,7 @@ def exercise(root, out):
                          ('incomplete', [1, 2, 3, 4, 5, 1])]:
         run('ring-' + name, 'ring', values, 3, b'')
     print('PASS ring single-producer/consumer order, 40 launches, 16 slots, wrap and byte visibility checked')
-    print('CONTROL CAUGHT header-before-body: Omega model exit=3')
+    caught('header-before-body', 'ring-header-before-body')
     print('PASS ring write-index/doorbell/consumer/reuse/incomplete-order refusals')
     print(f'ORACLE PASS subprocess_cases={len(events)}')
 

@@ -13,7 +13,7 @@ export LC_ALL
 [ "$#" -eq 1 ] || { echo 'usage: run.sh /absolute/path/to/pinned-omc' >&2; exit 64; }
 omc=$1
 case $omc in /*) ;; *) echo 'usage: omc path must be absolute' >&2; exit 64 ;; esac
-for tool in dirname sed uname basename sha256sum; do
+for tool in dirname sed uname basename sha256sum python3; do
   command -v "$tool" >/dev/null 2>&1 || { echo "NOT_RUN required tool missing: $tool"; exit 77; }
 done
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
@@ -22,7 +22,7 @@ omc_pin=$(sed -n 's/^omc_pin=//p' "$root/tests/multitarget/run.sh")
 [ "${#omc_pin}" -eq 64 ] || { echo 'FAIL: cannot read repository compiler pin'; exit 1; }
 digest() { d=$(sha256sum < "$1") || return 1; printf '%s\n' "${d%% *}"; }
 [ -f "$omc" ] && [ -x "$omc" ] || { echo 'NOT_RUN pinned omc missing/not executable'; exit 77; }
-[ "$(digest "$omc")" = "$omc_pin" ] || { echo "REFUSED: compiler digest differs from pin $omc_pin" >&2; exit 69; }
+python3 -I "$root/tests/amd-kfd/control.py" compare digest "$omc" "$omc_pin" || { echo "REFUSED: compiler digest differs from pin $omc_pin" >&2; exit 69; }
 # Digest is verified before any compiler invocation, other oracle, or output-directory creation.
 if [ "$(uname -s)" != Linux ] || [ "$(uname -m)" != aarch64 ]; then
   echo 'NOT_RUN: the amd-kfd host gate needs Linux AArch64 and the pinned seeded omc'; exit 77
@@ -53,7 +53,8 @@ wrong=$(CDPATH= cd -- "$out" && pwd)/wrong-omc
 AMD_KFD_OUT="$out/wrong-pin-output" sh tests/amd-kfd/run.sh "$wrong" > "$out/wrong-pin.log" 2>&1
 rc=$?
 if [ "$rc" -eq 69 ] && [ ! -e "$out/WRONG-COMPILER-EXECUTED" ] && [ ! -e "$out/wrong-pin-output" ]; then
-  ok 'CONTROL CAUGHT wrong-compiler-digest: exit=69 compiler not executed; output directory not created'
+  python3 -I "$root/tests/amd-kfd/control.py" prove "$out" wrong-compiler-digest digest "$wrong" "$omc_pin" || exit 1
+  ok 'wrong compiler refused before invocation or output creation'
 else bad "wrong-compiler-digest exit=$rc"; fi
 
 for u in aql kernarg records ring; do
@@ -76,9 +77,6 @@ done
 rc=$?
 if [ "$rc" -ne 0 ]; then cat "$out/native-build.log"; echo "AMD-KFD-HOST FAIL native oracle build exit=$rc"; exit 1; fi
 "$out/native-layout" > "$out/native-table.tsv" || exit 1
-if cmp -s backend/amd/kfd/requests.tsv "$out/native-table.tsv"; then
-  ok 'native aarch64: every KFD request/record size/field offset/width equals installed kfd_ioctl.h'
-else bad 'native KFD table differs from installed header'; fi
 "$objcopy" --dump-section ".kfdlayout=$out/native-layout.bin" "$out/native-layout" || exit 1
 xc=${KFD_X86_CC:-x86_64-linux-gnu-gcc}
 if [ -d /usr/x86_64-linux-gnu/include ] && [ -f /usr/x86_64-linux-gnu/include/linux/kfd_ioctl.h ] && command -v "$xc" >/dev/null 2>&1; then

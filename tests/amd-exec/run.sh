@@ -162,6 +162,12 @@ for control in mlpsilu-no-silu mlpsilu-wrong-up; do
     python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
 done
 python3 -I "$root/tests/amd-exec/token.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/norm.py" mutate "$src" "$out"
+for control in rmsnorm5120-no-one rmsnorm5120-wrong-mean rmsnorm5120-dropped-chunk; do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/norm.py" suite "$out/exec.1" "$out"
 cat > "$out/wrong-omc" <<'WRONG'
 #!/bin/sh
 printf 'WRONG_COMPILER_EXECUTED\n' >&2

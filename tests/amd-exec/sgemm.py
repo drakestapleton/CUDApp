@@ -179,6 +179,7 @@ def summary(kernels):
     attention = runpy.run_path(str(pathlib.Path(__file__).with_name('attention.py')))
     prep = runpy.run_path(str(pathlib.Path(__file__).with_name('prep.py')))
     token = runpy.run_path(str(pathlib.Path(__file__).with_name('token.py')))
+    norm = runpy.run_path(str(pathlib.Path(__file__).with_name('norm.py')))
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
           f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} '
@@ -193,7 +194,9 @@ def summary(kernels):
           f'prep_cases={len(prep["POSITIONS"])+1} gate_cases=1 '
           f'rope_cases={len(prep["ROPE_POSITIONS"])} '
           f'mlpsilu_counts={",".join(map(str, token["COUNTS"]))} '
-          f'mlpsilu_cases={len(token["COUNTS"])} hardware=NOT_RUN')
+          f'mlpsilu_cases={len(token["COUNTS"])} '
+          f'rmsnorm5120_rows={",".join(map(str, sorted(set(r for r,_ in norm["CASES"]))))} '
+          f'rmsnorm5120_cases={len(norm["CASES"])} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

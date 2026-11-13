@@ -57,7 +57,8 @@ def run_section(ctx):
             launch([step(case,d)])
             width = check(get(d,len(raw(case))),case)
             say(f'PASS {name} {case["label"]} every-output interval/exact inputs/guards widest_interval={width}')
-        case = p['cases'][p['timing']]
+        case = dict(p['cases'][p['timing']])
+        case['gx'],case['gy'] = case['timing_grid']
         image = raw(case)
         d = alloc(image)
         steps = [step(case,d)]

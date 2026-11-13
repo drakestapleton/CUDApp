@@ -1091,3 +1091,45 @@ timed output and guard (all cold copies, not sampled), records wrong-object
 controls, and labels the separate torch measurement
 “(AMD library, not Omega)”. Cold inputs occupy distinct addresses exceeding
 the notebook's COLD_BYTES. No notebook timing is inferred from host runs.
+
+## 19. Standalone zero-centered RMSNorm5120
+
+`rmsnorm5120` follows [Transformers v5.8.0 lines710–723][prep-reference]:
+FP32 x*rsqrt(mean(x²)+epsilon), then multiply by (1+weight). This is the
+input, post-attention and final norm, not the gated delta net's norm
+(whose weight is not zero-centered). The pinned config in §17 supplies
+hidden5120 and epsilon1e-6. All input, weight and output elements are FP32;
+the decoder's BF16 weight can be widened exactly before this interface.
+
+ABI: input pointer0, weight pointer8, output pointer16, rows:u32 at24.
+Input/output layout [rows][5120], one shared weight[5120]. The buffers
+must not overlap. Launch X=rows, Y=1, block64; zero rows and additional
+X/Y groups do not write. No arbitrary row cap is introduced.
+
+The instruction order is specified: each lane accumulates80 squares
+using RN-even FMA in ascending chunk/j order, at index256*chunk+4*lane+j
+(chunk0..19, j0..3). All lanes reduce by snapshot XOR32,16,8,4,2,1 using
+RN-even ADD. Multiply by RN32(1/5120), add RN32(epsilon), RSQ, then each
+output uses separately rounded x*inv and result*RN32(1+weight).
+RSQ has the manual pp1971ULP/FTZ enclosure; no guessed device bit pattern.
+The kernel reloads inputs after reduction rather than keeping all rows in
+registers. The host executor's already-audited dwordx4, bpermute, carry
+and loop semantics are reused; no new opcode or gate exception is added.
+The RSQ-consumer delay is explicit and the all-object scheduling gate
+remains mandatory.
+
+Recorded independent calculation:
+`tests/amd-exec/sgemm.py round32(Fraction(1,5120)) -> 0x394ccccd`;
+`tests/amd-exec/norm.py` asserts it at every invocation. The Fraction
+oracle reproduces the declared reduction order, propagates the Decimal120
+RSQ enclosure through each later rounding, and reports every output's
+interval plus the widest observed interval. Cases include zero rows,
+zero vectors, several rows, subnormal inputs and large finite magnitudes.
+Wrong-object controls omit the zero-centered1, use the wrong mean divisor,
+and omit the last accumulation chunk. Every original case is retained.
+
+The generated `rmsnorm5120.py` notebook section uses the same instrument
+as §18: all outputs/guards, genuine wrong-object controls, event and
+warm/cold wall timing with every timed copy checked, and a separate torch
+line labeled “(AMD library, not Omega)”. Kernel and notebook hardware
+execution remain NOT_RUN until the parent runs that section on MI300X.

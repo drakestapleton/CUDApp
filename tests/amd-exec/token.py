@@ -43,7 +43,8 @@ def mlp_case(n):
         lo,hi = imul(imul(point(g),sigmoid(g)),point(u))
         intervals.append([op+4*i,str(lo),str(hi)])
     return dict(label=f'N={n}',memory=base64.b64encode(image).decode(),intervals=intervals,
-                args=[['ptr',gp],['ptr',up],['ptr',op],['u32',n]],gx=(n+63)//64+1,gy=2,input_bytes=8*n+4)
+                args=[['ptr',gp],['ptr',up],['ptr',op],['u32',n]],gx=(n+63)//64+1,gy=2,input_bytes=8*n+4,
+                timing_grid=[max(1,(n+63)//64),1])
 
 
 def check(actual,case):
@@ -78,7 +79,9 @@ def export(name,cases,controls,out):
     (out/(name+'-intervals.json')).write_bytes(serialized+b'\n')
     encoded = base64.b64encode(zlib.compress(serialized,9)).decode()
     source = (HERE/'notebook_section.py').read_text()
-    (out/(name+'.py')).write_text('# Generated from tests/amd-exec/token.py and notebook_section.py; do not edit.\nPAYLOAD = '+repr(encoded)+'\n'+source)
+    generated = '# Generated from tests/amd-exec/token.py and notebook_section.py; do not edit.\nPAYLOAD = '+repr(encoded)+'\n'+source
+    compile(generated,name+'.py','exec')
+    (out/(name+'.py')).write_text(generated)
 
 
 def mutate(src,out):

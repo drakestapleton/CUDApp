@@ -1039,3 +1039,55 @@ generated-position end-to-end model quality and timing require the
 parent's MI300X bundle. This does not claim complete serving.
 
 [prep-reference]: https://github.com/huggingface/transformers/blob/v5.8.0/src/transformers/models/qwen3_5/modeling_qwen3_5.py
+
+## 18. Token MLP activation and mandatory scheduling check
+
+The first MI300X attention-core exercise is filed separately in
+`evidence/AMD-GFX942-ATTENTION-DEVICE-20261113T000755Z/`. The corrected
+RCP-consumer delay is exercised on device; the earlier raw diagnostic and
+its BF16 reference-input defect remain visible. This is not qualification
+of the complete token path. The Table11 static scheduling gate stays
+mandatory for **every** future object; functional executor parity alone
+does not test issue timing.
+
+`mlpsilu` implements [Transformers v5.8.0 Qwen3_5MLP lines695–707][prep-reference]:
+`down_proj(silu(gate_proj(x)) * up_proj(x))`. The pinned config revision
+017b9c7a has hidden5120, intermediate17408 and SiLU activation. This
+kernel consumes the FP32 gate/up outputs of the existing GEMV2 kernels,
+and produces the FP32 vector consumed by GEMV2 down. It is not the
+attention-output sigmoid-only gate.
+
+ABI: gate pointer0, up pointer8, output pointer16, N:u32 at24;28bytes.
+Launch ceil(N/64) workgroups in X, one in Y,64threads. N=0 and extra X/Y
+groups write nothing; the final partial wave masks its inactive lanes.
+Inputs and output must not overlap. Each active lane computes:
+
+1. t = EXP2(RN32(-abs(g) * LOG2E32)), LOG2E32=0x3fb8aa3b.
+2. r = RCP(RN32(1+t)); if g has its sign bit set, r = RN32(r*t).
+3. s = RN32(g*r); output = RN32(s*up).
+
+EXP/RCP use the same CDNA3 pp195–1961ULP/FTZ contract as §16/17, not an
+assumption of device-identical transcendental bits. The reference uses
+independent Fraction round-to-nearest-even arithmetic and Decimal120
+transcendental enclosures at those exact instruction boundaries.
+The finite-input contract includes signed zeros, subnormals and large
+finite magnitudes. The explicit EXP-consumer NOP and independent
+instructions after RCP satisfy Table11. No instruction is newly added to
+the executor: the manual-derived instruction cases in earlier sections
+remain applicable, including carry, EXEC restoration and SCC.
+
+The gate retains every earlier case and adds counts0,1,63,64,65,17408,
+checks every output interval and every untouched input/guard byte, and
+requires actual wrong-object controls omitting the SiLU input multiply
+and reading gate instead of up to be CAUGHT. Host and LLVM gates build
+twice and compare bytes; the latter checks the full descriptor and
+instruction encodings and runs the scheduling check over all objects.
+
+`tests/amd-exec/token.py` generates the notebook section and its numerical
+fixture payload from the same checked input/interval source. The generated
+section's `run_section(ctx)` uses the v7 notebook helpers, tests small
+cases, measures event/warm-wall/cold-wall timings at17408, checks every
+timed output and guard (all cold copies, not sampled), records wrong-object
+controls, and labels the separate torch measurement
+“(AMD library, not Omega)”. Cold inputs occupy distinct addresses exceeding
+the notebook's COLD_BYTES. No notebook timing is inferred from host runs.

@@ -113,21 +113,32 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
     }
     case AMDKFD_IOC_GET_PROCESS_APERTURES_NEW: {
         struct kfd_ioctl_get_process_apertures_new_args a; rd(p,&a,sizeof a);
-        CHECK(a.num_of_nodes==64 && a.kfd_process_device_apertures_ptr && !a.pad);
-        struct kfd_process_device_apertures ap[2] = {
-            {UINT64_C(0x3000000000000),UINT64_C(0x30000ffffffff),UINT64_C(0x4000000000000),UINT64_C(0x40000ffffffff),0x10000,UINT64_C(0x7fffffffffff),expected_gpu+1,0},
-            {UINT64_C(0x1000000000000),UINT64_C(0x10000ffffffff),UINT64_C(0x2000000000000),UINT64_C(0x20000ffffffff),0x10000,UINT64_C(0x7fffffffffff),expected_gpu,0}
-        };
+        CHECK(a.kfd_process_device_apertures_ptr && !a.pad);
         const char *mode=getenv("KFD_TEST_APERTURE");
-        a.num_of_nodes=2;
-        if(mode) {
-            if(!strcmp(mode,"missing")) ap[1].gpu_id=expected_gpu+2;
-            if(!strcmp(mode,"duplicate")) ap[0].gpu_id=expected_gpu;
-            if(!strcmp(mode,"truncated")) a.num_of_nodes=64;
-            if(!strcmp(mode,"invalid")) ap[1].lds_limit=0;
-            if(!strcmp(mode,"empty")) a.num_of_nodes=0;
+        int large=mode && (!strcmp(mode,"large") || !strcmp(mode,"large-duplicate") || !strcmp(mode,"grow"));
+        uint32_t cap=a.num_of_nodes,total=large?80:2,written=cap<total?cap:total;
+        if(!cap) {
+            a.num_of_nodes=(mode && !strcmp(mode,"grow"))?1:total;
+            if(mode && !strcmp(mode,"empty"))a.num_of_nodes=0;
+            wr(p,&a,sizeof a);break;
         }
-        wr(a.kfd_process_device_apertures_ptr,ap,sizeof ap); wr(p,&a,sizeof a); break;
+        struct kfd_process_device_apertures other={
+            UINT64_C(0x3000000000000),UINT64_C(0x30000ffffffff),UINT64_C(0x4000000000000),UINT64_C(0x40000ffffffff),0x10000,UINT64_C(0x7fffffffffff),0,0};
+        struct kfd_process_device_apertures selected={
+            UINT64_C(0x1000000000000),UINT64_C(0x10000ffffffff),UINT64_C(0x2000000000000),UINT64_C(0x20000ffffffff),0x10000,UINT64_C(0x7fffffffffff),expected_gpu,0};
+        struct kfd_process_device_apertures *ap=calloc(written,sizeof *ap);CHECK(ap);
+        for(uint32_t i=0;i<written;i++) {
+            ap[i]=other;ap[i].gpu_id=expected_gpu+100+i;
+            if(i==total-1)ap[i]=selected;
+            if(mode && !strcmp(mode,"missing") && i==total-1)ap[i].gpu_id=expected_gpu+2;
+            if(mode && !strcmp(mode,"duplicate") && i==0)ap[i]=selected;
+            if(mode && !strcmp(mode,"large-duplicate") && i==1)ap[i]=selected;
+            if(mode && !strcmp(mode,"invalid") && i==total-1)ap[i].lds_limit=0;
+        }
+        a.num_of_nodes=written;
+        if(mode && !strcmp(mode,"oversized"))a.num_of_nodes=cap+1;
+        if(mode && !strcmp(mode,"empty"))a.num_of_nodes=0;
+        wr(a.kfd_process_device_apertures_ptr,ap,written*sizeof *ap);free(ap);wr(p,&a,sizeof a);break;
     }
     case AMDKFD_IOC_ALLOC_MEMORY_OF_GPU: {
         struct kfd_ioctl_alloc_memory_of_gpu_args a; rd(p,&a,sizeof a);

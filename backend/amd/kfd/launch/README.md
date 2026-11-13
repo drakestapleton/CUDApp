@@ -58,7 +58,7 @@ The launcher owns a zero-initialized 4096-byte AMD queue object. Its write and
 read dispatch IDs are at bytes 56 and 128 of the same live mapping. CREATE_QUEUE
 receives the same opaque queue handle for both pointers, with zero address
 bytes in the caller header. The compiler selects the fixed AMD AQL layout,
-binds base+56 and base+128, and validates the complete 256-byte ABI object,
+binds base+56 and base+128, and validates the complete 2304-byte amd_queue_v2_t ABI object,
 handle lifetime and writable kind. The launcher owns and clears a 4096-byte
 allocation containing that object.
 
@@ -66,7 +66,11 @@ The HSA prefix names the ring, queue size and ID. The queue's read-pointer base
 offset is 128, pointer mode at byte 180 is 2, and the inactive USER signal is a
 separate live allocation. GET_PROCESS_APERTURES_NEW supplies LDS and scratch
 aperture high words for the selected GPU, with exactly one matching record
-required. Empty, truncated, duplicate, invalid or unmatched results are refused.
+required. A zero-count query obtains the inventory size; a checked owned mapping
+holds the records with one spare slot. A full reply grows the mapping and retries,
+so the launcher has no fixed GPU-count table. The u32 ABI field bounds the count.
+Empty, oversized, duplicate, invalid or unmatched results are refused. The CPU
+gate includes 80 devices and an inventory that grows between query and fill.
 CU and wave limits come from the selected node's topology properties. The trusted
 kernel subset still excludes private scratch and queue-pointer arguments.
 

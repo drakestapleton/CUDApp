@@ -1499,7 +1499,7 @@ ROCm 7.2.2 during the device investigation:
 The launcher now owns the full zeroed queue object, an inactive USER signal, and
 an executable GTT ring. The compiler-owned AMD queue-object binding places the dispatch pointers at
 bytes 56 and 128 within that same live queue map. Caller address fields stay
-zero, and the compiler checks the complete 256-byte ABI object extent. The CPU oracle checks every queue byte and allocation
+zero, and the compiler checks the complete 2304-byte amd_queue_v2_t ABI object extent. The CPU oracle checks every queue byte and allocation
 permission before CREATE_QUEUE and rejects wrong pointer mode, a dirty tail,
 missing execute permission and malformed aperture results. The loader still
 refuses queue-pointer SGPR and private-scratch requirements outside its trusted
@@ -1521,3 +1521,15 @@ not a production compiler dependency. The loader trusts the first-party writer's
 explicit kernarg ABI; it does not interpret hidden-argument metadata from arbitrary
 third-party code objects. In particular, rejecting the queue-pointer SGPR bit
 is not a general proof that an unknown kernel never consumes a queue pointer.
+
+### Dynamic KFD process aperture inventory
+
+The native launcher uses the count-query form of
+[Linux v6.18 kfd_ioctl_get_process_apertures_new](https://raw.githubusercontent.com/torvalds/linux/v6.18/drivers/gpu/drm/amd/amdkfd/kfd_chardev.c):
+zero num_of_nodes returns the process inventory size; a nonzero request copies at
+most that many 56-byte records. A full reply does not prove completeness. The
+launcher allocates checked owned memory with a spare slot and grows on full
+replies. The compiler supplies the owned mapping address, while caller pointer
+bytes remain zero. Host oracle cases exercise inventories beyond the former
+64-record buffer, growth between query and fill, malformed counts and duplicate
+selected GPU IDs. This changes discovery, not the card-tested dispatch kernels.

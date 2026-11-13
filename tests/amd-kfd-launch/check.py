@@ -103,7 +103,7 @@ vobj,vdata,kd,ka=objects['vadd']
 # Record numeric constant and unit-conversion oracle queries/results, not guesses.
 calcs={'ELF_magic':int.from_bytes(b'\x7fELF','little'),'ELF_class_data_version_osabi':int.from_bytes(bytes([2,1,1,64]),'little'),'ELF_type_machine':int.from_bytes(struct.pack('<HH',3,224),'little'),'manifest_magic':int.from_bytes(b'OMKFD001','little'),'f32_one':struct.pack('<f',1.0).hex(),'f32_one_plus_one':struct.pack('<f',1.0+1.0).hex()}
 (out/'calculation-oracles.json').write_text(json.dumps(calcs,indent=2)+'\n')
-mutations={ 'truncated':vdata[:63], 'wrong-machine':vdata[:18]+b'\0\0'+vdata[20:], 'wave32':vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|1024)+vdata[kd+58:], 'negative-entry':vdata[:kd+16]+struct.pack('<q',-1)+vdata[kd+24:] }
+mutations={ 'oversized':vdata[:63], 'wrong-machine':vdata[:18]+b'\0\0'+vdata[20:], 'wave32':vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|1024)+vdata[kd+58:], 'negative-entry':vdata[:kd+16]+struct.pack('<q',-1)+vdata[kd+24:] }
 mutations['queue-pointer-required']=vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|4)+vdata[kd+58:]
 for label,data in mutations.items():
     pth=out/(label+'.hsaco'); pth.write_bytes(data)
@@ -183,9 +183,11 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     bad=compile('ring-not-executable',mutant)
     p=run('CONTROL ring lacks execute permission',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
     assert b'KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE' in p.stderr
-    for mode in ('missing','duplicate','truncated','invalid','empty'):
+    for mode in ('missing','duplicate','oversized','invalid','empty','large-duplicate'):
         p=run('CONTROL aperture '+mode,['env','KFD_TEST_APERTURE='+mode,*command],1)
         assert b'child_exit=66 ' in p.stderr and b'queued=0' in p.stderr
+    for mode in ('large','grow'):
+        run('aperture inventory '+mode,['env','KFD_TEST_APERTURE='+mode,*command])
     # The generic CLI reuses the ring across its boundary, not only one packet.
     ins=[]
     for name in ('a','b'):

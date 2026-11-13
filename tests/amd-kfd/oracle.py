@@ -192,8 +192,13 @@ def exercise(root, out):
     over_fuel = out / 'field-count-over-fuel.tsv'
     # Keep every preceding field valid: a truncated table would refuse 3 before exhausting fuel.
     over_fuel.write_text('0 4 1000001\n' + '0 4 1\n' * 1000001)
+    alarm = subprocess.run(['sh', str(root / 'tests/amd/loop-fuel.sh'), str(over_fuel)], capture_output=True, timeout=10)
+    (out / 'field-count-alarm.log').write_bytes(alarm.stdout + alarm.stderr)
+    assert alarm.returncode == 1 and b'LOOP-FUEL ALARM site=backend/amd/kfd/records.om:' in alarm.stdout
+    assert b'function=record' in alarm.stdout and b'compiler=' in alarm.stdout
+    controls['prove'](out, 'field-count-over-loop-fuel', 'exit', alarm.returncode, 0)
     run('record-field-count-over-fuel', 'records', [over_fuel, 0], 104, b'', timeout=60)
-    caught('field-count-over-loop-fuel', 'record-field-count-over-fuel')
+    print('MEASURED compiler-fuel reference exit=104; named source-site alarm fired before this isolated reference run')
 
     steps = [1, 2, 3, 4, 5] * 40
     first = run('ring-wrap', 'ring', steps)

@@ -121,6 +121,8 @@ if grep -q 'NT_AMDGPU_METADATA' "$out/omega.readelf.txt" && grep -q 'amdhsa.targ
 else bad 'llvm-readelf metadata/header/symbol check'; fi
 # Generate the probe and expected bytes from MessagePack width thresholds.
 python3 -I "$root/tests/amd/boundaries.py" "$out" || exit 1
+python3 -I "$root/tests/amd/loop-sites.py" test "$root" > "$out/loop-sites.log" || exit 1
+cat "$out/loop-sites.log"
 mptest() {
   sed '/^fn main to int/,$d' "$1" > "$out/$2.om" || exit 74
   cat "$out/msgpack-main.om" >> "$out/$2.om" || exit 74

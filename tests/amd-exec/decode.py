@@ -172,7 +172,8 @@ def mutate(src,out):
             elif control.endswith('no-z-round'): bad=strip_round(text,['Z_LOW','Z_HIGH'])
             else:
                 old,new={
-                  'embed5120-low-bits':('I 8 128 1 8','I 8 129 1 8'),
+                  # Corrupt the settled full-width result, not the D16 prefill.
+                  'embed5120-low-bits':('I 4 0x0f70 12','I 4 0x0f70 12\nI 5 129 8 8 21'),
                   'gdnparams-wrong-decay':('I 8 275 32 19','I 8 242 1 19'),
                   'gdnrmsgate-no-swish':('I 5 270 18 18 5','I 8 274 1 18'),
                   'argmax_part-wrong-tie':('I 6 265 11 204','I 6 267 9 204'),

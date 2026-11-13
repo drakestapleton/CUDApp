@@ -195,7 +195,9 @@ case('global-ubyte-negative-offset', 503, [0xdc409fff, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, {v(3): 128}, mem=b'\x80')
 case('global-ubyte-range-refused', 503, [0xdc408000, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, mem=b'\xff', refusal=67)
-# PDF p507: D16_HI replaces high16 only; low16, flags and inactive lanes are preserved.
+# Preserve-unused-half MODEL from PDF p507, not a device/ECC qualification.
+# Section 9.1.6 also documents ECC-dependent unused-bit zeroing for D16 loads.
+# Keep this model until the isolated raw-word card probe resolves its applicable mode.
 bf16 = runpy.run_path(str(pathlib.Path(__file__).with_name('bf16gemv.py')))
 half = [0xdc008000 | 37 << 18, 3 << 24 | 127 << 16 | 4]
 for bits in bf16['VALUES']:

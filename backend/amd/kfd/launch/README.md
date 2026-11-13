@@ -34,6 +34,23 @@ Exit classes: 64 CLI/argument contract; 65 ELF/span contract; 66 topology; 67 in
 
 Select a gfx942 topology node and its DRM render minor; use that node's GPU ID, never an NVIDIA identifier. GET_VERSION requires KFD 1.14 or later, then ACQUIRE_VM binds the render fd. Each buffer has one 2 MiB-aligned reservation and 64-bit sizes. ALLOC receives its compiler-bound address, MAP_MEMORY its checked GPU-ID span, and the returned mmap offset is mapped through the render fd at that same reserved address. Public VRAM holds code, inputs and output; GTT holds kernargs and queue state. The doorbell is instead mapped through `/dev/kfd`. No raw caller-provided ioctl address is trusted.
 
+Discovery reads `gpu_id` before properties, skips CPU nodes (`gpu_id=0`), and
+skips nodes whose files cannot be opened or read. Each skipped failure records
+its errno and node number. It accepts `gfx_target_version 90402`, logs the chosen
+node/GPU ID/render minor, and opens that exact render device. If the container
+does not expose it, `render_open` fails explicitly; another GPU's render device
+is never silently substituted. The CPU gate injects EPERM at the syscall boundary
+(including under root) for both `gpu_id` and `properties`, with CPU nodes and a
+node-3-only GPU fixture. Mutants that abort on either skipped node must fail.
+
+Each device step emits `OMEGA step NAME ok|fail errno=N phase=before|after detail=N`.
+A `before` row means the step is about to be attempted, not that it succeeded.
+Detail identifies the node, selected GPU, render minor, buffer index, doorbell
+offset, byte count or packet count as applicable. Kernel errno is preserved;
+contract failures use EINVAL, I/O/readback failures EIO, missing gfx942 ENODEV,
+and polling timeout ETIMEDOUT. Raw `OMEGA error=N` and existing refusal exits
+remain for syscall failures. All allocation/map buffers have separate rows.
+
 Queue state includes ring, write/read pointers, context save and a coherent USER signal. The signal starts at the repeat count; each dispatch decrements it. Context sizes follow the cited ROCT gfx942 formula using actual node SIMD, shader-array and XCC properties, rather than a card-name constant. gfx942 AQL needs no EOP allocation. Context debug headers follow the ROCT ABI. The ring's configured size is not a limit on repeats: read-pointer backpressure permits wraparound.
 
 The packet body is written while its header is INVALID. A CPU fence precedes the final aligned header write; further fences precede write-pointer and 8-byte doorbell publication. The dispatch has system acquire/release fence scopes and barrier semantics. The launcher bounds host polling by the requested monotonic timeout, waits for signal zero, fences, and copies output. It reports `OMEGA dispatch_ns=... packets=...`; this is host-monotonic dispatch-and-wait time, not GPU event time and not model tokens/s.
@@ -44,8 +61,8 @@ No SET_MEMORY_POLICY or debugger RUNTIME_ENABLE is needed by this path. Kernel r
 
 `tests/amd-kfd-launch/bundle.py --gate GATE_DIR --gemv-tree GEMV_TREE --attention-tree ATTN_TREE --out NEW_DIR` packages the verified x86 executable and exact committed seeded objects; `cell.py` is the one cell. `notebook-check.py NEW_DIR GATE_DIR` checks every object's parser path on both targets, executes the real cell's absent-device path through qemu, compares its reference calculations to rational scalar sums, and kills a changed-asset-digest control.
 
-The integration bundle is named `notebook-probe/launch1/`, not v6. It includes the correct attention merge object selected by digest, never the earlier silicon-wrong merge. Object source commits and full hashes are generated into `bundle.json`; no peer branch is merged into this launcher.
+The integration bundle is named `notebook-probe/launch2/`. It includes the correct attention merge object selected by digest, never the earlier silicon-wrong merge. Object source commits and full hashes are generated into `bundle.json`; no peer branch is merged into this launcher. The builder generates README.md and hashes all delivered files except the manifest itself.
 
-The cell persists `amdserve-launch1.txt` after each line and retains inputs, outputs and invocation stdout/stderr. It runs vadd, then the FP8/BF16 GEMV2 27B layer shapes and a tail shape with an independent fmaf/reduction reference. FP8 uses E4M3FNUZ row scales after reduction, with a discriminating OCP-bias control. An optional HIP measurement uses the same object bytes and is labelled AMD_LIBRARY, separate from OMEGA. Host dispatch time, process wall time and HIP GPU-event time remain different quantities. The receipt fits within the requested line budget without truncation.
+The cell persists `amdserve-launch2.txt` after every line, streams each launcher stdout line while the process is running, and retains inputs, outputs and raw stdout/stderr. CONTROLS is first, the observed topology table is included, and RESULT is always last, including asset-unpack or execution failure. It runs vadd, then the FP8/BF16 GEMV2 layer shapes and a tail shape with an independent fmaf/reduction reference. FP8 uses E4M3FNUZ row scales after reduction, with a discriminating OCP-bias control. Optional HIP measurements use the same object bytes and are labelled `OMEGA objects via AMD HIP loader`; no torch or NVIDIA rows are emitted. Host dispatch time includes diagnostic writes between dispatch and wait boundaries. Process wall time and HIP GPU-event time remain different quantities. There is no receipt truncation or line cap.
 
 **NOT_RUN until the authorized MI300X run:** actual KFD mappings/queue creation, device completion, GPU output parity, FP8 mode, timings, attention dispatch, full 27B serving and any Spark comparison. Merely packing an object or passing the CPU instruments does not qualify it on silicon.

@@ -17,6 +17,7 @@ assert summary['failures']==0
 compiler=(root/'backend/amd/kfd/launch/COMPILER').read_text().splitlines()
 assert compiler[1].split()[0]==summary['compiler']
 bundle={'sources':{'launcher_head':git(root,'rev-parse','HEAD').decode().strip(),'compiler_head':compiler[0].split()[0],'compiler_sha256':summary['compiler'],'launcher_source_sha256':{str(f.relative_to(root)):sha(f.read_bytes()) for f in sorted((root/'backend/amd/kfd/launch').glob('*.om'))}},'assets':{}}
+bundle['sources']['notebook_template_sha256']=sha((root/'tests/amd-kfd-launch/notebook.py.in').read_bytes())
 def add(name,data,source):
     bundle['assets'][name]={'sha256':sha(data),'zlib_base64':base64.b64encode(zlib.compress(data,9)).decode(),'source':source}
 binary=(a.gate/'launch-x86').read_bytes()
@@ -49,6 +50,38 @@ assert text.count('@BUNDLE@')==1
 cell=text.replace('@BUNDLE@',json.dumps(bundle,separators=(',',':')))
 (a.out/'cell.py').write_text(cell)
 (a.out/'bundle.json').write_text(json.dumps(bundle,indent=2)+'\n')
+readme=f"""# launch2 notebook probe
+
+READY for the authorized MI300X notebook run. CPU launcher gates passed;
+actual KFD/GPU execution, timings and full 27B serving remain NOT_RUN.
+
+Paste all of `cell.py` into one notebook cell. It needs x86-64 Linux, Python 3
+standard library, libm, executable temporary storage, and permission to open
+`/dev/kfd`, the readable gfx942 topology node and its exact DRM render device.
+The render minor comes from sysfs, not a guessed device index. A missing render
+device is reported with errno and stops the run; no other GPU is substituted.
+The optional comparison needs libamdhip64. No packages or model downloads,
+credentials, strace, dmesg, or shell paste are required.
+
+Download `amdserve-launch2.txt` afterward, including on failure. CONTROLS is first,
+the observed topology table and every launcher stdout line are persisted as they
+arrive, and RESULT is last. Temporary inputs, outputs and raw stdout/stderr remain
+at the path printed in the receipt. Direct launches are labelled OMEGA; same-object
+HIP measurements are labelled `OMEGA objects via AMD HIP loader`. There are no
+torch rows or Spark measurements. Host dispatch timing includes diagnostic writes
+between dispatch and signal-wait boundaries and is not GPU event time.
+
+Cell bytes: {len(cell.encode())}
+Cell sha256: {sha(cell.encode())}
+Binary sha256: {sha(binary)}
+Launcher source commit: {bundle['sources']['launcher_head']}
+Compiler source commit: {bundle['sources']['compiler_head']}
+Compiler sha256: {summary['compiler']}
+
+`bundle.json` records every object source commit and digest. `SHA256SUMS` covers
+every delivered file, including this README and cell.py, except itself.
+"""
+(a.out/'README.md').write_text(readme)
 files=sorted(f for f in a.out.iterdir() if f.is_file())
 (a.out/'SHA256SUMS').write_text(''.join(sha(f.read_bytes())+'  '+f.name+'\n' for f in files))
-print(json.dumps({'cell_sha256':sha(cell.encode()),'binary_sha256':sha(binary),'assets':{k:v['sha256'] for k,v in bundle['assets'].items()},'device':'NOT_RUN'},sort_keys=True))
+print(json.dumps({'cell_bytes':len(cell.encode()),'cell_sha256':sha(cell.encode()),'binary_sha256':sha(binary),'assets':{k:v['sha256'] for k,v in bundle['assets'].items()},'device':'NOT_RUN'},sort_keys=True))

@@ -26,6 +26,8 @@ results=[]
 def run(label,args,want=0,data=None):
     p=subprocess.run(list(map(str,args)),input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120)
     row={'case':label,'exit':p.returncode,'expected':want,'stderr':p.stderr.decode(errors='replace')}
+    if not label.startswith(('compile ', 'build ')):
+        row['stdout']=p.stdout.decode(errors='replace')
     results.append(row)
     print(('PASS' if p.returncode==want else 'FAIL'),label,'exit',p.returncode,'expected',want,flush=True)
     (out/'results.json').write_text(json.dumps(results,indent=2)+'\n')
@@ -93,7 +95,8 @@ for target,binary in bins.items():
     run(target+' missing descriptor',pre+[binary,'inspect',vobj,'not_a_kernel'],65)
     if not Path('/dev/kfd').exists():
         p=run(target+' absent KFD',pre+[binary,'vadd',vobj,'vadd'],77)
-        assert p.stdout==b'OMEGA device=absent errno=2\n'
+        assert b'OMEGA device=absent errno=2\n' in p.stdout
+        assert b'OMEGA step open_kfd fail errno=2 phase=after detail=0\n' in p.stdout
     badargs=out/'bad-args'; badargs.write_bytes(b'\0'*48)
     run(target+' refuse argument header',pre+[binary,'run',vobj,'vadd',4,1,badargs,out/'unused'],64)
 # Full native host orchestration with a syscall instrument: no GPU opens reach Linux.
@@ -126,6 +129,36 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     assert mutant!=body
     bad=compile('bad-gpu-record',mutant)
     run('CONTROL wrong GPU record',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+# Card-shaped discovery: CPUs, denied gpu_id/properties, and only node 3 readable.
+# Denial is injected at syscall entry, so this remains deterministic under root.
+with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
+    for index in range(4):
+        node=Path(tmp)/str(index); node.mkdir()
+        (node/'gpu_id').write_text('0\n' if index<2 else '37820\n')
+        (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 136\nsimd_count 32\nsimd_per_cu 4\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
+    command=['env','KFD_TEST_SORT_NODES=1','KFD_TEST_GPU=37820','KFD_TEST_MINOR=136',out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd']
+    for deny in ('2/gpu_id','2/properties'):
+        args=['env','KFD_TEST_DENY='+deny,*command]
+        p=run('node-3-only discovery '+deny,args)
+        assert b'OMEGA topology selected node=3 gpu_id=37820 render_minor=136\n' in p.stdout
+        assert b'OMEGA topology skip CPU gpu_id=0\n' in p.stdout
+        assert b'OMEGA step topology_node fail errno=1 phase=after detail=2\n' in p.stdout
+        for step in ('open_kfd','version','render_open','acquire_vm','memory_alloc','memory_map','memory_cpu_map','queue_create','doorbell_map','code_object_load','dispatch','signal_wait','readback'):
+            assert ('OMEGA step '+step+' ok errno=0 phase=before').encode() in p.stdout
+            assert ('OMEGA step '+step+' ok errno=0 phase=after').encode() in p.stdout
+    p=run('CONTROL missing selected render node',['env','KFD_TEST_DENY=2/gpu_id','KFD_TEST_RENDER_ABSENT=1',*command],1)
+    assert b'child_exit=74 ' in p.stderr
+    assert b'OMEGA step render_open fail errno=2 phase=after detail=136\n' in p.stdout
+    mutant=body.replace('r = stepresult fd\nret false','r = checked fd\nret false')
+    assert mutant!=body
+    bad=compile('fatal-topology-open',mutant)
+    p=run('CONTROL inaccessible node must not abort',['env','KFD_TEST_DENY=2/gpu_id',*command[:-4],bad,'vadd',vobj,'vadd'],1)
+    assert b'child_exit=74 ' in p.stderr
+    mutant=body.replace('emit cpuskip\nret false','emit cpuskip\nexit 66')
+    assert mutant!=body
+    bad=compile('fatal-cpu-node',mutant)
+    p=run('CONTROL CPU node must not abort',[*command[:-4],bad,'vadd',vobj,'vadd'],1)
+    assert b'child_exit=66 ' in p.stderr
 # Exercise packet publication separately at every native instruction, using anonymous
 # CPU mappings. The observer verifies body -> header -> wptr -> doorbell, not final bytes alone.
 unit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch'))

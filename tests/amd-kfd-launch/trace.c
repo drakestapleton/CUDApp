@@ -67,6 +67,30 @@ static int kfd=-1,drm=-1,kback=-1,dback=-1;
 static struct kfd_ioctl_create_queue_args queue;
 static int queued,packets;
 static unsigned clocks;
+static unsigned expected_gpu=1,expected_minor=128;
+static int denied;
+static int topology_fd=-1;
+static int entry_order(const void *a,const void *b) {
+    return strcmp(*(const char *const *)a+19,*(const char *const *)b+19);
+}
+static void ordered_entries(uint64_t address,size_t bytes) {
+    unsigned char *input=malloc(bytes),*output=malloc(bytes);
+    char **entries=malloc((bytes/20+1)*sizeof *entries);
+    CHECK(input && output && entries); rd(address,input,bytes);
+    size_t count_entries=0;
+    for(size_t p=0;p<bytes;) {
+        uint16_t size; CHECK(bytes-p>=20); memcpy(&size,input+p+16,2);
+        CHECK(size>=20 && size<=bytes-p && memchr(input+p+19,0,size-19));
+        entries[count_entries++]=(char *)input+p; p+=size;
+    }
+    qsort(entries,count_entries,sizeof *entries,entry_order);
+    size_t offset=0;
+    for(size_t i=0;i<count_entries;i++) {
+        uint16_t size; memcpy(&size,entries[i]+16,2);
+        memcpy(output+offset,entries[i],size); offset+=size;
+    }
+    wr(address,output,bytes); free(entries); free(output); free(input);
+}
 static int backing(int fd) {
     char p[128]; snprintf(p,sizeof p,"/proc/%d/fd/%d",child,fd);
     int x=open(p,O_RDWR); CHECK(x>=0); return x;
@@ -83,11 +107,11 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
     }
     case AMDKFD_IOC_ACQUIRE_VM: {
         struct kfd_ioctl_acquire_vm_args a; rd(p,&a,sizeof a);
-        CHECK(a.drm_fd==(unsigned)drm && a.gpu_id==1); break;
+        CHECK(a.drm_fd==(unsigned)drm && a.gpu_id==expected_gpu); break;
     }
     case AMDKFD_IOC_ALLOC_MEMORY_OF_GPU: {
         struct kfd_ioctl_alloc_memory_of_gpu_args a; rd(p,&a,sizeof a);
-        CHECK(a.gpu_id==1 && a.va_addr && !(a.va_addr%2097152) && a.size && !(a.size%4096));
+        CHECK(a.gpu_id==expected_gpu && a.va_addr && !(a.va_addr%2097152) && a.size && !(a.size%4096));
         CHECK(a.flags & KFD_IOC_ALLOC_MEM_FLAGS_WRITABLE);
         CHECK(a.flags & KFD_IOC_ALLOC_MEM_FLAGS_PUBLIC);
         allocs=realloc(allocs,(count+1)*sizeof *allocs); CHECK(allocs);
@@ -100,7 +124,7 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
     case AMDKFD_IOC_UNMAP_MEMORY_FROM_GPU: {
         struct kfd_ioctl_map_memory_to_gpu_args a; rd(p,&a,sizeof a);
         uint32_t gpu; rd(a.device_ids_array_ptr,&gpu,sizeof gpu);
-        CHECK(a.n_devices==1 && gpu==1);
+        CHECK(a.n_devices==1 && gpu==expected_gpu);
         struct alloc *b=findalloc(a.handle);
         CHECK(b->mapped==(request==AMDKFD_IOC_UNMAP_MEMORY_FROM_GPU));
         b->mapped=request==AMDKFD_IOC_MAP_MEMORY_TO_GPU;
@@ -112,7 +136,7 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
     }
     case AMDKFD_IOC_CREATE_QUEUE:
         rd(p,&queue,sizeof queue);
-        CHECK(count==10 && !queued && queue.gpu_id==1 && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
+        CHECK(count==10 && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
         CHECK(queue.ring_base_address==allocs[5].va && queue.ring_size==1024);
         CHECK(queue.write_pointer_address==allocs[6].va && queue.read_pointer_address==allocs[7].va);
         CHECK(!queue.eop_buffer_address && !queue.eop_buffer_size);
@@ -145,6 +169,8 @@ static void complete_packets(void) {
 }
 int main(int argc,char **argv) {
     CHECK(argc>=4);
+    if(getenv("KFD_TEST_GPU")) expected_gpu=(unsigned)strtoul(getenv("KFD_TEST_GPU"),0,10);
+    if(getenv("KFD_TEST_MINOR")) expected_minor=(unsigned)strtoul(getenv("KFD_TEST_MINOR"),0,10);
     child=fork(); CHECK(child>=0);
     if(!child) { CHECK(!ptrace(PTRACE_TRACEME,0,0,0)); raise(SIGSTOP); execv(argv[2],argv+2); _exit(92); }
     int st; CHECK(waitpid(child,&st,0)==child && WIFSTOPPED(st));
@@ -165,15 +191,26 @@ int main(int argc,char **argv) {
         struct user_pt_regs r; struct iovec v={&r,sizeof r};
         CHECK(!ptrace(PTRACE_GETREGSET,child,(void *)NT_PRSTATUS,&v));
         if(enter) {
-            call=r.regs[8]; memcpy(a,r.regs,sizeof a); kind=0; changed=0;
+            call=r.regs[8]; memcpy(a,r.regs,sizeof a); kind=0; changed=0; denied=0;
             if(call==SYS_openat) {
                 string(a[1],old,sizeof old);
                 if(!strcmp(old,"/dev/kfd") || !strncmp(old,"/dev/dri/renderD",sizeof("/dev/dri/renderD")-1)) {
                     kind=!strcmp(old,"/dev/kfd")?1:2;
-                    r.regs[0]=a[1]; r.regs[1]=0; replace_call(&r,SYS_memfd_create);
+                    if(kind==2) {
+                        CHECK(strtoul(old+strlen("/dev/dri/renderD"),0,10)==expected_minor);
+                        if(getenv("KFD_TEST_RENDER_ABSENT")) {
+                            denied=ENOENT; replace_call(&r,SYS_getpid); kind=0;
+                        }
+                    }
+                    if(!denied) { r.regs[0]=a[1]; r.regs[1]=0; replace_call(&r,SYS_memfd_create); }
                 } else if(!strncmp(old,prefix,strlen(prefix))) {
-                    char path[4096]; int n=snprintf(path,sizeof path,"%s/%s",argv[1],old+strlen(prefix));
-                    CHECK(n>0 && (size_t)n<=strlen(old)); wr(a[1],path,(size_t)n+1); changed=1;
+                    const char *deny=getenv("KFD_TEST_DENY");
+                    if(deny && !strcmp(old+strlen(prefix),deny)) {
+                        denied=EPERM; replace_call(&r,SYS_getpid);
+                    } else {
+                        char path[4096]; int n=snprintf(path,sizeof path,"%s/%s",argv[1],old+strlen(prefix));
+                        CHECK(n>0 && (size_t)n<=strlen(old)); wr(a[1],path,(size_t)n+1); changed=1;
+                    }
                 } else if(!strncmp(old,"/dev/",5)) fail("unexpected device open");
             } else if(call==SYS_ioctl) { CHECK((int)a[0]==kfd); replace_call(&r,SYS_getpid); }
             else if(call==SYS_newfstatat) { string(a[1],old,sizeof old); CHECK(!strcmp(old,"/dev/kfd")); replace_call(&r,SYS_getpid); }
@@ -186,7 +223,9 @@ int main(int argc,char **argv) {
             }
         } else {
             if(call==SYS_openat) {
+                if(denied) { r.regs[0]=(uint64_t)-(int64_t)denied; setregs(&r); }
                 if(changed) wr(a[1],old,strlen(old)+1);
+                if(changed && !strcmp(old,prefix)) topology_fd=(int)r.regs[0];
                 if(kind) { CHECK((int64_t)r.regs[0]>=0); int fd=(int)r.regs[0];
                     if(kind==1) { kfd=fd; kback=backing(fd); CHECK(!ftruncate(kback,8192)); }
                     else { drm=fd; dback=backing(fd); }
@@ -194,9 +233,11 @@ int main(int argc,char **argv) {
             } else if(call==SYS_ioctl) { ioctl_reply(a[1],a[2]); r.regs[0]=0; setregs(&r); }
             else if(call==SYS_fstat && ((int)a[0]==kfd || (int)a[0]==drm)) {
                 struct stat s; rd(a[1],&s,sizeof s); s.st_mode=S_IFCHR|0600;
-                s.st_rdev=(int)a[0]==drm?makedev(226,128):makedev(234,0); wr(a[1],&s,sizeof s);
+                s.st_rdev=(int)a[0]==drm?makedev(226,expected_minor):makedev(234,0); wr(a[1],&s,sizeof s);
             } else if(call==SYS_newfstatat) {
                 struct stat s={0}; s.st_mode=S_IFCHR|0600; s.st_rdev=makedev(234,0); wr(a[2],&s,sizeof s); r.regs[0]=0; setregs(&r);
+            } else if(call==SYS_getdents64 && (int)a[0]==topology_fd && (int64_t)r.regs[0]>0 && getenv("KFD_TEST_SORT_NODES")) {
+                ordered_entries(a[1],(size_t)r.regs[0]);
             } else if(call==SYS_clock_gettime && queued && ++clocks>=2 && !getenv("KFD_TEST_NO_COMPLETE")) complete_packets();
         }
         enter=!enter;

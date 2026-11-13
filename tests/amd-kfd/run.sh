@@ -35,6 +35,7 @@ done
 cd "$root" || exit 74
 out=${AMD_KFD_OUT:-$(mktemp -d "${TMPDIR:-/tmp}/amd-kfd.XXXXXX")} || exit 74
 mkdir -p "$out" || exit 74
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out" || exit 1
 npass=0; nfail=0; nnr=0
 ok() { npass=$((npass + 1)); echo "PASS $*"; }
 bad() { nfail=$((nfail + 1)); echo "FAIL $*"; }
@@ -142,5 +143,6 @@ else ok 'loop-fuel alarm control CAUGHT the over-fuel table that traps 104'; fi
 notrun 'AMD gfx942 hardware: KFD device calls, queue creation, mapped memory, AQL dispatch, completion and vadd execution'
 notrun 'MI300X model loading, Qwen 27B inference, speed and hardware coherency'
 if [ "$nfail" -ne 0 ]; then echo "AMD-KFD-HOST FAIL pass=$npass fail=$nfail not_run=$nnr"; exit 1; fi
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out" || exit 1
 echo "AMD-KFD-HOST PASS pass=$npass fail=0 not_run=$nnr"
 exit 0

@@ -32,6 +32,8 @@ mkdir -p "$out" || exit 74
 # Canonicalize only after mkdir, so recursive wrong-pin control can prove it created no output dir.
 out=$(CDPATH= cd -- "$out" && pwd) || exit 74
 src=$root/backend/amd/gfx942
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out" || exit 1
+python3 -I "$root/tests/amd/receipt-test.py" || exit 1
 printf 'PIN omc %s\nOutputs: AMD_OUT (or the fresh temporary directory)\n' "$omc_pin"
 for tool in llvm-mc-18 llvm-objdump-18 llvm-readelf-18 llvm-objcopy-18; do
   "$tool" --version > "$out/$tool.version" 2>&1 || { echo "FAIL cannot run $tool"; exit 1; }
@@ -437,6 +439,7 @@ echo 'hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary 
 echo 'hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.'
 echo 'NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld'
 if [ "$fail" -ne 0 ]; then echo "AMD-GFX942-HOST FAIL pass=$pass fail=$fail hardware=NOT_RUN"; exit 1; fi
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out" || exit 1
 kernels=
 for table in "$src/"*.isa; do
   name=${table##*/}

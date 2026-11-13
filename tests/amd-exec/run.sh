@@ -24,6 +24,7 @@ out=${AMD_EXEC_OUT:-$(mktemp -d "${TMPDIR:-/tmp}/gfx942-exec.XXXXXX")}
 mkdir -p "$out"
 out=$(CDPATH= cd -- "$out" && pwd)
 src=$root/backend/amd/gfx942
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out"
 printf 'PIN omc=%s\n' "$pin"
 python3 --version
 # Instruments run with this directory first on sys.path; a stdlib-named module here breaks oracle imports.
@@ -223,4 +224,5 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
 sha256sum "$out/hsaco.1" "$out/exec.1" "$out/"*.1.hsaco
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out"
 python3 -I "$root/tests/amd-exec/sgemm.py" summary "$kernels"

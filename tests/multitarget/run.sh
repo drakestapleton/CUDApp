@@ -40,6 +40,7 @@ digest() { d=$(sha256sum < "$1") || return 1; printf '%s\n' "${d%% *}"; }
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 74
 out=${MT_OUT:-$(mktemp -d "${TMPDIR:-/tmp}/cudapp-multitarget.XXXXXX")} || exit 74
 mkdir -p "$out" || exit 74
+python3 -I "$root/tests/amd/receipt.py" write "$root" "$out" || exit 1
 echo "PIN omc $omc_pin"
 echo "Outputs: $out"
 
@@ -237,5 +238,6 @@ fi
 
 echo "hardware NOT_RUN: every GPU target except the GB10 (no AMD, Intel, Apple, Qualcomm, Arm, Imagination, Broadcom or Vortex device on this host; PoCL and lavapipe are CPUs)"
 if [ "$nfail" -ne 0 ]; then echo "MULTITARGET FAIL pass=$npass fail=$nfail not_run=$nnr"; exit 1; fi
+python3 -I "$root/tests/amd/receipt.py" check "$root" "$out" || exit 1
 echo "MULTITARGET PASS pass=$npass fail=0 not_run=$nnr"
 exit 0

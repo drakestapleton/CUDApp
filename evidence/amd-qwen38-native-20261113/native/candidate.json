@@ -1,0 +1,8 @@
+{
+  "omega-launch": "dd626fcdf6c405e988499f728eb791a5c12f1ca9fec97d9ca7dc9ead2a19facf",
+  "benchmark-qualified.py": "0028ebf2beb99f6651f85e262f155410bc17ca5535ce8c605f83ab24b9e93d81",
+  "source_commit": "069fe4e8",
+  "compiler_commit": "64d6db3bb8a0c6b4a4f5334b75191abf77c66ab9",
+  "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+  "release_status": "candidate; dependency gates and independent review pending"
+}

@@ -1,0 +1,342 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: AMD_OUT (or the fresh temporary directory)
+ORACLE llvm-mc-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objdump-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-readelf-18 Ubuntu LLVM version 18.1.3
+ORACLE llvm-objcopy-18 llvm-objcopy, compatible with GNU objcopy
+COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
+COMPILE hsaco src=32ee1f43b2507fd99de93973b3c2fcbfa1b075f4321ff8cd75a0e6c489994b0d bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
+COMPILE hsaco-again src=32ee1f43b2507fd99de93973b3c2fcbfa1b075f4321ff8cd75a0e6c489994b0d bin=eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b
+PASS two producer compilations byte-identical
+PASS two code-object builds byte-identical
+OBJECT sha256=10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f bytes=2608
+PASS load-gfx942 exit=0 LOAD ACCEPT AMDGPU_HSACO target=amdgcn-amd-amdhsa--gfx942 mach=0x4c abi=3 kernels=1 note=AMDGPU/NT_AMDGPU_METADATA bytes=2608
+PASS code section bytes equal llvm-mc-18 gfx942 oracle
+PASS AMDGPU metadata note bytes equal independent oracle
+PASS descriptor sizes/reserved prefix match oracle
+PASS descriptor resources/properties match oracle
+PASS descriptor entry displacement resolves to vadd (no relocation remains)
+PASS objdump -d listings equal (oracle rebased to emitted .text VA)
+PASS llvm-readelf parses HSA v5 gfx942 flags, metadata kernel vadd and symbol vadd.kd
+PASS MessagePack uint and str encodings at every width boundary equal the spec bytes
+PASS CONTROL single-byte MessagePack value CAUGHT by byte comparison
+PASS CONTROL str16 cutoff 65534 CAUGHT by byte comparison
+PASS CONTROL instruction-table flipped bit CAUGHT code mismatch
+PASS control-wrong-mach exit=33 LOAD REFUSE AMDGPU_HSACO code=33 reason=e_flags mach does not match the requested gfx target
+PASS control-truncated exit=34 LOAD REFUSE AMDGPU_HSACO code=34 reason=no well-formed AMDGPU NT_AMDGPU_METADATA note in a PT_NOTE segment
+PASS CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup
+PASS vadd entire object unchanged from pre-generalization
+PASS fsum16 two code-object builds byte-identical
+PASS fsum16 .text bytes equal independent llvm-mc-18 oracle
+PASS fsum16 metadata note bytes equal independent oracle
+PASS fsum16 descriptor sizes match oracle
+PASS fsum16 descriptor resources/properties match oracle
+PASS fsum16 descriptor entry displacement resolves to kernel symbol
+PASS llvm-readelf parses fsum16 symbol, 20-byte kernarg and table register counts
+PASS CONTROL missing-kernel CAUGHT exit=4 before object emission
+PASS CONTROL duplicate-kernel CAUGHT exit=4 before object emission
+PASS CONTROL argument-gap CAUGHT exit=4 before object emission
+FSUM16 OBJECT sha256=15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478 bytes=2736
+PASS fsum16 entire object unchanged from pre-SGEMM
+PASS sgemm two code-object builds byte-identical
+PASS sgemm .text including v_fmac_f32 and backward branch equals LLVM18 gfx942
+PASS sgemm metadata note equals independent oracle
+PASS sgemm descriptor sizes equal oracle
+PASS sgemm descriptor resources including workgroup Y equal oracle
+PASS sgemm workgroup-id-Y enabled in rsrc2 and v_fmac_f32 accepted by gfx942 oracle
+PASS sgemm descriptor entry displacement resolves to kernel symbol
+PASS sgemm llvm-readelf metadata reports six arguments and descriptor resources
+PASS SOPP forward-max exact signed-16-bit word=bf857fff
+PASS SOPP backward-min exact signed-16-bit word=bf858000
+CONTROL forward-overflow CAUGHT exit=4 before output
+CONTROL backward-overflow CAUGHT exit=4 before output
+CONTROL undefined-label CAUGHT exit=4 before output
+CONTROL duplicate-label CAUGHT exit=4 before output
+PASS signed SOPP offset boundaries, undefined and duplicate labels
+PASS sgemm original object preserved by all oracle tools
+SGEMM OBJECT sha256=466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70 bytes=2768
+PASS corrected sgemm entire object unchanged from pre-FP8
+PASS fp8gemv two code-object builds byte-identical
+PASS fp8gemv .text including SDWA conversion and VOP3 mul equals LLVM18 gfx942
+PASS fp8gemv metadata note equals independent oracle
+PASS fp8gemv descriptor sizes equal oracle
+PASS fp8gemv descriptor resources equal oracle
+PASS fp8gemv descriptor entry displacement resolves to kernel symbol
+PASS fp8gemv BYTE0 SDWA accepted by gfx942 oracle and kernarg is40 bytes
+PASS sparse-format-ids byte-identical FP8 object (no capacity ceiling)
+PASS growing-format-count byte-identical FP8 object (no capacity ceiling)
+CONTROL undefined-format CAUGHT exit=4 no object
+PASS growable format IDs/count and undefined-format control
+FP8GEMV OBJECT sha256=b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b bytes=2800
+PASS fp8gemv entire object unchanged from pre-BF16
+PASS bf16gemv two code-object builds byte-identical
+PASS bf16gemv .text including GLOBAL_LOAD_SHORT_D16_HI equals LLVM18 gfx942
+PASS bf16gemv metadata note equals independent oracle
+PASS bf16gemv descriptor sizes equal oracle
+PASS bf16gemv descriptor resources equal oracle
+PASS bf16gemv descriptor entry displacement resolves to kernel symbol
+PASS bf16gemv D16_HI accepted by gfx942 oracle and kernarg is32 bytes
+BF16GEMV OBJECT sha256=59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa bytes=2672
+PASS bf16gemv entire object unchanged from pre-GEMV2
+PASS addnorm5120 two code-object builds byte-identical
+PASS addnorm5120 complete instruction bytes equal LLVM18 gfx942
+PASS addnorm5120 metadata note equals independent oracle
+PASS addnorm5120 descriptor sizes equal oracle
+PASS addnorm5120 descriptor resources equal oracle
+PASS addnorm5120 descriptor entry displacement resolves to kernel symbol
+addnorm5120 OBJECT sha256=917d4cd93637d4f1244fcb8a0634749c695308cf4d0ba2cc6cb0ab4733d3ad16 bytes=4024
+PASS argmax_final two code-object builds byte-identical
+PASS argmax_final complete instruction bytes equal LLVM18 gfx942
+PASS argmax_final metadata note equals independent oracle
+PASS argmax_final descriptor sizes equal oracle
+PASS argmax_final descriptor resources equal oracle
+PASS argmax_final descriptor entry displacement resolves to kernel symbol
+argmax_final OBJECT sha256=432ab23b5cbe13bec5ff4e79c960407e3e1bf44432a53d1e0707da7bbac3e02d bytes=3040
+PASS argmax_part two code-object builds byte-identical
+PASS argmax_part complete instruction bytes equal LLVM18 gfx942
+PASS argmax_part metadata note equals independent oracle
+PASS argmax_part descriptor sizes equal oracle
+PASS argmax_part descriptor resources equal oracle
+PASS argmax_part descriptor entry displacement resolves to kernel symbol
+argmax_part OBJECT sha256=f5970079fbc83b2dc3ebb5c5db5e186b73942d27a73ad392f1e69fe3432064c4 bytes=3040
+PASS attn256_gate two code-object builds byte-identical
+PASS attn256_gate complete instruction bytes equal LLVM18 gfx942
+PASS attn256_gate metadata note equals independent oracle
+PASS attn256_gate descriptor sizes equal oracle
+PASS attn256_gate descriptor resources equal oracle
+PASS attn256_gate workgroup-id-Y enabled
+PASS attn256_gate descriptor entry displacement resolves to kernel symbol
+attn256_gate OBJECT sha256=b2c6ef4a50b69faf76a7bd823c7c1bdd9a40083e9e1d9e2cee19446da730d856 bytes=2736
+PASS attn256_merge two code-object builds byte-identical
+PASS attn256_merge complete instruction bytes equal LLVM18 gfx942
+PASS attn256_merge metadata note equals independent oracle
+PASS attn256_merge descriptor sizes equal oracle
+PASS attn256_merge descriptor resources equal oracle
+PASS attn256_merge workgroup-id-Y enabled
+PASS attn256_merge descriptor entry displacement resolves to kernel symbol
+attn256_merge OBJECT sha256=a721017369917d2b757095198877f16f9aa41a8955dbf4bf55d73e29f83b2ec3 bytes=3104
+PASS attn256_merge_step two code-object builds byte-identical
+PASS attn256_merge_step complete instruction bytes equal LLVM18 gfx942
+PASS attn256_merge_step metadata note equals independent oracle
+PASS attn256_merge_step descriptor sizes equal oracle
+PASS attn256_merge_step descriptor resources equal oracle
+PASS attn256_merge_step workgroup-id-Y enabled
+PASS attn256_merge_step descriptor entry displacement resolves to kernel symbol
+attn256_merge_step OBJECT sha256=e07dc53272322ca466ee61f27b6325024388b811c3ac23ec89f3c4ddaa087208 bytes=3224
+PASS attn256_part two code-object builds byte-identical
+PASS attn256_part complete instruction bytes equal LLVM18 gfx942
+PASS attn256_part metadata note equals independent oracle
+PASS attn256_part descriptor sizes equal oracle
+PASS attn256_part descriptor resources equal oracle
+PASS attn256_part workgroup-id-Y enabled
+PASS attn256_part descriptor entry displacement resolves to kernel symbol
+attn256_part OBJECT sha256=9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95 bytes=3552
+PASS attn256_part_step two code-object builds byte-identical
+PASS attn256_part_step complete instruction bytes equal LLVM18 gfx942
+PASS attn256_part_step metadata note equals independent oracle
+PASS attn256_part_step descriptor sizes equal oracle
+PASS attn256_part_step descriptor resources equal oracle
+PASS attn256_part_step workgroup-id-Y enabled
+PASS attn256_part_step descriptor entry displacement resolves to kernel symbol
+attn256_part_step OBJECT sha256=81fcdc0017499d446494331ee168193dffb0930c533d9cf60a0d7e24f2ba9f32 bytes=3664
+PASS attn256_prep two code-object builds byte-identical
+PASS attn256_prep complete instruction bytes equal LLVM18 gfx942
+PASS attn256_prep metadata note equals independent oracle
+PASS attn256_prep descriptor sizes equal oracle
+PASS attn256_prep descriptor resources equal oracle
+PASS attn256_prep workgroup-id-Y enabled
+PASS attn256_prep descriptor entry displacement resolves to kernel symbol
+attn256_prep OBJECT sha256=9bbc291825b1c70d2b18bbb333a36982d355ffdf36b5e7bdedf09c84fb448f8a bytes=5032
+PASS attn256_prep_step two code-object builds byte-identical
+PASS attn256_prep_step complete instruction bytes equal LLVM18 gfx942
+PASS attn256_prep_step metadata note equals independent oracle
+PASS attn256_prep_step descriptor sizes equal oracle
+PASS attn256_prep_step descriptor resources equal oracle
+PASS attn256_prep_step workgroup-id-Y enabled
+PASS attn256_prep_step descriptor entry displacement resolves to kernel symbol
+attn256_prep_step OBJECT sha256=e9fdf75c9c3f13ef1d048ec9722bf454ec9f210f197b187b9d3bb304a88f1232 bytes=5216
+PASS bf16gemv2 two code-object builds byte-identical
+PASS bf16gemv2 complete instruction bytes equal LLVM18 gfx942
+PASS bf16gemv2 metadata note equals independent oracle
+PASS bf16gemv2 descriptor sizes equal oracle
+PASS bf16gemv2 descriptor resources equal oracle
+PASS bf16gemv2 descriptor entry displacement resolves to kernel symbol
+bf16gemv2 OBJECT sha256=4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb bytes=3824
+PASS embed5120 two code-object builds byte-identical
+PASS embed5120 complete instruction bytes equal LLVM18 gfx942
+PASS embed5120 metadata note equals independent oracle
+PASS embed5120 descriptor sizes equal oracle
+PASS embed5120 descriptor resources equal oracle
+PASS embed5120 descriptor entry displacement resolves to kernel symbol
+embed5120 OBJECT sha256=7e661da8a94c4d3aa0e02dcd3a2b1b25434d6cd5e2eae5f1445a28a207d05d4c bytes=2520
+PASS embed5120_step two code-object builds byte-identical
+PASS embed5120_step complete instruction bytes equal LLVM18 gfx942
+PASS embed5120_step metadata note equals independent oracle
+PASS embed5120_step descriptor sizes equal oracle
+PASS embed5120_step descriptor resources equal oracle
+PASS embed5120_step descriptor entry displacement resolves to kernel symbol
+embed5120_step OBJECT sha256=f3593c4b9b5c112f66be07cffd8ce2d96025a3ebefbfe04b54bf886733b2c4f1 bytes=2728
+PASS fp8gemv2 two code-object builds byte-identical
+PASS fp8gemv2 complete instruction bytes equal LLVM18 gfx942
+PASS fp8gemv2 metadata note equals independent oracle
+PASS fp8gemv2 descriptor sizes equal oracle
+PASS fp8gemv2 descriptor resources equal oracle
+PASS fp8gemv2 descriptor entry displacement resolves to kernel symbol
+fp8gemv2 OBJECT sha256=99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0 bytes=4152
+PASS fp8gemv_b128 two code-object builds byte-identical
+PASS fp8gemv_b128 complete instruction bytes equal LLVM18 gfx942
+PASS fp8gemv_b128 metadata note equals independent oracle
+PASS fp8gemv_b128 descriptor sizes equal oracle
+PASS fp8gemv_b128 descriptor resources equal oracle
+PASS fp8gemv_b128 descriptor entry displacement resolves to kernel symbol
+fp8gemv_b128 OBJECT sha256=d31f212fb2c5dcac5e59fd87dbfbba32ff449d6ba11bde5f634710342eac5325 bytes=3216
+PASS fp8gemv_b128f two code-object builds byte-identical
+PASS fp8gemv_b128f complete instruction bytes equal LLVM18 gfx942
+PASS fp8gemv_b128f metadata note equals independent oracle
+PASS fp8gemv_b128f descriptor sizes equal oracle
+PASS fp8gemv_b128f descriptor resources equal oracle
+PASS fp8gemv_b128f descriptor entry displacement resolves to kernel symbol
+fp8gemv_b128f OBJECT sha256=72049eeefffe5431c0f8972d1d9f3e4f93e39841312aeb492ac24f455d23adbd bytes=4816
+PASS gdnconv4 two code-object builds byte-identical
+PASS gdnconv4 complete instruction bytes equal LLVM18 gfx942
+PASS gdnconv4 metadata note equals independent oracle
+PASS gdnconv4 descriptor sizes equal oracle
+PASS gdnconv4 descriptor resources equal oracle
+PASS gdnconv4 descriptor entry displacement resolves to kernel symbol
+gdnconv4 OBJECT sha256=c169381577b1ce5f0155904b3975d68a57ae01de906f3d2f359e7cf74a8969fd bytes=3264
+PASS gdnconv4_step two code-object builds byte-identical
+PASS gdnconv4_step complete instruction bytes equal LLVM18 gfx942
+PASS gdnconv4_step metadata note equals independent oracle
+PASS gdnconv4_step descriptor sizes equal oracle
+PASS gdnconv4_step descriptor resources equal oracle
+PASS gdnconv4_step descriptor entry displacement resolves to kernel symbol
+gdnconv4_step OBJECT sha256=df8d6f11ee18e1220a0ed7bcfae96d0765e4d444a8d0934cbcf72e7db52610aa bytes=3424
+PASS gdnparams two code-object builds byte-identical
+PASS gdnparams complete instruction bytes equal LLVM18 gfx942
+PASS gdnparams metadata note equals independent oracle
+PASS gdnparams descriptor sizes equal oracle
+PASS gdnparams descriptor resources equal oracle
+PASS gdnparams descriptor entry displacement resolves to kernel symbol
+gdnparams OBJECT sha256=9cc7e5ed4850b6033b8f1744f96968bb7a5fdfcf0e9c9bc6fb3598cd8e7a5b05 bytes=3328
+PASS gdnqknorm two code-object builds byte-identical
+PASS gdnqknorm complete instruction bytes equal LLVM18 gfx942
+PASS gdnqknorm metadata note equals independent oracle
+PASS gdnqknorm descriptor sizes equal oracle
+PASS gdnqknorm descriptor resources equal oracle
+PASS gdnqknorm descriptor entry displacement resolves to kernel symbol
+gdnqknorm OBJECT sha256=387f6f78eb0a5f24013c7818c82e9a77e357eb3e91496273ecf0f80ce71025cd bytes=3152
+PASS gdnrmsgate two code-object builds byte-identical
+PASS gdnrmsgate complete instruction bytes equal LLVM18 gfx942
+PASS gdnrmsgate metadata note equals independent oracle
+PASS gdnrmsgate descriptor sizes equal oracle
+PASS gdnrmsgate descriptor resources equal oracle
+PASS gdnrmsgate descriptor entry displacement resolves to kernel symbol
+gdnrmsgate OBJECT sha256=d48e02ac4b8cd4cfd2449578d50931ec8c5d458007f168d537288a3a148af090 bytes=3632
+PASS gdnstate two code-object builds byte-identical
+PASS gdnstate complete instruction bytes equal LLVM18 gfx942
+PASS gdnstate metadata note equals independent oracle
+PASS gdnstate descriptor sizes equal oracle
+PASS gdnstate descriptor resources equal oracle
+PASS gdnstate descriptor entry displacement resolves to kernel symbol
+gdnstate OBJECT sha256=4c9d8d462e8eddb2b575ae6f27bdd366609d8b3237ac552f3c696da8ab7bcf80 bytes=3480
+PASS gdnstate_step two code-object builds byte-identical
+PASS gdnstate_step complete instruction bytes equal LLVM18 gfx942
+PASS gdnstate_step metadata note equals independent oracle
+PASS gdnstate_step descriptor sizes equal oracle
+PASS gdnstate_step descriptor resources equal oracle
+PASS gdnstate_step descriptor entry displacement resolves to kernel symbol
+gdnstate_step OBJECT sha256=e36ce013066567f07c208caf14316662835622ea3fb40bc9fdea9f6ed08b382f bytes=3704
+PASS gdnstate_w two code-object builds byte-identical
+PASS gdnstate_w complete instruction bytes equal LLVM18 gfx942
+PASS gdnstate_w metadata note equals independent oracle
+PASS gdnstate_w descriptor sizes equal oracle
+PASS gdnstate_w descriptor resources equal oracle
+PASS gdnstate_w descriptor entry displacement resolves to kernel symbol
+gdnstate_w OBJECT sha256=449930132690bc88336d171aad876690423750de0f0bf18e601a9d245a574263 bytes=3360
+PASS mlpsilu two code-object builds byte-identical
+PASS mlpsilu complete instruction bytes equal LLVM18 gfx942
+PASS mlpsilu metadata note equals independent oracle
+PASS mlpsilu descriptor sizes equal oracle
+PASS mlpsilu descriptor resources equal oracle
+PASS mlpsilu descriptor entry displacement resolves to kernel symbol
+mlpsilu OBJECT sha256=2e22681a1fe0aa9a69796eec1326d4ee7679bda9d7d9985ae52fd7edffc5a69a bytes=2752
+PASS readfirst_probe two code-object builds byte-identical
+PASS readfirst_probe complete instruction bytes equal LLVM18 gfx942
+PASS readfirst_probe metadata note equals independent oracle
+PASS readfirst_probe descriptor sizes equal oracle
+PASS readfirst_probe descriptor resources equal oracle
+PASS readfirst_probe descriptor entry displacement resolves to kernel symbol
+readfirst_probe OBJECT sha256=3265577b17501a6a9053f16eb8885daebb4bd96e51ca44be75b9106e2432987c bytes=2576
+PASS residual5120 two code-object builds byte-identical
+PASS residual5120 complete instruction bytes equal LLVM18 gfx942
+PASS residual5120 metadata note equals independent oracle
+PASS residual5120 descriptor sizes equal oracle
+PASS residual5120 descriptor resources equal oracle
+PASS residual5120 descriptor entry displacement resolves to kernel symbol
+residual5120 OBJECT sha256=f4d5127cb4db16282257e91c42a220f9141c222f904554f45b2019f049085e7e bytes=2808
+PASS rmsnorm5120 two code-object builds byte-identical
+PASS rmsnorm5120 complete instruction bytes equal LLVM18 gfx942
+PASS rmsnorm5120 metadata note equals independent oracle
+PASS rmsnorm5120 descriptor sizes equal oracle
+PASS rmsnorm5120 descriptor resources equal oracle
+PASS rmsnorm5120 descriptor entry displacement resolves to kernel symbol
+rmsnorm5120 OBJECT sha256=f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f bytes=3032
+PASS step_advance two code-object builds byte-identical
+PASS step_advance complete instruction bytes equal LLVM18 gfx942
+PASS step_advance metadata note equals independent oracle
+PASS step_advance descriptor sizes equal oracle
+PASS step_advance descriptor resources equal oracle
+PASS step_advance descriptor entry displacement resolves to kernel symbol
+step_advance OBJECT sha256=2f688c9f6f2f7af751d4976b6bf748f7b15fd4d4ca1d8d90c43fe228363b975c bytes=2440
+PASS scheduling addnorm5120 trans_instructions=1 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling argmax_final trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling argmax_part trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_gate trans_instructions=2 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_merge trans_instructions=3 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_merge_step trans_instructions=3 sgpr_writes=1 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_part trans_instructions=2 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_part_step trans_instructions=2 sgpr_writes=1 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_prep trans_instructions=2 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling attn256_prep_step trans_instructions=2 sgpr_writes=3 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling bf16gemv trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling bf16gemv2 trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling embed5120 trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling embed5120_step trans_instructions=0 sgpr_writes=3 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling fp8gemv trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling fp8gemv2 trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling fp8gemv_b128 trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling fp8gemv_b128f trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling fsum16 trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnconv4 trans_instructions=2 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnconv4_step trans_instructions=2 sgpr_writes=1 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnparams trans_instructions=7 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnqknorm trans_instructions=1 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnrmsgate trans_instructions=5 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnstate trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnstate_step trans_instructions=0 sgpr_writes=1 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling gdnstate_w trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling mlpsilu trans_instructions=2 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling readfirst_probe trans_instructions=0 sgpr_writes=1 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling residual5120 trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling rmsnorm5120 trans_instructions=1 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling sgemm trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling step_advance trans_instructions=0 sgpr_writes=1 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+PASS scheduling vadd trans_instructions=0 sgpr_writes=0 rule=CDNA3-p28-29-trans-consumer,valu-sgpr-write
+CONTROL scheduling-attn256_merge-no-wait CAUGHT missing transcendental wait: attn256_merge-no-trans-wait.hsaco: ['000000000474:v_rcp_f32 -> 000000000478:v_mul_f32']
+CONTROL scheduling-attn256_gate-no-wait CAUGHT missing transcendental wait: attn256_gate-no-trans-wait.hsaco: ['0000000003E0:v_exp_f32 -> 0000000003E4:v_add_f32']
+CONTROL scheduling-readfirst_probe-no-sgpr-wait CAUGHT missing VALU SGPR-write wait: readfirst_probe-no-sgpr-wait.hsaco: ['000000000334:v_readfirstlane_b32 -> 00000000033C:v_mov_b32 waits=1 need=2']
+CONTROL scheduling-sgpr-constant CAUGHT 0:v_readfirstlane_b32 -> 8:v_mov_b32 waits=1 need=2
+CONTROL scheduling-sgpr-lane-select CAUGHT 0:v_readfirstlane_b32 -> 8:v_readlane_b32 waits=2 need=4
+CONTROL scheduling-sgpr-vmem CAUGHT 0:v_readlane_b32 -> 8:global_load_dword waits=3 need=5
+CONTROL scheduling-sgpr-branch-path CAUGHT 0:v_readfirstlane_b32 -> 10:v_mov_b32 waits=1 need=2
+PASS scheduling-sgpr-constant-after-nop1 no hazard
+PASS scheduling-sgpr-carry-in no hazard
+PASS scheduling-sgpr-salu-read no hazard
+PASS scheduling objects=34 controls=7 hardware=NOT_RUN
+PASS all emitted objects satisfy CDNA3 transcendental consumer wait
+PASS loop-fuel alarm quiet: largest gate input or object 8656 bytes, threshold 500000
+PASS loop-fuel alarm control CAUGHT a 600001-byte file
+hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
+hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.
+NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
+AMD-GFX942-HOST PASS pass=241 fail=0 kernels=addnorm5120,argmax_final,argmax_part,attn256_gate,attn256_merge,attn256_merge_step,attn256_part,attn256_part_step,attn256_prep,attn256_prep_step,bf16gemv,bf16gemv2,embed5120,embed5120_step,fp8gemv,fp8gemv2,fp8gemv_b128,fp8gemv_b128f,fsum16,gdnconv4,gdnconv4_step,gdnparams,gdnqknorm,gdnrmsgate,gdnstate,gdnstate_step,gdnstate_w,mlpsilu,readfirst_probe,residual5120,rmsnorm5120,sgemm,step_advance,vadd hardware=NOT_RUN

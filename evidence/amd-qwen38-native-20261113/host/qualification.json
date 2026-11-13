@@ -1,0 +1,48 @@
+{
+  "source_head": "a5f95dd1cf671ce23b7c2ad940268063850e0854",
+  "source_tree_clean_before_after": true,
+  "fresh_clone": true,
+  "launcher_checks": 169,
+  "plan_contract_cases": 53,
+  "required_model_code_objects_rebuilt_identical": 18,
+  "gates": {
+    "launcher": "PASS",
+    "amd-kfd": "PASS",
+    "amd-exec": "PASS",
+    "amd": "PASS"
+  },
+  "compiler_source": "64d6db3bb8a0c6b4a4f5334b75191abf77c66ab9",
+  "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+  "backend_gate_compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+  "binary_sha256": "dd626fcdf6c405e988499f728eb791a5c12f1ca9fec97d9ca7dc9ead2a19facf",
+  "elf_program_header_types": [
+    1,
+    1
+  ],
+  "elf_dynamic_section_or_interpreter": false,
+  "logs": {
+    "exec.log": {
+      "original_sha256": "e257cf78df95f81744c7fec4471252290da67b2e23219770c1e4ae24031f6881",
+      "portable_sha256": "2659d5091957bc07c4622e671c86a697a08810c79cd5dfe0a0b5c2eacc4633cb"
+    },
+    "amd.log": {
+      "original_sha256": "3a7ce100b2cb29bf68b8c0ea644b5f7ada4b942d5221a15a049ef60383f788b5",
+      "portable_sha256": "3a7ce100b2cb29bf68b8c0ea644b5f7ada4b942d5221a15a049ef60383f788b5"
+    },
+    "kfd.log": {
+      "original_sha256": "49d79c7e91e78b693aa64b78c9b53cc0ff401aa571f1e9c3c3855a8c9f8113cb",
+      "portable_sha256": "c27aea8d22fc3b238132b93dfc79f726c598bb65f23229c9e03976e5c9e40280"
+    },
+    "launcher.log": {
+      "original_sha256": "b38338a5ce808e332e83386e02c28faa24ecb4315cd54500032f1d2df1a09086",
+      "portable_sha256": "b38338a5ce808e332e83386e02c28faa24ecb4315cd54500032f1d2df1a09086"
+    }
+  },
+  "commands": [
+    "python3 -I tests/amd-kfd-launch/check.py $LAUNCH_COMPILER",
+    "sh tests/amd-kfd/run.sh $BACKEND_COMPILER",
+    "sh tests/amd-exec/run.sh $BACKEND_COMPILER",
+    "sh tests/amd/run.sh $BACKEND_COMPILER"
+  ],
+  "log_portability": "Only /home/drakestapleton/ replaced by $HOME/; original hashes retained. Original full logs retained in task evidence."
+}

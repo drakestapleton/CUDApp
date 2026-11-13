@@ -166,3 +166,12 @@ The release gate rebuilds every object in the native Qwen fixture manifest
 `tests/amd-kfd-launch/qwen38-objects.json` and requires byte-identical code objects
 and kernarg sizes. Missing source and changed-object controls must be caught.
 A notebook carrying an unlanded object cannot qualify the release tree.
+
+## Full-model hardware qualification
+
+The [November 13 native model receipt](../../../../evidence/amd-qwen38-native-20261113/README.md)
+records the final executable, the exact coding reference check, five longer
+requests compared with an independent AMD execution path, and the archived
+Spark comparison. It retains raw IDs, timings, controls, source/compiler hashes,
+external reproduction instruments and the cross-engine numerical differences.
+The receipt states timing boundaries and memory-accounting limits explicitly.

@@ -9,7 +9,7 @@ import struct
 import sys
 
 HERE=pathlib.Path(__file__).parent
-ref=runpy.run_path(str(HERE/'token.py'))
+ref=runpy.run_path(str(HERE/'token_ref.py'))
 finite,round32,fma,point,imul,sigmoid,execute,export=(ref[n] for n in ('finite','round32','fma','point','imul','sigmoid','execute','export'))
 bf16=ref['ref']['bf16']
 CHANNELS=16*128*2+48*128

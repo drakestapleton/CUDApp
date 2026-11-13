@@ -10,7 +10,7 @@ import runpy
 import struct
 import sys
 HERE=pathlib.Path(__file__).parent
-ref=runpy.run_path(str(HERE/'token.py'))
+ref=runpy.run_path(str(HERE/'token_ref.py'))
 finite,round32,mul,add,point,imul,iadd,expbound,intervalrcp,rsqbound,execute,export=(ref[n] for n in ('finite','round32','mul','add','point','imul','iadd','expbound','intervalrcp','rsqbound','execute','export'))
 bf16=ref['ref']['bf16']
 sigmoid=ref['sigmoid']

@@ -8,7 +8,7 @@ import runpy
 import struct
 import sys
 HERE=pathlib.Path(__file__).parent
-ref=runpy.run_path(str(HERE/'token.py'))
+ref=runpy.run_path(str(HERE/'token_ref.py'))
 execute,export,round32,finite,imul,point,sigmoid=(ref[n] for n in ('execute','export','round32','finite','imul','point','sigmoid'))
 fixture,normrope,rope_reference,bf16=(ref['ref'][n] for n in ('fixture','normrope','rope_reference','bf16'))
 

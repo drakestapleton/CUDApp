@@ -9,7 +9,7 @@ import struct
 import sys
 
 HERE = pathlib.Path(__file__).parent
-ref = runpy.run_path(str(HERE/'token.py'))
+ref = runpy.run_path(str(HERE/'token_ref.py'))
 finite,round32,fma,add,mul,point,imul,rsqbound,execute,export = (
     ref[n] for n in ('finite','round32','fma','add','mul','point','imul','rsqbound','execute','export'))
 CASES = ((0,'varied'),(1,'zero'),(2,'varied'),(3,'large'),(1,'varied'))

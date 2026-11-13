@@ -1098,7 +1098,7 @@ and reading gate instead of up to be CAUGHT. Host and LLVM gates build
 twice and compare bytes; the latter checks the full descriptor and
 instruction encodings and runs the scheduling check over all objects.
 
-`tests/amd-exec/token.py` and `section.py` generate code-only notebook
+`tests/amd-exec/token_ref.py` and `section.py` generate code-only notebook
 sections from the actual fixture functions and their arithmetic dependency
 closure. Inputs and all exact results/intervals are computed in the cell:
 no full memory image or interval list is embedded. Generation executes

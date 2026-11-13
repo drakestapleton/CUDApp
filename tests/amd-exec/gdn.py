@@ -10,7 +10,7 @@ import runpy
 import struct
 import sys
 HERE=pathlib.Path(__file__).parent
-ref=runpy.run_path(str(HERE/'token.py'))
+ref=runpy.run_path(str(HERE/'token_ref.py'))
 finite,round32,mul,add,point,imul,rsqbound,execute,export=(ref[n] for n in ('finite','round32','mul','add','point','imul','rsqbound','execute','export'))
 bf16=ref['ref']['bf16']
 QSCALE=0x3db504f3

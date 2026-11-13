@@ -4,7 +4,7 @@
 import pathlib
 import runpy
 import sys
-# This directory's token.py is a GPU test module, not Python's token module.
+# Import torch from the supplied oracle path, never from this directory's test modules.
 sys.path=[p for p in sys.path if pathlib.Path(p).resolve()!=pathlib.Path(__file__).parent.resolve()]
 sys.path.insert(0,sys.argv[1])
 import torch

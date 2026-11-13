@@ -26,6 +26,17 @@ out=$(CDPATH= cd -- "$out" && pwd)
 src=$root/backend/amd/gfx942
 printf 'PIN omc=%s\n' "$pin"
 python3 --version
+# Instruments run with this directory first on sys.path; a stdlib-named module here breaks oracle imports.
+python3 -I - "$root/tests/amd-exec" <<'PY'
+import pathlib, sys
+def shadows(names):
+    return sorted(n for n in names if n in sys.stdlib_module_names)
+assert shadows(['token']) == ['token'], 'shadow control missed'
+print('CONTROL stdlib-named module token CAUGHT')
+found = shadows(p.stem for p in pathlib.Path(sys.argv[1]).glob('*.py'))
+assert not found, f'test modules shadow stdlib: {found}'
+print('PASS no tests/amd-exec module shadows the Python standard library')
+PY
 cat "$src/exec/fp.om" "$src/exec/fma.om" "$src/exec/main.om" > "$out/exec.om"
 for name in hsaco exec rope; do
     input=$src/$name.om
@@ -157,12 +168,12 @@ timeout 120 "$omc" < "$out/ropefreq-probe.om" > "$out/ropefreq-probe" 2> "$out/r
 [ ! -s "$out/ropefreq-probe.compile.log" ] || { cat "$out/ropefreq-probe.compile.log"; exit 1; }
 chmod 700 "$out/ropefreq-probe"
 python3 -I "$root/tests/amd-exec/prep.py" suite "$out/exec.1" "$out/rope.1" "$out"
-python3 -I "$root/tests/amd-exec/token.py" mutate "$src" "$out"
+python3 -I "$root/tests/amd-exec/token_ref.py" mutate "$src" "$out"
 for control in mlpsilu-no-silu mlpsilu-wrong-up; do
     timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
     python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
 done
-python3 -I "$root/tests/amd-exec/token.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/token_ref.py" suite "$out/exec.1" "$out"
 python3 -I "$root/tests/amd-exec/norm.py" mutate "$src" "$out"
 for control in rmsnorm5120-no-one rmsnorm5120-wrong-mean rmsnorm5120-dropped-chunk; do
     timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"

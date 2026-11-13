@@ -178,7 +178,7 @@ def summary(kernels):
     gemv2 = runpy.run_path(str(pathlib.Path(__file__).with_name('gemv2.py')))
     attention = runpy.run_path(str(pathlib.Path(__file__).with_name('attention.py')))
     prep = runpy.run_path(str(pathlib.Path(__file__).with_name('prep.py')))
-    token = runpy.run_path(str(pathlib.Path(__file__).with_name('token.py')))
+    token = runpy.run_path(str(pathlib.Path(__file__).with_name('token_ref.py')))
     norm = runpy.run_path(str(pathlib.Path(__file__).with_name('norm.py')))
     conv = runpy.run_path(str(pathlib.Path(__file__).with_name('gdnconv.py')))
     gdn = runpy.run_path(str(pathlib.Path(__file__).with_name('gdn.py')))

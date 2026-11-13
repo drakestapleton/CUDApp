@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-"""Test-only notebook instrument. token.py exports this with generated fixtures.
+"""Test-only notebook instrument. token_ref.py exports this with generated fixtures.
 No production dependency; the numerical intervals come from the host oracle.
 """
 def run_section(ctx):

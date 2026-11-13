@@ -1375,3 +1375,42 @@ baseline. The control flips the settled output bit rather than relying on a
 nonzero prefill surviving the load. No oracle interval or expected output is
 changed. The previous prefill mutation belongs in the raw D16 semantics
 probe, not among portable numerical controls.
+
+## 23. Device-stepped replay variants
+
+The new `*_step` objects retain their original numerical bodies. Position
+and token IDs are loaded through VMEM, then transferred with
+`V_READFIRSTLANE_B32`; they are not fetched through the scalar data cache.
+The CDNA3 manual physical p187 specifies the lowest active lane, or lane0
+when EXEC is empty, and no flag changes. The executor accepts only the
+VOP1 opcode2 form with a VGPR source and an ordinary SGPR0..101 destination;
+special registers, scalar sources and modifiers remain refused. LLVM18
+`VOP1Instructions.td` provides the independent encoding oracle.
+`semantics.py` covers empty, sparse, high-bit and full masks, unchanged
+registers/flags, invalid operands and a forced-lane-zero control.
+
+CDNA3 physical p29's dependency table requires two wait states between a
+VALU SGPR write and a VALU constant read. Explicit `S_NOP 1` barriers follow
+the transfers in these variants. The functional executor does not model
+pipeline timing; `readfirst_probe` supplies a separate physical-card check.
+
+`attn256_prep_step` selects one256-byte cos32/sin32 row from a precomputed
+FP32 table. Part and merge derive T=position+1 and retain their active
+tile-count workspace stride. The part launch can use the fixed capacity
+grid: extra tiles return and merge never reads them. Conv and GDN state
+arguments are fixed banks A/B: even positions read A/write B, odd positions
+read B/write A. Use these variants from position0, or normalize bank
+orientation before capture. `embed5120_step` selects the row from the
+device token written by `argmax_final`. `step_advance` updates the single
+u32 position once, after all layers and argmax, and refuses wrap/exhaustion
+at the caller's physical cache capacity.
+
+Capture does not execute. Keep every argument buffer and RoPE row alive,
+use one ordered stream, and issue no more replays than available cache
+positions. No host parameter changes, table copies or state-pointer swaps
+belong inside replay. `tests/amd-exec/replay.py` records bit-exact
+consecutive-step comparisons with the original kernels, exact kernarg and
+per-buffer access bounds, and caught stale-value/wrong-bank/truncated-buffer
+controls. `replay_bundle.py EVIDENCE DEST GOLDEN CONFIG` derives the capacity
+and vocabulary from those pinned inputs and exports objects, ABI, access
+records and the readfirst card probe. Card execution remains a separate receipt.

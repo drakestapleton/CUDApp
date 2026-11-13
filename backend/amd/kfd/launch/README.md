@@ -4,7 +4,7 @@ Intent: exercise our seeded gfx942 code objects through Omega on MI300X, with a 
 
 ## Build and CPU acceptance
 
-`COMPILER` records the local omega-mv source head and the seeded compiler digest. Concatenate `om2`, `common.om`, `elf.om`, `device.om`, `dispatch.om`, `main.om`, then `../cli.om`, and pipe into that compiler. Prefix `target x86linux` before `om2` for x86. The gate performs this composition, validates the compiler digest before execution/output, and builds both targets:
+`COMPILER` records the local omega-mv source head and the seeded compiler digest. Concatenate `om2`, `common.om`, `elf.om`, `device.om`, `dispatch.om`, `plan.om`, `main.om`, then `../cli.om`, and pipe into that compiler. Prefix `target x86linux` before `om2` for x86. The gate performs this composition, validates the compiler digest before execution/output, and builds both targets:
 
 ```
 python3 -I tests/amd-kfd-launch/check.py /absolute/path/to/omega-mv/seed/out/omc
@@ -15,6 +15,7 @@ On Spark run CPU jobs through the assigned pool lock, nice and CPU affinity. `AM
 ## Commands
 
 ```
+omega-launch plan PLAN.bin CODE_OBJECT... WEIGHT_FILE...
 omega-launch inspect OBJECT.hsaco KERNEL
 omega-launch vadd VADD.hsaco vadd
 omega-launch run OBJECT.hsaco KERNEL GROUPS_X GROUPS_Y ARGS.bin INPUT... OUTPUT.bin
@@ -118,3 +119,33 @@ for the full queue fix is recorded separately: the uninstrumented x86 executable
 passed vadd, 200 repeated vadd packets across ring wrap, fsum16, SGEMM and FP8 GEMV
 with exact fixture outputs on MI300X. These kernel checks do not establish full
 27B serving or a like-for-like Spark comparison.
+
+## Persistent model plans
+
+`plan` validates an OMPLAN01 file, all code descriptors, weight-file extents and
+relocations before opening KFD. The format is specified in [PLAN.md](PLAN.md).
+Plans and kernels are trusted first-party executable input. This is a command-line
+inference executor; it does not expose an HTTP service or accept untrusted plans.
+
+Code objects load once. Model buffers occupy checked, page-aligned slices of one
+VRAM allocation and one coherent GTT allocation. A buffer's relocations may address
+only its declared byte range, excluding alignment padding. This avoids consuming a
+runtime map handle for each model tensor. Normal weight ranges copy directly from
+files; BF16 vectors widen exactly into F32. Initialization and zero fill precede
+timing. Kernargs and packet templates are built once. Each step replays the list,
+with ring backpressure and one completion signal on the last dispatch. The host
+writes prompt tokens, then reads generated IDs from the coherent token buffer.
+
+`OMEGA_STEP i tok=T us=U` measures monotonic wall time from the first packet write
+through the step completion signal. `OMEGA_PLAN ids=[...]` contains exactly the
+requested generated IDs after successful cleanup. A timeout exits 75 and never
+prints the completion marker. Prefill is token-by-token; decode statistics exclude
+prompt steps. Allocation, weight loading, template construction and text decoding
+are outside these per-step timings. Compare these boundaries explicitly with any
+other runtime's numbers.
+
+The CPU gate also runs `plan-check.py`: malformed plans on both target parsers,
+independent code objects, raw file ranges, BF16 widening, data-pool initialization,
+shared allocation offsets, ring wrap, output IDs, missing completion and cleanup.
+`publication.c` observes a nonzero group-segment size and rejects a deliberate
+swap of the packet's group/private fields. CPU simulation is not card proof.

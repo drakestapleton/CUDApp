@@ -34,7 +34,7 @@ def run(label,args,want=0,data=None):
     if p.returncode!=want:
         print(p.stdout.decode(errors='replace')); print(row['stderr']); raise SystemExit(1)
     return p
-parts=['common','elf','device','dispatch','main']
+parts=['common','elf','device','dispatch','plan','main']
 body=''.join((src/(x+'.om')).read_text() for x in parts)+(root/'backend/amd/kfd/cli.om').read_text()
 def compile(label,text,target='a64'):
     text=('target x86linux\n' if target=='x86' else '')+'om2\n'+text
@@ -232,6 +232,7 @@ unit+='''fn main to int
 +put launch 5 4
 +put launch 6 1
 +put el 6 64
++put el 9 4096
 +r = checked mapset lh 3 0 4 1
 +hput 0 8 mapaddr lh 3
 +hput 8 8 mapaddr lh 0
@@ -246,11 +247,17 @@ unit+='''fn main to int
 +'''.replace('\n+','\n')
 u=compile('publication-unit',unit)
 run('native publication order',[out/'publication',u])
+mutant=unit.replace('hput 24 4 get el 9\nhput 28 4 get el 10','hput 24 4 get el 10\nhput 28 4 get el 9')
+assert mutant!=unit
+u=compile('publication-swapped-segments',mutant)
+run('CONTROL swapped group-private segments',[out/'publication',u],1)
+
 line='r = checked mapwrite lh 3 add slot 4 hdr 4 60\n'
 mutant=unit.replace(line,'').replace('r = checked mapset lh 3 slot 4 0x00021502\n','r = checked mapset lh 3 slot 4 0x00021502\n'+line)
 assert mutant!=unit
 u=compile('publication-early-header',mutant)
 run('CONTROL early valid header',[out/'publication',u],1)
+run('native plan CPU contracts',[sys.executable,'-I',root/'tests/amd-kfd-launch/plan-check.py',out])
 summary={'compiler':pin,'checks':len(results),'failures':sum(r['exit']!=r['expected'] for r in results),'qemu':qemu,'device':'NOT_RUN','orchestration':'native CPU syscall simulation only','publication':'native instruction-step observation only','objects':{name:hashlib.sha256(data).hexdigest() for name,(p,data,k,a) in objects.items()},'binaries':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in bins.items()}}
 (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('AMD-KFD-LAUNCH CPU PASS',json.dumps(summary,sort_keys=True))

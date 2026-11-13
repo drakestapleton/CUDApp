@@ -66,6 +66,8 @@ static uint64_t endoff;
 static int kfd=-1,drm=-1,kback=-1,dback=-1;
 static struct kfd_ioctl_create_queue_args queue;
 static int queued,packets;
+static int planmode;
+static size_t ring_index=5,allocation_count=10;
 static unsigned clocks;
 static unsigned expected_gpu=1,expected_minor=128;
 static int denied;
@@ -158,27 +160,27 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
             uint64_t value; memcpy(&value,(char *)&queue+i*8,8);
             fprintf(stderr,"TEST_SIM queue_input_qword_%zu=%llu\n",i,(unsigned long long)value);
         }
-        CHECK(count==10 && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
-        CHECK(queue.ring_base_address==allocs[5].va && queue.ring_size==1024);
-        CHECK(allocs[5].flags & KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE);
-        CHECK(queue.write_pointer_address==allocs[7].va+56 && queue.read_pointer_address==allocs[7].va+128);
+        CHECK(count==allocation_count && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
+        CHECK(queue.ring_base_address==allocs[ring_index].va && queue.ring_size==1024);
+        CHECK(allocs[ring_index].flags & KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE);
+        CHECK(queue.write_pointer_address==allocs[ring_index+2].va+56 && queue.read_pointer_address==allocs[ring_index+2].va+128);
         /* Independent queue image, including all unused bytes and the inactive signal. */
         uint64_t queue_image[512]={0};
         queue_image[0]=UINT64_C(1)<<32;
-        queue_image[1]=allocs[5].va;
+        queue_image[1]=allocs[ring_index].va;
         queue_image[3]=16;
         queue_image[4]=UINT64_MAX;
         queue_image[8]=UINT64_C(0x2000000010000);
         queue_image[9]=(UINT64_C(31)<<32)|7;
         queue_image[17]=128;
         queue_image[22]=UINT64_C(2)<<32;
-        queue_image[24]=allocs[6].va;
+        queue_image[24]=allocs[ring_index+1].va;
         for (size_t off=0;off<4096;off+=8)
-            CHECK(word(allocs[7].va+off)==queue_image[off/8]);
+            CHECK(word(allocs[ring_index+2].va+off)==queue_image[off/8]);
         for (size_t off=0;off<4096;off+=8)
-            CHECK(word(allocs[6].va+off)==(off==0 ? 1 : 0));
+            CHECK(word(allocs[ring_index+1].va+off)==(off==0 ? 1 : 0));
         CHECK(!queue.eop_buffer_address && !queue.eop_buffer_size);
-        CHECK(queue.ctx_save_restore_address==allocs[8].va && queue.ctx_save_restore_size<=allocs[8].size);
+        CHECK(queue.ctx_save_restore_address==allocs[ring_index+3].va && queue.ctx_save_restore_size<=allocs[ring_index+3].size);
         CHECK(queue.ctl_stack_size<=queue.ctx_save_restore_size);
         queue.queue_id=7; queue.doorbell_offset=8; wr(p,&queue,sizeof queue); queued=1; break;
     case AMDKFD_IOC_DESTROY_QUEUE: {
@@ -195,20 +197,32 @@ static void complete_packets(void) {
         uint32_t h; rd(p,&h,4); CHECK(h==0x21502);
         uint16_t wg[3]; rd(p+4,wg,sizeof wg); CHECK(wg[0]==64 && wg[1]==1 && wg[2]==1);
         uint64_t kd=word(p+32),args=word(p+40),sig=word(p+56);
-        CHECK(kd>=allocs[0].va && kd+64<=allocs[0].va+allocs[0].size);
-        CHECK(args==allocs[1].va && sig==allocs[9].va);
+        if(planmode) {
+            size_t ci=1+(size_t)(packets%2);
+            CHECK(kd>=allocs[ci].va && kd+64<=allocs[ci].va+allocs[ci].size);
+            CHECK(args==allocs[0].va+(uint64_t)(packets%20)*32);
+            CHECK(sig==((packets%20)==19 ? allocs[ring_index+4].va : 0));
+        } else {
+            CHECK(kd>=allocs[0].va && kd+64<=allocs[0].va+allocs[0].size);
+            CHECK(args==allocs[1].va && sig==allocs[ring_index+4].va);
+        }
         uint64_t a=word(args),b=word(args+8),out=word(args+16);
         uint32_t n; rd(args+24,&n,4); CHECK(n==256);
-        CHECK(a==allocs[3].va && b==allocs[4].va && out==allocs[2].va);
+        if(planmode) CHECK(a==allocs[3].va && b==allocs[3].va+4096 && out==allocs[4].va);
+        else CHECK(a==allocs[3].va && b==allocs[4].va && out==allocs[2].va);
         if(!getenv("KFD_TEST_NO_OUTPUT"))
             for(uint32_t i=0;i<n;i++) { float x,y,z; rd(a+4*i,&x,4); rd(b+4*i,&y,4); z=x+y; wr(out+4*i,&z,4); }
-        CHECK(word(sig)==1 && word(sig+8));
-        if(!getenv("KFD_TEST_NO_SIGNAL")) setword(sig+8,word(sig+8)-1);
+        if(sig) {
+            CHECK(word(sig)==1 && word(sig+8));
+            if(!getenv("KFD_TEST_NO_SIGNAL")) setword(sig+8,word(sig+8)-1);
+        }
         packets++; setword(queue.read_pointer_address,(uint64_t)packets);
     }
 }
 int main(int argc,char **argv) {
     CHECK(argc>=4);
+    planmode=getenv("KFD_TEST_PLAN")!=NULL;
+    if(planmode) { ring_index=5; allocation_count=10; }
     if(getenv("KFD_TEST_GPU")) expected_gpu=(unsigned)strtoul(getenv("KFD_TEST_GPU"),0,10);
     if(getenv("KFD_TEST_MINOR")) expected_minor=(unsigned)strtoul(getenv("KFD_TEST_MINOR"),0,10);
     child=fork(); CHECK(child>=0);
@@ -221,7 +235,7 @@ int main(int argc,char **argv) {
         CHECK(!ptrace(PTRACE_SYSCALL,child,0,0)); CHECK(waitpid(child,&st,0)==child);
         if(WIFEXITED(st)) {
             fprintf(stderr,"TEST_SIM child_exit=%d allocations=%zu packets=%d queued=%d\n",WEXITSTATUS(st),count,packets,queued);
-            CHECK(WEXITSTATUS(st)==0 && count==10 && packets && !queued);
+            CHECK(WEXITSTATUS(st)==0 && count==allocation_count && packets && !queued);
             for(size_t i=0;i<count;i++) CHECK(allocs[i].freed);
             fprintf(stderr,"TEST_SIM PASS allocations=%zu packets=%d freed=all device=NOT_RUN\n",count,packets);
             free(allocs); close(kback); close(dback); return 0;
@@ -254,7 +268,7 @@ int main(int argc,char **argv) {
                 } else if(!strncmp(old,"/dev/",5)) fail("unexpected device open");
             } else if(call==SYS_ioctl) { CHECK((int)a[0]==kfd); replace_call(&r,SYS_getpid); }
             else if(call==SYS_newfstatat) { string(a[1],old,sizeof old); CHECK(!strcmp(old,"/dev/kfd")); replace_call(&r,SYS_getpid); }
-            else if(call==SYS_mmap && ((int)a[4]==drm || (int)a[4]==kfd)) {
+            else if(call==SYS_mmap && ((drm>=0 && (int)a[4]==drm) || (kfd>=0 && (int)a[4]==kfd))) {
                 if((int)a[4]==drm) {
                     size_t i; for(i=0;i<count;i++) if(a[5]==allocs[i].off) break;
                     CHECK(i<count && a[0]==allocs[i].va && a[1]==allocs[i].size && a[3]==(MAP_SHARED|MAP_FIXED));

@@ -54,7 +54,7 @@ int main(int argc,char **argv) {
                 readmem(a[0]+4,wg,sizeof wg); readmem(a[0]+12,grid,sizeof grid);
                 CHECK(wg[0]==64 && wg[1]==1 && wg[2]==1);
                 CHECK(grid[0]==256 && grid[1]==1 && grid[2]==1);
-                CHECK(u64(a[0]+24)==0 && u64(a[0]+32)==a[1]+64);
+                CHECK(u64(a[0]+24)==4096 && u64(a[0]+32)==a[1]+64);
                 CHECK(u64(a[0]+40)==a[2] && !u64(a[0]+48) && u64(a[0]+56)==a[3]);
                 published=1;
             } else CHECK(h==1);

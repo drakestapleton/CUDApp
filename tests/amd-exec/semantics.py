@@ -195,19 +195,20 @@ case('global-ubyte-negative-offset', 503, [0xdc409fff, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, {v(3): 128}, mem=b'\x80')
 case('global-ubyte-range-refused', 503, [0xdc408000, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, mem=b'\xff', refusal=67)
-# Preserve-unused-half MODEL from PDF p507, not a device/ECC qualification.
-# Section 9.1.6 also documents ECC-dependent unused-bit zeroing for D16 loads.
-# Keep this model until the isolated raw-word card probe resolves its applicable mode.
+# Fixed target profile mi300x-vf-rocm722-d16-zero. Loaded high16 comes from PDF p507;
+# unused low16 follows raw MI300X VF / ROCm7.2.2 observations, not generic pseudocode.
+# Evidence: AMD-MI300X-CODEX-20261113T0315Z/amdserve-d16probe.txt
+# SHA256 af7365ee4f2f0da6db6e995cda83c4ac4a6ee6da3df3446936621ca96c4ac0c7.
 bf16 = runpy.run_path(str(pathlib.Path(__file__).with_name('bf16gemv.py')))
 half = [0xdc008000 | 37 << 18, 3 << 24 | 127 << 16 | 4]
 for bits in bf16['VALUES']:
     case(f'global-d16-hi-{bits:04x}', 507, half,
          {v(4): 2, v(5): 0, v(3): 0x1234beef, v(3,1): 0xdeadbeef,
           v(4,63): 2, v(5,63): 0, v(3,63): 0xffff0000},
-         {v(3): bits << 16 | 0xbeef, v(3,63): bits << 16},
+         {v(3): bits << 16, v(3,63): bits << 16},
          ex=(1 << 63)|1, mem=b'\xa5\xa5'+struct.pack('<H', bits))
 case('global-d16-hi-negative-offset', 507, [half[0] | 8190, half[1]],
-     {v(4): 2, v(5): 0, v(3): 0x12345678}, {v(3): 0x803f5678}, mem=b'\x3f\x80')
+     {v(4): 2, v(5): 0, v(3): 0x12345678}, {v(3): 0x803f0000}, mem=b'\x3f\x80')
 case('global-d16-hi-zero-exec', 507, half, {v(3): 0xdeadbeef}, ex=0, mem=b'')
 case('global-d16-hi-short-memory', 507, half, mem=b'\x01', refusal=67)
 case('global-d16-hi-partial-tail', 507, half, {v(4): 2}, mem=b'\x01\x02\x03', refusal=67)
@@ -274,7 +275,8 @@ MUTATIONS = {
     'smem-dest-alignment': ('if ne and sd sub shl ulong 1 op 1 0', 'if false'),
     'smem-negative': ('if ne shr x 20 0', 'if ne shr x 21 0'),
     'vgpr-pair-alignment': ('if or ge va 255 ne and va 1 0', 'if ge va 255'),
-    'd16-low-cleared': ('lo = and vg get st 13 lane 65535', 'lo = ulong 0'),
+    'd16-low-preserved': ('vs get st 13 lane shl h 16',
+                          'vs get st 13 lane or and vg get st 13 lane 65535 shl h 16'),
     'mov64-loses-scc': ('put st 14 or get sr ss shl get sr add ss 1 32',
                         'put st 14 or get sr ss shl get sr add ss 1 32\nput st 16 0'),
     'xor-uses-or': ('r = xor a b', 'r = or a b'),
@@ -296,7 +298,7 @@ MUTANT_CASE = {
     'smem-offset-low-bits': 'smem-component-low-bits',
     'smem-dest-alignment': 'smem-bad-destination-1', 'smem-negative': 'smem-negative-undefined',
     'vgpr-pair-alignment': 'global-odd-address-pair',
-    'd16-low-cleared': 'global-d16-hi-3f80',
+    'd16-low-preserved': 'global-d16-hi-3f80',
     'mov64-loses-scc': 'mov64-exec-0', 'xor-uses-or': 'xor-2147483649-2147483648',
     'wide-drops-last': 'global-wide-4', 'bpermute-live-alias': 'bpermute-alias-snapshot',
 }

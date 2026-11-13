@@ -518,11 +518,19 @@ does not establish device NaN payload parity.
 
 The CDNA3 manual physical PDF p507 specifies `GLOBAL_LOAD_SHORT_D16_HI`:
 `VDATA[31 : 16].b16 = MEM[addr].b16; // VDATA[15:0] is preserved.`
-This is the executor's **preserve-unused-half model**, not a hardware/ECC
-qualification. Section9.1.6 also says ECC-enabled 16-bit memory loads write
-the full VGPR and zero unused bits, within its buffer-instruction discussion.
-An isolated raw-word GLOBAL D16 card probe must establish the applicable
-mode; production code must not depend on an unmeasured unused-half result.
+That pseudocode is not the configured target's unused-half behavior. The fixed
+executor profile `mi300x-vf-rocm722-d16-zero` follows raw observations from the
+MI300X VF / ROCm7.2.2 recorded in
+`AMD-MI300X-CODEX-20261113T0315Z/amdserve-d16probe.txt`, SHA256
+`af7365ee4f2f0da6db6e995cda83c4ac4a6ee6da3df3446936621ca96c4ac0c7`.
+Every probed unsigned-byte, signed-byte and short D16 low/high form zeroed
+its unused half, including nonzero prefills, delayed/copy/overwrite cases and
+identical repeated dispatches; all six no-load controls were caught. RAS was
+enabled in the recorded environment. Section9.1.6 documents ECC-dependent
+zeroing for buffer D16 loads; that is context, not proof of this GLOBAL
+instruction's cause. The executor supports only SHORT_D16_HI and now zeros
+its low16. The other five probed forms remain refused. This named fixed
+profile does not claim behavior for every gfx942 configuration.
 Initialize v7 once with `V_MOV_B32 v7,0` (p186), then use this high-half load
 for each weight. Nothing in the loop changes v7's low16 bits. This performs
 load and exact widening in **one instruction per weight**, rather than a
@@ -559,7 +567,7 @@ than the ET_REL entry relocation, and checks the resolved entry separately.
 | V_MOV_B32 | 186 | Bitwise copy to active lanes; flags unchanged. | [VOP1Instructions.td][bf16-vop1], VOP1e |
 | V_ADD_CO_U32 | 22,175 | Low32 sum; replace VCC with active-lane carry mask. | [VOP2Instructions.td][bf16-vop2], VOP2e |
 | V_ADDC_CO_U32 | 22,176 | Include incoming lane carry; replace VCC. | [VOP2Instructions.td][bf16-vop2], VOP2e |
-| GLOBAL_LOAD_SHORT_D16_HI | 87,90,507 | Read exactly two bytes into high16; executor models low16 preservation, whose hardware/ECC applicability is UNVERIFIED; flags/inactive lanes unchanged. | [FLATInstructions.td][bf16-flat], `FLAT_Real_AllAddr_vi<0x25>` |
+| GLOBAL_LOAD_SHORT_D16_HI | 87,90,507 plus target-profile receipt above | Read exactly two bytes into high16 and zero low16 for the observed MI300X VF target; flags/inactive lanes unchanged. | [FLATInstructions.td][bf16-flat], `FLAT_Real_AllAddr_vi<0x25>` |
 | GLOBAL_LOAD_DWORD | 87,90,503–504 | Active-lane32-bit load, VGPR64 address plus signed13 offset. | [FLATInstructions.td][bf16-flat], opcode0x14 |
 | GLOBAL_STORE_DWORD | 87,90,505 | Corresponding active-lane32-bit store. | [FLATInstructions.td][bf16-flat], opcode0x1c |
 | V_FMAC_F32 | 185 | Exact product plus destination, one nearest-even FP32 rounding. | [VOP2Instructions.td][bf16-vop2], gfx940 opcode0x3b |
@@ -574,13 +582,14 @@ than the ET_REL entry relocation, and checks the resolved entry separately.
 
 The only new executor instruction is `GLOBAL_LOAD_SHORT_D16_HI`, with the
 existing restricted GLOBAL VGPR64/off addressing, no cache modifiers.
-It reads exactly two little-endian bytes and models destination low16 preservation.
-Other D16 forms or modifiers refuse66; insufficient memory refuses67,
-I/O failure74. The single-step cases derive expected high/low halves from
-p507, including lane63, inactive lanes, unchanged flags, negative offsets,
-the final two bytes of memory, and truncated-memory refusals. A low-half
-clearing mutant must fail this preserve-mode case; that is model discrimination,
-not proof that clearing is impossible on hardware.
+It reads exactly two little-endian bytes and zeroes destination low16 in the
+fixed target profile above. Other D16 forms or modifiers refuse66; insufficient
+memory refuses67, I/O failure74. Single-step expectations combine the loaded-half
+definition on p507 with the measured unused-half behavior. Cases include lane63,
+inactive lanes, unchanged flags, negative offsets, the final two bytes of memory,
+and truncated-memory refusals. A low-half-preserving mutant must now fail the
+nonzero-prefill case. The earlier preserve model and its inverse control remain
+in immutable historical receipts, not as a selectable fallback.
 
 ### Acceptance and hardware boundary
 

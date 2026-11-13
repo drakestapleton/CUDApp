@@ -1393,6 +1393,14 @@ CDNA3 physical p29's dependency table requires two wait states between a
 VALU SGPR write and a VALU constant read. Explicit `S_NOP 1` barriers follow
 the transfers in these variants. The functional executor does not model
 pipeline timing; `readfirst_probe` supplies a separate physical-card check.
+`tests/amd/scheduling.py` statically checks every emitted object for this
+row on v_readlane/v_readfirstlane writes (VALU constant read 2 wait
+states, v_readlane/v_writelane lane select 4, VMEM read 5), along
+fall-through and branch paths, and requires a real `readfirst_probe` mutant
+with its `S_NOP 1` removed to fail, plus hand-written row controls for each
+case. SALU reads have no Table11 entry, so the `S_NOP 1` before an SALU-only
+consumer is not required by the manual and its removal is not a failure.
+SGPR writes by v_cmp or carry-out are not audited by this check.
 
 `attn256_prep_step` selects one256-byte cos32/sin32 row from a precomputed
 FP32 table. Part and merge derive T=position+1 and retain their active

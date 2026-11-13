@@ -10,7 +10,6 @@ import runpy
 import struct
 import subprocess
 import sys
-import zlib
 
 HERE = pathlib.Path(__file__).parent
 ref = runpy.run_path(str(HERE/'prep.py'))
@@ -75,15 +74,26 @@ def execute(exe,code,out,case):
     return check(path.read_bytes(),case)
 
 
-def export(name,cases,controls,out):
+def export(name,cases,controls,out,factory,parameters):
     payload = dict(name=name,cases=cases,controls=list(controls),timing=len(cases)-1)
     serialized = json.dumps(payload,separators=(',',':')).encode()
     (out/(name+'-intervals.json')).write_bytes(serialized+b'\n')
-    encoded = base64.b64encode(zlib.compress(serialized,9)).decode()
-    source = (HERE/'notebook_section.py').read_text()
-    generated = '# Generated from tests/amd-exec/token.py and notebook_section.py; do not edit.\nPAYLOAD = '+repr(encoded)+'\n'+source
-    compile(generated,name+'.py','exec')
+    generate = runpy.run_path(str(HERE/'section.py'))['generate']
+    generated = generate(name,factory,parameters,controls,(HERE/'notebook_section.py').read_text())
+    namespace = {}
+    exec(compile(generated,name+'.py','exec'),namespace)
+    actual = namespace['_make_payload']()
+    assert actual == payload, f'generated fixture mismatch {name}'
+    # A missing case must not escape the fixture/oracle parity check.
+    bad = dict(actual,cases=actual['cases'][:-1])
+    try: assert bad == payload, f'generated fixture mismatch {name}'
+    except AssertionError:
+        print(f'CONTROL notebook-{name}-fixture-drift CAUGHT',flush=True)
+    else: raise AssertionError('generated fixture drift escaped')
+    size = len(generated.encode())
+    assert size < 15000, f'notebook section size alarm: {name} bytes={size} target<15000 (relay cell~60000)'
     (out/(name+'.py')).write_text(generated)
+    print(f'PASS notebook-{name} code_bytes={size} in-cell-fixtures/oracle=host-identical every-case/no-embedded-images hardware=NOT_RUN',flush=True)
 
 
 def mutate(src,out):
@@ -106,7 +116,7 @@ def suite(exe,out):
             assert str(error).startswith('token mismatch'),error
             print(f'CONTROL {name} CAUGHT {str(error).split(":")[0]}',flush=True)
         else: raise AssertionError(f'control escaped {name}')
-    export('mlpsilu',cases,CONTROLS,out)
+    export('mlpsilu',cases,CONTROLS,out,mlp_case,[(n,) for n in COUNTS])
     print(f'PASS token mlpsilu_counts={",".join(map(str,COUNTS))} mlpsilu_cases={len(cases)} hardware=NOT_RUN',flush=True)
 
 

@@ -5,14 +5,11 @@ No production dependency; the numerical intervals come from the host oracle.
 def run_section(ctx):
     import base64
     import ctypes as C
-    import json
-    import math
     import struct
     import time
-    import zlib
     from fractions import Fraction
 
-    p = json.loads(zlib.decompress(base64.b64decode(PAYLOAD)))
+    p = _make_payload()
     name = p['name']
     say, put, get = (ctx[k] for k in ('say', 'put', 'get'))
     load, Params, launch = (ctx[k] for k in ('load', 'Params', 'launch'))

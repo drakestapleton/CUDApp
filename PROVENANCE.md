@@ -1083,9 +1083,16 @@ and reading gate instead of up to be CAUGHT. Host and LLVM gates build
 twice and compare bytes; the latter checks the full descriptor and
 instruction encodings and runs the scheduling check over all objects.
 
-`tests/amd-exec/token.py` generates the notebook section and its numerical
-fixture payload from the same checked input/interval source. The generated
-section's `run_section(ctx)` uses the v7 notebook helpers, tests small
+`tests/amd-exec/token.py` and `section.py` generate code-only notebook
+sections from the actual fixture functions and their arithmetic dependency
+closure. Inputs and all exact results/intervals are computed in the cell:
+no full memory image or interval list is embedded. Generation executes
+that same code and checks every reconstructed case against the host
+oracle, with a missing-case drift control. An emitted-source byte-size
+alarm checks the operator's target below15KB per section, to fit the
+external relay's approximately60KB cell limit. Other kernels' torch
+branches are removed by AST specialization, not by a second handwritten
+implementation. The generated section's `run_section(ctx)` tests small
 cases, measures event/warm-wall/cold-wall timings at17408, checks every
 timed output and guard (all cold copies, not sampled), records wrong-object
 controls, and labels the separate torch measurement

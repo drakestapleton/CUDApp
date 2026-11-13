@@ -69,7 +69,7 @@ def suite(exe,out):
             assert str(error).startswith('token mismatch'),error
             print(f'CONTROL {name} CAUGHT {str(error).split(":")[0]}',flush=True)
         else: raise AssertionError(f'control escaped {name}')
-    export('rmsnorm5120',cases,CONTROLS,out)
+    export('rmsnorm5120',cases,CONTROLS,out,fixture,CASES)
     print(f'PASS RMSNorm5120 rows={",".join(map(str,sorted(set(r for r,_ in CASES))))} cases={len(CASES)} hardware=NOT_RUN',flush=True)
 
 

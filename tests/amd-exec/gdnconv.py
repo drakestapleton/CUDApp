@@ -75,7 +75,7 @@ def suite(exe,out):
             assert str(error).startswith('token mismatch'),error
             print(f'CONTROL {name} CAUGHT {str(error).split(":")[0]}',flush=True)
         else: raise AssertionError(f'control escaped {name}')
-    export('gdnconv4',cases,CONTROLS,out)
+    export('gdnconv4',cases,CONTROLS,out,fixture,CASES)
     print(f'PASS GDN convolution channels={CHANNELS} cases={len(CASES)} hardware=NOT_RUN',flush=True)
 
 

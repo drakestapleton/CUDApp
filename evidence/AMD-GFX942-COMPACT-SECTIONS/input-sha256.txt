@@ -1,0 +1,14 @@
+2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f  /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc
+51b27dd9c124b01b2c9a5b4f998b836804d3c2fcbe279e4923716207a40e3b9e  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/exec.1
+1dd59f06efde492aa3f3a892360035693f9cd0fbfaede113ac9ceffba4ce3838  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/gdnconv4-no-conv-round.text
+89cbd71991b3b3a47cebe7ac239728b4f25bf6bc16400e4bda1eabf71981cbbb  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/gdnconv4-no-input-round.text
+dc20642612b90f74d3f2464668b1bfc0f765e70cc41dc70e4862ec9fb7dad802  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/gdnconv4-no-silu-round.text
+a5ea69d008765060b7d97525ca144d7fc763ee88dfcfb69ab370f7988f953b49  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/gdnconv4-wrong-cache-shift.text
+491e203b411629782cc11834bcc8f45f176e2b8373ae6ba0fb99d1cd710a9179  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/gdnconv4.text
+afd242ea11186ee0fbdd0d79c34259a57817f52d5a52b84aa3f93cdafb6a3412  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/mlpsilu-no-silu.text
+7bbb55a1966b3a0f5f775235162b5282232af71d6b5a871ef6a416e0741d0cec  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/mlpsilu-wrong-up.text
+d643a0e5e9be004349633c2cb23175ce6d6a01386b474362ff7e3861095353f4  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/mlpsilu.text
+4b91ff8680256a441f0c06b8e85d92c50c3f2e0bdec57779a8b8e4ee0110f0ce  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/rmsnorm5120-dropped-chunk.text
+ef2bd5a34752f5af53ef71e688a867ab9a28721cedae41982afff4eaf1fb1a4f  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/rmsnorm5120-no-one.text
+7949126f103d8bf8679460abea89b55455b711a202cbdf2e2060d77cd81f3282  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/rmsnorm5120-wrong-mean.text
+bd66f4c84fbc41f0de3b6d80a8ce5c2496f694de3cfa8d7c581f26eec5eb1827  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-attempt1/rmsnorm5120.text

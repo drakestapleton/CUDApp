@@ -1,0 +1,11 @@
+PASS mlpsilu N=0 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS mlpsilu N=1 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS mlpsilu N=63 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=64 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=65 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=17408 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+CONTROL mlpsilu-no-silu CAUGHT token mismatch N=17408 offset=139456 bits=c0800000 interval=0,0
+CONTROL mlpsilu-wrong-up CAUGHT token mismatch N=17408 offset=139472 bits=461c4000 interval=-4915201/65536,-4915199/65536
+CONTROL notebook-mlpsilu-fixture-drift CAUGHT
+PASS notebook-mlpsilu code_bytes=9998 in-cell-fixtures/oracle=host-identical every-case/no-embedded-images hardware=NOT_RUN
+PASS token mlpsilu_counts=0,1,63,64,65,17408 mlpsilu_cases=6 hardware=NOT_RUN

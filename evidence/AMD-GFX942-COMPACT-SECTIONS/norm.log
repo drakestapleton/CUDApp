@@ -1,0 +1,11 @@
+PASS rmsnorm5120 rows=0 hidden=5120 kind=varied all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS rmsnorm5120 rows=1 hidden=5120 kind=zero all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS rmsnorm5120 rows=2 hidden=5120 kind=varied all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=5/4194304
+PASS rmsnorm5120 rows=3 hidden=5120 kind=large all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=3/2097152
+PASS rmsnorm5120 rows=1 hidden=5120 kind=varied all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=5/4194304
+CONTROL rmsnorm5120-no-one CAUGHT token mismatch rows=1 hidden=5120 kind=varied offset=41168 bits=bf092cab interval=1498311/8388608,11986491/67108864
+CONTROL rmsnorm5120-wrong-mean CAUGHT token mismatch rows=1 hidden=5120 kind=varied offset=41160 bits=00000000 interval=1/713623846352979940529142984724747568191373312,1/713623846352979940529142984724747568191373312
+CONTROL rmsnorm5120-dropped-chunk CAUGHT token mismatch rows=1 hidden=5120 kind=varied offset=41168 bits=3e3ba9c3 interval=1498311/8388608,11986491/67108864
+CONTROL notebook-rmsnorm5120-fixture-drift CAUGHT
+PASS notebook-rmsnorm5120 code_bytes=10109 in-cell-fixtures/oracle=host-identical every-case/no-embedded-images hardware=NOT_RUN
+PASS RMSNorm5120 rows=0,1,2,3 cases=5 hardware=NOT_RUN

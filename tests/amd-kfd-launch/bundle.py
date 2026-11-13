@@ -5,8 +5,6 @@ import argparse,base64,hashlib,json,lzma,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser()
 p.add_argument('--gate',type=Path,required=True)
-p.add_argument('--gemv-tree',type=Path,required=True)
-p.add_argument('--attention-tree',type=Path,required=True)
 p.add_argument('--out',type=Path,required=True)
 a=p.parse_args()
 root=Path(__file__).resolve().parents[2]
@@ -18,6 +16,7 @@ compiler=(root/'backend/amd/kfd/launch/COMPILER').read_text().splitlines()
 assert compiler[1].split()[0]==summary['compiler']
 bundle={'sources':{'launcher_head':git(root,'rev-parse','HEAD').decode().strip(),'compiler_head':compiler[0].split()[0],'compiler_sha256':summary['compiler'],'launcher_source_sha256':{str(f.relative_to(root)):sha(f.read_bytes()) for f in sorted((root/'backend/amd/kfd/launch').glob('*.om'))}},'assets':{}}
 bundle['sources']['notebook_template_sha256']=sha((root/'tests/amd-kfd-launch/notebook.py.in').read_bytes())
+REFERENCE_LABEL='REFERENCE (AMD runtime loading our object, not the Omega launcher)'
 def add(name,data,source):
     bundle['assets'][name]={'sha256':sha(data),'xz_base85':base64.b85encode(lzma.compress(data,preset=9|lzma.PRESET_EXTREME)).decode(),'source':source}
 binary=(a.gate/'launch-x86').read_bytes()
@@ -26,21 +25,6 @@ add('omega-launch',binary,{'gate':'tests/amd-kfd-launch/check.py'})
 vadd=(a.gate/'vadd.hsaco').read_bytes()
 assert sha(vadd)==summary['objects']['vadd']
 add('vadd.hsaco',vadd,{'repository_head':bundle['sources']['launcher_head'],'producer':'backend/amd/gfx942/hsaco.om'})
-def committed(tree,path,name):
-    commit=git(tree,'log','-1','--format=%H','--',path).decode().strip()
-    assert commit
-    data=git(tree,'show',commit+':'+path)
-    # The exact committed object is used, never a moving uncommitted substitute.
-    add(name,data,{'commit':commit,'path':path})
-for kind in ('fp8','bf16'):
-    committed(a.gemv_tree,'evidence/AMD-GFX942-GEMV2/objects/'+kind+'gemv2.hsaco',kind+'gemv2.hsaco')
-for kernel in ('part','merge','prep','gate'):
-    committed(a.attention_tree,'evidence/AMD-GFX942-PREP/objects/attn256_'+kernel+'.hsaco','attn256_'+kernel+'.hsaco')
-for group,name in (('GDNCONV4','gdnconv4'),('RMSNORM5120','rmsnorm5120'),('MLPSILU','mlpsilu')):
-    committed(a.attention_tree,'evidence/AMD-GFX942-'+group+'/objects/'+name+'.hsaco',name+'.hsaco')
-# Exact device-qualified object choices specified by the integrating lane.
-required={'fp8gemv2.hsaco':'99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0','bf16gemv2.hsaco':'4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb','attn256_part.hsaco':'9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95','attn256_merge.hsaco':'a721017369917d2b757095198877f16f9aa41a8955dbf4bf55d73e29f83b2ec3'}
-for name,digest in required.items(): assert bundle['assets'][name]['sha256']==digest,(name,'not the approved object')
 a.out.mkdir(parents=True,exist_ok=False)
 for name,record in bundle['assets'].items():
     path=a.out/name; path.write_bytes(lzma.decompress(base64.b85decode(record['xz_base85'])))
@@ -50,26 +34,38 @@ assert text.count('@BUNDLE@')==1
 cell=text.replace('@BUNDLE@',json.dumps(bundle,separators=(',',':')))
 (a.out/'cell.py').write_text(cell)
 (a.out/'bundle.json').write_text(json.dumps(bundle,indent=2)+'\n')
-readme=f"""# launch2 notebook probe
+readme=f"""# launch3 notebook probe
 
-READY for the authorized MI300X notebook run. CPU launcher gates passed;
-actual KFD/GPU execution, timings and full 27B serving remain NOT_RUN.
+READY for the authorized MI300X notebook diagnostic run. CPU launcher gates passed;
+actual KFD/GPU execution and the HIP comparison remain NOT_RUN.
 
 Paste all of `cell.py` into one notebook cell. It needs x86-64 Linux, Python 3
-standard library, libm, executable temporary storage, and permission to open
-`/dev/kfd`, the readable gfx942 topology node and its exact DRM render device.
-The render minor comes from sysfs, not a guessed device index. A missing render
-device is reported with errno and stops the run; no other GPU is substituted.
-The optional comparison needs libamdhip64. No packages or model downloads,
-credentials, strace, dmesg, or shell paste are required.
+standard library, executable temporary storage, permission to open `/dev/kfd`,
+the readable gfx942 topology node and its exact DRM render device. The comparison
+needs the installed ROCm torch package and the libamdhip64 that it loads; no torch
+kernels are run. No package/model downloads, credentials, strace or dmesg are needed.
 
-Download `amdserve-launch2.txt` afterward, including on failure. CONTROLS is first,
-the observed topology table and every launcher stdout line are persisted as they
-arrive, and RESULT is last. Temporary inputs, outputs and raw stdout/stderr remain
-at the path printed in the receipt. Direct launches are labelled OMEGA; same-object
-HIP measurements are labelled `OMEGA objects via AMD HIP loader`. There are no
-torch rows or Spark measurements. Host dispatch timing includes diagnostic writes
-between dispatch and signal-wait boundaries and is not GPU event time.
+Download `amdserve-launch3.txt`, including on failure. CONTROLS is first, every
+launcher stdout line is saved as it arrives, and RESULT is last. The direct vadd
+uses its existing timeout, printed as `OMEGA diag wait_timeout_ns`, and existing
+dispatch bytes. It reads queue pointers, signal, packet header/addresses, loaded
+descriptor fields and first eight output words on success or timeout. Values
+are decimal; create_queue_input_qword_N is the little-endian u64 at byte offset
+8*N in the 88-byte ioctl input, including compiler-bound mapping addresses.
+Returned queue ID and full doorbell offset are separate rows.
+
+The notebook reads the child's KFD proc directory and queue/occupancy/VRAM files
+while signal_wait runs. Missing/inaccessible files are reported, not inferred.
+It then runs the identical vadd object and inputs once through HIP, even if Omega
+timed out. These rows are labelled `{REFERENCE_LABEL}`. No new doorbell value,
+extra Omega packet, alternative dispatch, other kernel, or Spark test is attempted.
+
+Interpret observations together, not as a diagnosis: unchanged read pointer
+with advanced write pointer may indicate CP did not consume the packet; expected
+output with a nonzero signal may indicate execution without signal completion;
+NaN fill means those output words were not observed written. Asynchronous reads
+are not a coherent device-wide snapshot. HIP success alone does not establish
+why direct dispatch failed. Host dispatch timing is not GPU event timing.
 
 Cell bytes: {len(cell.encode())}
 Cell sha256: {sha(cell.encode())}

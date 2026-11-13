@@ -136,6 +136,10 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
     }
     case AMDKFD_IOC_CREATE_QUEUE:
         rd(p,&queue,sizeof queue);
+        for(size_t i=0;i<sizeof queue/8;i++) {
+            uint64_t value; memcpy(&value,(char *)&queue+i*8,8);
+            fprintf(stderr,"TEST_SIM queue_input_qword_%zu=%llu\n",i,(unsigned long long)value);
+        }
         CHECK(count==10 && !queued && queue.gpu_id==expected_gpu && queue.queue_type==KFD_IOC_QUEUE_TYPE_COMPUTE_AQL);
         CHECK(queue.ring_base_address==allocs[5].va && queue.ring_size==1024);
         CHECK(queue.write_pointer_address==allocs[6].va && queue.read_pointer_address==allocs[7].va);
@@ -162,8 +166,10 @@ static void complete_packets(void) {
         uint64_t a=word(args),b=word(args+8),out=word(args+16);
         uint32_t n; rd(args+24,&n,4); CHECK(n==256);
         CHECK(a==allocs[3].va && b==allocs[4].va && out==allocs[2].va);
-        for(uint32_t i=0;i<n;i++) { float x,y,z; rd(a+4*i,&x,4); rd(b+4*i,&y,4); z=x+y; wr(out+4*i,&z,4); }
-        CHECK(word(sig)==1 && word(sig+8)); setword(sig+8,word(sig+8)-1);
+        if(!getenv("KFD_TEST_NO_OUTPUT"))
+            for(uint32_t i=0;i<n;i++) { float x,y,z; rd(a+4*i,&x,4); rd(b+4*i,&y,4); z=x+y; wr(out+4*i,&z,4); }
+        CHECK(word(sig)==1 && word(sig+8));
+        if(!getenv("KFD_TEST_NO_SIGNAL")) setword(sig+8,word(sig+8)-1);
         packets++; setword(queue.read_pointer_address,(uint64_t)packets);
     }
 }
@@ -238,7 +244,16 @@ int main(int argc,char **argv) {
                 struct stat s={0}; s.st_mode=S_IFCHR|0600; s.st_rdev=makedev(234,0); wr(a[2],&s,sizeof s); r.regs[0]=0; setregs(&r);
             } else if(call==SYS_getdents64 && (int)a[0]==topology_fd && (int64_t)r.regs[0]>0 && getenv("KFD_TEST_SORT_NODES")) {
                 ordered_entries(a[1],(size_t)r.regs[0]);
-            } else if(call==SYS_clock_gettime && queued && ++clocks>=2 && !getenv("KFD_TEST_NO_COMPLETE")) complete_packets();
+            } else if(call==SYS_clock_gettime && queued && ++clocks>=2) {
+                if(clocks==2) {
+                    fprintf(stderr,"TEST_SIM packet_kernel_object=%llu\n",(unsigned long long)word(queue.ring_base_address+32));
+                    fprintf(stderr,"TEST_SIM packet_kernarg_address=%llu\n",(unsigned long long)word(queue.ring_base_address+40));
+                }
+                if(!getenv("KFD_TEST_NO_COMPLETE")) complete_packets();
+                if(getenv("KFD_TEST_EXPIRE")) {
+                    struct timespec now; rd(a[1],&now,sizeof now); now.tv_sec+=11; wr(a[1],&now,sizeof now);
+                }
+            }
         }
         enter=!enter;
     }

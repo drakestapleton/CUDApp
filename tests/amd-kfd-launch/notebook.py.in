@@ -1,11 +1,15 @@
-# launch2: one cell, Python standard-library measuring harness only.
-# The production launcher and object writer are seeded Omega, not Python or HIP.
-import base64, ctypes, hashlib, json, lzma, math, os, platform, re, selectors, struct, subprocess, tempfile, time
+# launch3: external Python measuring harness; the production launcher is seeded Omega.
+import base64, ctypes, hashlib, json, lzma, os, platform, selectors, struct, subprocess, tempfile, time
 from pathlib import Path
 BUNDLE = json.loads(r'''@BUNDLE@''')
-REPORT = Path('amdserve-launch2.txt')
+REPORT = Path('amdserve-launch3.txt')
 ROWS = []
 WORK = None
+ASSETS = {}
+BIN = None
+KFD_PROC_ROOT = Path('/sys/class/kfd/kfd/proc')
+SAMPLE_DELAYS = (0.0, 1.0, 3.0)
+REFERENCE = 'REFERENCE (AMD runtime loading our object, not the Omega launcher)'
 def say(line):
     ROWS.append(str(line).replace('\n',' '))
     temp=REPORT.with_suffix('.tmp'); temp.write_text('\n'.join(ROWS)+'\n'); temp.replace(REPORT)
@@ -16,10 +20,6 @@ def asset(name):
     p=WORK/name; p.write_bytes(data)
     if name=='omega-launch': p.chmod(0o700)
     return p
-ASSETS={}
-BIN=None
-REPEATS=200
-SHAPES=[('tail-control',7,1031),('gate/up',17408,5120),('down',5120,17408),('hidden',5120,5120)]
 def topology_table():
     root=Path('/sys/class/kfd/kfd/topology/nodes')
     try: nodes=sorted(root.iterdir(),key=lambda p: int(p.name) if p.name.isdecimal() else -1)
@@ -37,63 +37,41 @@ def topology_table():
                     values.update({k:props.get(k,'missing') for k in ('gfx_target_version','drm_render_minor','simd_count','device_id')})
             except OSError as exc: values[name+'_errno']=exc.errno
         say('OMEGA topology table '+json.dumps(values,sort_keys=True))
+def sample_kfd(pid,index):
+    root=KFD_PROC_ROOT/str(pid)
+    prefix='OMEGA proc sample='+str(index)+' pid='+str(pid)+' '
+    def contents(path):
+        try:
+            names=sorted(p.name for p in path.iterdir())
+            say(prefix+str(path)+' entries='+json.dumps(names)); return names
+        except OSError as exc:
+            say(prefix+str(path)+' missing/unreadable errno='+str(exc.errno)); return []
+    def value(path):
+        try:
+            data=path.read_text().strip(); say(prefix+str(path)+' value='+json.dumps(data)); return data
+        except OSError as exc:
+            say(prefix+str(path)+' missing/unreadable errno='+str(exc.errno)); return None
+    names=contents(root)
+    gpuids=set()
+    for queue in contents(root/'queues'):
+        for field in ('size','type','gpuid'):
+            data=value(root/'queues'/queue/field)
+            if field=='gpuid' and data and data.isdecimal(): gpuids.add(data)
+    for name in names:
+        for stem in ('stats_','vram_'):
+            if name.startswith(stem) and name[len(stem):].isdecimal(): gpuids.add(name[len(stem):])
+    if not gpuids: say(prefix+'stats_<gpuid>/cu_occupancy and vram_<gpuid> missing: no observed gpuid')
+    for gpu in sorted(gpuids):
+        value(root/('stats_'+gpu)/'cu_occupancy')
+        value(root/('vram_'+gpu))
 
-def f32(x): return struct.unpack('<f',struct.pack('<f',x))[0]
-LIBM=None
-FMA=None
-FP8_CODES=(0x38,0x40,0x48,0xb8,0xc0,0xc8,0x01,0x09)
-BF16_VALUES=(0.75,-0.5,1.25,-1.5,0.0625,0.875,-0.25,0.03125)
-def fp8(code,bias=8):
-    if code==0x80: return float('nan')
-    sign=-1 if code&128 else 1; e=(code>>3)&15; m=code&7
-    return sign*math.ldexp(m/8 if e==0 else 1+m/8,(1 if e==0 else e)-bias)
-def row(kind,r,k):
-    if kind=='fp8':
-        data=bytes(FP8_CODES[(i*5+r*3)%len(FP8_CODES)] for i in range(k))
-        return data,[fp8(x) for x in data]
-    values=[BF16_VALUES[(i*5+r*3)%len(BF16_VALUES)] for i in range(k)]
-    return b''.join(struct.pack('<f',x)[2:] for x in values),values
-
-def reference(weights,x,scale):
-    lanes=[]
-    for lane in range(64):
-        value=0.0
-        for block in range(0,len(x),256):
-            for j in range(4):
-                k=block+4*lane+j
-                if k<len(x): value=FMA(weights[k],x[k],value)
-        lanes.append(value)
-    for distance in (32,16,8,4,2,1): lanes=[f32(lanes[i]+lanes[i^distance]) for i in range(64)]
-    return f32(lanes[0]*scale)
-
-def fixture(kind,m,k):
-    x=[((i*13)%31-15)/16 for i in range(k)]
-    unique=[row(kind,r,k) for r in range(4)]
-    scales=[(1.0,0.5,2.0,0.25)[r] if kind=='fp8' else 1.0 for r in range(4)]
-    expected=[struct.pack('<f',reference(w,x,scales[r])) for r,(_,w) in enumerate(unique)]
-    wpath=WORK/'weights.bin'
-    with wpath.open('wb') as f:
-        for r in range(m): f.write(unique[r%4][0])
-    xpath=WORK/'x.bin'; xpath.write_bytes(struct.pack('<'+'f'*k,*x))
-    paths=[wpath,xpath]
-    if kind=='fp8':
-        spath=WORK/'scale.bin'; spath.write_bytes(b''.join(struct.pack('<f',scales[r%4]) for r in range(m))); paths.append(spath)
-        wrong=[struct.pack('<f',reference([fp8(c,7) for c in data],x,scales[r])) for r,(data,_) in enumerate(unique)]
-        if wrong==expected: raise RuntimeError('FP8 mode control is not discriminating')
-    return paths,b''.join(expected[r%4] for r in range(m))
-
-def manifest(kind,m,k,n):
-    ptrs=4 if kind=='fp8' else 3
-    raw=bytes(ptrs*8)+struct.pack('<II',m,k)
-    pairs=b''.join(struct.pack('<QQ',i*8,i) for i in range(ptrs))
-    return b'OMKFD001'+struct.pack('<QQQQQ',len(raw),m*4,n,300_000_000_000,ptrs)+pairs+raw
-
-def invoke(arguments,label,expected=0):
+def invoke(arguments,label,expected=0,sample=False):
     start=time.perf_counter_ns()
     command=[str(BIN),*map(str,arguments)]
     say('OMEGA invocation '+json.dumps({'label':label,'argv':command},sort_keys=True))
     streams={'stdout':bytearray(),'stderr':bytearray()}
     pending={'stdout':b'','stderr':b''}
+    waiting=None; sampled=0
     with subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE) as child:
         with selectors.DefaultSelector() as selector, (WORK/(label+'.stdout')).open('wb') as out, (WORK/(label+'.stderr')).open('wb') as err:
             logs={'stdout':out,'stderr':err}
@@ -102,8 +80,14 @@ def invoke(arguments,label,expected=0):
             deadline=time.monotonic()+330
             try:
                 while selector.get_map():
-                    left=deadline-time.monotonic()
+                    now=time.monotonic(); left=deadline-now
                     if left<=0: raise subprocess.TimeoutExpired(command,330)
+                    if waiting is not None and sampled<len(SAMPLE_DELAYS):
+                        due=waiting+SAMPLE_DELAYS[sampled]-now
+                        if due<=0:
+                            sample_kfd(child.pid,sampled); sampled+=1
+                            continue
+                        left=min(left,due)
                     for key,_ in selector.select(left):
                         data=os.read(key.fileobj.fileno(),65536); kind=key.data
                         if not data:
@@ -117,6 +101,8 @@ def invoke(arguments,label,expected=0):
                         while b'\n' in pending[kind]:
                             line,pending[kind]=pending[kind].split(b'\n',1)
                             say(line.decode(errors='replace') if kind=='stdout' else 'OMEGA stderr '+line.decode(errors='replace'))
+                            if sample and kind=='stdout' and line.startswith(b'OMEGA step signal_wait ') and b'phase=before' in line:
+                                waiting=time.monotonic()
                 code=child.wait(timeout=max(0.001,deadline-time.monotonic()))
             except BaseException:
                 child.kill(); child.wait()
@@ -126,64 +112,56 @@ def invoke(arguments,label,expected=0):
     elapsed=time.perf_counter_ns()-start
     p=subprocess.CompletedProcess(command,code,bytes(streams['stdout']),bytes(streams['stderr']))
     say('OMEGA invocation '+label+' exit='+str(code)+' expected='+str(expected))
-    if p.returncode!=expected: raise RuntimeError(label+' exit='+str(p.returncode)+' expected='+str(expected))
+    if sample: say('OMEGA proc samples='+str(sampled)+'; missing samples mean child exited before scheduled read or wait was not reached')
+    if expected is not None and p.returncode!=expected: raise RuntimeError(label+' exit='+str(p.returncode)+' expected='+str(expected))
     return p,elapsed
-
-def omega(kind,m,k,paths,expected,n):
-    args=WORK/'args.bin'; args.write_bytes(manifest(kind,m,k,n))
-    output=WORK/'out.bin'
-    p,wall=invoke(['run',ASSETS[kind+'gemv2.hsaco'],kind+'gemv2',m,1,args,*paths,output],kind+'-'+str(m)+'-'+str(k))
-    got=output.read_bytes()
-    if got!=expected: raise RuntimeError('OMEGA output bits differ '+kind+' '+str((m,k)))
-    match=re.search(rb'^OMEGA dispatch_ns=(\d+) packets=(\d+)$',p.stdout,re.MULTILINE)
-    if not match or int(match[2])!=n: raise RuntimeError('OMEGA timing receipt malformed')
-    return int(match[1])/n,wall/n
 
 class Hip:
     def __init__(self):
-        self.lib=None
-        for name in ('libamdhip64.so','/opt/rocm/lib/libamdhip64.so','/opt/rocm/lib64/libamdhip64.so'):
-            try: self.lib=ctypes.CDLL(name); self.name=name; break
-            except OSError: pass
-        if self.lib is None: raise FileNotFoundError('libamdhip64 unavailable')
+        # Import the installed torch only to load its AMD runtime; no torch kernels.
+        import torch
+        say(REFERENCE+' torch_version='+str(torch.__version__)+' hip_build='+str(torch.version.hip))
+        paths=set()
+        for line in Path('/proc/self/maps').read_text().splitlines():
+            fields=line.split(None,5)
+            if len(fields)==6 and Path(fields[5]).name.startswith('libamdhip64.so'): paths.add(fields[5])
+        if len(paths)!=1: raise RuntimeError('expected one torch-loaded libamdhip64, observed '+repr(sorted(paths)))
+        self.name=paths.pop(); self.lib=ctypes.CDLL(self.name)
         P=ctypes.c_void_p; U=ctypes.c_uint; Z=ctypes.c_size_t; I=ctypes.c_int
-        signatures={'hipInit':[U],'hipRuntimeGetVersion':[ctypes.POINTER(I)],'hipMalloc':[ctypes.POINTER(P),Z], 'hipFree':[P], 'hipMemcpy':[P,P,Z,I], 'hipModuleLoadData':[ctypes.POINTER(P),P], 'hipModuleGetFunction':[ctypes.POINTER(P),P,ctypes.c_char_p], 'hipModuleUnload':[P], 'hipModuleLaunchKernel':[P,U,U,U,U,U,U,U,P,ctypes.POINTER(P),ctypes.POINTER(P)], 'hipDeviceSynchronize':[], 'hipEventCreate':[ctypes.POINTER(P)], 'hipEventRecord':[P,P], 'hipEventSynchronize':[P], 'hipEventElapsedTime':[ctypes.POINTER(ctypes.c_float),P,P], 'hipEventDestroy':[P]}
+        signatures={'hipInit':[U],'hipRuntimeGetVersion':[ctypes.POINTER(I)],'hipMalloc':[ctypes.POINTER(P),Z], 'hipFree':[P], 'hipMemcpy':[P,P,Z,I], 'hipModuleLoadData':[ctypes.POINTER(P),P], 'hipModuleGetFunction':[ctypes.POINTER(P),P,ctypes.c_char_p], 'hipModuleUnload':[P], 'hipModuleLaunchKernel':[P,U,U,U,U,U,U,U,P,ctypes.POINTER(P),ctypes.POINTER(P)], 'hipDeviceSynchronize':[]}
         for name,types in signatures.items():
             fn=getattr(self.lib,name); fn.argtypes=types; fn.restype=I
-        self.call('hipInit',0); version=I(); self.call('hipRuntimeGetVersion',ctypes.byref(version)); self.version=version.value
+        self.call('hipInit',0); version=I(); self.call('hipRuntimeGetVersion',ctypes.byref(version))
+        say(REFERENCE+' library='+self.name+' runtime_version='+str(version.value))
     def call(self,name,*args):
         rc=getattr(self.lib,name)(*args)
-        if rc: raise RuntimeError('OMEGA objects via AMD HIP loader '+name+' rc='+str(rc))
-    def measure(self,kind,m,k,paths,expected,n):
-        P=ctypes.c_void_p; ptrs=[]; mod=P(); ev=[]
+        say(REFERENCE+' '+name+' rc='+str(rc))
+        if rc: raise RuntimeError(REFERENCE+' '+name+' rc='+str(rc))
+    def vadd(self):
+        P=ctypes.c_void_p; ptrs=[]; mod=P()
         try:
-            for data in [p.read_bytes() for p in paths]+[struct.pack('<I',0x7fc00000)*m]:
+            # Identical 256 binary32 ones and NaN output fill to the Omega vadd.
+            for data in [struct.pack('<f',1.0)*256]*2+[struct.pack('<I',0x7fc00000)*256]:
                 ptr=P(); self.call('hipMalloc',ctypes.byref(ptr),len(data)); ptrs.append(ptr)
                 host=ctypes.create_string_buffer(data); self.call('hipMemcpy',ptr,host,len(data),1)
-            image=ctypes.create_string_buffer(ASSETS[kind+'gemv2.hsaco'].read_bytes())
+            image=ctypes.create_string_buffer(ASSETS['vadd.hsaco'].read_bytes())
             self.call('hipModuleLoadData',ctypes.byref(mod),image)
-            fn=P(); self.call('hipModuleGetFunction',ctypes.byref(fn),mod,(kind+'gemv2').encode())
-            values=ptrs+[ctypes.c_uint32(m),ctypes.c_uint32(k)]
+            fn=P(); self.call('hipModuleGetFunction',ctypes.byref(fn),mod,b'vadd')
+            values=ptrs+[ctypes.c_uint32(256)]
             params=(P*len(values))(*(ctypes.addressof(v) for v in values))
-            for _ in range(2):
-                event=P(); self.call('hipEventCreate',ctypes.byref(event)); ev.append(event)
+            self.call('hipModuleLaunchKernel',fn,4,1,1,64,1,1,0,None,params,None)
             self.call('hipDeviceSynchronize')
-            start=time.perf_counter_ns(); self.call('hipEventRecord',ev[0],None)
-            for _ in range(n): self.call('hipModuleLaunchKernel',fn,m,1,1,64,1,1,0,None,params,None)
-            self.call('hipEventRecord',ev[1],None); self.call('hipEventSynchronize',ev[1]); wall=time.perf_counter_ns()-start
-            ms=ctypes.c_float(); self.call('hipEventElapsedTime',ctypes.byref(ms),*ev)
-            result=ctypes.create_string_buffer(len(expected)); self.call('hipMemcpy',result,ptrs[-1],len(expected),2)
-            if result.raw!=expected: raise RuntimeError('OMEGA objects via AMD HIP loader output bits differ '+kind+' '+str((m,k)))
-            return ms.value*1_000_000/n,wall/n
+            result=ctypes.create_string_buffer(1024); self.call('hipMemcpy',result,ptrs[-1],1024,2)
+            say(REFERENCE+' first8_words='+json.dumps(struct.unpack('<8I',result.raw[:32])))
+            if result.raw!=struct.pack('<f',2.0)*256: raise RuntimeError(REFERENCE+' output bits differ')
+            say(REFERENCE+' vadd bitwise=PASS count=256 same_object_sha256='+BUNDLE['assets']['vadd.hsaco']['sha256'])
         finally:
-            for e in ev: self.call('hipEventDestroy',e)
             if mod.value: self.call('hipModuleUnload',mod)
-            for p in ptrs: self.call('hipFree',p)
+            for ptr in ptrs: self.call('hipFree',ptr)
 
 def main():
     if platform.machine()!='x86_64':
         say('OMEGA NOT_RUN target requires x86_64 Linux; AMD device rows NOT_RUN'); return 'NOT_RUN'
-    # Refusals run before any device access, including on a machine without KFD.
     bad=WORK/'bad.hsaco'; bad.write_bytes(b'bad ELF')
     invoke(['inspect',bad,'vadd'],'control-bad-elf',65)
     args=WORK/'bad.args'; args.write_bytes(bytes(48))
@@ -192,40 +170,30 @@ def main():
     if not Path('/dev/kfd').exists():
         invoke(['vadd',ASSETS['vadd.hsaco'],'vadd'],'absent-kfd',77)
         say('OMEGA NOT_RUN /dev/kfd absent; errno=2 exit=77 checked'); return 'NOT_RUN'
-    p,wall=invoke(['vadd',ASSETS['vadd.hsaco'],'vadd'],'vadd')
-    if b'OMEGA vadd=PASS count=256\n' not in p.stdout: raise RuntimeError('vadd receipt missing')
-    say('OMEGA vadd bitwise=PASS')
+    p,_=invoke(['vadd',ASSETS['vadd.hsaco'],'vadd'],'vadd',expected=None,sample=True)
+    omega_ok=p.returncode==0 and b'OMEGA vadd=PASS count=256\n' in p.stdout
+    say('OMEGA vadd '+('bitwise=PASS' if omega_ok else 'FAIL_OR_INCOMPLETE')+' exit='+str(p.returncode)+' timeout='+str(p.returncode==75))
+    # Run this independent comparison even when the direct launcher timed out.
+    hip_ok=False
     try:
-        hip=Hip(); say('OMEGA objects via AMD HIP loader '+hip.name+' runtime_version='+str(hip.version)+' same object bytes; not direct KFD')
-    except FileNotFoundError:
-        hip=None; say('OMEGA objects via AMD HIP loader NOT_RUN libamdhip64 unavailable')
-    for label,m,k in SHAPES:
-        for kind in ('fp8','bf16'):
-            paths,expected=fixture(kind,m,k)
-            n=1 if label=='tail-control' else REPEATS
-            dispatch,wall=omega(kind,m,k,paths,expected,n)
-            say('OMEGA '+label+' '+kind+' M='+str(m)+' K='+str(k)+' n='+str(n)+' bitwise=PASS CPU_dispatch_ns/packet='+str(dispatch)+' process_wall_ns/packet='+str(wall))
-            if hip:
-                event,wall=hip.measure(kind,m,k,paths,expected,n)
-                say('OMEGA objects via AMD HIP loader '+label+' '+kind+' bitwise=PASS GPU_event_ns/packet='+str(event)+' host_submit_wait_ns/packet='+str(wall))
-    say('CONTROL FP8 FNUZ-vs-OCP reference discrimination PASS; tail shapes exercised both kernels')
-    say('NOT_RUN full Qwen 27B serving, Spark comparison, attention dispatch; kernel timings alone are not model throughput')
-    return 'PASS kernel paths only; full model and Spark comparison NOT_RUN'
+        Hip().vadd(); hip_ok=True
+    except Exception as exc:
+        say(REFERENCE+' FAIL_OR_NOT_RUN '+type(exc).__name__+' '+str(exc))
+    say('NOT_RUN full 27B serving, Spark comparison and all other kernels; no dispatch variants attempted')
+    return 'PASS vadd only' if omega_ok and hip_ok else 'FAIL_OR_INCOMPLETE vadd diagnostics retained'
 
 def run():
-    global WORK,ASSETS,BIN,LIBM,FMA
+    global WORK,ASSETS,BIN
     ROWS.clear()
-    say('CONTROLS first: asset digests, malformed ELF, argument header; GPU results require successful completion and bitwise parity')
+    say('CONTROLS first: asset digests, malformed ELF, argument header; no changed doorbell values or dispatch variants')
     result='FAIL'
     try:
-        WORK=Path(tempfile.mkdtemp(prefix='omega-launch2-'))
+        WORK=Path(tempfile.mkdtemp(prefix='omega-launch3-'))
         try: ASSETS={name:asset(name) for name in BUNDLE['assets']}
         except Exception as exc:
             say('FAIL asset unpack: '+str(exc)); raise
         BIN=ASSETS['omega-launch']
-        LIBM=ctypes.CDLL('libm.so.6')
-        FMA=LIBM.fmaf; FMA.argtypes=[ctypes.c_float]*3; FMA.restype=ctypes.c_float
-        say('launch2 candidate; OMEGA=seeded direct KFD; OMEGA objects via AMD HIP loader=comparison; no NVIDIA measurements')
+        say('launch3 candidate; OMEGA=seeded direct KFD; '+REFERENCE+'=independent comparison')
         say('pins '+json.dumps(BUNDLE['sources'],sort_keys=True))
         say('assets '+json.dumps({k:v['sha256'] for k,v in BUNDLE['assets'].items()},sort_keys=True))
         say('host arch='+platform.machine()+' kernel='+platform.release()+' libc='+str(platform.libc_ver())+' work='+str(WORK))

@@ -105,11 +105,47 @@ layout=run('UAPI layout',[out/'layout']).stdout
 assert layout==(root/'backend/amd/kfd/requests.tsv').read_bytes()
 for name in ('trace','publication'):
     run('compile '+name+' instrument',['cc','-Wall','-Wextra','-Werror',root/'tests/amd-kfd-launch'/ (name+'.c'),'-o',out/name])
+def diagnostics(p,read,signal,output):
+    rows={}
+    for line in p.stdout.decode().splitlines():
+        if line.startswith('OMEGA diag '):
+            name,value=line.removeprefix('OMEGA diag ').split()
+            rows[name]=int(value)
+    expected={'queue_read_pointer':read,'queue_write_pointer':1,'signal_kind':1,'signal_value':signal,
+              'ring_header':0x21502,'ring_slot_byte_offset':0,'queue_id':7,'doorbell_offset':8,
+              'wait_timeout_ns':10_000_000_000,'output_first8_nan_fill_count':8 if output==0x7fc00000 else 0,
+              'output_first8_expected_vadd_sum_count':8 if output==0x40000000 else 0}
+    for name,off,fmt in [('kernel_code_entry_byte_offset',16,'Q'),('compute_pgm_rsrc1',48,'I'),
+                         ('compute_pgm_rsrc2',52,'I'),('compute_pgm_rsrc3',44,'I'),('kernel_code_properties',56,'H'),
+                         ('group_segment_size',0,'I'),('private_segment_size',4,'I'),('kernarg_size',8,'I')]:
+        expected[name]=struct.unpack_from('<'+fmt,vdata,kd+off)[0]
+    expected.update({f'output_word_{i}':output for i in range(8)})
+    for line in p.stderr.decode().splitlines():
+        if line.startswith('TEST_SIM queue_input_qword_'):
+            name,value=line.removeprefix('TEST_SIM ').split('=')
+            expected['create_'+name]=int(value)
+        if line.startswith('TEST_SIM packet_'):
+            name,value=line.removeprefix('TEST_SIM ').split('=')
+            expected[name]=int(value)
+    assert len([x for x in expected if x.startswith('create_')])==11
+    assert all(rows.get(k)==v for k,v in expected.items()), (rows,expected)
+    assert rows['packet_kernel_object'] and rows['packet_kernarg_address']
 with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     node=Path(tmp)/'2'; node.mkdir()
     (node/'gpu_id').write_text('1\n')
     (node/'properties').write_text('gfx_target_version 90402\ndrm_render_minor 128\nsimd_count 32\nsimd_per_cu 4\narray_count 8\nsimd_arrays_per_engine 2\nnum_xcc 2\n')
-    run('native simulated orchestration',[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'])
+    command=[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd']
+    p=run('native simulated orchestration',command)
+    diagnostics(p,1,0,0x40000000)
+    for name,variables,read,signal,output,child_exit in [
+        ('unconsumed timeout',['KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1'],0,1,0x7fc00000,75),
+        ('output without completion timeout',['KFD_TEST_NO_SIGNAL=1','KFD_TEST_EXPIRE=1'],1,1,0x40000000,75),
+        ('completion without output',['KFD_TEST_NO_OUTPUT=1'],1,0,0x7fc00000,76)]:
+        p=run('CONTROL diagnostics '+name,['env',*variables,*command],1)
+        assert ('child_exit='+str(child_exit)+' ').encode() in p.stderr
+        diagnostics(p,read,signal,output)
+        if child_exit==75:
+            assert b'OMEGA step signal_wait fail errno=110' in p.stdout
     # The generic CLI reuses the ring across its boundary, not only one packet.
     ins=[]
     for name in ('a','b'):

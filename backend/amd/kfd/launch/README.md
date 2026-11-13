@@ -55,14 +55,40 @@ Queue state includes ring, write/read pointers, context save and a coherent USER
 
 The packet body is written while its header is INVALID. A CPU fence precedes the final aligned header write; further fences precede write-pointer and 8-byte doorbell publication. The dispatch has system acquire/release fence scopes and barrier semantics. The launcher bounds host polling by the requested monotonic timeout, waits for signal zero, fences, and copies output. It reports `OMEGA dispatch_ns=... packets=...`; this is host-monotonic dispatch-and-wait time, not GPU event time and not model tokens/s.
 
+Success and timeout also emit `OMEGA diag NAME VALUE` decimal rows, read only
+from existing owned mappings: queue read/write pointers, signal kind/value,
+last published packet slot/header and actual packet kernel/kernarg addresses,
+descriptor fields, and the first eight available output words. Vadd reports
+counts matching its expected sum and NaN fill. `create_queue_input_qword_N`
+reconstructs the input u64 at byte offset `8*N`, including addresses that the
+pinned compiler binds privately; queue ID and full doorbell offset are outputs.
+The CPU instrument compares all input qwords with the actual intercepted ioctl
+block and tests untouched output, output without signal completion, and normal
+completion. These rows are observations, not a timeout diagnosis.
+
 No SET_MEMORY_POLICY or debugger RUNTIME_ENABLE is needed by this path. Kernel registration configures SH_MEM bases/config; the gfx9.4.3/9.4.4 path sets F8_MODE. The default/alternate cache-policy ioctl is not the initializer. This is a source-based prerequisite, not a measurement of an installed remote driver's register state. See root `PROVENANCE.md` for the named kernel tag and manual requirement.
 
 ## One-cell notebook bundle
 
-`tests/amd-kfd-launch/bundle.py --gate GATE_DIR --gemv-tree GEMV_TREE --attention-tree ATTN_TREE --out NEW_DIR` packages the verified x86 executable and exact committed seeded objects; `cell.py` is the one cell. `notebook-check.py NEW_DIR GATE_DIR` checks every object's parser path on both targets, executes the real cell's absent-device path through qemu, compares its reference calculations to rational scalar sums, and kills a changed-asset-digest control.
+`tests/amd-kfd-launch/bundle.py --gate GATE_DIR --out NEW_DIR` packages the verified
+x86 executable and vadd object into `cell.py`, using xz then base85. Source commits
+and hashes are generated into `bundle.json`; README and SHA256SUMS are generated.
+The manifest covers every delivered file except itself.
 
-The integration bundle is named `notebook-probe/launch2/`. It includes the correct attention merge object selected by digest, never the earlier silicon-wrong merge. Object source commits and full hashes are generated into `bundle.json`; no peer branch is merged into this launcher. The builder generates README.md and hashes all delivered files except the manifest itself.
+The targeted diagnostic bundle is `notebook-probe/launch3/`. It runs the unchanged
+Omega vadd once, while the Python parent samples the child's KFD proc queue,
+occupancy and VRAM files read-only. Missing files are explicit. After Omega exits,
+even on timeout, it runs the identical object and inputs once through the installed
+torch-loaded HIP runtime, labelled `REFERENCE (AMD runtime loading our object, not
+the Omega launcher)`. Torch supplies the runtime, not kernels or a correctness
+oracle. No other kernels, doorbell variants or added Omega packets are run.
 
-The cell persists `amdserve-launch2.txt` after every line, streams each launcher stdout line while the process is running, and retains inputs, outputs and raw stdout/stderr. CONTROLS is first, the observed topology table is included, and RESULT is always last, including asset-unpack or execution failure. It runs vadd, then the FP8/BF16 GEMV2 layer shapes and a tail shape with an independent fmaf/reduction reference. FP8 uses E4M3FNUZ row scales after reduction, with a discriminating OCP-bias control. Optional HIP measurements use the same object bytes and are labelled `OMEGA objects via AMD HIP loader`; no torch or NVIDIA rows are emitted. Host dispatch time includes diagnostic writes between dispatch and wait boundaries. Process wall time and HIP GPU-event time remain different quantities. There is no receipt truncation or line cap.
+The cell persists `amdserve-launch3.txt` after every line and retains raw child
+stdout/stderr. CONTROLS is first; topology and every launcher stdout line are
+included; RESULT is last even on exceptions. `notebook-check.py NEW_DIR GATE_DIR`
+checks both parsers, real x86/qemu refusals and absent-device behavior, receipt
+streaming, read-only proc sampling while a real child waits, and digest refusal.
 
-**NOT_RUN until the authorized MI300X run:** actual KFD mappings/queue creation, device completion, GPU output parity, FP8 mode, timings, attention dispatch, full 27B serving and any Spark comparison. Merely packing an object or passing the CPU instruments does not qualify it on silicon.
+**NOT_RUN until the authorized MI300X run:** actual KFD/GPU execution, direct and
+HIP vadd completion/parity, full 27B serving and any Spark comparison. CPU simulation
+and emulation do not qualify the dispatch on silicon or establish a timeout cause.

@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-# External test/calculation oracle only; never a launcher dependency.
-import hashlib,json,os,platform,shutil,struct,subprocess,sys,tempfile
-from fractions import Fraction
+# External CPU measuring harness only; never a launcher dependency.
+import hashlib,json,os,platform,shutil,subprocess,sys,tempfile
 from pathlib import Path
 bundle=Path(sys.argv[1]).resolve(); gate=Path(sys.argv[2]).resolve()
 assert not Path('/dev/kfd').exists(), 'CPU gate refuses a host with a KFD device'
 qemu=shutil.which('qemu-x86_64'); assert qemu
 cell=(bundle/'cell.py').read_text(); records=[]
-with tempfile.TemporaryDirectory(prefix='launch2-cpu-') as tmp:
+with tempfile.TemporaryDirectory(prefix='launch3-cpu-') as tmp:
     prior=Path.cwd(); os.chdir(tmp)
     ns={'__name__':'__notebook_test__'}
     exec(compile(cell,'cell.py','exec'),ns)
-    # Drive the exact notebook's x86 absent-device branch using real qemu execution.
     oldmachine=platform.machine; oldpopen=subprocess.Popen
     def emulated(args,*a,**k):
         args=list(args)
@@ -24,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix='launch2-cpu-') as tmp:
     finally:
         subprocess.Popen=oldpopen; platform.machine=oldmachine
     binary=ns['BIN']
-    report=Path('amdserve-launch2.txt').read_text()
+    report=Path('amdserve-launch3.txt').read_text()
     assert 'argument-header=64 PASS' in report and 'errno=2 exit=77 checked' in report
     assert report=='\n'.join(ns['ROWS'])+'\n'
     assert report.splitlines()[0].startswith('CONTROLS ') and report.splitlines()[-1]=='RESULT NOT_RUN'
@@ -38,36 +36,46 @@ with tempfile.TemporaryDirectory(prefix='launch2-cpu-') as tmp:
             p=subprocess.run(list(map(str,command)),capture_output=True)
             assert p.returncode==0,(name,target,p.returncode,p.stdout,p.stderr)
             records.append({'case':target+' inspect '+name,'exit':p.returncode,'stdout':p.stdout.decode()})
-    for label,m,k in ns['SHAPES']:
-        for kind in ('fp8','bf16'):
-            paths,expected=ns['fixture'](kind,m,k)
-            x=[Fraction((i*13)%31-15,16) for i in range(k)]
-            for r in range(4):
-                data,weights=ns['row'](kind,r,k)
-                scale=(1.0,0.5,2.0,0.25)[r] if kind=='fp8' else 1.0
-                exact=sum((Fraction(w)*v for w,v in zip(weights,x)),Fraction())*Fraction(scale)
-                want=struct.pack('<f',float(exact))
-                assert expected[4*r:4*r+4]==want,(kind,m,k,r)
-            records.append({'case':label+' '+kind+' CPU rational scalar vs lane-FMA reference','m':m,'k':k,'expected_sha256':hashlib.sha256(expected).hexdigest(),'exit':0})
-    # A real child refuses to exit until its first line is visible in the receipt.
-    # This discriminates streaming from capture-then-print without a GPU or mock launcher.
+    # The child holds itself alive until all scheduled read-only proc samples and
+    # its first stdout line have reached disk. This rejects capture-after-exit.
     ns['BIN']=Path(sys.executable)
-    child="""import pathlib,sys,time
+    ns['KFD_PROC_ROOT']=Path(tmp)/'proc-fixture'
+    ns['SAMPLE_DELAYS']=(0.0,0.01,0.02)
+    child=r'''import os,pathlib,sys,time
+root=pathlib.Path(sys.argv[1])/str(os.getpid())
+(root/'queues'/'7').mkdir(parents=True)
+(root/'stats_37820').mkdir()
+for path,value in [('queues/7/size','1024'),('queues/7/type','2'),('queues/7/gpuid','37820'),('stats_37820/cu_occupancy','0'),('vram_37820','4096')]:
+    (root/path).write_text(value)
 print('OMEGA streaming-first',flush=True)
+print('OMEGA step signal_wait ok errno=0 phase=before detail=1',flush=True)
 deadline=time.monotonic()+5
-while 'OMEGA streaming-first\\n' not in pathlib.Path('amdserve-launch2.txt').read_text():
+while True:
+    receipt=pathlib.Path('amdserve-launch3.txt').read_text()
+    if 'sample=2 pid='+str(os.getpid()) in receipt and 'OMEGA streaming-first\n' in receipt:
+        break
     if time.monotonic()>deadline: sys.exit(91)
     time.sleep(0.01)
+for path,value in [('queues/7/size','1024'),('queues/7/type','2'),('queues/7/gpuid','37820'),('stats_37820/cu_occupancy','0'),('vram_37820','4096')]:
+    assert (root/path).read_text()==value
 print('OMEGA streaming-last',flush=True)
 sys.stderr.write('diagnostic-tail')
-"""
-    p,_=ns['invoke'](['-c',child],'streaming-control')
-    assert p.stdout==b'OMEGA streaming-first\nOMEGA streaming-last\n'
+sys.exit(75)
+'''
+    p,_=ns['invoke'](['-c',child,ns['KFD_PROC_ROOT']],'streaming-proc-control',expected=None,sample=True)
+    assert p.returncode==75 and p.stdout.endswith(b'OMEGA streaming-last\n')
     assert p.stderr==b'diagnostic-tail'
-    assert 'OMEGA stderr diagnostic-tail\n' in Path('amdserve-launch2.txt').read_text()
-    records.append({'case':'real child observed first stdout line persisted before exit; stderr partial preserved','exit':p.returncode})
+    report=Path('amdserve-launch3.txt').read_text()
+    assert 'OMEGA stderr diagnostic-tail\n' in report and 'OMEGA proc samples=3;' in report
+    for sample in range(3):
+        lines=[s for s in report.splitlines() if s.startswith('OMEGA proc sample='+str(sample)+' ')]
+        for field,value in [('size','1024'),('type','2'),('gpuid','37820'),('cu_occupancy','0'),('vram_37820','4096')]:
+            assert any('/'+field+' value='+json.dumps(value) in s for s in lines),(sample,field,lines)
+    ns['sample_kfd'](0,3)
+    assert 'missing/unreadable errno=2' in Path('amdserve-launch3.txt').read_text()
+    (gate/'notebook-proc-receipt.txt').write_text(Path('amdserve-launch3.txt').read_text())
+    records.append({'case':'real child observes streaming and three proc samples while waiting; fields unchanged; nonzero exit retained; missing files explicit','exit':p.returncode,'expected':75})
     ns['BIN']=binary
-    # An execution failure still terminates the receipt with RESULT, not a traceback row.
     original_main=ns['main']
     def failure(): raise RuntimeError('CONTROL forced execution failure')
     ns['main']=failure
@@ -75,11 +83,10 @@ sys.stderr.write('diagnostic-tail')
     except RuntimeError: pass
     else: raise AssertionError('forced failure survived')
     ns['main']=original_main
-    report=Path('amdserve-launch2.txt').read_text()
+    report=Path('amdserve-launch3.txt').read_text()
     assert report.splitlines()[0].startswith('CONTROLS ') and report.splitlines()[-1]=='RESULT FAIL'
     (gate/'notebook-failure-receipt.txt').write_text(report)
     records.append({'case':'CONTROL execution failure keeps RESULT last','exit':1,'expected':1})
-    # The real cell refuses a changed asset digest before any child is executed.
     digest=ns['BUNDLE']['assets']['omega-launch']['sha256']
     mutated=cell.replace(digest,'0'*64,1); assert mutated!=cell
     control=Path(tmp)/'digest-control'; control.mkdir(); os.chdir(control)
@@ -87,14 +94,14 @@ sys.stderr.write('diagnostic-tail')
         badns={'__name__':'__notebook_test__'}
         exec(compile(mutated,'bad-cell.py','exec'),badns)
         badns['run']()
-    except RuntimeError as e:
-        assert str(e)=='asset digest omega-launch'
+    except RuntimeError as exc:
+        assert str(exc)=='asset digest omega-launch'
     else: raise AssertionError('asset digest mutant survived')
-    report=Path('amdserve-launch2.txt').read_text()
+    report=Path('amdserve-launch3.txt').read_text()
     assert 'FAIL asset unpack: asset digest omega-launch' in report
     assert report.splitlines()[0].startswith('CONTROLS ') and report.splitlines()[-1]=='RESULT FAIL'
     (gate/'notebook-digest-receipt.txt').write_text(report)
     records.append({'case':'CONTROL corrupted binary digest refused before execution','exit':1,'expected':1})
     os.chdir(prior)
-(gate/'notebook-check.json').write_text(json.dumps({'records':records,'device':'NOT_RUN','calculations':'fixture/reference in notebook.py.in; Fraction scalar sum then IEEE binary32 compared to fmaf lane reduction; quantities dimensionless'},indent=2)+'\n')
+(gate/'notebook-check.json').write_text(json.dumps({'records':records,'device':'NOT_RUN','HIP_comparison':'NOT_RUN CPU host; no GPU runtime is imported by the CPU gate'},indent=2)+'\n')
 print('NOTEBOOK_CPU PASS',len(records),'rows; all device rows NOT_RUN')

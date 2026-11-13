@@ -76,3 +76,8 @@ production plan calls use constant widths, so no fake input row claims to reach 
 Every malformed numeric deadline also has a fresh valid zero twin and a specific
 reason from the existing shared unsigned parser, preserving exit2. Its six refusal
 sites are tested, including a too-long argument that argread already refuses.
+
+Reference URLs, digests and raw-file ranges now have one canonical manifest,
+reference/sources.json. The existing gate verifies each quoted range and checks
+that SHA256SUMS and the README table are exact derived views. PROVENANCE points
+to the manifest instead of maintaining another copy of the raw line numbers.

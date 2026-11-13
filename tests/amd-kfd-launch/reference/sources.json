@@ -1,0 +1,120 @@
+{
+  "sources": [
+    {
+      "file": "topology-rocm-6.2.0.c",
+      "url": "https://raw.githubusercontent.com/ROCm/ROCT-Thunk-Interface/rocm-6.2.0/src/topology.c",
+      "sha256": "df339eb2532374fecdab571efcf49131dd79f31c236792ab1cb260dbd18f4c3f",
+      "ranges": [
+        {
+          "start": 1147,
+          "end": 1150,
+          "contains": [
+            "array_count",
+            "simd_arrays_per_engine",
+            "simd_arrays_count",
+            "NumArrays"
+          ]
+        },
+        {
+          "start": 1204,
+          "end": 1205,
+          "contains": [
+            "NumShaderBanks",
+            "simd_arrays_count/props->NumArrays"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "topology-rocm-7.2.2.c",
+      "url": "https://raw.githubusercontent.com/ROCm/rocm-systems/rocm-7.2.2/projects/rocr-runtime/libhsakmt/src/topology.c",
+      "sha256": "97269f0baf231d490032fc47ea8fe9e1101232477e10f74ff15e616d8e54ad86",
+      "ranges": [
+        {
+          "start": 1171,
+          "end": 1174,
+          "contains": [
+            "array_count",
+            "simd_arrays_per_engine",
+            "simd_arrays_count",
+            "NumArrays"
+          ]
+        },
+        {
+          "start": 1234,
+          "end": 1235,
+          "contains": [
+            "NumShaderBanks",
+            "simd_arrays_count/props->NumArrays"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "queues-rocm-6.2.0.c",
+      "url": "https://raw.githubusercontent.com/ROCm/ROCT-Thunk-Interface/rocm-6.2.0/src/queues.c",
+      "sha256": "6653cd7b55466616a44e4b7e89619081adee33a813c07b17dd850fa230c7fef4",
+      "ranges": [
+        {
+          "start": 292,
+          "end": 298,
+          "contains": [
+            "NumFComputeCores",
+            "NumSIMDPerCU",
+            "NumXcc",
+            "NumShaderBanks /",
+            "NumArrays"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "kfd_topology-v6.18.c",
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.18/drivers/gpu/drm/amd/amdkfd/kfd_topology.c",
+      "sha256": "b6f18da3603c196d1b6a58ff9607524365c5ed33e6716895cff0fc621c1742d6",
+      "ranges": [
+        {
+          "start": 461,
+          "end": 465,
+          "contains": [
+            "array_count",
+            "NUM_XCC",
+            "simd_arrays_per_engine"
+          ]
+        },
+        {
+          "start": 2082,
+          "end": 2083,
+          "contains": [
+            "simd_arrays_per_engine",
+            "max_sh_per_se"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "kfd_crat-v6.18.c",
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.18/drivers/gpu/drm/amd/amdkfd/kfd_crat.c",
+      "sha256": "aeacf7c1aed367e499bf6ee65489d42ffacd7c68dcd7e43f4f9e795559f2f999",
+      "ranges": [
+        {
+          "start": 1041,
+          "end": 1041,
+          "contains": [
+            "array_count",
+            "cu->array_count"
+          ]
+        },
+        {
+          "start": 2286,
+          "end": 2287,
+          "contains": [
+            "array_count",
+            "max_sh_per_se",
+            "max_shader_engines"
+          ]
+        }
+      ]
+    }
+  ]
+}

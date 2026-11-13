@@ -38,16 +38,24 @@ def run(label,args,want=0,data=None):
         print(p.stdout.decode(errors='replace')); print(row['stderr']); raise SystemExit(1)
     return p
 reference=root/'tests/amd-kfd-launch/reference'
-for line in (reference/'SHA256SUMS').read_text().splitlines():
-    digest,name=line.split()
-    assert hashlib.sha256((reference/name).read_bytes()).hexdigest()==digest,name
-source=(reference/'topology-rocm-6.2.0.c').read_text().splitlines()
-assert 'array_count' in source[1146] and 'simd_arrays_per_engine' in source[1148]
-assert 'NumArrays' in source[1203] and 'NumShaderBanks' in source[1204]
-source=(reference/'topology-rocm-7.2.2.c').read_text().splitlines()
-assert 'array_count' in source[1170] and 'simd_arrays_per_engine' in source[1172]
-assert 'NumArrays' in source[1233] and 'NumShaderBanks' in source[1234]
-print('PRIMARY SOURCE PASS producer mapping and pinned files',flush=True)
+references=json.loads((reference/'sources.json').read_text())['sources']
+assert len({r['file'] for r in references})==len(references)
+for row in references:
+    path=reference/row['file']
+    assert path.parent==reference and path.suffix=='.c'
+    assert hashlib.sha256(path.read_bytes()).hexdigest()==row['sha256'],row['file']
+    lines=path.read_text().splitlines()
+    for span in row['ranges']:
+        assert 1<=span['start']<=span['end']<=len(lines)
+        quoted='\n'.join(lines[span['start']-1:span['end']])
+        assert all(token in quoted for token in span['contains']),(row['file'],span)
+checksums=''.join(r['sha256']+'  '+r['file']+'\n' for r in sorted(references,key=lambda r:r['file']))
+assert (reference/'SHA256SUMS').read_text()==checksums
+source_table='| Local file | Upstream URL | Relevant lines |\n| --- | --- | --- |\n'+''.join('| '+r['file']+' | '+r['url']+' | '+', '.join(str(s['start'])+('-'+str(s['end']) if s['end']!=s['start'] else '') for s in r['ranges'])+' |\n' for r in references)
+readme=(reference/'README.md').read_text()
+assert readme.count('<!-- generated from sources.json -->\n')==readme.count('<!-- end generated source table -->')==1
+assert readme.split('<!-- generated from sources.json -->\n')[1].split('<!-- end generated source table -->')[0]==source_table
+print('PRIMARY SOURCE PASS producer mapping, pins and derived reference views',flush=True)
 parts=['common','elf','device','dispatch','plan','main']
 body=''.join((src/(x+'.om')).read_text() for x in parts)+(root/'backend/amd/kfd/cli.om').read_text()
 def compile(label,text,target='a64'):

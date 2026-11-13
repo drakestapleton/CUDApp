@@ -9,10 +9,40 @@ cases=[]
 def run(name,args,want):
  p=subprocess.run(list(map(str,args)),capture_output=True,timeout=90)
  assert p.returncode==want,(name,p.returncode,want,p.stdout[-3000:],p.stderr[-3000:])
+ previous=cases[-1] if cases else None
  log=gate/('plan-row-'+str(len(cases)))
  log.with_suffix('.stdout').write_bytes(p.stdout);log.with_suffix('.stderr').write_bytes(p.stderr)
- cases.append({'case':name,'command':list(map(str,args)),'exit':p.returncode,'expected':want,'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'stdout_path':str(log.with_suffix('.stdout')),'stderr_path':str(log.with_suffix('.stderr')),'stdout_sha256':hashlib.sha256(p.stdout).hexdigest(),'stderr_sha256':hashlib.sha256(p.stderr).hexdigest()})
+ cases.append({'kind':'baseline','case':name,'command':list(map(str,args)),'exit':p.returncode,'expected':want,'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'stdout_path':str(log.with_suffix('.stdout')),'stderr_path':str(log.with_suffix('.stderr')),'stdout_sha256':hashlib.sha256(p.stdout).hexdigest(),'stderr_sha256':hashlib.sha256(p.stderr).hexdigest()})
+ if want not in (0,77) and not name.startswith(('CONTROL ','caller deadline','missing completion')):
+  assert previous and ' positive twin ' in previous['case'],name
+  assert b'OMEGA step open_kfd' in Path(previous['stdout_path']).read_bytes(),previous['case']
+  previous['value_asserted']=True
+  pair(name,previous['case'])
  return p
+def pair(refusal,twin):
+ rows={r['case']:r for r in cases};r,t=rows[refusal],rows[twin]
+ assert t['exit']==t['expected'] and t['expected'] in (0,77)
+ assert t.get('value_asserted'),twin
+ a=[x for x in r['command'] if x!='env'];b=[x for x in t['command'] if x!='env']
+ if len(a)==len(b):assert sum(x!=y for x,y in zip(a,b))==1,(refusal,a,b)
+ else:
+  assert abs(len(a)-len(b))==1,(refusal,a,b)
+  long,short=(a,b) if len(a)>len(b) else (b,a)
+  assert any(long[:i]+long[i+1:]==short for i in range(len(long))),(refusal,a,b)
+ common=[x if x==y else '<refused-input>' for x,y in zip(a,b)] if len(a)==len(b) else short
+ setup=hashlib.sha256(json.dumps(common).encode()).hexdigest()
+ r.update(kind='refusal',twin=twin,setup_sha256=setup);t.update(kind='twin',setup_sha256=setup)
+def plan_value(p):
+ assert b'OMEGA_PLAN ids=[1073741824,1073741824,1073741824]\n' in p.stdout
+ assert b'packets=60 freed=all' in p.stderr
+def slow_plan_value(p):
+ plan_value(p)
+ assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==3,p.stdout
+def refuse(name,args,want,twinargs,verify):
+ twin='positive twin '+name
+ p=run(twin,twinargs,0);verify(p);cases[-1]['value_asserted']=True
+ p=run(name,args,want);pair(name,twin);return p
+
 with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  d=Path(td); nodes=d/'nodes'; node=nodes/'2';node.mkdir(parents=True)
  (node/'gpu_id').write_text('1\n')
@@ -108,7 +138,7 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  # An accepted descriptor with nonzero LDS exercises plantemplate, not a handcrafted packet.
  ldsargv=[pth,gate/'vadd-lds.hsaco',gate/'vadd-lds.hsaco',weight]
  run('plan ELF nonzero LDS packet fields',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',*ldsargv],0)
- run('CONTROL plan swapped private-group',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'plan-swapped-segments','plan',*ldsargv],1)
+ refuse('CONTROL plan swapped private-group',['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'plan-swapped-segments','plan',*ldsargv],1,['env','KFD_TEST_PLAN=1',gate/'trace',nodes,gate/'launch-a64','plan',*ldsargv],plan_value)
  (gate/'plan-simulation.stdout').write_bytes(p.stdout);(gate/'plan-simulation.stderr').write_bytes(p.stderr)
  # Raw file ranges share the same VRAM arena as the data-pool buffer.
  rawplan=bytearray(plan)
@@ -132,10 +162,33 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
  assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==3,p.stdout
  p=run('explicit zero timeout permits slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'0'],0)
  assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==3,p.stdout
- p=run('CONTROL plan missing re-arm detected',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'plan-no-alarm-rearm','plan',*argv],0)
+ p=refuse('CONTROL plan missing re-arm detected',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'plan-no-alarm-rearm','plan',*argv],0,['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv],slow_plan_value)
  assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==1,p.stdout
- run('caller deadline refuses slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1)
- p=run('missing completion refuses plan',['env','KFD_TEST_PLAN=1','KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1)
+ refuse('caller deadline refuses slow completed step',['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'10000000000'],1,['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'20000000000'],slow_plan_value)
+ p=refuse('missing completion refuses plan',['env','KFD_TEST_PLAN=1','KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'20000000000'],1,['env','KFD_TEST_PLAN=1','KFD_TEST_EXPIRE=1',gate/'trace',nodes,gate/'launch-a64','plan',*argv,'20000000000'],slow_plan_value)
  assert b'child_exit=75' in p.stderr and b'OMEGA_PLAN complete' not in p.stdout
-(gate/'plan-check.json').write_text(json.dumps({'cases':cases,'device':'NOT_RUN'},indent=2)+'\n')
+def validate_inventory():
+ names={r['case']:r for r in cases};assert len(names)==len(cases)
+ for row in cases:
+  assert row['kind'] in ('refusal','twin','baseline')
+  if row['expected'] not in (0,77) or row['case'].startswith('CONTROL '):assert row['kind']=='refusal',row
+  if row['kind']=='refusal':
+   assert names[row['twin']]['kind']=='twin'
+   assert row['setup_sha256']==names[row['twin']]['setup_sha256']
+   pair(row['case'],row['twin'])
+validate_inventory()
+import copy
+for fault in ('missing','trap103','trap104','setup','different-setup','kind'):
+ saved=cases;cases=copy.deepcopy(saved)
+ r=next(r for r in cases if r['kind']=='refusal');t=next(t for t in cases if t['case']==r['twin'])
+ if fault=='missing':r.pop('twin')
+ elif fault.startswith('trap'):t['exit']=int(fault[4:])
+ elif fault=='setup':t['command']=['unrelated','fixture','extra']
+ elif fault=='different-setup':t['setup_sha256']='unrelated'
+ else:t['kind']='baseline'
+ try:validate_inventory()
+ except (AssertionError,KeyError):pass
+ else:raise AssertionError(('inventory control escaped',fault))
+ finally:cases=saved
+(gate/'plan-check.json').write_text(json.dumps({'success_exits':[0,77],'cases':cases,'device':'NOT_RUN','inventory_controls':['missing','trap103','trap104','setup','different-setup','kind']},indent=2)+'\n')
 print('PLAN_CPU PASS',len(cases),'cases; device NOT_RUN')

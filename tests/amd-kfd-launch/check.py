@@ -27,16 +27,78 @@ out=Path(os.environ.get('AMD_KFD_LAUNCH_OUT',root/'build/amd-kfd-launch/gate')).
 out.mkdir(parents=True,exist_ok=True)
 results=[]
 def run(label,args,want=0,data=None):
+    original=label
+    n=1
+    while any(r['case']==label for r in results):
+        n+=1;label=original+' #'+str(n)
     p=subprocess.run(list(map(str,args)),input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120)
-    row={'case':label,'exit':p.returncode,'expected':want,'stderr':p.stderr.decode(errors='replace')}
+    row={'kind':'baseline','command':list(map(str,args)),'case':label,'exit':p.returncode,'expected':want,'stderr':p.stderr.decode(errors='replace')}
     if not label.startswith(('compile ', 'build ')):
         row['stdout']=p.stdout.decode(errors='replace')
     results.append(row)
     print(('PASS' if p.returncode==want else 'FAIL'),label,'exit',p.returncode,'expected',want,flush=True)
-    (out/'results.json').write_text(json.dumps(results,indent=2)+'\n')
+    (out/'results.json').write_text(json.dumps({'success_exits':[0,77],'cases':results},indent=2)+'\n')
     if p.returncode!=want:
         print(p.stdout.decode(errors='replace')); print(row['stderr']); raise SystemExit(1)
     return p
+def pair(refusal,twin):
+    rows={r['case']:r for r in results}
+    r,t=rows[refusal],rows[twin]
+    assert t['exit']==t['expected'] and t['expected'] in (0,77)
+    assert t.get('value_asserted'),('unverified twin',twin)
+    # Both executions use the same command builder. Only one input token may
+    # differ (an object, program, caller argument, or injected syscall fault).
+    def tokens(command):
+        return [x for x in command if x!='env']
+    a,b=tokens(r['command']),tokens(t['command'])
+    if len(a)==len(b):assert sum(x!=y for x,y in zip(a,b))==1,(refusal,a,b)
+    else:
+        assert abs(len(a)-len(b))==1,(refusal,a,b)
+        long,short=(a,b) if len(a)>len(b) else (b,a)
+        assert any(long[:i]+long[i+1:]==short for i in range(len(long))),(refusal,a,b)
+    common=[x if x==y else '<refused-input>' for x,y in zip(a,b)] if len(a)==len(b) else short
+    setup=hashlib.sha256(json.dumps(common).encode()).hexdigest()
+    r.update(kind='refusal',twin=twin,setup_sha256=setup)
+    t['setup_sha256']=setup
+    t['kind']='twin'
+def refuse(label,args,want,twinargs,verify):
+    twin='positive twin '+label
+    p=run(twin,twinargs,77 if label.endswith('argument header') else 0)
+    twinrow=results[-1]
+    verify(p)
+    twinrow['value_asserted']=True
+    p=run(label,args,want)
+    pair(label,twin)
+    return p
+def vadd_value(p):
+    assert b'OMEGA vadd=PASS count=256' in p.stdout and b'child_exit=0 ' in p.stderr,(p.stdout,p.stderr)
+def empty_value(p):
+    # Composed units return zero only after asserting their mapped read value.
+    assert p.stdout==b''
+def preflight_value(p):
+    assert b'OMEGA step open_kfd' in p.stdout
+def two_alarm_value(p):
+    vadd_value(p)
+    assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==2
+def fast_value(p):
+    diagnostics(p,1,0,0x40000000,0)
+    assert b'OMEGA alarm slow_dispatch_ns=' not in p.stdout
+def inspected_value(p):
+    assert ('kernarg_bytes='+str(ka)).encode() in p.stdout
+def validate_inventory(rows):
+    names={r['case']:r for r in rows};assert len(names)==len(rows)
+    for r in rows:
+        assert r['kind'] in ('baseline','twin','refusal')
+        if r['expected'] not in (0,77) or r['case'].startswith('CONTROL '):assert r['kind']=='refusal',r['case']
+        if r['kind']=='refusal':
+            t=names[r['twin']]
+            assert t['kind']=='twin' and t['exit']==t['expected'] and t['expected'] in (0,77)
+            assert t.get('value_asserted')
+            # Recheck the builder relation, rather than trusting a written label.
+            assert r['setup_sha256']==t['setup_sha256']
+            pair(r['case'],t['case'])
+    return True
+
 reference=root/'tests/amd-kfd-launch/reference'
 references=json.loads((reference/'sources.json').read_text())['sources']
 assert len({r['file'] for r in references})==len(references)
@@ -137,24 +199,25 @@ for label,data in mutations.items():
     pth=out/(label+'.hsaco'); pth.write_bytes(data)
     for target,binary in bins.items():
         if target=='x86' and not qemu: continue
-        run(target+' refuse '+label,([qemu] if target=='x86' else [])+[binary,'inspect',pth,'vadd'],65)
+        refuse(target+' refuse '+label,([qemu] if target=='x86' else [])+[binary,'inspect',pth,'vadd'],65,([qemu] if target=='x86' else [])+[binary,'inspect',vobj,'vadd'],inspected_value)
 for target,binary in bins.items():
     if target=='x86' and not qemu: continue
     pre=([qemu] if target=='x86' else [])
-    run(target+' missing descriptor',pre+[binary,'inspect',vobj,'not_a_kernel'],65)
+    refuse(target+' missing descriptor',pre+[binary,'inspect',vobj,'not_a_kernel'],65,pre+[binary,'inspect',vobj,'vadd'],inspected_value)
     if not Path('/dev/kfd').exists():
         p=run(target+' absent KFD',pre+[binary,'vadd',vobj,'vadd'],77)
         assert b'OMEGA device=absent errno=2\n' in p.stdout
         assert b'OMEGA step open_kfd fail errno=2 phase=after detail=0\n' in p.stdout
-    badargs=out/'bad-args'; badargs.write_bytes(b'\0'*48)
-    run(target+' refuse argument header',pre+[binary,'run',vobj,'vadd',4,1,badargs,out/'unused'],64)
+    goodargs=out/'good-args'; goodargs.write_bytes(b'OMKFD001'+struct.pack('<5Q',28,1024,1,0,0)+bytes(28))
+    badargs=out/'bad-args'; badargs.write_bytes(b'BADMAGIC'+goodargs.read_bytes()[8:])
+    refuse(target+' refuse argument header',pre+[binary,'run',vobj,'vadd',4,1,badargs,out/'unused'],64,pre+[binary,'run',vobj,'vadd',4,1,goodargs,out/'unused'],preflight_value)
 # Full native host orchestration with a syscall instrument: no GPU opens reach Linux.
 run('compile UAPI layout oracle',['cc','-Wall','-Wextra','-Werror',root/'tests/amd-kfd/layout-oracle.c','-o',out/'layout'])
 layout=run('UAPI layout',[out/'layout']).stdout
 assert layout==(root/'backend/amd/kfd/requests.tsv').read_bytes()
 for name in ('trace','publication'):
     run('compile '+name+' instrument',['cc','-Wall','-Wextra','-Werror',root/'tests/amd-kfd-launch'/ (name+'.c'),'-o',out/name])
-def diagnostics(p,read,signal,output):
+def diagnostics(p,read,signal,output,timeout=10_000_000_000):
     rows={}
     for line in p.stdout.decode().splitlines():
         if line.startswith('OMEGA diag '):
@@ -162,7 +225,7 @@ def diagnostics(p,read,signal,output):
             rows[name]=int(value)
     expected={'queue_read_pointer':read,'queue_write_pointer':1,'signal_kind':1,'signal_value':signal,
               'queue_properties':2,'read_pointer_base_offset':128,'ring_header':0x21502,'ring_slot_byte_offset':0,'queue_id':7,'doorbell_offset':8,
-              'wait_timeout_ns':10_000_000_000,'output_first8_nan_fill_count':8 if output==0x7fc00000 else 0,
+              'wait_timeout_ns':timeout,'output_first8_nan_fill_count':8 if output==0x7fc00000 else 0,
               'output_first8_expected_vadd_sum_count':8 if output==0x40000000 else 0}
     for name,off,fmt in [('kernel_code_entry_byte_offset',16,'Q'),('compute_pgm_rsrc1',48,'I'),
                          ('compute_pgm_rsrc2',52,'I'),('compute_pgm_rsrc3',44,'I'),('kernel_code_properties',56,'H'),
@@ -198,12 +261,12 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     mutant=twice.replace('put dispatchalarm 0 0\n','')
     assert mutant!=twice
     u=compile('generic-no-alarm-rearm',mutant)
-    p=run('CONTROL generic missing re-arm detected',['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,u,'vadd',vobj,'vadd'])
+    p=refuse('CONTROL generic missing re-arm detected',['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,u,'vadd',vobj,'vadd'],0,['env','KFD_TEST_EXPIRE=1',out/'trace',tmp,out/'generic-two-dispatches','vadd',vobj,'vadd'],two_alarm_value)
     assert p.stdout.count(b'OMEGA alarm slow_dispatch_ns=')==1
     mutant=body.replace('gt elapsed 10000000000','gt elapsed 0')
     assert mutant!=body
     u=compile('alarm-threshold-zero',mutant)
-    p=run('CONTROL fast dispatch false alarm detected',[out/'trace',tmp,u,'vadd',vobj,'vadd'])
+    p=refuse('CONTROL fast dispatch false alarm detected',[out/'trace',tmp,u,'vadd',vobj,'vadd'],0,[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'],fast_value)
     assert b'OMEGA alarm slow_dispatch_ns=' in p.stdout
     p=run('native simulated orchestration',command)
     assert b'OMEGA alarm slow_dispatch' not in p.stdout
@@ -212,29 +275,32 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
         ('unconsumed timeout',['KFD_TEST_NO_COMPLETE=1','KFD_TEST_EXPIRE=1'],0,1,0x7fc00000,75),
         ('output without completion timeout',['KFD_TEST_NO_SIGNAL=1','KFD_TEST_EXPIRE=1'],1,1,0x40000000,75),
         ('completion without output',['KFD_TEST_NO_OUTPUT=1'],1,0,0x7fc00000,76)]:
-        p=run('CONTROL diagnostics '+name,['env',*variables,*command],1)
+        deadline=20_000_000_000 if child_exit==75 else 10_000_000_000
+        cmd=[*command[:-1],str(deadline)]
+        twinenv=['env','KFD_TEST_EXPIRE=1'] if child_exit==75 else []
+        p=refuse('CONTROL diagnostics '+name,['env',*variables,*cmd],1,[*twinenv,*cmd],lambda p: diagnostics(p,1,0,0x40000000,deadline))
         assert ('child_exit='+str(child_exit)+' ').encode() in p.stderr
-        diagnostics(p,read,signal,output)
+        diagnostics(p,read,signal,output,deadline)
         if child_exit==75:
             assert b'OMEGA step signal_wait fail errno=110' in p.stdout
     mutant=body.replace('r = checked mapset lh 5 180 4 2\n','r = checked mapset lh 5 180 4 0\n')
     assert mutant!=body
     bad=compile('queue-ptr32',mutant)
-    p=run('CONTROL wrong queue pointer width',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    p=refuse('CONTROL wrong queue pointer width',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1,[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'],vadd_value)
     assert b'queue_image' in p.stderr
     mutant=body.replace('r = checked mapset lh 5 180 4 2\n',
                         'r = checked mapset lh 5 180 4 2\nr = checked mapset lh 5 2040 8 1\n')
     assert mutant!=body
     bad=compile('queue-tail-dirty',mutant)
-    p=run('CONTROL nonzero unused queue tail',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    p=refuse('CONTROL nonzero unused queue tail',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1,[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'],vadd_value)
     assert b'queue_image' in p.stderr
     mutant=body.replace('r = allocate 3 mul get launch 10 64 0xe6000002', 'r = allocate 3 mul get launch 10 64 0xa6000002')
     assert mutant!=body
     bad=compile('ring-not-executable',mutant)
-    p=run('CONTROL ring lacks execute permission',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    p=refuse('CONTROL ring lacks execute permission',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1,[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'],vadd_value)
     assert b'KFD_IOC_ALLOC_MEM_FLAGS_EXECUTABLE' in p.stderr
     for mode in ('missing','duplicate','oversized','invalid','empty','large-duplicate'):
-        p=run('CONTROL aperture '+mode,['env','KFD_TEST_APERTURE='+mode,*command],1)
+        p=refuse('CONTROL aperture '+mode,['env','KFD_TEST_APERTURE='+mode,*command],1,['env','KFD_TEST_APERTURE='+('large' if mode=='large-duplicate' else 'normal'),*command],lambda p: (diagnostics(p,1,0,0x40000000),vadd_value(p)))
         assert b'child_exit=66 ' in p.stderr and b'queued=0' in p.stderr
     for mode in ('large','grow'):
         run('aperture inventory '+mode,['env','KFD_TEST_APERTURE='+mode,*command])
@@ -250,13 +316,18 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     invocation=[out/'trace',tmp,bins['a64'],'run',vobj,'vadd',4,1,args,*ins,result]
     repeated=run('native generic CLI ring wrap',invocation)
     assert b'packets=200\n' in repeated.stdout and result.read_bytes()==struct.pack('<f',2.0)*256
-    args.write_bytes(b'OMKFD001'+struct.pack('<QQQQQ',28,1024,1,1,3)+pairs+raw)
-    stopped=run('CONTROL missing device completion',['env','KFD_TEST_NO_COMPLETE=1',*invocation],1)
+    args.write_bytes(b'OMKFD001'+struct.pack('<QQQQQ',28,1024,1,20_000_000_000,3)+pairs+raw)
+    result.unlink(missing_ok=True)
+    def repeated_value(p):
+        assert b'packets=1\n' in p.stdout and result.read_bytes()==struct.pack('<f',2.0)*256
+        result.unlink()
+    stopped=refuse('CONTROL missing device completion',['env','KFD_TEST_EXPIRE=1','KFD_TEST_NO_COMPLETE=1',*invocation],1,['env','KFD_TEST_EXPIRE=1',*invocation],repeated_value)
+    assert not result.exists()
     assert b'child_exit=75 ' in stopped.stderr
     mutant=body.replace('hput 32 4 get dev 2\n','hput 32 4 add get dev 2 1\n')
     assert mutant!=body
     bad=compile('bad-gpu-record',mutant)
-    run('CONTROL wrong GPU record',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    refuse('CONTROL wrong GPU record',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1,[out/'trace',tmp,bins['a64'],'vadd',vobj,'vadd'],vadd_value)
 # An array-bound-dominant topology distinguishes both required ROCT divisions.
 with tempfile.TemporaryDirectory(prefix='kfd-ctx-',dir='/tmp') as tmp:
     node=Path(tmp)/'2';node.mkdir()
@@ -267,7 +338,7 @@ with tempfile.TemporaryDirectory(prefix='kfd-ctx-',dir='/tmp') as tmp:
     mutant=body.replace('mul div div get dev 5 get dev 6 get dev 6 512','mul div get dev 5 get dev 6 512')
     assert mutant!=body
     bad=compile('wrong-one-division-context',mutant)
-    run('CONTROL missing topology conversion',['env','KFD_TEST_CTX_BOUND=1',out/'trace',tmp,bad,'vadd',vobj,'vadd','10000000000'],1)
+    refuse('CONTROL missing topology conversion',['env','KFD_TEST_CTX_BOUND=1',out/'trace',tmp,bad,'vadd',vobj,'vadd','10000000000'],1,command,vadd_value)
 # Card-shaped discovery: CPUs, denied gpu_id/properties, and only node 3 readable.
 # Denial is injected at syscall entry, so this remains deterministic under root.
 with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
@@ -285,18 +356,18 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
         for step in ('open_kfd','version','render_open','acquire_vm','memory_alloc','memory_map','memory_cpu_map','queue_create','doorbell_map','code_object_load','dispatch','signal_wait','readback'):
             assert ('OMEGA step '+step+' ok errno=0 phase=before').encode() in p.stdout
             assert ('OMEGA step '+step+' ok errno=0 phase=after').encode() in p.stdout
-    p=run('CONTROL missing selected render node',['env','KFD_TEST_DENY=2/gpu_id','KFD_TEST_RENDER_ABSENT=1',*command],1)
+    p=refuse('CONTROL missing selected render node',['env','KFD_TEST_DENY=2/gpu_id','KFD_TEST_RENDER_ABSENT=1',*command],1,['env','KFD_TEST_DENY=2/gpu_id',*command],vadd_value)
     assert b'child_exit=74 ' in p.stderr
     assert b'OMEGA step render_open fail errno=2 phase=after detail=136\n' in p.stdout
     mutant=body.replace('r = stepresult fd\nret false','r = checked fd\nret false')
     assert mutant!=body
     bad=compile('fatal-topology-open',mutant)
-    p=run('CONTROL inaccessible node must not abort',['env','KFD_TEST_DENY=2/gpu_id',*command[:-4],bad,'vadd',vobj,'vadd'],1)
+    p=refuse('CONTROL inaccessible node must not abort',['env','KFD_TEST_DENY=2/gpu_id',*command[:-4],bad,'vadd',vobj,'vadd'],1,['env','KFD_TEST_DENY=2/gpu_id',*command],vadd_value)
     assert b'child_exit=74 ' in p.stderr
     mutant=body.replace('emit cpuskip\nret false','emit cpuskip\nexit 66')
     assert mutant!=body
     bad=compile('fatal-cpu-node',mutant)
-    p=run('CONTROL CPU node must not abort',[*command[:-4],bad,'vadd',vobj,'vadd'],1)
+    p=refuse('CONTROL CPU node must not abort',[*command[:-4],bad,'vadd',vobj,'vadd'],1,command,vadd_value)
     assert b'child_exit=66 ' in p.stderr
 # Exercise packet publication separately at every native instruction, using anonymous
 # CPU mappings. The observer verifies body -> header -> wptr -> doorbell, not final bytes alone.
@@ -344,13 +415,13 @@ packet_agrees_with_aql(run('generic ABI private20 group4096',['env','EXPECTED_PR
 mutant=unit.replace('hput 24 4 get el 10\nhput 28 4 get el 9','hput 24 4 get el 9\nhput 28 4 get el 10')
 assert mutant!=unit
 u=compile('publication-swapped-segments',mutant)
-run('CONTROL swapped group-private segments',[out/'publication',u],1)
+refuse('CONTROL swapped group-private segments',[out/'publication',u],1,[out/'publication',out/'publication-unit'],packet_agrees_with_aql)
 
 line='r = checked mapwrite lh 3 add slot 4 hdr 4 60\n'
 mutant=unit.replace(line,'').replace('r = checked mapset lh 3 slot 4 0x00021502\n','r = checked mapset lh 3 slot 4 0x00021502\n'+line)
 assert mutant!=unit
 u=compile('publication-early-header',mutant)
-run('CONTROL early valid header',[out/'publication',u],1)
+refuse('CONTROL early valid header',[out/'publication',u],1,[out/'publication',out/'publication-unit'],packet_agrees_with_aql)
 # Ring capacity follows the dispatch count, the established AQL minimum,
 # and the 32-bit CREATE_QUEUE byte-size wire field.
 ringunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))
@@ -370,7 +441,7 @@ for width in (1,4,8):
     u=compile('plan-helper-valid-width-'+str(width),word_width_unit(width))
     run('positive twin plan helper legal width '+str(width),[u])
 u=compile('plan-helper-word-width',word_width_unit(9))
-p=run('plan helper refuses impossible input width',[u],64)
+p=refuse('plan helper refuses impossible input width',[u],64,[out/'plan-helper-valid-width-8'],empty_value)
 assert p.stdout==b'OMEGA refuse plan field=word-width\n'
 ringmain='fn main to int\n'
 for dispatches,slots in [(1,16),(15,16),(16,32),(20,32),(1126,2048),(33554431,33554432)]:
@@ -379,7 +450,8 @@ ringmain+='ret 0\nend\n'
 u=compile('plan-ring-boundaries',ringunit+ringmain)
 run('native plan ring capacity boundaries',[u])
 u=compile('plan-ring-unrepresentable',ringunit+'fn main to int\nput ps 6 33554432\nplanring\nret 99\nend\n')
-run('CONTROL plan ring exceeds UAPI size',[u],64)
+valid=compile('plan-ring-largest-representable',ringunit+'fn main to int\nput ps 6 33554431\nplanring\nif ne get launch 10 33554432\nret 99\nend\nret 0\nend\n')
+refuse('CONTROL plan ring exceeds UAPI size',[u],64,[valid],empty_value)
 # The batch path has its own body-before-header observation and early-header control.
 planunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))
 planunit+=(root/'backend/amd/kfd/cli.om').read_text()
@@ -406,11 +478,11 @@ packet_agrees_with_aql(run('plantemplate ABI private20 group4096',['env','EXPECT
 mutant=planunit.replace('hput 24 4 cm code 80\nhput 28 4 cm code 72','hput 24 4 cm code 72\nhput 28 4 cm code 80')
 assert mutant!=planunit
 u=compile('plan-publication-swapped-segments',mutant)
-run('CONTROL plantemplate-only swapped segments',[out/'publication',u],1)
+refuse('CONTROL plantemplate-only swapped segments',[out/'publication',u],1,[out/'publication',out/'plan-publication-unit'],packet_agrees_with_aql)
 mutant=planunit.replace('plancopy sent\ncpufence\n','').replace('r = checked mapset lh 5 56 8 add sent get ps 6','plancopy sent\nr = checked mapset lh 5 56 8 add sent get ps 6')
 assert mutant!=planunit
 u=compile('plan-publication-early-header',mutant)
-run('CONTROL batch early valid header',[out/'publication',u],1)
+refuse('CONTROL batch early valid header',[out/'publication',u],1,[out/'publication',out/'plan-publication-unit'],packet_agrees_with_aql)
 mutant=body.replace('hput 24 4 cm code 80\nhput 28 4 cm code 72','hput 24 4 cm code 72\nhput 28 4 cm code 80')
 assert mutant!=body
 compile('plan-swapped-segments',mutant)
@@ -429,6 +501,23 @@ for receipt in sorted((root/'evidence').glob('amd-qwen38-native-*')):
         assert math.isclose(sum(u for _,_,u in steps[:prompt])/1000,row['prefill_ms'],rel_tol=0,abs_tol=1e-9)
         assert statistics.median(u/1000 for _,_,u in steps[prompt:])==row['decode_ms_median']
     print('RAW TIMING PASS',receipt.name,flush=True)
+validate_inventory(results)
+import copy
+for fault in ('missing','trap103','trap104','setup','different-setup','kind'):
+    saved=results
+    results=copy.deepcopy(saved)
+    r=next(r for r in results if r['kind']=='refusal')
+    t=next(t for t in results if t['case']==r['twin'])
+    if fault=='missing':r.pop('twin')
+    elif fault.startswith('trap'):t['exit']=int(fault[4:])
+    elif fault=='setup':t['command']=['unrelated','fixture','extra']
+    elif fault=='different-setup':t['setup_sha256']='unrelated'
+    else:t['kind']='baseline'
+    try:validate_inventory(results)
+    except (AssertionError,KeyError):pass
+    else:raise AssertionError(('inventory control escaped',fault))
+    finally:results=saved
+(out/'results.json').write_text(json.dumps({'success_exits':[0,77],'cases':results,'inventory_controls':['missing','trap103','trap104','setup','different-setup','kind']},indent=2)+'\n')
 summary={'compiler':pin,'checks':len(results),'failures':sum(r['exit']!=r['expected'] for r in results),'qemu':qemu,'device':'NOT_RUN','orchestration':'native CPU syscall simulation only','publication':'native instruction-step observation only','objects':{name:hashlib.sha256(data).hexdigest() for name,(p,data,k,a) in objects.items()},'binaries':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in bins.items()}}
 (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('AMD-KFD-LAUNCH CPU PASS',json.dumps(summary,sort_keys=True))

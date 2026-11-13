@@ -107,3 +107,21 @@ not establish a meaningful positive baseline. The shared word_width_unit builder
 now initializes real mapped data for both paths; legal widths1,4,8 must read the
 known bytes successfully before width9's specific refusal counts. The ring helper
 has its own successful boundary table before the unrepresentable-size refusal.
+
+The positive-twin rule must be enforced over both launcher gate result files,
+not inferred from labels or checked only in the plan parser. Each now declares
+success_exits and cases, and every refusal names a fresh passing twin with a
+verified value, matching command setup and one changed input. This also covers
+semantic mutants that exit zero. Inventory controls reject missing twins, trap
+exits103/104, unrelated command setups, mismatched setup hashes and wrong kinds.
+Both files use the same object envelope; consumers read .cases.
+
+Search all CONTROL and non-success rows before review. That inventory exposed
+fixtures where the valid timeout twin also failed: use the same simulated clock
+and a deadline above one completed step, changing only the missing completion
+fault for the refusal. Start output checks without a prior result file. The
+argument-header pair now preserves a valid manifest except its magic, and the
+ring helper has a separate largest-representable twin with the same single-count
+setup. Refusal credit requires a twin from that same execution, not a compiler
+success or an unrelated boundary table. An unexpected trap is a failed gate,
+not a credited refusal; classify its mapping/bounds cause before a mutant claim.

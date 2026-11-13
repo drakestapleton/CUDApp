@@ -1,0 +1,325 @@
+{
+  "schema": "addnorm5120-acceptance-v1",
+  "status": "EXERCISED",
+  "hardware": "NOT_RUN",
+  "performance": "NOT_RUN",
+  "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+  "source_sha256": {
+    "addnorm5120.isa": "0be7f619cd49fb99c8a50a041fc47a5c85466ab53c8360a5fcf2397a76457c8e",
+    "token_access.py": "4b3db017488b92a8d09440f3eeb289ca21c4fe39cb742c40a735803709398907",
+    "gdnstate_w.py": "fa27dfdeb1625652a82f79e9df731da1a1614b6a8b145df9a3f87748713424af",
+    "main.om": "e9b2b3e76ee475a2ee04966d4310da7855b1140a81289eea533d89da8b6ec059",
+    "hsaco.om": "4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1",
+    "residual5120-gfx942.s": "7fb45f1579e4a11f2af932f297089273cd5466cba02207c5ee86fbaadf0c508e",
+    "fp.om": "90b87189e2647f9071e90a738a9b0d2e0ca7b88950c401ce00d5feadd86e0006",
+    "rmsnorm5120-gfx942.s": "43d186718c8688b7b059728a399b004a3f50dcbc71e52f70b0d49fc0eaa206ea",
+    "sgemm.py": "8a262ab521815b893e12790c8acbff0e44511224055ce81848201b81acb71e0a",
+    "addnorm5120-gfx942.s": "fe85a014aa1f15d674a974ea0f70ae5e0fc6f8d160906cd017fbcc3157dbb761",
+    "prep.py": "37435cfddd0724da23759ab0db1c4926fa23e4ceeb7769d66fbbf1ef48f28039",
+    "fma.om": "7ec0ae5afbab2a81dfa9852b3178b91ed05e3a42a988e59affe98b12d19da73e",
+    "residual5120.isa": "81d6a0d6030bf3e07a6eff4ca9b3705b4196fd75e0b3a159f3404302d9e5f713",
+    "addnorm5120.py": "23351b19bea10efcdf3730aa302d15c22056c3cd1139f8f00eb066288c51c721",
+    "rmsnorm5120.isa": "2830ef250f1003cbb23be44c4bd5a08b17700e8f00cd2fc2eaa1029e410e9565",
+    "attention.py": "d9f5f04df4d0bf9790f6440ceba9c68714675af2d0f0af771dc5daad9e8a6e3e"
+  },
+  "kernarg_size": 40,
+  "grid_workgroups": [
+    1,
+    1,
+    1
+  ],
+  "block": [
+    64,
+    1,
+    1
+  ],
+  "objects": {
+    "residual5120": {
+      "file": "residual5120.hsaco",
+      "sha256": "f4d5127cb4db16282257e91c42a220f9141c222f904554f45b2019f049085e7e"
+    },
+    "rmsnorm5120": {
+      "file": "rmsnorm5120.hsaco",
+      "sha256": "f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f"
+    },
+    "addnorm5120": {
+      "file": "addnorm5120.hsaco",
+      "sha256": "917d4cd93637d4f1244fcb8a0634749c695308cf4d0ba2cc6cb0ab4733d3ad16"
+    },
+    "addnorm5120-skip-residual-write": {
+      "file": "addnorm5120-skip-residual-write.hsaco",
+      "sha256": "e03722bbe02d725725995ffd288e52e13920727585ed4b73552f45e1107a6675"
+    },
+    "addnorm5120-norm-preadd": {
+      "file": "addnorm5120-norm-preadd.hsaco",
+      "sha256": "aac677b806f02825f886433467203c084c9dae4902482c673f6f782ed6ffda0b"
+    },
+    "addnorm5120-wrong-epsilon": {
+      "file": "addnorm5120-wrong-epsilon.hsaco",
+      "sha256": "9c04a55f1cfcdaebf196a4f9d9fd87db81958bbeec94f3bac7a7e7ba28a786de"
+    }
+  },
+  "cases": [
+    {
+      "case": "random-1",
+      "input_sha256": "fd048fc71b6c3087a49f90bf54b7f2350501793bffb688144c15cd6888a1798e",
+      "result_sha256": "43fbde8fb6fd1ee58331f7270abbc151e63a483a7d819d4ea6b7b06cf8083ffc",
+      "independent": "residual exact; all norm outputs within instruction-boundary RSQ interval"
+    },
+    {
+      "case": "random-2",
+      "input_sha256": "ce0bc55d52129ecca126fb23ce200e854545c6ce649fd9dec9d919bfe21ab6a2",
+      "result_sha256": "36797ed686fb096415fe09956d218f8c2555a1afda1c2c9497210d28fb77fb5c",
+      "independent": "residual exact; all norm outputs within instruction-boundary RSQ interval"
+    },
+    {
+      "case": "zero",
+      "input_sha256": "ded3136226c0cf42d88a138238b94f69e8da25b9c181232190bc2e4e12dfdf59",
+      "result_sha256": "efc5faaf56a8642dfcd12520d16c970eaf4900d9f4b40162279df8f82450130a",
+      "independent": "residual exact; all norm outputs within instruction-boundary RSQ interval"
+    },
+    {
+      "case": "cancel",
+      "input_sha256": "a7533d248d124a9ef0cbb18b9ff74b3b7d3028341d51cb9b42d54886af19cd7a",
+      "result_sha256": "1a2f68c5f79af3f36a20b0623cc76a1b04f27e7556dd6d8735a4dd74881cc19c",
+      "independent": "residual exact; all norm outputs within instruction-boundary RSQ interval"
+    },
+    {
+      "case": "tiny",
+      "input_sha256": "078419b8a865af45b0a98716bb24366cf046875325ce2084c613053f80d59063",
+      "result_sha256": "e70cce56861524db95a9b0bcab2dfbc6db98af3b3bf03c08e76daf921b9b8d27",
+      "independent": "residual exact; all norm outputs within instruction-boundary RSQ interval"
+    },
+    {
+      "case": "large",
+      "input_sha256": "9febda359b7c5e9ffe11f00335a64cd94fc125a529ea0e75f475c3ae95b81573",
+      "result_sha256": "989563beef9e0aff5bdb4c55689fd838e78b45e4e34d3e8ff37de3d288d93a5e",
+      "independent": "overflow: residual exact; norm exact against original sequence"
+    },
+    {
+      "case": "subnormal",
+      "input_sha256": "483824dbd0b150626ca02d5729b74d26ed86a2008972b8a881a8d085fc217871",
+      "result_sha256": "0a1be8a910954b004c9951a27889e050845d97c1a6ab7a3b83058ae4df0d2e8c",
+      "independent": "residual exact; all norm outputs within instruction-boundary RSQ interval"
+    },
+    {
+      "case": "exceptional",
+      "input_sha256": "4541e2dffa931a34092b4cfab2e70e018c1a2b973700408e02fc2f477f223b92",
+      "result_sha256": "eaf7ddf53b58d0c457fe63fb6a55aac4d4afaedee2a66240224aa796c5ca2be8",
+      "independent": "nonfinite: residual exact; norm exact against original sequence"
+    }
+  ],
+  "bounds": [
+    {
+      "case": "random-1",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "h",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "delta",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "weight",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "h_new",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": 20479
+        },
+        {
+          "name": "y",
+          "bytes": 20480,
+          "max_read_offset": null,
+          "max_write_offset": 20479
+        }
+      ]
+    },
+    {
+      "case": "skip-residual-write",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "h",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "delta",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "weight",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "h_new",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "y",
+          "bytes": 20480,
+          "max_read_offset": null,
+          "max_write_offset": 20479
+        }
+      ]
+    },
+    {
+      "case": "norm-preadd",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "h",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "delta",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "weight",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "h_new",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": 20479
+        },
+        {
+          "name": "y",
+          "bytes": 20480,
+          "max_read_offset": null,
+          "max_write_offset": 20479
+        }
+      ]
+    },
+    {
+      "case": "wrong-epsilon",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 40,
+          "max_read_offset": 39,
+          "max_write_offset": null
+        },
+        {
+          "name": "h",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "delta",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "weight",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": null
+        },
+        {
+          "name": "h_new",
+          "bytes": 20480,
+          "max_read_offset": 20479,
+          "max_write_offset": 20479
+        },
+        {
+          "name": "y",
+          "bytes": 20480,
+          "max_read_offset": null,
+          "max_write_offset": 20479
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "mutant": "skip-residual-write",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "mutant": "norm-preadd",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "mutant": "wrong-epsilon",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "buffer": "kernarg",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "h",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "delta",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "weight",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "h_new",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "y",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    }
+  ]
+}

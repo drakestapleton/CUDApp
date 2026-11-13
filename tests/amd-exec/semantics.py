@@ -33,6 +33,18 @@ def case(name, page, words, seed=None, result=None, *, ex=1, vc=U64, cc=1,
     CASES.append(dict(name=name, page=page, words=words, seed=seed or {}, expect=expect,
                       ex=ex, vc=vc, cc=cc, running=running, mem=mem, memory=memory, refusal=refusal))
 
+# VOP1 readfirstlane writes an SGPR even when EXEC is empty (CDNA3 physical p187).
+for mask, lane in ((0, 0), (1, 0), (2, 1), (1 << 63, 63),
+                   ((1 << 63) | 8, 3), (U64, 0)):
+    seed = {v(1, i): 0xabc00000 + i for i in range(64)}
+    seed[s(8)] = 0xdeadbeef
+    seed[v(8)] = 0x11223344
+    case(f'readfirst-{mask}', 187, [0x7e000000 | 8 << 17 | 2 << 9 | 257],
+         seed, {s(8): 0xabc00000 + lane}, ex=mask)
+for source, dest in ((4, 8), (255, 8), (257, 102), (257, 126), (257, 255)):
+    case(f'readfirst-refuse-{source}-{dest}', 187,
+         [0x7e000000 | dest << 17 | 2 << 9 | source], refusal=66)
+
 # Scalar arithmetic: full unsigned temporary, destination low32; SUB sets borrow, not carry/no-borrow.
 for a, b in [(0, 1), (1, 1), (2, 1), (U32, 1), (0, U32)]:
     case(f'sub-{a}-{b}', 97, sop(1), {s(4): a, s(5): b}, {s(8): (a-b)&U32}, ncc=int(b>a))
@@ -256,6 +268,8 @@ words[1] |= 1 << 16
 case('bpermute-unused-data1', 437, words, refusal=66)
 
 MUTATIONS = {
+    'readfirst-lane-zero': ('put sr get st 13 vg sub get st 11 256 first',
+                            'put sr get st 13 vg sub get st 11 256 0'),
     'lshr-left': ('r = shr a and b 31', 'r = and shl a and b 31 0xffffffff'),
     'fsub-add': ('r = fpadd a xor b 0x80000000', 'r = fpadd a b'),
     'fmax-ignores-snan': ('ret or a 0x400000', 'ret b'),
@@ -286,6 +300,7 @@ MUTATIONS = {
                           'src = and shr add vg get st 11 lane get st 7 2 63\nvs get st 13 lane vg get st 12 src'),
 }
 MUTANT_CASE = {
+    'readfirst-lane-zero': 'readfirst-2',
     'lshr-left': 'lshr32-2147483649-33', 'fsub-add': 'fsub-denorm',
     'fmax-ignores-snan': 'fmax-7f801234-3f800000',
     'exp-returns-input': 'trans-32-3f800000', 'rcp-returns-input': 'trans-34-c0000000',

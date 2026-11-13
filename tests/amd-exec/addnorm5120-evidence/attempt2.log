@@ -1,0 +1,20 @@
+POOL_ACQUIRED=/home/drakestapleton/handoffs/hive/queen/pool-6.lock AFFINITY=6
+PASS deterministic seeded producer/executor; original and fused LLVM text/note/descriptor
+PASS random-1 residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; residual exact; all norm outputs within instruction-boundary RSQ interval
+PASS random-2 residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; residual exact; all norm outputs within instruction-boundary RSQ interval
+PASS zero residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; residual exact; all norm outputs within instruction-boundary RSQ interval
+PASS cancel residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; residual exact; all norm outputs within instruction-boundary RSQ interval
+PASS tiny residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; residual exact; all norm outputs within instruction-boundary RSQ interval
+PASS large residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; overflow: residual exact; norm exact against original sequence
+PASS subnormal residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; residual exact; all norm outputs within instruction-boundary RSQ interval
+PASS exceptional residual/norm all bits equal two-kernel sequence; guards; XY overdispatch; nonfinite: residual exact; norm exact against original sequence
+CONTROL skip-residual-write CAUGHT numerical mismatch exit=0
+CONTROL norm-preadd CAUGHT numerical mismatch exit=0
+CONTROL wrong-epsilon CAUGHT numerical mismatch exit=0
+CONTROL short-kernarg CAUGHT exit=68
+CONTROL short-h CAUGHT exit=68
+CONTROL short-delta CAUGHT exit=68
+CONTROL short-weight CAUGHT exit=68
+CONTROL short-h_new CAUGHT exit=68
+CONTROL short-y CAUGHT exit=68
+PASS addnorm5120 cases=8 controls=9 HARDWARE NOT_RUN PERFORMANCE NOT_RUN

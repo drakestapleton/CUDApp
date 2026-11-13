@@ -1,0 +1,636 @@
+[
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "0689ac495c7d54e0f87da40fed5e67e62303a9c9cd9410f3beb266dd80d01ebf",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "0689ac495c7d54e0f87da40fed5e67e62303a9c9cd9410f3beb266dd80d01ebf",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f4d5127cb4db16282257e91c42a220f9141c222f904554f45b2019f049085e7e",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f4d5127cb4db16282257e91c42a220f9141c222f904554f45b2019f049085e7e",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "917d4cd93637d4f1244fcb8a0634749c695308cf4d0ba2cc6cb0ab4733d3ad16",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "917d4cd93637d4f1244fcb8a0634749c695308cf4d0ba2cc6cb0ab4733d3ad16",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-skip-residual-write.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e03722bbe02d725725995ffd288e52e13920727585ed4b73552f45e1107a6675",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-skip-residual-write.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e03722bbe02d725725995ffd288e52e13920727585ed4b73552f45e1107a6675",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-norm-preadd.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "aac677b806f02825f886433467203c084c9dae4902482c673f6f782ed6ffda0b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-norm-preadd.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "aac677b806f02825f886433467203c084c9dae4902482c673f6f782ed6ffda0b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-wrong-epsilon.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "9c04a55f1cfcdaebf196a4f9d9fd87db81958bbeec94f3bac7a7e7ba28a786de",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-wrong-epsilon.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "9c04a55f1cfcdaebf196a4f9d9fd87db81958bbeec94f3bac7a7e7ba28a786de",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "llvm-mc-18",
+      "-triple=amdgcn-amd-amdhsa",
+      "-mcpu=gfx942",
+      "-filetype=obj",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/source/residual5120-gfx942.s",
+      "-o",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120-llvm.o"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "llvm-mc-18",
+      "-triple=amdgcn-amd-amdhsa",
+      "-mcpu=gfx942",
+      "-filetype=obj",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/source/rmsnorm5120-gfx942.s",
+      "-o",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120-llvm.o"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "llvm-mc-18",
+      "-triple=amdgcn-amd-amdhsa",
+      "-mcpu=gfx942",
+      "-filetype=obj",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/source/addnorm5120-gfx942.s",
+      "-o",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-llvm.o"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "87a4da1459e4312c6b42cac3926d518427851d7bf33e79933e88632c37f188aa",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3345f67a9d6905d9c13d7e5678df1d69b2fbb1a3777ad466aa509b23a68a79f8",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/residual5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "5184",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/rmsnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-skip-residual-write.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "b466fb17787caa6378b90a2ea0e265f3125b77fa9ee28e475efd9014a6ea5f54",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-norm-preadd.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3345f67a9d6905d9c13d7e5678df1d69b2fbb1a3777ad466aa509b23a68a79f8",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120-wrong-epsilon.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3345f67a9d6905d9c13d7e5678df1d69b2fbb1a3777ad466aa509b23a68a79f8",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3b21bdda0fd28cb07e505353883d0eed9f4ea01dd51764e254e1f0380f89528c",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/short-kernarg",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "60a63f98b40b6fe227082f786b43931e6ca723f5711bffd58633ededc5388dac",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/short-h",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "8ed1fd3e6b518bed5c2d0d8b3c7ff6deb9ca44699d57a6f10b132f2050d136cf",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/short-delta",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "a657db1f8abb09c2f0e5a4c1919337fc08ce2a88cc11cbe8860e60b93448390f",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/short-weight",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "0fb47713345177411c461ba3523893c4be7be9f6ce8519fce2b206b3b6d356aa",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/short-h_new",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "c7e79d46633d6afd7b8330909bbe47106e509f974843b081a2ee4bbe9310f8ce",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/short-y",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/addnorm5120.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt2/memory.bin",
+      "128",
+      "2"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  }
+]

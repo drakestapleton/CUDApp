@@ -1,0 +1,12 @@
+POOL_ACQUIRED=/home/drakestapleton/handoffs/hive/queen/pool-6.lock AFFINITY=6
+Traceback (most recent call last):
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/addnorm5120.py", line 149, in <module>
+    if __name__=='__main__': main()
+                             ^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/addnorm5120.py", line 105, in main
+    obj=out/(name+'-llvm.o'); run(['llvm-mc-18','-triple=amdgcn-amd-amdhsa','-mcpu=gfx942','-filetype=obj',snapshot/(name+'-gfx942.s'),'-o',obj])
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn/tests/amd-exec/addnorm5120.py", line 89, in run
+    assert result.returncode==expected and not result.stderr,commands[-1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'argv': ['llvm-mc-18', '-triple=amdgcn-amd-amdhsa', '-mcpu=gfx942', '-filetype=obj', '/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt1/source/addnorm5120-gfx942.s', '-o', '/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt1/addnorm5120-llvm.o'], 'exit': 1, 'stdout_sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'stderr': '/home/drakestapleton/handoffs/hive/amdserve/evidence/addnorm5120-attempt1/source/addnorm5120-gfx942.s:345:21: error: invalid HSA metadata\n.end_amdgpu_metadata\n                    ^\n'}

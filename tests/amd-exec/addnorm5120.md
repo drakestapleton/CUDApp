@@ -10,10 +10,10 @@ The fused kernel is a single wave. More workgroups would require a different syn
 
 ## Acceptance
 
-Under a free queen pool lock, with `nice`, run:
+Run from the repository root under an externally held free queen CPU-pool lock with `nice` and CPU affinity. Set `OMEGA_OMC` to the absolute pinned compiler path and `AMD_DOC_OUT` to a new private output parent. Use `python3` on the caller's PATH with NumPy installed; a missing dependency is NOT_RUN.
 
-```
-python tests/amd-exec/addnorm5120.py --omc /path/to/pinned/omc --out /new/private/output
+```sh
+python3 tests/amd-exec/addnorm5120.py --omc "$OMEGA_OMC" --out "$AMD_DOC_OUT/addnorm5120"
 ```
 
 The instrument snapshots all source dependencies, checks deterministic seeded compilation/object production and LLVM encoding/metadata/descriptor agreement, and compares every output, input and guard byte against the existing two-kernel sequence. Cases include random inputs, zeros, cancellation, tiny values, overflow, subnormals and exceptional IEEE values. Both grid dimensions are overdispatched.

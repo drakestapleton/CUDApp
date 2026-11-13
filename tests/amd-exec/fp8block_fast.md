@@ -39,14 +39,13 @@ NaNs and signed zero; native gfx942 FNUZ is not used as the reference format.
 
 ## CPU acceptance
 
-Hold a free queen pool lock and use nice; the caller owns that lock throughout:
+Run from the repository root under an externally held free queen CPU-pool lock with `nice` and CPU affinity. Set `OMEGA_OMC`, `AMD_WEIGHTS` and `AMD_DOC_OUT` as in `fp8block.md`; run that document first to produce the baseline bundle. Use `python3` on the caller's PATH. Missing dependencies are NOT_RUN.
 
 ```sh
-flock -n "$HOME/handoffs/hive/queen/pool-0.lock" nice -n 10 \
-  python3 tests/amd-exec/fp8block_fast.py \
-  --omc "$HOME/work/hive/amdserve/AmdGfx942/pin/omc" \
-  --weights "$HOME/workspace/l182-final/aien-demo/weights/qwen3.8-27b-fp8" \
-  --out NEW_RUN_DIRECTORY
+python3 tests/amd-exec/fp8block_fast.py \
+  --omc "$OMEGA_OMC" \
+  --weights "$AMD_WEIGHTS" \
+  --out "$AMD_DOC_OUT/fp8block_fast"
 ```
 
 The run checks the compiler pin, deterministic seeded producer/executor and
@@ -63,7 +62,7 @@ same CPU-lock discipline:
 
 ```sh
 python3 tests/amd-exec/fp8block_fast_bundle.py \
-  RUN_DIRECTORY NEW_V13_DIRECTORY EXISTING_V11_DIRECTORY
+  "$AMD_DOC_OUT/fp8block_fast" "$AMD_DOC_OUT/fp8block-fast-bundle" "$AMD_DOC_OUT/fp8block-bundle"
 ```
 
 The bundle checks committed source hashes and retains the baseline's exact

@@ -76,6 +76,14 @@ for a, expected in [(0xff800000, 0xffc00000), (0x80000000, 0xff800000),
     case(f'rsq-{a:x}', 197, [0x7e000000 | 3 << 17 | 36 << 9 | 257],
          {v(1): a, v(3,1): 0xdeadbeef, v(1,63): a},
          {v(3): expected, v(3,63): expected}, ex=(1 << 63)|1)
+for a, expected in [(0xff800000,0xffc00000),(0xbf800000,0xffc00000),
+                    (0x80000000,0xff800000),(0,0xff800000),
+                    (1,0xff800000),(0x80000001,0xff800000),
+                    (0x3f800000,0),(0x40000000,0x3f800000),
+                    (0x3f000000,0xbf800000),(0x7f800000,0x7f800000)]:
+    case(f'log-{a:x}',187,[0x7e000000 | 3 << 17 | 33 << 9 | 257],
+         {v(1):a,v(3,1):0xdeadbeef,v(1,63):a},
+         {v(3):expected,v(3,63):expected},ex=(1<<63)|1)
 for op, label in [(36, 'mul-low'), (44, 'mul-high')]:
     for a, b in [(U32, U32), (0x80000000, 3), (0, 17)]:
         product = a*b
@@ -251,6 +259,7 @@ MUTATIONS = {
     'exp-returns-input': ('r = fpexp r', 'r = r'),
     'rcp-returns-input': ('r = fprcp r', 'r = r'),
     'rsq-is-rcp': ('r = fprsq r', 'r = fprcp r'),
+    'log-returns-input': ('r = fplog r', 'r = r'),
     'inline-float-refused': ('if and ge s 240 le s 248\nret\nend',
                              'if and ge s 240 le s 248\nfail 66\nend'),
     'nop-clears-scc': ('if eq cl 4\nop = get st 10\ncc = get st 16',
@@ -277,6 +286,7 @@ MUTANT_CASE = {
     'fmax-ignores-snan': 'fmax-7f801234-3f800000',
     'exp-returns-input': 'trans-32-3f800000', 'rcp-returns-input': 'trans-34-c0000000',
     'rsq-is-rcp': 'rsq-40800000',
+    'log-returns-input': 'log-40000000',
     'inline-float-refused': 'vmov-inline-float-242',
     'nop-clears-scc': 'nop-0',
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',

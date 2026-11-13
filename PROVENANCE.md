@@ -1593,3 +1593,10 @@ implies4.7178x graph decode ratio. Median prefill776.861 ms is slower than saved
 Spark507 ms. No fresh Spark run, startup-ratio claim,256-token bitwise Spark
 parity, model-quality equivalence or HTTP service is implied. Raw data, code
 identity, numerical limits, units and reproducible calculations are retained.
+
+Launcher CA6 close-out adds nine missing semantic-plan rows and an explicit
+word-width helper boundary. The shared CLI unsigned parser now emits distinct
+machine-readable reason lines on its existing exit2 paths; valid parsing and
+numeric bounds are unchanged. Every deadline refusal has a valid zero twin.
+These diagnostic-source changes produce a new executable and require a new
+hardware receipt; the earlier373e receipt remains an immutable historical run.

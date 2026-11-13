@@ -40,9 +40,12 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
   command=planargv(pth)
   p=run(arch+' valid preflight absent KFD',command,77)
   assert b'OMEGA device=absent' in p.stdout
-  for value in ('-1','not-a-number','18446744073709551616'):
-   p=run(arch+' refuses malformed caller deadline '+value,[*command,value],2)
-   assert b'OMEGA step open_kfd' not in p.stdout
+  def deadlineargv(value):return [*planargv(pth),value]
+  for value,reason in [('', 'text'),('0x12345678901234567','hex-length'),('0xg','hex-digit'),('-1','decimal-digit'),('not-a-number','decimal-digit'),('18446744073709551620','decimal-range'),('18446744073709551616','decimal-overflow'),('0'*21+'1','text')]:
+   p=run(arch+' positive twin deadline '+repr(value),deadlineargv('0'),77)
+   assert b'OMEGA step open_kfd' in p.stdout
+   p=run(arch+' refuses malformed caller deadline '+repr(value),deadlineargv(value),2)
+   assert p.stdout==('OMEGA refuse number field='+reason+'\n').encode(),(value,p.stdout)
   p=run(arch+' positive twin argc',planargv(pth),77)
   assert b'OMEGA step open_kfd' in p.stdout
   p=run(arch+' refuses argc',planargv(pth)[:-1],64)
@@ -65,6 +68,15 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
    'bad-buffer-offset':(248+32+28+8,struct.pack('<Q',1024)),
    'nonzero-pointer':(248+32,struct.pack('<Q',1)),
    'dispatch-padding':(248+108,b'\x01'),
+   'bad-data-layout':(len(plan)-8,struct.pack('<Q',len(data)+1)),
+   'empty-name':(72,bytes(8)),
+   'zero-buffer-size':(96,bytes(8)),
+   'nonzero-zero-buffer-index':(208,struct.pack('<Q',1)),
+   'nonzero-data-index':(112,struct.pack('<Q',1)),
+   'bad-relocation-buffer':(248+32+28+4,struct.pack('<I',3)),
+   'zero-grid':(248+4,bytes(4)),
+   'too-many-relocations':(248+24,struct.pack('<I',4)),
+   'dispatch-end-before-pool':(32,struct.pack('<Q',19)),
    'pool-overlap':(len(plan)-32,struct.pack('<Q',len(prefix)-1)),
   }
   too_large=bytearray(plan)
@@ -74,7 +86,7 @@ with tempfile.TemporaryDirectory(prefix='plan-',dir='/tmp') as td:
   assert b'OMEGA step open_kfd' in p.stdout
   p=run(arch+' refuses arena sum overflow',planargv(overflow),64)
   assert p.stdout==b'OMEGA refuse plan field=add-overflow\n'
-  reasons={'bad-magic': 'magic', 'zero-code': 'code-count', 'count-overflow': 'multiply-overflow', 'zero-prompt': 'count', 'bad-token': 'token-index', 'bad-name': 'span-offset', 'bad-kind': 'buffer-kind', 'bad-flags': 'buffer-flags', 'bad-file-index': 'file-index', 'bad-file-range': 'span-offset', 'odd-widen': 'widen-size', 'token-not-GTT': 'token-buffer', 'prompt-padding': 'padding', 'bad-code-index': 'code-index', 'bad-block': 'workgroup', 'bad-kernarg-size': 'kernarg-size', 'bad-reloc-alignment': 'relocation-alignment', 'duplicate-reloc': 'duplicate-relocation', 'bad-buffer-offset': 'span-size', 'nonzero-pointer': 'relocation-pointer', 'dispatch-padding': 'padding', 'pool-overlap': 'pool-layout'}
+  reasons={'bad-magic': 'magic', 'zero-code': 'code-count', 'count-overflow': 'multiply-overflow', 'zero-prompt': 'count', 'bad-token': 'token-index', 'bad-name': 'span-offset', 'bad-kind': 'buffer-kind', 'bad-flags': 'buffer-flags', 'bad-file-index': 'file-index', 'bad-file-range': 'span-offset', 'odd-widen': 'widen-size', 'token-not-GTT': 'token-buffer', 'prompt-padding': 'padding', 'bad-code-index': 'code-index', 'bad-block': 'workgroup', 'bad-kernarg-size': 'kernarg-size', 'bad-reloc-alignment': 'relocation-alignment', 'duplicate-reloc': 'duplicate-relocation', 'bad-buffer-offset': 'span-size', 'nonzero-pointer': 'relocation-pointer', 'dispatch-padding': 'padding', 'pool-overlap': 'pool-layout', 'bad-data-layout':'data-layout', 'empty-name':'name', 'zero-buffer-size':'buffer-size', 'nonzero-zero-buffer-index':'zero-buffer', 'nonzero-data-index':'data-index', 'bad-relocation-buffer':'relocation-buffer', 'zero-grid':'grid', 'too-many-relocations':'relocation-count', 'dispatch-end-before-pool':'dispatch-end'}
   for name,(off,value) in mutations.items():
    bad=d/(name+'.plan');bad.write_bytes(plan[:off]+value+plan[off+len(value):])
    p=run(arch+' positive twin '+name,planargv(pth),77)

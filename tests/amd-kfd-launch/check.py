@@ -342,6 +342,12 @@ run('CONTROL early valid header',[out/'publication',u],1)
 # and the 32-bit CREATE_QUEUE byte-size wire field.
 ringunit=''.join((src/(x+'.om')).read_text() for x in ('common','elf','device','dispatch','plan'))
 ringunit+=(root/'backend/amd/kfd/cli.om').read_text()
+# pw widths are fixed at production call sites. This defensive helper boundary is
+# not reachable by plan bytes; exercise it explicitly instead of inventing a plan row.
+widthunit=ringunit+'fn main to int\nput ps 2 16\nr = pw 0 9\nret 99\nend\n'
+u=compile('plan-helper-word-width',widthunit)
+p=run('plan helper refuses impossible input width',[u],64)
+assert p.stdout==b'OMEGA refuse plan field=word-width\n'
 ringmain='fn main to int\n'
 for dispatches,slots in [(1,16),(15,16),(16,32),(20,32),(1126,2048),(33554431,33554432)]:
     ringmain+='put ps 6 '+str(dispatches)+'\nplanring\nif ne get launch 10 '+str(slots)+'\nret 99\nend\n'

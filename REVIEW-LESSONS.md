@@ -67,3 +67,12 @@ Producer-source references are vendored unmodified with their own licenses,
 URLs and SHA256SUMS under tests/amd-kfd-launch/reference. The gate checks their
 bytes and the cited mapping lines offline. External field derivations require
 producer source, not an inference from field names.
+
+The CA6 close-out deleted each individual plan guard and found nine reachable
+boundaries without rows. The table now covers data layout, empty names, buffer
+size, zero/data-buffer indices, relocation buffer, grid, relocation count and
+final dispatch end. The word-width helper guard has a separate explicit unit;
+production plan calls use constant widths, so no fake input row claims to reach it.
+Every malformed numeric deadline also has a fresh valid zero twin and a specific
+reason from the existing shared unsigned parser, preserving exit2. Its six refusal
+sites are tested, including a too-long argument that argread already refuses.

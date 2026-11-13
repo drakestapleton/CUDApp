@@ -557,3 +557,11 @@ on the actual CREATE_QUEUE call. Clearing IS_PTR64 is a planted-error control;
 this check fails on the preceding launcher. Those CPU results establish the
 initialized bytes, not GPU consumption or completion. launch4 is the separate
 hardware experiment and retains the launch3 baseline receipt unchanged.
+
+The descriptor requirement bit is defined by the pinned LLVM llvmorg-19.1.7
+[AMDHSAKernelDescriptor.h](https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-19.1.7/llvm/include/llvm/Support/AMDHSAKernelDescriptor.h),
+`KERNEL_CODE_PROPERTY(ENABLE_SGPR_QUEUE_PTR, 2, 1)`. This is a format reference,
+not a production compiler dependency. The loader trusts the first-party writer's
+explicit kernarg ABI; it does not interpret hidden-argument metadata from arbitrary
+third-party code objects. In particular, rejecting the queue-pointer SGPR bit
+is not a general proof that an unknown kernel never consumes a queue pointer.

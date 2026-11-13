@@ -144,8 +144,10 @@ static void ioctl_reply(uint64_t request,uint64_t p) {
         CHECK(queue.ring_base_address==allocs[5].va && queue.ring_size==1024);
         CHECK(queue.write_pointer_address==allocs[6].va && queue.read_pointer_address==allocs[7].va);
         /* AMD CP ABI: queue_properties is 52 bytes after read_dispatch_id.
-         * ROCr AMD_QUEUE_PROPERTIES_IS_PTR64 is bit 1 for ELF64 kernels. */
+         * ROCr sets bit 1 for the 64-bit HSA_LARGE_MODEL runtime. */
         CHECK((word(queue.read_pointer_address+48)>>32)==2);
+        for (size_t off=0;off<4096;off+=8)
+            CHECK(word(queue.read_pointer_address+off)==(off==48 ? UINT64_C(2)<<32 : 0));
         CHECK(!queue.eop_buffer_address && !queue.eop_buffer_size);
         CHECK(queue.ctx_save_restore_address==allocs[8].va && queue.ctx_save_restore_size<=allocs[8].size);
         CHECK(queue.ctl_stack_size<=queue.ctx_save_restore_size);

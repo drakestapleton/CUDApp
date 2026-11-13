@@ -152,6 +152,12 @@ with tempfile.TemporaryDirectory(prefix='kfd-',dir='/tmp') as tmp:
     bad=compile('queue-ptr32',mutant)
     p=run('CONTROL wrong queue pointer width',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
     assert b'queue.read_pointer_address+48' in p.stderr
+    mutant=body.replace('r = checked mapset lh 5 52 4 2\n',
+                        'r = checked mapset lh 5 52 4 2\nr = checked mapset lh 5 2040 8 1\n')
+    assert mutant!=body
+    bad=compile('queue-tail-dirty',mutant)
+    p=run('CONTROL nonzero unused queue tail',[out/'trace',tmp,bad,'vadd',vobj,'vadd'],1)
+    assert b'queue.read_pointer_address+off' in p.stderr
     # The generic CLI reuses the ring across its boundary, not only one packet.
     ins=[]
     for name in ('a','b'):

@@ -104,7 +104,7 @@ references=json.loads((reference/'sources.json').read_text())['sources']
 assert len({r['file'] for r in references})==len(references)
 for row in references:
     path=reference/row['file']
-    assert path.parent==reference and path.suffix=='.c'
+    assert path.parent==reference and path.suffix in ('.c','.h')
     assert hashlib.sha256(path.read_bytes()).hexdigest()==row['sha256'],row['file']
     lines=path.read_text().splitlines()
     for span in row['ranges']:
@@ -195,6 +195,12 @@ calcs={'ELF_magic':int.from_bytes(b'\x7fELF','little'),'ELF_class_data_version_o
 mutations={ 'oversized':vdata[:63], 'wrong-machine':vdata[:18]+b'\0\0'+vdata[20:], 'wave32':vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|1024)+vdata[kd+58:], 'negative-entry':vdata[:kd+16]+struct.pack('<q',-1)+vdata[kd+24:] }
 mutations['private-segment-unsupported']=vdata[:kd+4]+struct.pack('<I',20)+vdata[kd+8:]
 mutations['queue-pointer-required']=vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|4)+vdata[kd+58:]
+# Scratch backing and scratch SGPR setup are outside the first-party subset.
+# ROCm 7.2.2 AMDHSAKernelDescriptor.h defines these bits (pinned below).
+for name,off,fmt,bit in [('scratch-enable',52,'I',1),('private-buffer',56,'H',1),('flat-scratch-init',56,'H',32),('private-size',56,'H',64),('dynamic-stack',56,'H',2048)]:
+    data=bytearray(vdata)
+    struct.pack_into('<'+fmt,data,kd+off,struct.unpack_from('<'+fmt,data,kd+off)[0]|bit)
+    mutations[name]=bytes(data)
 for label,data in mutations.items():
     pth=out/(label+'.hsaco'); pth.write_bytes(data)
     for target,binary in bins.items():

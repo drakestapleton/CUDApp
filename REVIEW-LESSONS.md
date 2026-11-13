@@ -125,3 +125,13 @@ ring helper has a separate largest-representable twin with the same single-count
 setup. Refusal credit requires a twin from that same execution, not a compiler
 success or an unrelated boundary table. An unexpected trap is a failed gate,
 not a credited refusal; classify its mapping/bounds cause before a mutant claim.
+
+A zero private_segment_fixed_size does not prove a descriptor needs no scratch.
+The final self-check reproduced five independently enabled scratch ABI flags
+accepted by the older launcher. Test each request in isolation, preserving the
+valid vadd descriptor as the same-run positive twin. The launcher's queue has no
+scratch backing, so refuse resource2 private-enable and properties private-buffer,
+flat-scratch-init, private-size and dynamic-stack requests before allocation.
+Pin the producer bit definitions, not just prose field names. A runtime admission
+change produces a new executable: prior card receipts remain historical until
+that exact executable is qualified on the card.

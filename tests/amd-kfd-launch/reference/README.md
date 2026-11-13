@@ -15,6 +15,7 @@ below and verify its listed digest before replacing a reference.
 | queues-rocm-6.2.0.c | https://raw.githubusercontent.com/ROCm/ROCT-Thunk-Interface/rocm-6.2.0/src/queues.c | 292-298 |
 | kfd_topology-v6.18.c | https://raw.githubusercontent.com/torvalds/linux/v6.18/drivers/gpu/drm/amd/amdkfd/kfd_topology.c | 461-465, 2082-2083 |
 | kfd_crat-v6.18.c | https://raw.githubusercontent.com/torvalds/linux/v6.18/drivers/gpu/drm/amd/amdkfd/kfd_crat.c | 1041, 2286-2287 |
+| AMDHSAKernelDescriptor-rocm-7.2.2.h | https://raw.githubusercontent.com/ROCm/llvm-project/rocm-7.2.2/llvm/include/llvm/Support/AMDHSAKernelDescriptor.h | 155, 243, 248, 249, 252 |
 <!-- end generated source table -->
 
 ROCT maps `array_count` to a local SIMD-array count and

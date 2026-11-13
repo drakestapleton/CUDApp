@@ -1605,8 +1605,9 @@ hardware receipt; the earlier373e receipt remains an immutable historical run.
 Shared-CLI compatibility correction: numeric refusal diagnostics use a local fixed
 record and stderr, retaining exit2 and empty binary-output stdout. The existing
 full-write helper now accepts an fd internally; emit preserves its stdout API.
-The original2c824 seed KFD suite passes23 host checks, and the26540 launcher gate
-passes199 checks. Requalification of the new executable is required.
+The original2c824 seed KFD suite and the26540 launcher gate passed their
+compatibility checks; exact counts are in the corresponding gate summaries.
+Requalification of the new executable is required.
 
 ## Compatible launcher hardware receipt
 
@@ -1620,3 +1621,11 @@ HIP graph. Five medians26.726,26.783,26.765,26.718,26.717 ms give26.726 ms/token
 baseline. AMD median prefill781.661 ms is slower than saved Spark507 ms.
 Earlier receipts remain immutable. No fresh Spark run or full Spark token parity,
 startup speed ratio, quality equivalence or HTTP deployment is claimed.
+
+The native launcher refuses scratch-enable, private-segment-buffer, flat-scratch
+initializer, private-segment-size SGPR and dynamic-stack descriptor requests even
+when private_segment_fixed_size is zero. The queue has no scratch backing. Bit
+positions are pinned in tests/amd-kfd-launch/reference/sources.json from ROCm
+7.2.2 AMDHSAKernelDescriptor.h; fresh ELF inspect twins cover each independently
+on both host targets. Earlier executable qualifications remain historical until
+the changed executable has its own card receipt.

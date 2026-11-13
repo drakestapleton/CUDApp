@@ -115,6 +115,48 @@
           "last": "gfx_info->max_shader_engines;"
         }
       ]
+    },
+    {
+      "file": "AMDHSAKernelDescriptor-rocm-7.2.2.h",
+      "url": "https://raw.githubusercontent.com/ROCm/llvm-project/rocm-7.2.2/llvm/include/llvm/Support/AMDHSAKernelDescriptor.h",
+      "sha256": "867b8bfabc6d38e97fe83a4ea5bed76f2e29306ddfde5be9a42ffed6fa68081f",
+      "ranges": [
+        {
+          "first": "COMPUTE_PGM_RSRC2(ENABLE_PRIVATE_SEGMENT, 0, 1),",
+          "last": "COMPUTE_PGM_RSRC2(ENABLE_PRIVATE_SEGMENT, 0, 1),",
+          "contains": [
+            "COMPUTE_PGM_RSRC2(ENABLE_PRIVATE_SEGMENT, 0, 1),"
+          ]
+        },
+        {
+          "first": "KERNEL_CODE_PROPERTY(ENABLE_SGPR_PRIVATE_SEGMENT_BUFFER, 0, 1),",
+          "last": "KERNEL_CODE_PROPERTY(ENABLE_SGPR_PRIVATE_SEGMENT_BUFFER, 0, 1),",
+          "contains": [
+            "KERNEL_CODE_PROPERTY(ENABLE_SGPR_PRIVATE_SEGMENT_BUFFER, 0, 1),"
+          ]
+        },
+        {
+          "first": "KERNEL_CODE_PROPERTY(ENABLE_SGPR_FLAT_SCRATCH_INIT, 5, 1),",
+          "last": "KERNEL_CODE_PROPERTY(ENABLE_SGPR_FLAT_SCRATCH_INIT, 5, 1),",
+          "contains": [
+            "KERNEL_CODE_PROPERTY(ENABLE_SGPR_FLAT_SCRATCH_INIT, 5, 1),"
+          ]
+        },
+        {
+          "first": "KERNEL_CODE_PROPERTY(ENABLE_SGPR_PRIVATE_SEGMENT_SIZE, 6, 1),",
+          "last": "KERNEL_CODE_PROPERTY(ENABLE_SGPR_PRIVATE_SEGMENT_SIZE, 6, 1),",
+          "contains": [
+            "KERNEL_CODE_PROPERTY(ENABLE_SGPR_PRIVATE_SEGMENT_SIZE, 6, 1),"
+          ]
+        },
+        {
+          "first": "KERNEL_CODE_PROPERTY(USES_DYNAMIC_STACK, 11, 1),",
+          "last": "KERNEL_CODE_PROPERTY(USES_DYNAMIC_STACK, 11, 1),",
+          "contains": [
+            "KERNEL_CODE_PROPERTY(USES_DYNAMIC_STACK, 11, 1),"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -1,3 +1,4 @@
+867b8bfabc6d38e97fe83a4ea5bed76f2e29306ddfde5be9a42ffed6fa68081f  AMDHSAKernelDescriptor-rocm-7.2.2.h
 aeacf7c1aed367e499bf6ee65489d42ffacd7c68dcd7e43f4f9e795559f2f999  kfd_crat-v6.18.c
 b6f18da3603c196d1b6a58ff9607524365c5ed33e6716895cff0fc621c1742d6  kfd_topology-v6.18.c
 6653cd7b55466616a44e4b7e89619081adee33a813c07b17dd850fa230c7fef4  queues-rocm-6.2.0.c

@@ -79,6 +79,26 @@ for table in sorted((root/'backend/amd/gfx942').glob('*.isa')):
         argv=([qemu] if target=='x86' else [])+[binary,'inspect',obj,name]
         p=run(target+' inspect '+name,argv)
         assert ('kernarg_bytes='+str(argbytes)).encode() in p.stdout
+# A card model run is releasable only when every exercised object rebuilds here.
+required=json.loads((root/'tests/amd-kfd-launch/qwen38-objects.json').read_text())['objects']
+def require_model_objects(actual):
+    missing=sorted(set(required)-set(actual))
+    assert not missing,('model kernels absent from release source',missing)
+    for name,row in required.items():
+        assert hashlib.sha256(actual[name][1]).hexdigest()==row['sha256'],('model object differs from card fixture',name)
+        assert actual[name][3]==row['kernarg'],('model kernarg differs from card fixture',name)
+require_model_objects(objects)
+first=next(iter(required))
+for kind in ('missing','changed'):
+    altered=objects.copy()
+    if kind=='missing':del altered[first]
+    else:
+        v=list(altered[first]);v[1]=bytes([v[1][0]^1])+v[1][1:];altered[first]=tuple(v)
+    try:require_model_objects(altered)
+    except AssertionError:pass
+    else:raise AssertionError(('model source control escaped',kind))
+(out/'model-object-source-check.json').write_text(json.dumps({'required':required,'all_rebuilt':True,'controls_caught':['missing','changed']},indent=2)+'\n')
+print('MODEL SOURCE PASS all required objects rebuilt; missing/changed controls caught',flush=True)
 vobj,vdata,kd,ka=objects['vadd']
 # Record numeric constant and unit-conversion oracle queries/results, not guesses.
 calcs={'ELF_magic':int.from_bytes(b'\x7fELF','little'),'ELF_class_data_version_osabi':int.from_bytes(bytes([2,1,1,64]),'little'),'ELF_type_machine':int.from_bytes(struct.pack('<HH',3,224),'little'),'manifest_magic':int.from_bytes(b'OMKFD001','little'),'f32_one':struct.pack('<f',1.0).hex(),'f32_one_plus_one':struct.pack('<f',1.0+1.0).hex()}

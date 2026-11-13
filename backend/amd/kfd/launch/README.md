@@ -157,3 +157,8 @@ independent code objects, raw file ranges, BF16 widening, data-pool initializati
 shared allocation offsets, ring wrap, output IDs, missing completion and cleanup.
 `publication.c` observes a nonzero group-segment size and rejects a deliberate
 swap of the packet's group/private fields. CPU simulation is not card proof.
+
+The release gate rebuilds every object in the native Qwen fixture manifest
+`tests/amd-kfd-launch/qwen38-objects.json` and requires byte-identical code objects
+and kernarg sizes. Missing source and changed-object controls must be caught.
+A notebook carrying an unlanded object cannot qualify the release tree.

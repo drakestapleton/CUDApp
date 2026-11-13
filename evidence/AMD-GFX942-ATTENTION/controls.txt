@@ -1,0 +1,52 @@
+evidence/AMD-GFX942-ATTENTION/host-final.log:PASS CONTROL single-byte MessagePack value CAUGHT by byte comparison
+evidence/AMD-GFX942-ATTENTION/host-final.log:PASS CONTROL instruction-table flipped bit CAUGHT code mismatch
+evidence/AMD-GFX942-ATTENTION/host-final.log:PASS CONTROL wrong compiler digest CAUGHT exit=69 before compiler/producer/output setup
+evidence/AMD-GFX942-ATTENTION/host-final.log:PASS CONTROL missing-kernel CAUGHT exit=4 before object emission
+evidence/AMD-GFX942-ATTENTION/host-final.log:PASS CONTROL duplicate-kernel CAUGHT exit=4 before object emission
+evidence/AMD-GFX942-ATTENTION/host-final.log:PASS CONTROL argument-gap CAUGHT exit=4 before object emission
+evidence/AMD-GFX942-ATTENTION/host-final.log:CONTROL forward-overflow CAUGHT exit=4 before output
+evidence/AMD-GFX942-ATTENTION/host-final.log:CONTROL backward-overflow CAUGHT exit=4 before output
+evidence/AMD-GFX942-ATTENTION/host-final.log:CONTROL undefined-label CAUGHT exit=4 before output
+evidence/AMD-GFX942-ATTENTION/host-final.log:CONTROL duplicate-label CAUGHT exit=4 before output
+evidence/AMD-GFX942-ATTENTION/host-final.log:CONTROL undefined-format CAUGHT exit=4 no object
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-lshr-left CAUGHT case=lshr32-2147483649-33 pdf-page=103 state=(1, 1, 18446744073709551615, 1, 4, 2147483649, 33, 2) expected=[1, 1, 18446744073709551615, 1, 4, 2147483649, 33, 1073741824]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-fsub-add CAUGHT case=fsub-denorm pdf-page=169 state=(1, 1, 18446744073709551615, 1, 4, 3, 2, 5) expected=[1, 1, 18446744073709551615, 1, 4, 3, 2, 1]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-fmax-ignores-snan CAUGHT case=fmax-7f801234-3f800000 pdf-page=172 state=(1, 1, 18446744073709551615, 1, 4, 2139099700, 1065353216, 1065353216) expected=[1, 1, 18446744073709551615, 1, 4, 2139099700, 1065353216, 2143294004]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-exp-returns-input CAUGHT case=trans-32-3f800000 pdf-page=195 state=(1, 1, 18446744073709551615, 1, 4, 1065353216, 1065353216) expected=[1, 1, 18446744073709551615, 1, 4, 1065353216, 1073741824]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-rcp-returns-input CAUGHT case=trans-34-c0000000 pdf-page=196 state=(1, 1, 18446744073709551615, 1, 4, 3221225472, 3221225472) expected=[1, 1, 18446744073709551615, 1, 4, 3221225472, 3204448256]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-sub-no-borrow CAUGHT case=sub-0-1 pdf-page=97 state=(1, 1, 18446744073709551615, 0, 4, 0, 1, 4294967295) expected=[1, 1, 18446744073709551615, 1, 4, 0, 1, 4294967295]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-inactive-vcc CAUGHT case=add-co pdf-page=175 state=(1, 9223372036854775809, 9223372036854775807, 1, 4, 4294967295, 1, 0, 0, 3735928559, 0, 0) expected=[1, 9223372036854775809, 1, 1, 4, 4294967295, 1, 0, 0, 3735928559, 0, 0]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-vcc-source CAUGHT case=cmp-vcc-source-snapshot pdf-page=22 state=(1, 1, 0, 1, 4, 0) expected=[1, 1, 1, 1, 4, 0]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-smem-low-bits CAUGHT case=smem-component-low-bits pdf-page=68 state=(1, 1, 18446744073709551615, 1, 8, 3, 0, 872415506) expected=[1, 1, 18446744073709551615, 1, 8, 3, 0, 305397760]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-smem-offset-low-bits CAUGHT case=smem-component-low-bits pdf-page=68 state=(1, 1, 18446744073709551615, 1, 8, 3, 0, 872415506) expected=[1, 1, 18446744073709551615, 1, 8, 3, 0, 305397760]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-smem-dest-alignment CAUGHT case=smem-bad-destination-1 pdf-page=70 exit=0 expected=66
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-smem-negative CAUGHT case=smem-negative-undefined pdf-page=68 exit=67 expected=66
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-vgpr-pair-alignment CAUGHT case=global-odd-address-pair pdf-page=21 exit=0 expected=66
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-d16-low-cleared CAUGHT case=global-d16-hi-3f80 pdf-page=507 state=(1, 9223372036854775809, 18446744073709551615, 1, 8, 2, 0, 1065353216, 3735928559, 2, 0, 1065353216) expected=[1, 9223372036854775809, 18446744073709551615, 1, 8, 2, 0, 1065402095, 3735928559, 2, 0, 1065353216]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-mov64-loses-scc CAUGHT case=mov64-exec-0 pdf-page=115 state=(1, 0, 18446744073709551615, 0, 4, 0, 0) expected=[1, 0, 18446744073709551615, 1, 4, 0, 0]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-xor-uses-or CAUGHT case=xor-2147483649-2147483648 pdf-page=174 state=(1, 1, 18446744073709551615, 1, 4, 2147483649, 2147483648, 2147483649) expected=[1, 1, 18446744073709551615, 1, 4, 2147483649, 2147483648, 1]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-wide-drops-last CAUGHT case=global-wide-4 pdf-page=504 state=(1, 1, 18446744073709551615, 1, 8, 4, 0, 287454017, 287454018, 287454019, 0) expected=[1, 1, 18446744073709551615, 1, 8, 4, 0, 287454017, 287454018, 287454019, 287454020]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL manual-bpermute-live-alias CAUGHT case=bpermute-alias-snapshot pdf-page=437 state=(1, 18446744073709551615, 18446744073709551615, 1, 8, 4, 0, 12, 8, 20, 16, 28, 24, 36, 32, 44, 40, 52, 48, 60, 56, 68, 64, 76, 72, 84, 80, 92, 88, 100, 96, 108, 104, 116, 112, 124, 120, 132, 128, 140, 136, 148, 144, 156, 152, 164, 160, 172, 168, 180, 176, 188, 184, 196, 192, 204, 200, 212, 208, 220, 216, 228, 224, 236, 232, 244, 240, 252, 248, 1001, 1001, 1003, 1003, 1005, 1005, 1007, 1007, 1009, 1009, 1011, 1011, 1013, 1013, 1015, 1015, 1017, 1017, 1019, 1019, 1021, 1021, 1023, 1023, 1025, 1025, 1027, 1027, 1029, 1029, 1031, 1031, 1033, 1033, 1035, 1035, 1037, 1037, 1039, 1039, 1041, 1041, 1043, 1043, 1045, 1045, 1047, 1047, 1049, 1049, 1051, 1051, 1053, 1053, 1055, 1055, 1057, 1057, 1059, 1059, 1061, 1061, 1063, 1063) expected=[1, 18446744073709551615, 18446744073709551615, 1, 8, 4, 0, 12, 8, 20, 16, 28, 24, 36, 32, 44, 40, 52, 48, 60, 56, 68, 64, 76, 72, 84, 80, 92, 88, 100, 96, 108, 104, 116, 112, 124, 120, 132, 128, 140, 136, 148, 144, 156, 152, 164, 160, 172, 168, 180, 176, 188, 184, 196, 192, 204, 200, 212, 208, 220, 216, 228, 224, 236, 232, 244, 240, 252, 248, 1001, 1000, 1003, 1002, 1005, 1004, 1007, 1006, 1009, 1008, 1011, 1010, 1013, 1012, 1015, 1014, 1017, 1016, 1019, 1018, 1021, 1020, 1023, 1022, 1025, 1024, 1027, 1026, 1029, 1028, 1031, 1030, 1033, 1032, 1035, 1034, 1037, 1036, 1039, 1038, 1041, 1040, 1043, 1042, 1045, 1044, 1047, 1046, 1049, 1048, 1051, 1050, 1053, 1052, 1055, 1054, 1057, 1056, 1059, 1058, 1061, 1060, 1063, 1062]
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL one-bit-vadd-operand CAUGHT bit mismatch
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL outside-subset CAUGHT exit=66 memory-unchanged
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL unreachable-outside-subset CAUGHT exit=66 memory-unchanged
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL truncated-word CAUGHT exit=65 memory-unchanged
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL branch-inside-literal CAUGHT exit=65 memory-unchanged
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL memory-range CAUGHT exit=67 memory-unchanged
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL fsum16-right-to-left CAUGHT bits left=3f800000 right=00000000 row=['4c000000', 'cc000000', '3f800000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000']
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL sgemm-separate-mul-add CAUGHT fused=a8800000 separate=00000000
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL addc-second-scalar-constant-bus CAUGHT exit=66 memory-unchanged
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL fp8gemv-OCP-E4M3FN-bias7 CAUGHT fp8gemv bit mismatch M=1 K=1 byte=126
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL fp8gemv-dropped-row-scale CAUGHT fp8gemv bit mismatch M=1 K=1 byte=126
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL bf16gemv-big-endian-weight CAUGHT bf16gemv bit mismatch M=1 K=1 byte=104
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL bf16gemv-truncated-FP32-x CAUGHT bf16gemv bit mismatch M=1 K=1 byte=104
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL fp8gemv2-order CAUGHT fp8gemv2 bit mismatch M=1 K=129 byte=766 got=00 expected=80
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL fp8gemv2-tail CAUGHT fp8gemv2 bit mismatch M=1 K=3 byte=135 got=00 expected=bf
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL fp8gemv2-stride CAUGHT fp8gemv2 bit mismatch M=3 K=257 byte=1928 got=55 expected=00
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL bf16gemv2-order CAUGHT bf16gemv2 bit mismatch M=1 K=129 byte=874 got=00 expected=80
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL bf16gemv2-tail CAUGHT bf16gemv2 bit mismatch M=1 K=3 byte=118 got=00 expected=80
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL bf16gemv2-stride CAUGHT bf16gemv2 bit mismatch M=3 K=257 byte=2672 got=01 expected=ac
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL attention-no-max CAUGHT attention mismatch maximum
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL attention-wrong-gqa CAUGHT attention mismatch maximum
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL attention-v-from-k CAUGHT attention mismatch partial accumulator
+evidence/AMD-GFX942-ATTENTION/exec-final.log:CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation

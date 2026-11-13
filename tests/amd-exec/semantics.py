@@ -51,6 +51,39 @@ for width, op in [(32, 28), (64, 29)]:
             seed[s(5)] = value >> 32
             result[s(9)] = shifted >> 32
         case(f'lshl{width}-{a}-{b}', 103, sop(op, b=6), seed, result, ncc=int(shifted != 0))
+for a, b in [(0, 1), (1, 32), (0x80000001, 33), (U32, 31)]:
+    shifted = a >> (b & 31)
+    case(f'lshr32-{a}-{b}', 103, sop(30), {s(4): a, s(5): b},
+         {s(8): shifted}, ncc=int(shifted != 0))
+for a, b, expected in [(0x80000000, 0, 0), (0, 0x80000000, 0),
+                       (0x7fc01234, 0x3f800000, 0x3f800000),
+                       (0x7f801234, 0x3f800000, 0x7fc01234),
+                       (0xbf800000, 0xc0000000, 0xbf800000)]:
+    case(f'fmax-{a:x}-{b:x}', 172, vop(11), {v(1): a, v(2): b}, {v(3): expected})
+case('fsub-denorm', 169, vop(2), {v(1): 3, v(2): 2}, {v(3): 1})
+for op, a, expected in [(32, 0xff800000, 0), (32, 0x80000000, 0x3f800000),
+                        (32, 0x7f800000, 0x7f800000), (32, 1, 0x3f800000),
+                        (32, 0x3f800000, 0x40000000), (32, 0xc2fc0000, 0x800000),
+                        (32, 0xc2fe0000, 0), (34, 0xff800000, 0x80000000),
+                        (34, 0xc0000000, 0xbf000000), (34, 0x80000000, 0xff800000),
+                        (34, 0, 0x7f800000), (34, 0x7f800000, 0), (34, 1, 0x7f800000)]:
+    case(f'trans-{op}-{a:x}', 195 if op == 32 else 196,
+         [0x7e000000 | 3 << 17 | op << 9 | 257], {v(1): a}, {v(3): expected})
+for a, expected in [(0xff800000, 0xffc00000), (0x80000000, 0xff800000),
+                    (0, 0x7f800000), (0x40800000, 0x3f000000),
+                    (0x7f800000, 0), (1, 0x7f800000), (0x80000001, 0xff800000),
+                    (0xbf800000, 0xffc00000)]:
+    case(f'rsq-{a:x}', 197, [0x7e000000 | 3 << 17 | 36 << 9 | 257],
+         {v(1): a, v(3,1): 0xdeadbeef, v(1,63): a},
+         {v(3): expected, v(3,63): expected}, ex=(1 << 63)|1)
+for a, expected in [(0xff800000,0xffc00000),(0xbf800000,0xffc00000),
+                    (0x80000000,0xff800000),(0,0xff800000),
+                    (1,0xff800000),(0x80000001,0xff800000),
+                    (0x3f800000,0),(0x40000000,0x3f800000),
+                    (0x3f000000,0xbf800000),(0x7f800000,0x7f800000)]:
+    case(f'log-{a:x}',187,[0x7e000000 | 3 << 17 | 33 << 9 | 257],
+         {v(1):a,v(3,1):0xdeadbeef,v(1,63):a},
+         {v(3):expected,v(3,63):expected},ex=(1<<63)|1)
 for op, label in [(36, 'mul-low'), (44, 'mul-high')]:
     for a, b in [(U32, U32), (0x80000000, 3), (0, 17)]:
         product = a*b
@@ -75,6 +108,8 @@ for ex in [0, 1]:
 for wait in [0xc07f, 0x0f70]:
     case(f'wait-{wait}', 141, [0xbf8c0000 | wait])
 case('endpgm', 138, [0xbf810000], running=0)
+for immediate in (0,15,65535):
+    case(f'nop-{immediate}',138,[0xbf800000 | immediate])
 # Scalar memory components individually ignore low two bits (p68), not just the final sum.
 mem = struct.pack('<16I', *range(0x12340000, 0x12340010))
 for op in [0, 1, 2]:
@@ -108,6 +143,13 @@ case('cmp-zero-exec', 22, [cmpword | 257], ex=0, nvc=0)
 case('vmov-inline-negative', 186, [0x7e000200 | 3 << 17 | 193], result={v(3): U32})
 case('vmov-literal', 186, [0x7e000200 | 3 << 17 | 255, 0x80000001], result={v(3): 0x80000001})
 case('vmov-exec-hi', 186, [0x7e000200 | 3 << 17 | 127], result={v(3): 0x80000000, v(3,63): 0x80000000}, ex=(1 << 63)|1)
+# Table23 p42 specifies the floating inline selector bits, including exact 1/(2*pi).
+for selector, value in enumerate((0.5,-0.5,1.0,-1.0,2.0,-2.0,4.0,-4.0,None),240):
+    bits = 0x3e22f983 if value is None else struct.unpack('<I',struct.pack('<f',value))[0]
+    case(f'vmov-inline-float-{selector}',42,[0x7e000200 | 3 << 17 | selector],
+         {v(3,1):0xdeadbeef},{v(3):bits,v(3,63):bits},ex=(1 << 63)|1)
+    case(f'smov-inline-float-{selector}',42,sop1(0,a=selector),result={s(8):bits})
+case('vadd-inline-one',42,vop(1,a=242),{v(2):0x3f800000},{v(3):0x40000000})
 # FP bit patterns: exact denormal addition, halfway-to-even, signed zero, exact fused cancellation.
 # The exhaustive Fraction oracle separately covers the numerical algorithms and special values.
 for name, op, a, b, c, answer, page in [
@@ -153,8 +195,78 @@ case('global-ubyte-negative-offset', 503, [0xdc409fff, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, {v(3): 128}, mem=b'\x80')
 case('global-ubyte-range-refused', 503, [0xdc408000, 3 << 24 | 127 << 16 | 4],
      {v(4): 1, v(5): 0}, mem=b'\xff', refusal=67)
+# Fixed target profile mi300x-vf-rocm722-d16-zero. Loaded high16 comes from PDF p507;
+# unused low16 follows raw MI300X VF / ROCm7.2.2 observations, not generic pseudocode.
+# Evidence: AMD-MI300X-CODEX-20261113T0315Z/amdserve-d16probe.txt
+# SHA256 af7365ee4f2f0da6db6e995cda83c4ac4a6ee6da3df3446936621ca96c4ac0c7.
+bf16 = runpy.run_path(str(pathlib.Path(__file__).with_name('bf16gemv.py')))
+half = [0xdc008000 | 37 << 18, 3 << 24 | 127 << 16 | 4]
+for bits in bf16['VALUES']:
+    case(f'global-d16-hi-{bits:04x}', 507, half,
+         {v(4): 2, v(5): 0, v(3): 0x1234beef, v(3,1): 0xdeadbeef,
+          v(4,63): 2, v(5,63): 0, v(3,63): 0xffff0000},
+         {v(3): bits << 16, v(3,63): bits << 16},
+         ex=(1 << 63)|1, mem=b'\xa5\xa5'+struct.pack('<H', bits))
+case('global-d16-hi-negative-offset', 507, [half[0] | 8190, half[1]],
+     {v(4): 2, v(5): 0, v(3): 0x12345678}, {v(3): 0x803f0000}, mem=b'\x3f\x80')
+case('global-d16-hi-zero-exec', 507, half, {v(3): 0xdeadbeef}, ex=0, mem=b'')
+case('global-d16-hi-short-memory', 507, half, mem=b'\x01', refusal=67)
+case('global-d16-hi-partial-tail', 507, half, {v(4): 2}, mem=b'\x01\x02\x03', refusal=67)
+case('global-d16-hi-low-form-refused', 507, [half[0] ^ 1 << 18, half[1]], refusal=66)
+case('global-d16-hi-modifier-refused', 87, [half[0] | 1 << 16, half[1]], refusal=66)
+
+# New GEMV2 operations: literal expectations follow CDNA3 pseudocode, not executor output.
+for mask in (0, 1, 0x8000000000000001, U64):
+    case(f'mov64-exec-{mask}', 115, sop1(1, a=4, d=126),
+         {s(4): mask & U32, s(5): mask >> 32}, nex=mask, cc=1)
+case('mov64-odd-pair-refused', 115, sop1(1, a=5, d=126), refusal=66)
+for a, b in ((0, U32), (0xaaaaaaaa, 0x55555555), (0x80000001, 0x80000000)):
+    case(f'xor-{a}-{b}', 174, vop(21), {v(1): a, v(2): b}, {v(3): a ^ b})
+for op, width in ((21, 2), (23, 4)):
+    words = [0xdc008000 | op << 18, 4 | 127 << 16 | 8 << 24]
+    seed = {v(4): 4, v(5): 0}
+    payload = struct.pack('<16I', *range(0x11223340, 0x11223350))
+    case(f'global-wide-{width}', 504, words, seed,
+         {v(8+i): 0x11223341+i for i in range(width)}, mem=payload)
+    case(f'global-wide-{width}-boundary', 504, words, {v(4): 64-4*width, v(5): 0},
+         {v(8+i): 0x11223350-width+i for i in range(width)}, mem=payload)
+    case(f'global-wide-{width}-out-of-memory', 504, words, {v(4): 65-4*width, v(5): 0},
+         mem=payload, refusal=67)
+    bad = [words[0], 4 | 127 << 16 | (257-width) << 24]
+    case(f'global-wide-{width}-register-overflow', 504, bad, refusal=66)
+def ds(offset=0, addr=1, data=2, dest=2):
+    return [0xd87e0000 | offset, addr | data << 8 | dest << 24]
+# Aliasing destination DATA0 must observe the original wave, never earlier writes.
+seed = {v(1, lane): (lane ^ 1)*4 for lane in range(64)}
+seed.update({v(2, lane): 1000+lane for lane in range(64)})
+case('bpermute-alias-snapshot', 437, ds(), seed,
+     {v(2, lane): 1000+(lane ^ 1) for lane in range(64)}, ex=U64)
+case('bpermute-inactive-source', 437, ds(dest=3),
+     {v(1): 4, v(2, 1): 1234, v(3, 1): 0xfeed}, {v(3): 0}, ex=1)
+case('bpermute-byte-offset-wrap', 437, ds(7, dest=3),
+     {v(1): U32, v(2, 1): 456}, {v(3): 456, v(3, 1): 456}, ex=3)
+case('bpermute-inactive-destination', 437, ds(dest=3),
+     {v(1): 0, v(2): 9, v(3): 0xfeed}, ex=0)
+for modifier in (1 << 16, 1 << 25):
+    words = ds()
+    words[0] |= modifier
+    case(f'bpermute-unsupported-modifier-{modifier}', 437, words, refusal=66)
+words = ds()
+words[1] |= 1 << 16
+case('bpermute-unused-data1', 437, words, refusal=66)
 
 MUTATIONS = {
+    'lshr-left': ('r = shr a and b 31', 'r = and shl a and b 31 0xffffffff'),
+    'fsub-add': ('r = fpadd a xor b 0x80000000', 'r = fpadd a b'),
+    'fmax-ignores-snan': ('ret or a 0x400000', 'ret b'),
+    'exp-returns-input': ('r = fpexp r', 'r = r'),
+    'rcp-returns-input': ('r = fprcp r', 'r = r'),
+    'rsq-is-rcp': ('r = fprsq r', 'r = fprcp r'),
+    'log-returns-input': ('r = fplog r', 'r = r'),
+    'inline-float-refused': ('if and ge s 240 le s 248\nret\nend',
+                             'if and ge s 240 le s 248\nfail 66\nend'),
+    'nop-clears-scc': ('if eq cl 4\nop = get st 10\ncc = get st 16',
+                      'if eq cl 4\nop = get st 10\nif eq op 0\nput st 16 0\nend\ncc = get st 16'),
     'sub-no-borrow': ('put st 16 fmbool lt a b', 'put st 16 fmbool ge a b'),
     'inactive-vcc': ('if or eq cl 6 and eq cl 5 or eq get st 10 25 eq get st 10 28', 'if eq cl 6'),
     'vcc-source': ('get st 17', 'get st 15'),
@@ -163,13 +275,32 @@ MUTATIONS = {
     'smem-dest-alignment': ('if ne and sd sub shl ulong 1 op 1 0', 'if false'),
     'smem-offset-bit20': ('if ne shr x 20 0', 'if ne shr x 21 0'),
     'vgpr-pair-alignment': ('if or ge va 255 ne and va 1 0', 'if ge va 255'),
+    'd16-low-preserved': ('vs get st 13 lane shl h 16',
+                          'vs get st 13 lane or and vg get st 13 lane 65535 shl h 16'),
+    'mov64-loses-scc': ('put st 14 or get sr ss shl get sr add ss 1 32',
+                        'put st 14 or get sr ss shl get sr add ss 1 32\nput st 16 0'),
+    'xor-uses-or': ('r = xor a b', 'r = or a b'),
+    'wide-drops-last': ('for i ulong n\nvs add get st 13 i lane mread add p mul i 4',
+                       'for i ulong sub n 1\nvs add get st 13 i lane mread add p mul i 4'),
+    'bpermute-live-alias': ('vs get st 13 lane get perm lane',
+                          'src = and shr add vg get st 11 lane get st 7 2 63\nvs get st 13 lane vg get st 12 src'),
 }
 MUTANT_CASE = {
+    'lshr-left': 'lshr32-2147483649-33', 'fsub-add': 'fsub-denorm',
+    'fmax-ignores-snan': 'fmax-7f801234-3f800000',
+    'exp-returns-input': 'trans-32-3f800000', 'rcp-returns-input': 'trans-34-c0000000',
+    'rsq-is-rcp': 'rsq-40800000',
+    'log-returns-input': 'log-40000000',
+    'inline-float-refused': 'vmov-inline-float-242',
+    'nop-clears-scc': 'nop-0',
     'sub-no-borrow': 'sub-0-1', 'inactive-vcc': 'add-co',
     'vcc-source': 'cmp-vcc-source-snapshot', 'smem-low-bits': 'smem-component-low-bits',
     'smem-offset-low-bits': 'smem-component-low-bits',
     'smem-dest-alignment': 'smem-bad-destination-1', 'smem-offset-bit20': 'smem-offset-bit20-refused',
     'vgpr-pair-alignment': 'global-odd-address-pair',
+    'd16-low-preserved': 'global-d16-hi-3f80',
+    'mov64-loses-scc': 'mov64-exec-0', 'xor-uses-or': 'xor-2147483649-2147483648',
+    'wide-drops-last': 'global-wide-4', 'bpermute-live-alias': 'bpermute-alias-snapshot',
 }
 
 def run_case(exe, out, c):

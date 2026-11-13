@@ -1,0 +1,15 @@
+PASS fp8gemv2 descriptor sizes equal oracle
+PASS fp8gemv2 descriptor resources equal oracle
+PASS fp8gemv2 descriptor entry displacement resolves to kernel symbol
+fp8gemv2 OBJECT sha256=99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0 bytes=4152
+PASS bf16gemv2 two code-object builds byte-identical
+PASS bf16gemv2 .text wide loads, XOR, EXEC restore, DS bpermute and FMAC equal LLVM18 gfx942
+PASS bf16gemv2 metadata note equals independent oracle
+PASS bf16gemv2 descriptor sizes equal oracle
+PASS bf16gemv2 descriptor resources equal oracle
+PASS bf16gemv2 descriptor entry displacement resolves to kernel symbol
+bf16gemv2 OBJECT sha256=4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb bytes=3824
+hardware NOT_RUN: gfx942 MI300X dispatch, FP32 outputs, n=0/tail/boundary vectors, ROCr loading and all other GPU rows
+hardware NOT_RUN: MI300 ISA PDF p60: The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct results for BF8 and FP8 operations. fp8gemv assumes E4M3FNUZ weights (bias8, NaN0x80) when set.
+NOT_RUN linked-oracle whole-object parity: gate uses ET_REL section parity; Spark has no ld.lld
+AMD-GFX942-HOST PASS pass=68 fail=0 kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv,fp8gemv2,bf16gemv2 hardware=NOT_RUN

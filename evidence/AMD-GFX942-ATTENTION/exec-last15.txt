@@ -1,0 +1,15 @@
+CONTROL attention-v-from-k CAUGHT attention mismatch partial accumulator
+PASS attention cases=8 T=0,1,2,63,64,65,129 scale=1/16 tile=64 order=lane4,XOR32..1,online,tile-ascending hardware=NOT_RUN
+CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation
+eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/hsaco.1
+a7f3efae2f4e1e47464e66b264c46bd92eb6299a205408bc1f0e5e3c0c5559d0  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/exec.1
+693816d93f06461d160440b3f6476b51daf4195470f8c1ab7709391fc2a3973e  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/attn256_merge.1.hsaco
+9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/attn256_part.1.hsaco
+59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/bf16gemv.1.hsaco
+4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/bf16gemv2.1.hsaco
+b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/fp8gemv.1.hsaco
+99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/fp8gemv2.1.hsaco
+15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/fsum16.1.hsaco
+466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/sgemm.1.hsaco
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2/exec/vadd.1.hsaco
+AMD-GFX942-EXEC PASS kernels=attn256_merge,attn256_part,bf16gemv,bf16gemv2,fp8gemv,fp8gemv2,fsum16,sgemm,vadd counts=0,1,63,64,65,200 sgemm_shapes=14 sgemm_cases=29 semantics_cases=428 fp8gemv_shapes=21 fp8gemv_cases=43 fp8_conversion_bytes=256 bf16gemv_shapes=30 bf16gemv_cases=61 gemv2_shapes=51 gemv2_cases_per_kernel=103 gemv2_sampled_shapes=3 attention_T=0,1,2,63,64,65,129 attention_cases=8 hardware=NOT_RUN

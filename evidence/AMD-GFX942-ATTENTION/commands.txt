@@ -1,0 +1,5 @@
+cwd=/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn
+out=/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-ATTN-WORK/acceptance2
+mkdir -p "$out"
+flock /home/drakestapleton/handoffs/hive/queen/pool-14.lock nice -n 10 sh -c 'set +e; AMD_OUT="$1/host" sh tests/amd/run.sh "$2" > "$1/host.log" 2>&1; h=$?; echo "host_exit=$h"; AMD_EXEC_OUT="$1/exec" sh tests/amd-exec/run.sh "$2" > "$1/exec.log" 2>&1; e=$?; echo "exec_exit=$e"; tail -n 15 "$1/host.log"; tail -n 15 "$1/exec.log"; test "$h" = 0 && test "$e" = 0' sh "$out" /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc
+Observed host_exit=0 exec_exit=0; outer command exit0.

@@ -1,0 +1,38 @@
+PIN omc 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Outputs: $HOME/work/hive/amdserve/Integrate/runs-s2/mt-after
+COMPILE targets src=8e5349ecbcbbc83b8d8a614393d045dec82d251022dc3e0bc6776b5405c69994 bin=499b15a603eb6ef3bf4e040c2f04267b5efaa7b01d8dfc5d614411bdfa1ddf09
+COMPILE emit src=e2c51836cea0d58adf387c223d7d8af88f5e8dc19ba675d91ef9e0008bb5dc29 bin=e95e2dabe1bd991950ce75978bf090d4ff2ae3df7e9c4b75d86ec2b15b899958
+COMPILE conform src=3df70d5d9c88fa810464654885e9058a74df62bc4102f150b89a37c456f45459 bin=4c8672b6c64a2260eba5dc8cce7d0bfa59d2cdd88118f6a1a82e6ea0f2b0cbe1
+PASS table rows=22 supported=nvidia-sm_121 planned_not_run=19 host=2
+PASS table-negative row claiming PASS rejected
+MODULE vadd.cl.spv sha256=6ebe7f4b7e511d52cc59177bb1bc0213fffeabd8d98be898a2e7376d9a323644 bytes=956
+MODULE vadd.vk.spv sha256=b56654c9853cfc2f869a7f3d9df44c6811875dffce596bd1e102468a2ce80444 bytes=1028
+MODULE fsum16.cl.spv sha256=60d3cd48ce768eabb0e381f74e4118d543677560f409f0a807e0ed462d37b299 bytes=2156
+MODULE fsum16.vk.spv sha256=1c139c14212e0cee1fa7f702f33884b20df927210371dc6c6803b5a151015805 bytes=2140
+NOT_RUN spirv-val: SPIRV_VAL not set to an executable
+PASS load-cl-vadd exit=0 LOAD ACCEPT SPIRV_CL version=1.0 bound=53 words=239 insns=58 entry=vadd
+PASS load-vk-vadd exit=0 LOAD ACCEPT SPIRV_VK version=1.3 bound=53 words=257 insns=66 entry=vadd
+PASS load-cl-fsum16 exit=0 LOAD ACCEPT SPIRV_CL version=1.0 bound=111 words=539 insns=115 entry=fsum16
+PASS load-vk-fsum16 exit=0 LOAD ACCEPT SPIRV_VK version=1.3 bound=111 words=535 insns=121 entry=fsum16
+PASS load-neg-truncated exit=21 LOAD REFUSE SPIRV_VK code=21 reason=SPIR-V instruction runs past the end, has word count 0, or the module does not end with OpFunctionEnd
+PASS load-neg-overrun exit=21 LOAD REFUSE SPIRV_VK code=21 reason=SPIR-V instruction runs past the end, has word count 0, or the module does not end with OpFunctionEnd
+PASS load-neg-badmagic exit=20 LOAD REFUSE SPIRV_VK code=20 reason=not a SPIR-V module (magic, version, bound or schema)
+PASS load-neg-aarch64 exit=11 LOAD REFUSE AARCH64 code=11 reason=format has no backend yet (PLANNED)
+PASS load-neg-cl-as-vk exit=22 LOAD REFUSE SPIRV_VK code=22 reason=not Vulkan compute SPIR-V (needs Shader, no Kernel, Logical GLSL450)
+PASS load-neg-vk-as-cl exit=22 LOAD REFUSE SPIRV_CL code=22 reason=not OpenCL kernel SPIR-V (needs Kernel+Addresses, no Shader, Physical64 OpenCL)
+PASS load-neg-entry exit=23 LOAD REFUSE SPIRV_VK code=23 reason=no entry point of the right model (or with that name)
+PASS load-neg-entry-prefix exit=23 LOAD REFUSE SPIRV_CL code=23 reason=no entry point of the right model (or with that name)
+PASS load-neg-msl exit=11 LOAD REFUSE MSL_SOURCE code=11 reason=format has no backend yet (PLANNED)
+PASS load-neg-cubin exit=12 LOAD REFUSE CUBIN code=12 reason=format reserved (CUBIN, #864 HOLD)
+PASS load-neg-unknown exit=10 LOAD REFUSE PTX code=10 reason=unknown format tag
+PASS load-neg-spv-as-sm121 exit=40 LOAD REFUSE SM121_RAW code=40 reason=SM121_RAW must be non-empty 16-byte instructions and not ELF or SPIR-V
+PASS load-sm121-shape exit=0 LOAD ACCEPT SM121_RAW bytes=32
+PASS load-neg-sm121-odd exit=40 LOAD REFUSE SM121_RAW code=40 reason=SM121_RAW must be non-empty 16-byte instructions and not ELF or SPIR-V
+REFERENCE vadd sha256=72d0c1b2928779e83518f0b4c7d101d933cf89f210cd4627e138c33c9ce9b6a6 fsum16 sha256=6a6de93787e333d506d50996589af3e025c16b9bfc7c9493e1af34578e076290
+NOT_RUN hello_gpu --sim cross-check: HELLO_GPU not set
+PASS conform-neg-planted exit=1 CONFORM vadd n=1048576 wrong=1 unwritten=0 first=1024
+PASS conform-self exit=0 CONFORM vadd n=1048576 wrong=0 unwritten=0 first=none
+NOT_RUN spirv-host runs on PoCL and lavapipe: CUDAPP_MIGRATION_PENDING_SPIRV_HOST is not 1 (migration-pending C, default OFF)
+NOT_RUN AMDGPU_HSACO checks: llvm-mc/llvm-readelf under LLVM_BIN or LD_LLD missing
+hardware NOT_RUN: every GPU target except the GB10 (no AMD, Intel, Apple, Qualcomm, Arm, Imagination, Broadcom or Vortex device on this host; PoCL and lavapipe are CPUs)
+MULTITARGET PASS pass=22 fail=0 not_run=4

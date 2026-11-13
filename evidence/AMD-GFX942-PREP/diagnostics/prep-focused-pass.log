@@ -1,0 +1,28 @@
+PASS pinned Q27 config digest and compiled attention dimensions/norm/rotary contract
+PASS rope inverse frequencies=32 bit-exact Decimal power -> RN32 -> reciprocal -> RN32
+PASS rope P=0 cos/sin=64 Decimal-precision=120 max_absolute_error=0
+PASS rope P=1 cos/sin=64 Decimal-precision=120 max_absolute_error=2.92568116e-08
+PASS rope P=63 cos/sin=64 Decimal-precision=120 max_absolute_error=2.94943453e-08
+PASS rope P=64 cos/sin=64 Decimal-precision=120 max_absolute_error=2.92312321e-08
+PASS rope P=65 cos/sin=64 Decimal-precision=120 max_absolute_error=2.77499675e-08
+PASS rope P=8191 cos/sin=64 Decimal-precision=120 max_absolute_error=2.93129703e-08
+PASS rope P=65535 cos/sin=64 Decimal-precision=120 max_absolute_error=2.95510689e-08
+PASS rope P=262143 cos/sin=64 Decimal-precision=120 max_absolute_error=2.84634678e-08
+PASS rope P=4294967295 cos/sin=64 Decimal-precision=120 max_absolute_error=2.93083118e-08
+CONTROL rope-malformed-record CAUGHT lengths=0,3,5 exit=64 no-output
+PASS RSQ manual-1ULP enclosing-oracle inputs=4096 Decimal-precision=120 seed=942197 FTZ
+PASS prep P=0 Q=24x256 K/V=4x256 rotary=64 all-history/guards BF16-specials widest_interval=3/4194304 ambiguous_BF16=0
+PASS prep P=1 Q=24x256 K/V=4x256 rotary=64 all-history/guards BF16-specials widest_interval=3/4194304 ambiguous_BF16=0
+PASS prep P=63 Q=24x256 K/V=4x256 rotary=64 all-history/guards BF16-specials widest_interval=3/4194304 ambiguous_BF16=0
+PASS prep P=64 Q=24x256 K/V=4x256 rotary=64 all-history/guards BF16-specials widest_interval=3/4194304 ambiguous_BF16=0
+PASS prep P=65 Q=24x256 K/V=4x256 rotary=64 all-history/guards BF16-specials widest_interval=3/4194304 ambiguous_BF16=0
+PASS prep invalid-capacity P=1 no-output no-cache-write
+PASS attention sigmoid gate packed=24x512 outputs=6144 signed-zero/extreme/inf widest_interval=1/1048576
+CONTROL prep-no-one CAUGHT prep mismatch Q[0,0]
+CONTROL prep-wrong-pair CAUGHT prep mismatch Q[0,0]
+CONTROL prep-wrong-position CAUGHT prep mismatch K[0,0]
+CONTROL prep-truncate-cache CAUGHT prep mismatch K[0,0]
+CONTROL prep-extra-swish CAUGHT prep mismatch gate[0]
+CONTROL prep-wrong-gate-stride CAUGHT prep mismatch gate[258]
+CONTROL rope-wrong-dim CAUGHT config rotary64 not256
+PASS fused prep positions=0,1,63,64,65 prep_cases=6 gate_cases=1 rope_cases=9 hardware=NOT_RUN

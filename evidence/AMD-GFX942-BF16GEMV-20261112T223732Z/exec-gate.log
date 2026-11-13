@@ -1,0 +1,193 @@
+PIN omc=2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f
+Python 3.12.3
+PASS hsaco two builds byte-identical
+PASS exec two builds byte-identical
+PASS manual single-instruction semantics cases=382 all implemented instructions flags/masks/addressing hardware=NOT_RUN
+CONTROL manual-sub-no-borrow CAUGHT case=sub-0-1 pdf-page=97 state=(1, 1, 18446744073709551615, 0, 4, 0, 1, 4294967295) expected=[1, 1, 18446744073709551615, 1, 4, 0, 1, 4294967295]
+CONTROL manual-inactive-vcc CAUGHT case=add-co pdf-page=175 state=(1, 9223372036854775809, 9223372036854775807, 1, 4, 4294967295, 1, 0, 0, 3735928559, 0, 0) expected=[1, 9223372036854775809, 1, 1, 4, 4294967295, 1, 0, 0, 3735928559, 0, 0]
+CONTROL manual-vcc-source CAUGHT case=cmp-vcc-source-snapshot pdf-page=22 state=(1, 1, 0, 1, 4, 0) expected=[1, 1, 1, 1, 4, 0]
+CONTROL manual-smem-low-bits CAUGHT case=smem-component-low-bits pdf-page=68 state=(1, 1, 18446744073709551615, 1, 8, 3, 0, 872415506) expected=[1, 1, 18446744073709551615, 1, 8, 3, 0, 305397760]
+CONTROL manual-smem-offset-low-bits CAUGHT case=smem-component-low-bits pdf-page=68 state=(1, 1, 18446744073709551615, 1, 8, 3, 0, 872415506) expected=[1, 1, 18446744073709551615, 1, 8, 3, 0, 305397760]
+CONTROL manual-smem-dest-alignment CAUGHT case=smem-bad-destination-1 pdf-page=70 exit=0 expected=66
+CONTROL manual-smem-negative CAUGHT case=smem-negative-undefined pdf-page=68 exit=67 expected=66
+CONTROL manual-vgpr-pair-alignment CAUGHT case=global-odd-address-pair pdf-page=21 exit=0 expected=66
+CONTROL manual-d16-low-cleared CAUGHT case=global-d16-hi-3f80 pdf-page=507 state=(1, 9223372036854775809, 18446744073709551615, 1, 8, 2, 0, 1065353216, 3735928559, 2, 0, 1065353216) expected=[1, 9223372036854775809, 18446744073709551615, 1, 8, 2, 0, 1065402095, 3735928559, 2, 0, 1065353216]
+PASS exact FMA rational-reference triples=18005 seed=94232 RN-even denormals signed-zeros infinities NaNs
+PASS vadd code object two builds byte-identical
+PASS fsum16 code object two builds byte-identical
+PASS sgemm code object two builds byte-identical
+PASS fp8gemv code object two builds byte-identical
+PASS bf16gemv code object two builds byte-identical
+PASS vadd code object unchanged from pre-generalization
+PASS fsum16 code object unchanged from pre-SGEMM
+PASS corrected sgemm code object unchanged from pre-FP8
+PASS fp8gemv code object unchanged from pre-BF16
+PASS count=0 every-output-bit and past-count guards
+PASS count=1 every-output-bit and past-count guards
+PASS count=63 every-output-bit and past-count guards
+PASS count=64 every-output-bit and past-count guards
+PASS count=65 every-output-bit and past-count guards
+PASS count=200 every-output-bit and past-count guards
+PASS random binary32 pairs=4096 seed=942
+CONTROL one-bit-vadd-operand CAUGHT bit mismatch
+CONTROL outside-subset CAUGHT exit=66 memory-unchanged
+CONTROL unreachable-outside-subset CAUGHT exit=66 memory-unchanged
+CONTROL truncated-word CAUGHT exit=65 memory-unchanged
+CONTROL branch-inside-literal CAUGHT exit=65 memory-unchanged
+CONTROL memory-range CAUGHT exit=67 memory-unchanged
+PASS fsum16 rows=0 left-to-right every-output-bit and past-count guards
+PASS fsum16 rows=1 left-to-right every-output-bit and past-count guards
+PASS fsum16 rows=63 left-to-right every-output-bit and past-count guards
+PASS fsum16 rows=64 left-to-right every-output-bit and past-count guards
+PASS fsum16 rows=65 left-to-right every-output-bit and past-count guards
+PASS fsum16 rows=200 left-to-right every-output-bit and past-count guards
+PASS fsum16 random rows=200 seed=94216 all 15 rounded additions
+CONTROL fsum16-right-to-left CAUGHT bits left=3f800000 right=00000000 row=['4c000000', 'cc000000', '3f800000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000']
+PASS sgemm M=1 N=1 K=1 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=3 K=3 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=1 K=65 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=65 K=3 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=64 N=3 K=1 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=65 N=1 K=64 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=64 K=65 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=65 K=64 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=65 N=65 K=3 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=65 N=65 K=65 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=1 K=0 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=65 K=0 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=0 N=65 K=3 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=0 K=65 inputs=finite ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=1 K=1 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=3 K=3 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=1 K=65 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=65 K=3 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=64 N=3 K=1 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=65 N=1 K=64 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=64 K=65 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=65 K=64 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=65 N=65 K=3 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=65 N=65 K=65 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=1 N=1 K=0 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=65 K=0 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=0 N=65 K=3 inputs=special ordered-fma every-output-bit and all guards
+PASS sgemm M=3 N=0 K=65 inputs=special ordered-fma every-output-bit and all guards
+CONTROL sgemm-separate-mul-add CAUGHT fused=a8800000 separate=00000000
+CONTROL addc-second-scalar-constant-bus CAUGHT exit=66 memory-unchanged
+PASS sgemm shapes=14 patterns=finite,special plus fused-sensitive shape and overdispatch X/Y guard groups hardware=NOT_RUN
+PASS fp8gemv M=1 K=0 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=1 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=3 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=64 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=65 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=0 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=1 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=3 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=64 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=65 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=0 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=1 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=3 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=64 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=65 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=0 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=1 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=3 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=64 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=65 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=0 K=3 inputs=finite ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=0 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=1 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=3 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=64 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=1 K=65 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=0 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=1 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=3 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=64 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=63 K=65 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=0 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=1 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=3 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=64 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=64 K=65 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=0 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=1 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=3 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=64 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=65 K=65 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv M=0 K=3 inputs=special ordered-FMA row-scale every-bit all-guards
+PASS fp8gemv all256 E4M3FNUZ table exact Fraction oracle including sole-NaN80 unsigned-zero subnormals exponent15 finite
+CONTROL fp8gemv-OCP-E4M3FN-bias7 CAUGHT fp8gemv bit mismatch M=1 K=1 byte=126
+CONTROL fp8gemv-dropped-row-scale CAUGHT fp8gemv bit mismatch M=1 K=1 byte=126
+PASS bf16gemv M=0 K=0 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=1 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=3 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=64 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=65 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=130 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=0 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=1 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=3 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=64 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=65 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=130 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=0 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=1 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=3 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=64 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=65 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=130 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=0 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=1 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=3 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=64 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=65 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=130 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=0 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=1 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=3 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=64 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=65 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=130 inputs=finite ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=0 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=1 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=3 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=64 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=65 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=0 K=130 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=0 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=1 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=3 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=64 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=65 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=1 K=130 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=0 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=1 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=3 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=64 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=65 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=63 K=130 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=0 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=1 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=3 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=64 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=65 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=64 K=130 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=0 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=1 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=3 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=64 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=65 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv M=65 K=130 inputs=special ordered-FMA exact-BF16 every-bit all-guards
+PASS bf16gemv isolated BF16 signed-zeros subnormals normals extremes infinities quiet/signaling-NaNs
+CONTROL bf16gemv-big-endian-weight CAUGHT bf16gemv bit mismatch M=1 K=1 byte=104
+CONTROL bf16gemv-truncated-FP32-x CAUGHT bf16gemv bit mismatch M=1 K=1 byte=104
+CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation
+eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/hsaco.1
+3f72361e5789c752f003fd084c6213e8e0e267f27f7e9046b50dea69f1070d75  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/exec.1
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/vadd.1.hsaco
+15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/fsum16.1.hsaco
+466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/sgemm.1.hsaco
+b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/fp8gemv.1.hsaco
+59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa  /home/drakestapleton/work/hive/amdserve/Gfx942Exec/bf16-exec-out-1/bf16gemv.1.hsaco
+AMD-GFX942-EXEC PASS kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv counts=0,1,63,64,65,200 sgemm_shapes=14 sgemm_cases=29 semantics_cases=382 fp8gemv_shapes=21 fp8gemv_cases=43 fp8_conversion_bytes=256 bf16gemv_shapes=30 bf16gemv_cases=61 hardware=NOT_RUN

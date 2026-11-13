@@ -1,0 +1,77 @@
+CONTROL manual-lshr-left CAUGHT case=lshr32-2147483649-33 pdf-page=103 state=(1, 1, 18446744073709551615, 1, 4, 2147483649, 33, 2) expected=[1, 1, 18446744073709551615, 1, 4, 2147483649, 33, 1073741824]
+CONTROL manual-fsub-add CAUGHT case=fsub-denorm pdf-page=169 state=(1, 1, 18446744073709551615, 1, 4, 3, 2, 5) expected=[1, 1, 18446744073709551615, 1, 4, 3, 2, 1]
+CONTROL manual-fmax-ignores-snan CAUGHT case=fmax-7f801234-3f800000 pdf-page=172 state=(1, 1, 18446744073709551615, 1, 4, 2139099700, 1065353216, 1065353216) expected=[1, 1, 18446744073709551615, 1, 4, 2139099700, 1065353216, 2143294004]
+CONTROL manual-exp-returns-input CAUGHT case=trans-32-3f800000 pdf-page=195 state=(1, 1, 18446744073709551615, 1, 4, 1065353216, 1065353216) expected=[1, 1, 18446744073709551615, 1, 4, 1065353216, 1073741824]
+CONTROL manual-rcp-returns-input CAUGHT case=trans-34-c0000000 pdf-page=196 state=(1, 1, 18446744073709551615, 1, 4, 3221225472, 3221225472) expected=[1, 1, 18446744073709551615, 1, 4, 3221225472, 3204448256]
+CONTROL manual-rsq-is-rcp CAUGHT case=rsq-40800000 pdf-page=197 state=(1, 9223372036854775809, 18446744073709551615, 1, 4, 1082130432, 3735928559, 1082130432, 1048576000, 1048576000) expected=[1, 9223372036854775809, 18446744073709551615, 1, 4, 1082130432, 3735928559, 1082130432, 1056964608, 1056964608]
+CONTROL manual-inline-float-refused CAUGHT case=vmov-inline-float-242 pdf-page=42 exit=66 expected=0
+CONTROL manual-nop-clears-scc CAUGHT case=nop-0 pdf-page=138 state=(1, 1, 18446744073709551615, 0, 4) expected=[1, 1, 18446744073709551615, 1, 4]
+CONTROL manual-sub-no-borrow CAUGHT case=sub-0-1 pdf-page=97 state=(1, 1, 18446744073709551615, 0, 4, 0, 1, 4294967295) expected=[1, 1, 18446744073709551615, 1, 4, 0, 1, 4294967295]
+CONTROL manual-inactive-vcc CAUGHT case=add-co pdf-page=175 state=(1, 9223372036854775809, 9223372036854775807, 1, 4, 4294967295, 1, 0, 0, 3735928559, 0, 0) expected=[1, 9223372036854775809, 1, 1, 4, 4294967295, 1, 0, 0, 3735928559, 0, 0]
+CONTROL manual-vcc-source CAUGHT case=cmp-vcc-source-snapshot pdf-page=22 state=(1, 1, 0, 1, 4, 0) expected=[1, 1, 1, 1, 4, 0]
+CONTROL manual-smem-low-bits CAUGHT case=smem-component-low-bits pdf-page=68 state=(1, 1, 18446744073709551615, 1, 8, 3, 0, 872415506) expected=[1, 1, 18446744073709551615, 1, 8, 3, 0, 305397760]
+CONTROL manual-smem-offset-low-bits CAUGHT case=smem-component-low-bits pdf-page=68 state=(1, 1, 18446744073709551615, 1, 8, 3, 0, 872415506) expected=[1, 1, 18446744073709551615, 1, 8, 3, 0, 305397760]
+CONTROL manual-smem-dest-alignment CAUGHT case=smem-bad-destination-1 pdf-page=70 exit=0 expected=66
+CONTROL manual-smem-negative CAUGHT case=smem-negative-undefined pdf-page=68 exit=67 expected=66
+CONTROL manual-vgpr-pair-alignment CAUGHT case=global-odd-address-pair pdf-page=21 exit=0 expected=66
+CONTROL manual-d16-low-cleared CAUGHT case=global-d16-hi-3f80 pdf-page=507 state=(1, 9223372036854775809, 18446744073709551615, 1, 8, 2, 0, 1065353216, 3735928559, 2, 0, 1065353216) expected=[1, 9223372036854775809, 18446744073709551615, 1, 8, 2, 0, 1065402095, 3735928559, 2, 0, 1065353216]
+CONTROL manual-mov64-loses-scc CAUGHT case=mov64-exec-0 pdf-page=115 state=(1, 0, 18446744073709551615, 0, 4, 0, 0) expected=[1, 0, 18446744073709551615, 1, 4, 0, 0]
+CONTROL manual-xor-uses-or CAUGHT case=xor-2147483649-2147483648 pdf-page=174 state=(1, 1, 18446744073709551615, 1, 4, 2147483649, 2147483648, 2147483649) expected=[1, 1, 18446744073709551615, 1, 4, 2147483649, 2147483648, 1]
+CONTROL manual-wide-drops-last CAUGHT case=global-wide-4 pdf-page=504 state=(1, 1, 18446744073709551615, 1, 8, 4, 0, 287454017, 287454018, 287454019, 0) expected=[1, 1, 18446744073709551615, 1, 8, 4, 0, 287454017, 287454018, 287454019, 287454020]
+CONTROL manual-bpermute-live-alias CAUGHT case=bpermute-alias-snapshot pdf-page=437 state=(1, 18446744073709551615, 18446744073709551615, 1, 8, 4, 0, 12, 8, 20, 16, 28, 24, 36, 32, 44, 40, 52, 48, 60, 56, 68, 64, 76, 72, 84, 80, 92, 88, 100, 96, 108, 104, 116, 112, 124, 120, 132, 128, 140, 136, 148, 144, 156, 152, 164, 160, 172, 168, 180, 176, 188, 184, 196, 192, 204, 200, 212, 208, 220, 216, 228, 224, 236, 232, 244, 240, 252, 248, 1001, 1001, 1003, 1003, 1005, 1005, 1007, 1007, 1009, 1009, 1011, 1011, 1013, 1013, 1015, 1015, 1017, 1017, 1019, 1019, 1021, 1021, 1023, 1023, 1025, 1025, 1027, 1027, 1029, 1029, 1031, 1031, 1033, 1033, 1035, 1035, 1037, 1037, 1039, 1039, 1041, 1041, 1043, 1043, 1045, 1045, 1047, 1047, 1049, 1049, 1051, 1051, 1053, 1053, 1055, 1055, 1057, 1057, 1059, 1059, 1061, 1061, 1063, 1063) expected=[1, 18446744073709551615, 18446744073709551615, 1, 8, 4, 0, 12, 8, 20, 16, 28, 24, 36, 32, 44, 40, 52, 48, 60, 56, 68, 64, 76, 72, 84, 80, 92, 88, 100, 96, 108, 104, 116, 112, 124, 120, 132, 128, 140, 136, 148, 144, 156, 152, 164, 160, 172, 168, 180, 176, 188, 184, 196, 192, 204, 200, 212, 208, 220, 216, 228, 224, 236, 232, 244, 240, 252, 248, 1001, 1000, 1003, 1002, 1005, 1004, 1007, 1006, 1009, 1008, 1011, 1010, 1013, 1012, 1015, 1014, 1017, 1016, 1019, 1018, 1021, 1020, 1023, 1022, 1025, 1024, 1027, 1026, 1029, 1028, 1031, 1030, 1033, 1032, 1035, 1034, 1037, 1036, 1039, 1038, 1041, 1040, 1043, 1042, 1045, 1044, 1047, 1046, 1049, 1048, 1051, 1050, 1053, 1052, 1055, 1054, 1057, 1056, 1059, 1058, 1061, 1060, 1063, 1062]
+PASS mlpsilu code object two builds byte-identical
+CONTROL one-bit-vadd-operand CAUGHT bit mismatch
+CONTROL outside-subset CAUGHT exit=66 memory-unchanged
+CONTROL unreachable-outside-subset CAUGHT exit=66 memory-unchanged
+CONTROL truncated-word CAUGHT exit=65 memory-unchanged
+CONTROL branch-inside-literal CAUGHT exit=65 memory-unchanged
+CONTROL memory-range CAUGHT exit=67 memory-unchanged
+CONTROL fsum16-right-to-left CAUGHT bits left=3f800000 right=00000000 row=['4c000000', 'cc000000', '3f800000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000', '00000000']
+CONTROL sgemm-separate-mul-add CAUGHT fused=a8800000 separate=00000000
+CONTROL addc-second-scalar-constant-bus CAUGHT exit=66 memory-unchanged
+CONTROL fp8gemv-OCP-E4M3FN-bias7 CAUGHT fp8gemv bit mismatch M=1 K=1 byte=126
+CONTROL fp8gemv-dropped-row-scale CAUGHT fp8gemv bit mismatch M=1 K=1 byte=126
+CONTROL bf16gemv-big-endian-weight CAUGHT bf16gemv bit mismatch M=1 K=1 byte=104
+CONTROL bf16gemv-truncated-FP32-x CAUGHT bf16gemv bit mismatch M=1 K=1 byte=104
+CONTROL fp8gemv2-order CAUGHT fp8gemv2 bit mismatch M=1 K=129 byte=766 got=00 expected=80
+CONTROL fp8gemv2-tail CAUGHT fp8gemv2 bit mismatch M=1 K=3 byte=135 got=00 expected=bf
+CONTROL fp8gemv2-stride CAUGHT fp8gemv2 bit mismatch M=3 K=257 byte=1928 got=55 expected=00
+CONTROL bf16gemv2-order CAUGHT bf16gemv2 bit mismatch M=1 K=129 byte=874 got=00 expected=80
+CONTROL bf16gemv2-tail CAUGHT bf16gemv2 bit mismatch M=1 K=3 byte=118 got=00 expected=80
+CONTROL bf16gemv2-stride CAUGHT bf16gemv2 bit mismatch M=3 K=257 byte=2672 got=01 expected=ac
+CONTROL attention-no-max CAUGHT attention mismatch maximum
+CONTROL attention-wrong-gqa CAUGHT attention mismatch maximum
+CONTROL attention-v-from-k CAUGHT attention mismatch partial accumulator
+CONTROL rope-malformed-record CAUGHT lengths=0,3,5 exit=64 no-output
+CONTROL prep-no-one CAUGHT prep mismatch Q[0,0]
+CONTROL prep-wrong-pair CAUGHT prep mismatch Q[0,0]
+CONTROL prep-wrong-position CAUGHT prep mismatch K[0,0]
+CONTROL prep-truncate-cache CAUGHT prep mismatch K[0,0]
+CONTROL prep-extra-swish CAUGHT prep mismatch gate[0]
+CONTROL prep-wrong-gate-stride CAUGHT prep mismatch gate[258]
+CONTROL rope-wrong-dim CAUGHT config rotary64 not256
+PASS mlpsilu N=0 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS mlpsilu N=1 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=0
+PASS mlpsilu N=63 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=64 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=65 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+PASS mlpsilu N=17408 all-outputs/manual-interval all-inputs/guards overdispatch=XY widest_interval=10
+CONTROL mlpsilu-no-silu CAUGHT token mismatch N=17408 offset=139456 bits=c0800000 interval=0,0
+CONTROL mlpsilu-wrong-up CAUGHT token mismatch N=17408 offset=139472 bits=461c4000 interval=-4915201/65536,-4915199/65536
+PASS token mlpsilu_counts=0,1,63,64,65,17408 mlpsilu_cases=6 hardware=NOT_RUN
+CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation
+eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/hsaco.1
+51b27dd9c124b01b2c9a5b4f998b836804d3c2fcbe279e4923716207a40e3b9e  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/exec.1
+b2c6ef4a50b69faf76a7bd823c7c1bdd9a40083e9e1d9e2cee19446da730d856  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/attn256_gate.1.hsaco
+a721017369917d2b757095198877f16f9aa41a8955dbf4bf55d73e29f83b2ec3  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/attn256_merge.1.hsaco
+9d2599e672abe87082f885f46870c7d31fddd3dff8e5e43b069e32a59a8f5f95  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/attn256_part.1.hsaco
+9bbc291825b1c70d2b18bbb333a36982d355ffdf36b5e7bdedf09c84fb448f8a  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/attn256_prep.1.hsaco
+59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/bf16gemv.1.hsaco
+4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/bf16gemv2.1.hsaco
+b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/fp8gemv.1.hsaco
+99eaf23f9af959db5a16cc5d7e6392dc32cfb2ee6b721797554e6bd62eecd0a0  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/fp8gemv2.1.hsaco
+15cf499fa114e801d931fb73cbee13fcb6e8764c08a470368306625a8df37478  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/fsum16.1.hsaco
+2e22681a1fe0aa9a69796eec1326d4ee7679bda9d7d9985ae52fd7edffc5a69a  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/mlpsilu.1.hsaco
+466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/sgemm.1.hsaco
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/mlpsilu-final/exec/vadd.1.hsaco
+AMD-GFX942-EXEC PASS kernels=attn256_gate,attn256_merge,attn256_part,attn256_prep,bf16gemv,bf16gemv2,fp8gemv,fp8gemv2,fsum16,mlpsilu,sgemm,vadd counts=0,1,63,64,65,200 sgemm_shapes=14 sgemm_cases=29 semantics_cases=458 fp8gemv_shapes=21 fp8gemv_cases=43 fp8_conversion_bytes=256 bf16gemv_shapes=30 bf16gemv_cases=61 gemv2_shapes=51 gemv2_cases_per_kernel=103 gemv2_sampled_shapes=3 attention_T=0,1,2,63,64,65,129 attention_cases=8 prep_positions=0,1,63,64,65 prep_cases=6 gate_cases=1 rope_cases=9 mlpsilu_counts=0,1,63,64,65,17408 mlpsilu_cases=6 hardware=NOT_RUN

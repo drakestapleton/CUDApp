@@ -1,0 +1,375 @@
+{
+  "schema": "gdnstate-w-acceptance-v1",
+  "status": "EXERCISED",
+  "hardware": "NOT_RUN",
+  "performance": "NOT_RUN",
+  "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+  "source_sha256": {
+    "token_access.py": "4b3db017488b92a8d09440f3eeb289ca21c4fe39cb742c40a735803709398907",
+    "gdnstate_w-gfx942.s": "9b8cbcfe96684b47186e4e0c4dd90711ea511a3c10cdbfbaaeff0fe622ac0287",
+    "gdnstate_w.py": "fa27dfdeb1625652a82f79e9df731da1a1614b6a8b145df9a3f87748713424af",
+    "main.om": "300ac6a59fa7351e14c8612eb4e9175294c4dd4aac142f5073ce4afbda26c4fd",
+    "hsaco.om": "4d18abf95b57971ae95bdf4f595b058c88a2dea938013677fee461dd3dbeaeb1",
+    "gdnstate.isa": "426e9f018749c58e60a69792242dafa9d791bd408673aff9a3b93e789274ffdb",
+    "gdnstate-gfx942.s": "fe29d0625060422f260c9636461474861644aff7d1804641d4906ab739159ce2",
+    "fp.om": "90b87189e2647f9071e90a738a9b0d2e0ca7b88950c401ce00d5feadd86e0006",
+    "fma.om": "7ec0ae5afbab2a81dfa9852b3178b91ed05e3a42a988e59affe98b12d19da73e",
+    "gdnstate_w.isa": "fc87b2238b59db4af2c1066c1ab1f3e1335b2e267c7c1ff950ddc888015922b6"
+  },
+  "kernarg_size": 56,
+  "grid_workgroups": [
+    48,
+    16,
+    1
+  ],
+  "block": [
+    64,
+    1,
+    1
+  ],
+  "active_lanes": 8,
+  "columns_per_workgroup": 8,
+  "objects": {
+    "gdnstate": {
+      "file": "gdnstate.hsaco",
+      "sha256": "4c9d8d462e8eddb2b575ae6f27bdd366609d8b3237ac552f3c696da8ab7bcf80"
+    },
+    "gdnstate_w": {
+      "file": "gdnstate_w.hsaco",
+      "sha256": "449930132690bc88336d171aad876690423750de0f0bf18e601a9d245a574263"
+    },
+    "gdnstate_w-wrong-column-block": {
+      "file": "gdnstate_w-wrong-column-block.hsaco",
+      "sha256": "2a9fbf41c14beecfa10f280df78ad1753c7c6ad7f123559f154223b9bff7c52c"
+    },
+    "gdnstate_w-wrong-key-head": {
+      "file": "gdnstate_w-wrong-key-head.hsaco",
+      "sha256": "3a2d7823d18e4ccc9813ffab0b4d3fa5e1ba35a8d52cc80f26f7dab4d89775f7"
+    },
+    "gdnstate_w-no-beta": {
+      "file": "gdnstate_w-no-beta.hsaco",
+      "sha256": "f163b60e753d6d67caec06fea5de741e91144e786e44006153e59d6efc3f96f6"
+    }
+  },
+  "cases": [
+    {
+      "case": "random-1",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "088a57a0f5ef2b96c3794469c651a8e240dc736e42ae7821ce7d7a0f388fa431",
+      "result_sha256": "62390984bd4b8abf5a72f0363f04cf1fa5282670fab7d5fd5d5ccc33a2a73af9"
+    },
+    {
+      "case": "random-2",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "db9740fc4b5a9b02935cc9773bff6592151d1c7e25089667a001ed43b2c9ff25",
+      "result_sha256": "ce033f81d71d7ee0bcd81158b688a618e92b0638f0dd29b44a99dce475386ab4"
+    },
+    {
+      "case": "random-3",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "1e089b8b26cd93bfa5f2381b9f3710043fdd03fc86ad6cdbece436046797675a",
+      "result_sha256": "d79bccbc1d5ffd66989beb0c10191edebf2d89babdb81457167790850293bc4a"
+    },
+    {
+      "case": "zero",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "b5421aead8b23a401c09dfe6666764d70b9ff2cc6ce6ffe2c7f90a9ba62f7ccd",
+      "result_sha256": "7a83dbaf511924dbec3dfc00b6cd620c0b621033a49d85415bbeda341b056246"
+    },
+    {
+      "case": "cancel",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "d78a08a6c05c9ab9932ea591762fc18b48ad8167f4c258f9500a856f55b4c56f",
+      "result_sha256": "b88e308959424d58c9ceda3227e6c76110a4e917f01cef8d696f894e4981a1d0"
+    },
+    {
+      "case": "subnormal",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "ea9148c8b209ece047896c7ce94cd9f381fae1fc6f241032ce7f23e7276b47ab",
+      "result_sha256": "1f864cba5a0f2e894a10f2d3c9ba70a6f2e47b9f29324d273a6950668f1f1978"
+    },
+    {
+      "case": "impulse",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "cf64057e02410a59d99961797398ec89024aa3a306b5923f7b67b42b1a530718",
+      "result_sha256": "cde228ca6014bc6c66c027b191108cc764b9a4c59e1bd02cda0ae4878b9683fe"
+    },
+    {
+      "case": "exceptional",
+      "comparison": "every byte vs original gdnstate; independent scalar-order FP32 oracle",
+      "input_sha256": "cc33f79ba827f752cf9e23b4b1d3365a4ad791978d9024d068f6b3be0f253b3b",
+      "result_sha256": "20a13947fd977553dbb9153ca0c7be33cb0b88f257037835376d74ce40ae3c8b"
+    }
+  ],
+  "bounds": [
+    {
+      "case": "random-1",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 56,
+          "max_read_offset": 55,
+          "max_write_offset": null
+        },
+        {
+          "name": "qk",
+          "bytes": 16384,
+          "max_read_offset": 16383,
+          "max_write_offset": null
+        },
+        {
+          "name": "value",
+          "bytes": 24576,
+          "max_read_offset": 24575,
+          "max_write_offset": null
+        },
+        {
+          "name": "oldstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145727,
+          "max_write_offset": null
+        },
+        {
+          "name": "newstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145727,
+          "max_write_offset": 3145727
+        },
+        {
+          "name": "output",
+          "bytes": 24576,
+          "max_read_offset": null,
+          "max_write_offset": 24575
+        },
+        {
+          "name": "decay",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        },
+        {
+          "name": "beta",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        }
+      ]
+    },
+    {
+      "case": "wrong-column-block",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 56,
+          "max_read_offset": 55,
+          "max_write_offset": null
+        },
+        {
+          "name": "qk",
+          "bytes": 16384,
+          "max_read_offset": 16383,
+          "max_write_offset": null
+        },
+        {
+          "name": "value",
+          "bytes": 24576,
+          "max_read_offset": 24335,
+          "max_write_offset": null
+        },
+        {
+          "name": "oldstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145487,
+          "max_write_offset": null
+        },
+        {
+          "name": "newstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145487,
+          "max_write_offset": 3145487
+        },
+        {
+          "name": "output",
+          "bytes": 24576,
+          "max_read_offset": null,
+          "max_write_offset": 24335
+        },
+        {
+          "name": "decay",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        },
+        {
+          "name": "beta",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        }
+      ]
+    },
+    {
+      "case": "wrong-key-head",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 56,
+          "max_read_offset": 55,
+          "max_write_offset": null
+        },
+        {
+          "name": "qk",
+          "bytes": 16384,
+          "max_read_offset": 12543,
+          "max_write_offset": null
+        },
+        {
+          "name": "value",
+          "bytes": 24576,
+          "max_read_offset": 24575,
+          "max_write_offset": null
+        },
+        {
+          "name": "oldstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145727,
+          "max_write_offset": null
+        },
+        {
+          "name": "newstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145727,
+          "max_write_offset": 3145727
+        },
+        {
+          "name": "output",
+          "bytes": 24576,
+          "max_read_offset": null,
+          "max_write_offset": 24575
+        },
+        {
+          "name": "decay",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        },
+        {
+          "name": "beta",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        }
+      ]
+    },
+    {
+      "case": "no-beta",
+      "buffers": [
+        {
+          "name": "kernarg",
+          "bytes": 56,
+          "max_read_offset": 55,
+          "max_write_offset": null
+        },
+        {
+          "name": "qk",
+          "bytes": 16384,
+          "max_read_offset": 16383,
+          "max_write_offset": null
+        },
+        {
+          "name": "value",
+          "bytes": 24576,
+          "max_read_offset": 24575,
+          "max_write_offset": null
+        },
+        {
+          "name": "oldstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145727,
+          "max_write_offset": null
+        },
+        {
+          "name": "newstate",
+          "bytes": 3145728,
+          "max_read_offset": 3145727,
+          "max_write_offset": 3145727
+        },
+        {
+          "name": "output",
+          "bytes": 24576,
+          "max_read_offset": null,
+          "max_write_offset": 24575
+        },
+        {
+          "name": "decay",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        },
+        {
+          "name": "beta",
+          "bytes": 192,
+          "max_read_offset": 191,
+          "max_write_offset": null
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "mutant": "wrong-column-block",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "mutant": "wrong-key-head",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "mutant": "no-beta",
+      "exit": 0,
+      "result": "CAUGHT numerical mismatch"
+    },
+    {
+      "buffer": "kernarg",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "qk",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "value",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "oldstate",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "newstate",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "output",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "decay",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    },
+    {
+      "buffer": "beta",
+      "exit": 68,
+      "result": "CAUGHT one-byte-short span"
+    }
+  ]
+}

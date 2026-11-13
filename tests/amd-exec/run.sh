@@ -26,9 +26,20 @@ out=$(CDPATH= cd -- "$out" && pwd)
 src=$root/backend/amd/gfx942
 printf 'PIN omc=%s\n' "$pin"
 python3 --version
+# Instruments run with this directory first on sys.path; a stdlib-named module here breaks oracle imports.
+python3 -I - "$root/tests/amd-exec" <<'PY'
+import pathlib, sys
+def shadows(names):
+    return sorted(n for n in names if n in sys.stdlib_module_names)
+assert shadows(['token']) == ['token'], 'shadow control missed'
+print('CONTROL stdlib-named module token CAUGHT')
+found = shadows(p.stem for p in pathlib.Path(sys.argv[1]).glob('*.py'))
+assert not found, f'test modules shadow stdlib: {found}'
+print('PASS no tests/amd-exec module shadows the Python standard library')
+PY
 cat "$src/exec/fp.om" "$src/exec/fma.om" "$src/exec/main.om" > "$out/exec.om"
-for name in hsaco exec; do
-    input=$src/hsaco.om
+for name in hsaco exec rope; do
+    input=$src/$name.om
     [ "$name" != exec ] || input=$out/exec.om
     for iteration in 1 2; do
         timeout 120 "$omc" < "$input" > "$out/$name.$iteration" 2> "$out/$name.$iteration.compile.log"
@@ -63,7 +74,15 @@ python3 -I "$root/tests/amd-exec/fp8gemv.py" mutate "$out/exec.om" "$out/exec-oc
 timeout 120 "$omc" < "$out/exec-ocp.om" > "$out/exec-ocp" 2> "$out/exec-ocp.compile.log"
 [ ! -s "$out/exec-ocp.compile.log" ] || { cat "$out/exec-ocp.compile.log"; exit 1; }
 chmod 700 "$out/exec-ocp"
-kernels='vadd fsum16 sgemm fp8gemv'
+python3 -I "$root/tests/amd-exec/bf16gemv.py" swap-mutant "$out/exec.om" "$out/exec-swapped.om"
+timeout 120 "$omc" < "$out/exec-swapped.om" > "$out/exec-swapped" 2> "$out/exec-swapped.compile.log"
+[ ! -s "$out/exec-swapped.compile.log" ] || { cat "$out/exec-swapped.compile.log"; exit 1; }
+chmod 700 "$out/exec-swapped"
+kernels=
+for table in "$src/"*.isa; do
+    kernel=${table##*/}
+    kernels="${kernels}${kernels:+ }${kernel%.isa}"
+done
 for kernel in $kernels; do
     for iteration in 1 2; do
         timeout 30 "$out/hsaco.$iteration" "$src/$kernel.isa" > "$out/$kernel.$iteration.hsaco"
@@ -81,6 +100,12 @@ echo 'PASS fsum16 code object unchanged from pre-SGEMM'
 digest=$(sha256sum < "$out/sgemm.1.hsaco")
 [ "${digest%% *}" = 466d2a9e8ed61768ca1d09c283933dbae12f768a5bae22f5cf50f13c527d7e70 ]
 echo 'PASS corrected sgemm code object unchanged from pre-FP8'
+digest=$(sha256sum < "$out/fp8gemv.1.hsaco")
+[ "${digest%% *}" = b2260043751f6483deae05d3c3b5cb1d2a5e97031d299998d9d4b04691fcaf5b ]
+echo 'PASS fp8gemv code object unchanged from pre-BF16'
+digest=$(sha256sum < "$out/bf16gemv.1.hsaco")
+[ "${digest%% *}" = 59f955f07f5702235927835b98e9934e574fe266744ea53b3ab2db35d30179fa ]
+echo 'PASS bf16gemv code object unchanged from pre-GEMV2'
 sed 's/^I 5 260 8 4 0x01 /I 5 261 8 4 0x01 /' "$src/vadd.isa" > "$out/flipped.isa"
 if cmp -s "$src/vadd.isa" "$out/flipped.isa"; then echo 'FAIL mutant did not apply'; exit 1; fi
 timeout 30 "$out/hsaco.1" "$out/flipped.isa" > "$out/flipped.hsaco"
@@ -98,6 +123,83 @@ python3 -I "$root/tests/amd-exec/fp8gemv.py" scale-mutant "$src/fp8gemv.isa" "$o
 timeout 30 "$out/hsaco.1" "$out/no-scale.isa" > "$out/no-scale.hsaco"
 python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/no-scale.hsaco" "$out/no-scale.text"
 python3 -I "$root/tests/amd-exec/fp8gemv.py" suite "$out/exec.1" "$out/fp8gemv.text" "$out/exec-ocp" "$out/no-scale.text" "$out"
+python3 -I "$root/tests/amd-exec/bf16gemv.py" truncate-mutant "$src/bf16gemv.isa" "$out/truncated-x.isa"
+timeout 30 "$out/hsaco.1" "$out/truncated-x.isa" > "$out/truncated-x.hsaco"
+python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/truncated-x.hsaco" "$out/truncated-x.text"
+python3 -I "$root/tests/amd-exec/bf16gemv.py" suite "$out/exec.1" "$out/bf16gemv.text" "$out/exec-swapped" "$out/truncated-x.text" "$out"
+{
+    cat "$src/exec/fp.om" "$src/exec/fma.om"
+    sed '/^fn main to int/,$d' "$src/exec/main.om"
+    cat "$root/tests/amd-exec/row-probe.om"
+} > "$out/row-probe.om"
+timeout 120 "$omc" < "$out/row-probe.om" > "$out/row-probe" 2> "$out/row-probe.compile.log"
+[ ! -s "$out/row-probe.compile.log" ] || { cat "$out/row-probe.compile.log"; exit 1; }
+chmod 700 "$out/row-probe"
+for kernel in fp8gemv2 bf16gemv2; do
+    python3 -I "$root/tests/amd-exec/gemv2.py" mutate "$src/$kernel.isa" "$out"
+    for control in order tail stride; do
+        timeout 30 "$out/hsaco.1" "$out/$kernel-$control.isa" > "$out/$kernel-$control.hsaco"
+        python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$kernel-$control.hsaco" "$out/$kernel-$control.text"
+    done
+done
+python3 -I "$root/tests/amd-exec/gemv2.py" suite "$out/exec.1" "$out/row-probe" "$out"
+cat "$src/exec/fp.om" "$root/tests/amd-exec/trans-probe.om" > "$out/trans-probe.om"
+timeout 120 "$omc" < "$out/trans-probe.om" > "$out/trans-probe" 2> "$out/trans-probe.compile.log"
+[ ! -s "$out/trans-probe.compile.log" ] || { cat "$out/trans-probe.compile.log"; exit 1; }
+chmod 700 "$out/trans-probe"
+python3 -I "$root/tests/amd-exec/attention.py" transprobe "$out/trans-probe"
+python3 -I "$root/tests/amd-exec/log.py" "$out/trans-probe"
+python3 -I "$root/tests/amd-exec/attention.py" mutate "$src/attn256_part.isa" "$out"
+for control in no-max wrong-gqa v-from-k; do
+    timeout 30 "$out/hsaco.1" "$out/attention-$control.isa" > "$out/attention-$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/attention-$control.hsaco" "$out/attention-$control.text"
+done
+python3 -I "$root/tests/amd-exec/attention.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/prep.py" mutate "$src" "$out"
+for control in no-one wrong-pair wrong-position truncate-cache extra-swish wrong-gate-stride; do
+    timeout 30 "$out/hsaco.1" "$out/prep-$control.isa" > "$out/prep-$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/prep-$control.hsaco" "$out/prep-$control.text"
+done
+timeout 120 "$omc" < "$out/rope-wrong-dim.om" > "$out/rope-wrong-dim" 2> "$out/rope-wrong-dim.compile.log"
+[ ! -s "$out/rope-wrong-dim.compile.log" ] || { cat "$out/rope-wrong-dim.compile.log"; exit 1; }
+chmod 700 "$out/rope-wrong-dim"
+{ sed '/^fn main to int/,$d' "$src/rope.om"; cat "$root/tests/amd-exec/ropefreq-probe.om"; } > "$out/ropefreq-probe.om"
+timeout 120 "$omc" < "$out/ropefreq-probe.om" > "$out/ropefreq-probe" 2> "$out/ropefreq-probe.compile.log"
+[ ! -s "$out/ropefreq-probe.compile.log" ] || { cat "$out/ropefreq-probe.compile.log"; exit 1; }
+chmod 700 "$out/ropefreq-probe"
+python3 -I "$root/tests/amd-exec/prep.py" suite "$out/exec.1" "$out/rope.1" "$out"
+python3 -I "$root/tests/amd-exec/token_ref.py" mutate "$src" "$out"
+for control in mlpsilu-no-silu mlpsilu-wrong-up; do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/token_ref.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/norm.py" mutate "$src" "$out"
+for control in rmsnorm5120-no-one rmsnorm5120-wrong-mean rmsnorm5120-dropped-chunk; do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/norm.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/gdnconv.py" mutate "$src" "$out"
+for control in gdnconv4-no-input-round gdnconv4-no-conv-round gdnconv4-no-silu-round gdnconv4-wrong-cache-shift; do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/gdnconv.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/gdn.py" mutate "$src" "$out"
+for control in $(python3 -I "$root/tests/amd-exec/gdn.py" controls); do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/gdn.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/decode.py" mutate "$src" "$out"
+for control in $(python3 -I "$root/tests/amd-exec/decode.py" controls); do
+    timeout 30 "$out/hsaco.1" "$out/$control.isa" > "$out/$control.hsaco"
+    python3 -I "$root/tests/amd-exec/oracle.py" extract "$out/$control.hsaco" "$out/$control.text"
+done
+python3 -I "$root/tests/amd-exec/decode.py" suite "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/prep_section.py" "$out/exec.1" "$out"
+python3 -I "$root/tests/amd-exec/token_access.py" "$omc" "$src" "$out"
 python3 -I "$root/tests/amd-exec/fp8gemv.py" flat-mutant "$out/exec.om" "$out/exec-flat.om"
 timeout 120 "$omc" < "$out/exec-flat.om" > "$out/exec-flat" 2> "$out/exec-flat.compile.log"
 [ ! -s "$out/exec-flat.compile.log" ] || { cat "$out/exec-flat.compile.log"; exit 1; }
@@ -120,5 +222,5 @@ AMD_EXEC_OUT="$out/wrong-pin-must-not-exist" sh "$root/tests/amd-exec/run.sh" "$
 [ ! -e "$out/wrong-pin-must-not-exist" ]
 if grep -q WRONG_COMPILER_EXECUTED "$out/wrong-pin.log"; then exit 1; fi
 echo 'CONTROL wrong-compiler-digest CAUGHT exit=69 before compiler execution or output creation'
-sha256sum "$out/hsaco.1" "$out/exec.1" "$out/vadd.1.hsaco" "$out/fsum16.1.hsaco" "$out/sgemm.1.hsaco" "$out/fp8gemv.1.hsaco"
+sha256sum "$out/hsaco.1" "$out/exec.1" "$out/"*.1.hsaco
 python3 -I "$root/tests/amd-exec/sgemm.py" summary "$kernels"

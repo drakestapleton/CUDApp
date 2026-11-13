@@ -1,0 +1,3 @@
+AMD_OUT=/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/rmsnorm5120-accepted2/host sh tests/amd/run.sh /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc
+AMD_EXEC_OUT=/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/rmsnorm5120-accepted2/exec sh tests/amd-exec/run.sh /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc
+Both inside flock -n -E 99 pool-*.lock nice -n 10, first available queen pool lock.

@@ -128,10 +128,10 @@ def suite(exe, text, flipped, out):
                          if word >> 25 == 0x13 and word & 511 == 255)
     words[branch_index] = 0xbf880000 | ((literal_index - branch_index - 1) & 65535)
     bad_branch = struct.pack('<' + 'I' * len(words), *words)
-    # Valid but unsupported s_nop. Full predecode must reject even after an endpgm.
+    # Valid but unsupported S_CBRANCH_VCCZ (CDNA3 p140). Reject even after endpgm.
     for label, code, rc in (
-        ('outside-subset', struct.pack('<I', 0xbf800000) + original[4:], 66),
-        ('unreachable-outside-subset', original + struct.pack('<I', 0xbf800000), 66),
+        ('outside-subset', struct.pack('<I', 0xbf860000) + original, 66),
+        ('unreachable-outside-subset', original + struct.pack('<I', 0xbf860000), 66),
         ('truncated-word', original[:-1], 65),
         ('branch-inside-literal', bad_branch, 65),
     ):

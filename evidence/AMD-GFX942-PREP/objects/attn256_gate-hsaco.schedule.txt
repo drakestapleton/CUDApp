@@ -1,0 +1,64 @@
+
+/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/acceptance2/host/attn256_gate-hsaco.hsaco:	file format elf64-amdgpu
+
+Disassembly of section .text:
+
+0000000000000300 <attn256_gate>:
+	s_load_dwordx4 s[4:7], s[0:1], 0x0                         // 000000000300: C00A0100 00000000
+	s_load_dwordx2 s[8:9], s[0:1], 0x10                        // 000000000308: C0060200 00000010
+	s_waitcnt lgkmcnt(0)                                       // 000000000310: BF8CC07F
+	s_sub_u32 s28, s2, 0x60                                    // 000000000314: 809CFF02 00000060
+	s_cbranch_scc0 61                                          // 00000000031C: BF84003D <attn256_gate+0x114>
+	s_sub_u32 s28, s3, 1                                       // 000000000320: 809C8103
+	s_cbranch_scc0 59                                          // 000000000324: BF84003B <attn256_gate+0x114>
+	v_and_b32_e32 v0, 0x3ff, v0                                // 000000000328: 260000FF 000003FF
+	v_mov_b32_e32 v1, s2                                       // 000000000330: 7E020202
+	v_lshlrev_b32_e32 v1, 6, v1                                // 000000000334: 24020286
+	v_add_u32_e32 v1, v0, v1                                   // 000000000338: 68020300
+	v_lshrrev_b32_e32 v2, 8, v1                                // 00000000033C: 20040288
+	v_lshlrev_b32_e32 v2, 11, v2                               // 000000000340: 2404048B
+	v_and_b32_e32 v30, 0xff, v1                                // 000000000344: 263C02FF 000000FF
+	v_lshlrev_b32_e32 v30, 2, v30                              // 00000000034C: 243C3C82
+	v_add_u32_e32 v2, v30, v2                                  // 000000000350: 6804051E
+	v_add_u32_e32 v2, 0x400, v2                                // 000000000354: 680404FF 00000400
+	v_mov_b32_e32 v3, 0                                        // 00000000035C: 7E060280
+	v_mov_b32_e32 v27, s5                                      // 000000000360: 7E360205
+	v_add_co_u32_e32 v2, vcc, s4, v2                           // 000000000364: 32040404
+	v_addc_co_u32_e32 v3, vcc, v27, v3, vcc                    // 000000000368: 3806071B
+	v_mov_b32_e32 v4, v1                                       // 00000000036C: 7E080301
+	v_mov_b32_e32 v5, 0                                        // 000000000370: 7E0A0280
+	v_lshrrev_b32_e32 v27, 30, v4                              // 000000000374: 2036089E
+	v_lshlrev_b32_e32 v5, 2, v5                                // 000000000378: 240A0A82
+	v_add_u32_e32 v5, v27, v5                                  // 00000000037C: 680A0B1B
+	v_lshlrev_b32_e32 v4, 2, v4                                // 000000000380: 24080882
+	v_mov_b32_e32 v27, s7                                      // 000000000384: 7E360207
+	v_add_co_u32_e32 v4, vcc, s6, v4                           // 000000000388: 32080806
+	v_addc_co_u32_e32 v5, vcc, v27, v5, vcc                    // 00000000038C: 380A0B1B
+	v_mov_b32_e32 v6, v1                                       // 000000000390: 7E0C0301
+	v_mov_b32_e32 v7, 0                                        // 000000000394: 7E0E0280
+	v_lshrrev_b32_e32 v27, 30, v6                              // 000000000398: 20360C9E
+	v_lshlrev_b32_e32 v7, 2, v7                                // 00000000039C: 240E0E82
+	v_add_u32_e32 v7, v27, v7                                  // 0000000003A0: 680E0F1B
+	v_lshlrev_b32_e32 v6, 2, v6                                // 0000000003A4: 240C0C82
+	v_mov_b32_e32 v27, s9                                      // 0000000003A8: 7E360209
+	v_add_co_u32_e32 v6, vcc, s8, v6                           // 0000000003AC: 320C0C08
+	v_addc_co_u32_e32 v7, vcc, v27, v7, vcc                    // 0000000003B0: 380E0F1B
+	global_load_dword v8, v[2:3], off                          // 0000000003B4: DC508000 087F0002
+	global_load_dword v9, v[4:5], off                          // 0000000003BC: DC508000 097F0004
+	s_waitcnt vmcnt(0)                                         // 0000000003C4: BF8C0F70
+	v_and_b32_e32 v10, 0x7fffffff, v8                          // 0000000003C8: 261410FF 7FFFFFFF
+	v_xor_b32_e32 v10, 0x80000000, v10                         // 0000000003D0: 2A1414FF 80000000
+	v_mul_f32_e32 v10, 0x3fb8aa3b, v10                         // 0000000003D8: 0A1414FF 3FB8AA3B
+	v_exp_f32_e32 v10, v10                                     // 0000000003E0: 7E14410A
+	s_nop 0                                                    // 0000000003E4: BF800000
+	v_add_f32_e32 v11, 1.0, v10                                // 0000000003E8: 021614F2
+	v_rcp_f32_e32 v11, v11                                     // 0000000003EC: 7E16450B
+	v_lshrrev_b32_e32 v12, 31, v8                              // 0000000003F0: 2018109F
+	v_mov_b32_e32 v13, 0                                       // 0000000003F4: 7E1A0280
+	v_cmp_gt_u32_e32 vcc, v12, v13                             // 0000000003F8: 7D981B0C
+	s_and_saveexec_b64 s[26:27], vcc                           // 0000000003FC: BE9A206A
+	v_mul_f32_e32 v11, v10, v11                                // 000000000400: 0A16170A
+	s_mov_b64 exec, s[26:27]                                   // 000000000404: BEFE011A
+	v_mul_f32_e32 v9, v11, v9                                  // 000000000408: 0A12130B
+	global_store_dword v[6:7], v9, off                         // 00000000040C: DC708000 007F0906
+	s_endpgm                                                   // 000000000414: BF810000

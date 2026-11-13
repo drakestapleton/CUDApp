@@ -1,0 +1,19 @@
+cwd=/home/drakestapleton/work/hive/amdserve/Gfx942Exec/attn
+host=spark-b87b
+branch=amdserve/gfx942-attn
+
+Final host gate (job bg_78; observed exit0):
+AMD_OUT=/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/acceptance2/host sh tests/amd/run.sh /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc > /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/acceptance2/host.log 2>&1
+
+Final executor gate (job bg_80; observed exit0):
+AMD_EXEC_OUT=/home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/acceptance3/exec sh tests/amd-exec/run.sh /home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc > /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-PREP-WORK/acceptance3/exec.log 2>&1
+
+Each gate ran inside this nonblocking CPU-pool selection wrapper (the quoted sh -c body also created its output directory and printed its captured exit/log tail):
+for lock in /home/drakestapleton/handoffs/hive/queen/pool-*.lock; do
+  flock -n -E 99 "$lock" nice -n 10 sh -c '<gate body above>' && exit 0
+  rc=$?
+  [ "$rc" = 99 ] || exit "$rc"
+done
+exit 99
+
+The earlier full gates and focused bring-up attempts are not counted as final PASS; their failing outputs remain in diagnostics/.

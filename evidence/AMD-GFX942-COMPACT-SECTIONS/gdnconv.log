@@ -1,0 +1,10 @@
+PASS gdnconv4 channels=64/10240 taps=4 kind=zero BF16-input/conv/SiLU cache-exact every-output all-inputs/guards widest_interval=0
+PASS gdnconv4 channels=128/10240 taps=4 kind=range BF16-input/conv/SiLU cache-exact every-output all-inputs/guards widest_interval=0
+PASS gdnconv4 channels=10240/10240 taps=4 kind=history BF16-input/conv/SiLU cache-exact every-output all-inputs/guards widest_interval=1/32768
+CONTROL gdnconv4-no-input-round CAUGHT token mismatch channels=10240/10240 taps=4 kind=history offset=287040 bits=3eb30000 interval=45/128,45/128
+CONTROL gdnconv4-no-conv-round CAUGHT token mismatch channels=10240/10240 taps=4 kind=history offset=287064 bits=b79c0000 interval=-155/8388608,-155/8388608
+CONTROL gdnconv4-no-silu-round CAUGHT token mismatch BF16 output offset=287040
+CONTROL gdnconv4-wrong-cache-shift CAUGHT token mismatch exact offset=205056
+CONTROL notebook-gdnconv4-fixture-drift CAUGHT
+PASS notebook-gdnconv4 code_bytes=11964 in-cell-fixtures/oracle=host-identical every-case/no-embedded-images hardware=NOT_RUN
+PASS GDN convolution channels=10240 cases=3 hardware=NOT_RUN

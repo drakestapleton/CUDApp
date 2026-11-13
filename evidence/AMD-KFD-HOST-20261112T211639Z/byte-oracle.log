@@ -1,0 +1,13 @@
+PASS AQL two fixed launches: independent HSA definition + struct.pack <6H5I4Q
+CONTROL CAUGHT grid-size-zero: Omega exit=3 no packet emitted
+PASS AQL field rules and overflowing/malformed numeric refusals
+PASS kernarg assembly metadata: code-object-v5 metadata 1.2; four explicit arguments; no hidden args
+CONTROL CAUGHT kernarg-one-byte-short: Omega exit=3 no block emitted
+PASS KFD 12 requests + auxiliary pointed records: every serialized field vs live header oracle
+CONTROL CAUGHT wrong-request-number: complete table comparison rejects GET_VERSION + 1
+CONTROL CAUGHT record-off-by-one-field: sizeof mismatch and emitted 12 bytes != header 8 bytes
+CONTROL CAUGHT field-offset-plus-one: header comparison and Omega range refusal exit=3
+PASS ring single-producer/consumer order, 40 launches, 16 slots, wrap and byte visibility checked
+CONTROL CAUGHT header-before-body: Omega model exit=3
+PASS ring write-index/doorbell/consumer/reuse/incomplete-order refusals
+ORACLE PASS subprocess_cases=77

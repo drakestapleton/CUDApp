@@ -1,0 +1,548 @@
+[
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "93f784871075fa063363d29c500554403ee4c9ae69b78526006ca4ec52c27cbd",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "93f784871075fa063363d29c500554403ee4c9ae69b78526006ca4ec52c27cbd",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "4c9d8d462e8eddb2b575ae6f27bdd366609d8b3237ac552f3c696da8ab7bcf80",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "4c9d8d462e8eddb2b575ae6f27bdd366609d8b3237ac552f3c696da8ab7bcf80",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "449930132690bc88336d171aad876690423750de0f0bf18e601a9d245a574263",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "449930132690bc88336d171aad876690423750de0f0bf18e601a9d245a574263",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-wrong-column-block.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "2a9fbf41c14beecfa10f280df78ad1753c7c6ad7f123559f154223b9bff7c52c",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-wrong-column-block.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "2a9fbf41c14beecfa10f280df78ad1753c7c6ad7f123559f154223b9bff7c52c",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-wrong-key-head.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3a2d7823d18e4ccc9813ffab0b4d3fa5e1ba35a8d52cc80f26f7dab4d89775f7",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-wrong-key-head.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3a2d7823d18e4ccc9813ffab0b4d3fa5e1ba35a8d52cc80f26f7dab4d89775f7",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-no-beta.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f163b60e753d6d67caec06fea5de741e91144e786e44006153e59d6efc3f96f6",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-no-beta.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f163b60e753d6d67caec06fea5de741e91144e786e44006153e59d6efc3f96f6",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "llvm-mc-18",
+      "-triple=amdgcn-amd-amdhsa",
+      "-mcpu=gfx942",
+      "-filetype=obj",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/source/gdnstate-gfx942.s",
+      "-o",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate-llvm.o"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "llvm-mc-18",
+      "-triple=amdgcn-amd-amdhsa",
+      "-mcpu=gfx942",
+      "-filetype=obj",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/source/gdnstate_w-gfx942.s",
+      "-o",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-llvm.o"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "060928414321919cf9ed4489f5ba8be96d57aead8a365e0164e7cfa82b118630",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "498b15b84ab1fcbc9ad74672d6205974b4db01c6860e7e6ae817109146531251",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "256",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-wrong-column-block.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "8b8cb3f55253508d2f03c176d26805c19cbabeae666588ad1171e4e0ae32e6d7",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-wrong-key-head.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "6b33f1696747132c8fe350b8001c4b86f53542a263e467600aeaecff2c9397d9",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/access",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w-no-beta.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 0,
+    "stdout_sha256": "498b15b84ab1fcbc9ad74672d6205974b4db01c6860e7e6ae817109146531251",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "09fddf3adf0e7a0c10b4d45068fb8e037d9c43b3ee20b914de1924e1deea782f",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-kernarg",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "40a544824703ae1532c2c948f9f992cd0841396c0acd0184bff0bf441b40a495",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-qk",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "829b0ebd0122c3c86c81eac30b97e4d219d9d16432910c4f659d834a83d2d9c0",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-value",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "c2de99be3059129c9edf89a9640118af972a7da1715c728a955f5e49e10277fb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-oldstate",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "51954a824d16db93e0a87702bd74fd85b5ab099238a926a3bf0fc149b997c3b5",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-newstate",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cee2287a9f2cdf9efb70eb4a1d6863df7653a3e0995832ec1bc398f8a48c67ae",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-output",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "9df833b0015fd7df3a476f2df121e8d9560272146270b98320926ad2d99ab37b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-decay",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cfecb1893ee43927d46036f00e25a03193b807ad854ba18ef0c2732bb04bc892",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/short-beta",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/gdnstate_w.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/gdnstate-w-attempt1/memory.bin",
+      "3136",
+      "17"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  }
+]

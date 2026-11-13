@@ -492,7 +492,912 @@ The notebook must establish that register precondition through an authorized
 hardware path before dispatch. No register state, GPU dispatch, timing,
 throughput, ROCr loading, or device-output parity has been measured here.
 
-## 14. Seeded direct-KFD gfx942 launcher
+## 14. gfx942 BF16 GEMV
+
+`backend/amd/gfx942/bf16gemv.isa` defines `bf16gemv(W,x,y,M,K)`: three
+64-bit global pointers at offsets0/8/16, unsigned32 M/K at24/28, a32-byte
+kernarg. W is row-major little-endian BF16, two bytes per element; x[K] and
+y[M] are FP32. Each row starts with acc=positive zero, then, for ascending k,
+`acc = RN32(BF16(W[m*K+k]) * x[k] + acc)` with **one fused rounding**.
+The output is acc; K=0 writes positive zero and M=0 writes nothing.
+The grid is `(M,1,1)` with local size `(64,1,1)`, one row per lane. EXEC
+excludes over-dispatched rows. The row product is multiplied and doubled
+with both32-bit halves and carry propagation; valid arrays must fit the
+machine's64-bit address space. No input is rounded to BF16.
+
+### Exact widening and the instruction choice
+
+BF16 is S1E8M7, bias127. LLVM18.1.3
+[APFloat.cpp lines127–129](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Support/APFloat.cpp#L127-L129)
+gives BF16 and FP32 the same exponent range, with precisions8 and24.
+**BF16-to-FP32 widening is exactly `uint32(bf16_bits) << 16`**: no finite
+rounding, zero flushing, or reinterpretation as IEEE FP16. Signed zeros,
+infinities and NaN sign/payload bits are carried by the widening itself.
+Subsequent FMA uses the existing explicit canonical-NaN host policy, which
+does not establish device NaN payload parity.
+
+The CDNA3 manual physical PDF p507 specifies `GLOBAL_LOAD_SHORT_D16_HI`:
+`VDATA[31 : 16].b16 = MEM[addr].b16; // VDATA[15:0] is preserved.`
+That pseudocode is not the configured target's unused-half behavior. The fixed
+executor profile `mi300x-vf-rocm722-d16-zero` follows raw observations from the
+MI300X VF / ROCm7.2.2 recorded in
+`AMD-MI300X-CODEX-20261113T0315Z/amdserve-d16probe.txt`, SHA256
+`af7365ee4f2f0da6db6e995cda83c4ac4a6ee6da3df3446936621ca96c4ac0c7`.
+Every probed unsigned-byte, signed-byte and short D16 low/high form zeroed
+its unused half, including nonzero prefills, delayed/copy/overwrite cases and
+identical repeated dispatches; all six no-load controls were caught. RAS was
+enabled in the recorded environment. Section9.1.6 documents ECC-dependent
+zeroing for buffer D16 loads; that is context, not proof of this GLOBAL
+instruction's cause. The executor supports only SHORT_D16_HI and now zeros
+its low16. The other five probed forms remain refused. This named fixed
+profile does not claim behavior for every gfx942 configuration.
+Initialize v7 once with `V_MOV_B32 v7,0` (p186), then use this high-half load
+for each weight. Nothing in the loop changes v7's low16 bits. This performs
+load and exact widening in **one instruction per weight**, rather than a
+ushort load followed by a shift. This is an instruction-count choice, not
+a measured throughput claim. Each iteration waits for VM_CNT before FMA
+and before the next partial-register load. BF16 has no FP8 format-select
+precondition: this path is a bitwise load followed by FP32 FMA; descriptor
+FP32 round mode0 and denorm mode3 retain input/output denormals (p45).
+
+### Semantics and encoding authority
+
+The manual is the same physical-page-numbered CDNA3 source as section12.1.
+All instructions used by this kernel are listed below, including reused
+ones. Encoding links name the pinned LLVM18.1.3 format/opcode definitions;
+the independent `bf16gemv-gfx942.s` is assembled by `llvm-mc-18 -mcpu=gfx942`.
+The gate compares **complete .text**, metadata note, descriptor bytes other
+than the ET_REL entry relocation, and checks the resolved entry separately.
+
+| Instruction | CDNA3 physical PDF page | Semantics | LLVM18.1.3 encoding |
+| --- | --- | --- | --- |
+| S_LOAD_DWORDX4 | 68,70,147 | Four dwords; component alignment, quad SGPR destination; flags unchanged. | [SMInstructions.td][bf16-sm], SMEM and `_vi` opcode |
+| S_LSHL_B32 | 103 | Low32 shift, count masked5bits; SCC=result nonzero. | [SOPInstructions.td][bf16-sop], SOP2 |
+| S_SUB_U32 | 97 | Low32 difference; SCC=unsigned borrow. | [SOPInstructions.td][bf16-sop], SOP2 |
+| S_AND_SAVEEXEC_B64 | 124–125 | Save old EXEC, AND source into EXEC; SCC=new EXEC nonzero. | [SOPInstructions.td][bf16-sop], SOP1 |
+| S_CBRANCH_EXECZ | 140 | Branch iff whole EXEC zero; signed16 DWORD displacement from next PC. | [SOPInstructions.td][bf16-sop], SOPP |
+| S_CBRANCH_SCC0 / S_CBRANCH_SCC1 | 139 | Branch iff SCC=0 / SCC=1; same displacement; flags unchanged. | [SOPInstructions.td][bf16-sop], SOPP |
+| S_WAITCNT | 141 | Wait for lgkmcnt/vmcnt0; no flag writes. | [SOPInstructions.td][bf16-sop], SOPP |
+| S_ENDPGM | 138 | End wave; implicit memory wait. | [SOPInstructions.td][bf16-sop], SOPP |
+| V_AND_B32 | 174 | Bitwise AND, flags unchanged. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| V_ADD_U32 | 183 | Low32 sum, no carry flags. | [VOP2Instructions.td][bf16-vop2], gfx9 |
+| V_CMP_GT_U32 | 22,251 | VCC=EXEC AND unsigned greater-than mask. | [VOPCInstructions.td][bf16-vopc], VOPCe |
+| V_LSHLREV_B32 / V_LSHRREV_B32 | 173 | Left / unsigned right shift, count masked5bits; flags unchanged. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| V_MUL_LO_U32 / V_MUL_HI_U32 | 361 | Low / high32 unsigned product; flags unchanged. | [VOP3Instructions.td][bf16-vop3], opcodes0x285/0x286 |
+| V_MOV_B32 | 186 | Bitwise copy to active lanes; flags unchanged. | [VOP1Instructions.td][bf16-vop1], VOP1e |
+| V_ADD_CO_U32 | 22,175 | Low32 sum; replace VCC with active-lane carry mask. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| V_ADDC_CO_U32 | 22,176 | Include incoming lane carry; replace VCC. | [VOP2Instructions.td][bf16-vop2], VOP2e |
+| GLOBAL_LOAD_SHORT_D16_HI | 87,90,507 plus target-profile receipt above | Read exactly two bytes into high16 and zero low16 for the observed MI300X VF target; flags/inactive lanes unchanged. | [FLATInstructions.td][bf16-flat], `FLAT_Real_AllAddr_vi<0x25>` |
+| GLOBAL_LOAD_DWORD | 87,90,503–504 | Active-lane32-bit load, VGPR64 address plus signed13 offset. | [FLATInstructions.td][bf16-flat], opcode0x14 |
+| GLOBAL_STORE_DWORD | 87,90,505 | Corresponding active-lane32-bit store. | [FLATInstructions.td][bf16-flat], opcode0x1c |
+| V_FMAC_F32 | 185 | Exact product plus destination, one nearest-even FP32 rounding. | [VOP2Instructions.td][bf16-vop2], gfx940 opcode0x3b |
+
+[bf16-sm]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SMInstructions.td
+[bf16-sop]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/SOPInstructions.td
+[bf16-vop1]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td
+[bf16-vop2]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP2Instructions.td
+[bf16-vopc]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOPCInstructions.td
+[bf16-vop3]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP3Instructions.td#L1604-L1611
+[bf16-flat]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/FLATInstructions.td#L1969-L1993
+
+The only new executor instruction is `GLOBAL_LOAD_SHORT_D16_HI`, with the
+existing restricted GLOBAL VGPR64/off addressing, no cache modifiers.
+It reads exactly two little-endian bytes and zeroes destination low16 in the
+fixed target profile above. Other D16 forms or modifiers refuse66; insufficient
+memory refuses67, I/O failure74. Single-step expectations combine the loaded-half
+definition on p507 with the measured unused-half behavior. Cases include lane63,
+inactive lanes, unchanged flags, negative offsets, the final two bytes of memory,
+and truncated-memory refusals. A low-half-preserving mutant must now fail the
+nonzero-prefill case. The earlier preserve model and its inverse control remain
+in immutable historical receipts, not as a selectable fallback.
+
+### Acceptance and hardware boundary
+
+`tests/amd-exec/bf16gemv.py` independently reconstructs BF16 finite values
+as exact Fractions and applies the existing rational single-rounding FMA
+oracle, not host floating arithmetic. The gate runs the Cartesian shape
+table M={0,1,63,64,65}, K={0,1,3,64,65,130} for finite and special inputs.
+The weight base is two-byte aligned but not dword aligned, so odd K tests
+both row-end alignments. Every byte of memory is checked: output elements,
+guard words, inputs, kernarg, and deliberately over-dispatched rows.
+An additional isolated-weight matrix checks each special class without an
+earlier NaN masking later operations. Controls execute a big-endian weight
+loader and an instruction-table mutant that truncates x's low16 bits before
+FMA; both must produce output-bit mismatches, not compilation/refusal errors.
+Previous kernel objects remain byte-identical and all prior gate cases
+remain. Final PASS counts come from the actual case tables.
+
+**Hardware NOT_RUN:** no AMD device, dispatch, memory-ordering/timing,
+throughput, ROCr loading, model weights, or Qwen end-to-end inference was
+exercised. The binary/text and host semantic gates are not GPU qualification.
+
+## 15. gfx942 wave-parallel FP8/BF16 GEMV
+
+`fp8gemv2.isa` and `bf16gemv2.isa` are separate kernel symbols and objects;
+the previous five kernels and producer remain unchanged. Their argument
+layouts and datatypes are the same as sections13–14. **Launch workgroup
+size64, GRID_X=64*M, GRID_Y=1.** Workgroup X is the output row; lane0 alone
+stores. An extra row group safely returns before touching vector memory.
+The descriptor does not request workgroup Y. The new kernels are not
+drop-in replacements for the old kernels' launch geometry.
+
+### Hardware observation and design
+
+The operator's MI300X notebook record
+`~/handoffs/hive/amdserve/evidence/AMD-MI300X-NOTEBOOK-20261112T224000Z`
+reports bit-exact old-kernel results. FP8 times for MxK
+17408x5120, 5120x17408, 5120x5120 were0.7472,2.5073,0.7295ms;
+BF16 times were0.7402,2.5001,0.7399ms. Time followed K rather than weight
+bytes. That observation motivates removing the dependent load/wait for
+every scalar k; it does not establish a tuned-kernel speedup.
+
+The CDNA3 manual physical PDF p12 defines a wavefront as64 work-items.
+[AMD's MI300 architecture description][gemv2-arch] specifies304 active CUs.
+One wave per row supplies M independently schedulable workgroups rather
+than the old ceil(M/64) groups. The [ROCm Compute Profiler7.2.2 vector-L1
+description][gemv2-cache] specifies64B cache lines and explains address
+coalescing and backpressure from outstanding requests. Each lane owns four
+consecutive columns. Across the wave, a chunk accesses contiguous weight
+and x ranges, instead of loading one scalar from widely separated rows.
+FP8 packs those four weights into one DWORD; BF16 uses DWORDX2; x uses
+DWORDX4. These are consecutive-byte accesses, not a claim that a memory
+instruction is a single cache transaction.
+
+The main loop prefetches four chunks into disjoint VGPRs: four weight loads
+and four x loads before one `s_waitcnt vmcnt(0)`. The CDNA3 manual p141
+defines this wait in terms of outstanding vector-memory operations; it
+does not require a wait after each issue. The load group processes1024
+columns before advancing pointers. The remaining columns use guarded
+scalar loads with EXEC saved/restored for every element. The batch size is
+a tuning choice, not an imposed input-size limit. No input is truncated.
+Resource use and the complete instruction stream are compared against
+LLVM18 gfx942, including all wide loads, FMAC, EXEC moves and DS operations.
+
+No LDS storage or barrier is used. `DS_BPERMUTE_B32` (p437) says:
+“This does not access LDS memory and may be called even if no LDS memory
+is allocated to the wave. It uses LDS hardware to implement an arbitrary
+swizzle across threads in a wavefront.” Its LLVM18 instruction declaration
+is under `let Uses = [EXEC]`; no M0/LDS-range setup is required here.
+Each permutation is followed by `s_waitcnt lgkmcnt(0)` before the add.
+
+### Exact accumulation order
+
+For lane L, start P[L]=+0. Visit chunks q=0,1,... in ascending order and
+j=0,1,2,3 within each chunk. When k=256*q+4*L+j is less than K, set
+P[L]=RN32_FMA(decode(W[row,k]),x[k],P[L]). The unrolled load grouping does
+not change this order. Then perform six simultaneous butterfly stages
+with distance32,16,8,4,2,1, in that exact order:
+`next[L] = RN32_ADD(P[L], P[L XOR distance])`. Each stage reads a snapshot
+of the previous stage. Store lane0, applying one final RN32 scale
+multiplication for FP8 only. Missing tail elements cause no arithmetic,
+not artificial zero products that might alter signed zero or NaN results.
+K=0 still follows the defined zero reduction and FP8 scaling.
+
+`tests/amd-exec/gemv2.py` records this algorithm using exact `Fraction`
+arithmetic and the independent binary32 rounding/FMA reference. Its add
+is the exact rational equivalent FMA(a,1,b), not host float arithmetic.
+The Omega executor's integer FP32 add/FMA paths retain denormals and use
+round-to-nearest-even; the explicit canonical-NaN policy from section10
+remains. Arithmetic order differs deliberately from the old serial GEMV.
+The tree-order control places +2^24,+1,-2^24 in lanes0,16,32 respectively;
+swapping the first two stages must change the output, not merely the code.
+
+### Added instruction semantics and refusal boundary
+
+All reused instructions retain the manual audit in sections12–14.
+New operations below have manual-derived single-step input/output/flag
+cases, including inactive lanes and refusals. The bounded source/destination
+subset is explicit: this is an executor, not a claim of complete gfx942.
+
+| Instruction | CDNA3 physical PDF page | Implemented semantics and boundary | LLVM18.1.3 source |
+| --- | --- | --- | --- |
+| S_MOV_B64 | 20,115 | Even SGPR pair to EXEC only; exact64-bit copy, SCC/VCC unchanged. Other forms refuse66. | [SOPInstructions.td][bf16-sop], SOP1 opcode1 |
+| V_XOR_B32 | 174 | Active-lane bitwise XOR; no flag writes or modifiers. | [VOP2Instructions.td][bf16-vop2], opcode21 |
+| GLOBAL_LOAD_DWORDX2 / DWORDX4 | 87,90,504 | Sequential2/4 little-endian dwords from the existing VGPR64/off address; flags and inactive lanes preserved. Full range checked before writes. | [FLATInstructions.td][bf16-flat], opcodes21/23 |
+| DS_BPERMUTE_B32 | 437 | Source lane=((address+offset)/4)%64, disabled source returns0, disabled destination unchanged; all source reads precede all writes. GDS/accumulator/DATA1 modifiers refuse66. | [DSInstructions.td][gemv2-ds], `DS_Real_vi`, opcode63 |
+
+Instruction words alone drive execution; the executor does not recognize
+kernel names, ISA tables, metadata, or expected answers. Unknown encodings
+refuse66. Truncated/bad text refuses65, flat-memory bounds67, I/O74, CLI64;
+the gate rejects a wrong compiler digest69 before invoking any compiler.
+The64-entry permutation temporary is the physical wave width, not an
+arbitrary software capacity. Per-instruction controls deliberately lose
+SCC on MOV64, substitute OR for XOR, omit a wide-load dword, and read an
+aliased permutation source live; all must fail the manual expectations.
+
+### Host acceptance and hardware handoff
+
+The gate retains all prior shapes and cases. New shape tables are the
+union of both old GEMV tables plus chunk-boundary/tail cases; the final
+PASS line derives its counts from the actual tables. Finite and special
+inputs check every output bit and every unchanged memory byte, including
+past-M guards. Additional controls change the reduction order, drop the
+tail, or change the row stride and must produce output mismatches.
+For each of the three notebook shapes, a test-only row entry executes
+first, middle and last rows with the real full M/K and full matrix address
+layout. All other output bytes must stay untouched. The production
+executor CLI is unchanged. The sampled row results are recorded in a TSV.
+Both compiler builds and emitted objects must be byte-identical.
+
+**Tuned hardware NOT_RUN:** performance, cache traffic, memory scheduling,
+device NaN payloads and device results require the parent's MI300X run.
+Host execution is not a memory-bandwidth measurement. BF16 uses exact
+widening; FP8 assumes E4M3FNUZ (bias8, sole NaN0x80). Beside that hardware
+row, the exact manual p60 precondition remains:
+“The register SH_MEM_CONFIG, bit[8] must be set to 1 to produce the correct
+results for BF8 and FP8 operations.”
+
+[gemv2-arch]: https://rocm.docs.amd.com/en/docs-6.3.1/conceptual/gpu-arch/mi300.html
+[gemv2-cache]: https://rocm.docs.amd.com/projects/rocprofiler-compute/en/docs-7.2.2/conceptual/vector-l1-cache.html
+[gemv2-ds]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/DSInstructions.td
+
+## 16. gfx942 tiled full-attention core (27B)
+
+### Model and boundary
+
+The exact [Qwen3.8-27B-FP8 config at revision
+017b9c7af6b5689d5dd426a76e0bc077eb5ca20a][attn-config] is filed unchanged at
+`tests/amd-exec/model/qwen38-27b-fp8-config.json`. Its digest is checked
+against the historical Q27 manifest, rather than a mutable model name.
+Its `text_config` specifies `num_attention_heads=24`,
+`num_key_value_heads=4`, `head_dim=256`, `attn_output_gate=true`,
+`output_gate_type="swish"`, and full attention every fourth layer.
+The same configuration specifies `rms_norm_eps=1e-6`,
+`partial_rotary_factor=0.25`, and `rope_theta=10000000`.
+
+This commit implements **only the attention core**: Q is FP32, already
+Q-normalized and rotated; the BF16 K/V cache already contains the newest
+token. It writes FP32 attention values before the output gate. Q/K
+normalization, RoPE, cache append, and the output swish/sigmoid gate belong
+to separate kernels, not an implicit assumption that they are unnecessary.
+The mathematical reference is `tests/gpu_decode_attn256_test.c`: lines
+50–52 establish24/4 heads and6 queries per KV head, lines61–66 give the
+cache layout, and lines125–143 specify GQA mapping, the scaled dot product,
+max-subtracted softmax, and weighted V. Lines100–111 describe the preceding
+zero-centered `(1+w)` Q/K normalization and partial RoPE; lines118–123
+describe K/V BF16 cache append. These are model-math references, not
+NVIDIA tool or instruction facts.
+
+Both kernels share a48-byte kernarg:
+Q pointer at0, K at8, V at16, partials at24, output at32, token count T
+at40, cache capacity at44; the last two fields are unsigned32-bit.
+Q and output are `[24][256]` FP32. K and V are `[4][capacity][256]` BF16.
+T means **number of valid tokens**, not the newest zero-based position;
+the caller requires T<=capacity. A prep launch appending position P feeds
+T=P+1 to this core. Nonfinite model inputs are outside the numerical
+qualification fixtures; unsupported instructions and memory violations
+still have the executor's defined refusals.
+
+`attn256_part`: launch `(ceil(T/64),24)` workgroups of64 lanes, with
+workgroup X selecting a64-token tile and workgroup Y selecting the Q head.
+Both dimensions may be overdispatched: invalid tiles/heads return without
+accessing arrays. `attn256_merge`: launch `(1,24)` workgroups of64 lanes.
+The executor CLI takes **work-item grid X**, so its X argument is64 times
+the workgroup count, not the count itself. Both descriptors enable
+workgroup-id Y; the gate compares their descriptor bytes with LLVM18 and
+checks that bit explicitly.
+
+Partials contain `[24][ceil(T/64)]` records of1040 bytes: FP32 maximum
+at0, denominator at4, eight untouched padding bytes at8, and256 FP32
+unnormalized weighted sums at16. T=0 reads no Q/K/V/partial records and
+writes zero output. Partial buffers are scratch, not a persistent KV
+cache or a host computation dependency.
+
+### Scheduling and exact arithmetic order
+
+The wave64,304-CU and64-byte cache-line references in section15 apply here.
+One wave per head alone would offer only24 workgroups. Tiling the context
+adds independently schedulable workgroups without atomics or cross-wave
+barriers. Each lane owns four adjacent dimensions. Q loads use DWORDX4;
+the K and V loads for a token are DWORDX2, both issued before a single
+`vmcnt(0)` wait. Thus all lanes cover contiguous512-byte BF16 rows, not
+one strided scalar each. DS_BPERMUTE uses no allocated LDS; its lgkm wait
+and snapshot semantics are unchanged from section15. Hardware bandwidth,
+occupancy and performance remain NOT_RUN.
+
+Within each tile, visit tokens in ascending order. Each lane starts its
+dot accumulator at +0 and executes four RN32 FMA operations for dimensions
+`4*lane+j`, j=0,1,2,3. Six simultaneous XOR butterfly adds at distances
+32,16,8,4,2,1 follow. Multiply the resulting score by exact FP32
+`1/sqrt(256)=1/16=0.0625`. Every active lane obtains the same score.
+Initialize maximum m=-infinity, denominator l=+0, and each sum a=+0.
+For score s, set:
+
+* n=MAX32(m,s).
+* alpha=EXP2_32(RN32_MUL(RN32_SUB(m,n),LOG2E32)).
+* beta=EXP2_32(RN32_MUL(RN32_SUB(s,n),LOG2E32)).
+* l=RN32_ADD(RN32_MUL(l,alpha),beta).
+* a[d]=RN32_FMA(beta,V[d],RN32_MUL(a[d],alpha)).
+* m=n.
+
+LOG2E32 is the binary32 constant0x3fb8aa3b. The merge visits tile records
+in ascending tile order, reweights old and tile statistics by their
+maxima in the same manner, and uses FMA for both the merged denominator
+and sums. Finally it computes RCP32(l) once and multiplies each sum by it.
+It does not claim the same rounding order as a monolithic softmax or the
+Spark reduction.
+
+### Transcendental model and manual audit
+
+Ordinary add/subtract/multiply/FMA retain the executor's exact RN-even
+integer algorithms and denormal preservation. EXP and RCP are different:
+the ISA promises1ULP, not device-identical answer bits. The executor
+selects one representative within that allowance. EXP uses binary64
+range reduction, an18-term Taylor polynomial of exp(r*ln2), and exact
+binary64 powers of two before RN32 conversion. RCP uses binary64 division
+then RN32 conversion. Both implement the manual's input/output FTZ and
+special-value behavior. This binary64 use is in seeded Omega, not a host
+library or a production Python dependency.
+
+Recorded Wolfram query:
+`{N[Log[2],22], N[2 Log[2]^19/19!,22], N[1/Log[2],22], 1/Sqrt[256]}`
+returned ln2=0.69314718055994530941723212145817656807,
+the Taylor remainder bound1.55460168577147128381779943180201880963e-20,
+log2(e)=1.44269504088896340735992468100189213743, and1/16.
+The finite-precision implementation is additionally checked against
+independent Decimal120-digit enclosures, not justified by the polynomial
+remainder alone.
+
+| Instruction | CDNA3 physical PDF page | Semantics, flags, refusal boundary | LLVM18.1.3 source |
+| --- | --- | --- | --- |
+| S_LSHR_B32 | 103 | Unsigned source shifted by low5 shift-count bits; SCC iff result nonzero. Other flags unchanged. | [SOPInstructions.td][bf16-sop], opcode30 |
+| V_SUB_F32 | 169 | RN32 subtract, denormals preserved; active lanes only, EXEC/VCC/SCC unchanged. | [VOP2Instructions.td][bf16-vop2], opcode2 |
+| V_MAX_F32 | 172 | IEEE signaling-NaN quieting first, quiet NaN selects numeric operand, +0 preferred to -0; active lanes only, flags unchanged. | [VOP2Instructions.td][bf16-vop2], opcode11 |
+| V_EXP_F32 | 195 | pow(2,S0),1ULP, input/output denormals flushed; -infinity maps0, signed zero maps1, +infinity maps+infinity. | [VOP1Instructions.td][attn-vop1], opcode32 |
+| V_RCP_F32 | 196 | Reciprocal,1ULP, input/output denormals flushed; signed zero/infinity map to signed infinity/zero. | [VOP1Instructions.td][attn-vop1], opcode34 |
+
+Every new opcode has manual-derived single-step cases checking results
+and flags; the shared vector-lane dispatcher retains its inactive-lane cases. The
+gate retains all earlier cases. Literal/source/modifier refusal boundaries
+remain those in sections10–15; no kernel-name recognition is introduced.
+
+`attention.py` independently uses Fraction arithmetic with RN-even at
+each ordinary instruction boundary and Decimal120-digit EXP reference
+values. It encloses the manual's1ULP allowance and rounds interval
+endpoints outward; an interval is a conservative enclosure, not a claim
+that every value inside is an allowed device result. These intervals are
+propagated through every reweighting, accumulation and final reciprocal.
+Every partial statistic and output must lie inside its own interval.
+All inputs, cache tails, padding, and guard bytes must stay unchanged.
+Per-output exact rational interval bounds and widths are emitted as JSON;
+each case prints the widest interval. No fixed arbitrary output tolerance
+replaces the per-instruction bound. Controls remove max subtraction,
+mis-map GQA, and load V from K; each must produce a numerical mismatch.
+
+**Hardware NOT_RUN:** MI300X execution of these attention objects, timing,
+the actual transcendental choices, and end-to-end model output require
+the parent's hardware bundle. Host byte parity and bounded numerical
+checks are not hardware qualification or a measured speedup.
+
+[attn-config]: https://huggingface.co/Qwen/Qwen3.8-27B-FP8/resolve/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/config.json
+[attn-vop1]: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/llvm/lib/Target/AMDGPU/VOP1Instructions.td
+
+## 17. gfx942 fused full-attention preparation and output gate
+
+This follows the same pinned [Q27 config][attn-config] as section16.
+The gate verifies its digest and the compiled specialization:24 Q heads,
+4 KV heads,256 dimensions, epsilon1e-6, theta10000000, and64 rotary
+dimensions (partial factor0.25). This is the text decode path: the three
+MRoPE position axes all equal P, so interleaving sections[11,11,10]
+does not change the32 inverse-frequency indices. Multimodal unequal-axis
+position construction is not implemented by this text-position producer.
+
+### Reference and layouts
+
+Reference: [Transformers v5.8.0 modeling_qwen3_5.py][prep-reference].
+Lines128–140 define inverse frequencies; lines147–175 form/interleave
+the position embeddings. Lines541–545 define `rotate_half(x)` as
+`[-x_second_half, x_first_half]`; lines570–585 apply it only to the
+rotary prefix. Lines659–665 split each512-element Q projection head into
+Q256 and gate256, then apply Q/K norms. Lines668–672 apply RoPE and append
+K/V. Lines710–723 define zero-centered RMSNorm with `(1 + weight)`.
+Line690 multiplies attention output by **sigmoid(gate)**; this is not
+`silu(gate)`. The latter belongs to the gated-delta norm at lines177–190.
+The config's `output_gate_type: swish` must not override the full-attention
+reference. The existing mathematical reference
+`tests/gpu_decode_attn256_test.c:100–123` agrees on norm/rotation/append
+and line19 explicitly places sigmoid outside the attention core.
+
+This implementation's explicit ABI uses FP32 projection/norm values and
+position embeddings, then rounds only K/V cache storage to BF16.
+It follows the reference formulas, not a claim of PyTorch BF16-intermediate
+bit identity. Norm weights are FP32 views of model weights, shared across
+heads. No weight values, epsilon, or gate data are invented by the kernel.
+
+`attn256_prep` has80-byte kernarg, alignment8:
+
+| Byte offset | Argument | Layout/type |
+| --- | --- | --- |
+| 0 | Q_gate | FP32 `[24][512]`, Q then gate in each head |
+| 8 | K_raw | FP32 `[4][256]` |
+| 16 | V_raw | FP32 `[4][256]` |
+| 24 | Q_weight | FP32 `[256]`, zero-centered |
+| 32 | K_weight | FP32 `[256]`, zero-centered |
+| 40 | cos_sin | FP32 cos32 followed by sin32, shared token position |
+| 48 | Q_out | FP32 `[24][256]` |
+| 56 | K_cache | BF16 `[4][capacity][256]` |
+| 64 | V_cache | BF16 `[4][capacity][256]` |
+| 72 | P | u32 append position |
+| 76 | capacity | u32 allocated cache capacity |
+
+Launch24 by1 workgroups of64 lanes. Head=`s2`, Y=`s3` must be0.
+Overdispatched heads/Y and P>=capacity write nothing. This is the real
+allocated-memory boundary, not an arbitrary token cap. After this launch,
+the core's token count is `T=P+1`. Each wave handles one Q head; the first
+four waves also process the corresponding K/V head. Inputs must not alias
+outputs or the cache append slices. Historical cache positions, packed
+gate halves, raw projections, norm weights and guard bytes remain unchanged.
+
+Norm order: lane i visits dimensions4i+j, j0..3, with FP32 FMA of x*x
+into+0. All64 lanes use snapshot XOR32,16,8,4,2,1 ADD reductions.
+Multiply the sum by1/256, add epsilon (separate RN32 operations), then
+V_RSQ_F32. Multiply x by this reciprocal norm, then by RN32(1+weight).
+For each rotary pair d,d+32, d0..31, output is separately rounded
+`x[d]*cos[d] + (-x[d+32])*sin[d]` and
+`x[d+32]*cos[d] + x[d]*sin[d]`. This is **half pairing**, not adjacent
+even/odd pairing. The DS_BPERMUTE address XOR is32 bytes (lane XOR8),
+with all16 participating lanes active. Dimensions64..255 are unchanged
+after norm. No FMA contraction is substituted across the two rotation
+products/addition.
+
+K and V use integer RN-even BF16 conversion: add0x7fff and retained
+low-bit parity, then shift16. Infinities and signed zero survive;
+any NaN becomes quiet0x7fc0, preventing signaling/low-payload NaNs from
+turning into infinity. Two BF16 values are packed into each existing
+GLOBAL_STORE_DWORD, so no new store opcode or misaligned write is needed.
+
+`attn256_gate` has24-byte kernarg: Q_gate pointer0, core attention FP32
+`[24][256]` pointer8, output of that shape pointer16. Launch96 by1 groups
+of64; overdispatch is guarded. It reads the packed gate half at
+`head*512+256+dimension`. It computes t=exp2(RN32(-abs(g)*LOG2E32)),
+r=rcp(RN32(1+t)), then sigma=r for nonnegative g and sigma=RN32(t*r)
+for negative g. Output is RN32(attention*sigma), not multiplied by g.
+This stable form avoids positive exponent overflow. The gate is a separate
+tiny kernel before o_proj; the existing GEMV2 objects remain unchanged.
+The gate declares32 VGPRs (highest referenced v30), not the prep kernel's48.
+
+### Seeded host position-embedding producer
+
+`backend/amd/gfx942/rope.om` accepts exactly one little-endian u32 P
+on stdin and emits256 bytes: cos32 then sin32 as little-endian FP32.
+Missing/trailing input refuses64 with no output; I/O failure is74.
+It is compiled with the same seeded pin, uses only Omega native arithmetic
+and syscalls, and has no Python/libm/runtime dependency.
+
+Inverse frequency is RN32(1 / RN32(theta^(i/32))), i0..31; position
+is converted to FP32 and multiplied at a FP32 boundary. Power uses
+binary64 range reduction and18 exponential terms. The test-only
+`ropefreq-probe.om` compares all32 frequencies bit-for-bit with independent
+Decimal120-digit power followed by the two required FP32 roundings.
+For sin/cos the producer reduces the FP32 angle with a split pi/2 in
+binary64, computes21st/20th-degree sine/cosine series, selects the quadrant,
+and rounds once to FP32. The64 generated values are shared across every
+attention layer for this token; no head recomputes them on the GPU.
+
+Recorded calculations:
+
+* Wolfram `N[Log[10000000],22]` ->16.11809565095831978812594;
+  `N[2/Pi,22]` ->0.6366197723675813430755351.
+* Wolfram `N[Pi/2-157079601287841796875/10^20,30]`
+  ->3.13916478650481321691639751442e-7.
+  Python byte encoding, `struct.unpack("<Q",struct.pack("<d",
+  3.139164786504813216916397514420985846996875529075603e-7))[0]`
+  ->0x3e95110b4611a626, used as a binary64 bitcast to avoid the pinned
+  compiler's long fractional-literal parser limit.
+* Wolfram `N[Pi,125]` supplied the independent oracle's recorded pi
+  constant; it is not read from the producer.
+* Wolfram `{N[(786/1000)^23/23!,24],N[(786/1000)^22/22!,24],
+  N[2^-42+2^-53+40*2^-52,24],N[2^-39,24]}`
+  ->{1.52133245558152738690949e-25,4.45173619317749744261046e-24,
+  2.36366481942695827456191e-13,1.81898940354585647583008e-12}.
+
+MODELED binary64 allowance, not a formal Lean proof: the21-significant-bit
+high pi/2 part times the at-most32-bit quadrant index is exact in binary64;
+its first subtraction is exact. The low-part representation/product
+errors contribute at most2^-42 over u32 positions. The residual stays
+within0.786 despite quotient rounding; series truncation is bounded by
+the recorded terms, with conservative binary64 roundoff accounting
+2^-53+40*2^-52. The gate's absolute check allows2^-39 plus half a final
+FP32 ULP against independent Decimal120 sine/cosine, including P=2^32-1.
+This allowance is only for generated embeddings; the GPU applies their
+actual bits and gets no added arbitrary output tolerance.
+
+### New opcode audit and gates
+
+| Instruction | CDNA3 physical PDF page | Semantics and side effects | LLVM18.1.3 source |
+| --- | --- | --- | --- |
+| V_RSQ_F32 | 197 | Reciprocal square root,1ULP, input/output FTZ; -0 -> -inf, +0 -> +inf,4 ->0.5,+inf ->+0,-inf -> negative quiet NaN. Active lanes only; EXEC/VCC/SCC and inactive registers unchanged. | [VOP1Instructions.td][attn-vop1], opcode36 |
+| Floating inline selectors240..248 | 42, Table23 | FP32 bits for ±0.5, ±1, ±2, ±4 and the manual's exact0x3e22f983 for1/(2*pi). Scalar/vector MOV preserve flags; inactive vector lanes remain untouched. | Operand encodings, not new opcodes |
+| S_NOP | 138 | Issue delay1..16 clocks from low4 immediate bits; no register, flag or memory changes. The functional executor advances PC only and does not model elapsed cycles. | SOPP opcode0 |
+
+The executor uses native binary64 sqrt/divide followed by FP32/FTZ as
+a bounded representative, not the actual MI300X approximation. Manual
+single-step cases include both end lanes, inactive-lane sentinels, signed
+zeros, subnormals, negative input, infinities and4. Replacing RSQ by
+RCP must be CAUGHT. The bulk probe checks4096 independent positive normal
+inputs against Decimal120 and the manual1ULP enclosure. S_NOP is the only
+other new opcode; earlier audit tables and refusal boundaries apply.
+Every added inline selector has scalar and vector single-step cases, plus
+V_ADD_F32 with inline1.0. Restoring the old refusal must be CAUGHT.
+LLVM selects inline1.0 instead of a literal DWORD; the production tables
+use selector242 so their bytes, lengths and branch displacements match.
+
+CDNA3 pp28–29, Table11: “The hardware does not check for the following
+dependencies; they must be resolved by inserting NOPs or independent
+instructions.” A VALU transcendental followed by a consuming non-trans
+VALU needs one wait state. The merge's RCP and gate's EXP therefore have
+`s_nop 0`; other EXP/RSQ results already have independent intervening
+instructions. `tests/amd/scheduling.py` checks LLVM-decoded bytes from
+every emitted object for this rule, including all earlier GEMV versions.
+It emits real mutant objects with those NOPs removed and requires
+both scheduling failures. This is a static check for this specific hazard,
+not a cycle model or a claim that all other hardware hazards are covered.
+S_NOP single-step cases check low/high immediate bits and unchanged flags;
+a mutant clearing SCC must be CAUGHT.
+
+The prep oracle propagates RSQ intervals through every norm and rotation
+operation, checks every Q output and every appended K/V element, and
+requires all input/history/guard bytes unchanged. BF16 V conversion is
+bit-for-bit including denormals, ties, signed zero, infinities and NaNs.
+For K it reports any BF16 result made ambiguous by the allowed RSQ interval
+rather than hiding it. Exact per-Q-output intervals/widths are filed as
+JSON; each case prints its widest interval. Controls omit the norm's1,
+use the wrong half-pair, write the wrong cache position, truncate BF16,
+multiply the sigmoid result by g, and use the wrong packed-head stride.
+Host-producer controls corrupt rotary dimension and malformed input.
+All earlier gate counts and controls remain. Both new code objects and
+the producer/executor get two byte-identical builds, with LLVM instruction
+and complete descriptor/note parity as before.
+
+**Hardware NOT_RUN:** preparation/gate objects, RSQ/EXP/RCP choices,
+generated-position end-to-end model quality and timing require the
+parent's MI300X bundle. This does not claim complete serving.
+
+[prep-reference]: https://github.com/huggingface/transformers/blob/v5.8.0/src/transformers/models/qwen3_5/modeling_qwen3_5.py
+
+## 18. Token MLP activation and mandatory scheduling check
+
+The first MI300X attention-core exercise is filed separately in
+`evidence/AMD-GFX942-ATTENTION-DEVICE-20261113T000755Z/`. The corrected
+RCP-consumer delay is exercised on device; the earlier raw diagnostic and
+its BF16 reference-input defect remain visible. This is not qualification
+of the complete token path. The Table11 static scheduling gate stays
+mandatory for **every** future object; functional executor parity alone
+does not test issue timing.
+
+`mlpsilu` implements [Transformers v5.8.0 Qwen3_5MLP lines695–707][prep-reference]:
+`down_proj(silu(gate_proj(x)) * up_proj(x))`. The pinned config revision
+017b9c7a has hidden5120, intermediate17408 and SiLU activation. This
+kernel consumes the FP32 gate/up outputs of the existing GEMV2 kernels,
+and produces the FP32 vector consumed by GEMV2 down. It is not the
+attention-output sigmoid-only gate.
+
+ABI: gate pointer0, up pointer8, output pointer16, N:u32 at24;28bytes.
+Launch ceil(N/64) workgroups in X, one in Y,64threads. N=0 and extra X/Y
+groups write nothing; the final partial wave masks its inactive lanes.
+Inputs and output must not overlap. Each active lane computes:
+
+1. t = EXP2(RN32(-abs(g) * LOG2E32)), LOG2E32=0x3fb8aa3b.
+2. r = RCP(RN32(1+t)); if g has its sign bit set, r = RN32(r*t).
+3. s = RN32(g*r); output = RN32(s*up).
+
+EXP/RCP use the same CDNA3 pp195–1961ULP/FTZ contract as §16/17, not an
+assumption of device-identical transcendental bits. The reference uses
+independent Fraction round-to-nearest-even arithmetic and Decimal120
+transcendental enclosures at those exact instruction boundaries.
+The finite-input contract includes signed zeros, subnormals and large
+finite magnitudes. The explicit EXP-consumer NOP and independent
+instructions after RCP satisfy Table11. No instruction is newly added to
+the executor: the manual-derived instruction cases in earlier sections
+remain applicable, including carry, EXEC restoration and SCC.
+
+The gate retains every earlier case and adds counts0,1,63,64,65,17408,
+checks every output interval and every untouched input/guard byte, and
+requires actual wrong-object controls omitting the SiLU input multiply
+and reading gate instead of up to be CAUGHT. Host and LLVM gates build
+twice and compare bytes; the latter checks the full descriptor and
+instruction encodings and runs the scheduling check over all objects.
+
+`tests/amd-exec/token_ref.py` and `section.py` generate code-only notebook
+sections from the actual fixture functions and their arithmetic dependency
+closure. Inputs and all exact results/intervals are computed in the cell:
+no full memory image or interval list is embedded. Generation executes
+that same code and checks every reconstructed case against the host
+oracle, with a missing-case drift control. An emitted-source byte-size
+alarm checks the operator's target below15KB per section, to fit the
+external relay's approximately60KB cell limit. Other kernels' torch
+branches are removed by AST specialization, not by a second handwritten
+implementation. The generated section's `run_section(ctx)` tests small
+cases, measures event/warm-wall/cold-wall timings at17408, checks every
+timed output and guard (all cold copies, not sampled), records wrong-object
+controls, and labels the separate torch measurement
+“(AMD library, not Omega)”. Cold inputs occupy distinct addresses exceeding
+the notebook's COLD_BYTES. No notebook timing is inferred from host runs.
+Each exported source is executed in the loader's fresh empty namespace;
+all generated/decorated/nested function code is also checked for unresolved
+global lookups before export. A control removes the math import and must
+be CAUGHT in the deferred interval checker. Factory execution alone does
+not exercise that checker; hardware notebook execution stays NOT_RUN.
+
+## 19. Standalone zero-centered RMSNorm5120
+
+`rmsnorm5120` follows [Transformers v5.8.0 lines710–723][prep-reference]:
+FP32 x*rsqrt(mean(x²)+epsilon), then multiply by (1+weight). This is the
+input, post-attention and final norm, not the gated delta net's norm
+(whose weight is not zero-centered). The pinned config in §17 supplies
+hidden5120 and epsilon1e-6. All input, weight and output elements are FP32;
+the decoder's BF16 weight can be widened exactly before this interface.
+
+ABI: input pointer0, weight pointer8, output pointer16, rows:u32 at24.
+Input/output layout [rows][5120], one shared weight[5120]. The buffers
+must not overlap. Launch X=rows, Y=1, block64; zero rows and additional
+X/Y groups do not write. No arbitrary row cap is introduced.
+
+The instruction order is specified: each lane accumulates80 squares
+using RN-even FMA in ascending chunk/j order, at index256*chunk+4*lane+j
+(chunk0..19, j0..3). All lanes reduce by snapshot XOR32,16,8,4,2,1 using
+RN-even ADD. Multiply by RN32(1/5120), add RN32(epsilon), RSQ, then each
+output uses separately rounded x*inv and result*RN32(1+weight).
+RSQ has the manual pp1971ULP/FTZ enclosure; no guessed device bit pattern.
+The kernel reloads inputs after reduction rather than keeping all rows in
+registers. The host executor's already-audited dwordx4, bpermute, carry
+and loop semantics are reused; no new opcode or gate exception is added.
+The RSQ-consumer delay is explicit and the all-object scheduling gate
+remains mandatory.
+
+Recorded independent calculation:
+`tests/amd-exec/sgemm.py round32(Fraction(1,5120)) -> 0x394ccccd`;
+`tests/amd-exec/norm.py` asserts it at every invocation. The Fraction
+oracle reproduces the declared reduction order, propagates the Decimal120
+RSQ enclosure through each later rounding, and reports every output's
+interval plus the widest observed interval. Cases include zero rows,
+zero vectors, several rows, subnormal inputs and large finite magnitudes.
+Wrong-object controls omit the zero-centered1, use the wrong mean divisor,
+and omit the last accumulation chunk. Every original case is retained.
+
+The generated `rmsnorm5120.py` notebook section uses the same instrument
+as §18: all outputs/guards, genuine wrong-object controls, event and
+warm/cold wall timing with every timed copy checked, and a separate torch
+line labeled “(AMD library, not Omega)”. Kernel and notebook hardware
+execution remain NOT_RUN until the parent runs that section on MI300X.
+
+## 20. Gated delta net BF16 causal convolution
+
+`gdnconv4` implements the single-token cached convolution in
+[Transformers v5.8.0 lines211–225 and455–463][prep-reference].
+The pinned config revision017b9c7a (§17) has kernel4, key heads16,
+value heads48, head dimensions128 and BF16 model weights. The channel
+layout is Q[16][128], K[16][128], V[48][128], totaling10240.
+
+The dtype boundaries follow the reference, not a new FP32-only variant:
+line220 concatenates the existing cache and projected token and converts
+to the weight dtype; line221 copies the last state_len entries back;
+line222 runs the grouped BF16 convolution, whose result is BF16;
+line223 applies SiLU to that BF16 result, producing BF16; line224 converts
+back to the incoming hidden-state dtype. This interface takes the incoming
+projection as FP32, explicitly rounds it to BF16 for the append, uses BF16
+weights/cache and FP32 accumulating FMA, rounds the convolution result to
+BF16 before SiLU, and rounds SiLU to BF16 before widening its output to
+FP32. Subsequent Q/K normalization therefore receives those widened values.
+
+ABI (40 bytes): input pointer0, weight pointer8, old_cache pointer16,
+new_cache pointer24, output pointer32. Input/output are [10240] FP32;
+weight/old_cache/new_cache are [10240][4] BF16, tap-major inside each
+channel. All buffers are disjoint. The new state is old[1],old[2],old[3],
+RN_BF16(input). Old state is immutable; the caller swaps old/new pointers
+after the launch. Grid X=160, Y=1, block64; additional X/Y groups return.
+
+For each channel, start the accumulator at +0 and FMA the four new-cache
+samples and weights in ascending tap order. BF16 conversion is RN-even
+with signed-zero preservation, infinity preservation and canonical NaN
+0x7fc0. SiLU uses the stable sigmoid order in §18 on the widened BF16
+convolution result. The manual's EXP/RCP error enclosures are propagated
+through FP32 operations and the final BF16 rounding. Every output must
+also lie on the BF16 bit lattice; interval membership alone is insufficient.
+Every new-cache halfword is checked exactly. Existing audited instructions
+are reused, and the all-object scheduling gate is mandatory.
+
+`tests/amd-exec/gdnconv.py` independently constructs the updated cache,
+performs Fraction FMA and BF16 rounding at each stated boundary, and reports
+every output interval and its maximum width. Its cases include zero cache,
+different histories, BF16 ties, subnormals, large values, infinities/NaNs,
+partial dispatch and full10240-channel overdispatch. Separate controls
+remove each of the three BF16 conversions or shift the cache incorrectly.
+The generated notebook section checks all state/output/guard bytes,
+every timed cold copy, genuine wrong objects, and a separately labeled
+BF16 torch grouped-convolution reference. Hardware remains NOT_RUN.
+
+## 21. BF16 GDN query/key normalization and FP32 recurrent state
+
+Model fields remain pinned to config revision
+`017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`: 16 key heads,
+48 value heads, key/value dimensions 128. The reference is
+Transformers v5.8.0 `modeling_qwen3_5.py`, lines 228–231
+(`l2norm`), 317–328 (normalize before the FP32 cast, then scale Q),
+343–350 (decay, key/state reduction, delta, state update, query/state
+reduction), 354 (core output back to initial dtype), and 506–507
+(repeat each key head for its three value heads).
+
+This is the torch fallback contract without the optional FLA package.
+The model BF16 contract is retained even though kernel boundaries carry
+FP32 words: BF16 values are widened exactly, not treated as unconstrained
+FP32 values and silently advertised as the model's BF16 path.
+
+| Kernel | Kernarg byte offsets | Launch, block |
+| --- | --- | --- |
+| `gdnqknorm` | input Q/K 0, output Q/K 8; two pointers | 32 x 1 workgroups, 64 lanes |
+| `gdnstate` | Q/K 0, V 8, old state 16, new state 24, output 32, decay 40, beta 48; seven pointers | 3 x 16 workgroups, 64 lanes |
+
+All buffers are row-major FP32 words. Q/K layout is `[2][16][128]`;
+V/core output is `[48][128]`; state is `[48][128][128]` in
+`[value head][key row][value column]` order; decay/beta are `[48]`.
+Q/K input is the BF16-rounded, widened convolution output. Q/K output
+contains normalized K widened from BF16 and normalized Q widened from
+BF16 then scaled in FP32. Decay and beta are inputs here, not substituted
+constants or claimed fused gate computations. Old/new states must be
+distinct; the old state is immutable, and the caller swaps the pointers
+after the completed launch.
+
+For normalization, each lane squares x[lane] and x[lane+64], rounding
+each product to BF16 before widening. It adds those two in FP32, then
+executes snapshot XOR adds with shifts 32,16,8,4,2,1. The result is
+rounded to BF16. The epsilon scalar is first converted to BF16, as
+the BF16 tensor operation does; the sum with epsilon is rounded to
+BF16. V_RSQ_F32's manual interval is rounded to BF16, and each x*inverse
+product is rounded to BF16. Query heads alone then multiply by FP32
+`0x3db504f3`. This constant is checked by the recorded Python query
+`round32(Fraction(Decimal(1)/Decimal(128).sqrt()))` at precision 120;
+the assertion lives in `gdn.py`. BF16 conversion is RN-even with
+canonical NaNs, using the same existing instruction sequence as conv4.
+
+For recurrence, value head `3*group_y+group_x` uses key head `group_y`.
+Each lane handles columns lane and lane+64. All operations below round
+separately to FP32; there is no implicit contraction into FMA:
+`decayed = old * decay`; `kv = sum(decayed[row] * k[row])`;
+`delta = (v - kv) * beta`; `new = decayed + k * delta`;
+`output = sum(new[row] * q[row])`. Both sums start at +0 and add rows
+in ascending order 0 through 127. New state remains FP32. Core output
+is rounded to BF16 and widened, matching the reference's final cast.
+The reference library may use another reduction tree; we state this
+kernel's order rather than claiming its library reductions are bit-equal.
+
+No new instruction is introduced. The gate still compares every
+instruction word and descriptor to LLVM's oracle, runs the all-object
+scheduling check, and checks two builds for byte identity. `gdn.py`
+checks every state/output bit (or the RSQ-derived interval for Q/K),
+all unchanged input bytes and guards, and over-dispatch in X and Y.
+Controls change scale, epsilon, upper-half contributions, BF16
+normalization rounding, decay, beta, key-head selection, row stride,
+and BF16 core rounding. The full gate summary derives both new case
+counts from the test module, retaining all prior counts.
+
+`torch_gdn_probe.py` is an optional, CPU-only independent verification
+instrument, not a build/production dependency. The isolated reference
+is torch 2.9.0+cpu. It checks the fallback's BF16 operation dtypes and
+epsilon scalar conversion over every positive finite BF16 encoding.
+The ARM CPU BF16 `rsqrt` is not the numerical oracle: for input bits
+`0x425e0000`, it returns `0x3e0a0000`, whereas a precision-120 Decimal
+square root, independently rounded to BF16, gives `0x3e090000`. The CPU
+answer lies outside the CDNA3 RSQ one-ULP interval after BF16 conversion.
+The probe asserts that disagreement rather than widening the interval.
+For a second normalization reference, it substitutes only the FP64
+`rsqrt` primitive rounded to BF16; all other operations retain Torch's
+BF16 boundaries. It also compares every recurrent state/output bit using
+independent Torch operations in the explicitly declared reduction order.
+This is not a claim of bit parity with unmodified CPU Torch. The notebook
+timing reference retains Torch's own primitives/reduction tree and is
+labelled AMD-library work, not Omega.
+
+The compact notebook sections generate all fixtures and oracle outputs
+in-cell and pass the same fresh-namespace dependency check as section 18.
+Hardware execution and performance qualification remain NOT_RUN until
+the device notebook actually runs these objects.
+
+## 22. Remaining decode kernels and bounded access instruments
+
+The seeded objects in this section use the same explicit FP32-word ABI
+as the preceding kernels. BF16 boundary values are exactly widened;
+packed BF16 occurs only in the embedding input and attention KV cache.
+The implementation source is the `.isa` instruction table. Companion
+`.s` files are independently assembled by LLVM 18 solely as byte/descriptor
+oracles. Neither Python nor LLVM is a production kernel dependency.
+
+`gdnparams` consumes per-value-head a, b, A_log, and dt_bias. It rounds a/b
+to BF16, computes sigmoid(b), rounds beta to BF16, and emits FP32
+`exp(-exp(A_log)*softplus(a+dt_bias))` for the recurrent decay. Softplus
+uses the stable positive/negative split with the Torch threshold at 20.
+For small t, `log1p(t)` is evaluated as
+`log(1+t)*t/((1+t)-1)` using explicitly rounded operations; when `1+t`
+rounds to one it returns t. This avoids both cancellation and overflow.
+All transcendental operations retain the documented CDNA3 intervals.
+
+The added executor `V_LOG_F32` implementation computes log2 using a
+native binary64 mantissa reduction and odd atanh series. `log.py` checks
+it against a precision-120 Decimal logarithm and the ISA one-ULP
+enclosure; opcode special cases have independent exact-bit tests.
+An identity-instead-of-log control must fail.
+
+`gdnrmsgate` consumes BF16-rounded core/weight values widened to FP32,
+and rounds the FP32 projection z to BF16 before evaluating swish.
+Its RMS variance is FP32 with the documented wave-XOR sum, epsilon
+1e-6, normalization rounded to BF16, weight multiplication rounded to
+BF16, then FP32 swish(z) and final BF16 rounding. This is the ordering
+of Transformers' `Qwen3_5RMSNormGated`, not a reordered fused expression.
+Old/new recurrent states remain separate immutable-input/output buffers.
+
+`residual5120` rounds both FP32-word operands to BF16, adds in FP32,
+then rounds the result to BF16. This admits the FP32 projection output
+without losing the model's BF16 residual-add boundary. `embed5120`
+loads one selected, packed BF16 embedding row and widens it. The caller
+must validate the token index and bind the selected row pointer
+`embedding_base + token*10240`; this object does not accept an entire
+unbounded matrix or claim to validate a host token pointer.
+
+`argmax_part` reduces all 248320 FP32 logits into 3880 (ordered key,
+original index) pairs. `argmax_final` consumes all pairs and emits one
+uint32 token. Ties, including opposite signed zeros, select the first
+index. NaNs outrank numeric values and the first NaN wins, matching
+Torch argmax's selection behavior. Ordered integer keys preserve all
+finite FP32 ordering without lossy arithmetic or reduction additions.
+
+`decode.py`, `gdn.py`, and `prep_section.py` construct independent
+Fraction/Decimal or exact-bit oracles, adversarial fixtures, in-bounds
+numerical controls, and compact notebook sections. Prep checks Q/K RMS
+normalization, exactly 64 rotated dimensions out of 256, BF16 KV append,
+and unchanged prior cache rows. The attention gate remains sigmoid,
+whereas GDN's post-norm gate is swish. Library timing is labelled
+separately; it never substitutes for the interval oracle.
+
+`token_access.py` is a verification instrument, not a production runtime.
+It builds a seeded executor with per-buffer access checks for each
+concrete fixture, records every buffer's largest actually touched read
+and write byte, and executes numerical controls under the same checks.
+A separately compiled short-input-bound control must exit 68.
+`token-access.json` records those measurements. Hardware memory safety
+and timing remain NOT_RUN: a functional executor is not a GPU.
+
+After the host/executor gates and optional Torch probe have written
+`host.log`, `exec.log`, and `torch.log` under an evidence directory,
+`tests/amd-exec/token_bundle.py EVIDENCE NEW_DESTINATION` generates the
+notebook transport bundle. It derives object hashes, source head,
+kernarg offsets/types, launch dimensions, exact fixture buffer lengths,
+measured access maxima, case errors, and caught controls from the actual
+tables and gate outputs. `list.json` is the machine-readable list;
+`list.md` and `SHA256SUMS` are generated views. An existing destination is
+refused so an earlier evidence bundle cannot be silently replaced.
+
+### D16-independent embedding control
+
+`embed5120-low-bits` now inserts `V_XOR_B32 v8,1,v8` after the D16 load's
+`S_WAITCNT`, before its full-width store. The production destination is
+zero-initialized, so preservation and unused-half zeroing produce the same
+baseline. The control flips the settled output bit rather than relying on a
+nonzero prefill surviving the load. No oracle interval or expected output is
+changed. The previous prefill mutation belongs in the raw D16 semantics
+probe, not among portable numerical controls.
+
+## Kernel/main integration
+
+The kernel line and the reviewed main executor/KFD chain are combined without
+changing the target-specific D16 profile or promoting host evidence to hardware
+qualification. Nested wave, validation and grid loops coexist with the extended
+instruction subset. The SMEM bit-20 refusal uses the manual's explicit ambiguity,
+not an assertion that all immediate offsets are signed. Unsupported-instruction
+controls use S_CBRANCH_VCCZ because S_NOP is now supported.
+
+Acceptance is regenerated by `tests/amd/run.sh`, `tests/amd-kfd/run.sh`,
+`tests/amd-exec/run.sh`, and the private-output instruments `fp8block.py`,
+`fp8block_fast.py`, and `gdnstate_w.py` in `tests/amd-exec`. Their output directories
+contain the actual commands, hashes, control outcomes and generated summaries;
+the NumPy dependency is an external test oracle, not product code.
+Integration evidence is filed beside the integration clone as
+`kmain-gates-<shortHEAD>/SUMMARY`, with a fresh-clone `suite2.sh` run using the
+integration clone as its source. The conflict decisions are in
+`kmain-resolution.md` beside the clone. Existing receipts remain historical
+evidence for their named revisions; this integration does not rewrite them or
+claim fresh device execution, serving throughput, review, landing or deployment.
+
+## Seeded direct-KFD gfx942 launcher
 
 `backend/amd/kfd/launch/` is the direct syscall path. Its `COMPILER` pin names
 the seeded omega-mv compiler with checked KFD words. The Linux UAPI layout

@@ -1,0 +1,939 @@
+[
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "907aab626b92a0c6f12e3138c3658878d6fa02277946c044708d1fe2b6892807",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "907aab626b92a0c6f12e3138c3658878d6fa02277946c044708d1fe2b6892807",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "d31f212fb2c5dcac5e59fd87dbfbba32ff449d6ba11bde5f634710342eac5325",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "d31f212fb2c5dcac5e59fd87dbfbba32ff449d6ba11bde5f634710342eac5325",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-per-row-scale.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f7667827e2134eb54870fc3b849cfc89c3bbbf4eb4064a391cbda7f123e53c3b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-per-row-scale.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "f7667827e2134eb54870fc3b849cfc89c3bbbf4eb4064a391cbda7f123e53c3b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-transposed-scale.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "6ce5012584baa7f1b1660a2227a692c3de0b2204e97d5c63cd07aaeb16181392",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-transposed-scale.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "6ce5012584baa7f1b1660a2227a692c3de0b2204e97d5c63cd07aaeb16181392",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-no-tail-block.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "31e04e0a9d3282ef5be03d8c09b86d46e7b7d0141d1bb7cbbd8ae0d9c0d73b69",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/hsaco",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-no-tail-block.isa"
+    ],
+    "exit": 0,
+    "stdout_sha256": "31e04e0a9d3282ef5be03d8c09b86d46e7b7d0141d1bb7cbbd8ae0d9c0d73b69",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "llvm-mc-18",
+      "-triple=amdgcn-amd-amdhsa",
+      "-mcpu=gfx942",
+      "-filetype=obj",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/source/fp8gemv_b128-gfx942.s",
+      "-o",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/llvm-oracle.o"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47",
+      "48",
+      "49",
+      "50",
+      "51",
+      "52",
+      "53",
+      "54",
+      "55",
+      "56",
+      "57",
+      "58",
+      "59",
+      "60",
+      "61",
+      "62",
+      "63",
+      "64",
+      "65",
+      "66",
+      "67",
+      "68",
+      "69",
+      "70",
+      "71",
+      "72",
+      "73",
+      "74",
+      "75",
+      "76",
+      "77",
+      "78",
+      "79",
+      "80",
+      "81",
+      "82",
+      "83",
+      "84",
+      "85",
+      "86",
+      "87",
+      "88",
+      "89",
+      "90",
+      "91",
+      "92",
+      "93",
+      "94",
+      "95",
+      "96",
+      "97",
+      "98",
+      "99",
+      "100",
+      "101",
+      "102",
+      "103",
+      "104",
+      "105",
+      "106",
+      "107",
+      "108",
+      "109",
+      "110",
+      "111",
+      "112",
+      "113",
+      "114",
+      "115",
+      "116",
+      "117",
+      "118",
+      "119",
+      "120",
+      "121",
+      "122",
+      "123",
+      "124",
+      "125",
+      "126",
+      "127",
+      "128",
+      "129",
+      "130",
+      "131",
+      "132",
+      "133",
+      "134",
+      "135",
+      "136",
+      "137",
+      "138",
+      "139",
+      "140",
+      "141",
+      "142",
+      "143",
+      "144",
+      "145",
+      "146",
+      "147",
+      "148",
+      "149",
+      "150",
+      "151",
+      "152",
+      "153",
+      "154",
+      "155",
+      "156",
+      "157",
+      "158",
+      "159",
+      "160",
+      "161",
+      "162",
+      "163",
+      "164",
+      "165",
+      "166",
+      "167",
+      "168",
+      "169",
+      "170",
+      "171",
+      "172",
+      "173",
+      "174",
+      "175",
+      "176",
+      "177",
+      "178",
+      "179",
+      "180",
+      "181",
+      "182",
+      "183",
+      "184",
+      "185",
+      "186",
+      "187",
+      "188",
+      "189",
+      "190",
+      "191",
+      "192",
+      "193",
+      "194",
+      "195",
+      "196",
+      "197",
+      "198",
+      "199",
+      "200",
+      "201",
+      "202",
+      "203",
+      "204",
+      "205",
+      "206",
+      "207",
+      "208",
+      "209",
+      "210",
+      "211",
+      "212",
+      "213",
+      "214",
+      "215",
+      "216",
+      "217",
+      "218",
+      "219",
+      "220",
+      "221",
+      "222",
+      "223",
+      "224",
+      "225",
+      "226",
+      "227",
+      "228",
+      "229",
+      "230",
+      "231",
+      "232",
+      "233",
+      "234",
+      "235",
+      "236",
+      "237",
+      "238",
+      "239",
+      "240",
+      "241",
+      "242",
+      "243",
+      "244",
+      "245",
+      "246",
+      "247",
+      "248",
+      "249",
+      "250",
+      "251",
+      "252",
+      "253",
+      "254",
+      "255",
+      "256"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/row-exec",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "aa3fe011ea05d9e0fb776d0f727fe7ac8913a62fc078c96d51e5c0695acffe56",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-tail-257-259",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "255",
+      "256",
+      "257"
+    ],
+    "exit": 0,
+    "stdout_sha256": "d75e99edbd9ffe04ac771fb9b541b8290acd4e07d28a5f9042ceebc7a25b90de",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "7019d0a0b9e0cc033dd0c2d5564909453b5379d9772c1faa5b16d718d74be61e",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-10240-5120",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "5120",
+      "10239",
+      "10240"
+    ],
+    "exit": 0,
+    "stdout_sha256": "c504a72319a71fdd5675c3f8f073501db071665d962a8528544043f1e00d98f2",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "e12528d4362e9f4593508f0b404ebf53d426242051248ee47c5401f359c4c5e9",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-6144-5120",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "3072",
+      "6143",
+      "6144"
+    ],
+    "exit": 0,
+    "stdout_sha256": "5af27bcb751edbfa8904b56ff6a9cc4cea0dd2ad2d44beb5e1da5373bafe7e88",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "591c45981f743ce75b7f61383f7f85f531732bf41bdf15b3dc3150b6d5fea3c4",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-5120-6144",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "2560",
+      "5119",
+      "5120"
+    ],
+    "exit": 0,
+    "stdout_sha256": "a47f65fb09564aaf866c1ded85c0743bb47c52d6ae3fbbe5a10dd9ceab2a10cc",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "c6280f31c932e82ed32b8491003eb133270e8715c18ca35069208dad8756a3bb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-5120-17408",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "2560",
+      "5119",
+      "5120"
+    ],
+    "exit": 0,
+    "stdout_sha256": "6943eb5ca595b5cf0b27b0f4eca391289a75943bb4ae51f19e2d32c772e4fcef",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "3fe661ebf51d328bcda5910ccf3e7dfad87a08f8ee3a5d62d608f6db8537d821",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-17408-5120",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "8704",
+      "17407",
+      "17408"
+    ],
+    "exit": 0,
+    "stdout_sha256": "9955dbc11e6b7bde36a989fa5b0624145df90aafacc996711a47d3bdd02846e7",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cb9958e46827780a9b3d790978324f26268af849012ee5ef001390eb11db5b8e",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-1024-5120",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "512",
+      "1023",
+      "1024"
+    ],
+    "exit": 0,
+    "stdout_sha256": "7053678fa00ef3c090bbc14e40af282507a16b79d7a7d6d6c70d132bd8a31436",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "4f8f03e4dadc02f13ba00cf815fcfc70c8b9bf1f2af149ecadfeffac2d6b36ec",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-checkpoint-12288-5120",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "6144",
+      "12287",
+      "12288"
+    ],
+    "exit": 0,
+    "stdout_sha256": "5f848d09f54aa997360cc6736abc80d3014168ed3e759d1a4b8fef6b248dee5b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cd01369a92c83099db53bb8b1198725dde2ab3ccbd887d8fe791c8e5c01d6fdb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-per-row-scale",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-per-row-scale.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "1",
+      "257"
+    ],
+    "exit": 0,
+    "stdout_sha256": "00f9d3906fa61b22d1f5f46c47b7969994dabfb7f2a236aaa33262e51db28ee5",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cd01369a92c83099db53bb8b1198725dde2ab3ccbd887d8fe791c8e5c01d6fdb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-transposed-scale",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-transposed-scale.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "128",
+      "256",
+      "257"
+    ],
+    "exit": 0,
+    "stdout_sha256": "bafb4f37132bf19eaa706c4e0c3ddac0a809a95b13de497dad11f0ebc0b75277",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cd01369a92c83099db53bb8b1198725dde2ab3ccbd887d8fe791c8e5c01d6fdb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/access-no-tail-block",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128-no-tail-block.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "128",
+      "256",
+      "257"
+    ],
+    "exit": 0,
+    "stdout_sha256": "277324363522a6a95714b454a253e5eb482cc493a3ab3a91ff01586a00a9948b",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "42574a804b6c02ea8bf8328579eec018ca3338bc9ad1db970d1fa733a6756fa8",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/short-kernarg",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "255",
+      "256",
+      "257"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "cb22b8dd6773009ae947331f13120e728c9932ec779962b2e9ba1491ad797efc",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/short-W",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "255",
+      "256",
+      "257"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "70bd79206c27da964ffeb8fab03cc4a0d587b88758d8abb9ea954ead565a4bcb",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/short-x",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "255",
+      "256",
+      "257"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "2628b671600de5a8a49b616a2d8194d561f09d8043bed5cb001c317ac7a5fb26",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/short-scale_inv",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "255",
+      "256",
+      "257"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/work/hive/amdserve/AmdGfx942/pin/omc"
+    ],
+    "exit": 0,
+    "stdout_sha256": "4f7e7fe0c81a0e1cd751b5cde0d3d9a53fc1484a90cb52b2a1715a520a857ea9",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/short-y",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/fp8gemv_b128.text",
+      "/home/drakestapleton/handoffs/hive/amdserve/evidence/fp8block/attempt2/memory.bin",
+      "0",
+      "1",
+      "127",
+      "128",
+      "255",
+      "256",
+      "257"
+    ],
+    "exit": 68,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,6 @@
+Compiler digest checked first against 2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f.
+Inputs: exec.1 and mlpsilu*.text/rmsnorm5120*.text/gdnconv4*.text copied from GFX942-TOKEN-WORK/gdnconv4-attempt1/exec; input-sha256.txt pins every file.
+python3 -I tests/amd-exec/token.py suite /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-import-accepted/exec.1 /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-import-accepted
+python3 -I tests/amd-exec/norm.py suite /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-import-accepted/exec.1 /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-import-accepted
+python3 -I tests/amd-exec/gdnconv.py suite /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-import-accepted/exec.1 /home/drakestapleton/handoffs/hive/amdserve/evidence/GFX942-TOKEN-WORK/compact-sections-import-accepted
+All three inside flock -n -E 99 pool-*.lock nice -n 10, first available queen pool lock.

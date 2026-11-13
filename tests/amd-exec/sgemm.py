@@ -174,11 +174,37 @@ def summary(kernels):
     counts = runpy.run_path(str(pathlib.Path(__file__).with_name('oracle.py')))['COUNTS']
     semantics = runpy.run_path(str(pathlib.Path(__file__).with_name('semantics.py')))['CASES']
     fp8 = runpy.run_path(str(pathlib.Path(__file__).with_name('fp8gemv.py')))
+    bf16 = runpy.run_path(str(pathlib.Path(__file__).with_name('bf16gemv.py')))
+    gemv2 = runpy.run_path(str(pathlib.Path(__file__).with_name('gemv2.py')))
+    attention = runpy.run_path(str(pathlib.Path(__file__).with_name('attention.py')))
+    prep = runpy.run_path(str(pathlib.Path(__file__).with_name('prep.py')))
+    token = runpy.run_path(str(pathlib.Path(__file__).with_name('token_ref.py')))
+    norm = runpy.run_path(str(pathlib.Path(__file__).with_name('norm.py')))
+    conv = runpy.run_path(str(pathlib.Path(__file__).with_name('gdnconv.py')))
+    gdn = runpy.run_path(str(pathlib.Path(__file__).with_name('gdn.py')))
+    decode = runpy.run_path(str(pathlib.Path(__file__).with_name('decode.py')))['SPECS']
+    prep_sections = runpy.run_path(str(pathlib.Path(__file__).with_name('prep_section.py')))['SPECS']
     print(f'AMD-GFX942-EXEC PASS kernels={kernels.replace(" ", ",")} '
           f'counts={",".join(map(str, counts))} sgemm_shapes={len(SHAPES)} '
           f'sgemm_cases={2*len(SHAPES)+1} semantics_cases={len(semantics)} '
           f'fp8gemv_shapes={len(fp8["SHAPES"])} fp8gemv_cases={2*len(fp8["SHAPES"])+1} '
-          f'fp8_conversion_bytes={len(range(256))} hardware=NOT_RUN')
+          f'fp8_conversion_bytes={len(range(256))} '
+          f'bf16gemv_shapes={len(bf16["SHAPES"])} bf16gemv_cases={2*len(bf16["SHAPES"])+1} '
+          f'gemv2_shapes={len(gemv2["SHAPES"])} gemv2_cases_per_kernel={2*len(gemv2["SHAPES"])+1} '
+          f'gemv2_sampled_shapes={len(gemv2["LARGE"])} '
+          f'attention_T={",".join(map(str, attention["SHAPES"]))} '
+          f'attention_cases={len(attention["SHAPES"])+1} '
+          f'prep_positions={",".join(map(str, prep["POSITIONS"]))} '
+          f'prep_cases={len(prep["POSITIONS"])+1} gate_cases=1 '
+          f'rope_cases={len(prep["ROPE_POSITIONS"])} '
+          f'mlpsilu_counts={",".join(map(str, token["COUNTS"]))} '
+          f'mlpsilu_cases={len(token["COUNTS"])} '
+          f'rmsnorm5120_rows={",".join(map(str, sorted(set(r for r,_ in norm["CASES"]))))} '
+          f'rmsnorm5120_cases={len(norm["CASES"])} '
+          f'gdnconv_channels={conv["CHANNELS"]} gdnconv_cases={len(conv["CASES"])} '
+          f'gdnqknorm_cases={len(gdn["QK_CASES"])} gdnstate_cases={len(gdn["STATE_CASES"])} '
+          f'decode_cases={sum(len(s[2]) for s in decode)} prep_section_cases={sum(len(s[2]) for s in prep_sections)} '
+          f'per_buffer_access_kernels={2+len(decode)+len(prep_sections)} hardware=NOT_RUN')
 
 
 if __name__ == '__main__':

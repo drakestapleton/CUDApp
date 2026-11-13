@@ -1,0 +1,22 @@
+POOL_ACQUIRED=/home/drakestapleton/handoffs/hive/queen/pool-4.lock
+PASS deterministic seeded producer/executor and LLVM text/note/descriptor
+PASS random-1 all-state/core bits and all inputs/guards; XY overdispatch
+PASS random-2 all-state/core bits and all inputs/guards; XY overdispatch
+PASS random-3 all-state/core bits and all inputs/guards; XY overdispatch
+PASS zero all-state/core bits and all inputs/guards; XY overdispatch
+PASS cancel all-state/core bits and all inputs/guards; XY overdispatch
+PASS subnormal all-state/core bits and all inputs/guards; XY overdispatch
+PASS impulse all-state/core bits and all inputs/guards; XY overdispatch
+PASS exceptional all-state/core bits and all inputs/guards; XY overdispatch
+CONTROL wrong-column-block CAUGHT numerical mismatch exit=0
+CONTROL wrong-key-head CAUGHT numerical mismatch exit=0
+CONTROL no-beta CAUGHT numerical mismatch exit=0
+CONTROL short-kernarg CAUGHT exit=68
+CONTROL short-qk CAUGHT exit=68
+CONTROL short-value CAUGHT exit=68
+CONTROL short-oldstate CAUGHT exit=68
+CONTROL short-newstate CAUGHT exit=68
+CONTROL short-output CAUGHT exit=68
+CONTROL short-decay CAUGHT exit=68
+CONTROL short-beta CAUGHT exit=68
+PASS gdnstate_w cases=8 controls=11 HARDWARE NOT_RUN PERFORMANCE NOT_RUN

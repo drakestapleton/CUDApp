@@ -1,0 +1,5 @@
+host_exit=0
+exec_exit=0
+combined_exit=0
+../bf16-host-1.log:AMD-GFX942-HOST PASS pass=55 fail=0 kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv hardware=NOT_RUN
+../bf16-exec-1.log:AMD-GFX942-EXEC PASS kernels=vadd,fsum16,sgemm,fp8gemv,bf16gemv counts=0,1,63,64,65,200 sgemm_shapes=14 sgemm_cases=29 semantics_cases=382 fp8gemv_shapes=21 fp8gemv_cases=43 fp8_conversion_bytes=256 bf16gemv_shapes=30 bf16gemv_cases=61 hardware=NOT_RUN

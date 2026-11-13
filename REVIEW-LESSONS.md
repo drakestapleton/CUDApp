@@ -150,3 +150,11 @@ the ring-limit unit asserts field=ring-size. Search covered all existing exit65
 sites in common.om/elf.om and all check.py inspect refusals, including the new
 scratch requests on both targets. Keep raw class exits stable and test the
 reason too, so a later guard cannot conceal a missing earlier one.
+
+CA14: pinning a producer is not enough when fixture bits and production masks
+are copied separately. The launcher gate now parses the five scratch-request
+bits and two descriptor offsets from the pinned vendor header. It derives its
+mutated objects and compares the production guard with those derived values.
+A coherent edit of the header, ranges and digests must fail that relation even
+when the pin checks themselves pass. The baseline passes with unchanged runtime
+bytes; the earlier coherent bit-position mutant is now caught before execution.

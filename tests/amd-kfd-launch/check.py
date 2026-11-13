@@ -195,9 +195,36 @@ calcs={'ELF_magic':int.from_bytes(b'\x7fELF','little'),'ELF_class_data_version_o
 mutations={ 'oversized':vdata[:63], 'wrong-machine':vdata[:18]+b'\0\0'+vdata[20:], 'wave32':vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|1024)+vdata[kd+58:], 'negative-entry':vdata[:kd+16]+struct.pack('<q',-1)+vdata[kd+24:] }
 mutations['private-segment-unsupported']=vdata[:kd+4]+struct.pack('<I',20)+vdata[kd+8:]
 mutations['queue-pointer-required']=vdata[:kd+56]+struct.pack('<H',struct.unpack_from('<H',vdata,kd+56)[0]|4)+vdata[kd+58:]
-# Scratch backing and scratch SGPR setup are outside the first-party subset.
-# ROCm 7.2.2 AMDHSAKernelDescriptor.h defines these bits (pinned below).
-for name,off,fmt,bit in [('scratch-enable',52,'I',1),('private-buffer',56,'H',1),('flat-scratch-init',56,'H',32),('private-size',56,'H',64),('dynamic-stack',56,'H',2048)]:
+# The pinned producer owns field positions. Derive both fixtures and the
+# expected production guard from it, so a coherent pin edit cannot leave our
+# copied mask and mutations agreeing with one another but not the producer.
+descriptor=(reference/'AMDHSAKernelDescriptor-rocm-7.2.2.h').read_text()
+def descriptor_number(name):
+    values=re.findall(r'\b'+re.escape(name)+r'\s*=\s*(\d+)\s*,',descriptor)
+    assert len(values)==1,(name,values)
+    return int(values[0])
+def descriptor_bit(macro,name):
+    values=re.findall(r'\b'+re.escape(macro)+r'\('+re.escape(name)+r',\s*(\d+),\s*(\d+)\)',descriptor)
+    assert len(values)==1 and int(values[0][1])==1,(macro,name,values)
+    return 1<<int(values[0][0])
+rsrc2_offset=descriptor_number('COMPUTE_PGM_RSRC2_OFFSET')
+properties_offset=descriptor_number('KERNEL_CODE_PROPERTIES_OFFSET')
+assert re.search(r'uint32_t\s+compute_pgm_rsrc2\s*;',descriptor)
+assert re.search(r'uint16_t\s+kernel_code_properties\s*;',descriptor)
+private_bit=descriptor_bit('COMPUTE_PGM_RSRC2','ENABLE_PRIVATE_SEGMENT')
+scratch_fields=[('private-buffer','ENABLE_SGPR_PRIVATE_SEGMENT_BUFFER'),
+                ('flat-scratch-init','ENABLE_SGPR_FLAT_SCRATCH_INIT'),
+                ('private-size','ENABLE_SGPR_PRIVATE_SEGMENT_SIZE'),
+                ('dynamic-stack','USES_DYNAMIC_STACK')]
+scratch_requests=[('scratch-enable',rsrc2_offset,'I',private_bit)]
+scratch_mask=0
+for label,field in scratch_fields:
+    bit=descriptor_bit('KERNEL_CODE_PROPERTY',field)
+    scratch_mask|=bit
+    scratch_requests.append((label,properties_offset,'H',bit))
+expected_guard=f'if or ne and ew add d {rsrc2_offset} 4 {private_bit} 0 ne and ew add d {properties_offset} 2 {scratch_mask} 0\n'
+assert (src/'elf.om').read_text().count(expected_guard)==1,'scratch guard differs from pinned producer'
+for name,off,fmt,bit in scratch_requests:
     data=bytearray(vdata)
     struct.pack_into('<'+fmt,data,kd+off,struct.unpack_from('<'+fmt,data,kd+off)[0]|bit)
     mutations[name]=bytes(data)

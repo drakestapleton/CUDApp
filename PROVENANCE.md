@@ -1579,3 +1579,17 @@ controls, and every malformed-plan refusal has a fresh valid twin plus a specifi
 reason line. Upstream topology/queue/kernel producer files are retained unchanged
 with their original licenses and SHA256SUMS in tests/amd-kfd-launch/reference;
 README.md records exact URLs and raw-file line ranges. The arithmetic is unchanged.
+
+## Final launcher hardware receipt, November 13
+
+`evidence/amd-qwen38-native-final-20261113/` qualifies launcher source
+0c1bed70e87466375dfc7aab7e0169a68f8f4e5f and x86 executable
+373e76cd29edab8d92d5e05d7d351474083c0937ed239d1f2e4521431cf187a4.
+Normal/nonzero-LDS vadd and original coding24 pass; warmup plus five longer
+requests match all256 IDs of the previously measured independent AMD HIP graph.
+Five decode medians:26.58,26.493,26.55,26.602,26.624 ms; median26.58 ms/token,
+37.6223 reciprocal median-step tokens/s. Historical Spark graph time125.4 ms/token
+implies4.7178x graph decode ratio. Median prefill776.861 ms is slower than saved
+Spark507 ms. No fresh Spark run, startup-ratio claim,256-token bitwise Spark
+parity, model-quality equivalence or HTTP service is implied. Raw data, code
+identity, numerical limits, units and reproducible calculations are retained.

@@ -174,9 +174,15 @@ A notebook carrying an unlanded object cannot qualify the release tree.
 
 ## Full-model hardware qualification
 
-The [November 13 native model receipt](../../../../evidence/amd-qwen38-native-20261113/README.md)
-records the final executable, the exact coding reference check, five longer
+The [November 13 final native model receipt](../../../../evidence/amd-qwen38-native-final-20261113/README.md)
+records the final hardware-qualified executable, the exact coding reference check, five longer
 requests compared with an independent AMD execution path, and the archived
 Spark comparison. It retains raw IDs, timings, controls, source/compiler hashes,
 external reproduction instruments and the cross-engine numerical differences.
 The receipt states timing boundaries and memory-accounting limits explicitly.
+
+Plan parser refusals print `OMEGA refuse plan field=REASON` before exit 64.
+The CPU table checks the reason and runs a valid positive twin through the same
+argument builder before counting a refusal. ABI publication checks call both real
+packet writers, comparing private=20/group=4096 with the independent AQL encoder;
+this synthetic unit does not expand the ELF loader's supported scratch subset.

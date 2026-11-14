@@ -1,0 +1,5 @@
+fp8 {"wiki_ppl": 6.212623428233547, "ppl_ratio": 1.0, "top1_agree_inputs123": 1.0, "top1_agree_generated": 1.0, "kl_mean_inputs123": 0.0, "arc_correct": 97, "arc_lost_minus_won_vs_fp8": 0}
+q4keep {"wiki_ppl": 6.58449749114854, "ppl_ratio": 1.0598578148524171, "top1_agree_inputs123": 0.9097162510748066, "top1_agree_generated": 0.9285714285714286, "kl_mean_inputs123": 0.04639731347299528, "arc_correct": 96, "arc_lost_minus_won_vs_fp8": 1}
+  BAR FAIL {'B1': False, 'B2': False, 'B3': False, 'B4': True, 'B5': True}
+q4keep+lmq4 {"wiki_ppl": 6.711934460403539, "ppl_ratio": 1.0803704003530699, "top1_agree_inputs123": 0.8899398108340498, "top1_agree_generated": 0.9142857142857143, "kl_mean_inputs123": 0.0585196678134928, "arc_correct": 96, "arc_lost_minus_won_vs_fp8": 1}
+  BAR FAIL {'B1': False, 'B2': False, 'B3': False, 'B4': False, 'B5': True}

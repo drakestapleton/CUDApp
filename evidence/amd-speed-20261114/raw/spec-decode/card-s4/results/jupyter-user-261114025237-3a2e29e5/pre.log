@@ -1,0 +1,24 @@
++ git clone https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp
+Cloning into 'CUDApp'...
++ cd CUDApp
++ git checkout dc536882c06a692991be97dc65cd2d037d82b129
+Note: switching to 'dc536882c06a692991be97dc65cd2d037d82b129'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at dc536882 Derive AMD scratch checks from the pinned descriptor definition
++ cd evidence/amd-qwen38-native-20261113
++ python3 -c import runpy; runpy.run_path('oracle/driver-real2.py', run_name='prepare-import')['prepare']()

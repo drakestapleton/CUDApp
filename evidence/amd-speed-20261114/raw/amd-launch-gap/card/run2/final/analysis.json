@@ -1,0 +1,203 @@
+{
+ "arms": {
+  "old plan (published launcher)": {
+   "run_medians": [
+    26.602,
+    26.626,
+    26.641,
+    26.653,
+    26.658
+   ],
+   "median_of_medians": 26.641,
+   "n": 5
+  },
+  "new plan2": {
+   "run_medians": [
+    24.899,
+    24.896
+   ],
+   "median_of_medians": 24.8975,
+   "n": 2
+  },
+  "HIP graph": {
+   "run_medians": [
+    24.704183917492628,
+    24.726298870518804,
+    24.74596700631082,
+    24.740881053730845,
+    24.74688203074038
+   ],
+   "median_of_medians": 24.740881053730845,
+   "n": 5
+  },
+  "new planscope (scope fix only)": {
+   "run_medians": [],
+   "median_of_medians": null,
+   "n": 0
+  },
+  "new planstage (staging only)": {
+   "run_medians": [],
+   "median_of_medians": null,
+   "n": 0
+  },
+  "new plan (old contract, new binary)": {
+   "run_medians": [],
+   "median_of_medians": null,
+   "n": 0
+  }
+ },
+ "runs": {
+  "omega-control-new-plan3": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": false,
+   "first_difference": 0,
+   "prefill_ms": 728.145,
+   "decode_ms_median": 24.891
+  },
+  "omega-new-plan2-run1": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.679,
+   "decode_ms_median": 24.899
+  },
+  "omega-new-plan2-run2": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.499,
+   "decode_ms_median": 24.896
+  },
+  "omega-new-plan3-run1": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.942,
+   "decode_ms_median": 24.884
+  },
+  "omega-new-plan3-run2": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.575,
+   "decode_ms_median": 24.893
+  },
+  "omega-new-plan3-run3": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.528,
+   "decode_ms_median": 24.885
+  },
+  "omega-new-plan3-run4": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.398,
+   "decode_ms_median": 24.891
+  },
+  "omega-new-plan3-run5": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 727.723,
+   "decode_ms_median": 24.914
+  },
+  "omega-new-plan3-warmup": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 726.216,
+   "decode_ms_median": 24.807
+  },
+  "omega-old-plan-run1": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 779.252,
+   "decode_ms_median": 26.602
+  },
+  "omega-old-plan-run2": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 779.805,
+   "decode_ms_median": 26.626
+  },
+  "omega-old-plan-run3": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 780.756,
+   "decode_ms_median": 26.641
+  },
+  "omega-old-plan-run4": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 780.825,
+   "decode_ms_median": 26.653
+  },
+  "omega-old-plan-run5": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 781.034,
+   "decode_ms_median": 26.658
+  },
+  "omega-old-plan-warmup": {
+   "kind": "omega",
+   "steps": 285,
+   "ids_equal_published": true,
+   "first_difference": null,
+   "prefill_ms": 777.341,
+   "decode_ms_median": 26.489
+  },
+  "hip-graph-run1": {
+   "kind": "hip",
+   "ids_equal_published": true,
+   "decode_ms_median": 24.704183917492628
+  },
+  "hip-graph-run2": {
+   "kind": "hip",
+   "ids_equal_published": true,
+   "decode_ms_median": 24.726298870518804
+  },
+  "hip-graph-run3": {
+   "kind": "hip",
+   "ids_equal_published": true,
+   "decode_ms_median": 24.74596700631082
+  },
+  "hip-graph-run4": {
+   "kind": "hip",
+   "ids_equal_published": true,
+   "decode_ms_median": 24.740881053730845
+  },
+  "hip-graph-run5": {
+   "kind": "hip",
+   "ids_equal_published": true,
+   "decode_ms_median": 24.74688203074038
+  },
+  "hip-graph-warmup": {
+   "kind": "hip",
+   "ids_equal_published": true,
+   "decode_ms_median": 24.671602062880993
+  }
+ },
+ "all_non_control_ids_equal": true,
+ "controls_caught": true
+}

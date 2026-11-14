@@ -1,0 +1,74 @@
+CELL UNPACK OK
++ echo EMIT --capacity=131072 rc=0 sha=2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012
+EMIT --capacity=131072 rc=0 sha=2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012
++ echo EMIT --capacity=131072 rc=0 sha=2665179baef2453c13d5dd3c6a9cd2674443ef9f0217a50f93a92dcea1fbca65
+EMIT --capacity=131072 rc=0 sha=2665179baef2453c13d5dd3c6a9cd2674443ef9f0217a50f93a92dcea1fbca65
++ echo EMIT --capacity=131072 rc=0 sha=c547d38ed9aa865e81d25107a390e693502f5e008dc5de9672de88212a4858ef
+EMIT --capacity=131072 rc=0 sha=c547d38ed9aa865e81d25107a390e693502f5e008dc5de9672de88212a4858ef
++ echo EMIT --capacity=131072 rc=0 sha=40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e
+EMIT --capacity=131072 rc=0 sha=40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e
++ echo EMIT --capacity=131072 rc=0 sha=c9689280bcda787d004ba1df38f19d20c52e4d0f10aea82fe0549f1c57039b43
+EMIT --capacity=131072 rc=0 sha=c9689280bcda787d004ba1df38f19d20c52e4d0f10aea82fe0549f1c57039b43
++ echo EMIT --capacity=64 rc=0 sha=85a9fd9de051af477d8126c24e3811f6765d9bc9fe66e7ae59902ee556aa969f
+EMIT --capacity=64 rc=0 sha=85a9fd9de051af477d8126c24e3811f6765d9bc9fe66e7ae59902ee556aa969f
++ echo EMIT --capacity=64 rc=0 sha=84f5db1eac52bfff56b14ed6787832dfae0682b068dab3c21d87c3720df45372
+EMIT --capacity=64 rc=0 sha=84f5db1eac52bfff56b14ed6787832dfae0682b068dab3c21d87c3720df45372
++ echo EMIT --capacity=64 rc=0 sha=20f304e9974213c55f92771aa0e09c608c943f3eafab74925c4da53ed9454f3a
+EMIT --capacity=64 rc=0 sha=20f304e9974213c55f92771aa0e09c608c943f3eafab74925c4da53ed9454f3a
++ echo EMIT --capacity=131072 rc=0 sha=bda32b26b5a07d1ef8a0f4857b34de6a04524cbcd0474da07337a876a4c0f9ec
+EMIT --capacity=131072 rc=0 sha=bda32b26b5a07d1ef8a0f4857b34de6a04524cbcd0474da07337a876a4c0f9ec
++ echo EMIT --capacity=131072 rc=0 sha=852c9420f00e11f48b5c3534f59f4f46862ee2d9aa6a70afb5f9e729940d9e69
+EMIT --capacity=131072 rc=0 sha=852c9420f00e11f48b5c3534f59f4f46862ee2d9aa6a70afb5f9e729940d9e69
++ echo EMIT --capacity=64 rc=0 sha=5354501aea4381b2f3bf95afdc485c3f1276c7447ae06e96abab249920227c3e
+EMIT --capacity=64 rc=0 sha=5354501aea4381b2f3bf95afdc485c3f1276c7447ae06e96abab249920227c3e
+PLAN lh-plain OK 2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012
+PLAN lh-r2 OK 2665179baef2453c13d5dd3c6a9cd2674443ef9f0217a50f93a92dcea1fbca65
+PLAN lh-r3 OK c547d38ed9aa865e81d25107a390e693502f5e008dc5de9672de88212a4858ef
+PLAN lh-r2h OK bda32b26b5a07d1ef8a0f4857b34de6a04524cbcd0474da07337a876a4c0f9ec
+PLAN lh-plain-ctl OK 40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e
+PLAN lh-r2-ctl OK c9689280bcda787d004ba1df38f19d20c52e4d0f10aea82fe0549f1c57039b43
+PLAN lh-r2h-ctl OK 852c9420f00e11f48b5c3534f59f4f46862ee2d9aa6a70afb5f9e729940d9e69
+PLAN c24-plain OK 85a9fd9de051af477d8126c24e3811f6765d9bc9fe66e7ae59902ee556aa969f
+PLAN c24-r2 OK 84f5db1eac52bfff56b14ed6787832dfae0682b068dab3c21d87c3720df45372
+PLAN c24-r3 OK 20f304e9974213c55f92771aa0e09c608c943f3eafab74925c4da53ed9454f3a
+PLAN c24-r2h OK 5354501aea4381b2f3bf95afdc485c3f1276c7447ae06e96abab249920227c3e
++ echo DRY-PLAN OK lh-plain launch-x86
+DRY-PLAN OK lh-plain launch-x86
++ echo DRY-PLAN OK lh-plain launch-spec
+DRY-PLAN OK lh-plain launch-spec
++ echo DRY-PLAN OK lh-r2 launch-spec
+DRY-PLAN OK lh-r2 launch-spec
++ echo DRY-PLAN OK lh-r3 launch-spec
+DRY-PLAN OK lh-r3 launch-spec
++ echo DRY-PLAN OK lh-r2h launch-spec
+DRY-PLAN OK lh-r2h launch-spec
++ echo DRY-PLAN OK lh-plain-ctl launch-x86
+DRY-PLAN OK lh-plain-ctl launch-x86
++ echo DRY-PLAN OK lh-plain-ctl launch-spec
+DRY-PLAN OK lh-plain-ctl launch-spec
++ echo DRY-PLAN OK lh-r2-ctl launch-spec
+DRY-PLAN OK lh-r2-ctl launch-spec
++ echo DRY-PLAN OK lh-r2h-ctl launch-spec
+DRY-PLAN OK lh-r2h-ctl launch-spec
++ echo DRY-PLAN OK c24-plain launch-x86
+DRY-PLAN OK c24-plain launch-x86
++ echo DRY-PLAN OK c24-plain launch-spec
+DRY-PLAN OK c24-plain launch-spec
++ echo DRY-PLAN OK c24-r2 launch-spec
+DRY-PLAN OK c24-r2 launch-spec
++ echo DRY-PLAN OK c24-r3 launch-spec
+DRY-PLAN OK c24-r3 launch-spec
++ echo DRY-PLAN OK c24-r2h launch-spec
+DRY-PLAN OK c24-r2h launch-spec
++ echo ANALYZE_RC=0 s4-core
+ANALYZE_RC=0 s4-core
++ echo ANALYZE_RC=0 s4-evidence
+ANALYZE_RC=0 s4-evidence
++ echo S4-DONE
+S4-DONE
+RUN warm-r2h ids_ok complete tok/pass=1.0 ms/token=26.157 
+RUN warm-r3 ids_ok complete tok/pass=1.0 ms/token=26.157 
+SPEC-S4 PASS
+DRY-S4 CONTROL corrupted bundle refused
+DRY-S4 CONTROL wrong id caught
+DRY-S4 OK

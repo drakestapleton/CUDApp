@@ -1,0 +1,7 @@
+Two CPU logs copied byte for byte by the report lane from the DGX Spark on 14 November 2026 (no card was involved):
+  kernel-step2-sim-next.log                  from ~/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/next.log
+      sha256 a916f916b210d31be44bcd6f9516db31e7bb1ac9d0eea72dfe7cdf15b234a2bc
+      the kernel step 2 card bundle built and simulated on the Spark: plan rewrites (FUSED, FUSED_AB) and one RUN line per run
+  hostloop-gate-final-20261114T022658Z.log   from ~/work/hive/uxl-brief-20261113/SpecDecode/hostloop/logs/gate-final-20261114T022658Z.log
+      sha256 468c3a12ee8cf0f3d77623363013736a3eb9faaa82a9abdb3413feff0a241e70
+      tests/amd-kfd-launch/check.py on branch spec-decode2 head f859c88f (first line), ending in the AMD-KFD-LAUNCH CPU PASS line

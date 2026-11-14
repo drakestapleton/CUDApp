@@ -1,0 +1,13 @@
+RECOMPUTE baseline PASS numbers=13 failures=0
+RECOMPUTE launcher PASS numbers=122 failures=0
+RECOMPUTE kernels PASS numbers=105 failures=0
+RECOMPUTE fourbit PASS numbers=135 failures=0
+RECOMPUTE specdecode PASS numbers=111 failures=0
+RECOMPUTE combined PASS numbers=67 failures=0
+RECOMPUTE sessions PASS numbers=15 failures=0
+NUMBERS 597 unchanged; sources changed since last build: 0
+RENDER sessions rows=13 unchanged
+CHECK-REPORT decimals=475 unit-bound=142 claims=71 MISMATCH 0 dashes=0
+CHECK-SELFTEST PASS original=pass mutations caught=5/5
+REPEATABLE PASS a second complete run left numbers.json, REPORT.md and out/ (15 files) byte-identical
+RUN-ALL rc=0

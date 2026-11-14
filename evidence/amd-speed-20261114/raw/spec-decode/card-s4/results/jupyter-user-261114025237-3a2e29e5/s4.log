@@ -1,0 +1,14 @@
++ date -u +%FT%TZ
+2026-11-14T02:53:00Z
++ STEP_NS=10000000000
++ OUTER=420
++ export PYTHONDONTWRITEBYTECODE=1
++ [ 0 = 1 ]
++ export AMDSERVE_WEIGHTS=/tmp/qwen3.8-27b-fp8
++ PRE=97
++ MTP=98
++ [ -f ../spec-rho/rho.tar.xz ]
++ [ ! -f ../spec-rho/rho.log ]
++ wait 97
++ cd ../spec-rho
++ timeout 1500 python3 spec_rho.py .

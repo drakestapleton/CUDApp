@@ -1,0 +1,507 @@
++ export AMDSERVE_WEIGHTS=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/../w
++ true
++ E=CUDApp/evidence/amd-qwen38-native-20261113
++ mkdir -p plan runs
++ python3 CUDApp/evidence/amd-qwen38-native-20261113/oracle/emit-plan.py CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py /home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/../w plan/real2.plan --capacity=131072 --fixture-json=CUDApp/evidence/amd-qwen38-native-20261113/oracle/lighthouse256.json
++ echo EMIT_RC=0
+EMIT_RC=0
++ true
++ python3 CUDApp/evidence/amd-qwen38-native-20261113/oracle/emit-plan.py CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py /home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/../w plan/cap286.plan --capacity=286 --fixture-json=CUDApp/evidence/amd-qwen38-native-20261113/oracle/lighthouse256.json
++ echo EMIT286_RC=0
+EMIT286_RC=0
++ python3 CUDApp/evidence/amd-qwen38-native-20261113/oracle/emit-plan.py CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py /home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/../w plan/real2-controls.plan --controls --capacity=131072 --fixture-json=CUDApp/evidence/amd-qwen38-native-20261113/oracle/lighthouse256.json
++ echo EMITC_RC=0
+EMITC_RC=0
++ mkdir -p bin-old bin-new
++ cp launch-x86 bin-old/omega-launch
++ cp launch-new bin-new/omega-launch
++ chmod 755 bin-new/omega-launch bin-old/omega-launch
++ python3 fuse-plan.py plan/real2.plan plan/real2.plan.cmd plan/real2f.plan plan/real2f.plan.cmd code/addnorm5120.hsaco
+FUSED {'pairs': 128, 'dispatches_before': 1126, 'dispatches_after': 998, 'code_objects': 19, 'sha256': 'b437150142ad2ffdf04523d370d7cac557f36ff8f278d2e8d7b6a0e8e8c68dc2'}
++ echo FUSE_RC=0
+FUSE_RC=0
++ python3 fuse-plan.py plan/cap286.plan plan/cap286.plan.cmd plan/cap286f.plan plan/cap286f.plan.cmd code/addnorm5120.hsaco
+FUSED {'pairs': 128, 'dispatches_before': 1126, 'dispatches_after': 998, 'code_objects': 19, 'sha256': 'b437150142ad2ffdf04523d370d7cac557f36ff8f278d2e8d7b6a0e8e8c68dc2'}
++ echo FUSE286_RC=0
+FUSE286_RC=0
++ python3 fuse-ab.py plan/real2f.plan plan/real2f.plan.cmd plan/real2fab.plan plan/real2fab.plan.cmd
+FUSED_AB {'layers': 48, 'dispatches_before': 998, 'dispatches_after': 950, 'buffers': 1600, 'sha256': '63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49'}
++ echo FUSEAB_RC=0
+FUSEAB_RC=0
++ python3 fuse-ab.py plan/cap286f.plan plan/cap286f.plan.cmd plan/cap286fab.plan plan/cap286fab.plan.cmd
+FUSED_AB {'layers': 48, 'dispatches_before': 998, 'dispatches_after': 950, 'buffers': 1600, 'sha256': '63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49'}
++ echo FUSEAB286_RC=0
+FUSEAB286_RC=0
++ python3 halve-grid.py plan/real2fab.plan plan/real2fabr2.plan 2
+HALVED {"rows": 2, "dispatches": 950, "rewritten": 400, "bytes_differing": 400, "classes": {"10240x5120": {"count": 48, "gx_from": 10240, "gx_to": 5120}, "6144x5120": {"count": 48, "gx_from": 6144, "gx_to": 3072}, "5120x6144": {"count": 64, "gx_from": 5120, "gx_to": 2560}, "17408x5120": {"count": 128, "gx_from": 17408, "gx_to": 8704}, "5120x17408": {"count": 64, "gx_from": 5120, "gx_to": 2560}, "12288x5120": {"count": 16, "gx_from": 12288, "gx_to": 6144}, "1024x5120": {"count": 32, "gx_from": 1024, "gx_to": 512}}, "sha256_in": "63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49", "sha256_out": "d503313d9e9aae0905bfd6e2f219160cfa0cded484a5b7c9fc4048ea676dbd4b"}
++ echo HALVE_real2fab_2 RC=0
+HALVE_real2fab_2 RC=0
++ sed s#^omega-launch plan real2fab.plan #omega-launch plan real2fabr2.plan # plan/real2fab.plan.cmd
++ python3 halve-grid.py plan/cap286fab.plan plan/cap286fabr2.plan 2
+HALVED {"rows": 2, "dispatches": 950, "rewritten": 400, "bytes_differing": 400, "classes": {"10240x5120": {"count": 48, "gx_from": 10240, "gx_to": 5120}, "6144x5120": {"count": 48, "gx_from": 6144, "gx_to": 3072}, "5120x6144": {"count": 64, "gx_from": 5120, "gx_to": 2560}, "17408x5120": {"count": 128, "gx_from": 17408, "gx_to": 8704}, "5120x17408": {"count": 64, "gx_from": 5120, "gx_to": 2560}, "12288x5120": {"count": 16, "gx_from": 12288, "gx_to": 6144}, "1024x5120": {"count": 32, "gx_from": 1024, "gx_to": 512}}, "sha256_in": "63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49", "sha256_out": "d503313d9e9aae0905bfd6e2f219160cfa0cded484a5b7c9fc4048ea676dbd4b"}
++ echo HALVE_cap286fab_2 RC=0
+HALVE_cap286fab_2 RC=0
++ sed s#^omega-launch plan cap286fab.plan #omega-launch plan cap286fabr2.plan # plan/cap286fab.plan.cmd
++ python3 halve-grid.py plan/real2fab.plan plan/real2fabr4.plan 4
+HALVED {"rows": 4, "dispatches": 950, "rewritten": 400, "bytes_differing": 400, "classes": {"10240x5120": {"count": 48, "gx_from": 10240, "gx_to": 2560}, "6144x5120": {"count": 48, "gx_from": 6144, "gx_to": 1536}, "5120x6144": {"count": 64, "gx_from": 5120, "gx_to": 1280}, "17408x5120": {"count": 128, "gx_from": 17408, "gx_to": 4352}, "5120x17408": {"count": 64, "gx_from": 5120, "gx_to": 1280}, "12288x5120": {"count": 16, "gx_from": 12288, "gx_to": 3072}, "1024x5120": {"count": 32, "gx_from": 1024, "gx_to": 256}}, "sha256_in": "63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49", "sha256_out": "4eab7064e21c055cafb2c1cbba3f89b14ed53eb0f48fa406f454ad7d0e357403"}
++ echo HALVE_real2fab_4 RC=0
+HALVE_real2fab_4 RC=0
++ sed s#^omega-launch plan real2fab.plan #omega-launch plan real2fabr4.plan # plan/real2fab.plan.cmd
++ python3 halve-grid.py plan/cap286fab.plan plan/cap286fabr4.plan 4
+HALVED {"rows": 4, "dispatches": 950, "rewritten": 400, "bytes_differing": 400, "classes": {"10240x5120": {"count": 48, "gx_from": 10240, "gx_to": 2560}, "6144x5120": {"count": 48, "gx_from": 6144, "gx_to": 1536}, "5120x6144": {"count": 64, "gx_from": 5120, "gx_to": 1280}, "17408x5120": {"count": 128, "gx_from": 17408, "gx_to": 4352}, "5120x17408": {"count": 64, "gx_from": 5120, "gx_to": 1280}, "12288x5120": {"count": 16, "gx_from": 12288, "gx_to": 3072}, "1024x5120": {"count": 32, "gx_from": 1024, "gx_to": 256}}, "sha256_in": "63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49", "sha256_out": "4eab7064e21c055cafb2c1cbba3f89b14ed53eb0f48fa406f454ad7d0e357403"}
++ echo HALVE_cap286fab_4 RC=0
+HALVE_cap286fab_4 RC=0
++ sed s#^omega-launch plan cap286fab.plan #omega-launch plan cap286fabr4.plan # plan/cap286fab.plan.cmd
++ mkset k2 rmsnorm5120-v2.hsaco gdnstate_step-v2.hsaco fp8gemv_b128f-v2b2.hsaco addnorm5120-v2.hsaco
++ d=sets/k2
++ shift
++ mkdir -p sets/k2
++ cp -r plan/code sets/k2/code
++ ln -sf ../../plan/real2.plan sets/k2/real2.plan
++ cp plan/real2.plan.cmd sets/k2/
++ ln -sf ../../plan/cap286.plan sets/k2/cap286.plan
++ cp plan/cap286.plan.cmd sets/k2/
++ ln -sf ../../plan/real2f.plan sets/k2/real2f.plan
++ cp plan/real2f.plan.cmd sets/k2/
++ ln -sf ../../plan/cap286f.plan sets/k2/cap286f.plan
++ cp plan/cap286f.plan.cmd sets/k2/
++ ln -sf ../../plan/real2fab.plan sets/k2/real2fab.plan
++ cp plan/real2fab.plan.cmd sets/k2/
++ ln -sf ../../plan/cap286fab.plan sets/k2/cap286fab.plan
++ cp plan/cap286fab.plan.cmd sets/k2/
++ ln -sf ../../plan/real2fabr2.plan sets/k2/real2fabr2.plan
++ cp plan/real2fabr2.plan.cmd sets/k2/
++ ln -sf ../../plan/cap286fabr2.plan sets/k2/cap286fabr2.plan
++ cp plan/cap286fabr2.plan.cmd sets/k2/
++ ln -sf ../../plan/real2fabr4.plan sets/k2/real2fabr4.plan
++ cp plan/real2fabr4.plan.cmd sets/k2/
++ ln -sf ../../plan/cap286fabr4.plan sets/k2/cap286fabr4.plan
++ cp plan/cap286fabr4.plan.cmd sets/k2/
++ ln -sf ../../plan/real2-controls.plan sets/k2/real2-controls.plan
++ cp plan/real2-controls.plan.cmd sets/k2/
++ echo rmsnorm5120-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp rmsnorm5120-v2.hsaco sets/k2/code/rmsnorm5120.hsaco
++ echo gdnstate_step-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp gdnstate_step-v2.hsaco sets/k2/code/gdnstate_step.hsaco
++ echo fp8gemv_b128f-v2b2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp fp8gemv_b128f-v2b2.hsaco sets/k2/code/fp8gemv_b128f.hsaco
++ echo addnorm5120-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp addnorm5120-v2.hsaco sets/k2/code/addnorm5120.hsaco
++ sha256sum sets/k2/code/addnorm5120.hsaco sets/k2/code/argmax_final.hsaco sets/k2/code/argmax_part.hsaco sets/k2/code/attn256_gate.hsaco sets/k2/code/attn256_merge_step.hsaco sets/k2/code/attn256_part_step.hsaco sets/k2/code/attn256_prep_step.hsaco sets/k2/code/bf16gemv2.hsaco sets/k2/code/embed5120_step.hsaco sets/k2/code/fp8gemv_b128f.hsaco sets/k2/code/gdnconv4_step.hsaco sets/k2/code/gdnparams.hsaco sets/k2/code/gdnqknorm.hsaco sets/k2/code/gdnrmsgate.hsaco sets/k2/code/gdnstate_step.hsaco sets/k2/code/mlpsilu.hsaco sets/k2/code/residual5120.hsaco sets/k2/code/rmsnorm5120.hsaco sets/k2/code/step_advance.hsaco
++ mkset k3 rmsnorm5120-v2.hsaco gdnstate_step-v2.hsaco fp8gemv_b128f-v3r2.hsaco addnorm5120-v2.hsaco
++ d=sets/k3
++ shift
++ mkdir -p sets/k3
++ cp -r plan/code sets/k3/code
++ ln -sf ../../plan/real2.plan sets/k3/real2.plan
++ cp plan/real2.plan.cmd sets/k3/
++ ln -sf ../../plan/cap286.plan sets/k3/cap286.plan
++ cp plan/cap286.plan.cmd sets/k3/
++ ln -sf ../../plan/real2f.plan sets/k3/real2f.plan
++ cp plan/real2f.plan.cmd sets/k3/
++ ln -sf ../../plan/cap286f.plan sets/k3/cap286f.plan
++ cp plan/cap286f.plan.cmd sets/k3/
++ ln -sf ../../plan/real2fab.plan sets/k3/real2fab.plan
++ cp plan/real2fab.plan.cmd sets/k3/
++ ln -sf ../../plan/cap286fab.plan sets/k3/cap286fab.plan
++ cp plan/cap286fab.plan.cmd sets/k3/
++ ln -sf ../../plan/real2fabr2.plan sets/k3/real2fabr2.plan
++ cp plan/real2fabr2.plan.cmd sets/k3/
++ ln -sf ../../plan/cap286fabr2.plan sets/k3/cap286fabr2.plan
++ cp plan/cap286fabr2.plan.cmd sets/k3/
++ ln -sf ../../plan/real2fabr4.plan sets/k3/real2fabr4.plan
++ cp plan/real2fabr4.plan.cmd sets/k3/
++ ln -sf ../../plan/cap286fabr4.plan sets/k3/cap286fabr4.plan
++ cp plan/cap286fabr4.plan.cmd sets/k3/
++ ln -sf ../../plan/real2-controls.plan sets/k3/real2-controls.plan
++ cp plan/real2-controls.plan.cmd sets/k3/
++ echo rmsnorm5120-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp rmsnorm5120-v2.hsaco sets/k3/code/rmsnorm5120.hsaco
++ echo gdnstate_step-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp gdnstate_step-v2.hsaco sets/k3/code/gdnstate_step.hsaco
++ echo fp8gemv_b128f-v3r2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp fp8gemv_b128f-v3r2.hsaco sets/k3/code/fp8gemv_b128f.hsaco
++ echo addnorm5120-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp addnorm5120-v2.hsaco sets/k3/code/addnorm5120.hsaco
++ sha256sum sets/k3/code/addnorm5120.hsaco sets/k3/code/argmax_final.hsaco sets/k3/code/argmax_part.hsaco sets/k3/code/attn256_gate.hsaco sets/k3/code/attn256_merge_step.hsaco sets/k3/code/attn256_part_step.hsaco sets/k3/code/attn256_prep_step.hsaco sets/k3/code/bf16gemv2.hsaco sets/k3/code/embed5120_step.hsaco sets/k3/code/fp8gemv_b128f.hsaco sets/k3/code/gdnconv4_step.hsaco sets/k3/code/gdnparams.hsaco sets/k3/code/gdnqknorm.hsaco sets/k3/code/gdnrmsgate.hsaco sets/k3/code/gdnstate_step.hsaco sets/k3/code/mlpsilu.hsaco sets/k3/code/residual5120.hsaco sets/k3/code/rmsnorm5120.hsaco sets/k3/code/step_advance.hsaco
++ mkset k4 rmsnorm5120-v2.hsaco gdnstate_step-v2.hsaco fp8gemv_b128f-v3r4.hsaco addnorm5120-v2.hsaco
++ d=sets/k4
++ shift
++ mkdir -p sets/k4
++ cp -r plan/code sets/k4/code
++ ln -sf ../../plan/real2.plan sets/k4/real2.plan
++ cp plan/real2.plan.cmd sets/k4/
++ ln -sf ../../plan/cap286.plan sets/k4/cap286.plan
++ cp plan/cap286.plan.cmd sets/k4/
++ ln -sf ../../plan/real2f.plan sets/k4/real2f.plan
++ cp plan/real2f.plan.cmd sets/k4/
++ ln -sf ../../plan/cap286f.plan sets/k4/cap286f.plan
++ cp plan/cap286f.plan.cmd sets/k4/
++ ln -sf ../../plan/real2fab.plan sets/k4/real2fab.plan
++ cp plan/real2fab.plan.cmd sets/k4/
++ ln -sf ../../plan/cap286fab.plan sets/k4/cap286fab.plan
++ cp plan/cap286fab.plan.cmd sets/k4/
++ ln -sf ../../plan/real2fabr2.plan sets/k4/real2fabr2.plan
++ cp plan/real2fabr2.plan.cmd sets/k4/
++ ln -sf ../../plan/cap286fabr2.plan sets/k4/cap286fabr2.plan
++ cp plan/cap286fabr2.plan.cmd sets/k4/
++ ln -sf ../../plan/real2fabr4.plan sets/k4/real2fabr4.plan
++ cp plan/real2fabr4.plan.cmd sets/k4/
++ ln -sf ../../plan/cap286fabr4.plan sets/k4/cap286fabr4.plan
++ cp plan/cap286fabr4.plan.cmd sets/k4/
++ ln -sf ../../plan/real2-controls.plan sets/k4/real2-controls.plan
++ cp plan/real2-controls.plan.cmd sets/k4/
++ echo rmsnorm5120-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp rmsnorm5120-v2.hsaco sets/k4/code/rmsnorm5120.hsaco
++ echo gdnstate_step-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp gdnstate_step-v2.hsaco sets/k4/code/gdnstate_step.hsaco
++ echo fp8gemv_b128f-v3r4.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp fp8gemv_b128f-v3r4.hsaco sets/k4/code/fp8gemv_b128f.hsaco
++ echo addnorm5120-v2.hsaco
++ sed s/-v[0-9][a-z0-9]*\.hsaco$/.hsaco/
++ cp addnorm5120-v2.hsaco sets/k4/code/addnorm5120.hsaco
++ sha256sum sets/k4/code/addnorm5120.hsaco sets/k4/code/argmax_final.hsaco sets/k4/code/argmax_part.hsaco sets/k4/code/attn256_gate.hsaco sets/k4/code/attn256_merge_step.hsaco sets/k4/code/attn256_part_step.hsaco sets/k4/code/attn256_prep_step.hsaco sets/k4/code/bf16gemv2.hsaco sets/k4/code/embed5120_step.hsaco sets/k4/code/fp8gemv_b128f.hsaco sets/k4/code/gdnconv4_step.hsaco sets/k4/code/gdnparams.hsaco sets/k4/code/gdnqknorm.hsaco sets/k4/code/gdnrmsgate.hsaco sets/k4/code/gdnstate_step.hsaco sets/k4/code/mlpsilu.hsaco sets/k4/code/residual5120.hsaco sets/k4/code/rmsnorm5120.hsaco sets/k4/code/step_advance.hsaco
++ run D2-1 bin-new plan3 k2 real2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2.plan.cmd
++ date +%s.%N
++ echo RUN D2-1 start 1794625950.473895365
+RUN D2-1 start 1794625950.473895365
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-D2-1.sh
++ date +%s.%N
++ echo RUN D2-1 rc=0 end 1794625950.482832096
+RUN D2-1 rc=0 end 1794625950.482832096
++ run E2-1 bin-new plan3 k2 cap286
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286.plan.cmd
++ date +%s.%N
++ echo RUN E2-1 start 1794625950.485205432
+RUN E2-1 start 1794625950.485205432
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-E2-1.sh
++ date +%s.%N
++ echo RUN E2-1 rc=0 end 1794625950.492833141
+RUN E2-1 rc=0 end 1794625950.492833141
++ run F2-1 bin-new plan3 k2 real2f
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2f.plan.cmd
++ date +%s.%N
++ echo RUN F2-1 start 1794625950.494659672
+RUN F2-1 start 1794625950.494659672
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-F2-1.sh
++ date +%s.%N
++ echo RUN F2-1 rc=0 end 1794625950.502166756
+RUN F2-1 rc=0 end 1794625950.502166756
++ run G2-1 bin-new plan3 k2 cap286f
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286f.plan.cmd
++ date +%s.%N
++ echo RUN G2-1 start 1794625950.504266586
+RUN G2-1 start 1794625950.504266586
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-G2-1.sh
++ date +%s.%N
++ echo RUN G2-1 rc=0 end 1794625950.509952164
+RUN G2-1 rc=0 end 1794625950.509952164
++ run H2-1 bin-new plan3 k2 real2fab
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2fab.plan.cmd
++ date +%s.%N
++ echo RUN H2-1 start 1794625950.511735606
+RUN H2-1 start 1794625950.511735606
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-H2-1.sh
++ date +%s.%N
++ echo RUN H2-1 rc=0 end 1794625950.517201421
+RUN H2-1 rc=0 end 1794625950.517201421
++ run I2-1 bin-new plan3 k2 cap286fab
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286fab.plan.cmd
++ date +%s.%N
++ echo RUN I2-1 start 1794625950.519206514
+RUN I2-1 start 1794625950.519206514
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-I2-1.sh
++ date +%s.%N
++ echo RUN I2-1 rc=0 end 1794625950.526862672
+RUN I2-1 rc=0 end 1794625950.526862672
++ run J3-1 bin-new plan3 k3 real2fabr2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k3/real2fabr2.plan.cmd
++ date +%s.%N
++ echo RUN J3-1 start 1794625950.529013701
+RUN J3-1 start 1794625950.529013701
++ cd sets/k3
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k3/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-J3-1.sh
++ date +%s.%N
++ echo RUN J3-1 rc=0 end 1794625950.535115076
+RUN J3-1 rc=0 end 1794625950.535115076
++ run K3-1 bin-new plan3 k3 cap286fabr2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k3/cap286fabr2.plan.cmd
++ date +%s.%N
++ echo RUN K3-1 start 1794625950.536967462
+RUN K3-1 start 1794625950.536967462
++ cd sets/k3
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k3/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-K3-1.sh
++ date +%s.%N
++ echo RUN K3-1 rc=0 end 1794625950.543970910
+RUN K3-1 rc=0 end 1794625950.543970910
++ run J4-1 bin-new plan3 k4 real2fabr4
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k4/real2fabr4.plan.cmd
++ date +%s.%N
++ echo RUN J4-1 start 1794625950.546454103
+RUN J4-1 start 1794625950.546454103
++ cd sets/k4
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k4/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-J4-1.sh
++ date +%s.%N
++ echo RUN J4-1 rc=0 end 1794625950.554108837
+RUN J4-1 rc=0 end 1794625950.554108837
++ run K4-1 bin-new plan3 k4 cap286fabr4
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k4/cap286fabr4.plan.cmd
++ date +%s.%N
++ echo RUN K4-1 start 1794625950.555500467
+RUN K4-1 start 1794625950.555500467
++ cd sets/k4
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k4/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-K4-1.sh
++ date +%s.%N
++ echo RUN K4-1 rc=0 end 1794625950.563440276
+RUN K4-1 rc=0 end 1794625950.563440276
++ run D2-2 bin-new plan3 k2 real2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2.plan.cmd
++ date +%s.%N
++ echo RUN D2-2 start 1794625950.564906499
+RUN D2-2 start 1794625950.564906499
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-D2-2.sh
++ date +%s.%N
++ echo RUN D2-2 rc=0 end 1794625950.571845305
+RUN D2-2 rc=0 end 1794625950.571845305
++ run E2-2 bin-new plan3 k2 cap286
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286.plan.cmd
++ date +%s.%N
++ echo RUN E2-2 start 1794625950.573151910
+RUN E2-2 start 1794625950.573151910
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-E2-2.sh
++ date +%s.%N
++ echo RUN E2-2 rc=0 end 1794625950.578808528
+RUN E2-2 rc=0 end 1794625950.578808528
++ run F2-2 bin-new plan3 k2 real2f
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2f.plan.cmd
++ date +%s.%N
++ echo RUN F2-2 start 1794625950.581048455
+RUN F2-2 start 1794625950.581048455
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-F2-2.sh
++ date +%s.%N
++ echo RUN F2-2 rc=0 end 1794625950.587629386
+RUN F2-2 rc=0 end 1794625950.587629386
++ run G2-2 bin-new plan3 k2 cap286f
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286f.plan.cmd
++ date +%s.%N
++ echo RUN G2-2 start 1794625950.589877457
+RUN G2-2 start 1794625950.589877457
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-G2-2.sh
++ date +%s.%N
++ echo RUN G2-2 rc=0 end 1794625950.595776381
+RUN G2-2 rc=0 end 1794625950.595776381
++ run H2-2 bin-new plan3 k2 real2fab
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2fab.plan.cmd
++ date +%s.%N
++ echo RUN H2-2 start 1794625950.597121802
+RUN H2-2 start 1794625950.597121802
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-H2-2.sh
++ date +%s.%N
++ echo RUN H2-2 rc=0 end 1794625950.603021558
+RUN H2-2 rc=0 end 1794625950.603021558
++ run I2-2 bin-new plan3 k2 cap286fab
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286fab.plan.cmd
++ date +%s.%N
++ echo RUN I2-2 start 1794625950.604594470
+RUN I2-2 start 1794625950.604594470
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-I2-2.sh
++ date +%s.%N
++ echo RUN I2-2 rc=0 end 1794625950.610334065
+RUN I2-2 rc=0 end 1794625950.610334065
++ run J3-2 bin-new plan3 k3 real2fabr2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k3/real2fabr2.plan.cmd
++ date +%s.%N
++ echo RUN J3-2 start 1794625950.613053500
+RUN J3-2 start 1794625950.613053500
++ cd sets/k3
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k3/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-J3-2.sh
++ date +%s.%N
++ echo RUN J3-2 rc=0 end 1794625950.621585123
+RUN J3-2 rc=0 end 1794625950.621585123
++ run K3-2 bin-new plan3 k3 cap286fabr2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k3/cap286fabr2.plan.cmd
++ date +%s.%N
++ echo RUN K3-2 start 1794625950.623542375
+RUN K3-2 start 1794625950.623542375
++ cd sets/k3
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k3/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-K3-2.sh
++ date +%s.%N
++ echo RUN K3-2 rc=0 end 1794625950.628764284
+RUN K3-2 rc=0 end 1794625950.628764284
++ run J4-2 bin-new plan3 k4 real2fabr4
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k4/real2fabr4.plan.cmd
++ date +%s.%N
++ echo RUN J4-2 start 1794625950.630034249
+RUN J4-2 start 1794625950.630034249
++ cd sets/k4
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k4/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-J4-2.sh
++ date +%s.%N
++ echo RUN J4-2 rc=0 end 1794625950.635902325
+RUN J4-2 rc=0 end 1794625950.635902325
++ run K4-2 bin-new plan3 k4 cap286fabr4
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k4/cap286fabr4.plan.cmd
++ date +%s.%N
++ echo RUN K4-2 start 1794625950.638137547
+RUN K4-2 start 1794625950.638137547
++ cd sets/k4
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k4/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-K4-2.sh
++ date +%s.%N
++ echo RUN K4-2 rc=0 end 1794625950.646190701
+RUN K4-2 rc=0 end 1794625950.646190701
++ run D2-3 bin-new plan3 k2 real2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2.plan.cmd
++ date +%s.%N
++ echo RUN D2-3 start 1794625950.647976543
+RUN D2-3 start 1794625950.647976543
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-D2-3.sh
++ date +%s.%N
++ echo RUN D2-3 rc=0 end 1794625950.657131245
+RUN D2-3 rc=0 end 1794625950.657131245
++ run E2-3 bin-new plan3 k2 cap286
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286.plan.cmd
++ date +%s.%N
++ echo RUN E2-3 start 1794625950.658652076
+RUN E2-3 start 1794625950.658652076
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-E2-3.sh
++ date +%s.%N
++ echo RUN E2-3 rc=0 end 1794625950.669110838
+RUN E2-3 rc=0 end 1794625950.669110838
++ run F2-3 bin-new plan3 k2 real2f
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2f.plan.cmd
++ date +%s.%N
++ echo RUN F2-3 start 1794625950.671381598
+RUN F2-3 start 1794625950.671381598
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-F2-3.sh
++ date +%s.%N
++ echo RUN F2-3 rc=0 end 1794625950.678403973
+RUN F2-3 rc=0 end 1794625950.678403973
++ run G2-3 bin-new plan3 k2 cap286f
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286f.plan.cmd
++ date +%s.%N
++ echo RUN G2-3 start 1794625950.680077542
+RUN G2-3 start 1794625950.680077542
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-G2-3.sh
++ date +%s.%N
++ echo RUN G2-3 rc=0 end 1794625950.686988332
+RUN G2-3 rc=0 end 1794625950.686988332
++ run H2-3 bin-new plan3 k2 real2fab
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2fab.plan.cmd
++ date +%s.%N
++ echo RUN H2-3 start 1794625950.688621197
+RUN H2-3 start 1794625950.688621197
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-H2-3.sh
++ date +%s.%N
++ echo RUN H2-3 rc=0 end 1794625950.695448594
+RUN H2-3 rc=0 end 1794625950.695448594
++ run I2-3 bin-new plan3 k2 cap286fab
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/cap286fab.plan.cmd
++ date +%s.%N
++ echo RUN I2-3 start 1794625950.697312085
+RUN I2-3 start 1794625950.697312085
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-I2-3.sh
++ date +%s.%N
++ echo RUN I2-3 rc=0 end 1794625950.703792695
+RUN I2-3 rc=0 end 1794625950.703792695
++ run J3-3 bin-new plan3 k3 real2fabr2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k3/real2fabr2.plan.cmd
++ date +%s.%N
++ echo RUN J3-3 start 1794625950.706338641
+RUN J3-3 start 1794625950.706338641
++ cd sets/k3
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k3/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-J3-3.sh
++ date +%s.%N
++ echo RUN J3-3 rc=0 end 1794625950.712278733
+RUN J3-3 rc=0 end 1794625950.712278733
++ run K3-3 bin-new plan3 k3 cap286fabr2
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k3/cap286fabr2.plan.cmd
++ date +%s.%N
++ echo RUN K3-3 start 1794625950.713748541
+RUN K3-3 start 1794625950.713748541
++ cd sets/k3
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k3/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-K3-3.sh
++ date +%s.%N
++ echo RUN K3-3 rc=0 end 1794625950.719318965
+RUN K3-3 rc=0 end 1794625950.719318965
++ run J4-3 bin-new plan3 k4 real2fabr4
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k4/real2fabr4.plan.cmd
++ date +%s.%N
++ echo RUN J4-3 start 1794625950.721509675
+RUN J4-3 start 1794625950.721509675
++ cd sets/k4
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k4/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-J4-3.sh
++ date +%s.%N
++ echo RUN J4-3 rc=0 end 1794625950.729629758
+RUN J4-3 rc=0 end 1794625950.729629758
++ run K4-3 bin-new plan3 k4 cap286fabr4
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k4/cap286fabr4.plan.cmd
++ date +%s.%N
++ echo RUN K4-3 start 1794625950.732282761
+RUN K4-3 start 1794625950.732282761
++ cd sets/k4
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k4/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-K4-3.sh
++ date +%s.%N
++ echo RUN K4-3 rc=0 end 1794625950.738677354
+RUN K4-3 rc=0 end 1794625950.738677354
++ run control bin-new plan3 k2 real2-controls
++ sed s/^omega-launch plan /omega-launch plan3 / sets/k2/real2-controls.plan.cmd
++ date +%s.%N
++ echo RUN control start 1794625950.740450844
+RUN control start 1794625950.740450844
++ cd sets/k2
++ PATH=/home/drakestapleton/work/hive/uxl-brief-20261113/AmdKernelSpeed/sim/sets/k2/../../bin-new:/home/drakestapleton/.local/bin:/home/drakestapleton/.cargo/bin:/home/drakestapleton/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin timeout -k 5 150 sh cmd-control.sh
++ date +%s.%N
++ echo RUN control rc=0 end 1794625950.748776161
+RUN control rc=0 end 1794625950.748776161
++ sha256sum launch-x86 launch-new plan/cap286.plan plan/cap286f.plan plan/cap286fab.plan plan/cap286fabr2.plan plan/cap286fabr4.plan plan/real2-controls.plan plan/real2.plan plan/real2f.plan plan/real2fab.plan plan/real2fabr2.plan plan/real2fabr4.plan sets/k2/code.sha256 sets/k3/code.sha256 sets/k4/code.sha256 card-next.sh fuse-plan.py fuse-ab.py halve-grid.py
+7383082f493fc7757069be8888d24e06f4f1b089f12eaf259d652096d32562da  launch-x86
+7383082f493fc7757069be8888d24e06f4f1b089f12eaf259d652096d32562da  launch-new
+2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  plan/cap286.plan
+b437150142ad2ffdf04523d370d7cac557f36ff8f278d2e8d7b6a0e8e8c68dc2  plan/cap286f.plan
+63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49  plan/cap286fab.plan
+d503313d9e9aae0905bfd6e2f219160cfa0cded484a5b7c9fc4048ea676dbd4b  plan/cap286fabr2.plan
+4eab7064e21c055cafb2c1cbba3f89b14ed53eb0f48fa406f454ad7d0e357403  plan/cap286fabr4.plan
+2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  plan/real2-controls.plan
+2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  plan/real2.plan
+b437150142ad2ffdf04523d370d7cac557f36ff8f278d2e8d7b6a0e8e8c68dc2  plan/real2f.plan
+63f14b4c8ed605be88a232e692f7e5db91aa4cd9d52fb2e3d5b7263ddbc81f49  plan/real2fab.plan
+d503313d9e9aae0905bfd6e2f219160cfa0cded484a5b7c9fc4048ea676dbd4b  plan/real2fabr2.plan
+4eab7064e21c055cafb2c1cbba3f89b14ed53eb0f48fa406f454ad7d0e357403  plan/real2fabr4.plan
+629af1cb97713bcfdf087c9ad4f215abcb1852d7c17fa95be24e978591f0477c  sets/k2/code.sha256
+b23e50a3bfa1723ca4ebbb324b3466cadc1adfe78bf6c6ed309ce20cde37bfa3  sets/k3/code.sha256
+c9817dfc069fe2bde197be9452491ce85b8c14b7316d4786fc4444c3887262fc  sets/k4/code.sha256
+103eff980202e70f9a9ed1eabe7d5651cd43d67e5dd1c9dff191e4ed1d83e4e4  card-next.sh
+ab755dc1631da5b5a1302f1fb9b0827639a73dc3a2765ef66e1e26c4ae3a5596  fuse-plan.py
+5a6d1b45876d3c554ea5aaeda4476fec71a48ee34c1329170bd57fd5fa1527a9  fuse-ab.py
+e03577aa4c10bc5f59b818a3cfb8d9f0ad64d5e3f3173b1cb6000aebc93db18f  halve-grid.py
++ echo NEXT_DONE
+NEXT_DONE

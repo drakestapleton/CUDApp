@@ -1,0 +1,76 @@
++ date -u +%FT%TZ
+2026-11-14T01:00:41Z
++ uname -a
+Linux jupyter-user-261114005045-52ef268c 6.12.48+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20) x86_64 x86_64 x86_64 GNU/Linux
++ cat /opt/rocm/.info/version
+7.2.2
++ rocminfo
++ grep -E Marketing Name|Name: +gfx
++ head -6
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Name:                    gfx942                             
+  Marketing Name:          AMD Instinct MI300X VF             
++ cat /sys/class/kfd/kfd/topology/nodes/0/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/0 gpu_id 0
+node /sys/class/kfd/kfd/topology/nodes/0 gpu_id 0
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/0/properties
+simd_count 0
+gfx_target_version 0
+drm_render_minor 0
++ cat /sys/class/kfd/kfd/topology/nodes/1/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/1 gpu_id 0
+node /sys/class/kfd/kfd/topology/nodes/1 gpu_id 0
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/1/properties
+simd_count 0
+gfx_target_version 0
+drm_render_minor 0
++ cat /sys/class/kfd/kfd/topology/nodes/2/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/2 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/2/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/2 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/2/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/2/properties
+grep: /sys/class/kfd/kfd/topology/nodes/2/properties: Operation not permitted
++ cat /sys/class/kfd/kfd/topology/nodes/3/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/3 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/3/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/3 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/3/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/3/properties
+grep: /sys/class/kfd/kfd/topology/nodes/3/properties: Operation not permitted
++ cat /sys/class/kfd/kfd/topology/nodes/4/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/4 gpu_id 39350
+node /sys/class/kfd/kfd/topology/nodes/4 gpu_id 39350
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/4/properties
+simd_count 1216
+gfx_target_version 90402
+drm_render_minor 144
+num_xcc 8
++ cat /sys/class/kfd/kfd/topology/nodes/5/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/5 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/5/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/5 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/5/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/5/properties
+grep: /sys/class/kfd/kfd/topology/nodes/5/properties: Operation not permitted
++ cat /sys/class/kfd/kfd/topology/nodes/6/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/6 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/6/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/6 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/6/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/6/properties
+grep: /sys/class/kfd/kfd/topology/nodes/6/properties: Operation not permitted
++ cat /sys/class/kfd/kfd/topology/nodes/7/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/7 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/7/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/7 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/7/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/7/properties
+grep: /sys/class/kfd/kfd/topology/nodes/7/properties: Operation not permitted
++ cat /sys/class/kfd/kfd/topology/nodes/8/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/8 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/8/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/8 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/8/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/8/properties
+grep: /sys/class/kfd/kfd/topology/nodes/8/properties: Operation not permitted
++ cat /sys/class/kfd/kfd/topology/nodes/9/gpu_id
++ echo node /sys/class/kfd/kfd/topology/nodes/9 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/9/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/9 gpu_id cat: /sys/class/kfd/kfd/topology/nodes/9/gpu_id: Operation not permitted
++ grep -E gfx_target_version|num_xcc|simd_count|drm_render_minor /sys/class/kfd/kfd/topology/nodes/9/properties
+grep: /sys/class/kfd/kfd/topology/nodes/9/properties: Operation not permitted
++ python3 -c import torch;print("torch",torch.__version__,torch.version.hip)
+torch 2.10.0+rocm7.2.2.git40d237bf 7.2.53211
++ nproc
+160
++ grep -m1 model name /proc/cpuinfo
+model name	: INTEL(R) XEON(R) PLATINUM 8568Y+

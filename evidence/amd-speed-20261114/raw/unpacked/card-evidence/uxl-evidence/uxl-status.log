@@ -1,0 +1,9 @@
+2026-11-13T19:03:45Z
++ cd evidence/amd-qwen38-native-20261113
++ export AMDSERVE_WEIGHTS=/tmp/qwen3.8-27b-fp8
++ date -u +%FT%TZ
+2026-11-13T18:54:25Z
++ python3 -c import runpy; runpy.run_path('oracle/driver-real2.py', run_name='prepare-import')['prepare']()
+23G	/tmp/qwen3.8-27b-fp8
+65
+2

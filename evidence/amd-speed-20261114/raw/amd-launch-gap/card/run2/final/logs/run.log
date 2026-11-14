@@ -1,0 +1,470 @@
++ test -d /tmp/qwen3.8-27b-fp8
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap2/pre.log
++ grep -q PREPARE_RC=0 /workspace/gap2/pre.log
++ test -f /workspace/gap2/bin-upload.json
++ sha256sum /workspace/gap2/bin-old/omega-launch /workspace/gap2/bin-new/omega-launch
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  /workspace/gap2/bin-old/omega-launch
+de67f27eb4c12aa8059b1dfa24ff419095bde6ca4412c3ba7a1b82230405a738  /workspace/gap2/bin-new/omega-launch
++ echo 08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  /workspace/gap2/bin-old/omega-launch
++ sha256sum -c
+/workspace/gap2/bin-old/omega-launch: OK
++ echo de67f27eb4c12aa8059b1dfa24ff419095bde6ca4412c3ba7a1b82230405a738  /workspace/gap2/bin-new/omega-launch
++ sha256sum -c
+/workspace/gap2/bin-new/omega-launch: OK
++ cd /workspace/gap2/CUDApp/evidence/amd-qwen38-native-20261113
++ export AMDSERVE_WEIGHTS=/tmp/qwen3.8-27b-fp8
++ mkdir -p out
++ python3 oracle/emit-plan.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 out/real2.plan --capacity=131072 --fixture-json=oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 33777539, "sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMIT_RC=0
+EMIT_RC=0
++ python3 oracle/check-plan.py out/real2.plan /tmp/qwen3.8-27b-fp8
+PLAN_CHECK PASS {"code": 18, "buffers": 1504, "file_backed": 1251, "widened": 305, "control_vectors": 0, "dispatches": 1126, "capacity": {"capacity": 131072, "kv_bytes": 8589934592, "rope_bytes": 33554432, "partitions": 2048}, "fixture": {"fixture": "Spark qualification lighthouse short decode1", "sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "prompt": 30, "generate": 256}} CONTROLS CAUGHT ['weight range shifted', 'reloc slot misaligned', 'capacity halved', 'capacity plus 64', 'prompt id changed']
++ echo CHECK_RC=0
+CHECK_RC=0
++ python3 oracle/emit-plan.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 out/real2-controls.plan --controls --capacity=131072 --fixture-json=oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 36452227, "sha256": "40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMITC_RC=0
+EMITC_RC=0
++ python3 oracle/check-plan.py out/real2-controls.plan /tmp/qwen3.8-27b-fp8
+PLAN_CHECK PASS {"code": 18, "buffers": 1504, "file_backed": 1090, "widened": 144, "control_vectors": 161, "dispatches": 1126, "capacity": {"capacity": 131072, "kv_bytes": 8589934592, "rope_bytes": 33554432, "partitions": 2048}, "fixture": {"fixture": "Spark qualification lighthouse short decode1", "sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "prompt": 30, "generate": 256}} CONTROLS CAUGHT ['weight range shifted', 'reloc slot misaligned', 'capacity halved', 'capacity plus 64', 'prompt id changed']
++ echo CHECKC_RC=0
+CHECKC_RC=0
++ sha256sum out/real2.plan out/real2-controls.plan out/code/argmax_final.hsaco out/code/argmax_part.hsaco out/code/attn256_gate.hsaco out/code/attn256_merge_step.hsaco out/code/attn256_part_step.hsaco out/code/attn256_prep_step.hsaco out/code/bf16gemv2.hsaco out/code/embed5120_step.hsaco out/code/fp8gemv_b128f.hsaco out/code/gdnconv4_step.hsaco out/code/gdnparams.hsaco out/code/gdnqknorm.hsaco out/code/gdnrmsgate.hsaco out/code/gdnstate_step.hsaco out/code/mlpsilu.hsaco out/code/residual5120.hsaco out/code/rmsnorm5120.hsaco out/code/step_advance.hsaco
++ cat /workspace/gap2/logs/plan-and-code.sha256
+2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  out/real2.plan
+40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e  out/real2-controls.plan
+432ab23b5cbe13bec5ff4e79c960407e3e1bf44432a53d1e0707da7bbac3e02d  out/code/argmax_final.hsaco
+f5970079fbc83b2dc3ebb5c5db5e186b73942d27a73ad392f1e69fe3432064c4  out/code/argmax_part.hsaco
+b2c6ef4a50b69faf76a7bd823c7c1bdd9a40083e9e1d9e2cee19446da730d856  out/code/attn256_gate.hsaco
+e07dc53272322ca466ee61f27b6325024388b811c3ac23ec89f3c4ddaa087208  out/code/attn256_merge_step.hsaco
+81fcdc0017499d446494331ee168193dffb0930c533d9cf60a0d7e24f2ba9f32  out/code/attn256_part_step.hsaco
+e9fdf75c9c3f13ef1d048ec9722bf454ec9f210f197b187b9d3bb304a88f1232  out/code/attn256_prep_step.hsaco
+4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb  out/code/bf16gemv2.hsaco
+f3593c4b9b5c112f66be07cffd8ce2d96025a3ebefbfe04b54bf886733b2c4f1  out/code/embed5120_step.hsaco
+72049eeefffe5431c0f8972d1d9f3e4f93e39841312aeb492ac24f455d23adbd  out/code/fp8gemv_b128f.hsaco
+df8d6f11ee18e1220a0ed7bcfae96d0765e4d444a8d0934cbcf72e7db52610aa  out/code/gdnconv4_step.hsaco
+9cc7e5ed4850b6033b8f1744f96968bb7a5fdfcf0e9c9bc6fb3598cd8e7a5b05  out/code/gdnparams.hsaco
+387f6f78eb0a5f24013c7818c82e9a77e357eb3e91496273ecf0f80ce71025cd  out/code/gdnqknorm.hsaco
+d48e02ac4b8cd4cfd2449578d50931ec8c5d458007f168d537288a3a148af090  out/code/gdnrmsgate.hsaco
+e36ce013066567f07c208caf14316662835622ea3fb40bc9fdea9f6ed08b382f  out/code/gdnstate_step.hsaco
+2e22681a1fe0aa9a69796eec1326d4ee7679bda9d7d9985ae52fd7edffc5a69a  out/code/mlpsilu.hsaco
+f4d5127cb4db16282257e91c42a220f9141c222f904554f45b2019f049085e7e  out/code/residual5120.hsaco
+f7d1de5ad332c7e1d9f595ad8eaeb0cde46ad74427344d59a4d57734082e329f  out/code/rmsnorm5120.hsaco
+2f688c9f6f2f7af751d4976b6bf748f7b15fd4d4ca1d8d90c43fe228363b975c  out/code/step_advance.hsaco
++ cd out
++ sed s/^omega-launch plan /omega-launch plan / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan / real2-controls.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan2 / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan2 / real2-controls.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3 / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3 / real2-controls.plan.cmd
++ cp real2.plan.cmd real2-controls.plan.cmd cmd-plan.sh cmd-plan2.sh cmd-plan3.sh cmdc-plan.sh cmdc-plan2.sh cmdc-plan3.sh /workspace/gap2/logs/
++ omega old-plan-warmup /workspace/gap2/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-warmup start 2026-11-14T01:33:05.399705867Z
+old-plan-warmup start 2026-11-14T01:33:05.399705867Z
++ PATH=/workspace/gap2/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-warmup rc=0
+old-plan-warmup rc=0
++ date -u +%FT%T.%NZ
++ echo old-plan-warmup end 2026-11-14T01:33:31.982741190Z
+old-plan-warmup end 2026-11-14T01:33:31.982741190Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-old-plan-warmup.txt
+285
++ omega new-plan3-warmup /workspace/gap2/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-warmup start 2026-11-14T01:33:31.984561492Z
+new-plan3-warmup start 2026-11-14T01:33:31.984561492Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-warmup rc=0
+new-plan3-warmup rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan3-warmup end 2026-11-14T01:33:59.093704539Z
+new-plan3-warmup end 2026-11-14T01:33:59.093704539Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan3-warmup.txt
+285
++ hip graph-warmup
++ date -u +%FT%T.%NZ
++ echo graph-warmup start 2026-11-14T01:33:59.095316404Z
+graph-warmup start 2026-11-14T01:33:59.095316404Z
++ cd ..
++ python3 /workspace/gap2/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap2/logs/hip-graph-warmup.json 131072
++ echo graph-warmup rc=0
+graph-warmup rc=0
++ date -u +%FT%T.%NZ
++ echo graph-warmup end 2026-11-14T01:34:40.684295905Z
+graph-warmup end 2026-11-14T01:34:40.684295905Z
++ tail -1 /workspace/gap2/logs/hip-graph-warmup.txt
++ cut -c1-400
+GAPHIP {"mode": "graph", "capacity": 131072, "decode_ms_median": 24.671602062880993, "capture_ms": 49.97061286121607, "timing_mode": "graph replay", "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py", "driver_sha256": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d"}
++ echo ROUND_DONE warmup
+ROUND_DONE warmup
++ omega old-plan-run1 /workspace/gap2/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-run1 start 2026-11-14T01:34:40.685985652Z
+old-plan-run1 start 2026-11-14T01:34:40.685985652Z
++ PATH=/workspace/gap2/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-run1 rc=0
+old-plan-run1 rc=0
++ date -u +%FT%T.%NZ
++ echo old-plan-run1 end 2026-11-14T01:35:07.417797618Z
+old-plan-run1 end 2026-11-14T01:35:07.417797618Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-old-plan-run1.txt
+285
++ omega new-plan3-run1 /workspace/gap2/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-run1 start 2026-11-14T01:35:07.419559905Z
+new-plan3-run1 start 2026-11-14T01:35:07.419559905Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-run1 rc=0
+new-plan3-run1 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan3-run1 end 2026-11-14T01:35:34.223554214Z
+new-plan3-run1 end 2026-11-14T01:35:34.223554214Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan3-run1.txt
+285
++ hip graph-run1
++ date -u +%FT%T.%NZ
++ echo graph-run1 start 2026-11-14T01:35:34.225244877Z
+graph-run1 start 2026-11-14T01:35:34.225244877Z
++ cd ..
++ python3 /workspace/gap2/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap2/logs/hip-graph-run1.json 131072
++ echo graph-run1 rc=0
+graph-run1 rc=0
++ date -u +%FT%T.%NZ
++ echo graph-run1 end 2026-11-14T01:36:14.995805261Z
+graph-run1 end 2026-11-14T01:36:14.995805261Z
++ tail -1 /workspace/gap2/logs/hip-graph-run1.txt
++ cut -c1-400
+GAPHIP {"mode": "graph", "capacity": 131072, "decode_ms_median": 24.704183917492628, "capture_ms": 64.87603695131838, "timing_mode": "graph replay", "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py", "driver_sha256": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d"}
++ echo ROUND_DONE run1
+ROUND_DONE run1
++ omega old-plan-run2 /workspace/gap2/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-run2 start 2026-11-14T01:36:14.997368047Z
+old-plan-run2 start 2026-11-14T01:36:14.997368047Z
++ PATH=/workspace/gap2/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-run2 rc=0
+old-plan-run2 rc=0
++ date -u +%FT%T.%NZ
++ echo old-plan-run2 end 2026-11-14T01:36:41.621839470Z
+old-plan-run2 end 2026-11-14T01:36:41.621839470Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-old-plan-run2.txt
+285
++ omega new-plan3-run2 /workspace/gap2/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-run2 start 2026-11-14T01:36:41.623437498Z
+new-plan3-run2 start 2026-11-14T01:36:41.623437498Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-run2 rc=0
+new-plan3-run2 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan3-run2 end 2026-11-14T01:37:07.914017129Z
+new-plan3-run2 end 2026-11-14T01:37:07.914017129Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan3-run2.txt
+285
++ hip graph-run2
++ date -u +%FT%T.%NZ
++ echo graph-run2 start 2026-11-14T01:37:07.915699725Z
+graph-run2 start 2026-11-14T01:37:07.915699725Z
++ cd ..
++ python3 /workspace/gap2/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap2/logs/hip-graph-run2.json 131072
++ echo graph-run2 rc=0
+graph-run2 rc=0
++ date -u +%FT%T.%NZ
++ echo graph-run2 end 2026-11-14T01:37:48.985009304Z
+graph-run2 end 2026-11-14T01:37:48.985009304Z
++ tail -1 /workspace/gap2/logs/hip-graph-run2.txt
++ cut -c1-400
+GAPHIP {"mode": "graph", "capacity": 131072, "decode_ms_median": 24.726298870518804, "capture_ms": 49.89025695249438, "timing_mode": "graph replay", "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py", "driver_sha256": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d"}
++ echo ROUND_DONE run2
+ROUND_DONE run2
++ omega old-plan-run3 /workspace/gap2/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-run3 start 2026-11-14T01:37:48.986657267Z
+old-plan-run3 start 2026-11-14T01:37:48.986657267Z
++ PATH=/workspace/gap2/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-run3 rc=0
+old-plan-run3 rc=0
++ date -u +%FT%T.%NZ
++ echo old-plan-run3 end 2026-11-14T01:38:15.877698078Z
+old-plan-run3 end 2026-11-14T01:38:15.877698078Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-old-plan-run3.txt
+285
++ omega new-plan3-run3 /workspace/gap2/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-run3 start 2026-11-14T01:38:15.879302684Z
+new-plan3-run3 start 2026-11-14T01:38:15.879302684Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-run3 rc=0
+new-plan3-run3 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan3-run3 end 2026-11-14T01:38:41.877763933Z
+new-plan3-run3 end 2026-11-14T01:38:41.877763933Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan3-run3.txt
+285
++ hip graph-run3
++ date -u +%FT%T.%NZ
++ echo graph-run3 start 2026-11-14T01:38:41.879366786Z
+graph-run3 start 2026-11-14T01:38:41.879366786Z
++ cd ..
++ python3 /workspace/gap2/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap2/logs/hip-graph-run3.json 131072
++ echo graph-run3 rc=0
+graph-run3 rc=0
++ date -u +%FT%T.%NZ
++ echo graph-run3 end 2026-11-14T01:39:22.700071096Z
+graph-run3 end 2026-11-14T01:39:22.700071096Z
++ tail -1 /workspace/gap2/logs/hip-graph-run3.txt
++ cut -c1-400
+GAPHIP {"mode": "graph", "capacity": 131072, "decode_ms_median": 24.74596700631082, "capture_ms": 48.31113503314555, "timing_mode": "graph replay", "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py", "driver_sha256": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d"}
++ echo ROUND_DONE run3
+ROUND_DONE run3
++ omega old-plan-run4 /workspace/gap2/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-run4 start 2026-11-14T01:39:22.701695767Z
+old-plan-run4 start 2026-11-14T01:39:22.701695767Z
++ PATH=/workspace/gap2/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-run4 rc=0
+old-plan-run4 rc=0
++ date -u +%FT%T.%NZ
++ echo old-plan-run4 end 2026-11-14T01:39:49.733611376Z
+old-plan-run4 end 2026-11-14T01:39:49.733611376Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-old-plan-run4.txt
+285
++ omega new-plan3-run4 /workspace/gap2/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-run4 start 2026-11-14T01:39:49.735403873Z
+new-plan3-run4 start 2026-11-14T01:39:49.735403873Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-run4 rc=0
+new-plan3-run4 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan3-run4 end 2026-11-14T01:40:16.301599328Z
+new-plan3-run4 end 2026-11-14T01:40:16.301599328Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan3-run4.txt
+285
++ hip graph-run4
++ date -u +%FT%T.%NZ
++ echo graph-run4 start 2026-11-14T01:40:16.303172671Z
+graph-run4 start 2026-11-14T01:40:16.303172671Z
++ cd ..
++ python3 /workspace/gap2/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap2/logs/hip-graph-run4.json 131072
++ echo graph-run4 rc=0
+graph-run4 rc=0
++ date -u +%FT%T.%NZ
++ echo graph-run4 end 2026-11-14T01:40:56.842475133Z
+graph-run4 end 2026-11-14T01:40:56.842475133Z
++ tail -1 /workspace/gap2/logs/hip-graph-run4.txt
++ cut -c1-400
+GAPHIP {"mode": "graph", "capacity": 131072, "decode_ms_median": 24.740881053730845, "capture_ms": 57.029756950214505, "timing_mode": "graph replay", "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py", "driver_sha256": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d"}
++ echo ROUND_DONE run4
+ROUND_DONE run4
++ omega old-plan-run5 /workspace/gap2/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-run5 start 2026-11-14T01:40:56.844073828Z
+old-plan-run5 start 2026-11-14T01:40:56.844073828Z
++ PATH=/workspace/gap2/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-run5 rc=0
+old-plan-run5 rc=0
++ date -u +%FT%T.%NZ
++ echo old-plan-run5 end 2026-11-14T01:41:23.601693575Z
+old-plan-run5 end 2026-11-14T01:41:23.601693575Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-old-plan-run5.txt
+285
++ omega new-plan3-run5 /workspace/gap2/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-run5 start 2026-11-14T01:41:23.603406133Z
+new-plan3-run5 start 2026-11-14T01:41:23.603406133Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-run5 rc=0
+new-plan3-run5 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan3-run5 end 2026-11-14T01:41:50.501714767Z
+new-plan3-run5 end 2026-11-14T01:41:50.501714767Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan3-run5.txt
+285
++ hip graph-run5
++ date -u +%FT%T.%NZ
++ echo graph-run5 start 2026-11-14T01:41:50.503412551Z
+graph-run5 start 2026-11-14T01:41:50.503412551Z
++ cd ..
++ python3 /workspace/gap2/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap2/logs/hip-graph-run5.json 131072
++ echo graph-run5 rc=0
+graph-run5 rc=0
++ date -u +%FT%T.%NZ
++ echo graph-run5 end 2026-11-14T01:42:31.116307460Z
+graph-run5 end 2026-11-14T01:42:31.116307460Z
++ tail -1 /workspace/gap2/logs/hip-graph-run5.txt
++ cut -c1-400
+GAPHIP {"mode": "graph", "capacity": 131072, "decode_ms_median": 24.74688203074038, "capture_ms": 51.06815509498119, "timing_mode": "graph replay", "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py", "driver_sha256": "dcde8df1a528759e8193b5c2869ad42be4d495e08f25243cc1637e1bbbc09a1d"}
++ echo ROUND_DONE run5
+ROUND_DONE run5
++ omega control-new-plan3 /workspace/gap2/bin-new cmdc-plan3.sh
++ date -u +%FT%T.%NZ
++ echo control-new-plan3 start 2026-11-14T01:42:31.118039226Z
+control-new-plan3 start 2026-11-14T01:42:31.118039226Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmdc-plan3.sh
++ echo control-new-plan3 rc=0
+control-new-plan3 rc=0
++ date -u +%FT%T.%NZ
++ echo control-new-plan3 end 2026-11-14T01:42:57.617766953Z
+control-new-plan3 end 2026-11-14T01:42:57.617766953Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-control-new-plan3.txt
+285
++ echo MAIN_DONE
+MAIN_DONE
++ omega new-plan2-run1 /workspace/gap2/bin-new cmd-plan2.sh
++ date -u +%FT%T.%NZ
++ echo new-plan2-run1 start 2026-11-14T01:42:57.619464185Z
+new-plan2-run1 start 2026-11-14T01:42:57.619464185Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan2.sh
++ echo new-plan2-run1 rc=0
+new-plan2-run1 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan2-run1 end 2026-11-14T01:43:24.242081024Z
+new-plan2-run1 end 2026-11-14T01:43:24.242081024Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan2-run1.txt
+285
++ omega new-plan2-run2 /workspace/gap2/bin-new cmd-plan2.sh
++ date -u +%FT%T.%NZ
++ echo new-plan2-run2 start 2026-11-14T01:43:24.243801538Z
+new-plan2-run2 start 2026-11-14T01:43:24.243801538Z
++ PATH=/workspace/gap2/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan2.sh
++ echo new-plan2-run2 rc=0
+new-plan2-run2 rc=0
++ date -u +%FT%T.%NZ
++ echo new-plan2-run2 end 2026-11-14T01:43:50.878425158Z
+new-plan2-run2 end 2026-11-14T01:43:50.878425158Z
++ grep -c OMEGA_STEP /workspace/gap2/logs/omega-new-plan2-run2.txt
+285
++ echo ATTRIBUTION_DONE
+ATTRIBUTION_DONE
++ cd /workspace/gap2
++ python3 gap-verdict.py /workspace/gap2/logs published-ids.json
++ echo VERDICT_RC=0
+VERDICT_RC=0
++ cat /workspace/gap2/logs/verdict.txt
+VERDICT omega-control-new-plan3 CAUGHT ids_equal_published=False decode_median=24891
+VERDICT omega-new-plan2-run1 PASS ids_equal_published=True decode_median=24899
+VERDICT omega-new-plan2-run2 PASS ids_equal_published=True decode_median=24896
+VERDICT omega-new-plan3-run1 PASS ids_equal_published=True decode_median=24884
+VERDICT omega-new-plan3-run2 PASS ids_equal_published=True decode_median=24893
+VERDICT omega-new-plan3-run3 PASS ids_equal_published=True decode_median=24885
+VERDICT omega-new-plan3-run4 PASS ids_equal_published=True decode_median=24891
+VERDICT omega-new-plan3-run5 PASS ids_equal_published=True decode_median=24914
+VERDICT omega-new-plan3-warmup PASS ids_equal_published=True decode_median=24807
+VERDICT omega-old-plan-run1 PASS ids_equal_published=True decode_median=26602
+VERDICT omega-old-plan-run2 PASS ids_equal_published=True decode_median=26626
+VERDICT omega-old-plan-run3 PASS ids_equal_published=True decode_median=26641
+VERDICT omega-old-plan-run4 PASS ids_equal_published=True decode_median=26653
+VERDICT omega-old-plan-run5 PASS ids_equal_published=True decode_median=26658
+VERDICT omega-old-plan-warmup PASS ids_equal_published=True decode_median=26489
+VERDICT hip-graph-run1 PASS ids_equal_published=True decode_median=24.704183917492628
+VERDICT hip-graph-run2 PASS ids_equal_published=True decode_median=24.726298870518804
+VERDICT hip-graph-run3 PASS ids_equal_published=True decode_median=24.74596700631082
+VERDICT hip-graph-run4 PASS ids_equal_published=True decode_median=24.740881053730845
+VERDICT hip-graph-run5 PASS ids_equal_published=True decode_median=24.74688203074038
+VERDICT hip-graph-warmup PASS ids_equal_published=True decode_median=24.671602062880993
+GAP_VERDICT PASS 21 runs
++ cp pre.log run.log gap-pre.sh gap-run.sh gap-hip.py gap-verdict.py published-ids.json /workspace/gap2/logs/

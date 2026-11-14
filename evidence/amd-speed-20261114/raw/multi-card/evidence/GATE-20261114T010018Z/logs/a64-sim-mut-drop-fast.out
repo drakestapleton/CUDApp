@@ -1,0 +1,6 @@
+MCSIM ref tokens=2,63,77,68,45,71,19,68,45,71,19,68,45,71,19,68
+MCSIM card=0 stall
+MCSIM card=1 stall
+MCSIM card=2 stall
+MCSIM card=3 stall
+MCSIM FAIL

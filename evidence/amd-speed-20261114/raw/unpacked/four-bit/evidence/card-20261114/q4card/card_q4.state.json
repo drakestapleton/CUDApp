@@ -1,0 +1,710 @@
+{
+ "done": [
+  "env",
+  "weights",
+  "convert"
+ ],
+ "results": {
+  "env": {
+   "uname": {
+    "system": "Linux",
+    "node": "jupyter-user-261114014516-c715b669",
+    "release": "6.12.48+deb13-amd64",
+    "version": "#1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20)",
+    "machine": "x86_64",
+    "processor": "x86_64"
+   },
+   "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+   "numpy": "2.4.4",
+   "gfx": [
+    "gfx942"
+   ],
+   "marketing": [
+    "AMD Instinct MI300X VF",
+    "INTEL(R) XEON(R) PLATINUM 8568Y+"
+   ],
+   "compute_units": [
+    "304",
+    "80"
+   ],
+   "bundle_sha256_bad": []
+  },
+  "convert": {
+   "layers-0.safetensors": {
+    "card": "6838338b9248305c1ae827e62f3e2f4f111186efa356c16ced91905c4adba92e",
+    "spark": "6838338b9248305c1ae827e62f3e2f4f111186efa356c16ced91905c4adba92e",
+    "equal": true
+   },
+   "layers-3.safetensors": {
+    "card": "1bbb528e1ccf6e9e8cf2249ffa413d2ddacd5242b88357d40726956475b09d88",
+    "spark": "1bbb528e1ccf6e9e8cf2249ffa413d2ddacd5242b88357d40726956475b09d88",
+    "equal": true
+   },
+   "outside.safetensors": {
+    "card": "9afc6a236b58e3ef08b0359642c600feccf921551593bb05d361ffbecc1a7359",
+    "spark": "9afc6a236b58e3ef08b0359642c600feccf921551593bb05d361ffbecc1a7359",
+    "equal": true
+   }
+  },
+  "kernels": {
+   "gdn in_proj_qkv 10240x5120 seg4": {
+    "q4": {
+     "r1_ns": [
+      259375,
+      264035,
+      269642
+     ],
+     "r50_ns": [
+      11257111,
+      11126633,
+      10868239
+     ],
+     "per_dispatch_ms": 0.22168567346938775,
+     "repeat": 50,
+     "output_bits_equal_oracle": 204800,
+     "rows": 204800,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 602931200,
+     "per_tensor_ms": 0.011084283673469388,
+     "weight_GBps": 2719.757170430131,
+     "rel_err_vs_source_float64": 0.08171300280351859
+    },
+    "q4r2": {
+     "r1_ns": [
+      240346,
+      240452,
+      235412
+     ],
+     "r50_ns": [
+      9887108,
+      9897707,
+      9846752
+     ],
+     "per_dispatch_ms": 0.19687269387755102,
+     "repeat": 50,
+     "output_bits_equal_oracle": 204800,
+     "rows": 204800,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 602931200,
+     "per_tensor_ms": 0.009843634693877551,
+     "weight_GBps": 3062.543556065755,
+     "rel_err_vs_source_float64": 0.08171300280351859
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      539232,
+      554258,
+      547745
+     ],
+     "r50_ns": [
+      24840901,
+      24924318,
+      24475129
+     ],
+     "per_dispatch_ms": 0.495778693877551,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.0729869894832287e-07,
+     "weight_bytes_per_dispatch": 1048704000,
+     "per_tensor_ms": 0.02478893469387755,
+     "weight_GBps": 2115.266373788568
+    },
+    "M": 10240,
+    "K": 5120,
+    "seg": 4,
+    "tile_copies": 20
+   },
+   "gdn in_proj_z 6144x5120 seg4": {
+    "q4": {
+     "r1_ns": [
+      253776,
+      268730,
+      263911
+     ],
+     "r50_ns": [
+      10847772,
+      11038178,
+      10838308
+     ],
+     "per_dispatch_ms": 0.21599716326530613,
+     "repeat": 50,
+     "output_bits_equal_oracle": 208896,
+     "rows": 208896,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 614989824,
+     "per_tensor_ms": 0.006352857743097239,
+     "weight_GBps": 2847.2125036411567,
+     "rel_err_vs_source_float64": 0.08409012082276138
+    },
+    "q4r2": {
+     "r1_ns": [
+      238685,
+      226909,
+      243060
+     ],
+     "r50_ns": [
+      10103951,
+      9903898,
+      9961209
+     ],
+     "per_dispatch_ms": 0.19841885714285712,
+     "repeat": 50,
+     "output_bits_equal_oracle": 208896,
+     "rows": 208896,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 614989824,
+     "per_tensor_ms": 0.005835848739495797,
+     "weight_GBps": 3099.452505954215,
+     "rel_err_vs_source_float64": 0.08409012082276138
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      554896,
+      542414,
+      549149
+     ],
+     "r50_ns": [
+      25134496,
+      25386752,
+      25320109
+     ],
+     "per_dispatch_ms": 0.5055297959183673,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.097451165396125e-07,
+     "weight_bytes_per_dispatch": 1069678080,
+     "per_tensor_ms": 0.014868523409363746,
+     "weight_GBps": 2115.9545661532698
+    },
+    "M": 6144,
+    "K": 5120,
+    "seg": 4,
+    "tile_copies": 34
+   },
+   "gdn out_proj 5120x6144": {
+    "q4": {
+     "error": "rc=-15",
+     "stderr": ""
+    },
+    "q4r2": {
+     "r1_ns": [
+      274052,
+      224088,
+      224737
+     ],
+     "r50_ns": [
+      9568575,
+      9551148,
+      9642464
+     ],
+     "per_dispatch_ms": 0.19069057142857143,
+     "repeat": 50,
+     "output_bits_equal_oracle": 189440,
+     "rows": 189440,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 606208000,
+     "per_tensor_ms": 0.005153799227799228,
+     "weight_GBps": 3179.0140197208043,
+     "rel_err_vs_source_float64": 0.11494067909937661
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      594976,
+      600158,
+      594519
+     ],
+     "r50_ns": [
+      27199457,
+      27500109,
+      27277852
+     ],
+     "per_dispatch_ms": 0.5445484897959183,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.1593033713088346e-07,
+     "weight_bytes_per_dispatch": 1164061440,
+     "per_tensor_ms": 0.014717526751241035,
+     "weight_GBps": 2137.6635172310516
+    },
+    "M": 5120,
+    "K": 6144,
+    "seg": 16,
+    "tile_copies": 37
+   },
+   "mlp gate_proj 17408x5120": {
+    "q4": {
+     "r1_ns": [
+      258060,
+      263134,
+      272713
+     ],
+     "r50_ns": [
+      11406003,
+      11204263,
+      11499292
+     ],
+     "per_dispatch_ms": 0.22740548979591838,
+     "repeat": 50,
+     "output_bits_equal_oracle": 226304,
+     "rows": 226304,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 608305152,
+     "per_tensor_ms": 0.017492729984301413,
+     "weight_GBps": 2674.980065546853,
+     "rel_err_vs_source_float64": 0.09716483193654732
+    },
+    "q4r2": {
+     "r1_ns": [
+      233287,
+      238836,
+      238699
+     ],
+     "r50_ns": [
+      10012287,
+      10028379,
+      10006600
+     ],
+     "per_dispatch_ms": 0.19946097959183676,
+     "repeat": 50,
+     "output_bits_equal_oracle": 226304,
+     "rows": 226304,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 608305152,
+     "per_tensor_ms": 0.015343152276295135,
+     "weight_GBps": 3049.745134335517,
+     "rel_err_vs_source_float64": 0.09716483193654732
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "error": "rc=-15",
+     "stderr": ""
+    },
+    "M": 17408,
+    "K": 5120,
+    "seg": 16,
+    "tile_copies": 13
+   },
+   "mlp up_proj 17408x5120": {
+    "q4": {
+     "r1_ns": [
+      312577,
+      274943,
+      274358
+     ],
+     "r50_ns": [
+      11395550,
+      10838540,
+      11404586
+     ],
+     "per_dispatch_ms": 0.22695116326530612,
+     "repeat": 50,
+     "output_bits_equal_oracle": 226304,
+     "rows": 226304,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 608305152,
+     "per_tensor_ms": 0.017457781789638933,
+     "weight_GBps": 2680.335025597074,
+     "rel_err_vs_source_float64": 0.10031465371726557
+    },
+    "q4r2": {
+     "r1_ns": [
+      236041,
+      240970,
+      227655
+     ],
+     "r50_ns": [
+      10307055,
+      10228173,
+      10109507
+     ],
+     "per_dispatch_ms": 0.2039210612244898,
+     "repeat": 50,
+     "output_bits_equal_oracle": 226304,
+     "rows": 226304,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 608305152,
+     "per_tensor_ms": 0.015686235478806907,
+     "weight_GBps": 2983.0423024835936,
+     "rel_err_vs_source_float64": 0.10031465371726557
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      588197,
+      589815,
+      592036
+     ],
+     "r50_ns": [
+      27490138,
+      26939029,
+      26978729
+     ],
+     "per_dispatch_ms": 0.5385492653061225,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.167380861439589e-07,
+     "weight_bytes_per_dispatch": 1158817920,
+     "per_tensor_ms": 0.04142686656200942,
+     "weight_GBps": 2151.7398586391237
+    },
+    "M": 17408,
+    "K": 5120,
+    "seg": 16,
+    "tile_copies": 13
+   },
+   "mlp down_proj 5120x17408": {
+    "q4": {
+     "r1_ns": [
+      242897,
+      258757,
+      259656
+     ],
+     "r50_ns": [
+      10833781,
+      10922469,
+      10870853
+     ],
+     "per_dispatch_ms": 0.21657338775510204,
+     "repeat": 50,
+     "output_bits_equal_oracle": 66560,
+     "rows": 66560,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 604897280,
+     "per_tensor_ms": 0.01665949136577708,
+     "weight_GBps": 2793.0360524443054,
+     "rel_err_vs_source_float64": 0.10334497467436655
+    },
+    "q4r2": {
+     "r1_ns": [
+      227586,
+      216600,
+      234290
+     ],
+     "r50_ns": [
+      10071388,
+      9600314,
+      9608907
+     ],
+     "per_dispatch_ms": 0.1914555306122449,
+     "repeat": 50,
+     "output_bits_equal_oracle": 66560,
+     "rows": 66560,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 604897280,
+     "per_tensor_ms": 0.014727348508634223,
+     "weight_GBps": 3159.4662116348004,
+     "rel_err_vs_source_float64": 0.10334497467436655
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      620099,
+      624147,
+      639558
+     ],
+     "r50_ns": [
+      27469641,
+      27906980,
+      27780834
+     ],
+     "per_dispatch_ms": 0.5542181020408163,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.718823705122158e-07,
+     "weight_bytes_per_dispatch": 1158817920,
+     "per_tensor_ms": 0.04263216169544741,
+     "weight_GBps": 2090.9059370901905
+    },
+    "M": 5120,
+    "K": 17408,
+    "seg": 16,
+    "tile_copies": 13
+   },
+   "attn q_proj 12288x5120": {
+    "q4": {
+     "r1_ns": [
+      261115,
+      280026,
+      275817
+     ],
+     "r50_ns": [
+      11646158,
+      11774851,
+      11735153
+     ],
+     "per_dispatch_ms": 0.233864,
+     "repeat": 50,
+     "output_bits_equal_oracle": 233472,
+     "rows": 233472,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 627572736,
+     "per_tensor_ms": 0.012308631578947368,
+     "weight_GBps": 2683.4944070057813,
+     "rel_err_vs_source_float64": 0.1005445373409727
+    },
+    "q4r2": {
+     "r1_ns": [
+      239801,
+      251304,
+      242545
+     ],
+     "r50_ns": [
+      10174495,
+      10242925,
+      10266105
+     ],
+     "per_dispatch_ms": 0.20408938775510205,
+     "repeat": 50,
+     "output_bits_equal_oracle": 233472,
+     "rows": 233472,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 627572736,
+     "per_tensor_ms": 0.01074154672395274,
+     "weight_GBps": 3074.989556796842,
+     "rel_err_vs_source_float64": 0.1005445373409727
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      596696,
+      593097,
+      608604
+     ],
+     "r50_ns": [
+      28158292,
+      27803921,
+      28004691
+     ],
+     "per_dispatch_ms": 0.5593468367346939,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.1281804104749373e-07,
+     "weight_bytes_per_dispatch": 1195522560,
+     "per_tensor_ms": 0.029439307196562837,
+     "weight_GBps": 2137.3546456061454
+    },
+    "M": 12288,
+    "K": 5120,
+    "seg": 16,
+    "tile_copies": 19
+   },
+   "attn k_proj 1024x5120": {
+    "q4": {
+     "r1_ns": [
+      258243,
+      266259,
+      269052
+     ],
+     "r50_ns": [
+      11278856,
+      11346950,
+      11195268
+     ],
+     "per_dispatch_ms": 0.2247468775510204,
+     "repeat": 50,
+     "output_bits_equal_oracle": 223232,
+     "rows": 223232,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 600047616,
+     "per_tensor_ms": 0.0010309489795918367,
+     "weight_GBps": 2669.881880177764,
+     "rel_err_vs_source_float64": 0.10636712412814167
+    },
+    "q4r2": {
+     "r1_ns": [
+      226760,
+      234774,
+      232670
+     ],
+     "r50_ns": [
+      9891691,
+      9969548,
+      9772378
+     ],
+     "per_dispatch_ms": 0.19712287755102043,
+     "repeat": 50,
+     "output_bits_equal_oracle": 223232,
+     "rows": 223232,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 600047616,
+     "per_tensor_ms": 0.0009042333832615615,
+     "weight_GBps": 3044.0282906518164,
+     "rel_err_vs_source_float64": 0.10636712412814167
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      578607,
+      590560,
+      578478
+     ],
+     "r50_ns": [
+      27097792,
+      26674821,
+      26826878
+     ],
+     "per_dispatch_ms": 0.535679,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.1211942834326651e-07,
+     "weight_bytes_per_dispatch": 1143087360,
+     "per_tensor_ms": 0.002457243119266055,
+     "weight_GBps": 2133.903625118774
+    },
+    "M": 1024,
+    "K": 5120,
+    "seg": 16,
+    "tile_copies": 218
+   },
+   "attn o_proj 5120x6144": {
+    "q4": {
+     "r1_ns": [
+      304211,
+      250644,
+      255861
+     ],
+     "r50_ns": [
+      10904648,
+      10650000,
+      10751424
+     ],
+     "per_dispatch_ms": 0.21419516326530613,
+     "repeat": 50,
+     "output_bits_equal_oracle": 189440,
+     "rows": 189440,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 606208000,
+     "per_tensor_ms": 0.005789058466629896,
+     "weight_GBps": 2830.1666142159306,
+     "rel_err_vs_source_float64": 0.1022079347020152
+    },
+    "q4r2": {
+     "r1_ns": [
+      230728,
+      239401,
+      228625
+     ],
+     "r50_ns": [
+      9860807,
+      10234094,
+      9771070
+     ],
+     "per_dispatch_ms": 0.1965322244897959,
+     "repeat": 50,
+     "output_bits_equal_oracle": 189440,
+     "rows": 189440,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 606208000,
+     "per_tensor_ms": 0.005311681742967457,
+     "weight_GBps": 3084.52215189512,
+     "rel_err_vs_source_float64": 0.1022079347020152
+    },
+    "baseline_kind": "fp8",
+    "baseline": {
+     "r1_ns": [
+      602141,
+      611310,
+      615687
+     ],
+     "r50_ns": [
+      27355254,
+      27380880,
+      27120110
+     ],
+     "per_dispatch_ms": 0.545794775510204,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.227541154319893e-07,
+     "weight_bytes_per_dispatch": 1164061440,
+     "per_tensor_ms": 0.014751210148924434,
+     "weight_GBps": 2132.7823061549934
+    },
+    "M": 5120,
+    "K": 6144,
+    "seg": 16,
+    "tile_copies": 37
+   },
+   "lm_head 248320x5120": {
+    "q4": {
+     "r1_ns": [
+      273933,
+      284369,
+      287575
+     ],
+     "r50_ns": [
+      12518220,
+      12436572,
+      12577642
+     ],
+     "per_dispatch_ms": 0.24967042857142857,
+     "repeat": 50,
+     "output_bits_equal_oracle": 248320,
+     "rows": 248320,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 667484160,
+     "per_tensor_ms": 0.24967042857142857,
+     "weight_GBps": 2673.461025477587,
+     "rel_err_vs_source_float64": 0.09438298857159476
+    },
+    "q4r2": {
+     "r1_ns": [
+      254461,
+      253018,
+      260372
+     ],
+     "r50_ns": [
+      11080765,
+      11257666,
+      10961237
+     ],
+     "per_dispatch_ms": 0.22094497959183673,
+     "repeat": 50,
+     "output_bits_equal_oracle": 248320,
+     "rows": 248320,
+     "repeat_output_equal": true,
+     "verdict": "PASS",
+     "weight_bytes_per_dispatch": 667484160,
+     "per_tensor_ms": 0.22094497959183673,
+     "weight_GBps": 3021.042438860021,
+     "rel_err_vs_source_float64": 0.09438298857159476
+    },
+    "baseline_kind": "bf16",
+    "baseline": {
+     "r1_ns": [
+      745130,
+      774775,
+      745867
+     ],
+     "r50_ns": [
+      38671758,
+      36956325,
+      39070418
+     ],
+     "per_dispatch_ms": 0.773997775510204,
+     "repeat": 50,
+     "rel_err_vs_float64": 1.640711493672676e-07,
+     "weight_bytes_per_dispatch": 2542796800,
+     "per_tensor_ms": 0.773997775510204,
+     "weight_GBps": 3285.276625406111
+    },
+    "M": 248320,
+    "K": 5120,
+    "seg": 16,
+    "tile_copies": 1
+   }
+  }
+ }
+}

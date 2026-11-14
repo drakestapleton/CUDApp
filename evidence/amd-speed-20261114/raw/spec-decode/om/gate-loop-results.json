@@ -1,0 +1,90 @@
+{
+ "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+ "sources": {
+  "spec.om": "80bcf2c48379028c92005445f8feb3f45526483ffe0b76f65454d76c5ce3f84c",
+  "specloop.om": "93a43c432fe50637be98f840a51652a302191a3b4ff20699623c001de4640754",
+  "specloopgate.om": "8278151079390f019aa92fa82aaae5ca86d645ad9ba72669dbf633b4884d56dc"
+ },
+ "positive": {
+  "stdout": [
+   "576",
+   "34416",
+   "1341",
+   "5736",
+   "12935747085974451484",
+   "717",
+   "exit=0"
+  ],
+  "expected": [
+   "576",
+   "34416",
+   "1341",
+   "5736",
+   "12935747085974451484",
+   "717",
+   "exit=0"
+  ],
+  "distinct_tokens_in_references": 16,
+  "ok": true,
+  "stderr": ""
+ },
+ "mutants": [
+  {
+   "name": "keep-every-row",
+   "stdout": [
+    "exit=103"
+   ],
+   "caught": true
+  },
+  {
+   "name": "state-slot-one-ahead",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  },
+  {
+   "name": "position-one-behind",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  },
+  {
+   "name": "next-row0-from-draft",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  },
+  {
+   "name": "attention-reads-one-past",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  },
+  {
+   "name": "rows-share-one-state-slot",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  },
+  {
+   "name": "accept-after-mismatch",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  },
+  {
+   "name": "emit-ignores-stop",
+   "stdout": [
+    "exit=21"
+   ],
+   "caught": true
+  }
+ ],
+ "verdict": "PASS"
+}

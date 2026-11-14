@@ -1,0 +1,4 @@
+session jupyter-user-261113232737-7605956f
+launched 2026-11-13T23:27:37Z from an omp-managed Chromium Drake signed into (kernel websocket, no cell paste)
+bundle measure/cell.py sha256 5008ca46fa6c0287600277553f20e5d3eb5569993fbf7973a3d285191524d429, cell2.py sha256 07a475a735938c5749cc28237310ed22cbed2052c6244e24674fdaadb2e2a64a
+run by Developer/GpuBenchSync taking over from uxl-brief/AmdKernelSpeed on Drake's instruction

@@ -1,0 +1,4 @@
+MCSIM ref tokens=2,63,77,68,45,71,19,68,45,71,19,68,45,71,19,68
+MCSIM card=0 tokens=2,63,77,68,45,71,19,68,45,71,19,68,45,71,19,68 tokens_equal_one_card=yes hidden_words_differing_from_one_card=0 tokens_and_bits_equal_fast_reference=yes
+MCSIM result mode=fast exchanges_per_step=5 cards=1
+MCSIM PASS

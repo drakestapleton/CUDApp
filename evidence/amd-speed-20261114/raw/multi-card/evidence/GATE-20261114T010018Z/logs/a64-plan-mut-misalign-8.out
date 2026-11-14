@@ -1,0 +1,133 @@
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=0 seg=0 lo=0 hi=256
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=0 seg=1 lo=2048 hi=2304
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=0 seg=2 lo=4096 hi=4864
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=0 seg=0 lo=0 hi=832
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=0 seg=0 lo=0 hi=6
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=0 seg=0 lo=0 hi=6
+MCPLAN slice tensor=gdn.out_proj axis=rows card=0 seg=0 lo=0 hi=640
+MCPLAN slice tensor=attn.q_proj axis=rows card=0 seg=0 lo=0 hi=1536
+MCPLAN slice tensor=attn.k_proj axis=rows card=0 seg=0 lo=0 hi=256
+MCPLAN slice tensor=attn.v_proj axis=rows card=0 seg=0 lo=0 hi=256
+MCPLAN slice tensor=attn.o_proj axis=rows card=0 seg=0 lo=0 hi=640
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=0 seg=0 lo=0 hi=2176
+MCPLAN slice tensor=mlp.up_proj axis=rows card=0 seg=0 lo=0 hi=2176
+MCPLAN slice tensor=mlp.down_proj axis=rows card=0 seg=0 lo=0 hi=640
+MCPLAN slice tensor=lm_head axis=rows card=0 seg=0 lo=0 hi=31040
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=1 seg=0 lo=256 hi=512
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=1 seg=1 lo=2304 hi=2560
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=1 seg=2 lo=4864 hi=5632
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=1 seg=0 lo=768 hi=1536
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=1 seg=0 lo=6 hi=12
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=1 seg=0 lo=6 hi=12
+MCPLAN slice tensor=gdn.out_proj axis=rows card=1 seg=0 lo=640 hi=1280
+MCPLAN slice tensor=attn.q_proj axis=rows card=1 seg=0 lo=1536 hi=3072
+MCPLAN slice tensor=attn.k_proj axis=rows card=1 seg=0 lo=0 hi=256
+MCPLAN slice tensor=attn.v_proj axis=rows card=1 seg=0 lo=0 hi=256
+MCPLAN slice tensor=attn.o_proj axis=rows card=1 seg=0 lo=640 hi=1280
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=1 seg=0 lo=2176 hi=4352
+MCPLAN slice tensor=mlp.up_proj axis=rows card=1 seg=0 lo=2176 hi=4352
+MCPLAN slice tensor=mlp.down_proj axis=rows card=1 seg=0 lo=640 hi=1280
+MCPLAN slice tensor=lm_head axis=rows card=1 seg=0 lo=31040 hi=62080
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=2 seg=0 lo=512 hi=768
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=2 seg=1 lo=2560 hi=2816
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=2 seg=2 lo=5632 hi=6400
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=2 seg=0 lo=1536 hi=2304
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=2 seg=0 lo=12 hi=18
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=2 seg=0 lo=12 hi=18
+MCPLAN slice tensor=gdn.out_proj axis=rows card=2 seg=0 lo=1280 hi=1920
+MCPLAN slice tensor=attn.q_proj axis=rows card=2 seg=0 lo=3072 hi=4608
+MCPLAN slice tensor=attn.k_proj axis=rows card=2 seg=0 lo=256 hi=512
+MCPLAN slice tensor=attn.v_proj axis=rows card=2 seg=0 lo=256 hi=512
+MCPLAN slice tensor=attn.o_proj axis=rows card=2 seg=0 lo=1280 hi=1920
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=2 seg=0 lo=4352 hi=6528
+MCPLAN slice tensor=mlp.up_proj axis=rows card=2 seg=0 lo=4352 hi=6528
+MCPLAN slice tensor=mlp.down_proj axis=rows card=2 seg=0 lo=1280 hi=1920
+MCPLAN slice tensor=lm_head axis=rows card=2 seg=0 lo=62080 hi=93120
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=3 seg=0 lo=768 hi=1024
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=3 seg=1 lo=2816 hi=3072
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=3 seg=2 lo=6400 hi=7168
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=3 seg=0 lo=2304 hi=3072
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=3 seg=0 lo=18 hi=24
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=3 seg=0 lo=18 hi=24
+MCPLAN slice tensor=gdn.out_proj axis=rows card=3 seg=0 lo=1920 hi=2560
+MCPLAN slice tensor=attn.q_proj axis=rows card=3 seg=0 lo=4608 hi=6144
+MCPLAN slice tensor=attn.k_proj axis=rows card=3 seg=0 lo=256 hi=512
+MCPLAN slice tensor=attn.v_proj axis=rows card=3 seg=0 lo=256 hi=512
+MCPLAN slice tensor=attn.o_proj axis=rows card=3 seg=0 lo=1920 hi=2560
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=3 seg=0 lo=6528 hi=8704
+MCPLAN slice tensor=mlp.up_proj axis=rows card=3 seg=0 lo=6528 hi=8704
+MCPLAN slice tensor=mlp.down_proj axis=rows card=3 seg=0 lo=1920 hi=2560
+MCPLAN slice tensor=lm_head axis=rows card=3 seg=0 lo=93120 hi=124160
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=4 seg=0 lo=1024 hi=1280
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=4 seg=1 lo=3072 hi=3328
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=4 seg=2 lo=7168 hi=7936
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=4 seg=0 lo=3072 hi=3840
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=4 seg=0 lo=24 hi=30
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=4 seg=0 lo=24 hi=30
+MCPLAN slice tensor=gdn.out_proj axis=rows card=4 seg=0 lo=2560 hi=3200
+MCPLAN slice tensor=attn.q_proj axis=rows card=4 seg=0 lo=6144 hi=7680
+MCPLAN slice tensor=attn.k_proj axis=rows card=4 seg=0 lo=512 hi=768
+MCPLAN slice tensor=attn.v_proj axis=rows card=4 seg=0 lo=512 hi=768
+MCPLAN slice tensor=attn.o_proj axis=rows card=4 seg=0 lo=2560 hi=3200
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=4 seg=0 lo=8704 hi=10880
+MCPLAN slice tensor=mlp.up_proj axis=rows card=4 seg=0 lo=8704 hi=10880
+MCPLAN slice tensor=mlp.down_proj axis=rows card=4 seg=0 lo=2560 hi=3200
+MCPLAN slice tensor=lm_head axis=rows card=4 seg=0 lo=124160 hi=155200
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=5 seg=0 lo=1280 hi=1536
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=5 seg=1 lo=3328 hi=3584
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=5 seg=2 lo=7936 hi=8704
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=5 seg=0 lo=3840 hi=4608
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=5 seg=0 lo=30 hi=36
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=5 seg=0 lo=30 hi=36
+MCPLAN slice tensor=gdn.out_proj axis=rows card=5 seg=0 lo=3200 hi=3840
+MCPLAN slice tensor=attn.q_proj axis=rows card=5 seg=0 lo=7680 hi=9216
+MCPLAN slice tensor=attn.k_proj axis=rows card=5 seg=0 lo=512 hi=768
+MCPLAN slice tensor=attn.v_proj axis=rows card=5 seg=0 lo=512 hi=768
+MCPLAN slice tensor=attn.o_proj axis=rows card=5 seg=0 lo=3200 hi=3840
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=5 seg=0 lo=10880 hi=13056
+MCPLAN slice tensor=mlp.up_proj axis=rows card=5 seg=0 lo=10880 hi=13056
+MCPLAN slice tensor=mlp.down_proj axis=rows card=5 seg=0 lo=3200 hi=3840
+MCPLAN slice tensor=lm_head axis=rows card=5 seg=0 lo=155200 hi=186240
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=6 seg=0 lo=1536 hi=1792
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=6 seg=1 lo=3584 hi=3840
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=6 seg=2 lo=8704 hi=9472
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=6 seg=0 lo=4608 hi=5376
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=6 seg=0 lo=36 hi=42
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=6 seg=0 lo=36 hi=42
+MCPLAN slice tensor=gdn.out_proj axis=rows card=6 seg=0 lo=3840 hi=4480
+MCPLAN slice tensor=attn.q_proj axis=rows card=6 seg=0 lo=9216 hi=10752
+MCPLAN slice tensor=attn.k_proj axis=rows card=6 seg=0 lo=768 hi=1024
+MCPLAN slice tensor=attn.v_proj axis=rows card=6 seg=0 lo=768 hi=1024
+MCPLAN slice tensor=attn.o_proj axis=rows card=6 seg=0 lo=3840 hi=4480
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=6 seg=0 lo=13056 hi=15232
+MCPLAN slice tensor=mlp.up_proj axis=rows card=6 seg=0 lo=13056 hi=15232
+MCPLAN slice tensor=mlp.down_proj axis=rows card=6 seg=0 lo=3840 hi=4480
+MCPLAN slice tensor=lm_head axis=rows card=6 seg=0 lo=186240 hi=217280
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=7 seg=0 lo=1792 hi=2048
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=7 seg=1 lo=3840 hi=4096
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=7 seg=2 lo=9472 hi=10240
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=7 seg=0 lo=5376 hi=6144
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=7 seg=0 lo=42 hi=48
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=7 seg=0 lo=42 hi=48
+MCPLAN slice tensor=gdn.out_proj axis=rows card=7 seg=0 lo=4480 hi=5120
+MCPLAN slice tensor=attn.q_proj axis=rows card=7 seg=0 lo=10752 hi=12288
+MCPLAN slice tensor=attn.k_proj axis=rows card=7 seg=0 lo=768 hi=1024
+MCPLAN slice tensor=attn.v_proj axis=rows card=7 seg=0 lo=768 hi=1024
+MCPLAN slice tensor=attn.o_proj axis=rows card=7 seg=0 lo=4480 hi=5120
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=7 seg=0 lo=15232 hi=17408
+MCPLAN slice tensor=mlp.up_proj axis=rows card=7 seg=0 lo=15232 hi=17408
+MCPLAN slice tensor=mlp.down_proj axis=rows card=7 seg=0 lo=4480 hi=5120
+MCPLAN slice tensor=lm_head axis=rows card=7 seg=0 lo=217280 hi=248320
+MCPLAN fail check=align tensor=gdn.in_proj_z card=0
+MCPLAN fail check=overlap tensor=gdn.in_proj_z card=1
+MCPLAN summary mode=exact cards=8 layers=64 gdn=48 attn=16 syncs_per_step=257 slices=120
+MCPLAN card card=0 weight_bytes=3402073600 exchange_bytes_sent=7655480
+MCPLAN card card=1 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN card card=2 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN card card=3 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN card card=4 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN card card=5 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN card card=6 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN card card=7 weight_bytes=3386337280 exchange_bytes_sent=7569464
+MCPLAN summary max_card_bytes=3402073600 min_card_bytes=3386337280 sum_card_bytes=27106434560
+MCPLAN verify cards=8 FAIL

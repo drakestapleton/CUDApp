@@ -1,0 +1,16 @@
+{
+  "source_commit": "0c1bed70e87466375dfc7aab7e0169a68f8f4e5f",
+  "compiler_commit": "64d6db3bb8a0c6b4a4f5334b75191abf77c66ab9",
+  "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+  "binary_sha256": "373e76cd29edab8d92d5e05d7d351474083c0937ed239d1f2e4521431cf187a4",
+  "status": "hardware qualification candidate; release gates and review pending",
+  "hardware": "AMD Instinct MI300X gfx942",
+  "model": "Qwen/Qwen3.8-27B-FP8",
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "source_repository": "rad:z4RxD8vXigmWg61nM8miQ8DVPAXEP",
+  "notebook_session": "jupyter-user-261113072240-bb2a389c",
+  "archive_sha256": "9f8a5f5274b3b2e200f59b07e4f59f163f3114bdfc1ce1900d31d3079db5ee6d",
+  "archive_bytes": 175675,
+  "independent_hip_reference_reused": true,
+  "new_spark_baseline": false
+}

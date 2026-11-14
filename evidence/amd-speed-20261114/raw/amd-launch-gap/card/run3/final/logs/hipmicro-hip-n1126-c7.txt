@@ -1,0 +1,1 @@
+HIPMICRO {"N": 1126, "steps": 100, "median_step_us": 1744.3039978388697, "median_launch_call_us": 20.734500139951706, "median_sync_us": 1723.5964769497514, "median_token_readback_us": 16.863516066223383, "position": 113726}

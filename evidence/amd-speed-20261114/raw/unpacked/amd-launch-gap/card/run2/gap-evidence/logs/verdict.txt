@@ -1,0 +1,22 @@
+VERDICT omega-control-new-plan3 CAUGHT ids_equal_published=False decode_median=24891
+VERDICT omega-new-plan2-run1 PASS ids_equal_published=True decode_median=24899
+VERDICT omega-new-plan2-run2 PASS ids_equal_published=True decode_median=24896
+VERDICT omega-new-plan3-run1 PASS ids_equal_published=True decode_median=24884
+VERDICT omega-new-plan3-run2 PASS ids_equal_published=True decode_median=24893
+VERDICT omega-new-plan3-run3 PASS ids_equal_published=True decode_median=24885
+VERDICT omega-new-plan3-run4 PASS ids_equal_published=True decode_median=24891
+VERDICT omega-new-plan3-run5 PASS ids_equal_published=True decode_median=24914
+VERDICT omega-new-plan3-warmup PASS ids_equal_published=True decode_median=24807
+VERDICT omega-old-plan-run1 PASS ids_equal_published=True decode_median=26602
+VERDICT omega-old-plan-run2 PASS ids_equal_published=True decode_median=26626
+VERDICT omega-old-plan-run3 PASS ids_equal_published=True decode_median=26641
+VERDICT omega-old-plan-run4 PASS ids_equal_published=True decode_median=26653
+VERDICT omega-old-plan-run5 PASS ids_equal_published=True decode_median=26658
+VERDICT omega-old-plan-warmup PASS ids_equal_published=True decode_median=26489
+VERDICT hip-graph-run1 PASS ids_equal_published=True decode_median=24.704183917492628
+VERDICT hip-graph-run2 PASS ids_equal_published=True decode_median=24.726298870518804
+VERDICT hip-graph-run3 PASS ids_equal_published=True decode_median=24.74596700631082
+VERDICT hip-graph-run4 PASS ids_equal_published=True decode_median=24.740881053730845
+VERDICT hip-graph-run5 PASS ids_equal_published=True decode_median=24.74688203074038
+VERDICT hip-graph-warmup PASS ids_equal_published=True decode_median=24.671602062880993
+GAP_VERDICT PASS 21 runs

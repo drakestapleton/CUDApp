@@ -1,0 +1,1 @@
+VARIANT {"cls": "fp8gemv_b128f:17408x5120", "inserted": 128, "dispatches": 1254, "n_gen": 64, "bytes": 33794947, "sha256": "8671b319a1c31d8fadcf09f3d486e3db2c0a91068711779f258da99516adc952", "base_sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012"}

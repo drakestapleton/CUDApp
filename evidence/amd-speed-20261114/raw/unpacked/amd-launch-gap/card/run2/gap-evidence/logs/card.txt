@@ -1,0 +1,19 @@
++ date -u +%FT%TZ
+2026-11-14T01:32:55Z
++ uname -a
+Linux jupyter-user-261114012602-e8cddcb1 6.12.48+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20) x86_64 x86_64 x86_64 GNU/Linux
++ cat /opt/rocm/.info/version
+7.2.2
++ rocminfo
++ head+  -6
+grep -E Marketing Name|Name: +gfx
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Name:                    gfx942                             
+  Marketing Name:          AMD Instinct MI300X VF             
++ python3 -c import torch;print("torch",torch.__version__,torch.version.hip)
+torch 2.10.0+rocm7.2.2.git40d237bf 7.2.53211
++ nproc
+160
++ grep -m1 model name /proc/cpuinfo
+model name	: INTEL(R) XEON(R) PLATINUM 8568Y+

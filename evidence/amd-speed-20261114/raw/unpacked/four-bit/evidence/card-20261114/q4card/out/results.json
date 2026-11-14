@@ -1,0 +1,703 @@
+{
+ "convert": {
+  "layers-0.safetensors": {
+   "card": "6838338b9248305c1ae827e62f3e2f4f111186efa356c16ced91905c4adba92e",
+   "equal": true,
+   "spark": "6838338b9248305c1ae827e62f3e2f4f111186efa356c16ced91905c4adba92e"
+  },
+  "layers-3.safetensors": {
+   "card": "1bbb528e1ccf6e9e8cf2249ffa413d2ddacd5242b88357d40726956475b09d88",
+   "equal": true,
+   "spark": "1bbb528e1ccf6e9e8cf2249ffa413d2ddacd5242b88357d40726956475b09d88"
+  },
+  "outside.safetensors": {
+   "card": "9afc6a236b58e3ef08b0359642c600feccf921551593bb05d361ffbecc1a7359",
+   "equal": true,
+   "spark": "9afc6a236b58e3ef08b0359642c600feccf921551593bb05d361ffbecc1a7359"
+  }
+ },
+ "env": {
+  "bundle_sha256_bad": [],
+  "compute_units": [
+   "304",
+   "80"
+  ],
+  "gfx": [
+   "gfx942"
+  ],
+  "marketing": [
+   "AMD Instinct MI300X VF",
+   "INTEL(R) XEON(R) PLATINUM 8568Y+"
+  ],
+  "numpy": "2.4.4",
+  "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+  "uname": {
+   "machine": "x86_64",
+   "node": "jupyter-user-261114014516-c715b669",
+   "processor": "x86_64",
+   "release": "6.12.48+deb13-amd64",
+   "system": "Linux",
+   "version": "#1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20)"
+  }
+ },
+ "kernels": {
+  "attn k_proj 1024x5120": {
+   "K": 5120,
+   "M": 1024,
+   "baseline": {
+    "per_dispatch_ms": 0.535679,
+    "per_tensor_ms": 0.002457243119266055,
+    "r1_ns": [
+     578607,
+     590560,
+     578478
+    ],
+    "r50_ns": [
+     27097792,
+     26674821,
+     26826878
+    ],
+    "rel_err_vs_float64": 1.1211942834326651e-07,
+    "repeat": 50,
+    "weight_GBps": 2133.903625118774,
+    "weight_bytes_per_dispatch": 1143087360
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 223232,
+    "per_dispatch_ms": 0.2247468775510204,
+    "per_tensor_ms": 0.0010309489795918367,
+    "r1_ns": [
+     258243,
+     266259,
+     269052
+    ],
+    "r50_ns": [
+     11278856,
+     11346950,
+     11195268
+    ],
+    "rel_err_vs_source_float64": 0.10636712412814167,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 223232,
+    "verdict": "PASS",
+    "weight_GBps": 2669.881880177764,
+    "weight_bytes_per_dispatch": 600047616
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 223232,
+    "per_dispatch_ms": 0.19712287755102043,
+    "per_tensor_ms": 0.0009042333832615615,
+    "r1_ns": [
+     226760,
+     234774,
+     232670
+    ],
+    "r50_ns": [
+     9891691,
+     9969548,
+     9772378
+    ],
+    "rel_err_vs_source_float64": 0.10636712412814167,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 223232,
+    "verdict": "PASS",
+    "weight_GBps": 3044.0282906518164,
+    "weight_bytes_per_dispatch": 600047616
+   },
+   "seg": 16,
+   "tile_copies": 218
+  },
+  "attn o_proj 5120x6144": {
+   "K": 6144,
+   "M": 5120,
+   "baseline": {
+    "per_dispatch_ms": 0.545794775510204,
+    "per_tensor_ms": 0.014751210148924434,
+    "r1_ns": [
+     602141,
+     611310,
+     615687
+    ],
+    "r50_ns": [
+     27355254,
+     27380880,
+     27120110
+    ],
+    "rel_err_vs_float64": 1.227541154319893e-07,
+    "repeat": 50,
+    "weight_GBps": 2132.7823061549934,
+    "weight_bytes_per_dispatch": 1164061440
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 189440,
+    "per_dispatch_ms": 0.21419516326530613,
+    "per_tensor_ms": 0.005789058466629896,
+    "r1_ns": [
+     304211,
+     250644,
+     255861
+    ],
+    "r50_ns": [
+     10904648,
+     10650000,
+     10751424
+    ],
+    "rel_err_vs_source_float64": 0.1022079347020152,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 189440,
+    "verdict": "PASS",
+    "weight_GBps": 2830.1666142159306,
+    "weight_bytes_per_dispatch": 606208000
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 189440,
+    "per_dispatch_ms": 0.1965322244897959,
+    "per_tensor_ms": 0.005311681742967457,
+    "r1_ns": [
+     230728,
+     239401,
+     228625
+    ],
+    "r50_ns": [
+     9860807,
+     10234094,
+     9771070
+    ],
+    "rel_err_vs_source_float64": 0.1022079347020152,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 189440,
+    "verdict": "PASS",
+    "weight_GBps": 3084.52215189512,
+    "weight_bytes_per_dispatch": 606208000
+   },
+   "seg": 16,
+   "tile_copies": 37
+  },
+  "attn q_proj 12288x5120": {
+   "K": 5120,
+   "M": 12288,
+   "baseline": {
+    "per_dispatch_ms": 0.5593468367346939,
+    "per_tensor_ms": 0.029439307196562837,
+    "r1_ns": [
+     596696,
+     593097,
+     608604
+    ],
+    "r50_ns": [
+     28158292,
+     27803921,
+     28004691
+    ],
+    "rel_err_vs_float64": 1.1281804104749373e-07,
+    "repeat": 50,
+    "weight_GBps": 2137.3546456061454,
+    "weight_bytes_per_dispatch": 1195522560
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 233472,
+    "per_dispatch_ms": 0.233864,
+    "per_tensor_ms": 0.012308631578947368,
+    "r1_ns": [
+     261115,
+     280026,
+     275817
+    ],
+    "r50_ns": [
+     11646158,
+     11774851,
+     11735153
+    ],
+    "rel_err_vs_source_float64": 0.1005445373409727,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 233472,
+    "verdict": "PASS",
+    "weight_GBps": 2683.4944070057813,
+    "weight_bytes_per_dispatch": 627572736
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 233472,
+    "per_dispatch_ms": 0.20408938775510205,
+    "per_tensor_ms": 0.01074154672395274,
+    "r1_ns": [
+     239801,
+     251304,
+     242545
+    ],
+    "r50_ns": [
+     10174495,
+     10242925,
+     10266105
+    ],
+    "rel_err_vs_source_float64": 0.1005445373409727,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 233472,
+    "verdict": "PASS",
+    "weight_GBps": 3074.989556796842,
+    "weight_bytes_per_dispatch": 627572736
+   },
+   "seg": 16,
+   "tile_copies": 19
+  },
+  "gdn in_proj_qkv 10240x5120 seg4": {
+   "K": 5120,
+   "M": 10240,
+   "baseline": {
+    "per_dispatch_ms": 0.495778693877551,
+    "per_tensor_ms": 0.02478893469387755,
+    "r1_ns": [
+     539232,
+     554258,
+     547745
+    ],
+    "r50_ns": [
+     24840901,
+     24924318,
+     24475129
+    ],
+    "rel_err_vs_float64": 1.0729869894832287e-07,
+    "repeat": 50,
+    "weight_GBps": 2115.266373788568,
+    "weight_bytes_per_dispatch": 1048704000
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 204800,
+    "per_dispatch_ms": 0.22168567346938775,
+    "per_tensor_ms": 0.011084283673469388,
+    "r1_ns": [
+     259375,
+     264035,
+     269642
+    ],
+    "r50_ns": [
+     11257111,
+     11126633,
+     10868239
+    ],
+    "rel_err_vs_source_float64": 0.08171300280351859,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 204800,
+    "verdict": "PASS",
+    "weight_GBps": 2719.757170430131,
+    "weight_bytes_per_dispatch": 602931200
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 204800,
+    "per_dispatch_ms": 0.19687269387755102,
+    "per_tensor_ms": 0.009843634693877551,
+    "r1_ns": [
+     240346,
+     240452,
+     235412
+    ],
+    "r50_ns": [
+     9887108,
+     9897707,
+     9846752
+    ],
+    "rel_err_vs_source_float64": 0.08171300280351859,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 204800,
+    "verdict": "PASS",
+    "weight_GBps": 3062.543556065755,
+    "weight_bytes_per_dispatch": 602931200
+   },
+   "seg": 4,
+   "tile_copies": 20
+  },
+  "gdn in_proj_z 6144x5120 seg4": {
+   "K": 5120,
+   "M": 6144,
+   "baseline": {
+    "per_dispatch_ms": 0.5055297959183673,
+    "per_tensor_ms": 0.014868523409363746,
+    "r1_ns": [
+     554896,
+     542414,
+     549149
+    ],
+    "r50_ns": [
+     25134496,
+     25386752,
+     25320109
+    ],
+    "rel_err_vs_float64": 1.097451165396125e-07,
+    "repeat": 50,
+    "weight_GBps": 2115.9545661532698,
+    "weight_bytes_per_dispatch": 1069678080
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 208896,
+    "per_dispatch_ms": 0.21599716326530613,
+    "per_tensor_ms": 0.006352857743097239,
+    "r1_ns": [
+     253776,
+     268730,
+     263911
+    ],
+    "r50_ns": [
+     10847772,
+     11038178,
+     10838308
+    ],
+    "rel_err_vs_source_float64": 0.08409012082276138,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 208896,
+    "verdict": "PASS",
+    "weight_GBps": 2847.2125036411567,
+    "weight_bytes_per_dispatch": 614989824
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 208896,
+    "per_dispatch_ms": 0.19841885714285712,
+    "per_tensor_ms": 0.005835848739495797,
+    "r1_ns": [
+     238685,
+     226909,
+     243060
+    ],
+    "r50_ns": [
+     10103951,
+     9903898,
+     9961209
+    ],
+    "rel_err_vs_source_float64": 0.08409012082276138,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 208896,
+    "verdict": "PASS",
+    "weight_GBps": 3099.452505954215,
+    "weight_bytes_per_dispatch": 614989824
+   },
+   "seg": 4,
+   "tile_copies": 34
+  },
+  "gdn out_proj 5120x6144": {
+   "K": 6144,
+   "M": 5120,
+   "baseline": {
+    "per_dispatch_ms": 0.5445484897959183,
+    "per_tensor_ms": 0.014717526751241035,
+    "r1_ns": [
+     594976,
+     600158,
+     594519
+    ],
+    "r50_ns": [
+     27199457,
+     27500109,
+     27277852
+    ],
+    "rel_err_vs_float64": 1.1593033713088346e-07,
+    "repeat": 50,
+    "weight_GBps": 2137.6635172310516,
+    "weight_bytes_per_dispatch": 1164061440
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "error": "rc=-15",
+    "stderr": ""
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 189440,
+    "per_dispatch_ms": 0.19069057142857143,
+    "per_tensor_ms": 0.005153799227799228,
+    "r1_ns": [
+     274052,
+     224088,
+     224737
+    ],
+    "r50_ns": [
+     9568575,
+     9551148,
+     9642464
+    ],
+    "rel_err_vs_source_float64": 0.11494067909937661,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 189440,
+    "verdict": "PASS",
+    "weight_GBps": 3179.0140197208043,
+    "weight_bytes_per_dispatch": 606208000
+   },
+   "seg": 16,
+   "tile_copies": 37
+  },
+  "lm_head 248320x5120": {
+   "K": 5120,
+   "M": 248320,
+   "baseline": {
+    "per_dispatch_ms": 0.773997775510204,
+    "per_tensor_ms": 0.773997775510204,
+    "r1_ns": [
+     745130,
+     774775,
+     745867
+    ],
+    "r50_ns": [
+     38671758,
+     36956325,
+     39070418
+    ],
+    "rel_err_vs_float64": 1.640711493672676e-07,
+    "repeat": 50,
+    "weight_GBps": 3285.276625406111,
+    "weight_bytes_per_dispatch": 2542796800
+   },
+   "baseline_kind": "bf16",
+   "q4": {
+    "output_bits_equal_oracle": 248320,
+    "per_dispatch_ms": 0.24967042857142857,
+    "per_tensor_ms": 0.24967042857142857,
+    "r1_ns": [
+     273933,
+     284369,
+     287575
+    ],
+    "r50_ns": [
+     12518220,
+     12436572,
+     12577642
+    ],
+    "rel_err_vs_source_float64": 0.09438298857159476,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 248320,
+    "verdict": "PASS",
+    "weight_GBps": 2673.461025477587,
+    "weight_bytes_per_dispatch": 667484160
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 248320,
+    "per_dispatch_ms": 0.22094497959183673,
+    "per_tensor_ms": 0.22094497959183673,
+    "r1_ns": [
+     254461,
+     253018,
+     260372
+    ],
+    "r50_ns": [
+     11080765,
+     11257666,
+     10961237
+    ],
+    "rel_err_vs_source_float64": 0.09438298857159476,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 248320,
+    "verdict": "PASS",
+    "weight_GBps": 3021.042438860021,
+    "weight_bytes_per_dispatch": 667484160
+   },
+   "seg": 16,
+   "tile_copies": 1
+  },
+  "mlp down_proj 5120x17408": {
+   "K": 17408,
+   "M": 5120,
+   "baseline": {
+    "per_dispatch_ms": 0.5542181020408163,
+    "per_tensor_ms": 0.04263216169544741,
+    "r1_ns": [
+     620099,
+     624147,
+     639558
+    ],
+    "r50_ns": [
+     27469641,
+     27906980,
+     27780834
+    ],
+    "rel_err_vs_float64": 1.718823705122158e-07,
+    "repeat": 50,
+    "weight_GBps": 2090.9059370901905,
+    "weight_bytes_per_dispatch": 1158817920
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 66560,
+    "per_dispatch_ms": 0.21657338775510204,
+    "per_tensor_ms": 0.01665949136577708,
+    "r1_ns": [
+     242897,
+     258757,
+     259656
+    ],
+    "r50_ns": [
+     10833781,
+     10922469,
+     10870853
+    ],
+    "rel_err_vs_source_float64": 0.10334497467436655,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 66560,
+    "verdict": "PASS",
+    "weight_GBps": 2793.0360524443054,
+    "weight_bytes_per_dispatch": 604897280
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 66560,
+    "per_dispatch_ms": 0.1914555306122449,
+    "per_tensor_ms": 0.014727348508634223,
+    "r1_ns": [
+     227586,
+     216600,
+     234290
+    ],
+    "r50_ns": [
+     10071388,
+     9600314,
+     9608907
+    ],
+    "rel_err_vs_source_float64": 0.10334497467436655,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 66560,
+    "verdict": "PASS",
+    "weight_GBps": 3159.4662116348004,
+    "weight_bytes_per_dispatch": 604897280
+   },
+   "seg": 16,
+   "tile_copies": 13
+  },
+  "mlp gate_proj 17408x5120": {
+   "K": 5120,
+   "M": 17408,
+   "baseline": {
+    "error": "rc=-15",
+    "stderr": ""
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 226304,
+    "per_dispatch_ms": 0.22740548979591838,
+    "per_tensor_ms": 0.017492729984301413,
+    "r1_ns": [
+     258060,
+     263134,
+     272713
+    ],
+    "r50_ns": [
+     11406003,
+     11204263,
+     11499292
+    ],
+    "rel_err_vs_source_float64": 0.09716483193654732,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 226304,
+    "verdict": "PASS",
+    "weight_GBps": 2674.980065546853,
+    "weight_bytes_per_dispatch": 608305152
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 226304,
+    "per_dispatch_ms": 0.19946097959183676,
+    "per_tensor_ms": 0.015343152276295135,
+    "r1_ns": [
+     233287,
+     238836,
+     238699
+    ],
+    "r50_ns": [
+     10012287,
+     10028379,
+     10006600
+    ],
+    "rel_err_vs_source_float64": 0.09716483193654732,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 226304,
+    "verdict": "PASS",
+    "weight_GBps": 3049.745134335517,
+    "weight_bytes_per_dispatch": 608305152
+   },
+   "seg": 16,
+   "tile_copies": 13
+  },
+  "mlp up_proj 17408x5120": {
+   "K": 5120,
+   "M": 17408,
+   "baseline": {
+    "per_dispatch_ms": 0.5385492653061225,
+    "per_tensor_ms": 0.04142686656200942,
+    "r1_ns": [
+     588197,
+     589815,
+     592036
+    ],
+    "r50_ns": [
+     27490138,
+     26939029,
+     26978729
+    ],
+    "rel_err_vs_float64": 1.167380861439589e-07,
+    "repeat": 50,
+    "weight_GBps": 2151.7398586391237,
+    "weight_bytes_per_dispatch": 1158817920
+   },
+   "baseline_kind": "fp8",
+   "q4": {
+    "output_bits_equal_oracle": 226304,
+    "per_dispatch_ms": 0.22695116326530612,
+    "per_tensor_ms": 0.017457781789638933,
+    "r1_ns": [
+     312577,
+     274943,
+     274358
+    ],
+    "r50_ns": [
+     11395550,
+     10838540,
+     11404586
+    ],
+    "rel_err_vs_source_float64": 0.10031465371726557,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 226304,
+    "verdict": "PASS",
+    "weight_GBps": 2680.335025597074,
+    "weight_bytes_per_dispatch": 608305152
+   },
+   "q4r2": {
+    "output_bits_equal_oracle": 226304,
+    "per_dispatch_ms": 0.2039210612244898,
+    "per_tensor_ms": 0.015686235478806907,
+    "r1_ns": [
+     236041,
+     240970,
+     227655
+    ],
+    "r50_ns": [
+     10307055,
+     10228173,
+     10109507
+    ],
+    "rel_err_vs_source_float64": 0.10031465371726557,
+    "repeat": 50,
+    "repeat_output_equal": true,
+    "rows": 226304,
+    "verdict": "PASS",
+    "weight_GBps": 2983.0423024835936,
+    "weight_bytes_per_dispatch": 608305152
+   },
+   "seg": 16,
+   "tile_copies": 13
+  }
+ }
+}

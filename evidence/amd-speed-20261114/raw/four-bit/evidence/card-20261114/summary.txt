@@ -1,0 +1,21 @@
+convert {'layers-0.safetensors': True, 'layers-3.safetensors': True, 'outside.safetensors': True}
+shape                                  C | q4gemv_d8 TB/s bits    | q4gemv_d8r2 TB/s bits  | FP8/BF16 TB/s  | base rel err
+gdn in_proj_qkv 10240x5120 seg4       20 | 2.720 PASS 204800/204800 | 3.063 PASS 204800/204800 | 2.115          | 1.0729869894832287e-07
+   per-tensor ms: q4 0.0111 r2 0.0098 base 0.0248
+gdn in_proj_z 6144x5120 seg4          34 | 2.847 PASS 208896/208896 | 3.099 PASS 208896/208896 | 2.116          | 1.097451165396125e-07
+   per-tensor ms: q4 0.0064 r2 0.0058 base 0.0149
+gdn out_proj 5120x6144                37 | ERR rc=-15             | 3.179 PASS 189440/189440 | 2.138          | 1.1593033713088346e-07
+   per-tensor ms: q4 - r2 0.0052 base 0.0147
+mlp gate_proj 17408x5120              13 | 2.675 PASS 226304/226304 | 3.050 PASS 226304/226304 | ERR            | None
+mlp up_proj 17408x5120                13 | 2.680 PASS 226304/226304 | 2.983 PASS 226304/226304 | 2.152          | 1.167380861439589e-07
+   per-tensor ms: q4 0.0175 r2 0.0157 base 0.0414
+mlp down_proj 5120x17408              13 | 2.793 PASS 66560/66560 | 3.159 PASS 66560/66560 | 2.091          | 1.718823705122158e-07
+   per-tensor ms: q4 0.0167 r2 0.0147 base 0.0426
+attn q_proj 12288x5120                19 | 2.683 PASS 233472/233472 | 3.075 PASS 233472/233472 | 2.137          | 1.1281804104749373e-07
+   per-tensor ms: q4 0.0123 r2 0.0107 base 0.0294
+attn k_proj 1024x5120                218 | 2.670 PASS 223232/223232 | 3.044 PASS 223232/223232 | 2.134          | 1.1211942834326651e-07
+   per-tensor ms: q4 0.0010 r2 0.0009 base 0.0025
+attn o_proj 5120x6144                 37 | 2.830 PASS 189440/189440 | 3.085 PASS 189440/189440 | 2.133          | 1.227541154319893e-07
+   per-tensor ms: q4 0.0058 r2 0.0053 base 0.0148
+lm_head 248320x5120                    1 | 2.673 PASS 248320/248320 | 3.021 PASS 248320/248320 | 3.285          | 1.640711493672676e-07
+   per-tensor ms: q4 0.2497 r2 0.2209 base 0.7740

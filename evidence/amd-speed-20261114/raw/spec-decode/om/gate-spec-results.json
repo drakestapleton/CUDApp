@@ -1,0 +1,56 @@
+{
+ "compiler_sha256": "26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991",
+ "spec_om_sha256": "80bcf2c48379028c92005445f8feb3f45526483ffe0b76f65454d76c5ce3f84c",
+ "positive": {
+  "stdout": [
+   "304470",
+   "12975762646888749485",
+   "exit=0"
+  ],
+  "expected": [
+   "304470",
+   "12975762646888749485",
+   "exit=0"
+  ],
+  "ok": true,
+  "stderr": ""
+ },
+ "mutants": [
+  {
+   "name": "accept-after-mismatch",
+   "stdout": [
+    "exit=11"
+   ],
+   "caught": true
+  },
+  {
+   "name": "emit-one-short",
+   "stdout": [
+    "exit=12"
+   ],
+   "caught": true
+  },
+  {
+   "name": "ignore-room",
+   "stdout": [
+    "exit=12"
+   ],
+   "caught": true
+  },
+  {
+   "name": "ignore-stop",
+   "stdout": [
+    "exit=12"
+   ],
+   "caught": true
+  },
+  {
+   "name": "accept-one-extra",
+   "stdout": [
+    "exit=11"
+   ],
+   "caught": true
+  }
+ ],
+ "verdict": "PASS"
+}

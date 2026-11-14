@@ -1,0 +1,57 @@
+CONTROL wrong compiler (one appended byte) CAUGHT exit=69 NOT_RUN, nothing built
+PIN omc=26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991
+BUILD hsaco sha256=0bbccf59f9456ad70fcc67a8c7ca30a1d9e2c0b92207bdfcec76a1339cee72a0 exec sha256=b0adb9f979917453181d117643abbd0590a3be7fbea8a14b35becd44a289d191
+PASS hsaco.om packs q4gemv_d8.isa twice byte-identical, code object sha256=b55b7ded6aabdcaaa147ca4fac3ecc98d48e08afc78f813a29d65ca844ca193a
+PASS q4gemv_d8 kernel descriptor equals llvm-mc-18 except the layout-dependent entry offset (rsrc3,rsrc1,rsrc2=0000000b,00af0085,00000084)
+PASS q4gemv_d8 packed .text equals llvm-mc-18 .text (732 instruction bytes)
+PASS q4gemv_d8 case one-step M=1 T=1 seg=1 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case seg16-T1 M=3 T=1 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case seg1-T2 M=2 T=2 seg=1 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case K5120-seg16 M=3 T=10 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case K6144-seg16 M=2 T=12 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case K17408-seg16 M=2 T=34 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case K5120-seg4 M=4 T=10 seg=4 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case T7-seg3 M=2 T=7 seg=3 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case T9-seg5 M=2 T=9 seg=5 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case outlier-x M=2 T=10 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case T4-seg4 M=1 T=4 seg=4 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case T5-seg2 M=2 T=5 seg=2 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case M6-T10-seg16 M=6 T=10 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8 case SEG=0 exits with memory unchanged
+PASS q4gemv_d8 real rows model.language_model.layers.0.linear_attn.in_proj_qkv [0, 5000, 10238, 10239] seg=4 T=10
+PASS q4gemv_d8 real rows model.language_model.layers.3.self_attn.k_proj [0, 1023] seg=16 T=10
+PASS q4gemv_d8 real rows model.language_model.layers.31.mlp.down_proj [0, 2559, 5118, 5119] seg=16 T=34
+PASS q4gemv_d8 real rows model.language_model.layers.63.mlp.up_proj [17406, 17407] seg=16 T=10
+PASS q4gemv_d8 real rows lm_head [0, 248319] seg=16 T=10
+PASS hsaco.om packs q4gemv_d8r2.isa twice byte-identical, code object sha256=491a2cfe12d2a084ce47fa54b6c12649706ca4b8eab99ef39858f2d1d483ab0d
+PASS q4gemv_d8r2 kernel descriptor equals llvm-mc-18 except the layout-dependent entry offset (rsrc3,rsrc1,rsrc2=0000000d,00af0086,00000084)
+PASS q4gemv_d8r2 packed .text equals llvm-mc-18 .text (1124 instruction bytes)
+PASS q4gemv_d8r2 case one-step M=1 T=1 seg=1 odd M refused, memory unchanged
+PASS q4gemv_d8r2 case seg16-T1 M=3 T=1 seg=16 odd M refused, memory unchanged
+PASS q4gemv_d8r2 case seg1-T2 M=2 T=2 seg=1 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case K5120-seg16 M=3 T=10 seg=16 odd M refused, memory unchanged
+PASS q4gemv_d8r2 case K6144-seg16 M=2 T=12 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case K17408-seg16 M=2 T=34 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case K5120-seg4 M=4 T=10 seg=4 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case T7-seg3 M=2 T=7 seg=3 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case T9-seg5 M=2 T=9 seg=5 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case outlier-x M=2 T=10 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case T4-seg4 M=1 T=4 seg=4 odd M refused, memory unchanged
+PASS q4gemv_d8r2 case T5-seg2 M=2 T=5 seg=2 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case M6-T10-seg16 M=6 T=10 seg=16 every output bit, rows>=M wave and all guard bytes untouched
+PASS q4gemv_d8r2 case SEG=0 exits with memory unchanged
+PASS q4gemv_d8r2 real rows model.language_model.layers.0.linear_attn.in_proj_qkv [0, 5000, 10238, 10239] seg=4 T=10
+PASS q4gemv_d8r2 real rows model.language_model.layers.3.self_attn.k_proj [0, 1023] seg=16 T=10
+PASS q4gemv_d8r2 real rows model.language_model.layers.31.mlp.down_proj [0, 2559, 5118, 5119] seg=16 T=34
+PASS q4gemv_d8r2 real rows model.language_model.layers.63.mlp.up_proj [17406, 17407] seg=16 T=10
+PASS q4gemv_d8r2 real rows lm_head [0, 248319] seg=16 T=10
+CONTROL kernel mutant plane-swap CAUGHT mismatch byte=16400
+CONTROL kernel mutant digit-shift-8-as-4 CAUGHT mismatch byte=16400
+CONTROL kernel mutant scale-advance-off-by-one CAUGHT mismatch byte=16400
+CONTROL kernel mutant r2-row1-plane-swap CAUGHT mismatch byte=16404
+CONTROL kernel mutant r2-row1-scale-pointer-row0 CAUGHT mismatch byte=16404
+CONTROL executor mutant unsigned-nibbles CAUGHT mismatch byte=15888
+PASS q4exectest packed .text equals llvm-mc-18 .text
+PASS executor V_DOT8C_I32_I4 and V_CVT_F32_I32 on 64 lanes: 3 signed-32 wraps, 61 conversions that round (|v| > 2^24, incl. INT_MIN and 0x7fffffff)
+CONTROL unsigned-nibble executor mutant CAUGHT on the instruction test
+Q4GEMV GATE PASS cases=38 mutants=7 caught=7

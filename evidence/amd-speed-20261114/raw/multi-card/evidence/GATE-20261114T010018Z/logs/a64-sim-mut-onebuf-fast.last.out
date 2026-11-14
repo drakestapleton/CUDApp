@@ -1,0 +1,7 @@
+MCSIM ref tokens=2,63,77,68,45,71,19,68,45,71,19,68,45,71,19,68
+MCSIM card=0 tokens=99,55,98,126,45,71,19,68,45,71,19,68,45,71,19,68 tokens_equal_one_card=no hidden_words_differing_from_one_card=64 tokens_and_bits_equal_fast_reference=no
+MCSIM card=1 tokens=99,55,98,126,45,71,19,68,45,71,19,68,45,71,19,68 tokens_equal_one_card=no hidden_words_differing_from_one_card=64 tokens_and_bits_equal_fast_reference=no
+MCSIM card=2 tokens=99,55,98,126,45,71,19,68,45,71,19,68,45,71,19,68 tokens_equal_one_card=no hidden_words_differing_from_one_card=64 tokens_and_bits_equal_fast_reference=no
+MCSIM card=3 tokens=99,55,98,126,45,71,19,68,45,71,19,68,45,71,19,68 tokens_equal_one_card=no hidden_words_differing_from_one_card=64 tokens_and_bits_equal_fast_reference=no
+MCSIM result mode=fast exchanges_per_step=5 cards=4
+MCSIM FAIL

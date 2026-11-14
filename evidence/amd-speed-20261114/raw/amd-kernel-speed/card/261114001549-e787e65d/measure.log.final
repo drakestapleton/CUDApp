@@ -1,0 +1,852 @@
++ LAUNCH_SHA=08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1
++ PLAN_SHA=2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012
++ export AMDSERVE_WEIGHTS=/tmp/qwen3.8-27b-fp8
++ sha256sum
++ cut -d  -f1
++ [ 08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1 = 08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1 ]
++ E=CUDApp/evidence/amd-qwen38-native-20261113
++ mkdir -p plan runs
++ python3 CUDApp/evidence/amd-qwen38-native-20261113/oracle/emit-plan.py CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 plan/real2.plan --capacity=131072 --fixture-json=CUDApp/evidence/amd-qwen38-native-20261113/oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 33777539, "sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMIT_RC=0
+EMIT_RC=0
++ sha256sum
++ cut -d  -f1
++ [ 2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012 = 2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012 ]
++ cp launch-x86 plan/omega-launch
++ chmod 755 plan/omega-launch
++ tr   \n
++ + sed s#^$AMDSERVE_WEIGHTS/#/tmp/qwen3.8-27b-fp8/#
+tail -n +4
++ tr \n  
++ args=code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors 
++ [ -e plan/code/argmax_final.hsaco ]
++ [ -e plan/code/argmax_part.hsaco ]
++ [ -e plan/code/attn256_gate.hsaco ]
++ [ -e plan/code/attn256_merge_step.hsaco ]
++ [ -e plan/code/attn256_part_step.hsaco ]
++ [ -e plan/code/attn256_prep_step.hsaco ]
++ [ -e plan/code/bf16gemv2.hsaco ]
++ [ -e plan/code/embed5120_step.hsaco ]
++ [ -e plan/code/fp8gemv_b128f.hsaco ]
++ [ -e plan/code/gdnconv4_step.hsaco ]
++ [ -e plan/code/gdnparams.hsaco ]
++ [ -e plan/code/gdnqknorm.hsaco ]
++ [ -e plan/code/gdnrmsgate.hsaco ]
++ [ -e plan/code/gdnstate_step.hsaco ]
++ [ -e plan/code/mlpsilu.hsaco ]
++ [ -e plan/code/residual5120.hsaco ]
++ [ -e plan/code/rmsnorm5120.hsaco ]
++ [ -e plan/code/step_advance.hsaco ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-0.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-0.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-1.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-1.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-10.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-10.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-11.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-11.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-12.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-12.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-13.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-13.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-14.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-14.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-15.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-15.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-16.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-16.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-17.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-17.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-18.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-18.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-19.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-19.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-2.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-2.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-20.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-20.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-21.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-21.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-22.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-22.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-23.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-23.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-24.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-24.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-25.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-25.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-26.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-26.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-27.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-27.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-28.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-28.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-29.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-29.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-3.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-3.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-30.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-30.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-31.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-31.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-32.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-32.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-33.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-33.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-34.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-34.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-35.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-35.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-36.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-36.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-37.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-37.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-38.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-38.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-39.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-39.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-4.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-4.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-40.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-40.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-41.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-41.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-42.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-42.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-43.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-43.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-44.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-44.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-45.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-45.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-46.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-46.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-47.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-47.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-48.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-48.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-49.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-49.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-5.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-5.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-50.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-50.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-51.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-51.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-52.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-52.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-53.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-53.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-54.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-54.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-55.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-55.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-56.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-56.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-57.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-57.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-58.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-58.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-59.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-59.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-6.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-6.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-60.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-60.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-61.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-61.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-62.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-62.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-63.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-63.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-7.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-7.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-8.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-8.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/layers-9.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/layers-9.safetensors ]
++ [ -e plan//tmp/qwen3.8-27b-fp8/outside.safetensors ]
++ [ -e /tmp/qwen3.8-27b-fp8/outside.safetensors ]
++ run full-a real2.plan
++ date +%s.%N
++ echo RUN full-a start 1794616421.695627861
+RUN full-a start 1794616421.695627861
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan real2.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN full-a rc=0 end 1794616448.095420042
+RUN full-a rc=0 end 1794616448.095420042
++ python3 CUDApp/evidence/amd-qwen38-native-20261113/oracle/emit-plan.py CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 plan/cap286.plan --capacity=286 --fixture-json=CUDApp/evidence/amd-qwen38-native-20261113/oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 296323, "sha256": "d0cc050e5a9f911650e2f137429edb1c23db6f6e76694af19b6030b8672cdff7", "buffers": 1504, "device_bytes": 29799776712, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMIT286_RC=0
+EMIT286_RC=0
++ run cap286 cap286.plan
++ date +%s.%N
++ echo RUN cap286 start 1794616451.330788927
+RUN cap286 start 1794616451.330788927
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan cap286.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN cap286 rc=0 end 1794616474.939616919
+RUN cap286 rc=0 end 1794616474.939616919
++ CANDIDATES=gdnstate_step c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937
+rmsnorm5120 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a
++ cp -r plan/code plan/code-v1
++ echo gdnstate_step c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937
+rmsnorm5120 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a
++ read -r k sha
++ [ -n gdnstate_step ]
++ sha256sum
++ cut -d  -f1
++ [ c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937 = c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937 ]
++ cp gdnstate_step-v2.hsaco plan/code/gdnstate_step.hsaco
++ run v2-gdnstate_step real2.plan
++ date +%s.%N
++ echo RUN v2-gdnstate_step start 1794616474.944679703
+RUN v2-gdnstate_step start 1794616474.944679703
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan real2.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN v2-gdnstate_step rc=0 end 1794616500.319493101
+RUN v2-gdnstate_step rc=0 end 1794616500.319493101
++ cp plan/code-v1/gdnstate_step.hsaco plan/code/gdnstate_step.hsaco
++ read -r k sha
++ [ -n rmsnorm5120 ]
++ sha256sum
++ cut -d  -f1
++ [ 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a = 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a ]
++ cp rmsnorm5120-v2.hsaco plan/code/rmsnorm5120.hsaco
++ run v2-rmsnorm5120 real2.plan
++ date +%s.%N
++ echo RUN v2-rmsnorm5120 start 1794616500.323858846
+RUN v2-rmsnorm5120 start 1794616500.323858846
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan real2.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN v2-rmsnorm5120 rc=0 end 1794616525.295553083
+RUN v2-rmsnorm5120 rc=0 end 1794616525.295553083
++ cp plan/code-v1/rmsnorm5120.hsaco plan/code/rmsnorm5120.hsaco
++ read -r k sha
++ echo gdnstate_step c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937
+rmsnorm5120 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a
++ read -r k sha
++ [ -n gdnstate_step ]
++ cut -d  -f1
++ sha256sum
++ [ c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937 = c689890dcfd54bd782870866de9a381f9a120d9dfa90ac0f2da747661fdbb937 ]
++ cp gdnstate_step-v2.hsaco plan/code/gdnstate_step.hsaco
++ read -r k sha
++ [ -n rmsnorm5120 ]
++ cut -d  -f1
++ sha256sum
++ [ 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a = 7d63972f57c6211a77036665a2482ee58526cbc7cd79796544cb57137f69384a ]
++ cp rmsnorm5120-v2.hsaco plan/code/rmsnorm5120.hsaco
++ read -r k sha
++ run v1all cap286.plan
++ date +%s.%N
++ echo RUN v1all start 1794616525.302950002
+RUN v1all start 1794616525.302950002
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan cap286.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN v1all rc=0 end 1794616546.279256562
+RUN v1all rc=0 end 1794616546.279256562
++ rm -rf plan/code
++ mv plan/code-v1 plan/code
++ amp base 64 base-1
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan base 64
++ run base-1 v.plan
++ date +%s.%N
++ echo RUN base-1 start 1794616546.448005967
+RUN base-1 start 1794616546.448005967
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN base-1 rc=0 end 1794616566.703586021
+RUN base-1 rc=0 end 1794616566.703586021
++ rm -f plan/v.plan
++ python3 amplify-plan.py list plan/real2.plan
++ python3 -c import json,sys;print(" ".join(c for c in json.load(sys.stdin)["classes"] if c!="step_advance"))
++ CLASSES=embed5120_step rmsnorm5120 fp8gemv_b128f:10240x5120 fp8gemv_b128f:6144x5120 bf16gemv2:48x5120 gdnparams gdnconv4_step gdnqknorm gdnstate_step gdnrmsgate fp8gemv_b128f:5120x6144 residual5120 fp8gemv_b128f:17408x5120 mlpsilu fp8gemv_b128f:5120x17408 fp8gemv_b128f:12288x5120 fp8gemv_b128f:1024x5120 attn256_prep_step attn256_part_step attn256_merge_step attn256_gate bf16gemv2:248320x5120 argmax_part argmax_final
++ FIRST=empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ i=0
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF embed5120_step
++ echo embed5120_step
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF rmsnorm5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF fp8gemv_b128f:10240x5120
++ echo fp8gemv_b128f:10240x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF fp8gemv_b128f:6144x5120
++ echo fp8gemv_b128f:6144x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF bf16gemv2:48x5120
++ echo bf16gemv2:48x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF gdnparams
++ echo gdnparams
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF gdnconv4_step
++ echo gdnconv4_step
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF gdnqknorm
++ echo gdnqknorm
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF gdnstate_step
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF gdnrmsgate
++ echo gdnrmsgate
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ grep -qxF fp8gemv_b128f:5120x6144
++ tr   \n
++ echo fp8gemv_b128f:5120x6144
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF residual5120
++ echo residual5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF fp8gemv_b128f:17408x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF mlpsilu
++ echo mlpsilu
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF fp8gemv_b128f:5120x17408
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF fp8gemv_b128f:12288x5120
++ echo fp8gemv_b128f:12288x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF fp8gemv_b128f:1024x5120
++ echo fp8gemv_b128f:1024x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF attn256_prep_step
++ echo attn256_prep_step
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF attn256_part_step
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF attn256_merge_step
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF attn256_gate
++ echo attn256_gate
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ + tr   \n
+grep -qxF bf16gemv2:248320x5120
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF argmax_part
++ echo argmax_part
++ echo empty:1 empty:17408 gdnstate_step rmsnorm5120 attn256_part_step attn256_merge_step fp8gemv_b128f:17408x5120 fp8gemv_b128f:5120x17408 bf16gemv2:248320x5120
++ tr   \n
++ grep -qxF argmax_final
++ echo argmax_final
++ REST=embed5120_step
+fp8gemv_b128f:10240x5120
+fp8gemv_b128f:6144x5120
+bf16gemv2:48x5120
+gdnparams
+gdnconv4_step
+gdnqknorm
+gdnrmsgate
+fp8gemv_b128f:5120x6144
+residual5120
+mlpsilu
+fp8gemv_b128f:12288x5120
+fp8gemv_b128f:1024x5120
+attn256_prep_step
+attn256_gate
+argmax_part
+argmax_final
++ echo empty:1
++ tr : _
++ amp empty:1 64 empty_1
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan empty:1 64
++ run empty_1 v.plan
++ date +%s.%N
++ echo RUN empty_1 start 1794616566.917120490
+RUN empty_1 start 1794616566.917120490
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN empty_1 rc=0 end 1794616588.139553700
+RUN empty_1 rc=0 end 1794616588.139553700
++ rm -f plan/v.plan
++ i=1
++ [ 1 = 9 ]
++ echo empty:17408
++ tr : _
++ amp empty:17408 64 empty_17408
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan empty:17408 64
++ run empty_17408 v.plan
++ date +%s.%N
++ echo RUN empty_17408 start 1794616588.279651361
+RUN empty_17408 start 1794616588.279651361
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN empty_17408 rc=0 end 1794616609.207337807
+RUN empty_17408 rc=0 end 1794616609.207337807
++ rm -f plan/v.plan
++ i=2
++ [ 2 = 9 ]
++ echo gdnstate_step
++ tr : _
++ amp gdnstate_step 64 gdnstate_step
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan gdnstate_step 64
++ run gdnstate_step v.plan
++ date +%s.%N
++ echo RUN gdnstate_step start 1794616609.339235981
+RUN gdnstate_step start 1794616609.339235981
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN gdnstate_step rc=0 end 1794616631.163319764
+RUN gdnstate_step rc=0 end 1794616631.163319764
++ rm -f plan/v.plan
++ i=3
++ [ 3 = 9 ]
++ echo rmsnorm5120
++ tr : _
++ amp rmsnorm5120 64 rmsnorm5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan rmsnorm5120 64
++ run rmsnorm5120 v.plan
++ date +%s.%N
++ echo RUN rmsnorm5120 start 1794616631.311323214
+RUN rmsnorm5120 start 1794616631.311323214
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN rmsnorm5120 rc=0 end 1794616651.811495906
+RUN rmsnorm5120 rc=0 end 1794616651.811495906
++ rm -f plan/v.plan
++ i=4
++ [ 4 = 9 ]
++ echo attn256_part_step
++ tr : _
++ amp attn256_part_step 64 attn256_part_step
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan attn256_part_step 64
++ run attn256_part_step v.plan
++ date +%s.%N
++ echo RUN attn256_part_step start 1794616651.970161830
+RUN attn256_part_step start 1794616651.970161830
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN attn256_part_step rc=0 end 1794616673.399379550
+RUN attn256_part_step rc=0 end 1794616673.399379550
++ rm -f plan/v.plan
++ i=5
++ [ 5 = 9 ]
++ echo attn256_merge_step
++ tr : _
++ amp attn256_merge_step 64 attn256_merge_step
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan attn256_merge_step 64
++ run attn256_merge_step v.plan
++ date +%s.%N
++ echo RUN attn256_merge_step start 1794616673.536163048
+RUN attn256_merge_step start 1794616673.536163048
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN attn256_merge_step rc=0 end 1794616693.787486269
+RUN attn256_merge_step rc=0 end 1794616693.787486269
++ rm -f plan/v.plan
++ i=6
++ [ 6 = 9 ]
++ tr : _
++ echo fp8gemv_b128f:17408x5120
++ amp fp8gemv_b128f:17408x5120 64 fp8gemv_b128f_17408x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:17408x5120 64
++ run fp8gemv_b128f_17408x5120 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_17408x5120 start 1794616693.928251051
+RUN fp8gemv_b128f_17408x5120 start 1794616693.928251051
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_17408x5120 rc=0 end 1794616715.751564218
+RUN fp8gemv_b128f_17408x5120 rc=0 end 1794616715.751564218
++ rm -f plan/v.plan
++ i=7
++ [ 7 = 9 ]
++ echo fp8gemv_b128f:5120x17408
++ tr : _
++ amp fp8gemv_b128f:5120x17408 64 fp8gemv_b128f_5120x17408
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:5120x17408 64
++ run fp8gemv_b128f_5120x17408 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_5120x17408 start 1794616715.912890005
+RUN fp8gemv_b128f_5120x17408 start 1794616715.912890005
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_5120x17408 rc=0 end 1794616737.095401599
+RUN fp8gemv_b128f_5120x17408 rc=0 end 1794616737.095401599
++ rm -f plan/v.plan
++ i=8
++ [ 8 = 9 ]
++ echo bf16gemv2:248320x5120
++ tr : _
++ amp bf16gemv2:248320x5120 64 bf16gemv2_248320x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan bf16gemv2:248320x5120 64
++ run bf16gemv2_248320x5120 v.plan
++ date +%s.%N
++ echo RUN bf16gemv2_248320x5120 start 1794616737.259254060
+RUN bf16gemv2_248320x5120 start 1794616737.259254060
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN bf16gemv2_248320x5120 rc=0 end 1794616759.419470393
+RUN bf16gemv2_248320x5120 rc=0 end 1794616759.419470393
++ rm -f plan/v.plan
++ i=9
++ [ 9 = 9 ]
++ amp base 64 base-2
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan base 64
++ run base-2 v.plan
++ date +%s.%N
++ echo RUN base-2 start 1794616759.550759206
+RUN base-2 start 1794616759.550759206
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN base-2 rc=0 end 1794616780.359238145
+RUN base-2 rc=0 end 1794616780.359238145
++ rm -f plan/v.plan
++ echo embed5120_step
++ tr : _
++ amp embed5120_step 64 embed5120_step
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan embed5120_step 64
++ run embed5120_step v.plan
++ date +%s.%N
++ echo RUN embed5120_step start 1794616780.507345688
+RUN embed5120_step start 1794616780.507345688
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN embed5120_step rc=0 end 1794616801.515350983
+RUN embed5120_step rc=0 end 1794616801.515350983
++ rm -f plan/v.plan
++ i=10
++ [ 10 = 9 ]
++ echo fp8gemv_b128f:10240x5120
++ tr : _
++ amp fp8gemv_b128f:10240x5120 64 fp8gemv_b128f_10240x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:10240x5120 64
++ run fp8gemv_b128f_10240x5120 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_10240x5120 start 1794616801.664086776
+RUN fp8gemv_b128f_10240x5120 start 1794616801.664086776
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_10240x5120 rc=0 end 1794616822.419288922
+RUN fp8gemv_b128f_10240x5120 rc=0 end 1794616822.419288922
++ rm -f plan/v.plan
++ i=11
++ [ 11 = 9 ]
++ echo fp8gemv_b128f:6144x5120
++ tr : _
++ amp fp8gemv_b128f:6144x5120 64 fp8gemv_b128f_6144x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:6144x5120 64
++ run fp8gemv_b128f_6144x5120 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_6144x5120 start 1794616822.556862435
+RUN fp8gemv_b128f_6144x5120 start 1794616822.556862435
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_6144x5120 rc=0 end 1794616843.995298103
+RUN fp8gemv_b128f_6144x5120 rc=0 end 1794616843.995298103
++ rm -f plan/v.plan
++ i=12
++ [ 12 = 9 ]
++ echo bf16gemv2:48x5120
++ tr : _
++ amp bf16gemv2:48x5120 64 bf16gemv2_48x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan bf16gemv2:48x5120 64
++ run bf16gemv2_48x5120 v.plan
++ date +%s.%N
++ echo RUN bf16gemv2_48x5120 start 1794616844.132285884
+RUN bf16gemv2_48x5120 start 1794616844.132285884
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN bf16gemv2_48x5120 rc=0 end 1794616865.367267279
+RUN bf16gemv2_48x5120 rc=0 end 1794616865.367267279
++ rm -f plan/v.plan
++ i=13
++ [ 13 = 9 ]
++ echo gdnparams
++ tr : _
++ amp gdnparams 64 gdnparams
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan gdnparams 64
++ run gdnparams v.plan
++ date +%s.%N
++ echo RUN gdnparams start 1794616865.507875592
+RUN gdnparams start 1794616865.507875592
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN gdnparams rc=0 end 1794616887.067318442
+RUN gdnparams rc=0 end 1794616887.067318442
++ rm -f plan/v.plan
++ i=14
++ [ 14 = 9 ]
++ echo gdnconv4_step
++ tr : _
++ amp gdnconv4_step 64 gdnconv4_step
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan gdnconv4_step 64
++ run gdnconv4_step v.plan
++ date +%s.%N
++ echo RUN gdnconv4_step start 1794616887.264336706
+RUN gdnconv4_step start 1794616887.264336706
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN gdnconv4_step rc=0 end 1794616908.171347913
+RUN gdnconv4_step rc=0 end 1794616908.171347913
++ rm -f plan/v.plan
++ i=15
++ [ 15 = 9 ]
++ + echo gdnqknorm
+tr : _
++ amp gdnqknorm 64 gdnqknorm
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan gdnqknorm 64
++ run gdnqknorm v.plan
++ date +%s.%N
++ echo RUN gdnqknorm start 1794616908.308884704
+RUN gdnqknorm start 1794616908.308884704
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN gdnqknorm rc=0 end 1794616929.515311364
+RUN gdnqknorm rc=0 end 1794616929.515311364
++ rm -f plan/v.plan
++ i=16
++ [ 16 = 9 ]
++ echo gdnrmsgate
++ tr : _
++ amp gdnrmsgate 64 gdnrmsgate
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan gdnrmsgate 64
++ run gdnrmsgate v.plan
++ date +%s.%N
++ echo RUN gdnrmsgate start 1794616929.662660750
+RUN gdnrmsgate start 1794616929.662660750
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN gdnrmsgate rc=0 end 1794616950.815358401
+RUN gdnrmsgate rc=0 end 1794616950.815358401
++ rm -f plan/v.plan
++ i=17
++ [ 17 = 9 ]
++ + echo fp8gemv_b128f:5120x6144
+tr : _
++ amp fp8gemv_b128f:5120x6144 64 fp8gemv_b128f_5120x6144
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:5120x6144 64
++ run fp8gemv_b128f_5120x6144 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_5120x6144 start 1794616950.949765051
+RUN fp8gemv_b128f_5120x6144 start 1794616950.949765051
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_5120x6144 rc=0 end 1794616972.251575989
+RUN fp8gemv_b128f_5120x6144 rc=0 end 1794616972.251575989
++ rm -f plan/v.plan
++ i=18
++ [ 18 = 9 ]
++ echo residual5120
++ tr : _
++ amp residual5120 64 residual5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan residual5120 64
++ run residual5120 v.plan
++ date +%s.%N
++ echo RUN residual5120 start 1794616972.391545364
+RUN residual5120 start 1794616972.391545364
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN residual5120 rc=0 end 1794616993.335471084
+RUN residual5120 rc=0 end 1794616993.335471084
++ rm -f plan/v.plan
++ i=19
++ [ 19 = 9 ]
++ echo mlpsilu
++ tr : _
++ amp mlpsilu 64 mlpsilu
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan mlpsilu 64
++ run mlpsilu v.plan
++ date +%s.%N
++ echo RUN mlpsilu start 1794616993.472171608
+RUN mlpsilu start 1794616993.472171608
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN mlpsilu rc=0 end 1794617013.819504824
+RUN mlpsilu rc=0 end 1794617013.819504824
++ rm -f plan/v.plan
++ i=20
++ [ 20 = 9 ]
++ echo fp8gemv_b128f:12288x5120
++ tr : _
++ amp fp8gemv_b128f:12288x5120 64 fp8gemv_b128f_12288x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:12288x5120 64
++ run fp8gemv_b128f_12288x5120 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_12288x5120 start 1794617013.953521978
+RUN fp8gemv_b128f_12288x5120 start 1794617013.953521978
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_12288x5120 rc=0 end 1794617034.295411679
+RUN fp8gemv_b128f_12288x5120 rc=0 end 1794617034.295411679
++ rm -f plan/v.plan
++ i=21
++ [ 21 = 9 ]
++ echo fp8gemv_b128f:1024x5120
++ tr : _
++ amp fp8gemv_b128f:1024x5120 64 fp8gemv_b128f_1024x5120
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan fp8gemv_b128f:1024x5120 64
++ run fp8gemv_b128f_1024x5120 v.plan
++ date +%s.%N
++ echo RUN fp8gemv_b128f_1024x5120 start 1794617034.473699602
+RUN fp8gemv_b128f_1024x5120 start 1794617034.473699602
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN fp8gemv_b128f_1024x5120 rc=0 end 1794617054.755434618
+RUN fp8gemv_b128f_1024x5120 rc=0 end 1794617054.755434618
++ rm -f plan/v.plan
++ i=22
++ [ 22 = 9 ]
++ echo attn256_prep_step
++ tr : _
++ amp attn256_prep_step 64 attn256_prep_step
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan attn256_prep_step 64
++ run attn256_prep_step v.plan
++ date +%s.%N
++ echo RUN attn256_prep_step start 1794617054.890302317
+RUN attn256_prep_step start 1794617054.890302317
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN attn256_prep_step rc=0 end 1794617075.259735876
+RUN attn256_prep_step rc=0 end 1794617075.259735876
++ rm -f plan/v.plan
++ i=23
++ [ 23 = 9 ]
++ echo attn256_gate
++ tr : _
++ amp attn256_gate 64 attn256_gate
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan attn256_gate 64
++ run attn256_gate v.plan
++ date +%s.%N
++ echo RUN attn256_gate start 1794617075.394102933
+RUN attn256_gate start 1794617075.394102933
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN attn256_gate rc=0 end 1794617095.943432227
+RUN attn256_gate rc=0 end 1794617095.943432227
++ rm -f plan/v.plan
++ i=24
++ [ 24 = 9 ]
++ echo argmax_part
++ tr : _
++ amp argmax_part 64 argmax_part
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan argmax_part 64
++ run argmax_part v.plan
++ date +%s.%N
++ echo RUN argmax_part start 1794617096.075346062
+RUN argmax_part start 1794617096.075346062
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN argmax_part rc=0 end 1794617116.427599867
+RUN argmax_part rc=0 end 1794617116.427599867
++ rm -f plan/v.plan
++ i=25
++ [ 25 = 9 ]
++ echo argmax_final
++ tr : _
++ amp argmax_final 64 argmax_final
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan argmax_final 64
++ run argmax_final v.plan
++ date +%s.%N
++ echo RUN argmax_final start 1794617116.571483765
+RUN argmax_final start 1794617116.571483765
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN argmax_final rc=0 end 1794617141.975309704
+RUN argmax_final rc=0 end 1794617141.975309704
++ rm -f plan/v.plan
++ i=26
++ [ 26 = 9 ]
++ amp base 64 base-3
++ python3 amplify-plan.py write plan/real2.plan plan/v.plan base 64
++ run base-3 v.plan
++ date +%s.%N
++ echo RUN base-3 start 1794617142.116571731
+RUN base-3 start 1794617142.116571731
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan v.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN base-3 rc=0 end 1794617163.303367438
+RUN base-3 rc=0 end 1794617163.303367438
++ rm -f plan/v.plan
++ python3 CUDApp/evidence/amd-qwen38-native-20261113/oracle/emit-plan.py CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 plan/real2-controls.plan --controls --capacity=131072 --fixture-json=CUDApp/evidence/amd-qwen38-native-20261113/oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 36452227, "sha256": "40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMITC_RC=0
+EMITC_RC=0
++ python3 amplify-plan.py write plan/real2-controls.plan plan/c.plan base 64
++ run control c.plan
++ date +%s.%N
++ echo RUN control start 1794617166.935526932
+RUN control start 1794617166.935526932
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan c.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN control rc=0 end 1794617187.755452557
+RUN control rc=0 end 1794617187.755452557
++ run full-b real2.plan
++ date +%s.%N
++ echo RUN full-b start 1794617187.756378289
+RUN full-b start 1794617187.756378289
++ cd plan
++ PATH=/workspace/aks/plan:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin omega-launch plan real2.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco /tmp/qwen3.8-27b-fp8/layers-0.safetensors /tmp/qwen3.8-27b-fp8/layers-1.safetensors /tmp/qwen3.8-27b-fp8/layers-10.safetensors /tmp/qwen3.8-27b-fp8/layers-11.safetensors /tmp/qwen3.8-27b-fp8/layers-12.safetensors /tmp/qwen3.8-27b-fp8/layers-13.safetensors /tmp/qwen3.8-27b-fp8/layers-14.safetensors /tmp/qwen3.8-27b-fp8/layers-15.safetensors /tmp/qwen3.8-27b-fp8/layers-16.safetensors /tmp/qwen3.8-27b-fp8/layers-17.safetensors /tmp/qwen3.8-27b-fp8/layers-18.safetensors /tmp/qwen3.8-27b-fp8/layers-19.safetensors /tmp/qwen3.8-27b-fp8/layers-2.safetensors /tmp/qwen3.8-27b-fp8/layers-20.safetensors /tmp/qwen3.8-27b-fp8/layers-21.safetensors /tmp/qwen3.8-27b-fp8/layers-22.safetensors /tmp/qwen3.8-27b-fp8/layers-23.safetensors /tmp/qwen3.8-27b-fp8/layers-24.safetensors /tmp/qwen3.8-27b-fp8/layers-25.safetensors /tmp/qwen3.8-27b-fp8/layers-26.safetensors /tmp/qwen3.8-27b-fp8/layers-27.safetensors /tmp/qwen3.8-27b-fp8/layers-28.safetensors /tmp/qwen3.8-27b-fp8/layers-29.safetensors /tmp/qwen3.8-27b-fp8/layers-3.safetensors /tmp/qwen3.8-27b-fp8/layers-30.safetensors /tmp/qwen3.8-27b-fp8/layers-31.safetensors /tmp/qwen3.8-27b-fp8/layers-32.safetensors /tmp/qwen3.8-27b-fp8/layers-33.safetensors /tmp/qwen3.8-27b-fp8/layers-34.safetensors /tmp/qwen3.8-27b-fp8/layers-35.safetensors /tmp/qwen3.8-27b-fp8/layers-36.safetensors /tmp/qwen3.8-27b-fp8/layers-37.safetensors /tmp/qwen3.8-27b-fp8/layers-38.safetensors /tmp/qwen3.8-27b-fp8/layers-39.safetensors /tmp/qwen3.8-27b-fp8/layers-4.safetensors /tmp/qwen3.8-27b-fp8/layers-40.safetensors /tmp/qwen3.8-27b-fp8/layers-41.safetensors /tmp/qwen3.8-27b-fp8/layers-42.safetensors /tmp/qwen3.8-27b-fp8/layers-43.safetensors /tmp/qwen3.8-27b-fp8/layers-44.safetensors /tmp/qwen3.8-27b-fp8/layers-45.safetensors /tmp/qwen3.8-27b-fp8/layers-46.safetensors /tmp/qwen3.8-27b-fp8/layers-47.safetensors /tmp/qwen3.8-27b-fp8/layers-48.safetensors /tmp/qwen3.8-27b-fp8/layers-49.safetensors /tmp/qwen3.8-27b-fp8/layers-5.safetensors /tmp/qwen3.8-27b-fp8/layers-50.safetensors /tmp/qwen3.8-27b-fp8/layers-51.safetensors /tmp/qwen3.8-27b-fp8/layers-52.safetensors /tmp/qwen3.8-27b-fp8/layers-53.safetensors /tmp/qwen3.8-27b-fp8/layers-54.safetensors /tmp/qwen3.8-27b-fp8/layers-55.safetensors /tmp/qwen3.8-27b-fp8/layers-56.safetensors /tmp/qwen3.8-27b-fp8/layers-57.safetensors /tmp/qwen3.8-27b-fp8/layers-58.safetensors /tmp/qwen3.8-27b-fp8/layers-59.safetensors /tmp/qwen3.8-27b-fp8/layers-6.safetensors /tmp/qwen3.8-27b-fp8/layers-60.safetensors /tmp/qwen3.8-27b-fp8/layers-61.safetensors /tmp/qwen3.8-27b-fp8/layers-62.safetensors /tmp/qwen3.8-27b-fp8/layers-63.safetensors /tmp/qwen3.8-27b-fp8/layers-7.safetensors /tmp/qwen3.8-27b-fp8/layers-8.safetensors /tmp/qwen3.8-27b-fp8/layers-9.safetensors /tmp/qwen3.8-27b-fp8/outside.safetensors
++ date +%s.%N
++ echo RUN full-b rc=0 end 1794617213.395221668
+RUN full-b rc=0 end 1794617213.395221668
++ sha256sum launch-x86 plan/real2.plan plan/real2-controls.plan plan/cap286.plan amplify-plan.py card-measure.sh
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  launch-x86
+2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  plan/real2.plan
+40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e  plan/real2-controls.plan
+d0cc050e5a9f911650e2f137429edb1c23db6f6e76694af19b6030b8672cdff7  plan/cap286.plan
+288534d69dbcec98bf8d793fcf8de62818e3f0183a99a3a508fea0f548f8b973  amplify-plan.py
+5e36127b59ee8ec8a9161e5fd04dc2b0578889c22a37004edc5ae02c82403b07  card-measure.sh
++ echo MEASURE_DONE
+MEASURE_DONE
+FIN_DONE

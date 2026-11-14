@@ -1,0 +1,28 @@
+07f700e293baeaf3cd4240c3df1a948c4403f16961ea7979e86c8d6a9f8fd466  layers-0.safetensors
+302f9af90bb683a8be9e96d124b470a2eddee6612c95c39a8e93f26eb654563d  layers-3.safetensors
+ACCEPT batch 1 rc=0
+PASS checkpoint-17408-5120 M=17408 K=5120 rows=[0, 1, 127, 128, 8704, 17407] overdispatch=17408 all-memory-byte-equal
+PASS checkpoint-1024-5120 M=1024 K=5120 rows=[0, 1, 127, 128, 512, 1023] overdispatch=1024 all-memory-byte-equal
+PASS checkpoint-12288-5120 M=12288 K=5120 rows=[0, 1, 127, 128, 6144, 12287] overdispatch=12288 all-memory-byte-equal
+CONTROL per-row-scale CAUGHT exact and v11 tolerance mismatch, executor exit=0
+CONTROL transposed-scale CAUGHT exact and v11 tolerance mismatch, executor exit=0
+CONTROL no-tail-block CAUGHT exact and v11 tolerance mismatch, executor exit=0
+CONTROL short-kernarg CAUGHT exit=68
+CONTROL short-W CAUGHT exit=68
+CONTROL short-x CAUGHT exit=68
+CONTROL short-scale_inv CAUGHT exit=68
+CONTROL short-y CAUGHT exit=68
+PASS fp8gemv_b128f cases=27 controls=8 hardware=NOT_RUN performance=NOT_RUN
+ACCEPT batch 2 rc=0
+PASS checkpoint-17408-5120 M=17408 K=5120 rows=[0, 1, 127, 128, 8704, 17407] overdispatch=17408 all-memory-byte-equal
+PASS checkpoint-1024-5120 M=1024 K=5120 rows=[0, 1, 127, 128, 512, 1023] overdispatch=1024 all-memory-byte-equal
+PASS checkpoint-12288-5120 M=12288 K=5120 rows=[0, 1, 127, 128, 6144, 12287] overdispatch=12288 all-memory-byte-equal
+CONTROL per-row-scale CAUGHT exact and v11 tolerance mismatch, executor exit=0
+CONTROL transposed-scale CAUGHT exact and v11 tolerance mismatch, executor exit=0
+CONTROL no-tail-block CAUGHT exact and v11 tolerance mismatch, executor exit=0
+CONTROL short-kernarg CAUGHT exit=68
+CONTROL short-W CAUGHT exit=68
+CONTROL short-x CAUGHT exit=68
+CONTROL short-scale_inv CAUGHT exit=68
+CONTROL short-y CAUGHT exit=68
+PASS fp8gemv_b128f cases=27 controls=8 hardware=NOT_RUN performance=NOT_RUN

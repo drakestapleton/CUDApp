@@ -1,0 +1,10 @@
+ERROR backward branch to label 1 (loop): linear scan not sound
+ERROR forward branch to label 2 skips a memory instruction or wait
+ERROR backward branch to label 3 (loop): linear scan not sound
+ERROR forward branch to label 8 skips a memory instruction or wait
+ERROR forward branch to label 9 skips a memory instruction or wait
+ERROR forward branch to label 10 skips a memory instruction or wait
+ERROR backward branch to label 1 (loop): linear scan not sound
+ERROR backward branch to label 2 (loop): linear scan not sound
+WAITCHECK FAIL peak_outstanding=12 max_vgpr=51 declared=56 errors=8
+v2b1 exit=1

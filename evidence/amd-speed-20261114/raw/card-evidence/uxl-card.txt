@@ -1,0 +1,44 @@
+2026-11-13T19:18:35Z
+  ISA Info:                
+*******                  
+Agent 3                  
+*******                  
+  Name:                    gfx942                             
+  Uuid:                    GPU-2fc7ece477638043               
+  Marketing Name:          AMD Instinct MI300X VF             
+  Vendor Name:             AMD                                
+  Feature:                 KERNEL_DISPATCH                    
+  Profile:                 BASE_PROFILE                       
+  Float Round Mode:        NEAR                               
+  Max Queue Number:        128(0x80)                          
+  Queue Min Size:          64(0x40)                           
+  Queue Max Size:          131072(0x20000)                    
+  Queue Type:              MULTI                              
+  Node:                    2                                  
+  Device Type:             GPU                                
+  Cache Info:              
+    L1:                      32(0x20) KB                        
+
+
+============================ ROCm System Management Interface ============================
+====================================== Product Info ======================================
+GPU[0]		: Card Series: 		AMD Instinct MI300X VF
+GPU[0]		: Card Model: 		0x74b5
+GPU[0]		: Card Vendor: 		Advanced Micro Devices, Inc. [AMD/ATI]
+GPU[0]		: Card SKU: 		M3000108
+GPU[0]		: Subsystem ID: 	0x74a1
+GPU[0]		: Device Rev: 		0x00
+GPU[0]		: Node ID: 		6
+GPU[0]		: GUID: 		36258
+GPU[0]		: GFX Version: 		gfx942
+==========================================================================================
+================================== End of ROCm SMI Log ===================================
+
+
+============================ ROCm System Management Interface ============================
+================================== Memory Usage (Bytes) ==================================
+GPU[0]		: VRAM Total Memory (B): 205822885888
+GPU[0]		: VRAM Total Used Memory (B): 299687936
+==========================================================================================
+================================== End of ROCm SMI Log ===================================
+jupyter-user-261113185025-46d1b9c5

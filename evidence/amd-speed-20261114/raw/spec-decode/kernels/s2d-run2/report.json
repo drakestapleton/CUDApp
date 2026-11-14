@@ -1,0 +1,117 @@
+{
+ "schema": "spec-decode-s2d-v1",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "R": [
+  2,
+  3,
+  8
+ ],
+ "hardware": "NOT_RUN",
+ "kernels": {
+  "residual5120_y2": {
+   "object_sha256": "d5da743c3e0290211bde9dbcd5e863533a97b6155ec0458a2faf2578843c6892",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 1282,
+   "ok": true
+  },
+  "residual5120_y3": {
+   "object_sha256": "0cc5accd701e6228567aab70d99b79e47f78fe2bb36f77baadef0b76fbb73c1c",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 1335,
+   "ok": true
+  },
+  "residual5120_y8": {
+   "object_sha256": "94223228f5bab329116bf2e5579d3c1ea93a872e2e7e5dc467bbab0e6dc6e31a",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 1539,
+   "ok": true
+  },
+  "attn256_gate_y2": {
+   "object_sha256": "faa028af145e802e3db6833ef38cd6e97b5ffaa35c1c9259957a123b5cbf4439",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 12287,
+   "ok": true
+  },
+  "attn256_gate_y3": {
+   "object_sha256": "9654708fd244e87a845c80deb4290f0e5b681f05218ce8e4bbe7b629a57d525f",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 18432,
+   "ok": true
+  },
+  "attn256_gate_y8": {
+   "object_sha256": "b270a1075ef30eaf41d3aa6903ae369a90402668836c182ca964eb487ef5c393",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 49138,
+   "ok": true
+  },
+  "gdnrmsgate_y2": {
+   "object_sha256": "6353449a0e06c34154cceb841927c391548eaa059a36b3c7c7a62b1921c39e23",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 2608,
+   "ok": true
+  },
+  "gdnrmsgate_y3": {
+   "object_sha256": "c1a2f657d84610025f3faf805c22bb4b7ac6f309bf518abf4e73930ee0283c95",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 3191,
+   "ok": true
+  },
+  "gdnrmsgate_y8": {
+   "object_sha256": "91efc06abb0bc0d5017c47a5019beff7ee4b8b1e699f3061bd487262604f7b02",
+   "memory_equal_to_R_one_row_dispatches": true,
+   "finite": true,
+   "every_row_written": true,
+   "distinct_output_words": 3803,
+   "ok": true
+  }
+ },
+ "mutants": [
+  {
+   "kernel": "residual5120",
+   "mutant": "stride-short",
+   "caught": true
+  },
+  {
+   "kernel": "residual5120",
+   "mutant": "guard-one",
+   "caught": true
+  },
+  {
+   "kernel": "attn256_gate",
+   "mutant": "stride-short",
+   "caught": true
+  },
+  {
+   "kernel": "attn256_gate",
+   "mutant": "guard-one",
+   "caught": true
+  },
+  {
+   "kernel": "gdnrmsgate",
+   "mutant": "stride-short",
+   "caught": true
+  },
+  {
+   "kernel": "gdnrmsgate",
+   "mutant": "guard-one",
+   "caught": true
+  }
+ ],
+ "verdict": "PASS"
+}

@@ -1,0 +1,297 @@
+OMEGA step open_kfd ok errno=0 phase=before detail=0
+OMEGA step open_kfd ok errno=0 phase=after detail=0
+OMEGA step version ok errno=0 phase=before detail=0
+OMEGA step version ok errno=0 phase=after detail=0
+OMEGA step topology ok errno=0 phase=before detail=0
+OMEGA step topology_node ok errno=0 phase=before detail=7
+OMEGA step topology_node fail errno=1 phase=after detail=7
+OMEGA step topology_node ok errno=0 phase=before detail=5
+OMEGA step topology_node ok errno=0 phase=after detail=5
+OMEGA topology selected node=5 gpu_id=24497 render_minor=152
+OMEGA step topology ok errno=0 phase=before detail=5
+OMEGA step topology ok errno=0 phase=after detail=5
+OMEGA step render_open ok errno=0 phase=before detail=152
+OMEGA step render_open ok errno=0 phase=after detail=152
+OMEGA step acquire_vm ok errno=0 phase=before detail=24497
+OMEGA step acquire_vm ok errno=0 phase=after detail=24497
+OMEGA step memory_reserve ok errno=0 phase=before detail=1
+OMEGA step memory_reserve ok errno=0 phase=after detail=1
+OMEGA step memory_alloc ok errno=0 phase=before detail=1
+OMEGA step memory_alloc ok errno=0 phase=after detail=1
+OMEGA step memory_map ok errno=0 phase=before detail=1
+OMEGA step memory_map ok errno=0 phase=after detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=1
+OMEGA step memory_reserve ok errno=0 phase=before detail=8
+OMEGA step memory_reserve ok errno=0 phase=after detail=8
+OMEGA step memory_alloc ok errno=0 phase=before detail=8
+OMEGA step memory_alloc ok errno=0 phase=after detail=8
+OMEGA step memory_map ok errno=0 phase=before detail=8
+OMEGA step memory_map ok errno=0 phase=after detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=8
+OMEGA step memory_reserve ok errno=0 phase=before detail=9
+OMEGA step memory_reserve ok errno=0 phase=after detail=9
+OMEGA step memory_alloc ok errno=0 phase=before detail=9
+OMEGA step memory_alloc ok errno=0 phase=after detail=9
+OMEGA step memory_map ok errno=0 phase=before detail=9
+OMEGA step memory_map ok errno=0 phase=after detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=9
+OMEGA step memory_reserve ok errno=0 phase=before detail=10
+OMEGA step memory_reserve ok errno=0 phase=after detail=10
+OMEGA step memory_alloc ok errno=0 phase=before detail=10
+OMEGA step memory_alloc ok errno=0 phase=after detail=10
+OMEGA step memory_map ok errno=0 phase=before detail=10
+OMEGA step memory_map ok errno=0 phase=after detail=10
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=10
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=10
+OMEGA step memory_apertures ok errno=0 phase=before detail=24497
+OMEGA step memory_apertures ok errno=0 phase=after detail=24497
+OMEGA step memory_reserve ok errno=0 phase=before detail=3
+OMEGA step memory_reserve ok errno=0 phase=after detail=3
+OMEGA step memory_alloc ok errno=0 phase=before detail=3
+OMEGA step memory_alloc ok errno=0 phase=after detail=3
+OMEGA step memory_map ok errno=0 phase=before detail=3
+OMEGA step memory_map ok errno=0 phase=after detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=3
+OMEGA step memory_reserve ok errno=0 phase=before detail=4
+OMEGA step memory_reserve ok errno=0 phase=after detail=4
+OMEGA step memory_alloc ok errno=0 phase=before detail=4
+OMEGA step memory_alloc ok errno=0 phase=after detail=4
+OMEGA step memory_map ok errno=0 phase=before detail=4
+OMEGA step memory_map ok errno=0 phase=after detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=4
+OMEGA step memory_reserve ok errno=0 phase=before detail=5
+OMEGA step memory_reserve ok errno=0 phase=after detail=5
+OMEGA step memory_alloc ok errno=0 phase=before detail=5
+OMEGA step memory_alloc ok errno=0 phase=after detail=5
+OMEGA step memory_map ok errno=0 phase=before detail=5
+OMEGA step memory_map ok errno=0 phase=after detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=5
+OMEGA step memory_reserve ok errno=0 phase=before detail=6
+OMEGA step memory_reserve ok errno=0 phase=after detail=6
+OMEGA step memory_alloc ok errno=0 phase=before detail=6
+OMEGA step memory_alloc ok errno=0 phase=after detail=6
+OMEGA step memory_map ok errno=0 phase=before detail=6
+OMEGA step memory_map ok errno=0 phase=after detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=6
+OMEGA step memory_reserve ok errno=0 phase=before detail=7
+OMEGA step memory_reserve ok errno=0 phase=after detail=7
+OMEGA step memory_alloc ok errno=0 phase=before detail=7
+OMEGA step memory_alloc ok errno=0 phase=after detail=7
+OMEGA step memory_map ok errno=0 phase=before detail=7
+OMEGA step memory_map ok errno=0 phase=after detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=7
+OMEGA step queue_create ok errno=0 phase=before detail=24497
+OMEGA step queue_create ok errno=0 phase=after detail=24497
+OMEGA step doorbell_map ok errno=0 phase=before detail=15558881181402398720
+OMEGA step doorbell_map ok errno=0 phase=after detail=15558881181402398720
+OMEGA_PLAN ready
+OMEGA_PHASE 0 d1=8318 dn=8318 sig=26191 tok=29644
+OMEGA_STEP 0 tok=0 us=26
+OMEGA_PHASE 1 d1=1042 dn=1042 sig=15393 tok=15761
+OMEGA_STEP 1 tok=0 us=15
+OMEGA_PHASE 2 d1=970 dn=970 sig=11150 tok=11493
+OMEGA_STEP 2 tok=0 us=11
+OMEGA_PHASE 3 d1=963 dn=963 sig=7047 tok=7395
+OMEGA_STEP 3 tok=0 us=7
+OMEGA_PHASE 4 d1=968 dn=968 sig=7033 tok=7374
+OMEGA_STEP 4 tok=0 us=7
+OMEGA_PHASE 5 d1=972 dn=972 sig=7274 tok=7624
+OMEGA_STEP 5 tok=0 us=7
+OMEGA_PHASE 6 d1=946 dn=946 sig=7036 tok=7379
+OMEGA_STEP 6 tok=0 us=7
+OMEGA_PHASE 7 d1=945 dn=945 sig=7029 tok=7362
+OMEGA_STEP 7 tok=0 us=7
+OMEGA_PHASE 8 d1=947 dn=947 sig=6971 tok=7308
+OMEGA_STEP 8 tok=0 us=6
+OMEGA_PHASE 9 d1=936 dn=936 sig=6951 tok=7292
+OMEGA_STEP 9 tok=0 us=6
+OMEGA_PHASE 10 d1=965 dn=965 sig=7314 tok=7650
+OMEGA_STEP 10 tok=0 us=7
+OMEGA_PHASE 11 d1=936 dn=936 sig=7025 tok=7363
+OMEGA_STEP 11 tok=0 us=7
+OMEGA_PHASE 12 d1=947 dn=947 sig=7042 tok=7375
+OMEGA_STEP 12 tok=0 us=7
+OMEGA_PHASE 13 d1=936 dn=936 sig=7202 tok=7542
+OMEGA_STEP 13 tok=0 us=7
+OMEGA_PHASE 14 d1=953 dn=953 sig=6877 tok=7221
+OMEGA_STEP 14 tok=0 us=6
+OMEGA_PHASE 15 d1=942 dn=942 sig=7020 tok=7362
+OMEGA_STEP 15 tok=0 us=7
+OMEGA_PHASE 16 d1=970 dn=970 sig=7057 tok=7402
+OMEGA_STEP 16 tok=0 us=7
+OMEGA_PHASE 17 d1=946 dn=946 sig=7084 tok=7417
+OMEGA_STEP 17 tok=0 us=7
+OMEGA_PHASE 18 d1=948 dn=948 sig=7037 tok=7375
+OMEGA_STEP 18 tok=0 us=7
+OMEGA_PHASE 19 d1=944 dn=944 sig=7249 tok=7594
+OMEGA_STEP 19 tok=0 us=7
+OMEGA_PHASE 20 d1=947 dn=947 sig=7059 tok=7403
+OMEGA_STEP 20 tok=0 us=7
+OMEGA_PHASE 21 d1=962 dn=962 sig=7036 tok=7358
+OMEGA_STEP 21 tok=0 us=7
+OMEGA_PHASE 22 d1=950 dn=950 sig=7030 tok=7370
+OMEGA_STEP 22 tok=0 us=7
+OMEGA_PHASE 23 d1=946 dn=946 sig=7030 tok=7370
+OMEGA_STEP 23 tok=0 us=7
+OMEGA_PHASE 24 d1=954 dn=954 sig=6808 tok=7148
+OMEGA_STEP 24 tok=0 us=6
+OMEGA_PHASE 25 d1=935 dn=935 sig=7014 tok=7355
+OMEGA_STEP 25 tok=0 us=7
+OMEGA_PHASE 26 d1=957 dn=957 sig=7044 tok=7388
+OMEGA_STEP 26 tok=0 us=7
+OMEGA_PHASE 27 d1=951 dn=951 sig=10708 tok=11047
+OMEGA_STEP 27 tok=0 us=10
+OMEGA_PHASE 28 d1=955 dn=955 sig=7075 tok=7411
+OMEGA_STEP 28 tok=0 us=7
+OMEGA_PHASE 29 d1=945 dn=945 sig=6815 tok=7158
+OMEGA_STEP 29 tok=0 us=6
+OMEGA_PHASE 30 d1=944 dn=944 sig=6800 tok=7135
+OMEGA_STEP 30 tok=0 us=6
+OMEGA_PHASE 31 d1=938 dn=938 sig=7009 tok=7342
+OMEGA_STEP 31 tok=0 us=7
+OMEGA_PHASE 32 d1=984 dn=984 sig=6867 tok=7198
+OMEGA_STEP 32 tok=0 us=6
+OMEGA_PHASE 33 d1=941 dn=941 sig=7018 tok=7361
+OMEGA_STEP 33 tok=0 us=7
+OMEGA_PHASE 34 d1=945 dn=945 sig=7256 tok=7599
+OMEGA_STEP 34 tok=0 us=7
+OMEGA_PHASE 35 d1=952 dn=952 sig=7004 tok=7339
+OMEGA_STEP 35 tok=0 us=7
+OMEGA_PHASE 36 d1=939 dn=939 sig=7033 tok=7372
+OMEGA_STEP 36 tok=0 us=7
+OMEGA_PHASE 37 d1=953 dn=953 sig=7025 tok=7365
+OMEGA_STEP 37 tok=0 us=7
+OMEGA_PHASE 38 d1=941 dn=941 sig=7016 tok=7350
+OMEGA_STEP 38 tok=0 us=7
+OMEGA_PHASE 39 d1=995 dn=995 sig=7011 tok=7347
+OMEGA_STEP 39 tok=0 us=7
+OMEGA_PHASE 40 d1=954 dn=954 sig=6753 tok=7098
+OMEGA_STEP 40 tok=0 us=6
+OMEGA_PHASE 41 d1=958 dn=958 sig=6762 tok=7101
+OMEGA_STEP 41 tok=0 us=6
+OMEGA_PHASE 42 d1=942 dn=942 sig=6801 tok=7149
+OMEGA_STEP 42 tok=0 us=6
+OMEGA_PHASE 43 d1=954 dn=954 sig=6739 tok=7074
+OMEGA_STEP 43 tok=0 us=6
+OMEGA_PHASE 44 d1=955 dn=955 sig=6806 tok=7140
+OMEGA_STEP 44 tok=0 us=6
+OMEGA_PHASE 45 d1=940 dn=940 sig=6772 tok=7118
+OMEGA_STEP 45 tok=0 us=6
+OMEGA_PHASE 46 d1=940 dn=940 sig=6758 tok=7093
+OMEGA_STEP 46 tok=0 us=6
+OMEGA_PHASE 47 d1=938 dn=938 sig=6884 tok=7224
+OMEGA_STEP 47 tok=0 us=6
+OMEGA_PHASE 48 d1=977 dn=977 sig=6729 tok=7065
+OMEGA_STEP 48 tok=0 us=6
+OMEGA_PHASE 49 d1=941 dn=941 sig=6894 tok=7234
+OMEGA_STEP 49 tok=0 us=6
+OMEGA_PHASE 50 d1=937 dn=937 sig=6910 tok=7247
+OMEGA_STEP 50 tok=0 us=6
+OMEGA_PHASE 51 d1=973 dn=973 sig=6933 tok=7263
+OMEGA_STEP 51 tok=0 us=6
+OMEGA_PHASE 52 d1=971 dn=971 sig=6946 tok=7276
+OMEGA_STEP 52 tok=0 us=6
+OMEGA_PHASE 53 d1=939 dn=939 sig=6912 tok=7252
+OMEGA_STEP 53 tok=0 us=6
+OMEGA_PHASE 54 d1=960 dn=960 sig=6935 tok=7266
+OMEGA_STEP 54 tok=0 us=6
+OMEGA_PHASE 55 d1=935 dn=935 sig=6939 tok=7278
+OMEGA_STEP 55 tok=0 us=6
+OMEGA_PHASE 56 d1=957 dn=957 sig=6738 tok=7077
+OMEGA_STEP 56 tok=0 us=6
+OMEGA_PHASE 57 d1=925 dn=925 sig=6652 tok=6986
+OMEGA_STEP 57 tok=0 us=6
+OMEGA_PHASE 58 d1=949 dn=949 sig=6700 tok=7032
+OMEGA_STEP 58 tok=0 us=6
+OMEGA_PHASE 59 d1=939 dn=939 sig=6685 tok=7027
+OMEGA_STEP 59 tok=0 us=6
+OMEGA_PHASE 60 d1=932 dn=932 sig=6859 tok=7199
+OMEGA_STEP 60 tok=0 us=6
+OMEGA_PHASE 61 d1=946 dn=946 sig=6737 tok=7077
+OMEGA_STEP 61 tok=0 us=6
+OMEGA_PHASE 62 d1=928 dn=928 sig=6878 tok=7206
+OMEGA_STEP 62 tok=0 us=6
+OMEGA_PHASE 63 d1=959 dn=959 sig=6729 tok=7067
+OMEGA_STEP 63 tok=0 us=6
+OMEGA_PHASE 64 d1=966 dn=966 sig=6908 tok=7236
+OMEGA_STEP 64 tok=0 us=6
+OMEGA_PHASE 65 d1=937 dn=937 sig=6884 tok=7211
+OMEGA_STEP 65 tok=0 us=6
+OMEGA_PHASE 66 d1=950 dn=950 sig=6885 tok=7225
+OMEGA_STEP 66 tok=0 us=6
+OMEGA_PHASE 67 d1=967 dn=967 sig=6907 tok=7233
+OMEGA_STEP 67 tok=0 us=6
+OMEGA_PHASE 68 d1=938 dn=938 sig=6890 tok=7220
+OMEGA_STEP 68 tok=0 us=6
+OMEGA_PHASE 69 d1=981 dn=981 sig=6774 tok=7114
+OMEGA_STEP 69 tok=0 us=6
+OMEGA_PHASE 70 d1=938 dn=938 sig=6877 tok=7200
+OMEGA_STEP 70 tok=0 us=6
+OMEGA_PHASE 71 d1=936 dn=936 sig=6715 tok=7050
+OMEGA_STEP 71 tok=0 us=6
+OMEGA_PHASE 72 d1=943 dn=943 sig=6735 tok=7075
+OMEGA_STEP 72 tok=0 us=6
+OMEGA_PHASE 73 d1=954 dn=954 sig=6943 tok=7277
+OMEGA_STEP 73 tok=0 us=6
+OMEGA_PHASE 74 d1=942 dn=942 sig=6718 tok=7053
+OMEGA_STEP 74 tok=0 us=6
+OMEGA_PHASE 75 d1=944 dn=944 sig=6726 tok=7061
+OMEGA_STEP 75 tok=0 us=6
+OMEGA_PHASE 76 d1=966 dn=966 sig=6715 tok=7054
+OMEGA_STEP 76 tok=0 us=6
+OMEGA_PHASE 77 d1=971 dn=971 sig=6750 tok=7087
+OMEGA_STEP 77 tok=0 us=6
+OMEGA_PHASE 78 d1=949 dn=949 sig=6939 tok=7277
+OMEGA_STEP 78 tok=0 us=6
+OMEGA_PHASE 79 d1=945 dn=945 sig=6945 tok=7281
+OMEGA_STEP 79 tok=0 us=6
+OMEGA_PHASE 80 d1=974 dn=974 sig=6920 tok=7247
+OMEGA_STEP 80 tok=0 us=6
+OMEGA_PHASE 81 d1=940 dn=940 sig=6922 tok=7256
+OMEGA_STEP 81 tok=0 us=6
+OMEGA_PHASE 82 d1=939 dn=939 sig=6952 tok=7279
+OMEGA_STEP 82 tok=0 us=6
+OMEGA_PHASE 83 d1=940 dn=940 sig=6874 tok=7210
+OMEGA_STEP 83 tok=0 us=6
+OMEGA_PHASE 84 d1=937 dn=937 sig=6912 tok=7238
+OMEGA_STEP 84 tok=0 us=6
+OMEGA_PHASE 85 d1=940 dn=940 sig=6905 tok=7234
+OMEGA_STEP 85 tok=0 us=6
+OMEGA_PHASE 86 d1=941 dn=941 sig=6927 tok=7256
+OMEGA_STEP 86 tok=0 us=6
+OMEGA_PHASE 87 d1=987 dn=987 sig=6958 tok=7295
+OMEGA_STEP 87 tok=0 us=6
+OMEGA_PHASE 88 d1=937 dn=937 sig=6745 tok=7083
+OMEGA_STEP 88 tok=0 us=6
+OMEGA_PHASE 89 d1=932 dn=932 sig=6680 tok=7015
+OMEGA_STEP 89 tok=0 us=6
+OMEGA_PHASE 90 d1=962 dn=962 sig=6959 tok=7284
+OMEGA_STEP 90 tok=0 us=6
+OMEGA_PHASE 91 d1=939 dn=939 sig=6712 tok=7049
+OMEGA_STEP 91 tok=0 us=6
+OMEGA_PHASE 92 d1=950 dn=950 sig=6702 tok=7031
+OMEGA_STEP 92 tok=0 us=6
+OMEGA_PHASE 93 d1=924 dn=924 sig=6875 tok=7211
+OMEGA_STEP 93 tok=0 us=6
+OMEGA_PHASE 94 d1=943 dn=943 sig=6696 tok=7035
+OMEGA_STEP 94 tok=0 us=6
+OMEGA_PHASE 95 d1=955 dn=955 sig=6870 tok=7196
+OMEGA_STEP 95 tok=0 us=6
+OMEGA_PHASE 96 d1=973 dn=973 sig=6967 tok=7305
+OMEGA_STEP 96 tok=0 us=6
+OMEGA_PHASE 97 d1=948 dn=948 sig=6736 tok=7075
+OMEGA_STEP 97 tok=0 us=6
+OMEGA_PHASE 98 d1=991 dn=991 sig=6935 tok=7267
+OMEGA_STEP 98 tok=0 us=6
+OMEGA_PHASE 99 d1=966 dn=966 sig=6917 tok=7254
+OMEGA_STEP 99 tok=0 us=6
+OMEGA_PLAN complete
+OMEGA_PLAN ids=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]

@@ -1,0 +1,505 @@
+{
+ "schema": "spec-decode-s3c-v1",
+ "hardware": "NOT_RUN",
+ "plans_sha256sums": "548ce894220553820c95914d031b556571d4a6b931426fb168b6575faecc183d  plans/s3c/c24-plain-ctl/plan.plan\n85a9fd9de051af477d8126c24e3811f6765d9bc9fe66e7ae59902ee556aa969f  plans/s3c/c24-plain/plan.plan\nba7c323d93dfdab70859a70c2835d21199e87a5aafa1dd661a4e557b524f91b0  plans/s3c/c24-r2-ctl/plan.plan\n84f5db1eac52bfff56b14ed6787832dfae0682b068dab3c21d87c3720df45372  plans/s3c/c24-r2/plan.plan\n5354501aea4381b2f3bf95afdc485c3f1276c7447ae06e96abab249920227c3e  plans/s3c/c24-r2h/plan.plan\n6d7f08a32bb4f8be7892e122ad2e390154032554b7e8e69cf53695aaa05375bc  plans/s3c/c24-r3-ctl/plan.plan\n20f304e9974213c55f92771aa0e09c608c943f3eafab74925c4da53ed9454f3a  plans/s3c/c24-r3/plan.plan\n40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e  plans/s3c/lh-plain-ctl/plan.plan\n2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  plans/s3c/lh-plain/plan.plan\nc9689280bcda787d004ba1df38f19d20c52e4d0f10aea82fe0549f1c57039b43  plans/s3c/lh-r2-ctl/plan.plan\n2665179baef2453c13d5dd3c6a9cd2674443ef9f0217a50f93a92dcea1fbca65  plans/s3c/lh-r2/plan.plan\n852c9420f00e11f48b5c3534f59f4f46862ee2d9aa6a70afb5f9e729940d9e69  plans/s3c/lh-r2h-ctl/plan.plan\nbda32b26b5a07d1ef8a0f4857b34de6a04524cbcd0474da07337a876a4c0f9ec  plans/s3c/lh-r2h/plan.plan\nd4d6afd7b7ce3f84f430b0404ef067be27fbf274e49a124dedc497c337cd1498  plans/s3c/lh-r3-ctl/plan.plan\nd5693aca31141c8d066ecc893075a550a44a7c520b1a4f0dc16dab222733f694  plans/s3c/lh-r3-mut-banks/plan.plan\n4f21391420f02afe679408e36574bc63366fc4fcb48b63ea7758f90aa41b86b4  plans/s3c/lh-r3-mut-embed0/plan.plan\n9a030cdc2677194f016411e9a40e8e6b0d5e5de2b3070d6c875bf5327953f997  plans/s3c/lh-r3-mut-partfirst/plan.plan\nc650df92d3063e000cde710ec49fbc0d419adc2c0e7ba264dbe19db0dd3bef6b  plans/s3c/lh-r3-mut-pos0/plan.plan\nc547d38ed9aa865e81d25107a390e693502f5e008dc5de9672de88212a4858ef  plans/s3c/lh-r3/plan.plan\n",
+ "rows": [
+  {
+   "label": "lh plain runs",
+   "verdict": "PASS",
+   "required": true,
+   "ids": 256
+  },
+  {
+   "label": "lh-plain-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "lh-r2-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "lh-r3-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "lh-r2h-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "lh R=2 drafter=plan ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 drafter=perfect ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 128,
+   "n_hist": {
+    "2": 128
+   },
+   "tokens_per_pass": 2.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 drafter=wrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 drafter=firstwrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 drafter=oracle:0.3:1 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 152,
+   "n_hist": {
+    "1": 48,
+    "2": 104
+   },
+   "tokens_per_pass": 1.6842,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 drafter=oracle:0.6:2 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 184,
+   "n_hist": {
+    "1": 112,
+    "2": 72
+   },
+   "tokens_per_pass": 1.3913,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=3 drafter=plan ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=3 drafter=perfect ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 86,
+   "n_hist": {
+    "1": 1,
+    "3": 85
+   },
+   "tokens_per_pass": 2.9767,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=3 drafter=wrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=3 drafter=firstwrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=3 drafter=oracle:0.3:1 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 117,
+   "n_hist": {
+    "1": 37,
+    "2": 21,
+    "3": 59
+   },
+   "tokens_per_pass": 2.188,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=3 drafter=oracle:0.6:2 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 158,
+   "n_hist": {
+    "1": 90,
+    "2": 38,
+    "3": 30
+   },
+   "tokens_per_pass": 1.6203,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 head drafter, injected plan, ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 256,
+   "n_hist": {
+    "1": 256
+   },
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 head drafter, injected perfect, ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 128,
+   "n_hist": {
+    "2": 128
+   },
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "lh R=2 head drafter, injected oracle:0.3:1, ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 152,
+   "n_hist": {
+    "1": 48,
+    "2": 104
+   },
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 plain runs",
+   "verdict": "PASS",
+   "required": true,
+   "ids": 24
+  },
+  {
+   "label": "c24-plain-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "c24-r2-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "c24-r3-ctl differs (altered weights)",
+   "verdict": "PASS",
+   "required": true
+  },
+  {
+   "label": "c24 R=2 drafter=plan ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 drafter=perfect ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 12,
+   "n_hist": {
+    "2": 12
+   },
+   "tokens_per_pass": 2.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 drafter=wrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 drafter=firstwrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 drafter=oracle:0.3:1 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 15,
+   "n_hist": {
+    "1": 6,
+    "2": 9
+   },
+   "tokens_per_pass": 1.6,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 drafter=oracle:0.6:2 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 16,
+   "n_hist": {
+    "1": 8,
+    "2": 8
+   },
+   "tokens_per_pass": 1.5,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=3 drafter=plan ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=3 drafter=perfect ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 8,
+   "n_hist": {
+    "3": 8
+   },
+   "tokens_per_pass": 3.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=3 drafter=wrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=3 drafter=firstwrong ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "tokens_per_pass": 1.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=3 drafter=oracle:0.3:1 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 12,
+   "n_hist": {
+    "1": 4,
+    "2": 4,
+    "3": 4
+   },
+   "tokens_per_pass": 2.0,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=3 drafter=oracle:0.6:2 ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 14,
+   "n_hist": {
+    "1": 8,
+    "2": 2,
+    "3": 4
+   },
+   "tokens_per_pass": 1.7143,
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 head drafter, injected plan, ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 24,
+   "n_hist": {
+    "1": 24
+   },
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 head drafter, injected perfect, ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 12,
+   "n_hist": {
+    "2": 12
+   },
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "c24 R=2 head drafter, injected oracle:0.3:1, ids equal plain",
+   "verdict": "PASS",
+   "required": true,
+   "decode_passes": 15,
+   "n_hist": {
+    "1": 6,
+    "2": 9
+   },
+   "status": "OK",
+   "fault": null
+  },
+  {
+   "label": "MUTANT emitter pos0 caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT emitter embed0 caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    false,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT emitter banks caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT emitter partfirst caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT object spec_accept_r3 accept-all (accepts wrong drafts) caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT object spec_accept_r3 pos-unchanged caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT object spec_pos_r3 off-by-one caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT host appends R tokens caught",
+   "verdict": "PASS",
+   "required": true,
+   "caught_by": [
+    true,
+    true
+   ]
+  },
+  {
+   "label": "MUTANT object spec_accept_r3 accept-after-mismatch caught",
+   "verdict": "FAIL",
+   "required": false,
+   "caught_by": [
+    false,
+    false
+   ]
+  }
+ ],
+ "verdict": "PASS"
+}

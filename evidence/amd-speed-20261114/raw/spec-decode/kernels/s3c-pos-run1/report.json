@@ -1,0 +1,45 @@
+{
+ "schema": "spec-decode-s3c-pos-v1",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "hardware": "NOT_RUN",
+ "kernels": {
+  "spec_pos_r2": {
+   "object_sha256": "525181acf83d257058ec27c40ae514aa36370e93d5eb0b0f9ecb3f820503649a",
+   "cases": 208,
+   "mismatches": 0
+  },
+  "spec_pos_r3": {
+   "object_sha256": "76f8efbe4733bf8f398aaf1b165f536c549c1f9411d0be12d897384bf58709b2",
+   "cases": 208,
+   "mismatches": 0
+  },
+  "spec_pos_r5": {
+   "object_sha256": "b283add81f7de4ef7636871a75bea24237f8f5c38a3ffaebe600dedb6fd03353",
+   "cases": 208,
+   "mismatches": 0
+  },
+  "spec_pos_r8": {
+   "object_sha256": "abcb31c8f8c8a25aec2f8c7b55ca039ae56eaff145a59772a3c0297f176f77c0",
+   "cases": 208,
+   "mismatches": 0
+  }
+ },
+ "mutants": [
+  {
+   "mutant": "off-by-one",
+   "cases": 208,
+   "failing_cases": 208
+  },
+  {
+   "mutant": "row0-only",
+   "cases": 208,
+   "failing_cases": 208
+  },
+  {
+   "mutant": "stale-position",
+   "cases": 208,
+   "failing_cases": 208
+  }
+ ],
+ "verdict": "PASS"
+}

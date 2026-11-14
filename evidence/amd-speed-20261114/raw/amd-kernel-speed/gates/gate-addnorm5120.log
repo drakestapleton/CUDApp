@@ -1,0 +1,20 @@
+v1 object sha256 917d4cd93637d4f1244fcb8a0634749c695308cf4d0ba2cc6cb0ab4733d3ad16
+PASS v2 two builds byte-identical
+v2 object sha256 64c459c7692dd64a6d4b94eaef0c378a030634c94ace2fa1f147b2dc3014f76d
+PASS v2 code bytes equal independent LLVM 18 oracle (21188 bytes)
+PASS v2 descriptor bytes (except entry offset 16..23) equal LLVM oracle
+WAITCHECK PASS peak_outstanding=60 max_vgpr=191 declared=192 errors=0
+EXEC-COPY partial_waits=2 differing_lines=2
+CONTROL v1 loop table refused by waitcheck (ERROR backward branch to label 10 (loop): linear scan not sound)
+CONTROL v2-relaxed CAUGHT by waitcheck (WAITCHECK FAIL peak_outstanding=80 max_vgpr=191 declared=192 errors=1)
+CONTROL v2-nowait CAUGHT by waitcheck (WAITCHECK FAIL peak_outstanding=100 max_vgpr=191 declared=192 errors=1501)
+PASS seed=1 kind=random v1 0 v2 0 image f19fa2e26b70da44 identical
+PASS seed=2 kind=wide v1 0 v2 0 image 3e6c0a813768151f identical
+PASS seed=3 kind=nan v1 0 v2 0 image 2f90fc3df9ebdd51 identical
+PASS seed=4 kind=cancel v1 0 v2 0 image 7e4f2144875f91ca identical
+PASS seed=5 kind=zero v1 0 v2 0 image cb6e37a57d5de943 identical
+PASS seed=6 kind=random v1 0 v2 0 image 8e82cf68240c1578 identical
+CONTROL v2-no-one CAUGHT
+CONTROL v2-skip-store CAUGHT
+CONTROL v2-wrong-mean CAUGHT
+ADDNORM5120-V2-GATE PASS cases=6 mutants=3 fail=0

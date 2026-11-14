@@ -1,0 +1,455 @@
+2026-11-13T18:55:06Z
+Linux jupyter-user-261113185025-46d1b9c5 6.12.48+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20) x86_64 x86_64 x86_64 GNU/Linux
+0
+7.2.2
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Name:                    gfx942                             
+torch 2.10.0+rocm7.2.2.git40d237bf transformers 5.12.1 safetensors 0.7.0
+cat: /sys/class/kfd/kfd/version: No such file or directory
+crw-rw---- 1 root  991 240, 0 Nov  7 01:43 /dev/kfd
+
+/dev/dri:
+total 0
+drwxr-xr-x 2 root root      2600 Nov  7 01:43 by-path
+crw-rw---- 1 root video 226,   0 Nov  7 01:43 card0
+crw-rw---- 1 root video 226,   1 Nov  7 01:43 card1
+crw-rw---- 1 root video 226,  10 Nov  7 01:43 card10
+crw-rw---- 1 root video 226,  11 Nov  7 01:43 card11
+crw-rw---- 1 root video 226,  12 Nov  7 01:43 card12
+crw-rw---- 1 root video 226,  13 Nov  7 01:43 card13
+crw-rw---- 1 root video 226,  14 Nov  7 01:43 card14
+crw-rw---- 1 root video 226,  15 Nov  7 01:43 card15
+crw-rw---- 1 root video 226,  16 Nov  7 01:43 card16
+crw-rw---- 1 root video 226,  17 Nov  7 01:43 card17
+crw-rw---- 1 root video 226,  18 Nov  7 01:43 card18
+crw-rw---- 1 root video 226,  19 Nov  7 01:43 card19
+crw-rw---- 1 root video 226,   2 Nov  7 01:43 card2
+crw-rw---- 1 root video 226,  20 Nov  7 01:43 card20
+crw-rw---- 1 root video 226,  21 Nov  7 01:43 card21
+crw-rw---- 1 root video 226,  22 Nov  7 01:43 card22
+crw-rw---- 1 root video 226,  23 Nov  7 01:43 card23
+crw-rw---- 1 root video 226,  24 Nov  7 01:43 card24
+crw-rw---- 1 root video 226,  25 Nov  7 01:43 card25
+crw-rw---- 1 root video 226,  26 Nov  7 01:43 card26
+crw-rw---- 1 root video 226,  27 Nov  7 01:43 card27
+crw-rw---- 1 root video 226,  28 Nov  7 01:43 card28
+crw-rw---- 1 root video 226,  29 Nov  7 01:43 card29
+crw-rw---- 1 root video 226,   3 Nov  7 01:43 card3
+crw-rw---- 1 root video 226,  30 Nov  7 01:43 card30
+crw-rw---- 1 root video 226,  31 Nov  7 01:43 card31
+crw-rw---- 1 root video 226,  32 Nov  7 01:43 card32
+crw-rw---- 1 root video 226,  33 Nov  7 01:43 card33
+crw-rw---- 1 root video 226,  34 Nov  7 01:43 card34
+crw-rw---- 1 root video 226,  35 Nov  7 01:43 card35
+crw-rw---- 1 root video 226,  36 Nov  7 01:43 card36
+crw-rw---- 1 root video 226,  37 Nov  7 01:43 card37
+crw-rw---- 1 root video 226,  38 Nov  7 01:43 card38
+crw-rw---- 1 root video 226,  39 Nov  7 01:43 card39
+crw-rw---- 1 root video 226,   4 Nov  7 01:43 card4
+crw-rw---- 1 root video 226,  40 Nov  7 01:43 card40
+crw-rw---- 1 root video 226,  41 Nov  7 01:43 card41
+crw-rw---- 1 root video 226,  42 Nov  7 01:43 card42
+crw-rw---- 1 root video 226,  43 Nov  7 01:43 card43
+crw-rw---- 1 root video 226,  44 Nov  7 01:43 card44
+crw-rw---- 1 root video 226,  45 Nov  7 01:43 card45
+crw-rw---- 1 root video 226,  46 Nov  7 01:43 card46
+crw-rw---- 1 root video 226,  47 Nov  7 01:43 card47
+crw-rw---- 1 root video 226,  48 Nov  7 01:43 card48
+crw-rw---- 1 root video 226,  49 Nov  7 01:43 card49
+crw-rw---- 1 root video 226,   5 Nov  7 01:43 card5
+crw-rw---- 1 root video 226,  50 Nov  7 01:43 card50
+crw-rw---- 1 root video 226,  51 Nov  7 01:43 card51
+crw-rw---- 1 root video 226,  52 Nov  7 01:43 card52
+crw-rw---- 1 root video 226,  53 Nov  7 01:43 card53
+crw-rw---- 1 root video 226,  54 Nov  7 01:43 card54
+crw-rw---- 1 root video 226,  55 Nov  7 01:43 card55
+crw-rw---- 1 root video 226,  56 Nov  7 01:43 card56
+crw-rw---- 1 root video 226,  57 Nov  7 01:43 card57
+crw-rw---- 1 root video 226,  58 Nov  7 01:43 card58
+crw-rw---- 1 root video 226,  59 Nov  7 01:43 card59
+crw-rw---- 1 root video 226,   6 Nov  7 01:43 card6
+crw-rw---- 1 root video 226,  60 Nov  7 01:43 card60
+crw-rw---- 1 root video 226,  61 Nov  7 01:43 card61
+crw-rw---- 1 root video 226,  62 Nov  7 01:43 card62
+crw-rw---- 1 root video 226,  63 Nov  7 01:43 card63
+crw-rw---- 1 root video 226,   7 Nov  7 01:43 card7
+crw-rw---- 1 root video 226,   8 Nov  7 01:43 card8
+crw-rw---- 1 root video 226,   9 Nov  7 01:43 card9
+crw-rw---- 1 root   991 226, 128 Nov  7 01:43 renderD128
+crw-rw---- 1 root   991 226, 129 Nov  7 01:43 renderD129
+crw-rw---- 1 root   991 226, 130 Nov  7 01:43 renderD130
+crw-rw---- 1 root   991 226, 131 Nov  7 01:43 renderD131
+crw-rw---- 1 root   991 226, 132 Nov  7 01:43 renderD132
+crw-rw---- 1 root   991 226, 133 Nov  7 01:43 renderD133
+crw-rw---- 1 root   991 226, 134 Nov  7 01:43 renderD134
+crw-rw---- 1 root   991 226, 135 Nov  7 01:43 renderD135
+crw-rw---- 1 root   991 226, 136 Nov  7 01:43 renderD136
+crw-rw---- 1 root   991 226, 137 Nov  7 01:43 renderD137
+crw-rw---- 1 root   991 226, 138 Nov  7 01:43 renderD138
+crw-rw---- 1 root   991 226, 139 Nov  7 01:43 renderD139
+crw-rw---- 1 root   991 226, 140 Nov  7 01:43 renderD140
+crw-rw---- 1 root   991 226, 141 Nov  7 01:43 renderD141
+crw-rw---- 1 root   991 226, 142 Nov  7 01:43 renderD142
+crw-rw---- 1 root   991 226, 143 Nov  7 01:43 renderD143
+crw-rw---- 1 root   991 226, 144 Nov  7 01:43 renderD144
+crw-rw---- 1 root   991 226, 145 Nov  7 01:43 renderD145
+crw-rw---- 1 root   991 226, 146 Nov  7 01:43 renderD146
+crw-rw---- 1 root   991 226, 147 Nov  7 01:43 renderD147
+crw-rw---- 1 root   991 226, 148 Nov  7 01:43 renderD148
+crw-rw---- 1 root   991 226, 149 Nov  7 01:43 renderD149
+crw-rw---- 1 root   991 226, 150 Nov  7 01:43 renderD150
+crw-rw---- 1 root   991 226, 151 Nov  7 01:43 renderD151
+crw-rw---- 1 root   991 226, 152 Nov  7 01:43 renderD152
+crw-rw---- 1 root   991 226, 153 Nov  7 01:43 renderD153
+crw-rw---- 1 root   991 226, 154 Nov  7 01:43 renderD154
+crw-rw---- 1 root   991 226, 155 Nov  7 01:43 renderD155
+crw-rw---- 1 root   991 226, 156 Nov  7 01:43 renderD156
+crw-rw---- 1 root   991 226, 157 Nov  7 01:43 renderD157
+crw-rw---- 1 root   991 226, 158 Nov  7 01:43 renderD158
+crw-rw---- 1 root   991 226, 159 Nov  7 01:43 renderD159
+crw-rw---- 1 root   991 226, 160 Nov  7 01:43 renderD160
+crw-rw---- 1 root   991 226, 161 Nov  7 01:43 renderD161
+crw-rw---- 1 root   991 226, 162 Nov  7 01:43 renderD162
+crw-rw---- 1 root   991 226, 163 Nov  7 01:43 renderD163
+crw-rw---- 1 root   991 226, 164 Nov  7 01:43 renderD164
+crw-rw---- 1 root   991 226, 165 Nov  7 01:43 renderD165
+crw-rw---- 1 root   991 226, 166 Nov  7 01:43 renderD166
+crw-rw---- 1 root   991 226, 167 Nov  7 01:43 renderD167
+crw-rw---- 1 root   991 226, 168 Nov  7 01:43 renderD168
+crw-rw---- 1 root   991 226, 169 Nov  7 01:43 renderD169
+crw-rw---- 1 root   991 226, 170 Nov  7 01:43 renderD170
+crw-rw---- 1 root   991 226, 171 Nov  7 01:43 renderD171
+crw-rw---- 1 root   991 226, 172 Nov  7 01:43 renderD172
+crw-rw---- 1 root   991 226, 173 Nov  7 01:43 renderD173
+crw-rw---- 1 root   991 226, 174 Nov  7 01:43 renderD174
+crw-rw---- 1 root   991 226, 175 Nov  7 01:43 renderD175
+crw-rw---- 1 root   991 226, 176 Nov  7 01:43 renderD176
+crw-rw---- 1 root   991 226, 177 Nov  7 01:43 renderD177
+crw-rw---- 1 root   991 226, 178 Nov  7 01:43 renderD178
+crw-rw---- 1 root   991 226, 179 Nov  7 01:43 renderD179
+crw-rw---- 1 root   991 226, 180 Nov  7 01:43 renderD180
+crw-rw---- 1 root   991 226, 181 Nov  7 01:43 renderD181
+crw-rw---- 1 root   991 226, 182 Nov  7 01:43 renderD182
+crw-rw---- 1 root   991 226, 183 Nov  7 01:43 renderD183
+crw-rw---- 1 root   991 226, 184 Nov  7 01:43 renderD184
+crw-rw---- 1 root   991 226, 185 Nov  7 01:43 renderD185
+crw-rw---- 1 root   991 226, 186 Nov  7 01:43 renderD186
+crw-rw---- 1 root   991 226, 187 Nov  7 01:43 renderD187
+crw-rw---- 1 root   991 226, 188 Nov  7 01:43 renderD188
+crw-rw---- 1 root   991 226, 189 Nov  7 01:43 renderD189
+crw-rw---- 1 root   991 226, 190 Nov  7 01:43 renderD190
+crw-rw---- 1 root   991 226, 191 Nov  7 01:43 renderD191
+node /sys/class/kfd/kfd/topology/nodes/0 gpu_id 0
+simd_count 0
+gfx_target_version 0
+vendor_id 0
+device_id 0
+drm_render_minor 0
+node /sys/class/kfd/kfd/topology/nodes/1 gpu_id 0
+simd_count 0
+gfx_target_version 0
+vendor_id 0
+device_id 0
+drm_render_minor 0
+cat: /sys/class/kfd/kfd/topology/nodes/2/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/2 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/2/properties: Operation not permitted
+cat: /sys/class/kfd/kfd/topology/nodes/3/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/3 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/3/properties: Operation not permitted
+cat: /sys/class/kfd/kfd/topology/nodes/4/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/4 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/4/properties: Operation not permitted
+cat: /sys/class/kfd/kfd/topology/nodes/5/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/5 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/5/properties: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/6 gpu_id 36258
+simd_count 1216
+gfx_target_version 90402
+vendor_id 4098
+device_id 29877
+drm_render_minor 160
+local_mem_size 0
+fw_version 32957
+sdma_fw_version 24
+cat: /sys/class/kfd/kfd/topology/nodes/7/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/7 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/7/properties: Operation not permitted
+cat: /sys/class/kfd/kfd/topology/nodes/8/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/8 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/8/properties: Operation not permitted
+cat: /sys/class/kfd/kfd/topology/nodes/9/gpu_id: Operation not permitted
+node /sys/class/kfd/kfd/topology/nodes/9 gpu_id 
+grep: /sys/class/kfd/kfd/topology/nodes/9/properties: Operation not permitted
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         2.0T  463G  1.5T  24% /
+overlay         2.0T  463G  1.5T  24% /
+160
+               total        used        free      shared  buff/cache   available
+Mem:            1889         300          50           0        1549        1589
+CACHEDIR.TAG
+datasets--EleutherAI--hendrycks_math
+datasets--HuggingFaceFW--fineweb-2
+datasets--HuggingFaceFW--fineweb-edu
+datasets--deepmind--aqua_rat
+datasets--openai--gsm8k
+datasets--vserifsaglam--tr-sft-data
+datasets--wikimedia--wikipedia
+kernels--kernels-community--gpt-oss-triton-kernels
+models--0bserverx--Qwen3.8-27B-Heretic-Abliterated-Uncensored
+models--0bserverx--Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF
+models--BAAI--bge-m3
+models--Comfy-Org--MiniMax-H3
+models--DavidAU--Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NEO-CODER-MAX-MTP-GGUF
+models--Disya--nayelina_anime_hereticV2-clip
+models--FX-FeiHou--wan2.2-Remix
+models--IFM--K2-Horizon-7B
+models--IFM--K2-Horizon-MoVA-36B-A4B
+models--ISTA-DASLab--Qwen3.8-27B-GSQ-RCO-GGUF
+models--InstantX--FLUX.1-dev-Controlnet-Union
+models--Jackrong--Qwopus3.8-27B-Flash-GGUF
+models--John6666--illustrious-xl10-improved-uncensored-v30-sdxl
+models--JonathanColetti--Qwen3.8-27B-Uncensored-GGUF
+models--Lightricks--LTX-Video
+models--Lightricks--LTX-Video-0.9.5
+models--OBLITERATUS--Qwen3.8-27B-OBLITERATED
+models--OpenMOSS-Team--MOSS-Image-SFT
+models--QUASAR-QAT--Qwen3.8-27B-QUASAR-NVFP4
+models--Qwen--QwQ-32B
+models--Qwen--Qwen-Image
+models--Qwen--Qwen-Image-2.1
+models--Qwen--Qwen2.5-VL-7B-Instruct
+models--Qwen--Qwen3-0.6B
+models--Qwen--Qwen3-1.7B
+models--Qwen--Qwen3-30B-A3B
+models--Qwen--Qwen3-32B
+models--Qwen--Qwen3-4B-Instruct-2507
+models--Qwen--Qwen3-VL-32B-Instruct
+models--Qwen--Qwen3.5-35B-A3B
+models--Qwen--Qwen3.6-27B
+models--Qwen--Qwen3.6-35B-A3B
+models--Qwen--Qwen3.8-27B
+models--RedHatAI--gemma-4-31B-it-FP8-dynamic
+models--Tongyi-MAI--Z-Image-Turbo
+models--TracerUst--Moss-image-nsfw-uncensored-lora
+models--Wan-AI--Wan2.1-I2V-14B-480P-Diffusers
+models--Wan-AI--Wan2.2-I2V-A14B-Diffusers
+models--XHToken--Spark-X2.6-4B
+models--ZB-Tech--Text-to-Image
+models--axiomofmind--Moss-image-nsfw-uncensored-lora
+models--bert-base-uncased
+models--black-forest-labs--FLUX.1-dev
+models--black-forest-labs--FLUX.2-dev
+models--black-forest-labs--FLUX.2-klein-9B
+models--deepseek-ai--DeepSeek-R1-Distill-Llama-70B
+models--deepseek-ai--DeepSeek-R1-Distill-Qwen-32B
+models--deepseek-ai--deepseek-math-7b-base
+models--diffusers--LTX-Video-0.9.0
+models--distilbert--distilbert-base-uncased
+models--facebook--sam3
+models--fdk6566--wan2.2_14b_i2v_480p_lightning_nsfw_diffusers
+models--google--gemma-4-26B-A4B-it
+models--google--gemma-4-31B-it
+models--google--gemma-4-E4B-it
+models--google-bert--bert-base-uncased
+models--huihui-ai--Huihui-Qwen3.8-27B-abliterated-GGUF
+models--ibm-granite--granite-4.1-8b
+models--jarradh--Qwen3-Coder-480B-A35B-Instruct-heretic
+models--local--h3-runtime
+models--meta-llama--Llama-3.1-8B-Instruct
+models--meta-llama--Llama-3.3-70B-Instruct
+models--meta-llama--Meta-Llama-3.1-8B-Instruct
+models--meta-llama--meta-Llama-3.1-8B-Instruct
+models--openai--clip-vit-base-patch32
+models--openai--gpt-oss-120b
+models--openai--gpt-oss-20b
+models--openai--whisper-large-v3-turbo
+models--openai-community--gpt2
+models--orcarouter--Qwen3.8-27B-Uncensored-FP8
+models--peculiar-ragdoll--Tiel-Coder-35B-A3B-GGUF
+models--poolside--Laguna-XS.2
+models--sentence-transformers--all-MiniLM-L6-v2
+models--skykholodovzz--ltxvideo-2b-nsfw
+models--stabilityai--stable-video-diffusion-img2vid-xt
+models--the1ian--Flux-uncensored
+models--unsloth--Meta-Llama-3.1-8B-Instruct
+models--unslothai--1
+models--unslothai--other
+models--unslothai--repeat
+models--unslothai--vram-96
+models--xtools-at--DeepSeek-V4-Pro-Qwen3.5-9B-UNCENSORED-heretic
+models--zai-org--GLM-4.7-Flash
+models--zai-org--GLM-OCR
+/usr/bin/git
+08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  launch-x86
+10eb12e019ff2117ddc0190650899d4254589375c62e5ebb970b1bbb7e67e55f  vadd.hsaco
+--- small example
+2026-11-13T18:55:08Z
+OMEGA step open_kfd ok errno=0 phase=before detail=0
+OMEGA step open_kfd ok errno=0 phase=after detail=0
+OMEGA step version ok errno=0 phase=before detail=0
+OMEGA step version ok errno=0 phase=after detail=0
+OMEGA step topology ok errno=0 phase=before detail=0
+OMEGA step topology_node ok errno=0 phase=before detail=7
+OMEGA step topology_node fail errno=1 phase=after detail=7
+OMEGA step topology_node ok errno=0 phase=before detail=5
+OMEGA step topology_node fail errno=1 phase=after detail=5
+OMEGA step topology_node ok errno=0 phase=before detail=3
+OMEGA step topology_node fail errno=1 phase=after detail=3
+OMEGA step topology_node ok errno=0 phase=before detail=1
+OMEGA step topology_node ok errno=0 phase=after detail=1
+OMEGA topology skip CPU gpu_id=0
+OMEGA step topology_node ok errno=0 phase=before detail=8
+OMEGA step topology_node fail errno=1 phase=after detail=8
+OMEGA step topology_node ok errno=0 phase=before detail=6
+OMEGA step topology_node ok errno=0 phase=after detail=6
+OMEGA topology selected node=6 gpu_id=36258 render_minor=160
+OMEGA step topology ok errno=0 phase=before detail=6
+OMEGA step topology ok errno=0 phase=after detail=6
+OMEGA step render_open ok errno=0 phase=before detail=160
+OMEGA step render_open ok errno=0 phase=after detail=160
+OMEGA step acquire_vm ok errno=0 phase=before detail=36258
+OMEGA step acquire_vm ok errno=0 phase=after detail=36258
+OMEGA step memory_reserve ok errno=0 phase=before detail=0
+OMEGA step memory_reserve ok errno=0 phase=after detail=0
+OMEGA step memory_alloc ok errno=0 phase=before detail=0
+OMEGA step memory_alloc ok errno=0 phase=after detail=0
+OMEGA step memory_map ok errno=0 phase=before detail=0
+OMEGA step memory_map ok errno=0 phase=after detail=0
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=0
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=0
+OMEGA step code_object_load ok errno=0 phase=before detail=2608
+OMEGA step code_object_load ok errno=0 phase=after detail=2608
+OMEGA step memory_reserve ok errno=0 phase=before detail=1
+OMEGA step memory_reserve ok errno=0 phase=after detail=1
+OMEGA step memory_alloc ok errno=0 phase=before detail=1
+OMEGA step memory_alloc ok errno=0 phase=after detail=1
+OMEGA step memory_map ok errno=0 phase=before detail=1
+OMEGA step memory_map ok errno=0 phase=after detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=1
+OMEGA step memory_reserve ok errno=0 phase=before detail=2
+OMEGA step memory_reserve ok errno=0 phase=after detail=2
+OMEGA step memory_alloc ok errno=0 phase=before detail=2
+OMEGA step memory_alloc ok errno=0 phase=after detail=2
+OMEGA step memory_map ok errno=0 phase=before detail=2
+OMEGA step memory_map ok errno=0 phase=after detail=2
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=2
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=2
+OMEGA step memory_reserve ok errno=0 phase=before detail=8
+OMEGA step memory_reserve ok errno=0 phase=after detail=8
+OMEGA step memory_alloc ok errno=0 phase=before detail=8
+OMEGA step memory_alloc ok errno=0 phase=after detail=8
+OMEGA step memory_map ok errno=0 phase=before detail=8
+OMEGA step memory_map ok errno=0 phase=after detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=8
+OMEGA step memory_reserve ok errno=0 phase=before detail=9
+OMEGA step memory_reserve ok errno=0 phase=after detail=9
+OMEGA step memory_alloc ok errno=0 phase=before detail=9
+OMEGA step memory_alloc ok errno=0 phase=after detail=9
+OMEGA step memory_map ok errno=0 phase=before detail=9
+OMEGA step memory_map ok errno=0 phase=after detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=9
+OMEGA step memory_apertures ok errno=0 phase=before detail=36258
+OMEGA step memory_apertures ok errno=0 phase=after detail=36258
+OMEGA step memory_reserve ok errno=0 phase=before detail=3
+OMEGA step memory_reserve ok errno=0 phase=after detail=3
+OMEGA step memory_alloc ok errno=0 phase=before detail=3
+OMEGA step memory_alloc ok errno=0 phase=after detail=3
+OMEGA step memory_map ok errno=0 phase=before detail=3
+OMEGA step memory_map ok errno=0 phase=after detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=3
+OMEGA step memory_reserve ok errno=0 phase=before detail=4
+OMEGA step memory_reserve ok errno=0 phase=after detail=4
+OMEGA step memory_alloc ok errno=0 phase=before detail=4
+OMEGA step memory_alloc ok errno=0 phase=after detail=4
+OMEGA step memory_map ok errno=0 phase=before detail=4
+OMEGA step memory_map ok errno=0 phase=after detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=4
+OMEGA step memory_reserve ok errno=0 phase=before detail=5
+OMEGA step memory_reserve ok errno=0 phase=after detail=5
+OMEGA step memory_alloc ok errno=0 phase=before detail=5
+OMEGA step memory_alloc ok errno=0 phase=after detail=5
+OMEGA step memory_map ok errno=0 phase=before detail=5
+OMEGA step memory_map ok errno=0 phase=after detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=5
+OMEGA step memory_reserve ok errno=0 phase=before detail=6
+OMEGA step memory_reserve ok errno=0 phase=after detail=6
+OMEGA step memory_alloc ok errno=0 phase=before detail=6
+OMEGA step memory_alloc ok errno=0 phase=after detail=6
+OMEGA step memory_map ok errno=0 phase=before detail=6
+OMEGA step memory_map ok errno=0 phase=after detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=6
+OMEGA step memory_reserve ok errno=0 phase=before detail=7
+OMEGA step memory_reserve ok errno=0 phase=after detail=7
+OMEGA step memory_alloc ok errno=0 phase=before detail=7
+OMEGA step memory_alloc ok errno=0 phase=after detail=7
+OMEGA step memory_map ok errno=0 phase=before detail=7
+OMEGA step memory_map ok errno=0 phase=after detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=7
+OMEGA step queue_create ok errno=0 phase=before detail=36258
+OMEGA step queue_create ok errno=0 phase=after detail=36258
+OMEGA step doorbell_map ok errno=0 phase=before detail=16386487981675905024
+OMEGA step doorbell_map ok errno=0 phase=after detail=16386487981675905024
+OMEGA step dispatch ok errno=0 phase=before detail=1
+OMEGA diag wait_timeout_ns 10000000000
+OMEGA step dispatch ok errno=0 phase=after detail=1
+OMEGA step signal_wait ok errno=0 phase=before detail=1
+OMEGA step signal_wait ok errno=0 phase=after detail=1
+OMEGA dispatch_ns=33918 packets=1
+OMEGA diag queue_read_pointer 1
+OMEGA diag queue_write_pointer 1
+OMEGA diag queue_properties 2
+OMEGA diag read_pointer_base_offset 128
+OMEGA diag signal_kind 1
+OMEGA diag signal_value 0
+OMEGA diag ring_slot_byte_offset 0
+OMEGA diag ring_header 1
+OMEGA diag packet_kernel_object 140319171543552
+OMEGA diag packet_kernarg_address 140319169445888
+OMEGA diag queue_id 0
+OMEGA diag doorbell_offset 16386487981675905024
+OMEGA diag create_queue_input_qword_0 140319161057280
+OMEGA diag create_queue_input_qword_1 140319156863032
+OMEGA diag create_queue_input_qword_2 140319156863104
+OMEGA diag create_queue_input_qword_3 0
+OMEGA diag create_queue_input_qword_4 155726924219392
+OMEGA diag create_queue_input_qword_5 429496729602
+OMEGA diag create_queue_input_qword_6 7
+OMEGA diag create_queue_input_qword_7 0
+OMEGA diag create_queue_input_qword_8 0
+OMEGA diag create_queue_input_qword_9 140318970216448
+OMEGA diag create_queue_input_qword_10 52776581337088
+OMEGA diag kernel_code_entry_byte_offset 256
+OMEGA diag compute_pgm_rsrc1 11468929
+OMEGA diag compute_pgm_rsrc2 132
+OMEGA diag compute_pgm_rsrc3 2
+OMEGA diag kernel_code_properties 8
+OMEGA diag group_segment_size 0
+OMEGA diag private_segment_size 0
+OMEGA diag kernarg_size 28
+OMEGA diag output_word_0 1073741824
+OMEGA diag output_word_1 1073741824
+OMEGA diag output_word_2 1073741824
+OMEGA diag output_word_3 1073741824
+OMEGA diag output_word_4 1073741824
+OMEGA diag output_word_5 1073741824
+OMEGA diag output_word_6 1073741824
+OMEGA diag output_word_7 1073741824
+OMEGA diag output_first8_nan_fill_count 0
+OMEGA diag output_first8_expected_vadd_sum_count 8
+OMEGA step readback ok errno=0 phase=before detail=1024
+OMEGA vadd=PASS count=256
+OMEGA step readback ok errno=0 phase=after detail=1024
+OMEGA step cleanup ok errno=0 phase=before detail=0
+OMEGA step cleanup ok errno=0 phase=after detail=0
+VADD_RC=0
+ENV_DONE

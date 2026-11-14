@@ -1,0 +1,2 @@
+OMEGA step  fail errno=2 phase=after detail=0
+OMEGA error=2

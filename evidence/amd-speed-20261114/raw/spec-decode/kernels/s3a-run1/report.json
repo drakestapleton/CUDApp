@@ -1,0 +1,64 @@
+{
+ "schema": "spec-decode-s3a-v1",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "hardware": "NOT_RUN",
+ "kernels": {
+  "spec_accept_r2": {
+   "object_sha256": "ff72f7d9876939ab5de07f6f6e95e1d9b1b3bfc7fc995c65787a0a098cce660c",
+   "cases": 216,
+   "mismatches": 0,
+   "n_histogram": {
+    "1": 171,
+    "2": 45
+   }
+  },
+  "spec_accept_r3": {
+   "object_sha256": "74e1dc2ab360f513fac7ff05f4af662df468c390513558dd00a289ec3f75e223",
+   "cases": 400,
+   "mismatches": 0,
+   "n_histogram": {
+    "1": 221,
+    "3": 85,
+    "2": 94
+   }
+  },
+  "spec_accept_r8": {
+   "object_sha256": "6d28632bd445577c12be493d98b834ba8d4ee015b604faa194ea13a1789ab99f",
+   "cases": 400,
+   "mismatches": 0,
+   "n_histogram": {
+    "8": 9,
+    "1": 181,
+    "2": 98,
+    "5": 21,
+    "6": 6,
+    "3": 49,
+    "4": 31,
+    "7": 5
+   }
+  }
+ },
+ "mutants": [
+  {
+   "mutant": "accept-after-mismatch",
+   "cases": 400,
+   "failing_cases": 76
+  },
+  {
+   "mutant": "ignore-room",
+   "cases": 400,
+   "failing_cases": 78
+  },
+  {
+   "mutant": "ignore-stop",
+   "cases": 400,
+   "failing_cases": 68
+  },
+  {
+   "mutant": "pos-unchanged",
+   "cases": 400,
+   "failing_cases": 400
+  }
+ ],
+ "verdict": "PASS"
+}

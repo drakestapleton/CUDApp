@@ -1,0 +1,7 @@
+old plan (published launcher)            n=5 median_of_medians=26.641 medians=[26.602, 26.626, 26.641, 26.653, 26.658]
+new plan2                                n=2 median_of_medians=24.8975 medians=[24.899, 24.896]
+HIP graph                                n=5 median_of_medians=24.740881053730845 medians=[24.704183917492628, 24.726298870518804, 24.74596700631082, 24.740881053730845, 24.74688203074038]
+new planscope (scope fix only)           n=0 median_of_medians=None medians=[]
+new planstage (staging only)             n=0 median_of_medians=None medians=[]
+new plan (old contract, new binary)      n=0 median_of_medians=None medians=[]
+ids equal published (all non-control): True  controls caught: True

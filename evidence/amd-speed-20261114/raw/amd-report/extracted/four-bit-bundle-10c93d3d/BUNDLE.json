@@ -1,0 +1,17 @@
+{
+ "bundle_bytes": 53904,
+ "bundle_sha256": "10c93d3d65c03e0f294075fc35c50479369c90f53cece416132c67e43c6a6574",
+ "cells": 2,
+ "files": {
+  "bf16gemv2.hsaco": "4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb",
+  "card_q4.py": "6588e77ae87fdf6d05b56036b1565ffbdbd4a2b18029c941c0bb661fbf627dfc",
+  "expected.json": "e1fe0a1ff12f3c4c9c8815ea9b79360391ac2080d8770aa31a8073d7f1fc5c1a",
+  "fp8gemv_b128f.hsaco": "72049eeefffe5431c0f8972d1d9f3e4f93e39841312aeb492ac24f455d23adbd",
+  "launch-x86": "08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1",
+  "oracle_vec.py": "3829b7c72592e6e2e3ac2f800ecc0678f614f954b2227b79f1bccf77e125c5cb",
+  "q4convert.py": "51f58dc8538b68efa41fad0c6cfebb7e90793e91a91cd1801e33a80d006b73f9",
+  "q4format.py": "fbea7690ecd3144cc6acf126149cc6af3dd4c0e6cbf178ad3538043e0cf9bc9d",
+  "q4gemv_d8.hsaco": "b55b7ded6aabdcaaa147ca4fac3ecc98d48e08afc78f813a29d65ca844ca193a",
+  "q4gemv_d8r2.hsaco": "491a2cfe12d2a084ce47fa54b6c12649706ca4b8eab99ef39858f2d1d483ab0d"
+ }
+}

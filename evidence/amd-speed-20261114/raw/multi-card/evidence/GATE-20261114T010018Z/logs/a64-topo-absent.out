@@ -1,0 +1,2 @@
+MCTOPO absent node=0 errno=2
+MCTOPO refuse reason=too_few have=0 want=1

@@ -1,0 +1,7 @@
+MCSIM ref tokens=2,63,77,68,45,71,19,68,45,71,19,68,45,71,19,68
+MCSIM card=0 tokens=2,63,60,63,77,85,30,2,98,108,117,2,98,108,56,47 tokens_equal_one_card=no hidden_words_differing_from_one_card=64
+MCSIM card=1 tokens=2,63,60,3189155720,77,1028201740,30,1022334735,1032692609,1041111327,992128423,1022334735,1032692609,108,56,47 tokens_equal_one_card=no hidden_words_differing_from_one_card=64
+MCSIM card=2 tokens=1022334735,3189155720,60,63,77,85,30,1022334735,98,1041111327,117,2,98,108,56,47 tokens_equal_one_card=no hidden_words_differing_from_one_card=64
+MCSIM card=3 tokens=1022334735,3189155720,1022334735,3189155720,3181949107,1028201740,992128423,1022334735,1032692609,1041111327,992128423,1022334735,1032692609,1041111327,1028201740,47 tokens_equal_one_card=no hidden_words_differing_from_one_card=64
+MCSIM result mode=exact exchanges_per_step=9 cards=4
+MCSIM FAIL

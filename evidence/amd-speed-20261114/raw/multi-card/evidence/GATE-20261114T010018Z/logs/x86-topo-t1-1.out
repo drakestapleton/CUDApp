@@ -1,0 +1,6 @@
+MCTOPO cpu node=0
+MCTOPO cpu node=1
+MCTOPO gpu node=2 gpu_id=40000 gfx=90402 device=29877 render=128 hive=3942903108070991289 xcc=8 domain=0 location=4096 links=1
+MCTOPO link from=2 to=0 type=2 weight=20
+MCTOPO select n=1 node=2
+MCTOPO peers xgmi_pairs=0

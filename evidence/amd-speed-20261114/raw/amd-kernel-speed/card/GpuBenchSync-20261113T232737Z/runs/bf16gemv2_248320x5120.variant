@@ -1,0 +1,1 @@
+VARIANT {"cls": "bf16gemv2:248320x5120", "inserted": 6, "dispatches": 1132, "n_gen": 64, "bytes": 33778211, "sha256": "f288b3031e103a51b18b0497fd99d313b5076871660dcc598e12eaa46f038106", "base_sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012"}

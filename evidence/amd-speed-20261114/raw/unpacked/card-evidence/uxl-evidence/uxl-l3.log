@@ -1,0 +1,184 @@
++ date -u +%FT%TZ
+2026-11-13T19:06:39Z
++ mkdir out
++ python3 oracle/emit-plan.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 out/real2.plan --capacity=131072 --fixture-json=oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 33777539, "sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMIT_RC=0
+EMIT_RC=0
++ python3 oracle/check-plan.py out/real2.plan /tmp/qwen3.8-27b-fp8
+PLAN_CHECK PASS {"code": 18, "buffers": 1504, "file_backed": 1251, "widened": 305, "control_vectors": 0, "dispatches": 1126, "capacity": {"capacity": 131072, "kv_bytes": 8589934592, "rope_bytes": 33554432, "partitions": 2048}, "fixture": {"fixture": "Spark qualification lighthouse short decode1", "sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "prompt": 30, "generate": 256}} CONTROLS CAUGHT ['weight range shifted', 'reloc slot misaligned', 'capacity halved', 'capacity plus 64', 'prompt id changed']
++ echo CHECK_RC=0
+CHECK_RC=0
++ sha256sum out/real2.plan
+2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012  out/real2.plan
++ python3 oracle/emit-plan.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 out/real2-controls.plan --controls --capacity=131072 --fixture-json=oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 36452227, "sha256": "40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMITC_RC=0
+EMITC_RC=0
++ python3 oracle/check-plan.py out/real2-controls.plan /tmp/qwen3.8-27b-fp8
+PLAN_CHECK PASS {"code": 18, "buffers": 1504, "file_backed": 1090, "widened": 144, "control_vectors": 161, "dispatches": 1126, "capacity": {"capacity": 131072, "kv_bytes": 8589934592, "rope_bytes": 33554432, "partitions": 2048}, "fixture": {"fixture": "Spark qualification lighthouse short decode1", "sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "prompt": 30, "generate": 256}} CONTROLS CAUGHT ['weight range shifted', 'reloc slot misaligned', 'capacity halved', 'capacity plus 64', 'prompt id changed']
++ echo CHECKC_RC=0
+CHECKC_RC=0
++ sha256sum out/real2-controls.plan
+40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e  out/real2-controls.plan
++ cut -c1-700 out/real2.plan.cmd
+omega-launch plan real2.plan code/argmax_final.hsaco code/argmax_part.hsaco code/attn256_gate.hsaco code/attn256_merge_step.hsaco code/attn256_part_step.hsaco code/attn256_prep_step.hsaco code/bf16gemv2.hsaco code/embed5120_step.hsaco code/fp8gemv_b128f.hsaco code/gdnconv4_step.hsaco code/gdnparams.hsaco code/gdnqknorm.hsaco code/gdnrmsgate.hsaco code/gdnstate_step.hsaco code/mlpsilu.hsaco code/residual5120.hsaco code/rmsnorm5120.hsaco code/step_advance.hsaco $AMDSERVE_WEIGHTS/layers-0.safetensors $AMDSERVE_WEIGHTS/layers-1.safetensors $AMDSERVE_WEIGHTS/layers-10.safetensors $AMDSERVE_WEIGHTS/layers-11.safetensors $AMDSERVE_WEIGHTS/layers-12.safetensors $AMDSERVE_WEIGHTS/layers-13.safetensor
++ head -40
++ ls -la out out/code
+out:
+total 68644
+drwxr-xr-x 3 root root     4096 Nov 13 19:06 .
+drwxr-xr-x 9 root root     4096 Nov 13 19:06 ..
+drwxr-xr-x 2 root root     4096 Nov 13 19:06 code
+-rw-r--r-- 1 root root 36452227 Nov 13 19:06 real2-controls.plan
+-rw-r--r-- 1 root root     3061 Nov 13 19:06 real2-controls.plan.cmd
+-rw-r--r-- 1 root root    18064 Nov 13 19:06 real2-controls.plan.json
+-rw-r--r-- 1 root root       32 Nov 13 19:06 real2-controls.plan.log.mark
+-rw-r--r-- 1 root root 33777539 Nov 13 19:06 real2.plan
+-rw-r--r-- 1 root root     3052 Nov 13 19:06 real2.plan.cmd
+-rw-r--r-- 1 root root     7784 Nov 13 19:06 real2.plan.json
+-rw-r--r-- 1 root root       32 Nov 13 19:06 real2.plan.log.mark
+
+out/code:
+total 88
+drwxr-xr-x 2 root root 4096 Nov 13 19:06 .
+drwxr-xr-x 3 root root 4096 Nov 13 19:06 ..
+-rw-r--r-- 1 root root 3040 Nov 13 19:06 argmax_final.hsaco
+-rw-r--r-- 1 root root 3040 Nov 13 19:06 argmax_part.hsaco
+-rw-r--r-- 1 root root 2736 Nov 13 19:06 attn256_gate.hsaco
+-rw-r--r-- 1 root root 3224 Nov 13 19:06 attn256_merge_step.hsaco
+-rw-r--r-- 1 root root 3664 Nov 13 19:06 attn256_part_step.hsaco
+-rw-r--r-- 1 root root 5216 Nov 13 19:06 attn256_prep_step.hsaco
+-rw-r--r-- 1 root root 3824 Nov 13 19:06 bf16gemv2.hsaco
+-rw-r--r-- 1 root root 2728 Nov 13 19:06 embed5120_step.hsaco
+-rw-r--r-- 1 root root 4816 Nov 13 19:06 fp8gemv_b128f.hsaco
+-rw-r--r-- 1 root root 3424 Nov 13 19:06 gdnconv4_step.hsaco
+-rw-r--r-- 1 root root 3328 Nov 13 19:06 gdnparams.hsaco
+-rw-r--r-- 1 root root 3152 Nov 13 19:06 gdnqknorm.hsaco
+-rw-r--r-- 1 root root 3632 Nov 13 19:06 gdnrmsgate.hsaco
+-rw-r--r-- 1 root root 3704 Nov 13 19:06 gdnstate_step.hsaco
+-rw-r--r-- 1 root root 2752 Nov 13 19:06 mlpsilu.hsaco
+-rw-r--r-- 1 root root 2808 Nov 13 19:06 residual5120.hsaco
+-rw-r--r-- 1 root root 3032 Nov 13 19:06 rmsnorm5120.hsaco
+-rw-r--r-- 1 root root 2440 Nov 13 19:06 step_advance.hsaco
++ cp /workspace/uxl/launch-x86 out/omega-launch
++ cd out
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo warmup start 2026-11-13T19:06:51.056449090Z 1794596811.057315962
+warmup start 2026-11-13T19:06:51.056449090Z 1794596811.057315962
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2.plan.cmd
++ echo warmup rc=0
+warmup rc=0
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo warmup end 2026-11-13T19:07:18.043346133Z 1794596838.044203806
+warmup end 2026-11-13T19:07:18.043346133Z 1794596838.044203806
++ grep -c OMEGA_STEP /workspace/uxl/uxl-native-warmup.txt
+285
++ tail -c 300 /workspace/uxl/uxl-native-warmup.err
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run1 start 2026-11-13T19:07:18.046620228Z 1794596838.047416769
+run1 start 2026-11-13T19:07:18.046620228Z 1794596838.047416769
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2.plan.cmd
++ echo run1 rc=0
+run1 rc=0
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run1 end 2026-11-13T19:07:44.959958199Z 1794596864.960913893
+run1 end 2026-11-13T19:07:44.959958199Z 1794596864.960913893
++ grep -c OMEGA_STEP /workspace/uxl/uxl-native-run1.txt
+285
++ tail -c 300 /workspace/uxl/uxl-native-run1.err
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run2 start 2026-11-13T19:07:44.963245678Z 1794596864.963959227
+run2 start 2026-11-13T19:07:44.963245678Z 1794596864.963959227
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2.plan.cmd
++ echo run2 rc=0
+run2 rc=0
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run2 end 2026-11-13T19:08:11.975886178Z 1794596891.976667149
+run2 end 2026-11-13T19:08:11.975886178Z 1794596891.976667149
++ grep -c OMEGA_STEP /workspace/uxl/uxl-native-run2.txt
+285
++ tail -c 300 /workspace/uxl/uxl-native-run2.err
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run3 start 2026-11-13T19:08:11.979001670Z 1794596891.979677916
+run3 start 2026-11-13T19:08:11.979001670Z 1794596891.979677916
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2.plan.cmd
++ echo run3 rc=0
+run3 rc=0
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run3 end 2026-11-13T19:08:39.135356787Z 1794596919.136240832
+run3 end 2026-11-13T19:08:39.135356787Z 1794596919.136240832
++ grep -c OMEGA_STEP /workspace/uxl/uxl-native-run3.txt
+285
++ tail -c 300 /workspace/uxl/uxl-native-run3.err
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run4 start 2026-11-13T19:08:39.138606556Z 1794596919.139303772
+run4 start 2026-11-13T19:08:39.138606556Z 1794596919.139303772
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2.plan.cmd
++ echo run4 rc=0
+run4 rc=0
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run4 end 2026-11-13T19:09:05.527571870Z 1794596945.528310896
+run4 end 2026-11-13T19:09:05.527571870Z 1794596945.528310896
++ grep -c OMEGA_STEP /workspace/uxl/uxl-native-run4.txt
+285
++ tail -c 300 /workspace/uxl/uxl-native-run4.err
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run5 start 2026-11-13T19:09:05.530599372Z 1794596945.531234537
+run5 start 2026-11-13T19:09:05.530599372Z 1794596945.531234537
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2.plan.cmd
++ echo run5 rc=0
+run5 rc=0
++ date -u +%FT%T.%NZ
++ date +%s.%N
++ echo run5 end 2026-11-13T19:09:32.267556223Z 1794596972.268424759
+run5 end 2026-11-13T19:09:32.267556223Z 1794596972.268424759
++ grep -c OMEGA_STEP /workspace/uxl/uxl-native-run5.txt
+285
++ tail -c 300 /workspace/uxl/uxl-native-run5.err
++ date +%s.%N
++ echo control start 1794596972.270647835
+control start 1794596972.270647835
++ PATH=/workspace/uxl/CUDApp/evidence/amd-qwen38-native-20261113/out:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh real2-controls.plan.cmd
++ echo control rc=0
+control rc=0
++ date +%s.%N
++ echo control end 1794596998.635713239
+control end 1794596998.635713239
++ echo NATIVE_DONE
+NATIVE_DONE
++ date -u +%FT%TZ
+2026-11-13T19:09:58Z
++ cd ..
++ python3 oracle/lighthouse-oracle.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json graph /workspace/uxl/uxl-graph-fresh.json --capacity=131072
++ echo GRAPH_RC=0
+GRAPH_RC=0
++ tail -3 /workspace/uxl/uxl-graph-fresh.txt
++ cut -c1-600
+CHECKPOINT SHA256 verified 68 files at 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a; shared outside shard includes unused visual bytes; no visual tensors loaded
+ORACLE graph {"mode": "graph", "capacity": 131072, "first_divergence": 109, "match": 115, "decode_ms_median": 24.741188972257078, "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py"}
++ date -u +%FT%TZ
+2026-11-13T19:10:42Z
++ python3 oracle/lighthouse-oracle.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json reference /workspace/uxl/uxl-reference-fresh.json --capacity=131072
++ echo REFERENCE_RC=0
+REFERENCE_RC=0
++ tail -3 /workspace/uxl/uxl-reference-fresh.txt
++ cut -c1-600
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching ... files: 0it [00:00, ?it/s]Fetching ... files: 2it [00:00, 17.19it/s]Fetching ... files: 9it [00:00, 65.69it/s]
+ORACLE reference {"mode": "reference", "first_divergence": 29, "match": 32, "decode_ms_median": 131.0108790639788, "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py"}
++ date -u +%FT%TZ
+2026-11-13T19:15:01Z
++ echo L3_DONE
+L3_DONE

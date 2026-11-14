@@ -1,0 +1,40 @@
+{
+ "schema": "spec-decode-s3c-select-v1",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "hardware": "NOT_RUN",
+ "kernels": {
+  "spec_select_r2": {
+   "object_sha256": "bd451d094ac59b6da77a611edf8f8037505db63b8af5d851ba3c7a315616f946",
+   "cases": 200,
+   "mismatches": 0
+  },
+  "spec_select_r3": {
+   "object_sha256": "0c9f5fa1469da86442a91e1bfdcc9991a9d8e0c1a23c25482d01df35098fbad5",
+   "cases": 250,
+   "mismatches": 0
+  },
+  "spec_select_r4": {
+   "object_sha256": "8c0870e23148bca60fe54f6c796dc791ac4b9c768e1ecefafcad164f5090cf14",
+   "cases": 300,
+   "mismatches": 0
+  }
+ },
+ "mutants": [
+  {
+   "mutant": "first",
+   "cases": 250,
+   "failing_cases": 100
+  },
+  {
+   "mutant": "last",
+   "cases": 250,
+   "failing_cases": 100
+  },
+  {
+   "mutant": "off-by-one",
+   "cases": 250,
+   "failing_cases": 100
+  }
+ ],
+ "verdict": "PASS"
+}

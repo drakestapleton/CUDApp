@@ -1,0 +1,499 @@
+{
+ "schema": "spec-decode-s2b-v1",
+ "kernel": "gdnconv4_step",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "hardware": "NOT_RUN",
+ "rows": [
+  {
+   "row": 0,
+   "position": 13,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 1,
+   "position": 14,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 2,
+   "position": 15,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 3,
+   "position": 16,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 4,
+   "position": 17,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 5,
+   "position": 18,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 6,
+   "position": 19,
+   "state_equal": true,
+   "core_equal": true
+  },
+  {
+   "row": 7,
+   "position": 20,
+   "state_equal": true,
+   "core_equal": true
+  }
+ ],
+ "mutants": [
+  {
+   "mutant": "in-slot-plus-one",
+   "caught": true
+  },
+  {
+   "mutant": "mask",
+   "caught": true
+  }
+ ],
+ "checks": [
+  "PASS first-party table writer fieldenc.py (no LLVM input) reproduces all 11 reviewed dc536882 tables",
+  "PASS gdnconv4_step_ring16 object .text, .note and descriptor equal llvm-mc-18 (sha256 c31d64cc75fa2f9d56b8c8e1839342124c8b2557435fee08bb6fce8e9e9aeb42)"
+ ],
+ "keep_n_rows_slots_equal_plain_prefix_state": {
+  "0": true,
+  "1": true,
+  "2": true,
+  "3": true,
+  "4": true,
+  "5": true,
+  "6": true,
+  "7": true,
+  "8": true
+ },
+ "two_bank_comparison": "two parity banks hold 2 of the 9 prefix states after 8 rows",
+ "verdict": "PASS",
+ "commands": [
+  {
+   "argv": [
+    "/w/kernels/build/omc-e5b32567"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "/w/kernels/build/omc-e5b32567"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/hsaco",
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.isa"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "-filetype=obj",
+    "-o",
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.o",
+    "kernels/s2b-conv-run3/gdnconv4_step_r1-gfx942.s"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/hsaco",
+    "src/CUDApp/backend/amd/gfx942/gdnconv4_step.isa"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_r1.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/hsaco",
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.isa"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "-filetype=obj",
+    "-o",
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.o",
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16-gfx942.s"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/gdnconv4_step_ring16.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/hsaco",
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.isa"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "-filetype=obj",
+    "-o",
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.o",
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one-gfx942.s"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-in-slot-plus-one.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/hsaco",
+    "kernels/s2b-conv-run3/mutant-mask.isa"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "-filetype=obj",
+    "-o",
+    "kernels/s2b-conv-run3/mutant-mask.o",
+    "kernels/s2b-conv-run3/mutant-mask-gfx942.s"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2b-conv-run3/mutant-mask.text",
+    "kernels/s2b-conv-run3/m.bin",
+    "128",
+    "1"
+   ],
+   "exit": 0,
+   "stderr": ""
+  }
+ ]
+}

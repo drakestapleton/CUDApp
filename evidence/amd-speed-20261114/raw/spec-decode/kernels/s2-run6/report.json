@@ -1,0 +1,3964 @@
+{
+ "schema": "spec-decode-s2-v1",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "cudapp": "dc536882c06a692991be97dc65cd2d037d82b129",
+ "hardware": "NOT_RUN",
+ "performance": "NOT_RUN",
+ "checks": [
+  "PASS first-party table writer (fieldenc.py, no LLVM input) reproduces all 11 reviewed dc536882 tables: fp8gemv_b128f 498 lines all (word 'v_cvt_f32_fp8' only in this kernel), bf16gemv2 287 lines leave-one-out, rmsnorm5120 115 lines leave-one-out, gdnstate_step 193 lines all (word 's_mul_i32' only in this kernel), attn256_part_step 204 lines leave-one-out, attn256_prep_step 481 lines leave-one-out, attn256_merge_step 114 lines leave-one-out, gdnconv4_step 176 lines leave-one-out, embed5120_step 52 lines leave-one-out, argmax_part 160 lines leave-one-out, argmax_final 160 lines leave-one-out",
+  "PASS R=1 generator output assembles to the reviewed fp8gemv_b128f .text",
+  "PASS fp8gemv_b128f_r2 object .text, .note metadata and descriptor equal llvm-mc-18 (vgpr 80, object sha256 d4e281befb43de9e09f7b6dcf4c6a2c47a13440629cd5438fa98805e91846112)",
+  "PASS fp8gemv_b128f_r3 object .text, .note metadata and descriptor equal llvm-mc-18 (vgpr 104, object sha256 e17bc27e70fb75b521467a3788a121257264e31a131ba04b04cf1e848d349c47)",
+  "PASS fp8gemv_b128f_r8 object .text, .note metadata and descriptor equal llvm-mc-18 (vgpr 224, object sha256 049d41e5ced19b70200ec74c95c8aeedbc02ff5555b394069144ffb828e48aad)",
+  "PASS R=1 generator output assembles to the reviewed bf16gemv2 .text",
+  "PASS bf16gemv2_r2 object .text, .note metadata and descriptor equal llvm-mc-18 (vgpr 72, object sha256 a2fbe915125d24d19bc9f29a1e754792e651d78edbd0476574d0734a48508e8c)",
+  "PASS bf16gemv2_r3 object .text, .note metadata and descriptor equal llvm-mc-18 (vgpr 96, object sha256 19b888f2715cc616400770102bdfaf3886b6f473a908a92082ea6eb5b8a16847)",
+  "PASS bf16gemv2_r8 object .text, .note metadata and descriptor equal llvm-mc-18 (vgpr 216, object sha256 a8e92314e65aee1838d56a93b99d80e32f749246df89eb9ecdb2c5d4f142b8ca)"
+ ],
+ "mutants": [
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "mutant-xor-order",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 4,
+   "words_different_from_exact_oracle": 4,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "mutant-shared-partial",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 6,
+   "words_different_from_exact_oracle": 6,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "mutant-x-alias",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 6,
+   "words_different_from_exact_oracle": 6,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "mutant-stride-k-minus-1",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 6,
+   "words_different_from_exact_oracle": 6,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "mutant-xor-order",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 2,
+   "words_different_from_exact_oracle": 2,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "mutant-x-alias",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 6,
+   "words_different_from_exact_oracle": 6,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "mutant-stride-k-minus-1",
+   "R": 3,
+   "M": 3,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 6,
+   "words_different_from_exact_oracle": 6,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  }
+ ],
+ "cases": [
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-130x1283",
+   "R": 2,
+   "M": 130,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    129,
+    127,
+    128,
+    130
+   ],
+   "words_compared": 10,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 10,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-4x300",
+   "R": 2,
+   "M": 4,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-3x2048",
+   "R": 2,
+   "M": 3,
+   "K": 2048,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "real-mtp.layers.0.mlp.down_proj.weight-rows0,1",
+   "R": 2,
+   "M": 2,
+   "K": 17408,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 4,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 4,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "real-mtp.layers.0.self_attn.q_proj.weight-rows0,1",
+   "R": 2,
+   "M": 2,
+   "K": 5120,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 4,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 4,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "nan-in-row0",
+   "R": 2,
+   "M": 3,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": false,
+   "distinct_values": 5,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-130x1283",
+   "R": 3,
+   "M": 130,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    129,
+    127,
+    128,
+    130
+   ],
+   "words_compared": 15,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 15,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-4x300",
+   "R": 3,
+   "M": 4,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "words_compared": 9,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-3x2048",
+   "R": 3,
+   "M": 3,
+   "K": 2048,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "real-mtp.layers.0.mlp.down_proj.weight-rows0,1",
+   "R": 3,
+   "M": 2,
+   "K": 17408,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "real-mtp.layers.0.self_attn.q_proj.weight-rows0,1",
+   "R": 3,
+   "M": 2,
+   "K": 5120,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "nan-in-row0",
+   "R": 3,
+   "M": 3,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 9,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": false,
+   "distinct_values": 7,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-130x1283",
+   "R": 8,
+   "M": 130,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    129,
+    127,
+    128,
+    130
+   ],
+   "words_compared": 40,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 40,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-4x300",
+   "R": 8,
+   "M": 4,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "words_compared": 24,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 24,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "synthetic-3x2048",
+   "R": 8,
+   "M": 3,
+   "K": 2048,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 24,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 24,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "real-mtp.layers.0.mlp.down_proj.weight-rows0,1",
+   "R": 8,
+   "M": 2,
+   "K": 17408,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 16,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 16,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "real-mtp.layers.0.self_attn.q_proj.weight-rows0,1",
+   "R": 8,
+   "M": 2,
+   "K": 5120,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 16,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 16,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "fp8gemv_b128f",
+   "case": "nan-in-row0",
+   "R": 8,
+   "M": 3,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 24,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": false,
+   "distinct_values": 17,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-130x1283",
+   "R": 2,
+   "M": 130,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    129,
+    127,
+    128,
+    130
+   ],
+   "words_compared": 10,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 10,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-4x300",
+   "R": 2,
+   "M": 4,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-3x2048",
+   "R": 2,
+   "M": 3,
+   "K": 2048,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "real-mtp.fc.weight-rows0,1",
+   "R": 2,
+   "M": 2,
+   "K": 10240,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 4,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 4,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-130x1283",
+   "R": 3,
+   "M": 130,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    129,
+    127,
+    128,
+    130
+   ],
+   "words_compared": 15,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 15,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-4x300",
+   "R": 3,
+   "M": 4,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "words_compared": 9,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-3x2048",
+   "R": 3,
+   "M": 3,
+   "K": 2048,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 9,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 9,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "real-mtp.fc.weight-rows0,1",
+   "R": 3,
+   "M": 2,
+   "K": 10240,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 6,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 6,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-130x1283",
+   "R": 8,
+   "M": 130,
+   "K": 1283,
+   "rows": [
+    0,
+    1,
+    129,
+    127,
+    128,
+    130
+   ],
+   "words_compared": 40,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 40,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-4x300",
+   "R": 8,
+   "M": 4,
+   "K": 300,
+   "rows": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "words_compared": 24,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 24,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "synthetic-3x2048",
+   "R": 8,
+   "M": 3,
+   "K": 2048,
+   "rows": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "words_compared": 24,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 24,
+   "outside_y_unchanged": true,
+   "ok": true
+  },
+  {
+   "kernel": "bf16gemv2",
+   "case": "real-mtp.fc.weight-rows0,1",
+   "R": 8,
+   "M": 2,
+   "K": 10240,
+   "rows": [
+    0,
+    1,
+    2
+   ],
+   "words_compared": 16,
+   "words_different": 0,
+   "words_different_from_exact_oracle": 0,
+   "all_finite": true,
+   "distinct_values": 16,
+   "outside_y_unchanged": true,
+   "ok": true
+  }
+ ],
+ "verdict": "PASS",
+ "commands": [
+  {
+   "argv": [
+    "/w/kernels/build/omc-e5b32567"
+   ],
+   "exit": 0,
+   "stdout_sha256": "eca3f3b03366eecc3039e7dcb3ab2834b380c8156e0d5a64dcbe110a657ab95b",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "/w/kernels/build/omc-e5b32567"
+   ],
+   "exit": 0,
+   "stdout_sha256": "fc1f0b559120d64b7d4875fe2ee4de819f81ee6d5fd909853602ef9fe5bcdbc8",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f_r1.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "d54f9872ac11df116952dbc6925a95d1aa85fcb7f391f158eb46f3b38244f5dd",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f_r1.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f_r1-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "src/CUDApp/backend/amd/gfx942/fp8gemv_b128f.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "72049eeefffe5431c0f8972d1d9f3e4f93e39841312aeb492ac24f455d23adbd",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f_r2.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "d4e281befb43de9e09f7b6dcf4c6a2c47a13440629cd5438fa98805e91846112",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f_r2.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f_r2-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f_r3.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e17bc27e70fb75b521467a3788a121257264e31a131ba04b04cf1e848d349c47",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f_r3.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f_r3-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f_r8.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "049d41e5ced19b70200ec74c95c8aeedbc02ff5555b394069144ffb828e48aad",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f_r8.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f_r8-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-xor-order.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "b86c30f0eddeca9c280da6579a2736815d79c07d2014b1b811fb4d9e45e4a93b",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-xor-order.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-xor-order-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-xor-order.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-shared-partial.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "add45d44acfe8428f1f14b5b494639f9980d21108e28aa43638e42ce29db2961",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-shared-partial.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-shared-partial-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-shared-partial.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-x-alias.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "b2269c01a396025b76d4864355457f486ad35ccc253066c65c25033440bfd0b4",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-x-alias.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-x-alias-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-x-alias.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-stride-k-minus-1.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "1544e1a32dee5cfc41e1fad8e424779743c0619db6d66f9a1888c7d2c4755e8a",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-stride-k-minus-1.llvm.o",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-stride-k-minus-1-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f-mutant-stride-k-minus-1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/fp8gemv_b128f_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2_r1.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "b7cb92c9a9e57a52c5668651dfb8ac94ac6abe89db0c8639ec8046ae582ee4fe",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2_r1.llvm.o",
+    "kernels/s2-run6/bf16gemv2_r1-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "src/CUDApp/backend/amd/gfx942/bf16gemv2.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "4ef73f616043b8bf007b025d1ec62635be26c80a3eeb09a681d0f38386e9aaeb",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2_r2.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "a2fbe915125d24d19bc9f29a1e754792e651d78edbd0476574d0734a48508e8c",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2_r2.llvm.o",
+    "kernels/s2-run6/bf16gemv2_r2-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r2.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2_r3.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "19b888f2715cc616400770102bdfaf3886b6f473a908a92082ea6eb5b8a16847",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2_r3.llvm.o",
+    "kernels/s2-run6/bf16gemv2_r3-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r3.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2_r8.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "a8e92314e65aee1838d56a93b99d80e32f749246df89eb9ecdb2c5d4f142b8ca",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2_r8.llvm.o",
+    "kernels/s2-run6/bf16gemv2_r8-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "129",
+    "127",
+    "128",
+    "130",
+    "130"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "3",
+    "4",
+    "4"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r8.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "2"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2-mutant-xor-order.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "ba6d84cf0bc03aae34ca8bc54ff3f54bfa357cd1bf544704299aaf121b256f86",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2-mutant-xor-order.llvm.o",
+    "kernels/s2-run6/bf16gemv2-mutant-xor-order-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2-mutant-xor-order.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2-mutant-x-alias.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "93e1a923636a5adffcc53a144fdcfed8bafc1fa2b0803da0b20ef0e471e38e6e",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2-mutant-x-alias.llvm.o",
+    "kernels/s2-run6/bf16gemv2-mutant-x-alias-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2-mutant-x-alias.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/hsaco",
+    "kernels/s2-run6/bf16gemv2-mutant-stride-k-minus-1.isa"
+   ],
+   "exit": 0,
+   "stdout_sha256": "f154b12d579abef528fb40179cc8aef2831e536117b4976aa187342426640ce1",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "llvm-mc-18",
+    "-triple=amdgcn-amd-amdhsa",
+    "-mcpu=gfx942",
+    "-filetype=obj",
+    "-o",
+    "kernels/s2-run6/bf16gemv2-mutant-stride-k-minus-1.llvm.o",
+    "kernels/s2-run6/bf16gemv2-mutant-stride-k-minus-1-gfx942.s"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2-mutant-stride-k-minus-1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  },
+  {
+   "argv": [
+    "kernels/s2-run6/row-exec",
+    "kernels/s2-run6/bf16gemv2_r1.text",
+    "kernels/s2-run6/memory.bin",
+    "0",
+    "1",
+    "2",
+    "3",
+    "3"
+   ],
+   "exit": 0,
+   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderr": ""
+  }
+ ]
+}

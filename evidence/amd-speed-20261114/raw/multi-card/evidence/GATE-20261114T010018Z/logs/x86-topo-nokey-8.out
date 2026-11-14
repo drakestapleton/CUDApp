@@ -1,0 +1,67 @@
+MCTOPO cpu node=0
+MCTOPO cpu node=1
+MCTOPO gpu node=2 gpu_id=40000 gfx=90402 device=29877 render=128 hive=3942903108070991289 xcc=8 domain=0 location=4096 links=8
+MCTOPO link from=2 to=0 type=2 weight=20
+MCTOPO link from=2 to=3 type=11 weight=15
+MCTOPO link from=2 to=4 type=11 weight=15
+MCTOPO link from=2 to=5 type=11 weight=15
+MCTOPO link from=2 to=6 type=11 weight=15
+MCTOPO link from=2 to=7 type=11 weight=15
+MCTOPO link from=2 to=8 type=11 weight=15
+MCTOPO link from=2 to=9 type=11 weight=15
+MCTOPO gpu node=3 gpu_id=40017 gfx=90402 device=29877 render=129 hive=3942903108070991289 xcc=8 domain=0 location=4352 links=8
+MCTOPO link from=3 to=1 type=2 weight=20
+MCTOPO link from=3 to=2 type=11 weight=15
+MCTOPO link from=3 to=4 type=11 weight=15
+MCTOPO link from=3 to=5 type=11 weight=15
+MCTOPO link from=3 to=6 type=11 weight=15
+MCTOPO link from=3 to=7 type=11 weight=15
+MCTOPO link from=3 to=8 type=11 weight=15
+MCTOPO link from=3 to=9 type=11 weight=15
+MCTOPO skip node=4 errno=22
+MCTOPO gpu node=5 gpu_id=40051 gfx=90402 device=29877 render=131 hive=3942903108070991289 xcc=8 domain=0 location=4864 links=8
+MCTOPO link from=5 to=1 type=2 weight=20
+MCTOPO link from=5 to=2 type=11 weight=15
+MCTOPO link from=5 to=3 type=11 weight=15
+MCTOPO link from=5 to=4 type=11 weight=15
+MCTOPO link from=5 to=6 type=11 weight=15
+MCTOPO link from=5 to=7 type=11 weight=15
+MCTOPO link from=5 to=8 type=11 weight=15
+MCTOPO link from=5 to=9 type=11 weight=15
+MCTOPO gpu node=6 gpu_id=40068 gfx=90402 device=29877 render=132 hive=3942903108070991289 xcc=8 domain=0 location=5120 links=8
+MCTOPO link from=6 to=0 type=2 weight=20
+MCTOPO link from=6 to=2 type=11 weight=15
+MCTOPO link from=6 to=3 type=11 weight=15
+MCTOPO link from=6 to=4 type=11 weight=15
+MCTOPO link from=6 to=5 type=11 weight=15
+MCTOPO link from=6 to=7 type=11 weight=15
+MCTOPO link from=6 to=8 type=11 weight=15
+MCTOPO link from=6 to=9 type=11 weight=15
+MCTOPO gpu node=7 gpu_id=40085 gfx=90402 device=29877 render=133 hive=3942903108070991289 xcc=8 domain=0 location=5376 links=8
+MCTOPO link from=7 to=1 type=2 weight=20
+MCTOPO link from=7 to=2 type=11 weight=15
+MCTOPO link from=7 to=3 type=11 weight=15
+MCTOPO link from=7 to=4 type=11 weight=15
+MCTOPO link from=7 to=5 type=11 weight=15
+MCTOPO link from=7 to=6 type=11 weight=15
+MCTOPO link from=7 to=8 type=11 weight=15
+MCTOPO link from=7 to=9 type=11 weight=15
+MCTOPO gpu node=8 gpu_id=40102 gfx=90402 device=29877 render=134 hive=3942903108070991289 xcc=8 domain=0 location=5632 links=8
+MCTOPO link from=8 to=0 type=2 weight=20
+MCTOPO link from=8 to=2 type=11 weight=15
+MCTOPO link from=8 to=3 type=11 weight=15
+MCTOPO link from=8 to=4 type=11 weight=15
+MCTOPO link from=8 to=5 type=11 weight=15
+MCTOPO link from=8 to=6 type=11 weight=15
+MCTOPO link from=8 to=7 type=11 weight=15
+MCTOPO link from=8 to=9 type=11 weight=15
+MCTOPO gpu node=9 gpu_id=40119 gfx=90402 device=29877 render=135 hive=3942903108070991289 xcc=8 domain=0 location=5888 links=8
+MCTOPO link from=9 to=1 type=2 weight=20
+MCTOPO link from=9 to=2 type=11 weight=15
+MCTOPO link from=9 to=3 type=11 weight=15
+MCTOPO link from=9 to=4 type=11 weight=15
+MCTOPO link from=9 to=5 type=11 weight=15
+MCTOPO link from=9 to=6 type=11 weight=15
+MCTOPO link from=9 to=7 type=11 weight=15
+MCTOPO link from=9 to=8 type=11 weight=15
+MCTOPO refuse reason=too_few have=7 want=8

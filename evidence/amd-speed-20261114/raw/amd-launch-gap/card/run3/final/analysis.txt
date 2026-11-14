@@ -1,0 +1,98 @@
+{
+ "micro": {
+  "paired-plan3-minus-hip-n1-us": {
+   "median": -12.822502508759499,
+   "min": -16.009480744600296,
+   "max": -11.807019270956516,
+   "n": 9
+  },
+  "paired-plan3-minus-hip-n1126-us": {
+   "median": -10.230509312823415,
+   "min": -23.584984155371785,
+   "max": 3.3554886989295483,
+   "n": 9
+  },
+  "paired-plan3-minus-hip-per-dispatch-us": {
+   "median": 0.002482187004553049,
+   "min": -0.006733780809574652,
+   "max": 0.013943109838499002,
+   "n": 9
+  },
+  "paired-plan3c-minus-hip-n1-us": {
+   "median": -12.822502508759499,
+   "min": -15.009480744600296,
+   "max": -12.330509869381785,
+   "n": 9
+  },
+  "paired-plan3c-minus-hip-n1126-us": {
+   "median": -1.303997838869691,
+   "min": -22.584984155371785,
+   "max": 4.355488698929548,
+   "n": 9
+  },
+  "paired-plan3c-minus-hip-per-dispatch-us": {
+   "median": 0.010238670817679818,
+   "min": -0.006733780809574652,
+   "max": 0.01492663144899753,
+   "n": 9
+  }
+ },
+ "model": {
+  "paired-plan3-minus-hip-ms": {
+   "median": 0.09569996104761813,
+   "min": -0.022103996060788944,
+   "max": 0.15435797361284642,
+   "n": 9
+  },
+  "paired-plan3c-minus-hip-ms": {
+   "median": 0.07391399214789374,
+   "min": -0.011103996060789711,
+   "max": 0.16153600258752832,
+   "n": 9
+  },
+  "plan3-summary": {
+   "median": 25.222,
+   "min": 25.147,
+   "max": 25.312,
+   "n": 9
+  },
+  "plan3c-summary": {
+   "median": 25.201,
+   "min": 25.148,
+   "max": 25.315,
+   "n": 9
+  },
+  "hip-summary": {
+   "median": 25.14730003895238,
+   "min": 25.04754002438858,
+   "max": 25.180955999530852,
+   "n": 9
+  },
+  "old-plan-summary": {
+   "median": 27.051,
+   "min": 27.045,
+   "max": 27.067,
+   "n": 3
+  }
+ },
+ "phases": {
+  "model": {
+   "first_doorbell_ns": 1224,
+   "last_doorbell_ns": 243108,
+   "signal_ns": 25354577,
+   "token_read_ns": 25355088
+  },
+  "micro-n1": {
+   "first_doorbell_ns": 947,
+   "last_doorbell_ns": 947,
+   "signal_ns": 6917,
+   "token_read_ns": 7252
+  },
+  "micro-n1126": {
+   "first_doorbell_ns": 1053,
+   "last_doorbell_ns": 229290,
+   "signal_ns": 1803747,
+   "token_read_ns": 1804104
+  }
+ }
+}

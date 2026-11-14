@@ -1,0 +1,18 @@
+CONVERT model.language_model.layers.0.linear_attn.in_proj_qkv M=10240 K=5120 seg=4 rel_err=0.08528
+CONVERT model.language_model.layers.0.linear_attn.in_proj_z M=6144 K=5120 seg=4 rel_err=0.08604
+CONVERT model.language_model.layers.0.linear_attn.out_proj M=5120 K=6144 seg=16 rel_err=0.10853
+CONVERT model.language_model.layers.0.mlp.down_proj M=5120 K=17408 seg=16 rel_err=0.10323
+CONVERT model.language_model.layers.0.mlp.gate_proj M=17408 K=5120 seg=16 rel_err=0.09842
+CONVERT model.language_model.layers.0.mlp.up_proj M=17408 K=5120 seg=16 rel_err=0.09795
+SHARD layers-0.safetensors 6838338b9248305c1ae827e62f3e2f4f111186efa356c16ced91905c4adba92e
+CONVERT model.language_model.layers.3.mlp.down_proj M=5120 K=17408 seg=16 rel_err=0.10158
+CONVERT model.language_model.layers.3.mlp.gate_proj M=17408 K=5120 seg=16 rel_err=0.09805
+CONVERT model.language_model.layers.3.mlp.up_proj M=17408 K=5120 seg=16 rel_err=0.09799
+CONVERT model.language_model.layers.3.self_attn.k_proj M=1024 K=5120 seg=16 rel_err=0.10388
+CONVERT model.language_model.layers.3.self_attn.o_proj M=5120 K=6144 seg=16 rel_err=0.10496
+CONVERT model.language_model.layers.3.self_attn.q_proj M=12288 K=5120 seg=16 rel_err=0.10016
+CONVERT model.language_model.layers.3.self_attn.v_proj M=1024 K=5120 seg=16 rel_err=0.10084
+SHARD layers-3.safetensors 1bbb528e1ccf6e9e8cf2249ffa413d2ddacd5242b88357d40726956475b09d88
+CONVERT lm_head M=248320 K=5120 seg=16 rel_err=0.10171
+SHARD outside.safetensors 9afc6a236b58e3ef08b0359642c600feccf921551593bb05d361ffbecc1a7359
+CONVERT DONE shards=3/66

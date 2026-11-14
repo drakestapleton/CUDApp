@@ -1,0 +1,299 @@
+{
+ "ids": {
+  "full-a": {
+   "ok": false,
+   "first_difference": 109
+  },
+  "full-b": {
+   "ok": false,
+   "first_difference": 109
+  },
+  "cap286": {
+   "ok": false,
+   "first_difference": 109
+  },
+  "v1all": {
+   "ok": false,
+   "first_difference": 109
+  },
+  "control": {
+   "ok": true,
+   "first_difference": 0
+  }
+ },
+ "classes": {
+  "argmax_final": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 2064,
+   "us_per_dispatch": 16.125,
+   "delta_p10_p90": [
+    2015,
+    2134
+   ]
+  },
+  "argmax_part": {
+   "ids_ok": true,
+   "inserted": 64,
+   "median_delta_us": 353,
+   "us_per_dispatch": 5.515625,
+   "delta_p10_p90": [
+    301,
+    386
+   ]
+  },
+  "attn256_gate": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 357,
+   "us_per_dispatch": 2.7890625,
+   "delta_p10_p90": [
+    308,
+    409
+   ]
+  },
+  "attn256_merge_step": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 452,
+   "us_per_dispatch": 3.53125,
+   "delta_p10_p90": [
+    412,
+    498
+   ]
+  },
+  "attn256_part_step": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 7172,
+   "us_per_dispatch": 56.03125,
+   "delta_p10_p90": [
+    5487,
+    7417
+   ]
+  },
+  "attn256_prep_step": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 651,
+   "us_per_dispatch": 5.0859375,
+   "delta_p10_p90": [
+    616,
+    689
+   ]
+  },
+  "bf16gemv2:248320x5120": {
+   "ids_ok": true,
+   "inserted": 6,
+   "median_delta_us": 4498,
+   "us_per_dispatch": 749.6666666666666,
+   "delta_p10_p90": [
+    4411,
+    4605
+   ]
+  },
+  "bf16gemv2:48x5120": {
+   "ids_ok": true,
+   "inserted": 192,
+   "median_delta_us": 1115,
+   "us_per_dispatch": 5.807291666666667,
+   "delta_p10_p90": [
+    1068,
+    1180
+   ]
+  },
+  "embed5120_step": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 1882,
+   "us_per_dispatch": 14.703125,
+   "delta_p10_p90": [
+    1829,
+    1930
+   ]
+  },
+  "empty:1": {
+   "ids_ok": true,
+   "inserted": 256,
+   "median_delta_us": 995,
+   "us_per_dispatch": 3.88671875,
+   "delta_p10_p90": [
+    948,
+    1031
+   ]
+  },
+  "empty:17408": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 1636,
+   "us_per_dispatch": 12.78125,
+   "delta_p10_p90": [
+    1588,
+    1697
+   ]
+  },
+  "fp8gemv_b128f:10240x5120": {
+   "ids_ok": true,
+   "inserted": 96,
+   "median_delta_us": 2896,
+   "us_per_dispatch": 30.166666666666668,
+   "delta_p10_p90": [
+    2858,
+    2972
+   ]
+  },
+  "fp8gemv_b128f:1024x5120": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 1088,
+   "us_per_dispatch": 8.5,
+   "delta_p10_p90": [
+    1042,
+    1164
+   ]
+  },
+  "fp8gemv_b128f:12288x5120": {
+   "ids_ok": true,
+   "inserted": 96,
+   "median_delta_us": 3335,
+   "us_per_dispatch": 34.739583333333336,
+   "delta_p10_p90": [
+    3297,
+    3400
+   ]
+  },
+  "fp8gemv_b128f:17408x5120": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 6038,
+   "us_per_dispatch": 47.171875,
+   "delta_p10_p90": [
+    5903,
+    6167
+   ]
+  },
+  "fp8gemv_b128f:5120x17408": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 8225,
+   "us_per_dispatch": 64.2578125,
+   "delta_p10_p90": [
+    8144,
+    8298
+   ]
+  },
+  "fp8gemv_b128f:5120x6144": {
+   "ids_ok": true,
+   "inserted": 128,
+   "median_delta_us": 3153,
+   "us_per_dispatch": 24.6328125,
+   "delta_p10_p90": [
+    3113,
+    3215
+   ]
+  },
+  "fp8gemv_b128f:6144x5120": {
+   "ids_ok": true,
+   "inserted": 144,
+   "median_delta_us": 3213,
+   "us_per_dispatch": 22.3125,
+   "delta_p10_p90": [
+    3152,
+    3272
+   ]
+  },
+  "gdnconv4_step": {
+   "ids_ok": true,
+   "inserted": 240,
+   "median_delta_us": 862,
+   "us_per_dispatch": 3.591666666666667,
+   "delta_p10_p90": [
+    822,
+    906
+   ]
+  },
+  "gdnparams": {
+   "ids_ok": true,
+   "inserted": 240,
+   "median_delta_us": 768,
+   "us_per_dispatch": 3.2,
+   "delta_p10_p90": [
+    732,
+    827
+   ]
+  },
+  "gdnqknorm": {
+   "ids_ok": true,
+   "inserted": 240,
+   "median_delta_us": 823,
+   "us_per_dispatch": 3.4291666666666667,
+   "delta_p10_p90": [
+    773,
+    880
+   ]
+  },
+  "gdnrmsgate": {
+   "ids_ok": true,
+   "inserted": 240,
+   "median_delta_us": 869,
+   "us_per_dispatch": 3.620833333333333,
+   "delta_p10_p90": [
+    812,
+    915
+   ]
+  },
+  "gdnstate_step": {
+   "ids_ok": true,
+   "inserted": 240,
+   "median_delta_us": 15511,
+   "us_per_dispatch": 64.62916666666666,
+   "delta_p10_p90": [
+    15436,
+    15592
+   ]
+  },
+  "mlpsilu": {
+   "ids_ok": true,
+   "inserted": 256,
+   "median_delta_us": 829,
+   "us_per_dispatch": 3.23828125,
+   "delta_p10_p90": [
+    767,
+    886
+   ]
+  },
+  "residual5120": {
+   "ids_ok": true,
+   "inserted": 256,
+   "median_delta_us": 805,
+   "us_per_dispatch": 3.14453125,
+   "delta_p10_p90": [
+    763,
+    867
+   ]
+  },
+  "rmsnorm5120": {
+   "ids_ok": true,
+   "inserted": 258,
+   "median_delta_us": 2700,
+   "us_per_dispatch": 10.465116279069768,
+   "delta_p10_p90": [
+    2641,
+    2749
+   ]
+  }
+ },
+ "decode": {},
+ "base_decode_median_us": 26309,
+ "base_spread_us": {
+  "base-1": 106,
+  "base-2": 0,
+  "base-3": -42
+ },
+ "failures": [
+  "full-a",
+  "full-b",
+  "cap286",
+  "v1all"
+ ]
+}

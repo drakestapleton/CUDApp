@@ -1,0 +1,203 @@
+build-a64-mc_topo	0	compile exit 0	PASS
+build-a64-mc_kfd	0	compile exit 0	PASS
+build-a64-mc_plan	0	compile exit 0	PASS
+build-a64-mc_sim	0	compile exit 0	PASS
+build-x86-mc_topo	0	compile exit 0	PASS
+build-x86-mc_kfd	0	compile exit 0	PASS
+build-x86-mc_plan	0	compile exit 0	PASS
+build-x86-mc_sim	0	compile exit 0	PASS
+oracle-build	0	gcc against v6.18 kfd_ioctl.h	PASS
+model-spec	0	model.txt regenerates byte-identically from config.json	PASS
+a64-topo-t8-8	0	exit=0 want=0 /^MCTOPO select n=8 node=2 node=3 node=4 node=5 node=6 node=7 node=8 node=9$/	PASS
+a64-topo-t8-pairs	0	exit=0 want=0 /^MCTOPO peers xgmi_pairs=56$/	PASS
+a64-topo-t8-4	0	exit=0 want=0 /^MCTOPO select n=4 node=2 node=3 node=4 node=5$/	PASS
+a64-topo-t1-1	0	exit=0 want=0 /^MCTOPO select n=1 node=2$/	PASS
+a64-topo-t1-2	66	exit=66 want=66 /^MCTOPO refuse reason=too_few have=1 want=2$/	PASS
+a64-topo-t64-64	0	exit=0 want=0 /^MCTOPO peers xgmi_pairs=4032$/	PASS
+a64-topo-perm-6	0	exit=0 want=0 /^MCTOPO skip node=5 errno=13$/	PASS
+a64-topo-perm-7	66	exit=66 want=66 /^MCTOPO refuse reason=too_few have=6 want=7$/	PASS
+a64-topo-mixed-8	66	exit=66 want=66 /^MCTOPO refuse reason=mixed_device node=7$/	PASS
+a64-topo-mixed-4	0	exit=0 want=0 /^MCTOPO select n=4/	PASS
+a64-topo-pcie-2	66	exit=66 want=66 /^MCTOPO refuse reason=no_xgmi from=2 to=3$/	PASS
+a64-topo-pcie-1	0	exit=0 want=0 /^MCTOPO select n=1 node=2$/	PASS
+a64-topo-nohive-2	66	exit=66 want=66 /^MCTOPO refuse reason=hive from=2 to=3$/	PASS
+a64-topo-cpx-2	66	exit=66 want=66 /^MCTOPO refuse reason=partition from=2 to=3$/	PASS
+a64-topo-cpx-8	66	exit=66 want=66 /^MCTOPO refuse reason=partition/	PASS
+a64-topo-vf-8	66	exit=66 want=66 /^MCTOPO refuse reason=partial_card node=2 xcc=1$/	PASS
+a64-topo-asym-8	66	exit=66 want=66 /^MCTOPO refuse reason=no_xgmi from=4 to=5$/	PASS
+a64-topo-nokey-8	66	exit=66 want=66 /^MCTOPO skip node=4 errno=22$/	PASS
+a64-topo-absent	66	exit=66 want=66 /^MCTOPO absent node=0 errno=2$/	PASS
+a64-topo-argc	64	exit=64 want=64 	PASS
+a64-topo-zero	64	exit=64 want=64 	PASS
+a64-kfd-records-1	0	7 lines byte-identical to the v6.18 UAPI oracle	PASS
+a64-kfd-records-2	0	12 lines byte-identical to the v6.18 UAPI oracle	PASS
+a64-kfd-records-4	0	22 lines byte-identical to the v6.18 UAPI oracle	PASS
+a64-kfd-records-8	0	42 lines byte-identical to the v6.18 UAPI oracle	PASS
+a64-kfd-records-64	0	322 lines byte-identical to the v6.18 UAPI oracle	PASS
+a64-kfd-absent	77	exit=77 want=77 /^MCKFD device=absent errno=2$/	PASS
+a64-kfd-max	66	exit=66 want=66 /^MCKFD refuse reason=kfd_max_gpu_instance max=64 want=65$/	PASS
+a64-kfd-8	0	exit=0 want=0 /^MCKFD ok cards=8 rx_bytes=2097152$/	PASS
+a64-kfd-64	0	exit=0 want=0 /^MCKFD ok cards=64 rx_bytes=4194304$/	PASS
+a64-kfd-version	0	exit=0 want=0 /^MCKFD kfd_version=1\.18$/	PASS
+a64-kfd-badmodel	65	exit=65 want=65 /^MCKFD refuse reason=model key=hidden_size$/	PASS
+a64-kfd-pcie	66	exit=66 want=66 /^MCTOPO refuse reason=no_xgmi/	PASS
+a64-kfd-mode	64	exit=64 want=64 	PASS
+a64-plan-exact-1	0	exit=0 want=0 /^MCPLAN verify cards=1 PASS$/	PASS
+a64-plan-exact-2	0	exit=0 want=0 /^MCPLAN verify cards=2 PASS$/	PASS
+a64-plan-exact-3	0	exit=0 want=0 /^MCPLAN verify cards=3 PASS$/	PASS
+a64-plan-exact-4	0	exit=0 want=0 /^MCPLAN verify cards=4 PASS$/	PASS
+a64-plan-exact-8	0	exit=0 want=0 /^MCPLAN verify cards=8 PASS$/	PASS
+a64-plan-exact-16	0	exit=0 want=0 /^MCPLAN verify cards=16 PASS$/	PASS
+a64-plan-fast-1	0	exit=0 want=0 /^MCPLAN verify cards=1 PASS$/	PASS
+a64-plan-fast-2	0	exit=0 want=0 /^MCPLAN verify cards=2 PASS$/	PASS
+a64-plan-fast-3	0	exit=0 want=0 /^MCPLAN verify cards=3 PASS$/	PASS
+a64-plan-fast-4	0	exit=0 want=0 /^MCPLAN verify cards=4 PASS$/	PASS
+a64-plan-fast-8	0	exit=0 want=0 /^MCPLAN verify cards=8 PASS$/	PASS
+a64-plan-fast-16	0	exit=0 want=0 /^MCPLAN verify cards=16 PASS$/	PASS
+a64-plan-bytes-1	0	exit=0 want=0 /^MCPLAN summary max_card_bytes=26922885120 min_card_bytes=26922885120 sum_card_bytes=26922885120$/	PASS
+a64-plan-bytes-8	0	exit=0 want=0 /^MCPLAN summary max_card_bytes=3386337280 min_card_bytes=3386337280 sum_card_bytes=27090698240$/	PASS
+a64-plan-syncs-exact	0	exit=0 want=0 /syncs_per_step=257 /	PASS
+a64-plan-syncs-fast	0	exit=0 want=0 /syncs_per_step=129 /	PASS
+a64-plan-mut-overlap-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-overlap-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-overlap-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-drop-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-drop-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-drop-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-misalign-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-misalign-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-misalign-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-gqa-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-gqa-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-gqa-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-kv-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-kv-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-kv-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+a64-plan-mut-fast-gqa	1	exit=1 want=1 /^MCPLAN fail check=gqa/	PASS
+a64-plan-mode	64	exit=64 want=64 	PASS
+a64-plan-badspec	65	exit=65 want=65 /^MCPLAN refuse reason=model key=hidden_size$/	PASS
+a64-sim-exact-1	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-fast-1	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-exact-2	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-fast-2	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-exact-3	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-fast-3	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-exact-4	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-fast-4	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-exact-8	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-fast-8	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-fast-differs	0	exit=0 want=0 /hidden_words_differing_from_one_card=[1-9]/	PASS
+a64-sim-mut-drop-exact	2	exit=2 want=2 / stall$/	PASS
+a64-sim-mut-weakwait-exact	1	caught 20/20	PASS
+a64-sim-mut-nowait-exact	1	caught 20/20	PASS
+a64-sim-mut-onebuf-exact	1	caught 20/20	PASS
+a64-sim-mut-drop-fast	2	exit=2 want=2 / stall$/	PASS
+a64-sim-mut-weakwait-fast	1	caught 20/20	PASS
+a64-sim-mut-nowait-fast	1	caught 20/20	PASS
+a64-sim-mut-onebuf-fast	1	caught 20/20	PASS
+a64-sim-fast-4-stable	0	caught 10/10	PASS
+a64-sim-exact-8-stable	0	caught 10/10	PASS
+a64-sim-fast-8-stable	0	caught 10/10	PASS
+a64-sim-mut-order-fast	1	exit=1 want=1 /^MCSIM FAIL$/	PASS
+a64-sim-order-exact-control	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+a64-sim-args	64	exit=64 want=64 	PASS
+x86-topo-t8-8	0	exit=0 want=0 /^MCTOPO select n=8 node=2 node=3 node=4 node=5 node=6 node=7 node=8 node=9$/	PASS
+x86-topo-t8-pairs	0	exit=0 want=0 /^MCTOPO peers xgmi_pairs=56$/	PASS
+x86-topo-t8-4	0	exit=0 want=0 /^MCTOPO select n=4 node=2 node=3 node=4 node=5$/	PASS
+x86-topo-t1-1	0	exit=0 want=0 /^MCTOPO select n=1 node=2$/	PASS
+x86-topo-t1-2	66	exit=66 want=66 /^MCTOPO refuse reason=too_few have=1 want=2$/	PASS
+x86-topo-t64-64	0	exit=0 want=0 /^MCTOPO peers xgmi_pairs=4032$/	PASS
+x86-topo-perm-6	0	exit=0 want=0 /^MCTOPO skip node=5 errno=13$/	PASS
+x86-topo-perm-7	66	exit=66 want=66 /^MCTOPO refuse reason=too_few have=6 want=7$/	PASS
+x86-topo-mixed-8	66	exit=66 want=66 /^MCTOPO refuse reason=mixed_device node=7$/	PASS
+x86-topo-mixed-4	0	exit=0 want=0 /^MCTOPO select n=4/	PASS
+x86-topo-pcie-2	66	exit=66 want=66 /^MCTOPO refuse reason=no_xgmi from=2 to=3$/	PASS
+x86-topo-pcie-1	0	exit=0 want=0 /^MCTOPO select n=1 node=2$/	PASS
+x86-topo-nohive-2	66	exit=66 want=66 /^MCTOPO refuse reason=hive from=2 to=3$/	PASS
+x86-topo-cpx-2	66	exit=66 want=66 /^MCTOPO refuse reason=partition from=2 to=3$/	PASS
+x86-topo-cpx-8	66	exit=66 want=66 /^MCTOPO refuse reason=partition/	PASS
+x86-topo-vf-8	66	exit=66 want=66 /^MCTOPO refuse reason=partial_card node=2 xcc=1$/	PASS
+x86-topo-asym-8	66	exit=66 want=66 /^MCTOPO refuse reason=no_xgmi from=4 to=5$/	PASS
+x86-topo-nokey-8	66	exit=66 want=66 /^MCTOPO skip node=4 errno=22$/	PASS
+x86-topo-absent	66	exit=66 want=66 /^MCTOPO absent node=0 errno=2$/	PASS
+x86-topo-argc	64	exit=64 want=64 	PASS
+x86-topo-zero	64	exit=64 want=64 	PASS
+x86-kfd-records-1	0	7 lines byte-identical to the v6.18 UAPI oracle	PASS
+x86-kfd-records-2	0	12 lines byte-identical to the v6.18 UAPI oracle	PASS
+x86-kfd-records-4	0	22 lines byte-identical to the v6.18 UAPI oracle	PASS
+x86-kfd-records-8	0	42 lines byte-identical to the v6.18 UAPI oracle	PASS
+x86-kfd-records-64	0	322 lines byte-identical to the v6.18 UAPI oracle	PASS
+x86-kfd-absent	77	exit=77 want=77 /^MCKFD device=absent errno=2$/	PASS
+x86-kfd-max	66	exit=66 want=66 /^MCKFD refuse reason=kfd_max_gpu_instance max=64 want=65$/	PASS
+x86-kfd-8	0	exit=0 want=0 /^MCKFD ok cards=8 rx_bytes=2097152$/	PASS
+x86-kfd-64	0	exit=0 want=0 /^MCKFD ok cards=64 rx_bytes=4194304$/	PASS
+x86-kfd-version	0	exit=0 want=0 /^MCKFD kfd_version=1\.18$/	PASS
+x86-kfd-badmodel	65	exit=65 want=65 /^MCKFD refuse reason=model key=hidden_size$/	PASS
+x86-kfd-pcie	66	exit=66 want=66 /^MCTOPO refuse reason=no_xgmi/	PASS
+x86-kfd-mode	64	exit=64 want=64 	PASS
+x86-plan-exact-1	0	exit=0 want=0 /^MCPLAN verify cards=1 PASS$/	PASS
+x86-plan-exact-2	0	exit=0 want=0 /^MCPLAN verify cards=2 PASS$/	PASS
+x86-plan-exact-3	0	exit=0 want=0 /^MCPLAN verify cards=3 PASS$/	PASS
+x86-plan-exact-4	0	exit=0 want=0 /^MCPLAN verify cards=4 PASS$/	PASS
+x86-plan-exact-8	0	exit=0 want=0 /^MCPLAN verify cards=8 PASS$/	PASS
+x86-plan-exact-16	0	exit=0 want=0 /^MCPLAN verify cards=16 PASS$/	PASS
+x86-plan-fast-1	0	exit=0 want=0 /^MCPLAN verify cards=1 PASS$/	PASS
+x86-plan-fast-2	0	exit=0 want=0 /^MCPLAN verify cards=2 PASS$/	PASS
+x86-plan-fast-3	0	exit=0 want=0 /^MCPLAN verify cards=3 PASS$/	PASS
+x86-plan-fast-4	0	exit=0 want=0 /^MCPLAN verify cards=4 PASS$/	PASS
+x86-plan-fast-8	0	exit=0 want=0 /^MCPLAN verify cards=8 PASS$/	PASS
+x86-plan-fast-16	0	exit=0 want=0 /^MCPLAN verify cards=16 PASS$/	PASS
+x86-plan-bytes-1	0	exit=0 want=0 /^MCPLAN summary max_card_bytes=26922885120 min_card_bytes=26922885120 sum_card_bytes=26922885120$/	PASS
+x86-plan-bytes-8	0	exit=0 want=0 /^MCPLAN summary max_card_bytes=3386337280 min_card_bytes=3386337280 sum_card_bytes=27090698240$/	PASS
+x86-plan-syncs-exact	0	exit=0 want=0 /syncs_per_step=257 /	PASS
+x86-plan-syncs-fast	0	exit=0 want=0 /syncs_per_step=129 /	PASS
+x86-plan-mut-overlap-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-overlap-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-overlap-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-drop-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-drop-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-drop-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-misalign-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-misalign-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-misalign-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-gqa-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-gqa-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-gqa-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-kv-2	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-kv-4	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-kv-8	1	exit=1 want=1 /^MCPLAN fail check=/	PASS
+x86-plan-mut-fast-gqa	1	exit=1 want=1 /^MCPLAN fail check=gqa/	PASS
+x86-plan-mode	64	exit=64 want=64 	PASS
+x86-plan-badspec	65	exit=65 want=65 /^MCPLAN refuse reason=model key=hidden_size$/	PASS
+x86-sim-exact-1	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-fast-1	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-exact-2	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-fast-2	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-exact-3	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-fast-3	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-exact-4	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-fast-4	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-exact-8	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-fast-8	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-fast-differs	0	exit=0 want=0 /hidden_words_differing_from_one_card=[1-9]/	PASS
+x86-sim-mut-drop-exact	2	exit=2 want=2 / stall$/	PASS
+x86-sim-mut-weakwait-exact	1	caught 20/20	PASS
+x86-sim-mut-nowait-exact	1	caught 20/20	PASS
+x86-sim-mut-onebuf-exact	1	caught 20/20	PASS
+x86-sim-mut-drop-fast	2	exit=2 want=2 / stall$/	PASS
+x86-sim-mut-weakwait-fast	1	caught 20/20	PASS
+x86-sim-mut-nowait-fast	1	caught 20/20	PASS
+x86-sim-mut-onebuf-fast	1	caught 20/20	PASS
+x86-sim-fast-4-stable	0	caught 10/10	PASS
+x86-sim-exact-8-stable	0	caught 10/10	PASS
+x86-sim-fast-8-stable	0	caught 10/10	PASS
+x86-sim-mut-order-fast	1	exit=1 want=1 /^MCSIM FAIL$/	PASS
+x86-sim-order-exact-control	0	exit=0 want=0 /^MCSIM PASS$/	PASS
+x86-sim-args	64	exit=64 want=64 	PASS
+mut-map-ndevices-offset	0	records differ from oracle	PASS
+mut-alloc-flags	0	records differ from oracle	PASS
+mut-acquire-gpu-offset	0	records differ from oracle	PASS
+mut-alloc-size-offset	0	records differ from oracle	PASS
+mut-alloc-length	9	compile error 9 (kfdctl record length)	PASS
+mut-rx-no-allreduce-slots	0	records differ from oracle	PASS
+wrong-compiler	3	NOT_RUN	PASS

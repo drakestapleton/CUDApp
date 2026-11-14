@@ -1,0 +1,16 @@
+2026-11-14T01:57:31.608Z
+PID 592 01:52
+State:	R (running)
+VmSize:	 1323504 kB
+VmRSS:	    2760 kB
+0 /dev/null pipe:[1422086864] pipe:[1422086865] /workspace/q4/fp8gemv_b128f.hsaco /dev/kfd /dev/dri/renderD128 
+PID 685 00:00
+State:	S (sleeping)
+VmSize:	    2800 kB
+VmRSS:	    2064 kB
+0 pipe:[1422068161] pipe:[1422085926] pipe:[1422085927] 
+
+<>:2: SyntaxWarning: invalid escape sequence '\$'
+<>:2: SyntaxWarning: invalid escape sequence '\$'
+/tmp/ipykernel_74/3372918203.py:2: SyntaxWarning: invalid escape sequence '\$'
+  print(subprocess.run('for p in $(pgrep -f "launch-x86 run"); do echo PID $p $(ps -o etime= -p $p); grep -E "State|VmRSS|VmSize" /proc/$p/status; ls -l /proc/$p/fd 2>/dev/null | awk "{print \$NF}" | tr "\n" " "; echo; kill -TERM $p; done', shell=True, capture_output=True, text=True).stdout)

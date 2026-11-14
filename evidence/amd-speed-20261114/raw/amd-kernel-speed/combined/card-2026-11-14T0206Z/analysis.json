@@ -1,0 +1,178 @@
+{
+ "runs": {
+  "A-1": {
+   "ids_ok": true,
+   "decode_us": 27211,
+   "prefill_us": 793409
+  },
+  "A-2": {
+   "ids_ok": true,
+   "decode_us": 27164,
+   "prefill_us": 790850
+  },
+  "A-3": {
+   "ids_ok": true,
+   "decode_us": 27149,
+   "prefill_us": 791575
+  },
+  "B-1": {
+   "ids_ok": true,
+   "decode_us": 25498,
+   "prefill_us": 741422
+  },
+  "B-2": {
+   "ids_ok": true,
+   "decode_us": 25425,
+   "prefill_us": 740052
+  },
+  "B-3": {
+   "ids_ok": true,
+   "decode_us": 25349,
+   "prefill_us": 737502
+  },
+  "C-1": {
+   "ids_ok": true,
+   "decode_us": 19619,
+   "prefill_us": 569483
+  },
+  "C-2": {
+   "ids_ok": true,
+   "decode_us": 19623,
+   "prefill_us": 569076
+  },
+  "C-3": {
+   "ids_ok": true,
+   "decode_us": 19611,
+   "prefill_us": 568810
+  },
+  "D1-1": {
+   "ids_ok": true,
+   "decode_us": 17056,
+   "prefill_us": 492860
+  },
+  "D1-2": {
+   "ids_ok": true,
+   "decode_us": 17124,
+   "prefill_us": 494305
+  },
+  "D1-3": {
+   "ids_ok": true,
+   "decode_us": 17127,
+   "prefill_us": 493697
+  },
+  "D2-1": {
+   "ids_ok": true,
+   "decode_us": 16527,
+   "prefill_us": 479034
+  },
+  "D2-2": {
+   "ids_ok": true,
+   "decode_us": 16517,
+   "prefill_us": 477466
+  },
+  "D2-3": {
+   "ids_ok": true,
+   "decode_us": 16519,
+   "prefill_us": 477035
+  },
+  "E1-1": {
+   "ids_ok": true,
+   "decode_us": 16712,
+   "prefill_us": 482396
+  },
+  "E1-2": {
+   "ids_ok": true,
+   "decode_us": 16797,
+   "prefill_us": 486132
+  },
+  "E1-3": {
+   "ids_ok": true,
+   "decode_us": 16721,
+   "prefill_us": 482920
+  },
+  "E2-1": {
+   "ids_ok": true,
+   "decode_us": 16226,
+   "prefill_us": 467827
+  },
+  "E2-2": {
+   "ids_ok": true,
+   "decode_us": 16151,
+   "prefill_us": 465208
+  },
+  "E2-3": {
+   "ids_ok": true,
+   "decode_us": 16237,
+   "prefill_us": 468238
+  },
+  "control": {
+   "ids_differ": true
+  }
+ },
+ "arms": {
+  "A": {
+   "runs": [
+    27211,
+    27164,
+    27149
+   ],
+   "median_us": 27164,
+   "spread_us": 62
+  },
+  "B": {
+   "runs": [
+    25498,
+    25425,
+    25349
+   ],
+   "median_us": 25425,
+   "spread_us": 149
+  },
+  "C": {
+   "runs": [
+    19619,
+    19623,
+    19611
+   ],
+   "median_us": 19619,
+   "spread_us": 12
+  },
+  "D1": {
+   "runs": [
+    17056,
+    17124,
+    17127
+   ],
+   "median_us": 17124,
+   "spread_us": 71
+  },
+  "D2": {
+   "runs": [
+    16527,
+    16517,
+    16519
+   ],
+   "median_us": 16519,
+   "spread_us": 10
+  },
+  "E1": {
+   "runs": [
+    16712,
+    16797,
+    16721
+   ],
+   "median_us": 16721,
+   "spread_us": 85
+  },
+  "E2": {
+   "runs": [
+    16226,
+    16151,
+    16237
+   ],
+   "median_us": 16226,
+   "spread_us": 86
+  }
+ },
+ "failures": []
+}

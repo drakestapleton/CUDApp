@@ -1,0 +1,529 @@
+OMEGA step open_kfd ok errno=0 phase=before detail=0
+OMEGA step open_kfd ok errno=0 phase=after detail=0
+OMEGA step version ok errno=0 phase=before detail=0
+OMEGA step version ok errno=0 phase=after detail=0
+OMEGA step topology ok errno=0 phase=before detail=0
+OMEGA step topology_node ok errno=0 phase=before detail=7
+OMEGA step topology_node fail errno=1 phase=after detail=7
+OMEGA step topology_node ok errno=0 phase=before detail=5
+OMEGA step topology_node fail errno=1 phase=after detail=5
+OMEGA step topology_node ok errno=0 phase=before detail=3
+OMEGA step topology_node fail errno=1 phase=after detail=3
+OMEGA step topology_node ok errno=0 phase=before detail=1
+OMEGA step topology_node ok errno=0 phase=after detail=1
+OMEGA topology skip CPU gpu_id=0
+OMEGA step topology_node ok errno=0 phase=before detail=8
+OMEGA step topology_node fail errno=1 phase=after detail=8
+OMEGA step topology_node ok errno=0 phase=before detail=6
+OMEGA step topology_node fail errno=1 phase=after detail=6
+OMEGA step topology_node ok errno=0 phase=before detail=4
+OMEGA step topology_node ok errno=0 phase=after detail=4
+OMEGA topology selected node=4 gpu_id=39350 render_minor=144
+OMEGA step topology ok errno=0 phase=before detail=4
+OMEGA step topology ok errno=0 phase=after detail=4
+OMEGA step render_open ok errno=0 phase=before detail=144
+OMEGA step render_open ok errno=0 phase=after detail=144
+OMEGA step acquire_vm ok errno=0 phase=before detail=39350
+OMEGA step acquire_vm ok errno=0 phase=after detail=39350
+OMEGA step memory_reserve ok errno=0 phase=before detail=1
+OMEGA step memory_reserve ok errno=0 phase=after detail=1
+OMEGA step memory_alloc ok errno=0 phase=before detail=1
+OMEGA step memory_alloc ok errno=0 phase=after detail=1
+OMEGA step memory_map ok errno=0 phase=before detail=1
+OMEGA step memory_map ok errno=0 phase=after detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=1
+OMEGA step memory_reserve ok errno=0 phase=before detail=8
+OMEGA step memory_reserve ok errno=0 phase=after detail=8
+OMEGA step memory_alloc ok errno=0 phase=before detail=8
+OMEGA step memory_alloc ok errno=0 phase=after detail=8
+OMEGA step memory_map ok errno=0 phase=before detail=8
+OMEGA step memory_map ok errno=0 phase=after detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=8
+OMEGA step memory_reserve ok errno=0 phase=before detail=9
+OMEGA step memory_reserve ok errno=0 phase=after detail=9
+OMEGA step memory_alloc ok errno=0 phase=before detail=9
+OMEGA step memory_alloc ok errno=0 phase=after detail=9
+OMEGA step memory_map ok errno=0 phase=before detail=9
+OMEGA step memory_map ok errno=0 phase=after detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=9
+OMEGA step memory_reserve ok errno=0 phase=before detail=10
+OMEGA step memory_reserve ok errno=0 phase=after detail=10
+OMEGA step memory_alloc ok errno=0 phase=before detail=10
+OMEGA step memory_alloc ok errno=0 phase=after detail=10
+OMEGA step memory_map ok errno=0 phase=before detail=10
+OMEGA step memory_map ok errno=0 phase=after detail=10
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=10
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=10
+OMEGA step memory_reserve ok errno=0 phase=before detail=11
+OMEGA step memory_reserve ok errno=0 phase=after detail=11
+OMEGA step memory_alloc ok errno=0 phase=before detail=11
+OMEGA step memory_alloc ok errno=0 phase=after detail=11
+OMEGA step memory_map ok errno=0 phase=before detail=11
+OMEGA step memory_map ok errno=0 phase=after detail=11
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=11
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=11
+OMEGA step memory_reserve ok errno=0 phase=before detail=12
+OMEGA step memory_reserve ok errno=0 phase=after detail=12
+OMEGA step memory_alloc ok errno=0 phase=before detail=12
+OMEGA step memory_alloc ok errno=0 phase=after detail=12
+OMEGA step memory_map ok errno=0 phase=before detail=12
+OMEGA step memory_map ok errno=0 phase=after detail=12
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=12
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=12
+OMEGA step memory_reserve ok errno=0 phase=before detail=13
+OMEGA step memory_reserve ok errno=0 phase=after detail=13
+OMEGA step memory_alloc ok errno=0 phase=before detail=13
+OMEGA step memory_alloc ok errno=0 phase=after detail=13
+OMEGA step memory_map ok errno=0 phase=before detail=13
+OMEGA step memory_map ok errno=0 phase=after detail=13
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=13
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=13
+OMEGA step memory_reserve ok errno=0 phase=before detail=14
+OMEGA step memory_reserve ok errno=0 phase=after detail=14
+OMEGA step memory_alloc ok errno=0 phase=before detail=14
+OMEGA step memory_alloc ok errno=0 phase=after detail=14
+OMEGA step memory_map ok errno=0 phase=before detail=14
+OMEGA step memory_map ok errno=0 phase=after detail=14
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=14
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=14
+OMEGA step memory_reserve ok errno=0 phase=before detail=15
+OMEGA step memory_reserve ok errno=0 phase=after detail=15
+OMEGA step memory_alloc ok errno=0 phase=before detail=15
+OMEGA step memory_alloc ok errno=0 phase=after detail=15
+OMEGA step memory_map ok errno=0 phase=before detail=15
+OMEGA step memory_map ok errno=0 phase=after detail=15
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=15
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=15
+OMEGA step memory_reserve ok errno=0 phase=before detail=16
+OMEGA step memory_reserve ok errno=0 phase=after detail=16
+OMEGA step memory_alloc ok errno=0 phase=before detail=16
+OMEGA step memory_alloc ok errno=0 phase=after detail=16
+OMEGA step memory_map ok errno=0 phase=before detail=16
+OMEGA step memory_map ok errno=0 phase=after detail=16
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=16
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=16
+OMEGA step memory_reserve ok errno=0 phase=before detail=17
+OMEGA step memory_reserve ok errno=0 phase=after detail=17
+OMEGA step memory_alloc ok errno=0 phase=before detail=17
+OMEGA step memory_alloc ok errno=0 phase=after detail=17
+OMEGA step memory_map ok errno=0 phase=before detail=17
+OMEGA step memory_map ok errno=0 phase=after detail=17
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=17
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=17
+OMEGA step memory_reserve ok errno=0 phase=before detail=18
+OMEGA step memory_reserve ok errno=0 phase=after detail=18
+OMEGA step memory_alloc ok errno=0 phase=before detail=18
+OMEGA step memory_alloc ok errno=0 phase=after detail=18
+OMEGA step memory_map ok errno=0 phase=before detail=18
+OMEGA step memory_map ok errno=0 phase=after detail=18
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=18
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=18
+OMEGA step memory_reserve ok errno=0 phase=before detail=19
+OMEGA step memory_reserve ok errno=0 phase=after detail=19
+OMEGA step memory_alloc ok errno=0 phase=before detail=19
+OMEGA step memory_alloc ok errno=0 phase=after detail=19
+OMEGA step memory_map ok errno=0 phase=before detail=19
+OMEGA step memory_map ok errno=0 phase=after detail=19
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=19
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=19
+OMEGA step memory_reserve ok errno=0 phase=before detail=20
+OMEGA step memory_reserve ok errno=0 phase=after detail=20
+OMEGA step memory_alloc ok errno=0 phase=before detail=20
+OMEGA step memory_alloc ok errno=0 phase=after detail=20
+OMEGA step memory_map ok errno=0 phase=before detail=20
+OMEGA step memory_map ok errno=0 phase=after detail=20
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=20
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=20
+OMEGA step memory_reserve ok errno=0 phase=before detail=21
+OMEGA step memory_reserve ok errno=0 phase=after detail=21
+OMEGA step memory_alloc ok errno=0 phase=before detail=21
+OMEGA step memory_alloc ok errno=0 phase=after detail=21
+OMEGA step memory_map ok errno=0 phase=before detail=21
+OMEGA step memory_map ok errno=0 phase=after detail=21
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=21
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=21
+OMEGA step memory_reserve ok errno=0 phase=before detail=22
+OMEGA step memory_reserve ok errno=0 phase=after detail=22
+OMEGA step memory_alloc ok errno=0 phase=before detail=22
+OMEGA step memory_alloc ok errno=0 phase=after detail=22
+OMEGA step memory_map ok errno=0 phase=before detail=22
+OMEGA step memory_map ok errno=0 phase=after detail=22
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=22
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=22
+OMEGA step memory_reserve ok errno=0 phase=before detail=23
+OMEGA step memory_reserve ok errno=0 phase=after detail=23
+OMEGA step memory_alloc ok errno=0 phase=before detail=23
+OMEGA step memory_alloc ok errno=0 phase=after detail=23
+OMEGA step memory_map ok errno=0 phase=before detail=23
+OMEGA step memory_map ok errno=0 phase=after detail=23
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=23
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=23
+OMEGA step memory_reserve ok errno=0 phase=before detail=24
+OMEGA step memory_reserve ok errno=0 phase=after detail=24
+OMEGA step memory_alloc ok errno=0 phase=before detail=24
+OMEGA step memory_alloc ok errno=0 phase=after detail=24
+OMEGA step memory_map ok errno=0 phase=before detail=24
+OMEGA step memory_map ok errno=0 phase=after detail=24
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=24
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=24
+OMEGA step memory_reserve ok errno=0 phase=before detail=25
+OMEGA step memory_reserve ok errno=0 phase=after detail=25
+OMEGA step memory_alloc ok errno=0 phase=before detail=25
+OMEGA step memory_alloc ok errno=0 phase=after detail=25
+OMEGA step memory_map ok errno=0 phase=before detail=25
+OMEGA step memory_map ok errno=0 phase=after detail=25
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=25
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=25
+OMEGA step memory_reserve ok errno=0 phase=before detail=26
+OMEGA step memory_reserve ok errno=0 phase=after detail=26
+OMEGA step memory_alloc ok errno=0 phase=before detail=26
+OMEGA step memory_alloc ok errno=0 phase=after detail=26
+OMEGA step memory_map ok errno=0 phase=before detail=26
+OMEGA step memory_map ok errno=0 phase=after detail=26
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=26
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=26
+OMEGA step memory_reserve ok errno=0 phase=before detail=27
+OMEGA step memory_reserve ok errno=0 phase=after detail=27
+OMEGA step memory_alloc ok errno=0 phase=before detail=27
+OMEGA step memory_alloc ok errno=0 phase=after detail=27
+OMEGA step memory_map ok errno=0 phase=before detail=27
+OMEGA step memory_map ok errno=0 phase=after detail=27
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=27
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=27
+OMEGA step memory_apertures ok errno=0 phase=before detail=39350
+OMEGA step memory_apertures ok errno=0 phase=after detail=39350
+OMEGA step memory_reserve ok errno=0 phase=before detail=3
+OMEGA step memory_reserve ok errno=0 phase=after detail=3
+OMEGA step memory_alloc ok errno=0 phase=before detail=3
+OMEGA step memory_alloc ok errno=0 phase=after detail=3
+OMEGA step memory_map ok errno=0 phase=before detail=3
+OMEGA step memory_map ok errno=0 phase=after detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=3
+OMEGA step memory_reserve ok errno=0 phase=before detail=4
+OMEGA step memory_reserve ok errno=0 phase=after detail=4
+OMEGA step memory_alloc ok errno=0 phase=before detail=4
+OMEGA step memory_alloc ok errno=0 phase=after detail=4
+OMEGA step memory_map ok errno=0 phase=before detail=4
+OMEGA step memory_map ok errno=0 phase=after detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=4
+OMEGA step memory_reserve ok errno=0 phase=before detail=5
+OMEGA step memory_reserve ok errno=0 phase=after detail=5
+OMEGA step memory_alloc ok errno=0 phase=before detail=5
+OMEGA step memory_alloc ok errno=0 phase=after detail=5
+OMEGA step memory_map ok errno=0 phase=before detail=5
+OMEGA step memory_map ok errno=0 phase=after detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=5
+OMEGA step memory_reserve ok errno=0 phase=before detail=6
+OMEGA step memory_reserve ok errno=0 phase=after detail=6
+OMEGA step memory_alloc ok errno=0 phase=before detail=6
+OMEGA step memory_alloc ok errno=0 phase=after detail=6
+OMEGA step memory_map ok errno=0 phase=before detail=6
+OMEGA step memory_map ok errno=0 phase=after detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=6
+OMEGA step memory_reserve ok errno=0 phase=before detail=7
+OMEGA step memory_reserve ok errno=0 phase=after detail=7
+OMEGA step memory_alloc ok errno=0 phase=before detail=7
+OMEGA step memory_alloc ok errno=0 phase=after detail=7
+OMEGA step memory_map ok errno=0 phase=before detail=7
+OMEGA step memory_map ok errno=0 phase=after detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=7
+OMEGA step queue_create ok errno=0 phase=before detail=39350
+OMEGA step queue_create ok errno=0 phase=after detail=39350
+OMEGA step doorbell_map ok errno=0 phase=before detail=16604068138673242112
+OMEGA step doorbell_map ok errno=0 phase=after detail=16604068138673242112
+OMEGA_PLAN ready
+OMEGA_STEP 0 tok=101526 us=24116
+OMEGA_STEP 1 tok=234942 us=23916
+OMEGA_STEP 2 tok=234942 us=23934
+OMEGA_STEP 3 tok=158949 us=23981
+OMEGA_STEP 4 tok=158949 us=23966
+OMEGA_STEP 5 tok=158949 us=23971
+OMEGA_STEP 6 tok=158949 us=23979
+OMEGA_STEP 7 tok=158949 us=23998
+OMEGA_STEP 8 tok=158949 us=23990
+OMEGA_STEP 9 tok=158949 us=24027
+OMEGA_STEP 10 tok=158949 us=24045
+OMEGA_STEP 11 tok=158949 us=24063
+OMEGA_STEP 12 tok=12729 us=24058
+OMEGA_STEP 13 tok=150910 us=24069
+OMEGA_STEP 14 tok=158949 us=24081
+OMEGA_STEP 15 tok=158949 us=24086
+OMEGA_STEP 16 tok=158949 us=24085
+OMEGA_STEP 17 tok=158949 us=24130
+OMEGA_STEP 18 tok=158949 us=24113
+OMEGA_STEP 19 tok=158949 us=24147
+OMEGA_STEP 20 tok=158949 us=24153
+OMEGA_STEP 21 tok=150910 us=24162
+OMEGA_STEP 22 tok=158949 us=24187
+OMEGA_STEP 23 tok=158949 us=24203
+OMEGA_STEP 24 tok=158949 us=24218
+OMEGA_STEP 25 tok=158949 us=24222
+OMEGA_STEP 26 tok=158949 us=24240
+OMEGA_STEP 27 tok=158949 us=24280
+OMEGA_STEP 28 tok=12729 us=24288
+OMEGA_STEP 29 tok=158949 us=24302
+OMEGA_STEP 30 tok=12729 us=24277
+OMEGA_STEP 31 tok=158949 us=24319
+OMEGA_STEP 32 tok=158949 us=24298
+OMEGA_STEP 33 tok=158949 us=24336
+OMEGA_STEP 34 tok=158949 us=24333
+OMEGA_STEP 35 tok=158949 us=24369
+OMEGA_STEP 36 tok=158949 us=24375
+OMEGA_STEP 37 tok=158949 us=24387
+OMEGA_STEP 38 tok=158949 us=24419
+OMEGA_STEP 39 tok=158949 us=24438
+OMEGA_STEP 40 tok=158949 us=24420
+OMEGA_STEP 41 tok=158949 us=24422
+OMEGA_STEP 42 tok=158949 us=24459
+OMEGA_STEP 43 tok=158949 us=24457
+OMEGA_STEP 44 tok=158949 us=24477
+OMEGA_STEP 45 tok=158949 us=24489
+OMEGA_STEP 46 tok=158949 us=24506
+OMEGA_STEP 47 tok=158949 us=24495
+OMEGA_STEP 48 tok=158949 us=24545
+OMEGA_STEP 49 tok=158949 us=24545
+OMEGA_STEP 50 tok=158949 us=24551
+OMEGA_STEP 51 tok=158949 us=24569
+OMEGA_STEP 52 tok=158949 us=24591
+OMEGA_STEP 53 tok=158949 us=24580
+OMEGA_STEP 54 tok=158949 us=24616
+OMEGA_STEP 55 tok=158949 us=24615
+OMEGA_STEP 56 tok=158949 us=24629
+OMEGA_STEP 57 tok=158949 us=24654
+OMEGA_STEP 58 tok=158949 us=24673
+OMEGA_STEP 59 tok=158949 us=24648
+OMEGA_STEP 60 tok=158949 us=24675
+OMEGA_STEP 61 tok=158949 us=24704
+OMEGA_STEP 62 tok=158949 us=24705
+OMEGA_STEP 63 tok=158949 us=24697
+OMEGA_STEP 64 tok=158949 us=24740
+OMEGA_STEP 65 tok=158949 us=24743
+OMEGA_STEP 66 tok=158949 us=24712
+OMEGA_STEP 67 tok=158949 us=24736
+OMEGA_STEP 68 tok=158949 us=24724
+OMEGA_STEP 69 tok=158949 us=24720
+OMEGA_STEP 70 tok=158949 us=24734
+OMEGA_STEP 71 tok=158949 us=24719
+OMEGA_STEP 72 tok=158949 us=24714
+OMEGA_STEP 73 tok=158949 us=24760
+OMEGA_STEP 74 tok=158949 us=24757
+OMEGA_STEP 75 tok=158949 us=24724
+OMEGA_STEP 76 tok=158949 us=24722
+OMEGA_STEP 77 tok=158949 us=24777
+OMEGA_STEP 78 tok=158949 us=24748
+OMEGA_STEP 79 tok=158949 us=24751
+OMEGA_STEP 80 tok=158949 us=24730
+OMEGA_STEP 81 tok=158949 us=24743
+OMEGA_STEP 82 tok=158949 us=24742
+OMEGA_STEP 83 tok=158949 us=24763
+OMEGA_STEP 84 tok=158949 us=24748
+OMEGA_STEP 85 tok=158949 us=24727
+OMEGA_STEP 86 tok=158949 us=24754
+OMEGA_STEP 87 tok=158949 us=24743
+OMEGA_STEP 88 tok=158949 us=24745
+OMEGA_STEP 89 tok=158949 us=24769
+OMEGA_STEP 90 tok=158949 us=24741
+OMEGA_STEP 91 tok=158949 us=24750
+OMEGA_STEP 92 tok=158949 us=24748
+OMEGA_STEP 93 tok=158949 us=24747
+OMEGA_STEP 94 tok=158949 us=24750
+OMEGA_STEP 95 tok=158949 us=24763
+OMEGA_STEP 96 tok=158949 us=24762
+OMEGA_STEP 97 tok=158949 us=24740
+OMEGA_STEP 98 tok=158949 us=24764
+OMEGA_STEP 99 tok=158949 us=24745
+OMEGA_STEP 100 tok=158949 us=24767
+OMEGA_STEP 101 tok=158949 us=24780
+OMEGA_STEP 102 tok=158949 us=24744
+OMEGA_STEP 103 tok=158949 us=24780
+OMEGA_STEP 104 tok=158949 us=24761
+OMEGA_STEP 105 tok=158949 us=24768
+OMEGA_STEP 106 tok=158949 us=24749
+OMEGA_STEP 107 tok=158949 us=24774
+OMEGA_STEP 108 tok=158949 us=24782
+OMEGA_STEP 109 tok=158949 us=24749
+OMEGA_STEP 110 tok=158949 us=24795
+OMEGA_STEP 111 tok=158949 us=24773
+OMEGA_STEP 112 tok=158949 us=24762
+OMEGA_STEP 113 tok=158949 us=24784
+OMEGA_STEP 114 tok=158949 us=24770
+OMEGA_STEP 115 tok=158949 us=24799
+OMEGA_STEP 116 tok=158949 us=24764
+OMEGA_STEP 117 tok=158949 us=24764
+OMEGA_STEP 118 tok=158949 us=24801
+OMEGA_STEP 119 tok=158949 us=24770
+OMEGA_STEP 120 tok=158949 us=24777
+OMEGA_STEP 121 tok=158949 us=24770
+OMEGA_STEP 122 tok=158949 us=24755
+OMEGA_STEP 123 tok=158949 us=24765
+OMEGA_STEP 124 tok=158949 us=24772
+OMEGA_STEP 125 tok=158949 us=24791
+OMEGA_STEP 126 tok=158949 us=24775
+OMEGA_STEP 127 tok=158949 us=24774
+OMEGA_STEP 128 tok=158949 us=24731
+OMEGA_STEP 129 tok=158949 us=24782
+OMEGA_STEP 130 tok=158949 us=24770
+OMEGA_STEP 131 tok=158949 us=24785
+OMEGA_STEP 132 tok=158949 us=24796
+OMEGA_STEP 133 tok=158949 us=24776
+OMEGA_STEP 134 tok=158949 us=24767
+OMEGA_STEP 135 tok=158949 us=24810
+OMEGA_STEP 136 tok=158949 us=24792
+OMEGA_STEP 137 tok=158949 us=24788
+OMEGA_STEP 138 tok=158949 us=24786
+OMEGA_STEP 139 tok=158949 us=24786
+OMEGA_STEP 140 tok=158949 us=24786
+OMEGA_STEP 141 tok=158949 us=24801
+OMEGA_STEP 142 tok=158949 us=24780
+OMEGA_STEP 143 tok=158949 us=24818
+OMEGA_STEP 144 tok=158949 us=24801
+OMEGA_STEP 145 tok=158949 us=24764
+OMEGA_STEP 146 tok=158949 us=24796
+OMEGA_STEP 147 tok=158949 us=24806
+OMEGA_STEP 148 tok=158949 us=24786
+OMEGA_STEP 149 tok=158949 us=24777
+OMEGA_STEP 150 tok=158949 us=24794
+OMEGA_STEP 151 tok=158949 us=24799
+OMEGA_STEP 152 tok=158949 us=24798
+OMEGA_STEP 153 tok=158949 us=24797
+OMEGA_STEP 154 tok=158949 us=24804
+OMEGA_STEP 155 tok=158949 us=24837
+OMEGA_STEP 156 tok=158949 us=24797
+OMEGA_STEP 157 tok=158949 us=24776
+OMEGA_STEP 158 tok=158949 us=24820
+OMEGA_STEP 159 tok=158949 us=24796
+OMEGA_STEP 160 tok=158949 us=24817
+OMEGA_STEP 161 tok=158949 us=24802
+OMEGA_STEP 162 tok=158949 us=24801
+OMEGA_STEP 163 tok=158949 us=24825
+OMEGA_STEP 164 tok=158949 us=24778
+OMEGA_STEP 165 tok=158949 us=24800
+OMEGA_STEP 166 tok=158949 us=24812
+OMEGA_STEP 167 tok=158949 us=24821
+OMEGA_STEP 168 tok=158949 us=24808
+OMEGA_STEP 169 tok=158949 us=24822
+OMEGA_STEP 170 tok=158949 us=24806
+OMEGA_STEP 171 tok=158949 us=24846
+OMEGA_STEP 172 tok=158949 us=24809
+OMEGA_STEP 173 tok=158949 us=24821
+OMEGA_STEP 174 tok=158949 us=24800
+OMEGA_STEP 175 tok=158949 us=24822
+OMEGA_STEP 176 tok=158949 us=24830
+OMEGA_STEP 177 tok=158949 us=24804
+OMEGA_STEP 178 tok=158949 us=24803
+OMEGA_STEP 179 tok=158949 us=24840
+OMEGA_STEP 180 tok=158949 us=24830
+OMEGA_STEP 181 tok=158949 us=24804
+OMEGA_STEP 182 tok=158949 us=24841
+OMEGA_STEP 183 tok=158949 us=24796
+OMEGA_STEP 184 tok=158949 us=24825
+OMEGA_STEP 185 tok=158949 us=24823
+OMEGA_STEP 186 tok=158949 us=24820
+OMEGA_STEP 187 tok=158949 us=24847
+OMEGA_STEP 188 tok=158949 us=24816
+OMEGA_STEP 189 tok=158949 us=24820
+OMEGA_STEP 190 tok=158949 us=24818
+OMEGA_STEP 191 tok=158949 us=24802
+OMEGA_STEP 192 tok=158949 us=24819
+OMEGA_STEP 193 tok=158949 us=24857
+OMEGA_STEP 194 tok=158949 us=24852
+OMEGA_STEP 195 tok=158949 us=24837
+OMEGA_STEP 196 tok=158949 us=24836
+OMEGA_STEP 197 tok=158949 us=24845
+OMEGA_STEP 198 tok=158949 us=24847
+OMEGA_STEP 199 tok=158949 us=24851
+OMEGA_STEP 200 tok=158949 us=24834
+OMEGA_STEP 201 tok=158949 us=24842
+OMEGA_STEP 202 tok=158949 us=24859
+OMEGA_STEP 203 tok=158949 us=24887
+OMEGA_STEP 204 tok=158949 us=24851
+OMEGA_STEP 205 tok=158949 us=24852
+OMEGA_STEP 206 tok=158949 us=24831
+OMEGA_STEP 207 tok=158949 us=24907
+OMEGA_STEP 208 tok=158949 us=24851
+OMEGA_STEP 209 tok=158949 us=24823
+OMEGA_STEP 210 tok=158949 us=24845
+OMEGA_STEP 211 tok=158949 us=24843
+OMEGA_STEP 212 tok=158949 us=24859
+OMEGA_STEP 213 tok=158949 us=24854
+OMEGA_STEP 214 tok=158949 us=24863
+OMEGA_STEP 215 tok=158949 us=24850
+OMEGA_STEP 216 tok=158949 us=24851
+OMEGA_STEP 217 tok=158949 us=24853
+OMEGA_STEP 218 tok=158949 us=24862
+OMEGA_STEP 219 tok=158949 us=24854
+OMEGA_STEP 220 tok=158949 us=24852
+OMEGA_STEP 221 tok=158949 us=24868
+OMEGA_STEP 222 tok=158949 us=24873
+OMEGA_STEP 223 tok=158949 us=24862
+OMEGA_STEP 224 tok=158949 us=24859
+OMEGA_STEP 225 tok=158949 us=24864
+OMEGA_STEP 226 tok=158949 us=24828
+OMEGA_STEP 227 tok=158949 us=24855
+OMEGA_STEP 228 tok=158949 us=24861
+OMEGA_STEP 229 tok=158949 us=24852
+OMEGA_STEP 230 tok=158949 us=24836
+OMEGA_STEP 231 tok=158949 us=24876
+OMEGA_STEP 232 tok=158949 us=24852
+OMEGA_STEP 233 tok=158949 us=24859
+OMEGA_STEP 234 tok=158949 us=24853
+OMEGA_STEP 235 tok=158949 us=24842
+OMEGA_STEP 236 tok=158949 us=24838
+OMEGA_STEP 237 tok=158949 us=24875
+OMEGA_STEP 238 tok=158949 us=24863
+OMEGA_STEP 239 tok=158949 us=24856
+OMEGA_STEP 240 tok=158949 us=24848
+OMEGA_STEP 241 tok=158949 us=24837
+OMEGA_STEP 242 tok=158949 us=24864
+OMEGA_STEP 243 tok=158949 us=24837
+OMEGA_STEP 244 tok=158949 us=24864
+OMEGA_STEP 245 tok=158949 us=24861
+OMEGA_STEP 246 tok=158949 us=24842
+OMEGA_STEP 247 tok=158949 us=24851
+OMEGA_STEP 248 tok=158949 us=24889
+OMEGA_STEP 249 tok=158949 us=24862
+OMEGA_STEP 250 tok=158949 us=24853
+OMEGA_STEP 251 tok=158949 us=24859
+OMEGA_STEP 252 tok=158949 us=24858
+OMEGA_STEP 253 tok=158949 us=24874
+OMEGA_STEP 254 tok=158949 us=24876
+OMEGA_STEP 255 tok=158949 us=24867
+OMEGA_STEP 256 tok=158949 us=24845
+OMEGA_STEP 257 tok=158949 us=24841
+OMEGA_STEP 258 tok=158949 us=24863
+OMEGA_STEP 259 tok=158949 us=24867
+OMEGA_STEP 260 tok=158949 us=24874
+OMEGA_STEP 261 tok=158949 us=24854
+OMEGA_STEP 262 tok=158949 us=24867
+OMEGA_STEP 263 tok=158949 us=24862
+OMEGA_STEP 264 tok=158949 us=24872
+OMEGA_STEP 265 tok=158949 us=24881
+OMEGA_STEP 266 tok=158949 us=24845
+OMEGA_STEP 267 tok=158949 us=24869
+OMEGA_STEP 268 tok=158949 us=24887
+OMEGA_STEP 269 tok=158949 us=24869
+OMEGA_STEP 270 tok=158949 us=24880
+OMEGA_STEP 271 tok=158949 us=24875
+OMEGA_STEP 272 tok=158949 us=24837
+OMEGA_STEP 273 tok=158949 us=24874
+OMEGA_STEP 274 tok=158949 us=24857
+OMEGA_STEP 275 tok=158949 us=24861
+OMEGA_STEP 276 tok=158949 us=24879
+OMEGA_STEP 277 tok=158949 us=24852
+OMEGA_STEP 278 tok=158949 us=24885
+OMEGA_STEP 279 tok=158949 us=24857
+OMEGA_STEP 280 tok=158949 us=24862
+OMEGA_STEP 281 tok=158949 us=24878
+OMEGA_STEP 282 tok=158949 us=24866
+OMEGA_STEP 283 tok=158949 us=24883
+OMEGA_STEP 284 tok=158949 us=24846
+OMEGA_PLAN complete
+OMEGA_PLAN ids=[158949,12729,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949,158949]

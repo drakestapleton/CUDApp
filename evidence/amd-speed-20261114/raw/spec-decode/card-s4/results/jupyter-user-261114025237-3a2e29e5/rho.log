@@ -1,0 +1,6 @@
+RHO fp8gemv_b128f_r1 M=81920 K=5120 median_us=198.592 identical finite 
+RHO fp8gemv_b128f_r2 M=81920 K=5120 median_us=260.800 identical finite rho=0.3132
+RHO fp8gemv_b128f_r3 M=81920 K=5120 median_us=345.157 identical finite rho=0.3690
+RHO fp8gemv_b128f_r8 M=81920 K=5120 median_us=739.862 identical finite rho=0.3894
+TIME fp8gemv_b128f 19s
+RHO bf16gemv2_r1 M=248320 K=5120 median_us=798.018 identical finite 

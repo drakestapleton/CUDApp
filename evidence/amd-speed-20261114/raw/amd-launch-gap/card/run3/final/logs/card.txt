@@ -1,0 +1,17 @@
++ date -u +%FT%TZ
+2026-11-14T02:24:25Z
++ uname -a
+Linux jupyter-user-261114022348-7f66e322 6.12.48+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.48-1 (2025-09-20) x86_64 x86_64 x86_64 GNU/Linux
++ cat /opt/rocm/.info/version
+7.2.2
++ rocminfo
++ grep -E Marketing Name|Name: +gfx
++ head -6
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Name:                    gfx942                             
+  Marketing Name:          AMD Instinct MI300X VF             
++ nproc
+160
++ grep -m1 model name /proc/cpuinfo
+model name	: INTEL(R) XEON(R) PLATINUM 8568Y+

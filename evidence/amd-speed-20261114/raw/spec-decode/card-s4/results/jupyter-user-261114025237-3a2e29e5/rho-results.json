@@ -1,0 +1,93 @@
+{
+ "schema": "spec-decode-card-rho-v2",
+ "N": 20,
+ "trials": 5,
+ "timeout_s": 60.0,
+ "kernels": {
+  "fp8gemv_b128f_r1": {
+   "M": 81920,
+   "K": 5120,
+   "R": 1,
+   "per_dispatch_ns": [
+    206726.7894736842,
+    198592.31578947368,
+    197016.15789473685,
+    205462.57894736843,
+    198443.2105263158
+   ],
+   "median_ns": 198592.31578947368,
+   "rows_bit_identical_to_one_row": null,
+   "finite": true,
+   "weight_bytes": 419430400
+  },
+  "fp8gemv_b128f_r2": {
+   "M": 81920,
+   "K": 5120,
+   "R": 2,
+   "per_dispatch_ns": [
+    260800.36842105264,
+    243982.05263157896,
+    275455.7894736842,
+    264948.94736842107,
+    258130.0
+   ],
+   "median_ns": 260800.36842105264,
+   "rows_bit_identical_to_one_row": true,
+   "finite": true,
+   "weight_bytes": 419430400,
+   "rho": 0.31324501345523004
+  },
+  "fp8gemv_b128f_r3": {
+   "M": 81920,
+   "K": 5120,
+   "R": 3,
+   "per_dispatch_ns": [
+    338606.63157894736,
+    345589.8947368421,
+    345157.1052631579,
+    325936.4736842105,
+    346013.1052631579
+   ],
+   "median_ns": 345157.1052631579,
+   "rows_bit_identical_to_one_row": true,
+   "finite": true,
+   "weight_bytes": 419430400,
+   "rho": 0.36900921591814395
+  },
+  "fp8gemv_b128f_r8": {
+   "M": 81920,
+   "K": 5120,
+   "R": 8,
+   "per_dispatch_ns": [
+    737617.5263157894,
+    749707.7894736842,
+    734678.0,
+    743745.6842105263,
+    739861.7894736842
+   ],
+   "median_ns": 739861.7894736842,
+   "rows_bit_identical_to_one_row": true,
+   "finite": true,
+   "weight_bytes": 419430400,
+   "rho": 0.38936154311371557
+  },
+  "bf16gemv2_r1": {
+   "M": 248320,
+   "K": 5120,
+   "R": 1,
+   "per_dispatch_ns": [
+    798017.947368421,
+    812219.7368421053,
+    783919.947368421,
+    785972.7894736842,
+    800636.1052631579
+   ],
+   "median_ns": 798017.947368421,
+   "rows_bit_identical_to_one_row": null,
+   "finite": true,
+   "weight_bytes": 2542796800
+  }
+ },
+ "timeouts": [],
+ "verdict": "PARTIAL"
+}

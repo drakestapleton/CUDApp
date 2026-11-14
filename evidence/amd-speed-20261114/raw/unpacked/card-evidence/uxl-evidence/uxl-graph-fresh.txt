@@ -1,0 +1,2 @@
+CHECKPOINT SHA256 verified 68 files at 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a; shared outside shard includes unused visual bytes; no visual tensors loaded
+ORACLE graph {"mode": "graph", "capacity": 131072, "first_divergence": 109, "match": 115, "decode_ms_median": 24.741188972257078, "fixture_sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "driver": "oracle/driver-real2.py"}

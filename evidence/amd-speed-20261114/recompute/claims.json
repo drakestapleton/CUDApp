@@ -1,0 +1,271 @@
+[
+ {
+  "pattern": "\\*\\*(16\\.226) ms per token \\((61\\.6) tokens per second\\)\\*\\*,\\s+against (27\\.164) ms",
+  "ids": [
+   "combined.E2.decode_ms",
+   "combined.E2.tokens_s",
+   "combined.A.decode_ms"
+  ]
+ },
+ {
+  "pattern": "\\*\\*(1\\.674) times faster\\*\\*",
+  "ids": [
+   "combined.speedup_A_over_E2"
+  ]
+ },
+ {
+  "pattern": "Every one of the (\\d+)\\s+timed runs printed",
+  "ids": [
+   "combined.runs_ids_equal"
+  ]
+ },
+ {
+  "pattern": "take (16\\.519) ms \\((1\\.644) times\\)",
+  "ids": [
+   "combined.D2.decode_ms",
+   "combined.speedup_A_over_D2"
+  ]
+ },
+ {
+  "pattern": "still (3\\.19) times the floor",
+  "ids": [
+   "combined.E2_over_floor"
+  ]
+ },
+ {
+  "pattern": "is (10\\.938) ms, (1\\.674) times; A to\\s+D2, without the request-specific plan, (1\\.644) times\\.\\s+E2 is (3\\.19) times",
+  "ids": [
+   "combined.total_gain_ms",
+   "combined.speedup_A_over_E2",
+   "combined.speedup_A_over_D2",
+   "combined.E2_over_floor"
+  ]
+ },
+ {
+  "pattern": "All (\\d+) timed runs printed the 256",
+  "ids": [
+   "combined.runs_ids_equal"
+  ]
+ },
+ {
+  "pattern": "median decode time of (26\\.726) ms",
+  "ids": [
+   "baseline.published.decode_ms"
+  ]
+ },
+ {
+  "pattern": "launcher was (1\\.98) ms per token behind",
+  "ids": [
+   "baseline.gap.ms"
+  ]
+ },
+ {
+  "pattern": "still trails HIP by (0\\.08) ms per token after each side",
+  "ids": [
+   "launcher.run3.like_for_like_median"
+  ]
+ },
+ {
+  "pattern": "behind in (\\d+) of 9 cycles; (0\\.096) ms on the raw step clocks",
+  "ids": [
+   "launcher.run3.like_for_like_cycles_omega_behind",
+   "launcher.run3.plan3_minus_hip_median"
+  ]
+ },
+ {
+  "pattern": "plan3 trails HIP by a paired median of (0\\.08) ms per token",
+  "ids": [
+   "launcher.run3.like_for_like_median"
+  ]
+ },
+ {
+  "pattern": "launcher read (27\\.051) ms after the cycles, (1\\.829) ms",
+  "ids": [
+   "launcher.run3.plan_ms",
+   "launcher.run3.plan_minus_plan3_ms"
+  ]
+ },
+ {
+  "pattern": "`tests/amd-kfd-launch/check\\.py` (\\d+) checks PASS",
+  "ids": [
+   "launcher.hang.fix_gate_checks"
+  ]
+ },
+ {
+  "pattern": "Spark gate: (\\d+) checks, 0 failures",
+  "ids": [
+   "launcher.hang.node_fix_gate_checks"
+  ]
+ },
+ {
+  "pattern": "That launcher's Spark gate is (\\d+) checks, 0 failures \\(`amd-launch-gap/build-r15-spark-gate\\.log`\\)",
+  "ids": [
+   "launcher.run4.gate_checks"
+  ]
+ },
+ {
+  "pattern": "extended to `q4gemv_d8r4`, passes: (\\d+) cases over the three kernels \\((\\d+) for `q4gemv_d8r4`\\), (\\d+) of (\\d+) mutants caught, (\\d+) of them specific to the four-row kernel",
+  "ids": [
+   "fourbit.r4_gate.cases",
+   "fourbit.r4_gate.cases_d8r4",
+   "fourbit.r4_gate.mutants_caught",
+   "fourbit.r4_gate.mutants",
+   "fourbit.r4_gate.mutants_r4_specific"
+  ]
+ },
+ {
+  "pattern": "`addnorm5120` v2 passes its CPU gate, (\\d+) cases, (\\d+) mutants caught",
+  "ids": [
+   "kernels.addnorm_gate.cases",
+   "kernels.addnorm_gate.mutants"
+  ]
+ },
+ {
+  "pattern": "Of (\\d+)\\s+single-kernel launches of the published launcher `08a50491` in session c715b669, (\\d+) completed and (\\d+) never finished",
+  "ids": [
+   "fourbit.hang.launches",
+   "fourbit.hang.launches_completed",
+   "fourbit.hang.launches_alarmed"
+  ]
+ },
+ {
+  "pattern": "(\\d+) launcher plan processes behind sections",
+  "ids": [
+   "launcher.hang.plan_processes"
+  ]
+ },
+ {
+  "pattern": "any of the (\\d+) in the combined session or the (\\d+) in launcher\\s+run 3",
+  "ids": [
+   "combined.launches",
+   "launcher.run3.launcher_processes"
+  ]
+ },
+ {
+  "pattern": "that launcher for (\\d+) processes",
+  "ids": [
+   "launcher.run3.launches_of_new_launcher"
+  ]
+ },
+ {
+  "pattern": "(\\d+) of the (\\d+) planned shapes survive",
+  "ids": [
+   "fourbit.card.shapes_recovered",
+   "sessions.fourbit.shapes_planned"
+  ]
+ },
+ {
+  "pattern": "Launcher: (\\d+) checks PASS at commit `d957526e`",
+  "ids": [
+   "launcher.hang.fix_gate_checks"
+  ]
+ },
+ {
+  "pattern": "fused add and norm \\(([\\d,]+) to ([\\d,]+) dispatches\\) and merged delta-net a/b projection \\((\\d+) fewer\\)",
+  "ids": [
+   "kernels.step2.dispatches_before",
+   "kernels.step2.dispatches_after_addnorm",
+   "kernels.step2.ab_merge_fewer"
+  ]
+ },
+ {
+  "pattern": "In the same simulation (\\d+) of (\\d+) runs of the card bundle exit 0",
+  "ids": [
+   "kernels.step2.sim_runs_exit0",
+   "kernels.step2.sim_runs"
+  ]
+ },
+ {
+  "pattern": "the launchers accepted all (\\d+) plans in (\\d+) plan checks \\((\\d+) with `launch-spec`, (\\d+) with `launch-x86`\\)",
+  "ids": [
+   "specdecode.s4_dry.plans",
+   "specdecode.s4_dry.plans_ok",
+   "specdecode.s4_dry.plans_ok_spec",
+   "specdecode.s4_dry.plans_ok_x86"
+  ]
+ },
+ {
+  "pattern": "the pass decision \\(([\\d,]+) cases,\\s+(\\d+) of (\\d+) mutants caught",
+  "ids": [
+   "specdecode.gate_s0.cases",
+   "specdecode.gate_s0.mutants_caught",
+   "specdecode.gate_s0.mutants"
+  ]
+ },
+ {
+  "pattern": "\\((\\d+) runs, (\\d+) of (\\d+) mutants caught; `spec-decode/om/gate-loop-results\\.json`\\)",
+  "ids": [
+   "specdecode.gate_s1.cases",
+   "specdecode.gate_s1.mutants_caught",
+   "specdecode.gate_s1.mutants"
+  ]
+ },
+ {
+  "pattern": "\\((\\d+) checks, 0 failures at commit `f859c88f`",
+  "ids": [
+   "specdecode.hostloop.gate_checks"
+  ]
+ },
+ {
+  "pattern": "with all (\\d+) required wiring mutants\\s+caught",
+  "ids": [
+   "specdecode.gate_s3c.required_mutants_caught"
+  ]
+ },
+ {
+  "pattern": "the (26\\.157) ms per token in the log's two `RUN` lines is the stand-in's output",
+  "ids": [
+   "specdecode.s4_dry.standin_ms"
+  ]
+ },
+ {
+  "pattern": "pass their gates with (\\d+) cases and (\\d+) and (\\d+) mutants caught \\(`raw/amd-kernel-speed/kernels/FP8-R2-RESULT\\.md`",
+  "ids": [
+   "kernels.fp8_v3r2_gate.cases",
+   "kernels.fp8_v3r2_gate.mutants",
+   "kernels.fp8_v3r4_gate.mutants"
+  ]
+ },
+ {
+  "pattern": "pass their gates with (\\d+) cases and",
+  "ids": [
+   "kernels.fp8_v3r4_gate.cases"
+  ]
+ },
+ {
+  "pattern": "caught, (\\d+) rows of which (\\d+) pass \\(`spec-decode/s3c/run3/report\\.json`",
+  "ids": [
+   "specdecode.gate_s3c.rows",
+   "specdecode.gate_s3c.rows_pass"
+  ]
+ },
+ {
+  "pattern": "`run3\\.log` line 105\\s+labels it \"caught\" in error",
+  "ids": []
+ },
+ {
+  "pattern": "One further, non-required mutant\\s+\\(accept-after-mismatch in `spec_accept_r3`\\) is not caught",
+  "ids": []
+ },
+ {
+  "pattern": "catches it \\((\\d+) of (\\d+)\\s+cases fail, `spec-decode/kernels/s3a-run1/report\\.json`\\)",
+  "ids": [
+   "specdecode.gate_s3a.accept_after_mismatch_failing",
+   "specdecode.gate_s3a.accept_after_mismatch_cases"
+  ]
+ },
+ {
+  "pattern": "4-bit linears with BF16 head above are (1\\.70) times it\\) \\| (2\\.93) \\|",
+  "ids": [
+   "fourbit.rerun.sum_q4_bf16head_over_q4_floor",
+   "modeled.q4_floor_ms"
+  ]
+ },
+ {
+  "pattern": "Against its own floor, (2\\.93) ms per token for candidate A's bytes\\s+\\(which keep the head in BF16\\) at 5\\.3 TB/s, the 4-bit sum with the same BF16 head is (1\\.70) times",
+  "ids": [
+   "modeled.q4_floor_ms",
+   "fourbit.rerun.sum_q4_bf16head_over_q4_floor"
+  ]
+ }
+]

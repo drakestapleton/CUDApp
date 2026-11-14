@@ -1,0 +1,1 @@
+VARIANT {"cls": "argmax_final", "inserted": 128, "dispatches": 1254, "n_gen": 64, "bytes": 33787779, "sha256": "3d5c6e574c7a0b4666866eb60b7141c307405a139e64aa435b60ba984c730445", "base_sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012"}

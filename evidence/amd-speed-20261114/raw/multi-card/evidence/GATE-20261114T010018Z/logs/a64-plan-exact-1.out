@@ -1,0 +1,19 @@
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=0 seg=0 lo=0 hi=2048
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=0 seg=1 lo=2048 hi=4096
+MCPLAN slice tensor=gdn.in_proj_qkv axis=rows card=0 seg=2 lo=4096 hi=10240
+MCPLAN slice tensor=gdn.in_proj_z axis=rows card=0 seg=0 lo=0 hi=6144
+MCPLAN slice tensor=gdn.in_proj_a axis=rows card=0 seg=0 lo=0 hi=48
+MCPLAN slice tensor=gdn.in_proj_b axis=rows card=0 seg=0 lo=0 hi=48
+MCPLAN slice tensor=gdn.out_proj axis=rows card=0 seg=0 lo=0 hi=5120
+MCPLAN slice tensor=attn.q_proj axis=rows card=0 seg=0 lo=0 hi=12288
+MCPLAN slice tensor=attn.k_proj axis=rows card=0 seg=0 lo=0 hi=1024
+MCPLAN slice tensor=attn.v_proj axis=rows card=0 seg=0 lo=0 hi=1024
+MCPLAN slice tensor=attn.o_proj axis=rows card=0 seg=0 lo=0 hi=5120
+MCPLAN slice tensor=mlp.gate_proj axis=rows card=0 seg=0 lo=0 hi=17408
+MCPLAN slice tensor=mlp.up_proj axis=rows card=0 seg=0 lo=0 hi=17408
+MCPLAN slice tensor=mlp.down_proj axis=rows card=0 seg=0 lo=0 hi=5120
+MCPLAN slice tensor=lm_head axis=rows card=0 seg=0 lo=0 hi=248320
+MCPLAN summary mode=exact cards=1 layers=64 gdn=48 attn=16 syncs_per_step=0 slices=15
+MCPLAN card card=0 weight_bytes=26922885120 exchange_bytes_sent=0
+MCPLAN summary max_card_bytes=26922885120 min_card_bytes=26922885120 sum_card_bytes=26922885120
+MCPLAN verify cards=1 PASS

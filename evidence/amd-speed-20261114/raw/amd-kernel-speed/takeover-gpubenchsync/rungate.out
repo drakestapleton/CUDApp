@@ -1,0 +1,113 @@
+===== batch 1
+rc=0
+v1 object sha256 72049eeefffe5431c0f8972d1d9f3e4f93e39841312aeb492ac24f455d23adbd
+PASS v2 two builds byte-identical
+v2 object sha256 00686ea55dc4701d5622dd3d8518c092b595b963d5a889433f9a5cb28ce1df84
+PASS v2 code bytes equal independent LLVM 18 oracle (2772 bytes)
+PASS v2 descriptor bytes (except entry offset 16..23) equal LLVM oracle
+WAITCHECK PASS peak_outstanding=12 errors=0
+EXEC-COPY partial_waits=0 differing_lines=0
+PASS k1-clean v1 0 v2 0 image ed14e32ff9ff01c4 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3-clean v1 0 v2 0 image f658846ed745122e identical-to-v1 oracle-ok v1-oracle-ok
+PASS k255-clean v1 0 v2 0 image 26ecaeba392bea00 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k900-clean v1 0 v2 0 image 67c91908f9dad330 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-clean v1 0 v2 0 image 8b8fe9fa9e08b66c identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1025-clean v1 0 v2 0 image c627c8955544ac90 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k2048-clean v1 0 v2 0 image bc03fa481f71b344 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k2051-clean v1 0 v2 0 image f69e594afb657161 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3072-clean v1 0 v2 0 image 0277fcdc1dc43a47 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k4096-clean v1 0 v2 0 image 9808da64c3347710 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-clean v1 0 v2 0 image 47f6d07472452305 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5420-clean v1 0 v2 0 image 5ae1fb7bc5806346 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k6144-clean v1 0 v2 0 image a3ddae4c153c0daa identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-00 v1 0 v2 0 image f36d0759424e1d02 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk0 v1 0 v2 0 image 10aad58f711279d6 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk1 v1 0 v2 0 image a6c61fa33dc9097f identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk3 v1 0 v2 0 image c64731f01f15ed32 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk4 v1 0 v2 0 image c2e098c7da1b0d3a identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-00-residual v1 0 v2 0 image a08830b1c54c9f2c identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-80 v1 0 v2 0 image d2e85028655203ed identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk0 v1 0 v2 0 image 322dad0427b8b913 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk1 v1 0 v2 0 image 7f4dafacdfb027c7 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk3 v1 0 v2 0 image b4033768816c0549 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk4 v1 0 v2 0 image 66891baf81d59393 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-80-residual v1 0 v2 0 image de5885cc367beac6 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-7f v1 0 v2 0 image c2c06b7f686e1bf7 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk0 v1 0 v2 0 image 22d58229c054a42f identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk1 v1 0 v2 0 image 2d7890f718cb5989 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk3 v1 0 v2 0 image d4d6be1ea18d7306 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk4 v1 0 v2 0 image e56640bd7d5ef2c2 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-7f-residual v1 0 v2 0 image f6be88e237726778 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-ff v1 0 v2 0 image 4b902c9d6c554229 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk0 v1 0 v2 0 image 296f2f62f8fac311 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk1 v1 0 v2 0 image 3eeb87641ac8b4fc identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk3 v1 0 v2 0 image 19953766e819be10 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk4 v1 0 v2 0 image 87b776e84c9ab8b2 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-ff-residual v1 0 v2 0 image d6a46c1669a05c76 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k6144-mixed v1 0 v2 0 image 9616ab3159be8805 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k2048-allspecial v1 0 v2 0 image 3f7c3f5817660f6e identical-to-v1 oracle-ok v1-oracle-ok
+CONTROL v2-fast-drops-double CAUGHT by 35 cases, first k1024-clean
+CONTROL v2-fast-wrong-byte CAUGHT by 35 cases, first k1024-clean
+CONTROL v2-never-slow-single CAUGHT by 35 cases, first k1024-clean
+CONTROL v2-test-misses-nan CAUGHT by 11 cases, first k1024-7f
+CONTROL v2-test-misses-zero CAUGHT by 35 cases, first k1024-clean
+FP8GEMV-B128F-V2-GATE PASS cases=39 mutants=5 fail=0
+===== batch 2
+rc=0
+v1 object sha256 72049eeefffe5431c0f8972d1d9f3e4f93e39841312aeb492ac24f455d23adbd
+PASS v2 two builds byte-identical
+v2 object sha256 21f4265db152695e98014a1c755adfa9dc583b2dbe15535e85139d99bec5085e
+PASS v2 code bytes equal independent LLVM 18 oracle (6452 bytes)
+PASS v2 descriptor bytes (except entry offset 16..23) equal LLVM oracle
+WAITCHECK PASS peak_outstanding=24 errors=0
+EXEC-COPY partial_waits=0 differing_lines=0
+PASS k1-clean v1 0 v2 0 image ed14e32ff9ff01c4 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3-clean v1 0 v2 0 image f658846ed745122e identical-to-v1 oracle-ok v1-oracle-ok
+PASS k255-clean v1 0 v2 0 image 26ecaeba392bea00 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k900-clean v1 0 v2 0 image 67c91908f9dad330 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-clean v1 0 v2 0 image 8b8fe9fa9e08b66c identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1025-clean v1 0 v2 0 image c627c8955544ac90 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k2048-clean v1 0 v2 0 image bc03fa481f71b344 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k2051-clean v1 0 v2 0 image f69e594afb657161 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3072-clean v1 0 v2 0 image 0277fcdc1dc43a47 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k4096-clean v1 0 v2 0 image 9808da64c3347710 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-clean v1 0 v2 0 image 47f6d07472452305 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5420-clean v1 0 v2 0 image 5ae1fb7bc5806346 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k6144-clean v1 0 v2 0 image a3ddae4c153c0daa identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-00 v1 0 v2 0 image f36d0759424e1d02 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk0 v1 0 v2 0 image 10aad58f711279d6 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk1 v1 0 v2 0 image a6c61fa33dc9097f identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk3 v1 0 v2 0 image c64731f01f15ed32 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-00-chunk4 v1 0 v2 0 image c2e098c7da1b0d3a identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-00-residual v1 0 v2 0 image a08830b1c54c9f2c identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-80 v1 0 v2 0 image d2e85028655203ed identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk0 v1 0 v2 0 image 322dad0427b8b913 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk1 v1 0 v2 0 image 7f4dafacdfb027c7 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk3 v1 0 v2 0 image b4033768816c0549 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-80-chunk4 v1 0 v2 0 image 66891baf81d59393 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-80-residual v1 0 v2 0 image de5885cc367beac6 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-7f v1 0 v2 0 image c2c06b7f686e1bf7 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk0 v1 0 v2 0 image 22d58229c054a42f identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk1 v1 0 v2 0 image 2d7890f718cb5989 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk3 v1 0 v2 0 image d4d6be1ea18d7306 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-7f-chunk4 v1 0 v2 0 image e56640bd7d5ef2c2 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-7f-residual v1 0 v2 0 image f6be88e237726778 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k1024-ff v1 0 v2 0 image 4b902c9d6c554229 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk0 v1 0 v2 0 image 296f2f62f8fac311 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk1 v1 0 v2 0 image 3eeb87641ac8b4fc identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk3 v1 0 v2 0 image 19953766e819be10 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k5120-ff-chunk4 v1 0 v2 0 image 87b776e84c9ab8b2 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k3372-ff-residual v1 0 v2 0 image d6a46c1669a05c76 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k6144-mixed v1 0 v2 0 image 9616ab3159be8805 identical-to-v1 oracle-ok v1-oracle-ok
+PASS k2048-allspecial v1 0 v2 0 image 3f7c3f5817660f6e identical-to-v1 oracle-ok v1-oracle-ok
+CONTROL v2-fast-drops-double CAUGHT by 29 cases, first k1024-clean
+CONTROL v2-fast-wrong-byte CAUGHT by 29 cases, first k1024-clean
+CONTROL v2-never-slow-pair CAUGHT by 29 cases, first k2048-clean
+CONTROL v2-never-slow-single CAUGHT by 29 cases, first k1024-clean
+CONTROL v2-pair-drops-scale CAUGHT by 29 cases, first k2048-clean
+CONTROL v2-pair-short-advance CAUGHT by 27 cases, first k2051-clean
+CONTROL v2-pair-wrong-w CAUGHT by 29 cases, first k2048-clean
+CONTROL v2-pair-wrong-x CAUGHT by 29 cases, first k2048-clean
+CONTROL v2-test-misses-nan CAUGHT by 4 cases, first k1024-7f
+CONTROL v2-test-misses-zero CAUGHT by 29 cases, first k1024-clean
+FP8GEMV-B128F-V2-GATE PASS cases=39 mutants=10 fail=0

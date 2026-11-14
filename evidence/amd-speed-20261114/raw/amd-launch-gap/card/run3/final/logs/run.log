@@ -1,0 +1,990 @@
++ test -f /workspace/gap3/bin-upload.json
++ echo 08a504911ec6e87a9746632a14d22245155597e3a8ed384c93c0e5260bb691e1  /workspace/gap3/bin-old/omega-launch
++ sha256sum -c
+/workspace/gap3/bin-old/omega-launch: OK
++ sha256sum -c
++ echo a6aee5ef6f144ada59941197c72e3ca8c84fab1f448b99484bf727f67982afc7  /workspace/gap3/bin-new/omega-launch
+/workspace/gap3/bin-new/omega-launch: OK
++ DRV=/workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py
++ test -f /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py
++ sleep 5
++ test -f /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py
++ python3 /workspace/gap3/gap-microplan.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro
+MICROPLAN /workspace/gap3/micro/m1126.plan N 1126 gen 100 kernarg 12 bytes 72292 object 2f688c9f6f2f7af751d4976b6bf748f7b15fd4d4ca1d8d90c43fe228363b975c
++ python3 /workspace/gap3/gap-microplan.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/micro/m1.plan /workspace/gap3/micro
+MICROPLAN /workspace/gap3/micro/m1.plan N 1 gen 100 kernarg 12 bytes 292 object 2f688c9f6f2f7af751d4976b6bf748f7b15fd4d4ca1d8d90c43fe228363b975c
++ sha256sum /workspace/gap3/micro/m1.plan /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ micro plan3-n1-c0 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c0 start 2026-11-14T02:24:30.469727905Z
+plan3-n1-c0 start 2026-11-14T02:24:30.469727905Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c0 rc=0
+plan3-n1-c0 rc=0
++ micro plan3c-n1-c0 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c0 start 2026-11-14T02:24:30.570196588Z
+plan3c-n1-c0 start 2026-11-14T02:24:30.570196588Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c0 rc=0
+plan3c-n1-c0 rc=0
++ hipmicro hip-n1-c0 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c0 start 2026-11-14T02:24:30.698378353Z
+hip-n1-c0 start 2026-11-14T02:24:30.698378353Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c0.json
++ echo hip-n1-c0 rc=0
+hip-n1-c0 rc=0
++ micro plan3-n1126-c0 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c0 start 2026-11-14T02:24:32.456396124Z
+plan3-n1126-c0 start 2026-11-14T02:24:32.456396124Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c0 rc=0
+plan3-n1126-c0 rc=0
++ micro plan3c-n1126-c0 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c0 start 2026-11-14T02:24:32.774270966Z
+plan3c-n1126-c0 start 2026-11-14T02:24:32.774270966Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c0 rc=0
+plan3c-n1126-c0 rc=0
++ hipmicro hip-n1126-c0 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c0 start 2026-11-14T02:24:33.078244417Z
+hip-n1126-c0 start 2026-11-14T02:24:33.078244417Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c0.json
++ echo hip-n1126-c0 rc=0
+hip-n1126-c0 rc=0
++ echo MICRO_CYCLE_DONE 0
+MICRO_CYCLE_DONE 0
++ micro plan3-n1-c1 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c1 start 2026-11-14T02:24:34.842236561Z
+plan3-n1-c1 start 2026-11-14T02:24:34.842236561Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c1 rc=0
+plan3-n1-c1 rc=0
++ micro plan3c-n1-c1 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c1 start 2026-11-14T02:24:34.990235409Z
+plan3c-n1-c1 start 2026-11-14T02:24:34.990235409Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c1 rc=0
+plan3c-n1-c1 rc=0
++ hipmicro hip-n1-c1 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c1 start 2026-11-14T02:24:35.122230425Z
+hip-n1-c1 start 2026-11-14T02:24:35.122230425Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c1.json
++ echo hip-n1-c1 rc=0
+hip-n1-c1 rc=0
++ micro plan3-n1126-c1 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c1 start 2026-11-14T02:24:36.616021166Z
+plan3-n1126-c1 start 2026-11-14T02:24:36.616021166Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c1 rc=0
+plan3-n1126-c1 rc=0
++ micro plan3c-n1126-c1 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c1 start 2026-11-14T02:24:36.934358293Z
+plan3c-n1126-c1 start 2026-11-14T02:24:36.934358293Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c1 rc=0
+plan3c-n1126-c1 rc=0
++ hipmicro hip-n1126-c1 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c1 start 2026-11-14T02:24:37.262311991Z
+hip-n1126-c1 start 2026-11-14T02:24:37.262311991Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c1.json
++ echo hip-n1126-c1 rc=0
+hip-n1126-c1 rc=0
++ echo MICRO_CYCLE_DONE 1
+MICRO_CYCLE_DONE 1
++ micro plan3-n1-c2 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c2 start 2026-11-14T02:24:39.077900731Z
+plan3-n1-c2 start 2026-11-14T02:24:39.077900731Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c2 rc=0
+plan3-n1-c2 rc=0
++ micro plan3c-n1-c2 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c2 start 2026-11-14T02:24:39.226343128Z
+plan3c-n1-c2 start 2026-11-14T02:24:39.226343128Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c2 rc=0
+plan3c-n1-c2 rc=0
++ hipmicro hip-n1-c2 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c2 start 2026-11-14T02:24:39.354229041Z
+hip-n1-c2 start 2026-11-14T02:24:39.354229041Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c2.json
++ echo hip-n1-c2 rc=0
+hip-n1-c2 rc=0
++ micro plan3-n1126-c2 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c2 start 2026-11-14T02:24:40.831232773Z
+plan3-n1126-c2 start 2026-11-14T02:24:40.831232773Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c2 rc=0
+plan3-n1126-c2 rc=0
++ micro plan3c-n1126-c2 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c2 start 2026-11-14T02:24:41.150265653Z
+plan3c-n1126-c2 start 2026-11-14T02:24:41.150265653Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c2 rc=0
+plan3c-n1126-c2 rc=0
++ hipmicro hip-n1126-c2 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c2 start 2026-11-14T02:24:41.466383613Z
+hip-n1126-c2 start 2026-11-14T02:24:41.466383613Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c2.json
++ echo hip-n1126-c2 rc=0
+hip-n1126-c2 rc=0
++ echo MICRO_CYCLE_DONE 2
+MICRO_CYCLE_DONE 2
++ micro plan3-n1-c3 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c3 start 2026-11-14T02:24:43.219942310Z
+plan3-n1-c3 start 2026-11-14T02:24:43.219942310Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c3 rc=0
+plan3-n1-c3 rc=0
++ micro plan3c-n1-c3 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c3 start 2026-11-14T02:24:43.366567522Z
+plan3c-n1-c3 start 2026-11-14T02:24:43.366567522Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c3 rc=0
+plan3c-n1-c3 rc=0
++ hipmicro hip-n1-c3 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c3 start 2026-11-14T02:24:43.498120589Z
+hip-n1-c3 start 2026-11-14T02:24:43.498120589Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c3.json
++ echo hip-n1-c3 rc=0
+hip-n1-c3 rc=0
++ micro plan3-n1126-c3 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c3 start 2026-11-14T02:24:45.008587046Z
+plan3-n1126-c3 start 2026-11-14T02:24:45.008587046Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c3 rc=0
+plan3-n1126-c3 rc=0
++ micro plan3c-n1126-c3 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c3 start 2026-11-14T02:24:45.342296803Z
+plan3c-n1126-c3 start 2026-11-14T02:24:45.342296803Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c3 rc=0
+plan3c-n1126-c3 rc=0
++ hipmicro hip-n1126-c3 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c3 start 2026-11-14T02:24:45.650316707Z
+hip-n1126-c3 start 2026-11-14T02:24:45.650316707Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c3.json
++ echo hip-n1126-c3 rc=0
+hip-n1126-c3 rc=0
++ echo MICRO_CYCLE_DONE 3
+MICRO_CYCLE_DONE 3
++ micro plan3-n1-c4 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c4 start 2026-11-14T02:24:47.396460006Z
+plan3-n1-c4 start 2026-11-14T02:24:47.396460006Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c4 rc=0
+plan3-n1-c4 rc=0
++ micro plan3c-n1-c4 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c4 start 2026-11-14T02:24:47.538289821Z
+plan3c-n1-c4 start 2026-11-14T02:24:47.538289821Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c4 rc=0
+plan3c-n1-c4 rc=0
++ hipmicro hip-n1-c4 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c4 start 2026-11-14T02:24:47.666416866Z
+hip-n1-c4 start 2026-11-14T02:24:47.666416866Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c4.json
++ echo hip-n1-c4 rc=0
+hip-n1-c4 rc=0
++ micro plan3-n1126-c4 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c4 start 2026-11-14T02:24:49.178967299Z
+plan3-n1126-c4 start 2026-11-14T02:24:49.178967299Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c4 rc=0
+plan3-n1126-c4 rc=0
++ micro plan3c-n1126-c4 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c4 start 2026-11-14T02:24:49.506428999Z
+plan3c-n1126-c4 start 2026-11-14T02:24:49.506428999Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c4 rc=0
+plan3c-n1126-c4 rc=0
++ hipmicro hip-n1126-c4 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c4 start 2026-11-14T02:24:49.810265925Z
+hip-n1126-c4 start 2026-11-14T02:24:49.810265925Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c4.json
++ echo hip-n1126-c4 rc=0
+hip-n1126-c4 rc=0
++ echo MICRO_CYCLE_DONE 4
+MICRO_CYCLE_DONE 4
++ micro plan3-n1-c5 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c5 start 2026-11-14T02:24:51.555405768Z
+plan3-n1-c5 start 2026-11-14T02:24:51.555405768Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c5 rc=0
+plan3-n1-c5 rc=0
++ micro plan3c-n1-c5 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c5 start 2026-11-14T02:24:51.686228797Z
+plan3c-n1-c5 start 2026-11-14T02:24:51.686228797Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c5 rc=0
+plan3c-n1-c5 rc=0
++ hipmicro hip-n1-c5 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c5 start 2026-11-14T02:24:51.818197891Z
+hip-n1-c5 start 2026-11-14T02:24:51.818197891Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c5.json
++ echo hip-n1-c5 rc=0
+hip-n1-c5 rc=0
++ micro plan3-n1126-c5 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c5 start 2026-11-14T02:24:53.327301436Z
+plan3-n1126-c5 start 2026-11-14T02:24:53.327301436Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c5 rc=0
+plan3-n1126-c5 rc=0
++ micro plan3c-n1126-c5 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c5 start 2026-11-14T02:24:53.646422782Z
+plan3c-n1126-c5 start 2026-11-14T02:24:53.646422782Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c5 rc=0
+plan3c-n1126-c5 rc=0
++ hipmicro hip-n1126-c5 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c5 start 2026-11-14T02:24:53.958476862Z
+hip-n1126-c5 start 2026-11-14T02:24:53.958476862Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c5.json
++ echo hip-n1126-c5 rc=0
+hip-n1126-c5 rc=0
++ echo MICRO_CYCLE_DONE 5
+MICRO_CYCLE_DONE 5
++ micro plan3-n1-c6 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c6 start 2026-11-14T02:24:55.704100605Z
+plan3-n1-c6 start 2026-11-14T02:24:55.704100605Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c6 rc=0
+plan3-n1-c6 rc=0
++ micro plan3c-n1-c6 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c6 start 2026-11-14T02:24:55.842476577Z
+plan3c-n1-c6 start 2026-11-14T02:24:55.842476577Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c6 rc=0
+plan3c-n1-c6 rc=0
++ hipmicro hip-n1-c6 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c6 start 2026-11-14T02:24:55.978175519Z
+hip-n1-c6 start 2026-11-14T02:24:55.978175519Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c6.json
++ echo hip-n1-c6 rc=0
+hip-n1-c6 rc=0
++ micro plan3-n1126-c6 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c6 start 2026-11-14T02:24:57.475004568Z
+plan3-n1126-c6 start 2026-11-14T02:24:57.475004568Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c6 rc=0
+plan3-n1126-c6 rc=0
++ micro plan3c-n1126-c6 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c6 start 2026-11-14T02:24:57.818219062Z
+plan3c-n1126-c6 start 2026-11-14T02:24:57.818219062Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c6 rc=0
+plan3c-n1126-c6 rc=0
++ hipmicro hip-n1126-c6 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c6 start 2026-11-14T02:24:58.138230640Z
+hip-n1126-c6 start 2026-11-14T02:24:58.138230640Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c6.json
++ echo hip-n1126-c6 rc=0
+hip-n1126-c6 rc=0
++ echo MICRO_CYCLE_DONE 6
+MICRO_CYCLE_DONE 6
++ micro plan3-n1-c7 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c7 start 2026-11-14T02:24:59.858685298Z
+plan3-n1-c7 start 2026-11-14T02:24:59.858685298Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c7 rc=0
+plan3-n1-c7 rc=0
++ micro plan3c-n1-c7 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c7 start 2026-11-14T02:25:00.010174620Z
+plan3c-n1-c7 start 2026-11-14T02:25:00.010174620Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c7 rc=0
+plan3c-n1-c7 rc=0
++ hipmicro hip-n1-c7 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c7 start 2026-11-14T02:25:00.138269363Z
+hip-n1-c7 start 2026-11-14T02:25:00.138269363Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c7.json
++ echo hip-n1-c7 rc=0
+hip-n1-c7 rc=0
++ micro plan3-n1126-c7 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c7 start 2026-11-14T02:25:01.622022076Z
+plan3-n1126-c7 start 2026-11-14T02:25:01.622022076Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c7 rc=0
+plan3-n1126-c7 rc=0
++ micro plan3c-n1126-c7 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c7 start 2026-11-14T02:25:01.910408649Z
+plan3c-n1126-c7 start 2026-11-14T02:25:01.910408649Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c7 rc=0
+plan3c-n1126-c7 rc=0
++ hipmicro hip-n1126-c7 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c7 start 2026-11-14T02:25:02.222575781Z
+hip-n1126-c7 start 2026-11-14T02:25:02.222575781Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c7.json
++ echo hip-n1126-c7 rc=0
+hip-n1126-c7 rc=0
++ echo MICRO_CYCLE_DONE 7
+MICRO_CYCLE_DONE 7
++ micro plan3-n1-c8 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c8 start 2026-11-14T02:25:03.975100011Z
+plan3-n1-c8 start 2026-11-14T02:25:03.975100011Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c8 rc=0
+plan3-n1-c8 rc=0
++ micro plan3c-n1-c8 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c8 start 2026-11-14T02:25:04.114266730Z
+plan3c-n1-c8 start 2026-11-14T02:25:04.114266730Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c8 rc=0
+plan3c-n1-c8 rc=0
++ hipmicro hip-n1-c8 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c8 start 2026-11-14T02:25:04.226268053Z
+hip-n1-c8 start 2026-11-14T02:25:04.226268053Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c8.json
++ echo hip-n1-c8 rc=0
+hip-n1-c8 rc=0
++ micro plan3-n1126-c8 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c8 start 2026-11-14T02:25:05.735443074Z
+plan3-n1126-c8 start 2026-11-14T02:25:05.735443074Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c8 rc=0
+plan3-n1126-c8 rc=0
++ micro plan3c-n1126-c8 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c8 start 2026-11-14T02:25:06.050297789Z
+plan3c-n1126-c8 start 2026-11-14T02:25:06.050297789Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c8 rc=0
+plan3c-n1126-c8 rc=0
++ hipmicro hip-n1126-c8 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c8 start 2026-11-14T02:25:06.370216108Z
+hip-n1126-c8 start 2026-11-14T02:25:06.370216108Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c8.json
++ echo hip-n1126-c8 rc=0
+hip-n1126-c8 rc=0
++ echo MICRO_CYCLE_DONE 8
+MICRO_CYCLE_DONE 8
++ micro plan3-n1-c9 plan3 /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1-c9 start 2026-11-14T02:25:08.099181849Z
+plan3-n1-c9 start 2026-11-14T02:25:08.099181849Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1-c9 rc=0
+plan3-n1-c9 rc=0
++ micro plan3c-n1-c9 plan3c /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1-c9 start 2026-11-14T02:25:08.230156778Z
+plan3c-n1-c9 start 2026-11-14T02:25:08.230156778Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1-c9 rc=0
+plan3c-n1-c9 rc=0
++ hipmicro hip-n1-c9 1
++ date -u +%FT%T.%NZ
++ echo hip-n1-c9 start 2026-11-14T02:25:08.350207436Z
+hip-n1-c9 start 2026-11-14T02:25:08.350207436Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1 100 /workspace/gap3/logs/hipmicro-hip-n1-c9.json
++ echo hip-n1-c9 rc=0
+hip-n1-c9 rc=0
++ micro plan3-n1126-c9 plan3 /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3-n1126-c9 start 2026-11-14T02:25:09.819422884Z
+plan3-n1126-c9 start 2026-11-14T02:25:09.819422884Z
++ /workspace/gap3/bin-new/omega-launch plan3 /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3-n1126-c9 rc=0
+plan3-n1126-c9 rc=0
++ micro plan3c-n1126-c9 plan3c /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3c-n1126-c9 start 2026-11-14T02:25:10.150403004Z
+plan3c-n1126-c9 start 2026-11-14T02:25:10.150403004Z
++ /workspace/gap3/bin-new/omega-launch plan3c /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3c-n1126-c9 rc=0
+plan3c-n1126-c9 rc=0
++ hipmicro hip-n1126-c9 1126
++ date -u +%FT%T.%NZ
++ echo hip-n1126-c9 start 2026-11-14T02:25:10.442340961Z
+hip-n1126-c9 start 2026-11-14T02:25:10.442340961Z
++ python3 /workspace/gap3/gap-hipmicro.py /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113/oracle/driver-real2.py 1126 100 /workspace/gap3/logs/hipmicro-hip-n1126-c9.json
++ echo hip-n1126-c9 rc=0
+hip-n1126-c9 rc=0
++ echo MICRO_CYCLE_DONE 9
+MICRO_CYCLE_DONE 9
++ micro plan3t-n1 plan3t /workspace/gap3/micro/m1.plan
++ date -u +%FT%T.%NZ
++ echo plan3t-n1 start 2026-11-14T02:25:12.175120396Z
+plan3t-n1 start 2026-11-14T02:25:12.175120396Z
++ /workspace/gap3/bin-new/omega-launch plan3t /workspace/gap3/micro/m1.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3t-n1 rc=0
+plan3t-n1 rc=0
++ micro plan3t-n1126 plan3t /workspace/gap3/micro/m1126.plan
++ date -u +%FT%T.%NZ
++ echo plan3t-n1126 start 2026-11-14T02:25:12.318415688Z
+plan3t-n1126 start 2026-11-14T02:25:12.318415688Z
++ /workspace/gap3/bin-new/omega-launch plan3t /workspace/gap3/micro/m1126.plan /workspace/gap3/micro/step_advance.hsaco
++ echo plan3t-n1126 rc=0
+plan3t-n1126 rc=0
++ echo MICRO_DONE
+MICRO_DONE
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ sleep 5
++ grep -q PRE_DONE /workspace/gap3/pre.log
++ grep -q PREPARE_RC=0 /workspace/gap3/pre.log
++ cd /workspace/gap3/CUDApp/evidence/amd-qwen38-native-20261113
++ export AMDSERVE_WEIGHTS=/tmp/qwen3.8-27b-fp8
++ mkdir -p out
++ python3 oracle/emit-plan.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 out/real2.plan --capacity=131072 --fixture-json=oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 33777539, "sha256": "2a292dadc236f224005ed4e2d8ac2ba8b33dc71d79dabcc8497d177561f9c012", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMIT_RC=0
+EMIT_RC=0
++ python3 oracle/check-plan.py out/real2.plan /tmp/qwen3.8-27b-fp8
+PLAN_CHECK PASS {"code": 18, "buffers": 1504, "file_backed": 1251, "widened": 305, "control_vectors": 0, "dispatches": 1126, "capacity": {"capacity": 131072, "kv_bytes": 8589934592, "rope_bytes": 33554432, "partitions": 2048}, "fixture": {"fixture": "Spark qualification lighthouse short decode1", "sha256": "71ab03b952c03146bb47bd0107bc8fb1662878d6831a1b4581fac1ea26878b95", "prompt": 30, "generate": 256}} CONTROLS CAUGHT ['weight range shifted', 'reloc slot misaligned', 'capacity halved', 'capacity plus 64', 'prompt id changed']
++ echo CHECK_RC=0
+CHECK_RC=0
++ python3 oracle/emit-plan.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 out/real2-controls.plan --controls --capacity=131072 --fixture-json=oracle/lighthouse256.json
+PLAN_DECODE_MATCH {"bytes": 36452227, "sha256": "40701b9a81ef55c3dc92620df801d595cd1a10360ae047e14e76de37e279228e", "buffers": 1504, "device_bytes": 38455442504, "dispatches_per_step": 1126, "prompt": 30, "generate": 256}
++ echo EMITC_RC=0
+EMITC_RC=0
++ sha256sum out/real2.plan out/real2-controls.plan out/code/argmax_final.hsaco out/code/argmax_part.hsaco out/code/attn256_gate.hsaco out/code/attn256_merge_step.hsaco out/code/attn256_part_step.hsaco out/code/attn256_prep_step.hsaco out/code/bf16gemv2.hsaco out/code/embed5120_step.hsaco out/code/fp8gemv_b128f.hsaco out/code/gdnconv4_step.hsaco out/code/gdnparams.hsaco out/code/gdnqknorm.hsaco out/code/gdnrmsgate.hsaco out/code/gdnstate_step.hsaco out/code/mlpsilu.hsaco out/code/residual5120.hsaco out/code/rmsnorm5120.hsaco out/code/step_advance.hsaco
++ cd out
++ sed s/^omega-launch plan /omega-launch plan / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan / real2-controls.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3 / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3 / real2-controls.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3c / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3c / real2-controls.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3t / real2.plan.cmd
++ sed s/^omega-launch plan /omega-launch plan3t / real2-controls.plan.cmd
++ cp real2.plan.cmd cmd-plan.sh cmd-plan3.sh cmd-plan3c.sh cmd-plan3t.sh cmdc-plan.sh cmdc-plan3.sh cmdc-plan3c.sh cmdc-plan3t.sh /workspace/gap3/logs/
++ omega new-plan3-warmup /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-warmup start 2026-11-14T02:34:01.065521942Z
+new-plan3-warmup start 2026-11-14T02:34:01.065521942Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-warmup rc=0
+new-plan3-warmup rc=0
++ omega new-plan3c-warmup /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-warmup start 2026-11-14T02:34:26.750408560Z
+new-plan3c-warmup start 2026-11-14T02:34:26.750408560Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-warmup rc=0
+new-plan3c-warmup rc=0
++ hip graph-warmup
++ date -u +%FT%T.%NZ
++ echo graph-warmup start 2026-11-14T02:34:52.006487418Z
+graph-warmup start 2026-11-14T02:34:52.006487418Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-warmup.json 131072
++ echo graph-warmup rc=0
+graph-warmup rc=0
++ echo ROUND_DONE warmup
+ROUND_DONE warmup
++ omega new-plan3-c1 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c1 start 2026-11-14T02:35:33.042497174Z
+new-plan3-c1 start 2026-11-14T02:35:33.042497174Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c1 rc=0
+new-plan3-c1 rc=0
++ omega new-plan3c-c1 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c1 start 2026-11-14T02:35:58.030843393Z
+new-plan3c-c1 start 2026-11-14T02:35:58.030843393Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c1 rc=0
+new-plan3c-c1 rc=0
++ hip graph-c1
++ date -u +%FT%T.%NZ
++ echo graph-c1 start 2026-11-14T02:36:23.414809207Z
+graph-c1 start 2026-11-14T02:36:23.414809207Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c1.json 131072
++ echo graph-c1 rc=0
+graph-c1 rc=0
++ echo ROUND_DONE c1
+ROUND_DONE c1
++ omega new-plan3-c2 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c2 start 2026-11-14T02:37:04.715829159Z
+new-plan3-c2 start 2026-11-14T02:37:04.715829159Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c2 rc=0
+new-plan3-c2 rc=0
++ omega new-plan3c-c2 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c2 start 2026-11-14T02:37:30.286881888Z
+new-plan3c-c2 start 2026-11-14T02:37:30.286881888Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c2 rc=0
+new-plan3c-c2 rc=0
++ hip graph-c2
++ date -u +%FT%T.%NZ
++ echo graph-c2 start 2026-11-14T02:37:55.467296799Z
+graph-c2 start 2026-11-14T02:37:55.467296799Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c2.json 131072
++ echo graph-c2 rc=0
+graph-c2 rc=0
++ echo ROUND_DONE c2
+ROUND_DONE c2
++ omega new-plan3-c3 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c3 start 2026-11-14T02:38:35.804305242Z
+new-plan3-c3 start 2026-11-14T02:38:35.804305242Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c3 rc=0
+new-plan3-c3 rc=0
++ omega new-plan3c-c3 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c3 start 2026-11-14T02:39:01.334509825Z
+new-plan3c-c3 start 2026-11-14T02:39:01.334509825Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c3 rc=0
+new-plan3c-c3 rc=0
++ hip graph-c3
++ date -u +%FT%T.%NZ
++ echo graph-c3 start 2026-11-14T02:39:27.207035642Z
+graph-c3 start 2026-11-14T02:39:27.207035642Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c3.json 131072
++ echo graph-c3 rc=0
+graph-c3 rc=0
++ echo ROUND_DONE c3
+ROUND_DONE c3
++ omega new-plan3-c4 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c4 start 2026-11-14T02:40:07.524049764Z
+new-plan3-c4 start 2026-11-14T02:40:07.524049764Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c4 rc=0
+new-plan3-c4 rc=0
++ omega new-plan3c-c4 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c4 start 2026-11-14T02:40:33.142646444Z
+new-plan3c-c4 start 2026-11-14T02:40:33.142646444Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c4 rc=0
+new-plan3c-c4 rc=0
++ hip graph-c4
++ date -u +%FT%T.%NZ
++ echo graph-c4 start 2026-11-14T02:40:57.894708769Z
+graph-c4 start 2026-11-14T02:40:57.894708769Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c4.json 131072
++ echo graph-c4 rc=0
+graph-c4 rc=0
++ echo ROUND_DONE c4
+ROUND_DONE c4
++ omega new-plan3-c5 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c5 start 2026-11-14T02:41:38.926548685Z
+new-plan3-c5 start 2026-11-14T02:41:38.926548685Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c5 rc=0
+new-plan3-c5 rc=0
++ omega new-plan3c-c5 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c5 start 2026-11-14T02:42:03.859094255Z
+new-plan3c-c5 start 2026-11-14T02:42:03.859094255Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c5 rc=0
+new-plan3c-c5 rc=0
++ hip graph-c5
++ date -u +%FT%T.%NZ
++ echo graph-c5 start 2026-11-14T02:42:29.682696351Z
+graph-c5 start 2026-11-14T02:42:29.682696351Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c5.json 131072
++ echo graph-c5 rc=0
+graph-c5 rc=0
++ echo ROUND_DONE c5
+ROUND_DONE c5
++ omega new-plan3-c6 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c6 start 2026-11-14T02:43:10.940578471Z
+new-plan3-c6 start 2026-11-14T02:43:10.940578471Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c6 rc=0
+new-plan3-c6 rc=0
++ omega new-plan3c-c6 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c6 start 2026-11-14T02:43:36.550555679Z
+new-plan3c-c6 start 2026-11-14T02:43:36.550555679Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c6 rc=0
+new-plan3c-c6 rc=0
++ hip graph-c6
++ date -u +%FT%T.%NZ
++ echo graph-c6 start 2026-11-14T02:44:02.006617244Z
+graph-c6 start 2026-11-14T02:44:02.006617244Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c6.json 131072
++ echo graph-c6 rc=0
+graph-c6 rc=0
++ echo ROUND_DONE c6
+ROUND_DONE c6
++ omega new-plan3-c7 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c7 start 2026-11-14T02:44:42.847618725Z
+new-plan3-c7 start 2026-11-14T02:44:42.847618725Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c7 rc=0
+new-plan3-c7 rc=0
++ omega new-plan3c-c7 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c7 start 2026-11-14T02:45:08.626724367Z
+new-plan3c-c7 start 2026-11-14T02:45:08.626724367Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c7 rc=0
+new-plan3c-c7 rc=0
++ hip graph-c7
++ date -u +%FT%T.%NZ
++ echo graph-c7 start 2026-11-14T02:45:34.126717561Z
+graph-c7 start 2026-11-14T02:45:34.126717561Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c7.json 131072
++ echo graph-c7 rc=0
+graph-c7 rc=0
++ echo ROUND_DONE c7
+ROUND_DONE c7
++ omega new-plan3-c8 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c8 start 2026-11-14T02:46:14.899766928Z
+new-plan3-c8 start 2026-11-14T02:46:14.899766928Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c8 rc=0
+new-plan3-c8 rc=0
++ omega new-plan3c-c8 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c8 start 2026-11-14T02:46:40.136335182Z
+new-plan3c-c8 start 2026-11-14T02:46:40.136335182Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c8 rc=0
+new-plan3c-c8 rc=0
++ hip graph-c8
++ date -u +%FT%T.%NZ
++ echo graph-c8 start 2026-11-14T02:47:05.422854626Z
+graph-c8 start 2026-11-14T02:47:05.422854626Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c8.json 131072
++ echo graph-c8 rc=0
+graph-c8 rc=0
++ echo ROUND_DONE c8
+ROUND_DONE c8
++ omega new-plan3-c9 /workspace/gap3/bin-new cmd-plan3.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3-c9 start 2026-11-14T02:47:46.324060990Z
+new-plan3-c9 start 2026-11-14T02:47:46.324060990Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3.sh
++ echo new-plan3-c9 rc=0
+new-plan3-c9 rc=0
++ omega new-plan3c-c9 /workspace/gap3/bin-new cmd-plan3c.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3c-c9 start 2026-11-14T02:48:12.246710490Z
+new-plan3c-c9 start 2026-11-14T02:48:12.246710490Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3c.sh
++ echo new-plan3c-c9 rc=0
+new-plan3c-c9 rc=0
++ hip graph-c9
++ date -u +%FT%T.%NZ
++ echo graph-c9 start 2026-11-14T02:48:38.198843805Z
+graph-c9 start 2026-11-14T02:48:38.198843805Z
++ cd ..
++ python3 /workspace/gap3/gap-hip.py oracle/driver-real2.py /tmp/qwen3.8-27b-fp8 oracle/lighthouse256.json /workspace/gap3/logs/hip-graph-c9.json 131072
++ echo graph-c9 rc=0
+graph-c9 rc=0
++ echo ROUND_DONE c9
+ROUND_DONE c9
++ omega new-plan3t-c1 /workspace/gap3/bin-new cmd-plan3t.sh
++ date -u +%FT%T.%NZ
++ echo new-plan3t-c1 start 2026-11-14T02:49:19.199489069Z
+new-plan3t-c1 start 2026-11-14T02:49:19.199489069Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan3t.sh
++ echo new-plan3t-c1 rc=0
+new-plan3t-c1 rc=0
++ omega old-plan-c1 /workspace/gap3/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-c1 start 2026-11-14T02:49:44.730754421Z
+old-plan-c1 start 2026-11-14T02:49:44.730754421Z
++ PATH=/workspace/gap3/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-c1 rc=0
+old-plan-c1 rc=0
++ omega old-plan-c2 /workspace/gap3/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-c2 start 2026-11-14T02:50:11.062746082Z
+old-plan-c2 start 2026-11-14T02:50:11.062746082Z
++ PATH=/workspace/gap3/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-c2 rc=0
+old-plan-c2 rc=0
++ omega old-plan-c3 /workspace/gap3/bin-old cmd-plan.sh
++ date -u +%FT%T.%NZ
++ echo old-plan-c3 start 2026-11-14T02:50:37.252316115Z
+old-plan-c3 start 2026-11-14T02:50:37.252316115Z
++ PATH=/workspace/gap3/bin-old:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmd-plan.sh
++ echo old-plan-c3 rc=0
+old-plan-c3 rc=0
++ omega control-new-plan3 /workspace/gap3/bin-new cmdc-plan3.sh
++ date -u +%FT%T.%NZ
++ echo control-new-plan3 start 2026-11-14T02:51:03.290801491Z
+control-new-plan3 start 2026-11-14T02:51:03.290801491Z
++ PATH=/workspace/gap3/bin-new:/opt/venv/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh cmdc-plan3.sh
++ echo control-new-plan3 rc=0
+control-new-plan3 rc=0
++ echo MAIN_DONE
+MAIN_DONE
++ cd /workspace/gap3
++ python3 gap-verdict.py /workspace/gap3/logs published-ids.json
++ echo VERDICT_RC=0
+VERDICT_RC=0
++ cp pre.log run.log gap-pre.sh gap-run3.sh gap-hip.py gap-hipmicro.py gap-microplan.py gap-verdict.py published-ids.json /workspace/gap3/logs/

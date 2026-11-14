@@ -1,0 +1,7 @@
+card_q4.py and BUNDLE.json of the bundle that ran in card sessions f591aa44 and c715b669 (bundle sha256 10c93d3d...).
+Extracted by the report lane from the FourBit lane's local git repository (four-bit/):
+  card_q4.py   `git show 7db478fbf009f83f92111c09a3823ae8a6edce5a:card/card_q4.py`
+  BUNDLE.json  `git show e9cd7441fd707152955aa5c02f72742b24f106bc:card/cells/BUNDLE.json` (the first commit that holds it)
+The sha256 of card_q4.py equals the value BUNDLE.json lists for it (6588e77a...). The file four-bit/card/card_q4.py in the
+lane's working tree is a later revision (sha256 7ff11ac5..., with launch deadlines and the four-row kernel) that never ran
+on a card; it is not used by the recompute scripts.

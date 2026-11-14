@@ -1,0 +1,128 @@
+MCTOPO cpu node=0
+MCTOPO cpu node=1
+MCTOPO gpu node=2 gpu_id=40000 gfx=90402 device=29877 render=128 hive=3942903108070991289 xcc=8 domain=0 location=4096 links=8
+MCTOPO link from=2 to=0 type=2 weight=20
+MCTOPO link from=2 to=3 type=11 weight=15
+MCTOPO link from=2 to=4 type=11 weight=15
+MCTOPO link from=2 to=5 type=11 weight=15
+MCTOPO link from=2 to=6 type=11 weight=15
+MCTOPO link from=2 to=7 type=11 weight=15
+MCTOPO link from=2 to=8 type=11 weight=15
+MCTOPO link from=2 to=9 type=11 weight=15
+MCTOPO gpu node=3 gpu_id=40017 gfx=90402 device=29877 render=129 hive=3942903108070991289 xcc=8 domain=0 location=4352 links=8
+MCTOPO link from=3 to=1 type=2 weight=20
+MCTOPO link from=3 to=2 type=11 weight=15
+MCTOPO link from=3 to=4 type=11 weight=15
+MCTOPO link from=3 to=5 type=11 weight=15
+MCTOPO link from=3 to=6 type=11 weight=15
+MCTOPO link from=3 to=7 type=11 weight=15
+MCTOPO link from=3 to=8 type=11 weight=15
+MCTOPO link from=3 to=9 type=11 weight=15
+MCTOPO gpu node=4 gpu_id=40034 gfx=90402 device=29877 render=130 hive=3942903108070991289 xcc=8 domain=0 location=4608 links=8
+MCTOPO link from=4 to=0 type=2 weight=20
+MCTOPO link from=4 to=2 type=11 weight=15
+MCTOPO link from=4 to=3 type=11 weight=15
+MCTOPO link from=4 to=5 type=11 weight=15
+MCTOPO link from=4 to=6 type=11 weight=15
+MCTOPO link from=4 to=7 type=11 weight=15
+MCTOPO link from=4 to=8 type=11 weight=15
+MCTOPO link from=4 to=9 type=11 weight=15
+MCTOPO gpu node=5 gpu_id=40051 gfx=90402 device=29877 render=131 hive=3942903108070991289 xcc=8 domain=0 location=4864 links=8
+MCTOPO link from=5 to=1 type=2 weight=20
+MCTOPO link from=5 to=2 type=11 weight=15
+MCTOPO link from=5 to=3 type=11 weight=15
+MCTOPO link from=5 to=4 type=11 weight=15
+MCTOPO link from=5 to=6 type=11 weight=15
+MCTOPO link from=5 to=7 type=11 weight=15
+MCTOPO link from=5 to=8 type=11 weight=15
+MCTOPO link from=5 to=9 type=11 weight=15
+MCTOPO gpu node=6 gpu_id=40068 gfx=90402 device=29877 render=132 hive=3942903108070991289 xcc=8 domain=0 location=5120 links=8
+MCTOPO link from=6 to=0 type=2 weight=20
+MCTOPO link from=6 to=2 type=11 weight=15
+MCTOPO link from=6 to=3 type=11 weight=15
+MCTOPO link from=6 to=4 type=11 weight=15
+MCTOPO link from=6 to=5 type=11 weight=15
+MCTOPO link from=6 to=7 type=11 weight=15
+MCTOPO link from=6 to=8 type=11 weight=15
+MCTOPO link from=6 to=9 type=11 weight=15
+MCTOPO gpu node=7 gpu_id=40085 gfx=90402 device=29877 render=133 hive=3942903108070991289 xcc=8 domain=0 location=5376 links=8
+MCTOPO link from=7 to=1 type=2 weight=20
+MCTOPO link from=7 to=2 type=11 weight=15
+MCTOPO link from=7 to=3 type=11 weight=15
+MCTOPO link from=7 to=4 type=11 weight=15
+MCTOPO link from=7 to=5 type=11 weight=15
+MCTOPO link from=7 to=6 type=11 weight=15
+MCTOPO link from=7 to=8 type=11 weight=15
+MCTOPO link from=7 to=9 type=11 weight=15
+MCTOPO gpu node=8 gpu_id=40102 gfx=90402 device=29877 render=134 hive=3942903108070991289 xcc=8 domain=0 location=5632 links=8
+MCTOPO link from=8 to=0 type=2 weight=20
+MCTOPO link from=8 to=2 type=11 weight=15
+MCTOPO link from=8 to=3 type=11 weight=15
+MCTOPO link from=8 to=4 type=11 weight=15
+MCTOPO link from=8 to=5 type=11 weight=15
+MCTOPO link from=8 to=6 type=11 weight=15
+MCTOPO link from=8 to=7 type=11 weight=15
+MCTOPO link from=8 to=9 type=11 weight=15
+MCTOPO gpu node=9 gpu_id=40119 gfx=90402 device=29877 render=135 hive=3942903108070991289 xcc=8 domain=0 location=5888 links=8
+MCTOPO link from=9 to=1 type=2 weight=20
+MCTOPO link from=9 to=2 type=11 weight=15
+MCTOPO link from=9 to=3 type=11 weight=15
+MCTOPO link from=9 to=4 type=11 weight=15
+MCTOPO link from=9 to=5 type=11 weight=15
+MCTOPO link from=9 to=6 type=11 weight=15
+MCTOPO link from=9 to=7 type=11 weight=15
+MCTOPO link from=9 to=8 type=11 weight=15
+MCTOPO select n=8 node=2 node=3 node=4 node=5 node=6 node=7 node=8 node=9
+MCTOPO peers xgmi_pairs=56
+MCKFD ids bytes=409c0000519c0000629c0000739c0000849c0000959c0000a69c0000b79c0000
+MCKFD record request=2148027137 card=0 bytes=0000000000000000
+MCKFD kfd_version=1.18
+MCKFD record request=1074285333 card=0 bytes=64000000409c0000
+MCKFD record request=1074285333 card=1 bytes=65000000519c0000
+MCKFD record request=1074285333 card=2 bytes=66000000629c0000
+MCKFD record request=1074285333 card=3 bytes=67000000739c0000
+MCKFD record request=1074285333 card=4 bytes=68000000849c0000
+MCKFD record request=1074285333 card=5 bytes=69000000959c0000
+MCKFD record request=1074285333 card=6 bytes=6a000000a69c0000
+MCKFD record request=1074285333 card=7 bytes=6b000000b79c0000
+MCKFD record request=3223866134 card=0 bytes=0000000000000000000020000000000000000000000000000000000000000000409c0000010000a1
+MCKFD record request=3222817560 card=0 bytes=001000000000000000000000000000000800000000000000
+MCKFD peer card=0 gpu_id=40000 mapped_to=8
+MCKFD record request=3223866134 card=1 bytes=0000000000000000000020000000000000000000000000000000000000000000519c0000010000a1
+MCKFD record request=3222817560 card=1 bytes=011000000000000000000000000000000800000000000000
+MCKFD peer card=1 gpu_id=40017 mapped_to=8
+MCKFD record request=3223866134 card=2 bytes=0000000000000000000020000000000000000000000000000000000000000000629c0000010000a1
+MCKFD record request=3222817560 card=2 bytes=021000000000000000000000000000000800000000000000
+MCKFD peer card=2 gpu_id=40034 mapped_to=8
+MCKFD record request=3223866134 card=3 bytes=0000000000000000000020000000000000000000000000000000000000000000739c0000010000a1
+MCKFD record request=3222817560 card=3 bytes=031000000000000000000000000000000800000000000000
+MCKFD peer card=3 gpu_id=40051 mapped_to=8
+MCKFD record request=3223866134 card=4 bytes=0000000000000000000020000000000000000000000000000000000000000000849c0000010000a1
+MCKFD record request=3222817560 card=4 bytes=041000000000000000000000000000000800000000000000
+MCKFD peer card=4 gpu_id=40068 mapped_to=8
+MCKFD record request=3223866134 card=5 bytes=0000000000000000000020000000000000000000000000000000000000000000959c0000010000a1
+MCKFD record request=3222817560 card=5 bytes=051000000000000000000000000000000800000000000000
+MCKFD peer card=5 gpu_id=40085 mapped_to=8
+MCKFD record request=3223866134 card=6 bytes=0000000000000000000020000000000000000000000000000000000000000000a69c0000010000a1
+MCKFD record request=3222817560 card=6 bytes=061000000000000000000000000000000800000000000000
+MCKFD peer card=6 gpu_id=40102 mapped_to=8
+MCKFD record request=3223866134 card=7 bytes=0000000000000000000020000000000000000000000000000000000000000000b79c0000010000a1
+MCKFD record request=3222817560 card=7 bytes=071000000000000000000000000000000800000000000000
+MCKFD peer card=7 gpu_id=40119 mapped_to=8
+MCKFD record request=3222817561 card=0 bytes=001000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=0 bytes=0010000000000000
+MCKFD record request=3222817561 card=1 bytes=011000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=1 bytes=0110000000000000
+MCKFD record request=3222817561 card=2 bytes=021000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=2 bytes=0210000000000000
+MCKFD record request=3222817561 card=3 bytes=031000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=3 bytes=0310000000000000
+MCKFD record request=3222817561 card=4 bytes=041000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=4 bytes=0410000000000000
+MCKFD record request=3222817561 card=5 bytes=051000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=5 bytes=0510000000000000
+MCKFD record request=3222817561 card=6 bytes=061000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=6 bytes=0610000000000000
+MCKFD record request=3222817561 card=7 bytes=071000000000000000000000000000000800000000000000
+MCKFD record request=1074285335 card=7 bytes=0710000000000000
+MCKFD ok cards=8 rx_bytes=2097152

@@ -1,0 +1,75 @@
+{
+ "schema": "spec-decode-s2c-v1",
+ "compiler_sha256": "2c82480596bbdc50cda9626866209ef662d5834f278f839ff4ce0250c495029f",
+ "R": 3,
+ "hardware": "NOT_RUN",
+ "kernels": {
+  "rmsnorm5120": {
+   "role": "candidate",
+   "row_native": true,
+   "grid_groups_one_row": 1,
+   "output_words": 15360,
+   "many_equal_to_one_row_dispatches": true,
+   "output_written": true,
+   "all_finite": true,
+   "distinct_words": 15359,
+   "ok": true
+  },
+  "residual5120": {
+   "role": "candidate",
+   "row_native": false,
+   "grid_groups_one_row": 80,
+   "output_words": 15360,
+   "many_equal_to_one_row_dispatches": false,
+   "output_written": true,
+   "all_finite": true,
+   "distinct_words": 11353,
+   "ok": true
+  },
+  "mlpsilu": {
+   "role": "candidate",
+   "row_native": true,
+   "grid_groups_one_row": 272,
+   "output_words": 52224,
+   "many_equal_to_one_row_dispatches": true,
+   "output_written": true,
+   "all_finite": true,
+   "distinct_words": 52213,
+   "ok": true
+  },
+  "gdnrmsgate": {
+   "role": "candidate",
+   "row_native": false,
+   "grid_groups_one_row": 48,
+   "output_words": 18432,
+   "many_equal_to_one_row_dispatches": false,
+   "output_written": true,
+   "all_finite": true,
+   "distinct_words": 14570,
+   "ok": true
+  },
+  "attn256_gate": {
+   "role": "candidate",
+   "row_native": false,
+   "grid_groups_one_row": 96,
+   "output_words": 18432,
+   "many_equal_to_one_row_dispatches": false,
+   "output_written": true,
+   "all_finite": true,
+   "distinct_words": 18432,
+   "ok": true
+  },
+  "gdnqknorm": {
+   "role": "control (expected not row-contiguous)",
+   "row_native": false,
+   "grid_groups_one_row": 32,
+   "output_words": 12288,
+   "many_equal_to_one_row_dispatches": false,
+   "output_written": true,
+   "all_finite": true,
+   "distinct_words": 9858,
+   "ok": true
+  }
+ },
+ "verdict": "PASS"
+}

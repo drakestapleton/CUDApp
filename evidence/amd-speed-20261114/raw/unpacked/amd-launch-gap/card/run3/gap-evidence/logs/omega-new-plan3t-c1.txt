@@ -1,0 +1,803 @@
+OMEGA step open_kfd ok errno=0 phase=before detail=0
+OMEGA step open_kfd ok errno=0 phase=after detail=0
+OMEGA step version ok errno=0 phase=before detail=0
+OMEGA step version ok errno=0 phase=after detail=0
+OMEGA step topology ok errno=0 phase=before detail=0
+OMEGA step topology_node ok errno=0 phase=before detail=7
+OMEGA step topology_node fail errno=1 phase=after detail=7
+OMEGA step topology_node ok errno=0 phase=before detail=5
+OMEGA step topology_node ok errno=0 phase=after detail=5
+OMEGA topology selected node=5 gpu_id=24497 render_minor=152
+OMEGA step topology ok errno=0 phase=before detail=5
+OMEGA step topology ok errno=0 phase=after detail=5
+OMEGA step render_open ok errno=0 phase=before detail=152
+OMEGA step render_open ok errno=0 phase=after detail=152
+OMEGA step acquire_vm ok errno=0 phase=before detail=24497
+OMEGA step acquire_vm ok errno=0 phase=after detail=24497
+OMEGA step memory_reserve ok errno=0 phase=before detail=1
+OMEGA step memory_reserve ok errno=0 phase=after detail=1
+OMEGA step memory_alloc ok errno=0 phase=before detail=1
+OMEGA step memory_alloc ok errno=0 phase=after detail=1
+OMEGA step memory_map ok errno=0 phase=before detail=1
+OMEGA step memory_map ok errno=0 phase=after detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=1
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=1
+OMEGA step memory_reserve ok errno=0 phase=before detail=8
+OMEGA step memory_reserve ok errno=0 phase=after detail=8
+OMEGA step memory_alloc ok errno=0 phase=before detail=8
+OMEGA step memory_alloc ok errno=0 phase=after detail=8
+OMEGA step memory_map ok errno=0 phase=before detail=8
+OMEGA step memory_map ok errno=0 phase=after detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=8
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=8
+OMEGA step memory_reserve ok errno=0 phase=before detail=9
+OMEGA step memory_reserve ok errno=0 phase=after detail=9
+OMEGA step memory_alloc ok errno=0 phase=before detail=9
+OMEGA step memory_alloc ok errno=0 phase=after detail=9
+OMEGA step memory_map ok errno=0 phase=before detail=9
+OMEGA step memory_map ok errno=0 phase=after detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=9
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=9
+OMEGA step memory_reserve ok errno=0 phase=before detail=10
+OMEGA step memory_reserve ok errno=0 phase=after detail=10
+OMEGA step memory_alloc ok errno=0 phase=before detail=10
+OMEGA step memory_alloc ok errno=0 phase=after detail=10
+OMEGA step memory_map ok errno=0 phase=before detail=10
+OMEGA step memory_map ok errno=0 phase=after detail=10
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=10
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=10
+OMEGA step memory_reserve ok errno=0 phase=before detail=11
+OMEGA step memory_reserve ok errno=0 phase=after detail=11
+OMEGA step memory_alloc ok errno=0 phase=before detail=11
+OMEGA step memory_alloc ok errno=0 phase=after detail=11
+OMEGA step memory_map ok errno=0 phase=before detail=11
+OMEGA step memory_map ok errno=0 phase=after detail=11
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=11
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=11
+OMEGA step memory_reserve ok errno=0 phase=before detail=12
+OMEGA step memory_reserve ok errno=0 phase=after detail=12
+OMEGA step memory_alloc ok errno=0 phase=before detail=12
+OMEGA step memory_alloc ok errno=0 phase=after detail=12
+OMEGA step memory_map ok errno=0 phase=before detail=12
+OMEGA step memory_map ok errno=0 phase=after detail=12
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=12
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=12
+OMEGA step memory_reserve ok errno=0 phase=before detail=13
+OMEGA step memory_reserve ok errno=0 phase=after detail=13
+OMEGA step memory_alloc ok errno=0 phase=before detail=13
+OMEGA step memory_alloc ok errno=0 phase=after detail=13
+OMEGA step memory_map ok errno=0 phase=before detail=13
+OMEGA step memory_map ok errno=0 phase=after detail=13
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=13
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=13
+OMEGA step memory_reserve ok errno=0 phase=before detail=14
+OMEGA step memory_reserve ok errno=0 phase=after detail=14
+OMEGA step memory_alloc ok errno=0 phase=before detail=14
+OMEGA step memory_alloc ok errno=0 phase=after detail=14
+OMEGA step memory_map ok errno=0 phase=before detail=14
+OMEGA step memory_map ok errno=0 phase=after detail=14
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=14
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=14
+OMEGA step memory_reserve ok errno=0 phase=before detail=15
+OMEGA step memory_reserve ok errno=0 phase=after detail=15
+OMEGA step memory_alloc ok errno=0 phase=before detail=15
+OMEGA step memory_alloc ok errno=0 phase=after detail=15
+OMEGA step memory_map ok errno=0 phase=before detail=15
+OMEGA step memory_map ok errno=0 phase=after detail=15
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=15
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=15
+OMEGA step memory_reserve ok errno=0 phase=before detail=16
+OMEGA step memory_reserve ok errno=0 phase=after detail=16
+OMEGA step memory_alloc ok errno=0 phase=before detail=16
+OMEGA step memory_alloc ok errno=0 phase=after detail=16
+OMEGA step memory_map ok errno=0 phase=before detail=16
+OMEGA step memory_map ok errno=0 phase=after detail=16
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=16
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=16
+OMEGA step memory_reserve ok errno=0 phase=before detail=17
+OMEGA step memory_reserve ok errno=0 phase=after detail=17
+OMEGA step memory_alloc ok errno=0 phase=before detail=17
+OMEGA step memory_alloc ok errno=0 phase=after detail=17
+OMEGA step memory_map ok errno=0 phase=before detail=17
+OMEGA step memory_map ok errno=0 phase=after detail=17
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=17
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=17
+OMEGA step memory_reserve ok errno=0 phase=before detail=18
+OMEGA step memory_reserve ok errno=0 phase=after detail=18
+OMEGA step memory_alloc ok errno=0 phase=before detail=18
+OMEGA step memory_alloc ok errno=0 phase=after detail=18
+OMEGA step memory_map ok errno=0 phase=before detail=18
+OMEGA step memory_map ok errno=0 phase=after detail=18
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=18
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=18
+OMEGA step memory_reserve ok errno=0 phase=before detail=19
+OMEGA step memory_reserve ok errno=0 phase=after detail=19
+OMEGA step memory_alloc ok errno=0 phase=before detail=19
+OMEGA step memory_alloc ok errno=0 phase=after detail=19
+OMEGA step memory_map ok errno=0 phase=before detail=19
+OMEGA step memory_map ok errno=0 phase=after detail=19
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=19
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=19
+OMEGA step memory_reserve ok errno=0 phase=before detail=20
+OMEGA step memory_reserve ok errno=0 phase=after detail=20
+OMEGA step memory_alloc ok errno=0 phase=before detail=20
+OMEGA step memory_alloc ok errno=0 phase=after detail=20
+OMEGA step memory_map ok errno=0 phase=before detail=20
+OMEGA step memory_map ok errno=0 phase=after detail=20
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=20
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=20
+OMEGA step memory_reserve ok errno=0 phase=before detail=21
+OMEGA step memory_reserve ok errno=0 phase=after detail=21
+OMEGA step memory_alloc ok errno=0 phase=before detail=21
+OMEGA step memory_alloc ok errno=0 phase=after detail=21
+OMEGA step memory_map ok errno=0 phase=before detail=21
+OMEGA step memory_map ok errno=0 phase=after detail=21
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=21
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=21
+OMEGA step memory_reserve ok errno=0 phase=before detail=22
+OMEGA step memory_reserve ok errno=0 phase=after detail=22
+OMEGA step memory_alloc ok errno=0 phase=before detail=22
+OMEGA step memory_alloc ok errno=0 phase=after detail=22
+OMEGA step memory_map ok errno=0 phase=before detail=22
+OMEGA step memory_map ok errno=0 phase=after detail=22
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=22
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=22
+OMEGA step memory_reserve ok errno=0 phase=before detail=23
+OMEGA step memory_reserve ok errno=0 phase=after detail=23
+OMEGA step memory_alloc ok errno=0 phase=before detail=23
+OMEGA step memory_alloc ok errno=0 phase=after detail=23
+OMEGA step memory_map ok errno=0 phase=before detail=23
+OMEGA step memory_map ok errno=0 phase=after detail=23
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=23
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=23
+OMEGA step memory_reserve ok errno=0 phase=before detail=24
+OMEGA step memory_reserve ok errno=0 phase=after detail=24
+OMEGA step memory_alloc ok errno=0 phase=before detail=24
+OMEGA step memory_alloc ok errno=0 phase=after detail=24
+OMEGA step memory_map ok errno=0 phase=before detail=24
+OMEGA step memory_map ok errno=0 phase=after detail=24
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=24
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=24
+OMEGA step memory_reserve ok errno=0 phase=before detail=25
+OMEGA step memory_reserve ok errno=0 phase=after detail=25
+OMEGA step memory_alloc ok errno=0 phase=before detail=25
+OMEGA step memory_alloc ok errno=0 phase=after detail=25
+OMEGA step memory_map ok errno=0 phase=before detail=25
+OMEGA step memory_map ok errno=0 phase=after detail=25
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=25
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=25
+OMEGA step memory_reserve ok errno=0 phase=before detail=26
+OMEGA step memory_reserve ok errno=0 phase=after detail=26
+OMEGA step memory_alloc ok errno=0 phase=before detail=26
+OMEGA step memory_alloc ok errno=0 phase=after detail=26
+OMEGA step memory_map ok errno=0 phase=before detail=26
+OMEGA step memory_map ok errno=0 phase=after detail=26
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=26
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=26
+OMEGA step memory_reserve ok errno=0 phase=before detail=27
+OMEGA step memory_reserve ok errno=0 phase=after detail=27
+OMEGA step memory_alloc ok errno=0 phase=before detail=27
+OMEGA step memory_alloc ok errno=0 phase=after detail=27
+OMEGA step memory_map ok errno=0 phase=before detail=27
+OMEGA step memory_map ok errno=0 phase=after detail=27
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=27
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=27
+OMEGA step memory_apertures ok errno=0 phase=before detail=24497
+OMEGA step memory_apertures ok errno=0 phase=after detail=24497
+OMEGA step memory_reserve ok errno=0 phase=before detail=3
+OMEGA step memory_reserve ok errno=0 phase=after detail=3
+OMEGA step memory_alloc ok errno=0 phase=before detail=3
+OMEGA step memory_alloc ok errno=0 phase=after detail=3
+OMEGA step memory_map ok errno=0 phase=before detail=3
+OMEGA step memory_map ok errno=0 phase=after detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=3
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=3
+OMEGA step memory_reserve ok errno=0 phase=before detail=4
+OMEGA step memory_reserve ok errno=0 phase=after detail=4
+OMEGA step memory_alloc ok errno=0 phase=before detail=4
+OMEGA step memory_alloc ok errno=0 phase=after detail=4
+OMEGA step memory_map ok errno=0 phase=before detail=4
+OMEGA step memory_map ok errno=0 phase=after detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=4
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=4
+OMEGA step memory_reserve ok errno=0 phase=before detail=5
+OMEGA step memory_reserve ok errno=0 phase=after detail=5
+OMEGA step memory_alloc ok errno=0 phase=before detail=5
+OMEGA step memory_alloc ok errno=0 phase=after detail=5
+OMEGA step memory_map ok errno=0 phase=before detail=5
+OMEGA step memory_map ok errno=0 phase=after detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=5
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=5
+OMEGA step memory_reserve ok errno=0 phase=before detail=6
+OMEGA step memory_reserve ok errno=0 phase=after detail=6
+OMEGA step memory_alloc ok errno=0 phase=before detail=6
+OMEGA step memory_alloc ok errno=0 phase=after detail=6
+OMEGA step memory_map ok errno=0 phase=before detail=6
+OMEGA step memory_map ok errno=0 phase=after detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=6
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=6
+OMEGA step memory_reserve ok errno=0 phase=before detail=7
+OMEGA step memory_reserve ok errno=0 phase=after detail=7
+OMEGA step memory_alloc ok errno=0 phase=before detail=7
+OMEGA step memory_alloc ok errno=0 phase=after detail=7
+OMEGA step memory_map ok errno=0 phase=before detail=7
+OMEGA step memory_map ok errno=0 phase=after detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=before detail=7
+OMEGA step memory_cpu_map ok errno=0 phase=after detail=7
+OMEGA step queue_create ok errno=0 phase=before detail=24497
+OMEGA step queue_create ok errno=0 phase=after detail=24497
+OMEGA step doorbell_map ok errno=0 phase=before detail=15558881181402398720
+OMEGA step doorbell_map ok errno=0 phase=after detail=15558881181402398720
+OMEGA_PLAN ready
+OMEGA_PHASE 0 d1=6206 dn=211439 sig=24428385 tok=24429073
+OMEGA_STEP 0 tok=8678 us=24428
+OMEGA_PHASE 1 d1=1334 dn=235202 sig=24374248 tok=24374527
+OMEGA_STEP 1 tok=198 us=24374
+OMEGA_PHASE 2 d1=1186 dn=227189 sig=24392195 tok=24392408
+OMEGA_STEP 2 tok=2523 us=24392
+OMEGA_PHASE 3 d1=1138 dn=226718 sig=24436120 tok=24436363
+OMEGA_STEP 3 tok=264 us=24436
+OMEGA_PHASE 4 d1=1280 dn=246563 sig=24451948 tok=24452232
+OMEGA_STEP 4 tok=248046 us=24451
+OMEGA_PHASE 5 d1=1231 dn=259930 sig=24456220 tok=24456491
+OMEGA_STEP 5 tok=248046 us=24456
+OMEGA_PHASE 6 d1=1323 dn=336895 sig=24438347 tok=24438937
+OMEGA_STEP 6 tok=248046 us=24438
+OMEGA_PHASE 7 d1=2540 dn=282817 sig=24474346 tok=24474732
+OMEGA_STEP 7 tok=248046 us=24474
+OMEGA_PHASE 8 d1=1556 dn=284584 sig=24488685 tok=24488951
+OMEGA_STEP 8 tok=248046 us=24488
+OMEGA_PHASE 9 d1=1283 dn=256780 sig=24524358 tok=24524582
+OMEGA_STEP 9 tok=248046 us=24524
+OMEGA_PHASE 10 d1=1138 dn=234757 sig=24571274 tok=24571482
+OMEGA_STEP 10 tok=248046 us=24571
+OMEGA_PHASE 11 d1=1158 dn=226156 sig=24564487 tok=24564712
+OMEGA_STEP 11 tok=248046 us=24564
+OMEGA_PHASE 12 d1=1344 dn=256864 sig=24573839 tok=24574039
+OMEGA_STEP 12 tok=248046 us=24573
+OMEGA_PHASE 13 d1=1230 dn=253701 sig=24573352 tok=24573674
+OMEGA_STEP 13 tok=248046 us=24573
+OMEGA_PHASE 14 d1=1313 dn=262962 sig=24587421 tok=24587627
+OMEGA_STEP 14 tok=248046 us=24587
+OMEGA_PHASE 15 d1=1115 dn=228185 sig=24580282 tok=24580515
+OMEGA_STEP 15 tok=248046 us=24580
+OMEGA_PHASE 16 d1=1232 dn=232514 sig=24633227 tok=24633531
+OMEGA_STEP 16 tok=248046 us=24633
+OMEGA_PHASE 17 d1=1332 dn=271254 sig=24602103 tok=24602353
+OMEGA_STEP 17 tok=248046 us=24602
+OMEGA_PHASE 18 d1=1287 dn=267272 sig=24651798 tok=24652028
+OMEGA_STEP 18 tok=248046 us=24651
+OMEGA_PHASE 19 d1=1283 dn=268940 sig=24689185 tok=24689426
+OMEGA_STEP 19 tok=248046 us=24689
+OMEGA_PHASE 20 d1=1293 dn=267435 sig=24675561 tok=24675789
+OMEGA_STEP 20 tok=248046 us=24675
+OMEGA_PHASE 21 d1=1225 dn=236669 sig=24687862 tok=24688127
+OMEGA_STEP 21 tok=198 us=24687
+OMEGA_PHASE 22 d1=1377 dn=276943 sig=24740257 tok=24740484
+OMEGA_STEP 22 tok=248045 us=24740
+OMEGA_PHASE 23 d1=1201 dn=252445 sig=24725511 tok=24725787
+OMEGA_STEP 23 tok=3474 us=24725
+OMEGA_PHASE 24 d1=1348 dn=263267 sig=24743628 tok=24743854
+OMEGA_STEP 24 tok=248068 us=24743
+OMEGA_PHASE 25 d1=1225 dn=251699 sig=24741866 tok=24742160
+OMEGA_STEP 25 tok=248068 us=24741
+OMEGA_PHASE 26 d1=1218 dn=250237 sig=24753255 tok=24753453
+OMEGA_STEP 26 tok=198 us=24753
+OMEGA_PHASE 27 d1=1276 dn=227246 sig=24780886 tok=24781084
+OMEGA_STEP 27 tok=248069 us=24780
+OMEGA_PHASE 28 d1=1132 dn=203005 sig=24779070 tok=24779264
+OMEGA_STEP 28 tok=271 us=24779
+OMEGA_PHASE 29 d1=1114 dn=215515 sig=24818052 tok=24824141
+OMEGA_STEP 29 tok=2 us=24818
+OMEGA_PHASE 30 d1=1120 dn=226370 sig=24818836 tok=24819314
+OMEGA_STEP 30 tok=2732 us=24818
+OMEGA_PHASE 31 d1=1125 dn=224194 sig=24871336 tok=24871801
+OMEGA_STEP 31 tok=3986 us=24871
+OMEGA_PHASE 32 d1=1261 dn=228613 sig=24809859 tok=24810388
+OMEGA_STEP 32 tok=303 us=24809
+OMEGA_PHASE 33 d1=1233 dn=248046 sig=24852029 tok=24852549
+OMEGA_STEP 33 tok=279 us=24852
+OMEGA_PHASE 34 d1=1211 dn=249407 sig=24865797 tok=24866317
+OMEGA_STEP 34 tok=11908 us=24865
+OMEGA_PHASE 35 d1=1124 dn=203865 sig=24881536 tok=24882014
+OMEGA_STEP 35 tok=25 us=24881
+OMEGA_PHASE 36 d1=1124 dn=204590 sig=24886624 tok=24887099
+OMEGA_STEP 36 tok=357 us=24886
+OMEGA_PHASE 37 d1=1128 dn=228261 sig=24874081 tok=24874636
+OMEGA_STEP 37 tok=10776 us=24874
+OMEGA_PHASE 38 d1=1198 dn=248441 sig=24926433 tok=24926900
+OMEGA_STEP 38 tok=314 us=24926
+OMEGA_PHASE 39 d1=1108 dn=224453 sig=24965299 tok=24965763
+OMEGA_STEP 39 tok=436 us=24965
+OMEGA_PHASE 40 d1=1219 dn=202747 sig=24965889 tok=24966359
+OMEGA_STEP 40 tok=21204 us=24965
+OMEGA_PHASE 41 d1=1164 dn=217196 sig=24993869 tok=24994442
+OMEGA_STEP 41 tok=19154 us=24993
+OMEGA_PHASE 42 d1=1299 dn=277669 sig=25028306 tok=25028834
+OMEGA_STEP 42 tok=271 us=25028
+OMEGA_PHASE 43 d1=1298 dn=249169 sig=25025327 tok=25025945
+OMEGA_STEP 43 tok=2381 us=25025
+OMEGA_PHASE 44 d1=1285 dn=265144 sig=24998595 tok=24999123
+OMEGA_STEP 44 tok=92325 us=24998
+OMEGA_PHASE 45 d1=1268 dn=253315 sig=25053360 tok=25053856
+OMEGA_STEP 45 tok=11 us=25053
+OMEGA_PHASE 46 d1=1118 dn=223874 sig=25070017 tok=25070488
+OMEGA_STEP 46 tok=279 us=25070
+OMEGA_PHASE 47 d1=1124 dn=228481 sig=25077067 tok=25077531
+OMEGA_STEP 47 tok=9117 us=25077
+OMEGA_PHASE 48 d1=1111 dn=209152 sig=25073520 tok=25073980
+OMEGA_STEP 48 tok=682 us=25073
+OMEGA_PHASE 49 d1=1351 dn=225764 sig=25087571 tok=25088050
+OMEGA_STEP 49 tok=978 us=25087
+OMEGA_PHASE 50 d1=1123 dn=229222 sig=25082420 tok=25082895
+OMEGA_STEP 50 tok=2107 us=25082
+OMEGA_PHASE 51 d1=1162 dn=225359 sig=25115922 tok=25116422
+OMEGA_STEP 51 tok=21265 us=25115
+OMEGA_PHASE 52 d1=1202 dn=251771 sig=25137591 tok=25138100
+OMEGA_STEP 52 tok=725 us=25137
+OMEGA_PHASE 53 d1=1194 dn=241611 sig=25158598 tok=25159124
+OMEGA_STEP 53 tok=11848 us=25158
+OMEGA_PHASE 54 d1=1223 dn=227231 sig=25183896 tok=25184443
+OMEGA_STEP 54 tok=25882 us=25183
+OMEGA_PHASE 55 d1=1284 dn=247733 sig=25182888 tok=25183359
+OMEGA_STEP 55 tok=321 us=25182
+OMEGA_PHASE 56 d1=1113 dn=226509 sig=25201827 tok=25202296
+OMEGA_STEP 56 tok=1141 us=25201
+OMEGA_PHASE 57 d1=1161 dn=232816 sig=25211707 tok=25212239
+OMEGA_STEP 57 tok=1379 us=25211
+OMEGA_PHASE 58 d1=1194 dn=249277 sig=25260580 tok=25261060
+OMEGA_STEP 58 tok=39888 us=25260
+OMEGA_PHASE 59 d1=1239 dn=221706 sig=25249819 tok=25250285
+OMEGA_STEP 59 tok=31126 us=25249
+OMEGA_PHASE 60 d1=1117 dn=226507 sig=25226129 tok=25226603
+OMEGA_STEP 60 tok=13 us=25226
+OMEGA_PHASE 61 d1=1116 dn=232173 sig=25235298 tok=25235798
+OMEGA_STEP 61 tok=1946 us=25235
+OMEGA_PHASE 62 d1=1186 dn=246861 sig=25266970 tok=25267440
+OMEGA_STEP 62 tok=20239 us=25266
+OMEGA_PHASE 63 d1=1174 dn=227074 sig=25269969 tok=25270443
+OMEGA_STEP 63 tok=279 us=25269
+OMEGA_PHASE 64 d1=1280 dn=212196 sig=25289343 tok=25289816
+OMEGA_STEP 64 tok=4118 us=25289
+OMEGA_PHASE 65 d1=1113 dn=214422 sig=25283710 tok=25284220
+OMEGA_STEP 65 tok=10685 us=25283
+OMEGA_PHASE 66 d1=1195 dn=245909 sig=25286620 tok=25287090
+OMEGA_STEP 66 tok=757 us=25286
+OMEGA_PHASE 67 d1=1124 dn=226649 sig=25270382 tok=25270861
+OMEGA_STEP 67 tok=13255 us=25270
+OMEGA_PHASE 68 d1=1111 dn=226012 sig=25264295 tok=25264762
+OMEGA_STEP 68 tok=7718 us=25264
+OMEGA_PHASE 69 d1=1122 dn=214502 sig=25301833 tok=25302351
+OMEGA_STEP 69 tok=11 us=25301
+OMEGA_PHASE 70 d1=1206 dn=246966 sig=25303769 tok=25304239
+OMEGA_STEP 70 tok=53653 us=25303
+OMEGA_PHASE 71 d1=1115 dn=225320 sig=25252391 tok=25252863
+OMEGA_STEP 71 tok=69090 us=25252
+OMEGA_PHASE 72 d1=1105 dn=202170 sig=25290090 tok=25290603
+OMEGA_STEP 72 tok=1091 us=25290
+OMEGA_PHASE 73 d1=1230 dn=243123 sig=25230383 tok=25230968
+OMEGA_STEP 73 tok=11 us=25230
+OMEGA_PHASE 74 d1=1226 dn=258632 sig=25284174 tok=25284644
+OMEGA_STEP 74 tok=321 us=25284
+OMEGA_PHASE 75 d1=1109 dn=230238 sig=25320335 tok=25320812
+OMEGA_STEP 75 tok=30787 us=25320
+OMEGA_PHASE 76 d1=1259 dn=225718 sig=25276939 tok=25277479
+OMEGA_STEP 76 tok=66725 us=25276
+OMEGA_PHASE 77 d1=1244 dn=245786 sig=25270139 tok=25270818
+OMEGA_STEP 77 tok=11 us=25270
+OMEGA_PHASE 78 d1=1260 dn=243121 sig=25290302 tok=25290802
+OMEGA_STEP 78 tok=66509 us=25290
+OMEGA_PHASE 79 d1=1204 dn=248404 sig=25322671 tok=25323133
+OMEGA_STEP 79 tok=599 us=25322
+OMEGA_PHASE 80 d1=1157 dn=229488 sig=25313129 tok=25313630
+OMEGA_STEP 80 tok=38589 us=25313
+OMEGA_PHASE 81 d1=1333 dn=243108 sig=25279705 tok=25280219
+OMEGA_STEP 81 tok=383 us=25279
+OMEGA_PHASE 82 d1=1204 dn=255943 sig=25304212 tok=25304725
+OMEGA_STEP 82 tok=799 us=25304
+OMEGA_PHASE 83 d1=1207 dn=247292 sig=25324881 tok=25325355
+OMEGA_STEP 83 tok=314 us=25324
+OMEGA_PHASE 84 d1=1137 dn=227319 sig=25271518 tok=25271982
+OMEGA_STEP 84 tok=279 us=25271
+OMEGA_PHASE 85 d1=1143 dn=224383 sig=25340086 tok=25340589
+OMEGA_STEP 85 tok=1379 us=25340
+OMEGA_PHASE 86 d1=1238 dn=246264 sig=25236647 tok=25237112
+OMEGA_STEP 86 tok=25438 us=25236
+OMEGA_PHASE 87 d1=1115 dn=226854 sig=25321349 tok=25321814
+OMEGA_STEP 87 tok=13976 us=25321
+OMEGA_PHASE 88 d1=1109 dn=219873 sig=25276865 tok=25277376
+OMEGA_STEP 88 tok=303 us=25276
+OMEGA_PHASE 89 d1=1245 dn=256306 sig=25346023 tok=25346581
+OMEGA_STEP 89 tok=3611 us=25346
+OMEGA_PHASE 90 d1=1224 dn=234863 sig=25319557 tok=25320082
+OMEGA_STEP 90 tok=3712 us=25319
+OMEGA_PHASE 91 d1=1207 dn=242045 sig=25311328 tok=25311841
+OMEGA_STEP 91 tok=25 us=25311
+OMEGA_PHASE 92 d1=1197 dn=257078 sig=25283518 tok=25284022
+OMEGA_STEP 92 tok=279 us=25283
+OMEGA_PHASE 93 d1=1225 dn=247097 sig=25308977 tok=25309498
+OMEGA_STEP 93 tok=324 us=25308
+OMEGA_PHASE 94 d1=1207 dn=250049 sig=25291983 tok=25292494
+OMEGA_STEP 94 tok=55965 us=25291
+OMEGA_PHASE 95 d1=1196 dn=249056 sig=25306951 tok=25307414
+OMEGA_STEP 95 tok=13 us=25306
+OMEGA_PHASE 96 d1=1259 dn=226793 sig=25312507 tok=25312969
+OMEGA_STEP 96 tok=13065 us=25312
+OMEGA_PHASE 97 d1=1112 dn=230374 sig=25294147 tok=25294705
+OMEGA_STEP 97 tok=777 us=25294
+OMEGA_PHASE 98 d1=1205 dn=258040 sig=25341714 tok=25342225
+OMEGA_STEP 98 tok=1056 us=25341
+OMEGA_PHASE 99 d1=1195 dn=242604 sig=25293648 tok=25294123
+OMEGA_STEP 99 tok=4145 us=25293
+OMEGA_PHASE 100 d1=1195 dn=224595 sig=25310607 tok=25311082
+OMEGA_STEP 100 tok=38409 us=25310
+OMEGA_PHASE 101 d1=1108 dn=216373 sig=25289019 tok=25289544
+OMEGA_STEP 101 tok=314 us=25289
+OMEGA_PHASE 102 d1=1231 dn=233859 sig=25325536 tok=25326009
+OMEGA_STEP 102 tok=9506 us=25325
+OMEGA_PHASE 103 d1=1119 dn=222062 sig=25309684 tok=25310148
+OMEGA_STEP 103 tok=11 us=25309
+OMEGA_PHASE 104 d1=1392 dn=235707 sig=25334453 tok=25334926
+OMEGA_STEP 104 tok=324 us=25334
+OMEGA_PHASE 105 d1=1131 dn=215039 sig=25280037 tok=25280562
+OMEGA_STEP 105 tok=21204 us=25280
+OMEGA_PHASE 106 d1=1219 dn=255224 sig=25312026 tok=25312501
+OMEGA_STEP 106 tok=19154 us=25312
+OMEGA_PHASE 107 d1=1128 dn=233747 sig=25325834 tok=25326299
+OMEGA_STEP 107 tok=3875 us=25325
+OMEGA_PHASE 108 d1=1265 dn=226728 sig=25331332 tok=25331800
+OMEGA_STEP 108 tok=264 us=25331
+OMEGA_PHASE 109 d1=1110 dn=228474 sig=25325214 tok=25325732
+OMEGA_STEP 109 tok=18677 us=25325
+OMEGA_PHASE 110 d1=1224 dn=236976 sig=25331334 tok=25331793
+OMEGA_STEP 110 tok=4368 us=25331
+OMEGA_PHASE 111 d1=1102 dn=203194 sig=25338463 tok=25338972
+OMEGA_STEP 111 tok=314 us=25338
+OMEGA_PHASE 112 d1=1197 dn=249877 sig=25306425 tok=25306916
+OMEGA_STEP 112 tok=28069 us=25306
+OMEGA_PHASE 113 d1=1247 dn=237272 sig=25349062 tok=25349651
+OMEGA_STEP 113 tok=18204 us=25349
+OMEGA_PHASE 114 d1=1234 dn=255686 sig=25315244 tok=25315710
+OMEGA_STEP 114 tok=11 us=25315
+OMEGA_PHASE 115 d1=1105 dn=230551 sig=25324895 tok=25325374
+OMEGA_STEP 115 tok=41052 us=25324
+OMEGA_PHASE 116 d1=1110 dn=231251 sig=25331445 tok=25331920
+OMEGA_STEP 116 tok=43136 us=25331
+OMEGA_PHASE 117 d1=1111 dn=225197 sig=25336241 tok=25336773
+OMEGA_STEP 117 tok=11 us=25336
+OMEGA_PHASE 118 d1=1325 dn=233204 sig=25306665 tok=25307168
+OMEGA_STEP 118 tok=321 us=25306
+OMEGA_PHASE 119 d1=1199 dn=253258 sig=25398845 tok=25399312
+OMEGA_STEP 119 tok=3611 us=25398
+OMEGA_PHASE 120 d1=1104 dn=224151 sig=25348954 tok=25349427
+OMEGA_STEP 120 tok=53113 us=25348
+OMEGA_PHASE 121 d1=1126 dn=227435 sig=25298833 tok=25299371
+OMEGA_STEP 121 tok=13 us=25298
+OMEGA_PHASE 122 d1=1222 dn=251778 sig=25327531 tok=25328004
+OMEGA_STEP 122 tok=10643 us=25327
+OMEGA_PHASE 123 d1=1239 dn=224004 sig=25338164 tok=25338638
+OMEGA_STEP 123 tok=3712 us=25338
+OMEGA_PHASE 124 d1=1114 dn=228278 sig=25346639 tok=25347108
+OMEGA_STEP 124 tok=369 us=25346
+OMEGA_PHASE 125 d1=1110 dn=226131 sig=25293439 tok=25293958
+OMEGA_STEP 125 tok=264 us=25293
+OMEGA_PHASE 126 d1=1259 dn=259237 sig=25377119 tok=25377592
+OMEGA_STEP 126 tok=58170 us=25377
+OMEGA_PHASE 127 d1=1139 dn=231732 sig=25353428 tok=25353903
+OMEGA_STEP 127 tok=310 us=25353
+OMEGA_PHASE 128 d1=1295 dn=225048 sig=25340496 tok=25341036
+OMEGA_STEP 128 tok=279 us=25340
+OMEGA_PHASE 129 d1=1299 dn=268250 sig=25322876 tok=25323698
+OMEGA_STEP 129 tok=50032 us=25322
+OMEGA_PHASE 130 d1=1362 dn=274479 sig=25351851 tok=25352504
+OMEGA_STEP 130 tok=12229 us=25351
+OMEGA_PHASE 131 d1=1320 dn=255298 sig=25370311 tok=25370887
+OMEGA_STEP 131 tok=310 us=25370
+OMEGA_PHASE 132 d1=1359 dn=266913 sig=25311911 tok=25312460
+OMEGA_STEP 132 tok=48827 us=25311
+OMEGA_PHASE 133 d1=1325 dn=385174 sig=25390321 tok=25390883
+OMEGA_STEP 133 tok=279 us=25390
+OMEGA_PHASE 134 d1=1325 dn=276458 sig=25328152 tok=25328701
+OMEGA_STEP 134 tok=9496 us=25328
+OMEGA_PHASE 135 d1=1313 dn=277630 sig=25321905 tok=25322412
+OMEGA_STEP 135 tok=11 us=25321
+OMEGA_PHASE 136 d1=1224 dn=247684 sig=25363843 tok=25364315
+OMEGA_STEP 136 tok=39577 us=25363
+OMEGA_PHASE 137 d1=1116 dn=228477 sig=25385345 tok=25385930
+OMEGA_STEP 137 tok=494 us=25385
+OMEGA_PHASE 138 d1=1212 dn=237318 sig=25374221 tok=25374738
+OMEGA_STEP 138 tok=13437 us=25374
+OMEGA_PHASE 139 d1=1203 dn=249594 sig=25340265 tok=25340787
+OMEGA_STEP 139 tok=25250 us=25340
+OMEGA_PHASE 140 d1=1372 dn=231439 sig=25396751 tok=25397268
+OMEGA_STEP 140 tok=383 us=25396
+OMEGA_PHASE 141 d1=1234 dn=236147 sig=25379198 tok=25379697
+OMEGA_STEP 141 tok=82884 us=25379
+OMEGA_PHASE 142 d1=1123 dn=226235 sig=25327628 tok=25328150
+OMEGA_STEP 142 tok=310 us=25327
+OMEGA_PHASE 143 d1=1227 dn=255409 sig=25368827 tok=25369330
+OMEGA_STEP 143 tok=25924 us=25368
+OMEGA_PHASE 144 d1=1277 dn=248258 sig=25361812 tok=25362282
+OMEGA_STEP 144 tok=11 us=25361
+OMEGA_PHASE 145 d1=1284 dn=237865 sig=25383962 tok=25384483
+OMEGA_STEP 145 tok=26606 us=25383
+OMEGA_PHASE 146 d1=1232 dn=257058 sig=25338346 tok=25338852
+OMEGA_STEP 146 tok=7143 us=25338
+OMEGA_PHASE 147 d1=1440 dn=251287 sig=25365877 tok=25366349
+OMEGA_STEP 147 tok=3106 us=25365
+OMEGA_PHASE 148 d1=1137 dn=227870 sig=25355196 tok=25355671
+OMEGA_STEP 148 tok=258 us=25355
+OMEGA_PHASE 149 d1=1126 dn=225980 sig=25393478 tok=25394006
+OMEGA_STEP 149 tok=1943 us=25393
+OMEGA_PHASE 150 d1=1378 dn=239084 sig=25317794 tok=25318266
+OMEGA_STEP 150 tok=13 us=25317
+OMEGA_PHASE 151 d1=1117 dn=246467 sig=25387969 tok=25388437
+OMEGA_STEP 151 tok=271 us=25387
+OMEGA_PHASE 152 d1=1142 dn=219014 sig=25322005 tok=25322471
+OMEGA_STEP 152 tok=13962 us=25322
+OMEGA_PHASE 153 d1=1123 dn=226620 sig=25362438 tok=25362961
+OMEGA_STEP 153 tok=561 us=25362
+OMEGA_PHASE 154 d1=1316 dn=255250 sig=25332352 tok=25332924
+OMEGA_STEP 154 tok=35725 us=25332
+OMEGA_PHASE 155 d1=1365 dn=254178 sig=25387693 tok=25388246
+OMEGA_STEP 155 tok=67139 us=25387
+OMEGA_PHASE 156 d1=1320 dn=274866 sig=25386669 tok=25387135
+OMEGA_STEP 156 tok=25 us=25386
+OMEGA_PHASE 157 d1=1117 dn=229637 sig=25338370 tok=25338928
+OMEGA_STEP 157 tok=6438 us=25338
+OMEGA_PHASE 158 d1=1227 dn=245886 sig=25367715 tok=25368227
+OMEGA_STEP 158 tok=321 us=25367
+OMEGA_PHASE 159 d1=1229 dn=248064 sig=25393708 tok=25394223
+OMEGA_STEP 159 tok=31860 us=25393
+OMEGA_PHASE 160 d1=1358 dn=234597 sig=25307390 tok=25307859
+OMEGA_STEP 160 tok=271 us=25307
+OMEGA_PHASE 161 d1=1115 dn=227748 sig=25326660 tok=25327138
+OMEGA_STEP 161 tok=760 us=25326
+OMEGA_PHASE 162 d1=1120 dn=224945 sig=25329348 tok=25329919
+OMEGA_STEP 162 tok=7059 us=25329
+OMEGA_PHASE 163 d1=1361 dn=282787 sig=25375696 tok=25376242
+OMEGA_STEP 163 tok=314 us=25375
+OMEGA_PHASE 164 d1=1353 dn=269531 sig=25342301 tok=25342859
+OMEGA_STEP 164 tok=48559 us=25342
+OMEGA_PHASE 165 d1=1379 dn=284594 sig=25384432 tok=25385946
+OMEGA_STEP 165 tok=17199 us=25384
+OMEGA_PHASE 166 d1=2805 dn=258557 sig=25346062 tok=25346596
+OMEGA_STEP 166 tok=440 us=25346
+OMEGA_PHASE 167 d1=1267 dn=249982 sig=25364918 tok=25365395
+OMEGA_STEP 167 tok=3000 us=25364
+OMEGA_PHASE 168 d1=1099 dn=240435 sig=25327497 tok=25327966
+OMEGA_STEP 168 tok=369 us=25327
+OMEGA_PHASE 169 d1=1108 dn=228179 sig=25354577 tok=25355088
+OMEGA_STEP 169 tok=430 us=25354
+OMEGA_PHASE 170 d1=1348 dn=249432 sig=25344415 tok=25344868
+OMEGA_STEP 170 tok=2235 us=25344
+OMEGA_PHASE 171 d1=1112 dn=227811 sig=25397004 tok=25397465
+OMEGA_STEP 171 tok=430 us=25397
+OMEGA_PHASE 172 d1=1242 dn=231168 sig=25385830 tok=25386346
+OMEGA_STEP 172 tok=500 us=25385
+OMEGA_PHASE 173 d1=1196 dn=239225 sig=25329568 tok=25330249
+OMEGA_STEP 173 tok=2492 us=25329
+OMEGA_PHASE 174 d1=1212 dn=230138 sig=25306359 tok=25306863
+OMEGA_STEP 174 tok=3144 us=25306
+OMEGA_PHASE 175 d1=1205 dn=247420 sig=25328605 tok=25329119
+OMEGA_STEP 175 tok=4924 us=25328
+OMEGA_PHASE 176 d1=1234 dn=223307 sig=25335639 tok=25336606
+OMEGA_STEP 176 tok=13 us=25335
+OMEGA_PHASE 177 d1=1141 dn=226582 sig=25344763 tok=25345276
+OMEGA_STEP 177 tok=5546 us=25344
+OMEGA_PHASE 178 d1=1212 dn=256997 sig=25391073 tok=25391522
+OMEGA_STEP 178 tok=1518 us=25391
+OMEGA_PHASE 179 d1=1174 dn=208995 sig=25354428 tok=25354948
+OMEGA_STEP 179 tok=279 us=25354
+OMEGA_PHASE 180 d1=1202 dn=253842 sig=25359803 tok=25360265
+OMEGA_STEP 180 tok=4496 us=25359
+OMEGA_PHASE 181 d1=1099 dn=223258 sig=25365326 tok=25366322
+OMEGA_STEP 181 tok=328 us=25365
+OMEGA_PHASE 182 d1=1878 dn=228577 sig=25396121 tok=25396666
+OMEGA_STEP 182 tok=75 us=25396
+OMEGA_PHASE 183 d1=1225 dn=259498 sig=25328388 tok=25328857
+OMEGA_STEP 183 tok=55965 us=25328
+OMEGA_PHASE 184 d1=1105 dn=214323 sig=25374202 tok=25374717
+OMEGA_STEP 184 tok=1 us=25374
+OMEGA_PHASE 185 d1=1333 dn=249135 sig=25401007 tok=25401458
+OMEGA_STEP 185 tok=23533 us=25401
+OMEGA_PHASE 186 d1=1105 dn=222051 sig=25385961 tok=25386471
+OMEGA_STEP 186 tok=11 us=25385
+OMEGA_PHASE 187 d1=1215 dn=253820 sig=25404946 tok=25405448
+OMEGA_STEP 187 tok=13437 us=25404
+OMEGA_PHASE 188 d1=1097 dn=227107 sig=25347736 tok=25348190
+OMEGA_STEP 188 tok=82517 us=25347
+OMEGA_PHASE 189 d1=1112 dn=235163 sig=25388459 tok=25388983
+OMEGA_STEP 189 tok=1429 us=25388
+OMEGA_PHASE 190 d1=1214 dn=259043 sig=25351168 tok=25352758
+OMEGA_STEP 190 tok=5629 us=25351
+OMEGA_PHASE 191 d1=3172 dn=254422 sig=25384578 tok=25385059
+OMEGA_STEP 191 tok=57902 us=25384
+OMEGA_PHASE 192 d1=1393 dn=235503 sig=25394761 tok=25395339
+OMEGA_STEP 192 tok=321 us=25394
+OMEGA_PHASE 193 d1=1499 dn=251092 sig=25378506 tok=25379008
+OMEGA_STEP 193 tok=19820 us=25378
+OMEGA_PHASE 194 d1=1218 dn=226235 sig=25401588 tok=25402088
+OMEGA_STEP 194 tok=25250 us=25401
+OMEGA_PHASE 195 d1=1200 dn=243361 sig=25353187 tok=25353663
+OMEGA_STEP 195 tok=310 us=25353
+OMEGA_PHASE 196 d1=1181 dn=214136 sig=25389023 tok=25389467
+OMEGA_STEP 196 tok=1804 us=25389
+OMEGA_PHASE 197 d1=1114 dn=222027 sig=25402781 tok=25403229
+OMEGA_STEP 197 tok=5902 us=25402
+OMEGA_PHASE 198 d1=1106 dn=229750 sig=25358625 tok=25359088
+OMEGA_STEP 198 tok=66148 us=25358
+OMEGA_PHASE 199 d1=1096 dn=225700 sig=25384500 tok=25385186
+OMEGA_STEP 199 tok=1052 us=25384
+OMEGA_PHASE 200 d1=1115 dn=228416 sig=25374543 tok=25375020
+OMEGA_STEP 200 tok=13 us=25374
+OMEGA_PHASE 201 d1=1132 dn=223451 sig=25376879 tok=25377380
+OMEGA_STEP 201 tok=733 us=25376
+OMEGA_PHASE 202 d1=1218 dn=233283 sig=25373591 tok=25374077
+OMEGA_STEP 202 tok=63490 us=25373
+OMEGA_PHASE 203 d1=1201 dn=236408 sig=25388287 tok=25388851
+OMEGA_STEP 203 tok=725 us=25388
+OMEGA_PHASE 204 d1=1334 dn=257953 sig=25428729 tok=25429212
+OMEGA_STEP 204 tok=348 us=25428
+OMEGA_PHASE 205 d1=1416 dn=228984 sig=25406804 tok=25407376
+OMEGA_STEP 205 tok=64071 us=25406
+OMEGA_PHASE 206 d1=1189 dn=255308 sig=25400840 tok=25401351
+OMEGA_STEP 206 tok=51458 us=25400
+OMEGA_PHASE 207 d1=1353 dn=251409 sig=25400828 tok=25401384
+OMEGA_STEP 207 tok=11961 us=25400
+OMEGA_PHASE 208 d1=1181 dn=225859 sig=25384687 tok=25385144
+OMEGA_STEP 208 tok=279 us=25384
+OMEGA_PHASE 209 d1=1243 dn=225843 sig=25401741 tok=25402394
+OMEGA_STEP 209 tok=11482 us=25401
+OMEGA_PHASE 210 d1=1226 dn=255295 sig=25373700 tok=25374744
+OMEGA_STEP 210 tok=369 us=25373
+OMEGA_PHASE 211 d1=1566 dn=231568 sig=25411170 tok=25411647
+OMEGA_STEP 211 tok=31511 us=25411
+OMEGA_PHASE 212 d1=1157 dn=229247 sig=25405627 tok=25406086
+OMEGA_STEP 212 tok=539 us=25405
+OMEGA_PHASE 213 d1=1092 dn=226281 sig=25425519 tok=25426018
+OMEGA_STEP 213 tok=279 us=25425
+OMEGA_PHASE 214 d1=1365 dn=238740 sig=25417644 tok=25418180
+OMEGA_STEP 214 tok=328 us=25417
+OMEGA_PHASE 215 d1=1239 dn=248508 sig=25411431 tok=25411936
+OMEGA_STEP 215 tok=10479 us=25411
+OMEGA_PHASE 216 d1=1193 dn=248010 sig=25397865 tok=25398383
+OMEGA_STEP 216 tok=314 us=25397
+OMEGA_PHASE 217 d1=1207 dn=247706 sig=25408582 tok=25410837
+OMEGA_STEP 217 tok=279 us=25408
+OMEGA_PHASE 218 d1=3352 dn=283184 sig=25345538 tok=25346207
+OMEGA_STEP 218 tok=2274 us=25345
+OMEGA_PHASE 219 d1=1519 dn=279351 sig=25435934 tok=25436468
+OMEGA_STEP 219 tok=5734 us=25435
+OMEGA_PHASE 220 d1=1352 dn=278561 sig=25390496 tok=25391082
+OMEGA_STEP 220 tok=565 us=25390
+OMEGA_PHASE 221 d1=1404 dn=279317 sig=25415428 tok=25416193
+OMEGA_STEP 221 tok=5212 us=25415
+OMEGA_PHASE 222 d1=1591 dn=234165 sig=25393817 tok=25394315
+OMEGA_STEP 222 tok=1288 us=25393
+OMEGA_PHASE 223 d1=1315 dn=253552 sig=25413830 tok=25414324
+OMEGA_STEP 223 tok=21861 us=25413
+OMEGA_PHASE 224 d1=1436 dn=253862 sig=25404277 tok=25404781
+OMEGA_STEP 224 tok=421 us=25404
+OMEGA_PHASE 225 d1=1224 dn=260969 sig=25400984 tok=25401484
+OMEGA_STEP 225 tok=49577 us=25400
+OMEGA_PHASE 226 d1=1211 dn=254362 sig=25407292 tok=25407793
+OMEGA_STEP 226 tok=25250 us=25407
+OMEGA_PHASE 227 d1=1249 dn=240255 sig=25371825 tok=25372295
+OMEGA_STEP 227 tok=998 us=25371
+OMEGA_PHASE 228 d1=1113 dn=209400 sig=25404612 tok=25405149
+OMEGA_STEP 228 tok=264 us=25404
+OMEGA_PHASE 229 d1=1236 dn=262830 sig=25422793 tok=25423253
+OMEGA_STEP 229 tok=3750 us=25422
+OMEGA_PHASE 230 d1=1151 dn=226090 sig=25373911 tok=25374689
+OMEGA_STEP 230 tok=32306 us=25373
+OMEGA_PHASE 231 d1=1498 dn=282760 sig=25396518 tok=25397075
+OMEGA_STEP 231 tok=1605 us=25396
+OMEGA_PHASE 232 d1=1278 dn=269150 sig=25409053 tok=25409592
+OMEGA_STEP 232 tok=11944 us=25409
+OMEGA_PHASE 233 d1=1302 dn=274136 sig=25411400 tok=25412107
+OMEGA_STEP 233 tok=303 us=25411
+OMEGA_PHASE 234 d1=1894 dn=275928 sig=25393477 tok=25394028
+OMEGA_STEP 234 tok=279 us=25393
+OMEGA_PHASE 235 d1=1384 dn=268592 sig=25450570 tok=25451182
+OMEGA_STEP 235 tok=220 us=25450
+OMEGA_PHASE 236 d1=1487 dn=258278 sig=25464817 tok=25465370
+OMEGA_STEP 236 tok=23 us=25464
+OMEGA_PHASE 237 d1=1334 dn=272153 sig=25391967 tok=25392638
+OMEGA_STEP 237 tok=337 us=25391
+OMEGA_PHASE 238 d1=1504 dn=277455 sig=25438894 tok=25439461
+OMEGA_STEP 238 tok=9018 us=25438
+OMEGA_PHASE 239 d1=1309 dn=278673 sig=25434558 tok=25435106
+OMEGA_STEP 239 tok=75887 us=25434
+OMEGA_PHASE 240 d1=1315 dn=253669 sig=25407502 tok=25408211
+OMEGA_STEP 240 tok=13 us=25407
+OMEGA_PHASE 241 d1=1355 dn=274737 sig=25404499 tok=25405081
+OMEGA_STEP 241 tok=271 us=25404
+OMEGA_PHASE 242 d1=1375 dn=257833 sig=25433816 tok=25434442
+OMEGA_STEP 242 tok=10883 us=25433
+OMEGA_PHASE 243 d1=1334 dn=269026 sig=25408869 tok=25409476
+OMEGA_STEP 243 tok=11 us=25408
+OMEGA_PHASE 244 d1=1386 dn=272594 sig=25437536 tok=25438141
+OMEGA_STEP 244 tok=279 us=25437
+OMEGA_PHASE 245 d1=1253 dn=253131 sig=25420382 tok=25421051
+OMEGA_STEP 245 tok=1379 us=25420
+OMEGA_PHASE 246 d1=1575 dn=272833 sig=25427252 tok=25427767
+OMEGA_STEP 246 tok=10919 us=25427
+OMEGA_PHASE 247 d1=1207 dn=251556 sig=25433007 tok=25433605
+OMEGA_STEP 247 tok=321 us=25433
+OMEGA_PHASE 248 d1=1383 dn=245522 sig=25367704 tok=25368215
+OMEGA_STEP 248 tok=28689 us=25367
+OMEGA_PHASE 249 d1=1248 dn=249294 sig=25428386 tok=25429060
+OMEGA_STEP 249 tok=25530 us=25428
+OMEGA_PHASE 250 d1=1439 dn=246877 sig=25416442 tok=25417021
+OMEGA_STEP 250 tok=324 us=25416
+OMEGA_PHASE 251 d1=1548 dn=272894 sig=25442100 tok=25442859
+OMEGA_STEP 251 tok=55965 us=25442
+OMEGA_PHASE 252 d1=1714 dn=255940 sig=25427429 tok=25428090
+OMEGA_STEP 252 tok=369 us=25427
+OMEGA_PHASE 253 d1=1880 dn=280372 sig=25421337 tok=25422529
+OMEGA_STEP 253 tok=279 us=25421
+OMEGA_PHASE 254 d1=2612 dn=276866 sig=25447487 tok=25448253
+OMEGA_STEP 254 tok=2972 us=25447
+OMEGA_PHASE 255 d1=1808 dn=257211 sig=25448508 tok=25449178
+OMEGA_STEP 255 tok=3248 us=25448
+OMEGA_PHASE 256 d1=1735 dn=269954 sig=25447374 tok=25447898
+OMEGA_STEP 256 tok=240424 us=25447
+OMEGA_PHASE 257 d1=1253 dn=251512 sig=25422322 tok=25423089
+OMEGA_STEP 257 tok=314 us=25422
+OMEGA_PHASE 258 d1=3157 dn=261354 sig=25414691 tok=25415224
+OMEGA_STEP 258 tok=54248 us=25414
+OMEGA_PHASE 259 d1=1546 dn=253883 sig=25455832 tok=25456331
+OMEGA_STEP 259 tok=93868 us=25455
+OMEGA_PHASE 260 d1=1212 dn=241802 sig=25429033 tok=25429681
+OMEGA_STEP 260 tok=5617 us=25429
+OMEGA_PHASE 261 d1=1512 dn=255238 sig=25458395 tok=25458900
+OMEGA_STEP 261 tok=303 us=25458
+OMEGA_PHASE 262 d1=1200 dn=252741 sig=25414259 tok=25414914
+OMEGA_STEP 262 tok=14437 us=25414
+OMEGA_PHASE 263 d1=1214 dn=254992 sig=25460042 tok=25460514
+OMEGA_STEP 263 tok=2094 us=25460
+OMEGA_PHASE 264 d1=1118 dn=228251 sig=25386584 tok=25387068
+OMEGA_STEP 264 tok=220 us=25386
+OMEGA_PHASE 265 d1=1258 dn=224713 sig=25415736 tok=25416298
+OMEGA_STEP 265 tok=17 us=25415
+OMEGA_PHASE 266 d1=1665 dn=275745 sig=25443790 tok=25444265
+OMEGA_STEP 266 tok=23 us=25443
+OMEGA_PHASE 267 d1=1115 dn=226125 sig=25432205 tok=25433124
+OMEGA_STEP 267 tok=15 us=25432
+OMEGA_PHASE 268 d1=1748 dn=229239 sig=25450541 tok=25450999
+OMEGA_STEP 268 tok=75887 us=25450
+OMEGA_PHASE 269 d1=1145 dn=232751 sig=25397795 tok=25398332
+OMEGA_STEP 269 tok=2261 us=25397
+OMEGA_PHASE 270 d1=1215 dn=252765 sig=25410350 tok=25410869
+OMEGA_STEP 270 tok=279 us=25410
+OMEGA_PHASE 271 d1=1332 dn=256410 sig=25445951 tok=25446474
+OMEGA_STEP 271 tok=387 us=25445
+OMEGA_PHASE 272 d1=1651 dn=263855 sig=25460748 tok=25461913
+OMEGA_STEP 272 tok=951 us=25460
+OMEGA_PHASE 273 d1=1823 dn=285137 sig=25428780 tok=25429401
+OMEGA_STEP 273 tok=273 us=25428
+OMEGA_PHASE 274 d1=1609 dn=279535 sig=25439634 tok=25440380
+OMEGA_STEP 274 tok=1667 us=25439
+OMEGA_PHASE 275 d1=1390 dn=270730 sig=25415442 tok=25415945
+OMEGA_STEP 275 tok=291 us=25415
+OMEGA_PHASE 276 d1=1309 dn=258408 sig=25449947 tok=25450443
+OMEGA_STEP 276 tok=64588 us=25449
+OMEGA_PHASE 277 d1=1191 dn=239794 sig=25467007 tok=25467509
+OMEGA_STEP 277 tok=13 us=25467
+OMEGA_PHASE 278 d1=1441 dn=231500 sig=25434921 tok=25435431
+OMEGA_STEP 278 tok=43718 us=25434
+OMEGA_PHASE 279 d1=1292 dn=231697 sig=25399582 tok=25400089
+OMEGA_STEP 279 tok=383 us=25399
+OMEGA_PHASE 280 d1=1313 dn=254625 sig=25445191 tok=25445924
+OMEGA_STEP 280 tok=279 us=25445
+OMEGA_PHASE 281 d1=1323 dn=261955 sig=25457928 tok=25458466
+OMEGA_STEP 281 tok=12552 us=25457
+OMEGA_PHASE 282 d1=1280 dn=246367 sig=25476346 tok=25476911
+OMEGA_STEP 282 tok=314 us=25476
+OMEGA_PHASE 283 d1=1212 dn=229997 sig=25426394 tok=25426903
+OMEGA_STEP 283 tok=84552 us=25426
+OMEGA_PHASE 284 d1=1202 dn=228132 sig=25474341 tok=25474796
+OMEGA_STEP 284 tok=428 us=25474
+OMEGA_PLAN complete
+OMEGA_PLAN ids=[2,2732,3986,303,279,11908,25,357,10776,314,436,21204,19154,271,2381,92325,11,279,9117,682,978,2107,21265,725,11848,25882,321,1141,1379,39888,31126,13,1946,20239,279,4118,10685,757,13255,7718,11,53653,69090,1091,11,321,30787,66725,11,66509,599,38589,383,799,314,279,1379,25438,13976,303,3611,3712,25,279,324,55965,13,13065,777,1056,4145,38409,314,9506,11,324,21204,19154,3875,264,18677,4368,314,28069,18204,11,41052,43136,11,321,3611,53113,13,10643,3712,369,264,58170,310,279,50032,12229,310,48827,279,9496,11,39577,494,13437,25250,383,82884,310,25924,11,26606,7143,3106,258,1943,13,271,13962,561,35725,67139,25,6438,321,31860,271,760,7059,314,48559,17199,440,3000,369,430,2235,430,500,2492,3144,4924,13,5546,1518,279,4496,328,75,55965,1,23533,11,13437,82517,1429,5629,57902,321,19820,25250,310,1804,5902,66148,1052,13,733,63490,725,348,64071,51458,11961,279,11482,369,31511,539,279,328,10479,314,279,2274,5734,565,5212,1288,21861,421,49577,25250,998,264,3750,32306,1605,11944,303,279,220,23,337,9018,75887,13,271,10883,11,279,1379,10919,321,28689,25530,324,55965,369,279,2972,3248,240424,314,54248,93868,5617,303,14437,2094,220,17,23,15,75887,2261,279,387,951,273,1667,291,64588,13,43718,383,279,12552,314,84552,428]

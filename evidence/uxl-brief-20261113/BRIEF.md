@@ -1,3 +1,5 @@
+> **Note, 14 November 2026:** run Level 3 only on hardware you control or with the host operator's agreement; Levels 1 and 2 need no GPU.
+
 # Omega running Qwen3.8-27B on an AMD Instinct MI300X
 
 Technical brief for the UXL Open Source Working Group

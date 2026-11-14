@@ -1,3 +1,5 @@
+> **Note, 14 November 2026:** run Level 3 only on hardware you control or with the host operator's agreement; Levels 1 and 2 need no GPU.
+
 # UXL technical brief: Omega running Qwen3.8-27B on an AMD Instinct MI300X (13 November 2026)
 
 This folder holds the technical brief I wrote for the UXL Open Source Working Group on 13 November 2026, with its raw evidence and its review record. The brief reports Omega's own launcher and 18 Omega-written gfx942 kernels running Qwen3.8-27B (FP8) on an AMD Instinct MI300X, compared with my DGX Spark. It gives three ways to check the result: recompute the numbers from the logs, rebuild the launcher and kernels from source, or run it on an MI300X. Read the brief as [BRIEF.md](BRIEF.md) or as a PDF, [BRIEF.pdf](BRIEF.pdf). The run that the brief calls the published run is in [`../amd-qwen38-native-refusal-20261113/`](../amd-qwen38-native-refusal-20261113/), added in `bb3bf43a` and present at `dc536882c06a692991be97dc65cd2d037d82b129`, the commit the brief names.

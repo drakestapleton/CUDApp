@@ -1117,27 +1117,75 @@ int omega_gpu_rope_f32(uint32_t heads, uint32_t head_dim, const float *v,
     return rc;
 }
 
+/* Bytes this chunk may stage. rec[0] is this chunk's count (av_ew_rec caps a
+ * 1d chunk at 131072). The plan's p[10] is that cap for the whole n, so a
+ * shorter tail must not reuse it: swiglu_131073's last chunk is 4 bytes, and
+ * copying p[10] (524288) wrote past the caller's buffer (97fc9eb3). */
+static int ew_1d_extent(uint32_t remaining, uint64_t record_count, uint32_t *count, size_t *bytes) {
+    if (record_count == 0 || record_count > remaining || record_count > (uint64_t)SIZE_MAX / 4u)
+        return OMEGA_GPU_EW_BAD_ARGS;
+    *count = (uint32_t)record_count;
+    *bytes = (size_t)record_count * 4u;
+    return OMEGA_GPU_EW_OK;
+}
+
+/* TEST ONLY. When set, run_1d records each chunk's byte count and does not
+ * open the device or touch the caller buffers. The host gate reads it back. */
+static int g_stage_probe;
+static size_t g_stage_bytes[8];
+static uint32_t g_stage_n;
+
 static int run_1d(OmegaGpuEwOp op, uint32_t n, const void *a, const void *b, void *c, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
     uint64_t p[16]={n};int plan_rc=ap_plan(AP_EW,2,p);
     if(plan_rc)return plan_rc;
     Slot *k = NULL;
-    int rc = begin(op, &k, info);
-    if (rc != OMEGA_GPU_EW_OK) return rc;
+    int rc = OMEGA_GPU_EW_OK;
+    int locked = 0;
+    if (!g_stage_probe) {
+        rc = begin(op, &k, info);
+        if (rc != OMEGA_GPU_EW_OK) return rc;
+        locked = 1;
+    }
     for (uint32_t i0 = 0; i0 < n && rc == OMEGA_GPU_EW_OK; ) {
         uint64_t rec[8];
         if (av_ew_rec(0, n - i0, 0, 0, rec)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
-        uint32_t ni = (uint32_t)rec[0];
+        uint32_t ni = 0;
         uint32_t grid = (uint32_t)rec[1];
+        size_t bytes = 0;
+        if (ew_1d_extent(n - i0, rec[0], &ni, &bytes) != OMEGA_GPU_EW_OK) {
+            rc = OMEGA_GPU_EW_BAD_ARGS;
+            break;
+        }
         uint32_t params[4] = { ni, 0, 0, 0 };
-        size_t bytes = (size_t)ni * 4; /* this chunk's bytes: the plan's p[10] is not per chunk */
+        if (g_stage_probe) {
+            if (g_stage_n < (uint32_t)(sizeof g_stage_bytes / sizeof g_stage_bytes[0]))
+                g_stage_bytes[g_stage_n] = bytes;
+            g_stage_n++;
+            i0 += ni;
+            continue;
+        }
         rc = run_abc(k, (const uint8_t *)a + (size_t)i0 * 4, bytes, b ? (const uint8_t *)b + (size_t)i0 * 4 : a, bytes,
                      (uint8_t *)c + (size_t)i0 * 4, bytes, (uint32_t)rec[6], grid, params, info);
         i0 += ni;
     }
-    UNLOCK();
+    if (locked) UNLOCK();
     info_end(info, t0);
     return rc;
+}
+
+int omega_gpu_elementwise_test_stage_bytes(uint32_t n, size_t *bytes, uint32_t cap, uint32_t *nchunks) {
+    static const uint32_t dummy = 0;
+    if (!bytes || !nchunks || cap == 0 || n == 0) return OMEGA_GPU_EW_BAD_ARGS;
+    g_stage_n = 0;
+    g_stage_probe = 1;
+    int rc = run_1d(OMEGA_GPU_EW_EX2, n, &dummy, NULL, (void *)&dummy, NULL);
+    g_stage_probe = 0;
+    if (rc != OMEGA_GPU_EW_OK) return rc;
+    if (g_stage_n > cap) return OMEGA_GPU_EW_TOO_LARGE;
+    for (uint32_t i = 0; i < g_stage_n; i++) bytes[i] = g_stage_bytes[i];
+    *nchunks = g_stage_n;
+    return OMEGA_GPU_EW_OK;
 }
 
 int omega_gpu_swiglu_f32(uint32_t n, const float *gate, const float *up, float *out, OmegaGpuEwInfo *info) {

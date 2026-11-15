@@ -112,6 +112,23 @@ static int sm121dis_check(OmegaGpuEwOp op, const char *name, const char *const *
 }
 
 static void host_only(void) {
+    /* swiglu_131073's tail is one element. Staging the plan's p[10] (524288 bytes)
+     * wrote past the caller buffer; the chunk's own length is 4. No device. */
+    {
+        size_t b[4] = {0};
+        uint32_t nch = 99;
+        CHECK(omega_gpu_elementwise_test_stage_bytes(131073, b, 4, &nch) == OMEGA_GPU_EW_OK
+              && nch == 2 && b[0] == 524288u && b[1] == 4u,
+              "n=131073 stages a 524288-byte chunk then a 4-byte tail (chunks %u %zu %zu)", nch, b[0], b[1]);
+        CHECK(b[1] != 524288u, "negative control: the tail is not the plan's full-chunk length");
+        nch = 99;
+        CHECK(omega_gpu_elementwise_test_stage_bytes(131072, b, 4, &nch) == OMEGA_GPU_EW_OK
+              && nch == 1 && b[0] == 524288u, "a full chunk stages its own 524288 bytes (chunks %u %zu)", nch, b[0]);
+        nch = 99;
+        CHECK(omega_gpu_elementwise_test_stage_bytes(1, b, 4, &nch) == OMEGA_GPU_EW_OK
+              && nch == 1 && b[0] == 4u, "one element stages 4 bytes (chunks %u %zu)", nch, b[0]);
+        CHECK(omega_gpu_elementwise_test_stage_bytes(0, b, 4, &nch) == OMEGA_GPU_EW_BAD_ARGS, "n=0 stage probe refused");
+    }
     CHECK(omega_blackwell_verify_codegen_fixtures_fb1cut4() == 0, "word fixtures MUFU_EX2 / BAR_SYNC / LDS32 / STS32 (rc %d)", omega_blackwell_verify_codegen_fixtures_fb1cut4());
     float a[256] = {0}, b[256] = {0}, c[256] = {0};
     CHECK(omega_gpu_rmsnorm_f32(0, 128, a, b, 1e-5f, c, NULL) == OMEGA_GPU_EW_BAD_ARGS, "rows=0 refused");

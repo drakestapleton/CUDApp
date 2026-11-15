@@ -137,6 +137,7 @@ fn omega_gpu_elementwise_codegen_ir # kernel builder used by the library and its
 fn omega_gpu_elementwise_last_error # serving-daemon internals; aien-sovereign-core does not bind it; candidate EXPERIMENTAL
 fn omega_gpu_elementwise_test_set_mutant # TEST ONLY: test hook (mutant, simulator, split or counter) for the library's own batteries
 fn omega_gpu_elementwise_test_set_mutant_level # TEST ONLY: test hook (mutant, simulator, split or counter) for the library's own batteries
+fn omega_gpu_elementwise_test_stage_bytes # TEST ONLY: host probe of the 1d chunk byte count; does not launch
 fn omega_gpu_engine_test_force_block # TEST ONLY: a blocked process must stay blocked because the GPU may still be running
 fn omega_gpu_engine_test_reset_block # TEST ONLY: a blocked process must stay blocked because the GPU may still be running
 fn omega_gpu_engine_test_set_clock # TEST ONLY: a blocked process must stay blocked because the GPU may still be running

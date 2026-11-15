@@ -170,6 +170,11 @@ void omega_gpu_elementwise_test_set_mutant(int op);
  * corrupted) that the next launch of `op` builds; lets a chip test observe what a missing
  * reconvergence does (the simulator must have flagged it first). */
 void omega_gpu_elementwise_test_set_mutant_level(int op, int level);
+/* TEST ONLY. Byte count run_1d stages for each chunk of an n-element call.
+ * Does not open a device or read the caller's buffers. bytes[i] is chunk i.
+ * The plan's full-chunk length is not reused for a shorter tail. */
+int omega_gpu_elementwise_test_stage_bytes(uint32_t n, size_t *bytes, uint32_t cap,
+                                           uint32_t *nchunks);
 
 const char *omega_gpu_elementwise_rc_name(int rc);
 void omega_gpu_elementwise_cache_clear(void);

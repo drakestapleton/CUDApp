@@ -168,7 +168,28 @@ check "escalation calls sudo" [ -s "$S/sudo.argv" ]
 check "escalation drops -E (no caller environment reaches root)" bash -c "! grep -qx -- '-E' '$S/sudo.argv'"
 check "escalation re-runs this script by absolute path" [ "$(sed -n 1p "$S/sudo.argv")" = "$(readlink -f "$TOOL")" ]
 check "escalation passes --lib as a resolved absolute path" grep -qx -- "$S/lib/libcuda.so.1" "$S/sudo.argv"
-check "escalation passes --kdir and --driver-src" bash -c "grep -qx -- --kdir '$S/sudo.argv' && grep -qx -- --driver-src '$S/sudo.argv'"
+check "user escalation does not pass --kdir or --driver-src" bash -c "! grep -qx -- --kdir '$S/sudo.argv' && ! grep -qx -- --driver-src '$S/sudo.argv'"
+: > "$S/sudo.argv"
+env -u CUDAPP_ROOT -u CUDAPP_DRIVER_SRC -u CUDAPP_KDIR PATH="$S/bin:$PATH" \
+    bash "$TOOL" swap kernel --yes > /dev/null 2>&1
+check "kernel escalation calls sudo" [ -s "$S/sudo.argv" ]
+check "kernel escalation does not pass --driver-src or --kdir" bash -c "! grep -qx -- --driver-src '$S/sudo.argv' && ! grep -qx -- --kdir '$S/sudo.argv'"
+: > "$S/sudo.argv"
+out=$(env -u CUDAPP_ROOT -u CUDAPP_DRIVER_SRC -u CUDAPP_KDIR PATH="$S/bin:$PATH" \
+    bash "$TOOL" swap kernel --yes --driver-src "$S/lib" 2>&1); rc=$?
+check "caller-selected driver source is refused before sudo (exit 3)" [ $rc -eq 3 ]
+check "refused driver source never reaches sudo" [ ! -s "$S/sudo.argv" ]
+check "driver-source refusal names the delegated swap" grep -q "delegated kernel swap" <<<"$out"
+: > "$S/sudo.argv"
+out=$(env -u CUDAPP_ROOT PATH="$S/bin:$PATH" CUDAPP_DRIVER_SRC="$S/lib" \
+    bash "$TOOL" swap kernel --yes 2>&1); rc=$?
+check "CUDAPP_DRIVER_SRC is refused before sudo (exit 3)" [ $rc -eq 3 ]
+check "refused CUDAPP_DRIVER_SRC never reaches sudo" [ ! -s "$S/sudo.argv" ]
+: > "$S/sudo.argv"
+out=$(env -u CUDAPP_ROOT -u CUDAPP_DRIVER_SRC PATH="$S/bin:$PATH" \
+    bash "$TOOL" swap all --yes --kdir "$S" 2>&1); rc=$?
+check "caller-selected kdir is refused before sudo (exit 3)" [ $rc -eq 3 ]
+check "refused kdir never reaches sudo" [ ! -s "$S/sudo.argv" ]
 # 12. as root on the real system (fake id prints 0): sources outside the allowed places are refused before any level runs
 printf '#!/bin/bash\necho 0\n' > "$S/bin/id"
 out=$(env -u CUDAPP_ROOT PATH="$S/bin:$PATH" bash "$TOOL" swap user --lib "$S/lib/libcuda.so.1" 2>&1); rc=$?
@@ -193,6 +214,154 @@ check "failure names the sha256 mismatch" grep -q "sha256 .* != .* planned" <<<"
 check "differing installed library rolled back" [ "$before" = "$(tree_hash "$R")" ]
 rm "$R/fakebin/install"; out=$(run swap user --yes 2>&1)
 check "installed sha256 recorded next to the backup" bash -c "grep -q \"\$(sha256sum < '$R/build/libcuda.so.1' | cut -d' ' -f1)  /usr/lib/cudapp/libcuda.so.1\" '$R'/var/lib/cudapp-swap/backup-*-user/installed.sha256"
+
+# 14. Delegated kernel build (SUDO_UID set, fake machine root). Root must build /usr/src/aien-gpu
+#     and the running kernel's build dir, never the caller's tree. Ownership in the fixture is
+#     the test uid, which stands in for uid 0.
+lock_tree() { # $1 = trusted file or directory; drop group/other write on it and on ancestors inside $2
+    local p=$1 stop=$2
+    chmod -R u+rwX,go-w "$p"
+    while :; do
+        chmod u+rwx,go-w "$p"
+        [ "$p" = "$stop" ] && break
+        p=$(dirname "$p")
+    done
+}
+stage_make() { # record the Kbuild the module build actually consumed
+    local R=$1
+    printf '#!/bin/bash\necho "make $*" >> "%s/calls.log"\nfor a in "$@"; do case $a in M=*) d=${a#M=}; echo "KBUILD:$(head -1 "$d/Kbuild")" >> "%s/calls.log"; echo built > "$d/aien_gpu.ko";; esac; done\n' "$R" "$R" > "$R/fakebin/make"
+    chmod +x "$R/fakebin/make"
+}
+delegated() { # $1 = fake root; remaining args are the tool's
+    local R=$1; shift
+    env -u CUDAPP_DRIVER_SRC -u CUDAPP_KDIR PATH="$R/fakebin:$PATH" CUDAPP_ROOT="$R" \
+        CUDAPP_LIB="$R/build/libcuda.so.1" SUDO_UID=1000 SUDO_USER=fixture \
+        bash "$TOOL" "$@"
+}
+trusted_src() { # $1 = fake root. A locked tree whose Kbuild is not the attacker's.
+    local R=$1
+    mkdir -p "$R/usr/src/aien-gpu" "$R/attacker"
+    printf 'trusted-marker\nobj-m := aien_gpu.o\n' > "$R/usr/src/aien-gpu/Kbuild"
+    echo '/* trusted */' > "$R/usr/src/aien-gpu/aien_gpu.c"
+    printf 'attacker-marker\nobj-m := aien_gpu.o\n' > "$R/attacker/Kbuild"
+    echo '/* attacker */' > "$R/attacker/aien_gpu.c"
+    lock_tree "$R/usr/src/aien-gpu" "$R"
+}
+
+R=$T/r14a; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+out=$(delegated "$R" swap kernel --yes --driver-src "$R/attacker" 2>&1); rc=$?
+check "delegated kernel swap refuses --driver-src (exit 3)" [ $rc -eq 3 ]
+check "delegated --driver-src refusal names the delegated swap" grep -q "delegated kernel swap" <<<"$out"
+check "delegated --driver-src runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+check "delegated --driver-src does not install a module" [ ! -e "$R/lib/modules/$KVER/updates/cudapp/aien_gpu.ko" ]
+
+R=$T/r14b; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+out=$(PATH="$R/fakebin:$PATH" CUDAPP_ROOT="$R" CUDAPP_LIB="$R/build/libcuda.so.1" \
+    CUDAPP_DRIVER_SRC="$R/attacker" SUDO_UID=1000 bash "$TOOL" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses CUDAPP_DRIVER_SRC (exit 3)" [ $rc -eq 3 ]
+check "delegated CUDAPP_DRIVER_SRC refusal names the delegated swap" grep -q "delegated kernel swap" <<<"$out"
+check "delegated CUDAPP_DRIVER_SRC runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+
+R=$T/r14c; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+out=$(delegated "$R" swap kernel --yes --kdir "$R/attacker" 2>&1); rc=$?
+check "delegated kernel swap refuses --kdir (exit 3)" [ $rc -eq 3 ]
+check "delegated --kdir refusal names the delegated swap" grep -q "delegated kernel swap" <<<"$out"
+check "delegated --kdir runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+
+R=$T/r14d; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+chmod o+w "$R/usr/src/aien-gpu/Kbuild"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses a group-or-other-writable source file (exit 3)" [ $rc -eq 3 ]
+check "writable source refusal names the file mode" grep -q "writable" <<<"$out"
+check "writable source file runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+
+R=$T/r14e; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+rm "$R/usr/src/aien-gpu/aien_gpu.c"
+ln -s "$R/attacker/aien_gpu.c" "$R/usr/src/aien-gpu/aien_gpu.c"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses a symlink in the source (exit 3)" [ $rc -eq 3 ]
+check "source symlink refusal names the symlink" grep -q "symlink" <<<"$out"
+check "source symlink runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+
+R=$T/r14f; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+rm -rf "$R/usr/src/aien-gpu"
+ln -s "$R/attacker" "$R/usr/src/aien-gpu"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses a symlinked source directory (exit 3)" [ $rc -eq 3 ]
+check "symlinked source directory refusal names the symlink" grep -q "symlink" <<<"$out"
+
+R=$T/r14g; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+chmod o+w "$R/usr/src"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses a writable ancestor (exit 3)" [ $rc -eq 3 ]
+check "writable ancestor refusal names the mode" grep -q "writable" <<<"$out"
+check "writable ancestor runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+
+R=$T/r14h; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+rm -rf "$R/lib/modules/$KVER/build"
+mkdir -p "$R/attacker-kdir"
+chmod 777 "$R/attacker-kdir"
+echo 'attacker-makefile' > "$R/attacker-kdir/Makefile"
+ln -s "$R/attacker-kdir" "$R/lib/modules/$KVER/build"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses a kdir symlink to a writable tree (exit 3)" [ $rc -eq 3 ]
+check "writable kdir refusal names the kdir" grep -Eq "writable|symlink" <<<"$out"
+check "writable kdir symlink runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+
+R=$T/r14i; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+rm -rf "$R/lib/modules/$KVER/build"
+mkdir -p "$R/usr/src/linux-headers"
+echo 'trusted-makefile' > "$R/usr/src/linux-headers/Makefile"
+lock_tree "$R/usr/src/linux-headers" "$R"
+ln -s "$R/usr/src/linux-headers" "$R/lib/modules/$KVER/build"
+# The symlink itself is mode 777 on Linux; its owner is the fixture uid. Parent stays locked.
+chown -h "$(id -u):$(id -g)" "$R/lib/modules/$KVER/build" 2>/dev/null || true
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap accepts a locked kdir symlink (exit 0)" [ $rc -eq 0 ]
+check "delegated kdir symlink build consumed the trusted module source" grep -qx "KBUILD:trusted-marker" "$R/calls.log"
+check "delegated kdir symlink build did not consume the attacker source" bash -c "! grep -q 'KBUILD:attacker-marker' '$R/calls.log'"
+
+R=$T/r14j; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap accepts a locked /usr/src/aien-gpu (exit 0)" [ $rc -eq 0 ]
+check "delegated build consumed the trusted Kbuild" grep -qx "KBUILD:trusted-marker" "$R/calls.log"
+check "delegated build did not consume the attacker Kbuild" bash -c "! grep -q 'KBUILD:attacker-marker' '$R/calls.log'"
+check "delegated build installed aien_gpu.ko" [ -f "$R/lib/modules/$KVER/updates/cudapp/aien_gpu.ko" ]
+
+# Ubuntu's /lib is a symlink to usr/lib. The kernel build dir is reached through that link.
+R=$T/r14k; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+rm -rf "$R/lib"
+mkdir -p "$R/usr/lib/modules/$KVER" "$R/usr/src/linux-headers"
+echo 'trusted-makefile' > "$R/usr/src/linux-headers/Makefile"
+ln -s usr/lib "$R/lib"
+ln -s "$R/usr/src/linux-headers" "$R/usr/lib/modules/$KVER/build"
+lock_tree "$R/usr/lib/modules/$KVER" "$R"
+lock_tree "$R/usr/src/linux-headers" "$R"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap follows a /lib -> usr/lib symlink (exit 0)" [ $rc -eq 0 ]
+check "usr-merge build consumed the trusted module source" grep -qx "KBUILD:trusted-marker" "$R/calls.log"
+check "usr-merge build did not consume the attacker source" bash -c "! grep -q 'KBUILD:attacker-marker' '$R/calls.log'"
+check "usr-merge build installed aien_gpu.ko through the /lib symlink" [ -f "$R/usr/lib/modules/$KVER/updates/cudapp/aien_gpu.ko" ]
+
+R=$T/r14l; mkroot "$R"; trusted_src "$R"; stage_make "$R"
+rm -rf "$R/lib"
+mkdir -p "$T/escape/modules/$KVER/build"
+echo 'attacker-makefile' > "$T/escape/modules/$KVER/build/Makefile"
+ln -s "$T/escape" "$R/lib"
+out=$(delegated "$R" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses a /lib symlink that leaves the machine root (exit 3)" [ $rc -eq 3 ]
+check "escaping /lib symlink names the machine root" grep -q "outside the machine root" <<<"$out"
+check "escaping /lib symlink runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+check "escaping /lib symlink did not consume the attacker makefile" bash -c "! grep -q 'attacker-makefile' '$R/calls.log' 2>/dev/null"
+
+# A real delegated root (sudo sets SUDO_UID) must accept this machine's compiler path and still
+# refuse before make, because /usr/src/aien-gpu is not installed here. Nothing is written.
+if sudo -n true 2>/dev/null; then
+    out=$(sudo -n env -u CUDAPP_ROOT -u CUDAPP_DRIVER_SRC -u CUDAPP_KDIR -u CUDAPP_LIB bash "$TOOL" swap kernel --yes 2>&1); rc=$?
+    check "delegated root refuses before any build on this machine (exit 3)" [ $rc -eq 3 ]
+    check "delegated root reached the trusted source check" grep -q "trusted aien_gpu source not found" <<<"$out"
+    check "delegated root did not report a compiler-path failure" bash -c "! grep -Eq 'make PATH|not on the trusted PATH|does not resolve' <<<"$out""
+fi
 
 echo "swap cli: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ]

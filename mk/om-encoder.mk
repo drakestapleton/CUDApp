@@ -23,7 +23,7 @@
 #       as destination); the nvdisasm 13.0.85 ORACLE must decode them as those instructions. Red checks: the signed
 #       type (.S64), RZ dropped for an absent destination, and the oracle text without its R14 line.
 #   make test-om-encoder-guard    DRA-483: om/encoder/guard_pred_test.om, the guard predicate (@P0 / @!P0) of every
-#       op 0..64 through the seeded encoder, LDCU / LDCU.64 refused, the omega-mv #1044 bool/trap rows; ORACLE
+#       emitting op 0..79 through the seeded encoder, LDCU / LDCU.64 refused, the omega-mv #1044 bool/trap rows; ORACLE
 #       nvdisasm 13.0.85 must print each guard; om/encoder/guard_spec_test.om: sp_enc equals enc1 on the guards.
 #       Red checks: the guard ignored, forced to 7, @!P0 as @P0, the LDCU refusal removed (enc1 and sp_enc), oracle
 #       lines missing.
@@ -143,22 +143,24 @@ test-om-encoder-ldg-c: $(OM_ENC_DIR)/ldg-c
 	@if cmp -s $(OM_ENC_DIR)/ldg-mini.before.bin $(OM_ENC_DIR)/ldg-mini.c.bin; then echo 'FAIL pre-fix LDG witness unexpectedly agrees'; exit 1; fi
 	@echo 'PASS one-instruction LDG C parity; pre-fix seeded encoder differs; public Mesa field selects C as correct'
 OM_ENC_GUARD = $(OM_ENC_DIR)/guard-pred
-# DRA-483 (C1b): om/encoder/guard_pred_test.om, composed after the encoder and compiled by the pinned omc. Every op
-# 0..64 encoded @P0 and @!P0 must carry guard 0 / 8 in w0 bits 12..15 and equal the unpredicated words otherwise;
-# LDCU / LDCU.64 (uniform datapath, guard bits name UP0..UPT) must refuse both forms; the omega-mv #1044 bool and
-# trap rows through the program entry must get guards 7, 0, 8, 8, 8. ORACLE NVIDIA nvdisasm 13.0.85 (offline,
-# read-only, never shipped) must print @P0 / @!P0 on the 126 P-guarded words, @UP0 / @!UP0 on the 4 LDCU probe
-# words and the five #1044 guards. Then om/encoder/guard_spec_test.om: the spec encoder sp_enc (bc_encode's path)
-# must equal enc1 on every op 0..59 unpredicated, @P0 and @!P0.
+# DRA-483 (C1b): om/encoder/guard_pred_test.om, composed after the encoder and compiled by the pinned omc. Every
+# emitting op 0..79 encoded @P0 and @!P0 must carry guard 0 / 8 in w0 bits 12..15 and equal the unpredicated words
+# otherwise. DSETP (op 72) is encoded with no GPR destination. LDCU / LDCU.64 (uniform datapath, guard bits name
+# UP0..UPT) must refuse both forms; the omega-mv #1044 bool and trap rows through the program entry must get
+# guards 7, 0, 8, 8, 8. ORACLE NVIDIA nvdisasm 13.0.85 (offline, read-only, never shipped) must print @P0 / @!P0
+# on the 156 P-guarded words, @UP0 / @!UP0 on the 4 LDCU probe words and the five #1044 guards. Then
+# om/encoder/guard_spec_test.om: the spec encoder sp_enc (bc_encode's path) must equal enc1 on every op 0..59
+# unpredicated, @P0 and @!P0. sp_enc does not emit ops 60..79; enc1 does, and this gate checks those on enc1.
 # Red checks: each triple is the file edited, the failure count the gate must print (exit 1), then one edit.
-# enc 122: the guard left as each op encodes it (the pre-fix behaviour except the LDCU refusal).
+# enc 152: the guard left as each op encodes it (the pre-fix behaviour except the LDCU refusal).
 # The #280 wrapper owns both EXIT guard forms; removing it loses one more form than main's partial EXIT guard.
-# enc 130: the guard
-# forced to 7 (always) again. enc 66: @!P0 encoded as @P0. enc 4: LDCU / LDCU.64 accept a P guard. spec 106: sp_enc
-# without the guard. spec 4: sp_enc accepts a P guard on LDCU / LDCU.64. Oracle red: no @!UP0 lines exits 4.
-OM_ENC_GUARD_RED = enc 122 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 x/' \
-	enc 130 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 or sub x and x 61440 shl ulong 7 12/' \
-	enc 66 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 or sub x and x 61440 shl and pred o 7 12/' \
+# Ops 65..79 encode guard 7 in the opcode word, so they fail this edit too.
+# enc 160: the guard forced to 7 (always) again. enc 81: @!P0 encoded as @P0. enc 4: LDCU / LDCU.64 accept a P
+# guard. spec 106: sp_enc without the guard. spec 4: sp_enc accepts a P guard on LDCU / LDCU.64. Oracle red: no
+# @!UP0 lines exits 4.
+OM_ENC_GUARD_RED = enc 152 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 x/' \
+	enc 160 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 or sub x and x 61440 shl ulong 7 12/' \
+	enc 81 's/^put w 0 or sub x and x 61440 shl pred o 12$$/put w 0 or sub x and x 61440 shl and pred o 7 12/' \
 	enc 4 's/^if isuld op$$/if eq op 99/' \
 	spec 106 's/^put w 0 or sub gx and gx 61440 shl sp_val R_PRED 0 o 12$$/put w 0 gx/' \
 	spec 4 's/^if or eq get o 0 6 eq get o 0 7$$/if eq get o 0 99/'
@@ -192,7 +194,7 @@ test-om-encoder-guard: om/encoder/bw_enc_sm121.om om/encoder/bw_spec_sm121.om om
 	@rc=0; grep -v -- '@!UP0' $(OM_ENC_GUARD).nv | $(OM_ENC_GUARD) check oracle > /dev/null || rc=$$?; \
 	if [ $$rc != 4 ]; then echo "RED CHECK BROKEN: oracle text without @!UP0 exited $$rc, not 4"; exit 1; fi; \
 	echo "red check: oracle text without the @!UP0 lines exits 4, as it must"
-	@echo "PASS guard predicates: 63 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 135 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN"
+	@echo "PASS guard predicates: 78 ops x @P0/@!P0 exact guard, LDCU/LDCU.64 refused, #1044 bool/trap rows, nvdisasm 13.0.85 prints all 165 guards, sp_enc = enc1 on 180 forms. GB10 DEVICE NOT_RUN"
 
 # Sampling, normalization and verification live in seeded Omega; the C test only routes the tape.
 # The per-form and per-edge acceptance counts must equal the committed receipt: a sampler or encoder change that

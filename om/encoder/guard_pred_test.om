@@ -2,9 +2,10 @@ note SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 note guard_pred_test.om: gate for the guard predicate of every sm_121 op in the seeded encoder (DRA-483, C1b).
 note Concatenate after bw_enc_sm121.om; mk/om-encoder.mk test-om-encoder-guard compiles it with the pinned omc.
 note Input word 7 bit 1 (predicate_p0) and bit 2 (predicate_not) ask for @P0 / @!P0; the guard is w0 bits 12..15:
-note 7 always (PT), 0 @P0, 8 @!P0. Every op 0..64 is encoded three times with R4 <- R8, R12, R16, UR4 (imm 2 for
-note BRA and BSSY, else 0): unpredicated, @P0 and @!P0. The @P0 / @!P0 words must carry guard 0 / 8 and equal the
-note unpredicated words in every other bit. LDCU and LDCU.64 (ops 6, 7) are uniform-datapath instructions: their
+note 7 always (PT), 0 @P0, 8 @!P0. Every emitting op 0..79 (BW_IR_LAST) is encoded three times with R4 <- R8, R12,
+note R16, UR4 (imm 2 for BRA and BSSY, else 0): unpredicated, @P0 and @!P0. The @P0 / @!P0 words must carry guard
+note 0 / 8 and equal the unpredicated words in every other bit. DSETP (op 72) has no GPR destination, so that row
+note clears the destination-present flag. LDCU and LDCU.64 (ops 6, 7) are uniform-datapath instructions: their
 note guard bits name UP0..UPT, so @P0 cannot be encoded there and both forms must be refused.
 note Program rows: the omega-mv #1044 seed/oscgpu bool and trap shapes (gpuir.om bw_bool, bw_trap; the C twin is
 note src/omega_osc_gpu.c Bool, Trap) go through the program entry bw_enc_sm121 with word 7 as the C packer writes
@@ -13,14 +14,15 @@ note guards must be 7, 0, 8, 8, 8.
 note No arguments: print one line per failing form (op, form 1 @P0 / 2 @!P0, guard read; 99 refused, 98 accepted
 note but must refuse, 97 another bit changed; program rows as op 100 + row), then the failure count; exit 0 when
 note none, else 1.
-note One argument: write 135 instructions (2160 bytes) on stdout for the ORACLE: the @P0 and @!P0 forms of the 63
+note One argument: write 165 instructions (2640 bytes) on stdout for the ORACLE: the @P0 and @!P0 forms of the 78
 note P-guarded ops in op order, then the unpredicated LDCU and LDCU.64 words with their guard bits set to 0 and 8
 note (an oracle probe, not encoder output), then the five program rows.
-note Two arguments: read the ORACLE's text on stdin; instruction k must start with @P0 / @!P0 (k < 126, even / odd),
-note then @UP0 / @!UP0 (126..129), then no guard, @P0, @!P0, @!P0, @!P0 (130..134). Exit 0, 4 when a guard or the
+note Two arguments: read the ORACLE's text on stdin; instruction k must start with @P0 / @!P0 (k < 156, even / odd),
+note then @UP0 / @!UP0 (156..159), then no guard, @P0, @!P0, @!P0, @!P0 (160..164). Exit 0, 4 when a guard or the
 note instruction count is wrong, 70 read error, 71 text too long.
 note ORACLE (independent, not first-party, never shipped): NVIDIA nvdisasm 13.0.85 -b SM121 -hex.
-note Constants (Wolfram): 61440 = 0xf000 (guard mask), 130 = 2 * 65, 135 = 130 + 5, 2160 = 135 * 16.
+note Constants: 61440 = 0xf000 (guard mask). 78 = 80 - 2 uniform ops. 156 = 78 * 2. 160 = 156 + 4. 165 = 160 + 5.
+note 2640 = 165 * 16.
 text gptok "@P0 @!P0 @UP0 @!UP0 "
 text gpm1 "FAIL op "
 text gpm2 " form "
@@ -53,6 +55,9 @@ put o 12 1
 put o 13 1
 put o 14 1
 put o 15 1
+if eq op 72
+put o 15 0
+end
 if ne f 0
 put o 9 1
 end
@@ -233,7 +238,7 @@ end
 
 fn gp_rows to int
 bad = ulong 0
-for op ulong 65
+for op ulong 80
 bad = add bad gp_row op
 end
 bad = add bad gp_prog
@@ -251,7 +256,7 @@ w = new ulong 4 0
 code = new uchar 16384 0
 pc = new uchar 16384 0
 i = ulong 0
-for op ulong 65
+for op ulong 80
 if not gp_uni op
 for f ulong 2
 if ne gp_enc op add f 1 edit w 0
@@ -262,7 +267,7 @@ i = add i 1
 end
 end
 end
-for op ulong 65
+for op ulong 80
 if gp_uni op
 if ne gp_enc op 0 edit w 0
 ret int add 10 op
@@ -369,16 +374,16 @@ end
 
 note the token instruction k must carry
 fn gp_want k ulong to ulong
-if lt k 126
+if lt k 156
 ret rem k 2
 end
-if lt k 130
+if lt k 160
 ret add 2 rem k 2
 end
-if eq k 130
+if eq k 160
 ret 4
 end
-if eq k 131
+if eq k 161
 ret 0
 end
 ret 1
@@ -419,7 +424,7 @@ gp_dec k
 w = write 1 gpm6 0 len gpm6
 gp_dec bad
 w = write 1 gpnl 0 1
-if or ne k 135 ne bad 0
+if or ne k 165 ne bad 0
 ret 4
 end
 ret 0

@@ -19,13 +19,21 @@
 # tests/swap/test_swap_cli.sh runs every level against a fake machine root.
 #
 # Sources: --lib PATH (CUDA++ libcuda.so.1), --driver-src PATH (aien_gpu source), --kdir PATH (kernel build dir).
-# CUDAPP_LIB, CUDAPP_DRIVER_SRC and CUDAPP_KDIR give the defaults for an unprivileged run. Escalation runs
-# `sudo "$0" swap ...` WITHOUT -E and passes the resolved paths as these options, so a sudoers rule naming
-# this script cannot be steered by the caller's environment. Running as root on the real system, the library
-# must be a regular file inside this repository and the kernel build dir must live under /lib/modules or /usr/src.
-# The aien_gpu source is built as root by design (a kernel module is root-equivalent): point it at a tree
-# only root or you can write.
+# CUDAPP_LIB, CUDAPP_DRIVER_SRC and CUDAPP_KDIR are the defaults for a run that is not a delegated root build.
+# Escalation runs `sudo "$0" swap ...` WITHOUT -E. A sudoers rule that names only this script rejects the
+# caller's environment (BASH_ENV, SUDO_UID, CUDAPP_DRIVER_SRC, sudo -E); it still allows arguments. Those
+# arguments must not choose the tree make runs as root. A delegated kernel swap (SUDO_UID set to a non-root
+# user, or this script's own sudo re-entry) builds /usr/src/aien-gpu and /lib/modules/$(uname -r)/build.
+# Both must be owned by root and not writable by group or other, and neither may carry an ACL. The module
+# source must contain no symlink. /lib -> usr/lib and the kernel's build symlink are followed when the link
+# is owned by root and the resolved directory stays under /lib/modules, /usr/lib/modules or /usr/src.
+# make and cc are taken from a fixed PATH whose directories and resolved binaries are root-owned and
+# not group/other-writable, so a caller cannot plant a compiler via PATH, CC or MAKEFLAGS.
+# A root shell with SUDO_UID unset may still pass --driver-src and --kdir; a shell started by sudo keeps
+# SUDO_UID, so unset it before a custom-source build. Do not grant SETENV on the sudoers rule.
 set -u
+DRIVER_SRC_ENV_SET=0; [ "${CUDAPP_DRIVER_SRC+x}" = x ] && DRIVER_SRC_ENV_SET=1
+KDIR_ENV_SET=0; [ "${CUDAPP_KDIR+x}" = x ] && KDIR_ENV_SET=1
 ROOT=${CUDAPP_ROOT:-}
 STATE=$ROOT/var/lib/cudapp-swap
 SELF=$(readlink -f "$0")
@@ -46,6 +54,7 @@ INITRD=/boot/initrd.img-$KVER
 NV_MODULES="nvidia nvidia_uvm nvidia_modeset nvidia_drm"
 
 YES=0; REBOOT=0; HOLDERS_OK=0
+DRIVER_SRC_OPTION=0; KDIR_OPTION=0
 die()    { echo "cudapp: $*" >&2; exit 1; }
 refuse() { echo "REFUSED: $*" >&2; exit 3; }
 # A machine that schedules GPU work through spark-window (the invoking user has the tool) reboots only inside a window.
@@ -57,6 +66,198 @@ window_host() {
 }
 usage()  { sed -n '3,9p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 sha()    { if [ -e "$1" ] || [ -L "$1" ]; then sha256sum < "$1" | cut -d' ' -f1; else echo -; fi; }
+# sudo sets SUDO_UID itself. A sudoers rule without SETENV rejects `sudo SUDO_UID=...`; do not trust a
+# value the caller could have kept only when SETENV is granted (that grant also allows BASH_ENV).
+sudo_origin() { [ -n "${SUDO_UID:-}" ] && [ "$SUDO_UID" != 0 ]; }
+caller_selected_build() {
+    [ "$DRIVER_SRC_OPTION" -eq 1 ] || [ "$KDIR_OPTION" -eq 1 ] || \
+        [ "$DRIVER_SRC_ENV_SET" -eq 1 ] || [ "$KDIR_ENV_SET" -eq 1 ]
+}
+delegated_build() {
+    case $level in kernel|all) ;; *) return 1;; esac
+    sudo_origin && { [ "$(id -u)" -eq 0 ] || [ -n "$ROOT" ]; }
+}
+# $1 path, $2 owner uid. A symlink's mode is ignored by the kernel, so only its owner is checked here.
+# An ACL can grant write without setting the mode bits, and this helper has no getfacl. GNU ls prints '+'
+# after the mode when an ACL is present ('.' is a security context and is left alone). Any ACL is refused.
+path_owner_mode() {
+    local p=$1 owner=$2 uid mode perm mark
+    [ -e "$p" ] || [ -L "$p" ] || refuse "trusted path does not exist: $p"
+    uid=$(stat -c %u "$p") || refuse "cannot stat $p"
+    [ "$uid" = "$owner" ] || refuse "trusted path is not owned by uid $owner: $p"
+    if [ -L "$p" ]; then return 0; fi
+    mode=$(stat -c %a "$p") || refuse "cannot stat $p"
+    perm=$((8#$mode & 8#022))
+    [ "$perm" -eq 0 ] || refuse "trusted path is writable by group or other: $p"
+    mark=$(ls -ld "$p" | awk '{print $1}') || refuse "cannot list $p"
+    case $mark in ??????????+*) refuse "trusted path has an ACL: $p";; esac
+}
+# Collapse "." and ".." without following symlinks.
+normalize() {
+    local in=$1 part out=
+    case $in in /*) ;; *) in=/$in;; esac
+    while [ "$in" != / ] && [ -n "$in" ]; do
+        in=${in#/}
+        part=${in%%/*}
+        if [ "$part" = "$in" ]; then in=; else in=${in#*/}; fi
+        case $part in
+            ''|.) ;;
+            ..) [ -n "$out" ] && out=${out%/*};;
+            *) out=$out/$part;;
+        esac
+    done
+    [ -n "$out" ] || out=/
+    printf '%s\n' "$out"
+}
+# Walk $1 up through $2 inclusive. No component may be a symlink.
+walk_owned() {
+    local p=$1 stop=$2 owner=$3
+    while :; do
+        [ ! -L "$p" ] || refuse "trusted path contains a symlink: $p"
+        path_owner_mode "$p" "$owner"
+        [ "$p" = "$stop" ] && break
+        [ "$p" = / ] && break
+        p=${p%/*}; [ -n "$p" ] || p=/
+    done
+}
+apply_delegated_sources() {
+    local owner stop src kd target shown
+    if sudo_origin && [ "$EUID" -eq 0 ] && [ -n "$ROOT" ]; then
+        refuse "CUDAPP_ROOT is refused for a delegated root swap"
+    fi
+    if caller_selected_build; then
+        refuse "a delegated kernel swap cannot take --driver-src, --kdir, CUDAPP_DRIVER_SRC or CUDAPP_KDIR; root uses /usr/src/aien-gpu and /lib/modules/<uname -r>/build"
+    fi
+    # The fixture tests are not root. A real delegated root build also pins make and cc.
+    if [ "$EUID" -eq 0 ]; then
+        require_trusted_make_path
+    fi
+    if [ -n "$ROOT" ]; then
+        stop=${ROOT%/}
+        owner=$(stat -c %u "$stop") || refuse "cannot stat the test machine root"
+        src=$stop/usr/src/aien-gpu
+        kd=$stop/lib/modules/$KVER/build
+    else
+        stop=/
+        owner=0
+        src=/usr/src/aien-gpu
+        kd=/lib/modules/$KVER/build
+    fi
+    [ -d "$src" ] || [ -L "$src" ] || refuse "trusted aien_gpu source not found at /usr/src/aien-gpu"
+    walk_owned "$src" "$stop" "$owner"
+    shown=$(find -P "$src" \( -type l -o ! -uid "$owner" -o -perm /022 -o ! \( -type f -o -type d \) \) -print -quit 2>/dev/null) || \
+        refuse "cannot inspect trusted aien_gpu source at /usr/src/aien-gpu"
+    [ -z "$shown" ] || refuse "trusted aien_gpu source must contain no symlink, be owned by uid $owner, and not be writable by group or other: $shown"
+    [ -f "$src/Kbuild" ] && [ ! -L "$src/Kbuild" ] || refuse "trusted aien_gpu source has no regular Kbuild at /usr/src/aien-gpu"
+    while IFS= read -r shown; do
+        [ -n "$shown" ] || continue
+        refuse "trusted aien_gpu source has an ACL: $shown"
+    done < <(find -P "$src" \( -type f -o -type d \) -exec ls -ld {} + | awk 'substr($1, 11, 1) == "+" { print $NF; exit }')
+    # /lib is a symlink to usr/lib on a merged /usr, and the kernel build dir is often itself a symlink
+    # into /usr/src. Follow those links. Each link is owned by the trusted uid, and every real directory
+    # on the resolved path is owned by that uid and not group/other-writable. The result stays under the
+    # machine root, and on the real system under /lib/modules, /usr/lib/modules or /usr/src.
+    [ -e "$kd" ] || [ -L "$kd" ] || refuse "kernel headers for $KVER not found at /lib/modules/$KVER/build"
+    follow_trusted "$kd" "$stop" "$owner"
+    target=$RESOLVED
+    if [ -z "$ROOT" ]; then
+        case $target in /lib/modules/*|/usr/lib/modules/*|/usr/src/*) ;; *) refuse "kernel build dir $target is not under /lib/modules or /usr/src";; esac
+    fi
+    [ -d "$target" ] || refuse "kernel build dir $target is not a directory"
+    DRIVER_SRC=$src
+    KDIR=$target
+}
+# Resolve $1 by following symlinks. Sets RESOLVED. Components at or above $2 are the trust boundary
+# (the fixture root in a test, / on the machine) and are not walked. A link that leaves $2 is refused.
+follow_trusted() {
+    local path=$1 stop=$2 owner=$3
+    local rest cur part next link dest suffix old hops=0
+    if [ "$stop" = / ]; then
+        case $path in /*) ;; *) refuse "trusted path is outside the machine root: $path";; esac
+    else
+        case $path in
+            "$stop"|"$stop"/*) ;;
+            *) refuse "trusted path is outside the machine root: $path";;
+        esac
+    fi
+    if [ "$stop" = / ]; then
+        rest=${path#/}
+        cur=
+    else
+        path_owner_mode "$stop" "$owner"
+        rest=${path#"$stop"}
+        rest=${rest#/}
+        cur=$stop
+    fi
+    while [ -n "$rest" ]; do
+        part=${rest%%/*}
+        if [ "$part" = "$rest" ]; then rest=; else rest=${rest#*/}; fi
+        case $part in
+            ''|.) continue;;
+            ..)
+                if [ "$cur" = "$stop" ] || [ -z "$cur" ] || [ "$cur" = / ]; then
+                    refuse "trusted path climbs above its root: $path"
+                fi
+                cur=${cur%/*}
+                [ -n "$cur" ] || cur=/
+                continue;;
+        esac
+        if [ -z "$cur" ] || [ "$cur" = / ]; then next=/$part; else next=$cur/$part; fi
+        if [ -L "$next" ]; then
+            hops=$((hops + 1))
+            [ "$hops" -le 16 ] || refuse "trusted path has too many symlinks: $path"
+            path_owner_mode "$next" "$owner"
+            link=$(readlink "$next") || refuse "cannot read symlink $next"
+            case $link in
+                /*) dest=$link;;
+                *) dest=$(dirname "$next")/$link;;
+            esac
+            dest=$(normalize "$dest")
+            old=$rest
+            if [ "$stop" = / ]; then
+                rest=${dest#/}
+                cur=
+            else
+                case $dest in
+                    "$stop"|"$stop"/*) ;;
+                    *) refuse "trusted path resolves outside the machine root: $dest";;
+                esac
+                suffix=${dest#"$stop"}
+                suffix=${suffix#/}
+                rest=$suffix
+                cur=$stop
+            fi
+            if [ -n "$old" ]; then
+                if [ -n "$rest" ]; then rest=$rest/$old; else rest=$old; fi
+            fi
+            continue
+        fi
+        path_owner_mode "$next" "$owner"
+        cur=$next
+    done
+    [ -n "$cur" ] || cur=/
+    RESOLVED=$cur
+}
+# Directories and binaries a delegated root build may execute. Caller environment is not consulted.
+require_trusted_make_path() {
+    local d tool path dirs
+    TRUSTED_PATH_OK=
+    IFS=: read -r -a dirs <<'EOF'
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EOF
+    for d in "${dirs[@]}"; do
+        [ -e "$d" ] || [ -L "$d" ] || continue
+        follow_trusted "$d" / 0
+        if [ -n "$TRUSTED_PATH_OK" ]; then TRUSTED_PATH_OK=$TRUSTED_PATH_OK:$RESOLVED
+        else TRUSTED_PATH_OK=$RESOLVED; fi
+    done
+    [ -n "$TRUSTED_PATH_OK" ] || refuse "no trusted directory on the make PATH"
+    for tool in make cc; do
+        path=$(PATH=$TRUSTED_PATH_OK command -v "$tool") || refuse "$tool is not on the trusted PATH"
+        follow_trusted "$path" / 0
+        [ -f "$RESOLVED" ] && [ ! -L "$RESOLVED" ] || refuse "$tool does not resolve to a regular file: $path"
+    done
+}
 
 # ---------------------------------------------------------------- facts
 gpu_ids() { # prints "vendor:device" of every NVIDIA PCI function
@@ -196,8 +397,15 @@ kernel_level() {
     backup_file "$MODDIR/aien_gpu.ko"; backup_file "$MODCONF"; backup_file "$MODLOAD"
     for m in "$ROOT"/lib/modules/$KVER/modules.*; do [ -e "$m" ] && backup_file "${m#$ROOT}"; done
     nv_in_initramfs && backup_file "$INITRD"
-    local B; B=$(mktemp -d) && cp -r "$DRIVER_SRC"/. "$B"/ || die "copy of driver source failed"
-    make -C "$KDIR" M="$B" modules > "$BK/build.log" 2>&1 || { cat "$BK/build.log" >&2; die "aien_gpu build failed (log $BK/build.log)"; }
+    local B; B=$(mktemp -d) && cp -a -- "$DRIVER_SRC"/. "$B"/ || die "copy of driver source failed"
+    # A delegated root build must not inherit CC, MAKEFLAGS or LD_PRELOAD from `sudo VAR=value`.
+    # sudoers without SETENV already rejects those assignments; this is the same boundary for make.
+    if [ "$EUID" -eq 0 ] && sudo_origin; then
+        env -i PATH="$TRUSTED_PATH_OK" HOME="${HOME:-/root}" \
+            make -C "$KDIR" M="$B" modules > "$BK/build.log" 2>&1 || { cat "$BK/build.log" >&2; die "aien_gpu build failed (log $BK/build.log)"; }
+    else
+        make -C "$KDIR" M="$B" modules > "$BK/build.log" 2>&1 || { cat "$BK/build.log" >&2; die "aien_gpu build failed (log $BK/build.log)"; }
+    fi
     local vm; vm=$(modinfo -F vermagic "$B/aien_gpu.ko" 2>/dev/null; modinfo "$B/aien_gpu.ko" 2>/dev/null | awk '/^vermagic/{print $2}')
     grep -q "$KVER" <<<"$vm" || die "built module vermagic '$vm' does not match running kernel $KVER"
     mkdir -p "$ROOT$MODDIR" && install -m 0644 "$B/aien_gpu.ko" "$ROOT$MODDIR/aien_gpu.ko" || die "module install failed"
@@ -254,7 +462,11 @@ while [ $# -gt 0 ]; do
         --in-spark-window) SPARK_WINDOW=1;;
         --lib|--driver-src|--kdir)
             [ $# -ge 2 ] && [ -n "$2" ] || usage
-            case $1 in --lib) LIB_SRC=$2;; --driver-src) DRIVER_SRC=$2;; --kdir) KDIR=$2;; esac
+            case $1 in
+                --lib) LIB_SRC=$2;;
+                --driver-src) DRIVER_SRC=$2; DRIVER_SRC_OPTION=1;;
+                --kdir) KDIR=$2; KDIR_OPTION=1;;
+            esac
             shift;;
         *) usage;;
     esac
@@ -262,13 +474,24 @@ while [ $# -gt 0 ]; do
 done
 case $level in status|user|kernel|all|back) ;; *) usage;; esac
 if [ $YES -eq 1 ] && [ -z "$ROOT" ] && [ "$(id -u)" -ne 0 ]; then
-    # No -E: root gets a clean environment; the three sources travel as explicit, resolved arguments.
+    # No -E: root gets a clean environment. The module source and the kernel build dir are chosen
+    # again in the root process; they are not arguments a delegated caller can set.
+    case $level in
+        kernel|all)
+            if caller_selected_build; then
+                refuse "a delegated kernel swap cannot take --driver-src, --kdir, CUDAPP_DRIVER_SRC or CUDAPP_KDIR; root uses /usr/src/aien-gpu and /lib/modules/<uname -r>/build"
+            fi
+            ;;
+    esac
     set -- --yes
     [ $REBOOT -eq 1 ] && set -- "$@" --reboot
     [ $HOLDERS_OK -eq 1 ] && set -- "$@" --holders-ok
     [ -n "${SPARK_WINDOW:-}" ] && set -- "$@" --in-spark-window
-    exec sudo "$SELF" swap "$level" "$@" --lib "$(readlink -m "$LIB_SRC")" \
-        --driver-src "$(readlink -m "$DRIVER_SRC")" --kdir "$(readlink -m "$KDIR")"
+    case $level in user|all) set -- "$@" --lib "$(readlink -m "$LIB_SRC")";; esac
+    exec sudo "$SELF" swap "$level" "$@"
+fi
+if delegated_build; then
+    apply_delegated_sources
 fi
 # As root on the real system, refuse sources outside the places a root install may read from.
 if [ -z "$ROOT" ] && [ "$(id -u)" -eq 0 ]; then

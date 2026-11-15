@@ -17,6 +17,39 @@ static int cubin_same(const uint8_t *a, size_t na, const uint8_t *b, size_t nb) 
     int same=ra==0 && rb==0 && nca==ncb && memcmp(ca,cb,nca)==0;
     omega_cubin_free(ca);omega_cubin_free(cb);return same;
 }
+static int chunk_partition(void) {
+    struct {
+        uint32_t remaining;
+        uint64_t record_count;
+        int rc;
+        uint32_t count;
+        size_t bytes;
+    } cases[] = {
+        { 131073, 131072, OMEGA_GPU_EW_OK, 131072, 524288 },
+        { 1, 1, OMEGA_GPU_EW_OK, 1, 4 },
+        { 128, 128, OMEGA_GPU_EW_OK, 128, 512 },
+        { 1, 0, OMEGA_GPU_EW_BAD_ARGS, 0, 0 },
+        { 1, 2, OMEGA_GPU_EW_BAD_ARGS, 0, 0 },
+        { UINT32_MAX, UINT64_MAX, OMEGA_GPU_EW_BAD_ARGS, 0, 0 },
+    };
+    unsigned accepted=0,refused=0;
+    for(size_t i=0;i<sizeof cases/sizeof *cases;i++) {
+        uint32_t count=UINT32_C(0xa5a5a5a5);
+        size_t bytes=SIZE_MAX;
+        int rc=ew_chunk_1d(cases[i].remaining,cases[i].record_count,&count,&bytes);
+        if(rc!=cases[i].rc || (rc==OMEGA_GPU_EW_OK &&
+           (count!=cases[i].count || bytes!=cases[i].bytes)) ||
+           (rc!=OMEGA_GPU_EW_OK &&
+           (count!=UINT32_C(0xa5a5a5a5) || bytes!=SIZE_MAX))) {
+            fprintf(stderr,"FAIL chunk remaining=%u record=%llu rc=%d count=%u bytes=%zu\n",
+              cases[i].remaining,(unsigned long long)cases[i].record_count,rc,count,bytes);
+            return 1;
+        }
+        if(rc==OMEGA_GPU_EW_OK)accepted++;else refused++;
+    }
+    printf("PASS API EW chunk extents: accepted=%u refused=%u\n",accepted,refused);
+    return 0;
+}
 static int shape_partition(void) {
     /* om/components/api_ew_plan.om: zero admission; even/128 divisibility;
      * 1024-row and 131072-element clamps; 2048/16384 dimension caps;
@@ -46,6 +79,7 @@ int main(void) {
     uint8_t *text=malloc(BW_MAX_IR_INSNS*16u);
     unsigned accepted=0,refused=0;
     if(!c||!om||!text)return 2;
+    if(chunk_partition()!=0)return 1;
     if(shape_partition()!=0)return 1;
     /* Shape is deliberately absent: EW IR depends only on op, mutant and
      * test_path. n/dim/epsilon/sieve limits reside in launch constant memory.

@@ -1061,6 +1061,18 @@ static int begin(OmegaGpuEwOp op, Slot **ks, OmegaGpuEwInfo *info) {
     return OMEGA_GPU_EW_OK;
 }
 
+/* Turn the current record count into the only extent run_1d may stage.  Keep
+ * the outputs unchanged on refusal so no caller can reuse a partial extent. */
+static int ew_chunk_1d(uint32_t remaining, uint64_t record_count,
+                       uint32_t *count, size_t *bytes) {
+    if (record_count == 0 || record_count > remaining ||
+        record_count > SIZE_MAX / sizeof(uint32_t))
+        return OMEGA_GPU_EW_BAD_ARGS;
+    *count = (uint32_t)record_count;
+    *bytes = (size_t)record_count * sizeof(uint32_t);
+    return OMEGA_GPU_EW_OK;
+}
+
 int omega_gpu_rmsnorm_f32(uint32_t rows, uint32_t dim, const float *x, const float *weight,
                           float eps, float *out, OmegaGpuEwInfo *info) {
     uint64_t t0 = now_ns();
@@ -1126,11 +1138,16 @@ static int run_1d(OmegaGpuEwOp op, uint32_t n, const void *a, const void *b, voi
     if (rc != OMEGA_GPU_EW_OK) return rc;
     for (uint32_t i0 = 0; i0 < n && rc == OMEGA_GPU_EW_OK; ) {
         uint64_t rec[8];
-        if (av_ew_rec(0, n - i0, 0, 0, rec)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
-        uint32_t ni = (uint32_t)rec[0];
+        uint32_t remaining = n - i0;
+        if (av_ew_rec(0, remaining, 0, 0, rec)) { rc = OMEGA_GPU_EW_BAD_ARGS; break; }
+        uint32_t ni;
+        size_t bytes;
+        if (ew_chunk_1d(remaining, rec[0], &ni, &bytes) != OMEGA_GPU_EW_OK) {
+            rc = OMEGA_GPU_EW_BAD_ARGS;
+            break;
+        }
         uint32_t grid = (uint32_t)rec[1];
         uint32_t params[4] = { ni, 0, 0, 0 };
-        size_t bytes=p[10];
         rc = run_abc(k, (const uint8_t *)a + (size_t)i0 * 4, bytes, b ? (const uint8_t *)b + (size_t)i0 * 4 : a, bytes,
                      (uint8_t *)c + (size_t)i0 * 4, bytes, (uint32_t)rec[6], grid, params, info);
         i0 += ni;

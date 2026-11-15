@@ -83,6 +83,18 @@ static size_t compare(const float *got, const float *want, size_t n, double rel,
     return bad;
 }
 
+#define EW_GUARD_WORD UINT32_C(0xa55ac33c)
+static void guard_fill(void *p, size_t words) {
+    uint32_t *u = p;
+    for (size_t i = 0; i < words; i++) u[i] = EW_GUARD_WORD;
+}
+static size_t guard_bad(const void *p, size_t words) {
+    const uint32_t *u = p;
+    size_t bad = 0;
+    for (size_t i = 0; i < words; i++) if (u[i] != EW_GUARD_WORD) bad++;
+    return bad;
+}
+
 /* ------------------------------------------------------------- host only */
 static int sm121dis_check(OmegaGpuEwOp op, const char *name, const char *const *must, int n_must) {
     OmegaBlackwellKernel k; memset(&k, 0, sizeof k);
@@ -112,6 +124,11 @@ static int sm121dis_check(OmegaGpuEwOp op, const char *name, const char *const *
 }
 
 static void host_only(void) {
+    uint32_t guard_control[4];
+    guard_fill(guard_control, 4);
+    CHECK(guard_bad(guard_control, 4) == 0, "guard control accepts intact words");
+    guard_control[2] ^= 1;
+    CHECK(guard_bad(guard_control, 4) == 1, "guard negative control detects one overwritten word");
     CHECK(omega_blackwell_verify_codegen_fixtures_fb1cut4() == 0, "word fixtures MUFU_EX2 / BAR_SYNC / LDS32 / STS32 (rc %d)", omega_blackwell_verify_codegen_fixtures_fb1cut4());
     float a[256] = {0}, b[256] = {0}, c[256] = {0};
     CHECK(omega_gpu_rmsnorm_f32(0, 128, a, b, 1e-5f, c, NULL) == OMEGA_GPU_EW_BAD_ARGS, "rows=0 refused");
@@ -172,32 +189,46 @@ static int chip(const char *out_path) {
 
     /* 1. EX2 probe, with a negative control on the comparison itself */
     {
-        size_t n = 4096; float *x = malloc(n * 4), *got = malloc(n * 4), *want = malloc(n * 4), *wrong = malloc(n * 4);
+        size_t n = 131073, guard_words = OMEGA_GPU_EW_MAX_CTAS * OMEGA_GPU_EW_THREADS - 1;
+        size_t capacity = n + guard_words;
+        float *x = malloc(capacity * 4), *got = malloc(capacity * 4), *want = malloc(n * 4), *wrong = malloc(n * 4);
         for (size_t i = 0; i < n; i++) { x[i] = frand(&seed, -20.0f, 20.0f); want[i] = (float)exp2((double)x[i]); wrong[i] = (float)exp2((double)x[i] + 1.0); }
+        guard_fill(x + n, guard_words); guard_fill(got + n, guard_words);
         Case c = { .name = "ex2_probe", .n = n };
         c.rc = omega_gpu_ex2_f32((uint32_t)n, x, got, &info);
         c.bad = compare(got, want, n, 1e-6, 0.0, &c.worst);
+        CHECK(guard_bad(x + n, guard_words) == 0, "ex2 n=131073 input guard remains intact");
+        CHECK(guard_bad(got + n, guard_words) == 0, "ex2 n=131073 output guard remains intact");
         double w2; size_t neg = compare(got, wrong, n, 1e-6, 0.0, &w2);
         CHECK(neg > n / 2, "ex2 negative control: the check rejects a wrong expectation (%zu of %zu flagged)", neg, n);
         c.pass = c.rc == OMEGA_GPU_EW_OK && c.bad == 0; c.chip_ns = info.elapsed_ns; c.calls = info.chip_calls; c.unwritten = info.unwritten_words;
         omega_gpu_elementwise_test_set_mutant(OMEGA_GPU_EW_EX2);
+        guard_fill(got + n, guard_words);
         c.mutant_rc = omega_gpu_ex2_f32((uint32_t)n, x, got, &info);
         c.mutant_bad = compare(got, want, n, 1e-6, 0.0, &w2);
+        CHECK(guard_bad(got + n, guard_words) == 0, "ex2 n=131073 mutant output guard remains intact");
         c.mutant_caught = c.mutant_rc != OMEGA_GPU_EW_OK || c.mutant_bad > 0;
         omega_gpu_elementwise_test_set_mutant(0);
         record(c, out); free(x); free(got); free(want); free(wrong);
     }
     /* 2. shared-memory exchange probe (STS, BAR.SYNC, LDS) */
     {
-        size_t n = 4096; uint32_t *x = malloc(n * 4), *got = malloc(n * 4);
+        size_t n = 131200, guard_words = OMEGA_GPU_EW_MAX_CTAS * OMEGA_GPU_EW_THREADS - 128;
+        size_t capacity = n + guard_words;
+        uint32_t *x = malloc(capacity * 4), *got = malloc(capacity * 4);
         for (size_t i = 0; i < n; i++) x[i] = lcg(&seed);
+        guard_fill(x + n, guard_words); guard_fill(got + n, guard_words);
         Case c = { .name = "shared_xchg_probe", .n = n };
         c.rc = omega_gpu_shared_xchg_u32((uint32_t)n, x, got, &info);
         for (size_t i = 0; i < n; i++) if (got[i] != x[i ^ (OMEGA_GPU_EW_THREADS - 1)]) c.bad++;
+        CHECK(guard_bad(x + n, guard_words) == 0, "xchg n=131200 input guard remains intact");
+        CHECK(guard_bad(got + n, guard_words) == 0, "xchg n=131200 output guard remains intact");
         c.pass = c.rc == OMEGA_GPU_EW_OK && c.bad == 0; c.chip_ns = info.elapsed_ns; c.calls = info.chip_calls; c.unwritten = info.unwritten_words;
         omega_gpu_elementwise_test_set_mutant(OMEGA_GPU_EW_XCHG);
+        guard_fill(got + n, guard_words);
         c.mutant_rc = omega_gpu_shared_xchg_u32((uint32_t)n, x, got, &info);
         for (size_t i = 0; i < n; i++) if (got[i] != x[i ^ (OMEGA_GPU_EW_THREADS - 1)]) c.mutant_bad++;
+        CHECK(guard_bad(got + n, guard_words) == 0, "xchg n=131200 mutant output guard remains intact");
         c.mutant_caught = c.mutant_rc != OMEGA_GPU_EW_OK || c.mutant_bad > 0;
         omega_gpu_elementwise_test_set_mutant(0);
         record(c, out); free(x); free(got);

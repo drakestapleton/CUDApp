@@ -110,7 +110,7 @@ I work with AI coding agents. They write much of the code and tooling, and they 
 ### Level 1: check my numbers (any machine with git and Python 3, five minutes)
 
 ```sh
-git clone https://www.aienos.com/rad/z4RxD8vXigmWg61nM8miQ8DVPAXEP.git CUDApp
+git clone https://interplane.io/drakestapleton/CUDApp.git CUDApp
 cd CUDApp
 git checkout dc536882c06a692991be97dc65cd2d037d82b129
 python3 -I evidence/amd-qwen38-native-refusal-20261113/verify.py
@@ -122,14 +122,14 @@ Expected output:
 EVIDENCE PASS 65 hashed files; raw steps/IDs; independent graph; reference coding24; calculations
 ```
 
-It checks the published files against their hashes and recomputes the medians and the ratio from the raw per-step timings of the published run. The raw output of each run is in `evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout` to `sample5.stdout`. The write-up beside it is `README.md` in the same folder, also at
+It checks the published files against their hashes and recomputes the medians and the ratio from the raw per-step timings of the published run. This level shows that the published record is consistent with itself and that the numbers follow from it; it cannot show where the logs were recorded. Only Level 3, on a card, does that. The raw output of each run is in `evidence/amd-qwen38-native-refusal-20261113/native/sample1.stdout` to `sample5.stdout`. The write-up beside it is `README.md` in the same folder, also at
 https://interplane.io/drakestapleton/CUDApp/blob/dc536882c06a692991be97dc65cd2d037d82b129/evidence/amd-qwen38-native-refusal-20261113/README.md
 
 ### Level 2: rebuild the launcher and kernels from source (Linux on arm64, no GPU)
 
 ```sh
 cd ..    # back to the folder that holds CUDApp, which stays at dc536882
-git clone https://www.aienos.com/rad/z6do9WDBhuSnvopDkgFdFr1yWA62.git omega-mv
+git clone https://interplane.io/drakestapleton/omega-mv.git omega-mv
 git -C omega-mv checkout 2ee0a70d1830581b706f288e722f3329d51f3583
 sha256sum omega-mv/seed/out/omc
 #   26540e6de62402d5784b30b24d7c6faae488137c1f8a4b3e784fd0b5d5528991

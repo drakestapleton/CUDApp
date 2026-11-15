@@ -16,7 +16,7 @@ mkroot() { # $1 = dir; builds a fake GB10 machine with NVIDIA's stack installed
     local R=$1
     mkdir -p "$R"/usr/lib/aarch64-linux-gnu "$R"/etc/ld.so.conf.d "$R"/etc/modprobe.d "$R"/etc/modules-load.d \
              "$R"/lib/modules/$KVER/kernel/drivers/video "$R"/boot "$R"/sys/bus/pci/devices/000f:01:00.0 \
-             "$R"/sys/module/nvidia "$R"/dev "$R"/fakebin "$R"/driver-src "$R"/build
+             "$R"/sys/module/nvidia "$R"/dev "$R"/fakebin "$R"/driver-src "$R"/usr/src/aien-gpu "$R"/build
     echo nvidia-libcuda-580 > "$R"/usr/lib/aarch64-linux-gnu/libcuda.so.580.173.02
     ln -s libcuda.so.580.173.02 "$R"/usr/lib/aarch64-linux-gnu/libcuda.so.1
     echo "/usr/lib/aarch64-linux-gnu" > "$R"/etc/ld.so.conf.d/aarch64-linux-gnu.conf
@@ -32,6 +32,8 @@ mkroot() { # $1 = dir; builds a fake GB10 machine with NVIDIA's stack installed
     echo "our-libcuda" > "$R"/build/libcuda.so.1
     echo "obj-m := aien_gpu.o" > "$R"/driver-src/Kbuild
     echo "/* aien_gpu */" > "$R"/driver-src/aien_gpu.c
+    echo "obj-m := aien_gpu.o" > "$R"/usr/src/aien-gpu/Kbuild
+    echo "/* trusted aien_gpu */" > "$R"/usr/src/aien-gpu/aien_gpu.c
     local F="$R"/fakebin
     for c in ldconfig depmod update-initramfs; do
         printf '#!/bin/bash\necho "%s $*" >> "%s/calls.log"\n' "$c" "$R" > "$F/$c"
@@ -58,6 +60,10 @@ tree_hash() { # hashes of every file and link under the fake root, minus the too
 run() { # run the tool against root $R
     PATH="$R/fakebin:$PATH" CUDAPP_ROOT="$R" CUDAPP_LIB="$R/build/libcuda.so.1" CUDAPP_DRIVER_SRC="$R/driver-src" \
         CUDAPP_KDIR="$R/lib/modules/$KVER/build" bash "$TOOL" "$@"
+}
+run_delegated() { # simulate root re-entry through sudo; the caller cannot select driver source
+    env -u CUDAPP_DRIVER_SRC PATH="$R/fakebin:$PATH" CUDAPP_ROOT="$R" CUDAPP_LIB="$R/build/libcuda.so.1" \
+        CUDAPP_KDIR="$R/lib/modules/$KVER/build" SUDO_UID=1000 bash "$TOOL" "$@"
 }
 
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
@@ -157,7 +163,7 @@ check "one back undoes all" [ "$before" = "$(tree_hash "$R")" ]
 out=$(run swap sideways 2>&1); rc=$?
 check "unknown level exits 2" [ $rc -eq 2 ]
 
-# 11. escalation (audit C8): sudo without -E, the sources passed as explicit absolute arguments.
+# 11. escalation (audit C8): sudo without -E, with only the source paths needed by that level.
 #     Fake id (uid 1000) and fake sudo (records argv, runs nothing); no CUDAPP_ROOT, so this is the real-system path.
 S=$T/esc; mkdir -p "$S/bin" "$S/lib"; echo "lib" > "$S/lib/libcuda.so.1"
 printf '#!/bin/bash\necho 1000\n' > "$S/bin/id"
@@ -168,8 +174,43 @@ check "escalation calls sudo" [ -s "$S/sudo.argv" ]
 check "escalation drops -E (no caller environment reaches root)" bash -c "! grep -qx -- '-E' '$S/sudo.argv'"
 check "escalation re-runs this script by absolute path" [ "$(sed -n 1p "$S/sudo.argv")" = "$(readlink -f "$TOOL")" ]
 check "escalation passes --lib as a resolved absolute path" grep -qx -- "$S/lib/libcuda.so.1" "$S/sudo.argv"
-check "escalation passes --kdir and --driver-src" bash -c "grep -qx -- --kdir '$S/sudo.argv' && grep -qx -- --driver-src '$S/sudo.argv'"
-# 12. as root on the real system (fake id prints 0): sources outside the allowed places are refused before any level runs
+check "user-level escalation does not pass unused build paths" bash -c "! grep -qx -- --kdir '$S/sudo.argv' && ! grep -qx -- --driver-src '$S/sudo.argv'"
+: > "$S/sudo.argv"
+env -u CUDAPP_ROOT -u CUDAPP_DRIVER_SRC PATH="$S/bin:$PATH" CUDAPP_KDIR="$S/kdir/../kdir" \
+    bash "$TOOL" swap kernel --yes > /dev/null 2>&1
+check "kernel escalation calls sudo" [ -s "$S/sudo.argv" ]
+check "kernel escalation passes resolved --kdir" grep -qx -- "$(readlink -m "$S/kdir")" "$S/sudo.argv"
+check "kernel escalation does not pass --driver-src" bash -c "! grep -qx -- --driver-src '$S/sudo.argv'"
+: > "$S/sudo.argv"
+out=$(env -u CUDAPP_ROOT PATH="$S/bin:$PATH" bash "$TOOL" swap kernel --yes --driver-src "$S/driver-src" 2>&1); rc=$?
+check "caller-selected driver source is refused before sudo (exit 3)" [ $rc -eq 3 ]
+check "refused driver source never reaches sudo" [ ! -s "$S/sudo.argv" ]
+
+# 12. sudo-originated kernel swaps use only the fixed, immutable source selected by the privileged process.
+R=$T/r12a; mkroot "$R"
+out=$(run_delegated swap kernel --yes --driver-src "$R/driver-src" 2>&1); rc=$?
+check "delegated kernel swap refuses --driver-src (exit 3)" [ $rc -eq 3 ]
+check "delegated --driver-src refusal runs no make" bash -c "! grep -q '^make ' '$R/calls.log' 2>/dev/null"
+R=$T/r12b; mkroot "$R"
+out=$(PATH="$R/fakebin:$PATH" CUDAPP_ROOT="$R" CUDAPP_LIB="$R/build/libcuda.so.1" \
+    CUDAPP_DRIVER_SRC="$R/driver-src" CUDAPP_KDIR="$R/lib/modules/$KVER/build" SUDO_UID=1000 \
+    bash "$TOOL" swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses CUDAPP_DRIVER_SRC (exit 3)" [ $rc -eq 3 ]
+R=$T/r12c; mkroot "$R"; chmod o+w "$R/usr/src/aien-gpu/Kbuild"
+out=$(run_delegated swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses writable source files (exit 3)" [ $rc -eq 3 ]
+R=$T/r12d; mkroot "$R"; rm "$R/usr/src/aien-gpu/aien_gpu.c"; ln -s "$R/driver-src/aien_gpu.c" "$R/usr/src/aien-gpu/aien_gpu.c"
+out=$(run_delegated swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses source symlinks (exit 3)" [ $rc -eq 3 ]
+R=$T/r12e; mkroot "$R"; chmod o+w "$R/usr/src"
+out=$(run_delegated swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap refuses writable path components (exit 3)" [ $rc -eq 3 ]
+R=$T/r12f; mkroot "$R"
+out=$(run_delegated swap kernel --yes 2>&1); rc=$?
+check "delegated kernel swap accepts immutable /usr/src/aien-gpu" [ $rc -eq 0 ]
+check "delegated kernel swap installs aien_gpu" [ -f "$R/lib/modules/$KVER/updates/cudapp/aien_gpu.ko" ]
+
+# 13. as root on the real system (fake id prints 0): sources outside the allowed places are refused before any level runs
 printf '#!/bin/bash\necho 0\n' > "$S/bin/id"
 out=$(env -u CUDAPP_ROOT PATH="$S/bin:$PATH" bash "$TOOL" swap user --lib "$S/lib/libcuda.so.1" 2>&1); rc=$?
 check "root: --lib outside the repository refused (exit 3)" [ $rc -eq 3 ]
@@ -184,7 +225,7 @@ check "root: refusal names /lib/modules" grep -q "not under /lib/modules" <<<"$o
 out=$(env -u CUDAPP_ROOT PATH="$S/bin:$PATH" bash "$TOOL" swap user --lib "$REPO/LICENSE" 2>&1); rc=$?
 check "root: --lib inside the repository accepted (dry run exits 0)" [ $rc -eq 0 ]
 check "root: accepted dry run changed nothing" grep -q "DRY RUN" <<<"$out"
-# 13. the installed library is pinned: a copy that differs from the planned sha256 is rolled back
+# 14. the installed library is pinned: a copy that differs from the planned sha256 is rolled back
 R=$T/r13; mkroot "$R"; before=$(tree_hash "$R")
 printf '#!/bin/bash\nfor a; do d=$a; done\necho tampered > "$d"\n' > "$R/fakebin/install"; chmod +x "$R/fakebin/install"
 out=$(run swap user --yes 2>&1); rc=$?

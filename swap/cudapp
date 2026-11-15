@@ -19,12 +19,12 @@
 # tests/swap/test_swap_cli.sh runs every level against a fake machine root.
 #
 # Sources: --lib PATH (CUDA++ libcuda.so.1), --driver-src PATH (aien_gpu source), --kdir PATH (kernel build dir).
-# CUDAPP_LIB, CUDAPP_DRIVER_SRC and CUDAPP_KDIR give the defaults for an unprivileged run. Escalation runs
-# `sudo "$0" swap ...` WITHOUT -E and passes the resolved paths as these options, so a sudoers rule naming
-# this script cannot be steered by the caller's environment. Running as root on the real system, the library
-# must be a regular file inside this repository and the kernel build dir must live under /lib/modules or /usr/src.
-# The aien_gpu source is built as root by design (a kernel module is root-equivalent): point it at a tree
-# only root or you can write.
+# CUDAPP_LIB, CUDAPP_DRIVER_SRC and CUDAPP_KDIR give the developer defaults. Escalation runs
+# `sudo "$0" swap ...` WITHOUT -E and passes only the resolved library and kernel-build paths needed by the level.
+# A sudo-originated kernel swap chooses /usr/src/aien-gpu in the privileged process and refuses caller overrides;
+# that tree and every path component must be root-owned, non-writable by group or other, and contain no symlinks.
+# A direct root invocation may still use --driver-src for development. On the real system, the library must be a
+# regular file inside this repository and the kernel build dir must live under /lib/modules or /usr/src.
 set -u
 ROOT=${CUDAPP_ROOT:-}
 STATE=$ROOT/var/lib/cudapp-swap
@@ -32,6 +32,7 @@ SELF=$(readlink -f "$0")
 SELF_DIR=$(cd "$(dirname "$SELF")" && pwd)
 REPO_DIR=$(cd "$SELF_DIR/.." && pwd -P)
 LIB_SRC=${CUDAPP_LIB:-$SELF_DIR/../build/swap/libcuda.so.1}
+DRIVER_SRC_ENV_SET=0; [ "${CUDAPP_DRIVER_SRC+x}" = x ] && DRIVER_SRC_ENV_SET=1
 DRIVER_SRC=${CUDAPP_DRIVER_SRC:-$HOME/workspace/aienos-own-gpu-driver/native/linux/aien-gpu}
 KVER=$(uname -r)
 KDIR=${CUDAPP_KDIR:-/lib/modules/$KVER/build}
@@ -45,7 +46,7 @@ MODDIR=/lib/modules/$KVER/updates/cudapp
 INITRD=/boot/initrd.img-$KVER
 NV_MODULES="nvidia nvidia_uvm nvidia_modeset nvidia_drm"
 
-YES=0; REBOOT=0; HOLDERS_OK=0
+YES=0; REBOOT=0; HOLDERS_OK=0; DRIVER_SRC_OPTION=0
 die()    { echo "cudapp: $*" >&2; exit 1; }
 refuse() { echo "REFUSED: $*" >&2; exit 3; }
 # A machine that schedules GPU work through spark-window (the invoking user has the tool) reboots only inside a window.
@@ -57,6 +58,32 @@ window_host() {
 }
 usage()  { sed -n '3,9p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 sha()    { if [ -e "$1" ] || [ -L "$1" ]; then sha256sum < "$1" | cut -d' ' -f1; else echo -; fi; }
+sudo_origin() { [ -n "${SUDO_UID:-}" ] && [ "$SUDO_UID" != 0 ]; }
+trusted_driver_source() {
+    local machine_root=$ROOT src owner=0 stop=/ p bad shown
+    # CUDAPP_ROOT is the host-test machine root. Its files are owned by the test uid, which stands in for uid 0.
+    if [ -n "$machine_root" ]; then
+        machine_root=${machine_root%/}; [ -n "$machine_root" ] || machine_root=/
+        owner=$(id -u); stop=$machine_root
+    fi
+    src=${machine_root%/}/usr/src/aien-gpu
+    [ -d "$src" ] || refuse "trusted aien_gpu source not found at /usr/src/aien-gpu"
+    p=$src
+    while :; do
+        shown=${p#"$machine_root"}; [ -n "$shown" ] || shown=/
+        [ ! -L "$p" ] || refuse "trusted aien_gpu path contains a symlink: $shown"
+        bad=$(find -P "$p" -maxdepth 0 \( ! -uid "$owner" -o -perm /022 \) -print -quit 2>/dev/null) || \
+            refuse "cannot inspect trusted aien_gpu path component $shown"
+        [ -z "$bad" ] || refuse "trusted aien_gpu path is not root-owned and immutable: $shown"
+        [ "$p" = "$stop" ] && break
+        p=${p%/*}; [ -n "$p" ] || p=/
+    done
+    bad=$(find -P "$src" \( -type l -o ! -uid "$owner" -o -perm /022 \) -print -quit 2>/dev/null) || \
+        refuse "cannot inspect trusted aien_gpu source at /usr/src/aien-gpu"
+    shown=${bad#"$machine_root"}
+    [ -z "$bad" ] || refuse "trusted aien_gpu source is not root-owned, immutable, and symlink-free: $shown"
+    DRIVER_SRC=$src
+}
 
 # ---------------------------------------------------------------- facts
 gpu_ids() { # prints "vendor:device" of every NVIDIA PCI function
@@ -254,7 +281,11 @@ while [ $# -gt 0 ]; do
         --in-spark-window) SPARK_WINDOW=1;;
         --lib|--driver-src|--kdir)
             [ $# -ge 2 ] && [ -n "$2" ] || usage
-            case $1 in --lib) LIB_SRC=$2;; --driver-src) DRIVER_SRC=$2;; --kdir) KDIR=$2;; esac
+            case $1 in
+                --lib) LIB_SRC=$2;;
+                --driver-src) DRIVER_SRC=$2; DRIVER_SRC_OPTION=1;;
+                --kdir) KDIR=$2;;
+            esac
             shift;;
         *) usage;;
     esac
@@ -262,14 +293,32 @@ while [ $# -gt 0 ]; do
 done
 case $level in status|user|kernel|all|back) ;; *) usage;; esac
 if [ $YES -eq 1 ] && [ -z "$ROOT" ] && [ "$(id -u)" -ne 0 ]; then
-    # No -E: root gets a clean environment; the three sources travel as explicit, resolved arguments.
+    case $level in
+        kernel|all)
+            [ $DRIVER_SRC_OPTION -eq 0 ] && [ $DRIVER_SRC_ENV_SET -eq 0 ] || \
+                refuse "--driver-src and CUDAPP_DRIVER_SRC are not accepted for a delegated kernel swap; root uses /usr/src/aien-gpu"
+            ;;
+    esac
+    # No -E: root gets a clean environment. Driver source is deliberately selected only after escalation.
     set -- --yes
     [ $REBOOT -eq 1 ] && set -- "$@" --reboot
     [ $HOLDERS_OK -eq 1 ] && set -- "$@" --holders-ok
     [ -n "${SPARK_WINDOW:-}" ] && set -- "$@" --in-spark-window
-    exec sudo "$SELF" swap "$level" "$@" --lib "$(readlink -m "$LIB_SRC")" \
-        --driver-src "$(readlink -m "$DRIVER_SRC")" --kdir "$(readlink -m "$KDIR")"
+    case $level in user|all) set -- "$@" --lib "$(readlink -m "$LIB_SRC")";; esac
+    case $level in kernel|all) set -- "$@" --kdir "$(readlink -m "$KDIR")";; esac
+    exec sudo "$SELF" swap "$level" "$@"
 fi
+# A sudoers rule may permit invoking this helper directly, bypassing the self-escalation branch above. Keep the
+# Kbuild selection inside the privileged process in both forms, and reject rather than ignore caller input.
+case $level in
+    kernel|all)
+        if sudo_origin && { [ "$(id -u)" -eq 0 ] || [ -n "$ROOT" ]; }; then
+            [ $DRIVER_SRC_OPTION -eq 0 ] || refuse "--driver-src is not accepted after sudo; root uses /usr/src/aien-gpu"
+            [ $DRIVER_SRC_ENV_SET -eq 0 ] || refuse "CUDAPP_DRIVER_SRC is not accepted after sudo; root uses /usr/src/aien-gpu"
+            trusted_driver_source
+        fi
+        ;;
+esac
 # As root on the real system, refuse sources outside the places a root install may read from.
 if [ -z "$ROOT" ] && [ "$(id -u)" -eq 0 ]; then
     case $level in

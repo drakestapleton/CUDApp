@@ -6,13 +6,17 @@ tools/ampere_nvdisasm.py	    parser.add_argument("--nvdisasm", default=os.enviro
 tools/runtime/clean-user-hello.sh	CUDA_RE='"(/usr/local/cuda[^"]*|/opt/nvidia[^"]*|[^"]*/(libcuda|libcudart|libcublas|libcudnn|libnvrtc|libnvJitLink|libnvidia-ptxjitcompiler)[^"/]*|[^"]*/nvcc)"'	negative pattern: the trace proves no CUDA file is opened or run
 tools/runtime/clean-user-hello.sh	else echo "# TRACE PASS: no CUDA file (/usr/local/cuda*, libcuda*, libnvrtc*, nvcc, ...) was opened or executed"; fi	negative pattern: the trace proves no CUDA file is opened or run
 tools/runtime/clean-user-hello.sh	nvcc_bin=$(S 'command -v nvcc' 2>/dev/null); [ -n "$nvcc_bin" ] || { [ -x /usr/local/cuda/bin/nvcc ] && nvcc_bin=/usr/local/cuda/bin/nvcc; }	negative pattern: the trace proves no CUDA file is opened or run
-tools/test_bw_spec_encoder.sh	NVDISASM="/usr/local/cuda/bin/nvdisasm"	ORACLE: spec encoder words against an independent decoder
-tools/test_bw_spec_encoder.sh	if [ ! -x "$NVDISASM" ] && command -v nvdisasm > /dev/null 2>&1; then	ORACLE: spec encoder words against an independent decoder
-tools/test_bw_spec_encoder.sh	  NVDISASM=$(command -v nvdisasm)	ORACLE: spec encoder words against an independent decoder
-tools/test_bw_spec_encoder.sh	  log "SKIP: (c) nvdisasm not found at /usr/local/cuda/bin/nvdisasm"	ORACLE: spec encoder words against an independent decoder
 tools/artifact_smoke.sh	    if command -v nvdisasm >/dev/null 2>&1; then	ORACLE: independent reader of the cubin container; build/sm121dis reads the text
 mk/ampere-cubin.mk	AMPERE_NVDISASM ?= /usr/local/cuda/bin/nvdisasm	ORACLE: sm_86 cubin read back by nvdisasm, offline
 mk/sm121dis.mk	NVDISASM ?= /usr/local/cuda/bin/nvdisasm	ORACLE: test-sm121-mmio semantic contract against nvdisasm 13.0.85
 mk/om-encoder.mk	NVDISASM ?= /usr/local/cuda/bin/nvdisasm	ORACLE: test-om-encoder-ldg/-atomg exact words against nvdisasm 13.0.85
 Makefile	CUDA_INC ?= /usr/local/cuda/include	cubin-probe interop target (links NVIDIA libcuda; not in make test)
 Makefile	CUDA_LIB ?= /usr/local/cuda/lib64	cubin-probe interop target (links NVIDIA libcuda; not in make test)
+tests/fixtures/philox_curand_dist_oracle.txt	# /usr/local/cuda-13.0/include) with the program below; only its output is committed, no NVIDIA code.	ORACLE: frozen cuRAND distribution reference provenance; comment, never executed
+tests/fixtures/philox_curand_dist_oracle.txt	#   g++ -O1 -ffp-contract=fast -I/usr/local/cuda/include dist_oracle.cpp -o dist_oracle && ./dist_oracle	ORACLE: historical command documenting the frozen distribution reference; comment, never executed
+tests/fixtures/philox_curand_oracle.txt	# /usr/local/cuda-13.0/include) with the program below; only its output is committed, no NVIDIA code:	ORACLE: frozen cuRAND sequence reference provenance; comment, never executed
+tests/fixtures/philox_curand_oracle.txt	#   g++ -O1 -I/usr/local/cuda/include philox_oracle.cpp -o philox_oracle && ./philox_oracle	ORACLE: historical command documenting the frozen sequence reference; comment, never executed
+tests/nvml/README.md	Without the CUDA header (`/usr/local/cuda/include/nvml.h` or `CUDA_NVML_INCLUDE`), step 6 prints NOT_RUN and the other steps still run, but the gate never prints `CUDAPP-NVML HOST PASS`: it ends `CUDAPP-NVML HOST INCOMPLETE (abi and prototype comparison NOT_RUN)` and exits 77.	ORACLE: documents the optional read-only NVML header ABI/prototype comparison
+tests/nvml/gate.om	text NgCuda "/usr/local/cuda/include"	ORACLE: read-only NVIDIA NVML header for ABI/prototype comparison; no decoder invocation
+tools/runtime/clean-room-sim.sh	BAD_RE='"(/dev/nvidia[^"]*|/usr/local/cuda[^"]*|/opt/nvidia[^"]*|[^"]*/(libcuda|libcudart|libcublas|libcudnn|libnvrtc|libnvJitLink|libnvidia-ptxjitcompiler)[^"/]*|[^"]*/nvcc)"'	negative pattern: the trace proves no device node or CUDA file is opened or executed
+tools/runtime/clean-room-sim.sh	    ctl=/usr/local/cuda/version.json	negative control: trace a read-only toolkit metadata file to prove the no-CUDA checker catches it

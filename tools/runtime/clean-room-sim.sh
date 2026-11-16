@@ -65,7 +65,7 @@ stub_hits() { grep -E '(execve|openat)\(' "$1" | grep -vE '= -1 ' | grep -E "$BA
 		echo "#   (the zero-CUDA gate's own stub libcudart in /tmp/tmp.*: $(stub_hits "$work/readme.trace") successful calls, its red control)"
 	fi
 	echo "# --- red control 1: the same trace and check on a real read of a CUDA toolkit file ---"
-	ctl=/usr/local/cuda/version.json
+    ctl=/usr/local/cuda/version.json
 	if [ -r "$ctl" ]; then
 		E strace -f -qq -e trace=execve,openat -o "$work/control.trace" cat "$ctl" > /dev/null 2>&1
 		c=$(bad_hits "$work/control.trace")

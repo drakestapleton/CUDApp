@@ -4,7 +4,7 @@ Intent: exercise our seeded gfx942 code objects through Omega on MI300X, with a 
 
 ## Build and CPU acceptance
 
-`COMPILER` records the omega-mv source head and the seeded compiler digest; it is generated from the root `PIN` by the `regen` line of the root `REPIN` (pin-follow.sh moves both), never edited by hand. Concatenate `om2`, `common.om`, `elf.om`, `device.om`, `dispatch.om`, `plan.om`, `main.om`, then `../cli.om`, and pipe into that compiler. Prefix `target x86linux` before `om2` for x86. The gate performs this composition, validates the compiler digest before execution/output, and builds both targets:
+`COMPILER` records the omega-mv source head and the seeded compiler digest; it is generated from the root `PIN` by `make pin-compiler` (the `regen` line of the root `REPIN`; pin-follow.sh moves PIN), never edited by hand, and `make test-pin-sync` (part of `make test`) fails when it differs. Concatenate `om2`, `common.om`, `elf.om`, `device.om`, `dispatch.om`, `plan.om`, `main.om`, then `../cli.om`, and pipe into that compiler. Prefix `target x86linux` before `om2` for x86. The gate performs this composition, validates the compiler digest before execution/output, and builds both targets:
 
 ```
 python3 -I tests/amd-kfd-launch/check.py /absolute/path/to/omega-mv/seed/out/omc

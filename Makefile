@@ -570,7 +570,7 @@ test-omega-slices:
 
 # Every host-only check: no GPU, no device opened. The chip gates are listed in README.md.
 # Portable commands and the AArch64-only rows are separated in docs/OMEGA_HOST_TESTS.md.
-HOST_TESTS = test-drift test-gpu-matmul-api test-gpu-elementwise test-gpu-latmeas test-gpu-mathlibs test-gpu-reconv test-gpu-attention test-gpu-moe-window \
+HOST_TESTS = test-drift test-pin-sync test-gpu-matmul-api test-gpu-elementwise test-gpu-latmeas test-gpu-mathlibs test-gpu-reconv test-gpu-attention test-gpu-moe-window \
 	test-gpu-fp8 test-gpu-decode-attn test-gpu-router test-gpu-bf16-gemv test-gpu-fp8gemm test-gpu-tern-sched test-gpu-gpr-boundary \
 	test-gpu-cmdlist test-gpu-decode-graph test-gpu-code-alloc test-gpu-engine-compile test-gpu-engine \
 	test-gpu-engine-mutants test-gpu-engine-backend-compile test-gpu-engine-prod-build test-gpu-engine-sim \
@@ -805,6 +805,19 @@ AMD_LAUNCH_OMC ?=
 test-amd-launch:
 	@test -n "$(AMD_LAUNCH_OMC)" || { echo "Set AMD_LAUNCH_OMC to the launcher COMPILER pin" >&2; exit 64; }
 	python3 -I tests/amd-kfd-launch/check.py "$(AMD_LAUNCH_OMC)"
+
+# backend/amd/kfd/launch/COMPILER is generated from the root PIN (moved by pin-follow.sh); never edit it by hand.
+# PIN_COMPILER writes it to $(1) after checking PIN is the two lines `omega-mv <40 hex>` / `omc-sha256 <64 hex>`.
+PIN_COMPILER = r=$$(sed -n 's/^omega-mv \([0-9a-f]\{40\}\)$$/\1/p' PIN); s=$$(sed -n 's/^omc-sha256 \([0-9a-f]\{64\}\)$$/\1/p' PIN); \
+	[ -n "$$r" ] && [ -n "$$s" ] && [ "$$(wc -l < PIN)" = 2 ] || { echo "PIN is not omega-mv <40 hex> / omc-sha256 <64 hex>" >&2; exit 1; }; \
+	printf '%s\n%s  seed/out/omc\n' "$$r" "$$s" > $(1)
+.PHONY: pin-compiler test-pin-sync
+pin-compiler:
+	@$(call PIN_COMPILER,backend/amd/kfd/launch/COMPILER)
+test-pin-sync:
+	@t=$$(mktemp) && trap 'rm -f "$$t"' EXIT && $(call PIN_COMPILER,"$$t") && \
+	cmp "$$t" backend/amd/kfd/launch/COMPILER || { echo "FAIL pin-sync: backend/amd/kfd/launch/COMPILER differs from PIN; run make pin-compiler" >&2; exit 1; }; \
+	echo "PASS pin-sync COMPILER generated from PIN"
 
 test-amd-release: test-amd
 	$(MAKE) test-amd-launch AMD_LAUNCH_OMC="$(AMD_LAUNCH_OMC)"

@@ -1,6 +1,11 @@
 note How this repository moves to a new omega-mv build, read by pin-follow.sh when omega-mv lands a new
-note seed/out/omc. PIN is the only place the compiler pin is written; backend/amd/kfd/launch/COMPILER is
-note generated from it by the regen line, and the pin-sync gate alarms if the two ever differ.
-regen printf '%s\n%s  seed/out/omc\n' "$(sed -n 's/^omega-mv //p' PIN)" "$(sed -n 's/^omc-sha256 //p' PIN)" > backend/amd/kfd/launch/COMPILER
-gate pin-sync test "$(printf '%s\n%s  seed/out/omc' "$(sed -n 's/^omega-mv //p' PIN)" "$(sed -n 's/^omc-sha256 //p' PIN)")" = "$(cat backend/amd/kfd/launch/COMPILER)"
+note seed/out/omc. Scope: PIN is the compiler pin of backend/amd/kfd/launch only. backend/amd/kfd/launch/COMPILER
+note is generated from PIN by `make pin-compiler` (the format is written once, in the Makefile); `make
+note test-pin-sync` (in make test) regenerates it and fails when the committed file differs.
+note Not yet driven by PIN (typed by hand, omc 2c824805 at omega-mv e5b32567, owner CUDApp's om-units and
+note encoder lanes): om/units.sh OMC_PIN, mk/om-encoder.mk (three checks), AGENTS.md line on ../omega-mv,
+note .github/workflows/ci.yml and ampere-x86.yml checkouts; om/c1/omega-mv.lock names omega-mv 37920c93.
+note A PIN that is current therefore says nothing about those; moving them needs their gates rerun at the new omc.
+regen make pin-compiler
+gate pin-sync make test-pin-sync
 gate amd-launch make test-amd-launch AMD_LAUNCH_OMC="$OMC"

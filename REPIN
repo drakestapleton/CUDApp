@@ -1,0 +1,6 @@
+note How this repository moves to a new omega-mv build, read by pin-follow.sh when omega-mv lands a new
+note seed/out/omc. PIN is the only place the compiler pin is written; backend/amd/kfd/launch/COMPILER is
+note generated from it by the regen line, and the pin-sync gate alarms if the two ever differ.
+regen printf '%s\n%s  seed/out/omc\n' "$(sed -n 's/^omega-mv //p' PIN)" "$(sed -n 's/^omc-sha256 //p' PIN)" > backend/amd/kfd/launch/COMPILER
+gate pin-sync test "$(printf '%s\n%s  seed/out/omc' "$(sed -n 's/^omega-mv //p' PIN)" "$(sed -n 's/^omc-sha256 //p' PIN)")" = "$(cat backend/amd/kfd/launch/COMPILER)"
+gate amd-launch make test-amd-launch AMD_LAUNCH_OMC="$OMC"

@@ -2,8 +2,9 @@ note How this repository moves to a new omega-mv build, read by pin-follow.sh wh
 note seed/out/omc. Scope: PIN is the compiler pin of backend/amd/kfd/launch only. backend/amd/kfd/launch/COMPILER
 note is generated from PIN by `make pin-compiler` (the format is written once, in the Makefile); `make
 note test-pin-sync` (in make test) regenerates it and fails when the committed file differs.
-note Not yet driven by PIN: every file that still types its own compiler pin. `make pin-hand-list` prints them
-note (generated from the omega-mv store each time; no list is kept here).
+note Not yet driven by PIN: files that still type their own compiler pin. `make pin-hand-list` prints every file
+note naming an omc sha256 that omega-mv's seed/out/omc.sha256 ever held or a full omega-mv commit in the store;
+note candidate builds outside the store and short (8-hex) ids are not detected, so read those files' own checks too.
 note A PIN that is current therefore says nothing about those; moving them needs their gates rerun at the new omc.
 regen make pin-compiler
 gate pin-sync make test-pin-sync

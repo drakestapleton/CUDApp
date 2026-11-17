@@ -3,8 +3,9 @@ note seed/out/omc. Scope: PIN is the compiler pin of backend/amd/kfd/launch only
 note is generated from PIN by `make pin-compiler` (the format is written once, in the Makefile); `make
 note test-pin-sync` (in make test) regenerates it and fails when the committed file differs.
 note Not yet driven by PIN: files that still type their own compiler pin. `make pin-hand-list` prints every file
-note naming an omc sha256 that omega-mv's seed/out/omc.sha256 ever held or a full omega-mv commit in the store;
-note candidate builds outside the store and short (8-hex) ids are not detected, so read those files' own checks too.
+note naming an omc sha256 that seed/out/omc.sha256 held in any commit of the omega-mv store (all branches, full
+note history) or a full omega-mv commit in the store; builds whose commits are not in the store and short (8-hex)
+note ids are not detected, so read those files' own checks too.
 note A PIN that is current therefore says nothing about those; moving them needs their gates rerun at the new omc.
 regen make pin-compiler
 gate pin-sync make test-pin-sync

@@ -811,13 +811,25 @@ test-amd-launch:
 PIN_COMPILER = r=$$(sed -n 's/^omega-mv \([0-9a-f]\{40\}\)$$/\1/p' PIN); s=$$(sed -n 's/^omc-sha256 \([0-9a-f]\{64\}\)$$/\1/p' PIN); \
 	[ -n "$$r" ] && [ -n "$$s" ] && [ "$$(wc -l < PIN)" -eq 2 ] || { echo "PIN is not omega-mv <40 hex> / omc-sha256 <64 hex>" >&2; exit 1; }; \
 	printf '%s\n%s  seed/out/omc\n' "$$r" "$$s" > $(1)
-.PHONY: pin-compiler test-pin-sync
+.PHONY: pin-compiler test-pin-sync pin-hand-list
 pin-compiler:
 	@$(call PIN_COMPILER,backend/amd/kfd/launch/COMPILER)
 test-pin-sync:
 	@t=$$(mktemp) && trap 'rm -f "$$t"' EXIT && $(call PIN_COMPILER,"$$t") && \
 	cmp "$$t" backend/amd/kfd/launch/COMPILER || { echo "FAIL pin-sync: backend/amd/kfd/launch/COMPILER differs from PIN; run make pin-compiler" >&2; exit 1; }; \
 	echo "PASS pin-sync COMPILER generated from PIN"
+# pin-hand-list prints every tracked file outside evidence/ that names an omega-mv build other than PIN's: an
+# omega-mv commit (any 40-hex that is a commit of OMEGA_MV_GIT) or an omc sha256 that seed/out/omc.sha256 ever held.
+# These still type their own compiler pin; the list is generated, never copied.
+OMEGA_MV_GIT ?= $(HOME)/git/omega-mv.git
+pin-hand-list:
+	@git -C "$(OMEGA_MV_GIT)" rev-parse -q --verify HEAD >/dev/null || { echo "FAIL pin-hand-list: no omega-mv store at $(OMEGA_MV_GIT)" >&2; exit 1; }; \
+	t=$$(mktemp) && trap 'rm -f "$$t"' EXIT && { git -C "$(OMEGA_MV_GIT)" log -p --format= -- seed/out/omc.sha256 | \
+	sed -n 's/^+\([0-9a-f]\{64\}\).*/\1/p'; git grep -hoIE '\b[0-9a-f]{40}\b' -- ':!evidence' | sort -u | \
+	git -C "$(OMEGA_MV_GIT)" cat-file --batch-check | awk '$$2 == "commit" { print $$1 }'; } | sort -u | \
+	grep -vxF -e "$$(sed -n 's/^omega-mv //p' PIN)" -e "$$(sed -n 's/^omc-sha256 //p' PIN)" > "$$t"; \
+	[ -s "$$t" ] || { echo "FAIL pin-hand-list: no omc digests read from $(OMEGA_MV_GIT)" >&2; exit 1; }; \
+	git grep -lIF -f "$$t" -- ':!evidence' ':!PIN'; [ $$? -le 1 ]
 
 test-amd-release: test-amd
 	$(MAKE) test-amd-launch AMD_LAUNCH_OMC="$(AMD_LAUNCH_OMC)"

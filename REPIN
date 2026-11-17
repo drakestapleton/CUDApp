@@ -2,10 +2,8 @@ note How this repository moves to a new omega-mv build, read by pin-follow.sh wh
 note seed/out/omc. Scope: PIN is the compiler pin of backend/amd/kfd/launch only. backend/amd/kfd/launch/COMPILER
 note is generated from PIN by `make pin-compiler` (the format is written once, in the Makefile); `make
 note test-pin-sync` (in make test) regenerates it and fails when the committed file differs.
-note Not yet driven by PIN (each still types its own compiler pin; read the value in the file, it is not copied
-note here): om/units.sh OMC_PIN, mk/om-encoder.mk (three checks), compat/cuda/test.sh `pin=`, om/c1/omega-mv.lock,
-note the AGENTS.md line on ../omega-mv, .github/workflows/ci.yml and ampere-x86.yml checkouts, and prose restating
-note them in docs/CODEGEN_F64.md, docs/OMEGA_HOST_TESTS.md, INTEGRATION.md, docs/ARCHITECTURE.md, docs/PORT-AMPERE.md.
+note Not yet driven by PIN: every file that still types its own compiler pin. `make pin-hand-list` prints them
+note (generated from the omega-mv store each time; no list is kept here).
 note A PIN that is current therefore says nothing about those; moving them needs their gates rerun at the new omc.
 regen make pin-compiler
 gate pin-sync make test-pin-sync

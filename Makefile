@@ -809,7 +809,7 @@ test-amd-launch:
 # backend/amd/kfd/launch/COMPILER is generated from the root PIN (moved by pin-follow.sh); never edit it by hand.
 # PIN_COMPILER writes it to $(1) after checking PIN is the two lines `omega-mv <40 hex>` / `omc-sha256 <64 hex>`.
 PIN_COMPILER = r=$$(sed -n 's/^omega-mv \([0-9a-f]\{40\}\)$$/\1/p' PIN); s=$$(sed -n 's/^omc-sha256 \([0-9a-f]\{64\}\)$$/\1/p' PIN); \
-	[ -n "$$r" ] && [ -n "$$s" ] && [ "$$(wc -l < PIN)" = 2 ] || { echo "PIN is not omega-mv <40 hex> / omc-sha256 <64 hex>" >&2; exit 1; }; \
+	[ -n "$$r" ] && [ -n "$$s" ] && [ "$$(wc -l < PIN)" -eq 2 ] || { echo "PIN is not omega-mv <40 hex> / omc-sha256 <64 hex>" >&2; exit 1; }; \
 	printf '%s\n%s  seed/out/omc\n' "$$r" "$$s" > $(1)
 .PHONY: pin-compiler test-pin-sync
 pin-compiler:

@@ -1,0 +1,8 @@
+gate_proj: bytes=19660800 order0=6.600 bits mag7=5.600 distinct=254 zero_codes=0.0000 nan=0.00000 perblock_H=6.520 zlib9=6.662 xz=6.674 maxcode_used=0.00584
+up_proj: bytes=19660800 order0=6.564 bits mag7=5.564 distinct=254 zero_codes=0.0000 nan=0.00000 perblock_H=6.511 zlib9=6.644 xz=6.655 maxcode_used=0.00812
+down_proj: bytes=19660800 order0=6.590 bits mag7=5.590 distinct=254 zero_codes=0.0000 nan=0.00000 perblock_H=6.498 zlib9=6.638 xz=6.638 maxcode_used=0.00817
+expert 0: neuron-importance min/median/max ratio=0.722/1/1.38 bottom10%share=0.0824 exact-zero-neurons=0 rank@99%energy g,u,d=[613, 613, 615] of 640 | rms g,u,d=0.0135,0.0133,0.0126
+expert 1: neuron-importance min/median/max ratio=0.701/1/1.94 bottom10%share=0.0813 exact-zero-neurons=0 rank@99%energy g,u,d=[610, 611, 616] of 640 | rms g,u,d=0.0137,0.0134,0.0127
+expert 2: neuron-importance min/median/max ratio=0.690/1/1.27 bottom10%share=0.0864 exact-zero-neurons=0 rank@99%energy g,u,d=[615, 616, 616] of 640 | rms g,u,d=0.0136,0.0132,0.0127
+expert 3: neuron-importance min/median/max ratio=0.881/1/1.15 bottom10%share=0.0925 exact-zero-neurons=0 rank@99%energy g,u,d=[615, 615, 617] of 640 | rms g,u,d=0.0119,0.0118,0.0113
+cross-expert down_proj cosine: mean 0.0001 max 0.0023

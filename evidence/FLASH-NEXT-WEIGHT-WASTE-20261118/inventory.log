@@ -1,0 +1,14 @@
+revision 7fb48d708ca6cd8eeed8f4db0433be18af96984f shards 131 tensors 152089 headers_sha256 0c1a0ab6e4a93e85f4ad7226e4a60a3f106c2be10214f4be99585ebdac6b1584
+routed experts (weights)        120795955200 B  112.500 GiB  {'F8_E4M3': 120795955200}
+n-gram table                     51200245762 B   47.684 GiB  {'BF16': 2, 'F8_E4M3': 51200245760}
+GDN                               4173020928 B    3.886 GiB  {'BF16': 4173020928}
+MTP head                          2698026496 B    2.513 GiB  {'BF16': 181444096, 'F8_E4M3': 2516582400}
+gated residual                    1281249280 B    1.193 GiB  {'BF16': 1281249280}
+token embedding                   1271398400 B    1.184 GiB  {'BF16': 1271398400}
+lm_head                           1271398400 B    1.184 GiB  {'BF16': 1271398400}
+QSA attention + indexer           1234716672 B    1.150 GiB  {'BF16': 1234716672}
+vision tower                       897862112 B    0.836 GiB  {'BF16': 897862112}
+router + shared expert             597934080 B    0.557 GiB  {'BF16': 597934080}
+PLE projections                     65679640 B    0.061 GiB  {'I64': 280, 'BF16': 65679360}
+routed experts (scales)             14745600 B    0.014 GiB  {'BF16': 14745600}
+TOTAL                           185502232570 B  172.762 GiB

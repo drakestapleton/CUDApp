@@ -1,0 +1,58 @@
+{
+ "revision": "7fb48d708ca6cd8eeed8f4db0433be18af96984f",
+ "bytes": {
+  "gated residual": 1281249280,
+  "GDN": 4173020928,
+  "vision tower": 897862112,
+  "routed experts (scales)": 14745600,
+  "routed experts (weights)": 120795955200,
+  "router + shared expert": 597934080,
+  "PLE projections": 65679640,
+  "n-gram table": 51200245762,
+  "MTP head": 2698026496,
+  "QSA attention + indexer": 1234716672,
+  "token embedding": 1271398400,
+  "lm_head": 1271398400
+ },
+ "dtypes": {
+  "gated residual": {
+   "BF16": 1281249280
+  },
+  "GDN": {
+   "BF16": 4173020928
+  },
+  "vision tower": {
+   "BF16": 897862112
+  },
+  "routed experts (scales)": {
+   "BF16": 14745600
+  },
+  "routed experts (weights)": {
+   "F8_E4M3": 120795955200
+  },
+  "router + shared expert": {
+   "BF16": 597934080
+  },
+  "PLE projections": {
+   "I64": 280,
+   "BF16": 65679360
+  },
+  "n-gram table": {
+   "BF16": 2,
+   "F8_E4M3": 51200245760
+  },
+  "MTP head": {
+   "BF16": 181444096,
+   "F8_E4M3": 2516582400
+  },
+  "QSA attention + indexer": {
+   "BF16": 1234716672
+  },
+  "token embedding": {
+   "BF16": 1271398400
+  },
+  "lm_head": {
+   "BF16": 1271398400
+  }
+ }
+}
